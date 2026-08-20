@@ -4,9 +4,9 @@ import type { SxProps, Theme } from '@mui/material';
 import { User } from 'lucide-react';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-export type UserAvatarSize = 24 | 32 | 40 | 48 | number;
+type UserAvatarSize = 24 | 32 | 40 | 48 | number;
 
-export interface UserAvatarProps {
+interface UserAvatarProps {
   name?: string;
   email?: string;
   src?: string;

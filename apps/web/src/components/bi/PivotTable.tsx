@@ -4,11 +4,11 @@ import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'luc
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-export interface PivotData {
+interface PivotData {
   [key: string]: string | number | boolean;
 }
 
-export interface PivotConfig {
+interface PivotConfig {
   data: PivotData[];
   rows: string[];
   cols: string[];

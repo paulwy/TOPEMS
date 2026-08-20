@@ -11,7 +11,7 @@ export interface ChartDataPoint {
   [key: string]: unknown;
 }
 
-export interface ChartSeries {
+interface ChartSeries {
   name: string;
   data: ChartDataPoint[];
   color?: string;
@@ -105,7 +105,7 @@ export interface CardGroup {
   actions?: React.ReactNode;
 }
 
-export interface LayoutBreakpoints {
+interface LayoutBreakpoints {
   xs?: number;
   sm?: number;
   md?: number;

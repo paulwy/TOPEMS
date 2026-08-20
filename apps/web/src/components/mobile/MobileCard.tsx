@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Paper, Typography, useTheme, type SxProps, type Theme } from '@mui/material';
 import { ChevronRight } from 'lucide-react';
 
-export interface MobileCardProps {
+interface MobileCardProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   leftIcon?: React.ReactNode;

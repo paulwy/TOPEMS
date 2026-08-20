@@ -6,7 +6,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 import i18n from '@/i18n';
 
-export interface SidebarUserPanelProps {
+interface SidebarUserPanelProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   displayName: string | null;

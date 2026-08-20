@@ -187,7 +187,7 @@ const LayerSkeleton: React.FC<{ layer: string; height?: number }> = ({ layer, he
 // ==================== StreamingBoundary ====================
 
 /** StreamingBoundary Props */
-export interface StreamingBoundaryProps {
+interface StreamingBoundaryProps {
   children: ReactNode;
   /** 是否启用流式数据注入追踪 */
   trackStreaming?: boolean;
@@ -408,7 +408,7 @@ const LayerReadyTracker: React.FC<{
 // ==================== 流式层级便捷组件 ====================
 
 /** StreamingLayer Props */
-export interface StreamingLayerProps {
+interface StreamingLayerProps {
   children: ReactNode;
   /** 层级名称 */
   name: string;

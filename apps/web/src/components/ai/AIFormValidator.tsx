@@ -6,7 +6,7 @@ import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion, ValidateResponse } from '@/types/ai';
 import i18n from '@/i18n';
 
-export interface AIFormValidatorProps {
+interface AIFormValidatorProps {
   isOpen: boolean;
   onClose: () => void;
   validateRequest: ValidateRequest;

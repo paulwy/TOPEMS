@@ -905,7 +905,7 @@ export interface QuickAction {
 }
 
 /** @deprecated 使用 {@link DashboardTemplateProps} 代替 */
-export type DashboardTemplateLegacyProps = DashboardTemplateProps;
+type DashboardTemplateLegacyProps = DashboardTemplateProps;
 
 // ============ Schema 派生工具 ============
 
@@ -934,7 +934,7 @@ export type DashboardTemplateLegacyProps = DashboardTemplateProps;
  * ```
  */
 
-export interface DataTableFromSchemaOptions {
+interface DataTableFromSchemaOptions {
   /** 表格标题（默认使用 Schema 的 title） */
   title?: string;
   /** 表格数据 */

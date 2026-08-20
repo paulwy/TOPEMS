@@ -12,7 +12,7 @@ interface AmapLayerProps {
   zoom?: number;
 }
 
-export interface AmapLayerRef {
+interface AmapLayerRef {
   getMap: () => any;
 }
 

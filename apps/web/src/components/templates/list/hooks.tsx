@@ -20,7 +20,7 @@ import i18n from '@/i18n';
 const t = i18n.t;
 
 /** 内部列表状态结果（传递在各 hook 之间的状态对象） */
-export interface InternalListStateResult {
+interface InternalListStateResult {
   debouncedSearch: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -33,7 +33,7 @@ export interface InternalListStateResult {
 
 // ============ useInlineEditing ============
 
-export interface UseInlineEditingParams<T> {
+interface UseInlineEditingParams<T> {
   editingRowIdProp?: string | number | null;
   onEditingRowIdChange?: (id: string | number | null) => void;
   onInlineEditSave?: (row: T, changes: Partial<T>) => Promise<void> | void;
@@ -41,7 +41,7 @@ export interface UseInlineEditingParams<T> {
   getRowId?: (row: T) => string | number;
 }
 
-export interface UseInlineEditingResult<T> {
+interface UseInlineEditingResult<T> {
   internalEditingRowId: string | number | null;
   editingData: Partial<T> | null;
   resolvedEditingRowId: string | number | null;
@@ -132,7 +132,7 @@ function useInlineEditing<T>({
 
 // ============ useTreeTable ============
 
-export interface UseTreeTableParams<T> {
+interface UseTreeTableParams<T> {
   data: T[];
   treeView?: boolean;
   treeChildrenField: string;
@@ -143,7 +143,7 @@ export interface UseTreeTableParams<T> {
   resolvedColumns: ColumnDef<T>[];
 }
 
-export interface UseTreeTableResult<T> {
+interface UseTreeTableResult<T> {
   internalExpandedKeys: (string | number)[];
   resolvedExpandedKeys: (string | number)[];
   setExpandedKeys: (keys: (string | number)[]) => void;
@@ -259,7 +259,7 @@ function useTreeTable<T>({
 
 // ============ useExportFeature ============
 
-export interface UseExportFeatureParams<T> {
+interface UseExportFeatureParams<T> {
   exportable?: boolean;
   exportFileName?: string;
   exportFormats?: Array<'csv' | 'excel' | 'json'>;
@@ -274,7 +274,7 @@ export interface UseExportFeatureParams<T> {
   getRowId?: (row: T) => string | number;
 }
 
-export interface UseExportFeatureResult {
+interface UseExportFeatureResult {
   resolvedExportable: boolean;
   resolvedExportFileName: string;
   resolvedExportFormats: Array<'csv' | 'excel' | 'json'>;
@@ -492,7 +492,7 @@ function useExportFeature<T>({
 
 // ============ useColumnConfigState ============
 
-export interface UseColumnConfigStateParams<T> {
+interface UseColumnConfigStateParams<T> {
   columns: ColumnDef<T>[];
   resolvedColumns: ColumnDef<T>[];
   defaultColumnConfig: ColumnConfig[];
@@ -511,7 +511,7 @@ export interface UseColumnConfigStateParams<T> {
   };
 }
 
-export interface UseColumnConfigStateResult {
+interface UseColumnConfigStateResult {
   columnConfig: ColumnConfig[];
   setColumnConfig: React.Dispatch<React.SetStateAction<ColumnConfig[]>>;
   columnConfigAnchor: HTMLElement | null;
@@ -666,7 +666,7 @@ function useColumnConfigState<T>({
 
 // ============ useBatchOperations ============
 
-export interface UseBatchOperationsParams<T> {
+interface UseBatchOperationsParams<T> {
   data: T[];
   getRowId: (row: T) => string | number;
   filterStorageKey?: string;
@@ -675,7 +675,7 @@ export interface UseBatchOperationsParams<T> {
   effectiveOnSelectionChange?: (ids: (string | number)[]) => void;
 }
 
-export interface UseBatchOperationsResult<T> {
+interface UseBatchOperationsResult<T> {
   selectedIds: Set<string | number>;
   setSelectedIds: React.Dispatch<React.SetStateAction<Set<string | number>>>;
   handleBatchSelect: (row: T, event?: React.MouseEvent) => void;
@@ -887,7 +887,7 @@ function useBatchOperations<T>({
 
 // ============ useCrudForm ============
 
-export interface UseCrudFormParams<T extends { id?: string | number }> {
+interface UseCrudFormParams<T extends { id?: string | number }> {
   crud?: ListPageCrudConfig<T>;
   getRowId?: (row: T) => string | number;
   crudResult: UseCrudQueriesResult<T>;
@@ -905,7 +905,7 @@ export interface UseCrudFormParams<T extends { id?: string | number }> {
   setFormErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
-export interface UseCrudFormResult<T extends { id?: string | number }> {
+interface UseCrudFormResult<T extends { id?: string | number }> {
   buildInitialFormData: (mode: 'create' | 'edit' | 'view', record?: T) => Record<string, unknown>;
   openCreateForm: () => void;
   openEditForm: (record: T) => void;
@@ -1203,7 +1203,7 @@ function useCrudForm<T extends { id?: string | number }>({
 
 // ============ useCrudFetchParams ============
 
-export interface UseCrudFetchParamsParams<T> {
+interface UseCrudFetchParamsParams<T> {
   crud?: ListPageCrudConfig<T>;
   internalListStateResult: InternalListStateResult;
 }
@@ -1254,7 +1254,7 @@ function useCrudFetchParams<T>({ crud, internalListStateResult }: UseCrudFetchPa
 
 // ============ useListPageFilters ============
 
-export interface UseListPageFiltersParams {
+interface UseListPageFiltersParams {
   filtersValue?: Record<string, unknown>;
   persistFilters?: boolean;
   filterStorageKey?: string;
@@ -1262,7 +1262,7 @@ export interface UseListPageFiltersParams {
   onFilterChange?: (filters: Record<string, unknown>) => void;
 }
 
-export interface UseListPageFiltersResult {
+interface UseListPageFiltersResult {
   localFilters: Record<string, unknown>;
   setLocalFilters: (newFilters: Record<string, unknown>) => void;
   handleFilterChange: (newFilters: Record<string, unknown>) => void;
@@ -1333,14 +1333,14 @@ function useListPageFilters({
 
 // ============ useListPageSearch ============
 
-export interface UseListPageSearchParams {
+interface UseListPageSearchParams {
   searchValue?: string;
   persistSearch?: boolean;
   filterStorageKey?: string;
   internalListStateResult: InternalListStateResult;
 }
 
-export interface UseListPageSearchResult {
+interface UseListPageSearchResult {
   searchInput: string;
   localSearchInput: string;
   setLocalSearchInput: React.Dispatch<React.SetStateAction<string>>;
@@ -1394,7 +1394,7 @@ function useListPageSearch({
 
 // ============ useViewMode ============
 
-export interface UseViewModeParams {
+interface UseViewModeParams {
   viewModeProp?: ListViewMode;
   defaultViewMode?: ListViewMode;
   onViewModeChange?: (mode: ListViewMode) => void;
@@ -1403,7 +1403,7 @@ export interface UseViewModeParams {
   setViewModeUrlState: (mode: ListViewMode) => void;
 }
 
-export interface UseViewModeResult {
+interface UseViewModeResult {
   viewModeLocal: ListViewMode;
   setViewModeLocal: React.Dispatch<React.SetStateAction<ListViewMode>>;
   effectiveViewMode: ListViewMode;
@@ -1452,7 +1452,7 @@ function useViewMode({
 
 // ============ useCrudRowActions ============
 
-export interface UseCrudRowActionsParams<T> {
+interface UseCrudRowActionsParams<T> {
   crud?: ListPageCrudConfig<T>;
   hasForm: boolean;
   rowActions?: RowAction<T>[];
@@ -1495,7 +1495,7 @@ function useCrudRowActions<T>({
 
 // ============ useCrudBatchActions ============
 
-export interface UseCrudBatchActionsParams<T> {
+interface UseCrudBatchActionsParams<T> {
   crud?: ListPageCrudConfig<T>;
   crudResult: UseCrudQueriesResult<T>;
   batchActions?: BatchAction<T>[];
@@ -1537,7 +1537,7 @@ function useCrudBatchActions<T>({ crud, crudResult, batchActions }: UseCrudBatch
 
 // ============ useCrudActions ============
 
-export interface UseCrudActionsParams<T> {
+interface UseCrudActionsParams<T> {
   crud?: ListPageCrudConfig<T>;
   hasForm: boolean;
   actions?: Array<{
@@ -1570,7 +1570,7 @@ function useCrudActions<T>({ crud, hasForm, actions, openCreateForm }: UseCrudAc
 
 // ============ useResolvedColumns ============
 
-export interface UseResolvedColumnsParams<T> {
+interface UseResolvedColumnsParams<T> {
   columns: ColumnDef<T>[];
   crud?: ListPageCrudConfig<T>;
 }
@@ -1663,7 +1663,7 @@ function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParams<T>) {
 
 // ============ useResolvedCrudConfig ============
 
-export interface UseResolvedCrudConfigParams {
+interface UseResolvedCrudConfigParams {
   crud?: ListPageCrudConfig<Record<string, unknown>>;
   columnResizable?: boolean;
   treeView?: boolean;

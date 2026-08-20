@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Stack, Typography, type SxProps, type Theme } from '@mui/material';
 
-export interface MobileFormField {
+interface MobileFormField {
   key: string;
   label: string;
   required?: boolean;
   render: (value: unknown, onChange: (val: unknown) => void) => React.ReactNode;
 }
 
-export interface MobileFormProps {
+interface MobileFormProps {
   fields: MobileFormField[];
   values: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;

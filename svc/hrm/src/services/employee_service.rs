@@ -232,7 +232,7 @@ impl EmployeeService {
         )
         .bind(id)
         .bind(self.tenant_id)
-        .bind(req.org_id)
+        .bind(req.org_id.unwrap_or(self.tenant_id))
         .bind(req.department_id)
         .bind(req.position_id)
         .bind(&req.employee_number)

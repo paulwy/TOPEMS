@@ -30,17 +30,17 @@ export type AlertLevel = 'success' | 'warning' | 'error' | 'info';
 /**
  * 展示模式类型
  */
-export type AlertDisplayMode = 'card' | 'alert' | 'inline';
+type AlertDisplayMode = 'card' | 'alert' | 'inline';
 
 /**
  * 尺寸类型
  */
-export type AlertSize = 'sm' | 'md' | 'lg';
+type AlertSize = 'sm' | 'md' | 'lg';
 
 /**
  * 操作按钮配置
  */
-export interface AlertAction {
+interface AlertAction {
   /** 按钮文本 */
   label: string;
   /** 点击事件 */
@@ -54,7 +54,7 @@ export interface AlertAction {
 /**
  * 警告配置接口
  */
-export interface AlertConfig {
+interface AlertConfig {
   /** 警告级别 */
   level: AlertLevel;
   /** 标题 */
@@ -76,7 +76,7 @@ export interface AlertConfig {
 /**
  * AlertCard组件属性
  */
-export interface AlertCardProps {
+interface AlertCardProps {
   /** 警告级别 */
   level: AlertLevel;
 

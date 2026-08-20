@@ -2,7 +2,7 @@ import React from 'react';
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 import type { RowAction } from './types';
 
-export interface RowActionMenuProps<T = any> {
+interface RowActionMenuProps<T = any> {
   anchorEl: HTMLElement | null;
   open: boolean;
   selectedRow: T | null;

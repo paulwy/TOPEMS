@@ -1,0 +1,1234 @@
+[
+  {
+    "defFile": "apps/web/src/api/master/dataServiceMarketplaceV73.ts",
+    "name": "OrderStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceMarketplaceV73.ts",
+    "name": "PayOrderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceMarketplaceV73.ts",
+    "name": "ReplyReviewRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceMarketplaceV73.ts",
+    "name": "ServiceCategory",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceMarketplaceV73.ts",
+    "name": "UpdateListingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "CreateOrchestrationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "CreateServiceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "DataService",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "DeployServiceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ExecuteFlowRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "OrchestrationFlow",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "OrchestrationStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ServiceDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ServiceDeployment",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ServiceExecution",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ServiceLog",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "ServiceVersion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "UpdateOrchestrationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataServiceOrchestrationV71.ts",
+    "name": "UpdateServiceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "AddMappingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "CategoryNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "CategoryNodeType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "DataStandardV63",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "EvaluateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "MappingRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "StandardDashboardV63",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "StandardEvaluation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "StandardStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataStandardV63.ts",
+    "name": "StandardType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "CreateMappingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "DataMapping",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "ExecuteWorkflowRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "ListWorkflowsRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "ReviewApprovalRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "UpdateMappingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "WorkflowDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "WorkflowExecution",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "WorkflowLog",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dataWorkflowAutomationV78.ts",
+    "name": "WorkflowTriggerType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dictionary.ts",
+    "name": "DictItemBatchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dictionary.ts",
+    "name": "DictItemCreateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/dictionary.ts",
+    "name": "DictTypeCreateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ConfigureReplicationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ContinuityImpact",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ContinuityPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ContinuityPlanStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ContinuityScore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "CreateContinuityPlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "CreateRecoveryPlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "CreateRecoveryPointRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "FailoverRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "FailoverStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "InitiateFailoverRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RecoveryPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RecoveryPlanPriority",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RecoveryPlanProgress",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RecoveryPlanStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RecoveryPoint",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "RegionHealth",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ReplicationConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "ReplicationStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/disasterRecovery.ts",
+    "name": "SnapshotType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "APIKey",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "APIKeyStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "APILog",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "AuthConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "AuthType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "CreateAPIKeyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "CreateAuthConfigRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "CreateDeveloperRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "CreateRateLimitRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "Developer",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "DeveloperStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "GatewayDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "LogsQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/gatewayV54.ts",
+    "name": "RateLimitType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governance.ts",
+    "name": "DataContract",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governance.ts",
+    "name": "GovernanceWorkflow",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governance.ts",
+    "name": "ImprovementPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governance.ts",
+    "name": "MaturityAssessment",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governance.ts",
+    "name": "MaturityDimension",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "AdvanceStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "AssessMaturityRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "BenchmarkComparison",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "CreateDataProductRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "CreateImprovementPlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "MaturityAssessmentResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "MaturityDimensionScore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "MaturityHistoryEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "MaturityLevel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "ProductLineage",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/governanceV2.ts",
+    "name": "StepStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "AddEdgeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "AddInteractionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "AddNodeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGAsset",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGCategory",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGEdge",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGExport",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGInteraction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGPath",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGRecommendation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGSimilarNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "KGSubgraph",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "RegisterAssetRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/knowledgeGraph.ts",
+    "name": "SearchAssetsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/lineage.ts",
+    "name": "ImpactReport",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/lineage.ts",
+    "name": "PropagationRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadata.ts",
+    "name": "MetadataRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "AddAttributeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "AddTagRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "AutoTransitionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "BuildLineageGraphRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "BulkTransitionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "CreateMetadataRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "CreatePolicyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "GetPathRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "LifecycleHistoryEntryV60",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "LifecycleStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "LineageImpact",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "LineagePath",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "MetadataType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "MetadataV60",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "SearchMetadataParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/metadataV60.ts",
+    "name": "UpdateMetadataRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "AutoFixAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "AutoFixActionType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "AutoFixRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "FixStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "GenerateSuggestionsRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "GovernanceInsight",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "QualityCheckV51",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "QualityDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "QualityStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/quality.ts",
+    "name": "RunQualityCheckRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "CreateSchemaRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "DynamicDataRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "ListDataQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "ListSchemaQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "SchemaDefinition",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/schemaRegistry.ts",
+    "name": "UpdateSchemaRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "ApplyTagRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "AutoTagRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "Community",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "FindPathRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "GraphEntityType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "HybridSearchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "IndexEntityRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticEdge",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticSearchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticSearchResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticSearchStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "SemanticTag",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "ShortestPath",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/semanticSearch.ts",
+    "name": "TagSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "AssignRoleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "AuditLogEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "CreateBranchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "CreateRoleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "DiffVersionsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "GrantPermissionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "MergeBranchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "QueryAuditParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "RestoreVersionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "UserPermissions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "VersionBranch",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/versioning.ts",
+    "name": "VersionSnapshot",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+    "name": "AnomalyQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+    "name": "AnomalyScanResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+    "name": "AnomalySummary",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+    "name": "DailyAnomalyCount",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+    "name": "EquipmentAnomalyCount",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "ApsScheduleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "BottleneckResource",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "ConstraintCheckRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "EquipmentConstraint",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "ImprovementSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "MaterialConstraint",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "PersonnelConstraint",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "SimulateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/aps.ts",
+    "name": "SimulateResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyAlert",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyAlertsResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyByEquipment",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyByWorkshop",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyConsumptionRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyForecastResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyReportResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyStatistic",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "EnergyTrendData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/energyManagement.ts",
+    "name": "RealTimeConsumption",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/process.ts",
+    "name": "AddProcessRouteStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/process.ts",
+    "name": "UpdateProcessRouteStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/processFlow.ts",
+    "name": "AddProcessFlowStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/processFlow.ts",
+    "name": "UpdateProcessFlowStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "ComparisonBreakdown",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "CostBreakdownItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "CostComparisonResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "CostForecastResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "CostTrendData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "CostTrendResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "LaborCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "MaterialCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "MonthlyCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "OverheadCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "PeriodCostReport",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "ProductCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "ProductionOrderCostResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "WorkOrderCostDetail",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "WorkOrderCostSummary",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/productionCost.ts",
+    "name": "WorkshopCostItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "AddPatrolInspectionItemRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "CreatePatrolInspectionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "CreateQualityInspectionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "PatrolInspection",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "PatrolInspectionItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "QualityStandardValue",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "UpdatePatrolInspectionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/quality.ts",
+    "name": "UpdateQualityInspectionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "AdaptedProductionOrder",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "AdaptedWorkOrder",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GanttTask",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedCreateFromErpRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedCreateProductionOrderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedCreateWorkOrderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedCreateWorkReportRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedProductionOrderResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedUpdateProductionOrderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedUpdateWorkOrderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedUpdateWorkReportRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedWorkOrderResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "GeneratedWorkReportResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "TraceLink",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mes/types.ts",
+    "name": "TraceNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/migration/index.ts",
+    "name": "AppliedMigration",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/migration/index.ts",
+    "name": "MigrationReport",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/attendance.ts",
+    "name": "CreateLeaveRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/device.ts",
+    "name": "OsType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/device.ts",
+    "name": "UpdatePushTokenRequest",
+    "sampleRefs": [
+      "apps/web/src/api/mobile/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/index.ts",
+    "name": "AudioRecording",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/index.ts",
+    "name": "CreateAudioRecordingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/index.ts",
+    "name": "CreateMobileTaskRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/index.ts",
+    "name": "CreatePatrolRecordRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mobile/index.ts",
+    "name": "CreatePhotoEvidenceRequest",
+    "sampleRefs": []
+  }
+]

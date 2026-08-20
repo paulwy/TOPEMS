@@ -32,7 +32,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-export interface CommandPaletteProps {
+interface CommandPaletteProps {
   open: boolean;
   onClose: () => void;
 }

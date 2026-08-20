@@ -31,10 +31,10 @@ import { LoadingSpinner as SharedLoadingSpinner } from '@topems/shared-component
 // Types
 // ============================================================================
 
-export type LoadingMode = 'fullscreen' | 'inline' | 'overlay' | 'skeleton';
-export type ProgressType = 'linear' | 'circular' | 'none';
+type LoadingMode = 'fullscreen' | 'inline' | 'overlay' | 'skeleton';
+type ProgressType = 'linear' | 'circular' | 'none';
 
-export interface LoadingOptions {
+interface LoadingOptions {
   mode?: LoadingMode;
   progress?: number; // 0-100
   progressType?: ProgressType;
@@ -45,7 +45,7 @@ export interface LoadingOptions {
   customMessage?: string;
 }
 
-export interface SkeletonOptions {
+interface SkeletonOptions {
   rows?: number;
   avatar?: boolean;
   actions?: number;

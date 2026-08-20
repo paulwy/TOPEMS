@@ -23,7 +23,7 @@ function toPascal(kebab: string): string {
     .join('');
 }
 
-export interface LazyIconProps extends LucideProps {
+interface LazyIconProps extends LucideProps {
   /** 图标名称，支持 kebab-case 或 PascalCase */
   name: string;
 }

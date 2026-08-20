@@ -26,7 +26,7 @@ export type DialogSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 /**
  * Dialog 配置接口
  */
-export interface DialogProps {
+interface DialogProps {
   /** 是否打开 */
   open: boolean;
   /** 关闭回调 */

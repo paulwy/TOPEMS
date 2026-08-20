@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { moduleToService } from './shared';
 
-export interface SidebarServiceStatusProps {
+interface SidebarServiceStatusProps {
   moduleCode: string;
   serviceStatuses: Record<string, boolean>;
   collapsed?: boolean;

@@ -19,7 +19,7 @@ import { designTokens, semanticTokens } from '@topems/tokens';
 const logger = createLogger('ErrorBoundary');
 
 // 错误报告接口
-export interface ErrorReport {
+interface ErrorReport {
   error: Error;
   errorInfo: ErrorInfo;
   timestamp: number;
@@ -32,7 +32,7 @@ export interface ErrorReport {
 }
 
 // 错误边界配置选项
-export interface ErrorBoundaryOptions {
+interface ErrorBoundaryOptions {
   level?: 'page' | 'module' | 'component';
   fallback?: ReactNode;
   onError?: (report: ErrorReport) => void;
@@ -885,4 +885,3 @@ const errorHistory = {
 };
 
 // 重新导出 ErrorBoundaryOptions 别名为 ErrorBoundaryProps（向后兼容）
-export type { ErrorBoundaryOptions as ErrorBoundaryProps };

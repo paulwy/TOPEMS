@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-export interface ResponsivePageProps {
+interface ResponsivePageProps {
   desktop: React.ReactNode;
   mobile: React.ReactNode;
 }

@@ -2,9 +2,9 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { useResponsive } from '../../hooks/useResponsive';
 
-export type ContainerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'fluid';
+type ContainerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'fluid';
 
-export interface ResponsiveContainerProps {
+interface ResponsiveContainerProps {
   size?: ContainerSize;
   children?: React.ReactNode;
   sx?: object;

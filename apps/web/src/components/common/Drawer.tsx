@@ -6,9 +6,9 @@ import i18n from '@/i18n';
 
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
 
-export type DrawerVariant = 'temporary' | 'persistent' | 'permanent';
+type DrawerVariant = 'temporary' | 'persistent' | 'permanent';
 
-export interface DrawerProps {
+interface DrawerProps {
   open: boolean;
   onClose: () => void;
   anchor?: DrawerAnchor;

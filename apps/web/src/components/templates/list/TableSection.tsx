@@ -20,7 +20,7 @@ import { EditCell } from './EditCell';
 import { ListEmptyState } from './EmptyState';
 import { useTranslation } from 'react-i18next';
 
-export interface ColumnWidthResult {
+interface ColumnWidthResult {
   columnWidths: Record<string, number>;
   resizingColumnId: string | null;
   getColumnWidth: (columnId: string) => number | string;
@@ -28,7 +28,7 @@ export interface ColumnWidthResult {
   resetColumnWidth: (columnId: string) => void;
 }
 
-export interface TableSectionProps<T> {
+interface TableSectionProps<T> {
   // Data
   data: T[];
   treeTableData: T[];

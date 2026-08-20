@@ -21,7 +21,7 @@ export type PriorityLevel =
   | 'p4'
   | 'P4';
 
-export interface PriorityBadgeProps {
+interface PriorityBadgeProps {
   priority: PriorityLevel | string;
   showIcon?: boolean;
   size?: 'sm' | 'md';

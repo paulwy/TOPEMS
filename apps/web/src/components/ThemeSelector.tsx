@@ -54,7 +54,7 @@ const THEME_LABEL_KEYS: Record<Theme, { iconKey: string; title: string; selectTh
   },
 };
 
-export interface ThemeSelectorProps {
+interface ThemeSelectorProps {
   /** 是否显示下拉菜单（含全部选项），false 时仅显示图标按钮循环切换 */
   showMenu?: boolean;
 }

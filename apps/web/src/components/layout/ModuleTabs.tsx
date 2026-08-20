@@ -34,13 +34,13 @@ interface LegacyModuleTabsProps {
 
 // ─── New Types ─────────────────────────────────────────────────────────────
 
-export interface ModuleTabItem {
+interface ModuleTabItem {
   label: string;
   path: string;
   icon?: React.ReactNode;
 }
 
-export interface ModuleTabsProps {
+interface ModuleTabsProps {
   /** Navigation items to display as tabs */
   items?: ModuleTabItem[];
   /** Whether to show the module home tab (navigates to /dashboard) */

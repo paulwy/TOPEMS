@@ -18,7 +18,7 @@ import { renderIcon } from '@/lib/iconMapping';
 import type { NavItem } from '@/lib/navigation/types';
 import { getNavigablePath, getAllNavItems } from './shared';
 
-export interface SidebarFavoritesProps {
+interface SidebarFavoritesProps {
   collapsed: boolean;
   favorites: Set<string>;
   onToggleFavorite: (item: NavItem) => void;

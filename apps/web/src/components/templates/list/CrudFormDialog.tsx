@@ -2,7 +2,7 @@ import React from 'react';
 import { FormDialog, FormDrawer } from '@/components/common';
 import type { ListPageCrudConfig } from './types';
 
-export interface CrudFormDialogProps {
+interface CrudFormDialogProps {
   open: boolean;
   mode: 'create' | 'edit' | 'view';
   crud: ListPageCrudConfig<unknown> | undefined;

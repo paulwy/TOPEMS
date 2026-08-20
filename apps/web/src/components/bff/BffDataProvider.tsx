@@ -42,14 +42,14 @@ import { useBffDashboard, type BffDashboardData } from '@/hooks/bff/useBffDashbo
 import type { SubscriptionStatus } from '@/hooks/bff/useBffSubscription';
 
 /** 服务健康条目 */
-export interface ServiceHealthEntry {
+interface ServiceHealthEntry {
   service: string;
   healthy: boolean;
   url: string;
 }
 
 /** BFF Context 提供的数据 */
-export interface BffDataContextValue {
+interface BffDataContextValue {
   /** 仪表盘聚合数据 */
   dashboard: BffDashboardData | undefined;
   /** 仪表盘加载中 */

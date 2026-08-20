@@ -71,10 +71,10 @@ export type ValidationRule<T extends Record<string, unknown> = Record<string, un
       message?: string;
     };
 
-export type FieldVisibility<T extends Record<string, unknown> = Record<string, unknown>> =
+type FieldVisibility<T extends Record<string, unknown> = Record<string, unknown>> =
   boolean | ((values: T) => boolean);
 
-export type FieldDisabled<T extends Record<string, unknown> = Record<string, unknown>> =
+type FieldDisabled<T extends Record<string, unknown> = Record<string, unknown>> =
   boolean | ((values: T) => boolean);
 
 export interface FormFieldConfig<T extends Record<string, unknown> = Record<string, unknown>> {
@@ -117,7 +117,7 @@ export interface FormFieldConfig<T extends Record<string, unknown> = Record<stri
   }) => React.ReactNode;
 }
 
-export type FormBuilderMode = 'create' | 'edit' | 'view';
+type FormBuilderMode = 'create' | 'edit' | 'view';
 
 /** 表单分组配置 */
 export interface FormSectionConfig {
@@ -125,7 +125,7 @@ export interface FormSectionConfig {
   fields: string[];
 }
 
-export interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, unknown>> {
+interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, unknown>> {
   fields: FormFieldConfig<T>[];
   onSubmit: (values: T) => Promise<void> | void;
   submitLabel?: string;

@@ -3,7 +3,7 @@ import { TablePagination } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-export interface ListPaginationProps {
+interface ListPaginationProps {
   page: number;
   pageSize: number;
   total: number;

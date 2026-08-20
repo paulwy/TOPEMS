@@ -11,7 +11,7 @@ import { navItemSx, getNavigablePath } from './shared';
 import { SidebarServiceStatus } from './SidebarServiceStatus';
 import i18n from '@/i18n';
 
-export interface SidebarModuleTreeProps {
+interface SidebarModuleTreeProps {
   collapsed: boolean;
   currentModule: string | null;
   moduleName: string;

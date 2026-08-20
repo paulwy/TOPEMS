@@ -9,7 +9,7 @@ export interface SwipeActionItem {
   onClick: () => void;
 }
 
-export interface SwipeActionProps {
+interface SwipeActionProps {
   children: React.ReactNode;
   leftActions?: SwipeActionItem[];
   rightActions?: SwipeActionItem[];

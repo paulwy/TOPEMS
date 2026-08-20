@@ -14,7 +14,7 @@ export interface PageAction {
   variant?: 'contained' | 'outlined' | 'text';
 }
 
-export interface PrimaryActionButton {
+interface PrimaryActionButton {
   label: string;
   icon?: React.ReactNode;
   onClick?: () => void;

@@ -1,0 +1,1062 @@
+[
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "AccountManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "AdminDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "AdminUserListProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "AuditLogPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "BankAccountManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "MonitorPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "TenantDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/admin/config.ts",
+    "name": "TenantManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiAssistantPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiChatPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiCodeAssistantPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiDocumentAnalysisPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiKnowledgeBasePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiModelSettingsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "AiPromptLibraryPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ai/config.ts",
+    "name": "DifyChatPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ApsDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "CapacityDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "CapacityManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "CapacityUtilizationPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ForecastAccuracyPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ForecastDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ForecastManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "MaterialPlanDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "MaterialPlanPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "MaterialShortagePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "OeeDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "PlanAdherencePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "PlanComparisonDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ProductionPlanDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ProductionPlanPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ScheduleDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ScheduleGanttPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/aps/config.ts",
+    "name": "ScheduleManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/asset/config.ts",
+    "name": "AssetListPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/asset/config.ts",
+    "name": "CategoryManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/asset/config.ts",
+    "name": "DepreciationPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/asset/config.ts",
+    "name": "TransferPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/automation/config.ts",
+    "name": "AutomationDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/automation/config.ts",
+    "name": "AutomationDesignerPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/automation/config.ts",
+    "name": "AutomationRulesPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/automation/config.ts",
+    "name": "AutomationRunsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/automation/config.ts",
+    "name": "AutomationVariablesPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIAnalyticsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIComparisonPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIDataSourcePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIModuleDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIReportPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BIVisualizationPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BiIndexPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "BiPermissionPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "DataAnalysisPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "DatasetPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "GisPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/bi/config.ts",
+    "name": "ReportBuilderPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CRMBillingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CRMSalesFunnelPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "ContactDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "ContactManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CrmDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CustomerCreatePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CustomerDetailProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CustomerEditPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "CustomerManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "OpportunityDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/crm/config.ts",
+    "name": "OpportunityManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/doc/config.ts",
+    "name": "DocumentCenterPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/doc/config.ts",
+    "name": "DocumentListPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/doc/config.ts",
+    "name": "DocumentsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/doc/config.ts",
+    "name": "FileDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/doc/config.ts",
+    "name": "KnowledgeBasePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "CompliancePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsAccidentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsCheckPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsDrillPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsHazardDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsHazardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsHazardousMaterialPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsIncidentReportPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsOccupationalDiseasePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EhsPlanPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EmergencyPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "EnvironmentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "HealthManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/ehs/config.ts",
+    "name": "TrainingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "AccountingManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "AnnouncementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "AssetManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "BankAccountPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "BudgetManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "DatabaseManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "DictManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "FinancialAnalysisPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "FinancialReportPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "InventoryManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "MaterialManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "MeetingRoomPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "OfficeSuppliesPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "PurchaseOrderPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "ReceivablePayablePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "SalesOrderPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "SupplierManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "VehiclePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "VehicleRequestPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/erp/config.ts",
+    "name": "VoucherPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "ConsolidationReportsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "ConsolidationScopePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceApprovalConfigPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceAssetPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceBudgetDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceCostPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceExpenseApprovalPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceExpensePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceInvoicePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceLedgerPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinancePaymentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceReceiptPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceReceivablePayablePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceReportsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceTaxPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "FinanceVoucherPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "OpeningBalancePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "VoucherCreatePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/finance/config.ts",
+    "name": "VoucherDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/gis/config.ts",
+    "name": "GisFencePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/gis/config.ts",
+    "name": "GisMapPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/gis/config.ts",
+    "name": "GisTrackingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "AttendanceRulePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmAttendancePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmCompanyPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmContractDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmContractPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmDepartmentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmEmployeeCreatePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmEmployeeDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmEmployeeEditPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmEmployeePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmLeavePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmOrganizationPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmOverviewPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmPayrollPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmPerformancePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmPositionPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmRecruitmentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmReportsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmSalaryAdjustmentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "HrmTrainingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "PayrollTemplatePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "RecruitmentFlowPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/hrm/config.ts",
+    "name": "TrainingPlanPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/iam/config.ts",
+    "name": "CompanyStructurePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/iam/config.ts",
+    "name": "PermissionManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/iam/config.ts",
+    "name": "RoleManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/iam/config.ts",
+    "name": "UserManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/im/config.ts",
+    "name": "MailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationConnectionsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationErpOverviewPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationEventsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationLimsQmsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationMappingsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationMesErpPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationSettingsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/integration/config.ts",
+    "name": "IntegrationWmsScmPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "BarcodePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "InspectionResultPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "InspectionTaskPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsInstrumentDataPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsInstrumentDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsInstrumentMaintenancePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsInstrumentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsProcessPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsProficiencyTestingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsSampleDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsSamplePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsTaskDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsTaskPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsTestMethodPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "LimsUncertaintyPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "ReagentPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lims/config.ts",
+    "name": "SampleReceivePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lowcode/config.ts",
+    "name": "AppListPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lowcode/config.ts",
+    "name": "FormDesignPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lowcode/config.ts",
+    "name": "PageDesignPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/lowcode/config.ts",
+    "name": "WorkflowConfigPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "AnomalyDetectionPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "ApsConfigPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "ApsSchedulingPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "BomVersionPolicyPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "EnergyManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "EquipmentDetailPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "EquipmentManagementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "EquipmentOEEPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "EquipmentThresholdPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MaterialBOMPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MaterialIssuePageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MaterialRequirementPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MaterialReturnPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesCapacityUtilizationPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesDeliveryAnalyticsPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesEnergyCostPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesEquipmentMtbfPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesOeeDashboardPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesQualityPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesQualityParetoPageProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/modules/mes/config.ts",
+    "name": "MesWorkOrderPageProps",
+    "sampleRefs": []
+  }
+]

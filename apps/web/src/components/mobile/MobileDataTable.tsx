@@ -13,14 +13,14 @@ import {
 import i18n from '@/i18n';
 import { ChevronRight, MoreVertical } from 'lucide-react';
 
-export interface MobileColumn<T = Record<string, unknown>> {
+interface MobileColumn<T = Record<string, unknown>> {
   key: string;
   title: string;
   render?: (value: unknown, row: T) => React.ReactNode;
   width?: string;
 }
 
-export interface MobileDataTableProps<T = Record<string, unknown>> {
+interface MobileDataTableProps<T = Record<string, unknown>> {
   data: T[];
   columns: MobileColumn<T>[];
   titleKey?: string;

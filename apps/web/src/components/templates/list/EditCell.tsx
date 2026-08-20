@@ -2,7 +2,7 @@ import React from 'react';
 import { Checkbox, FormControl, Input, MenuItem, Select, TextField } from '@mui/material';
 import type { ColumnDef } from './types';
 
-export interface EditCellProps<T> {
+interface EditCellProps<T> {
   column: ColumnDef<T>;
   value: unknown;
   onChange: (value: unknown) => void;

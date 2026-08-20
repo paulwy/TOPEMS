@@ -10,7 +10,7 @@ export interface MapViewProps {
 export type ToolMode =
   'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
-export interface DrawPoint {
+interface DrawPoint {
   lat: number;
   lng: number;
   timestamp?: number;

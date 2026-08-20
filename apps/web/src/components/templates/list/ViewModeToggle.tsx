@@ -5,7 +5,7 @@ import type { ListViewMode } from './types';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-export interface ViewModeToggleProps {
+interface ViewModeToggleProps {
   modes: ListViewMode[];
   current: ListViewMode;
   onChange: (mode: ListViewMode) => void;

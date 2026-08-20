@@ -18,7 +18,7 @@ import { useAIHelper } from '../../hooks/useAIHelper';
 import { getAITemplates, getAITemplatesList } from '../../config/ai-templates';
 import type { AITemplate } from '@/types/ai';
 
-export interface AIDocumentGeneratorProps {
+interface AIDocumentGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   initialTemplateId?: string;

@@ -20,7 +20,7 @@ import { assistantApi } from '../../api/ai/assistant';
 import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
 
-export interface AIFlowAssistantProps {
+interface AIFlowAssistantProps {
   initialQuery?: string;
   module?: string;
 }

@@ -34,7 +34,7 @@ import { logger } from '@/utils/logger';
 
 // ============ 类型定义 ============
 
-export interface BffColumn<T = unknown> {
+interface BffColumn<T = unknown> {
   field: keyof T | string;
   headerName: string;
   width?: number | string;
@@ -46,7 +46,7 @@ export interface BffColumn<T = unknown> {
   align?: 'left' | 'center' | 'right';
 }
 
-export interface BffDataTableProps<T = unknown> {
+interface BffDataTableProps<T = unknown> {
   /** 列配置 */
   columns: BffColumn<T>[];
   /** 实体类型，如 'customers'、'employees' */

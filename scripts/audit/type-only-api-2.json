@@ -1,0 +1,1232 @@
+[
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillDetail",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillEvaluation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillPlanListQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillProblem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillRecordListQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillStatistics",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "DrillType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "UpdateDrillPlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "UpdateDrillProblemRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyDrill.ts",
+    "name": "UpdateDrillRecordRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "ApprovePlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "CreatePlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "CreateSupplyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "EmergencyPlanItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanApproval",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanCategory",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanDetail",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanListQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanSupply",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "PlanVersion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "SubmitApprovalRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/emergencyPlan.ts",
+    "name": "UpdatePlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "ComplianceEvaluation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "ComplianceStatistics",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "CreateMonitorRecordRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "CreatePermitRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "CreateRegulationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "EnvironmentIncident",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "RegulationListQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "UpdateEvaluationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "UpdateIncidentRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "UpdatePermitRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/environmentalCompliance.ts",
+    "name": "UpdateRegulationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/healthMonitoring.ts",
+    "name": "HealthMonitoringQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/healthMonitoring.ts",
+    "name": "HealthRecordItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/healthMonitoring.ts",
+    "name": "HealthStatistics",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/safetyTraining.ts",
+    "name": "CreateSafetyTrainingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/safetyTraining.ts",
+    "name": "SafetyTrainingItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/safetyTraining.ts",
+    "name": "SafetyTrainingListQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/safetyTraining.ts",
+    "name": "SafetyTrainingStatistics",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/ehs/safetyTraining.ts",
+    "name": "UpdateSafetyTrainingRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "BatchSendEmailRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "BatchSendEmailResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "EmailLog",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "EmailLogListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "EmailStatsResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/email/index.ts",
+    "name": "SendEmailWithTemplateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/audit.ts",
+    "name": "AuditLogListParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/addressbook.ts",
+    "name": "AddressContact",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/addressbook.ts",
+    "name": "AddressContactListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/addressbook.ts",
+    "name": "DepartmentTreeNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/announcement.ts",
+    "name": "AnnouncementListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/asset.ts",
+    "name": "AssetListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/asset.ts",
+    "name": "CreateAssetRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/asset.ts",
+    "name": "UpdateAssetRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ApproveReportRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "CompanyRelationListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ConsolidationScopeCompany",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "EliminationRuleListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "InternalTransactionListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ReportLineListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ReportListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ScopeCompanyListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ScopeListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "ScopeQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/consolidation.ts",
+    "name": "SubmitReportRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/customerExtended.ts",
+    "name": "BatchCategoryUpdateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/customerExtended.ts",
+    "name": "BatchStatusUpdateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/customerExtended.ts",
+    "name": "CustomerListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "AddColumnRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "DbChangeListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "DbChangeQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "DropColumnRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "ModifyColumnRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dbStructure.ts",
+    "name": "TableQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "BatchCreateDictItemRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "CreateDictItemRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "CreateDictTypeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "DictItemListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "DictItemQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "DictTypeListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "DictTypeQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "UpdateDictItemRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/dict.ts",
+    "name": "UpdateDictTypeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/fixedAsset.ts",
+    "name": "CreateFixedAssetRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/fixedAsset.ts",
+    "name": "DepreciateAssetsRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/fixedAsset.ts",
+    "name": "FixedAssetListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/fixedAsset.ts",
+    "name": "UpdateFixedAssetRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmAttendance",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmAttendanceListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmAttendanceQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmCompany",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmCompanyListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmDepartment",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmDepartmentListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmDepartmentTreeNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmEmployee",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmEmployeeListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmEmployeeQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmPayroll",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmPayrollListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmPayrollQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmPosition",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/hrProxy.ts",
+    "name": "HrmPositionListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "ApproveLeaveRequestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "CreateLeaveRequestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "LeaveRequestListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "LeaveRequestQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "RejectLeaveRequestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "SubmitLeaveRequestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/leaveRequest.ts",
+    "name": "UpdateLeaveRequestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "ArchivePolicy",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "ArchiveRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "AssessImpactRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "ConfirmRetirementRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "CreateArchivePolicyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "CreateRetirementPlanRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "ExecuteRetirementRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "LifecycleDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "LifecycleEntity",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "LifecycleStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "LifecycleTask",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "NotifyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "RetirementPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "RetirementStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "RollbackRetirementRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "RunArchiveRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "TransitionLifecycleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "UpdateArchivePolicyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+    "name": "UpdateLifecycleTaskRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "ArchiveRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "AuditTrailEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "ConflictQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "CreateDataDomainRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "CreateQualityRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "CreateQualityTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "CreateSyncJobRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "DataLineage",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "DataLineageRef",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "DetectConflictsRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "GovernanceDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "MasterDataRefListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "MasterDataRefQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "QualityRuleListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "QualityTicket",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "QualityTicketListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "QualityTicketQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "RecordAuditEventRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "RestoreRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "ScheduleDestructionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "SetOwnershipMatrixRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "SyncJob",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "SyncJobListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "SyncJobQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "UpdateDataDomainRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+    "name": "UpdateQualityRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/officeSupply.ts",
+    "name": "CreateOfficeSupplyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/officeSupply.ts",
+    "name": "OfficeSupplyListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/officeSupply.ts",
+    "name": "UpdateOfficeSupplyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/openingBalance.ts",
+    "name": "OpeningBalanceListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/openingBalance.ts",
+    "name": "OpeningBalanceQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/openingBalance.ts",
+    "name": "UpdateOpeningBalanceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/productionOrder.ts",
+    "name": "ProductionOrderListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/salesOrderExtended.ts",
+    "name": "BulkApproveRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/salesOrderExtended.ts",
+    "name": "BulkCancelRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/salesOrderExtended.ts",
+    "name": "BulkCompleteRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/salesOrderExtended.ts",
+    "name": "BulkShipRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/salesOrderExtended.ts",
+    "name": "SalesOrderStatsResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/search.ts",
+    "name": "GlobalSearchParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/vehicle.ts",
+    "name": "CreateVehicleRequestPayload",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/vehicle.ts",
+    "name": "UpdateVehicleRequestPayload",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/vehicle.ts",
+    "name": "VehicleListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/core/vehicle.ts",
+    "name": "VehicleRequestListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/database.ts",
+    "name": "DbChangeListParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/database.ts",
+    "name": "PaginatedDbChanges",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/database.ts",
+    "name": "TableListParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/finance/assetCategory.ts",
+    "name": "UpdateAssetCategoryRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ApproveRepairRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "AssignTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "AssociationQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "AssociationRecommendation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "BatchClassifyRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "BatchRetryDeadLettersRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "BatchScoreRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ClassificationModel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ClassificationRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ClassificationStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ClassificationStatsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CloseTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CompensationAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CompletionQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "Concept",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ConceptQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CreateRepairStepRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CreateRepairWorkflowRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "CreateSyncJobV2Request",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DataDomain",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DataOwnershipMatrix",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DeadLetterEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DeadLetterV2",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DuplicateGroup",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "DuplicateGroupsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "EntityOwnerInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "EscalateTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "FindDuplicatesParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "FindMatchesRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayAggregateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayApiRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayApiResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayBatchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayRoute",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GatewayStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphEdge",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphqlRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "GraphqlResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "InferenceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "InferenceResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "InferenceRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "KnowledgeTriple",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "LearnRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "LineageInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListCategoriesParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListDeadLettersParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListQualityTicketsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListRepairWorkflowsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListSyncJobsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ListSyncJobsV2Params",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MasterDataConnection",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MasterDataEdge",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MasterDataEntity",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MasterDataGraph",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MatchField",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MatchResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MatchType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MdmServiceInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MdmServiceQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MdmServiceRegisterRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MdmStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MergeSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "MultiHopQueryParams",
+    "sampleRefs": []
+  }
+]

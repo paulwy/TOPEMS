@@ -75,7 +75,7 @@ import {
 } from '@/components/bff/ProgressiveHydration';
 
 /** PerformancePanel Props */
-export interface PerformancePanelProps {
+interface PerformancePanelProps {
   /** 默认是否展开，默认 false */
   defaultExpanded?: boolean;
   /** 面板位置，默认右下角 */

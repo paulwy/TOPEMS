@@ -7,7 +7,7 @@ import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
 import LanguageSelector from '@/components/LanguageSelector';
 
-export interface AppHeaderProps {
+interface AppHeaderProps {
   mobileMenuOpen?: boolean;
   onMobileMenuOpen?: () => void;
   onMobileMenuClose?: () => void;

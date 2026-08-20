@@ -14,7 +14,7 @@ import { HelpCircle, X } from 'lucide-react';
 
 // ============ 类型定义 ============
 
-export interface HelpButtonProps {
+interface HelpButtonProps {
   /** 帮助标题 */
   title?: string;
   /** 帮助内容 */

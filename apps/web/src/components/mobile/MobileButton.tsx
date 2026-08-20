@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, type ButtonProps } from '@mui/material';
 
-export interface MobileButtonProps extends Omit<ButtonProps, 'size'> {
+interface MobileButtonProps extends Omit<ButtonProps, 'size'> {
   size?: 'small' | 'medium' | 'large';
   fullWidth?: boolean;
 }
