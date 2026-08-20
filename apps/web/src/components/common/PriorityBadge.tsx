@@ -3,6 +3,7 @@ import { Chip, Box } from '@mui/material';
 import type { ChipProps } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { AlertOctagon, AlertTriangle, ArrowDown, ArrowUp, Minus, Flame } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export type PriorityLevel =
   | 'urgent'
@@ -41,8 +42,8 @@ interface PriorityConfig {
 
 const iconSizeMap = { sm: 12, md: 14 };
 
-const makeIcon = (IconComp: React.ComponentType<{ size?: number }>, size: number) =>
-  React.createElement(IconComp, { size });
+const makeIcon = (IconComp: React.ComponentType<{ size?: number }> | LucideIcon, size: number) =>
+  React.createElement(IconComp as React.ComponentType<any>, { size });
 
 const PRIORITY_CONFIG: Record<string, PriorityConfig> = {
   urgent: {

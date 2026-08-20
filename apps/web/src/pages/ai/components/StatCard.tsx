@@ -51,7 +51,7 @@ export const StatCard: React.FC<StatCardData> = ({
             color: colors.text,
           }}
         >
-          {icon}
+          {icon as React.ReactNode}
         </Box>
         <Chip
           label={`${isPositive ? '+' : ''}${change}%`}
