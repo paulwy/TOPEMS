@@ -4,37 +4,31 @@
  * 统一导出所有 AI 增强模块
  */
 
-export {
-  IntelligentCodeCompletion,
-  intelligentCodeCompletion,
+export type {
   CompletionKind,
-  type CompletionContext,
-  type CompletionItem,
-  type SnippetDefinition,
-  type ComponentPropInfo,
-  type APIEndpointInfo,
+  CompletionContext,
+  CompletionItem,
+  SnippetDefinition,
+  ComponentPropInfo,
+  APIEndpointInfo,
 } from './code-completion';
 
-export {
-  AutoTestGenerator,
-  autoTestGenerator,
-  type TestCase,
-  type TestMethod,
-  type TestSuite,
-  type AnalysisResult,
-  type TestFramework,
-  type TestType,
-  type AssertionStrategy,
+export type {
+  TestCase,
+  TestMethod,
+  TestSuite,
+  AnalysisResult,
+  TestFramework,
+  TestType,
+  AssertionStrategy,
 } from './test-generator';
 
-export {
-  UIComponentRecommender,
-  uiComponentRecommender,
-  type IntentContext,
-  type IntentCategory,
-  type ComponentRecommendation,
-  type ComponentMeta,
-  type ThemeMode,
+export type {
+  IntentContext,
+  IntentCategory,
+  ComponentRecommendation,
+  ComponentMeta,
+  ThemeMode,
 } from './ui-recommender';
 
 export { V53AIPanel } from './v53-ai-panel';

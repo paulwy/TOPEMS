@@ -1,36 +1,30 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 
-export {
-  modelVersionManager,
-  ModelVersionManager,
-  type ModelVersion,
-  type Model,
-  type VersionStatus,
-  type VersionCompareResult,
+export type {
+  ModelVersion,
+  Model,
+  VersionStatus,
+  VersionCompareResult,
 } from './model-versioning';
 
-export {
-  abTestManager,
-  ABTestManager,
-  type Experiment,
-  type Variant,
-  type ExperimentResult,
-  type SignificanceResult,
-  type ExperimentStatus,
+export type {
+  Experiment,
+  Variant,
+  ExperimentResult,
+  SignificanceResult,
+  ExperimentStatus,
 } from './ab-testing';
 
-export {
-  securityHardener,
-  SecurityHardener,
-  type SecurityCheckV58,
-  type ThreatModel,
-  type SecurityReport,
-  type SecurityCheckType,
-  type SecuritySeverity,
-  type SecurityStatus,
-  type ThreatSeverity,
-  type ThreatLikelihood,
-  type ThreatImpact,
+export type {
+  SecurityCheckV58,
+  ThreatModel,
+  SecurityReport,
+  SecurityCheckType,
+  SecuritySeverity,
+  SecurityStatus,
+  ThreatSeverity,
+  ThreatLikelihood,
+  ThreatImpact,
 } from './security-hardening';
 
 export { V58EvolutionPanel } from './v58-evolution-panel';

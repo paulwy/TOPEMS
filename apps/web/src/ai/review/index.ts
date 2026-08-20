@@ -1,32 +1,26 @@
-export {
-  CodeReviewer,
-  codeReviewer,
-  type ReviewIssue,
-  type ReviewResult,
-  type ReviewRule,
-  type IssueType,
-  type IssueSeverity,
+export type {
+  ReviewIssue,
+  ReviewResult,
+  ReviewRule,
+  IssueType,
+  IssueSeverity,
 } from './code-reviewer';
 
-export {
-  SecurityScanner,
-  securityScanner,
-  type SecurityFinding,
-  type ScanResult,
-  type ScanRule,
-  type SecurityCategory,
-  type SecuritySeverity,
+export type {
+  SecurityFinding,
+  ScanResult,
+  ScanRule,
+  SecurityCategory,
+  SecuritySeverity,
 } from './security-scanner';
 
-export {
-  PerformanceAuditor,
-  performanceAuditor,
-  type PerfFinding,
-  type AuditResult,
-  type AuditMetrics,
-  type LighthouseScores,
-  type BundleInfo,
-  type PerfCategory,
+export type {
+  PerfFinding,
+  AuditResult,
+  AuditMetrics,
+  LighthouseScores,
+  BundleInfo,
+  PerfCategory,
 } from './performance-auditor';
 
 export { V56ReviewPanel } from './v56-review-panel';

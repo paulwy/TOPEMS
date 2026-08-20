@@ -567,15 +567,3 @@ class SmartTestV2Impl {
   }
 }
 
-export class SmartTestV2 {
-  private static instance: SmartTestV2Impl;
-
-  static getInstance(): SmartTestV2Impl {
-    if (!SmartTestV2.instance) {
-      SmartTestV2.instance = new SmartTestV2Impl();
-    }
-    return SmartTestV2.instance;
-  }
-}
-
-export const smartTestV2 = SmartTestV2.getInstance();

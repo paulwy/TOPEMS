@@ -1,6 +1,4 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
-import { codeRefactorer, CodeRefactorer } from './code-refactor';
-
 export type {
   DebugSession,
   CallStackFrame,
@@ -29,9 +27,3 @@ export type {
 } from './code-refactor';
 
 export { V59DevExPanel } from './v59-devex-panel';
-
-// NOTE: codeRefactorer + CodeRefactorer retained for P1d-4c (next batch)
-export {
-  codeRefactorer,
-  CodeRefactorer,
-};

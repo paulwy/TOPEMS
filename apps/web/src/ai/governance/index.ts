@@ -1,32 +1,26 @@
-export {
-  ComplianceAutomator,
-  complianceAutomator,
-  type ComplianceRule,
-  type ComplianceCheck,
-  type ComplianceReport,
-  type Regulation,
-  type Severity,
+export type {
+  ComplianceRule,
+  ComplianceCheck,
+  ComplianceReport,
+  Regulation,
+  Severity,
 } from './compliance-automation';
 
-export {
-  RiskAlerter,
-  riskAlerter,
-  type RiskIndicator,
-  type RiskAlert,
-  type RiskScore,
-  type RiskCategory,
-  type RiskLevel,
-  type AlertSubscriber,
+export type {
+  RiskIndicator,
+  RiskAlert,
+  RiskScore,
+  RiskCategory,
+  RiskLevel,
+  AlertSubscriber,
 } from './risk-alerting';
 
-export {
-  PolicyEnforcer,
-  policyEnforcer,
-  type Policy,
-  type PolicyRule,
-  type PolicyDecision,
-  type EnforcementMode,
-  type PolicyStatus,
+export type {
+  Policy,
+  PolicyRule,
+  PolicyDecision,
+  EnforcementMode,
+  PolicyStatus,
 } from './policy-enforcement';
 
 export { V57GovernancePanel } from './v57-governance-panel';

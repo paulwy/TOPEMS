@@ -401,15 +401,3 @@ class UXMonitorImpl {
   }
 }
 
-export class UXMonitor {
-  private static instance: UXMonitorImpl;
-
-  static getInstance(): UXMonitorImpl {
-    if (!UXMonitor.instance) {
-      UXMonitor.instance = new UXMonitorImpl();
-    }
-    return UXMonitor.instance;
-  }
-}
-
-export const uxMonitor = UXMonitor.getInstance();
