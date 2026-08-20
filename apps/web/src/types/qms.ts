@@ -39,19 +39,19 @@ const INSPECTION_STATES = [
   'audited',
   'reworked',
 ] as const;
-export type InspectionState = (typeof INSPECTION_STATES)[number];
+type InspectionState = (typeof INSPECTION_STATES)[number];
 
 /** 质量问题 FSM 状态 */
 const ISSUE_STATES = ['open', 'in_progress', 'resolved', 'closed', 'reopened'] as const;
-export type IssueState = (typeof ISSUE_STATES)[number];
+type IssueState = (typeof ISSUE_STATES)[number];
 
 /** 纠正措施 FSM 状态 */
 const ACTION_STATES = ['pending', 'in_progress', 'implemented', 'verified', 'closed'] as const;
-export type ActionState = (typeof ACTION_STATES)[number];
+type ActionState = (typeof ACTION_STATES)[number];
 
 /** 审核计划 FSM 状态 */
 const AUDIT_PLAN_STATES = ['draft', 'planned', 'in_progress', 'completed', 'cancelled'] as const;
-export type AuditPlanState = (typeof AUDIT_PLAN_STATES)[number];
+type AuditPlanState = (typeof AUDIT_PLAN_STATES)[number];
 
 /** 审核发现 FSM 状态 */
 const AUDIT_FINDING_STATES = [
@@ -62,7 +62,7 @@ const AUDIT_FINDING_STATES = [
   'verified',
   'closed',
 ] as const;
-export type AuditFindingState = (typeof AUDIT_FINDING_STATES)[number];
+type AuditFindingState = (typeof AUDIT_FINDING_STATES)[number];
 
 /** 8D 报告 FSM 状态 */
 const EIGHT_D_STATES = [
@@ -77,7 +77,7 @@ const EIGHT_D_STATES = [
   'd8_recognize',
   'closed',
 ] as const;
-export type EightDState = (typeof EIGHT_D_STATES)[number];
+type EightDState = (typeof EIGHT_D_STATES)[number];
 
 /** APQP 项目 FSM 状态 */
 const APQP_STATES = [
@@ -91,13 +91,13 @@ const APQP_STATES = [
   'closure',
   'cancelled',
 ] as const;
-export type ApqpState = (typeof APQP_STATES)[number];
+type ApqpState = (typeof APQP_STATES)[number];
 
 // ============================================================================
 // E-1 QualityStandard（+ StandardRevision）
 // ============================================================================
 
-export interface QualityStandardDto {
+interface QualityStandardDto {
   id: string;
   tenant_id: string;
   code: string;
@@ -114,7 +114,7 @@ export interface QualityStandardDto {
   updated_at: string;
 }
 
-export interface CreateQualityStandardDto {
+interface CreateQualityStandardDto {
   code: string;
   name: string;
   description?: string | null;
@@ -127,7 +127,7 @@ export interface CreateQualityStandardDto {
   created_by?: string;
 }
 
-export interface UpdateQualityStandardDto {
+interface UpdateQualityStandardDto {
   name?: string;
   description?: string | null;
   category?: string | null;
@@ -138,7 +138,7 @@ export interface UpdateQualityStandardDto {
   content?: string | null;
 }
 
-export interface StandardRevisionDto {
+interface StandardRevisionDto {
   id: string;
   tenant_id: string;
   standard_id: string;
@@ -150,7 +150,7 @@ export interface StandardRevisionDto {
   updated_at: string;
 }
 
-export interface CreateStandardRevisionDto {
+interface CreateStandardRevisionDto {
   standard_id: string;
   version: string;
   description?: string | null;
@@ -158,7 +158,7 @@ export interface CreateStandardRevisionDto {
   created_by?: string;
 }
 
-export interface UpdateStandardRevisionDto {
+interface UpdateStandardRevisionDto {
   version?: string;
   description?: string | null;
   changes?: string | null;
@@ -168,7 +168,7 @@ export interface UpdateStandardRevisionDto {
 // E-2 QualityInspection（+ InspectionResultItem + InspectionAudit）
 // ============================================================================
 
-export interface QualityInspectionDto {
+interface QualityInspectionDto {
   id: string;
   tenant_id: string;
   inspection_no: string;
@@ -191,7 +191,7 @@ export interface QualityInspectionDto {
   updated_at: string;
 }
 
-export interface CreateQualityInspectionDto {
+interface CreateQualityInspectionDto {
   inspection_type: string;
   product_id?: string | null;
   product_name?: string | null;
@@ -200,7 +200,7 @@ export interface CreateQualityInspectionDto {
   created_by?: string;
 }
 
-export interface UpdateQualityInspectionDto {
+interface UpdateQualityInspectionDto {
   inspection_type?: string;
   product_id?: string | null;
   product_name?: string | null;
@@ -213,12 +213,12 @@ export interface UpdateQualityInspectionDto {
   memo?: string | null;
 }
 
-export interface AssignInspectionDto {
+interface AssignInspectionDto {
   assignee: string;
   operator: string;
 }
 
-export interface SubmitInspectionResultDto {
+interface SubmitInspectionResultDto {
   qualified_quantity: number;
   unqualified_quantity: number;
   qualification_rate?: number;
@@ -228,13 +228,13 @@ export interface SubmitInspectionResultDto {
   results?: InspectionResultItemDto[];
 }
 
-export interface AuditInspectionDto {
+interface AuditInspectionDto {
   action: string;
   operator: string;
   comment?: string;
 }
 
-export interface InspectionResultItemDto {
+interface InspectionResultItemDto {
   id: string;
   tenant_id: string;
   inspection_id: string;
@@ -246,7 +246,7 @@ export interface InspectionResultItemDto {
   created_at: string;
 }
 
-export interface CreateInspectionResultItemDto {
+interface CreateInspectionResultItemDto {
   inspection_id: string;
   item_name: string;
   standard_value?: string | null;
@@ -255,7 +255,7 @@ export interface CreateInspectionResultItemDto {
   remark?: string | null;
 }
 
-export interface InspectionAuditDto {
+interface InspectionAuditDto {
   id: string;
   tenant_id: string;
   inspection_id: string;
@@ -271,7 +271,7 @@ export interface InspectionAuditDto {
 // E-3 QualityIssue
 // ============================================================================
 
-export interface QualityIssueDto {
+interface QualityIssueDto {
   id: string;
   tenant_id: string;
   issue_no: string;
@@ -291,7 +291,7 @@ export interface QualityIssueDto {
   updated_at: string;
 }
 
-export interface CreateQualityIssueDto {
+interface CreateQualityIssueDto {
   title: string;
   description: string;
   severity: string;
@@ -303,7 +303,7 @@ export interface CreateQualityIssueDto {
   created_by?: string;
 }
 
-export interface UpdateQualityIssueDto {
+interface UpdateQualityIssueDto {
   title?: string;
   description?: string;
   severity?: string;
@@ -321,7 +321,7 @@ export interface UpdateQualityIssueDto {
 // E-4 CorrectiveAction（+ ActionItem）
 // ============================================================================
 
-export interface CorrectiveActionDto {
+interface CorrectiveActionDto {
   id: string;
   tenant_id: string;
   issue_id: string;
@@ -338,7 +338,7 @@ export interface CorrectiveActionDto {
   updated_at: string;
 }
 
-export interface CreateCorrectiveActionDto {
+interface CreateCorrectiveActionDto {
   issue_id: string;
   title: string;
   description?: string | null;
@@ -346,7 +346,7 @@ export interface CreateCorrectiveActionDto {
   created_by?: string;
 }
 
-export interface UpdateCorrectiveActionDto {
+interface UpdateCorrectiveActionDto {
   title?: string;
   description?: string | null;
   assigned_to?: string;
@@ -357,7 +357,7 @@ export interface UpdateCorrectiveActionDto {
   verified_at?: string | null;
 }
 
-export interface ActionItemDto {
+interface ActionItemDto {
   id: string;
   tenant_id: string;
   action_id: string;
@@ -372,7 +372,7 @@ export interface ActionItemDto {
   updated_at: string;
 }
 
-export interface CreateActionItemDto {
+interface CreateActionItemDto {
   action_id: string;
   item_no: string;
   description: string;
@@ -381,7 +381,7 @@ export interface CreateActionItemDto {
   remark?: string | null;
 }
 
-export interface UpdateActionItemDto {
+interface UpdateActionItemDto {
   item_no?: string;
   description?: string;
   assigned_to?: string;
@@ -395,7 +395,7 @@ export interface UpdateActionItemDto {
 // E-5 AuditPlan + AuditTask + AuditFinding
 // ============================================================================
 
-export interface AuditPlanDto {
+interface AuditPlanDto {
   id: string;
   tenant_id: string;
   plan_no: string;
@@ -415,7 +415,7 @@ export interface AuditPlanDto {
   updated_at: string;
 }
 
-export interface CreateAuditPlanDto {
+interface CreateAuditPlanDto {
   plan_no: string;
   title: string;
   description?: string | null;
@@ -430,7 +430,7 @@ export interface CreateAuditPlanDto {
   created_by?: string;
 }
 
-export interface UpdateAuditPlanDto {
+interface UpdateAuditPlanDto {
   title?: string;
   description?: string | null;
   audit_type?: string;
@@ -444,7 +444,7 @@ export interface UpdateAuditPlanDto {
   scope?: string | null;
 }
 
-export interface AuditTaskDto {
+interface AuditTaskDto {
   id: string;
   tenant_id: string;
   plan_id: string;
@@ -462,7 +462,7 @@ export interface AuditTaskDto {
   updated_at: string;
 }
 
-export interface CreateAuditTaskDto {
+interface CreateAuditTaskDto {
   plan_id: string;
   title: string;
   description?: string | null;
@@ -472,7 +472,7 @@ export interface CreateAuditTaskDto {
   due_date?: string | null;
 }
 
-export interface UpdateAuditTaskDto {
+interface UpdateAuditTaskDto {
   title?: string;
   description?: string | null;
   status?: string;
@@ -483,7 +483,7 @@ export interface UpdateAuditTaskDto {
   completed_at?: string | null;
 }
 
-export interface AuditFindingDto {
+interface AuditFindingDto {
   id: string;
   tenant_id: string;
   task_id: string;
@@ -501,7 +501,7 @@ export interface AuditFindingDto {
   updated_at: string;
 }
 
-export interface CreateAuditFindingDto {
+interface CreateAuditFindingDto {
   task_id: string;
   title: string;
   description: string;
@@ -512,7 +512,7 @@ export interface CreateAuditFindingDto {
   due_date?: string | null;
 }
 
-export interface UpdateAuditFindingDto {
+interface UpdateAuditFindingDto {
   title?: string;
   description?: string;
   severity?: string;
@@ -528,7 +528,7 @@ export interface UpdateAuditFindingDto {
 // E-6 SpcChart + SpcDataPoint + ControlLimitsResult
 // ============================================================================
 
-export interface SpcChartDto {
+interface SpcChartDto {
   id: string;
   tenant_id: string;
   chart_no: string;
@@ -555,7 +555,7 @@ export interface SpcChartDto {
   updated_at: string;
 }
 
-export interface CreateSpcChartDto {
+interface CreateSpcChartDto {
   chart_no: string;
   chart_name: string;
   chart_type: string;
@@ -575,7 +575,7 @@ export interface CreateSpcChartDto {
   created_by?: string;
 }
 
-export interface UpdateSpcChartDto {
+interface UpdateSpcChartDto {
   chart_name?: string;
   chart_type?: string;
   product_id?: string | null;
@@ -596,7 +596,7 @@ export interface UpdateSpcChartDto {
   description?: string | null;
 }
 
-export interface SpcDataPointDto {
+interface SpcDataPointDto {
   id: string;
   tenant_id: string;
   chart_id: string;
@@ -613,7 +613,7 @@ export interface SpcDataPointDto {
   created_at: string;
 }
 
-export interface CreateSpcDataPointDto {
+interface CreateSpcDataPointDto {
   chart_id: string;
   sample_no: string;
   sample_time?: string;
@@ -622,7 +622,7 @@ export interface CreateSpcDataPointDto {
   remark?: string | null;
 }
 
-export interface ControlLimitsResultDto {
+interface ControlLimitsResultDto {
   ucl: number;
   lcl: number;
   cl: number;
@@ -641,7 +641,7 @@ export interface ControlLimitsResultDto {
 // E-7 QualityCost + QualityCostStatistics
 // ============================================================================
 
-export interface QualityCostDto {
+interface QualityCostDto {
   id: string;
   tenant_id: string;
   cost_no: string;
@@ -660,7 +660,7 @@ export interface QualityCostDto {
   updated_at: string;
 }
 
-export interface CreateQualityCostDto {
+interface CreateQualityCostDto {
   cost_no: string;
   cost_type: string;
   cost_category: string;
@@ -675,7 +675,7 @@ export interface CreateQualityCostDto {
   created_by?: string;
 }
 
-export interface UpdateQualityCostDto {
+interface UpdateQualityCostDto {
   cost_type?: string;
   cost_category?: string;
   amount?: number;
@@ -688,7 +688,7 @@ export interface UpdateQualityCostDto {
   status?: string;
 }
 
-export interface QualityCostStatisticsDto {
+interface QualityCostStatisticsDto {
   total_cost: number;
   prevention_cost: number;
   appraisal_cost: number;
@@ -704,7 +704,7 @@ export interface QualityCostStatisticsDto {
 // E-8 EightDReport + EightDAuditLog
 // ============================================================================
 
-export interface EightDReportDto {
+interface EightDReportDto {
   id: string;
   tenant_id: string;
   report_no: string;
@@ -743,7 +743,7 @@ export interface EightDReportDto {
   updated_at: string;
 }
 
-export interface CreateEightDReportDto {
+interface CreateEightDReportDto {
   report_no: string;
   title: string;
   problem_description: string;
@@ -759,7 +759,7 @@ export interface CreateEightDReportDto {
   created_by?: string;
 }
 
-export interface UpdateEightDReportDto {
+interface UpdateEightDReportDto {
   title?: string;
   problem_description?: string;
   severity?: string;
@@ -791,7 +791,7 @@ export interface UpdateEightDReportDto {
   closed_at?: string | null;
 }
 
-export interface EightDAuditLogDto {
+interface EightDAuditLogDto {
   id: string;
   tenant_id: string;
   report_id: string;
@@ -802,7 +802,7 @@ export interface EightDAuditLogDto {
   created_at: string;
 }
 
-export interface CreateEightDAuditLogDto {
+interface CreateEightDAuditLogDto {
   report_id: string;
   action: string;
   stage?: number | null;
@@ -814,7 +814,7 @@ export interface CreateEightDAuditLogDto {
 // E-9 FmeaAnalysis + FmeaItem + FmeaStatistics
 // ============================================================================
 
-export interface FmeaAnalysisDto {
+interface FmeaAnalysisDto {
   id: string;
   tenant_id: string;
   fmea_no: string;
@@ -835,7 +835,7 @@ export interface FmeaAnalysisDto {
   updated_at: string;
 }
 
-export interface CreateFmeaAnalysisDto {
+interface CreateFmeaAnalysisDto {
   fmea_no: string;
   fmea_name: string;
   fmea_type: string;
@@ -852,7 +852,7 @@ export interface CreateFmeaAnalysisDto {
   created_by?: string;
 }
 
-export interface UpdateFmeaAnalysisDto {
+interface UpdateFmeaAnalysisDto {
   fmea_name?: string;
   fmea_type?: string;
   product_id?: string | null;
@@ -867,7 +867,7 @@ export interface UpdateFmeaAnalysisDto {
   description?: string | null;
 }
 
-export interface FmeaItemDto {
+interface FmeaItemDto {
   id: string;
   tenant_id: string;
   fmea_id: string;
@@ -894,7 +894,7 @@ export interface FmeaItemDto {
   updated_at: string;
 }
 
-export interface CreateFmeaItemDto {
+interface CreateFmeaItemDto {
   fmea_id: string;
   item_no: string;
   function_description: string;
@@ -911,7 +911,7 @@ export interface CreateFmeaItemDto {
   status?: string;
 }
 
-export interface UpdateFmeaItemDto {
+interface UpdateFmeaItemDto {
   function_description?: string;
   failure_mode?: string;
   failure_effect?: string;
@@ -930,7 +930,7 @@ export interface UpdateFmeaItemDto {
   status?: string;
 }
 
-export interface FmeaStatisticsDto {
+interface FmeaStatisticsDto {
   total_items: number;
   high_risk_count: number;
   medium_risk_count: number;
@@ -946,7 +946,7 @@ export interface FmeaStatisticsDto {
 // E-10 ApqpProject + ApqpPhase + ApqpTask + ApqpRisk + ApqpApproval
 // ============================================================================
 
-export interface ApqpProjectDto {
+interface ApqpProjectDto {
   id: string;
   tenant_id: string;
   project_no: string;
@@ -969,7 +969,7 @@ export interface ApqpProjectDto {
   updated_at: string;
 }
 
-export interface CreateApqpProjectDto {
+interface CreateApqpProjectDto {
   project_no: string;
   project_name: string;
   product_id?: string | null;
@@ -983,7 +983,7 @@ export interface CreateApqpProjectDto {
   created_by?: string;
 }
 
-export interface UpdateApqpProjectDto {
+interface UpdateApqpProjectDto {
   project_name?: string;
   product_id?: string | null;
   product_name?: string | null;
@@ -1000,7 +1000,7 @@ export interface UpdateApqpProjectDto {
   risk_level?: string | null;
 }
 
-export interface ApqpPhaseDto {
+interface ApqpPhaseDto {
   id: string;
   tenant_id: string;
   project_id: string;
@@ -1018,7 +1018,7 @@ export interface ApqpPhaseDto {
   updated_at: string;
 }
 
-export interface CreateApqpPhaseDto {
+interface CreateApqpPhaseDto {
   project_id: string;
   phase_code: string;
   phase_name: string;
@@ -1028,7 +1028,7 @@ export interface CreateApqpPhaseDto {
   sort_order?: number;
 }
 
-export interface UpdateApqpPhaseDto {
+interface UpdateApqpPhaseDto {
   phase_name?: string;
   description?: string | null;
   status?: string;
@@ -1040,7 +1040,7 @@ export interface UpdateApqpPhaseDto {
   sort_order?: number;
 }
 
-export interface ApqpTaskDto {
+interface ApqpTaskDto {
   id: string;
   tenant_id: string;
   project_id: string;
@@ -1058,7 +1058,7 @@ export interface ApqpTaskDto {
   updated_at: string;
 }
 
-export interface CreateApqpTaskDto {
+interface CreateApqpTaskDto {
   project_id: string;
   phase_id: string;
   task_name: string;
@@ -1070,7 +1070,7 @@ export interface CreateApqpTaskDto {
   sort_order?: number;
 }
 
-export interface UpdateApqpTaskDto {
+interface UpdateApqpTaskDto {
   task_name?: string;
   description?: string | null;
   task_type?: string | null;
@@ -1082,7 +1082,7 @@ export interface UpdateApqpTaskDto {
   sort_order?: number;
 }
 
-export interface ApqpRiskDto {
+interface ApqpRiskDto {
   id: string;
   tenant_id: string;
   project_id: string;
@@ -1101,7 +1101,7 @@ export interface ApqpRiskDto {
   updated_at: string;
 }
 
-export interface CreateApqpRiskDto {
+interface CreateApqpRiskDto {
   project_id: string;
   risk_name: string;
   description?: string | null;
@@ -1114,7 +1114,7 @@ export interface CreateApqpRiskDto {
   target_date?: string | null;
 }
 
-export interface UpdateApqpRiskDto {
+interface UpdateApqpRiskDto {
   risk_name?: string;
   description?: string | null;
   risk_category?: string | null;
@@ -1127,7 +1127,7 @@ export interface UpdateApqpRiskDto {
   target_date?: string | null;
 }
 
-export interface ApqpApprovalDto {
+interface ApqpApprovalDto {
   id: string;
   tenant_id: string;
   project_id: string;
@@ -1142,14 +1142,14 @@ export interface ApqpApprovalDto {
   updated_at: string;
 }
 
-export interface CreateApqpApprovalDto {
+interface CreateApqpApprovalDto {
   project_id: string;
   approval_type: string;
   applicant?: string | null;
   comment?: string | null;
 }
 
-export interface UpdateApqpApprovalDto {
+interface UpdateApqpApprovalDto {
   status?: string;
   approver?: string | null;
   comment?: string | null;
@@ -1172,7 +1172,7 @@ export type ApprovalEntityType =
   | 'apqp_project'
   | 'apqp_approval';
 
-export interface ApprovalRequestDto {
+interface ApprovalRequestDto {
   entity_type: ApprovalEntityType;
   entity_id: string;
   action: ApprovalAction;
@@ -1181,7 +1181,7 @@ export interface ApprovalRequestDto {
   next_status?: string | null;
 }
 
-export interface ApprovalResponseDto {
+interface ApprovalResponseDto {
   id: string;
   tenant_id: string;
   entity_type: ApprovalEntityType;
@@ -1198,7 +1198,7 @@ export interface ApprovalResponseDto {
 // BI 聚合类型（QualityOverview / QualityTrendItem / DefectDistribution）
 // ============================================================================
 
-export interface QualityOverviewDto {
+interface QualityOverviewDto {
   total_standards: number;
   total_inspections: number;
   total_issues: number;
@@ -1219,7 +1219,7 @@ export interface QualityOverviewDto {
   department_performance: DepartmentPerformanceDto[];
 }
 
-export interface QualityTrendItemDto {
+interface QualityTrendItemDto {
   date: string;
   pass_rate: number;
   defect_count: number;
@@ -1227,13 +1227,13 @@ export interface QualityTrendItemDto {
   inspection_count: number;
 }
 
-export interface DefectDistributionDto {
+interface DefectDistributionDto {
   category: string;
   count: number;
   percentage: number;
 }
 
-export interface DepartmentPerformanceDto {
+interface DepartmentPerformanceDto {
   department: string;
   pass_rate: number;
   issue_count: number;

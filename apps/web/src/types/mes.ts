@@ -26,7 +26,7 @@ export interface ProductionOrder {
 
 export type ProductionOrderStatus =
   'draft' | 'released' | 'in_progress' | 'completed' | 'cancelled';
-export type ProductionOrderSource = 'manual' | 'erp_sales_order' | 'mrp';
+type ProductionOrderSource = 'manual' | 'erp_sales_order' | 'mrp';
 
 export interface CreateProductionOrderRequest {
   product_id?: string | null;
@@ -193,7 +193,7 @@ export type EquipmentStatus =
   'running' | 'idle' | 'calibrating' | 'down' | 'maintenance' | 'scrapped';
 
 // ==================== E-7 AnomalyRecord ====================
-export interface AnomalyRecord {
+interface AnomalyRecord {
   id: string;
   equipment_id: string;
   severity: AnomalySeverity;
@@ -212,7 +212,7 @@ export type AnomalyStatus =
   'monitoring' | 'triggered' | 'acknowledged' | 'handling' | 'closed' | 'false_alarm_verified';
 
 // ==================== E-8 EquipmentOeeSnapshot ====================
-export interface EquipmentOeeSnapshot {
+interface EquipmentOeeSnapshot {
   id: string;
   equipment_id: string;
   date: string;
@@ -224,7 +224,7 @@ export interface EquipmentOeeSnapshot {
 }
 
 // ==================== E-9 ProductionCostRecord ====================
-export interface ProductionCostRecord {
+interface ProductionCostRecord {
   id: string;
   production_order_id: string;
   cost_type: ProductionCostType;
@@ -232,10 +232,10 @@ export interface ProductionCostRecord {
   recorded_at: string;
 }
 
-export type ProductionCostType = 'material' | 'labor' | 'energy' | 'overhead';
+type ProductionCostType = 'material' | 'labor' | 'energy' | 'overhead';
 
 // ==================== E-10 EnergyRecord ====================
-export interface EnergyRecord {
+interface EnergyRecord {
   id: string;
   workshop_id: string;
   product_id: string | null;
@@ -246,4 +246,4 @@ export interface EnergyRecord {
   recorded_at: string;
 }
 
-export type EnergyType = 'electric' | 'water' | 'gas' | 'steam';
+type EnergyType = 'electric' | 'water' | 'gas' | 'steam';
