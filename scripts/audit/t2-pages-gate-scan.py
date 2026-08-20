@@ -120,7 +120,7 @@ for p in all_pages_tests:
     g2 = gate_G2(src); evidence['G2'] = {'pass': g2['pass'], 'metrics': g2['metrics'], 'fails': g2['fails']}
     g3 = gate_G3(src); evidence['G3'] = {'pass': g3['pass'], 'fails': g3['fails']}
     g4 = gate_G4(src); evidence['G4'] = {'pass': g4['pass'], 'fails': g4['fails']}
-    all_pass = all(g1['pass'] and g2['pass'] and g3['pass'] and g4['pass'])
+    all_pass = bool(g1['pass'] and g2['pass'] and g3['pass'] and g4['pass'])
     if not g1['pass']: rej_stats['G1'] += 1; rejection_reasons[rp].extend(g1['fails'])
     if not g2['pass']: rej_stats['G2'] += 1; rejection_reasons[rp].extend(g2['fails'])
     if not g3['pass']: rej_stats['G3'] += 1; rejection_reasons[rp].extend(g3['fails'])
