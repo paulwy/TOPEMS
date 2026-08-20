@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useForm, type UseFormProps, type FieldValues, type DefaultValues } from 'react-hook-form';
 
-export interface UseDialogFormOptions<T extends FieldValues> {
+interface UseDialogFormOptions<T extends FieldValues> {
   formOptions?: UseFormProps<T>;
 }
 
-export interface UseDialogFormResult<T extends FieldValues> {
+interface UseDialogFormResult<T extends FieldValues> {
   open: boolean;
   mode: 'create' | 'edit' | 'view';
   editingData: Partial<T> | null;

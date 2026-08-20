@@ -50,9 +50,9 @@ import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-export type CrudFormMode = 'create' | 'view' | 'edit';
+type CrudFormMode = 'create' | 'view' | 'edit';
 
-export interface UseCrudFormOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+interface UseCrudFormOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   /** 实体名称（用于通知消息，如"用户"、"客户"） */
   entityName: string;
   /** 创建函数 */

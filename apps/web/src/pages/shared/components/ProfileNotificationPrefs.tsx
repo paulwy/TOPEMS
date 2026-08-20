@@ -20,7 +20,7 @@ interface NotificationOption {
   color: string;
 }
 
-export interface ProfileNotificationPrefsProps {
+interface ProfileNotificationPrefsProps {
   profile: UseProfileReturn;
 }
 

@@ -18,12 +18,12 @@ import {
 } from '@/api/bi';
 import i18n from '@/i18n';
 
-export type BiPermissionTab = 'row-level' | 'data';
+type BiPermissionTab = 'row-level' | 'data';
 export interface TestResult {
   success: boolean;
   message: string;
 }
-export interface UseBiPermissionResult {
+interface UseBiPermissionResult {
   // tab + search
   activeTab: BiPermissionTab;
   setActiveTab: (tab: BiPermissionTab) => void;

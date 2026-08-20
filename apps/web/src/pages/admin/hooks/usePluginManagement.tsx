@@ -79,7 +79,7 @@ type UninstallMutation = ReturnType<
   >
 >;
 type InstallMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-export interface UsePluginManagementReturn {
+interface UsePluginManagementReturn {
   // marketplace state
   marketplaceOpen: boolean;
   marketplaceTab: number;

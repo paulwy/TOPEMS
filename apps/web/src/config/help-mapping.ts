@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 
-export interface HelpMappingItem {
+interface HelpMappingItem {
   guideId?: string;
   faqCategory?: string;
   title: string;

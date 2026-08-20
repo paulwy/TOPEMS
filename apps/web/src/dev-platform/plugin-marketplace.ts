@@ -32,8 +32,8 @@ export type PluginCategory =
   | 'ai';
 
 export type PluginStatus = 'available' | 'installed' | 'disabled' | 'outdated' | 'incompatible';
-export type InstallationState = 'idle' | 'installing' | 'installed' | 'uninstalling' | 'error';
-export type SandboxPermission =
+type InstallationState = 'idle' | 'installing' | 'installed' | 'uninstalling' | 'error';
+type SandboxPermission =
   'network' | 'storage' | 'clipboard' | 'notifications' | 'file-system' | 'process' | 'registry';
 
 export interface PluginManifest {
@@ -77,7 +77,7 @@ export interface PluginDependency {
   optional?: boolean;
 }
 
-export interface CompatibilityMatrix {
+interface CompatibilityMatrix {
   framework: string;
   versions: string[];
   compatible: boolean;
@@ -122,7 +122,7 @@ export interface InstalledPlugin {
   latestVersion: string;
 }
 
-export interface SandboxConfig {
+interface SandboxConfig {
   permissions: SandboxPermission[];
   maxCpuMs: number;
   maxMemoryMb: number;
@@ -131,7 +131,7 @@ export interface SandboxConfig {
   storageQuotaMb: number;
 }
 
-export interface SearchOptions {
+interface SearchOptions {
   query?: string;
   category?: PluginCategory;
   tags?: string[];
@@ -187,7 +187,7 @@ export interface PluginMarketStats {
   outdatedPlugins: number;
 }
 
-export type MarketplaceChangeListener = (stats: PluginMarketStats) => void;
+type MarketplaceChangeListener = (stats: PluginMarketStats) => void;
 
 const PRESET_PLUGINS: PluginManifest[] = [
   {

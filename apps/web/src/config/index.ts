@@ -12,5 +12,4 @@ export { getEnv as isDevelopment, isProduction } from './runtime';
 export * from './types';
 export * from './deployment';
 export * from './permissions';
-export type { CspConfig } from './security';
 export { applySecurityHeaders } from './security';

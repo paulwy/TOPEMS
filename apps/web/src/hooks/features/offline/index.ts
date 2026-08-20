@@ -6,9 +6,8 @@
 
 // NetworkStatus
 export { useNetworkStatus } from '../../useNetworkStatus';
-export type { NetworkStatus, NetworkInfo } from '../../useNetworkStatus';
 
 // OfflineQuery / OfflineMutation
 
 // OfflineSync
-export type { SyncStatus, OfflineRequest } from '../../useOfflineSync';
+export type { SyncStatus } from '../../useOfflineSync';

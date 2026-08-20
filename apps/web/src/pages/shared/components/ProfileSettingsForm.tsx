@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, TextField, Button } from '@mui/material';
 import type { UseProfileReturn } from '../hooks/useProfile';
 
-export interface ProfileSettingsFormProps {
+interface ProfileSettingsFormProps {
   profile: UseProfileReturn;
 }
 

@@ -19,7 +19,7 @@ import { useMemo } from 'react';
 import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 import type { DynamicOptionConfig } from '@/schema';
 
-export interface DynamicOptionsResult {
+interface DynamicOptionsResult {
   [fieldName: string]: {
     options: { value: string; label: string }[];
     loading: boolean;

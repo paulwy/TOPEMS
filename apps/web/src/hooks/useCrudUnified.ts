@@ -63,19 +63,19 @@ import type {
 } from '@topems/shared-types';
 
 // 重新导出，保持调用方代码不变
-export type CrudListParams = _CrudListParams;
-export type CrudListResult<T> = _CrudListResult<T>;
-export type CrudAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>> = _CrudAdapter<
+type CrudListParams = _CrudListParams;
+type CrudListResult<T> = _CrudListResult<T>;
+type CrudAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>> = _CrudAdapter<
   T,
   TCreate,
   TUpdate
 >;
-export type UseCrudUnifiedOptions<
+type UseCrudUnifiedOptions<
   T,
   TCreate = Partial<T>,
   TUpdate = Partial<T>,
 > = _UseCrudUnifiedOptions<T, TCreate, TUpdate>;
-export type UseCrudUnifiedResult<
+type UseCrudUnifiedResult<
   T,
   TCreate = Partial<T>,
   TUpdate = Partial<T>,
@@ -90,7 +90,7 @@ export type UseCrudUnifiedResult<
 /**
  * 从 AxiosInstance + basePath 构造 adapter（替代 useCrudQueries）
  */
-export interface AxiosCrudAdapterOptions {
+interface AxiosCrudAdapterOptions {
   api: AxiosInstance;
   basePath: string;
   /** 列表响应转换（默认从 response.data.items / response.data.data 提取） */
@@ -142,7 +142,7 @@ function createAxiosAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
  *
  * 适配 { success, code, message, data } 标准响应格式。
  */
-export interface CrudOperationsAdapterOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+interface CrudOperationsAdapterOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   api: {
     list: (params?: Record<string, unknown>) => Promise<{
       success: boolean;
@@ -295,7 +295,7 @@ function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(api:
  * - 已有 queryFn + createFn/updateFn/deleteFn 的场景（替代 useResourceCRUD）
  * - 仅需 mutations 的场景（替代 useCrudMutations，list 留空 + enableList: false）
  */
-export interface FunctionAdapterOptions<T, TCreate, TUpdate> {
+interface FunctionAdapterOptions<T, TCreate, TUpdate> {
   list?: (params: CrudListParams) => Promise<CrudListResult<T>>;
   get?: (id: string) => Promise<T | null>;
   createFn: (data: TCreate) => Promise<unknown>;

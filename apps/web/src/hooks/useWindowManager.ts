@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export interface WindowConfig {
+interface WindowConfig {
   id: string;
   title: string;
   component: React.ReactNode;

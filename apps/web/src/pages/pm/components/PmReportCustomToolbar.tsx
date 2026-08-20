@@ -11,7 +11,7 @@ import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import type { ChartDatum, TrendDatum } from '../hooks/usePmReport';
 import i18n from '@/i18n';
 
-export interface PmReportCustomToolbarProps {
+interface PmReportCustomToolbarProps {
   params: { projectId?: string };
   navigate: (path: string) => void;
   projectStatusData: ChartDatum[];

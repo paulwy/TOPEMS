@@ -24,7 +24,7 @@ import i18n from '@/i18n';
 import { CheckCircle2, Edit2, Trash2, Shield } from 'lucide-react';
 import type { RowLevelPermission } from '@/api/bi';
 
-export interface BiPermissionRowLevelTableProps {
+interface BiPermissionRowLevelTableProps {
   permissions: RowLevelPermission[];
   loading: boolean;
   onToggle: (item: RowLevelPermission) => void;

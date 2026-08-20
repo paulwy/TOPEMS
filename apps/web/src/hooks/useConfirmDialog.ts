@@ -49,7 +49,7 @@ export interface ConfirmDialogConfig {
   cancelText?: string;
 }
 
-export interface UseConfirmDialogResult {
+interface UseConfirmDialogResult {
   /** 对话框是否打开 */
   confirmOpen: boolean;
   /** 当前对话框配置（打开时非 null） */

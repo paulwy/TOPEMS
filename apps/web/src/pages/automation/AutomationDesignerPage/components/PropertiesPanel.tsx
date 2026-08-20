@@ -16,7 +16,7 @@ import { NODE_TYPE_COLOR, NODE_TYPE_LABEL, type DesignerNodeItem } from '../shar
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-export interface PropertiesPanelProps {
+interface PropertiesPanelProps {
   selectedNode: DesignerNodeItem | null;
   nodes: DesignerNodeItem[];
   configDraft: string;

@@ -6,14 +6,14 @@ export type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
 export type DeviceType = 'mobile' | 'tablet' | 'desktop' | 'largeDesktop';
 
-export type Orientation = 'portrait' | 'landscape';
+type Orientation = 'portrait' | 'landscape';
 
-export interface ViewportSize {
+interface ViewportSize {
   width: number;
   height: number;
 }
 
-export interface ResponsiveContext {
+interface ResponsiveContext {
   breakpoint: Breakpoint;
   deviceType: DeviceType;
   orientation: Orientation;

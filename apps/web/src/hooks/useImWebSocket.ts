@@ -15,10 +15,10 @@ export interface ImWsMessage {
   timestamp: string;
 }
 
-export type ImConnectionStatus =
+type ImConnectionStatus =
   'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
-export interface UseImWebSocketOptions {
+interface UseImWebSocketOptions {
   onMessage?: (message: string | ImWsMessage) => void;
   onOpen?: () => void;
   onClose?: (event: CloseEvent) => void;

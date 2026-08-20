@@ -23,16 +23,16 @@ import { logger } from '@/utils/logger';
 
 const costLogger = logger.child({ prefix: 'QueryCost' });
 
-export type HighCostCallback = (analysis: QueryCostAnalysis, queryName: string) => void;
+type HighCostCallback = (analysis: QueryCostAnalysis, queryName: string) => void;
 
-export interface UseQueryCostOptions {
+interface UseQueryCostOptions {
   maxScore?: number;
   warnOnHighCost?: boolean;
   onHighCost?: HighCostCallback;
   autoAnalyze?: boolean;
 }
 
-export interface UseQueryCostResult {
+interface UseQueryCostResult {
   cost: QueryCostAnalysis;
   isHighCost: boolean;
   isCritical: boolean;

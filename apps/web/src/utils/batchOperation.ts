@@ -1,6 +1,6 @@
 import { apiLogger } from './logger';
 
-export interface BatchOperationOptions<T = any> {
+interface BatchOperationOptions<T = any> {
   concurrency?: number;
   onProgress?: (processed: number, total: number) => void;
   onComplete?: (successCount: number, failureCount: number, failures: T[]) => void;

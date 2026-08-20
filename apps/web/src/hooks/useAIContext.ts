@@ -15,7 +15,7 @@ import {
 
 export type { AIRecommendation, QuickCommand } from '@/lib/ai/recommendations';
 
-export interface AIContextState {
+interface AIContextState {
   currentPage: string;
   module: string;
   context: AICopilotContext;

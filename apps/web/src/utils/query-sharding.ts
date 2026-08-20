@@ -15,7 +15,7 @@ const shardLogger = logger.child({ prefix: 'QuerySharding' });
 
 export type ShardStrategy = 'time' | 'id_range' | 'offset';
 
-export interface ShardInfo {
+interface ShardInfo {
   index: number;
   variables: Record<string, unknown>;
   estimatedSize: number;

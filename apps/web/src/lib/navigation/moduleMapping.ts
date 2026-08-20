@@ -1,4 +1,4 @@
-export interface ModuleBackendMapping {
+interface ModuleBackendMapping {
   service: string;
   module: string;
   apiBasePath?: string;

@@ -392,4 +392,4 @@ const useDashboardData = () => {
   };
 };
 
-export type UseDashboardDataReturn = ReturnType<typeof useDashboardData>;
+type UseDashboardDataReturn = ReturnType<typeof useDashboardData>;

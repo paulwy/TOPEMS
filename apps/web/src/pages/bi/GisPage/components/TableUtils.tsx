@@ -37,7 +37,7 @@ export const StatusChip: React.FC<{ status: string }> = ({ status }) => {
     />
   );
 };
-export interface ActionButtonsProps {
+interface ActionButtonsProps {
   item: GisEntity;
   onEdit: (item: GisEntity) => void;
   onDelete: (id: string) => void;

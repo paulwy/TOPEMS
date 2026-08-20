@@ -1,4 +1,4 @@
-export interface L1BusinessDomain {
+interface L1BusinessDomain {
   key: string;
   title: string;
   /** i18n key for the title; when present, caller should translate at render time */

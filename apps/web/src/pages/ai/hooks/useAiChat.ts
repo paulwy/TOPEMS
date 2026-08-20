@@ -108,7 +108,7 @@ const getMockMessages = (t: (key: string) => string): Message[] => [
   },
 ];
 
-export interface UseAiChatResult {
+interface UseAiChatResult {
   // state
   messages: Message[];
   inputValue: string;

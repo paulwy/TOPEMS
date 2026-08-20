@@ -28,7 +28,7 @@ export type ExternalErpType =
 /**
  * 适配器配置
  */
-export interface AdapterConfig {
+interface AdapterConfig {
   type: ExternalErpType;
   name: string;
   endpoint: string;
@@ -58,7 +58,7 @@ export interface SyncResult {
 /**
  * 通用适配器接口
  */
-export interface ErpAdapter {
+interface ErpAdapter {
   /** 连接测试 */
   testConnection(): Promise<boolean>;
 

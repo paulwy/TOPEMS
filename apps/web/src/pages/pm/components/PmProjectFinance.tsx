@@ -9,7 +9,7 @@ import type { Project } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
 import i18n from '@/i18n';
 
-export interface PmProjectFinanceProps {
+interface PmProjectFinanceProps {
   project: Project | null;
   formatCurrency: (amount?: number) => string;
 }

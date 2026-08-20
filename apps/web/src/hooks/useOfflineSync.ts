@@ -12,7 +12,7 @@ export interface SyncStatus {
   syncError?: string;
 }
 
-export interface OfflineRequest {
+interface OfflineRequest {
   service: ServiceName;
   endpoint: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';

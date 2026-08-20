@@ -23,8 +23,8 @@ const customerZodSchema = z
   .merge(commonAuditSchema);
 
 export type Customer = z.infer<typeof customerZodSchema>;
-export type CustomerRating = z.infer<typeof customerRating>;
-export type CustomerType = z.infer<typeof customerType>;
+type CustomerRating = z.infer<typeof customerRating>;
+type CustomerType = z.infer<typeof customerType>;
 export type ApprovalStatus = z.infer<typeof approvalStatus>;
 
 const createCustomerSchema = customerZodSchema.omit({

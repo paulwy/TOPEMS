@@ -6,7 +6,7 @@ import { eventBus, ModuleEvents } from './EventBus';
 import { isDev, VITEDeploymentMode } from '@/config/env';
 import i18n from '@/i18n';
 
-export interface MicroFrontendLoaderProps {
+interface MicroFrontendLoaderProps {
   remoteName: string;
   remoteModule?: string;
   basename?: string;

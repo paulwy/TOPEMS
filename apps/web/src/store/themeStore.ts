@@ -32,7 +32,7 @@ export const getThemeList = (
 };
 
 /** 主题图标 key（供 ThemeSelector 等 UI 使用） */
-export type ThemeIconKey = 'Sun' | 'Moon' | 'Sparkles' | 'Monitor';
+type ThemeIconKey = 'Sun' | 'Moon' | 'Sparkles' | 'Monitor';
 export const THEME_ICON_KEYS: Record<Theme, ThemeIconKey> = {
   light: 'Sun',
   dark: 'Moon',

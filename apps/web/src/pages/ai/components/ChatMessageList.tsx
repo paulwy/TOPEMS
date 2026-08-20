@@ -8,7 +8,7 @@ import { Box, Typography, Avatar, Paper, Chip, IconButton } from '@mui/material'
 import { useTranslation } from 'react-i18next';
 import { getTypeLabel, type Message } from '../hooks/useAiChat';
 
-export interface ChatMessageListProps {
+interface ChatMessageListProps {
   messages: Message[];
   isTyping: boolean;
   copiedId: string | null;

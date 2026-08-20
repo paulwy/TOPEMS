@@ -19,7 +19,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 export type TabType = 'alerts' | 'rules' | 'health';
-export interface UseMonitoringAlertReturn {
+interface UseMonitoringAlertReturn {
   // State
   activeTab: TabType;
   searchQuery: string;

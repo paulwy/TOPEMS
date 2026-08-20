@@ -28,7 +28,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-export interface UseCrudMutationsOptions<TCreate, TUpdate, TDelete> {
+interface UseCrudMutationsOptions<TCreate, TUpdate, TDelete> {
   /** 创建成功后需要 invalidate 的 query key */
   queryKeyToInvalidate: QueryKey;
   /** 创建函数 */
@@ -49,7 +49,7 @@ export interface UseCrudMutationsOptions<TCreate, TUpdate, TDelete> {
   onDeleteSuccess?: (data: unknown) => void;
 }
 
-export interface UseCrudMutationsResult<TCreate, TUpdate> {
+interface UseCrudMutationsResult<TCreate, TUpdate> {
   createMutation: ReturnType<typeof useMutation<unknown, Error, TCreate, unknown>>;
   updateMutation: ReturnType<
     typeof useMutation<unknown, Error, { id: string | number; data: TUpdate }, unknown>

@@ -18,4 +18,4 @@ export const sizeTokens = {
   mobileToolbarHeight: '56px',
 } as const;
 
-export type SizeTokens = typeof sizeTokens;
+type SizeTokens = typeof sizeTokens;

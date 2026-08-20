@@ -3,7 +3,7 @@ import { Box, Card, CardContent, CardHeader, LinearProgress, Typography } from '
 import type { PmStatistics } from '@/api/pm';
 import i18n from '@/i18n';
 
-export interface PmReportBudgetCardProps {
+interface PmReportBudgetCardProps {
   stats: PmStatistics;
   budgetUtilization: number;
 }

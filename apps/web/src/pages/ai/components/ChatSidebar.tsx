@@ -22,7 +22,7 @@ const getTypeIcon = (type: ChatSession['type']) => {
   return icons[type];
 };
 
-export interface ChatSidebarProps {
+interface ChatSidebarProps {
   sessions: ChatSession[];
   selectedSessionId: string;
   activeTab: ChatMode;

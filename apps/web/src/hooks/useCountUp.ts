@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-export interface UseCountUpOptions {
+interface UseCountUpOptions {
   /** 动画时长（毫秒），默认 800 */
   duration?: number;
   /** 起始值，默认 0 */

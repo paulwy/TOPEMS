@@ -2,14 +2,14 @@ import type { ModuleRegistration } from './module-registry';
 import { moduleRegistry } from './module-registry';
 import i18n from '@/i18n';
 
-export interface RegistryFetchResult {
+interface RegistryFetchResult {
   success: boolean;
   modules: ModuleRegistration[];
   timestamp: number;
   error?: string;
 }
 
-export interface ModuleHealthStatus {
+interface ModuleHealthStatus {
   moduleId: string;
   healthy: boolean;
   responseTime?: number;

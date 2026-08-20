@@ -1,4 +1,4 @@
-export interface ModuleLoadMetrics {
+interface ModuleLoadMetrics {
   moduleName: string;
   componentName: string;
   remoteEntryLoadTime: number;

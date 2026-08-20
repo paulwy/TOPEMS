@@ -13,7 +13,7 @@ import {
 import i18n from '@/i18n';
 import type { TrendDatum } from '../hooks/usePmReport';
 
-export interface PmReportTrendChartProps {
+interface PmReportTrendChartProps {
   data: TrendDatum[];
 }
 const PmReportTrendChart: React.FC<PmReportTrendChartProps> = ({ data }) => {

@@ -35,10 +35,10 @@ const MAX_HISTORY_RECORDS = 1000;
 const MAX_RECORDS_PER_QUERY = 200;
 
 /** 慢查询回调类型 */
-export type SlowQueryCallback = (record: QueryPerformanceRecord, threshold: number) => void;
+type SlowQueryCallback = (record: QueryPerformanceRecord, threshold: number) => void;
 
 /** useBffPerformance 返回值 */
-export interface UseBffPerformanceResult {
+interface UseBffPerformanceResult {
   /** 所有查询的性能统计（按平均耗时排序） */
   stats: QueryPerformanceStats[];
   /** 最近的查询记录 */

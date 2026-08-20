@@ -13,9 +13,9 @@ import type {
   KnowledgeAskResponse,
 } from '@/api/ai';
 
-export type AiAssistantTab = 'report' | 'flow' | 'knowledge';
+type AiAssistantTab = 'report' | 'flow' | 'knowledge';
 
-export interface UseAiAssistantResult {
+interface UseAiAssistantResult {
   activeTab: AiAssistantTab;
   setActiveTab: (tab: AiAssistantTab) => void;
   loading: boolean;

@@ -5,7 +5,7 @@ export interface ListResponse<T> {
   total: number;
 }
 
-export interface ResourceCRUDResult<T, _CreateRequest, UpdateRequest> {
+interface ResourceCRUDResult<T, _CreateRequest, UpdateRequest> {
   queryResult: ReturnType<typeof useQuery<ListResponse<T>>>;
   createMutation: ReturnType<typeof useMutation>;
   updateMutation: ReturnType<typeof useMutation>;
@@ -20,7 +20,7 @@ export interface ResourceCRUDResult<T, _CreateRequest, UpdateRequest> {
   refetch: () => void;
 }
 
-export interface UseResourceCRUDOptions<T, CreateRequest, UpdateRequest> {
+interface UseResourceCRUDOptions<T, CreateRequest, UpdateRequest> {
   queryKey: unknown[];
   queryFn: () => Promise<ListResponse<T>>;
   createFn: (data: CreateRequest) => Promise<unknown>;

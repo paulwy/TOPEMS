@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
-export interface DocUploadDialogProps {
+interface DocUploadDialogProps {
   open: boolean;
   docFile: File | null;
   onClose: () => void;

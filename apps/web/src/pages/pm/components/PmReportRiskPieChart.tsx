@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import type { ChartDatum } from '../hooks/usePmReport';
 import i18n from '@/i18n';
 
-export interface PmReportRiskPieChartProps {
+interface PmReportRiskPieChartProps {
   data: ChartDatum[];
   outerRadius?: number;
 }

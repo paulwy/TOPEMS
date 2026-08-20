@@ -130,7 +130,7 @@ const LoadingFallback: React.FC<{ moduleName: string }> = ({ moduleName }) => (
 /**
  * RemoteLoader 属性
  */
-export interface RemoteLoaderProps {
+interface RemoteLoaderProps {
   /** 远程模块名（如 'topems_erp'） */
   moduleName: string;
   /** 远程模块导出的组件名（如 './ErpApp'） */

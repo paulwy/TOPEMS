@@ -17,7 +17,7 @@ export interface EmployeeListParams {
   [key: string]: string | number | undefined;
 }
 
-export interface ValidationSuggestion {
+interface ValidationSuggestion {
   field: string;
   value?: string | number;
   message?: string;

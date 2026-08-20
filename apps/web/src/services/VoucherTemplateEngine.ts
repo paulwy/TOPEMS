@@ -13,7 +13,7 @@ import i18n from '@/i18n';
 /**
  * 模板上下文（数据源）
  */
-export interface TemplateContext {
+interface TemplateContext {
   // 来源模块
   source_module: string;
 
@@ -46,7 +46,7 @@ export interface TemplateContext {
 /**
  * 生成的凭证条目
  */
-export interface GeneratedEntry {
+interface GeneratedEntry {
   account_id: string;
   account_code: string;
   account_name: string;
@@ -68,7 +68,7 @@ export interface GeneratedEntry {
 /**
  * 生成的凭证结果
  */
-export interface GeneratedVoucher {
+interface GeneratedVoucher {
   voucher_date: string;
   period: string;
   voucher_type: string;
@@ -198,7 +198,7 @@ class ExpressionEvaluator {
 /**
  * 科目查找器接口
  */
-export interface AccountFinder {
+interface AccountFinder {
   findByCode(code: string): Promise<{ id: string; code: string; name: string } | null>;
   findByName(name: string): Promise<{ id: string; code: string; name: string } | null>;
   getAccountMapping(): Promise<Map<string, { id: string; code: string; name: string }>>;

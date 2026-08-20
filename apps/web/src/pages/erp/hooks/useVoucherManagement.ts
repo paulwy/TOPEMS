@@ -23,7 +23,7 @@ export interface NewVoucherState {
   description: string;
   items: VoucherItemRequest[];
 }
-export type StatusBadgeColor =
+type StatusBadgeColor =
   'success' | 'warning' | 'default' | 'secondary' | 'error' | 'info' | 'primary';
 export type ChipColor = StatusBadgeColor;
 export const useVoucherManagement = () => {

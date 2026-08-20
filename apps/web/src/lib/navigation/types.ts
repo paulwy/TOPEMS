@@ -14,7 +14,7 @@ export type NavGroup =
   | 'setting' // (60) 系统配置/模板   参数/方案/阈值/模板配置
   | 'other'; // (99) 杂项兜底（尽量不用）
 
-export type ModuleSource = 'core' | 'plugin';
+type ModuleSource = 'core' | 'plugin';
 /**
  * L1 业务域标准枚举（四层模型 v2.0，共 10 个，禁止随意新增）
  * 新增模块必须从下表选归属；若确需新增 L1，请按 RFC 流程发起评审。

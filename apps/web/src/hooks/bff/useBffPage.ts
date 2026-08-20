@@ -19,7 +19,7 @@ import i18n from '@/i18n';
 
 // ============ 通用类型 ============
 
-export interface PageStateStatus {
+interface PageStateStatus {
   loading: boolean;
   error: string | null;
   isSaving: boolean;

@@ -20,7 +20,7 @@ import i18n from '@/i18n';
 import { Edit2, Trash2, Database } from 'lucide-react';
 import type { DataPermissionRule } from '@/api/bi';
 
-export interface BiPermissionDataTableProps {
+interface BiPermissionDataTableProps {
   permissions: DataPermissionRule[];
   getResourceTypeLabel: (type: string) => string;
   getPermissionTypeLabel: (type: string) => string;

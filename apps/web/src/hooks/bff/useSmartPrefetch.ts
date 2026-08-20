@@ -25,7 +25,7 @@ import { logger } from '@/utils/logger';
 
 const prefetchHookLogger = logger.child({ prefix: 'UseSmartPrefetch' });
 
-export interface UseSmartPrefetchOptions {
+interface UseSmartPrefetchOptions {
   enabled?: boolean;
   strategies?: PrefetchStrategy[];
   minConfidence?: number;
@@ -34,7 +34,7 @@ export interface UseSmartPrefetchOptions {
   customPrefetch?: (query: string, variables?: Record<string, unknown>) => Promise<void>;
 }
 
-export interface UseSmartPrefetchResult {
+interface UseSmartPrefetchResult {
   predictions: Prediction[];
   prefetchQueue: PrefetchTask[];
   isEnabled: boolean;

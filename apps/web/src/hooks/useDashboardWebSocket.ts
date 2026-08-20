@@ -8,7 +8,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { apiLogger } from '@/utils/logger';
 
-export interface UseDashboardWebSocketOptions extends Omit<
+interface UseDashboardWebSocketOptions extends Omit<
   UseWebSocketOptions,
   'authMessage' | 'queryParams'
 > {
@@ -16,7 +16,7 @@ export interface UseDashboardWebSocketOptions extends Omit<
   module?: 'mes' | 'bi' | 'gis';
 }
 
-export interface DashboardMessage {
+interface DashboardMessage {
   type?: string;
   data?: {
     alarms?: Record<string, unknown>[];

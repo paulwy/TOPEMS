@@ -14,7 +14,7 @@ import { Box, Button, TextField, Select, MenuItem, FormControl, InputLabel } fro
 import { SUITES } from '@/api/plugin';
 import type { SortOption, ViewMode } from '../hooks/usePluginMarketplace';
 
-export interface PluginMarketplaceFiltersProps {
+interface PluginMarketplaceFiltersProps {
   searchQuery: string;
   selectedSuite: string;
   sortBy: SortOption;

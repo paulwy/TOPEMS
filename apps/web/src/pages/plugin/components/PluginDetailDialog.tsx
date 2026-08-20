@@ -25,7 +25,7 @@ import { PluginInstallProgress } from './PluginInstallProgress';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-export interface PluginDetailDialogProps {
+interface PluginDetailDialogProps {
   plugin: Plugin;
   onClose: () => void;
 }

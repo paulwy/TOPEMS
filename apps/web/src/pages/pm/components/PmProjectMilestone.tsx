@@ -20,7 +20,7 @@ import i18n from '@/i18n';
 import type { ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
 
-export interface PmProjectMilestoneProps {
+interface PmProjectMilestoneProps {
   milestones: ProjectMilestone[];
   phases: ProjectPhase[];
   formatDate: (dateStr?: string) => string;

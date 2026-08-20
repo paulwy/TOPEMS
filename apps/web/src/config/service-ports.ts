@@ -6,7 +6,7 @@ import i18n from '@/i18n';
  * Any port change MUST update all three locations above.
  */
 
-export interface ServicePort {
+interface ServicePort {
   name: string;
   port: number;
   description: string;

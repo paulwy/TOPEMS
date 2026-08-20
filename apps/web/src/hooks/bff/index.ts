@@ -52,7 +52,6 @@ export type {
 } from './useBffDashboard';
 
 export { useBffPerformance } from './useBffPerformance';
-export type { UseBffPerformanceResult, SlowQueryCallback } from './useBffPerformance';
 
 export type {
   SlowQueryAlertOptions,
@@ -60,12 +59,9 @@ export type {
   AlertLevel,
 } from './useSlowQueryAlert';
 
-export type { UseQueryCostOptions, UseQueryCostResult, HighCostCallback } from './useQueryCost';
 
 export { useAutoSharding } from './useAutoSharding';
-export type { UseAutoShardingOptions, UseAutoShardingResult } from './useAutoSharding';
 
-export type { UseSmartPrefetchOptions, UseSmartPrefetchResult } from './useSmartPrefetch';
 
 // ==================== V42.0 Track D: Suspense 数据加载 ====================
 

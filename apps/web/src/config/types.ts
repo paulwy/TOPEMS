@@ -8,7 +8,7 @@ export interface WebSocketConfig {
   maxReconnectAttempts: number;
 }
 
-export interface ServicesConfig {
+interface ServicesConfig {
   iam: string;
   doc: string;
   ai: string;
@@ -70,7 +70,7 @@ export interface ServicesConfig {
   'plugin-registry': string;
 }
 
-export interface FeaturesConfig {
+interface FeaturesConfig {
   debugMode: boolean;
   hotReload: boolean;
   apiDocs: boolean;
@@ -79,12 +79,12 @@ export interface FeaturesConfig {
   darkMode: boolean;
 }
 
-export interface UploadConfig {
+interface UploadConfig {
   maxSize: number;
   allowedTypes: string[];
 }
 
-export interface LoggingConfig {
+interface LoggingConfig {
   level: string;
   errorTracking: boolean;
 }
@@ -94,13 +94,13 @@ export interface ThemeConfig {
   enableDarkMode: boolean;
 }
 
-export interface I18nConfig {
+interface I18nConfig {
   defaultLocale: string;
   fallbackLocale: string;
   supportedLocales: string[];
 }
 
-export interface AnalyticsConfig {
+interface AnalyticsConfig {
   enabled: boolean;
   id: string;
 }
@@ -110,7 +110,7 @@ export interface SecurityConfig {
   sessionTimeout: number;
 }
 
-export interface ThirdPartyConfig {
+interface ThirdPartyConfig {
   sentryDsn: string;
   gaTrackingId: string;
   amapKey: string;

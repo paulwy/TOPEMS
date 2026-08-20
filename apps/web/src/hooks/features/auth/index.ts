@@ -6,7 +6,7 @@
 
 export { useAuth, AuthProvider } from '../../useAuth';
 export type { User } from '../../useAuth';
-export type { AuthState, LoginCredentials } from '../../useAuth';
+export type { AuthState } from '../../useAuth';
 
 export { usePermission } from '../../usePermission';
 
@@ -14,4 +14,3 @@ export { useRole } from '../../useRole';
 export type { Role } from '../../useRole';
 
 export { useOrganization } from '../../useOrganization';
-export type { OrganizationData, UseOrganizationReturn } from '../../useOrganization';

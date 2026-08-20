@@ -10,9 +10,9 @@
  * - offset : 用 offset/limit 代替 page/pagesize
  */
 
-export type BackendParamStyle = 'standard' | 'nested' | 'offset';
+type BackendParamStyle = 'standard' | 'nested' | 'offset';
 
-export interface ListStateParams {
+interface ListStateParams {
   search: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -21,7 +21,7 @@ export interface ListStateParams {
   filters: Record<string, unknown>;
 }
 
-export interface ParamMappingOptions {
+interface ParamMappingOptions {
   /** 后端参数风格，默认 'standard' */
   style?: BackendParamStyle;
   /** 搜索参数名，默认 'keyword' */
@@ -136,7 +136,7 @@ export function mapListParamsToBackend(
 /**
  * 从后端响应中解析分页信息
  */
-export interface BackendPaginationResponse {
+interface BackendPaginationResponse {
   total: number;
   page?: number;
   pagesize?: number;
@@ -224,7 +224,7 @@ export interface FilterCondition {
   value: unknown;
 }
 
-export type FilterGroup = {
+type FilterGroup = {
   logic?: 'and' | 'or';
   conditions: (FilterCondition | FilterGroup)[];
 };

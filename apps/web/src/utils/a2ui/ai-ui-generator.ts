@@ -142,7 +142,7 @@ export interface GenerateOptions {
 }
 
 /** 向后兼容别名，等价于 GenerateOptions。 */
-export type AIUIGenerationRequest = GenerateOptions;
+type AIUIGenerationRequest = GenerateOptions;
 
 /**
  * V64.0+ AI 驱动 UI 生成器。

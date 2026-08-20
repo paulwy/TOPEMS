@@ -57,7 +57,7 @@ export interface PasswordFormData {
   confirm_password: string;
 }
 
-export interface ShortcutEntry {
+interface ShortcutEntry {
   id: string;
   title: string;
   path: string;

@@ -46,7 +46,7 @@ const DEFAULT_PIE_COLORS = [
   designTokens.colors.pink.main,
 ];
 
-export interface AiAssistantReportTabProps {
+interface AiAssistantReportTabProps {
   reportQuery: string;
   setReportQuery: (v: string) => void;
   reportDataSource: string;

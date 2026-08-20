@@ -8,7 +8,7 @@ import { useState, useCallback } from 'react';
 /**
  * 模态框状态管理
  */
-export interface ModalState<T = unknown> {
+interface ModalState<T = unknown> {
   open: boolean;
   data?: T;
 }
@@ -157,7 +157,7 @@ export function useSelection<T = string>() {
  */
 export type SortOrder = 'asc' | 'desc' | undefined;
 
-export interface SortState {
+interface SortState {
   field: string | undefined;
   order: SortOrder;
 }

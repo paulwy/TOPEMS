@@ -5,7 +5,7 @@ import type { NavItem } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 
-export interface AutoBreadcrumbItem {
+interface AutoBreadcrumbItem {
   label: string;
   href?: string;
   icon?: React.ReactNode;
@@ -14,7 +14,7 @@ export interface AutoBreadcrumbItem {
   paramValue?: string;
 }
 
-export interface UseAutoBreadcrumbsOptions {
+interface UseAutoBreadcrumbsOptions {
   includeHome?: boolean;
   homePath?: string;
   homeLabel?: string;

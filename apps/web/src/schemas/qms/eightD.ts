@@ -20,7 +20,7 @@ import i18n from '@/i18n';
 import type { TreeNode } from '@/components/templates/TreeBuilder';
 import type { SchemaField } from '@/schema/types';
 /** D4 根因分析自定义渲染函数类型 */
-export type RootCauseRenderer = (props: WizardStepRenderProps) => React.ReactNode;
+type RootCauseRenderer = (props: WizardStepRenderProps) => React.ReactNode;
 // ============ D1 团队成员子表 ============
 const teamMembersFields: NestedTableConfig['fields'] = [
   { name: 'name', label: i18n.t('qms.eight_d.k0'), type: 'text', required: true, listWidth: 120 },

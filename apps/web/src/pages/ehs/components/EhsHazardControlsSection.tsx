@@ -11,7 +11,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { EHSStatusBadge, EHSMeasureTypeBadge } from '@/components/ehs';
 import type { ControlMeasure } from '@/api/ehs';
 
-export interface EhsHazardControlsSectionProps {
+interface EhsHazardControlsSectionProps {
   controls: ControlMeasure[];
   onAddControl: () => void;
   onDeleteControl: (measureId: string) => void;

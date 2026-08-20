@@ -17,7 +17,7 @@ export interface FeatureFlag {
 /**
  * 特性开关上下文
  */
-export interface FeatureFlagContext {
+interface FeatureFlagContext {
   tenantId?: string;
   userId?: string;
   environment: string;
@@ -34,7 +34,7 @@ export interface FeatureCondition {
 /**
  * 特性开关检查结果
  */
-export interface FeatureFlagResult {
+interface FeatureFlagResult {
   enabled: boolean;
   loading: boolean;
   error: Error | null;

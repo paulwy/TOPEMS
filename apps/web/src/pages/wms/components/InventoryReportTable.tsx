@@ -25,7 +25,7 @@ import {
 import { Grid } from '@/components/common';
 import type { ABCAnalysisItem, InventoryTurnoverData, InventoryValueByWarehouse } from '@/api/wms';
 
-export interface InventoryReportABCTableProps {
+interface InventoryReportABCTableProps {
   abcAnalysis: ABCAnalysisItem[];
   formatNumber: (num: number) => string;
   getABCCategoryColor: (category: string) => string;
@@ -113,7 +113,7 @@ export const InventoryReportABCTable: React.FC<InventoryReportABCTableProps> = (
   );
 };
 
-export interface InventoryReportTurnoverTableProps {
+interface InventoryReportTurnoverTableProps {
   turnoverData: InventoryTurnoverData[];
   formatNumber: (num: number) => string;
 }
@@ -177,7 +177,7 @@ export const InventoryReportTurnoverTable: React.FC<InventoryReportTurnoverTable
   );
 };
 
-export interface InventoryReportValueByWarehouseTableProps {
+interface InventoryReportValueByWarehouseTableProps {
   valueByWarehouse: InventoryValueByWarehouse[];
   totalWarehouseValue: number;
   formatNumber: (num: number) => string;

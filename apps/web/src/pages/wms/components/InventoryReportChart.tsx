@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Typography, Card, CardContent, Chip, Grid } from '@mui/material';
 import type { ABCAnalysisItem, InventoryTurnoverData, InventoryValueByWarehouse } from '@/api/wms';
 
-export interface InventoryReportABCOverviewProps {
+interface InventoryReportABCOverviewProps {
   abcAnalysis: ABCAnalysisItem[];
   abcTotalSku: number;
 }
@@ -122,7 +122,7 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
   );
 };
 
-export interface InventoryReportTurnoverSummaryProps {
+interface InventoryReportTurnoverSummaryProps {
   turnoverData: InventoryTurnoverData[];
   formatNumber: (num: number) => string;
 }
@@ -200,7 +200,7 @@ export const InventoryReportTurnoverSummary: React.FC<InventoryReportTurnoverSum
   );
 };
 
-export interface InventoryReportValueDistributionProps {
+interface InventoryReportValueDistributionProps {
   valueByWarehouse: InventoryValueByWarehouse[];
   totalWarehouseValue: number;
   formatNumber: (num: number) => string;

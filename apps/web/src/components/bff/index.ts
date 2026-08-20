@@ -48,7 +48,7 @@ export type {
 } from '@/utils/bff/query-builder';
 
 export { toPascalCase } from '@/utils/bff/codegen';
-export type { FieldDefinition, EntitySchema } from '@/utils/bff/codegen';
+export type { EntitySchema } from '@/utils/bff/codegen';
 
 export { executeParallelShards } from '@/utils/bff/auto-sharding-v2';
 export type {

@@ -47,11 +47,11 @@ import { v51DesignTokens } from '../tokens/v51-tokens';
 // 基于 MUI 的 V51 设计系统组件库
 // ============================================================
 
-export type V51ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text' | 'icon';
-export type V51ButtonSize = 'sm' | 'md' | 'lg';
-export type V51ButtonColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+type V51ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text' | 'icon';
+type V51ButtonSize = 'sm' | 'md' | 'lg';
+type V51ButtonColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
-export interface V51ButtonProps {
+interface V51ButtonProps {
   variant?: V51ButtonVariant;
   size?: V51ButtonSize;
   color?: V51ButtonColor;
@@ -140,7 +140,7 @@ export const V51Button: React.FC<V51ButtonProps> = ({
   );
 };
 
-export interface V51CardProps {
+interface V51CardProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   headerAction?: React.ReactNode;
@@ -234,9 +234,9 @@ export const V51Card: React.FC<V51CardProps> = ({
   );
 };
 
-export type V51InputValidationState = 'default' | 'success' | 'warning' | 'error';
+type V51InputValidationState = 'default' | 'success' | 'warning' | 'error';
 
-export interface V51InputProps {
+interface V51InputProps {
   label?: string;
   value?: string;
   defaultValue?: string;
@@ -370,14 +370,14 @@ export const V51Input: React.FC<V51InputProps> = ({
   );
 };
 
-export interface V51SelectOption {
+interface V51SelectOption {
   value: string | number;
   label: string;
   disabled?: boolean;
   children?: React.ReactNode;
 }
 
-export interface V51SelectProps {
+interface V51SelectProps {
   label?: string;
   value?: string | number;
   defaultValue?: string | number;
@@ -561,9 +561,9 @@ export const V51Select: React.FC<V51SelectProps> = ({
   );
 };
 
-export type V51SortDirection = 'asc' | 'desc';
+type V51SortDirection = 'asc' | 'desc';
 
-export interface V51TableColumn<T = any> {
+interface V51TableColumn<T = any> {
   id: string;
   label: string;
   accessor?: keyof T;
@@ -573,7 +573,7 @@ export interface V51TableColumn<T = any> {
   render?: (value: unknown, row: T) => React.ReactNode;
 }
 
-export interface V51TableProps<T = Record<string, unknown>> {
+interface V51TableProps<T = Record<string, unknown>> {
   columns: V51TableColumn<T>[];
   data: T[];
   rowKey?: keyof T;
@@ -870,7 +870,7 @@ export function V51Table<T extends Record<string, unknown>>({
   );
 }
 
-export interface V51DialogProps {
+interface V51DialogProps {
   open: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -993,9 +993,9 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
   );
 };
 
-export type V51ToastType = 'success' | 'error' | 'warning' | 'info';
+type V51ToastType = 'success' | 'error' | 'warning' | 'info';
 
-export interface V51ToastMessage {
+interface V51ToastMessage {
   id: string;
   type: V51ToastType;
   title?: string;
@@ -1003,7 +1003,7 @@ export interface V51ToastMessage {
   duration?: number;
 }
 
-export interface V51ToastContextValue {
+interface V51ToastContextValue {
   toasts: V51ToastMessage[];
   showToast: (toast: Omit<V51ToastMessage, 'id'>) => void;
   success: (message: string, title?: string) => void;
@@ -1181,7 +1181,7 @@ const V51ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children })
   );
 };
 
-export interface V51TabItem {
+interface V51TabItem {
   id: string;
   label: React.ReactNode;
   content: React.ReactNode;
@@ -1189,7 +1189,7 @@ export interface V51TabItem {
   icon?: React.ReactNode;
 }
 
-export interface V51TabsProps {
+interface V51TabsProps {
   tabs: V51TabItem[];
   activeTab?: string;
   defaultTab?: string;
@@ -1289,11 +1289,11 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
   );
 };
 
-export type V51BadgeVariant =
+type V51BadgeVariant =
   'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
-export type V51BadgeSize = 'sm' | 'md' | 'lg';
+type V51BadgeSize = 'sm' | 'md' | 'lg';
 
-export interface V51BadgeProps {
+interface V51BadgeProps {
   label: React.ReactNode;
   variant?: V51BadgeVariant;
   size?: V51BadgeSize;
@@ -1386,7 +1386,7 @@ export const V51Badge: React.FC<V51BadgeProps> = ({
   );
 };
 
-export interface V51SkeletonProps {
+interface V51SkeletonProps {
   variant?: 'text' | 'circular' | 'rectangular' | 'rounded';
   width?: number | string;
   height?: number | string;
@@ -1417,7 +1417,7 @@ export const V51Skeleton: React.FC<V51SkeletonProps> = ({
   );
 };
 
-export interface V51SkeletonCardProps {
+interface V51SkeletonCardProps {
   rows?: number;
   showAvatar?: boolean;
   sx?: SxProps<Theme>;
@@ -1461,7 +1461,7 @@ export const V51SkeletonCard: React.FC<V51SkeletonCardProps> = ({
   );
 };
 
-export interface V51AvatarProps {
+interface V51AvatarProps {
   src?: string;
   alt?: string;
   fallback?: string;

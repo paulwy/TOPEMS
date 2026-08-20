@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 /**
  * 来源页状态信息
  */
-export interface FromState {
+interface FromState {
   /** 来源页路径 */
   pathname: string;
   /** 来源页查询参数 */
@@ -16,7 +16,7 @@ export interface FromState {
 /**
  * useBackNavigation hook 返回值
  */
-export interface BackNavigationResult {
+interface BackNavigationResult {
   /** 来源页信息 */
   from: FromState | null;
   /** 是否有来源页信息 */

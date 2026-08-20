@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export interface UseImportExportOptions {
+interface UseImportExportOptions {
   apiEndpoint: string;
 }
 

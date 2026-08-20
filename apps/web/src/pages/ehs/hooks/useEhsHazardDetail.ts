@@ -31,7 +31,7 @@ export interface HazardFormData {
   status: 'active' | 'controlled' | 'eliminated' | 'archived';
 }
 
-export interface UseEhsHazardDetailResult {
+interface UseEhsHazardDetailResult {
   // page state
   loading: boolean;
   errorMessage: string | undefined;

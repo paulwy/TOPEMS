@@ -104,7 +104,7 @@ export interface DataSourceConfig {
   cache_ttl_seconds?: number;
 }
 
-export interface PageMetadata {
+interface PageMetadata {
   title: string;
   description: string;
   created_at: number;

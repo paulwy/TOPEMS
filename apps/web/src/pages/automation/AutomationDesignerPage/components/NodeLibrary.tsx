@@ -5,7 +5,7 @@ import { NODE_TYPE_BORDER_COLOR, NODE_TYPE_ICON, NODE_TYPE_LABEL } from '../shar
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-export interface NodeLibraryProps {
+interface NodeLibraryProps {
   availableNodeTypes: AutomationNodeType[];
   nodesCount: number;
   onAddNodeAt: (type: AutomationNodeType, x: number, y: number) => void;

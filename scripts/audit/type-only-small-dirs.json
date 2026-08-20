@@ -1,0 +1,1952 @@
+[
+  {
+    "defFile": "apps/web/src/hooks/bff/useAutoSharding.ts",
+    "name": "UseAutoShardingOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useAutoSharding.ts",
+    "name": "UseAutoShardingResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useBffPage.ts",
+    "name": "PageStateStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useBffPerformance.ts",
+    "name": "SlowQueryCallback",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useBffPerformance.ts",
+    "name": "UseBffPerformanceResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+    "name": "HighCostCallback",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+    "name": "UseQueryCostOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+    "name": "UseQueryCostResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useSmartPrefetch.ts",
+    "name": "UseSmartPrefetchOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/bff/useSmartPrefetch.ts",
+    "name": "UseSmartPrefetchResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/foundation/useWebVitals.ts",
+    "name": "WebVitalsCallback",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/shortcuts.ts",
+    "name": "ShortcutBinding",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/shortcuts.ts",
+    "name": "ShortcutConfig",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/shortcuts.ts",
+    "name": "ShortcutHandler",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useAIContext.ts",
+    "name": "AIContextState",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/ai/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useAuth.tsx",
+    "name": "LoginCredentials",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/auth/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useAutoBreadcrumbs.ts",
+    "name": "AutoBreadcrumbItem",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useAutoBreadcrumbs.ts",
+    "name": "UseAutoBreadcrumbsOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useBIQueries.ts",
+    "name": "UseBIAllAnalyticsResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useBackNavigation.ts",
+    "name": "BackNavigationResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useBackNavigation.ts",
+    "name": "FromState",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useColumnConfig.ts",
+    "name": "UseColumnConfigOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useColumnConfig.ts",
+    "name": "UseColumnConfigResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useColumnWidth.ts",
+    "name": "UseColumnWidthOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useColumnWidth.ts",
+    "name": "UseColumnWidthResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useConfirmDialog.ts",
+    "name": "UseConfirmDialogResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCountUp.ts",
+    "name": "UseCountUpOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudForm.ts",
+    "name": "CrudFormMode",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudForm.ts",
+    "name": "UseCrudFormOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudMutations.ts",
+    "name": "UseCrudMutationsOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudMutations.ts",
+    "name": "UseCrudMutationsResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudQueries.ts",
+    "name": "CrudQueriesOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudQueries.ts",
+    "name": "ModuleQueriesOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "AxiosCrudAdapterOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "CrudAdapter",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "CrudListParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "CrudListResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "CrudOperationsAdapterOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "FunctionAdapterOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "UseCrudUnifiedOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useCrudUnified.ts",
+    "name": "UseCrudUnifiedResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDashboardWebSocket.ts",
+    "name": "DashboardMessage",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/websocket/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDashboardWebSocket.ts",
+    "name": "UseDashboardWebSocketOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/websocket/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDataTable.ts",
+    "name": "UseDataTableOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDataTable.ts",
+    "name": "UseDataTableResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDialogForm.ts",
+    "name": "UseDialogFormOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDialogForm.ts",
+    "name": "UseDialogFormResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useDynamicOptions.ts",
+    "name": "DynamicOptionsResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useErp.ts",
+    "name": "UseErpResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/finance/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useFeatureFlag.ts",
+    "name": "FeatureFlagContext",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useFeatureFlag.ts",
+    "name": "FeatureFlagResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useImWebSocket.ts",
+    "name": "ImConnectionStatus",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/websocket/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useImWebSocket.ts",
+    "name": "UseImWebSocketOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/websocket/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useImportExport.ts",
+    "name": "UseImportExportOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useListPageState.ts",
+    "name": "UseListPageStateOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useListPageState.ts",
+    "name": "UseListPageStateResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/domain/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useModuleData.ts",
+    "name": "UseModuleDataOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useModuleData.ts",
+    "name": "UseModuleDataResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useNetworkStatus.ts",
+    "name": "NetworkInfo",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/offline/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useNetworkStatus.ts",
+    "name": "NetworkStatus",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/offline/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useNotificationWebSocket.ts",
+    "name": "UseNotificationWebSocketOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useOfflineSync.ts",
+    "name": "OfflineRequest",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/offline/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useOrganization.ts",
+    "name": "OrganizationData",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/auth/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useOrganization.ts",
+    "name": "UseOrganizationReturn",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/auth/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "ListSyncActions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "ListSyncOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "ListSyncState",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "SyncActions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "SyncOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useRealtimeSync.ts",
+    "name": "SyncState",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useResourceCRUD.ts",
+    "name": "ResourceCRUDResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useResourceCRUD.ts",
+    "name": "UseResourceCRUDOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useResponsive.ts",
+    "name": "Orientation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useResponsive.ts",
+    "name": "ResponsiveContext",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useResponsive.ts",
+    "name": "ViewportSize",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useServiceStatus.ts",
+    "name": "ServiceInfo",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/system/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useThemeMode.ts",
+    "name": "ResolvedThemeMode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useThemeMode.ts",
+    "name": "UseThemeModeResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUiState.ts",
+    "name": "ModalState",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/system/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUiState.ts",
+    "name": "SortState",
+    "sampleRefs": [
+      "apps/web/src/hooks/features/system/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUnifiedWebSocket.ts",
+    "name": "UnifiedNotificationExtensions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUnifiedWebSocket.ts",
+    "name": "UseUnifiedWebSocketOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUnifiedWebSocket.ts",
+    "name": "UseUnifiedWebSocketResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUnifiedWebSocket.ts",
+    "name": "WsNotificationConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUrlListState.ts",
+    "name": "UseUrlListStateOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUrlListState.ts",
+    "name": "UseUrlListStateResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useUrlState.ts",
+    "name": "UrlStateSetter",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useVirtualScroll.ts",
+    "name": "UseVirtualScrollOptions",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useVirtualScroll.ts",
+    "name": "UseVirtualScrollResult",
+    "sampleRefs": [
+      "apps/web/src/hooks/foundation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/hooks/useWindowManager.ts",
+    "name": "WindowConfig",
+    "sampleRefs": [
+      "apps/web/src/hooks/ui/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/pages/_shared/UserManagementApiAdapter.shared.tsx",
+    "name": "CreateUserApiAdapterOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/components/MonitoringAlertFilters.tsx",
+    "name": "MonitoringAlertFiltersProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/components/MonitoringAlertRuleForm.tsx",
+    "name": "MonitoringAlertRuleFormProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/components/MonitoringAlertTable.tsx",
+    "name": "MonitoringAlertTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/hooks/useMonitoringAlert.ts",
+    "name": "UseMonitoringAlertReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/hooks/usePluginManagement.tsx",
+    "name": "UsePluginManagementReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/admin/hooks/useRateLimitConfig.tsx",
+    "name": "UseRateLimitConfigReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/AiAssistantFlowTab.tsx",
+    "name": "AiAssistantFlowTabProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/AiAssistantKnowledgeTab.tsx",
+    "name": "AiAssistantKnowledgeTabProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/AiAssistantReportTab.tsx",
+    "name": "AiAssistantReportTabProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/ChatHeader.tsx",
+    "name": "ChatHeaderProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/ChatMessageList.tsx",
+    "name": "ChatMessageListProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/ChatSidebar.tsx",
+    "name": "ChatSidebarProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/components/DocUploadDialog.tsx",
+    "name": "DocUploadDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/hooks/useAiAssistant.ts",
+    "name": "AiAssistantTab",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/hooks/useAiAssistant.ts",
+    "name": "UseAiAssistantResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/hooks/useAiChat.ts",
+    "name": "UseAiChatResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ai/hooks/useAiModelSettings.ts",
+    "name": "ModelUsageData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerCanvas.tsx",
+    "name": "DesignerCanvasProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerToolbar.tsx",
+    "name": "DesignerToolbarProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/NodeEditDialog.tsx",
+    "name": "NodeEditDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/NodeLibrary.tsx",
+    "name": "NodeLibraryProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/PropertiesPanel.tsx",
+    "name": "PropertiesPanelProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/useAutomationDesigner.ts",
+    "name": "UseAutomationDesignerResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/GisPage/components/TableUtils.tsx",
+    "name": "ActionButtonsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/components/BiPermissionDataTable.tsx",
+    "name": "BiPermissionDataTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/components/BiPermissionEditDialog.tsx",
+    "name": "BiPermissionEditDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/components/BiPermissionRowLevelTable.tsx",
+    "name": "BiPermissionRowLevelTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/components/BiPermissionStatsCards.tsx",
+    "name": "BiPermissionStatsCardsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/hooks/useBiPermission.ts",
+    "name": "BiPermissionTab",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/bi/hooks/useBiPermission.ts",
+    "name": "UseBiPermissionResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/doc/DocumentsPage/hooks/useDocumentsPage.ts",
+    "name": "UseDocumentsPageReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardAssessmentsSection.tsx",
+    "name": "EhsHazardAssessmentsSectionProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardBasicInfoSection.tsx",
+    "name": "EhsHazardBasicInfoSectionProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardControlDialog.tsx",
+    "name": "EhsHazardControlDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardControlsSection.tsx",
+    "name": "EhsHazardControlsSectionProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardEditDialog.tsx",
+    "name": "EhsHazardEditDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardInfoCard.tsx",
+    "name": "EhsHazardInfoCardProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/components/EhsHazardInfoCard.tsx",
+    "name": "HazardInfoCardData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/ehs/hooks/useEhsHazardDetail.ts",
+    "name": "UseEhsHazardDetailResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/erp/components/VoucherDetailTabs.tsx",
+    "name": "VoucherDetailTabsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/erp/components/VoucherFilters.tsx",
+    "name": "VoucherFiltersProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/erp/components/VoucherFormDialog.tsx",
+    "name": "VoucherFormDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/erp/components/VoucherTable.tsx",
+    "name": "VoucherTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/erp/hooks/useVoucherManagement.ts",
+    "name": "StatusBadgeColor",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/hrm/HrmEmployeePage/types.ts",
+    "name": "ValidationSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/im/MailPage/constants.ts",
+    "name": "BadgeConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/plugin/components/PluginDetailDialog.tsx",
+    "name": "PluginDetailDialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/plugin/components/PluginInstallProgress.tsx",
+    "name": "PluginInstallProgressProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/plugin/components/PluginMarketplaceFilters.tsx",
+    "name": "PluginMarketplaceFiltersProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/plugin/components/PluginMarketplaceGrid.tsx",
+    "name": "PluginMarketplaceGridProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/plugin/hooks/usePluginMarketplace.ts",
+    "name": "UsePluginMarketplaceReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectDetailHeader.tsx",
+    "name": "PmProjectDetailHeaderProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectDetailHeader.tsx",
+    "name": "PmProjectDetailInfoCard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectFinance.tsx",
+    "name": "PmProjectFinanceProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectGantt.tsx",
+    "name": "PmProjectGanttProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectMilestone.tsx",
+    "name": "PmProjectMilestoneProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectOverview.tsx",
+    "name": "PmProjectOverviewProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmProjectTaskList.tsx",
+    "name": "PmProjectTaskListProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportBenefitsTable.tsx",
+    "name": "PmReportBenefitsTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportBudgetCard.tsx",
+    "name": "PmReportBudgetCardProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportCustomToolbar.tsx",
+    "name": "PmReportCustomToolbarProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportRiskPieChart.tsx",
+    "name": "PmReportRiskPieChartProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportScheduleChart.tsx",
+    "name": "PmReportScheduleChartProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportStatusPieChart.tsx",
+    "name": "PmReportStatusPieChartProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/components/PmReportTrendChart.tsx",
+    "name": "PmReportTrendChartProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/hooks/usePmProjectDetail.ts",
+    "name": "UsePmProjectDetailReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/pm/hooks/usePmReport.tsx",
+    "name": "UsePmReportReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileActivityList.tsx",
+    "name": "ProfileActivityListProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileHeader.tsx",
+    "name": "ProfileHeaderProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileNotificationPrefs.tsx",
+    "name": "ProfileNotificationPrefsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileSecurityForm.tsx",
+    "name": "ProfileSecurityFormProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileSettingsForm.tsx",
+    "name": "ProfileSettingsFormProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/components/ProfileShortcuts.tsx",
+    "name": "ProfileShortcutsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/hooks/useDashboardData.tsx",
+    "name": "UseDashboardDataReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/shared/hooks/useProfile.ts",
+    "name": "ShortcutEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportChart.tsx",
+    "name": "InventoryReportABCOverviewProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportChart.tsx",
+    "name": "InventoryReportTurnoverSummaryProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportChart.tsx",
+    "name": "InventoryReportValueDistributionProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportFilters.tsx",
+    "name": "InventoryReportFiltersProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportSummary.tsx",
+    "name": "InventoryReportSummaryProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportTable.tsx",
+    "name": "InventoryReportABCTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportTable.tsx",
+    "name": "InventoryReportTurnoverTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/components/InventoryReportTable.tsx",
+    "name": "InventoryReportValueByWarehouseTableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/wms/hooks/useInventoryReport.ts",
+    "name": "UseInventoryReportReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/pages/workflow/hooks/useWorkflowApprovalDetail.ts",
+    "name": "UseWorkflowApprovalDetailReturn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/ai-ui-generator.ts",
+    "name": "AIUIGenerationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "CustomRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "DiffReviewResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "PatternDetection",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "ReviewScore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "ReviewSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/a2ui/smart-code-reviewer.ts",
+    "name": "ReviewSummary",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/apiPath.ts",
+    "name": "ApiPathOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/apiPath.ts",
+    "name": "ServiceCode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/batchOperation.ts",
+    "name": "BatchOperationOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/bff/codegen.ts",
+    "name": "FieldDefinition",
+    "sampleRefs": [
+      "apps/web/src/components/bff/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/bff/fallback-strategy.ts",
+    "name": "FallbackAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/cdn-scheduler.ts",
+    "name": "CdnProvider",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/cdn-scheduler.ts",
+    "name": "ResourceMetric",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/cdn-scheduler.ts",
+    "name": "ResourceType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/errorHandler.ts",
+    "name": "ErrorCategory",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/formSchemas.ts",
+    "name": "BaseEntity",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/formSchemas.ts",
+    "name": "Party",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/lazyImport.ts",
+    "name": "LazyImportOptions",
+    "sampleRefs": [
+      "apps/web/src/utils/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/listParamMapping.ts",
+    "name": "BackendPaginationResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/listParamMapping.ts",
+    "name": "BackendParamStyle",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/listParamMapping.ts",
+    "name": "FilterGroup",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/listParamMapping.ts",
+    "name": "ListStateParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/listParamMapping.ts",
+    "name": "ParamMappingOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/logger.ts",
+    "name": "Logger",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/logger.ts",
+    "name": "LoggerOptions",
+    "sampleRefs": [
+      "apps/web/src/utils/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/observability/e2e-tracing.ts",
+    "name": "SpanEvent",
+    "sampleRefs": [
+      "apps/web/src/utils/observability/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/observability/e2e-tracing.ts",
+    "name": "SpanStatus",
+    "sampleRefs": [
+      "apps/web/src/utils/observability/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/observability/e2e-tracing.ts",
+    "name": "TracingConfig",
+    "sampleRefs": [
+      "apps/web/src/utils/observability/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/pwa-cache-optimizer.ts",
+    "name": "CacheStrategy",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/pwa-cache-optimizer.ts",
+    "name": "RouteCacheConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/query-sharding.ts",
+    "name": "ShardInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/session.ts",
+    "name": "SessionUser",
+    "sampleRefs": [
+      "apps/web/src/utils/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/utils/storage.ts",
+    "name": "StorageItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/storage.ts",
+    "name": "StorageOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/streaming-ssr.ts",
+    "name": "SSRDataCollection",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/streaming-ssr.ts",
+    "name": "SSRDataEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/streaming-ssr.ts",
+    "name": "StreamingRenderResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/streaming-ssr.ts",
+    "name": "StreamingSSROptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/tracing.ts",
+    "name": "SpanContext",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/websocket-optimizer.ts",
+    "name": "ReconnectStrategyConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/worker.ts",
+    "name": "WorkerFn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/utils/worker.ts",
+    "name": "WorkerMessage",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51AvatarProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51BadgeProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51BadgeSize",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51BadgeVariant",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ButtonColor",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ButtonProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ButtonSize",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ButtonVariant",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51CardProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51DialogProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51InputProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51InputValidationState",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51SelectOption",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51SelectProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51SkeletonCardProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51SkeletonProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51SortDirection",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51TabItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51TableColumn",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51TableProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51TabsProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ToastContextValue",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ToastMessage",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/components/index.tsx",
+    "name": "V51ToastType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/design-lint.ts",
+    "name": "ColorContrastCheck",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/design-lint.ts",
+    "name": "ComponentUsageCheck",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/design-lint.ts",
+    "name": "LintIssue",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/design-lint.ts",
+    "name": "LintReport",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/theme-manager.tsx",
+    "name": "ThemeChangeListener",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/theme-manager.tsx",
+    "name": "V51ThemeConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/theme-manager.tsx",
+    "name": "V51ThemeContextValue",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/theme-manager.tsx",
+    "name": "V51ThemeMode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51BorderRadius",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51Breakpoints",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51ColorPalette",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51DesignTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51Motion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51SemanticTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51Shadows",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51Spacing",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51Typography",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/design-system/tokens/v51-tokens.ts",
+    "name": "V51ZIndex",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "AnimationConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "CanvasStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "ColorTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "DataBindingConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "FlowAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "FlowDefinition",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "FlowEdge",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "FlowEdgeType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "FlowTrigger",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "PublishRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "PublishStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "SpacingTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "TemplateDefinition",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+    "name": "TypographyTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "CompatibilityMatrix",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "InstallationState",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "MarketplaceChangeListener",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "SandboxConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "SandboxPermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/plugin-marketplace.ts",
+    "name": "SearchOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "BuildToolType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "EnvironmentConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "HealthIssue",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PackageManager",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PipelineArtifact",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PipelineDefinition",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PipelineStageConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PipelineStageStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "PipelineTrigger",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "ProjectHealth",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+    "name": "TechStack",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/deployment.ts",
+    "name": "DeploymentMode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/deployment.ts",
+    "name": "FeatureFlags",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/help-mapping.ts",
+    "name": "HelpMappingItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/permissions.ts",
+    "name": "ModulePermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/permissions.ts",
+    "name": "PermissionGroup",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/plugins.config.ts",
+    "name": "RemoteModuleEnvConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/security.ts",
+    "name": "CspConfig",
+    "sampleRefs": [
+      "apps/web/src/config/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/config/service-ports.ts",
+    "name": "ServicePort",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "AnalyticsConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "FeaturesConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "I18nConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "LoggingConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "ServicesConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "ThirdPartyConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/config/types.ts",
+    "name": "UploadConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/ai/copilotContext.ts",
+    "name": "AICopilotContextInput",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/ai/copilotContext.ts",
+    "name": "AICopilotSource",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/moduleThemes.ts",
+    "name": "ModuleTheme",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/navigation/moduleMapping.ts",
+    "name": "ModuleBackendMapping",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/navigation/types.ts",
+    "name": "ModuleSource",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/DynamicRouter.tsx",
+    "name": "RemoteConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/MicroFrontendLoader.tsx",
+    "name": "MicroFrontendLoaderProps",
+    "sampleRefs": [
+      "apps/web/src/lib/plugin-loader/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/ModuleLoader.tsx",
+    "name": "ModuleRouteWrapperProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/PluginLoader.tsx",
+    "name": "PluginLoaderOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/PluginLoader.tsx",
+    "name": "PluginLoaderProviderProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/PluginLoader.tsx",
+    "name": "PluginMenu",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/PluginLoader.tsx",
+    "name": "PluginRouteWrapperProps",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/plugin-loader/PluginManager.ts",
+    "name": "PluginState",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/lib/pwa.ts",
+    "name": "PushSubscriptionOptions",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/layouts/components/GlobalActions.tsx",
+    "name": "GlobalActionsProps",
+    "sampleRefs": [
+      "apps/web/src/layouts/components/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/layouts/components/UserMenu.tsx",
+    "name": "UserMenuProps",
+    "sampleRefs": [
+      "apps/web/src/layouts/components/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/layouts/constants.ts",
+    "name": "L1BusinessDomain",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/layouts/navTree.ts",
+    "name": "L1NavNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/layouts/navTree.ts",
+    "name": "L2NavNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/layouts/navTree.ts",
+    "name": "NavTreeResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/RemoteLoader.tsx",
+    "name": "RemoteLoaderProps",
+    "sampleRefs": [
+      "apps/web/src/microfrontend/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/ai-ops/smart-alerting.ts",
+    "name": "SmartAlertingConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/lowcode/builder.ts",
+    "name": "PageMetadata",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/performance.ts",
+    "name": "ModuleLoadMetrics",
+    "sampleRefs": [
+      "apps/web/src/microfrontend/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/registry/registry-api.ts",
+    "name": "ModuleHealthStatus",
+    "sampleRefs": [
+      "apps/web/src/microfrontend/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/microfrontend/registry/registry-api.ts",
+    "name": "RegistryFetchResult",
+    "sampleRefs": [
+      "apps/web/src/microfrontend/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/schemas/crm/contact.ts",
+    "name": "ContactStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/schemas/crm/customer.ts",
+    "name": "CustomerRating",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/schemas/crm/customer.ts",
+    "name": "CustomerType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/schemas/crm/opportunity.ts",
+    "name": "OppPriority",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/schemas/crm/opportunity.ts",
+    "name": "OppStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/schemas/qms/eightD.ts",
+    "name": "RootCauseRenderer",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/ExternalErpAdapters.ts",
+    "name": "AdapterConfig",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/ExternalErpAdapters.ts",
+    "name": "ErpAdapter",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/VoucherTemplateEngine.ts",
+    "name": "AccountFinder",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/VoucherTemplateEngine.ts",
+    "name": "GeneratedEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/VoucherTemplateEngine.ts",
+    "name": "GeneratedVoucher",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/services/VoucherTemplateEngine.ts",
+    "name": "TemplateContext",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/store/moduleLoadingStore.ts",
+    "name": "ModuleLoadingState",
+    "sampleRefs": [
+      "apps/web/src/lib/plugin-loader/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/store/moduleLoadingStore.ts",
+    "name": "ModuleLoadingStore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/store/themeStore.ts",
+    "name": "ThemeIconKey",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/theme/design-tokens.ts",
+    "name": "SizeTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/theme/tokens/cyberpunk.tokens.ts",
+    "name": "CyberpunkSemanticTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/theme/tokens/cyberpunk.tokens.ts",
+    "name": "CyberpunkTokens",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/debug/useDebugTrace.ts",
+    "name": "DebugLevel",
+    "sampleRefs": [
+      "apps/web/src/debug/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/debug/useDebugTrace.ts",
+    "name": "DebugTraceConfig",
+    "sampleRefs": [
+      "apps/web/src/debug/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/debug/useDebugTrace.ts",
+    "name": "UseDebugTraceReturn",
+    "sampleRefs": [
+      "apps/web/src/debug/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/fullstack-automation/intelligent-deployment.ts",
+    "name": "DeploymentUnit",
+    "sampleRefs": [
+      "apps/web/src/fullstack-automation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/fullstack-automation/intelligent-deployment.ts",
+    "name": "HealthCheck",
+    "sampleRefs": [
+      "apps/web/src/fullstack-automation/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/constants/storage.ts",
+    "name": "StorageKey",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/context/PluginContext.tsx",
+    "name": "PluginContextType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/i18n/index.ts",
+    "name": "NamespaceTier",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/routes/v2/types.ts",
+    "name": "ModuleTier",
+    "sampleRefs": []
+  }
+]

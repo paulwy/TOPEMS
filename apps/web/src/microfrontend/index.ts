@@ -81,7 +81,7 @@ export {
 } from './canary-release';
 
 // ==================== 性能监控 ====================
-export { microFrontendPerf, type ModuleLoadMetrics } from './performance';
+export { microFrontendPerf } from './performance';
 
 // ==================== 可观测性体系（V40.0 + V217 MF 运行时埋点） ====================
 export {
@@ -116,7 +116,6 @@ export {
   prefetchOnIdle,
   prefetchOnHover,
 } from './RemoteLoader';
-export type { RemoteLoaderProps } from './RemoteLoader';
 
 // ==================== 模块注册表 ====================
 export { type RegisteredModule, type ModuleStatus } from './registry';
@@ -128,7 +127,6 @@ export {
   type ModuleType,
   type ModuleFilter,
 } from './registry/module-registry';
-export { type RegistryFetchResult, type ModuleHealthStatus } from './registry/registry-api';
 export { default as RegistryPanel } from './registry/RegistryPanel';
 
 // ==================== 版本管理平台（V41.0）====================

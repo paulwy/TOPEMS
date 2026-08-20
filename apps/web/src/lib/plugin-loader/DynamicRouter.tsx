@@ -340,7 +340,7 @@ export const DynamicRouter: React.FC = () => {
   );
 };
 
-export interface RemoteConfig {
+interface RemoteConfig {
   name: string;
   url: string;
 }

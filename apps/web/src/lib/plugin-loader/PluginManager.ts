@@ -8,7 +8,7 @@ import i18n from '@/i18n';
 
 type PluginStatus = 'installing' | 'installed' | 'running' | 'disabled' | 'error' | 'uninstalled';
 
-export interface PluginState {
+interface PluginState {
   code: string;
   name: string;
   version: string;

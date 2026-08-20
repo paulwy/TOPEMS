@@ -23,7 +23,7 @@ import {
 import { designTokens, semanticTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 
-export interface DesignerCanvasProps {
+interface DesignerCanvasProps {
   nodes: DesignerNodeItem[];
   edges: DesignerCanvasEdge[];
   selectedNodeId: string | null;

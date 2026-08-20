@@ -11,7 +11,7 @@ const logger = createLogger('lazyImport');
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-export interface LazyImportOptions<T extends ComponentType<any>> {
+interface LazyImportOptions<T extends ComponentType<any>> {
   factory: () => Promise<{ default: T }>;
   moduleName?: string;
   maxRetries?: number;

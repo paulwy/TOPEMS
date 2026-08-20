@@ -15,7 +15,7 @@ import {
 import i18n from '@/i18n';
 import type { ProjectBenefit } from '@/api/pm';
 
-export interface PmReportBenefitsTableProps {
+interface PmReportBenefitsTableProps {
   benefits: ProjectBenefit[];
 }
 const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits }) => {

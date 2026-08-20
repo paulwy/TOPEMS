@@ -18,7 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { getTypeLabel, type ChatMode, type ChatSession } from '../hooks/useAiChat';
 
-export interface ChatHeaderProps {
+interface ChatHeaderProps {
   selectedSession: ChatSession | undefined;
   selectedModel: string;
   activeTab: ChatMode;

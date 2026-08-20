@@ -19,7 +19,7 @@ import type { InventoryStatistics } from '@/api/wms';
 
 const ct = designTokens.colors;
 
-export interface InventoryReportSummaryProps {
+interface InventoryReportSummaryProps {
   statistics: InventoryStatistics | undefined;
   formatNumber: (num: number) => string;
 }

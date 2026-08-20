@@ -25,7 +25,7 @@ import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { RowLevelPermission } from '@/api/bi';
 
 export type TestResult = { success: boolean; message: string } | null;
-export interface BiPermissionEditDialogProps {
+interface BiPermissionEditDialogProps {
   open: boolean;
   editingItem: RowLevelPermission | null;
   formData: Partial<RowLevelPermission>;

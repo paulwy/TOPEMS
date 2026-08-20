@@ -21,7 +21,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ColumnConfig } from '@/components/templates/list/types';
 
-export interface UseColumnConfigOptions {
+interface UseColumnConfigOptions {
   /** localStorage 存储 key，同时作为 URL 参数名（默认 cols）的后缀变体 */
   storageKey?: string;
   /** 默认列配置（从 columns 中提取的可见列 ID 列表） */
@@ -39,7 +39,7 @@ export interface UseColumnConfigOptions {
   urlPrefix?: string;
 }
 
-export interface UseColumnConfigResult {
+interface UseColumnConfigResult {
   /** 可见列的 ID，按顺序排列 */
   visibleColumnIds: string[];
   /** 切换列的可见性 */

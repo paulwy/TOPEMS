@@ -202,7 +202,7 @@ const BOOTSTRAP_SET = new Set(BOOTSTRAP_NAMESPACES);
 const FRAMEWORK_SET = new Set(FRAMEWORK_NAMESPACES);
 const BUSINESS_SET = new Set(BUSINESS_MODULE_NAMESPACES);
 
-export type NamespaceTier = 'bootstrap' | 'framework' | 'business' | 'unknown';
+type NamespaceTier = 'bootstrap' | 'framework' | 'business' | 'unknown';
 function classifyNamespaceTier(ns: string): NamespaceTier {
   if (BOOTSTRAP_SET.has(ns)) return 'bootstrap';
   if (FRAMEWORK_SET.has(ns)) return 'framework';

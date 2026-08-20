@@ -43,4 +43,4 @@ export const STORAGE_KEYS = {
   SIDEBAR_RECENT: 'sidebar-recent',
 } as const;
 
-export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
+type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

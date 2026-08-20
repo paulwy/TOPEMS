@@ -2,7 +2,7 @@ import type React from 'react';
 import { useEffect, useCallback, useState } from 'react';
 import i18n from '@/i18n';
 
-export interface ShortcutConfig {
+interface ShortcutConfig {
   key: string;
   ctrl?: boolean;
   meta?: boolean;
@@ -198,11 +198,11 @@ export function matchShortcut(
   return true;
 }
 
-export interface ShortcutHandler {
+interface ShortcutHandler {
   (event: KeyboardEvent): void;
 }
 
-export interface ShortcutBinding {
+interface ShortcutBinding {
   key: string;
   handler: ShortcutHandler;
   config: ShortcutConfig;

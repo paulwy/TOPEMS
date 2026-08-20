@@ -21,7 +21,7 @@ export interface NotificationWsState {
   error: Error | null;
 }
 
-export interface UseNotificationWebSocketOptions {
+interface UseNotificationWebSocketOptions {
   userId: string;
   onNotification?: (notification: Record<string, unknown>) => void;
   onUnreadCountChange?: (count: number) => void;

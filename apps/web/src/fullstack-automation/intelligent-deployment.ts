@@ -6,7 +6,7 @@ export type DeploymentStatus =
   'idle' | 'deploying' | 'verifying' | 'promoting' | 'rolling_back' | 'completed' | 'failed';
 export type HealthCheckStatus = 'healthy' | 'unhealthy' | 'degraded' | 'unknown';
 
-export interface HealthCheck {
+interface HealthCheck {
   endpoint: string;
   interval_ms: number;
   timeout_ms: number;
@@ -21,7 +21,7 @@ export interface DeploymentStrategy {
   rollback_enabled: boolean;
 }
 
-export interface DeploymentUnit {
+interface DeploymentUnit {
   name: string;
   version: string;
   replicas: number;

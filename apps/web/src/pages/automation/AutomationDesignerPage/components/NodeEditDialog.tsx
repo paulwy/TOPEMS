@@ -11,7 +11,7 @@ import {
 import type { DesignerNodeItem } from '../shared';
 import { useTranslation } from 'react-i18next';
 
-export interface NodeEditDialogProps {
+interface NodeEditDialogProps {
   node: DesignerNodeItem | null;
   onClose: () => void;
   onSave: (node: DesignerNodeItem) => void;

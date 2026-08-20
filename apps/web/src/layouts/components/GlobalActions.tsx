@@ -6,7 +6,7 @@ import { AI_PATHS } from '@/modules/ai/config';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import i18n from '@/i18n';
 
-export interface GlobalActionsProps {
+interface GlobalActionsProps {
   onSearchClick?: () => void;
 }
 

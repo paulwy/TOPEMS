@@ -115,7 +115,7 @@ function buildMutationName(entityName: string, operation: string): string {
 
 // ============ 字段定义类型 ============
 
-export interface FieldDefinition {
+interface FieldDefinition {
   name: string;
   type: 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'object' | 'array' | 'json';
   required?: boolean;

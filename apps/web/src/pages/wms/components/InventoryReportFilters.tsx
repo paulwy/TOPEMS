@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import type { Warehouse } from '@/api/wms';
 
-export interface InventoryReportFiltersProps {
+interface InventoryReportFiltersProps {
   currentTab: number;
   onTabChange: (tab: number) => void;
   warehouseFilter: string;

@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 
-export interface BadgeConfig {
+interface BadgeConfig {
   label: string;
   variant: 'default' | 'destructive' | 'outline' | 'secondary';
 }

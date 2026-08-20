@@ -12,7 +12,7 @@ import ListPageTemplate, {
 import i18n from '@/i18n';
 import type { Alert } from '@/api/admin/monitoring';
 
-export interface MonitoringAlertTableProps {
+interface MonitoringAlertTableProps {
   alerts: Alert[];
   loading: boolean;
   total: number;
