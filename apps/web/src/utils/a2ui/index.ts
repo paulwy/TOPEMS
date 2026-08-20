@@ -9,11 +9,6 @@
 
 // ==================== AI 生成 UI ====================
 export {
-  AIUIGenerator,
-  aiUiGenerator,
-  UIGenerationMode,
-  LayoutStrategy,
-  ComponentLevel,
   type DesignConstraints,
   type ResponsiveBreakpoint,
   type ThemeConfig,
@@ -25,11 +20,7 @@ export {
 
 // ==================== 自动测试生成 ====================
 export {
-  AutoTestGenerator,
-  autoTestGenerator,
-  TestGenerationStrategy,
   TestPriority,
-  MockType,
   TestStatus,
   type AutoTestRequest,
   type GeneratedTestSuite,

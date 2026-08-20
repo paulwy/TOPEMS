@@ -35,7 +35,7 @@ export function calculateBackoffDelay(
  * 完整抖动（Full Jitter）退避
  * 随机返回 [0, capped] 之间的值
  */
-export function fullJitterBackoff(
+function fullJitterBackoff(
   attempt: number,
   minDelay: number = 1000,
   maxDelay: number = 30000
@@ -49,7 +49,7 @@ export function fullJitterBackoff(
  * 均衡抖动（Equal Jitter）退避
  * 固定一半 + 随机一半
  */
-export function equalJitterBackoff(
+function equalJitterBackoff(
   attempt: number,
   minDelay: number = 1000,
   maxDelay: number = 30000

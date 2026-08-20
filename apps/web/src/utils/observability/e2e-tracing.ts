@@ -92,7 +92,7 @@ function generateSpanId(): string {
   return generateId(16);
 }
 
-export class E2ETracer {
+class E2ETracer {
   private config: TracingConfig;
   private currentTrace: Trace | null = null;
   private spanStack: Span[] = [];
@@ -700,5 +700,5 @@ export class E2ETracer {
   }
 }
 
-export const e2eTracer = new E2ETracer();
+const e2eTracer = new E2ETracer();
 export default e2eTracer;

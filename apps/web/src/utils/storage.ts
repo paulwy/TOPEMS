@@ -269,11 +269,10 @@ class SessionStorage {
 }
 
 // 导出单例
-export const localStorage2 = new LocalStorage();
-export const sessionStorage2 = new SessionStorage();
+const localStorage2 = new LocalStorage();
+const sessionStorage2 = new SessionStorage();
 
 // 导出类用于自定义配置
-export { LocalStorage, SessionStorage };
 
 // 常用键名常量
 export const STORAGE_KEYS = {

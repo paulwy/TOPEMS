@@ -4,17 +4,6 @@ import apiCache from './apiCache';
 
 export { default as createLogger, type LoggerOptions, type LogLevel } from './logger';
 export * from './format';
-export {
-  parseDate,
-  isSameDay,
-  getDaysBetween,
-  getWeekday,
-  isToday,
-  isYesterday,
-  isTomorrow,
-  getWeekStart,
-  getWeekEnd,
-} from './date';
 export * from './string';
 export { default as session, type SessionUser } from './session';
 export * from './errors';
@@ -39,11 +28,7 @@ export {
 
 // ==================== V50.0 A2UI ====================
 export {
-  aiUiGenerator,
-  autoTestGenerator,
   smartCodeReviewer,
-  UIGenerationMode,
-  TestGenerationStrategy,
   ReviewSeverity,
   defaultAiUiGenerator,
   defaultAutoTestGenerator,

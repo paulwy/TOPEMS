@@ -10,19 +10,19 @@ import i18n from '@/i18n';
 
 // ============ 枚举与类型定义 ============
 
-export enum UIGenerationMode {
+enum UIGenerationMode {
   TEXTTOUI = 'text_to_ui',
   DESIGNTOUI = 'design_to_ui',
   SKETCHTOUI = 'sketch_to_ui',
 }
 
-export enum LayoutStrategy {
+enum LayoutStrategy {
   FLEXBOX = 'flexbox',
   GRID = 'grid',
   ABSOLUTE = 'absolute',
 }
 
-export enum ComponentLevel {
+enum ComponentLevel {
   ATOM = 'atom',
   MOLECULE = 'molecule',
   ORGANISM = 'organism',
@@ -148,7 +148,7 @@ export type AIUIGenerationRequest = GenerateOptions;
  * V64.0+ AI 驱动 UI 生成器。
  * 通过本地 ollama 模型生成组件树；模型不可达或返回非法时降级为占位结构，不抛错。
  */
-export class AIUIGenerator {
+class AIUIGenerator {
   async generate(request: GenerateOptions): Promise<UIGenerationResult> {
     const mode = request.mode ?? UIGenerationMode.TEXTTOUI;
     const fallback = this.buildFallback(request, mode);
@@ -306,6 +306,6 @@ export class AIUIGenerator {
   }
 }
 
-export const aiUiGenerator = new AIUIGenerator();
+const aiUiGenerator = new AIUIGenerator();
 
 export default aiUiGenerator;

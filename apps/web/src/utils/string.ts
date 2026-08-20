@@ -15,7 +15,7 @@ export const trim = (str: string): string => {
 /**
  * 去除所有空格
  */
-export const trimAll = (str: string): string => {
+const trimAll = (str: string): string => {
   return str.replace(/\s+/g, '');
 };
 
@@ -56,7 +56,7 @@ export const capitalize = (str: string): string => {
 /**
  * 首字母小写
  */
-export const uncapitalize = (str: string): string => {
+const uncapitalize = (str: string): string => {
   return str.charAt(0).toLowerCase() + str.slice(1);
 };
 
@@ -92,21 +92,21 @@ export const truncate = (str: string, maxLength: number, suffix: string = '...')
 /**
  * 隐藏手机号中间四位
  */
-export const maskPhone = (phone: string): string => {
+const maskPhone = (phone: string): string => {
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 };
 
 /**
  * 隐藏邮箱
  */
-export const maskEmail = (email: string): string => {
+const maskEmail = (email: string): string => {
   return email.replace(/(.{2}).*(@.*)/, '$1***$2');
 };
 
 /**
  * 隐藏身份证号中间部分
  */
-export const maskIdCard = (idCard: string): string => {
+const maskIdCard = (idCard: string): string => {
   return idCard.replace(/(\d{4})\d+(\d{4})/, '$1**********$2');
 };
 
@@ -137,7 +137,7 @@ const randomNumber = (length: number = 6): string => {
 /**
  * 转换为URL友好字符串
  */
-export const slugify = (str: string): string => {
+const slugify = (str: string): string => {
   return str
     .toLowerCase()
     .trim()
@@ -149,7 +149,7 @@ export const slugify = (str: string): string => {
 /**
  * 移除HTML标签
  */
-export const stripHtml = (html: string): string => {
+const stripHtml = (html: string): string => {
   return html.replace(/<[^>]*>/g, '');
 };
 
@@ -170,7 +170,7 @@ export const escapeHtml = (str: string): string => {
 /**
  * 反转义HTML
  */
-export const unescapeHtml = (str: string): string => {
+const unescapeHtml = (str: string): string => {
   const unescapeMap: Record<string, string> = {
     '&amp;': '&',
     '&lt;': '<',
@@ -191,14 +191,14 @@ export const isEmpty = (str: string | null | undefined): boolean => {
 /**
  * 判断是否为非空字符串
  */
-export const isNotEmpty = (str: string | null | undefined): boolean => {
+const isNotEmpty = (str: string | null | undefined): boolean => {
   return !isEmpty(str);
 };
 
 /**
  * 限制字符串长度
  */
-export const limitLength = (str: string, maxLength: number, suffix: string = '...'): string => {
+const limitLength = (str: string, maxLength: number, suffix: string = '...'): string => {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength) + suffix;
 };
@@ -217,7 +217,7 @@ export const formatSize = (bytes: number): string => {
 /**
  * 将下划线命名转换为标题格式
  */
-export const snakeToTitle = (str: string): string => {
+const snakeToTitle = (str: string): string => {
   return str
     .split('_')
     .map((word) => capitalize(word.toLowerCase()))
@@ -227,7 +227,7 @@ export const snakeToTitle = (str: string): string => {
 /**
  * 将驼峰命名转换为标题格式
  */
-export const camelToTitle = (str: string): string => {
+const camelToTitle = (str: string): string => {
   return str
     .replace(/([A-Z])/g, ' $1')
     .trim()

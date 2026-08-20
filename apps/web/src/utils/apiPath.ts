@@ -9,7 +9,7 @@
  *  └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-export const API_VERSION = '';
+const API_VERSION = '';
 
 /**
  * Group1 核心虚拟服务（K8s ingress `/api/core/*` 转发到 unified-core:8000）
@@ -19,7 +19,7 @@ export const API_VERSION = '';
  * billing/ticket 已外迁为独立进程（8085/8086），不再属于 Group1。
  * 独立服务的路径前缀为 `/api/{svc}/`。
  */
-export const GROUP1_CORE_SERVICES = new Set<string>([
+const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
   'flow', // 工作流引擎（unified-core 虚拟服务，路径 /api/core/flow）
   'file',
@@ -35,7 +35,7 @@ export const GROUP1_CORE_SERVICES = new Set<string>([
 ]);
 
 /** Group2 独立进程服务列表（作为快速引用，实际所有非 Group1 服务都算 Group2） */
-export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
+const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'erp',
   'finance',
   'ai',
@@ -77,7 +77,7 @@ export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'asset', // 资产（归 erp 服务，但路径独立）
 ]);
 
-export const SERVICE_CODES = {
+const SERVICE_CODES = {
   iam: 'iam',
   portal: 'portal',
   workflow: 'flow', // workflow 是别名，实际服务为 'flow'（unified-core 虚拟服务，路径 /api/core/flow）
@@ -140,7 +140,7 @@ export interface ApiPathOptions {
  *   Group1（iam/workflow/file/...） →  /api/core/{svc}/{path}
  *   Group2（erp/hrm/pm/...）       →  /api/{svc}/{path}
  */
-export function buildApiPath(options: ApiPathOptions): string {
+function buildApiPath(options: ApiPathOptions): string {
   const { service, path } = options;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/core' : '/api';
@@ -154,7 +154,7 @@ function buildUnifiedApiPath(service: string, path: string): string {
   return buildApiPath({ service, path });
 }
 
-export function createServiceApi(service: ServiceCode | string) {
+function createServiceApi(service: ServiceCode | string) {
   return {
     path: (resourcePath: string) => buildApiPath({ service, path: resourcePath }),
     list: (resource: string) => buildApiPath({ service, path: `/${resource}` }),

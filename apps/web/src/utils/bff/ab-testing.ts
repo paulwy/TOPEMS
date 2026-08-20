@@ -156,7 +156,7 @@ export interface ConversionEvent {
  * 用于将用户 ID + 实验 ID 映射到稳定的哈希值，
  * 保证同一用户在同一实验中始终分配到同一变体。
  */
-export function fnv1aHash(input: string): number {
+function fnv1aHash(input: string): number {
   let hash = 0x811c9dc5; // FNV offset basis (32-bit)
   for (let i = 0; i < input.length; i++) {
     hash ^= input.charCodeAt(i);
@@ -230,7 +230,7 @@ const MAX_EVENTS = 5000;
  *
  * 单例模式，全局管理实验配置、用户分配与转化追踪。
  */
-export class ABTestEngine {
+class ABTestEngine {
   private experiments: Map<string, Experiment> = new Map();
   private assignments: Map<string, AssignmentRecord> = new Map();
   private conversions: ConversionEvent[] = [];

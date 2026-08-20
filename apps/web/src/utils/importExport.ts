@@ -4,7 +4,7 @@ import i18next from 'i18next';
 
 // i18n key 翻译函数
 
-export const parseFileExtension = (filename: string): string => {
+const parseFileExtension = (filename: string): string => {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   if (ext === 'xlsx' || ext === 'xls') {
     return 'xlsx';
@@ -12,7 +12,7 @@ export const parseFileExtension = (filename: string): string => {
   return 'csv';
 };
 
-export const getImportModeLabel = (mode: string): string => {
+const getImportModeLabel = (mode: string): string => {
   const labels: Record<string, string> = {
     create: i18n.t('shared.import_export.k0'),
     update: i18n.t('shared.import_export.k1'),
@@ -21,7 +21,7 @@ export const getImportModeLabel = (mode: string): string => {
   return labels[mode] || mode;
 };
 
-export const readFileAsBase64 = (file: File): Promise<string> => {
+const readFileAsBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {

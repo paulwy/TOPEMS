@@ -26,7 +26,7 @@ import i18n from '@/i18n';
 
 // ==================== 枚举 ====================
 
-export enum DragState {
+enum DragState {
   IDLE = 'idle',
   DRAGGING = 'dragging',
   HOVERING = 'hovering',
@@ -34,7 +34,7 @@ export enum DragState {
   CANCELLED = 'cancelled',
 }
 
-export enum AlignType {
+enum AlignType {
   LEFT = 'left',
   RIGHT = 'right',
   TOP = 'top',
@@ -119,7 +119,7 @@ const NODE_TYPE_COMPATIBILITY: Record<string, string[]> = {
 
 // ==================== 拖拽编排器 ====================
 
-export class DragOrchestrator {
+class DragOrchestrator {
   private state: DragState = DragState.IDLE;
   private context: DragContext | null = null;
   private dropTargets: Map<string, DropTarget> = new Map();
@@ -496,5 +496,5 @@ export class DragOrchestrator {
   }
 }
 
-export const dragOrchestrator = new DragOrchestrator();
+const dragOrchestrator = new DragOrchestrator();
 export default dragOrchestrator;

@@ -109,7 +109,7 @@ function serializeFilterValue(value: unknown): string {
 
 // ============ QueryBuilder ============
 
-export class QueryBuilder<T = unknown> {
+class QueryBuilder<T = unknown> {
   private entityName: string;
   private operationName: string;
   private fields: FieldSelection = [];
@@ -243,7 +243,7 @@ ${indent(selectionStr, 2)}
 
 // ============ MutationBuilder ============
 
-export class MutationBuilder<T = unknown> {
+class MutationBuilder<T = unknown> {
   private entityName: string;
   private operationName: string;
   private returnFields: FieldSelection = ['id'];
@@ -371,7 +371,7 @@ ${indent(selectionStr, 2)}
 
 // ============ 常用查询模板 ============
 
-export const queryTemplates = {
+const queryTemplates = {
   list(entityType: string, fields: FieldSelection, page = 1, pageSize = 10): BuiltQuery {
     const builder = new QueryBuilder(
       `${entityType}List`,

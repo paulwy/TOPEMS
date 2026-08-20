@@ -16,7 +16,7 @@
 
 // ==================== API 可视化对接 ====================
 
-export { ApiVisualIntegration, apiVisualIntegration } from './api-visual-integration';
+export { apiVisualIntegration } from './api-visual-integration';
 
 export type {
   SchemaField,
@@ -29,17 +29,11 @@ export type {
   ConnectionHealth,
 } from './api-visual-integration';
 
-export {
-  HttpMethod,
-  EndpointStatus,
-  FieldType,
-  MappingDirection,
-  ConnectionStatus,
-} from './api-visual-integration';
+export { HttpMethod, FieldType, ConnectionStatus } from './api-visual-integration';
 
 // ==================== 数据流编排 ====================
 
-export { DataflowOrchestrator, dataflowOrchestrator } from './dataflow-orchestrator';
+export { dataflowOrchestrator } from './dataflow-orchestrator';
 
 export type {
   FlowNode,
@@ -51,11 +45,11 @@ export type {
   FlowValidation,
 } from './dataflow-orchestrator';
 
-export { FlowNodeType, NodeStatus, ExecutionMode, DataFormat } from './dataflow-orchestrator';
+export { FlowNodeType, NodeStatus } from './dataflow-orchestrator';
 
 // ==================== 自动化文档生成 ====================
 
-export { AutoDocGenerator, autoDocGenerator } from './auto-doc-generator';
+export { autoDocGenerator } from './auto-doc-generator';
 
 export type {
   DocSection,
@@ -66,7 +60,7 @@ export type {
   ComponentDoc,
 } from './auto-doc-generator';
 
-export { DocFormat, DocSectionType, ComponentType } from './auto-doc-generator';
+export { DocFormat, ComponentType } from './auto-doc-generator';
 
 // ==================== 默认导出 ====================
 

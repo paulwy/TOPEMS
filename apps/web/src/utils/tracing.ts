@@ -24,7 +24,7 @@ export interface Span {
 let currentTraceId: string | null = null;
 let currentSpanId: string | null = null;
 
-export function resetTrace(): void {
+function resetTrace(): void {
   currentTraceId = null;
   currentSpanId = null;
 }
@@ -57,7 +57,7 @@ export function getCurrentSpanId(): string | null {
   return currentSpanId;
 }
 
-export function createSpan(name: string, parentSpanId?: string): Span {
+function createSpan(name: string, parentSpanId?: string): Span {
   const spanId = generateId().substring(0, 16);
   currentSpanId = spanId;
   return {
@@ -80,7 +80,7 @@ export function endSpan(span: Span, attributes?: Record<string, string | number 
   sendSpanToCollector(span);
 }
 
-export function getTraceHeaders(): Record<string, string> {
+function getTraceHeaders(): Record<string, string> {
   if (!currentTraceId || !currentSpanId) {
     return {};
   }
@@ -198,7 +198,7 @@ interface AxiosInstance {
   };
 }
 
-export function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
+function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
   axiosInstance.interceptors.request.use((config: AxiosInterceptorConfig) => {
     const traceHeaders = getTraceHeaders();
     config.headers = {

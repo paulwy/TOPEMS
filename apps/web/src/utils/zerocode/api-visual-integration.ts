@@ -29,7 +29,7 @@ export enum HttpMethod {
   DELETE = 'DELETE',
 }
 
-export enum EndpointStatus {
+enum EndpointStatus {
   DRAFT = 'draft',
   ACTIVE = 'active',
   DEPRECATED = 'deprecated',
@@ -48,7 +48,7 @@ export enum FieldType {
   REFERENCE = 'reference',
 }
 
-export enum MappingDirection {
+enum MappingDirection {
   REQUEST = 'request',
   RESPONSE = 'response',
   BOTH = 'both',
@@ -145,7 +145,7 @@ export interface ConnectionHealth {
 
 // ==================== API 可视化对接器 ====================
 
-export class ApiVisualIntegration {
+class ApiVisualIntegration {
   private endpoints: Map<string, ApiEndpoint> = new Map();
   private schemas: Map<string, ApiSchema> = new Map();
   private debugSessions: Map<string, DebugSession> = new Map();

@@ -146,7 +146,7 @@ export interface BackendPaginationResponse {
   data?: unknown[];
 }
 
-export function parsePaginationFromResponse(
+function parsePaginationFromResponse(
   response: Record<string, unknown>,
   _style: BackendParamStyle = 'standard'
 ): { items: unknown[]; total: number; page: number; pageSize: number } {
@@ -162,7 +162,7 @@ export function parsePaginationFromResponse(
 /**
  * 预设配置：TOPEMS 标准后端
  */
-export const topemsStandardParams: ParamMappingOptions = {
+const topemsStandardParams: ParamMappingOptions = {
   style: 'standard',
   searchParamName: 'keyword',
   sortByParamName: 'sortBy',
@@ -175,7 +175,7 @@ export const topemsStandardParams: ParamMappingOptions = {
 /**
  * 预设配置：嵌套筛选风格（如一些 Java 后端）
  */
-export const nestedFilterParams: ParamMappingOptions = {
+const nestedFilterParams: ParamMappingOptions = {
   style: 'nested',
   filtersKey: 'filters',
   sortKey: 'sort',
@@ -187,7 +187,7 @@ export const nestedFilterParams: ParamMappingOptions = {
 /**
  * 预设配置：offset 风格（如一些 NoSQL 数据库）
  */
-export const offsetStyleParams: ParamMappingOptions = {
+const offsetStyleParams: ParamMappingOptions = {
   style: 'offset',
   offsetParamName: 'offset',
   pageSizeParamName: 'limit',
@@ -238,7 +238,7 @@ export type FilterGroup = {
  * - in/nin: 值用逗号分隔
  * - between: 值用逗号分隔两个数
  */
-export function buildStandardFilterParams(
+function buildStandardFilterParams(
   filters: Record<string, unknown> | FilterCondition[] | FilterGroup,
   options: {
     fieldMapping?: Record<string, string>;
@@ -315,7 +315,7 @@ export function buildStandardFilterParams(
  *   { field: 'status', op: 'eq', value: 'active' }
  * ]
  */
-export function buildNestedFilterArray(
+function buildNestedFilterArray(
   filters: Record<string, unknown> | FilterCondition[],
   options: {
     fieldMapping?: Record<string, string>;
@@ -348,7 +348,7 @@ export function buildNestedFilterArray(
 
 const FILTER_URL_PREFIX = 'f_';
 
-export function serializeFiltersToUrl(
+function serializeFiltersToUrl(
   filters: Record<string, unknown>,
   prefix: string = FILTER_URL_PREFIX
 ): Record<string, string> {
@@ -365,7 +365,7 @@ export function serializeFiltersToUrl(
   return result;
 }
 
-export function parseFiltersFromUrl(
+function parseFiltersFromUrl(
   searchParams: URLSearchParams,
   prefix: string = FILTER_URL_PREFIX,
   defaultFilters: Record<string, unknown> = {}

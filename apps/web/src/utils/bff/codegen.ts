@@ -17,20 +17,20 @@ export function toPascalCase(str: string): string {
     .replace(/^(.)/, (_, c) => c.toUpperCase());
 }
 
-export function toCamelCase(str: string): string {
+function toCamelCase(str: string): string {
   return str
     .replace(/[-_](.)/g, (_, c) => c.toUpperCase())
     .replace(/^(.)/, (_, c) => c.toLowerCase());
 }
 
-export function toSnakeCase(str: string): string {
+function toSnakeCase(str: string): string {
   return str
     .replace(/([A-Z])/g, '_$1')
     .toLowerCase()
     .replace(/^_/, '');
 }
 
-export function toKebabCase(str: string): string {
+function toKebabCase(str: string): string {
   return str
     .replace(/([A-Z])/g, '-$1')
     .toLowerCase()
@@ -55,7 +55,7 @@ const irregularPlurals: Record<string, string> = {
   equipment: 'equipment',
 };
 
-export function pluralize(str: string): string {
+function pluralize(str: string): string {
   const lower = str.toLowerCase();
   if (irregularPlurals[lower]) {
     return str.slice(0, 1) + irregularPlurals[lower].slice(1);
@@ -75,7 +75,7 @@ export function pluralize(str: string): string {
   return `${str}s`;
 }
 
-export function singularize(str: string): string {
+function singularize(str: string): string {
   const lower = str.toLowerCase();
   const reversed = Object.entries(irregularPlurals).find(([, p]) => p === lower);
   if (reversed) {
@@ -103,12 +103,12 @@ export function singularize(str: string): string {
   return str;
 }
 
-export function buildQueryName(entityName: string, operation: string): string {
+function buildQueryName(entityName: string, operation: string): string {
   const pascal = toPascalCase(entityName);
   return `${operation}${pascal}`;
 }
 
-export function buildMutationName(entityName: string, operation: string): string {
+function buildMutationName(entityName: string, operation: string): string {
   const pascal = toPascalCase(entityName);
   return `${operation}${pascal}`;
 }
@@ -137,7 +137,7 @@ export interface EntitySchema {
 
 // ============ CRUD 查询生成 ============
 
-export function generateEntityQueries(
+function generateEntityQueries(
   entityName: string,
   fields: FieldDefinition[]
 ): {
@@ -226,7 +226,7 @@ function mapFieldType(field: FieldDefinition): string {
   }
 }
 
-export function generateTypeScriptTypes(schema: EntitySchema): string {
+function generateTypeScriptTypes(schema: EntitySchema): string {
   const { name, fields } = schema;
   const pascalName = toPascalCase(name);
 
@@ -276,7 +276,7 @@ export function generateTypeScriptTypes(schema: EntitySchema): string {
 
 // ============ React Query Hook 生成 ============
 
-export function generateReactQueryHooks(
+function generateReactQueryHooks(
   entityName: string,
   operations: Array<'list' | 'get' | 'create' | 'update' | 'delete'> = [
     'list',
@@ -428,7 +428,7 @@ export function generateReactQueryHooks(
 
 // ============ 页面模板生成 ============
 
-export function generateListPageTemplate(entityName: string): string {
+function generateListPageTemplate(entityName: string): string {
   const pascalName = toPascalCase(entityName);
   return `// ${pascalName} 列表页模板
 // 使用 BffDataTable + useBffListPage 快速构建

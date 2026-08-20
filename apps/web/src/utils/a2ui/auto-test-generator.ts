@@ -10,7 +10,7 @@ import i18n from '@/i18n';
 
 // ============ 枚举与类型定义 ============
 
-export enum TestGenerationStrategy {
+enum TestGenerationStrategy {
   UNIT = 'unit',
   INTEGRATION = 'integration',
   E2E = 'e2e',
@@ -23,7 +23,7 @@ export enum TestPriority {
   LOW = 'low',
 }
 
-export enum MockType {
+enum MockType {
   FUNCTION = 'function',
   MODULE = 'module',
   DATA = 'data',
@@ -150,7 +150,7 @@ interface RawTestSuitePayload {
  * V64.0+ AI 驱动测试用例生成器。
  * 通过本地 ollama 模型生成测试建议；模型不可达或返回非法时降级为占位结构，不抛错。
  */
-export class AutoTestGenerator {
+class AutoTestGenerator {
   async generate(request: TestGenerationOptions): Promise<GeneratedTestSuite> {
     const strategy = request.strategy ?? TestGenerationStrategy.UNIT;
     const fallback = this.buildFallback(request, strategy);
@@ -332,6 +332,6 @@ export class AutoTestGenerator {
   }
 }
 
-export const autoTestGenerator = new AutoTestGenerator();
+const autoTestGenerator = new AutoTestGenerator();
 
 export default autoTestGenerator;

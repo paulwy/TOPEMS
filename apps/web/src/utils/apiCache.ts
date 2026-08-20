@@ -134,6 +134,6 @@ class ApiCache {
   }
 }
 
-export const apiCache = new ApiCache();
+const apiCache = new ApiCache();
 
 export default apiCache;
