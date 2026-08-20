@@ -167,21 +167,45 @@ pub async fn init_database(pool: &PgPool) -> Result<(), TopemsError> {
 }
 
 pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError> {
+    // NOTE: pg_type existence check MUST be scoped to current_schema() — otherwise a stale
+    // type created in another schema (e.g. 'rs' from a misconfigured prior run) causes the
+    // DO block to skip creation here, and the subsequent CREATE TABLE referencing the type
+    // fails with "type does not exist" because search_path doesn't include that other schema.
     let create_types = r#"
         DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reconciliation_type') THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type t
+                JOIN pg_namespace n ON t.typnamespace = n.oid
+                WHERE t.typname = 'reconciliation_type' AND n.nspname = current_schema()
+            ) THEN
                 CREATE TYPE reconciliation_type AS ENUM ('bank', 'receivable', 'payable');
             END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reconciliation_status') THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type t
+                JOIN pg_namespace n ON t.typnamespace = n.oid
+                WHERE t.typname = 'reconciliation_status' AND n.nspname = current_schema()
+            ) THEN
                 CREATE TYPE reconciliation_status AS ENUM ('pending', 'processing', 'completed', 'cancelled');
             END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'match_status') THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type t
+                JOIN pg_namespace n ON t.typnamespace = n.oid
+                WHERE t.typname = 'match_status' AND n.nspname = current_schema()
+            ) THEN
                 CREATE TYPE match_status AS ENUM ('unmatched', 'matched', 'diff', 'manual');
             END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'diff_reason') THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type t
+                JOIN pg_namespace n ON t.typnamespace = n.oid
+                WHERE t.typname = 'diff_reason' AND n.nspname = current_schema()
+            ) THEN
                 CREATE TYPE diff_reason AS ENUM ('time_diff', 'amount_diff', 'duplicate', 'missing', 'unknown', 'fee', 'exchange_rate');
             END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_source') THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_type t
+                JOIN pg_namespace n ON t.typnamespace = n.oid
+                WHERE t.typname = 'item_source' AND n.nspname = current_schema()
+            ) THEN
                 CREATE TYPE item_source AS ENUM ('bank', 'erp');
             END IF;
         END $$;

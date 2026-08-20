@@ -793,6 +793,8 @@ get_port_env_var() {
         feedback) echo "FEEDBACK_PORT" ;;
         master-data) echo "MASTER_DATA_PORT" ;;
         lowcode) echo "LOWCODE_PORT" ;;
+        monitor) echo "MONITOR_PORT" ;;
+        plugin-registry) echo "PLUGIN_REGISTRY_PORT" ;;
         *) echo "SERVER_PORT" ;;
     esac
 }
