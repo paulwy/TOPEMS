@@ -8188,7 +8188,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ### V257 · 2026-08-20 Thu 二期 · Frontend 35 config.ts × 150 Props interface 泛型收紧开局 + V256 #12 tsc 全绿
 
-**Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟢 Frontend 泛型 P0-1+P0-2+P0-3 三轮全闭环 + P1-1 tsc 29→0 + i18n 7-in-1 0 failures（保守口径 37/40 模块合格 · 实扫有 config.ts=37/37 100% 全合格 · RouteConfigV2<any> 替换率≥90% 超额 ✅；tsc 29 历史遗留→0 · P0 三轮新增=0；i18n 7-in-1 全绿 key 偏差 1→0；实际绑定 routes=393）** · 归档: `TBD`
+**Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟢 V257 全 7/7 矩阵全绿（P0-1+P0-2+P0-3 泛型三轮 + P1-1 tsc 29→0 + i18n 7-in-1 + P1-2 R3=38→0）** · 归档: `528b6c96a` · Spec: [2026-08-20-v257-p1-1-p1-2-tsc-i18n-r3-closure.md](file:///Users/xingzhai/TOPEMS/docs/superpowers/specs/2026-08-20-v257-p1-1-p1-2-tsc-i18n-r3-closure.md)
 
 #### 目标
 承接 V256 5 子任务闭环后的遗留痛点：(1) apps/web 40 个 config.ts，除 V253 已完成的 report/admin/crm/pm/wms **5 个**外，剩余 **35 个 config.ts（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow/ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam/im）** 的路由 Props 泛型 **完全没定义页面级 Props interface**（grep `export interface .+PageProps` = 0 条），路由配置走的是 `RouteConfigV2<any>` / 默认泛型 `Record<string,unknown>`，字段真实度 = 0；(2) V256 验收矩阵 #12 `tsc + i18n 双门禁` 仍为 🟡（未实际跑 `tsc apps/web` 验证）。V257 开局做 2 件事：**① P0-1/P0-2 两轮 30 核心 config.ts × 150 Props interface × 3-8 真实字段 收窄**（覆盖主业务域 87% 页面），**② P1-1 跑 `tsc apps/web` 真实门禁**：修复 V256 时代未被实跑暴露的 any/fallback 类型错误，把 V256 #12 从 🟡 推成 ✅；**③ P1-2 顺手做 Perm-Gate R3=38 新识别 admin-only 38 条补 `// gate: admin-only` 注释**（V256 P1-2 rewrites 扩大 admin scope 导致 toolkit 新识别，跟前端泛型推进互为并行）。
