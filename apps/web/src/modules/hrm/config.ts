@@ -38,7 +38,7 @@ export const HRM_PATHS = {
 // 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
 // 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
 
-export interface HrmDashboardPageProps {
+interface HrmDashboardPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -60,7 +60,7 @@ export interface HrmDashboardPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface HrmEmployeePageProps {
+interface HrmEmployeePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -86,7 +86,7 @@ export interface HrmEmployeePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmEmployeeCreatePageProps {
+interface HrmEmployeeCreatePageProps {
   /** 表单模式 */
 
   mode?: 'create' | 'edit' | 'clone' | 'view';
@@ -104,7 +104,7 @@ export interface HrmEmployeeCreatePageProps {
   prefillFrom?: Record<string, unknown>;
 }
 
-export interface HrmEmployeeDetailPageProps {
+interface HrmEmployeeDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -122,7 +122,7 @@ export interface HrmEmployeeDetailPageProps {
   version?: string | number;
 }
 
-export interface HrmEmployeeEditPageProps {
+interface HrmEmployeeEditPageProps {
   /** 表单模式 */
 
   mode?: 'create' | 'edit' | 'clone' | 'view';
@@ -144,7 +144,7 @@ export interface HrmEmployeeEditPageProps {
   id?: string;
 }
 
-export interface HrmDepartmentPageProps {
+interface HrmDepartmentPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -170,7 +170,7 @@ export interface HrmDepartmentPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmOrganizationPageProps {
+interface HrmOrganizationPageProps {
   /** 展开的节点 ID 列表 */
 
   expandedKeys?: string[];
@@ -188,7 +188,7 @@ export interface HrmOrganizationPageProps {
   rootParentId?: string;
 }
 
-export interface HrmPositionPageProps {
+interface HrmPositionPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -214,7 +214,7 @@ export interface HrmPositionPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmContractPageProps {
+interface HrmContractPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -240,7 +240,7 @@ export interface HrmContractPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmContractDetailPageProps {
+interface HrmContractDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -258,7 +258,7 @@ export interface HrmContractDetailPageProps {
   version?: string | number;
 }
 
-export interface HrmCompanyPageProps {
+interface HrmCompanyPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -276,7 +276,7 @@ export interface HrmCompanyPageProps {
   version?: string | number;
 }
 
-export interface HrmAttendancePageProps {
+interface HrmAttendancePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -302,7 +302,7 @@ export interface HrmAttendancePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmLeavePageProps {
+interface HrmLeavePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -328,7 +328,7 @@ export interface HrmLeavePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmPayrollPageProps {
+interface HrmPayrollPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -354,7 +354,7 @@ export interface HrmPayrollPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmSalaryAdjustmentPageProps {
+interface HrmSalaryAdjustmentPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -380,7 +380,7 @@ export interface HrmSalaryAdjustmentPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmRecruitmentPageProps {
+interface HrmRecruitmentPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -406,7 +406,7 @@ export interface HrmRecruitmentPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmTrainingPageProps {
+interface HrmTrainingPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -432,7 +432,7 @@ export interface HrmTrainingPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmPerformancePageProps {
+interface HrmPerformancePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -458,7 +458,7 @@ export interface HrmPerformancePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface HrmReportsPageProps {
+interface HrmReportsPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -476,7 +476,7 @@ export interface HrmReportsPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface HrmOverviewPageProps {
+interface HrmOverviewPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -498,7 +498,7 @@ export interface HrmOverviewPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface AttendanceRulePageProps {
+interface AttendanceRulePageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;
@@ -512,7 +512,7 @@ export interface AttendanceRulePageProps {
   redirectOnSave?: string;
 }
 
-export interface PayrollTemplatePageProps {
+interface PayrollTemplatePageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;
@@ -526,7 +526,7 @@ export interface PayrollTemplatePageProps {
   redirectOnSave?: string;
 }
 
-export interface RecruitmentFlowPageProps {
+interface RecruitmentFlowPageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;
@@ -540,7 +540,7 @@ export interface RecruitmentFlowPageProps {
   redirectOnSave?: string;
 }
 
-export interface TrainingPlanPageProps {
+interface TrainingPlanPageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;

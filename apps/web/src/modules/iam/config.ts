@@ -16,21 +16,21 @@ export const IAM_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface UserManagementPageProps {
+interface UserManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RoleManagementPageProps {
+interface RoleManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PermissionManagementPageProps {}
+interface PermissionManagementPageProps {}
 
-export interface CompanyStructurePageProps {
+interface CompanyStructurePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;

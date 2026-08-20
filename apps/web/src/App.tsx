@@ -57,7 +57,7 @@ const DevPanels: React.FC = () => {
   return (
     <>
       {/*
-        开发模式占位块：MicroFrontendDevTools（左 fixed 一排彩色按钮 ~72px）
+        开发模式占位块：MicroFrontendDevTools（左 fixed 多排彩色按钮，25 个按钮约占 3-4 行）
         + ObservabilityPanel（右 fixed 浮层按钮 ~48px）均是 position: fixed
         脱离文档流，会遮挡页面底部内容。
         此处用普通文档流占位块把页面滚动底边界顶开，避免最后一屏内容被浮层覆盖。
@@ -67,7 +67,7 @@ const DevPanels: React.FC = () => {
         aria-hidden='true'
         style={{
           width: '100%',
-          height: 100,
+          height: 240,
           flexShrink: 0,
           pointerEvents: 'none',
         }}

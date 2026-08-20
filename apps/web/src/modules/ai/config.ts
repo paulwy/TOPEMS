@@ -18,43 +18,43 @@ export const AI_PATHS = {
   assistant: '/ai/assistant',
   difyChat: '/ai/dify-chat',
 } as const;
-export interface AiDashboardPageProps {}
+interface AiDashboardPageProps {}
 
-export interface AiChatPageProps {
+interface AiChatPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface AiCodeAssistantPageProps {
+interface AiCodeAssistantPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface AiDocumentAnalysisPageProps {
+interface AiDocumentAnalysisPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface AiKnowledgeBasePageProps {
+interface AiKnowledgeBasePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AiPromptLibraryPageProps {
+interface AiPromptLibraryPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AiModelSettingsPageProps {}
+interface AiModelSettingsPageProps {}
 
-export interface AiAssistantPageProps {
+interface AiAssistantPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface DifyChatPageProps {
+interface DifyChatPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }

@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 
 // ---- 路由配置（供路由系统使用） ----
 /** FinanceDashboardPage 路由 Props · 模板=dashboard */
-export interface FinanceDashboardPageProps {
+interface FinanceDashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
@@ -14,7 +14,7 @@ export interface FinanceDashboardPageProps {
 }
 
 /** FinanceLedgerPage 路由 Props · 模板=list */
-export interface FinanceLedgerPageProps {
+interface FinanceLedgerPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -24,7 +24,7 @@ export interface FinanceLedgerPageProps {
 }
 
 /** FinanceVoucherPage 路由 Props · 模板=list */
-export interface FinanceVoucherPageProps {
+interface FinanceVoucherPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -34,7 +34,7 @@ export interface FinanceVoucherPageProps {
 }
 
 /** VoucherCreatePage 路由 Props · 模板=form */
-export interface VoucherCreatePageProps {
+interface VoucherCreatePageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */
@@ -42,7 +42,7 @@ export interface VoucherCreatePageProps {
 }
 
 /** VoucherDetailPage 路由 Props · 模板=detail */
-export interface VoucherDetailPageProps {
+interface VoucherDetailPageProps {
   /** 主实体 ID（如凭证号、合同编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -50,7 +50,7 @@ export interface VoucherDetailPageProps {
 }
 
 /** FinanceReceivablePayablePage 路由 Props · 模板=list */
-export interface FinanceReceivablePayablePageProps {
+interface FinanceReceivablePayablePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -60,7 +60,7 @@ export interface FinanceReceivablePayablePageProps {
 }
 
 /** FinanceReceiptPage 路由 Props · 模板=list */
-export interface FinanceReceiptPageProps {
+interface FinanceReceiptPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -70,7 +70,7 @@ export interface FinanceReceiptPageProps {
 }
 
 /** FinancePaymentPage 路由 Props · 模板=list */
-export interface FinancePaymentPageProps {
+interface FinancePaymentPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -80,7 +80,7 @@ export interface FinancePaymentPageProps {
 }
 
 /** FinanceApprovalConfigPage 路由 Props · 模板=list */
-export interface FinanceApprovalConfigPageProps {
+interface FinanceApprovalConfigPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -90,7 +90,7 @@ export interface FinanceApprovalConfigPageProps {
 }
 
 /** FinanceInvoicePage 路由 Props · 模板=list */
-export interface FinanceInvoicePageProps {
+interface FinanceInvoicePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -100,7 +100,7 @@ export interface FinanceInvoicePageProps {
 }
 
 /** FinanceTaxPage 路由 Props · 模板=list */
-export interface FinanceTaxPageProps {
+interface FinanceTaxPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -110,7 +110,7 @@ export interface FinanceTaxPageProps {
 }
 
 /** FinanceExpensePage 路由 Props · 模板=list */
-export interface FinanceExpensePageProps {
+interface FinanceExpensePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -120,7 +120,7 @@ export interface FinanceExpensePageProps {
 }
 
 /** FinanceExpenseApprovalPage 路由 Props · 模板=wizard */
-export interface FinanceExpenseApprovalPageProps {
+interface FinanceExpenseApprovalPageProps {
   /** 当前向导步骤序号（1-based） */
   step?: number;
   /** 关联审批/工作流 ID */
@@ -130,7 +130,7 @@ export interface FinanceExpenseApprovalPageProps {
 }
 
 /** FinanceCostPage 路由 Props · 模板=list */
-export interface FinanceCostPageProps {
+interface FinanceCostPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -140,7 +140,7 @@ export interface FinanceCostPageProps {
 }
 
 /** FinanceAssetPage 路由 Props · 模板=list */
-export interface FinanceAssetPageProps {
+interface FinanceAssetPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -160,7 +160,7 @@ export interface BudgetManagementPageProps {
 }
 
 /** FinanceBudgetDetailPage 路由 Props · 模板=detail */
-export interface FinanceBudgetDetailPageProps {
+interface FinanceBudgetDetailPageProps {
   /** 主实体 ID（如凭证号、合同编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -168,7 +168,7 @@ export interface FinanceBudgetDetailPageProps {
 }
 
 /** OpeningBalancePage 路由 Props · 模板=form */
-export interface OpeningBalancePageProps {
+interface OpeningBalancePageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */
@@ -176,7 +176,7 @@ export interface OpeningBalancePageProps {
 }
 
 /** ConsolidationScopePage 路由 Props · 模板=list */
-export interface ConsolidationScopePageProps {
+interface ConsolidationScopePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -186,7 +186,7 @@ export interface ConsolidationScopePageProps {
 }
 
 /** ConsolidationReportsPage 路由 Props · 模板=stats */
-export interface ConsolidationReportsPageProps {
+interface ConsolidationReportsPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -194,7 +194,7 @@ export interface ConsolidationReportsPageProps {
 }
 
 /** FinanceReportsPage 路由 Props · 模板=stats */
-export interface FinanceReportsPageProps {
+interface FinanceReportsPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */

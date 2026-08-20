@@ -3,31 +3,31 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export interface CrmDashboardPageProps {}
-export interface CustomerManagementPageProps {
+interface CrmDashboardPageProps {}
+interface CustomerManagementPageProps {
   page?: number;
   pageSize?: number;
   searchKeyword?: string;
 }
-export interface CustomerDetailProps {
+interface CustomerDetailProps {
   id?: string;
   customerId?: string;
   tab?: string;
 }
-export interface CustomerCreatePageProps {}
-export interface CustomerEditPageProps {
+interface CustomerCreatePageProps {}
+interface CustomerEditPageProps {
   id?: string;
 }
-export interface ContactManagementPageProps {}
-export interface ContactDetailPageProps {
+interface ContactManagementPageProps {}
+interface ContactDetailPageProps {
   id?: string;
 }
-export interface OpportunityManagementPageProps {}
-export interface OpportunityDetailPageProps {
+interface OpportunityManagementPageProps {}
+interface OpportunityDetailPageProps {
   id?: string;
 }
-export interface CRMSalesFunnelPageProps {}
-export interface CRMBillingPageProps {}
+interface CRMSalesFunnelPageProps {}
+interface CRMBillingPageProps {}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 CRM_PATHS.xxx，而非硬编码字符串

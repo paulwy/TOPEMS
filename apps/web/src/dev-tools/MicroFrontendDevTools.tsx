@@ -109,8 +109,10 @@ const MicroFrontendDevTools: React.FC = () => {
           position: 'fixed',
           bottom: 16,
           left: 16,
+          right: 160,
           zIndex: 9998,
           display: 'flex',
+          flexWrap: 'wrap',
           gap: 1,
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}

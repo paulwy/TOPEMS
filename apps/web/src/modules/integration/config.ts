@@ -19,47 +19,47 @@ export const INTEGRATION_PATHS = {
   wmsScm: '/integration/wms-scm',
   settings: '/integration/settings',
 } as const;
-export interface IntegrationDashboardPageProps {}
+interface IntegrationDashboardPageProps {}
 
-export interface IntegrationConnectionsPageProps {
+interface IntegrationConnectionsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface IntegrationMappingsPageProps {
+interface IntegrationMappingsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface IntegrationEventsPageProps {
+interface IntegrationEventsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface IntegrationErpOverviewPageProps {
+interface IntegrationErpOverviewPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface IntegrationLimsQmsPageProps {
+interface IntegrationLimsQmsPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface IntegrationMesErpPageProps {
+interface IntegrationMesErpPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface IntegrationWmsScmPageProps {
+interface IntegrationWmsScmPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface IntegrationSettingsPageProps {}
+interface IntegrationSettingsPageProps {}
 
 const integrationDashboardRoute: RouteConfigV2<IntegrationDashboardPageProps> = {
   path: INTEGRATION_PATHS.dashboard,

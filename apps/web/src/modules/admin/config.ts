@@ -3,28 +3,28 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export interface AdminDashboardPageProps {}
-export interface TenantManagementPageProps {
+interface AdminDashboardPageProps {}
+interface TenantManagementPageProps {
   tenantId?: string;
 }
-export interface TenantDetailPageProps {
+interface TenantDetailPageProps {
   tenantId?: string;
 }
-export interface AccountManagementPageProps {
+interface AccountManagementPageProps {
   userId?: string;
 }
-export interface AdminUserListProps {
+interface AdminUserListProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
-export interface BankAccountManagementPageProps {}
+interface BankAccountManagementPageProps {}
 export interface DictionaryManagementPageProps {}
-export interface AuditLogPageProps {
+interface AuditLogPageProps {
   entityType?: string;
   entityId?: string;
 }
-export interface MonitorPageProps {}
+interface MonitorPageProps {}
 export interface PermissionAuditPageProps {}
 
 // ---- 第一部分：路径常量（唯一真相源） ----

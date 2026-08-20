@@ -29,79 +29,79 @@ export const APS_PATHS = {
     oeeDashboard: '/aps/analytics/oee-dashboard',
   },
 } as const;
-export interface ApsDashboardPageProps {}
+interface ApsDashboardPageProps {}
 
-export interface ProductionPlanPageProps {
+interface ProductionPlanPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ScheduleManagementPageProps {
+interface ScheduleManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface CapacityManagementPageProps {
+interface CapacityManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MaterialPlanPageProps {
+interface MaterialPlanPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ForecastManagementPageProps {
+interface ForecastManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ProductionPlanDetailPageProps {
+interface ProductionPlanDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface ScheduleDetailPageProps {
+interface ScheduleDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface CapacityDetailPageProps {
+interface CapacityDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface MaterialPlanDetailPageProps {
+interface MaterialPlanDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface ForecastDetailPageProps {
+interface ForecastDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface PlanComparisonDetailPageProps {
+interface PlanComparisonDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface PlanAdherencePageProps {}
+interface PlanAdherencePageProps {}
 
-export interface ScheduleGanttPageProps {}
+interface ScheduleGanttPageProps {}
 
-export interface CapacityUtilizationPageProps {}
+interface CapacityUtilizationPageProps {}
 
-export interface MaterialShortagePageProps {}
+interface MaterialShortagePageProps {}
 
-export interface ForecastAccuracyPageProps {}
+interface ForecastAccuracyPageProps {}
 
-export interface OeeDashboardPageProps {}
+interface OeeDashboardPageProps {}
 
 const apsDashboardRoute: RouteConfigV2<ApsDashboardPageProps> = {
   path: APS_PATHS.dashboard,

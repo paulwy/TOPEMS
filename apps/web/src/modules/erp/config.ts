@@ -34,7 +34,7 @@ export const ERP_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface VoucherPageProps {
+interface VoucherPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
@@ -46,41 +46,41 @@ export interface CustomerManagementPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface SupplierManagementPageProps {
+interface SupplierManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface InventoryManagementPageProps {
+interface InventoryManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MaterialManagementPageProps {
+interface MaterialManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PurchaseOrderPageProps {
+interface PurchaseOrderPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface SalesOrderPageProps {
+interface SalesOrderPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface FinancialReportPageProps {}
+interface FinancialReportPageProps {}
 
-export interface DictManagementPageProps {}
+interface DictManagementPageProps {}
 
-export interface DatabaseManagementPageProps {
+interface DatabaseManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
@@ -92,67 +92,67 @@ export interface AuditLogPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface OfficeSuppliesPageProps {
+interface OfficeSuppliesPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface VehiclePageProps {
+interface VehiclePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ReceivablePayablePageProps {
+interface ReceivablePayablePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AssetManagementPageProps {
+interface AssetManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BudgetManagementPageProps {
+interface BudgetManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BankAccountPageProps {
+interface BankAccountPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AccountingManagementPageProps {
+interface AccountingManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MeetingRoomPageProps {
+interface MeetingRoomPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AnnouncementPageProps {
+interface AnnouncementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface VehicleRequestPageProps {
+interface VehicleRequestPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface FinancialAnalysisPageProps {}
+interface FinancialAnalysisPageProps {}
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: ERP_PATHS.dashboard,

@@ -20,26 +20,26 @@ const AUTOMATION_PATHS = {
 // 三大能力串联成统一的「自动化」视图。
 // 后端初期落地 unified-core，路径 /api/core/automation；业务量足够再拆独立服务。
 
-export interface AutomationDashboardPageProps {}
+interface AutomationDashboardPageProps {}
 
-export interface AutomationRulesPageProps {
+interface AutomationRulesPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AutomationRunsPageProps {
+interface AutomationRunsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface AutomationDesignerPageProps {
+interface AutomationDesignerPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface AutomationVariablesPageProps {
+interface AutomationVariablesPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;

@@ -15,11 +15,11 @@ export const GIS_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface GisMapPageProps {}
+interface GisMapPageProps {}
 
-export interface GisTrackingPageProps {}
+interface GisTrackingPageProps {}
 
-export interface GisFencePageProps {
+interface GisFencePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
