@@ -197,7 +197,6 @@ mod handlers;
 mod mes_erp_sync;
 mod mes_qms_integration;
 mod models;
-mod modules;
 mod openapi;
 mod plugin;
 mod qms_lims_ehs;
