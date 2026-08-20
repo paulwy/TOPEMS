@@ -76,7 +76,8 @@ POSTGRES_DB=topems
 POSTGRES_PORT=5432
 REDIS_PASSWORD=topems_redis_secret
 REDIS_PORT=6379
-JWT_SECRET=topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256
+JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
+JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 32)}"
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 EOF
     success "环境变量文件创建完成"
