@@ -206,5 +206,5 @@ class RegistryApi {
   }
 }
 
-export const registryApi = new RegistryApi();
+const registryApi = new RegistryApi();
 export default registryApi;

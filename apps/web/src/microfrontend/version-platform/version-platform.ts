@@ -78,7 +78,7 @@ function compareSemver(
   return { result: 0, level: 'patch' };
 }
 
-export class VersionPlatform {
+class VersionPlatform {
   private static instance: VersionPlatform;
   private moduleVersions: Map<string, ModuleVersion[]> = new Map();
   private activeVersions: Map<string, string> = new Map();

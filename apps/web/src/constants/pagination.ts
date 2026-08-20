@@ -11,10 +11,10 @@
 // shared-constants internal paths
 
 /** Default page number (starting from 1) */
-export const DEFAULT_PAGE = 1 as const;
+const DEFAULT_PAGE = 1 as const;
 
 /** Default page size (consistent with shared PAGINATION.DEFAULT_PAGE_SIZE) */
-export const DEFAULT_PAGE_SIZE = 20 as const;
+const DEFAULT_PAGE_SIZE = 20 as const;
 
 /** Available page size options (consistent with shared PAGINATION.PAGE_SIZE_OPTIONS) */
 const PAGE_SIZES: readonly number[] = [10, 20, 50, 100] as const;
@@ -62,7 +62,7 @@ export interface PaginationParamsNormalized {
  * 取三个分页字段中的任意一个有效值，优先顺序 pageSize > page_size > pagesize。
  * 返回 undefined 代表三个字段都未提供合法数字。
  */
-export function pickPageSize(input: PaginationParamsInput): number | undefined {
+function pickPageSize(input: PaginationParamsInput): number | undefined {
   for (const k of ['pageSize', 'page_size', 'pagesize'] as const) {
     const v = input[k];
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
@@ -98,7 +98,7 @@ export function normalizePaginationParams(
  * 仅转换为后端 Rust 侧接受的 snake_case 格式（丢弃 pageSize / pagesize），
  * 用于发送最终请求之前的清理。
  */
-export function toBackendPagination(input: PaginationParamsInput): {
+function toBackendPagination(input: PaginationParamsInput): {
   page: number;
   page_size: number;
   search?: string;

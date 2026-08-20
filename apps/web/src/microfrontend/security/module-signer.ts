@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 
-export enum TrustLevel {
+enum TrustLevel {
   TRUSTED = 'trusted',
   VERIFIED = 'verified',
   UNKNOWN = 'unknown',
@@ -34,7 +34,7 @@ export interface VerificationResult {
   signedAt?: number;
 }
 
-export class ModuleSigner {
+class ModuleSigner {
   private signatures: Map<string, ModuleSignature> = new Map();
   private trustedPublishers: Map<string, TrustedPublisher> = new Map();
   private revokedSignatures: Set<string> = new Set();
@@ -250,5 +250,5 @@ export class ModuleSigner {
   }
 }
 
-export const moduleSigner = new ModuleSigner();
+const moduleSigner = new ModuleSigner();
 export default moduleSigner;

@@ -45,7 +45,7 @@ const lazyLoaders: Record<string, ModuleConfigLoader> = {
     import('@/modules/workflow/config').then((m) => ({ default: m.workflowNavConfig })),
 };
 
-export const lazyLoadModuleConfig = async (moduleCode: string): Promise<ModuleNavConfig | null> => {
+const lazyLoadModuleConfig = async (moduleCode: string): Promise<ModuleNavConfig | null> => {
   const loader = lazyLoaders[moduleCode];
   if (!loader) {
     return null;
@@ -58,9 +58,9 @@ export const lazyLoadModuleConfig = async (moduleCode: string): Promise<ModuleNa
   }
 };
 
-export const preloadModuleConfigs = async (moduleCodes: string[]): Promise<void> => {
+const preloadModuleConfigs = async (moduleCodes: string[]): Promise<void> => {
   const loaders = moduleCodes.map((code) => lazyLoadModuleConfig(code));
   await Promise.allSettled(loaders);
 };
 
-export const getAvailableModuleCodes = (): string[] => Object.keys(lazyLoaders);
+const getAvailableModuleCodes = (): string[] => Object.keys(lazyLoaders);

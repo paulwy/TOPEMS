@@ -73,7 +73,7 @@ function defaultHealthCheck(): HealthCheck {
   };
 }
 
-export class IntelligentDeployer {
+class IntelligentDeployer {
   private static instance: IntelligentDeployer;
 
   static getInstance(): IntelligentDeployer {

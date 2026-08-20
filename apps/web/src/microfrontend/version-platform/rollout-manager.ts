@@ -72,7 +72,7 @@ function generateId(): string {
   return `rollout_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-export class RolloutManager {
+class RolloutManager {
   private static instance: RolloutManager;
   private rollouts: Map<string, Rollout> = new Map();
   private listeners: Set<(rollout: Rollout) => void> = new Set();

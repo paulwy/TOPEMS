@@ -180,10 +180,10 @@ export function isDevelopment(): boolean {
   return getEnvBool('DEV', true);
 }
 
-export function isTest(): boolean {
+function isTest(): boolean {
   return getEnv('MODE', '') === 'test';
 }
 
-export function getMode(): string {
+function getMode(): string {
   return getEnv('MODE', 'development');
 }

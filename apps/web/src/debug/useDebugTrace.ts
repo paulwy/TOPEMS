@@ -59,7 +59,7 @@ export function setDebugTrace(config: Partial<DebugTraceConfig>): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
-export function clearDebugTrace(): void {
+function clearDebugTrace(): void {
   if (typeof localStorage === 'undefined') return;
   localStorage.removeItem(STORAGE_KEY);
 }
