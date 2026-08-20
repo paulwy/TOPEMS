@@ -231,7 +231,7 @@ const UI_DEPENDENCIES: Record<UIType, string[]> = {
   shadcn: ['@radix-ui/react-slot@1', 'class-variance-authority@0.7'],
 };
 
-export class UnifiedDevPlatform {
+class UnifiedDevPlatform {
   private projects: Map<string, DevProject> = new Map();
   private pipelines: Map<string, PipelineDefinition> = new Map();
   private pipelineRuns: Map<string, PipelineRun[]> = new Map();
