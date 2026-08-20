@@ -470,21 +470,21 @@ export const usePluginStore = create<PluginState>()(
 );
 
 export const useInstalledPlugins = () => usePluginStore((state) => state.installedPlugins);
-export const useMarketplacePlugins = () => usePluginStore((state) => state.marketplacePlugins);
-export const usePluginHealthStatus = () => usePluginStore((state) => state.healthStatus);
-export const usePluginLoading = () => usePluginStore((state) => state.loading);
-export const usePluginError = () => usePluginStore((state) => state.error);
-export const useSelectedPluginCode = () => usePluginStore((state) => state.selectedPluginCode);
-export const useSelectedPlugins = () => usePluginStore((state) => state.selectedPlugins);
-export const useSearchQuery = () => usePluginStore((state) => state.searchQuery);
-export const useActiveCategory = () => usePluginStore((state) => state.activeCategory);
+const useMarketplacePlugins = () => usePluginStore((state) => state.marketplacePlugins);
+const usePluginHealthStatus = () => usePluginStore((state) => state.healthStatus);
+const usePluginLoading = () => usePluginStore((state) => state.loading);
+const usePluginError = () => usePluginStore((state) => state.error);
+const useSelectedPluginCode = () => usePluginStore((state) => state.selectedPluginCode);
+const useSelectedPlugins = () => usePluginStore((state) => state.selectedPlugins);
+const useSearchQuery = () => usePluginStore((state) => state.searchQuery);
+const useActiveCategory = () => usePluginStore((state) => state.activeCategory);
 
-export const useIsPluginInstalled = (code: string) => {
+const useIsPluginInstalled = (code: string) => {
   const installedPlugins = useInstalledPlugins();
   return installedPlugins.some((p) => p.plugin_id === code);
 };
 
-export const useIsPluginActive = (code: string) => {
+const useIsPluginActive = (code: string) => {
   const installedPlugins = useInstalledPlugins();
   const plugin = installedPlugins.find((p) => p.plugin_id === code);
   return plugin?.isactive === true;
@@ -505,7 +505,7 @@ export const useMarketplacePlugin = (code: string) => {
   return marketplacePlugins.find((p) => p.code === code);
 };
 
-export const useFilteredPlugins = () => {
+const useFilteredPlugins = () => {
   const marketplacePlugins = useMarketplacePlugins();
   const searchQuery = useSearchQuery();
   const activeCategory = useActiveCategory();
@@ -537,7 +537,7 @@ export const useFilteredPlugins = () => {
   return result;
 };
 
-export const useFilteredInstalledPlugins = () => {
+const useFilteredInstalledPlugins = () => {
   const installedPlugins = useInstalledPlugins();
   const searchQuery = useSearchQuery();
 
@@ -553,7 +553,7 @@ export const useFilteredInstalledPlugins = () => {
   );
 };
 
-export const useHealthSummary = () => {
+const useHealthSummary = () => {
   const healthStatus = usePluginHealthStatus();
   const statusList = Object.values(healthStatus);
   const healthy = statusList.filter((s) => s.healthy).length;
@@ -564,12 +564,12 @@ export const useHealthSummary = () => {
   };
 };
 
-export const useInstalledCount = () => {
+const useInstalledCount = () => {
   const installedPlugins = useInstalledPlugins();
   return installedPlugins.length;
 };
 
-export const useActiveCount = () => {
+const useActiveCount = () => {
   const installedPlugins = useInstalledPlugins();
   return installedPlugins.filter((p) => p.isactive).length;
 };

@@ -204,12 +204,12 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
   },
 }));
 
-export const useModuleState = (moduleId: string) =>
+const useModuleState = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]);
-export const useTotalProgress = () => useModuleLoadingStore((state) => state.totalProgress);
-export const useIsModuleLoaded = (moduleId: string) =>
+const useTotalProgress = () => useModuleLoadingStore((state) => state.totalProgress);
+const useIsModuleLoaded = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'loaded');
-export const useIsModuleLoading = (moduleId: string) =>
+const useIsModuleLoading = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'loading');
-export const useHasModuleError = (moduleId: string) =>
+const useHasModuleError = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'error');
