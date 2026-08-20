@@ -834,7 +834,7 @@ export const srmApi = {
   getBidComparison: bidPriceApi.getBidComparison,
 };
 
-export { supplierCategoryApi, supplierProductApi, tenderApi, bidPriceApi };
+export { bidPriceApi };
 
 export type {
   SupplierCategory,

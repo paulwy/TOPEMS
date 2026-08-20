@@ -339,10 +339,7 @@ const exportConsolidationReport = async (
 /**
  * 导出抵消工作底稿
  */
-const exportEliminationWorkSheet = async (
-  scopeId: string,
-  period: string
-): Promise<Blob> => {
+const exportEliminationWorkSheet = async (scopeId: string, period: string): Promise<Blob> => {
   const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
   return downloadBlob(baseURL, `/consolidation/scopes/${scopeId}/elimination-worksheet/export`, {
     params: { period },

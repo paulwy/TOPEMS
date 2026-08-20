@@ -16,12 +16,7 @@ export { handleResponse, safeRequest, paginatedRequest, handleRequestError } fro
 export type { RequestOptions, PaginatedRequestParams } from './client';
 
 // Permission interceptor
-export {
-  createPermissionInterceptor,
-  checkPermissionBeforeRequest,
-  withPermissionCheck,
-  logPermissionAccess,
-} from './permissionInterceptor';
+export { createPermissionInterceptor } from './permissionInterceptor';
 export type { PermissionError } from './permissionInterceptor';
 
 // Domain modules - Business APIs

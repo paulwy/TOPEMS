@@ -16,9 +16,7 @@ export { experimentApi } from './experiment';
 export { formulaApi } from './formula';
 export { materialApi } from './material';
 export { auditRdApi } from './audit';
-export { rdStatisticsApi } from './statistics';
 export { bugApi } from './bug';
-export { testApi } from './test';
 export { buildApi } from './build';
 export { deployApi } from './deploy';
 

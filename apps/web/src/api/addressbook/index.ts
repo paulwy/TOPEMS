@@ -103,12 +103,7 @@ export const addressbookApi = {
 };
 
 export default addressbookApi;
-export {
-  addressbookGroupApi,
-  addressbookTagApi,
-  addressbookImportExportApi,
-  addressbookFavoriteApi,
-};
+export { addressbookGroupApi, addressbookImportExportApi, addressbookFavoriteApi };
 
 // Re-export sub-module types
 export type { ContactGroup, CreateGroupRequest, UpdateGroupRequest, GroupShare } from './group';

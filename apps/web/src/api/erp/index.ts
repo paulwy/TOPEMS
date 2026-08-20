@@ -42,18 +42,12 @@ export { financeReportApi } from './finance/report';
 export { bankAccountApi, bankTransactionApi } from './finance/bank';
 
 export { officeSupplyApi } from './admin/officeSupplies';
-export {
-  meetingRoomApi,
-  meetingBookingApi,
-  meetingRoomCrudApi,
-  meetingBookingCrudApi,
-} from './admin/meeting';
+export { meetingRoomApi, meetingBookingApi } from './admin/meeting';
 export { vehicleApi, vehicleRequestApi } from './admin/vehicle';
-export { announcementApi, announcementCrudApi } from './admin/announcement';
+export { announcementApi } from './admin/announcement';
 
 export { auditApi } from './audit';
 export { databaseApi } from './database';
-export { masterDataSyncApi } from './masterData';
 
 export interface ErpDashboardStats {
   total_assets: number;

@@ -23,21 +23,10 @@ export * from './types';
 
 export { supplierApi } from './supplier';
 export { purchaseOrderApi } from './purchaseOrder';
-export { purchaseItemApi } from './purchaseItem';
-export { supplierEvaluationApi } from './supplierEvaluation';
-export { mrpPlanApi } from './mrpPlan';
-export { mrpSuggestionApi } from './mrpSuggestion';
 export { incomingInspectionApi } from './incomingInspection';
-export { inspectionRecordApi } from './inspectionRecord';
-export { inventoryTurnoverApi } from './inventoryTurnover';
-export { supplyChainDashboardApi } from './supplyChainDashboard';
-export { priceComparisonApi } from './priceComparison';
 export { syncRecordApi } from './syncRecord';
 export { auditLogApi } from './auditLog';
 export { deliveryAppointmentApi } from './deliveryAppointment';
-export { purchaseRequisitionApi } from './purchaseRequisition';
-export { purchaseContractApi } from './purchaseContract';
-export { supplierAdmissionApi } from './supplierAdmission';
 
 export const scmApi = {
   suppliers: supplierApi,

@@ -43,7 +43,7 @@ export const announcementApi = {
   },
 };
 
-export const announcementCrudApi: CrudOperations<Announcement> = {
+const announcementCrudApi: CrudOperations<Announcement> = {
   list: (params?) =>
     announcementApi.list({
       page: params?.page as number,

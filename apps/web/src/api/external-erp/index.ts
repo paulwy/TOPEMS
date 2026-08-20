@@ -8,10 +8,7 @@ import { exportApi } from './export';
 export * from './types';
 
 export { connectionApi } from './connection';
-export { mappingApi } from './mapping';
 export { syncApi } from './sync';
-export { syncLogsApi } from './syncLogs';
-export { previewApi } from './preview';
 export { exportApi } from './export';
 
 export const externalErpApi = {

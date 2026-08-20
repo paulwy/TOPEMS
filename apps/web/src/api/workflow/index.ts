@@ -43,15 +43,12 @@ export { instanceApi } from './instance';
 export { approvalApi, approvalTaskApi } from './approval';
 export { templateApi } from './template';
 export { notificationApi } from './notification';
-export { settingApi } from './setting';
 export { historyApi } from './history';
 export { formDefinitionApi, formInstanceApi } from './form';
 export { taskApi } from './task';
 export { monitorApi } from './monitor';
 export { delegateApi } from './delegate';
 export { categoryApi } from './category';
-export { ruleApi } from './rule';
-export { variableApi } from './variable';
 
 export const workflowApi = {
   workflows: workflowDefinitionApi,

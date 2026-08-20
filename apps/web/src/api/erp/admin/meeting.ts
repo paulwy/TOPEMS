@@ -65,7 +65,7 @@ export const meetingBookingApi = {
   },
 };
 
-export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
+const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
   list: (params?) =>
     meetingRoomApi.list({
       page: params?.page as number,
@@ -78,7 +78,7 @@ export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
   delete: meetingRoomApi.delete,
 };
 
-export const meetingBookingCrudApi: CrudOperations<MeetingBooking> = {
+const meetingBookingCrudApi: CrudOperations<MeetingBooking> = {
   list: (params?) =>
     meetingBookingApi.list({
       page: params?.page as number,

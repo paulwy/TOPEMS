@@ -255,7 +255,11 @@ function getVisibilityOptions() {
   return [
     { value: 'private', label: i18n.t('shared.index.k1'), description: i18n.t('shared.index.k0') },
     { value: 'public', label: i18n.t('shared.index.k3'), description: i18n.t('shared.index.k2') },
-    { value: 'department', label: i18n.t('shared.index.k5'), description: i18n.t('shared.index.k4') },
+    {
+      value: 'department',
+      label: i18n.t('shared.index.k5'),
+      description: i18n.t('shared.index.k4'),
+    },
   ];
 }
 

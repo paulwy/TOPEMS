@@ -321,23 +321,7 @@ const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
   }) as unknown as CrudOperations<Alert, AlertQueryParams>['delete'],
 };
 
-export {
-  alertBatchApi,
-  performanceExtendedApi,
-  ruleAdvancedApi,
-  ruleTypedApi,
-  metricTypedApi,
-  suppressionApi,
-  templateApi,
-  thresholdApi,
-  pluginApi,
-  metricsSnapshotApi,
-  alertApi,
-  routingApi,
-  dashboardApi,
-  sloApi,
-  businessMetricApi,
-};
+export { alertBatchApi, templateApi, pluginApi, alertApi, dashboardApi, businessMetricApi };
 
 export type {
   AlertDetail,

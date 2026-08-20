@@ -180,7 +180,7 @@ export const tenantApi = {
 };
 
 export default tenantApi;
-export { tenantConfigApi, tenantSecurityApi, tenantAnalyticsApi };
+export { tenantConfigApi, tenantAnalyticsApi };
 // Config types
 export type {
   TenantSettingsFull,

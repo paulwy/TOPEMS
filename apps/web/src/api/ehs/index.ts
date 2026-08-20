@@ -6,7 +6,6 @@ import { complianceApi } from './compliance';
 import { ehsDashboardApi } from './dashboard';
 import { emergencyDrillApi } from './emergencyDrill';
 import { emergencyApi } from './emergency';
-import { emergencyPlanApi } from './emergencyPlan';
 import { environmentApi } from './environment';
 import { environmentalComplianceApi } from './environmentalCompliance';
 import { hazardApi } from './hazard';
@@ -30,7 +29,6 @@ export { complianceApi } from './compliance';
 export { ehsDashboardApi } from './dashboard';
 export { emergencyDrillApi } from './emergencyDrill';
 export { emergencyApi } from './emergency';
-export { emergencyPlanApi } from './emergencyPlan';
 export { environmentApi } from './environment';
 export { environmentalComplianceApi } from './environmentalCompliance';
 export { hazardApi } from './hazard';
@@ -38,13 +36,7 @@ export { hazardousMaterialApi } from './hazardousMaterial';
 export { healthMonitoringApi } from './healthMonitoring';
 export { incidentApi } from './incident';
 export { inspectionApi } from './inspection';
-export { occupationalDiseaseApi } from './occupationalDisease';
-export { occupationalHealthApi } from './occupationalHealth';
-export { riskApi } from './risk';
-export { safetyCheckApi } from './safetyCheck';
 export { safetyIssueApi } from './safetyIssue';
-export { safetyTrainingApi } from './safetyTraining';
-export { syncApi } from './sync';
 export { trainingApi } from './training';
 
 export const ehsApi = {
@@ -55,7 +47,6 @@ export const ehsApi = {
   safetyChecks: safetyCheckApi,
   emergency: emergencyApi,
   emergencyDrill: emergencyDrillApi,
-  emergencyPlan: emergencyPlanApi,
   incidents: incidentApi,
   accidents: accidentApi,
   risks: riskApi,
@@ -115,19 +106,6 @@ export const ehsApi = {
   createPlan: emergencyApi.createPlan,
   updatePlan: emergencyApi.updatePlan,
   deletePlan: emergencyApi.deletePlan,
-  listEmergencyPlans: emergencyPlanApi.listPlans,
-  getEmergencyPlan: emergencyPlanApi.getPlan,
-  createEmergencyPlan: emergencyPlanApi.createPlan,
-  updateEmergencyPlan: emergencyPlanApi.updatePlan,
-  deleteEmergencyPlan: emergencyPlanApi.deletePlan,
-  listPlanCategories: emergencyPlanApi.listPlanCategories,
-  listPlanSupplies: emergencyPlanApi.listPlanSupplies,
-  addPlanSupply: emergencyPlanApi.addPlanSupply,
-  deletePlanSupply: emergencyPlanApi.deletePlanSupply,
-  listPlanVersions: emergencyPlanApi.listPlanVersions,
-  createPlanVersion: emergencyPlanApi.createPlanVersion,
-  submitPlanApproval: emergencyPlanApi.submitPlanApproval,
-  approvePlan: emergencyPlanApi.approvePlan,
   listDrills: emergencyApi.listDrills,
   getDrill: emergencyApi.getDrill,
   createDrill: emergencyApi.createDrill,
