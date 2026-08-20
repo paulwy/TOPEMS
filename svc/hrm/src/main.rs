@@ -191,7 +191,6 @@
 mod models;
 mod schema_defense;
 mod services;
-mod utils;
 
 mod event_handlers;
 pub mod modules;

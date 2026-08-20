@@ -201,7 +201,6 @@ pub mod modules;
 use std::sync::Arc;
 use std::time::Duration;
 mod event_handlers;
-pub mod services;
 
 use axum::{
     extract::State,

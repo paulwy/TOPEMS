@@ -195,7 +195,6 @@
 mod event_handlers;
 mod models;
 mod modules;
-mod services;
 
 mod shared;
 
