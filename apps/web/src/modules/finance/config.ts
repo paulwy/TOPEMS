@@ -1,10 +1,205 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import { FINANCE_PATHS } from './paths';
 import i18n from '@/i18n';
 
 // ---- 路由配置（供路由系统使用） ----
+/** FinanceDashboardPage 路由 Props · 模板=dashboard */
+export interface FinanceDashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceLedgerPage 路由 Props · 模板=list */
+export interface FinanceLedgerPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceVoucherPage 路由 Props · 模板=list */
+export interface FinanceVoucherPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** VoucherCreatePage 路由 Props · 模板=form */
+export interface VoucherCreatePageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
+
+/** VoucherDetailPage 路由 Props · 模板=detail */
+export interface VoucherDetailPageProps {
+  /** 主实体 ID（如凭证号、合同编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** FinanceReceivablePayablePage 路由 Props · 模板=list */
+export interface FinanceReceivablePayablePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceReceiptPage 路由 Props · 模板=list */
+export interface FinanceReceiptPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinancePaymentPage 路由 Props · 模板=list */
+export interface FinancePaymentPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceApprovalConfigPage 路由 Props · 模板=list */
+export interface FinanceApprovalConfigPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceInvoicePage 路由 Props · 模板=list */
+export interface FinanceInvoicePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceTaxPage 路由 Props · 模板=list */
+export interface FinanceTaxPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceExpensePage 路由 Props · 模板=list */
+export interface FinanceExpensePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceExpenseApprovalPage 路由 Props · 模板=wizard */
+export interface FinanceExpenseApprovalPageProps {
+  /** 当前向导步骤序号（1-based） */
+  step?: number;
+  /** 关联审批/工作流 ID */
+  workflowId?: string;
+  /** 发起人/申请人 ID */
+  applicantId?: string;
+}
+
+/** FinanceCostPage 路由 Props · 模板=list */
+export interface FinanceCostPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceAssetPage 路由 Props · 模板=list */
+export interface FinanceAssetPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** BudgetManagementPage 路由 Props · 模板=list */
+export interface BudgetManagementPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** FinanceBudgetDetailPage 路由 Props · 模板=detail */
+export interface FinanceBudgetDetailPageProps {
+  /** 主实体 ID（如凭证号、合同编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** OpeningBalancePage 路由 Props · 模板=form */
+export interface OpeningBalancePageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
+
+/** ConsolidationScopePage 路由 Props · 模板=list */
+export interface ConsolidationScopePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ConsolidationReportsPage 路由 Props · 模板=stats */
+export interface ConsolidationReportsPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** FinanceReportsPage 路由 Props · 模板=stats */
+export interface FinanceReportsPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
 export const financeModuleConfig: RouteModuleConfig = {
   code: 'finance',
   name: i18n.t('shared.config.finance_name'),
@@ -32,7 +227,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceDashboardPageProps>,
     {
       path: FINANCE_PATHS.ledger,
       element: lazyWithRetry(
@@ -47,7 +242,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:ledger:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceLedgerPageProps>,
     {
       path: FINANCE_PATHS.vouchers,
       element: lazyWithRetry(
@@ -62,7 +257,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:voucher:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceVoucherPageProps>,
     {
       path: FINANCE_PATHS.voucherCreate,
       element: lazyWithRetry(
@@ -77,7 +272,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:voucher:create', 'finance:dashboard:write'],
       action: 'write',
-    },
+    } satisfies RouteConfigV2<VoucherCreatePageProps>,
     {
       path: FINANCE_PATHS.voucherDetail,
       element: lazyWithRetry(
@@ -92,7 +287,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:voucher:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<VoucherDetailPageProps>,
     {
       path: FINANCE_PATHS.receivablePayable,
       element: lazyWithRetry(
@@ -107,7 +302,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:receivable_payable:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceReceivablePayablePageProps>,
     {
       path: FINANCE_PATHS.receipts,
       element: lazyWithRetry(
@@ -122,7 +317,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:receipt:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceReceiptPageProps>,
     {
       path: FINANCE_PATHS.payments,
       element: lazyWithRetry(
@@ -137,7 +332,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:payment:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinancePaymentPageProps>,
     {
       path: FINANCE_PATHS.approvalConfig,
       element: lazyWithRetry(
@@ -152,7 +347,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['finance:dashboard:admin'],
       action: 'admin',
-    },
+    } satisfies RouteConfigV2<FinanceApprovalConfigPageProps>,
     {
       path: FINANCE_PATHS.invoices,
       element: lazyWithRetry(
@@ -167,7 +362,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['finance:invoice:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceInvoicePageProps>,
     {
       path: FINANCE_PATHS.tax,
       element: lazyWithRetry(() => import('@/pages/finance/FinanceTaxPage'), 'FinanceTaxPage'),
@@ -179,7 +374,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:tax:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceTaxPageProps>,
     {
       path: FINANCE_PATHS.expense,
       element: lazyWithRetry(
@@ -194,7 +389,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['finance:expense:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceExpensePageProps>,
     {
       path: FINANCE_PATHS.expenseApproval,
       element: lazyWithRetry(
@@ -207,9 +402,13 @@ export const financeModuleConfig: RouteModuleConfig = {
       titleKey: 'shared.config.k14',
       template: 'wizard',
       group: 'setting',
-      requiredPermissions: ['finance:expense_approval:read', 'finance:dashboard:read', 'finance:settlement:approve'],
+      requiredPermissions: [
+        'finance:expense_approval:read',
+        'finance:dashboard:read',
+        'finance:settlement:approve',
+      ],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceExpenseApprovalPageProps>,
     {
       path: FINANCE_PATHS.cost,
       element: lazyWithRetry(() => import('@/pages/finance/FinanceCostPage'), 'FinanceCostPage'),
@@ -221,7 +420,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:cost:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceCostPageProps>,
     {
       path: FINANCE_PATHS.assets,
       element: lazyWithRetry(() => import('@/pages/finance/FinanceAssetPage'), 'FinanceAssetPage'),
@@ -233,7 +432,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:asset:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceAssetPageProps>,
     {
       path: FINANCE_PATHS.budget,
       element: lazyWithRetry(
@@ -248,7 +447,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:budget:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<BudgetManagementPageProps>,
     {
       path: FINANCE_PATHS.budgetDetail,
       element: lazyWithRetry(
@@ -263,7 +462,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:budget:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceBudgetDetailPageProps>,
     {
       path: FINANCE_PATHS.openingBalance,
       element: lazyWithRetry(
@@ -278,7 +477,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['finance:opening_balance:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<OpeningBalancePageProps>,
     {
       path: FINANCE_PATHS.consolidation,
       element: lazyWithRetry(
@@ -293,7 +492,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['finance:consolidation:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ConsolidationScopePageProps>,
     {
       path: FINANCE_PATHS.consolidationReports,
       element: lazyWithRetry(
@@ -308,7 +507,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['finance:consolidation:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ConsolidationReportsPageProps>,
     {
       path: FINANCE_PATHS.reports,
       element: lazyWithRetry(
@@ -323,7 +522,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['finance:report:read', 'finance:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<FinanceReportsPageProps>,
   ],
 };
 
