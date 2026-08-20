@@ -123,16 +123,32 @@ export {
 export type { RemoteLoaderProps } from './RemoteLoader';
 
 // ==================== 模块注册表 ====================
-export { type RegisteredModule, type ModuleStatus } from './registry'
+export { type RegisteredModule, type ModuleStatus } from './registry';
 
 // ==================== 模块注册中心（V41.0新版）====================
-export { moduleRegistry, type ModuleRegistration, type ModuleType, type ModuleFilter } from './registry/module-registry'
-export { type RegistryFetchResult, type ModuleHealthStatus } from './registry/registry-api'
+export {
+  moduleRegistry,
+  type ModuleRegistration,
+  type ModuleType,
+  type ModuleFilter,
+} from './registry/module-registry';
+export { type RegistryFetchResult, type ModuleHealthStatus } from './registry/registry-api';
 export { default as RegistryPanel } from './registry/RegistryPanel';
 
 // ==================== 版本管理平台（V41.0）====================
-export { type ModuleVersion, type VersionStatus, type VersioningStrategy, type VersionComparison } from './version-platform/version-platform'
-export { type Rollout, type RolloutStrategy, type RolloutType, type RolloutStatus, type CanaryContext as RolloutCanaryContext } from './version-platform/rollout-manager'
+export {
+  type ModuleVersion,
+  type VersionStatus,
+  type VersioningStrategy,
+  type VersionComparison,
+} from './version-platform/version-platform';
+export {
+  type Rollout,
+  type RolloutStrategy,
+  type RolloutType,
+  type RolloutStatus,
+  type CanaryContext as RolloutCanaryContext,
+} from './version-platform/rollout-manager';
 export { default as VersionPanel } from './version-platform/VersionPanel';
 
 // ==================== 可观测性仪表盘（V41.0）====================
@@ -145,7 +161,6 @@ export { MicroAppRouter } from './MicroAppRouter';
 // JS 沙箱（Proxy 代理 window/document）
 export {
   JavaScriptSandbox,
-  isBuiltinGlobal,
   type SandboxOptions,
   type GlobalVarConflict,
 } from './sandbox/js-sandbox';
@@ -172,7 +187,6 @@ export {
 // 冲突检测器（单例）
 export {
   conflictDetector,
-  ConflictDetector,
   type ConflictSeverity,
   type ConflictReport,
 } from './sandbox/conflict-detector';
@@ -180,7 +194,6 @@ export {
 // 沙箱管理器（单例，统一管理三种隔离）
 export {
   sandboxManager,
-  SandboxManager,
   type SandboxBundle,
   type SandboxStatus,
   type SandboxManagerOptions,
@@ -259,7 +272,6 @@ export * as aiOps from './ai-ops';
 
 // ==================== V44.0 模块市场 ====================
 export {
-  ModuleMarket,
   moduleMarket,
   type MarketplaceModule,
   type ModuleDependencyRef,
@@ -293,9 +305,7 @@ export * as governance from './governance';
 
 // ==================== V44.0 安全扫描 ====================
 export {
-  SecurityScanner,
   securityScanner,
-  SecurityIssueType,
   SecurityIssueSeverity,
   SecurityCategory,
   type SecurityScanResult,
@@ -311,7 +321,6 @@ export * as security from './security';
 // ==================== V45.0 运行时终极形态 ====================
 // 运行时动态加载（import + 并发控制 + 重试 + 缓存）
 export {
-  DynamicModuleLoader,
   dynamicLoader,
   ModuleLoadStatus,
   type DynamicLoaderConfig,
@@ -320,12 +329,7 @@ export {
 
 // 跨框架兼容（React/Vue/Angular/Svelte 适配器 + 统一生命周期）
 export {
-  CrossFrameworkBridge,
   crossFrameworkBridge,
-  ReactAdapter,
-  VueAdapter,
-  AngularAdapter,
-  SvelteAdapter,
   FrameworkType,
   type FrameworkAdapter,
   type UnifiedProps,
@@ -337,13 +341,8 @@ export {
 
 // 统一设计系统（设计令牌 + 主题 + CSS 变量同步）
 export {
-  DesignSystemManager,
   designSystemManager,
   TokenType,
-  PRESET_TOKENS,
-  LIGHT_THEME,
-  DARK_THEME,
-  DESIGN_SYSTEM_EVENTS,
   type DesignToken,
   type ThemeConfig,
   type ThemeMode,
@@ -351,7 +350,6 @@ export {
 
 // 统一生命周期管理（状态机 + 钩子 + 事件时间线）
 export {
-  ModuleLifecycle,
   lifecycleManager,
   LifecycleState,
   LifecycleEventType,
@@ -372,9 +370,7 @@ export * as runtime from './runtime';
 // 构建管理（构建配置 + 构建任务 + 构建产物管理）
 // 部署管理（环境配置 + 部署流水线 + 回滚）
 export {
-  UnifiedDevPlatform,
   unifiedDevPlatform,
-  ProjectCategory,
   type ProjectTemplate,
   type ProjectConfig,
   type DevServerInstance,
@@ -393,7 +389,6 @@ export * as platform from './platform';
 // ==================== V47.0 低代码搭建引擎 ====================
 // 组件拖拽布局 + 属性面板 + 样式编辑器 + 事件绑定 + 数据源绑定 + 响应式设计
 export {
-  LowCodeBuilder,
   lowCodeBuilder,
   ComponentCategory,
   ActionType,
@@ -418,7 +413,6 @@ export * as lowcode from './lowcode';
 // 注意：与 marketplace（模块市场）独立，模块面向业务，插件面向平台扩展
 export {
   PluginMarket,
-  pluginMarket,
   PluginCategory,
   type Plugin,
   type PluginVersion,
@@ -437,7 +431,6 @@ export {
 // 边缘渲染引擎（SSR/SSG/ISR + 多级缓存 + 地理感知路由）
 export {
   edgeRenderer,
-  EdgeRenderer,
   type RenderMode,
   type CacheTier,
   type RenderStatus,
@@ -452,7 +445,6 @@ export {
 // 函数即模块（函数注册 + 依赖编排 + 结果缓存 + 可观测性）
 export {
   faas,
-  FunctionAsModule,
   type FunctionStatus,
   type ExecStatus,
   type FunctionDefinition,
@@ -469,7 +461,6 @@ export {
 // 按需加载引擎（智能预加载 + 懒加载 + 条件加载 + 优先级调度）
 export {
   onDemandLoader,
-  OnDemandLoader,
   type LoadPriority,
   type PreloadStrategy,
   type LoadStatus,

@@ -10,7 +10,6 @@ export {
 
 export {
   smartAlertManager,
-  SmartAlertManager,
   type Alert,
   type AlertRule,
   type AlertCondition,
@@ -24,8 +23,6 @@ export {
 
 export {
   metricPredictor,
-  MetricPredictor,
-  SimplePredictor,
   type PredictionResult,
   type PredictionWithConfidence,
   type PredictedAnomaly,

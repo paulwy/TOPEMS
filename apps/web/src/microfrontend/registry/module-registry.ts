@@ -46,7 +46,7 @@ function writeStorage<T>(key: string, value: T): void {
   }
 }
 
-export class ModuleRegistry {
+class ModuleRegistry {
   private static instance: ModuleRegistry;
   private modules: Map<string, ModuleRegistration> = new Map();
   private listeners: Set<(modules: ModuleRegistration[]) => void> = new Set();
