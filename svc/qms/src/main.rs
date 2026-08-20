@@ -128,28 +128,15 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "qms-service",
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "modules": {
-            "qms": "active",
-            "lims": "active",
-            "ehs": "active"
-        },
-        "dependencies": [
-            {
-                "name": "postgresql",
-                "status": db_status
-            }
-        ],
-        "version": "1.0.0"
-    });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    use topems_shared_bootstrap::build_detailed_health_response;
+    let modules = serde_json::json!({ "qms": "active", "lims": "active", "ehs": "active" });
+    let resp = build_detailed_health_response(
+        &state.pool,
+        "qms-service",
+        modules,
+        "1.0.0",
+        serde_json::json!({}),
+    )
+    .await;
+    Json(ApiResponse::success(resp, "Detailed health check"))
 }

@@ -538,66 +538,16 @@ async fn main() -> Result<()> {
 }
 
 use crate::models::DeviceLocation;
-use topems_shared_bootstrap::{check_database_health, check_iam_health};
-use topems_shared_core::health::HealthStatus;
-use topems_shared_core::health::ServiceHealth;
+use topems_shared_bootstrap::{build_detailed_service_health, build_simple_status_response};
 
 async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.pool).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
+    build_simple_status_response(&state.pool).await
 }
 
-async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
-    let dependencies = vec![
-        check_database_health(&state.pool).await,
-        check_iam_health().await,
-    ];
-
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
-
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
-
-    let health =
-        ServiceHealth::healthy_with_message("topems-gis", message).with_dependencies(dependencies);
-
-    Json(ApiResponse::success(health, "详细健康检查"))
+async fn health_check_detailed(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<topems_shared_core::health::ServiceHealth>> {
+    build_detailed_service_health(&state.pool, "topems-gis", None, vec![]).await
 }
 
 async fn list_device_locations_by_map(

@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 pub struct AuditLog {
     pub id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub action: String,
     pub entity_type: String,
     pub entity_id: Option<Uuid>,
@@ -21,7 +22,7 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateAuditLogRequest {
     pub action: String,
     pub entity_type: String,
@@ -37,7 +38,7 @@ pub struct CreateAuditLogRequest {
     pub user_agent: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct AuditLogQuery {
     pub action: Option<String>,
     pub entity_type: Option<String>,
@@ -234,6 +235,7 @@ impl AuditLogRecord {
     fn into_audit_log(self) -> AuditLog {
         AuditLog {
             id: self.id,
+            tenant_id: None,
             action: self.action,
             entity_type: self.entity_type,
             entity_id: self.entity_id,

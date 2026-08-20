@@ -96,30 +96,26 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "topems-monitor",
+    use topems_shared_bootstrap::build_detailed_health_response;
+    let modules = serde_json::json!({
+        "metrics": "active",
+        "health_check": "active",
+        "alerts": "active",
+        "alert_evaluator": "active",
+        "business_metrics": "active",
+        "slo": "active"
+    });
+    let extra = serde_json::json!({
         "split_from": "unified-core",
         "v68_1_task": "A2.1",
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "modules": {
-            "metrics": "active",
-            "health_check": "active",
-            "alerts": "active",
-            "alert_evaluator": "active",
-            "business_metrics": "active",
-            "slo": "active"
-        },
-        "dependencies": [
-            { "name": "postgresql", "status": db_status }
-        ],
-        "version": env!("CARGO_PKG_VERSION")
     });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    let resp = build_detailed_health_response(
+        &state.pool,
+        "topems-monitor",
+        modules,
+        env!("CARGO_PKG_VERSION"),
+        extra,
+    )
+    .await;
+    Json(ApiResponse::success(resp, "Detailed health check"))
 }

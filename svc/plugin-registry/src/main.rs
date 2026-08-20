@@ -115,32 +115,28 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "topems-plugin-registry",
+    use topems_shared_bootstrap::build_detailed_health_response;
+    let modules = serde_json::json!({
+        "handlers/tenant_plugins": "active",
+        "handlers/marketplace": "active",
+        "handlers/runtime": "active",
+        "handlers/simple_api": "active",
+        "handlers/upgrade_workflow": "active",
+        "handlers/automated_upgrade": "active",
+        "handlers/versioning": "active",
+        "handlers/reviews_stats": "active"
+    });
+    let extra = serde_json::json!({
         "split_from": "unified-core",
         "v68_1_task": "A2.2",
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "modules": {
-            "handlers/tenant_plugins": "active",
-            "handlers/marketplace": "active",
-            "handlers/runtime": "active",
-            "handlers/simple_api": "active",
-            "handlers/upgrade_workflow": "active",
-            "handlers/automated_upgrade": "active",
-            "handlers/versioning": "active",
-            "handlers/reviews_stats": "active"
-        },
-        "dependencies": [
-            { "name": "postgresql", "status": db_status }
-        ],
-        "version": env!("CARGO_PKG_VERSION")
     });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    let resp = build_detailed_health_response(
+        &state.pool,
+        "topems-plugin-registry",
+        modules,
+        env!("CARGO_PKG_VERSION"),
+        extra,
+    )
+    .await;
+    Json(ApiResponse::success(resp, "Detailed health check"))
 }

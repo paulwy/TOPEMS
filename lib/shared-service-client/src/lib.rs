@@ -202,9 +202,9 @@ pub mod service_client;
 pub use service_client::base_client::BaseServiceClient;
 pub use service_client::error::ServiceClientResult;
 // ServiceClientError 已合并到 TopemsError，保留 re-export 以向后兼容
-pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use service_client::generic::GenericServiceClient;
 pub use service_client::trait_api::{ServiceApi, TypedServiceClient};
+pub use topems_shared_core::error::TopemsError as ServiceClientError;
 
 // P0-2 Phase 2 + P2-2: 所有服务类型统一从 api::*_api 导出
 pub use service_client::api::erp_api::{ErpApi, ErpAsset};

@@ -217,9 +217,8 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     /// GET 请求并解包 `ApiResponse<T>` 的 `data` 字段。
     pub async fn get_and_unwrap<R: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.get(path).await?;
-        resp.data.ok_or_else(|| {
-            TopemsError::Config("API response missing `data` field".into())
-        })
+        resp.data
+            .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))
     }
 
     /// POST 请求并解包 `ApiResponse<T>` 的 `data` 字段。
@@ -229,9 +228,8 @@ impl<T: ServiceApi> TypedServiceClient<T> {
         body: &B,
     ) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.post(path, body).await?;
-        resp.data.ok_or_else(|| {
-            TopemsError::Config("API response missing `data` field".into())
-        })
+        resp.data
+            .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))
     }
 
     /// PUT 请求并解包 `ApiResponse<T>` 的 `data` 字段。
@@ -241,9 +239,8 @@ impl<T: ServiceApi> TypedServiceClient<T> {
         body: &B,
     ) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.put(path, body).await?;
-        resp.data.ok_or_else(|| {
-            TopemsError::Config("API response missing `data` field".into())
-        })
+        resp.data
+            .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))
     }
 
     /// POST 请求并检查 `ApiResponse.success`。

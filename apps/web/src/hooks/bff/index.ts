@@ -1,48 +1,21 @@
 /**
- * V44.0 Track D: BFF Hooks 入口
+ * BFF Hooks 入口
  *
- * 统一导出所有基于 BFF GraphQL 的 hooks：
+ * 统一导出实际被使用的 BFF hooks：
  * - useBffCrud: 通用 CRUD（list/get/create/update/delete）
- * - useBffSubscription: 通用 GraphQL Subscription（WebSocket）
  * - useBffDashboard: 仪表盘聚合查询
  * - useBffPerformance: GraphQL 查询性能监控
- * - useSlowQueryAlert: 慢查询告警
- * - useQueryCost: 查询成本分析（V41.0）
- * - useAutoSharding: 自动分片查询（V41.0）
- * - useSmartPrefetch: 智能预加载（V41.0）
- *
- * V42.0 Track D 高级模式：
- * - useBffSuspenseQuery / useBffSuspenseInfinite: 基于 Suspense 的数据加载
- * - usePartialPreRender: 部分预渲染（PPR）
- * - useRouteDataLoader: 路由级数据加载器（DeferredData + Suspense）
- * - BffSuspenseBoundary / BffErrorFallback / BffLoadingFallback: Suspense 边界组件
- * - StreamingSlot / StaticShell: PPR 流式占位与静态壳组件
- *
- * V43.0 Track D 极致性能：
- * - useEdgeCompute: 边缘计算 + 边缘缓存
- * - useEdgeCache: 边缘缓存 hook
- * - useOptimalEndpoint: 最优边缘节点选择
- * - useIsrCache: 增量静态再生（ISR）
- * - useRevalidate: 按需重验证
- * - useIsrStats: ISR 缓存统计
- *
- * V44.0 Track D 全页面 BFF 改造：
- * - useBffListPage: 列表页完整逻辑（搜索/过滤/分页/批量操作）
- * - useBffDetailPage: 详情页完整逻辑（加载/编辑/删除/关联数据）
- * - useBffFormPage: 表单页完整逻辑（创建/更新/验证/提交）
- *
- * 所有 hooks 通过 BFF GraphQL 出口获取数据，替代直接 REST 调用。
+ * - useAutoSharding: 自动分片查询
+ * - useBffPage (useBffListPage): 列表页完整逻辑（搜索/过滤/分页/批量操作）
+ * - useBffSuspense: BffErrorFallback / BffLoadingFallback / Suspense 边界组件 + 统计
+ * - usePartialPreRender: 部分预渲染（PPR）统计
+ * - useABTest: A/B 实验（useExperimentResult / useActiveExperiments / useExperimentAdmin）
  */
 
 export { useBffCrud } from './useBffCrud';
 export type { UseBffCrudOptions, UseBffCrudResult } from './useBffCrud';
 
-export { useBffSubscription } from './useBffSubscription';
-export type {
-  UseBffSubscriptionOptions,
-  UseBffSubscriptionResult,
-  SubscriptionStatus,
-} from './useBffSubscription';
+export type { SubscriptionStatus } from './useBffSubscription';
 
 export { useBffDashboard } from './useBffDashboard';
 export type {
@@ -53,17 +26,7 @@ export type {
 
 export { useBffPerformance } from './useBffPerformance';
 
-export type {
-  SlowQueryAlertOptions,
-  UseSlowQueryAlertResult,
-  AlertLevel,
-} from './useSlowQueryAlert';
-
-
 export { useAutoSharding } from './useAutoSharding';
-
-
-// ==================== V42.0 Track D: Suspense 数据加载 ====================
 
 export {
   usePrefetchBffSuspenseQuery,
@@ -83,8 +46,6 @@ export type {
   SuspenseMountRecord,
 } from './useBffSuspense';
 
-// ==================== V42.0 Track D: 部分预渲染（PPR） ====================
-
 export { usePartialPreRender, getPPRStats, onPPRStatsChange } from './usePartialPreRender';
 export type {
   RouteShellConfig,
@@ -94,42 +55,6 @@ export type {
   StaticShellProps,
   PPRSlotRecord,
 } from './usePartialPreRender';
-
-// ==================== V42.0 Track D: 路由级数据加载器 ====================
-
-export type {
-  RouteParams,
-  RouteLoaderConfig,
-  RouteDeferredLoaderConfig,
-  RouteDataLoader,
-  RouteDataEntry,
-  RouteLoaderState,
-  UseRouteDataLoaderResult,
-  RouteDataBoundaryProps,
-} from './useRouteDataLoader';
-
-// ==================== V43.0 Track D: 边缘计算（Edge Compute） ====================
-
-export type {
-  UseEdgeComputeOptions,
-  UseEdgeComputeResult,
-  UseEdgeCacheOptions,
-  UseEdgeCacheResult,
-  UseOptimalEndpointResult,
-} from './useEdgeCompute';
-
-// ==================== V43.0 Track D: 增量静态再生（ISR） ====================
-
-export type {
-  UseIsrCacheOptions,
-  UseIsrCacheResult,
-  UseRevalidateResult,
-  UseIsrStatsResult,
-  UseIsrEntryResult,
-  UseIsrConfigResult,
-} from './useIsr';
-
-// ==================== V44.0 Track D: 页面级 BFF Hooks ====================
 
 export { useBffListPage } from './useBffPage';
 export type {
@@ -142,16 +67,6 @@ export type {
   FormFieldConfig,
   RelatedQueryConfig,
 } from './useBffPage';
-
-// ==================== V45.0 Track D: BFF 生产化（错误边界 + 降级 + A/B 测试） ====================
-
-export type {
-  UseBffErrorResult,
-  UseBffRetryOptions,
-  UseBffRetryResult,
-  UseBffFallbackResult,
-  UseErrorReportResult,
-} from './useBffErrorHandling';
 
 export { useExperimentResult, useActiveExperiments, useExperimentAdmin } from './useABTest';
 export type {

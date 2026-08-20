@@ -1,10 +1,10 @@
 use super::error::ServiceClientResult;
-use topems_shared_core::error::TopemsError;
 use opentelemetry::global;
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
+use topems_shared_core::error::TopemsError;
 
 struct TraceHeaderInjector(HashMap<String, String>);
 
@@ -28,9 +28,7 @@ impl BaseServiceClient {
 
         // 验证 URL 有效性
         if base_url.is_empty() {
-            return Err(TopemsError::InvalidUrl(
-                "Base URL cannot be empty".into(),
-            ));
+            return Err(TopemsError::InvalidUrl("Base URL cannot be empty".into()));
         }
 
         let client = Client::builder()
@@ -95,10 +93,7 @@ impl BaseServiceClient {
         &self,
         request: RequestBuilder,
     ) -> ServiceClientResult<T> {
-        let response = self
-            .apply_headers(request)
-            .send()
-            .await?;
+        let response = self.apply_headers(request).send().await?;
 
         let status_code = response.status().as_u16();
 
@@ -114,20 +109,14 @@ impl BaseServiceClient {
             });
         }
 
-        let result = response
-            .json::<T>()
-            .await?;
+        let result = response.json::<T>().await?;
 
         Ok(result)
     }
 
     pub async fn get_without_response(&self, path: &str) -> ServiceClientResult<()> {
         let url = self.build_url(path);
-        let response = self
-            .client
-            .get(&url)
-            .send()
-            .await?;
+        let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
             let status_code = response.status().as_u16();

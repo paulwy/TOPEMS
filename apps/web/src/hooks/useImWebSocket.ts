@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import {
+  useWebSocket,
+  type WsConnectionStatus,
+  type UseWebSocketOptions,
+} from './useWebSocket';
 import { useAuthStore } from '@/store';
-import type { WsMessage } from './useWebSocket';
 import config from '@/config/runtime';
 import { logger } from '@/utils/logger';
 
@@ -15,8 +19,7 @@ export interface ImWsMessage {
   timestamp: string;
 }
 
-type ImConnectionStatus =
-  'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
+type ImConnectionStatus = WsConnectionStatus;
 
 interface UseImWebSocketOptions {
   onMessage?: (message: string | ImWsMessage) => void;
@@ -54,296 +57,89 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ImConnectionStatus>('disconnected');
-  const [reconnectCount, setReconnectCount] = useState(0);
-  const [error, setError] = useState<Event | null>(null);
+  const wsPath = WS_PATH;
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectCountRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isConnectingRef = useRef(false);
-  const isInitRef = useRef(false);
-
-  const callbacksRef = useRef({ onMessage, onOpen, onClose, onError });
-  callbacksRef.current = { onMessage, onOpen, onClose, onError };
-
-  const buildWsUrl = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    let url = `${protocol}//${window.location.host}${WS_PATH}`;
+  const queryParams = useMemo(() => {
     const params: Record<string, string> = {};
     if (token) params.token = token;
     if (user?.id) params.user_id = user.id;
-    if (Object.keys(params).length > 0) {
-      url += `?${new URLSearchParams(params).toString()}`;
-    }
-    return url;
+    return Object.keys(params).length > 0 ? params : undefined;
   }, [token, user?.id]);
 
-  const resetConnectTimeout = useCallback(() => {
-    if (connectTimeoutRef.current) {
-      clearTimeout(connectTimeoutRef.current);
-      connectTimeoutRef.current = null;
-    }
-  }, []);
+  const buildAuthMessage = useCallback((): string | undefined => {
+    if (!sendAuthOnOpen) return undefined;
+    if (typeof authMessage === 'function') return authMessage();
+    if (typeof authMessage === 'string') return authMessage;
+    return JSON.stringify({
+      type: 'auth',
+      token,
+      user_id: user?.id,
+    });
+  }, [sendAuthOnOpen, authMessage, token, user?.id]);
 
-  const scheduleReconnect = useCallback(() => {
-    if (reconnectCountRef.current >= reconnectAttempts) {
-      logger.warn('[useImWebSocket] max reconnect attempts reached');
-      setConnectionStatus('error');
-      return;
-    }
-    const attempt = reconnectCountRef.current + 1;
-    const delay = Math.min(
-      maxReconnectDelay,
-      reconnectInterval * Math.pow(2, reconnectCountRef.current)
-    );
-    const jitter = Math.random() * minReconnectDelay;
-    const totalDelay = delay + jitter;
-    logger.info(
-      `[useImWebSocket] scheduling reconnect attempt ${attempt}/${reconnectAttempts} in ${Math.round(totalDelay)}ms`
-    );
-    setConnectionStatus('reconnecting');
-    reconnectTimeoutRef.current = setTimeout(() => {
-      reconnectCountRef.current = attempt;
-      setReconnectCount(attempt);
-      connectInternal();
-    }, totalDelay);
-  }, [reconnectAttempts, reconnectInterval, maxReconnectDelay, minReconnectDelay]);
-
-  const connectInternal = useCallback(() => {
-    if (!enabled) {
-      logger.info('[useImWebSocket] disabled, skipping connection');
-      return;
-    }
-
-    if (typeof window === 'undefined' || !('WebSocket' in window)) {
-      logger.warn('[useImWebSocket] WebSocket not supported');
-      return;
-    }
-
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      logger.warn('[useImWebSocket] already connected');
-      return;
-    }
-
-    if (isConnectingRef.current) {
-      logger.warn('[useImWebSocket] already connecting');
-      return;
-    }
-
-    if (!reconnectCountRef.current && isInitRef.current) {
-      logger.info('[useImWebSocket] already initialized');
-      return;
-    }
-
-    if (wsRef.current) {
-      try {
-        wsRef.current.close(1000, 'Reconnecting');
-      } catch (_) {
-        // ignore
-      }
-      wsRef.current = null;
-    }
-
-    isConnectingRef.current = true;
-    const isReconnecting = reconnectCountRef.current > 0;
-    if (isReconnecting) {
-      setConnectionStatus('reconnecting');
-    } else {
-      setConnectionStatus('connecting');
-    }
-    setError(null);
-
-    try {
-      const wsUrl = buildWsUrl();
-      logger.info('[useImWebSocket] connecting to', WS_PATH);
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      connectTimeoutRef.current = setTimeout(() => {
-        if (ws.readyState === WebSocket.CONNECTING) {
-          logger.warn('[useImWebSocket] connection timeout');
-          try {
-            ws.close(1000, 'Connection timeout');
-          } catch (_) {
-            // ignore
-          }
-        }
-      }, connectionTimeout);
-
-      ws.onopen = () => {
-        resetConnectTimeout();
-        isConnectingRef.current = false;
-        isInitRef.current = true;
-        reconnectCountRef.current = 0;
-        setReconnectCount(0);
-        setIsConnected(true);
-        setConnectionStatus('connected');
-        setError(null);
-        logger.info('[useImWebSocket] connected');
-
-        if (sendAuthOnOpen) {
-          try {
-            const payload =
-              typeof authMessage === 'function'
-                ? authMessage()
-                : authMessage ||
-                  JSON.stringify({
-                    type: 'auth',
-                    token,
-                    user_id: user?.id,
-                  });
-            ws.send(payload);
-          } catch (sendErr) {
-            logger.warn('[useImWebSocket] failed to send auth message:', sendErr);
-          }
-        }
-
-        if (callbacksRef.current.onOpen) {
-          try {
-            callbacksRef.current.onOpen();
-          } catch (cbErr) {
-            logger.warn('[useImWebSocket] onOpen callback error:', cbErr);
-          }
-        }
-      };
-
-      ws.onmessage = (event) => {
-        if (!callbacksRef.current.onMessage) return;
+  const handleMessage = useCallback(
+    (message: string | unknown) => {
+      if (!onMessage) return;
+      if (typeof message === 'string') {
         try {
-          let msg: string | ImWsMessage = event.data;
-          try {
-            const parsed = JSON.parse(event.data) as ImWsMessage;
-            msg = parsed;
-          } catch (_) {
-            // keep as string
-          }
-          callbacksRef.current.onMessage(msg);
-        } catch (cbErr) {
-          logger.warn('[useImWebSocket] onMessage callback error:', cbErr);
+          const parsed = JSON.parse(message) as ImWsMessage;
+          onMessage(parsed);
+        } catch (_) {
+          onMessage(message);
         }
-      };
-
-      ws.onerror = (ev) => {
-        logger.warn('[useImWebSocket] error occurred');
-        setError(ev);
-        if (callbacksRef.current.onError) {
-          try {
-            callbacksRef.current.onError(ev);
-          } catch (cbErr) {
-            logger.warn('[useImWebSocket] onError callback error:', cbErr);
-          }
-        }
-      };
-
-      ws.onclose = (event) => {
-        resetConnectTimeout();
-        isConnectingRef.current = false;
-        setIsConnected(false);
-
-        const prevStatus = connectionStatus;
-        if (prevStatus === 'connecting' || prevStatus === 'reconnecting') {
-          setConnectionStatus('disconnected');
-        }
-
-        logger.info(`[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`);
-
-        if (callbacksRef.current.onClose) {
-          try {
-            callbacksRef.current.onClose(event);
-          } catch (cbErr) {
-            logger.warn('[useImWebSocket] onClose callback error:', cbErr);
-          }
-        }
-
-        const reconnecting = reconnectTimeoutRef.current != null;
-        wsRef.current = null;
-        if (!reconnecting && shouldReconnect(event.code) && enabled) {
-          scheduleReconnect();
-        }
-      };
-    } catch (err) {
-      logger.warn('[useImWebSocket] connection creation failed:', err);
-      isConnectingRef.current = false;
-      setConnectionStatus('error');
-      setError(null);
-    }
-  }, [
-    enabled,
-    buildWsUrl,
-    connectionTimeout,
-    resetConnectTimeout,
-    sendAuthOnOpen,
-    authMessage,
-    token,
-    user?.id,
-    shouldReconnect,
-    scheduleReconnect,
-  ]);
-
-  const connect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-    reconnectCountRef.current = 0;
-    setReconnectCount(0);
-    connectInternal();
-  }, [connectInternal]);
-
-  const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-    resetConnectTimeout();
-    isInitRef.current = false;
-    isConnectingRef.current = false;
-    reconnectCountRef.current = 0;
-
-    const ws = wsRef.current;
-    wsRef.current = null;
-
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-      try {
-        ws.close(1000, 'Client disconnect');
-      } catch (_) {
-        // ignore
+      } else {
+        onMessage(message as ImWsMessage);
       }
-    }
-    setIsConnected(false);
-    setConnectionStatus('disconnected');
-    setError(null);
-    setReconnectCount(0);
-  }, [resetConnectTimeout]);
+    },
+    [onMessage]
+  );
 
-  const send = useCallback((data: string | object) => {
-    const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      logger.warn('[useImWebSocket] send failed: not connected');
-      return false;
-    }
-    try {
-      const payload = typeof data === 'string' ? data : JSON.stringify(data);
-      ws.send(payload);
-      return true;
-    } catch (err) {
-      logger.warn('[useImWebSocket] send error:', err);
-      return false;
-    }
-  }, []);
+  const { isConnected, connectionStatus, reconnectCount, error, connect, disconnect, send } =
+    useWebSocket({
+      wsPath,
+      queryParams,
+      authMessage: buildAuthMessage,
+      onMessage: handleMessage,
+      onOpen: () => {
+        logger.info('[useImWebSocket] connected');
+        onOpen?.();
+      },
+      onClose: (event) => {
+        logger.info(
+          `[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`
+        );
+        onClose?.(event);
+      },
+      onError: (event) => {
+        logger.warn('[useImWebSocket] error occurred');
+        onError?.(event);
+      },
+      reconnectAttempts,
+      maxReconnectDelay,
+      minReconnectDelay: Math.min(minReconnectDelay, reconnectInterval),
+      connectionTimeout,
+      shouldReconnect,
+      enabled,
+      autoAuthToken: false,
+    } as UseWebSocketOptions);
 
-  useEffect(() => {
-    if (enabled) {
-      const timer = setTimeout(() => connect(), 50);
-      return () => clearTimeout(timer);
-    }
-    return () => {
-      disconnect();
-    };
-  }, [connect, disconnect, enabled]);
+  const sendSafe = useCallback(
+    (data: string | object): boolean => {
+      if (!isConnected) {
+        logger.warn('[useImWebSocket] send failed: not connected');
+        return false;
+      }
+      try {
+        const payload = typeof data === 'string' ? data : JSON.stringify(data);
+        send(payload as string | Record<string, unknown>);
+        return true;
+      } catch (err) {
+        logger.warn('[useImWebSocket] send error:', err);
+        return false;
+      }
+    },
+    [isConnected, send]
+  );
 
   return {
     isConnected,
@@ -352,8 +148,9 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
     error,
     connect,
     disconnect,
-    send,
+    send: sendSafe,
   };
 }
 
+export type { ImConnectionStatus };
 export default useImWebSocket;

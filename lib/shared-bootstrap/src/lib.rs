@@ -1047,6 +1047,99 @@ pub fn overall_health_message(status: &HealthStatus) -> &'static str {
     }
 }
 
+/// 构造简单健康检查响应（"healthy"/"degraded"/"unhealthy" 字符串，带 ApiResponse 包装）。
+///
+/// 等价于 RD/AI/GIS/Portal/Mobile 等服务中反复出现的内联 health_check 模板：
+/// 1) 依次调用 check_database_health + check_iam_health；
+/// 2) 用 rollup_health_status 汇总整体状态；
+/// 3) 映射为英文状态字符串后包装成 ApiResponse。
+pub async fn build_simple_status_response(
+    pool: &sqlx::PgPool,
+) -> axum::Json<ApiResponse<String>> {
+    let database_health = check_database_health(pool).await;
+    let iam_health = check_iam_health().await;
+    let overall_status = rollup_health_status(&[database_health.status, iam_health.status]);
+    let status_str = health_status_str(&overall_status).to_string();
+    axum::Json(ApiResponse::success(status_str, "健康检查"))
+}
+
+/// 构造标准详细健康检查响应（带 ServiceHealth，默认包含 db + iam，可注入额外依赖）。
+///
+/// - `extra_dependencies`: 除 db/iam 外的附加依赖项（例如 AI 服务、插件服务、自定义检查）。
+/// - `uptime`: 可选 uptime 字符串（从 metrics 或 start_time 计算，传 None 则省略 with_uptime）。
+///
+/// 返回 `Json<ApiResponse<ServiceHealth>>`，对应 RD/AI/GIS 的 health_check_detailed 模板。
+pub async fn build_detailed_service_health(
+    pool: &sqlx::PgPool,
+    service_name: &str,
+    uptime: Option<&str>,
+    extra_dependencies: Vec<DependencyHealth>,
+) -> axum::Json<ApiResponse<ServiceHealth>> {
+    let mut dependencies = vec![
+        check_database_health(pool).await,
+        check_iam_health().await,
+    ];
+    dependencies.extend(extra_dependencies);
+
+    let statuses: Vec<HealthStatus> = dependencies.iter().map(|d| d.status.clone()).collect();
+    let overall_status = rollup_health_status(&statuses);
+    let message = overall_health_message(&overall_status);
+
+    let mut health = ServiceHealth::healthy_with_message(service_name, message)
+        .with_dependencies(dependencies);
+    if let Some(up) = uptime {
+        health = health.with_uptime(up);
+    }
+
+    axum::Json(ApiResponse::success(health, "详细健康检查"))
+}
+
+/// 构造 /health/detailed 端点的标准化 JSON 响应（消除多服务内联重复模板）。
+///
+/// 典型返回（`modules`、`version` 和自定义 `extra_fields` 按服务注入）：
+/// ```json
+/// {
+///   "service": "<name>",
+///   "status": "healthy|unhealthy",
+///   "timestamp": "<ISO-8601>",
+///   "modules": { "<mod>": "active", ... },
+///   "dependencies": [{ "name": "postgresql", "status": "..." }],
+///   "version": "<version>",
+///   ...extra_fields
+/// }
+/// ```
+pub async fn build_detailed_health_response(
+    pool: &sqlx::PgPool,
+    service: &str,
+    modules: serde_json::Value,
+    version: &str,
+    extra_fields: serde_json::Value,
+) -> serde_json::Value {
+    let db_status = match sqlx::query("SELECT 1").fetch_one(pool).await {
+        Ok(_) => "healthy",
+        Err(_) => "unhealthy",
+    };
+
+    let mut response = serde_json::json!({
+        "service": service,
+        "status": db_status,
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "modules": modules,
+        "dependencies": [
+            { "name": "postgresql", "status": db_status }
+        ],
+        "version": version,
+    });
+
+    if let (serde_json::Value::Object(ref mut resp), serde_json::Value::Object(extra)) =
+        (&mut response, extra_fields)
+    {
+        resp.extend(extra);
+    }
+
+    response
+}
+
 /// 从 ServiceContext 创建 AppState（用于标准健康检查路由）
 pub fn create_health_state(ctx: &ServiceContext, config: &ServiceConfig) -> AppState {
     AppState::new(

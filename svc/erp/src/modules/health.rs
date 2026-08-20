@@ -1,19 +1,14 @@
-use axum::{extract::State, http::StatusCode, Json, Router};
-use chrono::{DateTime, Utc};
-use serde::Serialize;
-use sqlx::postgres::PgPool;
+//! ERP 健康检查 —— 复用 shared-core 统一类型
+//! 原实现：自定义 HealthResponse、内联 check_database/check_database_health 工具、
+//!         手写状态/响应拼装（65行）
+//! 新实现：调用 shared_core::health::simple_health_check，保留 utoipa 端点文档（42行）
+
+use axum::{extract::State, Router};
+use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
 use crate::modules::ApiState;
 
-#[derive(Serialize)]
-pub struct HealthResponse {
-    status: String,
-    service: String,
-    uptime: u64,
-    timestamp: DateTime<Utc>,
-    database: String,
-}
-
+/// 数据库健康检查（utoipa 文档端点占位，实际 DB 健康统一在 /health 端点返回）
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
@@ -24,11 +19,8 @@ pub struct HealthResponse {
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn check_database(pool: &PgPool) -> String {
-    match sqlx::query("SELECT 1").fetch_one(pool).await {
-        Ok(_) => "healthy".to_string(),
-        Err(e) => format!("unhealthy: {}", e),
-    }
+pub async fn check_database(_state: State<ApiState>) -> &'static str {
+    "Database health check is aggregated in GET /health endpoint"
 }
 
 #[utoipa::path(
@@ -38,26 +30,9 @@ pub async fn check_database(pool: &PgPool) -> String {
     tag = "Health",
     responses((status = 200, description = "ERP 服务健康检查成功"))
 )]
-pub async fn health_check(State(state): State<ApiState>) -> (StatusCode, Json<HealthResponse>) {
-    let uptime = state.start_time.elapsed().as_secs();
-    let db_status = check_database(&state.db).await;
-
-    let overall_status = if db_status == "healthy" {
-        "healthy".to_string()
-    } else {
-        "degraded".to_string()
-    };
-
-    (
-        StatusCode::OK,
-        Json(HealthResponse {
-            status: overall_status,
-            service: "topems-erp".to_string(),
-            uptime,
-            timestamp: Utc::now(),
-            database: db_status,
-        }),
-    )
+pub async fn health_check(State(state): State<ApiState>) -> ServiceHealth {
+    let cfg = SimpleHealthConfig::new("topems-erp").with_db(state.db);
+    simple_health_check(&cfg).await
 }
 
 pub fn create_routes() -> Router<ApiState> {
