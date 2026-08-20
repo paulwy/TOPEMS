@@ -8186,6 +8186,115 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ---
 
+### V258 · 2026-08-20 Thu · 前端未使用 exports 全量清理（L1-SAFE ×16 目录 + L2-CAUTION ×2 批次 + TYPE-only ×12 批次 · ✅ 全闭环）
+
+**Tag**: `TOPEMS-V258` · Baseline SHA: `d348794e8` → Final SHA: `c3260bd62` · Status: **🟢 全闭环 · TSC apps/web 0 errors · 14 commits pushed**
+
+#### 目标
+
+基于 `ts-unused-exports` 报告（2613 文件扫描 · 12614 命名 exports · 8971 唯一名），系统性清理 apps/web/src 下的三类死链：
+1. **L1-SAFE**：refCount=0 的 VALUE exports（无任何引用，安全删除）
+2. **L2-CAUTION**：仅被 barrel 文件（index.ts）聚合 re-export 引用、无真实消费端的 VALUE exports（严格死链检测 + TSC Gate + 假阳性整链回滚）
+3. **TYPE-only**：refCount=0 / barrel-only 的 `export type/interface/enum`（无 VALUE 混合，纯类型死链）
+
+#### 策略与执行
+
+##### Phase 1: L1-SAFE VALUE 清理（×16 目录批次）
+
+按目录分批推进，每批 TSC Gate 0 errors 后才提交：
+
+| 批次 | 目录 | VALUE exports 去除 | Barrel names 清除 |
+|------|------|-------------------:|------------------:|
+| 1-16 | hooks/ utils/ components/ services/ stores/ api/ modules/ pages/ types/ microfrontend/ design-system/ lib/ dev-platform/ schemas+config+theme/ | **90** | **105** |
+
+**L1-SAFE 合计**：90 def-side `export` keyword 去除 + 105 barrel aggregate re-export names 清除 = **195 条** VALUE dead exports 清理
+
+##### Phase 2: L2-CAUTION VALUE 清理（×2 批次）
+
+严格死链检测器 `l2-batch2-scan.py`：strip comments/strings → barrel 本地使用过滤 → 排除 aggregate object 赋值假阳性
+
+| 批次 | 候选 | 假阳性回滚 | 实际清理 |
+|------|-----:|----------:|--------:|
+| Pilot (setDebugTrace) | 1 | 0 | 1 |
+| Batch 2 | 28 | 6（systemApi×2 + fileApi + mailApi + schemas/hrm 2 已知剔除） | 22 |
+
+**L2-CAUTION 合计**：~23 条 dead VALUE chains 清理（含 barrel repair）
+
+**假阳性模式总结**（6 条回滚，21% 回滚率）：
+- **Barrel 内 aggregate object 赋值**：`const unifiedCoreApi = { system: systemApi }` — NAME 在 barrel 内被当作属性值使用，scanner 的 `sampleRefs` 扁平化导致误判
+- **`_mock.ts` 下划线前缀**：ts-unused-exports 默认跳过下划线文件，5 个 WMS DTO 类型被误判为 DEAD
+- **跨文件 type+class 命名冲突**：`type RequestPriority` 与 `class RequestPriorityQueue` 同文件，去 `export` 触发 TS2300 Duplicate Identifier
+
+##### Phase 3: TYPE-only 清理（×12 批次）
+
+Scanner `type-only-scan.py`：L1+L2 → 去 VALUE mixed → 严格 barrel-local usage strip comments/strings → 2607 DEAD（23 目录桶）
+
+| 批次 | 目录 | JSON 数 | 回滚 | 净清理 |
+|------|------|--------:|-----:|------:|
+| 1 | types (wms/mes/qms) | 134 | 5 | 129 |
+| 2 | small-dirs 合并（19 桶） | 360 | 0 | 360 |
+| 3 | components | 213 | 0 | 213 |
+| 4 | modules-1 | 212 | 0 | 212 |
+| 5 | modules-2 | 212 | 0 | 212 |
+| 6-11 | api-1~api-6 | 246×6 | 1 | 1475 |
+| **合计** | | **2607** | **6** | **2601** |
+
+Git diff 独立验证（def-side `export type/interface/enum NAME` keyword 删除精确计数）：**2596 条**（吻合度 99.8%）
+
+#### 验证矩阵
+
+| # | 维度 | 基线 | 最终 | 状态 |
+|---|------|------|------|------|
+| 1 | L1-SAFE VALUE (def keyword) | 0 removed | **90 removed** | ✅ |
+| 2 | L1-SAFE VALUE (barrel names) | 0 removed | **105 removed** | ✅ |
+| 3 | L2-CAUTION VALUE (dead chains) | 0 removed | **~23 removed** | ✅ |
+| 4 | TYPE-only (def keyword) | 0 removed | **2596 removed** | ✅ |
+| 5 | TYPE-only 假阳性回滚 | 0 | **6**（0.23% 回滚率） | ✅ |
+| 6 | TSC apps/web (每批 Gate) | — | **0 errors × 全批次** | ✅ |
+| 7 | 剩余 ALIVE (barrel local usage) | — | **255 VALUE + 1367 TYPE** | 不可删 |
+| 8 | 合计 dead exports 清理 | 0 | **≈ 2814** | ✅ |
+
+#### 提交时间线（14 commits）
+
+```
+c3260bd62  TYPE-only api-6 (245)
+71f7fc11e  TYPE-only api-5 (246)
+358af2210  TYPE-only api-4 (246)
+3cdafa79d  TYPE-only api-3 (246)
+40f0aa6a9  TYPE-only api-2 (246)
+63cc9da1e  TYPE-only api-1 (246)
+9a0ee57dc  TYPE-only modules-2 (212)
+c6f8109c2  TYPE-only modules-1 (212)
+6ce2c1776  TYPE-only components (213)
+6a47fa482  TYPE-only small-dirs (360)
+1af5ffde1  TYPE-only types pilot (129)
+9c0157950  L2-CAUTION VALUE batch 2 (22)
+d58f6fadf  L1-SAFE + L2-CAUTION VALUE (90+105+1)
+d348794e8  L2-CAUTION pilot (1)
+```
+
+#### 审计产物
+
+- `scripts/audit/ts-unused-exports-report.json` — ts-unused-exports 全量报告（2613 文件 / 12614 exports）
+- `scripts/audit/l2-batch2-scan.py` — L2 严格死链检测器（strip comments/strings + barrel-local usage）
+- `scripts/audit/l2-batch2-final.json` — L2 Batch 2 最终候选列表
+- `scripts/audit/type-only-scan.py` — TYPE-only 死链 scanner（L1+L2 → 严格 barrel filter → 目录分桶）
+- `scripts/audit/type-only-remove.py` — TYPE-only 批量去除脚本（def export keyword strip + barrel repair）
+- `scripts/audit/type-only-final.json` — 2607 条 TYPE-only DEAD 最终列表
+- `scripts/audit/type-only-by-dir.json` — 23 目录桶分组
+- `scripts/audit/type-only-alive-barrel.json` — 1367 条 ALIVE（barrel local usage，不可删）
+- `scripts/audit/l2-alive-barrel-usage.json` — 255 条 VALUE ALIVE（barrel aggregate object 赋值，不可删）
+
+#### 已知遗留（V259+ 优先候选）
+
+- [ ] **apps/desktop + apps/mobile + packages/shared-components + packages/shared-constants** 4 个小 TS 项目（143 文件）未被 ts-unused-exports 报告扫描，可生成各自报告并执行 L1-SAFE 清理
+- [ ] **apps/web L1-UNSAFE VALUE 241 条**：仍 VALUE exported 的 L1 候选（保守按目录清后仍存活），走 L1-UNSAFE + TSC-Gate 整链回滚策略，挖掘剩余 VALUE 死链
+- [ ] **ts-unused-exports scanner 增强**：`_mock.ts` 下划线前缀默认跳过导致假阳性，可加 `--no-skip-underscore` 选项
+
+#### CI 验收：**TSC apps/web 0 errors** · 每批次 Prettier + TSC Gate 全绿 · 14 commits pushed to main
+
+---
+
 ### V257 · 2026-08-20 Thu 二期 · Frontend 35 config.ts × 150 Props interface 泛型收紧开局 + V256 #12 tsc 全绿
 
 **Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟢 V257 全 7/7 矩阵全绿（P0-1+P0-2+P0-3 泛型三轮 + P1-1 tsc 29→0 + i18n 7-in-1 + P1-2 R3=38→0）** · 归档: `528b6c96a` · Spec: [2026-08-20-v257-p1-1-p1-2-tsc-i18n-r3-closure.md](file:///Users/xingzhai/TOPEMS/docs/superpowers/specs/2026-08-20-v257-p1-1-p1-2-tsc-i18n-r3-closure.md)
@@ -8437,4 +8546,127 @@ C 轨 Perm 脚本统一后半
 - V251 D 轨 `apps/desktop/src-tauri/Cargo.toml` 加 tauri-plugin-stronghold = "2"
 - V251 D 轨 `apps/desktop/src-tauri/src/keystore.rs` StrongholdKeyStore 真实现（insert/get/delete 真 API）
 - V251 `docs/roadmap/TODO.md` V251 章节 + V250-2 后续扩展勾选 4 条
+
+---
+
+## V252 · 全服务 CRUD 层系统性缺陷审计与修复（HRM 验证暴露）
+
+### 背景
+
+HRM 模块 CRUD 深度验证（21/21 通过）过程中暴露出 5 类系统性缺陷。经全项目扫描确认，这些问题在多个业务服务中普遍存在，不仅限于 HRM。需作为专项版本统一修复。
+
+### 问题清单
+
+#### 🔴 P0-1 · SELECT/RETURNING 缺失 `tenant_id`（FromRow 解码失败）
+
+**根因**：表定义含 `tenant_id UUID NOT NULL`，Rust 结构体也声明 `tenant_id: Uuid`，但 SQL SELECT/RETURNING 列表未包含 `tenant_id`，导致 `query_as::<_, T>()` 反序列化报 `ColumnNotFound` 运行时错误。
+
+**已修复**：
+- ✅ HRM `contract.rs` — 5 处 SELECT/RETURNING 补齐 `tenant_id`
+
+**未修复（扫描发现）**：
+- 🔴 CRM `customer_profile.rs` — 5 处 SELECT 缺 `tenant_id`（L122, L229, L255, L278, L423）
+- 🔴 CRM `customer_recommendation.rs` — 2 处 SELECT 缺 `tenant_id`（L84, L161）
+- 🔴 ERP `audit.rs` — 2 处 SELECT 缺 `tenant_id`（L64, L144）
+- 🔴 ERP `dict.rs` — 4 处 SELECT 缺 `tenant_id`（dict_types + dict_items 各 2 处）
+- 🔴 ERP `fixed_asset.rs` — 3 处 SELECT 缺 `tenant_id`（L120, L317, L358）
+- 🔴 ERP `office_supplies.rs` — 3 处 SELECT 缺 `tenant_id`
+- 🔴 ERP `opening_balance.rs` — 2 处 SELECT 缺 `tenant_id`
+- 🔴 ERP `meeting_room.rs` — 3 处 SELECT 缺 `tenant_id`
+- 🔴 WMS `stock_take.rs` — 8+ 处 SELECT 缺 `tenant_id`
+- 🔴 WMS `location.rs` — 3 处 SELECT 缺 `tenant_id`
+- 🔴 WMS `inventory_alert.rs` — 1 处 SELECT 缺 `tenant_id`（L851，其余已含）
+
+**对照（已正确实现）**：PDM 全模块、SRM 全模块、CRM `customer.rs`/`tag.rs`/`billing.rs` 等
+
+#### 🔴 P0-2 · VARCHAR 列用于加密字段（加密后超长截断）
+
+**根因**：`email`/`phone`/`id_card` 等字段经 AES 加密 + Base64 编码后长度膨胀（原文 17 字符 → 密文 60+ 字符），超过 `VARCHAR(20~100)` 限制导致 `value too long for type character varying` 错误。
+
+**已修复**：
+- ✅ HRM `employees` 表 `email`/`phone`/`id_card_number` → TEXT
+
+**未修复（扫描发现）**：
+- 🔴 SRM `suppliers` 表 — `phone VARCHAR(20)`、`email VARCHAR(100)`
+- 🔴 CRM `customers` 表 — `email VARCHAR(100)`、`phone VARCHAR(50)`、`mobile VARCHAR(50)`
+- 🔴 CRM `contacts` 表 — `email VARCHAR(100)`、`phone VARCHAR(50)`
+- 🔴 ERP — 2 处 `email VARCHAR(100)`
+- 🔴 SCM `suppliers` 表 — `phone VARCHAR(20)`、`email VARCHAR(100)`
+- 🔴 TMS — `phone VARCHAR(32)`
+- 🔴 HRM `companies` 表 — `email VARCHAR(128)`、`phone VARCHAR(64)`（尚未触发但隐患存在）
+
+#### 🟡 P1-1 · `Option<f64>` 映射 NUMERIC 列（解码 panic 风险）
+
+**根因**：Rust `Option<f64>` 与 PostgreSQL `NUMERIC(p,s)` 类型不完全兼容，sqlx 解码可能 panic。需在 SELECT/RETURNING 中显式 `::float8` 转型，或改用 `rust_decimal::Decimal`。
+
+**已修复**：
+- ✅ HRM `contract.rs` — `salary::float8 AS salary`
+- ✅ HRM `attendance.rs` — `work_hours::float8 AS work_hours`
+
+**未修复（扫描发现）**：
+- 🟡 PDM `project.rs` — `budget: Option<f64>`（3 处，L71/L90/L106）
+- 🟡 MES — `quantity: Option<f64>`（work_order.rs, production_order.rs, wip.rs, quality_traceability.rs）
+- 🟡 MES `equipment.rs` — `cost: Option<f64>`（L701, L724）
+- 🟡 ERP — `quantity: Option<f64>`（production_order.rs L52, material.rs L213, finance.rs L132）
+- 🟡 SRM `openapi.rs` — `price: Option<f64>`（L58）
+- 🟡 APS `schedule.rs` — `quantity: Option<f64>`（L59, L71）
+- 🟡 SCM `price_comparison.rs` — `quantity: Option<f64>`（L262, L273）
+
+#### 🟡 P1-2 · `DateTime<Utc>` 映射 DATE 列（解码错误）
+
+**根因**：Rust `DateTime<Utc>` 映射 PostgreSQL `DATE` 列时，DATE 无时间分量，sqlx 解码可能失败。需在 SELECT/RETURNING 中显式 `::timestamptz` 转型。
+
+**已修复**：
+- ✅ HRM `contract.rs` — `start_date::timestamptz`、`end_date::timestamptz`
+- ✅ HRM `attendance.rs` — `date::timestamptz`
+
+**未修复**：需对上述 P1-1 涉及服务中的日期字段逐一排查
+
+#### 🟡 P1-3 · 主查询缺失 `deleted_at IS NULL` 过滤
+
+**根因**：count 子查询含 `WHERE deleted_at IS NULL`，但主 SELECT 查询遗漏，导致列表返回已软删记录，与 total 不一致。
+
+**已修复**：
+- ✅ HRM `contract.rs` — list_contracts / get_contract / list_expiring_contracts / update_contract 均补齐
+
+**未修复**：需对全服务 list/get 查询逐一排查（模式：count 有 deleted_at 但主查询没有）
+
+#### 🟢 P2-1 · FK 引用错误 schema（跨库引用）
+
+**已修复**：
+- ✅ HRM `contracts.employee_id` FK 从 `shared.employees(id)` 改为 `hrm.employees(id)`
+
+**未修复**：需全服务 FK 约束审计，检查是否存在类似跨 schema 引用
+
+#### 🟢 P2-2 · CHECK 约束过严（业务状态值被拒）
+
+**已修复**：
+- ✅ HRM `attendance_records.ck_attendance_records_status_standard` — 扩展允许 present/absent/late/leave 等
+
+**未修复**：需排查其他服务的 status CHECK 约束是否限制过严
+
+### 修复计划
+
+| 阶段 | 范围 | 优先级 |
+|------|------|--------|
+| Phase 1 | CRM + ERP SELECT 补齐 tenant_id | P0 |
+| Phase 2 | WMS SELECT 补齐 tenant_id | P0 |
+| Phase 3 | 全服务加密字段 VARCHAR → TEXT | P0 |
+| Phase 4 | 全服务 f64/DateTime 类型转型 | P1 |
+| Phase 5 | 全服务 deleted_at IS NULL 过滤补齐 | P1 |
+| Phase 6 | FK 约束 + CHECK 约束审计 | P2 |
+
+### 验收标准
+
+1. 全服务 CRUD 深度验证（新增→列表→查询→编辑→删除）通过率 100%
+2. `grep -r "SELECT id, " svc/*/src/modules/ | grep -v tenant_id` 返回 0 条（排除无 tenant_id 列的表）
+3. 全服务 schema_defense.rs 中 email/phone/id_card 列无 VARCHAR(≤128) 定义
+4. 全服务 SELECT/RETURNING 中 NUMERIC 列有 `::float8` 转型或使用 `Decimal` 类型
+5. 全服务 list/get 查询均含 `deleted_at IS NULL` 过滤（针对有 deleted_at 列的表）
+
+### 审计产物
+
+- V252 扫描脚本：`scripts/audit-crud-patterns.sh`（待创建）
+- V252 修复清单：本节上述问题清单
+- HRM 修复参照：`svc/hrm/src/modules/contract.rs`、`svc/hrm/src/modules/attendance.rs`
 
