@@ -204,11 +204,4 @@ export const pdmProjectSchema: EntitySchema = {
   actions: ['create', 'edit', 'detail', 'delete'],
 };
 
-export {
-  STATUS_OPTIONS,
-  STATUS_COLOR_MAP,
-  STATUS_LABEL_MAP,
-  PHASE_OPTIONS,
-  PHASE_COLOR_MAP,
-  PHASE_LABEL_MAP,
-};
+export { STATUS_OPTIONS, STATUS_COLOR_MAP, STATUS_LABEL_MAP, PHASE_COLOR_MAP };

@@ -10,7 +10,7 @@ import { Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
 
-export const EVENT_TYPE_CONFIG: Record<
+const EVENT_TYPE_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'info' }
 > = {
@@ -19,7 +19,7 @@ export const EVENT_TYPE_CONFIG: Record<
   warning: { label: i18n.t('shared.event.k2'), color: 'warning' },
 };
 
-export const EVENT_STATUS_CONFIG: Record<
+const EVENT_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {

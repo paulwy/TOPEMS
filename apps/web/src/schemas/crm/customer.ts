@@ -3,7 +3,7 @@ import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
 import i18n from '@/i18n';
 
-export const customerRating = z.enum(['A', 'B', 'C', 'D']);
+const customerRating = z.enum(['A', 'B', 'C', 'D']);
 export const customerType = z.enum(['enterprise', 'individual']);
 export const approvalStatus = z.enum(['none', 'pending', 'approved', 'rejected']);
 
@@ -27,7 +27,7 @@ export type CustomerRating = z.infer<typeof customerRating>;
 export type CustomerType = z.infer<typeof customerType>;
 export type ApprovalStatus = z.infer<typeof approvalStatus>;
 
-export const createCustomerSchema = customerZodSchema.omit({
+const createCustomerSchema = customerZodSchema.omit({
   id: true,
   tenantId: true,
   approvalStatus: true,
@@ -37,7 +37,7 @@ export const createCustomerSchema = customerZodSchema.omit({
 });
 export type CreateCustomerRequest = z.infer<typeof createCustomerSchema>;
 
-export const updateCustomerSchema = createCustomerSchema.partial();
+const updateCustomerSchema = createCustomerSchema.partial();
 export type UpdateCustomerRequest = z.infer<typeof updateCustomerSchema>;
 
 export const customerSchema: EntitySchema<Customer> = {

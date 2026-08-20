@@ -449,14 +449,7 @@ export const alertHistorySchema: EntitySchema = {
   renderDetail: renderHistoryDetail,
 };
 
-export {
-  SEVERITY_LABELS as ALERT_HISTORY_SEVERITY_LABELS,
-  STATUS_LABELS as ALERT_HISTORY_STATUS_LABELS,
-  getSeverityColor as getAlertHistorySeverityColor,
-  getStatusColor as getAlertHistoryStatusColor,
-};
-
-export const ALERT_HISTORY_ICONS = {
+const ALERT_HISTORY_ICONS = {
   Clock,
   AlertTriangle,
   AlertCircle,

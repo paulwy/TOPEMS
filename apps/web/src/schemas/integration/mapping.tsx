@@ -20,7 +20,7 @@ export const MAPPING_TYPE_LABELS: Record<MappingType, string> = {
   validate: i18n.t('shared.mapping.k3'),
 };
 
-export const MAPPING_TYPE_COLORS: Record<
+const MAPPING_TYPE_COLORS: Record<
   MappingType,
   'primary' | 'secondary' | 'warning' | 'error'
 > = {
@@ -36,7 +36,7 @@ export const MAPPING_STATUS_LABELS: Record<MappingStatus, string> = {
   draft: i18n.t('shared.mapping.k6'),
 };
 
-export const MAPPING_STATUS_COLORS: Record<MappingStatus, 'success' | 'default' | 'warning'> = {
+const MAPPING_STATUS_COLORS: Record<MappingStatus, 'success' | 'default' | 'warning'> = {
   active: 'success',
   inactive: 'default',
   draft: 'warning',

@@ -16,7 +16,7 @@ export const REPORT_TYPE_CONFIG: Record<
   custom: { color: 'default', label: i18n.t('shared.report.k5') },
 };
 
-export const REPORT_STATUS_CONFIG: Record<
+const REPORT_STATUS_CONFIG: Record<
   string,
   { color: 'success' | 'warning' | 'default' | 'error' | 'info' | 'primary'; label: string }
 > = {

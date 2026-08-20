@@ -4,7 +4,7 @@ import { Database, Server, Clock, CheckCircle, XCircle } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
 
-export const DATA_SOURCE_STATUS_CONFIG: Record<
+const DATA_SOURCE_STATUS_CONFIG: Record<
   string,
   { color: 'success' | 'default' | 'error' | 'warning' | 'info' | 'primary'; label: string }
 > = {
@@ -13,7 +13,7 @@ export const DATA_SOURCE_STATUS_CONFIG: Record<
   error: { color: 'error', label: i18n.t('shared.data_source.k2') },
 };
 
-export const DATA_SOURCE_TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
+const DATA_SOURCE_TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
   postgresql: { icon: '🐘', label: 'PostgreSQL' },
   mysql: { icon: '🐬', label: 'MySQL' },
   mongodb: { icon: '🍃', label: 'MongoDB' },

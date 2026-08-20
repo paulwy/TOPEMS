@@ -16,7 +16,7 @@ const statusLabels: Record<string, string> = {
   inactive: i18n.t('admin.dictionary.k5'),
 };
 
-export const dictTypeFields: SchemaField[] = [
+const dictTypeFields: SchemaField[] = [
   {
     name: 'code',
     label: i18n.t('admin.dictionary.k6'),
@@ -144,7 +144,7 @@ export const dictTypeFields: SchemaField[] = [
   },
 ];
 
-export const dictTypeSchema: EntitySchema = {
+const dictTypeSchema: EntitySchema = {
   entity: 'dict-type',
   title: i18n.t('schema:admin.dict_type.meta.title'),
   description: i18n.t('schema:admin.dict_type.meta.description'),
@@ -221,7 +221,7 @@ export const dictTypeSchema: EntitySchema = {
   detailTitle: i18n.t('schema:admin.dict_type.meta.detailTitle'),
 };
 
-export const dictItemFields: SchemaField[] = [
+const dictItemFields: SchemaField[] = [
   {
     name: 'sort_order',
     label: i18n.t('schema:admin.dict_type.label'),

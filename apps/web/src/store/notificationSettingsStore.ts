@@ -45,7 +45,7 @@ export const useNotificationSettingsStore = create<NotificationSettingsState>()(
 
 export const useNotificationSettings = () =>
   useNotificationSettingsStore((state) => state.notificationSettings);
-export const useSetNotificationSettings = () =>
+const useSetNotificationSettings = () =>
   useNotificationSettingsStore((state) => state.setNotificationSettings);
-export const useUpdateNotificationSetting = () =>
+const useUpdateNotificationSetting = () =>
   useNotificationSettingsStore((state) => state.updateNotificationSetting);
