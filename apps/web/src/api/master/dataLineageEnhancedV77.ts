@@ -4,13 +4,13 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type LineageDirection = 'upstream' | 'downstream' | 'bidirectional';
-export type LineageNodeType =
+type LineageNodeType =
   'source' | 'transform' | 'destination' | 'table' | 'column' | 'view' | 'materialized_view';
-export type LineageEdgeType =
+type LineageEdgeType =
   'read' | 'write' | 'transform' | 'aggregate' | 'join' | 'filter' | 'group_by';
 export type ImpactSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-export type ImpactStatus = 'analyzing' | 'completed' | 'failed';
-export type DiffType = 'added' | 'removed' | 'modified' | 'unchanged';
+type ImpactStatus = 'analyzing' | 'completed' | 'failed';
+type DiffType = 'added' | 'removed' | 'modified' | 'unchanged';
 
 export interface LineageNode {
   id: string;
@@ -48,7 +48,7 @@ export interface LineageGraph {
   generated_at: string;
 }
 
-export interface ColumnLineage {
+interface ColumnLineage {
   id: string;
   source_column: {
     database: string;
@@ -68,7 +68,7 @@ export interface ColumnLineage {
   updated_at: string;
 }
 
-export interface ImpactAnalysis {
+interface ImpactAnalysis {
   id: string;
   status: ImpactStatus;
   target: {
@@ -98,7 +98,7 @@ export interface ImpactAnalysis {
   completed_at?: string;
 }
 
-export interface ChangePropagationPath {
+interface ChangePropagationPath {
   id: string;
   source_node_id: string;
   target_node_id: string;
@@ -115,7 +115,7 @@ export interface ChangePropagationPath {
   confidence: number;
 }
 
-export interface LineageDiff {
+interface LineageDiff {
   id: string;
   previous_node?: LineageNode;
   current_node?: LineageNode;
@@ -131,7 +131,7 @@ export interface LineageDiff {
   generated_at: string;
 }
 
-export interface LineageStats {
+interface LineageStats {
   total_tables: number;
   total_columns: number;
   total_lineage_edges: number;
@@ -148,7 +148,7 @@ export interface LineageStats {
   orphan_nodes: number;
 }
 
-export interface LineageDashboard {
+interface LineageDashboard {
   overview: {
     total_nodes: number;
     total_edges: number;
@@ -193,7 +193,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface GetLineageGraphRequest {
+interface GetLineageGraphRequest {
   database?: string;
   schema?: string;
   table?: string;
@@ -209,7 +209,7 @@ export interface GetLineageGraphRequest {
   };
 }
 
-export interface TraceColumnLineageRequest {
+interface TraceColumnLineageRequest {
   database: string;
   schema: string;
   table: string;
@@ -219,7 +219,7 @@ export interface TraceColumnLineageRequest {
   min_confidence?: number;
 }
 
-export interface RunImpactAnalysisRequest {
+interface RunImpactAnalysisRequest {
   target: {
     type: 'column' | 'table' | 'view' | 'materialized_view';
     database: string;
@@ -236,7 +236,7 @@ export interface RunImpactAnalysisRequest {
   };
 }
 
-export interface GetPropagationPathRequest {
+interface GetPropagationPathRequest {
   source_node_id: string;
   target_node_id: string;
   max_hops?: number;

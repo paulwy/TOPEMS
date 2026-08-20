@@ -4,14 +4,14 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type PolicyStatus = 'draft' | 'active' | 'paused' | 'archived';
-export type PolicyType =
+type PolicyType =
   'classification' | 'retention' | 'access' | 'encryption' | 'masking' | 'compliance' | 'quality';
-export type PolicyScope = 'global' | 'tenant' | 'department' | 'entity' | 'field';
-export type PolicyAction = 'allow' | 'deny' | 'warn' | 'encrypt' | 'mask' | 'alert' | 'log';
+type PolicyScope = 'global' | 'tenant' | 'department' | 'entity' | 'field';
+type PolicyAction = 'allow' | 'deny' | 'warn' | 'encrypt' | 'mask' | 'alert' | 'log';
 export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-export type PolicyVersionStatus = 'draft' | 'published' | 'deprecated';
+type PolicyVersionStatus = 'draft' | 'published' | 'deprecated';
 
-export interface PolicyDefinition {
+interface PolicyDefinition {
   id: string;
   tenant_id: string;
   name: string;
@@ -39,7 +39,7 @@ export interface PolicyRule {
   enabled: boolean;
 }
 
-export interface PolicyVersion {
+interface PolicyVersion {
   id: string;
   policy_id: string;
   version: string;
@@ -50,7 +50,7 @@ export interface PolicyVersion {
   created_at?: string;
 }
 
-export interface PolicyExecution {
+interface PolicyExecution {
   id: string;
   policy_id: string;
   policy_name: string;
@@ -63,7 +63,7 @@ export interface PolicyExecution {
   triggered_by?: string;
 }
 
-export interface PolicyLog {
+interface PolicyLog {
   id: string;
   policy_id: string;
   policy_version: string;
@@ -73,7 +73,7 @@ export interface PolicyLog {
   performed_at: string;
 }
 
-export interface PolicyDashboard {
+interface PolicyDashboard {
   total_policies: number;
   active_policies: number;
   draft_policies: number;
@@ -88,7 +88,7 @@ export interface PolicyDashboard {
   compliance_score: number;
 }
 
-export interface ListPoliciesRequest {
+interface ListPoliciesRequest {
   page?: number;
   pagesize?: number;
   policy_type?: PolicyType;
@@ -99,7 +99,7 @@ export interface ListPoliciesRequest {
   sort_order?: 'asc' | 'desc';
 }
 
-export interface ListPolicyExecutionsRequest {
+interface ListPolicyExecutionsRequest {
   page?: number;
   pagesize?: number;
   policy_id?: string;
@@ -108,13 +108,13 @@ export interface ListPolicyExecutionsRequest {
   to_date?: string;
 }
 
-export interface ListPolicyVersionsRequest {
+interface ListPolicyVersionsRequest {
   page?: number;
   pagesize?: number;
   status?: PolicyVersionStatus;
 }
 
-export interface ListPolicyLogsRequest {
+interface ListPolicyLogsRequest {
   page?: number;
   pagesize?: number;
   policy_id?: string;

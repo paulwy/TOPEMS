@@ -3,14 +3,14 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ProductStatus = 'draft' | 'review' | 'published' | 'deprecated' | 'archived';
-export type ProductType = 'dataset' | 'api' | 'report' | 'model' | 'dashboard' | 'template';
-export type ProductCategory =
+type ProductStatus = 'draft' | 'review' | 'published' | 'deprecated' | 'archived';
+type ProductType = 'dataset' | 'api' | 'report' | 'model' | 'dashboard' | 'template';
+type ProductCategory =
   'customer' | 'finance' | 'inventory' | 'sales' | 'hr' | 'operations' | 'analytics' | 'master';
-export type ConsumerRole = 'viewer' | 'editor' | 'admin';
-export type BundleStatus = 'active' | 'inactive' | 'archived';
+type ConsumerRole = 'viewer' | 'editor' | 'admin';
+type BundleStatus = 'active' | 'inactive' | 'archived';
 
-export interface DataProduct {
+interface DataProduct {
   id: string;
   tenant_id: string;
   name: string;
@@ -29,7 +29,7 @@ export interface DataProduct {
   updated_at: string;
 }
 
-export interface ProductVersion {
+interface ProductVersion {
   id: string;
   product_id: string;
   version: string;
@@ -39,7 +39,7 @@ export interface ProductVersion {
   published_at: string;
 }
 
-export interface ProductConsumer {
+interface ProductConsumer {
   id: string;
   product_id: string;
   user_id: string;
@@ -50,7 +50,7 @@ export interface ProductConsumer {
   status: 'active' | 'suspended' | 'expired';
 }
 
-export interface ProductBundle {
+interface ProductBundle {
   id: string;
   tenant_id: string;
   name: string;
@@ -64,7 +64,7 @@ export interface ProductBundle {
   updated_at: string;
 }
 
-export interface ProductAnalytics {
+interface ProductAnalytics {
   product_id: string;
   views_count: number;
   downloads_count: number;
@@ -78,7 +78,7 @@ export interface ProductAnalytics {
   popular_attributes: Array<{ attribute: string; count: number }>;
 }
 
-export interface ProductTag {
+interface ProductTag {
   id: string;
   name: string;
   color?: string;
@@ -94,7 +94,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface CreateProductRequest {
+interface CreateProductRequest {
   name: string;
   description: string;
   product_type: ProductType;
@@ -104,7 +104,7 @@ export interface CreateProductRequest {
   attributes?: Record<string, unknown>;
 }
 
-export interface UpdateProductRequest {
+interface UpdateProductRequest {
   name?: string;
   description?: string;
   category?: ProductCategory;
@@ -116,17 +116,17 @@ export interface UpdateProductRequest {
   steward_id?: string;
 }
 
-export interface PublishProductRequest {
+interface PublishProductRequest {
   version: string;
   changelog?: string;
 }
 
-export interface GrantAccessRequest {
+interface GrantAccessRequest {
   user_id: string;
   role: ConsumerRole;
 }
 
-export interface CreateBundleRequest {
+interface CreateBundleRequest {
   name: string;
   description: string;
   product_ids: string[];
@@ -134,7 +134,7 @@ export interface CreateBundleRequest {
   price?: number;
 }
 
-export interface UpdateBundleRequest {
+interface UpdateBundleRequest {
   name?: string;
   description?: string;
   product_ids?: string[];

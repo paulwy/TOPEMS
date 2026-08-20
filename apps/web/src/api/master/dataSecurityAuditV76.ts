@@ -5,10 +5,10 @@ import type { ApiResponse } from '../client';
 
 export type AuditAction = 'read' | 'write' | 'update' | 'delete' | 'export' | 'import' | 'transfer';
 export type AuditStatus = 'success' | 'denied' | 'pending' | 'failed';
-export type EventSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type EventStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'ignored';
-export type AuditRuleType = 'access' | 'change' | 'permission' | 'data' | 'system';
-export type AuditRuleStatus = 'active' | 'inactive' | 'archived';
+type EventSeverity = 'low' | 'medium' | 'high' | 'critical';
+type EventStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'ignored';
+type AuditRuleType = 'access' | 'change' | 'permission' | 'data' | 'system';
+type AuditRuleStatus = 'active' | 'inactive' | 'archived';
 export type ReportStatus = 'pending' | 'generating' | 'completed' | 'failed';
 export type ReportType = 'access' | 'security' | 'compliance' | 'change' | 'overview';
 
@@ -91,7 +91,7 @@ export interface SecurityEvent {
   updated_at: string;
 }
 
-export interface AnomalyDetectionConfig {
+interface AnomalyDetectionConfig {
   id: string;
   tenant_id: string;
   name: string;
@@ -105,7 +105,7 @@ export interface AnomalyDetectionConfig {
   updated_at: string;
 }
 
-export interface ComplianceAudit {
+interface ComplianceAudit {
   id: string;
   tenant_id: string;
   framework: 'GDPR' | 'HIPAA' | 'SOC2' | 'ISO27001' | 'CUSTOM';
@@ -133,7 +133,7 @@ export interface ComplianceAudit {
   completed_at?: string;
 }
 
-export interface AuditReport {
+interface AuditReport {
   id: string;
   tenant_id: string;
   name: string;
@@ -165,7 +165,7 @@ export interface AuditReport {
   generated_at?: string;
 }
 
-export interface AuditDashboard {
+interface AuditDashboard {
   total_audit_events: number;
   events_last_24h: number;
   critical_events_open: number;
@@ -194,7 +194,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface QueryLogsRequest {
+interface QueryLogsRequest {
   user_id?: string;
   action?: AuditAction;
   resource_type?: string;
@@ -235,7 +235,7 @@ export interface UpdateRuleRequest {
   anomaly_threshold?: number;
 }
 
-export interface CreateEventRequest {
+interface CreateEventRequest {
   title: string;
   description: string;
   severity: EventSeverity;
@@ -243,7 +243,7 @@ export interface CreateEventRequest {
   assignee_id?: string;
 }
 
-export interface UpdateEventRequest {
+interface UpdateEventRequest {
   title?: string;
   description?: string;
   severity?: EventSeverity;
@@ -252,7 +252,7 @@ export interface UpdateEventRequest {
   resolution?: string;
 }
 
-export interface CreateComplianceAuditRequest {
+interface CreateComplianceAuditRequest {
   framework: 'GDPR' | 'HIPAA' | 'SOC2' | 'ISO27001' | 'CUSTOM';
   audit_type: ComplianceAudit['audit_type'];
   scope: Array<{
@@ -275,7 +275,7 @@ export interface GenerateReportRequest {
   };
 }
 
-export interface CreateAnomalyDetectionConfigRequest {
+interface CreateAnomalyDetectionConfigRequest {
   name: string;
   description: string;
   detection_type: AnomalyDetectionConfig['detection_type'];

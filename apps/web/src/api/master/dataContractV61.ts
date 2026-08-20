@@ -3,11 +3,11 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ContractType = 'schema' | 'sla' | 'security' | 'compliance' | 'data_quality';
+type ContractType = 'schema' | 'sla' | 'security' | 'compliance' | 'data_quality';
 export type ContractStatus = 'draft' | 'active' | 'deprecated' | 'archived';
-export type BindingStatus = 'bound' | 'unbound' | 'conflict';
+type BindingStatus = 'bound' | 'unbound' | 'conflict';
 
-export interface DataContractV61 {
+interface DataContractV61 {
   id: string;
   name: string;
   type: ContractType;
@@ -25,21 +25,21 @@ export interface DataContractV61 {
   deprecated_at?: string;
 }
 
-export interface SlaDefinition {
+interface SlaDefinition {
   availability: number;
   latency_p99_ms: number;
   error_rate_threshold: number;
   update_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly';
 }
 
-export interface SecurityDefinition {
+interface SecurityDefinition {
   classification: 'public' | 'internal' | 'confidential' | 'restricted';
   encryption_required: boolean;
   pii_fields: string[];
   retention_days: number;
 }
 
-export interface ContractBinding {
+interface ContractBinding {
   id: string;
   contract_id: string;
   entity_type: string;
@@ -61,7 +61,7 @@ export interface ContractViolation {
   status: 'open' | 'investigating' | 'resolved' | 'ignored';
 }
 
-export interface ContractVersion {
+interface ContractVersion {
   version: string;
   status: ContractStatus;
   changelog: string;
@@ -70,7 +70,7 @@ export interface ContractVersion {
   is_latest: boolean;
 }
 
-export interface ContractDashboardV61 {
+interface ContractDashboardV61 {
   total_contracts: number;
   active: number;
   deprecated: number;
@@ -84,7 +84,7 @@ export interface ContractDashboardV61 {
 
 // ============ Request Types ============
 
-export interface CreateContractRequest {
+interface CreateContractRequest {
   name: string;
   type: ContractType;
   source_system: string;
@@ -96,7 +96,7 @@ export interface CreateContractRequest {
   security?: SecurityDefinition;
 }
 
-export interface UpdateContractRequest {
+interface UpdateContractRequest {
   name?: string;
   description?: string;
   schema?: Record<string, unknown>;
@@ -104,30 +104,30 @@ export interface UpdateContractRequest {
   security?: SecurityDefinition;
 }
 
-export interface PublishContractRequest {
+interface PublishContractRequest {
   changelog: string;
   target_version?: string;
 }
 
-export interface DeprecateContractRequest {
+interface DeprecateContractRequest {
   reason: string;
   replacement_contract_id?: string;
 }
 
-export interface BindEntityRequest {
+interface BindEntityRequest {
   entity_type: string;
   entity_id: string;
   direction: 'producer' | 'consumer';
 }
 
-export interface ValidateContractRequest {
+interface ValidateContractRequest {
   sample_payload?: Record<string, unknown>;
   validate_schema?: boolean;
   validate_sla?: boolean;
   validate_security?: boolean;
 }
 
-export interface GenerateContractRequest {
+interface GenerateContractRequest {
   source_system: string;
   target_system: string;
   entity_type: string;

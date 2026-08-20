@@ -3,15 +3,15 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ProductTier = 'free' | 'basic' | 'professional' | 'enterprise' | 'unlimited';
+type ProductTier = 'free' | 'basic' | 'professional' | 'enterprise' | 'unlimited';
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'pending';
-export type BillingStatus = 'pending' | 'invoiced' | 'paid' | 'overdue';
-export type SLAMetric = 'availability' | 'latency' | 'error_rate';
-export type SLAIncidentType = 'downtime' | 'degraded_performance' | 'data_loss' | 'security_breach';
+type BillingStatus = 'pending' | 'invoiced' | 'paid' | 'overdue';
+type SLAMetric = 'availability' | 'latency' | 'error_rate';
+type SLAIncidentType = 'downtime' | 'degraded_performance' | 'data_loss' | 'security_breach';
 export type IncidentStatus = 'open' | 'investigating' | 'resolved' | 'closed';
-export type ImpactSeverity = 'low' | 'medium' | 'high' | 'critical';
+type ImpactSeverity = 'low' | 'medium' | 'high' | 'critical';
 
-export interface APIProduct {
+interface APIProduct {
   id: string;
   name: string;
   tier: ProductTier;
@@ -61,7 +61,7 @@ export interface BillingRecord {
   status: BillingStatus;
 }
 
-export interface RateCard {
+interface RateCard {
   id: string;
   tier: ProductTier;
   cost_per_request: number;
@@ -70,7 +70,7 @@ export interface RateCard {
   currency: string;
 }
 
-export interface SLAConfig {
+interface SLAConfig {
   id: string;
   metric: SLAMetric;
   target_value: number;
@@ -79,7 +79,7 @@ export interface SLAConfig {
   measurement_window: number;
 }
 
-export interface SLAMeasurement {
+interface SLAMeasurement {
   id: string;
   config_id: string;
   tenant_id: string;
@@ -91,7 +91,7 @@ export interface SLAMeasurement {
   window_end: string;
 }
 
-export interface SLAIncident {
+interface SLAIncident {
   id: string;
   config_id: string;
   tenant_id: string;
@@ -110,7 +110,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface SLAStatusInfo {
+interface SLAStatusInfo {
   config_id: string;
   metric: string;
   target_value: number;
@@ -121,7 +121,7 @@ export interface SLAStatusInfo {
   current_status: string;
 }
 
-export interface SLAReport {
+interface SLAReport {
   report_id: string;
   generated_at: string;
   tenant_id: string;
@@ -147,7 +147,7 @@ export interface SLAReport {
 
 // ============ Request Types ============
 
-export interface CreateAPIProductRequest {
+interface CreateAPIProductRequest {
   name: string;
   tier?: ProductTier;
   rate_limit_per_min?: number;
@@ -156,7 +156,7 @@ export interface CreateAPIProductRequest {
   price_monthly?: number;
 }
 
-export interface SubscribeTenantRequest {
+interface SubscribeTenantRequest {
   api_product_id: string;
   tenant_id: string;
   tier?: ProductTier;
@@ -166,7 +166,7 @@ export interface UpdateSubscriptionRequest {
   tier?: ProductTier;
 }
 
-export interface RecordUsageRequest {
+interface RecordUsageRequest {
   tenant_id: string;
   api_product_id: string;
   endpoint: string;
@@ -175,13 +175,13 @@ export interface RecordUsageRequest {
   data_transferred?: number;
 }
 
-export interface GenerateBillRequest {
+interface GenerateBillRequest {
   tenant_id: string;
   period_start?: string;
   period_end?: string;
 }
 
-export interface CreateRateCardRequest {
+interface CreateRateCardRequest {
   tier: ProductTier;
   cost_per_request: number;
   cost_per_mb: number;
@@ -189,7 +189,7 @@ export interface CreateRateCardRequest {
   currency?: string;
 }
 
-export interface ConfigureSLARequest {
+interface ConfigureSLARequest {
   metric: SLAMetric;
   target_value: number;
   unit?: string;
@@ -197,13 +197,13 @@ export interface ConfigureSLARequest {
   measurement_window?: number;
 }
 
-export interface MeasureSLARequest {
+interface MeasureSLARequest {
   config_id: string;
   tenant_id: string;
   measured_value: number;
 }
 
-export interface CreateSLAIncidentRequest {
+interface CreateSLAIncidentRequest {
   config_id: string;
   tenant_id: string;
   incident_type: SLAIncidentType;

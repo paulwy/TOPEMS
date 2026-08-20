@@ -3,14 +3,14 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type MarketplaceAssetStatus = 'draft' | 'published' | 'deprecated' | 'archived';
+type MarketplaceAssetStatus = 'draft' | 'published' | 'deprecated' | 'archived';
 export type AssetCategory = 'dataset' | 'api' | 'report' | 'model' | 'dashboard' | 'template';
 export type SubscriptionStatus = 'pending' | 'active' | 'expired' | 'cancelled';
-export type PricingModel = 'free' | 'per_call' | 'subscription' | 'tiered';
-export type ReviewRating = 1 | 2 | 3 | 4 | 5;
+type PricingModel = 'free' | 'per_call' | 'subscription' | 'tiered';
+type ReviewRating = 1 | 2 | 3 | 4 | 5;
 export type ProviderStatus = 'verified' | 'pending' | 'suspended';
 
-export interface MarketplaceAsset {
+interface MarketplaceAsset {
   id: string;
   tenant_id: string;
   name: string;
@@ -32,7 +32,7 @@ export interface MarketplaceAsset {
   published_at?: string;
 }
 
-export interface AssetVersion {
+interface AssetVersion {
   id: string;
   asset_id: string;
   version: string;
@@ -42,7 +42,7 @@ export interface AssetVersion {
   download_count: number;
 }
 
-export interface AssetSubscription {
+interface AssetSubscription {
   id: string;
   asset_id: string;
   subscriber_id: string;
@@ -56,7 +56,7 @@ export interface AssetSubscription {
   auto_renew: boolean;
 }
 
-export interface AssetReview {
+interface AssetReview {
   id: string;
   asset_id: string;
   reviewer_id: string;
@@ -67,7 +67,7 @@ export interface AssetReview {
   created_at: string;
 }
 
-export interface AssetPricing {
+interface AssetPricing {
   id: string;
   asset_id: string;
   model: PricingModel;
@@ -81,7 +81,7 @@ export interface AssetPricing {
   effective_to?: string;
 }
 
-export interface MarketplaceProvider {
+interface MarketplaceProvider {
   id: string;
   tenant_id: string;
   name: string;
@@ -95,7 +95,7 @@ export interface MarketplaceProvider {
   created_at: string;
 }
 
-export interface MarketplaceDashboard {
+interface MarketplaceDashboard {
   total_assets: number;
   published_assets: number;
   total_providers: number;
@@ -118,7 +118,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface PublishAssetRequest {
+interface PublishAssetRequest {
   name: string;
   category: AssetCategory;
   description: string;
@@ -143,14 +143,14 @@ export interface SubscribeRequest {
   auto_renew?: boolean;
 }
 
-export interface WriteReviewRequest {
+interface WriteReviewRequest {
   asset_id: string;
   rating: ReviewRating;
   title?: string;
   comment?: string;
 }
 
-export interface CreateProviderRequest {
+interface CreateProviderRequest {
   name: string;
   description?: string;
   contact_email?: string;

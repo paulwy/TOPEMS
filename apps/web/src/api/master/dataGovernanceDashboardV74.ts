@@ -5,14 +5,14 @@ import type { ApiResponse } from '../client';
 
 export type AssetType =
   'table' | 'view' | 'api' | 'dashboard' | 'model' | 'report' | 'topic' | 'file';
-export type AssetClassification = 'public' | 'internal' | 'confidential' | 'restricted' | 'secret';
-export type AssetQualityStatus = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+type AssetClassification = 'public' | 'internal' | 'confidential' | 'restricted' | 'secret';
+type AssetQualityStatus = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
 export type LineageDirection = 'upstream' | 'downstream' | 'both';
-export type RuleSeverity = 'info' | 'warning' | 'error' | 'critical';
+type RuleSeverity = 'info' | 'warning' | 'error' | 'critical';
 export type RuleStatus = 'active' | 'inactive' | 'archived';
 export type ReportStatus = 'pending' | 'generating' | 'completed' | 'failed';
 
-export interface GovernanceOverview {
+interface GovernanceOverview {
   total_assets: number;
   assets_by_type: Record<AssetType, number>;
   assets_by_classification: Record<AssetClassification, number>;
@@ -28,7 +28,7 @@ export interface GovernanceOverview {
   last_scan_at: string;
 }
 
-export interface GovernanceAsset {
+interface GovernanceAsset {
   id: string;
   tenant_id: string;
   name: string;
@@ -50,7 +50,7 @@ export interface GovernanceAsset {
   updated_at: string;
 }
 
-export interface QualityMetric {
+interface QualityMetric {
   asset_id: string;
   metric_name: string;
   score: number;
@@ -110,7 +110,7 @@ export interface ComplianceCheck {
   checked_at: string;
 }
 
-export interface GovernanceRule {
+interface GovernanceRule {
   id: string;
   tenant_id: string;
   name: string;
@@ -126,7 +126,7 @@ export interface GovernanceRule {
   updated_at: string;
 }
 
-export interface GovernanceReport {
+interface GovernanceReport {
   id: string;
   tenant_id: string;
   name: string;
@@ -172,7 +172,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface CreateRuleRequest {
+interface CreateRuleRequest {
   name: string;
   description: string;
   category: GovernanceRule['category'];
@@ -182,7 +182,7 @@ export interface CreateRuleRequest {
   schedule?: string;
 }
 
-export interface UpdateRuleRequest {
+interface UpdateRuleRequest {
   name?: string;
   description?: string;
   severity?: RuleSeverity;

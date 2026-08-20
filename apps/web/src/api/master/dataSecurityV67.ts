@@ -3,15 +3,14 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type SecurityLevel = 'public' | 'internal' | 'confidential' | 'secret' | 'top_secret';
-export type DataClassification =
-  'personal' | 'financial' | 'health' | 'legal' | 'business' | 'technical';
-export type PermissionType = 'read' | 'write' | 'delete' | 'admin' | 'export';
-export type AccessDecision = 'allow' | 'deny' | 'challenge';
+type SecurityLevel = 'public' | 'internal' | 'confidential' | 'secret' | 'top_secret';
+type DataClassification = 'personal' | 'financial' | 'health' | 'legal' | 'business' | 'technical';
+type PermissionType = 'read' | 'write' | 'delete' | 'admin' | 'export';
+type AccessDecision = 'allow' | 'deny' | 'challenge';
 export type AuditAction = 'grant' | 'revoke' | 'access' | 'modify' | 'export' | 'delete';
 export type AuditStatus = 'success' | 'denied' | 'error' | 'challenge';
 
-export interface SecurityPolicy {
+interface SecurityPolicy {
   id: string;
   name: string;
   description?: string;
@@ -45,7 +44,7 @@ export interface SecurityRule {
   updated_at: string;
 }
 
-export interface DataClassificationInfo {
+interface DataClassificationInfo {
   id: string;
   asset_id: string;
   classification: DataClassification;
@@ -59,7 +58,7 @@ export interface DataClassificationInfo {
   tags?: string[];
 }
 
-export interface AccessControlList {
+interface AccessControlList {
   id: string;
   asset_id: string;
   asset_type: string;
@@ -75,7 +74,7 @@ export interface AccessControlList {
   updated_at: string;
 }
 
-export interface AccessRequest {
+interface AccessRequest {
   id: string;
   requester_id: string;
   requester_name: string;
@@ -110,7 +109,7 @@ export interface AuditLog {
   sensitive_data?: Array<{ field: string; value: string; action: 'masked' | 'exposed' }>;
 }
 
-export interface SecurityDashboard {
+interface SecurityDashboard {
   total_policies: number;
   active_policies: number;
   policies_by_type: Array<{ type: string; count: number }>;
@@ -129,7 +128,7 @@ export interface SecurityDashboard {
   top_denied_assets: Array<{ asset_id: string; asset_name: string; count: number }>;
 }
 
-export interface SecurityAssessment {
+interface SecurityAssessment {
   id: string;
   asset_id: string;
   asset_name: string;
@@ -149,7 +148,7 @@ export interface SecurityAssessment {
 
 // ============ Request Types ============
 
-export interface CreateSecurityPolicyRequest {
+interface CreateSecurityPolicyRequest {
   name: string;
   description?: string;
   entity_type: string;
@@ -165,7 +164,7 @@ export interface CreateSecurityPolicyRequest {
   department_ids?: string[];
 }
 
-export interface UpdateSecurityPolicyRequest {
+interface UpdateSecurityPolicyRequest {
   name?: string;
   description?: string;
   condition?: string;
@@ -179,7 +178,7 @@ export interface UpdateSecurityPolicyRequest {
   priority?: number;
 }
 
-export interface CreateSecurityRuleRequest {
+interface CreateSecurityRuleRequest {
   policy_id: string;
   entity_type: string;
   entity_id?: string;
@@ -190,7 +189,7 @@ export interface CreateSecurityRuleRequest {
   decision: AccessDecision;
 }
 
-export interface ClassifyDataRequest {
+interface ClassifyDataRequest {
   asset_id: string;
   classification: DataClassification;
   security_level: SecurityLevel;
@@ -199,14 +198,14 @@ export interface ClassifyDataRequest {
   tags?: string[];
 }
 
-export interface UpdateClassificationRequest {
+interface UpdateClassificationRequest {
   classification?: DataClassification;
   security_level?: SecurityLevel;
   reason?: string;
   tags?: string[];
 }
 
-export interface UpdateAclRequest {
+interface UpdateAclRequest {
   permissions: Array<{
     subject_type: 'user' | 'role' | 'department' | 'public';
     subject_id?: string;
@@ -216,27 +215,27 @@ export interface UpdateAclRequest {
   }>;
 }
 
-export interface CreateAccessRequestRequest {
+interface CreateAccessRequestRequest {
   asset_id: string;
   requested_actions: PermissionType[];
   reason: string;
   expires_at?: string;
 }
 
-export interface ReviewAccessRequest {
+interface ReviewAccessRequest {
   status: 'approved' | 'rejected';
   reason?: string;
   expires_at?: string;
 }
 
-export interface CheckAccessRequest {
+interface CheckAccessRequest {
   entity_type: string;
   entity_id?: string;
   actions: PermissionType[];
   context?: Record<string, unknown>;
 }
 
-export interface CheckAccessResponse {
+interface CheckAccessResponse {
   allowed: boolean;
   decisions: Array<{
     action: PermissionType;
@@ -248,7 +247,7 @@ export interface CheckAccessResponse {
   challenged_actions?: PermissionType[];
 }
 
-export interface QueryAuditLogParams {
+interface QueryAuditLogParams {
   actor_id?: string;
   action?: AuditAction;
   status?: AuditStatus;
