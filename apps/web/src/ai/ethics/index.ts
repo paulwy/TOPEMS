@@ -1,7 +1,5 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 export {
-  BiasDetector,
-  biasDetector,
   type BiasReport,
   type BiasMetric,
   type BiasRule,
@@ -21,8 +19,6 @@ export {
 } from './fairness-assurance';
 
 export {
-  ExplainabilityEngine,
-  explainabilityEngine,
   type Explanation,
   type ExplainabilityReport,
   type ExplainabilityMethod,

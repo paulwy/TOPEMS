@@ -1,6 +1,4 @@
 export {
-  AutonomousAgent,
-  autonomousAgent,
   type Task,
   type TaskStep,
   type TaskStatus,
@@ -12,8 +10,6 @@ export {
 } from './autonomous-agent';
 
 export {
-  WorkflowEngine,
-  workflowEngine,
   type Workflow,
   type WorkflowStep,
   type WorkflowTrigger,
@@ -25,8 +21,6 @@ export {
 } from './workflow-engine';
 
 export {
-  ContextEngine,
-  contextEngine,
   type ConversationContext,
   type ConversationMessage,
   type Entity,
