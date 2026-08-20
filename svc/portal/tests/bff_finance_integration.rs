@@ -13,7 +13,8 @@ use axum::http::HeaderMap;
 use axum::http::HeaderValue;
 
 use topems_shared_event::event::EventPublisher;
-use topems_shared_service_client::service_client::FinanceServiceClient;
+use topems_shared_service_client::service_client::api::finance_api::FinanceApi;
+use topems_shared_service_client::TypedServiceClient;
 
 /// 构造带有 auth/tenant/user 头的 HeaderMap
 fn make_forwarded_headers() -> HeaderMap {
@@ -247,8 +248,11 @@ fn test_api_response_error_structure() {
 #[test]
 fn test_finance_service_url_default() {
     // 验证 Finance 服务客户端的默认 URL
-    let client = FinanceServiceClient::new("http://localhost:8011");
-    assert!(client.is_ok(), "FinanceServiceClient 应能以默认 URL 构造");
+    let client = TypedServiceClient::new(FinanceApi, "http://localhost:8011");
+    assert!(
+        client.is_ok(),
+        "TypedServiceClient<FinanceApi> 应能以默认 URL 构造"
+    );
 }
 
 #[test]

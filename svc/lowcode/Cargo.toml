@@ -27,3 +27,6 @@ tokio-test.workspace = true
 [[bin]]
 name = "topems-lowcode"
 path = "src/main.rs"
+
+[lints]
+workspace = true

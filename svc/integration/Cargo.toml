@@ -34,3 +34,6 @@ axum-prometheus.workspace = true
 [dev-dependencies]
 tower = { workspace = true }
 axum = { workspace = true }
+
+[lints]
+workspace = true

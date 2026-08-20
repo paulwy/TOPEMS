@@ -38,9 +38,23 @@ pub struct ApiState {
     pub start_time: Instant,
     pub encryption: Arc<FieldEncryptionService>,
     pub event_publisher: Option<Arc<topems_shared_event::event::publisher::EventPublisher>>,
-    pub erp_client: Option<Arc<topems_shared_service_client::service_client::ErpServiceClient>>,
-    pub wms_client: Option<Arc<topems_shared_service_client::service_client::WmsServiceClient>>,
-    pub workflow_client: topems_shared_service_client::service_client::WorkflowServiceClient,
+    pub erp_client: Option<
+        Arc<
+            topems_shared_service_client::service_client::TypedServiceClient<
+                topems_shared_service_client::service_client::ErpApi,
+            >,
+        >,
+    >,
+    pub wms_client: Option<
+        Arc<
+            topems_shared_service_client::service_client::TypedServiceClient<
+                topems_shared_service_client::service_client::WmsApi,
+            >,
+        >,
+    >,
+    pub workflow_client: topems_shared_service_client::service_client::TypedServiceClient<
+        topems_shared_service_client::service_client::WorkflowApi,
+    >,
     pub customer_cache: Arc<InMemoryCache<Customer>>,
     pub dashboard_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
@@ -57,7 +71,11 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
-impl FromRef<ApiState> for topems_shared_service_client::service_client::WorkflowServiceClient {
+impl FromRef<ApiState>
+    for topems_shared_service_client::service_client::TypedServiceClient<
+        topems_shared_service_client::service_client::WorkflowApi,
+    >
+{
     fn from_ref(state: &ApiState) -> Self {
         state.workflow_client.clone()
     }

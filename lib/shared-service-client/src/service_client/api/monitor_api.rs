@@ -64,4 +64,14 @@ impl TypedServiceClient<MonitorApi> {
         let path = format!("/alerts/{}/acknowledge", id);
         self.put(&self.build_path(&path), data).await
     }
+
+    /// 列出日志
+    pub async fn list_logs(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/logs?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
 }

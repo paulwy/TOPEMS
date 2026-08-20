@@ -35,3 +35,6 @@ topems-shared-core = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
 reqwest = { workspace = true, features = ["json"] }
+
+[lints]
+workspace = true

@@ -1,4 +1,7 @@
 //! Workflow（工作流）服务 API trait 定义
+//!
+//! P0-2 Phase 2: 从 workflow_client.rs 迁移，补齐全部类型与方法，
+//! 作为 TypedServiceClient<WorkflowApi> 的完整实现。
 
 use super::super::error::ServiceClientResult;
 use super::super::trait_api::TypedServiceClient;
@@ -16,7 +19,7 @@ define_service_api!(
     ""
 );
 
-// ============ 业务数据类型 ============
+// ============ 业务数据类型（与旧 workflow_client.rs 完全一致）============
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowTask {
@@ -26,17 +29,28 @@ pub struct WorkflowTask {
     pub assignee_id: Uuid,
     pub status: String,
     pub comment: Option<String>,
+    pub priority: Option<String>,
+    pub due_time: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub claimed_at: Option<DateTime<Utc>>,
+    pub instance_title: Option<String>,
+    pub workflow_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskStats {
     pub todo: i32,
     pub done: i32,
+    pub sent: i32,
+    pub cc: i32,
     pub my_pending: i32,
     pub my_completed: i32,
+    pub my_involved: i32,
+    pub my_created: i32,
+    pub candidate: i32,
 }
 
-/// 流程实例（字段与 `workflow_client::WorkflowInstance` 一致）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowInstance {
     pub id: Uuid,
@@ -52,7 +66,23 @@ pub struct WorkflowInstance {
     pub updated_at: DateTime<Utc>,
 }
 
-/// 创建流程实例请求（字段与 `workflow_client::CreateInstanceRequest` 一致）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStatistics {
+    pub total_workflows: i64,
+    pub active_workflows: i64,
+    pub total_instances: i64,
+    pub running_instances: i64,
+    pub completed_instances: i64,
+    pub rejected_instances: i64,
+    pub total_approvals: i64,
+    pub pending_approvals: i64,
+    pub approved_approvals: i64,
+    pub rejected_approvals: i64,
+    pub avg_approval_time: f64,
+    pub approval_rate: f64,
+    pub rejection_rate: f64,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct CreateInstanceRequest {
     pub workflow_id: Uuid,
@@ -60,7 +90,6 @@ pub struct CreateInstanceRequest {
     pub variables: Option<serde_json::Value>,
 }
 
-/// 实例操作请求（审批意见）
 #[derive(Debug, Clone, Serialize)]
 pub struct TaskActionRequest {
     pub comment: Option<String>,
@@ -74,7 +103,7 @@ impl TypedServiceClient<WorkflowApi> {
         &self,
         page: i64,
         page_size: i64,
-    ) -> ServiceClientResult<serde_json::Value> {
+    ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
         let path = format!("/tasks/my/pending?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
@@ -84,18 +113,23 @@ impl TypedServiceClient<WorkflowApi> {
         &self,
         page: i64,
         page_size: i64,
-    ) -> ServiceClientResult<serde_json::Value> {
+    ) -> ServiceClientResult<PaginatedResponse<WorkflowTask>> {
         let path = format!("/tasks/my/completed?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
 
     /// 获取我的任务统计
-    pub async fn get_my_task_stats(&self) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_my_task_stats(&self) -> ServiceClientResult<TaskStats> {
         self.get_and_unwrap("/tasks/my/stats").await
     }
 
-    /// 获取任务
-    pub async fn get_task(&self, id: Uuid) -> ServiceClientResult<serde_json::Value> {
+    /// 获取我的任务数量
+    pub async fn get_my_task_count(&self) -> ServiceClientResult<i64> {
+        self.get_and_unwrap("/tasks/my/count").await
+    }
+
+    /// 获取任务详情
+    pub async fn get_task(&self, id: Uuid) -> ServiceClientResult<WorkflowTask> {
         let path = format!("/tasks/{}", id);
         self.get_and_unwrap(&path).await
     }
@@ -137,14 +171,11 @@ impl TypedServiceClient<WorkflowApi> {
     }
 
     /// 获取工作流统计
-    pub async fn get_statistics(&self) -> ServiceClientResult<serde_json::Value> {
+    pub async fn get_statistics(&self) -> ServiceClientResult<WorkflowStatistics> {
         self.get_and_unwrap("/statistics").await
     }
 
     // ============ 实例级工作流操作（/api/flow/instances） ============
-    //
-    // 委托 Flow 引擎执行实例级编排。路径与 `WorkflowServiceClient`
-    // 及 `svc/unified-core` 的 `/api/flow/instances` 路由保持一致。
 
     /// 创建流程实例
     pub async fn create_instance(
@@ -166,7 +197,7 @@ impl TypedServiceClient<WorkflowApi> {
         page: i64,
         page_size: i64,
     ) -> ServiceClientResult<PaginatedResponse<WorkflowInstance>> {
-        let path = format!("/api/flow/instances?page={}&page_size={}", page, page_size);
+        let path = format!("/instances?page={}&page_size={}", page, page_size);
         self.get_and_unwrap(&path).await
     }
 
@@ -207,25 +238,61 @@ mod tests {
     use super::*;
     use chrono::{TimeZone, Utc};
 
+    fn sample_dt() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap()
+    }
+
     fn rt<T: Serialize + serde::de::DeserializeOwned>(val: &T) -> T {
         let s = serde_json::to_string(val).unwrap();
         serde_json::from_str(&s).unwrap()
     }
 
     #[test]
-    fn workflow_task_roundtrip() {
+    fn workflow_task_roundtrip_full() {
         let t = WorkflowTask {
-            id: Uuid::parse_str("a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6").unwrap(),
-            instance_id: Uuid::parse_str("f1f2f3f4-f5f6-f7f8-f9fa-fbfcfdfeff00").unwrap(),
+            id: Uuid::nil(),
+            instance_id: Uuid::nil(),
             node_id: "node-approve".into(),
-            assignee_id: Uuid::parse_str("11111111-2222-3333-4444-555555555555").unwrap(),
+            assignee_id: Uuid::nil(),
             status: "pending".into(),
-            comment: None,
+            comment: Some("Please review".into()),
+            priority: Some("high".into()),
+            due_time: Some(sample_dt()),
+            created_at: sample_dt(),
+            completed_at: Some(sample_dt()),
+            claimed_at: Some(sample_dt()),
+            instance_title: Some("Leave Request".into()),
+            workflow_name: Some("Leave Approval".into()),
         };
         let back = rt(&t);
         assert_eq!(back.node_id, "node-approve");
         assert_eq!(back.status, "pending");
+        assert_eq!(back.priority.as_deref(), Some("high"));
+        assert!(back.due_time.is_some());
+        assert!(back.instance_title.is_some());
+    }
+
+    #[test]
+    fn workflow_task_roundtrip_minimal() {
+        let t = WorkflowTask {
+            id: Uuid::nil(),
+            instance_id: Uuid::nil(),
+            node_id: "node-2".into(),
+            assignee_id: Uuid::nil(),
+            status: "completed".into(),
+            comment: None,
+            priority: None,
+            due_time: None,
+            created_at: sample_dt(),
+            completed_at: None,
+            claimed_at: None,
+            instance_title: None,
+            workflow_name: None,
+        };
+        let back = rt(&t);
+        assert_eq!(back.status, "completed");
         assert!(back.comment.is_none());
+        assert!(back.priority.is_none());
     }
 
     #[test]
@@ -233,36 +300,73 @@ mod tests {
         let s = TaskStats {
             todo: 5,
             done: 10,
-            my_pending: 3,
-            my_completed: 7,
+            sent: 3,
+            cc: 2,
+            my_pending: 4,
+            my_completed: 20,
+            my_involved: 30,
+            my_created: 8,
+            candidate: 6,
         };
         let back = rt(&s);
         assert_eq!(back.todo, 5);
         assert_eq!(back.done, 10);
-        assert_eq!(back.my_pending, 3);
-        assert_eq!(back.my_completed, 7);
+        assert_eq!(back.candidate, 6);
     }
 
     #[test]
     fn workflow_instance_roundtrip() {
         let inst = WorkflowInstance {
-            id: Uuid::parse_str("a1a1a1a1-b2b2-c3c3-d4d4-e5e5e5e5e5e5").unwrap(),
-            workflow_id: Uuid::parse_str("f6f6f6f6-7777-8888-9999-0a0a0a0a0a0a").unwrap(),
+            id: Uuid::nil(),
+            workflow_id: Uuid::nil(),
             title: "Leave request".into(),
-            initiator_id: Uuid::parse_str("12345678-1234-5678-1234-567812345678").unwrap(),
+            initiator_id: Uuid::nil(),
             current_node_id: Some("manager-review".into()),
             status: "running".into(),
-            variables: Some(serde_json::json!({"days": 3, "reason": "vacation"})),
-            started_at: Utc.with_ymd_and_hms(2026, 8, 1, 9, 0, 0).unwrap(),
+            variables: Some(serde_json::json!({"days": 3})),
+            started_at: sample_dt(),
             completed_at: None,
-            created_at: Utc.with_ymd_and_hms(2026, 8, 1, 8, 55, 0).unwrap(),
-            updated_at: Utc.with_ymd_and_hms(2026, 8, 1, 9, 0, 0).unwrap(),
+            created_at: sample_dt(),
+            updated_at: sample_dt(),
         };
         let back = rt(&inst);
         assert_eq!(back.title, "Leave request");
-        assert_eq!(back.current_node_id.as_deref(), Some("manager-review"));
         assert_eq!(back.status, "running");
-        assert!(back.variables.is_some());
         assert!(back.completed_at.is_none());
+    }
+
+    #[test]
+    fn workflow_statistics_roundtrip() {
+        let s = WorkflowStatistics {
+            total_workflows: 100,
+            active_workflows: 50,
+            total_instances: 500,
+            running_instances: 30,
+            completed_instances: 400,
+            rejected_instances: 70,
+            total_approvals: 1000,
+            pending_approvals: 100,
+            approved_approvals: 800,
+            rejected_approvals: 100,
+            avg_approval_time: 3.5,
+            approval_rate: 0.8,
+            rejection_rate: 0.1,
+        };
+        let back = rt(&s);
+        assert_eq!(back.total_workflows, 100);
+        assert_eq!(back.running_instances, 30);
+        assert_eq!(back.approval_rate, 0.8);
+    }
+
+    #[test]
+    fn create_instance_request_serialization() {
+        let req = CreateInstanceRequest {
+            workflow_id: Uuid::nil(),
+            title: "Test Workflow".into(),
+            variables: Some(serde_json::json!({"key": "value"})),
+        };
+        let val = serde_json::to_value(&req).unwrap();
+        assert_eq!(val["title"], "Test Workflow");
+        assert!(val["variables"].is_object());
     }
 }

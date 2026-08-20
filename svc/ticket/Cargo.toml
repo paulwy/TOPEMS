@@ -31,3 +31,6 @@ prometheus.workspace = true
 [[bin]]
 name = "topems-ticket"
 path = "src/main.rs"
+
+[lints]
+workspace = true

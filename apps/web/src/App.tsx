@@ -57,11 +57,13 @@ const DevPanels: React.FC = () => {
   return (
     <>
       {/*
-        开发模式占位块：MicroFrontendDevTools（左 fixed 多排彩色按钮，25 个按钮约占 3-4 行）
-        + ObservabilityPanel（右 fixed 浮层按钮 ~48px）均是 position: fixed
-        脱离文档流，会遮挡页面底部内容。
-        此处用普通文档流占位块把页面滚动底边界顶开，避免最后一屏内容被浮层覆盖。
-        仅在 import.meta.env.DEV && 已认证 时渲染，生产构建完全移除。
+        Dev-mode placeholder: MicroFrontendDevTools (left fixed multi-row buttons,
+        ~25 colored buttons spanning 3-4 rows) + ObservabilityPanel (right fixed
+        floating button ~48px) both use position: fixed and are taken out of flow,
+        which would otherwise cover content near the bottom of the page.
+        This in-flow div pushes the scroll-boundary down so the last screenful
+        remains visible. Rendered only when import.meta.env.DEV && authenticated;
+        fully tree-shaken from production builds.
       */}
       <div
         aria-hidden='true'

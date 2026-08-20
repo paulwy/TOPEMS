@@ -33,3 +33,6 @@ csv.workspace = true
 [[bin]]
 name = "topems-lims"
 path = "src/main.rs"
+
+[lints]
+workspace = true

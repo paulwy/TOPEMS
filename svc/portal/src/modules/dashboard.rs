@@ -241,7 +241,7 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
 async fn fetch_monitor_healthy_count(state: &AppState) -> Option<u64> {
     match state.monitor_client.get_service_status().await {
         Ok(resp) => {
-            if let Some(serde_json::Value::Array(arr)) = resp.data {
+            if let serde_json::Value::Array(arr) = resp {
                 let healthy = arr
                     .iter()
                     .filter(|s| {

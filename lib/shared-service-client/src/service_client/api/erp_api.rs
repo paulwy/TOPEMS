@@ -82,6 +82,80 @@ impl TypedServiceClient<ErpApi> {
     pub async fn get_finance_summary(&self) -> ServiceClientResult<serde_json::Value> {
         self.get(&self.build_path("/finance/summary")).await
     }
+
+    /// 获取单个客户
+    pub async fn get_customer(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/customers/{}", id);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 列出供应商
+    pub async fn list_suppliers(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/suppliers?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 获取单个供应商
+    pub async fn get_supplier(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/suppliers/{}", id);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 列出物料
+    pub async fn list_materials(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/materials?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 列出采购订单
+    pub async fn list_purchase_orders(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/purchase-orders?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 列出销售订单
+    pub async fn list_sales_orders(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/sales-orders?page={}&pagesize={}", page, page_size);
+        self.get(&self.build_path(&path)).await
+    }
+
+    /// 创建对账记录
+    pub async fn create_reconciliation(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/finance/reconciliation"), data)
+            .await
+    }
+
+    /// 按关联标识列出对账记录
+    pub async fn list_reconciliations_by_ref(
+        &self,
+        ref_id: &str,
+        ref_type: &str,
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!(
+            "/finance/reconciliation?ref_id={}&ref_type={}",
+            ref_id, ref_type
+        );
+        self.get(&self.build_path(&path)).await
+    }
 }
 
 #[cfg(test)]

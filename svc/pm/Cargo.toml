@@ -41,3 +41,6 @@ axum-test.workspace = true
 [[bin]]
 name = "topems-pm"
 path = "src/main.rs"
+
+[lints]
+workspace = true

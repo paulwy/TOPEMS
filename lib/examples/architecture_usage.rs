@@ -31,7 +31,7 @@ async fn main() {
 
     // 2. 创建 HRM 服务客户端
     println!("2. 服务客户端示例");
-    let _hrm_client = create_hrm_client().unwrap();
+    let _hrm_client = TypedServiceClient::<HrmApi>::from_env_default().unwrap();
     println!("   HRM 客户端创建成功\n");
 
     // 3. 事件发布示例

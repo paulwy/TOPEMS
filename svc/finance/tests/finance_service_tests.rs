@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use topems_finance::models::*;
 use topems_finance::services::FinanceService;
-use topems_shared_service_client::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 async fn create_test_pool() -> PgPool {
     let database_url = std::env::var("DATABASE_URL")
@@ -49,7 +49,7 @@ async fn test_create_account() {
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
         pool.clone(),
-        WorkflowServiceClient::new("http://localhost:8080")
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
 
@@ -83,7 +83,7 @@ async fn test_get_account() {
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
         pool.clone(),
-        WorkflowServiceClient::new("http://localhost:8080")
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
 
@@ -120,7 +120,7 @@ async fn test_voucher_lifecycle() {
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
         pool.clone(),
-        WorkflowServiceClient::new("http://localhost:8080")
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
 
@@ -214,7 +214,7 @@ async fn test_period_management() {
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
         pool.clone(),
-        WorkflowServiceClient::new("http://localhost:8080")
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
 
@@ -245,7 +245,7 @@ async fn test_auxiliary_account() {
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
         pool.clone(),
-        WorkflowServiceClient::new("http://localhost:8080")
+        TypedServiceClient::new(WorkflowApi, "http://localhost:8080")
             .expect("Failed to create workflow client"),
     );
 

@@ -9,6 +9,8 @@ use axum::{
     Json,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_service_client::service_client::api::monitor_api::MonitorApi;
+use topems_shared_service_client::TypedServiceClient;
 
 use crate::{
     models::{Alert, LogEntry, MonitoringMetrics, MonitoringService as MonitoringServiceModel},
@@ -17,9 +19,9 @@ use crate::{
 };
 
 fn build_client(
-    base: &topems_shared_service_client::service_client::MonitorServiceClient,
+    base: &TypedServiceClient<MonitorApi>,
     headers: &HeaderMap,
-) -> topems_shared_service_client::service_client::MonitorServiceClient {
+) -> TypedServiceClient<MonitorApi> {
     let client = base.clone();
     if let Some(token) = extract_bearer_token(headers) {
         client.with_auth_token(token)
@@ -35,7 +37,7 @@ pub async fn get_monitoring_services(
     let client = build_client(&state.monitor_client, &headers);
     match client.get_service_status().await {
         Ok(resp) => {
-            let services = parse_service_status(resp.data);
+            let services = parse_service_status(Some(resp));
             Json(ApiResponse::success(services, "监控服务状态获取成功"))
         }
         Err(e) => {
@@ -80,7 +82,7 @@ pub async fn get_monitoring_metrics(
     let client = build_client(&state.monitor_client, &headers);
     match client.list_metrics().await {
         Ok(resp) => {
-            let metrics = parse_metrics(resp.data);
+            let metrics = parse_metrics(Some(resp));
             Json(ApiResponse::success(metrics, "监控指标获取成功"))
         }
         Err(e) => {
@@ -142,7 +144,7 @@ pub async fn get_monitoring_alerts(
     let client = build_client(&state.monitor_client, &headers);
     match client.list_alerts(1, 50).await {
         Ok(resp) => {
-            let alerts = parse_alerts(resp.data);
+            let alerts = parse_alerts(Some(resp));
             Json(ApiResponse::success(alerts, "告警列表获取成功"))
         }
         Err(e) => {
@@ -185,11 +187,7 @@ pub async fn acknowledge_alert(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let client = build_client(&state.monitor_client, &headers);
     match client.acknowledge_alert(&id, &serde_json::json!({})).await {
-        Ok(resp) => Json(ApiResponse::success(
-            resp.data
-                .unwrap_or(serde_json::json!({ "id": id, "acknowledged": true })),
-            "告警已确认",
-        )),
+        Ok(resp) => Json(ApiResponse::success(resp, "告警已确认")),
         Err(e) => {
             tracing::warn!("Failed to acknowledge alert via monitor service: {}", e);
             Json(ApiResponse::error(502, "监控服务暂不可用，告警确认失败"))
@@ -204,7 +202,7 @@ pub async fn get_monitoring_logs(
     let client = build_client(&state.monitor_client, &headers);
     match client.list_logs(1, 50).await {
         Ok(resp) => {
-            let logs = parse_logs(resp.data);
+            let logs = parse_logs(Some(resp));
             Json(ApiResponse::success(logs, "日志列表获取成功"))
         }
         Err(e) => {

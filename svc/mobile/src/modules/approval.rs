@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use topems_shared::{ApiResponse, AuthState};
-use topems_shared_service_client::service_client::{WorkflowServiceClient, WorkflowTask};
+use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi, WorkflowTask};
 
 #[derive(Debug, Deserialize)]
 pub struct ApprovalListParams {
@@ -67,7 +67,7 @@ fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>
 
 pub async fn list_approval_tasks(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Query(params): Query<ApprovalListParams>,
 ) -> impl IntoResponse {
@@ -103,7 +103,7 @@ pub async fn list_approval_tasks(
 
 pub async fn get_pending_approval_tasks(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
@@ -134,7 +134,7 @@ pub async fn get_pending_approval_tasks(
 
 pub async fn get_approval_task(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -166,7 +166,7 @@ pub async fn get_approval_task(
 
 pub async fn approve_approval_task(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     body: Option<Json<ApprovalActionRequest>>,
@@ -208,7 +208,7 @@ pub async fn approve_approval_task(
 
 pub async fn reject_approval_task(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     body: Option<Json<ApprovalActionRequest>>,
@@ -250,7 +250,7 @@ pub async fn reject_approval_task(
 
 pub async fn delegate_approval_task(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(payload): Json<DelegateRequest>,
@@ -305,7 +305,7 @@ pub async fn delegate_approval_task(
 
 pub async fn get_approval_history(
     State(auth_state): State<AuthState>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     headers: HeaderMap,
     Query(params): Query<ApprovalListParams>,
 ) -> impl IntoResponse {

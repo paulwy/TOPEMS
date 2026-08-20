@@ -35,3 +35,6 @@ topems-shared-db = { workspace = true }
 [[bin]]
 name = "topems-scm"
 path = "src/main.rs"
+
+[lints]
+workspace = true
