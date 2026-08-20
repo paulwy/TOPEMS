@@ -134,14 +134,12 @@ const inboundRoute: RouteConfigV2<InboundPageProps> = {
   action: 'read',
 };
 
-const stockInFormRoute: RouteConfigV2<StockInFormProps> = inboundRoute as RouteConfigV2<StockInFormProps>;
+const stockInFormRoute: RouteConfigV2<StockInFormProps> =
+  inboundRoute as RouteConfigV2<StockInFormProps>;
 
 const wmsInboundDetailRoute: RouteConfigV2<WmsInboundDetailPageProps> = {
   path: WMS_PATHS.WmsInboundDetail,
-  element: lazyWithRetry(
-    () => import('@/pages/wms/WmsInboundDetailPage'),
-    'WmsInboundDetailPage'
-  ),
+  element: lazyWithRetry(() => import('@/pages/wms/WmsInboundDetailPage'), 'WmsInboundDetailPage'),
   module: 'wms',
   code: 'wms-inbound-detail',
   title: i18n.t('shared.config.k27'),
@@ -245,10 +243,7 @@ const wmsRoutes: RouteConfigV2[] = [
   locationManagementRoute,
   {
     path: WMS_PATHS.batchManagement,
-    element: lazyWithRetry(
-      () => import('@/pages/wms/BatchManagementPage'),
-      'BatchManagementPage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/wms/BatchManagementPage'), 'BatchManagementPage'),
     module: 'wms',
     code: 'wms-batches',
     title: i18n.t('shared.config.k5'),
@@ -335,10 +330,7 @@ const wmsRoutes: RouteConfigV2[] = [
   inventoryRoute,
   {
     path: WMS_PATHS.inventoryReport,
-    element: lazyWithRetry(
-      () => import('@/pages/wms/InventoryReportPage'),
-      'InventoryReportPage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/wms/InventoryReportPage'), 'InventoryReportPage'),
     module: 'wms',
     code: 'wms-inventory-report',
     title: i18n.t('shared.config.k15'),

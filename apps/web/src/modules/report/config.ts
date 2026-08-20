@@ -60,10 +60,7 @@ const reportListRoute: RouteConfigV2<ReportListPageProps> = {
 
 const reportViewerRoute = {
   path: REPORT_PATHS.viewer,
-  element: lazyWithRetry(
-    () => import('@/pages/report/ReportViewer'),
-    'ReportViewer'
-  ),
+  element: lazyWithRetry(() => import('@/pages/report/ReportViewer'), 'ReportViewer'),
   module: 'report',
   title: i18n.t('shared.config.k4'),
   titleKey: 'shared.config.k4',
@@ -104,10 +101,7 @@ const reportRoutes: RouteConfigV2[] = [
   } as RouteConfigV2<ReportBuilderPageProps>,
   {
     path: REPORT_PATHS.schedule,
-    element: lazyWithRetry(
-      () => import('@/pages/report/ReportSchedulePage'),
-      'ReportSchedulePage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/report/ReportSchedulePage'), 'ReportSchedulePage'),
     module: 'report',
     title: i18n.t('shared.config.k7'),
     titleKey: 'shared.config.k7',

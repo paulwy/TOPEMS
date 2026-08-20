@@ -96,7 +96,7 @@ const PLUGIN_MODULES: ModuleConfig[] = [
 // Module Registry
 // ============================================================================
 
-export class ModuleRegistry {
+class ModuleRegistry {
   private static instance: ModuleRegistry;
   private modules: Map<string, ModuleConfig> = new Map();
   private enabledModules: Set<string> = new Set();
