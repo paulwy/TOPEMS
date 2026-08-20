@@ -155,7 +155,10 @@ let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
         panic!("JWT_SECRET must be set in production environment");
     }
     tracing::warn!("JWT_SECRET not set, using dev default (DO NOT use in production)");
-    "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256".to_string()
+    // ⚠️ V257+（2026-08-20）：以下默认字符串已在 AuthState::new 层设置为「任何环境一律 panic」，
+    // 严禁在集成脚本、部署配置中照抄使用！生成方式：openssl rand -hex 32
+    // 实际集成代码示例："<SET_YOUR_OWN_STRONG_SECRET_AT_LEAST_32_CHARS__REQUIRED>".to_string()
+    "<SET_YOUR_OWN_STRONG_SECRET_AT_LEAST_32_CHARS__REQUIRED>".to_string()
 });
 ```
 

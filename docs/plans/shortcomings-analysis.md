@@ -164,11 +164,15 @@ let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause); /
 
 1. **HS256 对称密钥**：所有 20+ 服务共享同一 `JWT_SECRET`，任一服务泄露密钥即可伪造任意租户/用户 token，跨服务横向移动无障碍。
 2. **默认密钥回退**：未设置 `JWT_SECRET` 环境变量时回退到硬编码 `topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256`，生产环境漏配即等于无认证。
+   > ✅ **2026-08-20（V257 章 Phase 2 治理闭环）**：源码级 `== DEFAULT_JWT_SECRET` 比较 + 最小 32 字符严格校验已下沉到 `AuthState::new`（任何环境一律 panic）；**全仓 25+ 份配置模板/部署脚本 0 处残留该硬编码默认值**（含 `config/env/.env.production.template` 31 字符弱长度 Bug 已一并修复）。对应 commits：`ebf380f15` · `3f97e2c0e` · `c37f148fe`。现网 3 条铁规则：① **严禁**使用 `topems-*` 前缀字符串；② `JWT_SECRET` / `JWT_REFRESH_SECRET` **长度 ≥ 32**；③ 两密钥**相互独立**。生成：`openssl rand -hex 32`。
 
 ```rust
 &Header::new(Algorithm::HS256),
 &EncodingKey::from_secret(secret.as_ref()),
 // ...
+// ⚠️ 下方为修复前的问题示例代码，现网任何环境严禁照抄
+// 正确做法：从环境变量读取，且值 ≠ 任何 "topems-*" 默认值，长度 ≥ 32
+#[allow(deprecated)]
 let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
 ```
 

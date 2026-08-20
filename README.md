@@ -461,6 +461,21 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 **注意**：`.env` 文件已添加到 `.gitignore`，不会被提交到代码仓库。
 
+> ### ⚠️ JWT 密钥 3 条铁规则（启动 panic 99% 来源于此，V257+ 2026-08-20 启用严格校验）
+>
+> `lib/shared-auth/src/auth.rs` 的 `AuthState::new` 在 **任何环境（含开发）** 都会做 2 层严格校验，不满足 **立即启动 panic 退出**：
+>
+> | # | 规则 | 错误形式 | 修复 |
+> |---|------|---------|------|
+> | ① | **严禁**使用 `topems-*` 前缀字符串（老默认值家族） | `panicked at ... secret must NOT equal the built-in DEFAULT_JWT_SECRET / DEFAULT_REFRESH_SECRET` | 重新生成随机值：`openssl rand -hex 32`（推荐）或 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+> | ② | `JWT_SECRET` 和 `JWT_REFRESH_SECRET` **长度 ≥ 32 字符** | `panicked at ... JWT_SECRET requires at least 32 characters (got N)` | 补足到 32+（`openssl rand -hex 32` 默认输出 64 字符，天然满足） |
+> | ③ | **两密钥相互独立**（不要互相复制成同一个值） | 不 panic，但是会让 refresh 令牌安全降级成 access 令牌 | 分两次独立 `openssl rand -hex 32` 生成 |
+>
+> 💡 快速自查（不启动服务）：
+> ```bash
+> grep -E '^JWT_(SECRET|REFRESH_SECRET)=' .env | awk -F= '{if (length($2)<32) print "❌ 长度不足32:",$1,"len="length($2); else if ($2 ~ /^topems-/) print "❌ 仍是默认值:",$1; else print "✅ 合法:",$1}'
+> ```
+
 ### 权限管理系统
 
 TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
