@@ -553,7 +553,7 @@ export const adaptActionItemToFrontend = (backend: ActionItemBackend): ActionIte
 // ============================================================================
 // Audit adapters — snake_case Backend → camelCase Frontend
 // ============================================================================
-export const adaptAuditPlanToFrontend = (backend: AuditPlan): AuditPlanFrontend => ({
+const adaptAuditPlanToFrontend = (backend: AuditPlan): AuditPlanFrontend => ({
   id: backend.id,
   planNo: backend.plan_no,
   title: backend.title,
@@ -572,7 +572,7 @@ export const adaptAuditPlanToFrontend = (backend: AuditPlan): AuditPlanFrontend 
   updatedAt: backend.updated_at,
 });
 
-export const adaptAuditPlanToBackend = (
+const adaptAuditPlanToBackend = (
   frontend: CreateAuditPlanRequest
 ): CreateAuditPlanRequestBackend => ({
   plan_no: frontend.planNo,
@@ -589,7 +589,7 @@ export const adaptAuditPlanToBackend = (
   created_by: frontend.createdBy,
 });
 
-export const adaptAuditTaskToFrontend = (backend: AuditTask): AuditTaskFrontend => ({
+const adaptAuditTaskToFrontend = (backend: AuditTask): AuditTaskFrontend => ({
   id: backend.id,
   planId: backend.plan_id,
   taskNo: backend.task_no,
@@ -606,7 +606,7 @@ export const adaptAuditTaskToFrontend = (backend: AuditTask): AuditTaskFrontend 
   updatedAt: backend.updated_at,
 });
 
-export const adaptAuditFindingToFrontend = (backend: AuditFinding): AuditFindingFrontend => ({
+const adaptAuditFindingToFrontend = (backend: AuditFinding): AuditFindingFrontend => ({
   id: backend.id,
   taskId: backend.task_id,
   findingNo: backend.finding_no,
@@ -626,7 +626,7 @@ export const adaptAuditFindingToFrontend = (backend: AuditFinding): AuditFinding
 // ============================================================================
 // APQP adapters — snake_case Backend → camelCase Frontend
 // ============================================================================
-export const adaptApqpProjectToFrontend = (backend: ApqpProject): ApqpProjectFrontend => ({
+const adaptApqpProjectToFrontend = (backend: ApqpProject): ApqpProjectFrontend => ({
   id: backend.id,
   projectNo: backend.project_no,
   projectName: backend.project_name,
@@ -648,7 +648,7 @@ export const adaptApqpProjectToFrontend = (backend: ApqpProject): ApqpProjectFro
   updatedAt: backend.updated_at || '',
 });
 
-export const adaptApqpProjectToBackend = (
+const adaptApqpProjectToBackend = (
   frontend: CreateApqpProjectFrontendRequest
 ): CreateApqpProjectBackendRequest => ({
   project_no: frontend.projectNo,
@@ -664,7 +664,7 @@ export const adaptApqpProjectToBackend = (
   created_by: frontend.createdBy,
 });
 
-export const adaptApqpPhaseToFrontend = (backend: ApqpPhase): ApqpPhaseFrontend => ({
+const adaptApqpPhaseToFrontend = (backend: ApqpPhase): ApqpPhaseFrontend => ({
   id: backend.id,
   projectId: backend.project_id,
   phaseCode: backend.phase_code,
@@ -681,7 +681,7 @@ export const adaptApqpPhaseToFrontend = (backend: ApqpPhase): ApqpPhaseFrontend 
   updatedAt: backend.updated_at || '',
 });
 
-export const adaptApqpTaskToFrontend = (backend: ApqpTask): ApqpTaskFrontend => ({
+const adaptApqpTaskToFrontend = (backend: ApqpTask): ApqpTaskFrontend => ({
   id: backend.id,
   projectId: backend.project_id,
   phaseId: backend.phase_id,
@@ -698,7 +698,7 @@ export const adaptApqpTaskToFrontend = (backend: ApqpTask): ApqpTaskFrontend => 
   updatedAt: backend.updated_at || '',
 });
 
-export const adaptApqpRiskToFrontend = (backend: ApqpRisk): ApqpRiskFrontend => ({
+const adaptApqpRiskToFrontend = (backend: ApqpRisk): ApqpRiskFrontend => ({
   id: backend.id,
   projectId: backend.project_id,
   riskName: backend.risk_name,
@@ -716,7 +716,7 @@ export const adaptApqpRiskToFrontend = (backend: ApqpRisk): ApqpRiskFrontend => 
   updatedAt: backend.updated_at || '',
 });
 
-export const adaptApqpApprovalToFrontend = (backend: ApqpApproval): ApqpApprovalFrontend => ({
+const adaptApqpApprovalToFrontend = (backend: ApqpApproval): ApqpApprovalFrontend => ({
   id: backend.id,
   projectId: backend.project_id,
   approvalType: backend.approval_type,

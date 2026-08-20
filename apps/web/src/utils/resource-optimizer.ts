@@ -19,7 +19,7 @@ interface ConnectionPoolStats {
   maxConnections: number;
 }
 
-export class ConnectionPool {
+class ConnectionPool {
   private maxConnections: number;
   private active = new Set<string>();
   private queue: Array<{ id: string; resolve: () => void }> = [];
@@ -68,7 +68,7 @@ export class ConnectionPool {
   }
 }
 
-export class ResourceOptimizer {
+class ResourceOptimizer {
   private static preconnectedUrls = new Set<string>();
   private static dnsPrefetchedUrls = new Set<string>();
   private static preloadedUrls = new Set<string>();
@@ -200,7 +200,7 @@ export class ResourceOptimizer {
 
 let navPreloadSupported: boolean | null = null;
 
-export function setupNavigationPreload(registration?: ServiceWorkerRegistration): boolean {
+function setupNavigationPreload(registration?: ServiceWorkerRegistration): boolean {
   if (typeof registration === 'undefined') {
     if (typeof navigator === 'undefined' || !navigator.serviceWorker) return false;
     return false;
@@ -222,12 +222,12 @@ export function setupNavigationPreload(registration?: ServiceWorkerRegistration)
   }
 }
 
-export function triggerNavPreload(url: string): void {
+function triggerNavPreload(url: string): void {
   if (typeof document === 'undefined') return;
   ResourceOptimizer.preload(url, 'document');
 }
 
-export function preloadOnIdle(url: string, as: PreloadAs = 'fetch'): void {
+function preloadOnIdle(url: string, as: PreloadAs = 'fetch'): void {
   if (typeof window === 'undefined') return;
 
   const load = () => {
@@ -243,7 +243,7 @@ export function preloadOnIdle(url: string, as: PreloadAs = 'fetch'): void {
   }
 }
 
-export function preloadOnVisible(url: string, as: PreloadAs = 'fetch'): void {
+function preloadOnVisible(url: string, as: PreloadAs = 'fetch'): void {
   if (typeof document === 'undefined') return;
 
   const load = () => {
@@ -279,7 +279,7 @@ export function prefetchOnIdle(url: string): void {
   }
 }
 
-export function preloadCriticalResources(
+function preloadCriticalResources(
   resources: Array<{ url: string; as: PreloadAs; priority?: number }>
 ): void {
   const sorted = [...resources].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));

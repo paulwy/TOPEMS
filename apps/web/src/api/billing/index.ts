@@ -76,7 +76,7 @@ export type { BillReminder, CreateReminderRequest, ReminderType } from './remind
 
 export type { BatchTask, BatchTaskStatus } from './batch';
 
-export const billingModule = {
+const billingModule = {
   ...billingApi,
   invoices: invoiceApi,
   payments: paymentApi,

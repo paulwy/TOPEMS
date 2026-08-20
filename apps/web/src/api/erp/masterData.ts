@@ -420,7 +420,7 @@ export interface QualityLoopStats {
 
 // ==================== V42.0 AC-14: 质量闭环 API 方法 ====================
 
-export const qualityTicketApi = {
+const qualityTicketApi = {
   // --- 质量工单 ---
 
   async createQualityTicket(data: CreateQualityTicketRequest): Promise<ApiResponse<QualityTicket>> {
@@ -499,7 +499,7 @@ export const qualityTicketApi = {
 
 // ==================== V42.0 AC-14: 修复工作流 API 方法 ====================
 
-export const repairWorkflowApi = {
+const repairWorkflowApi = {
   async createRepairWorkflow(
     data: CreateRepairWorkflowRequest
   ): Promise<ApiResponse<RepairWorkflow>> {
@@ -547,7 +547,7 @@ export const repairWorkflowApi = {
 
 // ==================== V42.0 AC-14: 数据所有权 API 方法 ====================
 
-export const dataOwnershipApi = {
+const dataOwnershipApi = {
   // --- 数据域 ---
 
   async createDataDomain(data: CreateDataDomainRequest): Promise<ApiResponse<DataDomain>> {
@@ -775,7 +775,7 @@ export interface CompletionQueryParams {
 
 // ==================== V43.0 AC-15: 主数据图谱 API 方法 ====================
 
-export const masterDataGraphApi = {
+const masterDataGraphApi = {
   async getMasterDataGraph(params?: GraphQueryParams): Promise<ApiResponse<MasterDataGraph>> {
     return apiClient.erp.get<MasterDataGraph>('/master-data/graph', { params });
   },
@@ -944,7 +944,7 @@ export interface MdmStats {
 
 // ==================== V44.0 AC-16: MDM GraphQL API 方法 ====================
 
-export const mdmGraphqlApi = {
+const mdmGraphqlApi = {
   async execute<T = unknown>(req: GraphqlRequest): Promise<ApiResponse<GraphqlResponse<T>>> {
     return apiClient.erp.post<GraphqlResponse<T>>('/master-data/graphql', req);
   },
@@ -1083,7 +1083,7 @@ export interface BatchRetryDeadLettersRequest {
 
 // ==================== V44.0 AC-16: 同步编排引擎 V2 API 方法 ====================
 
-export const syncEngineV2Api = {
+const syncEngineV2Api = {
   async createSyncJob(data: CreateSyncJobV2Request): Promise<ApiResponse<SyncJobV2>> {
     return apiClient.erp.post<SyncJobV2>('/master-data/sync/v2/jobs', data);
   },
@@ -1140,7 +1140,7 @@ export interface MdmServiceQueryParams {
 
 // ==================== V44.0 AC-16: MDM 服务注册 API 方法 ====================
 
-export const mdmServiceApi = {
+const mdmServiceApi = {
   async register(data: MdmServiceRegisterRequest): Promise<ApiResponse<MdmServiceInfo>> {
     return apiClient.erp.post<MdmServiceInfo>('/master-data/services/register', data);
   },
@@ -1208,7 +1208,7 @@ export interface GatewayStats {
 
 // ==================== V44.0 AC-16: MDM API 网关 API 方法 ====================
 
-export const mdmGatewayApi = {
+const mdmGatewayApi = {
   async route(data: GatewayApiRequest): Promise<ApiResponse<GatewayApiResponse>> {
     return apiClient.erp.post<GatewayApiResponse>('/master-data/gateway/route', data);
   },
@@ -1308,7 +1308,7 @@ export interface QualityAiStats {
 
 // ==================== V45.0 AC-17: 质量 AI API 方法 ====================
 
-export const qualityAiApi = {
+const qualityAiApi = {
   async scoreEntity(id: string): Promise<ApiResponse<QualityAiScore>> {
     return apiClient.erp.post<QualityAiScore>(`/master-data/quality-ai/score/${id}`);
   },
@@ -1409,7 +1409,7 @@ export interface MergeSuggestion {
 
 // ==================== V45.0 AC-17: 智能匹配 API 方法 ====================
 
-export const smartMatcherApi = {
+const smartMatcherApi = {
   async findMatches(id: string, data: FindMatchesRequest): Promise<ApiResponse<MatchResult[]>> {
     return apiClient.erp.post<MatchResult[]>(`/master-data/matching/find-matches/${id}`, data);
   },
@@ -1518,7 +1518,7 @@ export interface SuggestTagsResult {
 
 // ==================== V45.0 AC-17: 自动分类 API 方法 ====================
 
-export const autoClassifierApi = {
+const autoClassifierApi = {
   async classifyEntity(id: string): Promise<ApiResponse<ClassificationResult>> {
     return apiClient.erp.post<ClassificationResult>(`/master-data/classification/classify/${id}`);
   },

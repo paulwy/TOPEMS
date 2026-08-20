@@ -9,7 +9,7 @@ import type {
   CapacityUtilizationData,
 } from './types';
 
-export const mesAnalyticsApi = {
+const mesAnalyticsApi = {
   oee: (params?: { from?: string; to?: string; workshop?: string }) =>
     apiClient.mes.get<ApiResponse<OeeDashboardData>>('/analytics/oee', { params }),
   delivery: (params?: { month?: string; product_family?: string }) =>

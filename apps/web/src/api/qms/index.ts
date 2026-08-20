@@ -319,7 +319,7 @@ export const qmsApi = {
 // 通用审批 API — 调用 /api/qms/{entityType}/{id}/{action} 端点
 // 支持 approve / reject / rework / cancel 四种审批动作
 // ============================================================================
-export const qmsApprovalApi = {
+const qmsApprovalApi = {
   approve: async (
     entityType: ApprovalEntityType,
     id: string,

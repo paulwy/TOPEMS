@@ -47,7 +47,7 @@ import {
 
 // ==================== Training Plans ====================
 
-export const trainingPlanTypedApi = {
+const trainingPlanTypedApi = {
   /** list_training_plans operation（openapi: GET /api/ehs/training/plans） */
   list: async (
     params?: AdaptedQuery<'list_training_plans'> | TrainingPlanListQueryParams
@@ -91,7 +91,7 @@ export const trainingPlanTypedApi = {
 
 // ==================== Training Records ====================
 
-export const trainingRecordTypedApi = {
+const trainingRecordTypedApi = {
   /** list_training_records operation（openapi: GET /api/ehs/training/records） */
   list: async (
     params?: AdaptedQuery<'list_training_records'> | TrainingRecordListQueryParams
@@ -135,7 +135,7 @@ export const trainingRecordTypedApi = {
 
 // ==================== Training Certificates ====================
 
-export const trainingCertificateTypedApi = {
+const trainingCertificateTypedApi = {
   /** list_certificates operation（openapi: GET /api/ehs/training/certificates） */
   list: async (
     params?: AdaptedQuery<'list_certificates'> | TrainingCertificateListQueryParams
@@ -179,7 +179,7 @@ export const trainingCertificateTypedApi = {
 
 // ==================== Aggregate Export ====================
 
-export const trainingTypedApi = {
+const trainingTypedApi = {
   plans: trainingPlanTypedApi,
   records: trainingRecordTypedApi,
   certificates: trainingCertificateTypedApi,

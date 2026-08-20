@@ -150,7 +150,7 @@ export function buildApiPath(options: ApiPathOptions): string {
 /**
  * 无版本路径（V9.0 统一默认风格，等价于 buildApiPath 不带 version）
  */
-export function buildUnifiedApiPath(service: string, path: string): string {
+function buildUnifiedApiPath(service: string, path: string): string {
   return buildApiPath({ service, path });
 }
 

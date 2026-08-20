@@ -200,7 +200,7 @@ function zTestPValue(z: number): number {
  * @param n2 实验组样本量
  * @returns { zScore, pValue }
  */
-export function twoProportionZTest(
+function twoProportionZTest(
   cr1: number,
   n1: number,
   cr2: number,

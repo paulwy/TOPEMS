@@ -113,7 +113,7 @@ export const maskIdCard = (idCard: string): string => {
 /**
  * 生成随机字符串
  */
-export const randomString = (length: number = 8): string => {
+const randomString = (length: number = 8): string => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
@@ -125,7 +125,7 @@ export const randomString = (length: number = 8): string => {
 /**
  * 生成数字字符串
  */
-export const randomNumber = (length: number = 6): string => {
+const randomNumber = (length: number = 6): string => {
   const chars = '0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {

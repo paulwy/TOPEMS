@@ -33,7 +33,7 @@ interface PendingResource {
   resolve: (value: boolean) => void;
 }
 
-export class ResourcePriorityScheduler {
+class ResourcePriorityScheduler {
   private pending: Map<string, PendingResource> = new Map();
   private active: Set<string> = new Set();
   private maxConcurrent: number;
@@ -102,7 +102,7 @@ export class ResourcePriorityScheduler {
   }
 }
 
-export class CdnScheduler {
+class CdnScheduler {
   private providers: Map<string, CdnProvider> = new Map();
   private metrics: ResourceMetric[] = [];
   private dnsPrefetched: Set<string> = new Set();
@@ -341,7 +341,7 @@ const defaultCdnProviders: Array<Omit<CdnProvider, 'lastCheck' | 'successCount' 
   },
 ];
 
-export const cdnScheduler = new CdnScheduler(8);
+const cdnScheduler = new CdnScheduler(8);
 
 defaultCdnProviders.forEach((p) => {
   cdnScheduler.registerProvider(p);

@@ -19,13 +19,13 @@ import type { IamTypes } from '@topems/shared-types';
 export type GeneratedUser = IamTypes.User;
 
 // 定义 User 实体与 OpenAPI 生成类型的映射
-export const userApiSchema = defineApiSchema({
+const userApiSchema = defineApiSchema({
   entity: 'User',
 });
 
 // 类型安全的 User API 客户端（一行替代多个手写方法）
 // create 入参默认 Partial<User>，update 入参使用手写 UpdateUserRequest
-export const typedUserApi = createTypedApiClient<User, Partial<User>, UpdateUserRequest>(
+const typedUserApi = createTypedApiClient<User, Partial<User>, UpdateUserRequest>(
   apiClient.iam,
   '/users'
 );

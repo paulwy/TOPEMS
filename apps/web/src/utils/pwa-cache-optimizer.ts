@@ -32,7 +32,7 @@ export interface CacheStats {
 /**
  * 缓存命中率统计
  */
-export class CacheStatsTracker {
+class CacheStatsTracker {
   private hits = 0;
   private misses = 0;
   private errors = 0;
@@ -75,7 +75,7 @@ export class CacheStatsTracker {
 /**
  * 创建带统计的 CacheFirst 策略
  */
-export function createCacheFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
+function createCacheFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
   return {
     async handle(
       request: Request,
@@ -117,7 +117,7 @@ export function createCacheFirstWithStats(config: RouteCacheConfig, stats: Cache
 /**
  * 创建带统计的 StaleWhileRevalidate 策略
  */
-export function createStaleWhileRevalidateWithStats(
+function createStaleWhileRevalidateWithStats(
   config: RouteCacheConfig,
   stats: CacheStatsTracker
 ) {
@@ -161,7 +161,7 @@ export function createStaleWhileRevalidateWithStats(
 /**
  * 创建带统计的 NetworkFirst 策略
  */
-export function createNetworkFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
+function createNetworkFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
   return {
     async handle(
       request: Request,
@@ -209,7 +209,7 @@ export function createNetworkFirstWithStats(config: RouteCacheConfig, stats: Cac
  * - 空闲时预取关键路由
  * - 网络空闲时（navigator.connection.effectiveType === '4g'）才预取
  */
-export class SmartPrecacheController {
+class SmartPrecacheController {
   private isRunning = false;
   private abortController: AbortController | null = null;
 
@@ -355,7 +355,7 @@ export async function cleanupCaches(
 /**
  * 缓存配置预设
  */
-export const CACHE_PRESETS: Record<string, RouteCacheConfig> = {
+const CACHE_PRESETS: Record<string, RouteCacheConfig> = {
   /** 静态资源：长时间缓存 */
   STATIC: {
     cacheName: 'static',

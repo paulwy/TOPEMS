@@ -47,7 +47,7 @@ export type AdaptedPermission = IamTypes.Permission & {
  * 用于从后端响应到前端业务类型的边界转换。
  * 约定：status === 'active' → isactive === true
  */
-export const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser => {
+const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser => {
   const { status, ...rest } = generated;
   return {
     ...rest,
@@ -59,7 +59,7 @@ export const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser =>
  * 将生成类型 Permission 转换为手写命名（附加 category 可选字段）。
  * 待后端 schema 补充 module 字段后可做实际映射。
  */
-export const adaptPermissionFromGenerated = (generated: IamTypes.Permission): AdaptedPermission => {
+const adaptPermissionFromGenerated = (generated: IamTypes.Permission): AdaptedPermission => {
   return {
     ...generated,
   };
@@ -70,7 +70,7 @@ export const adaptPermissionFromGenerated = (generated: IamTypes.Permission): Ad
  * 用于向前端发送请求时，将业务字段名映射回后端字段名。
  * 约定：isactive === true → status = 'active'，否则 status = 'inactive'
  */
-export const adaptUserToGenerated = (
+const adaptUserToGenerated = (
   user: Pick<AdaptedUser, 'isactive'> & Omit<AdaptedUser, 'isactive'>
 ): IamTypes.User => {
   const { isactive, ...rest } = user;

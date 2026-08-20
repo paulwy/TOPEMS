@@ -346,7 +346,7 @@ export function buildNestedFilterArray(
  * URL 格式：?f_status=active&f_age_gt=18&f_tags_in=a,b,c
  */
 
-export const FILTER_URL_PREFIX = 'f_';
+const FILTER_URL_PREFIX = 'f_';
 
 export function serializeFiltersToUrl(
   filters: Record<string, unknown>,

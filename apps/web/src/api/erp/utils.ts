@@ -16,7 +16,7 @@ export function cleanEmptyUuids<T extends Record<string, unknown> & HasOptionalU
   return result;
 }
 
-export function createMockSuccessResponse<T>(
+function createMockSuccessResponse<T>(
   data: T,
   code = 200,
   message = i18n.t('shared.utils.k0')
@@ -30,7 +30,7 @@ export function createMockSuccessResponse<T>(
   };
 }
 
-export function createMockErrorResponse(message: string, code = 400) {
+function createMockErrorResponse(message: string, code = 400) {
   return {
     success: false,
     data: undefined,

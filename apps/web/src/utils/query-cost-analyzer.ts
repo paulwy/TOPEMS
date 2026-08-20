@@ -412,19 +412,19 @@ export function analyzeQueryCost(
   }
 }
 
-export function getCostLevel(score: number): CostLevel {
+function getCostLevel(score: number): CostLevel {
   if (score <= COST_THRESHOLDS.low) return 'low';
   if (score <= COST_THRESHOLDS.medium) return 'medium';
   if (score <= COST_THRESHOLDS.high) return 'high';
   return 'critical';
 }
 
-export function estimateResponseSize(query: string, variables?: Record<string, unknown>): number {
+function estimateResponseSize(query: string, variables?: Record<string, unknown>): number {
   const analysis = analyzeQueryCost(query, variables);
   return analysis.estimatedSizeKB;
 }
 
-export function suggestOptimization(query: string): string[] {
+function suggestOptimization(query: string): string[] {
   const analysis = analyzeQueryCost(query);
   return analysis.suggestions;
 }

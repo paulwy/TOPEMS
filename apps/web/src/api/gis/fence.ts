@@ -29,7 +29,7 @@ export interface CreateGeoFenceRequest {
   status: 'active' | 'inactive';
 }
 
-export const fenceApi = {
+const fenceApi = {
   listGeoFences: async (): Promise<ApiResponse<GeoFenceRecord[]>> => {
     return apiClient.gis.get<GeoFenceRecord[]>('/fences');
   },

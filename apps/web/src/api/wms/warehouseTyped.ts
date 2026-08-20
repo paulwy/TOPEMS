@@ -23,7 +23,7 @@ import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '
  * 当后端 Schema 变化时（如字段重命名、类型变更），
  * 生成类型会更新，此处会触发编译时类型错误，提示开发者更新手写类型。
  */
-export const warehouseApiSchema = defineApiSchema({
+const warehouseApiSchema = defineApiSchema({
   entity: 'Warehouse',
   create: 'CreateWarehouseRequest',
   update: 'UpdateWarehouseRequest',
@@ -61,7 +61,7 @@ type _GeneratedWarehouse = InferEntity<typeof warehouseApiSchema>;
  * 3. 请求参数类型安全（CreateWarehouseRequest 自动校验）
  * 4. 可直接替换现有 import，无需修改调用方
  */
-export const typedWarehouseApi = createTypedApiClient<
+const typedWarehouseApi = createTypedApiClient<
   Warehouse,
   CreateWarehouseRequest,
   UpdateWarehouseRequest

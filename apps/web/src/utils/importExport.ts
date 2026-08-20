@@ -33,7 +33,7 @@ export const readFileAsBase64 = (file: File): Promise<string> => {
   });
 };
 
-export const downloadBase64File = (base64Data: string, filename: string): void => {
+const downloadBase64File = (base64Data: string, filename: string): void => {
   const link = document.createElement('a');
   link.href = `data:application/octet-stream;base64,${base64Data}`;
   link.download = filename;

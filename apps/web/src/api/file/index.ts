@@ -251,7 +251,7 @@ export const fileApi = {
 
 // ==================== 常量 ====================
 
-export function getVisibilityOptions() {
+function getVisibilityOptions() {
   return [
     { value: 'private', label: i18n.t('shared.index.k1'), description: i18n.t('shared.index.k0') },
     { value: 'public', label: i18n.t('shared.index.k3'), description: i18n.t('shared.index.k2') },
@@ -259,7 +259,7 @@ export function getVisibilityOptions() {
   ];
 }
 
-export function getPermissionOptions() {
+function getPermissionOptions() {
   return [
     { value: 'read', label: i18n.t('shared.index.k7'), description: i18n.t('shared.index.k6') },
     { value: 'write', label: i18n.t('shared.index.k9'), description: i18n.t('shared.index.k8') },
@@ -267,7 +267,7 @@ export function getPermissionOptions() {
   ];
 }
 
-export function getPrincipalTypeOptions() {
+function getPrincipalTypeOptions() {
   return [
     { value: 'user', label: i18n.t('shared.index.k12') },
     { value: 'group', label: i18n.t('shared.index.k13') },

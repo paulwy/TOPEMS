@@ -28,7 +28,7 @@ import {
   type TypedPaginatedResponse,
 } from '@topems/shared-types';
 
-export const sloTypedApi = {
+const sloTypedApi = {
   /**
    * list_slos operation（openapi: GET /api/monitor/slos）
    * Query Params: { serviceName, sloType, status, keyword }（AdaptedQuery 后 camelCase）

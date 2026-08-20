@@ -25,7 +25,7 @@ import {
   type TypedPaginatedResponse,
 } from '@topems/shared-types';
 
-export const supplierTypedApi = {
+const supplierTypedApi = {
   /**
    * srm_list_suppliers operation（openapi: GET /api/srm/suppliers）
    * Query Params: { page, pageSize, search, status, category, sortBy, sortOrder }（AdaptedQuery 后 camelCase）

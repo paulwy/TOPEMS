@@ -41,7 +41,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   warning: 'warning.main',
 };
 
-export const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
+const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
   [i18n.t('utils.status.k0')]: 'grey.100',
   [i18n.t('utils.status.k1')]: 'warning.light',
   [i18n.t('utils.status.k2')]: 'primary.light',
@@ -117,7 +117,7 @@ export const getStatusColor = (
   return STATUS_COLOR_MAP[normalized] || fallback;
 };
 
-export const getStatusTextColor = (
+const getStatusTextColor = (
   status: string,
   category?: 'workflow' | 'mes' | 'lims' | 'monitor'
 ): string => {

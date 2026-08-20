@@ -1908,7 +1908,7 @@ function createGraphQLSubscription<T>(
 }
 
 /** 订阅主数据变更事件 */
-export function subscribeMasterDataChanged(
+function subscribeMasterDataChanged(
   callback: (event: MasterDataEvent) => void,
   domain?: string,
   onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void
@@ -1932,7 +1932,7 @@ export function subscribeMasterDataChanged(
 }
 
 /** 订阅通知接收事件 */
-export function subscribeNotificationReceived(
+function subscribeNotificationReceived(
   userId: string,
   callback: (event: NotificationEvent) => void,
   onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void
@@ -1957,7 +1957,7 @@ export function subscribeNotificationReceived(
 }
 
 /** 订阅工作流任务分配事件 */
-export function subscribeWorkflowTaskAssigned(
+function subscribeWorkflowTaskAssigned(
   assigneeId: string,
   callback: (event: WorkflowTaskEvent) => void,
   onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void
@@ -1982,7 +1982,7 @@ export function subscribeWorkflowTaskAssigned(
 }
 
 /** 订阅订单状态变更事件 */
-export function subscribeOrderStatusChanged(
+function subscribeOrderStatusChanged(
   callback: (event: OrderStatusEvent) => void,
   orderType?: string,
   onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void
@@ -3663,7 +3663,7 @@ export interface SubscriptionStats {
  * @param onStatusChange 连接状态变化回调
  * @returns 清理函数
  */
-export function subscribeDataChanged(
+function subscribeDataChanged(
   callback: (event: DataChangeEvent) => void,
   entityType?: string,
   updateType?: string,

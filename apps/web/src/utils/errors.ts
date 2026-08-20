@@ -122,7 +122,7 @@ export const logError = (context: string, error: unknown): void => {
   logger.error(`[${context}]`, error);
 };
 
-export const safeExecute = async <T>(
+const safeExecute = async <T>(
   fn: () => Promise<T>,
   errorHandler?: (error: AppError) => void
 ): Promise<T | null> => {

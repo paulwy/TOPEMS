@@ -41,10 +41,10 @@ const ssrLogger = logger.child({ prefix: 'StreamingSSR' });
 // ==================== SSR 数据序列化协议 ====================
 
 /** SSR 数据标记前缀（HTML 注释，避免被浏览器渲染） */
-export const SSR_DATA_MARKER = '<!-- SSR:DATA -->';
+const SSR_DATA_MARKER = '<!-- SSR:DATA -->';
 
 /** SSR 数据脚本全局变量名 */
-export const SSR_DATA_GLOBAL = '__SSR_DATA__';
+const SSR_DATA_GLOBAL = '__SSR_DATA__';
 
 /** 单条流式数据条目 */
 export interface SSRDataEntry {
@@ -76,7 +76,7 @@ const SSR_DATA_VERSION = 'v42.0';
  * @param data 任意可序列化数据
  * @returns 转义后的 JSON 字符串
  */
-export function serializeSSRData(data: unknown): string {
+function serializeSSRData(data: unknown): string {
   const json = JSON.stringify(data);
   if (typeof json !== 'string') return 'null';
   return json
@@ -90,7 +90,7 @@ export function serializeSSRData(data: unknown): string {
 /**
  * 反序列化 SSR 数据（从已转义 JSON 还原）
  */
-export function deserializeSSRData(escaped: string): unknown {
+function deserializeSSRData(escaped: string): unknown {
   const json = escaped
     .replace(/\\u003c/g, '<')
     .replace(/\\u003e/g, '>')
@@ -103,7 +103,7 @@ export function deserializeSSRData(escaped: string): unknown {
 /**
  * 构建完整 SSR 数据集合（包含元信息）
  */
-export function buildSSRDataCollection(entries: SSRDataEntry[]): SSRDataCollection {
+function buildSSRDataCollection(entries: SSRDataEntry[]): SSRDataCollection {
   return {
     entries,
     version: SSR_DATA_VERSION,
@@ -117,7 +117,7 @@ export function buildSSRDataCollection(entries: SSRDataEntry[]): SSRDataCollecti
  * @param collection SSR 数据集合
  * @returns 完整 <script> 标签字符串
  */
-export function serializeSSRDataToScript(collection: SSRDataCollection): string {
+function serializeSSRDataToScript(collection: SSRDataCollection): string {
   const escaped = serializeSSRData(collection);
   return `<script>window.${SSR_DATA_GLOBAL}=${escaped};</script>`;
 }
@@ -127,7 +127,7 @@ export function serializeSSRDataToScript(collection: SSRDataCollection): string 
  *
  * 客户端通过解析 `<!-- SSR:DATA -->` 标记识别流式数据块。
  */
-export function serializeStreamingChunk(entry: SSRDataEntry): string {
+function serializeStreamingChunk(entry: SSRDataEntry): string {
   const escaped = serializeSSRData(entry);
   return `${SSR_DATA_MARKER}${escaped}${SSR_DATA_MARKER}`;
 }
@@ -145,7 +145,7 @@ let hydratedData: SSRDataCollection | null = null;
  *
  * @returns SSR 数据集合
  */
-export function hydrateSSRData(): SSRDataCollection {
+function hydrateSSRData(): SSRDataCollection {
   if (hydratedData) return hydratedData;
 
   if (typeof window === 'undefined') {
@@ -194,7 +194,7 @@ export function readSSRData<T = unknown>(key: string): T | undefined {
  *
  * 扫描文档中的 `<!-- SSR:DATA -->` 标记，提取流式数据。
  */
-export function parseStreamingChunks(html: string): SSRDataEntry[] {
+function parseStreamingChunks(html: string): SSRDataEntry[] {
   const chunks: SSRDataEntry[] = [];
   const regex = new RegExp(
     `${escapeRegExp(SSR_DATA_MARKER)}(.*?)${escapeRegExp(SSR_DATA_MARKER)}`,
@@ -259,7 +259,7 @@ export interface StreamingRenderResult {
  *
  * 通过动态 import react-dom/server 避免在客户端打包产物中引入服务端模块。
  */
-export class StreamingSSRManager {
+class StreamingSSRManager {
   private entries: SSRDataEntry[] = [];
   private chunks: string[] = [];
   private flushed = false;
@@ -529,7 +529,7 @@ export async function collectSSRStream(stream: ReadableStream<Uint8Array>): Prom
 /**
  * 清除水合缓存（测试 / 路由切换时使用）
  */
-export function clearHydratedSSRData(): void {
+function clearHydratedSSRData(): void {
   hydratedData = null;
 }
 

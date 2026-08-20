@@ -55,7 +55,7 @@ interface NetworkInformation {
   effectiveType?: string;
 }
 
-export function getConnectionType(): string {
+function getConnectionType(): string {
   if (typeof window === 'undefined') return 'unknown';
   const nav = window.navigator as Navigator & { connection?: NetworkInformation };
   return nav.connection?.effectiveType || 'unknown';
@@ -154,7 +154,7 @@ export function initPerformanceMonitoring(): Promise<PerformanceMetrics> {
   });
 }
 
-export function generatePerformanceReport(): PerformanceReport {
+function generatePerformanceReport(): PerformanceReport {
   return {
     metrics: { ...performanceMetrics },
     timestamp: Date.now(),
@@ -176,7 +176,7 @@ export function logPerformanceMetrics(): void {
   });
 }
 
-export function measureTime<T>(label: string, fn: () => T): T {
+function measureTime<T>(label: string, fn: () => T): T {
   const start = performance.now();
   const result = fn();
   const end = performance.now();
@@ -217,7 +217,7 @@ export function throttle<T extends (...args: unknown[]) => void>(
   };
 }
 
-export function lazyLoadImages(): void {
+function lazyLoadImages(): void {
   if (typeof window === 'undefined') return;
 
   const images = document.querySelectorAll('img[data-src]');
@@ -241,7 +241,7 @@ export function lazyLoadImages(): void {
   images.forEach((img) => observer.observe(img));
 }
 
-export function lazyLoadComponents(): void {
+function lazyLoadComponents(): void {
   if (typeof window === 'undefined') return;
 
   const components = document.querySelectorAll('[data-lazy-component]');
@@ -285,7 +285,7 @@ export function lazyLoadComponents(): void {
   components.forEach((el) => observer.observe(el));
 }
 
-export function getPerformanceScore(metrics: PerformanceMetrics): number {
+function getPerformanceScore(metrics: PerformanceMetrics): number {
   let score = 100;
 
   if (metrics.lcp > 2500) score -= Math.min(30, (metrics.lcp - 2500) / 100);
@@ -295,6 +295,6 @@ export function getPerformanceScore(metrics: PerformanceMetrics): number {
   return Math.max(0, Math.round(score));
 }
 
-export function isPerformanceGood(metrics: PerformanceMetrics): boolean {
+function isPerformanceGood(metrics: PerformanceMetrics): boolean {
   return metrics.lcp <= 2500 && metrics.fid <= 100 && metrics.cls <= 0.1 && metrics.tti <= 5000;
 }

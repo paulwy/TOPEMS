@@ -14,17 +14,7 @@ import {
 import i18n from '@/i18n';
 
 // 重新导出共享工具
-export {
-  debounce,
-  throttle,
-  deepClone,
-  generateId,
-  sharedFormatNumber as formatNumberBase,
-  sharedFormatCurrency as formatCurrencyBase,
-  sharedTruncateText as truncateText,
-  sharedCapitalizeFirstLetter as capitalizeFirstLetter,
-  clearCloneCache,
-};
+export { debounce, throttle, generateId, sharedTruncateText as truncateText };
 
 const FORMAT_CACHE_SIZE = 100;
 

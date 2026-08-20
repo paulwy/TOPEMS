@@ -17,7 +17,7 @@ export { marketplaceApi } from './marketplace';
 export { pluginApi } from './plugin';
 
 export const getMarketplaceSummary = marketplaceApi.getSummary;
-export const getPluginCategories = marketplaceApi.getCategories;
+const getPluginCategories = marketplaceApi.getCategories;
 export const listPlugins = marketplaceApi.listPlugins;
 export const getPlugin = marketplaceApi.getPlugin;
 export const getPluginVersions = marketplaceApi.getVersions;
