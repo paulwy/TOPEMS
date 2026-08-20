@@ -28,7 +28,7 @@ export interface PluginContextType {
   isPluginHealthy: (code: string) => boolean;
 }
 
-export const useInstalledPlugins = () => {
+const useInstalledPlugins = () => {
   const context = useContext(PluginContext);
   if (!context) {
     throw new Error('useInstalledPlugins must be used within a PluginProvider');
