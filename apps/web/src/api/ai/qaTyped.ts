@@ -37,7 +37,7 @@ interface QABatchDeleteResponse {
   message: string;
 }
 
-export const qaTypedApi = {
+const qaTypedApi = {
   /**
    * _qa_history operation（openapi: GET /api/ai/qa/history）
    * Query Params: { page, pagesize, query }（AdaptedQuery 后 camelCase）

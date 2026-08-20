@@ -190,7 +190,7 @@ export const searchApi = {
 };
 
 // ============== Export all ==============
-export const sharedApi = {
+const sharedApi = {
   attachment: attachmentApi,
   comment: commentApi,
   favorite: favoriteApi,

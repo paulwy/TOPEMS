@@ -90,7 +90,7 @@ export type AdaptedProductionOrder = Omit<
  *           plan_start_date → planned_start_time, plan_end_date → planned_end_time,
  *           actual_start_date → actual_start_time, actual_end_date → actual_end_time
  */
-export const adaptWorkOrderFromGenerated = (
+const adaptWorkOrderFromGenerated = (
   generated: MesTypes.WorkOrderResponse
 ): AdaptedWorkOrder => {
   const {
@@ -118,7 +118,7 @@ export const adaptWorkOrderFromGenerated = (
  * 字段映射：order_no → order_number, planned_start_date → scheduled_start_date,
  *           planned_end_date → scheduled_end_date
  */
-export const adaptProductionOrderFromGenerated = (
+const adaptProductionOrderFromGenerated = (
   generated: MesTypes.ProductionOrderResponse
 ): AdaptedProductionOrder => {
   const { order_no, planned_start_date, planned_end_date, ...rest } = generated;

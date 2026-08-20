@@ -70,7 +70,7 @@ export { ComponentCategory, UILibrary, ResponsiveStrategy } from './ui-recommend
 
 // ============ 统一 AI 工具集 ============
 
-export const aiToolkit = {
+const aiToolkit = {
   completion: codeCompletionEngine,
   testing: testGenerator,
   ui: uiRecommender,

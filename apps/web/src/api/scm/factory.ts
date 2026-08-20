@@ -16,7 +16,7 @@ export interface CreateScmCrudApiOptions {
   singularName?: string;
 }
 
-export function createScmCrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
+function createScmCrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   resource: string,
   _options: CreateScmCrudApiOptions = {}
 ): ScmCrudApi<T, TCreate, TUpdate> {

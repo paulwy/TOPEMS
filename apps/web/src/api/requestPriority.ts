@@ -130,20 +130,20 @@ class RequestPriorityQueue {
   }
 }
 
-export const requestPriorityQueue = new RequestPriorityQueue();
+const requestPriorityQueue = new RequestPriorityQueue();
 
-export const withPriority = <T>(priority: RequestPriority, fn: () => Promise<T>): Promise<T> => {
+const withPriority = <T>(priority: RequestPriority, fn: () => Promise<T>): Promise<T> => {
   if (priority === 'critical' || priority === 'high') {
     return fn();
   }
   return requestPriorityQueue.enqueue(priority, fn);
 };
 
-export const setPageLoaded = (loaded: boolean = true): void => {
+const setPageLoaded = (loaded: boolean = true): void => {
   requestPriorityQueue.setPageLoaded(loaded);
 };
 
-export const getQueueStats = () => ({
+const getQueueStats = () => ({
   total: requestPriorityQueue.getQueueSize(),
   critical: requestPriorityQueue.getPendingByPriority('critical'),
   high: requestPriorityQueue.getPendingByPriority('high'),

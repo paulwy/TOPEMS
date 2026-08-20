@@ -463,7 +463,7 @@ export function ${pascalName}ListPage() {
 
 // ============ CrudPage + EntitySchema 模板生成 ============
 
-export function generateCrudPageTemplate(entityName: string, fields: FieldDefinition[]): string {
+function generateCrudPageTemplate(entityName: string, fields: FieldDefinition[]): string {
   const pascalName = toPascalCase(entityName);
   const camelName = toCamelCase(entityName);
 

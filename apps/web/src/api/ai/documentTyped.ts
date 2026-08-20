@@ -22,7 +22,7 @@ import apiClient from '../client';
 import type { Document, PaginationParams, PaginatedResult } from './types';
 import { toOpenApiParams, type AdaptedQuery, type TypedApiResponse } from '@topems/shared-types';
 
-export const documentTypedApi = {
+const documentTypedApi = {
   /**
    * _document_list operation（openapi: GET /api/ai/documents）
    * Query Params: { page, pagesize, search, category }（AdaptedQuery 后 camelCase）

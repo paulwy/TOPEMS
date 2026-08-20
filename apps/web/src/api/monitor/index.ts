@@ -295,7 +295,7 @@ export const monitorApi = {
 
 export default monitorApi;
 
-export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
+const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
   list: (params?) =>
     monitorApi.listAlerts({
       page: params?.page as number,

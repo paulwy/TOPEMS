@@ -197,7 +197,7 @@ export const getNotifications = async (
   }
 };
 
-export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
+const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
   const response = await apiClient.notification.get<Notification[]>('/notifications/unread');
 
   return response;

@@ -237,7 +237,7 @@ interface CreateAxiosClientOptions {
   returnData?: boolean;
 }
 
-export const createAxiosClient = ({
+const createAxiosClient = ({
   baseURL,
   timeout = config.api.timeout,
   withCsrf = true,

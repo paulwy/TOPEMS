@@ -141,7 +141,7 @@ export interface QueryPerformanceStats {
 /**
  * 计算百分位数
  */
-export function calculatePercentile(sortedValues: number[], percentile: number): number {
+function calculatePercentile(sortedValues: number[], percentile: number): number {
   if (sortedValues.length === 0) return 0;
   const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
   return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))];

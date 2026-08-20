@@ -70,7 +70,7 @@ export { dataLineageEnhancedApiV77 } from './dataLineageEnhancedV77';
 export { dataWorkflowAutomationApiV78 } from './dataWorkflowAutomationV78';
 export { dataPolicyConfigurationApiV79 } from './dataPolicyConfigurationV79';
 
-export const masterApi = {
+const masterApi = {
   schemaRegistry: schemaRegistryApi,
   dictionary: dictionaryApi,
   quality: qualityApi,

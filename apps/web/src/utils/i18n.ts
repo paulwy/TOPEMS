@@ -12,11 +12,11 @@ export function tpl(key: string, vars: Record<string, unknown> = {}): string {
   );
 }
 
-export function getCurrentLocale(): string {
+function getCurrentLocale(): string {
   return i18n.language || 'zh';
 }
 
-export function getIntlLocale(): string {
+function getIntlLocale(): string {
   const locale = getCurrentLocale();
   if (locale === 'zh') return 'zh-CN';
   if (locale === 'en') return 'en-US';

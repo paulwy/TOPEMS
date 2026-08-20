@@ -84,7 +84,7 @@ export interface SendEmailWithTemplateRequest {
   metadata?: Record<string, unknown>;
 }
 
-export const getEmailLogs = async (
+const getEmailLogs = async (
   page = 1,
   pageSize = 20,
   status?: string,
@@ -102,7 +102,7 @@ export const getEmailLogs = async (
   return apiClient.notification.get<EmailLogListResponse>(`/email/email-logs?${params.toString()}`);
 };
 
-export const resendEmail = async (
+const resendEmail = async (
   id: string
 ): Promise<ApiResponse<{ id: string; status: string }>> => {
   return apiClient.notification.post<{ id: string; status: string }>(
@@ -110,7 +110,7 @@ export const resendEmail = async (
   );
 };
 
-export const batchSendEmail = async (
+const batchSendEmail = async (
   request: BatchSendEmailRequest
 ): Promise<ApiResponse<BatchSendEmailResponse>> => {
   return apiClient.notification.post<BatchSendEmailResponse>('/email/batch-send', {
@@ -124,15 +124,15 @@ export const batchSendEmail = async (
   });
 };
 
-export const getEmailStats = async (): Promise<ApiResponse<EmailStatsResponse>> => {
+const getEmailStats = async (): Promise<ApiResponse<EmailStatsResponse>> => {
   return apiClient.notification.get<EmailStatsResponse>('/email/stats');
 };
 
-export const getEmailLog = async (id: string): Promise<ApiResponse<EmailLog>> => {
+const getEmailLog = async (id: string): Promise<ApiResponse<EmailLog>> => {
   return apiClient.notification.get<EmailLog>(`/email/email-logs/${id}`);
 };
 
-export const deleteEmailLog = async (id: string): Promise<ApiResponse<string>> => {
+const deleteEmailLog = async (id: string): Promise<ApiResponse<string>> => {
   return apiClient.notification.delete<string>(`/email/email-logs/${id}`);
 };
 
@@ -148,7 +148,7 @@ export const sendEmail = async (request: SendEmailRequest): Promise<ApiResponse<
   });
 };
 
-export const sendEmailWithTemplate = async (
+const sendEmailWithTemplate = async (
   request: SendEmailWithTemplateRequest
 ): Promise<ApiResponse<EmailLog>> => {
   return apiClient.notification.post<EmailLog>('/email/send-with-template', {
@@ -161,7 +161,7 @@ export const sendEmailWithTemplate = async (
   });
 };
 
-export const getEmailTemplates = async (): Promise<
+const getEmailTemplates = async (): Promise<
   ApiResponse<{ items: EmailTemplate[]; total: number }>
 > => {
   return apiClient.notification.get<{ items: EmailTemplate[]; total: number }>(
@@ -169,11 +169,11 @@ export const getEmailTemplates = async (): Promise<
   );
 };
 
-export const getEmailTemplate = async (id: string): Promise<ApiResponse<EmailTemplate>> => {
+const getEmailTemplate = async (id: string): Promise<ApiResponse<EmailTemplate>> => {
   return apiClient.notification.get<EmailTemplate>(`/email/email-templates/${id}`);
 };
 
-export const createEmailTemplate = async (
+const createEmailTemplate = async (
   template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<ApiResponse<EmailTemplate>> => {
   return apiClient.notification.post<EmailTemplate>('/email/email-templates', {
@@ -184,7 +184,7 @@ export const createEmailTemplate = async (
   });
 };
 
-export const updateEmailTemplate = async (
+const updateEmailTemplate = async (
   id: string,
   template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<ApiResponse<EmailTemplate>> => {
@@ -196,7 +196,7 @@ export const updateEmailTemplate = async (
   });
 };
 
-export const deleteEmailTemplate = async (id: string): Promise<ApiResponse<string>> => {
+const deleteEmailTemplate = async (id: string): Promise<ApiResponse<string>> => {
   return apiClient.notification.delete<string>(`/email/email-templates/${id}`);
 };
 

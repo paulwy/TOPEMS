@@ -19,7 +19,7 @@ export interface CreateApiKeyRequest {
   secret: string;
 }
 
-export const apiKeysApi = {
+const apiKeysApi = {
   list: async (): Promise<ApiResponse<ApiKeyEntry[]>> => {
     return apiClient.core.get<ApiKeyEntry[]>('/system/api-keys');
   },

@@ -18,7 +18,7 @@ export interface TestEmailResult {
   to: string;
 }
 
-export const smtpSettingsApi = {
+const smtpSettingsApi = {
   get: async (): Promise<ApiResponse<SmtpConfig>> => {
     return apiClient.core.get<SmtpConfig>('/system/settings/smtp');
   },

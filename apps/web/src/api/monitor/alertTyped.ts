@@ -30,7 +30,7 @@ import {
   type TypedPaginatedResponse,
 } from '@topems/shared-types';
 
-export const alertTypedApi = {
+const alertTypedApi = {
   /**
    * list_alerts operation（openapi: GET /api/monitor/alerts）
    * Query Params: { page, pagesize, severity, status, service_name }（AdaptedQuery 后 camelCase）

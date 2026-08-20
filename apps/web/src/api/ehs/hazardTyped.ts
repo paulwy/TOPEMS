@@ -28,7 +28,7 @@ import {
   type TypedPaginatedResponse,
 } from '@topems/shared-types';
 
-export const hazardTypedApi = {
+const hazardTypedApi = {
   /**
    * list_risks operation（openapi: GET /api/ehs/hazards）
    * Query Params: { page, pagesize, search, status }（AdaptedQuery 后 camelCase）

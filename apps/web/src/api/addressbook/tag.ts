@@ -61,7 +61,7 @@ export interface TagColor {
   hex: string;
 }
 
-export function getPresetTagColors(): TagColor[] {
+function getPresetTagColors(): TagColor[] {
   return [
     { name: i18n.t('shared.tag.k0'), hex: designTokens.colors.error.main },
     { name: i18n.t('shared.tag.k1'), hex: 'colors.orange.500' },

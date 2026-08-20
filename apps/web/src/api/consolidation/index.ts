@@ -326,7 +326,7 @@ export const getCompanyTree = async (): Promise<ApiResponse<CompanyTreeNode>> =>
 /**
  * 导出合并报表
  */
-export const exportConsolidationReport = async (
+const exportConsolidationReport = async (
   reportId: string,
   format: 'excel' | 'pdf' = 'excel'
 ): Promise<Blob> => {
@@ -339,7 +339,7 @@ export const exportConsolidationReport = async (
 /**
  * 导出抵消工作底稿
  */
-export const exportEliminationWorkSheet = async (
+const exportEliminationWorkSheet = async (
   scopeId: string,
   period: string
 ): Promise<Blob> => {

@@ -9,7 +9,7 @@ export type WorkerMessage<T = unknown> = {
 
 export type WorkerFn<T = unknown, R = unknown> = (data: T) => R;
 
-export class TaskWorker {
+class TaskWorker {
   private worker: Worker;
   private taskId = 0;
   private callbacks: Map<
@@ -91,28 +91,28 @@ export class TaskWorker {
 
 let globalWorker: TaskWorker | null = null;
 
-export function getGlobalWorker(): TaskWorker {
+function getGlobalWorker(): TaskWorker {
   if (!globalWorker) {
     globalWorker = new TaskWorker();
   }
   return globalWorker;
 }
 
-export function runInWorker<T = unknown, R = unknown>(fn: WorkerFn<T, R>, data: T): Promise<R> {
+function runInWorker<T = unknown, R = unknown>(fn: WorkerFn<T, R>, data: T): Promise<R> {
   return getGlobalWorker().execute(fn, data);
 }
 
-export function fibonacci(n: number): number {
+function fibonacci(n: number): number {
   if (n <= 1) return n;
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-export function factorial(n: number): number {
+function factorial(n: number): number {
   if (n <= 1) return 1;
   return n * factorial(n - 1);
 }
 
-export function generateUUID(): string {
+function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -120,7 +120,7 @@ export function generateUUID(): string {
   });
 }
 
-export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += chunkSize) {
     chunks.push(array.slice(i, i + chunkSize));
@@ -161,7 +161,7 @@ export function formatCurrency(amount: number, currency = 'CNY'): string {
   }).format(amount);
 }
 
-export function parseCSV(csv: string): string[][] {
+function parseCSV(csv: string): string[][] {
   const lines = csv.split('\n');
   return lines.map((line) => {
     const result: string[] = [];
@@ -189,12 +189,12 @@ export function validateEmail(email: string): boolean {
   return re.test(email);
 }
 
-export function validatePhone(phone: string): boolean {
+function validatePhone(phone: string): boolean {
   const re = /^1[3-9]\d{9}$/;
   return re.test(phone);
 }
 
-export function validateURL(url: string): boolean {
+function validateURL(url: string): boolean {
   try {
     new URL(url);
     return true;
@@ -203,7 +203,7 @@ export function validateURL(url: string): boolean {
   }
 }
 
-export function generateRandomString(length: number): string {
+function generateRandomString(length: number): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
@@ -222,7 +222,7 @@ export function hashString(str: string): number {
   return hash;
 }
 
-export function sortByKey<T>(array: T[], key: keyof T): T[] {
+function sortByKey<T>(array: T[], key: keyof T): T[] {
   return [...array].sort((a, b) => {
     const valA = a[key];
     const valB = b[key];
@@ -236,7 +236,7 @@ export function sortByKey<T>(array: T[], key: keyof T): T[] {
   });
 }
 
-export function groupByKey<T>(array: T[], key: keyof T): Map<T[keyof T], T[]> {
+function groupByKey<T>(array: T[], key: keyof T): Map<T[keyof T], T[]> {
   const groups = new Map<T[keyof T], T[]>();
   for (const item of array) {
     const groupKey = item[key];

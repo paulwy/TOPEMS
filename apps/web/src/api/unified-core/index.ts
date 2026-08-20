@@ -12,7 +12,7 @@ export { unifiedSearchApi } from './search';
 export { iamAuthApi } from './iamAuth';
 export { businessMetricApi } from './businessMetric';
 
-export const unifiedCoreApi = {
+const unifiedCoreApi = {
   system: systemApi,
   tenant: tenantApi,
   search: unifiedSearchApi,

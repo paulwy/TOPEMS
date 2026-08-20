@@ -11,10 +11,10 @@ export const fieldCode = () =>
     .min(2, i18n.t('shared.form_schemas.2_3'))
     .max(32, i18n.t('shared.form_schemas.32_4'));
 
-export const fieldDescription = () =>
+const fieldDescription = () =>
   z.string().max(500, i18n.t('shared.form_schemas.500_5')).optional().or(z.literal(''));
 
-export const fieldEmail = () =>
+const fieldEmail = () =>
   z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
 
 export const fieldPhone = () =>
@@ -29,13 +29,13 @@ export const fieldAmount = () =>
     .min(0, i18n.t('shared.form_schemas.k8'))
     .refine((val) => Number.isFinite(val), i18n.t('shared.form_schemas.k9'));
 
-export const fieldPercentage = () =>
+const fieldPercentage = () =>
   z
     .number()
     .min(0, i18n.t('shared.form_schemas.k11'))
     .max(100, i18n.t('shared.form_schemas.100_10'));
 
-export const fieldDateRange = () =>
+const fieldDateRange = () =>
   z
     .object({
       start: z.string().min(1, i18n.t('shared.form_schemas.k12')),
@@ -46,13 +46,13 @@ export const fieldDateRange = () =>
       path: ['end'],
     });
 
-export const fieldPagination = () =>
+const fieldPagination = () =>
   z.object({
     page: z.number().int().min(1).default(1),
     pageSize: z.number().int().min(1).max(100).default(10),
   });
 
-export const fieldSort = () =>
+const fieldSort = () =>
   z
     .object({
       field: z.string().optional(),
@@ -68,7 +68,7 @@ export const baseEntitySchema = z.object({
   status: z.enum(['active', 'inactive', 'draft']).default('active'),
 });
 
-export const partySchema = baseEntitySchema.extend({
+const partySchema = baseEntitySchema.extend({
   contactPerson: fieldName().optional(),
   phone: fieldPhone().optional(),
   email: fieldEmail().optional(),

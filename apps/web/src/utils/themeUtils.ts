@@ -1,6 +1,6 @@
 import { useTheme } from '@mui/material/styles';
 
-export function useDarkAwareValue(lightValue: string, darkValue: string): string {
+function useDarkAwareValue(lightValue: string, darkValue: string): string {
   const theme = useTheme();
   return theme.palette.mode === 'dark' ? darkValue : lightValue;
 }
