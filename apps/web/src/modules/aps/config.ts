@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 APS_PATHS.xxx，而非硬编码字符串
+
 export const APS_PATHS = {
   root: '/aps',
   dashboard: '/aps/dashboard',
@@ -28,6 +29,349 @@ export const APS_PATHS = {
     oeeDashboard: '/aps/analytics/oee-dashboard',
   },
 } as const;
+export interface ApsDashboardPageProps {}
+
+export interface ProductionPlanPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ScheduleManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface CapacityManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MaterialPlanPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ForecastManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ProductionPlanDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface ScheduleDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface CapacityDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface MaterialPlanDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface ForecastDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface PlanComparisonDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface PlanAdherencePageProps {}
+
+export interface ScheduleGanttPageProps {}
+
+export interface CapacityUtilizationPageProps {}
+
+export interface MaterialShortagePageProps {}
+
+export interface ForecastAccuracyPageProps {}
+
+export interface OeeDashboardPageProps {}
+
+const apsDashboardRoute: RouteConfigV2<ApsDashboardPageProps> = {
+  path: APS_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/aps/ApsDashboardPage'), 'ApsDashboardPage'),
+  module: 'aps',
+  code: 'aps-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['aps:dashboard:read'],
+  action: 'read',
+};
+
+const productionPlanRoute: RouteConfigV2<ProductionPlanPageProps> = {
+  path: APS_PATHS.productionPlans,
+  element: lazyWithRetry(() => import('@/pages/aps/ProductionPlanPage'), 'ProductionPlanPage'),
+  module: 'aps',
+  code: 'aps-production-plans',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['aps:production_plan:read'],
+  action: 'read',
+};
+
+const scheduleManagementRoute: RouteConfigV2<ScheduleManagementPageProps> = {
+  path: APS_PATHS.schedules,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/ScheduleManagementPage'),
+    'ScheduleManagementPage'
+  ),
+  module: 'aps',
+  code: 'aps-schedules',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['aps:schedule:read'],
+  action: 'read',
+};
+
+const capacityManagementRoute: RouteConfigV2<CapacityManagementPageProps> = {
+  path: APS_PATHS.capacities,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/CapacityManagementPage'),
+    'CapacityManagementPage'
+  ),
+  module: 'aps',
+  code: 'aps-capacities',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['aps:capacity:read'],
+  action: 'read',
+};
+
+const materialPlanRoute: RouteConfigV2<MaterialPlanPageProps> = {
+  path: APS_PATHS.materialPlans,
+  element: lazyWithRetry(() => import('@/pages/aps/MaterialPlanPage'), 'MaterialPlanPage'),
+  module: 'aps',
+  code: 'aps-material-plans',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['aps:material_plan:read'],
+  action: 'read',
+};
+
+const forecastManagementRoute: RouteConfigV2<ForecastManagementPageProps> = {
+  path: APS_PATHS.forecasts,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/ForecastManagementPage'),
+    'ForecastManagementPage'
+  ),
+  module: 'aps',
+  code: 'aps-forecasts',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'analytics',
+  requiredPermissions: ['aps:forecast:read'],
+  action: 'read',
+};
+
+const productionPlanDetailRoute: RouteConfigV2<ProductionPlanDetailPageProps> = {
+  path: APS_PATHS.productionPlanDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/ProductionPlanDetailPage'),
+    'ProductionPlanDetailPage'
+  ),
+  module: 'aps',
+  code: 'aps-production-plan-detail',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['aps:production_plan:read'],
+  action: 'read',
+};
+
+const scheduleDetailRoute: RouteConfigV2<ScheduleDetailPageProps> = {
+  path: APS_PATHS.scheduleDetail,
+  element: lazyWithRetry(() => import('@/pages/aps/ScheduleDetailPage'), 'ScheduleDetailPage'),
+  module: 'aps',
+  code: 'aps-schedule-detail',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['aps:schedule:read'],
+  action: 'read',
+};
+
+const capacityDetailRoute: RouteConfigV2<CapacityDetailPageProps> = {
+  path: APS_PATHS.capacityDetail,
+  element: lazyWithRetry(() => import('@/pages/aps/CapacityDetailPage'), 'CapacityDetailPage'),
+  module: 'aps',
+  code: 'aps-capacity-detail',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['aps:capacity:read'],
+  action: 'read',
+};
+
+const materialPlanDetailRoute: RouteConfigV2<MaterialPlanDetailPageProps> = {
+  path: APS_PATHS.materialPlanDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/MaterialPlanDetailPage'),
+    'MaterialPlanDetailPage'
+  ),
+  module: 'aps',
+  code: 'aps-material-plan-detail',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['aps:material_plan:read'],
+  action: 'read',
+};
+
+const forecastDetailRoute: RouteConfigV2<ForecastDetailPageProps> = {
+  path: APS_PATHS.forecastDetail,
+  element: lazyWithRetry(() => import('@/pages/aps/ForecastDetailPage'), 'ForecastDetailPage'),
+  module: 'aps',
+  code: 'aps-forecast-detail',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'detail',
+  group: 'analytics',
+  requiredPermissions: ['aps:forecast:read'],
+  action: 'read',
+};
+
+const planComparisonDetailRoute: RouteConfigV2<PlanComparisonDetailPageProps> = {
+  path: APS_PATHS.planComparison,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/PlanComparisonDetailPage'),
+    'PlanComparisonDetailPage'
+  ),
+  module: 'aps',
+  code: 'aps-plan-comparison',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['aps:production_plan:read'],
+  action: 'read',
+};
+
+const planAdherenceRoute: RouteConfigV2<PlanAdherencePageProps> = {
+  path: APS_PATHS.analytics.planAdherence,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/PlanAdherencePage'),
+    'PlanAdherencePage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-plan-adherence',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:dashboard:read'],
+  action: 'read',
+};
+
+const scheduleGanttRoute: RouteConfigV2<ScheduleGanttPageProps> = {
+  path: APS_PATHS.analytics.scheduleGantt,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/ScheduleGanttPage'),
+    'ScheduleGanttPage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-schedule-gantt',
+  title: i18n.t('shared.config.k15'),
+  titleKey: 'shared.config.k15',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:schedule:read'],
+  action: 'read',
+};
+
+const capacityUtilizationRoute: RouteConfigV2<CapacityUtilizationPageProps> = {
+  path: APS_PATHS.analytics.capacityUtilization,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/CapacityUtilizationPage'),
+    'CapacityUtilizationPage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-capacity-utilization',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:capacity:read'],
+  action: 'read',
+};
+
+const materialShortageRoute: RouteConfigV2<MaterialShortagePageProps> = {
+  path: APS_PATHS.analytics.materialShortage,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/MaterialShortagePage'),
+    'MaterialShortagePage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-material-shortage',
+  title: i18n.t('shared.config.k17'),
+  titleKey: 'shared.config.k17',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:material_plan:read'],
+  action: 'read',
+};
+
+const forecastAccuracyRoute: RouteConfigV2<ForecastAccuracyPageProps> = {
+  path: APS_PATHS.analytics.forecastAccuracy,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/ForecastAccuracyPage'),
+    'ForecastAccuracyPage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-forecast-accuracy',
+  title: i18n.t('shared.config.k18'),
+  titleKey: 'shared.config.k18',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:forecast:read'],
+  action: 'read',
+};
+
+const oeeDashboardRoute: RouteConfigV2<OeeDashboardPageProps> = {
+  path: APS_PATHS.analytics.oeeDashboard,
+  element: lazyWithRetry(
+    () => import('@/pages/aps/analytics/OeeDashboardPage'),
+    'OeeDashboardPage'
+  ),
+  module: 'aps',
+  code: 'aps-analytics-oee-dashboard',
+  title: i18n.t('shared.config.oee_0'),
+  titleKey: 'shared.config.oee_0',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['aps:dashboard:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const apsModuleConfig: RouteModuleConfig = {
@@ -43,260 +387,24 @@ export const apsModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'aps:module:read',
   routes: [
-    {
-      path: APS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/aps/ApsDashboardPage'), 'ApsDashboardPage'),
-      module: 'aps',
-      code: 'aps-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['aps:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.productionPlans,
-      element: lazyWithRetry(() => import('@/pages/aps/ProductionPlanPage'), 'ProductionPlanPage'),
-      module: 'aps',
-      code: 'aps-production-plans',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['aps:production_plan:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.schedules,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ScheduleManagementPage'),
-        'ScheduleManagementPage'
-      ),
-      module: 'aps',
-      code: 'aps-schedules',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['aps:schedule:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.capacities,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/CapacityManagementPage'),
-        'CapacityManagementPage'
-      ),
-      module: 'aps',
-      code: 'aps-capacities',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['aps:capacity:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.materialPlans,
-      element: lazyWithRetry(() => import('@/pages/aps/MaterialPlanPage'), 'MaterialPlanPage'),
-      module: 'aps',
-      code: 'aps-material-plans',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['aps:material_plan:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.forecasts,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ForecastManagementPage'),
-        'ForecastManagementPage'
-      ),
-      module: 'aps',
-      code: 'aps-forecasts',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'analytics',
-      requiredPermissions: ['aps:forecast:read'],
-      action: 'read',
-    },
-    // ---- 详情页路由 ----
-    {
-      path: APS_PATHS.productionPlanDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ProductionPlanDetailPage'),
-        'ProductionPlanDetailPage'
-      ),
-      module: 'aps',
-      code: 'aps-production-plan-detail',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['aps:production_plan:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.scheduleDetail,
-      element: lazyWithRetry(() => import('@/pages/aps/ScheduleDetailPage'), 'ScheduleDetailPage'),
-      module: 'aps',
-      code: 'aps-schedule-detail',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['aps:schedule:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.capacityDetail,
-      element: lazyWithRetry(() => import('@/pages/aps/CapacityDetailPage'), 'CapacityDetailPage'),
-      module: 'aps',
-      code: 'aps-capacity-detail',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['aps:capacity:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.materialPlanDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/MaterialPlanDetailPage'),
-        'MaterialPlanDetailPage'
-      ),
-      module: 'aps',
-      code: 'aps-material-plan-detail',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['aps:material_plan:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.forecastDetail,
-      element: lazyWithRetry(() => import('@/pages/aps/ForecastDetailPage'), 'ForecastDetailPage'),
-      module: 'aps',
-      code: 'aps-forecast-detail',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'detail',
-      group: 'analytics',
-      requiredPermissions: ['aps:forecast:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.planComparison,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/PlanComparisonDetailPage'),
-        'PlanComparisonDetailPage'
-      ),
-      module: 'aps',
-      code: 'aps-plan-comparison',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['aps:production_plan:read'],
-      action: 'read',
-    },
-    // ---- BI 分析页路由 ----
-    {
-      path: APS_PATHS.analytics.planAdherence,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/PlanAdherencePage'),
-        'PlanAdherencePage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-plan-adherence',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.analytics.scheduleGantt,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/ScheduleGanttPage'),
-        'ScheduleGanttPage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-schedule-gantt',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:schedule:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.analytics.capacityUtilization,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/CapacityUtilizationPage'),
-        'CapacityUtilizationPage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-capacity-utilization',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:capacity:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.analytics.materialShortage,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/MaterialShortagePage'),
-        'MaterialShortagePage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-material-shortage',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:material_plan:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.analytics.forecastAccuracy,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/ForecastAccuracyPage'),
-        'ForecastAccuracyPage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-forecast-accuracy',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:forecast:read'],
-      action: 'read',
-    },
-    {
-      path: APS_PATHS.analytics.oeeDashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/analytics/OeeDashboardPage'),
-        'OeeDashboardPage'
-      ),
-      module: 'aps',
-      code: 'aps-analytics-oee-dashboard',
-      title: i18n.t('shared.config.oee_0'),
-      titleKey: 'shared.config.oee_0',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['aps:dashboard:read'],
-      action: 'read',
-    },
+    apsDashboardRoute,
+    productionPlanRoute,
+    scheduleManagementRoute,
+    capacityManagementRoute,
+    materialPlanRoute,
+    forecastManagementRoute,
+    productionPlanDetailRoute,
+    scheduleDetailRoute,
+    capacityDetailRoute,
+    materialPlanDetailRoute,
+    forecastDetailRoute,
+    planComparisonDetailRoute,
+    planAdherenceRoute,
+    scheduleGanttRoute,
+    capacityUtilizationRoute,
+    materialShortageRoute,
+    forecastAccuracyRoute,
+    oeeDashboardRoute,
   ],
 };
 
