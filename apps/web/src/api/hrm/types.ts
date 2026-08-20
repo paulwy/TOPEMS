@@ -1,4 +1,4 @@
-import type { ApiResponse } from '../client';
+import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 
 export interface Company {
   id: string;
@@ -359,10 +359,7 @@ export interface SalaryAdjustment {
   updated_at?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
   employee_id?: string;
   department_id?: string;

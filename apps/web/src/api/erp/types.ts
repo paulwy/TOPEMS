@@ -1,3 +1,5 @@
+import type { PaginationParams as BasePaginationParams } from '../client';
+
 export interface Asset {
   id: string;
   asset_number: string;
@@ -555,10 +557,7 @@ export interface Announcement {
   updated_at: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
 }
 

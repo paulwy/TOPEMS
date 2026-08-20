@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse } from '../client';
+import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 
 import { templateVersionApi } from './version';
 import type {
@@ -110,10 +110,7 @@ export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
   id: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   type?: TemplateType;
   category?: string;
   module?: string;

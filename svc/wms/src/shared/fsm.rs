@@ -7,46 +7,11 @@
 //! FSM-5 WavePick:         created→assigned→picking→completed, created|assigned|picking→cancelled
 //! FSM-6 InventoryMovement:draft→posted→completed, draft|posted→cancelled
 //! FSM-7 SerialNumber:     pending→assigned→used→archived
+//!
+//! `FsmError` / `validate_status` / `check_pair` 已提取至 `topems_shared_core::fsm`。
 
-#[derive(Debug, thiserror::Error, PartialEq)]
-pub enum FsmError {
-    #[error("state '{0}' is terminal and cannot transition")]
-    TerminalState(String),
-    #[error("invalid transition: {from} -> {to}")]
-    InvalidTransition { from: String, to: String },
-    #[error("unknown status: {0}")]
-    UnknownStatus(String),
-}
-
-fn validate_status(status: &str, allowed: &[&str]) -> Result<(), FsmError> {
-    if allowed.contains(&status) {
-        Ok(())
-    } else {
-        Err(FsmError::UnknownStatus(status.to_string()))
-    }
-}
-
-fn check_pair(
-    from: &str,
-    to: &str,
-    allowed_pairs: &[(&str, &str)],
-    terminal: &[&str],
-    all_states: &[&str],
-) -> Result<(), FsmError> {
-    validate_status(from, all_states)?;
-    validate_status(to, all_states)?;
-    if terminal.contains(&from) {
-        return Err(FsmError::TerminalState(from.to_string()));
-    }
-    if allowed_pairs.contains(&(from, to)) {
-        Ok(())
-    } else {
-        Err(FsmError::InvalidTransition {
-            from: from.to_string(),
-            to: to.to_string(),
-        })
-    }
-}
+// 重导出公共 FSM 基础类型，保持 `use crate::shared::fsm::{...}` 调用方无需改动
+pub use topems_shared_core::fsm::{check_pair, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
 const INBOUND_ORDER_STATES: &[&str] =

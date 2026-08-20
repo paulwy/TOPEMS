@@ -2,19 +2,29 @@
 
 ## 工作流概述
 
-本项目使用 GitHub Actions 实现自动化 CI/CD 流程，包含以下工作流：
+本项目使用 GitHub Actions 实现自动化 CI/CD 流程，包含 5 个工作流（P2-5 合并后从 12 个精简而来）：
 
-### 1. CI (ci.yml) - 持续集成
-用于 Pull Request 和代码推送时的自动化检查，确保代码质量。
+| # | 工作流 | 文件 | 职责 |
+|---|--------|------|------|
+| 1 | **CI** | `ci.yml` | 主 CI 流水线：lint、test、build、quality gate、migration test、desktop build |
+| 2 | **Docker Build** | `docker-build.yml` | Docker 镜像构建与推送 |
+| 3 | **Deploy to Kubernetes** | `deploy-k8s.yml` | K8s 集群部署（staging/production） |
+| 4 | **E2E** | `e2e.yml` | Playwright 端到端测试（含后端启动） |
+| 5 | **Secret Scan** | `secret-scan.yml` | Gitleaks 安全扫描 |
 
-### 2. CI/CD Pipeline (ci-cd.yml) - 完整流水线
-包含完整的构建、测试、Docker 镜像构建和部署流程，支持自动回滚。
+### P2-5 合并记录
 
-### 3. Code Quality Check (code-quality.yml) - 代码质量检查
-执行 API 路径唯一性检查、组件命名规范检查和 console.log 检查。
+以下 7 个工作流已合并到上述 5 个中并删除：
 
-### 4. Split Services CI/CD (split-services.yml) - 拆分服务 CI/CD
-专门针对 mes/pdm/qms/lims/ehs/bi/report 等拆分服务的独立流水线。
+| 已删除文件 | 合并到 | 原因 |
+|-----------|--------|------|
+| `ci-cd.yml` | `ci.yml` + `docker-build.yml` + `deploy-k8s.yml` | lint/docker/deploy 三段均与已有工作流重复 |
+| `lint-check.yml` | `ci.yml` | 是 `ci.yml` 的子集 |
+| `code-quality.yml` | `ci.yml` (code-quality job) | API path / 命名 / console.log / allow_baseline 检查 |
+| `e2e-test.yml` | `e2e.yml` | 是 `e2e.yml` 的子集 |
+| `migration-test.yml` | `ci.yml` (migration-test job) | 条件触发：migration 路径变更 |
+| `split-services.yml` | `docker-build.yml` + `deploy-k8s.yml` | per-service 构建/部署已被统一工作流覆盖 |
+| `desktop-build.yml` | `ci.yml` (desktop-build job) | 条件触发：apps/desktop 路径变更 |
 
 ---
 
@@ -24,241 +34,149 @@
 
 | 事件类型 | 触发分支 | 说明 |
 |---------|---------|------|
-| `push` | `main`, `develop` | 代码推送时运行 |
+| `push` | `main`, `develop`, `v*` tags | 代码推送时运行 |
 | `pull_request` | `main`, `develop` | PR 创建/更新时运行 |
+| `schedule` | — | 每日 02:00 UTC 夜间回归 |
+| `workflow_dispatch` | 任意 | 手动触发（可跳过 Rust） |
+
+### 路径过滤
+
+`paths-ignore`: 纯文档/配置变更（`*.md`, `docs/**`, `LICENSE`, `.gitignore`）不触发 CI。
+
+### 变更检测 (`changes` job)
+
+使用 `dorny/paths-filter@v4` 检测变更路径，输出以下信号：
+
+| 输出 | 检测路径 | 关联 Job |
+|------|---------|---------|
+| `rust` | `lib/**`, `svc/**`, `Cargo.toml`, `Cargo.lock` | Rust Lint / Test / Schema Defense |
+| `frontend` | `apps/web/**`, `packages/**`, `pnpm-lock.yaml` | Frontend Lint / Test / Build |
+| `i18n` | `apps/web/src/i18n/**`, `scripts/i18n/**` | i18n Quality Gate |
+| `permission` | `lib/shared-auth/**`, `svc/**/*.rs`, `permissions.ts` | Permission Matrix Gate |
+| `menu` | `apps/web/src/modules/*/config.ts`, `navigation/**` | Menu Health Gate |
+| `api_audit` | `apps/web/src/api/**`, `scripts/p6-*.cjs` | API Audit Gate |
+| `migration` | `svc/**/migrations/**`, `database/migrations/**` | Migration Test |
+| `desktop` | `apps/desktop/**` | Desktop Build |
+| `ci` | `.github/**`, `scripts/ci/**` | 全部 CI 相关 |
+
+### Job 列表
+
+| Job | 条件 | 说明 |
+|-----|------|------|
+| `changes` | — | 变更检测 |
+| `rust-smoke` | rust | Phase 1 — 5 standalone services 快速验证 |
+| `rust-lint` (fmt + clippy + check) | rust | Rust 格式 / 静态分析 / 编译检查 |
+| `rust-test` | rust | Rust 全量测试 |
+| `rust-audit` | rust | Rust 依赖安全审计 |
+| `schema-defense-gate` | rust | 26 服务 Schema 自检（严格模式） |
+| `frontend-lint` | frontend | ESLint |
+| `frontend-typecheck` | frontend | tsc --noEmit |
+| `frontend-test` | frontend | Vitest (9 shards) |
+| `frontend-coverage` | frontend | 覆盖率检查 |
+| `frontend-build` | frontend | Bundle 大小检查 |
+| `design-system-check` | frontend | 设计 token 偏差检查 |
+| `frontend-audit` | frontend | V64 前端审计 |
+| `i18n-quality-gate` | i18n | R12 七合一 i18n 质量门禁 |
+| `permission-matrix-gate` | permission | 权限矩阵三向门禁 |
+| `menu-health-gate` | menu | 37 模块菜单健康门禁 |
+| `axum-layer-gate` | rust | Axum 中间件顺序检查 |
+| `api-audit-gate` | api_audit | P6 Page→API + P7 RBAC 审计 |
+| `security-scan` | frontend | npm audit + 密钥扫描 |
+| `code-quality` | frontend/ci | API path 唯一性 / 命名规范 / console.log / allow_baseline |
+| `migration-test` | migration | DB migration up-down-up 幂等测试 |
+| `desktop-build` | desktop | 跨平台 Tauri 桌面应用构建 (ubuntu/windows/macos) |
+| `quality-gate` | always | 最终质量门禁汇总 |
+
+### 质量门禁规则
+
+阻止合并的条件（`quality-gate` job 检查所有 job 结果，`skipped` 视为通过）：
+
+- Rust: fmt / clippy / test / schema-defense 任一 failure
+- Frontend: lint / typecheck / test / coverage / build 任一 failure
+- i18n: fake-en / mixed-structure / hardcoded CJK 任一 failure
+- 权限/菜单/API 审计任一 failure
+- Migration / Desktop / Code Quality 任一 failure（仅当对应路径变更时）
+
+---
+
+## Docker Build (docker-build.yml)
+
+### 触发条件
+
+| 事件类型 | 触发分支 | 说明 |
+|---------|---------|------|
+| `push` | `main`, `develop`, `v*` tags | 自动构建 |
+| `pull_request` | `main` | PR 验证 |
+| `workflow_dispatch` | 任意 | 可指定服务列表 |
+
+### 构建矩阵
+
+使用统一模板 `docker/Dockerfile.service` 构建 27+ 个服务镜像，推送到 `ghcr.io`。
+
+---
+
+## Deploy to Kubernetes (deploy-k8s.yml)
+
+### 触发条件
+
+| 事件类型 | 触发分支 | 说明 |
+|---------|---------|------|
+| `push` | `main`, `develop`, `v*` tags | 自动部署 |
+| `workflow_dispatch` | 任意 | 可指定环境和 image_tag |
+
+### 部署流程
+
+1. 确定 image tag（输入 > tag > sha-xxx）
+2. 配置 kubectl
+3. 滚动部署到 K8s 集群
+4. 验证部署状态
+
+---
+
+## E2E Tests (e2e.yml)
+
+### 触发条件
+
+| 事件类型 | 触发分支 | 说明 |
+|---------|---------|------|
+| `push` | `main`, `develop` | 自动运行 |
+| `pull_request` | `main`, `develop` | PR 验证 |
+| `schedule` | — | 每日 03:00 UTC 夜间回归 |
+| `workflow_dispatch` | 任意 | 可选择浏览器 |
+
+### 测试流程
+
+1. 启动 PostgreSQL + Redis + Rust 服务后端
+2. 安装 Playwright 浏览器
+3. 运行 Playwright 测试套件
+4. 上传测试报告和截图
+
+---
+
+## Secret Scan (secret-scan.yml)
+
+### 触发条件
+
+| 事件类型 | 触发分支 | 说明 |
+|---------|---------|------|
+| `push` | `main`, `develop` | 自动扫描 |
+| `pull_request` | `main`, `develop` | PR 检查 |
+| `schedule` | — | 每周一 06:00 UTC |
 | `workflow_dispatch` | 任意 | 手动触发 |
 
-### Jobs 架构
-
-```
-                    ┌─────────────────┐
-                    │   Pull Request  │
-                    │  / Push Event   │
-                    └────────┬────────┘
-                             │
-           ┌─────────────────┴─────────────────┐
-           │                                   │
-           ▼                                   ▼
-┌─────────────────────┐             ┌─────────────────────┐
-│     Rust Lint       │             │  Frontend Lint      │
-│  (cargo fmt/clippy) │             │   (ESLint)          │
-└─────────┬───────────┘             └─────────┬───────────┘
-          │                                   │
-          ▼                                   ▼
-┌─────────────────────┐             ┌─────────────────────┐
-│     Rust Tests      │             │ Frontend Type Check │
-│  (cargo test)       │             │  (tsc --noEmit)     │
-└─────────┬───────────┘             └─────────┬───────────┘
-          │                                   │
-          │                                   ▼
-          │                         ┌─────────────────────┐
-          │                         │ Design System Check │
-          │                         │  (token deviation)  │
-          │                         └─────────┬───────────┘
-          │                                   │
-          │                                   ▼
-          │                         ┌─────────────────────┐
-          │                         │  Frontend Tests     │
-          │                         │  (vitest + coverage)│
-          │                         └─────────┬───────────┘
-          │                                   │
-          └─────────────────┬─────────────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │  Security Scan  │
-                   └────────┬────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │  Quality Gate   │
-                   │  (质量门禁)     │
-                   └─────────────────┘
-```
-
-### Job 详情
-
-#### 1. Rust Lint (`rust-lint`)
-- **代码格式检查**: `cargo fmt --check --all`
-- **静态分析**: `cargo clippy --workspace --all-targets -- -D warnings`
-
-#### 2. Rust Tests (`rust-test`)
-- **依赖**: `rust-lint` 通过后执行
-- **服务**: PostgreSQL 16 + Redis 7
-- **测试命令**: `cargo test --workspace --no-fail-fast`
-
-#### 3. Frontend Lint (`frontend-lint`)
-- **Lint 工具**: ESLint
-- **命令**: `pnpm --filter topems-portal lint`
-
-#### 4. Design System Check (`design-system-check`)
-- **功能**: 检查设计系统 token 偏差
-- **命令**: `pnpm --filter @topems/tokens build` + 偏差检查脚本
-
-#### 5. Frontend Type Check (`frontend-typecheck`)
-- **工具**: TypeScript
-- **命令**: `pnpm --filter topems-portal typecheck`
-
-#### 6. Frontend Tests (`frontend-test`)
-- **依赖**: `frontend-lint` + `frontend-typecheck` + `design-system-check` 通过后执行
-- **测试框架**: Vitest
-- **命令**: `pnpm --filter topems-portal test:coverage`
-- **代码覆盖率阈值**:
-  - Statements: 60%
-  - Branches: 50%
-  - Functions: 60%
-  - Lines: 60%
-- **Bundle 大小检查**: 总大小 ≤ 5MB，单个 chunk ≤ 500KB，vendor chunk ≤ 2.5MB
-
-#### 7. Security Scan (`security-scan`)
-- **依赖审计**: `pnpm audit --prod --audit-level=high`
-- **密钥扫描**: 检查代码中是否包含敏感信息
-
-#### 8. Quality Gate (`quality-gate`)
-- **依赖**: 所有上述 Job
-- **作用**: 汇总所有检查结果，作为最终质量门禁
+使用 Gitleaks 扫描全历史，配置文件 `.gitleaks.toml`。
 
 ---
 
-## CI/CD Pipeline (ci-cd.yml)
+## GitHub Secrets 配置
 
-### 触发条件
+### 部署相关
 
-| 事件类型 | 触发分支 | 触发操作 |
-|---------|---------|---------|
-| `push` | `main`, `develop`, `release/**` | 完整 CI/CD 流程 |
-| `pull_request` | `main`, `develop` | 仅 Lint 和 Test |
-| `workflow_dispatch` | 任意 | 手动触发部署 |
-
-### 工作流架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      GitHub Events                          │
-│  push (main/develop/release/*) | pull_request | dispatch   │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Job: lint                                                 │
-│  ├── Rust: cargo fmt + clippy                              │
-│  └── Frontend: ESLint                                      │
-└──────────────────┬──────────────────────────────────────────┘
-                   │ (success)
-                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Job: test                                                 │
-│  ├── PostgreSQL + Redis services                           │
-│  ├── Rust: cargo test                                      │
-│  └── Frontend: typecheck + vitest                          │
-└──────────────────┬──────────────────────────────────────────┘
-                   │ (success)
-                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Job: build                                                │
-│  ├── Rust: cargo build --release                           │
-│  ├── Frontend: pnpm build                                  │
-│  └── Upload artifacts                                      │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Job: docker-build (Matrix)                                │
-│  ├── 构建所有服务的 Docker 镜像                             │
-│  ├── 生成 SBOM                                              │
-│  └── 推送到 GHCR/Docker Hub                                 │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-          ┌────────┴────────┐
-          ▼                 ▼
-┌─────────────────┐ ┌─────────────────┐
-│ Deploy Staging  │ │ Deploy Production│
-│ (自动回滚)      │ │ (自动回滚)      │
-└─────────────────┘ └─────────────────┘
-```
-
-### 部署特性
-
-#### 自动回滚机制
-- **备份**: 部署前自动备份当前版本到 `*.backup.{TIMESTAMP}`
-- **健康检查**: 部署后检查所有服务端口的 `/health` 端点
-- **自动回滚**: 如果健康检查失败，自动恢复到备份版本
-
-#### 服务列表
-| 服务 | 端口 |
-|------|------|
-| unified-core | 8000 |
-| erp | 8010 |
-| hrm | 8020 |
-| crm | 8029 |
-| pm | 8023 |
-| gis | 8071 |
-| rd | 8053 |
-| scm | 8040 |
-| wms | 8041 |
-| srm | 8042 |
-| mobile | 8070 |
-| portal | 8063 |
-| ai | 8064 |
-| integration | 8072 |
-| mes | 8030 |
-| pdm | 8031 |
-| qms | 8050 |
-| lims | 8051 |
-| ehs | 8052 |
-| bi | 8060 |
-| report | 8061 |
-
----
-
-## Split Services CI/CD (split-services.yml)
-
-### 触发条件
-
-| 事件类型 | 触发分支 | 路径过滤 |
-|---------|---------|---------|
-| `push` | `main`, `develop` | `svc/mes/**`, `svc/pdm/**`, `svc/qms/**`, `svc/lims/**`, `svc/ehs/**`, `svc/bi/**`, `svc/report/**`, `lib/**` |
-| `pull_request` | `main`, `develop` | 同上 |
-
-### 特性
-- **增量构建**: 仅构建变更的服务
-- **Kubernetes 部署**: 支持 staging 和 production 环境
-- **Slack 通知**: 部署完成后发送通知
-- **手动回滚**: 支持通过 workflow_dispatch 触发回滚
-
----
-
-## 质量门禁规则
-
-### 阻止合并的条件
-
-| 检查项 | 工具 | 失败条件 |
-|-------|------|---------|
-| 代码格式 | `cargo fmt` | 格式不符合规范 |
-| Rust 静态分析 | `cargo clippy` | 任何警告或错误 |
-| Rust 单元测试 | `cargo test` | 任何测试失败 |
-| 前端 Lint | `ESLint` | Error 级别问题 |
-| 前端类型检查 | `tsc --noEmit` | 任何类型错误 |
-| 前端单元测试 | `vitest` | 任何测试失败 |
-| 测试覆盖率 | `v8 coverage` | 低于阈值 |
-| Bundle 大小 | 构建检查 | 超过阈值 |
-
----
-
-## 性能优化
-
-### Rust 缓存
-- 使用 `Swatinem/rust-cache@v2` 缓存依赖和构建产物
-- 按 Job 类型分离缓存（lint / test / build / 服务名）
-
-### pnpm 缓存
-- 使用 `pnpm/action-setup@v4` 管理 pnpm 版本
-- 缓存 pnpm store 目录
-- 使用 `--frozen-lockfile` 确保依赖一致性
-
-### 并行执行
-- Rust 和前端检查并行执行
-- Docker 镜像构建使用 Matrix 并行
+| Secret 名称 | 说明 | 必需 |
+|------------|------|------|
+| `KUBE_CONFIG_STAGING` | Staging Kubernetes 配置（base64） | K8s 部署需要 |
+| `KUBE_CONFIG_PRODUCTION` | Production Kubernetes 配置（base64） | K8s 部署需要 |
+| `SLACK_WEBHOOK_URL` | Slack 通知 Webhook | 可选 |
 
 ---
 
@@ -280,37 +198,19 @@ pnpm --filter topems-portal test
 pnpm --filter topems-portal test:coverage
 ```
 
----
+### 代码质量
+```bash
+python scripts/check_api_duplicates_ci.py --ci
+python scripts/check_component_naming.py --ci
+bash scripts/check_allow_baseline.sh
+```
 
-## GitHub Secrets 配置
-
-### 部署相关
-
-| Secret 名称 | 说明 | 必需 |
-|------------|------|------|
-| `STAGING_HOST` | Staging 服务器主机地址 | 部署需要 |
-| `STAGING_USER` | SSH 登录用户名 | 部署需要 |
-| `STAGING_SSH_KEY` | SSH 私钥 | 部署需要 |
-| `STAGING_PORT` | SSH 端口（默认 22） | 可选 |
-| `PROD_HOST` | 生产服务器主机地址 | 部署需要 |
-| `PROD_USER` | SSH 登录用户名 | 部署需要 |
-| `PROD_SSH_KEY` | SSH 私钥 | 部署需要 |
-| `PROD_PORT` | SSH 端口（默认 22） | 可选 |
-| `PROD_DOMAIN` | 生产环境域名 | 部署需要 |
-| `DOCKER_USERNAME` | Docker Hub 用户名 | 可选 |
-| `DOCKER_PASSWORD` | Docker Hub 密码 | 可选 |
-| `KUBE_CONFIG_STAGING` | Staging Kubernetes 配置（base64 编码） | K8s 部署需要 |
-| `KUBE_CONFIG_PRODUCTION` | Production Kubernetes 配置（base64 编码） | K8s 部署需要 |
-| `SLACK_WEBHOOK_URL` | Slack 通知 Webhook | 可选 |
-
----
-
-## GitHub Environments 配置
-
-1. **staging** - 用于预发布测试
-2. **production** - 用于生产环境
-
-**建议**: 为 production 环境启用 **Required reviewers** 功能，需要人工审核才能部署。
+### Migration 测试
+```bash
+node scripts/check-migration-names.mjs --strict
+node scripts/check-migrations.mjs
+sqlx migrate run --source svc/{service}/migrations --database-url "$DATABASE_URL"
+```
 
 ---
 
@@ -320,53 +220,25 @@ pnpm --filter topems-portal test:coverage
 
 1. 启用 **Require status checks to pass before merging**
 2. 添加以下 status checks:
+   - `Quality Gate`
    - `Rust Lint`
    - `Rust Tests`
    - `Frontend Lint`
    - `Frontend Type Check`
    - `Frontend Tests`
-   - `Quality Gate`
 3. 启用 **Require branches to be up to date before merging**
-
----
-
-## 故障排除
-
-### 常见问题
-
-1. **Rust 构建失败**
-   - 检查 Rust 版本是否正确
-   - 清除缓存后重试
-   - 检查 `Cargo.toml` 依赖配置
-
-2. **测试失败**
-   - 检查 PostgreSQL/Redis 服务是否正常启动
-   - 查看测试日志中的具体错误信息
-   - 本地运行测试验证
-
-3. **前端依赖安装失败**
-   - 检查 `pnpm-lock.yaml` 是否与 `package.json` 同步
-   - 本地运行 `pnpm install` 验证
-
-4. **Lint 失败**
-   - 本地运行 lint 命令查看具体错误
-   - 使用 `pnpm lint:fix` 自动修复可修复的问题
-
-5. **部署失败**
-   - 检查服务器 SSH 密钥配置
-   - 查看部署日志中的错误信息
-   - 自动回滚已触发，服务应已恢复
 
 ---
 
 ## 相关文件
 
-- `.github/workflows/ci.yml` - CI 工作流配置
-- `.github/workflows/ci-cd.yml` - 完整 CI/CD 流水线
-- `.github/workflows/code-quality.yml` - 代码质量检查
-- `.github/workflows/split-services.yml` - 拆分服务 CI/CD
-- `apps/web/eslint.config.js` - ESLint 配置
-- `apps/web/vitest.config.ts` - Vitest 测试配置
-- `Cargo.toml` - Rust 工作区配置
-- `package.json` - 前端工作区配置
-- `pnpm-workspace.yaml` - pnpm 工作区配置
+- `.github/workflows/ci.yml` — 主 CI 工作流
+- `.github/workflows/docker-build.yml` — Docker 镜像构建
+- `.github/workflows/deploy-k8s.yml` — K8s 部署
+- `.github/workflows/e2e.yml` — E2E 测试
+- `.github/workflows/secret-scan.yml` — 安全扫描
+- `apps/web/eslint.config.js` — ESLint 配置
+- `apps/web/vitest.config.ts` — Vitest 测试配置
+- `Cargo.toml` — Rust 工作区配置
+- `package.json` — 前端工作区配置
+- `pnpm-workspace.yaml` — pnpm 工作区配置

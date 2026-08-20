@@ -1,3 +1,5 @@
+export type { PaginationParams } from '../client';
+
 // APS 高级计划与排程 - 类型定义
 
 // ---- FSM 状态联合类型（与 svc/aps/src/shared/fsm.rs 1:1 对齐） ----
@@ -135,12 +137,6 @@ export type CreateDemandForecastRequest = Omit<
   'id' | 'tenant_id' | 'created_at' | 'updated_at' | 'accuracy_rate'
 >;
 export type UpdateDemandForecastRequest = Partial<CreateDemandForecastRequest>;
-
-export interface PaginationParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-}
 
 // ---- 审批相关类型 ----
 

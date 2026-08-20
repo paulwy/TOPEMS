@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse } from '../client';
+import type { ApiResponse, PaginationParams } from '../client';
 import { systemParamsApi } from './params';
 import { systemAuditApi } from './audit';
 import { featureFlagApi } from './featureFlag';
@@ -88,12 +88,6 @@ export interface DbColumnDefinition {
 export interface SqlPreview {
   sql: string;
   warning?: string;
-}
-
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
 }
 
 export interface PaginatedResult<T> {

@@ -30,6 +30,7 @@ export type PaginatedResponse<T = unknown> = SharedPaginatedResponse<T>;
 export interface PaginationParams {
   page?: number;
   pageSize?: number;
+  pagesize?: number;
   search?: string;
 }
 

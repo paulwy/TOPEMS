@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from '@topems/shared-types';
+import type { PaginationParams as BasePaginationParams } from '../client';
 
 export interface InventoryItem {
   id: string;
@@ -287,10 +288,7 @@ export interface CountItemRequest {
   remarks?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
   warehouse_id?: string;
 }

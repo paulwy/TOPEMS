@@ -72,6 +72,8 @@ jobs:
       permission: ${{ steps.decide.outputs.permission }}
       menu: ${{ steps.decide.outputs.menu }}
       api_audit: ${{ steps.decide.outputs.api_audit }}
+      migration: ${{ steps.decide.outputs.migration }}
+      desktop: ${{ steps.decide.outputs.desktop }}
     steps:
       - uses: actions/checkout@v5
 
@@ -140,6 +142,13 @@ jobs:
             ci:
               - '.github/**'
               - 'scripts/ci/**'
+            migration:
+              - 'svc/**/migrations/**'
+              - 'database/migrations/**'
+              - 'lib/src/migration*/**'
+              - 'scripts/check-migrat*'
+            desktop:
+              - 'apps/desktop/**'
 
       - name: Decide job execution
         id: decide
@@ -156,6 +165,8 @@ jobs:
             echo "api_audit=true" >> $GITHUB_OUTPUT
             echo "docs=true" >> $GITHUB_OUTPUT
             echo "ci=true" >> $GITHUB_OUTPUT
+            echo "migration=true" >> $GITHUB_OUTPUT
+            echo "desktop=true" >> $GITHUB_OUTPUT
           else
             echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
             echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
@@ -165,6 +176,8 @@ jobs:
             echo "api_audit=${{ steps.filter.outputs.api_audit }}" >> $GITHUB_OUTPUT
             echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
             echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
+            echo "migration=${{ steps.filter.outputs.migration }}" >> $GITHUB_OUTPUT
+            echo "desktop=${{ steps.filter.outputs.desktop }}" >> $GITHUB_OUTPUT
           fi
 
   rust-smoke:
@@ -1531,6 +1544,165 @@ jobs:
           echo "| Dependency Audit | ✅ Completed (see logs) |" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Scanning | ✅ No secrets detected |" >> $GITHUB_STEP_SUMMARY
 
+  # ==========================================================================
+  # Code Quality (P2-5: merged from code-quality.yml)
+  #   - API path uniqueness (Python)
+  #   - Component naming conventions (Python)
+  #   - console.log check
+  #   - allow(dead_code) baseline regression check
+  # ==========================================================================
+  code-quality:
+    name: Code Quality (API paths · naming · console.log · allow_baseline)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check API path uniqueness
+        run: python scripts/check_api_duplicates_ci.py --ci
+
+      - name: Check component naming conventions
+        run: python scripts/check_component_naming.py --ci
+
+      - name: Check for console.log statements
+        run: |
+          if grep -r "console\.log" apps/web/src/ --include="*.ts" --include="*.tsx" | grep -v ".test." | grep -v ".spec." | grep -v ".stories."; then
+            echo "❌ Found console.log statements in source code"
+            exit 1
+          else
+            echo "✅ No console.log statements found"
+          fi
+
+      - name: Check allow(dead_code) baseline (prevent warning regression)
+        run: bash scripts/check_allow_baseline.sh
+
+  # ==========================================================================
+  # Migration Tests (P2-5: merged from migration-test.yml)
+  #   - Up-Down-Up idempotency test for all service migrations
+  #   - Multi-tenant RLS verification for unified-core
+  # ==========================================================================
+  migration-test:
+    name: Migration Up-Down-Up Test
+    needs: changes
+    if: needs.changes.outputs.migration == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      POSTGRES_VERSION: '16'
+      DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}-alpine
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Static check — migration naming convention
+        run: node scripts/check-migration-names.mjs --strict
+
+      - name: Static check — migration integrity
+        run: node scripts/check-migrations.mjs
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "migration-test-nightly-2026-07-01"
+
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run migration up-down-up tests
+        run: |
+          echo "## Migration Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Up | Replay | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          for migration_dir in $(find svc -type d -name "migrations" | sort); do
+            service=$(echo "$migration_dir" | cut -d'/' -f2)
+            PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" || true
+            PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS $service CASCADE; CREATE SCHEMA $service;" || true
+            if sqlx migrate run --source "$migration_dir" --database-url "$DATABASE_URL"; then
+              UP="✅"
+              PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" || true
+              PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS $service CASCADE; CREATE SCHEMA $service;" || true
+              if sqlx migrate run --source "$migration_dir" --database-url "$DATABASE_URL"; then
+                echo "| $service | $UP | ✅ | ✅ Pass |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| $service | $UP | ❌ | ❌ Replay Failed |" >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            else
+              echo "| $service | ❌ | ⏭️ | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          done
+          echo "✅ All migration tests passed" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # Desktop Build (P2-5: merged from desktop-build.yml)
+  #   - Cross-platform Tauri desktop app build (ubuntu, windows, macos)
+  # ==========================================================================
+  desktop-build:
+    name: Desktop Build (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build desktop app
+        working-directory: apps/desktop
+        run: pnpm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: topems-desktop-${{ matrix.os }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**
+            apps/desktop/src-tauri/target/release/topems-desktop*
+
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
@@ -1553,6 +1725,9 @@ jobs:
       - axum-layer-gate
       - security-scan
       - schema-defense-gate
+      - code-quality
+      - migration-test
+      - desktop-build
     if: always()
     steps:
       - name: Check all jobs passed or skipped
@@ -1579,6 +1754,9 @@ jobs:
           echo "| Menu Health Gate (37 modules · T1/T2/P1/R3 FAIL × Route×NavItem 2-way) | ${{ needs.menu-health-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Axum Layer Order Gate (Gate M · R1 FAIL / R2/R3 WARN) | ${{ needs.axum-layer-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality (API paths · naming · console.log · allow_baseline) | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### PR Review Checklist" >> $GITHUB_STEP_SUMMARY
@@ -1597,7 +1775,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
 
           FAILED=false
           for result in $RESULTS; do
