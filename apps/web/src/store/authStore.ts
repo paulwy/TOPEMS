@@ -236,7 +236,18 @@ export const useAuth = () => {
       userRole,
       ...actions,
     }),
-    [user, token, permissions, roles, displayName, avatarUrl, isAuthenticated, isSuperuser, userRole, actions]
+    [
+      user,
+      token,
+      permissions,
+      roles,
+      displayName,
+      avatarUrl,
+      isAuthenticated,
+      isSuperuser,
+      userRole,
+      actions,
+    ]
   );
 };
 

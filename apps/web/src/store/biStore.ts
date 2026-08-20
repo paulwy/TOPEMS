@@ -141,10 +141,10 @@ export const useBIStore = create<BIStore>((set, get) => ({
   },
 }));
 
-export const useBISummary = () => useBIStore((state) => state.summary);
-export const useBIDevelopment = () => useBIStore((state) => state.development);
-export const useBIQuality = () => useBIStore((state) => state.quality);
-export const useBIProduction = () => useBIStore((state) => state.production);
-export const useBILaboratory = () => useBIStore((state) => state.laboratory);
-export const useBILoading = () => useBIStore((state) => state.loading);
-export const useBIError = () => useBIStore((state) => state.error);
+const useBISummary = () => useBIStore((state) => state.summary);
+const useBIDevelopment = () => useBIStore((state) => state.development);
+const useBIQuality = () => useBIStore((state) => state.quality);
+const useBIProduction = () => useBIStore((state) => state.production);
+const useBILaboratory = () => useBIStore((state) => state.laboratory);
+const useBILoading = () => useBIStore((state) => state.loading);
+const useBIError = () => useBIStore((state) => state.error);
