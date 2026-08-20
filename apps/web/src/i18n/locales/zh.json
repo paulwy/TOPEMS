@@ -213,8 +213,7 @@
     "file_upload_retry": "重试",
     "file_upload_remove": "移除",
     "file_upload_preview": "预览",
-    "file_upload_download": "下载",
-    "missing_in_zh": "占位（翻译缺失 · dev only）"
+    "file_upload_download": "下载"
   },
   "auth": {
     "login": "登录",
