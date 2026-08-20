@@ -1248,7 +1248,7 @@ async fn add_return_item(
 ///
 /// V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
 /// 原 SQL `INSERT INTO erp.fin_reconciliations` / `INSERT INTO erp.vouchers`
-/// 改为通过 `ErpServiceClient` 调用 ERP 服务的 REST API。
+/// 改为通过 `TypedServiceClient<ErpApi>` 调用 ERP 服务的 REST API。
 pub async fn sync_return_to_finance(
     state: &ApiState,
     return_id: Uuid,
@@ -1355,7 +1355,7 @@ pub async fn sync_return_to_finance(
 ///
 /// V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
 /// 原 SQL `UPDATE erp.inventory` / `INSERT INTO erp.inventory_movements`
-/// 改为通过 `WmsServiceClient` 调用 WMS 服务的 REST API。
+/// 改为通过 `TypedServiceClient<WmsApi>` 调用 WMS 服务的 REST API。
 /// - 调用 PUT /api/wms/inventory/{material_id} 更新库存
 /// - 调用 POST /api/wms/inventory-movements 登记审计流水
 pub async fn sync_return_to_inventory(
@@ -1411,17 +1411,20 @@ pub async fn sync_return_to_inventory(
     // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
     // WMS 客户端由 ApiState 注入；若未配置则跳过库存联动并记录告警。
     // 注：显式类型注解避免 Rust 2024 edition 的 never type fallback 问题
-    let wms_client: &Arc<topems_shared_service_client::service_client::WmsServiceClient> =
-        match state.wms_client.as_ref() {
-            Some(c) => c,
-            None => {
-                tracing::warn!(
-                    "退换货 {} 库存联动跳过：WMS 服务客户端未配置",
-                    return_record.return_no
-                );
-                return Ok(0);
-            }
-        };
+    let wms_client: &Arc<
+        topems_shared_service_client::service_client::TypedServiceClient<
+            topems_shared_service_client::service_client::WmsApi,
+        >,
+    > = match state.wms_client.as_ref() {
+        Some(c) => c,
+        None => {
+            tracing::warn!(
+                "退换货 {} 库存联动跳过：WMS 服务客户端未配置",
+                return_record.return_no
+            );
+            return Ok(0);
+        }
+    };
 
     let mut synced: u64 = 0;
 
@@ -1540,9 +1543,7 @@ async fn get_return_finance_status(
             .list_reconciliations_by_ref(&id.to_string(), "return")
             .await
         {
-            Ok(resp) => resp
-                .data
-                .unwrap_or_else(|| serde_json::Value::Array(vec![])),
+            Ok(resp) => serde_json::Value::Array(resp),
             Err(e) => {
                 tracing::error!("获取退换货财务对账状态失败: {}", e);
                 return Json(api_error(500, "获取退换货财务对账状态失败"));
@@ -1613,9 +1614,7 @@ async fn get_return_inventory_status(
             .list_inventory_movements_by_ref(&id.to_string(), "return")
             .await
         {
-            Ok(resp) => resp
-                .data
-                .unwrap_or_else(|| serde_json::Value::Array(vec![])),
+            Ok(resp) => resp,
             Err(e) => {
                 tracing::error!("获取退换货库存联动状态失败: {}", e);
                 return Json(api_error(500, "获取退换货库存联动状态失败"));

@@ -1,10 +1,10 @@
 use sqlx::postgres::PgPool;
 
-use topems_shared_service_client::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 pub struct FinanceService {
     db_pool: PgPool,
-    workflow_client: WorkflowServiceClient,
+    workflow_client: TypedServiceClient<WorkflowApi>,
 }
 
 mod account;
@@ -33,7 +33,7 @@ pub mod year_end;
 pub use reconciliation::ReconciliationService;
 
 impl FinanceService {
-    pub fn new(db_pool: PgPool, workflow_client: WorkflowServiceClient) -> Self {
+    pub fn new(db_pool: PgPool, workflow_client: TypedServiceClient<WorkflowApi>) -> Self {
         Self {
             db_pool,
             workflow_client,

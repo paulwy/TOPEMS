@@ -39,3 +39,6 @@ rust_decimal = "1.35"
 [[bin]]
 name = "topems-aps"
 path = "src/main.rs"
+
+[lints]
+workspace = true

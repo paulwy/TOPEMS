@@ -24,34 +24,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - unified-core
-          - erp
-          - finance
-          - doc
-          - ai
-          - hrm
-          - pm
-          - crm
-          - mes
-          - pdm
-          - scm
-          - wms
-          - srm
-          - qms
-          - lims
-          - ehs
-          - rd
-          - analytics
-          - monitor
-          - portal
-          - mobile
-          - gis
-          - integration
+        include:
+          # 特殊服务：保留独立 Dockerfile
+          - service: unified-core
+            context: ./svc/unified-core
+            file: ./svc/unified-core/Dockerfile
+          # 标准服务：使用统一模板 docker/Dockerfile.service
+          - { service: erp,         binary: topems-erp,         dir: erp,         port: "8010", env_var: ERP_PORT }
+          - { service: finance,     binary: topems-finance,     dir: finance,     port: "8011", env_var: FINANCE_PORT }
+          - { service: ai,          binary: topems-ai,           dir: ai,          port: "8013", env_var: AI_PORT }
+          - { service: hrm,         binary: topems-hrm,         dir: hrm,         port: "8020", env_var: HRM_PORT }
+          - { service: pm,          binary: topems-pm,          dir: pm,          port: "8023", env_var: PM_PORT }
+          - { service: crm,         binary: topems-crm,         dir: crm,         port: "8029", env_var: CRM_PORT }
+          - { service: mes,         binary: topems-mes,         dir: mes,         port: "8030", env_var: MES_PORT }
+          - { service: pdm,         binary: topems-pdm,         dir: pdm,         port: "8031", env_var: PDM_PORT }
+          - { service: scm,         binary: topems-scm,         dir: scm,         port: "8040", env_var: SCM_PORT }
+          - { service: wms,         binary: topems-wms,         dir: wms,         port: "8041", env_var: WMS_PORT }
+          - { service: srm,         binary: topems-srm,         dir: srm,         port: "8042", env_var: SRM_PORT }
+          - { service: qms,         binary: topems-qms,         dir: qms,         port: "8050", env_var: QMS_PORT }
+          - { service: lims,        binary: topems-lims,        dir: lims,        port: "8051", env_var: LIMS_PORT }
+          - { service: ehs,         binary: topems-ehs,         dir: ehs,         port: "8052", env_var: EHS_PORT }
+          - { service: rd,          binary: topems-rd,          dir: rd,          port: "8053", env_var: RD_PORT }
+          - { service: analytics,   binary: topems-analytics,   dir: analytics,   port: "8060", env_var: BI_PORT }
+          - { service: portal,      binary: topems-portal,      dir: portal,      port: "8063", env_var: PORTAL_PORT }
+          - { service: mobile,      binary: topems-mobile,      dir: mobile,      port: "8070", env_var: MOBILE_PORT }
+          - { service: gis,         binary: topems-gis,         dir: gis,         port: "8071", env_var: GIS_PORT }
+          - { service: integration, binary: topems-integration, dir: integration, port: "8072", env_var: INTEGRATION_PORT }
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - uses: actions/checkout@v5
 
@@ -82,8 +84,8 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: ./svc/${{ matrix.service }}
-          file: ./svc/${{ matrix.service }}/Dockerfile
+          context: ${{ matrix.context || '.' }}
+          file: ${{ matrix.file || 'docker/Dockerfile.service' }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -91,7 +93,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            CARGO_BUILD_FLAGS=--release
+            SERVICE_NAME=${{ matrix.binary }}
+            SERVICE_PORT=${{ matrix.port }}
+            PORT_ENV_VAR=${{ matrix.env_var }}
+            SERVICE_DIR=${{ matrix.dir }}
 
       - name: Generate SBOM
         if: github.event_name != 'pull_request'

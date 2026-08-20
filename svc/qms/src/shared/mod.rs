@@ -82,7 +82,7 @@ use std::sync::Arc;
 use topems_shared::AuthState;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_event::event::EventPublisher;
-use topems_shared_service_client::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -90,7 +90,7 @@ pub struct AppState {
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub workflow_client: WorkflowServiceClient,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -105,7 +105,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-impl FromRef<AppState> for WorkflowServiceClient {
+impl FromRef<AppState> for TypedServiceClient<WorkflowApi> {
     fn from_ref(state: &AppState) -> Self {
         state.workflow_client.clone()
     }

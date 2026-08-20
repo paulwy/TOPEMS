@@ -1,21 +1,20 @@
 use axum::{
     extract::{Path, Query, State},
-    Extension,
     http::HeaderMap,
     routing::*,
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
-use topems_shared::auth::Claims;
 use crate::models::{
     Contract, ContractPaginationParams, ContractRenewal, CreateContractRequest,
     CreateRenewalRequest, UpdateContractRequest,
 };
 use crate::modules::audit::log_audit_event;
+use topems_shared::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {

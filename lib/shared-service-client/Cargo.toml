@@ -27,3 +27,6 @@ opentelemetry = { version = "0.32", features = ["trace"] }
 
 # URL 编码依赖（api 模块构造 query string）
 serde_urlencoded = "0.7"
+
+[lints]
+workspace = true

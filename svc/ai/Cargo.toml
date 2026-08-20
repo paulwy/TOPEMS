@@ -53,3 +53,6 @@ moka.workspace = true
 
 # OpenAPI 文档
 utoipa.workspace = true
+
+[lints]
+workspace = true

@@ -23,3 +23,6 @@ topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
+
+[lints]
+workspace = true

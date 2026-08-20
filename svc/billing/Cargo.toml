@@ -33,3 +33,6 @@ prometheus.workspace = true
 [[bin]]
 name = "topems-billing"
 path = "src/main.rs"
+
+[lints]
+workspace = true

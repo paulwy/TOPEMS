@@ -41,3 +41,6 @@ dashmap.workspace = true
 
 # 其他
 rand = "0.8"
+
+[lints]
+workspace = true

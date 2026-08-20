@@ -227,6 +227,49 @@ main() {
   services_conf_content=$(generate_services_conf)
   docker_env_content=$(generate_docker_env)
 
+  # P1-2: 校验 services.yaml 与 ports.env 的端口一致性
+  echo "校验 config/services.yaml 端口一致性:"
+  local yaml_inconsistent=false
+  while IFS='|' read -r env_var yaml_port; do
+    [ -z "$env_var" ] && continue
+    local env_port
+    env_port=$(get_port "$env_var" "")
+    if [ -n "$env_port" ] && [ "$env_port" != "$yaml_port" ]; then
+      echo "  DIFF: $env_var ports.env=$env_port services.yaml=$yaml_port" >&2
+      yaml_inconsistent=true
+    fi
+  done < <(python3 -c "
+import yaml, sys
+with open('$PROJECT_ROOT/config/services.yaml') as f:
+    data = yaml.safe_load(f)
+for group in data.get('service_groups', {}).values():
+    for svc in group:
+        env = svc.get('env_var', '')
+        port = svc.get('port', '')
+        if env and port:
+            print(f'{env}|{port}')
+for svc in data.get('virtual_services', []):
+    env = svc.get('env_var', '')
+    port = svc.get('port', '')
+    if env and port:
+        print(f'{env}|{port}')
+for key, info in data.get('special_ports', {}).items():
+    env = info.get('env_var', '')
+    port = info.get('port', '')
+    if env and port:
+        print(f'{env}|{port}')
+" 2>/dev/null || true)
+
+  if $yaml_inconsistent; then
+    echo "  请更新 config/services.yaml 或 config/ports.env 以保持一致" >&2
+    if $CHECK_ONLY; then
+      exit 1
+    fi
+  else
+    echo "  ✓ services.yaml 与 ports.env 端口一致"
+  fi
+  echo ""
+
   if $CHECK_ONLY; then
     # 校验模式：比较内容，不一致则报错
     local has_diff=false

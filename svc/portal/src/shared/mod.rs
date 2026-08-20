@@ -8,10 +8,9 @@ use topems_shared_event::cache::CacheManager;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_event::service_discovery::{LocalServiceRegistry, PortalServiceAggregator};
 use topems_shared_service_client::service_client::{
-    api::crm_api::CrmApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi, api::iam_api::IamApi,
-    api::mes_api::MesApi, api::notification_api::NotificationApi, create_erp_client,
-    create_monitor_client, create_workflow_client, ErpServiceClient, MonitorServiceClient,
-    TypedServiceClient, WorkflowServiceClient,
+    api::crm_api::CrmApi, api::erp_api::ErpApi, api::finance_api::FinanceApi, api::hrm_api::HrmApi,
+    api::iam_api::IamApi, api::mes_api::MesApi, api::monitor_api::MonitorApi,
+    api::notification_api::NotificationApi, TypedServiceClient, WorkflowApi,
 };
 
 #[derive(Clone)]
@@ -24,12 +23,12 @@ pub struct AppState {
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub dashboard_cache: CacheManager,
     pub notification_client: TypedServiceClient<NotificationApi>,
-    pub workflow_client: WorkflowServiceClient,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub mes_client: TypedServiceClient<MesApi>,
-    pub monitor_client: MonitorServiceClient,
+    pub monitor_client: TypedServiceClient<MonitorApi>,
     pub iam_client: TypedServiceClient<IamApi>,
     pub hrm_client: TypedServiceClient<HrmApi>,
-    pub erp_client: ErpServiceClient,
+    pub erp_client: TypedServiceClient<ErpApi>,
     pub crm_client: TypedServiceClient<CrmApi>,
     pub finance_client: TypedServiceClient<FinanceApi>,
 }
@@ -67,29 +66,29 @@ impl AppState {
                     TypedServiceClient::new(NotificationApi, "http://localhost:8000".to_string())
                         .unwrap()
                 }),
-            workflow_client: create_workflow_client().unwrap_or_else(|_| {
-                WorkflowServiceClient::from_env().unwrap_or_else(|_| {
-                    WorkflowServiceClient::new("http://localhost:8000".to_string()).unwrap()
-                })
-            }),
+            workflow_client: TypedServiceClient::<WorkflowApi>::from_env_default().unwrap_or_else(
+                |_| {
+                    TypedServiceClient::new(WorkflowApi, "http://localhost:8000".to_string())
+                        .unwrap()
+                },
+            ),
             mes_client: TypedServiceClient::<MesApi>::from_env_default().unwrap_or_else(|_| {
                 TypedServiceClient::new(MesApi, "http://localhost:8030".to_string()).unwrap()
             }),
-            monitor_client: create_monitor_client().unwrap_or_else(|_| {
-                MonitorServiceClient::from_env().unwrap_or_else(|_| {
-                    MonitorServiceClient::new("http://localhost:8000".to_string()).unwrap()
-                })
-            }),
+            monitor_client: TypedServiceClient::<MonitorApi>::from_env_default().unwrap_or_else(
+                |_| {
+                    TypedServiceClient::new(MonitorApi, "http://localhost:8000".to_string())
+                        .unwrap()
+                },
+            ),
             iam_client: TypedServiceClient::<IamApi>::from_env_default().unwrap_or_else(|_| {
                 TypedServiceClient::new(IamApi, "http://localhost:8000".to_string()).unwrap()
             }),
             hrm_client: TypedServiceClient::<HrmApi>::from_env_default().unwrap_or_else(|_| {
                 TypedServiceClient::new(HrmApi, "http://localhost:8020".to_string()).unwrap()
             }),
-            erp_client: create_erp_client().unwrap_or_else(|_| {
-                ErpServiceClient::from_env().unwrap_or_else(|_| {
-                    ErpServiceClient::new("http://localhost:8010".to_string()).unwrap()
-                })
+            erp_client: TypedServiceClient::<ErpApi>::from_env_default().unwrap_or_else(|_| {
+                TypedServiceClient::new(ErpApi, "http://localhost:8010".to_string()).unwrap()
             }),
             crm_client: TypedServiceClient::<CrmApi>::from_env_default().unwrap_or_else(|_| {
                 TypedServiceClient::new(CrmApi, "http://localhost:8029".to_string()).unwrap()

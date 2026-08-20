@@ -28,3 +28,6 @@ sqlx.workspace = true
 [features]
 default = []
 pgvector = []
+
+[lints]
+workspace = true

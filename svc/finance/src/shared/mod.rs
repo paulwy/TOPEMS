@@ -3,13 +3,13 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
-use topems_shared_service_client::service_client::WorkflowServiceClient;
+use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
-    pub workflow_client: WorkflowServiceClient,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
@@ -25,7 +25,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-impl FromRef<AppState> for WorkflowServiceClient {
+impl FromRef<AppState> for TypedServiceClient<WorkflowApi> {
     fn from_ref(state: &AppState) -> Self {
         state.workflow_client.clone()
     }

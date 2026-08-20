@@ -38,3 +38,6 @@ topems-shared-observability = { workspace = true }
 [[bin]]
 name = "topems-gis"
 path = "src/main.rs"
+
+[lints]
+workspace = true

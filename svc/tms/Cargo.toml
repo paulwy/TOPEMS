@@ -40,3 +40,6 @@ topems-wms = { path = "../wms" }
 [[bin]]
 name = "topems-tms"
 path = "src/main.rs"
+
+[lints]
+workspace = true

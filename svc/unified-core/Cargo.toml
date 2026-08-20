@@ -49,3 +49,6 @@ rand = "0.8"
 [[bin]]
 name = "topems-unified-core"
 path = "src/main.rs"
+
+[lints]
+workspace = true

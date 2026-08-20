@@ -36,3 +36,6 @@ tokio-test.workspace = true
 [[bin]]
 name = "topems-ehs"
 path = "src/main.rs"
+
+[lints]
+workspace = true

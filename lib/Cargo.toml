@@ -140,3 +140,6 @@ tempdir = "0.3"
 [build-dependencies]
 tonic-build = "0.14"
 prost-build = "0.13"
+
+[lints]
+workspace = true

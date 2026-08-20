@@ -40,3 +40,6 @@ rust_decimal = "1.35"
 [[bin]]
 name = "topems-wms"
 path = "src/main.rs"
+
+[lints]
+workspace = true

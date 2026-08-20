@@ -1,15 +1,15 @@
 //! 统一服务间通信模式使用示例
 //!
-//! 展示旧方式（具体 Client）与新方式（泛型 + trait）的对比。
+//! 展示泛型 + trait 的统一服务通信模式。
 //! 本模块中的代码仅用于展示模式，不会被实际调用。
 //!
-//! # 新模式核心思路
+//! # 核心思路
 //!
 //! 1. 用 `define_service_api!` 宏声明服务元数据（一行代码）。
 //! 2. 在 `TypedServiceClient<SpecificApi>` 上实现业务方法。
 //! 3. 创建客户端时优先 Consul 服务发现，回退环境变量，再回退默认端口。
 //!
-//! 对比旧模式：每个服务需要手写一个完整的 Client struct + impl，
+//! 相比旧模式（每个服务手写一个完整的 Client struct + impl），
 //! 新模式只需一行宏 + 业务方法，消除了 O(N²) 样板代码。
 
 #![allow(dead_code)]
@@ -22,38 +22,20 @@ use crate::service_client::api::{
     wms_api::WmsApi, workflow_api::WorkflowApi,
 };
 use crate::service_client::trait_api::{ServiceApi, TypedServiceClient};
-use crate::service_client::{
-    ErpServiceClient, HrmServiceClient, IamServiceClient, NotificationSvcClient,
-    WorkflowServiceClient,
-};
 use uuid::Uuid;
 
-/// 旧方式 vs 新方式对比示例
+/// 统一服务通信模式示例
 pub mod comparison {
     use super::*;
 
-    /// 旧方式：每个服务需要手写一个 Client struct
-    pub async fn old_way() -> Result<(), Box<dyn std::error::Error>> {
-        let erp_client = crate::service_client::create_erp_client()?;
-        let hrm_client = crate::service_client::create_hrm_client()?;
-        let iam_client = crate::service_client::create_iam_client()?;
-
-        // 调用方式
-        let _assets = erp_client.list_assets(1, 20).await?;
-        let _employees = hrm_client.list_employees().await?;
-        let _users = iam_client.list_users().await?;
-
-        Ok(())
-    }
-
-    /// 新方式：泛型 + trait，一行宏声明服务元数据
+    /// 使用泛型 + trait，一行宏声明服务元数据
     pub async fn new_way() -> Result<(), Box<dyn std::error::Error>> {
         // 创建客户端 — 自动服务发现
         let erp_client = TypedServiceClient::<ErpApi>::discover_default().await?;
         let hrm_client = TypedServiceClient::<HrmApi>::discover_default().await?;
         let iam_client = TypedServiceClient::<IamApi>::discover_default().await?;
 
-        // 调用方式与旧方式一致
+        // 调用各服务的业务方法
         let _assets = erp_client.list_assets(1, 20).await?;
         let _employees = hrm_client.list_employees().await?;
         let _users = iam_client.list_users().await?;

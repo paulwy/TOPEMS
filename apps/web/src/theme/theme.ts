@@ -2,6 +2,7 @@
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import { zhCN } from '@mui/material/locale';
+import i18n from '@/i18n';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
 import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
@@ -566,21 +567,29 @@ export const createCustomTheme = (): Theme => {
           defaultProps: {
             getItemAriaLabel: (
               type:
-                'page' | 'first' | 'last' | 'next' | 'previous' | 'start-ellipsis' | 'end-ellipsis',
+                | 'page'
+                | 'first'
+                | 'last'
+                | 'next'
+                | 'previous'
+                | 'start-ellipsis'
+                | 'end-ellipsis',
               page: number | null,
               selected: boolean
             ) => {
               if (type === 'page' && page !== null) {
-                return `跳转到第 ${page} 页${selected ? '（当前页）' : ''}`;
+                return selected
+                  ? i18n.t('theme.pagination.go_to_page_current', { page })
+                  : i18n.t('theme.pagination.go_to_page', { page });
               }
               if (type === 'start-ellipsis' || type === 'end-ellipsis') {
-                return '省略页';
+                return i18n.t('theme.pagination.ellipsis');
               }
               const labels: Record<string, string> = {
-                first: '跳转到首页',
-                last: '跳转到末页',
-                next: '跳转到下一页',
-                previous: '跳转到上一页',
+                first: i18n.t('theme.pagination.go_to_first'),
+                last: i18n.t('theme.pagination.go_to_last'),
+                next: i18n.t('theme.pagination.go_to_next'),
+                previous: i18n.t('theme.pagination.go_to_previous'),
               };
               return labels[type] ?? '';
             },
@@ -1065,7 +1074,7 @@ export const createCustomTheme = (): Theme => {
             return {};
           },
         },
-        // 表格分页中文化（覆盖显示文本）
+        // Localised table pagination display text (overrides MUI default labels)
         MuiTablePagination: {
           defaultProps: {
             labelDisplayedRows: ({
@@ -1077,8 +1086,14 @@ export const createCustomTheme = (): Theme => {
               to: number;
               count: number;
             }) => {
-              if (count === -1) return `第 ${from}-${to} 条（共超过 ${to} 条）`;
-              return `第 ${from}-${to} 条 / 共 ${count} 条`;
+              if (count === -1) {
+                return i18n.t('theme.table_pagination.rows_range_over', {
+                  from,
+                  to,
+                  cap: to,
+                });
+              }
+              return i18n.t('theme.table_pagination.rows_range', { from, to, count });
             },
           },
         },

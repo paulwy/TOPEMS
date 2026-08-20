@@ -9,7 +9,7 @@ use sqlx::{PgPool, Row};
 use topems_shared::{ApiResponse, AuthState};
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, TypedServiceClient, WorkflowServiceClient,
+    api::qms_api::QmsApi, TypedServiceClient, WorkflowApi,
 };
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -37,7 +37,7 @@ pub struct Shortcut {
 pub async fn get_workbench_data(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
-    State(workflow_client): State<WorkflowServiceClient>,
+    State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     State(notification_client): State<TypedServiceClient<NotificationApi>>,
     State(hrm_client): State<TypedServiceClient<HrmApi>>,
     State(mes_client): State<TypedServiceClient<MesApi>>,

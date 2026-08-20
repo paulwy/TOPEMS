@@ -18,5 +18,14 @@
   "theme.cyberpunk.css.k4": "这里同时定义两个名称以兼容自定义 class 和 MUI 内置 skeleton */",
   "theme.cyberpunk.css.k5": "响应 prefers-reduced-motion",
   "theme.cyberpunk.css.mui_6": "赛博朋克主题 — MUI 组件级样式覆盖",
-  "theme.cyberpunk.css.k7": "仅在 .cyberpunk-mode 下生效"
+  "theme.cyberpunk.css.k7": "仅在 .cyberpunk-mode 下生效",
+  "theme.pagination.go_to_page": "跳转到第 {{page}} 页",
+  "theme.pagination.go_to_page_current": "跳转到第 {{page}} 页（当前页）",
+  "theme.pagination.ellipsis": "省略页",
+  "theme.pagination.go_to_first": "跳转到首页",
+  "theme.pagination.go_to_last": "跳转到末页",
+  "theme.pagination.go_to_next": "跳转到下一页",
+  "theme.pagination.go_to_previous": "跳转到上一页",
+  "theme.table_pagination.rows_range_over": "第 {{from}}-{{to}} 条（共超过 {{cap}} 条）",
+  "theme.table_pagination.rows_range": "第 {{from}}-{{to}} 条 / 共 {{count}} 条"
 }

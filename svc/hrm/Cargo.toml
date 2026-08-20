@@ -41,3 +41,6 @@ reqwest = { version = "0.12", features = ["json"] }
 [[bin]]
 name = "topems-hrm"
 path = "src/main.rs"
+
+[lints]
+workspace = true

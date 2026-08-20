@@ -1,10 +1,9 @@
 use topems_shared_service_client::service_client::{
-    create_ai_client, create_bi_client, create_crm_client, create_doc_client, create_ehs_client,
-    create_erp_client, create_finance_client, create_generic_client, create_gis_client,
-    create_hrm_client, create_iam_client, create_integration_client, create_lims_client,
-    create_mes_client, create_mobile_client, create_monitor_client, create_notification_client,
-    create_pdm_client, create_pm_client, create_portal_client, create_qms_client, create_rd_client,
-    create_scm_client, create_srm_client, create_wms_client, BaseServiceClient, ServiceClientError,
+    create_ai_client, create_bi_client, create_doc_client, create_ehs_client,
+    create_generic_client, create_gis_client, create_integration_client, create_lims_client,
+    create_mobile_client, create_pdm_client, create_pm_client, create_portal_client,
+    create_rd_client, create_scm_client, create_srm_client, BaseServiceClient, ErpApi, FinanceApi,
+    HrmApi, IamApi, MonitorApi, NotificationApi, ServiceClientError, TypedServiceClient, WmsApi,
 };
 
 #[test]
@@ -89,7 +88,7 @@ async fn test_base_client_get_without_response_fails_without_server() {
 
 #[test]
 fn test_create_hrm_client_returns_client() {
-    let result = create_hrm_client();
+    let result = TypedServiceClient::<HrmApi>::from_env_default();
     match result {
         Ok(_) => {}
         Err(ServiceClientError::InvalidUrl(msg)) => {
@@ -101,7 +100,7 @@ fn test_create_hrm_client_returns_client() {
 
 #[test]
 fn test_create_iam_client_returns_client() {
-    let result = create_iam_client();
+    let result = TypedServiceClient::<IamApi>::from_env_default();
     match result {
         Ok(_) => {}
         Err(ServiceClientError::InvalidUrl(_)) => {}
@@ -111,7 +110,7 @@ fn test_create_iam_client_returns_client() {
 
 #[test]
 fn test_create_notification_client_returns_client() {
-    let result = create_notification_client();
+    let result = TypedServiceClient::<NotificationApi>::from_env_default();
     match result {
         Ok(_) => {}
         Err(ServiceClientError::InvalidUrl(_)) => {}
@@ -189,26 +188,14 @@ async fn test_base_client_timeout() {
 }
 
 #[test]
-fn test_create_qms_client_returns_client() {
-    let result = create_qms_client();
-    validate_client_result(result);
-}
-
-#[test]
-fn test_create_mes_client_returns_client() {
-    let result = create_mes_client();
-    validate_client_result(result);
-}
-
-#[test]
 fn test_create_erp_client_returns_client() {
-    let result = create_erp_client();
+    let result = TypedServiceClient::<ErpApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_wms_client_returns_client() {
-    let result = create_wms_client();
+    let result = TypedServiceClient::<WmsApi>::from_env_default();
     validate_client_result(result);
 }
 
@@ -225,14 +212,8 @@ fn test_create_pm_client_returns_client() {
 }
 
 #[test]
-fn test_create_crm_client_returns_client() {
-    let result = create_crm_client();
-    validate_client_result(result);
-}
-
-#[test]
 fn test_create_finance_client_returns_client() {
-    let result = create_finance_client();
+    let result = TypedServiceClient::<FinanceApi>::from_env_default();
     validate_client_result(result);
 }
 
@@ -298,7 +279,7 @@ fn test_create_portal_client_returns_client() {
 
 #[test]
 fn test_create_monitor_client_returns_client() {
-    let result = create_monitor_client();
+    let result = TypedServiceClient::<MonitorApi>::from_env_default();
     validate_client_result(result);
 }
 

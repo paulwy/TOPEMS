@@ -7,7 +7,7 @@ use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, TypedServiceClient, WmsServiceClient, WorkflowServiceClient,
+    api::qms_api::QmsApi, api::wms_api::WmsApi, TypedServiceClient, WorkflowApi,
 };
 
 #[derive(Clone)]
@@ -15,9 +15,9 @@ pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub wms_client: WmsServiceClient,
+    pub wms_client: TypedServiceClient<WmsApi>,
     pub hrm_client: TypedServiceClient<HrmApi>,
-    pub workflow_client: WorkflowServiceClient,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub notification_client: TypedServiceClient<NotificationApi>,
     pub mes_api_client: TypedServiceClient<MesApi>,
     pub qms_api_client: TypedServiceClient<QmsApi>,
@@ -35,7 +35,7 @@ impl FromRef<AppState> for PgPool {
     }
 }
 
-impl FromRef<AppState> for WmsServiceClient {
+impl FromRef<AppState> for TypedServiceClient<WmsApi> {
     fn from_ref(state: &AppState) -> Self {
         state.wms_client.clone()
     }
@@ -59,7 +59,7 @@ impl FromRef<AppState> for TypedServiceClient<HrmApi> {
     }
 }
 
-impl FromRef<AppState> for WorkflowServiceClient {
+impl FromRef<AppState> for TypedServiceClient<WorkflowApi> {
     fn from_ref(state: &AppState) -> Self {
         state.workflow_client.clone()
     }

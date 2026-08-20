@@ -38,3 +38,6 @@ utoipa.workspace = true
 tower = { workspace = true }
 axum = { workspace = true }
 rust_decimal = "1.35"
+
+[lints]
+workspace = true

@@ -22,7 +22,9 @@ use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
 };
-use topems_shared_service_client::service_client::{CreateInstanceRequest, WorkflowServiceClient};
+use topems_shared_service_client::service_client::{
+    CreateInstanceRequest, TypedServiceClient, WorkflowApi,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -38,14 +40,14 @@ pub struct ListQueryParams {
 pub struct AppState {
     pub db: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
-    pub workflow_client: WorkflowServiceClient,
+    pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 pub async fn create_routes(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-    workflow_client: WorkflowServiceClient,
+    workflow_client: TypedServiceClient<WorkflowApi>,
     supplier_cache: Arc<InMemoryCache<serde_json::Value>>,
 ) -> Result<Router> {
     let state = Arc::new(AppState {

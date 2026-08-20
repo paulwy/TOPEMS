@@ -26,3 +26,6 @@ topems-shared-core = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
+
+[lints]
+workspace = true

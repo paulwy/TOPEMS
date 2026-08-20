@@ -19,6 +19,15 @@
   "theme.cyberpunk.css.k5": "respond to prefers-reduced-motion",
   "theme.cyberpunk.css.mui_6": "Cyberpunk theme — MUI component-level style overrides",
   "theme.cyberpunk.css.k7": "Only effective under .cyberpunk-mode",
+  "theme.pagination.go_to_page": "Go to page {{page}}",
+  "theme.pagination.go_to_page_current": "Go to page {{page}} (current)",
+  "theme.pagination.ellipsis": "More pages",
+  "theme.pagination.go_to_first": "Go to first page",
+  "theme.pagination.go_to_last": "Go to last page",
+  "theme.pagination.go_to_next": "Go to next page",
+  "theme.pagination.go_to_previous": "Go to previous page",
+  "theme.table_pagination.rows_range_over": "Rows {{from}}-{{to}} of more than {{cap}}",
+  "theme.table_pagination.rows_range": "Rows {{from}}-{{to}} of {{count}}",
   "theme": {
     "presets": {
       "topems_0": "TOPEMS Blue",

@@ -39,3 +39,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "topems-qms"
 path = "src/main.rs"
+
+[lints]
+workspace = true

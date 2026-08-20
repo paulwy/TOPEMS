@@ -44,3 +44,6 @@ mockall.workspace = true
 [[bin]]
 name = "topems-crm"
 path = "src/main.rs"
+
+[lints]
+workspace = true
