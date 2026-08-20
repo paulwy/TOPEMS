@@ -8,14 +8,9 @@
  */
 
 export * from './env';
-export {
-  default as runtimeConfig,
-  getEnv as runtimeGetEnv,
-  isDevelopment,
-  isProduction,
-  isTest,
-  getMode,
-} from './runtime';
+export {    
+  default as getEnv as isDevelopment,
+  isProduction } from './runtime';
 export * from './types';
 export * from './deployment';
 export * from './permissions';
