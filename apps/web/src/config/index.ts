@@ -8,11 +8,9 @@
  */
 
 export * from './env';
-export {    
-  getEnv as isDevelopment,
-  isProduction } from './runtime';
+export { getEnv as isDevelopment, isProduction } from './runtime';
 export * from './types';
 export * from './deployment';
 export * from './permissions';
 export type { CspConfig } from './security';
-export { securityConfig, applySecurityHeaders } from './security';
+export { applySecurityHeaders } from './security';
