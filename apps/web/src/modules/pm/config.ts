@@ -96,10 +96,7 @@ const pmProjectDetailRoute: RouteConfigV2<PmProjectDetailPageProps> = {
 
 const taskKanbanRoute: RouteConfigV2<TaskBoardProps> = {
   path: PM_PATHS.taskKanban,
-  element: lazyWithRetry(
-    () => import('@/pages/pm/ProjectTaskKanbanPage'),
-    'ProjectTaskKanbanPage'
-  ),
+  element: lazyWithRetry(() => import('@/pages/pm/ProjectTaskKanbanPage'), 'ProjectTaskKanbanPage'),
   module: 'pm',
   code: 'pm-task-kanban',
   title: i18n.t('shared.config.k12'),
@@ -127,10 +124,7 @@ const pmContractListRoute: RouteConfigV2<PmContractListPageProps> = {
 
 const pmContractDetailRoute: RouteConfigV2<PmContractDetailPageProps> = {
   path: PM_PATHS.contractDetail,
-  element: lazyWithRetry(
-    () => import('@/pages/pm/PmContractDetailPage'),
-    'PmContractDetailPage'
-  ),
+  element: lazyWithRetry(() => import('@/pages/pm/PmContractDetailPage'), 'PmContractDetailPage'),
   module: 'pm',
   code: 'pm-contract-detail',
   title: i18n.t('shared.config.k8'),
@@ -176,10 +170,7 @@ const pmRoutes: RouteConfigV2[] = [
   pmContractListRoute,
   {
     path: PM_PATHS.contractCreate,
-    element: lazyWithRetry(
-      () => import('@/pages/pm/PmContractCreatePage'),
-      'PmContractCreatePage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/pm/PmContractCreatePage'), 'PmContractCreatePage'),
     module: 'pm',
     code: 'pm-contract-create',
     title: i18n.t('shared.config.k7'),

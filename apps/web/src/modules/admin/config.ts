@@ -113,7 +113,8 @@ const accountManagementRoute: RouteConfigV2<AccountManagementPageProps> = {
   group: 'master',
 };
 
-const adminUserListRoute: RouteConfigV2<AdminUserListProps> = accountManagementRoute as RouteConfigV2<AdminUserListProps>;
+const adminUserListRoute: RouteConfigV2<AdminUserListProps> =
+  accountManagementRoute as RouteConfigV2<AdminUserListProps>;
 
 const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
   path: ADMIN_PATHS.auditLog,
@@ -143,10 +144,7 @@ const monitorRoute: RouteConfigV2<MonitorPageProps> = {
 
 const permissionAuditRoute: RouteConfigV2<PermissionAuditPageProps> = {
   path: ADMIN_PATHS.permissionAudit,
-  element: lazyWithRetry(
-    () => import('@/pages/admin/PermissionAuditPage'),
-    'PermissionAuditPage'
-  ),
+  element: lazyWithRetry(() => import('@/pages/admin/PermissionAuditPage'), 'PermissionAuditPage'),
   module: 'admin',
   title: i18n.t('shared.config.k21'),
   titleKey: 'shared.config.k21',
@@ -166,10 +164,7 @@ const adminRoutes: RouteConfigV2[] = [
   tenantDetailRoute,
   {
     path: ADMIN_PATHS.tenantSettings,
-    element: lazyWithRetry(
-      () => import('@/pages/admin/TenantSettingsPage'),
-      'TenantSettingsPage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/admin/TenantSettingsPage'), 'TenantSettingsPage'),
     module: 'admin',
     title: i18n.t('shared.config.k5'),
     titleKey: 'shared.config.k5',
@@ -243,10 +238,7 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.systemSettings,
-    element: lazyWithRetry(
-      () => import('@/pages/admin/SystemSettingsPage'),
-      'SystemSettingsPage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/admin/SystemSettingsPage'), 'SystemSettingsPage'),
     module: 'admin',
     title: i18n.t('shared.config.k11'),
     titleKey: 'shared.config.k11',
@@ -266,7 +258,11 @@ const adminRoutes: RouteConfigV2[] = [
     title: i18n.t('shared.config.k12'),
     titleKey: 'shared.config.k12',
     code: 'admin-plugin',
-    requiredPermissions: ['admin:plugin:read', 'admin:dashboard:read', 'admin:iam:dashboard:approve'],
+    requiredPermissions: [
+      'admin:plugin:read',
+      'admin:dashboard:read',
+      'admin:iam:dashboard:approve',
+    ],
     action: 'read',
     template: 'list',
     group: 'setting',
@@ -290,10 +286,7 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.migration,
-    element: lazyWithRetry(
-      () => import('@/pages/admin/MigrationAdminPage'),
-      'MigrationAdminPage'
-    ),
+    element: lazyWithRetry(() => import('@/pages/admin/MigrationAdminPage'), 'MigrationAdminPage'),
     module: 'admin',
     title: i18n.t('shared.config.k14'),
     titleKey: 'shared.config.k14',
