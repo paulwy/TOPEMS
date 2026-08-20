@@ -100,11 +100,11 @@ async fn list_positions(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        SELECT id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
-          AND ($3::uuid IS NULL OR org_id = $3)
+          AND ($3::uuid IS NULL OR organization_id = $3)
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
@@ -126,7 +126,7 @@ async fn list_positions(
                 SELECT COUNT(*) FROM hrm.positions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
-                  AND ($3::uuid IS NULL OR org_id = $3)
+                  AND ($3::uuid IS NULL OR organization_id = $3)
                   AND ($4::text IS NULL OR status = $4)
                 "#,
             )
@@ -168,9 +168,9 @@ async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
+        INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#
     )
     .bind(id)
@@ -236,7 +236,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -263,19 +263,19 @@ async fn update_position(
         r#"
         UPDATE hrm.positions
         SET
-            org_id = COALESCE($1, org_id),
+            organization_id = COALESCE($1, organization_id),
             department_id = COALESCE($2, department_id),
             name = COALESCE($3, name),
             code = COALESCE($4, code),
             level = COALESCE($5, level),
-            min_salary = COALESCE($6, min_salary),
-            max_salary = COALESCE($7, max_salary),
+            salary_range_min = COALESCE($6, salary_range_min),
+            salary_range_max = COALESCE($7, salary_range_max),
             description = COALESCE($8, description),
             requirements = COALESCE($9, requirements),
             status = COALESCE($10, status),
             updated_at = $11
         WHERE id = $12
-        RETURNING id, tenant_id, org_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#
     )
     .bind(req.org_id)
