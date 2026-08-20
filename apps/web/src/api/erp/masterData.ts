@@ -12,7 +12,7 @@ export type SyncStatus =
   | 'compensating'
   | 'compensated';
 
-export interface SyncStep {
+interface SyncStep {
   id: string;
   step_name: string;
   target_system: string;
@@ -51,7 +51,7 @@ interface CompensationAction {
   executed_at?: string;
 }
 
-export interface SystemSyncStats {
+interface SystemSyncStats {
   system_name: string;
   total: number;
   successful: number;
@@ -169,7 +169,7 @@ export default masterDataSyncApi;
 
 // ==================== V42.0 AC-14: 质量闭环管理类型 ====================
 
-export type QualityTicketStatus =
+type QualityTicketStatus =
   | 'open'
   | 'assigned'
   | 'in_progress'
@@ -179,7 +179,7 @@ export type QualityTicketStatus =
   | 'closed'
   | 'rejected';
 
-export interface TicketHistoryEntry {
+interface TicketHistoryEntry {
   action: string;
   actor: string;
   comment?: string;
@@ -219,18 +219,18 @@ interface AssignTicketRequest {
   comment?: string;
 }
 
-export interface SubmitTicketRequest {
+interface SubmitTicketRequest {
   resolution: string;
   actor: string;
   comment?: string;
 }
 
-export interface VerifyTicketRequest {
+interface VerifyTicketRequest {
   verified_by: string;
   comment?: string;
 }
 
-export interface RejectTicketRequest {
+interface RejectTicketRequest {
   actor: string;
   comment?: string;
 }
@@ -253,7 +253,7 @@ interface ListQualityTicketsParams {
   page_size?: number;
 }
 
-export interface PaginatedTickets {
+interface PaginatedTickets {
   items: QualityTicket[];
   total: number;
   page: number;
@@ -263,9 +263,9 @@ export interface PaginatedTickets {
 
 // ==================== 自动修复工作流类型 ====================
 
-export type RepairStrategy = 'auto_fix' | 'manual_fix' | 'escalate' | 'ignore';
+type RepairStrategy = 'auto_fix' | 'manual_fix' | 'escalate' | 'ignore';
 
-export interface RepairStep {
+interface RepairStep {
   step_id: string;
   step_name: string;
   action: string;
@@ -276,7 +276,7 @@ export interface RepairStep {
   executed_at?: string;
 }
 
-export interface RepairResult {
+interface RepairResult {
   success: boolean;
   fields_changed: number;
   before_value: unknown;
@@ -285,7 +285,7 @@ export interface RepairResult {
   message: string;
 }
 
-export interface RepairWorkflow {
+interface RepairWorkflow {
   id: string;
   ticket_id: string;
   strategy: RepairStrategy;
@@ -327,7 +327,7 @@ interface ListRepairWorkflowsParams {
   page_size?: number;
 }
 
-export interface PaginatedRepairWorkflows {
+interface PaginatedRepairWorkflows {
   items: RepairWorkflow[];
   total: number;
   page: number;
@@ -402,7 +402,7 @@ interface EntityOwnerInfo {
 
 // ==================== 质量闭环统计类型 ====================
 
-export interface QualityLoopStats {
+interface QualityLoopStats {
   total_tickets: number;
   open_tickets: number;
   in_progress: number;
@@ -643,13 +643,13 @@ interface GraphQueryParams {
   limit?: number;
 }
 
-export interface NeighborQueryParams {
+interface NeighborQueryParams {
   relation_type?: string;
   direction?: string;
   limit?: number;
 }
 
-export interface ShortestPathParams {
+interface ShortestPathParams {
   source: string;
   target: string;
 }
@@ -698,7 +698,7 @@ interface ConceptQueryParams {
   page_size?: number;
 }
 
-export interface TripleQueryParams {
+interface TripleQueryParams {
   subject?: string;
   predicate?: string;
   object?: string;
@@ -723,7 +723,7 @@ interface InferenceResult {
 
 // ==================== V43.0 AC-15: 智能推荐类型 ====================
 
-export interface SimilarEntity {
+interface SimilarEntity {
   entity_id: string;
   entity_type: string;
   entity_name: string;
@@ -752,7 +752,7 @@ export interface CompletionSuggestion {
   reasoning: string;
 }
 
-export interface SimilarEntityQueryParams {
+interface SimilarEntityQueryParams {
   entity_id: string;
   entity_type?: string;
   top_k?: number;
@@ -891,7 +891,7 @@ interface MasterDataEdge {
   cursor: string;
 }
 
-export interface PageInfo {
+interface PageInfo {
   has_next_page: boolean;
   has_previous_page: boolean;
   start_cursor?: string;
@@ -904,7 +904,7 @@ interface MasterDataConnection {
   edges: MasterDataEdge[];
 }
 
-export interface QualityInfo {
+interface QualityInfo {
   score: number;
   issues_count: number;
   last_check_at: string;
@@ -994,9 +994,9 @@ const mdmGraphqlApi = {
 
 // ==================== V44.0 AC-16: 同步编排引擎 V2 类型 ====================
 
-export type SyncJobPriority = 'high' | 'normal' | 'low';
+type SyncJobPriority = 'high' | 'normal' | 'low';
 
-export interface SyncJobV2 {
+interface SyncJobV2 {
   id: string;
   tenant_id: string;
   entity_type: string;
@@ -1019,7 +1019,7 @@ export interface SyncJobV2 {
   error_message?: string;
 }
 
-export interface TenantSyncStats {
+interface TenantSyncStats {
   total_jobs: number;
   successful: number;
   failed: number;
@@ -1028,7 +1028,7 @@ export interface TenantSyncStats {
   dead_letter_count: number;
 }
 
-export interface SyncEngineStatsV2 {
+interface SyncEngineStatsV2 {
   total_jobs: number;
   by_priority: Record<string, number>;
   by_status: Record<string, number>;
@@ -1228,9 +1228,9 @@ const mdmGatewayApi = {
 
 // ==================== V45.0 AC-17: 主数据质量 AI 类型 ====================
 
-export type QualityRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+type QualityRiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
-export interface QualityAiScore {
+interface QualityAiScore {
   entity_id: string;
   domain: string;
   overall_score: number;
@@ -1246,7 +1246,7 @@ export interface QualityAiScore {
   scored_at: string;
 }
 
-export interface QualityAnomaly {
+interface QualityAnomaly {
   id: string;
   entity_id: string;
   domain: string;
@@ -1259,7 +1259,7 @@ export interface QualityAnomaly {
   detected_at: string;
 }
 
-export interface QualityPrediction {
+interface QualityPrediction {
   entity_id: string;
   domain: string;
   predicted_quality_trend: 'improving' | 'stable' | 'declining';
@@ -1274,7 +1274,7 @@ interface BatchScoreRequest {
   entity_ids?: string[];
 }
 
-export interface QualityAnomalyQueryParams {
+interface QualityAnomalyQueryParams {
   domain?: string;
   entity_id?: string;
   severity?: string;
@@ -1283,15 +1283,15 @@ export interface QualityAnomalyQueryParams {
   page_size?: number;
 }
 
-export interface PredictQualityParams {
+interface PredictQualityParams {
   horizon_days?: number;
 }
 
-export interface QualityAiStatsParams {
+interface QualityAiStatsParams {
   domain?: string;
 }
 
-export interface QualityAiStats {
+interface QualityAiStats {
   total_entities: number;
   avg_overall_score: number;
   avg_completeness: number;
@@ -1391,7 +1391,7 @@ interface DuplicateGroupsParams {
   domain?: string;
 }
 
-export interface SuggestMergeRequest {
+interface SuggestMergeRequest {
   group_id: string;
   primary_entity_id?: string;
 }
@@ -1509,7 +1509,7 @@ interface ClassificationStats {
   model: ClassificationModel;
 }
 
-export interface SuggestTagsResult {
+interface SuggestTagsResult {
   entity_id: string;
   domain: string;
   tags: string[];

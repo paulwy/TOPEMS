@@ -54,13 +54,13 @@ export interface FileMetadata {
   updated_at: string;
 }
 
-export interface ShareFileRequest {
+interface ShareFileRequest {
   principal_type: 'user' | 'group' | 'department';
   principal_id: string;
   permission: 'read' | 'write' | 'manage';
 }
 
-export interface FilePermission {
+interface FilePermission {
   id: string;
   file_id: string;
   principal_type: 'user' | 'group' | 'department';
@@ -72,7 +72,7 @@ export interface FilePermission {
   created_at: string;
 }
 
-export interface FileStats {
+interface FileStats {
   total_files: number;
   totalsize: number;
   today_uploads: number;
@@ -80,7 +80,7 @@ export interface FileStats {
   storage_limit: number;
 }
 
-export interface ListFilesQuery {
+interface ListFilesQuery {
   page?: number;
   pagesize?: number;
   search?: string;
@@ -88,20 +88,20 @@ export interface ListFilesQuery {
   owner_id?: string;
 }
 
-export interface PagedResponse<T> {
+interface PagedResponse<T> {
   items: T[];
   total: number;
   page: number;
   pagesize: number;
 }
 
-export interface ShareInfo {
+interface ShareInfo {
   file_id: string;
   file_name: string;
   shared_with: SharedWith[];
 }
 
-export interface SharedWith {
+interface SharedWith {
   id: string;
   name: string;
   type: 'user' | 'group' | 'department';

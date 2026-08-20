@@ -33,7 +33,7 @@ export interface ApprovalConfig {
   updatedAt?: string;
 }
 
-export interface CreateApprovalConfigRequest {
+interface CreateApprovalConfigRequest {
   name: string;
   description?: string;
   amountThreshold: number;

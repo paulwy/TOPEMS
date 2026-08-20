@@ -3,14 +3,14 @@ import type { ApiResponse } from '../client';
 
 // ==================== 类型定义 ====================
 
-export type FraudSignalType = 'velocity' | 'geolocation' | 'device' | 'behavior' | 'pattern';
+type FraudSignalType = 'velocity' | 'geolocation' | 'device' | 'behavior' | 'pattern';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type FraudAction = 'approve' | 'review' | 'block';
-export type CreditGrade = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
-export type StressScenarioType = 'market' | 'credit' | 'liquidity' | 'operational';
-export type ShockType = 'parallel' | 'sequential' | 'reverse';
+type FraudAction = 'approve' | 'review' | 'block';
+type CreditGrade = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
+type StressScenarioType = 'market' | 'credit' | 'liquidity' | 'operational';
+type ShockType = 'parallel' | 'sequential' | 'reverse';
 
-export interface FraudSignal {
+interface FraudSignal {
   id: string;
   signal_type: string;
   score: number;
@@ -19,7 +19,7 @@ export interface FraudSignal {
   detected_at: string;
 }
 
-export interface FraudDecision {
+interface FraudDecision {
   id: string;
   transaction_id: string;
   risk_level: string;
@@ -29,7 +29,7 @@ export interface FraudDecision {
   decided_at: string;
 }
 
-export interface DeviceProfile {
+interface DeviceProfile {
   id: string;
   device_id: string;
   fingerprint: string;
@@ -38,7 +38,7 @@ export interface DeviceProfile {
   ip_history?: unknown;
 }
 
-export interface CreditProfile {
+interface CreditProfile {
   id: string;
   entity_id: string;
   score: number;
@@ -47,7 +47,7 @@ export interface CreditProfile {
   updated_at: string;
 }
 
-export interface ScoringModel {
+interface ScoringModel {
   id: string;
   name: string;
   version: string;
@@ -64,7 +64,7 @@ export interface ScoreFactor {
   description: string;
 }
 
-export interface StressScenario {
+interface StressScenario {
   id: string;
   name: string;
   scenario_type: string;
@@ -73,7 +73,7 @@ export interface StressScenario {
   created_at: string;
 }
 
-export interface StressResult {
+interface StressResult {
   id: string;
   scenario_id: string;
   entity_id: string;
@@ -84,7 +84,7 @@ export interface StressResult {
   details?: unknown;
 }
 
-export interface ScenarioParameter {
+interface ScenarioParameter {
   name: string;
   base_value: number;
   shocked_value: number;
@@ -101,7 +101,7 @@ export interface FraudRule {
 
 // ==================== 请求类型 ====================
 
-export interface AnalyzeTransactionRequest {
+interface AnalyzeTransactionRequest {
   transaction_id: string;
   amount?: number;
   device_id?: string;
@@ -109,25 +109,25 @@ export interface AnalyzeTransactionRequest {
   metadata?: unknown;
 }
 
-export interface SignalsQuery {
+interface SignalsQuery {
   signal_type?: string;
 }
 
-export interface CreateDeviceRequest {
+interface CreateDeviceRequest {
   device_id: string;
   fingerprint: string;
   trust_score?: number;
   ip_history?: unknown;
 }
 
-export interface AddRuleRequest {
+interface AddRuleRequest {
   name: string;
   signal_type: string;
   threshold?: number;
   enabled?: boolean;
 }
 
-export interface CalculateScoreRequest {
+interface CalculateScoreRequest {
   entity_id: string;
   features?: unknown;
   model_id?: string;
@@ -141,7 +141,7 @@ export interface CreateModelRequest {
   accuracy?: number;
 }
 
-export interface UpdateModelRequest {
+interface UpdateModelRequest {
   name?: string;
   features?: unknown;
   weights?: unknown;
@@ -149,37 +149,37 @@ export interface UpdateModelRequest {
   status?: string;
 }
 
-export interface FactorsQuery {
+interface FactorsQuery {
   entity_id?: string;
 }
 
-export interface ModelComparisonQuery {
+interface ModelComparisonQuery {
   model_ids: string[];
 }
 
-export interface BulkScoreRequest {
+interface BulkScoreRequest {
   entity_ids: string[];
   model_id?: string;
 }
 
-export interface CreateScenarioRequest {
+interface CreateScenarioRequest {
   name: string;
   scenario_type?: string;
   severity?: string;
   assumptions?: unknown;
 }
 
-export interface RunStressTestRequest {
+interface RunStressTestRequest {
   scenario_id: string;
   entity_id: string;
   parameters?: ScenarioParameter[];
 }
 
-export interface CompareScenariosRequest {
+interface CompareScenariosRequest {
   scenario_ids: string[];
 }
 
-export interface ScenarioParamsQuery {
+interface ScenarioParamsQuery {
   scenario_id?: string;
 }
 

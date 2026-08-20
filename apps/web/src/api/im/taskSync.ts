@@ -28,7 +28,7 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done' | 'cancelled' | 'blocked';
-export type TodoStatus = 'pending' | 'completed';
+type TodoStatus = 'pending' | 'completed';
 export type ReminderType = 'once' | 'daily' | 'weekly' | 'custom_interval';
 
 export interface SyncedTask {
@@ -67,7 +67,7 @@ export interface CreateTaskFromMessageRequest {
   subtasks?: Array<{ title: string }>;
 }
 
-export interface BatchCreateTasksRequest {
+interface BatchCreateTasksRequest {
   tasks: CreateTaskFromMessageRequest[];
 }
 
@@ -86,7 +86,7 @@ export interface PersonalTodo {
   completed_at?: string;
 }
 
-export interface CreatePersonalTodoRequest {
+interface CreatePersonalTodoRequest {
   title: string;
   description?: string;
   priority?: TaskPriority;
@@ -110,7 +110,7 @@ export interface TaskReminder {
   created_at: string;
 }
 
-export interface CreateTaskReminderRequest {
+interface CreateTaskReminderRequest {
   message_id: string;
   chat_id: string;
   reminder_type: ReminderType;

@@ -59,7 +59,7 @@ export interface CreateVoiceMessageRequest {
   language?: string;
 }
 
-export interface TranscribeVoiceMessageRequest {
+interface TranscribeVoiceMessageRequest {
   language?: string;
   model?: 'base' | 'enhanced';
 }
@@ -93,7 +93,7 @@ export interface MakeVoiceCallRequest {
   caller_id?: string;
 }
 
-export interface TransferVoiceCallRequest {
+interface TransferVoiceCallRequest {
   target_user_id: string;
   target_user_name?: string;
   reason?: string;

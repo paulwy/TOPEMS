@@ -14,7 +14,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface FeedbackAttachment {
+interface FeedbackAttachment {
   id: string;
   feedback_id: string;
   tenant_id: string;
@@ -27,12 +27,12 @@ export interface FeedbackAttachment {
   created_at: string;
 }
 
-export interface UploadAttachmentRequest {
+interface UploadAttachmentRequest {
   file: File | Blob;
   description?: string;
 }
 
-export interface BulkUploadResult {
+interface BulkUploadResult {
   total: number;
   succeeded: number;
   failed: number;

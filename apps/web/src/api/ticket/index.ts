@@ -55,7 +55,7 @@ export type {
   CreateTicketTransitionRequest,
   CreateWorkflowRequest,
 } from './workflow';
-export type { TicketAttachment, UploadAttachmentRequest } from './attachment';
+export type { TicketAttachment } from './attachment';
 export type { TicketTag, BatchResult } from './batch';
 
 export const ticketApi = {

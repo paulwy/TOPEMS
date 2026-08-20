@@ -18,7 +18,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 export type AssistantTaskStatus = 'pending' | 'processing' | 'completed' | 'failed';
-export type AssistantConfigStatus = 'enabled' | 'disabled';
+type AssistantConfigStatus = 'enabled' | 'disabled';
 
 export interface ConversationSummary {
   chat_id: string;

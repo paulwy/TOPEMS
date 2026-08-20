@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface ReconciliationOrder {
+interface ReconciliationOrder {
   id?: string;
   order_no?: string;
   counterparty_id?: string;
@@ -18,7 +18,7 @@ export interface ReconciliationOrder {
   items?: ReconciliationItem[];
 }
 
-export interface ReconciliationItem {
+interface ReconciliationItem {
   id?: string;
   order_id?: string;
   source_type?: string;
@@ -34,7 +34,7 @@ export interface ReconciliationItem {
   remark?: string;
 }
 
-export interface ReconciliationCreateRequest {
+interface ReconciliationCreateRequest {
   counterparty_id?: string;
   period?: string;
   start_date?: string;

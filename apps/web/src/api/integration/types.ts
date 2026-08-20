@@ -1,6 +1,6 @@
 import type { ApiResponse } from '../client';
 
-export interface IntegrationEventPayload {
+interface IntegrationEventPayload {
   [key: string]: unknown;
 }
 
@@ -18,7 +18,7 @@ export interface IntegrationEvent {
   created_at: string;
 }
 
-export type ErpConnectionType = 'kingdee' | 'yonyou' | 'sap';
+type ErpConnectionType = 'kingdee' | 'yonyou' | 'sap';
 export type ErpConnectionStatus = 'connected' | 'disconnected' | 'error' | 'syncing';
 export type SyncDirection = 'import' | 'export' | 'bidirectional';
 export type SyncMode = 'realtime' | 'scheduled' | 'manual';

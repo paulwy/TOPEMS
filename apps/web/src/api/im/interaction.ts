@@ -171,7 +171,7 @@ export interface CheckInQuery {
   pagesize?: number;
 }
 
-export interface SubmitCheckInRequest {
+interface SubmitCheckInRequest {
   check_in_code?: string;
   longitude?: number;
   latitude?: number;

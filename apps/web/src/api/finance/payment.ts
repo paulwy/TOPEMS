@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse, PaginatedResult } from '../../types/finance';
 
-export interface PaymentItem {
+interface PaymentItem {
   id?: string;
   lineNo?: number;
   invoiceId?: string;
@@ -56,17 +56,17 @@ export interface CreatePaymentRequest {
   items: PaymentItem[];
 }
 
-export interface ExecutePaymentRequest {
+interface ExecutePaymentRequest {
   bankTransactionNo: string;
   actualPaymentDate: string;
 }
 
-export interface WriteOffRequest {
+interface WriteOffRequest {
   itemId: string;
   writeOffAmount: number;
 }
 
-export interface PaymentQueryParams {
+interface PaymentQueryParams {
   supplierId?: string;
   status?: string;
   startDate?: string;
@@ -75,14 +75,14 @@ export interface PaymentQueryParams {
   pageSize?: number;
 }
 
-export interface ExportPaymentRequest {
+interface ExportPaymentRequest {
   format: 'csv' | 'json';
   status?: string;
   startDate?: string;
   endDate?: string;
 }
 
-export interface ExportPaymentResponse {
+interface ExportPaymentResponse {
   fileName: string;
   format: string;
   totalCount: number;

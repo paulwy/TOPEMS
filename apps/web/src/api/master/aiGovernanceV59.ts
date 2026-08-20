@@ -5,13 +5,12 @@ import type { ApiResponse } from '../client';
 
 export type EntityType =
   'customer' | 'supplier' | 'product' | 'material' | 'order' | 'invoice' | 'employee' | 'document';
-export type SuggestionType =
-  'naming' | 'duplicate' | 'missing' | 'inconsistency' | 'standardization';
-export type SuggestionStatus = 'pending' | 'applied' | 'dismissed';
-export type MatchStatus = 'pending' | 'reviewed' | 'confirmed' | 'rejected';
-export type ClassifierType = 'rule_based' | 'ml' | 'hybrid';
+type SuggestionType = 'naming' | 'duplicate' | 'missing' | 'inconsistency' | 'standardization';
+type SuggestionStatus = 'pending' | 'applied' | 'dismissed';
+type MatchStatus = 'pending' | 'reviewed' | 'confirmed' | 'rejected';
+type ClassifierType = 'rule_based' | 'ml' | 'hybrid';
 
-export interface GovernanceSuggestionV59 {
+interface GovernanceSuggestionV59 {
   id: string;
   entity_type: EntityType;
   entity_id: string;
@@ -24,7 +23,7 @@ export interface GovernanceSuggestionV59 {
   applied_at?: string;
 }
 
-export interface GovernanceModel {
+interface GovernanceModel {
   id: string;
   name: string;
   version: string;
@@ -56,7 +55,7 @@ export interface MatchResult {
   reviewed_at?: string;
 }
 
-export interface MatchStats {
+interface MatchStats {
   total_pairs: number;
   pending_review: number;
   confirmed: number;
@@ -104,13 +103,13 @@ export interface AnalyzeRequest {
   focus_areas?: SuggestionType[];
 }
 
-export interface TrainModelRequest {
+interface TrainModelRequest {
   entity_type: EntityType;
   model_type: ClassifierType;
   parameters?: Record<string, unknown>;
 }
 
-export interface CreateMatchRuleRequest {
+interface CreateMatchRuleRequest {
   name: string;
   source_type: EntityType;
   target_type: EntityType;
@@ -118,7 +117,7 @@ export interface CreateMatchRuleRequest {
   threshold?: number;
 }
 
-export interface MatchEntitiesRequest {
+interface MatchEntitiesRequest {
   rule_id?: string;
   source_type?: EntityType;
   target_type?: EntityType;
@@ -126,12 +125,12 @@ export interface MatchEntitiesRequest {
   min_score?: number;
 }
 
-export interface ReviewMatchRequest {
+interface ReviewMatchRequest {
   action: 'confirm' | 'reject';
   reason?: string;
 }
 
-export interface CreateClassifierRequest {
+interface CreateClassifierRequest {
   name: string;
   classifier_type: ClassifierType;
   entity_types: EntityType[];
@@ -139,14 +138,14 @@ export interface CreateClassifierRequest {
   rules?: Array<{ condition: string; category: string }>;
 }
 
-export interface ClassifyEntityRequest {
+interface ClassifyEntityRequest {
   classifier_id?: string;
   entity_type: EntityType;
   entity_id: string;
   context?: Record<string, unknown>;
 }
 
-export interface ReviewClassificationRequest {
+interface ReviewClassificationRequest {
   category: string;
   action: 'approve' | 'reassign';
   reason?: string;

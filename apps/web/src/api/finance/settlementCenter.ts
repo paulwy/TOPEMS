@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface SettlementReconciliation {
+interface SettlementReconciliation {
   id?: string;
   reconciliation_code?: string;
   counterparty_id?: string;
@@ -33,7 +33,7 @@ export interface Settlement {
   updated_at?: string;
 }
 
-export interface SettlementLink {
+interface SettlementLink {
   id?: string;
   reconciliation_id?: string;
   settlement_id?: string;
@@ -41,7 +41,7 @@ export interface SettlementLink {
   created_at?: string;
 }
 
-export interface SettlementDifference {
+interface SettlementDifference {
   id?: string;
   reconciliation_id?: string;
   field_name?: string;
@@ -53,7 +53,7 @@ export interface SettlementDifference {
   created_at?: string;
 }
 
-export interface SettlementDashboard {
+interface SettlementDashboard {
   total_reconciliations?: number;
   pending_reconciliations?: number;
   total_settlements?: number;

@@ -5,7 +5,7 @@ import type { ApiResponse } from '../client';
  * V19.0: GIS 围栏管理 Stub API
  * 后端尚未实现，前端先建立接口契约；后端就绪后此文件无需改动。
  */
-export interface GeoFenceRecord {
+interface GeoFenceRecord {
   id: string;
   name: string;
   type: 'circle' | 'polygon' | 'rectangle';
@@ -19,7 +19,7 @@ export interface GeoFenceRecord {
   triggerCount: number;
 }
 
-export interface CreateGeoFenceRequest {
+interface CreateGeoFenceRequest {
   name: string;
   type: 'circle' | 'polygon' | 'rectangle';
   radius?: number;

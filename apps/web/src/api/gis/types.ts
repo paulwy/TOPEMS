@@ -137,7 +137,7 @@ export interface CreateEvidenceRecordRequest {
   recorded_by: string;
 }
 
-export interface WarehouseLocation {
+interface WarehouseLocation {
   id: string;
   warehouse_name: string;
   zone?: string;

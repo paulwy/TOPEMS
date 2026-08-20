@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface GovernanceAnalysis {
+interface GovernanceAnalysis {
   id: string;
   entity_type: string;
   entity_id?: string;
@@ -16,7 +16,7 @@ export interface GovernanceAnalysis {
   created_at: string;
 }
 
-export interface GovernanceSuggestion {
+interface GovernanceSuggestion {
   id: string;
   analysis_id: string;
   entity_type: string;
@@ -29,7 +29,7 @@ export interface GovernanceSuggestion {
   created_at: string;
 }
 
-export interface AIGovernanceModel {
+interface AIGovernanceModel {
   id: string;
   name: string;
   type: string;
@@ -39,7 +39,7 @@ export interface AIGovernanceModel {
   last_trained_at?: string;
 }
 
-export interface MatchRule {
+interface MatchRule {
   id: string;
   name: string;
   source_type: string;
@@ -59,7 +59,7 @@ export interface MatchResult {
   matched_at: string;
 }
 
-export interface Classifier {
+interface Classifier {
   id: string;
   name: string;
   entity_type: string;
