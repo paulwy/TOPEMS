@@ -1,6 +1,4 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
-import { smartDebugger, SmartDebugger } from './smart-debugger';
-import { performanceAnalyzerV59, PerformanceAnalyzerV59 } from './performance-analyzer';
 import { codeRefactorer, CodeRefactorer } from './code-refactor';
 
 export type {
@@ -32,11 +30,8 @@ export type {
 
 export { V59DevExPanel } from './v59-devex-panel';
 
+// NOTE: codeRefactorer + CodeRefactorer retained for P1d-4c (next batch)
 export {
-  smartDebugger,
-  SmartDebugger,
-  performanceAnalyzerV59,
-  PerformanceAnalyzerV59,
   codeRefactorer,
   CodeRefactorer,
 };

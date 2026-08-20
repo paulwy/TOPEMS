@@ -1,7 +1,5 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 export {
-  AISecurityAuditor,
-  aiSecurityAuditor,
   type SecurityAudit,
   type AuditResult,
   type AuditRule,
@@ -10,8 +8,6 @@ export {
 } from './ai-security-audit';
 
 export {
-  AdversarialRobustness,
-  adversarialRobustness,
   type AttackVector,
   type RobustnessTest,
   type Defense,
@@ -21,8 +17,6 @@ export {
 } from './adversarial-robustness';
 
 export {
-  PrivacyEnhancer,
-  privacyEnhancer,
   type PrivacyConfig,
   type PrivacyReport,
   type PrivacyTestResult,
