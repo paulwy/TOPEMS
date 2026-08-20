@@ -18,7 +18,7 @@ export interface AuditLog {
   created_at: string;
 }
 
-export interface AuditLogListParams {
+interface AuditLogListParams {
   action?: string;
   entity_type?: string;
   user_id?: string;

@@ -40,7 +40,7 @@ export interface SqlPreview {
   warning?: string;
 }
 
-export interface AddColumnRequest {
+interface AddColumnRequest {
   table_name: string;
   column_name: string;
   data_type: string;
@@ -49,29 +49,29 @@ export interface AddColumnRequest {
   description?: string;
 }
 
-export interface ModifyColumnRequest {
+interface ModifyColumnRequest {
   data_type?: string;
   is_nullable?: boolean;
   default_value?: string;
   description?: string;
 }
 
-export interface DropColumnRequest {
+interface DropColumnRequest {
   confirm: boolean;
   reason?: string;
 }
 
-export interface DbChangeListResponse {
+interface DbChangeListResponse {
   items: DbChange[];
   total: number;
 }
 
-export interface TableQueryParams {
+interface TableQueryParams {
   schema?: string;
   search?: string;
 }
 
-export interface DbChangeQueryParams extends PaginationParams {
+interface DbChangeQueryParams extends PaginationParams {
   table_name?: string;
 }
 

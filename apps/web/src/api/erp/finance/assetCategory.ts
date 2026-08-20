@@ -25,7 +25,7 @@ export interface CreateAssetCategoryRequest {
   status?: string;
 }
 
-export interface UpdateAssetCategoryRequest {
+interface UpdateAssetCategoryRequest {
   name?: string;
   code?: string;
   parentId?: string;

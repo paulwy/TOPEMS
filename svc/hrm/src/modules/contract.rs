@@ -54,7 +54,8 @@ async fn list_contracts(
     let result = sqlx::query_as::<_, Contract>(
         r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts
         WHERE deleted_at IS NULL
@@ -125,7 +126,8 @@ async fn list_expiring_contracts(
     let result = sqlx::query_as::<_, Contract>(
         r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts
         WHERE deleted_at IS NULL
@@ -226,7 +228,8 @@ async fn create_contract(
             contract_file_path, reminder_days, status, notes, created_at, updated_at
         ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-                  party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+                  party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+                  end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                   contract_file_path, reminder_days, status, notes, created_at, updated_at
         "#,
     )
@@ -298,7 +301,8 @@ async fn get_contract(
     let result = sqlx::query_as::<_, Contract>(
         r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
         "#,
@@ -348,10 +352,11 @@ async fn update_contract(
 ) -> Json<ApiResponse<Contract>> {
     let contract_result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts WHERE id = $1
+        FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)
@@ -385,9 +390,10 @@ async fn update_contract(
             status = COALESCE($14, status),
             notes = COALESCE($15, notes),
             updated_at = $16
-        WHERE id = $1
-        RETURNING id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-                  party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+                  party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+                  end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
                   contract_file_path, reminder_days, status, notes, created_at, updated_at
         "#,
     )

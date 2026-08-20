@@ -2,18 +2,18 @@ import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from './types';
 
-export interface BatchStatusUpdateRequest {
+interface BatchStatusUpdateRequest {
   ids: string[];
   status: 'active' | 'inactive' | 'blacklisted';
 }
 
-export interface BatchCategoryUpdateRequest {
+interface BatchCategoryUpdateRequest {
   ids: string[];
   category?: string;
   industry?: string;
 }
 
-export interface CustomerListResponse {
+interface CustomerListResponse {
   customers: Customer[];
   total: number;
   page: number;

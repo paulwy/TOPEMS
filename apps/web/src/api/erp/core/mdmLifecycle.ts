@@ -15,7 +15,7 @@ export type LifecycleStage =
   | 'archived'
   | 'destroyed';
 
-export interface LifecycleEntity {
+interface LifecycleEntity {
   master_data_id: string;
   domain: string;
   entity_type: string;
@@ -27,7 +27,7 @@ export interface LifecycleEntity {
   updated_at: string;
 }
 
-export interface LifecycleTask {
+interface LifecycleTask {
   task_id: string;
   name: string;
   description?: string;
@@ -46,7 +46,7 @@ export interface LifecycleEvent {
   created_at: string;
 }
 
-export interface RetirementPlan {
+interface RetirementPlan {
   plan_id: string;
   master_data_id: string;
   master_data_name: string;
@@ -66,7 +66,7 @@ export interface RetirementPlan {
   updated_at: string;
 }
 
-export interface ArchivePolicy {
+interface ArchivePolicy {
   policy_id: string;
   name: string;
   scope: string;
@@ -78,7 +78,7 @@ export interface ArchivePolicy {
   updated_at: string;
 }
 
-export interface ArchiveRecord {
+interface ArchiveRecord {
   record_id: string;
   master_data_id: string;
   master_data_name: string;
@@ -89,7 +89,7 @@ export interface ArchiveRecord {
   status: 'archived' | 'restored' | 'destroyed';
 }
 
-export interface LifecycleStats {
+interface LifecycleStats {
   by_stage: Array<{ stage: LifecycleStage; count: number }>;
   total: number;
   avg_stage_duration_days?: number;
@@ -101,66 +101,66 @@ export interface ArchiveStats {
   restorations_last_30d?: number;
 }
 
-export interface RetirementStats {
+interface RetirementStats {
   total_plans: number;
   executed_count: number;
   pending_count: number;
   avg_impact_score?: number;
 }
 
-export interface LifecycleDashboard {
+interface LifecycleDashboard {
   lifecycle: LifecycleStats;
   archive: ArchiveStats;
   retirement: RetirementStats;
   sla_compliance: number;
 }
 
-export interface UpdateLifecycleTaskRequest {
+interface UpdateLifecycleTaskRequest {
   status: 'pending' | 'in_progress' | 'completed' | 'blocked';
   assignee?: string;
   note?: string;
 }
 
-export interface TransitionLifecycleRequest {
+interface TransitionLifecycleRequest {
   target_stage: LifecycleStage;
   reason?: string;
   approver?: string;
 }
 
-export interface CreateRetirementPlanRequest {
+interface CreateRetirementPlanRequest {
   master_data_id: string;
   master_data_name: string;
   target_date?: string;
   reason?: string;
 }
 
-export interface AssessImpactRequest {
+interface AssessImpactRequest {
   include_related?: boolean;
   depth?: number;
 }
 
-export interface NotifyRequest {
+interface NotifyRequest {
   channels?: string[];
   recipients?: string[];
   message?: string;
 }
 
-export interface ConfirmRetirementRequest {
+interface ConfirmRetirementRequest {
   confirmed_by?: string;
   notes?: string;
 }
 
-export interface ExecuteRetirementRequest {
+interface ExecuteRetirementRequest {
   execute_type?: 'soft' | 'hard';
   scheduled_at?: string;
 }
 
-export interface RollbackRetirementRequest {
+interface RollbackRetirementRequest {
   reason?: string;
   rolled_back_by?: string;
 }
 
-export interface CreateArchivePolicyRequest {
+interface CreateArchivePolicyRequest {
   name: string;
   scope: string;
   age_threshold_days: number;
@@ -168,7 +168,7 @@ export interface CreateArchivePolicyRequest {
   retention_days: number;
 }
 
-export interface UpdateArchivePolicyRequest {
+interface UpdateArchivePolicyRequest {
   name?: string;
   age_threshold_days?: number;
   storage_tier?: 'hot' | 'warm' | 'cold' | 'archive';
@@ -176,7 +176,7 @@ export interface UpdateArchivePolicyRequest {
   status?: 'active' | 'inactive';
 }
 
-export interface RunArchiveRequest {
+interface RunArchiveRequest {
   policy_id?: string;
   dry_run?: boolean;
   scope?: string;

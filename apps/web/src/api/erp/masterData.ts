@@ -44,7 +44,7 @@ export interface SyncJob {
   error_message?: string;
 }
 
-export interface CompensationAction {
+interface CompensationAction {
   step_id: string;
   action: string;
   status: SyncStatus;
@@ -71,7 +71,7 @@ export interface SyncStats {
   sync_per_system: Record<string, SystemSyncStats>;
 }
 
-export interface DeadLetterEntry {
+interface DeadLetterEntry {
   id: string;
   job_id: string;
   step_id: string;
@@ -94,7 +94,7 @@ export interface CreateSyncJobRequest {
   max_retries?: number;
 }
 
-export interface ListSyncJobsParams {
+interface ListSyncJobsParams {
   entity_type?: string;
   status?: string;
   source_system?: string;
@@ -102,7 +102,7 @@ export interface ListSyncJobsParams {
   page_size?: number;
 }
 
-export interface ListDeadLettersParams {
+interface ListDeadLettersParams {
   entity_type?: string;
   job_id?: string;
   page?: number;
@@ -214,7 +214,7 @@ export interface CreateQualityTicketRequest {
   assigned_to?: string;
 }
 
-export interface AssignTicketRequest {
+interface AssignTicketRequest {
   assigned_to: string;
   comment?: string;
 }
@@ -235,17 +235,17 @@ export interface RejectTicketRequest {
   comment?: string;
 }
 
-export interface CloseTicketRequest {
+interface CloseTicketRequest {
   actor: string;
   comment?: string;
 }
 
-export interface EscalateTicketRequest {
+interface EscalateTicketRequest {
   actor: string;
   comment?: string;
 }
 
-export interface ListQualityTicketsParams {
+interface ListQualityTicketsParams {
   status?: string;
   severity?: string;
   entity_type?: string;
@@ -301,14 +301,14 @@ export interface RepairWorkflow {
   created_at: string;
 }
 
-export interface CreateRepairStepRequest {
+interface CreateRepairStepRequest {
   step_name: string;
   action: string;
   target_field: string;
   new_value?: unknown;
 }
 
-export interface CreateRepairWorkflowRequest {
+interface CreateRepairWorkflowRequest {
   ticket_id: string;
   strategy: RepairStrategy;
   steps: CreateRepairStepRequest[];
@@ -316,12 +316,12 @@ export interface CreateRepairWorkflowRequest {
   requires_approval?: boolean;
 }
 
-export interface ApproveRepairRequest {
+interface ApproveRepairRequest {
   approved_by: string;
   comment?: string;
 }
 
-export interface ListRepairWorkflowsParams {
+interface ListRepairWorkflowsParams {
   status?: string;
   page?: number;
   page_size?: number;
@@ -337,7 +337,7 @@ export interface PaginatedRepairWorkflows {
 
 // ==================== 数据所有权管理类型 ====================
 
-export interface DataDomain {
+interface DataDomain {
   id: string;
   name: string;
   description: string;
@@ -349,7 +349,7 @@ export interface DataDomain {
   created_at: string;
 }
 
-export interface DataOwnershipMatrix {
+interface DataOwnershipMatrix {
   entity_type: string;
   data_domain: string;
   data_owner: string;
@@ -390,7 +390,7 @@ export interface SetOwnershipMatrixRequest {
   escalation_path: string[];
 }
 
-export interface EntityOwnerInfo {
+interface EntityOwnerInfo {
   entity_type: string;
   data_owner: string;
   data_steward: string;
@@ -594,7 +594,7 @@ const dataOwnershipApi = {
 
 // ==================== V43.0 AC-15: 主数据图谱类型 ====================
 
-export interface GraphNode {
+interface GraphNode {
   id: string;
   label: string;
   entity_type: string;
@@ -605,7 +605,7 @@ export interface GraphNode {
   cluster?: string;
 }
 
-export interface GraphEdge {
+interface GraphEdge {
   id: string;
   source: string;
   target: string;
@@ -615,7 +615,7 @@ export interface GraphEdge {
   properties: Record<string, unknown>;
 }
 
-export interface MasterDataGraph {
+interface MasterDataGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
   node_count: number;
@@ -625,7 +625,7 @@ export interface MasterDataGraph {
   connected_components: number;
 }
 
-export interface GraphStats {
+interface GraphStats {
   node_count: number;
   edge_count: number;
   avg_degree: number;
@@ -637,7 +637,7 @@ export interface GraphStats {
   avg_clustering_coefficient: number;
 }
 
-export interface GraphQueryParams {
+interface GraphQueryParams {
   domain?: string;
   entity_type?: string;
   limit?: number;
@@ -654,14 +654,14 @@ export interface ShortestPathParams {
   target: string;
 }
 
-export interface MultiHopQueryParams {
+interface MultiHopQueryParams {
   max_hops?: number;
   relation_type?: string;
 }
 
 // ==================== V43.0 AC-15: 知识图谱类型 ====================
 
-export interface Concept {
+interface Concept {
   id: string;
   name: string;
   concept_type: string;
@@ -671,7 +671,7 @@ export interface Concept {
   synonyms: string[];
 }
 
-export interface KnowledgeTriple {
+interface KnowledgeTriple {
   subject: string;
   predicate: string;
   object: string;
@@ -680,7 +680,7 @@ export interface KnowledgeTriple {
   created_at: string;
 }
 
-export interface InferenceRule {
+interface InferenceRule {
   id: string;
   name: string;
   description: string;
@@ -690,7 +690,7 @@ export interface InferenceRule {
   enabled: boolean;
 }
 
-export interface ConceptQueryParams {
+interface ConceptQueryParams {
   concept_type?: string;
   parentId?: string;
   keyword?: string;
@@ -707,13 +707,13 @@ export interface TripleQueryParams {
   page_size?: number;
 }
 
-export interface InferenceRequest {
+interface InferenceRequest {
   entity_id: string;
   rule_ids?: string[];
   max_depth?: number;
 }
 
-export interface InferenceResult {
+interface InferenceResult {
   entity_id: string;
   inferred_triples: KnowledgeTriple[];
   used_rules: string[];
@@ -732,7 +732,7 @@ export interface SimilarEntity {
   shared_attributes: string[];
 }
 
-export interface AssociationRecommendation {
+interface AssociationRecommendation {
   source_entity_id: string;
   target_entity_id: string;
   target_entity_name: string;
@@ -759,14 +759,14 @@ export interface SimilarEntityQueryParams {
   min_similarity?: number;
 }
 
-export interface AssociationQueryParams {
+interface AssociationQueryParams {
   entity_id: string;
   relation_type?: string;
   top_k?: number;
   min_confidence?: number;
 }
 
-export interface CompletionQueryParams {
+interface CompletionQueryParams {
   entity_id: string;
   field_name?: string;
   top_k?: number;
@@ -874,7 +874,7 @@ export const recommendationApi = {
 
 // ==================== V44.0 AC-16: MDM GraphQL API 类型 ====================
 
-export interface MasterDataEntity {
+interface MasterDataEntity {
   id: string;
   code: string;
   name: string;
@@ -886,7 +886,7 @@ export interface MasterDataEntity {
   properties: Record<string, unknown>;
 }
 
-export interface MasterDataEdge {
+interface MasterDataEdge {
   node: MasterDataEntity;
   cursor: string;
 }
@@ -898,7 +898,7 @@ export interface PageInfo {
   end_cursor?: string;
 }
 
-export interface MasterDataConnection {
+interface MasterDataConnection {
   total_count: number;
   page_info: PageInfo;
   edges: MasterDataEdge[];
@@ -910,30 +910,30 @@ export interface QualityInfo {
   last_check_at: string;
 }
 
-export interface LineageInfo {
+interface LineageInfo {
   upstream_count: number;
   downstream_count: number;
   lineage_depth: number;
 }
 
-export interface GraphInfo {
+interface GraphInfo {
   degree: number;
   centrality: number;
   community_id: string;
 }
 
-export interface GraphqlRequest {
+interface GraphqlRequest {
   query: string;
   variables?: Record<string, unknown>;
   operation_name?: string;
 }
 
-export interface GraphqlResponse<T = unknown> {
+interface GraphqlResponse<T = unknown> {
   data?: T;
   errors?: Array<{ message: string; path?: string[] }>;
 }
 
-export interface MdmStats {
+interface MdmStats {
   total_entities: number;
   by_domain: Record<string, number>;
   avg_quality_score: number;
@@ -1038,7 +1038,7 @@ export interface SyncEngineStatsV2 {
   queue_size: number;
 }
 
-export interface DeadLetterV2 {
+interface DeadLetterV2 {
   id: string;
   job_id: string;
   tenant_id: string;
@@ -1053,7 +1053,7 @@ export interface DeadLetterV2 {
   payload?: Record<string, unknown>;
 }
 
-export interface CreateSyncJobV2Request {
+interface CreateSyncJobV2Request {
   tenant_id?: string;
   entity_type: string;
   entity_id: string;
@@ -1066,7 +1066,7 @@ export interface CreateSyncJobV2Request {
   max_retries?: number;
 }
 
-export interface ListSyncJobsV2Params {
+interface ListSyncJobsV2Params {
   tenant_id?: string;
   status?: string;
   priority?: string;
@@ -1076,7 +1076,7 @@ export interface ListSyncJobsV2Params {
   page_size?: number;
 }
 
-export interface BatchRetryDeadLettersRequest {
+interface BatchRetryDeadLettersRequest {
   ids: string[];
   category?: string;
 }
@@ -1115,7 +1115,7 @@ const syncEngineV2Api = {
 
 // ==================== V44.0 AC-16: MDM 服务注册与健康检查类型 ====================
 
-export interface MdmServiceInfo {
+interface MdmServiceInfo {
   service_id: string;
   service_name: string;
   endpoint: string;
@@ -1125,7 +1125,7 @@ export interface MdmServiceInfo {
   capabilities: string[];
 }
 
-export interface MdmServiceRegisterRequest {
+interface MdmServiceRegisterRequest {
   service_id?: string;
   service_name: string;
   endpoint: string;
@@ -1133,7 +1133,7 @@ export interface MdmServiceRegisterRequest {
   capabilities?: string[];
 }
 
-export interface MdmServiceQueryParams {
+interface MdmServiceQueryParams {
   status?: string;
   domain?: string;
 }
@@ -1166,30 +1166,30 @@ const mdmServiceApi = {
 
 // ==================== V44.0 AC-16: MDM API 网关层类型 ====================
 
-export interface GatewayApiRequest {
+interface GatewayApiRequest {
   path: string;
   method: string;
   body?: Record<string, unknown>;
   headers?: Record<string, string>;
 }
 
-export interface GatewayApiResponse {
+interface GatewayApiResponse {
   status: number;
   body?: Record<string, unknown>;
   headers: Record<string, string>;
   latency_ms: number;
 }
 
-export interface GatewayBatchRequest {
+interface GatewayBatchRequest {
   requests: GatewayApiRequest[];
 }
 
-export interface GatewayAggregateRequest {
+interface GatewayAggregateRequest {
   entities: string[];
   fields?: string[];
 }
 
-export interface GatewayRoute {
+interface GatewayRoute {
   path: string;
   target_service: string;
   methods: string[];
@@ -1197,7 +1197,7 @@ export interface GatewayRoute {
   rate_limit: number;
 }
 
-export interface GatewayStats {
+interface GatewayStats {
   total_requests: number;
   error_count: number;
   error_rate: number;
@@ -1269,7 +1269,7 @@ export interface QualityPrediction {
   prediction_date: string;
 }
 
-export interface BatchScoreRequest {
+interface BatchScoreRequest {
   domain?: string;
   entity_ids?: string[];
 }
@@ -1344,9 +1344,9 @@ const qualityAiApi = {
 
 // ==================== V45.0 AC-17: 智能匹配类型 ====================
 
-export type MatchType = 'exact' | 'fuzzy' | 'phonetic' | 'abbreviation' | 'synonym' | 'partial';
+type MatchType = 'exact' | 'fuzzy' | 'phonetic' | 'abbreviation' | 'synonym' | 'partial';
 
-export interface MatchField {
+interface MatchField {
   field_name: string;
   source_value: string;
   target_value: string;
@@ -1354,7 +1354,7 @@ export interface MatchField {
   match_type: MatchType;
 }
 
-export interface MatchResult {
+interface MatchResult {
   source_id: string;
   target_id: string;
   target_name: string;
@@ -1365,7 +1365,7 @@ export interface MatchResult {
   recommendation: 'merge' | 'review' | 'skip';
 }
 
-export interface DuplicateGroup {
+interface DuplicateGroup {
   group_id: string;
   domain: string;
   entities: string[];
@@ -1374,20 +1374,20 @@ export interface DuplicateGroup {
   merge_recommendation: 'auto_merge' | 'manual_review' | 'no_action';
 }
 
-export interface FindMatchesRequest {
+interface FindMatchesRequest {
   domain?: string;
   threshold?: number;
   limit?: number;
 }
 
-export interface FindDuplicatesParams {
+interface FindDuplicatesParams {
   domain?: string;
   min_confidence?: number;
   page?: number;
   page_size?: number;
 }
 
-export interface DuplicateGroupsParams {
+interface DuplicateGroupsParams {
   domain?: string;
 }
 
@@ -1396,7 +1396,7 @@ export interface SuggestMergeRequest {
   primary_entity_id?: string;
 }
 
-export interface MergeSuggestion {
+interface MergeSuggestion {
   group_id: string;
   domain: string;
   primary_entity_id: string;
@@ -1457,7 +1457,7 @@ export interface Category {
   entity_count: number;
 }
 
-export interface ClassificationRule {
+interface ClassificationRule {
   id: string;
   name: string;
   domain: string;
@@ -1469,7 +1469,7 @@ export interface ClassificationRule {
   learned: boolean;
 }
 
-export interface ClassificationModel {
+interface ClassificationModel {
   categories: Category[];
   rules: ClassificationRule[];
   accuracy: number;
@@ -1477,17 +1477,17 @@ export interface ClassificationModel {
   training_samples: number;
 }
 
-export interface BatchClassifyRequest {
+interface BatchClassifyRequest {
   domain?: string;
   entity_ids?: string[];
 }
 
-export interface ListCategoriesParams {
+interface ListCategoriesParams {
   domain?: string;
   parentId?: string;
 }
 
-export interface LearnRuleRequest {
+interface LearnRuleRequest {
   name: string;
   domain: string;
   conditions: string[];
@@ -1496,11 +1496,11 @@ export interface LearnRuleRequest {
   confidence?: number;
 }
 
-export interface ClassificationStatsParams {
+interface ClassificationStatsParams {
   domain?: string;
 }
 
-export interface ClassificationStats {
+interface ClassificationStats {
   total_categories: number;
   total_rules: number;
   learned_rules: number;

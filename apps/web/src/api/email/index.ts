@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface EmailLog {
+interface EmailLog {
   id: string;
   fromEmail: string;
   toEmail: string;
@@ -28,7 +28,7 @@ export interface EmailTemplate {
   updatedAt: string;
 }
 
-export interface EmailLogListResponse {
+interface EmailLogListResponse {
   items: EmailLog[];
   total: number;
   page: number;
@@ -36,7 +36,7 @@ export interface EmailLogListResponse {
   totalPages: number;
 }
 
-export interface EmailStatsResponse {
+interface EmailStatsResponse {
   total: number;
   sentCount: number;
   failedCount: number;
@@ -44,7 +44,7 @@ export interface EmailStatsResponse {
   todayCount: number;
 }
 
-export interface BatchSendEmailRequest {
+interface BatchSendEmailRequest {
   toEmails: string[];
   ccEmail?: string;
   bccEmail?: string;
@@ -54,7 +54,7 @@ export interface BatchSendEmailRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface BatchSendEmailResponse {
+interface BatchSendEmailResponse {
   total: number;
   successCount: number;
   failCount: number;
@@ -75,7 +75,7 @@ export interface SendEmailRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface SendEmailWithTemplateRequest {
+interface SendEmailWithTemplateRequest {
   toEmail: string;
   ccEmail?: string;
   bccEmail?: string;

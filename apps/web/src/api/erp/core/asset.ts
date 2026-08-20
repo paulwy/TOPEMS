@@ -23,12 +23,12 @@ export interface Asset {
   updated_at: string;
 }
 
-export interface AssetListResponse {
+interface AssetListResponse {
   items: Asset[];
   total: number;
 }
 
-export interface CreateAssetRequest {
+interface CreateAssetRequest {
   asset_code: string;
   asset_name: string;
   category?: string;
@@ -44,7 +44,7 @@ export interface CreateAssetRequest {
   remark?: string;
 }
 
-export interface UpdateAssetRequest {
+interface UpdateAssetRequest {
   asset_name?: string;
   category?: string;
   specification?: string;

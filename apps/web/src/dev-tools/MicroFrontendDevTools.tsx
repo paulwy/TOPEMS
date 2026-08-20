@@ -109,7 +109,7 @@ const MicroFrontendDevTools: React.FC = () => {
           position: 'fixed',
           bottom: 16,
           left: 16,
-          right: 160,
+          right: 220,
           zIndex: 9998,
           display: 'flex',
           flexWrap: 'wrap',

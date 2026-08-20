@@ -24,7 +24,7 @@ export interface LeaveRequest {
   updated_at: string;
 }
 
-export interface CreateLeaveRequestRequest {
+interface CreateLeaveRequestRequest {
   employee_id?: string;
   leave_type: string;
   start_date: string;
@@ -34,7 +34,7 @@ export interface CreateLeaveRequestRequest {
   reason?: string;
 }
 
-export interface UpdateLeaveRequestRequest {
+interface UpdateLeaveRequestRequest {
   leave_type?: string;
   start_date?: string;
   end_date?: string;
@@ -43,24 +43,24 @@ export interface UpdateLeaveRequestRequest {
   reason?: string;
 }
 
-export interface SubmitLeaveRequestRequest {
+interface SubmitLeaveRequestRequest {
   comment?: string;
 }
 
-export interface ApproveLeaveRequestRequest {
+interface ApproveLeaveRequestRequest {
   comment?: string;
 }
 
-export interface RejectLeaveRequestRequest {
+interface RejectLeaveRequestRequest {
   reason: string;
 }
 
-export interface LeaveRequestListResponse {
+interface LeaveRequestListResponse {
   items: LeaveRequest[];
   total: number;
 }
 
-export interface LeaveRequestQueryParams extends PaginationParams {
+interface LeaveRequestQueryParams extends PaginationParams {
   search?: string;
   status?: string;
   leave_type?: string;

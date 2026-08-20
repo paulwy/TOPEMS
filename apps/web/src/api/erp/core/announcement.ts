@@ -15,7 +15,7 @@ export interface Announcement {
   updated_at: string;
 }
 
-export interface AnnouncementListResponse {
+interface AnnouncementListResponse {
   items: Announcement[];
   total: number;
 }

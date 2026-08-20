@@ -25,7 +25,7 @@ export interface DictItem {
   updated_at: string;
 }
 
-export interface CreateDictTypeRequest {
+interface CreateDictTypeRequest {
   code: string;
   name: string;
   category?: string;
@@ -33,14 +33,14 @@ export interface CreateDictTypeRequest {
   status?: string;
 }
 
-export interface UpdateDictTypeRequest {
+interface UpdateDictTypeRequest {
   name?: string;
   category?: string;
   description?: string;
   status?: string;
 }
 
-export interface CreateDictItemRequest {
+interface CreateDictItemRequest {
   dict_type_id: string;
   code: string;
   name: string;
@@ -49,35 +49,35 @@ export interface CreateDictItemRequest {
   status?: string;
 }
 
-export interface UpdateDictItemRequest {
+interface UpdateDictItemRequest {
   name?: string;
   value?: string;
   sort_order?: number;
   status?: string;
 }
 
-export interface BatchCreateDictItemRequest {
+interface BatchCreateDictItemRequest {
   dict_type_id: string;
   items: CreateDictItemRequest[];
 }
 
-export interface DictTypeListResponse {
+interface DictTypeListResponse {
   items: DictType[];
   total: number;
 }
 
-export interface DictItemListResponse {
+interface DictItemListResponse {
   items: DictItem[];
   total: number;
 }
 
-export interface DictTypeQueryParams extends PaginationParams {
+interface DictTypeQueryParams extends PaginationParams {
   search?: string;
   category?: string;
   status?: string;
 }
 
-export interface DictItemQueryParams extends PaginationParams {
+interface DictItemQueryParams extends PaginationParams {
   search?: string;
 }
 

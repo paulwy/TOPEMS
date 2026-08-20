@@ -22,7 +22,7 @@ export interface EnvironmentalRegulation {
   updated_at?: string;
 }
 
-export interface ComplianceEvaluation {
+interface ComplianceEvaluation {
   id: string;
   eval_no: string;
   title: string;
@@ -86,7 +86,7 @@ export interface DischargePermit {
   updated_at?: string;
 }
 
-export interface EnvironmentIncident {
+interface EnvironmentIncident {
   id: string;
   incident_no: string;
   title: string;
@@ -111,7 +111,7 @@ export interface EnvironmentIncident {
   updated_at?: string;
 }
 
-export interface ComplianceStatistics {
+interface ComplianceStatistics {
   total_regulations: number;
   active_regulations: number;
   total_evaluations: number;
@@ -126,7 +126,7 @@ export interface ComplianceStatistics {
   by_incident_type: Record<string, unknown>[];
 }
 
-export interface RegulationListQuery {
+interface RegulationListQuery {
   page?: number;
   page_size?: number;
   status?: string;
@@ -134,7 +134,7 @@ export interface RegulationListQuery {
   year?: number;
 }
 
-export interface CreateRegulationRequest {
+interface CreateRegulationRequest {
   title: string;
   category: string;
   regulation_type?: string;
@@ -148,7 +148,7 @@ export interface CreateRegulationRequest {
   remarks?: string;
 }
 
-export interface UpdateRegulationRequest {
+interface UpdateRegulationRequest {
   title?: string;
   category?: string;
   regulation_type?: string;
@@ -172,7 +172,7 @@ export interface CreateEvaluationRequest {
   evaluator?: string;
 }
 
-export interface UpdateEvaluationRequest {
+interface UpdateEvaluationRequest {
   overall_result?: string;
   compliance_rate?: number;
   findings?: string;
@@ -180,7 +180,7 @@ export interface UpdateEvaluationRequest {
   status?: string;
 }
 
-export interface CreateMonitorRecordRequest {
+interface CreateMonitorRecordRequest {
   monitor_type: string;
   monitor_point: string;
   monitor_date?: string;
@@ -197,7 +197,7 @@ export interface CreateMonitorRecordRequest {
   remarks?: string;
 }
 
-export interface CreatePermitRequest {
+interface CreatePermitRequest {
   permit_type: string;
   permit_name?: string;
   issuing_authority?: string;
@@ -212,7 +212,7 @@ export interface CreatePermitRequest {
   remarks?: string;
 }
 
-export interface UpdatePermitRequest {
+interface UpdatePermitRequest {
   permit_name?: string;
   status?: string;
   valid_from?: string;
@@ -233,7 +233,7 @@ export interface CreateIncidentRequest {
   responsible_person?: string;
 }
 
-export interface UpdateIncidentRequest {
+interface UpdateIncidentRequest {
   level?: string;
   status?: string;
   cause?: string;

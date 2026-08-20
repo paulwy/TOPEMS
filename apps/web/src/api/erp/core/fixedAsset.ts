@@ -23,12 +23,12 @@ export interface FixedAsset {
   updated_at: string;
 }
 
-export interface FixedAssetListResponse {
+interface FixedAssetListResponse {
   items: FixedAsset[];
   total: number;
 }
 
-export interface CreateFixedAssetRequest {
+interface CreateFixedAssetRequest {
   asset_code: string;
   asset_name: string;
   asset_type: string;
@@ -42,7 +42,7 @@ export interface CreateFixedAssetRequest {
   location?: string;
 }
 
-export interface UpdateFixedAssetRequest {
+interface UpdateFixedAssetRequest {
   asset_name?: string;
   asset_type?: string;
   asset_category?: string;
@@ -57,7 +57,7 @@ export interface UpdateFixedAssetRequest {
   status?: string;
 }
 
-export interface DepreciateAssetsRequest {
+interface DepreciateAssetsRequest {
   asset_ids?: string[];
   depreciation_date?: string;
   period?: string;
