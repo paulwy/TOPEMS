@@ -1,0 +1,121 @@
+{
+  "scope": "config + constants L1-SAFE",
+  "targets": {
+    "apps/web/src/config/deployment.ts": [
+      "isSaaS",
+      "isOnPremise",
+      "isMultiTenant",
+      "checkTenantAccess",
+      "shouldCheckQuota",
+      "showTenantManagement",
+      "getFeatureFlag"
+    ],
+    "apps/web/src/config/env.ts": [
+      "isProd"
+    ],
+    "apps/web/src/config/help-mapping.ts": [
+      "getHelpMapping"
+    ],
+    "apps/web/src/config/index.ts": [
+      "runtimeConfig",
+      "runtimeGetEnv",
+      "isTest",
+      "getMode"
+    ],
+    "apps/web/src/config/permissionMapping.ts": [
+      "PERMISSION_MAPPING",
+      "mapPermissionIdToName",
+      "mapPermissionIdsToNames",
+      "mapPermissionNameToId",
+      "getPermissionByModule",
+      "getPermissionByAction",
+      "ALL_ADMIN_PERMISSIONS",
+      "IAM_ADMIN_PERMISSION_ID",
+      "DEFAULT_ROLE_PERMISSIONS"
+    ],
+    "apps/web/src/config/permissions.ts": [
+      "PERMISSION_GROUPS",
+      "MODULE_INFO",
+      "getModuleActions",
+      "getModuleActionsFromPermissions",
+      "getAllPermissions",
+      "getPermissionsByRole",
+      "PERMISSION_DEFS",
+      "ALL_3PART_PERM_CODES",
+      "PERMISSION_CODES_BY_MODULE"
+    ],
+    "apps/web/src/config/plugins.config.ts": [
+      "MODULE_CATEGORIES",
+      "getModuleByCode",
+      "getRequiredModules",
+      "getOptionalModules",
+      "getDefaultEnabledModules",
+      "buildRemoteConfig",
+      "buildEnvConfig"
+    ],
+    "apps/web/src/config/ports.ts": [
+      "BACKEND_PORTS",
+      "getBackendPort"
+    ],
+    "apps/web/src/config/service-ports.ts": [
+      "SERVICE_PORTS"
+    ],
+    "apps/web/src/constants/api.ts": [
+      "AUTH_UNAUTHORIZED_EVENT"
+    ],
+    "apps/web/src/constants/index.ts": [
+      "DEFAULT_PAGE",
+      "DEFAULT_PAGE_SIZE",
+      "pickPageSize",
+      "toBackendPagination"
+    ],
+    "apps/web/src/constants/pagination.ts": [
+      "PAGINATION",
+      "PAGE_SIZES",
+      "COMPACT_PAGE_SIZE",
+      "LARGE_PAGE_SIZE"
+    ],
+    "apps/web/src/constants/retry.ts": [
+      "API_MAX_RETRIES",
+      "API_RETRY_BASE_DELAY_MS",
+      "API_RETRY_MAX_DELAY_MS",
+      "API_RETRY_MAX_TOTAL_WAIT_MS"
+    ],
+    "apps/web/src/constants/routes.ts": [
+      "DEFAULT_ROUTE",
+      "LOGIN_ROUTE",
+      "FORBIDDEN_ROUTE",
+      "NOT_FOUND_ROUTE",
+      "PUBLIC_ROUTES",
+      "isPublicRoute"
+    ],
+    "apps/web/src/constants/storage.ts": [
+      "TOKEN_KEY",
+      "TENANT_KEY"
+    ],
+    "apps/web/src/constants/time.ts": [
+      "SECOND_MS",
+      "MINUTE_MS",
+      "HOUR_MS",
+      "WEEK_MS",
+      "MONTH_APPROX_MS",
+      "YEAR_APPROX_MS"
+    ],
+    "apps/web/src/constants/validation.ts": [
+      "PHONE_REGEX",
+      "EMAIL_REGEX",
+      "USERNAME_MIN_LENGTH",
+      "USERNAME_MAX_LENGTH",
+      "PASSWORD_MIN_LENGTH",
+      "PASSWORD_MAX_LENGTH",
+      "NAME_MAX_LENGTH",
+      "DESCRIPTION_MAX_LENGTH",
+      "URL_MAX_LENGTH"
+    ],
+    "apps/web/src/constants/version.ts": [
+      "APP_SDK_VERSION"
+    ]
+  },
+  "total_exports": 78,
+  "total_files": 18
+}

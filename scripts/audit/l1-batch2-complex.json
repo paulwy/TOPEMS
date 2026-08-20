@@ -1,0 +1,36 @@
+{
+  "scope": "L1-SAFE Batch 2 — complex files manual",
+  "total_exports": 17,
+  "total_files": 6,
+  "targets": {
+    "apps/web/src/design-system/design-lint.ts": [
+      "checkColorContrast",
+      "lintSpacing",
+      "lintTypography",
+      "lintComponentUsage",
+      "runAllChecks"
+    ],
+    "apps/web/src/microfrontend/lowcode/index.ts": [
+      "defaultBuilder"
+    ],
+    "apps/web/src/microfrontend/marketplace/plugin-index.ts": [
+      "defaultPluginMarket"
+    ],
+    "apps/web/src/microfrontend/platform/index.ts": [
+      "defaultPlatform"
+    ],
+    "apps/web/src/schema/adapterFactory.ts": [
+      "createCrudApiAdapter"
+    ],
+    "apps/web/src/services/VoucherTemplateEngine.ts": [
+      "ExpressionEvaluator",
+      "VoucherTemplateEngine",
+      "PAYROLL_ACCURAL_TEMPLATE",
+      "SALES_INVOICE_TEMPLATE",
+      "COLLECTION_TEMPLATE",
+      "PURCHASE_INVOICE_TEMPLATE",
+      "PAYMENT_TEMPLATE",
+      "DEPRECIATION_TEMPLATE"
+    ]
+  }
+}

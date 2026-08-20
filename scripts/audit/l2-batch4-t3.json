@@ -1,0 +1,102 @@
+{
+  "total_exports": 54,
+  "total_files": 20,
+  "targets": {
+    "apps/web/src/hooks/useBIQueries.ts": [
+      "BI_QUERY_KEYS",
+      "useBIAllAnalytics",
+      "useBIRefresh",
+      "useBIClearError",
+      "useBILoadAllData"
+    ],
+    "apps/web/src/hooks/useUnifiedWebSocket.ts": [
+      "useUnifiedWebSocket",
+      "closeConnection",
+      "subscribeTopic",
+      "unsubscribeTopic",
+      "getConnectionStatus",
+      "reconnectSocket",
+      "pingServer"
+    ],
+    "apps/web/src/hooks/useCrudUnified.ts": [
+      "createAxiosAdapter",
+      "createCrudOperationsAdapter",
+      "createModuleAdapter",
+      "createFunctionAdapter",
+      "useCrudUnified"
+    ],
+    "apps/web/src/hooks/useTouchFeedback.ts": [
+      "usePinchGesture",
+      "useTouchScale"
+    ],
+    "apps/web/src/hooks/useRealtimeSync.ts": [
+      "useRealtimeSync",
+      "useRealtimeListSync"
+    ],
+    "apps/web/src/hooks/useThemeMode.ts": [
+      "useThemeMode"
+    ],
+    "apps/web/src/hooks/useFeatureFlag.ts": [
+      "FeatureGate"
+    ],
+    "apps/web/src/hooks/shortcuts.ts": [
+      "isMacOS"
+    ],
+    "apps/web/src/hooks/useResponsive.ts": [
+      "BREAKPOINTS"
+    ],
+    "apps/web/src/modules/shared/SharedStateBridge.ts": [
+      "setSharedState",
+      "subscribeToSharedState",
+      "initSharedState",
+      "syncAuthState",
+      "getAuthState",
+      "syncThemeState",
+      "getThemeState",
+      "syncI18nState",
+      "getI18nState"
+    ],
+    "apps/web/src/modules/shared/config.ts": [
+      "SHARED_PATHS",
+      "sharedModuleConfig"
+    ],
+    "apps/web/src/modules/registry/core-modules.ts": [
+      "CORE_MODULES_CONFIG"
+    ],
+    "apps/web/src/modules/registry/index.ts": [
+      "initializeCoreModules",
+      "BUSINESS_MODULES",
+      "PLUGIN_MODULES",
+      "useModules",
+      "useModuleRoutes"
+    ],
+    "apps/web/src/modules/registry/config.ts": [
+      "REGISTRY_PATHS",
+      "registryModuleConfig"
+    ],
+    "apps/web/src/modules/ticket/config.ts": [
+      "TICKET_PATHS"
+    ],
+    "apps/web/src/modules/automation/config.ts": [
+      "AUTOMATION_PATHS"
+    ],
+    "apps/web/src/modules/oa/config.ts": [
+      "OA_PATHS"
+    ],
+    "apps/web/src/modules/lowcode/config.ts": [
+      "LOWCODE_PATHS"
+    ],
+    "apps/web/src/modules/pdm/config.ts": [
+      "PDM_PATHS"
+    ],
+    "apps/web/src/hooks/usePerformanceMonitor.tsx": [
+      "useApiCall",
+      "useComponentPerformance",
+      "useComponentLoadTime",
+      "withPerformanceTracking",
+      "PerformanceWarnings"
+    ]
+  },
+  "hooks_T3": 30,
+  "modules_T3": 24
+}

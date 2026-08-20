@@ -1,0 +1,17 @@
+{
+  "scope": "L2-Batch1 rollback list: names actually used in tests; restore export keyword",
+  "total": 5,
+  "targets": {
+    "apps/web/src/utils/apiPath.ts": [
+      "GROUP1_CORE_SERVICES",
+      "GROUP2_INDEPENDENT_SERVICES"
+    ],
+    "apps/web/src/utils/errors.ts": [
+      "ErrorCode"
+    ],
+    "apps/web/src/utils/storage.ts": [
+      "localStorage2",
+      "sessionStorage2"
+    ]
+  }
+}

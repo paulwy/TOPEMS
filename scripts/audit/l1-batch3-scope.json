@@ -1,0 +1,106 @@
+{
+  "scope": "L1-SAFE Batch 3 — mid risk (non-pages remainder)",
+  "total_exports": 43,
+  "total_files": 28,
+  "targets": {
+    "apps/web/src/context/PluginContext.tsx": [
+      "useInstalledPlugins"
+    ],
+    "apps/web/src/debug/DebugOverlay.tsx": [
+      "DebugOverlay"
+    ],
+    "apps/web/src/design-system/DesignSystemPanel.tsx": [
+      "V51DesignSystemPanel"
+    ],
+    "apps/web/src/dev-platform/lowcode-builder.ts": [
+      "FlowNodeType",
+      "LowCodeBuilder"
+    ],
+    "apps/web/src/dev-platform/unified-dev-platform.ts": [
+      "UnifiedDevPlatform"
+    ],
+    "apps/web/src/fullstack-automation/auto-rollback.ts": [
+      "AutoRollback"
+    ],
+    "apps/web/src/fullstack-automation/ci-cd-pipeline.ts": [
+      "CICDPipeline"
+    ],
+    "apps/web/src/lib/moduleThemes.ts": [
+      "getModuleThemes",
+      "getModuleTheme",
+      "getModuleThemeFromPath"
+    ],
+    "apps/web/src/lib/navigation/modules/index.ts": [
+      "coreModuleNavConfigs"
+    ],
+    "apps/web/src/lib/plugin-loader/MicroFrontendLoader.tsx": [
+      "MicroFrontendLoader",
+      "preloadRemoteModule"
+    ],
+    "apps/web/src/lib/plugin-loader/ModuleLoadingProgress.tsx": [
+      "ModuleLoadingOverlay"
+    ],
+    "apps/web/src/lib/plugin-loader/PluginLoader.tsx": [
+      "PluginRouteWrapper",
+      "PluginLoaderProvider"
+    ],
+    "apps/web/src/lib/security.ts": [
+      "setCsrfToken"
+    ],
+    "apps/web/src/microfrontend/MicroAppRouter.tsx": [
+      "MicroAppRouter"
+    ],
+    "apps/web/src/microfrontend/RemoteLoader.tsx": [
+      "prefetchRemoteEntry"
+    ],
+    "apps/web/src/microfrontend/ai-ops/anomaly-detector.ts": [
+      "StatisticalAnalyzer",
+      "AnomalyDetector"
+    ],
+    "apps/web/src/microfrontend/ai-ops/auto-scaler.ts": [
+      "AutoScaler"
+    ],
+    "apps/web/src/microfrontend/ai-ops/index.ts": [
+      "SmartAlertManager",
+      "MetricPredictor",
+      "SimplePredictor"
+    ],
+    "apps/web/src/microfrontend/ai-ops-v2/auto-remediation.ts": [
+      "AutoRemediation",
+      "autoRemediation"
+    ],
+    "apps/web/src/microfrontend/ai-ops-v2/index.ts": [
+      "intelligentMonitor",
+      "IntelligentMonitor",
+      "rootCauseAnalyzer",
+      "RootCauseAnalyzer"
+    ],
+    "apps/web/src/microfrontend/config.ts": [
+      "getModulesByPreloadStrategy"
+    ],
+    "apps/web/src/microfrontend/devex/code-completion.ts": [
+      "CodeCompletion"
+    ],
+    "apps/web/src/microfrontend/devex/index.ts": [
+      "SmartDebugger",
+      "PerformanceAnalyzer"
+    ],
+    "apps/web/src/microfrontend/governance/dependency-governor.ts": [
+      "DependencyGovernor"
+    ],
+    "apps/web/src/microfrontend/security/csp-manager.ts": [
+      "CSPStrategy",
+      "CSPManager",
+      "cspManager"
+    ],
+    "apps/web/src/routes/v2/index.ts": [
+      "coreModuleRoutes"
+    ],
+    "apps/web/src/schema/adapterFactory.ts": [
+      "createCrudApiAdapter"
+    ],
+    "apps/web/src/schema/index.ts": [
+      "toColumnDef"
+    ]
+  }
+}
