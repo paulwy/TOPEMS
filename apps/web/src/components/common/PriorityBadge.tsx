@@ -100,7 +100,7 @@ const PRIORITY_CONFIG: Record<string, PriorityConfig> = {
 
 const normalizeKey = (p: string): string => p.toLowerCase();
 
-export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
+const PriorityBadge: React.FC<PriorityBadgeProps> = ({
   priority,
   showIcon = true,
   size = 'sm',

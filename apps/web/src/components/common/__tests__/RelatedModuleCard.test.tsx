@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
-import { RelatedModuleCard } from '../RelatedModuleCard';
 
 const { i18nMap, translate } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {

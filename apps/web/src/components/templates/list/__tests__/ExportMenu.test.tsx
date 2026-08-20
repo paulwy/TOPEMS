@@ -3,7 +3,6 @@ import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { ExportMenu } from '../ExportMenu';
 import type { ExportFormat, ExportScope } from '../ExportMenu';
 import { renderWithProviders } from '@/__tests__/test-utils';
 

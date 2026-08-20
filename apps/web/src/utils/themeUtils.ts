@@ -5,7 +5,7 @@ function useDarkAwareValue(lightValue: string, darkValue: string): string {
   return theme.palette.mode === 'dark' ? darkValue : lightValue;
 }
 
-export function invertColor(hex: string): string {
+function invertColor(hex: string): string {
   const r = 255 - parseInt(hex.slice(1, 3), 16);
   const g = 255 - parseInt(hex.slice(3, 5), 16);
   const b = 255 - parseInt(hex.slice(5, 7), 16);

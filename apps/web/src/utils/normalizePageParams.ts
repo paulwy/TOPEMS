@@ -17,7 +17,7 @@ export function normalizePageParams<T extends Record<string, unknown>>(
   return result;
 }
 
-export function normalizeObjectKeysDeep<T extends Record<string, unknown>>(
+function normalizeObjectKeysDeep<T extends Record<string, unknown>>(
   obj: T,
   depth: number = 3
 ): Record<string, unknown> {

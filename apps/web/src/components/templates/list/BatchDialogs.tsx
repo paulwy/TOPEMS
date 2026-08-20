@@ -23,7 +23,7 @@ export interface BatchConfirmDialogProps {
 /**
  * 批量操作确认对话框
  */
-export const BatchConfirmDialog: React.FC<BatchConfirmDialogProps> = ({
+const BatchConfirmDialog: React.FC<BatchConfirmDialogProps> = ({
   open,
   actionLabel,
   selectedCount,
@@ -80,7 +80,7 @@ export interface BatchProgressDialogProps {
 /**
  * 批量操作进度对话框
  */
-export const BatchProgressDialog: React.FC<BatchProgressDialogProps> = ({
+const BatchProgressDialog: React.FC<BatchProgressDialogProps> = ({
   open,
   actionLabel,
   processed,

@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { Tabs } from '@mui/material';
 import { renderWithProviders } from '@/__tests__/test-utils';
-import { ExtendedTab } from '../ExtendedTab';
 import type { ExtendedTabConfig } from '../ExtendedTab';
 
 // Mock PluginContext to control isPluginInstalled behavior

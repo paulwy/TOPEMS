@@ -16,7 +16,7 @@ export interface CrudFormDialogProps {
  * CRUD 表单容器（Dialog 或 Drawer 模式）
  * 从 ListPageTemplate 中抽离的 CRUD 表单容器渲染
  */
-export const CrudFormDialog: React.FC<CrudFormDialogProps> = ({
+const CrudFormDialog: React.FC<CrudFormDialogProps> = ({
   open,
   mode,
   crud,

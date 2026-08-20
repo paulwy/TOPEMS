@@ -3,7 +3,6 @@ import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { ListPagination } from '../Pagination';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('react-i18next', () => ({
