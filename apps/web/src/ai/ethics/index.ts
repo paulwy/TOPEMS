@@ -8,8 +8,6 @@ export {
 } from './bias-detection';
 
 export {
-  FairnessAssurance,
-  fairnessAssurance,
   type FairnessConfig,
   type FairnessResult,
   type FairnessTrend,

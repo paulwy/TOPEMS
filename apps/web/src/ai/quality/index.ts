@@ -1,42 +1,36 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
-export {
-  smartTestV2,
-  SmartTestV2,
-  type TestCase,
-  type TestRun,
-  type TestResultDetail,
-  type TestSuggestion,
-  type TestTrendPoint,
-  type SmartTestEvent,
-  type TestType,
-  type TestPriority,
-  type TestStatus,
-  type RunStatus,
+export type {
+  TestCase,
+  TestRun,
+  TestResultDetail,
+  TestSuggestion,
+  TestTrendPoint,
+  SmartTestEvent,
+  TestType,
+  TestPriority,
+  TestStatus,
+  RunStatus,
 } from './smart-testing-v2';
 
-export {
-  continuousPerformance,
-  ContinuousPerformance,
-  type PerfBaseline,
-  type PerfRegression,
-  type PerfMetric,
-  type PerfAlert,
-  type PerfTrendPoint,
-  type RegressionSeverity,
-  type ContinuousPerfEvent,
+export type {
+  PerfBaseline,
+  PerfRegression,
+  PerfMetric,
+  PerfAlert,
+  PerfTrendPoint,
+  RegressionSeverity,
+  ContinuousPerfEvent,
 } from './continuous-performance';
 
-export {
-  uxMonitor,
-  UXMonitor,
-  type UXMetric,
-  type UXAlert,
-  type UXMetricType,
-  type AlertStatus,
-  type UserSegment,
-  type FunnelStep,
-  type FunnelAnalysis,
-  type UXMonitorEvent,
+export type {
+  UXMetric,
+  UXAlert,
+  UXMetricType,
+  AlertStatus,
+  UserSegment,
+  FunnelStep,
+  FunnelAnalysis,
+  UXMonitorEvent,
 } from './ux-monitor';
 
 export { V60QualityPanel } from './v60-quality-panel';

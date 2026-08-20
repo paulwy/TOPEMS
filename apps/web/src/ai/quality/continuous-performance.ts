@@ -323,15 +323,3 @@ class ContinuousPerformanceImpl {
   }
 }
 
-export class ContinuousPerformance {
-  private static instance: ContinuousPerformanceImpl;
-
-  static getInstance(): ContinuousPerformanceImpl {
-    if (!ContinuousPerformance.instance) {
-      ContinuousPerformance.instance = new ContinuousPerformanceImpl();
-    }
-    return ContinuousPerformance.instance;
-  }
-}
-
-export const continuousPerformance = ContinuousPerformance.getInstance();
