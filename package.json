@@ -34,7 +34,9 @@
     "check:design-system": "bash scripts/check-design-system.sh",
     "check:design-tokens": "node scripts/check-design-tokens.mjs",
     "gen:types": "node scripts/openapi/gen-types.mjs",
-    "gen:api-docs": "bash scripts/openapi/generate.sh"
+    "gen:api-docs": "bash scripts/openapi/generate.sh",
+    "audit:unused": "node scripts/audit/detect-ts-unused-exports.cjs",
+    "audit:unused:type-only": "python3 scripts/audit/type-only-scan.py"
   },
   "keywords": [
     "enterprise",

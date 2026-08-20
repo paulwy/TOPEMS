@@ -57,6 +57,32 @@ cargo build --workspace
 - 使用函数组件和 Hooks
 - 使用 `src/utils/logger.ts` 而非 `console.log`
 
+### 未使用 Exports 检查 (V258+)
+
+新增导出时，应定期运行 `ts-unused-exports` 检测器避免死链积累：
+
+```bash
+# 生成检测报告
+node scripts/audit/detect-ts-unused-exports.cjs
+
+# 查看报告
+cat scripts/audit/ts-unused-exports-report.json | jq '.summary'
+```
+
+清理策略（详见 [docs/audit/README.md](docs/audit/README.md#10-未使用-exports-清理-v258) 第 10 节）：
+
+| 级别                     | 策略                                                    | 工具                                        |
+| ------------------------ | ------------------------------------------------------- | ------------------------------------------- |
+| L1-SAFE (refCount=0)     | 直接删除 `export` keyword + barrel re-export            | `l1-conservative-remove-v2.cjs`             |
+| L2-CAUTION (barrel-only) | 严格死链检测 → strip comments/strings → TSC Gate        | `l2-batch2-scan.py`                         |
+| TYPE-only                | 批量 strip `export type/interface/enum` + barrel repair | `type-only-scan.py` + `type-only-remove.py` |
+
+**注意事项**：
+
+- 每批清理后必须 `cd apps/web && pnpm typecheck` → 0 errors 才提交
+- 出现 TS2459/TS2724/TS2304 → 消费端有真实引用，立即整链回滚
+- `_mock.ts` 下划线前缀文件会被检测器默认跳过，需手动验证
+
 ## 分支管理
 
 - `main` - 生产环境代码
@@ -78,18 +104,18 @@ cargo build --workspace
 
 ### Type 类型
 
-| Type | 说明 |
-|------|------|
-| `feat` | 新功能 |
-| `fix` | 修复 bug |
-| `docs` | 文档更新 |
-| `style` | 代码格式调整（不影响运行） |
-| `refactor` | 重构 |
-| `perf` | 性能优化 |
-| `test` | 测试相关 |
-| `chore` | 构建过程或辅助工具变动 |
-| `revert` | 回滚提交 |
-| `ci` | CI/CD 相关改动 |
+| Type       | 说明                       |
+| ---------- | -------------------------- |
+| `feat`     | 新功能                     |
+| `fix`      | 修复 bug                   |
+| `docs`     | 文档更新                   |
+| `style`    | 代码格式调整（不影响运行） |
+| `refactor` | 重构                       |
+| `perf`     | 性能优化                   |
+| `test`     | 测试相关                   |
+| `chore`    | 构建过程或辅助工具变动     |
+| `revert`   | 回滚提交                   |
+| `ci`       | CI/CD 相关改动             |
 
 ### 示例
 
@@ -151,10 +177,10 @@ cd apps/web && pnpm run e2e
 
 GitHub Actions 配置在 `.github/workflows/` 目录：
 
-| Workflow | 文件 | 触发条件 | 说明 |
-|----------|------|---------|------|
-| CI | `ci.yml` | push/PR（main/develop）、tag `v*`、每日 02:00 UTC、手动 | Lint + Type Check + 9 路分片测试 + 覆盖率 + 构建 + Rust 测试 |
-| E2E | `e2e.yml` | 每日 03:00 UTC、手动 | Playwright 端到端测试 |
+| Workflow | 文件      | 触发条件                                                | 说明                                                         |
+| -------- | --------- | ------------------------------------------------------- | ------------------------------------------------------------ |
+| CI       | `ci.yml`  | push/PR（main/develop）、tag `v*`、每日 02:00 UTC、手动 | Lint + Type Check + 9 路分片测试 + 覆盖率 + 构建 + Rust 测试 |
+| E2E      | `e2e.yml` | 每日 03:00 UTC、手动                                    | Playwright 端到端测试                                        |
 
 **CI 分片策略**：`unit`（1 job）+ `shard-1` ~ `shard-8`（8 个并行 matrix job），共 9 路并行，总 ~2936 用例。
 
