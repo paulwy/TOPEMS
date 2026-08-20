@@ -1241,10 +1241,11 @@ export default defineConfig({
               console.warn('[fix-cjs-general] channel X cannot read', devRel, '->', devAbs, e);
             }
             const devNames = extractCjsExportNames(devCode);
-            // 命名空间变量名用 hash，避免冲突
-            const nsVar = `__FIX_BARE_ENTRY_NS_${norm.split('/').slice(-2, -1)[0] || 'mod'}__`;
+            // 命名空间变量名用 hash，避免冲突（包名含连字符需清洗为合法标识符）
+            const _pkgSlug = (norm.split('/').slice(-2, -1)[0] || 'mod').replace(/[^A-Za-z0-9_$]/g, '_');
+            const nsVar = `__FIX_BARE_ENTRY_NS_${_pkgSlug}__`;
             let out = `\n/* ${INJECT_MARK_GENERAL} (channel-X: bare-cjs-dual-require → ESM) */\n`;
-            out += `import ${nsVar} from ${JSON.stringify(devRel)};\n`;
+            out += `import * as ${nsVar} from ${JSON.stringify(devRel)};\n`;
             out += `export default ${nsVar};\n`;
             if (devNames.length) {
               out += 'export const '
