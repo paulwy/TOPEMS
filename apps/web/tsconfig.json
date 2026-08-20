@@ -15,6 +15,16 @@
     "types": ["node", "react", "react-dom", "@react-three/fiber"]
   },
   "include": ["src", "src/types/**/*.d.ts"],
-  "exclude": ["node_modules", "dist", "src/**/*.stories.ts", "src/**/*.stories.tsx", "src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx", "src/__tests__/**", "src/test/**"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/__tests__/**",
+    "src/test/**"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

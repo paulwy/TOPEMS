@@ -8,6 +8,42 @@
  * L3-HOLD:    被页面/组件/配置实际引用
  *
  * 速度优先，先跑第一轮粗筛，人工交叉验证 L1 候选再删除。
+ *
+ * === V258 清理完成后说明 ===
+ *
+ * 本报告驱动了 V258 阶段的三轮清理（均已 Push 到 main）：
+ *
+ * Phase 1 — L1-SAFE VALUE（×16 目录批次）：
+ *   90 def-side `export` keyword 去除 + 105 barrel aggregate re-export names 清除
+ *   工具：scripts/audit/l1-conservative-remove-v2.cjs
+ *
+ * Phase 2 — L2-CAUTION VALUE（×2 批次）：
+ *   ~23 条 dead VALUE chains（6 条假阳性回滚）
+ *   工具：scripts/audit/l2-batch2-scan.py（strip comments/strings + barrel-local usage 严格过滤）
+ *
+ * Phase 3 — TYPE-only（×12 批次）：
+ *   2601 条 net dead TYPE exports（6 条回滚：5 wms _mock.ts + 1 api6 RequestPriority）
+ *   工具：scripts/audit/type-only-scan.py + scripts/audit/type-only-remove.py
+ *
+ * 合计 ≈ 2814 条 dead exports 清理，TSC apps/web 每批 0 errors Gate。
+ *
+ * 已知假阳性模式（回滚策略）：
+ *   1. Barrel 内 aggregate object 赋值 → `const api = { system: systemApi }` 是 ALIVE
+ *   2. `_mock.ts` 下划线前缀文件被默认跳过 → 需加 `--no-skip-underscore` 或手动验证
+ *   3. 同文件 type+class 命名冲突 → 去 `export` 触发 TS2300 Duplicate Identifier
+ *
+ * 剩余 ALIVE（不可删）：
+ *   - 255 条 VALUE（barrel 本地 aggregate 构造，如 `const erpApi = { addressbookApi, ... }`）
+ *   - 1367 条 TYPE（barrel 本地 namespace/type alias 构造）
+ *
+ * === 后续使用 ===
+ *
+ * 1. 新增导出后重跑 `node scripts/audit/detect-ts-unused-exports.cjs` 生成最新报告
+ * 2. L1 VALUE 候选 → scripts/audit/l1-conservative-remove-v2.cjs 批量去除
+ * 3. L2 VALUE 候选 → scripts/audit/l2-batch2-scan.py 严格死链重检 → conservative-remove-v2
+ * 4. TYPE-only 候选 → scripts/audit/type-only-scan.py → type-only-remove.py
+ * 5. 每批执行后必须 TSC Gate：`cd apps/web && pnpm typecheck` → 0 errors 才提交
+ * 6. 出现 TS2459/TS2724/TS2304 → 消费端有真实引用，立即整链回滚
  */
 const fs = require('fs');
 const path = require('path');
@@ -16,12 +52,25 @@ const cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..', '..');
 const WEB_SRC = path.join(ROOT, 'apps', 'web', 'src');
 
-const EXCLUDE_DIR = new Set(['node_modules', 'dist', 'build', '__tests__', '__mocks__', '__fixtures__', '.next', 'coverage']);
+const EXCLUDE_DIR = new Set([
+  'node_modules',
+  'dist',
+  'build',
+  '__tests__',
+  '__mocks__',
+  '__fixtures__',
+  '.next',
+  'coverage',
+]);
 const EXCLUDE_FILE_EXT = new Set(['.test.ts', '.test.tsx', '.spec.ts', '.spec.tsx', '.stories.tsx', '.d.ts']);
 
 function walk(dir, out = []) {
   let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
   for (const e of entries) {
     if (e.name.startsWith('.')) continue;
     if (EXCLUDE_DIR.has(e.name)) continue;
@@ -29,7 +78,11 @@ function walk(dir, out = []) {
     if (e.isDirectory()) walk(full, out);
     else if (e.isFile() && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(e.name)) {
       let skip = false;
-      for (const ext of EXCLUDE_FILE_EXT) if (e.name.endsWith(ext)) { skip = true; break; }
+      for (const ext of EXCLUDE_FILE_EXT)
+        if (e.name.endsWith(ext)) {
+          skip = true;
+          break;
+        }
       if (!skip) out.push(full);
     }
   }
@@ -47,7 +100,8 @@ function extractExports(filePath) {
   let i = 0;
 
   // 1. export const/class/function/enum/type/interface/abstract class Foo
-  const declRe = /^\s*export\s+(declare\s+)?(?:abstract\s+)?(type|interface|enum|const|let|var|function|class|namespace)\s+(\w+)/;
+  const declRe =
+    /^\s*export\s+(declare\s+)?(?:abstract\s+)?(type|interface|enum|const|let|var|function|class|namespace)\s+(\w+)/;
   const declRe2 = /^\s*export\s+\{\s*([^}]+?)\s*\}(?:\s+from\s+['"]([^'"]+)['"])?\s*;?\s*$/;
   // 2. export { A, B as C } 或 export { A } from './x'
   while (i < lines.length) {
@@ -55,18 +109,23 @@ function extractExports(filePath) {
     // 跳过块注释
     if (/^\s*\/\*/.test(line)) {
       while (i < lines.length && !/\*\//.test(lines[i])) i++;
-      i++; continue;
+      i++;
+      continue;
     }
     // 跳过行注释
-    if (/^\s*\/\//.test(line)) { i++; continue; }
+    if (/^\s*\/\//.test(line)) {
+      i++;
+      continue;
+    }
 
     let m = line.match(declRe);
     if (m) {
       const kind = m[2];
       const name = m[3];
-      const isTypeOnly = (kind === 'type' || kind === 'interface');
+      const isTypeOnly = kind === 'type' || kind === 'interface';
       exports.push({ kind, name, startLine: i + 1, isTypeOnly, isReExport: false });
-      i++; continue;
+      i++;
+      continue;
     }
 
     // 处理 export { A, B as C } [from 'x'] - 可能跨多行
@@ -75,12 +134,16 @@ function extractExports(filePath) {
       let buf = line;
       let j = i;
       while (j < lines.length && !/\}/.test(buf)) {
-        j++; buf += ' ' + (lines[j] || '');
+        j++;
+        buf += ' ' + (lines[j] || '');
         if (j - i > 20) break;
       }
       const m2 = buf.match(/export\s*\{\s*([^}]+?)\s*\}(?:\s+from\s+['"]([^'"]+)['"])?/);
       if (m2) {
-        const parts = m2[1].split(',').map(s => s.trim()).filter(Boolean);
+        const parts = m2[1]
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
         for (const p of parts) {
           const [origName, , alias] = p.split(/\s+/); // A as B => A, as, B
           const name = alias || origName;
@@ -137,7 +200,11 @@ function main() {
   const reverseIndex = new Map(); // name -> Set<file>
   for (const f of files) {
     let src;
-    try { src = fs.readFileSync(f, 'utf8'); } catch { continue; }
+    try {
+      src = fs.readFileSync(f, 'utf8');
+    } catch {
+      continue;
+    }
     // 粗略拿 identifiers：简单 /\b[A-Za-z_$][\w$]*\b/g 即可
     const ids = new Set(src.match(/\b[A-Za-z_$][\w$]{1,}\b/g) || []);
     const rel = path.relative(ROOT, f);
@@ -155,21 +222,25 @@ function main() {
 
   for (const [name, exps] of exportMap) {
     // 候选定义文件集合
-    const defFiles = new Set(exps.map(e => e.file));
+    const defFiles = new Set(exps.map((e) => e.file));
     const reffingFiles = reverseIndex.get(name) || new Set();
 
     // 真实引用文件数 = 出现的所有文件 - 定义文件
-    const realRefFiles = new Set([...reffingFiles].filter(f => !defFiles.has(f)));
+    const realRefFiles = new Set([...reffingFiles].filter((f) => !defFiles.has(f)));
 
     // 类型导出的 L1 判定更严格：类型可以出现在 type-only import，TS 可能在 tsc 时用
     // 先只对 值导出（const/function/class/enum/非 type-only reexport）做严格 L1
-    const anyValueExport = exps.some(e =>
-      e.kind === 'const' || e.kind === 'let' || e.kind === 'var' ||
-      e.kind === 'function' || e.kind === 'class' ||
-      (e.kind === 'enum' && !e.isTypeOnly) ||
-      (e.isReExport && !e.isTypeOnly)
+    const anyValueExport = exps.some(
+      (e) =>
+        e.kind === 'const' ||
+        e.kind === 'let' ||
+        e.kind === 'var' ||
+        e.kind === 'function' ||
+        e.kind === 'class' ||
+        (e.kind === 'enum' && !e.isTypeOnly) ||
+        (e.isReExport && !e.isTypeOnly)
     );
-    const anyTypeExport = exps.some(e => e.isTypeOnly || e.kind === 'type' || e.kind === 'interface');
+    const anyTypeExport = exps.some((e) => e.isTypeOnly || e.kind === 'type' || e.kind === 'interface');
 
     let level;
     if (realRefFiles.size === 0) {
@@ -182,7 +253,10 @@ function main() {
         const isTest = /__tests__|\.(test|spec)\.(ts|tsx)$/.test(rf);
         const isStory = /\.stories\.(ts|tsx)$/.test(rf);
         const isMock = /__mocks__|mock\.ts/.test(rf);
-        if (!isBarrel && !isTest && !isStory && !isMock) { allL2 = false; break; }
+        if (!isBarrel && !isTest && !isStory && !isMock) {
+          allL2 = false;
+          break;
+        }
       }
       level = allL2 ? 'L2' : 'L3';
     }
@@ -203,10 +277,10 @@ function main() {
   }
 
   // 聚合结果
-  const l1Values = L1.filter(r => r.anyValueExport);
-  const l1Types = L1.filter(r => !r.anyValueExport && r.anyTypeExport);
-  const l2Values = L2.filter(r => r.anyValueExport);
-  const l2Types = L2.filter(r => !r.anyValueExport && r.anyTypeExport);
+  const l1Values = L1.filter((r) => r.anyValueExport);
+  const l1Types = L1.filter((r) => !r.anyValueExport && r.anyTypeExport);
+  const l2Values = L2.filter((r) => r.anyValueExport);
+  const l2Types = L2.filter((r) => !r.anyValueExport && r.anyTypeExport);
 
   console.log('\n📊 结果汇总 =================================');
   console.log(`   L1-SAFE  总数     : ${L1.length}`);
@@ -222,18 +296,26 @@ function main() {
   const outDir = path.join(ROOT, 'scripts', 'audit');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   const outFile = path.join(outDir, 'ts-unused-exports-report.json');
-  fs.writeFileSync(outFile, JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    filesScanned: files.length,
-    totalNamedExports: totalExports,
-    uniqueExportNames: exportMap.size,
-    summary: {
-      L1: { total: L1.length, values: l1Values.length, types: l1Types.length },
-      L2: { total: L2.length, values: l2Values.length, types: l2Types.length },
-      L3: { total: L3.length },
-    },
-    L1, L2,
-  }, null, 2));
+  fs.writeFileSync(
+    outFile,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        filesScanned: files.length,
+        totalNamedExports: totalExports,
+        uniqueExportNames: exportMap.size,
+        summary: {
+          L1: { total: L1.length, values: l1Values.length, types: l1Types.length },
+          L2: { total: L2.length, values: l2Values.length, types: l2Types.length },
+          L3: { total: L3.length },
+        },
+        L1,
+        L2,
+      },
+      null,
+      2
+    )
+  );
   console.log(`💾 完整 JSON: ${path.relative(ROOT, outFile)}`);
 
   // 打印 L1 值导出前 60 条（优先删除候选）
