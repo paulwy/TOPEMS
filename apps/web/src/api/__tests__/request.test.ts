@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { ApiResponse } from '@topems/shared-types';
-import { handleResponse, handleRequestError, safeRequest, paginatedRequest } from '../request';
+import { handleResponse, handleRequestError, safeRequest, paginatedRequest } from '../client';
 
 vi.mock('@/utils/logger', () => ({
   default: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),

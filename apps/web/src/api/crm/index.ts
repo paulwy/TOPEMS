@@ -60,7 +60,7 @@ import { salesFunnelApi } from './salesFunnel';
 import { customerProfileApi } from './customerProfile';
 
 export * from './types';
-export { useCrmMock, default as useCrmMockDefault } from './mock';
+export { useCrmMock, default as useCrmMockDefault } from './_mock';
 export type {
   Period,
   CrmKpis,
@@ -80,7 +80,7 @@ export type {
   BillingAnalyticsData,
   RecommendationData,
   CrmMockShape,
-} from './mock';
+} from './_mock';
 
 export { customerApi, tagApi } from './customer';
 export { crmDashboardApi } from './dashboard';
