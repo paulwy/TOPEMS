@@ -45,7 +45,7 @@ export interface ResponsiveContext {
  * 此处仅保留 theme 未覆盖的补充断点（tablet/tabletMax/xxl）
  * —— P2-10 合规化：移除与 designTokens.values 重复的硬编码值，避免两套体系不一致
  */
-export const BREAKPOINTS = {
+const BREAKPOINTS = {
   tablet: 600,
   tabletMax: 1199,
   xxl: 1920,

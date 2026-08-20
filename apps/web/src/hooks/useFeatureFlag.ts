@@ -87,7 +87,7 @@ export function useFeatureFlags(
  *
  * 当特性开启时渲染 children，否则渲染 fallback
  */
-export function FeatureGate({
+function FeatureGate({
   feature,
   context,
   children,

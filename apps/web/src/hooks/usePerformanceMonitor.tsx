@@ -346,7 +346,7 @@ export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise
   }
 }
 
-export function useApiCall<T, A extends unknown[] = unknown[]>(
+function useApiCall<T, A extends unknown[] = unknown[]>(
   apiCall: (...args: A) => Promise<T>,
   _deps: React.DependencyList = []
 ) {
@@ -381,7 +381,7 @@ export function useApiCall<T, A extends unknown[] = unknown[]>(
   return { loading, error, data, execute };
 }
 
-export function useComponentPerformance(componentName: string) {
+function useComponentPerformance(componentName: string) {
   const renderStartTime = useRef<number>(0);
   const isMount = useRef(true);
 
@@ -398,7 +398,7 @@ export function useComponentPerformance(componentName: string) {
   return { onRender, onRenderComplete };
 }
 
-export function useComponentLoadTime(componentName: string) {
+function useComponentLoadTime(componentName: string) {
   const [loadTime, setLoadTime] = useState<number | null>(null);
 
   useEffect(() => {
@@ -423,7 +423,7 @@ export function useComponentLoadTime(componentName: string) {
   return loadTime;
 }
 
-export function withPerformanceTracking<P extends object>(
+function withPerformanceTracking<P extends object>(
   Component: React.ComponentType<P>,
   componentName?: string
 ): React.ComponentType<P> {
@@ -451,7 +451,7 @@ export function withPerformanceTracking<P extends object>(
   return WrappedComponent;
 }
 
-export function PerformanceWarnings() {
+function PerformanceWarnings() {
   const { getSlowApiCalls, getApiSuccessRate, getSlowComponents, getMemoryUsagePercent } =
     usePerformanceMonitor();
 

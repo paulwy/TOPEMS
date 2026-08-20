@@ -3,7 +3,7 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export const LOWCODE_PATHS = {
+const LOWCODE_PATHS = {
   root: '/lowcode',
   dashboard: '/lowcode/dashboard',
   apps: '/lowcode/apps',

@@ -105,7 +105,7 @@ export type UseUnifiedWebSocketResult = ReturnType<typeof useWebSocketBase> & {
  * ./useWebSocket 的 useWebSocket，仅保留通知中心 / Snackbar 扩展等
  * useUnifiedWebSocket 特有的业务逻辑。
  */
-export function useUnifiedWebSocket(
+function useUnifiedWebSocket(
   options: UseUnifiedWebSocketOptions = {}
 ): UseUnifiedWebSocketResult {
   const { notifications, notificationOptions, snackbarOptions, ...baseOptions } = options;
@@ -450,23 +450,23 @@ export const useWebSocket = useUnifiedWebSocket;
 /** @canonical-ws-naming 主实现 */
 export const createConnection = webSocketService.connect.bind(webSocketService);
 /** @canonical-ws-naming 主实现 */
-export const closeConnection = webSocketService.disconnect.bind(webSocketService);
+const closeConnection = webSocketService.disconnect.bind(webSocketService);
 /** @canonical-ws-naming 主实现 */
 export const sendMessage = webSocketService.send.bind(webSocketService);
 /** @canonical-ws-naming 主实现 */
-export const subscribeTopic = webSocketService.subscribe.bind(webSocketService);
+const subscribeTopic = webSocketService.subscribe.bind(webSocketService);
 /** @canonical-ws-naming 主实现 */
-export const unsubscribeTopic = webSocketService.unsubscribe.bind(webSocketService);
+const unsubscribeTopic = webSocketService.unsubscribe.bind(webSocketService);
 /** @canonical-ws-naming 主实现 */
-export const getConnectionStatus = (): WsConnectionStatus =>
+const getConnectionStatus = (): WsConnectionStatus =>
   webSocketService.isConnected() ? 'connected' : 'disconnected';
 /** @canonical-ws-naming 主实现 */
-export const reconnectSocket = (): void => {
+const reconnectSocket = (): void => {
   webSocketService.disconnect();
   void webSocketService.connect();
 };
 /** @canonical-ws-naming 主实现 */
-export const pingServer = (): Promise<void> => webSocketService.send({ type: 'ping', payload: {} });
+const pingServer = (): Promise<void> => webSocketService.send({ type: 'ping', payload: {} });
 
 /**
  * V78.0-V82 命名风格迁移历史记录：

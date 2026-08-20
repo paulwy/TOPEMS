@@ -63,7 +63,7 @@ const isStaticMode = VITEDeploymentMode() === 'static';
 
 export let CORE_MODULES: ModuleConfig[] = [];
 
-export function initializeCoreModules() {
+function initializeCoreModules() {
   CORE_MODULES = isStaticMode ? [] : getCoreModules();
 }
 
@@ -74,7 +74,7 @@ export function initializeCoreModules() {
 // 待实现后启用，对应组件路径为 '@/modules/xxx/pages/xxx'
 // 当前页面通过传统路由配置在 'src/pages/' 目录下
 
-export const BUSINESS_MODULES: ModuleConfig[] = [
+const BUSINESS_MODULES: ModuleConfig[] = [
   // 待实现：biz-manufacturing (MES 生产执行系统)
   // 待实现：biz-quality (QMS + LIMS + EHS 质量管控)
   // 待实现：biz-analytics (BI 大屏、报表中心)
@@ -87,7 +87,7 @@ export const BUSINESS_MODULES: ModuleConfig[] = [
 // 待实现后启用，对应组件将从远程服务器动态加载
 // 当前插件市场页面通过传统路由配置在 'src/pages/plugin/' 目录下
 
-export const PLUGIN_MODULES: ModuleConfig[] = [
+const PLUGIN_MODULES: ModuleConfig[] = [
   // 待实现：plugin-ai (AI 知识库)
   // 待实现：plugin-erp (ERP 系统)
 ];
@@ -218,7 +218,7 @@ export const moduleRegistry = ModuleRegistry.getInstance();
 // React Integration
 // ============================================================================
 
-export function useModules() {
+function useModules() {
   return {
     registry: moduleRegistry,
     allModules: moduleRegistry.getAllModules(),
@@ -229,7 +229,7 @@ export function useModules() {
   };
 }
 
-export function useModuleRoutes() {
+function useModuleRoutes() {
   const { enabledModules } = useModules();
 
   const routes: ModuleRoute[] = [];

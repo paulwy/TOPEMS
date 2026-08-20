@@ -31,7 +31,7 @@ export const getSharedState = (): SharedState => {
   return window[SHARED_STATE_KEY] || {};
 };
 
-export const setSharedState = (state: Partial<SharedState>): void => {
+const setSharedState = (state: Partial<SharedState>): void => {
   if (typeof window === 'undefined') return;
   if (!window[SHARED_STATE_KEY]) {
     window[SHARED_STATE_KEY] = {};
@@ -48,7 +48,7 @@ export const setSharedState = (state: Partial<SharedState>): void => {
   );
 };
 
-export const subscribeToSharedState = (callback: (state: SharedState) => void): (() => void) => {
+const subscribeToSharedState = (callback: (state: SharedState) => void): (() => void) => {
   if (typeof window === 'undefined') return () => {};
 
   const handler = () => {
@@ -61,31 +61,31 @@ export const subscribeToSharedState = (callback: (state: SharedState) => void): 
   };
 };
 
-export const initSharedState = (initialState: Partial<SharedState>): void => {
+const initSharedState = (initialState: Partial<SharedState>): void => {
   setSharedState(initialState);
 };
 
-export const syncAuthState = (auth: SharedState['auth']): void => {
+const syncAuthState = (auth: SharedState['auth']): void => {
   setSharedState({ auth });
 };
 
-export const getAuthState = (): SharedState['auth'] | undefined => {
+const getAuthState = (): SharedState['auth'] | undefined => {
   return getSharedState().auth;
 };
 
-export const syncThemeState = (theme: SharedState['theme']): void => {
+const syncThemeState = (theme: SharedState['theme']): void => {
   setSharedState({ theme });
 };
 
-export const getThemeState = (): SharedState['theme'] | undefined => {
+const getThemeState = (): SharedState['theme'] | undefined => {
   return getSharedState().theme;
 };
 
-export const syncI18nState = (i18n: SharedState['i18n']): void => {
+const syncI18nState = (i18n: SharedState['i18n']): void => {
   setSharedState({ i18n });
 };
 
-export const getI18nState = (): SharedState['i18n'] | undefined => {
+const getI18nState = (): SharedState['i18n'] | undefined => {
   return getSharedState().i18n;
 };
 

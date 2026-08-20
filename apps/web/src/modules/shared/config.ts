@@ -3,12 +3,12 @@ import i18n from '@/i18n';
 
 export interface EmptySharedModuleProps {}
 
-export const SHARED_PATHS = {
+const SHARED_PATHS = {
   root: '/shared',
   dashboard: '/shared/dashboard',
 } as const;
 
-export const sharedModuleConfig: RouteModuleConfig = {
+const sharedModuleConfig: RouteModuleConfig = {
   code: 'shared',
   name: i18n.t('shared.shared_mod.k0'),
   nameKey: 'shared.shared_mod.k0',

@@ -274,7 +274,7 @@ export function useDoubleTap(callback?: () => void, delay: number = 300) {
   return handleTap;
 }
 
-export function usePinchGesture(options?: {
+function usePinchGesture(options?: {
   onPinchStart?: () => void;
   onPinch?: (scale: number) => void;
   onPinchEnd?: () => void;
@@ -363,7 +363,7 @@ export function usePinchGesture(options?: {
   };
 }
 
-export function useTouchScale(options?: {
+function useTouchScale(options?: {
   minScale?: number;
   maxScale?: number;
   onScaleChange?: (scale: number) => void;

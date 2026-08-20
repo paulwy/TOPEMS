@@ -107,7 +107,7 @@ function defaultAxiosTransformList(response: unknown): CrudListResult<unknown> {
   return { items, total };
 }
 
-export function createAxiosAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
+function createAxiosAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   options: AxiosCrudAdapterOptions
 ): CrudAdapter<T, TCreate, TUpdate> {
   const { api, basePath, transformList = defaultAxiosTransformList } = options;
@@ -184,7 +184,7 @@ export interface CrudOperationsAdapterOptions<T, TCreate = Partial<T>, TUpdate =
   pageSizeParamName?: string;
 }
 
-export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
+function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   options: CrudOperationsAdapterOptions<T, TCreate, TUpdate>
 ): CrudAdapter<T, TCreate, TUpdate> {
   const { api, pageParamName = 'page', pageSizeParamName = 'pagesize' } = options;
@@ -238,7 +238,7 @@ export function createCrudOperationsAdapter<T, TCreate = Partial<T>, TUpdate = P
  *
  * 适配 { success, data } 简化响应格式。
  */
-export function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(api: {
+function createModuleAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(api: {
   list: (params?: Record<string, unknown>) => Promise<{
     success: boolean;
     data?: { items: T[]; total: number };
@@ -305,7 +305,7 @@ export interface FunctionAdapterOptions<T, TCreate, TUpdate> {
   transformResult?: (raw: unknown) => T;
 }
 
-export function createFunctionAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
+function createFunctionAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   options: FunctionAdapterOptions<T, TCreate, TUpdate>
 ): CrudAdapter<T, TCreate, TUpdate> {
   const { list, get, createFn, updateFn, deleteFn, transformResult = (r) => r as T } = options;
@@ -335,7 +335,7 @@ export function createFunctionAdapter<T, TCreate = Partial<T>, TUpdate = Partial
  *
  * @param options 配置项
  */
-export function useCrudUnified<
+function useCrudUnified<
   T extends { id?: string | number },
   TCreate = Partial<T>,
   TUpdate = Partial<T>,

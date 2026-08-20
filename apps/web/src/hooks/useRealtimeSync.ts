@@ -25,7 +25,7 @@ export interface SyncActions<T> {
   unsubscribe: () => void;
 }
 
-export function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & SyncActions<T> {
+function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & SyncActions<T> {
   const {
     channel,
     initialData,
@@ -238,7 +238,7 @@ export interface ListSyncActions<T> {
   unsubscribe: () => void;
 }
 
-export function useRealtimeListSync<T>(
+function useRealtimeListSync<T>(
   options: ListSyncOptions<T>
 ): ListSyncState<T> & ListSyncActions<T> {
   const {
