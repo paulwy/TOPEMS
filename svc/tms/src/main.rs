@@ -188,7 +188,6 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
-mod middleware;
 mod models;
 mod schema_defense;
 mod shared;

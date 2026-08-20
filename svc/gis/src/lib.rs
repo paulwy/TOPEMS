@@ -189,7 +189,6 @@
     clippy::useless_format
 )]
 pub mod db;
-pub mod middleware;
 pub mod models;
 pub mod modules;
 pub mod services;

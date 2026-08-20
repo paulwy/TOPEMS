@@ -211,7 +211,6 @@ use topems_shared_observability::telemetry::telemetry_middleware;
 
 mod db;
 mod event_handlers;
-mod middleware;
 mod models;
 mod modules;
 mod services;

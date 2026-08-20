@@ -198,7 +198,6 @@ pub mod handlers;
 pub mod hrm_finance_sync;
 pub mod mes_erp_sync;
 pub mod mes_qms_integration;
-pub mod middleware;
 pub mod models;
 pub mod modules;
 pub mod openapi;

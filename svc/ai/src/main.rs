@@ -190,7 +190,6 @@
 )]
 mod event_handlers;
 mod handlers;
-mod middleware;
 mod models;
 mod modules;
 mod routes;
