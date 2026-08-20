@@ -4,9 +4,9 @@ import { commonAuditSchema } from './_shared';
 import { approvalStatus } from './customer';
 import i18n from '@/i18n';
 
-export const contactStatus = z.enum(['active', 'inactive']);
+const contactStatus = z.enum(['active', 'inactive']);
 
-export const contactZodSchema = z
+const contactZodSchema = z
   .object({
     id: z.string().uuid(),
     tenantId: z.string().uuid(),
@@ -25,7 +25,7 @@ export const contactZodSchema = z
 export type Contact = z.infer<typeof contactZodSchema>;
 export type ContactStatus = z.infer<typeof contactStatus>;
 
-export const createContactSchema = contactZodSchema.omit({
+const createContactSchema = contactZodSchema.omit({
   id: true,
   tenantId: true,
   approvalStatus: true,
@@ -35,7 +35,7 @@ export const createContactSchema = contactZodSchema.omit({
 });
 export type CreateContactRequest = z.infer<typeof createContactSchema>;
 
-export const updateContactSchema = createContactSchema.partial();
+const updateContactSchema = createContactSchema.partial();
 export type UpdateContactRequest = z.infer<typeof updateContactSchema>;
 
 export const contactSchema: EntitySchema<Contact> = {

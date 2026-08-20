@@ -50,7 +50,7 @@ const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({
 
 // ============ 渲染辅助函数 ============
 
-export function renderWorkflowCategoryBadge(category: string): React.ReactNode {
+function renderWorkflowCategoryBadge(category: string): React.ReactNode {
   const config = categoryColorMap[category] || { bgcolor: 'gray.100', color: 'gray.700' };
   const label = categoryLabels[category] || category;
   return React.createElement(Chip, {
@@ -61,7 +61,7 @@ export function renderWorkflowCategoryBadge(category: string): React.ReactNode {
   });
 }
 
-export function renderWorkflowStatusBadge(status: string): React.ReactNode {
+function renderWorkflowStatusBadge(status: string): React.ReactNode {
   const color = statusColorMap[status] || 'default';
   const label = statusLabels[status] || status;
   return React.createElement(Chip, {

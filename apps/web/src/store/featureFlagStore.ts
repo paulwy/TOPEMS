@@ -97,8 +97,8 @@ export const useFeatureFlagStore = create<FeatureFlagState>((set, get) => ({
 }));
 
 export const useFeatureFlags = () => useFeatureFlagStore((state) => state.flags);
-export const useFeatureFlagLoading = () => useFeatureFlagStore((state) => state.loading);
-export const useFeatureFlagError = () => useFeatureFlagStore((state) => state.error);
+const useFeatureFlagLoading = () => useFeatureFlagStore((state) => state.loading);
+const useFeatureFlagError = () => useFeatureFlagStore((state) => state.error);
 
 export function useFeatureFlag(key: string): boolean {
   return useFeatureFlagStore((state) => {

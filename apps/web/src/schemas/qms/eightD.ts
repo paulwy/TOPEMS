@@ -214,7 +214,7 @@ const permanentActionsTable: NestedTableConfig = {
  *   import { createRootCauseRenderer } from './rootCauseRenderer';
  *   eightDWizard.steps[3].renderContent = createRootCauseRenderer();
  */
-export const eightDWizard: WizardConfig = {
+const eightDWizard: WizardConfig = {
   steps: [
     {
       key: 'd1',

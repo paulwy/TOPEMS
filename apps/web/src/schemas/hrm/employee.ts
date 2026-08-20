@@ -245,11 +245,4 @@ export const getEmployeeSchema = (): EntitySchema => {
   };
 };
 
-export {
-  getStatusOptions,
-  STATUS_COLOR_MAP,
-  getStatusLabelMap,
-  getGenderOptions,
-  getEducationOptions,
-  getEmployeeTypeOptions,
-};
+export { getStatusOptions, STATUS_COLOR_MAP, getStatusLabelMap };

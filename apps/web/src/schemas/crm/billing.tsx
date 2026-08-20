@@ -180,7 +180,7 @@ export const billingSchema: EntitySchema = {
   detailTitle: i18n.t('shared.billing.k30'),
 };
 
-export const getBillingRowActions = (
+const getBillingRowActions = (
   handleMarkPaid: (id: string) => void,
   handleSendNotification: (id: string) => void,
   activeTab: string

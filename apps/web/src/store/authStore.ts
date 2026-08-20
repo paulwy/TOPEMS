@@ -128,10 +128,10 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-export const useAuthUser = () => useAuthStore((state) => state.user);
+const useAuthUser = () => useAuthStore((state) => state.user);
 export const useAuthToken = () => useAuthStore((state) => state.token);
-export const useAuthPermissions = () => useAuthStore((state) => state.permissions);
-export const useAuthRoles = () => useAuthStore((state) => state.roles);
+const useAuthPermissions = () => useAuthStore((state) => state.permissions);
+const useAuthRoles = () => useAuthStore((state) => state.roles);
 
 export const useAuthDisplayName = () => {
   const user = useAuthStore((state) => state.user);
@@ -143,13 +143,13 @@ export const useAuthAvatarUrl = () => {
   return user?.avatar_url || user?.avatar || '';
 };
 
-export const useIsAuthenticated = () => {
+const useIsAuthenticated = () => {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   return !!user && !!token;
 };
 
-export const useIsSuperuser = () => {
+const useIsSuperuser = () => {
   const user = useAuthStore((state) => state.user);
   return !!(user?.is_superuser || user?.isSuperuser);
 };
@@ -160,7 +160,7 @@ export const useAuthUserRole = () => {
   return user?.role || (roles && roles.length > 0 ? roles[0] : '');
 };
 
-export const useAuthActions = () => {
+const useAuthActions = () => {
   // 使用单独选择器选择每个动作，避免在任何 store state 变化时都创建新的对象
   // zustand 中动作函数引用本身是稳定的，单独选择它们能确保仅当函数引用本身变化时才触发更新
   const setUser = useAuthStore((s) => s.setUser);
@@ -240,17 +240,17 @@ export const useAuth = () => {
   );
 };
 
-export const useHasPermission = (_permission: string) => {
+const useHasPermission = (_permission: string) => {
   const hasPermission = useAuthStore((state) => state.hasPermission);
   return useCallback((perm: string) => hasPermission(perm), [hasPermission]);
 };
 
-export const useHasAnyPermission = (_permissions: string[]) => {
+const useHasAnyPermission = (_permissions: string[]) => {
   const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
   return useCallback((perms: string[]) => hasAnyPermission(perms), [hasAnyPermission]);
 };
 
-export const useHasRole = (_role: string) => {
+const useHasRole = (_role: string) => {
   const hasRole = useAuthStore((state) => state.hasRole);
   return useCallback((r: string) => hasRole(r), [hasRole]);
 };

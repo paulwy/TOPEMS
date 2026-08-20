@@ -9,7 +9,7 @@ export interface Shortcut {
   path: string;
 }
 
-export function getDefaultShortcuts(): Shortcut[] {
+function getDefaultShortcuts(): Shortcut[] {
   return [
     { id: '1', title: i18n.t('store.shortcuts_store.k0'), icon: 'Activity', path: '/dashboard' },
     { id: '2', title: i18n.t('store.shortcuts_store.k1'), icon: 'FileText', path: '/documents' },
@@ -52,7 +52,7 @@ export function ensureShortcutsLoaded(): void {
   }
 }
 
-export const useShortcuts = () => useShortcutsStore((state) => state.shortcuts);
-export const useSetShortcuts = () => useShortcutsStore((state) => state.setShortcuts);
-export const useAddShortcut = () => useShortcutsStore((state) => state.addShortcut);
-export const useRemoveShortcut = () => useShortcutsStore((state) => state.removeShortcut);
+const useShortcuts = () => useShortcutsStore((state) => state.shortcuts);
+const useSetShortcuts = () => useShortcutsStore((state) => state.setShortcuts);
+const useAddShortcut = () => useShortcutsStore((state) => state.addShortcut);
+const useRemoveShortcut = () => useShortcutsStore((state) => state.removeShortcut);

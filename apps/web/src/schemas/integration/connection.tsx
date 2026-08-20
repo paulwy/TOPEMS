@@ -11,7 +11,7 @@ import { Database } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
 
-export const CONNECTION_TYPE_CONFIG: Record<
+const CONNECTION_TYPE_CONFIG: Record<
   string,
   { label: string; color: 'primary' | 'success' | 'info' | 'warning' | 'default' }
 > = {
@@ -22,7 +22,7 @@ export const CONNECTION_TYPE_CONFIG: Record<
   mes: { label: 'MES', color: 'default' },
 };
 
-export const CONNECTION_STATUS_CONFIG: Record<
+const CONNECTION_STATUS_CONFIG: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
 > = {

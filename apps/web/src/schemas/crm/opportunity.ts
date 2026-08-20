@@ -4,7 +4,7 @@ import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
 import i18n from '@/i18n';
 
-export const oppStage = z.enum([
+const oppStage = z.enum([
   'draft',
   'lead',
   'qualified',
@@ -14,10 +14,10 @@ export const oppStage = z.enum([
   'lost',
   'closed',
 ]);
-export const oppPriority = z.enum(['high', 'medium', 'low']);
-export const oppStatus = z.enum(['open', 'won', 'lost', 'archived']);
+const oppPriority = z.enum(['high', 'medium', 'low']);
+const oppStatus = z.enum(['open', 'won', 'lost', 'archived']);
 
-export const opportunityZodSchema = z
+const opportunityZodSchema = z
   .object({
     id: z.string().uuid(),
     tenantId: z.string().uuid(),
@@ -41,7 +41,7 @@ export type OppStage = z.infer<typeof oppStage>;
 export type OppPriority = z.infer<typeof oppPriority>;
 export type OppStatus = z.infer<typeof oppStatus>;
 
-export const createOpportunitySchema = opportunityZodSchema.omit({
+const createOpportunitySchema = opportunityZodSchema.omit({
   id: true,
   tenantId: true,
   stage: true,
@@ -52,7 +52,7 @@ export const createOpportunitySchema = opportunityZodSchema.omit({
 });
 export type CreateOpportunityRequest = z.infer<typeof createOpportunitySchema>;
 
-export const updateOpportunitySchema = createOpportunitySchema.partial();
+const updateOpportunitySchema = createOpportunitySchema.partial();
 export type UpdateOpportunityRequest = z.infer<typeof updateOpportunitySchema>;
 
 export const opportunitySchema: EntitySchema<Opportunity> = {

@@ -10,6 +10,6 @@ export const useWorkflowStore = create<WorkflowState>()((set) => ({
   setSelectedWorkflowId: (id) => set({ selectedWorkflowId: id }),
 }));
 
-export const useSelectedWorkflowId = () => useWorkflowStore((state) => state.selectedWorkflowId);
-export const useSetSelectedWorkflowId = () =>
+const useSelectedWorkflowId = () => useWorkflowStore((state) => state.selectedWorkflowId);
+const useSetSelectedWorkflowId = () =>
   useWorkflowStore((state) => state.setSelectedWorkflowId);
