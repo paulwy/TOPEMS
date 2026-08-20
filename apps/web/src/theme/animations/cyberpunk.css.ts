@@ -58,7 +58,7 @@ export const cyberpunkGlassStyles = `
   position: relative;
   border-radius: 12px;
   padding: 1px;
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
 }
 
 .cyber-glass-gradient-border > * {
@@ -91,23 +91,23 @@ export const cyberpunkGlassStyles = `
 
 /* 文字发光 */
 .cyber-text-glow-primary {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.50);
 }
 
 .cyber-text-glow-secondary {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
   text-shadow: 0 0 10px rgba(255, 0, 255, 0.50);
 }
 
 .cyber-text-glow-accent {
-  color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
+  color: var(--cyber-color-gold, #ffd700);
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.50);
 }
 
 /* 渐变文字 */
 .cyber-text-gradient {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -115,7 +115,7 @@ export const cyberpunkGlassStyles = `
 }
 
 .cyber-text-gradient-gold {
-  background: linear-gradient(135deg, var(--cyber-color-gold, var(--cyber-color-gold, #ffd700)) 0%, var(--color-warning, #f59e0b) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-gold, #ffd700) 0%, var(--color-warning, #f59e0b) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -307,7 +307,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.16);
@@ -345,7 +345,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiChip-root:hover {
   background-color: rgba(0, 255, 255, 0.15);
@@ -353,28 +353,28 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiChip-colorPrimary {
   background-color: rgba(0, 255, 255, 0.15);
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.12);
   border-color: rgba(0, 255, 136, 0.50);
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
 }
 .cyberpunk-mode .MuiChip-colorWarning {
   background-color: rgba(255, 170, 0, 0.12);
   border-color: rgba(255, 170, 0, 0.50);
-  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
+  color: var(--cyber-color-warn, #ffaa00);
 }
 .cyberpunk-mode .MuiChip-colorError {
   background-color: rgba(255, 68, 68, 0.12);
   border-color: rgba(255, 68, 68, 0.50);
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 
 /* Tabs */
 .cyberpunk-mode .MuiTabs-indicator {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiTab-root {
@@ -385,7 +385,7 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTab-root.Mui-selected {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
 }
 
@@ -396,13 +396,13 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiPaginationItem-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   border-color: rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiPaginationItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.15);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -428,7 +428,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiIconButton-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* Skeleton */
@@ -463,22 +463,22 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiAlert-standardSuccess {
   background-color: rgba(0, 255, 136, 0.08);
   border-color: rgba(0, 255, 136, 0.30);
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
 }
 .cyberpunk-mode .MuiAlert-standardWarning {
   background-color: rgba(255, 170, 0, 0.08);
   border-color: rgba(255, 170, 0, 0.30);
-  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
+  color: var(--cyber-color-warn, #ffaa00);
 }
 .cyberpunk-mode .MuiAlert-standardError {
   background-color: rgba(255, 68, 68, 0.08);
   border-color: rgba(255, 68, 68, 0.30);
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 .cyberpunk-mode .MuiAlert-standardInfo {
   background-color: rgba(0, 170, 255, 0.08);
   border-color: rgba(0, 170, 255, 0.30);
-  color: var(--cyber-color-blue, var(--cyber-color-blue, #00aaff));
+  color: var(--cyber-color-blue, #00aaff);
 }
 
 /* Switch */
@@ -490,7 +490,7 @@ export const cyberpunkComponentStyles = `
   opacity: 1;
 }
 .cyberpunk-mode .Mui-checked.MuiSwitch-switchBase .MuiSwitch-thumb {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
 }
 
@@ -499,7 +499,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(255, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-root.Mui-checked {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -508,7 +508,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(255, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-root.Mui-checked {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -517,11 +517,11 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(255, 255, 255, 0.10);
 }
 .cyberpunk-mode .MuiSlider-track {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiSlider-thumb {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiSlider-thumb:hover,
@@ -535,14 +535,14 @@ export const cyberpunkComponentStyles = `
   border-radius: 4px;
 }
 .cyberpunk-mode .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border-radius: 4px;
 }
 
 /* CircularProgress */
 .cyberpunk-mode .MuiCircularProgress-circle {
-  stroke: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  stroke: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -578,13 +578,13 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiAccordionSummary-root.Mui-expanded {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   min-height: auto;
 }
 
 /* Link */
 .cyberpunk-mode .MuiLink-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-decoration: none;
 }
 .cyberpunk-mode .MuiLink-root:hover {
@@ -593,7 +593,7 @@ export const cyberpunkComponentStyles = `
 
 /* Button */
 .cyberpunk-mode .MuiButton-contained {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   font-weight: 600;
   box-shadow: var(--shadow-custom, 0 0 20px rgba(0, 255, 255, 0.40));
@@ -604,15 +604,15 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiButton-outlined {
   border-color: rgba(0, 255, 255, 0.50);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiButton-outlined:hover {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
   box-shadow: var(--shadow-custom, 0 0 15px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiButton-text {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiButton-text:hover {
   background-color: rgba(0, 255, 255, 0.08);
@@ -644,7 +644,7 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, 0 0 15px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiOutlinedInput-input {
@@ -659,7 +659,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiTableCell-head {
   background-color: rgba(0, 255, 255, 0.05);
   border-bottom: 2px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* AppBar */
@@ -674,8 +674,8 @@ export const cyberpunkComponentStyles = `
 /* ListItemButton (侧边栏) */
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected {
   background: linear-gradient(90deg, rgba(0, 255, 255, 0.20) 0%, transparent 100%);
-  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 3px solid var(--cyber-color-cyan, #00ffff);
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected:hover {
   background: linear-gradient(90deg, rgba(0, 255, 255, 0.25) 0%, transparent 100%);
@@ -818,10 +818,10 @@ export const cyberpunkComponentStyles = `
   transition: color 200ms ease;
 }
 .cyberpunk-mode [role='navigation'] .MuiListItemButton-root:hover .MuiListItemIcon-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode [role='navigation'] .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -887,7 +887,7 @@ export const cyberpunkComponentStyles = `
 /* 登录页标题文字 — 霓虹发光 */
 .cyberpunk-mode .login-page h6,
 .cyberpunk-mode .login-page .MuiTypography-h6 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
 }
 
@@ -922,7 +922,7 @@ export const cyberpunkComponentStyles = `
 
 /* 错误图标 — 故障闪烁动画 */
 .cyberpunk-mode .error-page svg {
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444)) !important;
+  color: var(--cyber-color-danger, #ff4444) !important;
   filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.60));
   animation: cyber-error-glitch 2s ease-in-out infinite;
 }
@@ -935,7 +935,7 @@ export const cyberpunkComponentStyles = `
 
 /* 错误页标题 — 霓虹红发光 */
 .cyberpunk-mode .error-page .MuiTypography-h5 {
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444)) !important;
+  color: var(--cyber-color-danger, #ff4444) !important;
   text-shadow: 0 0 8px rgba(255, 68, 68, 0.50);
 }
 
@@ -948,26 +948,26 @@ export const cyberpunkComponentStyles = `
 
 /* Loading 文字 — 霓虹青 */
 .cyberpunk-mode .cyber-loading .MuiTypography-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
 /* Loading Spinner — 霓虹青旋转环 */
 .cyberpunk-mode .cyber-loading > div:first-child {
   border-color: rgba(0, 255, 255, 0.20) !important;
-  border-top-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  border-top-color: var(--cyber-color-cyan, #00ffff) !important;
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* Loading Dots — 霓虹色 */
 .cyberpunk-mode .cyber-loading > div:first-child > div {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  background-color: var(--cyber-color-cyan, #00ffff) !important;
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
 /* Loading Pulse — 霓虹脉冲 */
 .cyberpunk-mode .cyber-loading > div:first-child {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  background-color: var(--cyber-color-cyan, #00ffff) !important;
   box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.50));
 }
 
@@ -987,7 +987,7 @@ export const cyberpunkComponentStyles = `
 
 /* 空状态图标 — 霓虹发光 */
 .cyberpunk-mode [role='status'][aria-live='polite'] svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.50));
 }
 
@@ -1006,7 +1006,7 @@ export const cyberpunkComponentStyles = `
 
 /* 赛博朋克模式焦点环 — 霓虹青双环 */
 .cyberpunk-mode *:focus-visible {
-  outline: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  outline: 2px solid var(--cyber-color-cyan, #00ffff);
   outline-offset: 2px;
   box-shadow: var(--shadow-custom, 0 0 0 4px rgba(0, 255, 255, 0.20));
 }
@@ -1016,7 +1016,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiIconButton-root:focus-visible,
 .cyberpunk-mode .MuiListItemButton-root:focus-visible,
 .cyberpunk-mode .MuiChip-root:focus-visible {
-  outline: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  outline: 2px solid var(--cyber-color-cyan, #00ffff);
   outline-offset: 2px;
 }
 
@@ -1063,13 +1063,13 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .global-search-bar .MuiListItemButton-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left-color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 搜索结果选中项 */
 .cyberpunk-mode .global-search-bar .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -1093,11 +1093,11 @@ export const cyberpunkComponentStyles = `
   transition: color 150ms ease;
 }
 .cyberpunk-mode .MuiBreadcrumbs-li a:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiBreadcrumbs-li .MuiTypography-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiBreadcrumbs-separator {
@@ -1124,10 +1124,10 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected .MuiBottomNavigationAction-label {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected svg {
@@ -1136,7 +1136,7 @@ export const cyberpunkComponentStyles = `
 
 /* 底部导航 Badge — 霓虹发光 */
 .cyberpunk-mode .bottom-tab-bar .MuiBadge-badge {
-  background: linear-gradient(135deg, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)));
+  background: linear-gradient(135deg, var(--cyber-color-magenta, #ff00ff), var(--cyber-color-cyan, #00ffff));
   border: 1px solid rgba(255, 255, 255, 0.30);
   box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 0, 255, 0.50));
 }
@@ -1155,7 +1155,7 @@ export const cyberpunkComponentStyles = `
 
 /* 通知面板标题 */
 .cyberpunk-mode .notification-panel h3 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -1170,7 +1170,7 @@ export const cyberpunkComponentStyles = `
   transition: color 150ms ease;
 }
 .cyberpunk-mode .notification-panel button:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 通知项文字 */
@@ -1186,7 +1186,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .notification-panel [class*='unread'],
 .cyberpunk-mode .notification-panel .bg-blue-500,
 .cyberpunk-mode .notification-panel .bg-primary {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  background-color: var(--cyber-color-cyan, #00ffff) !important;
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   animation: cyber-status-pulse 2s ease-in-out infinite;
 }
@@ -1208,13 +1208,13 @@ export const cyberpunkComponentStyles = `
 
 /* 设置页区域标题图标 — 霓虹发光 */
 .cyberpunk-mode .settings-page-section svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.40));
 }
 
 /* 设置页保存按钮 — 霓虹脉冲 */
 .cyberpunk-mode .settings-page-save-btn {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.40));
 }
@@ -1226,10 +1226,10 @@ export const cyberpunkComponentStyles = `
 /* 设置页重置按钮 — 霓虹边框 */
 .cyberpunk-mode .settings-page-reset-btn {
   border-color: rgba(255, 170, 0, 0.50);
-  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
+  color: var(--cyber-color-warn, #ffaa00);
 }
 .cyberpunk-mode .settings-page-reset-btn:hover {
-  border-color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
+  border-color: var(--cyber-color-warn, #ffaa00);
   background-color: rgba(255, 170, 0, 0.08);
   box-shadow: var(--shadow-custom, 0 0 12px rgba(255, 170, 0, 0.30));
 }
@@ -1246,12 +1246,12 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .settings-success-alert {
   background-color: rgba(0, 255, 136, 0.08) !important;
   border: 1px solid rgba(0, 255, 136, 0.30);
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
 }
 .cyberpunk-mode .settings-error-alert {
   background-color: rgba(255, 68, 68, 0.08) !important;
   border: 1px solid rgba(255, 68, 68, 0.30);
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 
 /* ========== ModeToggle 主题切换按钮 ========== */
@@ -1259,10 +1259,10 @@ export const cyberpunkComponentStyles = `
 /* 主题切换按钮 — 霓虹边框 */
 .cyberpunk-mode .theme-toggle-btn {
   border-color: rgba(0, 255, 255, 0.40);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .theme-toggle-btn:hover {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
@@ -1281,8 +1281,8 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiToggleButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
+  color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiToggleButton-root.Mui-selected:hover {
@@ -1299,14 +1299,14 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50) !important;
 }
 .cyberpunk-mode .MuiTableSortLabel-active .MuiTableSortLabel-icon {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiTableSortLabel-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiTableSortLabel-root:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -1354,7 +1354,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .Mui-active .MuiStepConnector-line,
 .cyberpunk-mode .Mui-completed .MuiStepConnector-line {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.40));
 }
 
@@ -1364,19 +1364,19 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .Mui-active .MuiStepLabel-iconContainer .MuiSvgIcon-root,
 .cyberpunk-mode .Mui-completed .MuiStepLabel-iconContainer .MuiSvgIcon-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .MuiStepLabel-label {
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiStepLabel-label.Mui-active {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
   font-weight: 600;
 }
 .cyberpunk-mode .MuiStepLabel-label.Mui-completed {
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
 }
 
 /* 步骤替代图标（圆形数字） */
@@ -1385,11 +1385,11 @@ export const cyberpunkComponentStyles = `
   font-weight: 700;
 }
 .cyberpunk-mode .MuiStepIcon-root.Mui-active {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiStepIcon-root.Mui-completed {
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.40));
 }
 
@@ -1400,25 +1400,25 @@ export const cyberpunkComponentStyles = `
   background-color: transparent;
 }
 .cyberpunk-mode .MuiTimelineDot-root {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border: 2px solid rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-outlined {
   background-color: transparent;
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.40));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledSuccess {
-  background-color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  background-color: var(--cyber-color-green, #00ff88);
   box-shadow: var(--shadow-custom, 0 0 8px rgba(0, 255, 136, 0.60));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledError {
-  background-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  background-color: var(--cyber-color-danger, #ff4444);
   box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 68, 68, 0.60));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledWarning {
-  background-color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
+  background-color: var(--cyber-color-gold, #ffd700);
   box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 215, 0, 0.60));
 }
 
@@ -1469,18 +1469,18 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 2px solid var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.18);
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected .MuiTreeItem-label {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 树展开/折叠图标 */
 .cyberpunk-mode .MuiTreeItem-iconContainer svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.40));
 }
 
@@ -1505,14 +1505,14 @@ export const cyberpunkComponentStyles = `
 
 /* 日期选择器头部 */
 .cyberpunk-mode .MuiPickersCalendarHeader-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiPickersCalendarHeader-label {
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
   font-weight: 600;
 }
 .cyberpunk-mode .MuiPickersCalendarHeader-labelContainer svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 日期选择器星期标签 */
@@ -1531,13 +1531,13 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiPickersDay-root:hover {
   background-color: rgba(0, 255, 255, 0.10);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiPickersDay-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.20) !important;
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border: 1px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
+  border: 1px solid var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   font-weight: 600;
 }
@@ -1545,8 +1545,8 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.30) !important;
 }
 .cyberpunk-mode .MuiPickersDay-today {
-  border-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  border-color: var(--cyber-color-magenta, #ff00ff);
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* 日期选择器月份/年份选择 */
@@ -1562,12 +1562,12 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiPickersMonth-root:hover,
 .cyberpunk-mode .MuiPickersYear-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiPickersMonth-root.Mui-selected,
 .cyberpunk-mode .MuiPickersYear-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.15);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   border: 1px solid rgba(0, 255, 255, 0.30);
 }
 
@@ -1585,16 +1585,16 @@ export const cyberpunkComponentStyles = `
   transition: color 150ms ease;
 }
 .cyberpunk-mode .MuiClockNumber-root.Mui-selected {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.15);
 }
 .cyberpunk-mode .MuiClockPointer-root {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiClockPointer-thumb {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
+  border-color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 日期选择器工具栏 */
@@ -1608,15 +1608,15 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiPickersToolbar-penIconButton {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 日期选择器底部操作按钮 */
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-contained {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 
@@ -1682,7 +1682,7 @@ export const cyberpunkComponentStyles = `
 
 /* Dialog 标题 — 霓虹发光 */
 .cyberpunk-mode .MuiDialogTitle-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.30);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
@@ -1723,9 +1723,9 @@ export const cyberpunkComponentStyles = `
   height: designTokens.spacing.xs;
   background: linear-gradient(90deg,
     transparent 0%,
-    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 20%,
-    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 50%,
-    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 80%,
+    var(--cyber-color-cyan, #00ffff) 20%,
+    var(--cyber-color-magenta, #ff00ff) 50%,
+    var(--cyber-color-cyan, #00ffff) 80%,
     transparent 100%);
   box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
   z-index: 1;
@@ -1741,14 +1741,14 @@ export const cyberpunkComponentStyles = `
   bottom: 8px;
   pointer-events: none;
   background:
-    linear-gradient(to right, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top left no-repeat,
-    linear-gradient(to bottom, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top left no-repeat,
-    linear-gradient(to left, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top right no-repeat,
-    linear-gradient(to bottom, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top right no-repeat,
-    linear-gradient(to right, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom left no-repeat,
-    linear-gradient(to top, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom left no-repeat,
-    linear-gradient(to left, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom right no-repeat,
-    linear-gradient(to top, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom right no-repeat;
+    linear-gradient(to right, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) top left no-repeat,
+    linear-gradient(to bottom, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) top left no-repeat,
+    linear-gradient(to left, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) top right no-repeat,
+    linear-gradient(to bottom, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) top right no-repeat,
+    linear-gradient(to right, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) bottom left no-repeat,
+    linear-gradient(to top, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) bottom left no-repeat,
+    linear-gradient(to left, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) bottom right no-repeat,
+    linear-gradient(to top, var(--cyber-color-cyan, #00ffff) 0, var(--cyber-color-cyan, #00ffff) 12px, transparent 12px) bottom right no-repeat;
   background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
   opacity: 0.70;
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.60));
@@ -1764,13 +1764,13 @@ export const cyberpunkComponentStyles = `
 
 /* 命令面板搜索输入框 — 霓虹焦点 */
 .cyberpunk-mode .command-palette .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.40));
 }
 
 /* 命令面板搜索图标 — 霓虹发光 */
 .cyberpunk-mode .command-palette .MuiInputAdornment-root svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -1778,7 +1778,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .command-palette .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.10);
   border: 1px solid rgba(0, 255, 255, 0.40);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 600;
   box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.20));
@@ -1810,7 +1810,7 @@ export const cyberpunkComponentStyles = `
 /* 命令面板列表项 — 选中态（霓虹高亮） */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20),
     inset 0 0 16px rgba(0, 255, 255, 0.05));
 }
@@ -1823,20 +1823,20 @@ export const cyberpunkComponentStyles = `
   left: 0;
   bottom: 0;
   width: 3px;
-  background: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  box-shadow: 0 0 12px var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), 0 0 24px rgba(0, 255, 255, 0.50);
+  background: var(--cyber-color-cyan, #00ffff);
+  box-shadow: 0 0 12px var(--cyber-color-cyan, #00ffff), 0 0 24px rgba(0, 255, 255, 0.50);
   animation: cyber-pulse-glow 1.5s ease-in-out infinite;
 }
 
 /* 命令面板列表项图标 — 选中时霓虹发光 */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.70));
 }
 
 /* 命令面板列表项主文本 — 选中时霓虹色 */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected .MuiListItemText-primary {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -1853,7 +1853,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected > div > svg:last-child,
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected svg[lucide='arrow-right'] {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.60));
 }
 
@@ -1948,7 +1948,7 @@ export const cyberpunkComponentStyles = `
   position: absolute;
   width: designTokens.spacing.xl;
   height: designTokens.spacing.xl;
-  border: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border: 2px solid var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .cyber-hud-corners::before {
@@ -2006,8 +2006,8 @@ export const cyberpunkComponentStyles = `
   left: 0;
   width: 30%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
-  box-shadow: 0 0 12px var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, #00ffff), transparent);
+  box-shadow: 0 0 12px var(--cyber-color-cyan, #00ffff);
   animation: cyber-hud-scan 8s linear infinite;
 }
 
@@ -2037,7 +2037,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .cyber-hud-datastream::before {
   content: '◉';
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
   animation: cyber-hud-blink 1.5s ease-in-out infinite;
 }
 .cyberpunk-mode .cyber-hud-datastream::after {
@@ -2051,9 +2051,9 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .app-header-logo {
   position: relative;
   background: linear-gradient(135deg,
-    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%,
+    var(--cyber-color-cyan, #00ffff) 0%,
     var(--color-fallback-ant-blue, #1890ff) 25%,
-    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 75%,
+    var(--cyber-color-magenta, #ff00ff) 75%,
     var(--color-fallback-accent-pink, #ff0088) 100%) !important;
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   animation: cyber-pulse-glow 3s ease-in-out infinite;
@@ -2119,10 +2119,10 @@ export const cyberpunkComponentStyles = `
 /* AppHeader 标题 — 渐变文字 + 多层发光 */
 .cyberpunk-mode .app-header-title {
   background: linear-gradient(135deg,
-    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%,
+    var(--cyber-color-cyan, #00ffff) 0%,
     var(--color-surface, var(--color-primary-foreground, #ffffff)) 30%,
-    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 60%,
-    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 100%) !important;
+    var(--cyber-color-magenta, #ff00ff) 60%,
+    var(--cyber-color-cyan, #00ffff) 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -2143,7 +2143,7 @@ export const cyberpunkComponentStyles = `
   transform: translateY(-50%);
   width: 3px;
   height: 70%;
-  background: linear-gradient(180deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(180deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border-radius: 2px;
 }
@@ -2157,7 +2157,7 @@ export const cyberpunkComponentStyles = `
   background: transparent;
 }
 .cyberpunk-mode .command-palette ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(180deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   border-radius: 3px;
   box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.50));
 }
@@ -2183,7 +2183,7 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: designTokens.spacing.xs;
-  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff), transparent);
   opacity: 0.60;
 }
 
@@ -2201,7 +2201,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .bi-metric-card .MuiTypography-h4,
 .cyberpunk-mode .bi-metric-card .MuiTypography-h3 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 12px rgba(0, 255, 255, 0.50);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 700;
@@ -2210,7 +2210,7 @@ export const cyberpunkComponentStyles = `
 /* 趋势上升 — 霓虹绿 */
 .cyberpunk-mode .bi-metric-card [color='success.main'],
 .cyberpunk-mode .bi-metric-card .MuiTypography-colorSuccess {
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
+  color: var(--cyber-color-green, #00ff88) !important;
   text-shadow: 0 0 6px rgba(0, 255, 136, 0.50);
 }
 
@@ -2242,7 +2242,7 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, #00ffff), transparent);
   opacity: 0.70;
   z-index: 1;
 }
@@ -2256,7 +2256,7 @@ export const cyberpunkComponentStyles = `
 
 /* 卡片标题 — 霓虹青 */
 .cyberpunk-mode .bi-chart-card .MuiCardHeader-title {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -2282,7 +2282,7 @@ export const cyberpunkComponentStyles = `
 
 /* 切换按钮 hover — 霓虹青 */
 .cyberpunk-mode .bi-chart-card .MuiCardHeader-action button:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.10);
 }
 
@@ -2290,7 +2290,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .bi-chart-card .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* 汇总数据 — 等宽字体 */
@@ -2303,7 +2303,7 @@ export const cyberpunkComponentStyles = `
 
 /* 浮动按钮 — 霓虹渐变 + 多层发光 */
 .cyberpunk-mode .ai-helper-fab {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%) !important;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, #ff00ff) 100%) !important;
   box-shadow: var(--shadow-custom, 0 8px 24px rgba(0, 0, 0, 0.50),
     0 0 24px rgba(0, 255, 255, 0.50),
     0 0 48px rgba(255, 0, 255, 0.25) !important);
@@ -2361,14 +2361,14 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: designTokens.spacing.xs;
-  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff), var(--cyber-color-cyan, #00ffff), transparent);
   box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
   z-index: 1;
 }
 
 /* 面板头部 — 渐变背景 */
 .cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%) !important;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, #ff00ff) 100%) !important;
   position: relative;
 }
 
@@ -2394,7 +2394,7 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .ai-helper-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -2416,7 +2416,7 @@ export const cyberpunkComponentStyles = `
 
 /* 工具标题 — 霓虹青 */
 .cyberpunk-mode .ai-helper-panel .MuiTypography-subtitle2 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -2427,7 +2427,7 @@ export const cyberpunkComponentStyles = `
 
 /* 工具图标 — 霓虹青 */
 .cyberpunk-mode .ai-helper-panel .MuiListItemIcon-root svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -2435,7 +2435,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .ai-helper-panel .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
@@ -2464,7 +2464,7 @@ export const cyberpunkComponentStyles = `
 /* 看板统计数字 — 霓虹青等宽 */
 .cyberpunk-mode .kanban-page-template .MuiTypography-h5,
 .cyberpunk-mode .kanban-page-template .MuiTypography-h4 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
 }
@@ -2478,7 +2478,7 @@ export const cyberpunkComponentStyles = `
 
 /* 看板列标题 — 霓虹大写 */
 .cyberpunk-mode .kanban-page-template .MuiTypography-subtitle1 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
@@ -2522,34 +2522,34 @@ export const cyberpunkComponentStyles = `
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorWarning {
   background-color: rgba(255, 215, 0, 0.15) !important;
-  color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700)) !important;
+  color: var(--cyber-color-gold, #ffd700) !important;
   border: 1px solid rgba(255, 215, 0, 0.40);
   text-shadow: 0 0 4px rgba(255, 215, 0, 0.40);
 }
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.15) !important;
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
+  color: var(--cyber-color-green, #00ff88) !important;
   border: 1px solid rgba(0, 255, 136, 0.40);
   text-shadow: 0 0 4px rgba(0, 255, 136, 0.40);
 }
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorInfo {
   background-color: rgba(0, 255, 255, 0.15) !important;
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   border: 1px solid rgba(0, 255, 255, 0.40);
   text-shadow: 0 0 4px rgba(0, 255, 255, 0.40);
 }
 
 /* 看板进度条 — 霓虹渐变 */
 .cyberpunk-mode .kanban-page-template .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
 /* 看板搜索框 — 霓虹焦点 */
 .cyberpunk-mode .kanban-page-template .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -2619,7 +2619,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .dashboard-quick-actions .MuiButton-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   backdrop-filter: blur(8px);
 }
 .cyberpunk-mode .dashboard-quick-actions .MuiButton-root:hover {
@@ -2632,14 +2632,14 @@ export const cyberpunkComponentStyles = `
 
 /* 向导步骤标签 — 激活态霓虹 */
 .cyberpunk-mode .MuiStepLabel-label.Mui-active {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  color: var(--cyber-color-cyan, #00ffff) !important;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
   font-weight: 600;
 }
 
 /* 向导步骤标签 — 完成态霓虹绿 */
 .cyberpunk-mode .MuiStepLabel-label.Mui-completed {
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
+  color: var(--cyber-color-green, #00ff88) !important;
 }
 
 /* 向导内容容器 — 玻璃拟态 */
@@ -2658,7 +2658,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.10);
 }
 .cyberpunk-mode .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
@@ -2708,7 +2708,7 @@ export const cyberpunkComponentStyles = `
 /* 主列表选中项 — 霓虹高亮 */
 .cyberpunk-mode .master-detail-master .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 3px solid var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20));
 }
 
@@ -2730,7 +2730,7 @@ export const cyberpunkComponentStyles = `
 
 /* 工具栏按钮 — 霓虹 hover */
 .cyberpunk-mode .markdown-editor-toolbar .MuiIconButton-root:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.10);
 }
 
@@ -2743,7 +2743,7 @@ export const cyberpunkComponentStyles = `
 
 /* 编辑器焦点 — 霓虹边框 */
 .cyberpunk-mode .markdown-editor-textarea .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -2758,7 +2758,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-preview h1,
 .cyberpunk-mode .markdown-editor-preview h2,
 .cyberpunk-mode .markdown-editor-preview h3 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.30);
   border-bottom: 1px solid rgba(0, 255, 255, 0.20);
 }
@@ -2775,7 +2775,7 @@ export const cyberpunkComponentStyles = `
 /* 预览区行内代码 — 霓虹背景 */
 .cyberpunk-mode .markdown-editor-preview code {
   background-color: rgba(0, 255, 255, 0.10);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   padding: designTokens.spacing.xs 6px;
   border-radius: 3px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -2783,7 +2783,7 @@ export const cyberpunkComponentStyles = `
 
 /* 预览区引用 — 霓虹左边框 */
 .cyberpunk-mode .markdown-editor-preview blockquote {
-  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 3px solid var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.05);
   padding: designTokens.spacing.sm 16px;
   margin: designTokens.spacing.md 0;
@@ -2792,7 +2792,7 @@ export const cyberpunkComponentStyles = `
 
 /* 预览区链接 — 霓虹青 */
 .cyberpunk-mode .markdown-editor-preview a {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   text-decoration: none;
   text-shadow: 0 0 4px rgba(0, 255, 255, 0.30);
   border-bottom: 1px dashed rgba(0, 255, 255, 0.40);
@@ -2820,13 +2820,13 @@ export const cyberpunkComponentStyles = `
 /* 历史列表选中项 — 霓虹高亮 */
 .cyberpunk-mode .chat-history .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 3px solid var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20));
 }
 
 /* 历史搜索框 — 霓虹焦点 */
 .cyberpunk-mode .chat-history .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -2855,7 +2855,7 @@ export const cyberpunkComponentStyles = `
 
 /* 工具输入框 — 霓虹焦点 */
 .cyberpunk-mode .ai-tools-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
@@ -2899,16 +2899,16 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiSelect-root:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiSelect-iconOutlined {
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .MuiSelect-root:hover .MuiSelect-iconOutlined {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiSelect-root.Mui-focused .MuiSelect-iconOutlined {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -2927,7 +2927,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== Rating 评分组件 ========== */
@@ -2942,11 +2942,11 @@ export const cyberpunkComponentStyles = `
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiRating-iconFilled {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .MuiRating-iconHover {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
   filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.60));
 }
 .cyberpunk-mode .MuiRating-iconEmpty {
@@ -2972,19 +2972,19 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiAutocomplete-option[data-focus='true'] {
   background-color: rgba(0, 255, 255, 0.12);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiAutocomplete-option[aria-selected='true'] {
   background-color: rgba(0, 255, 255, 0.15);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
+  border-left: 2px solid var(--cyber-color-cyan, #00ffff);
 }
 
 /* Autocomplete 标签 — 霓虹风格 */
 .cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault {
   background-color: rgba(0, 255, 255, 0.10);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault:hover {
   background-color: rgba(0, 255, 255, 0.15);
@@ -3003,10 +3003,10 @@ export const cyberpunkComponentStyles = `
   border-bottom-color: rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiInput-underline:after {
-  border-bottom-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-bottom-color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiInput-underline.Mui-error:after {
-  border-bottom-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  border-bottom-color: var(--cyber-color-danger, #ff4444);
 }
 
 /* ========== FormControlLabel 表单标签 ========== */
@@ -3015,7 +3015,7 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiFormControlLabel-root:hover .MuiTypography-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== MenuItem 菜单项增强 ========== */
@@ -3048,7 +3048,7 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-text:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== TabScrollButton 标签滚动按钮 ========== */
@@ -3057,7 +3057,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .MuiTabScrollButton-root:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
 }
 
@@ -3073,7 +3073,7 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTablePagination-actions .MuiIconButton-root:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
 }
 
@@ -3083,19 +3083,19 @@ export const cyberpunkComponentStyles = `
   height: designTokens.spacing.xs;
 }
 .cyberpunk-mode .MuiLinearProgress-barColorPrimary {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
 }
 .cyberpunk-mode .MuiLinearProgress-barColorSecondary {
-  background: linear-gradient(90deg, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)));
+  background: linear-gradient(90deg, var(--cyber-color-magenta, #ff00ff), var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== CircularProgress 圆形进度条增强 ========== */
 
 .cyberpunk-mode .MuiCircularProgress-colorPrimary {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiCircularProgress-colorSecondary {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== ExpansionPanel 折叠面板 ========== */
@@ -3133,24 +3133,24 @@ export const cyberpunkComponentStyles = `
 
 .cyberpunk-mode .MuiChip-outlined {
   border-color: rgba(0, 255, 255, 0.30);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiChip-outlined:hover {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
 }
 .cyberpunk-mode .MuiChip-deleteIcon {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiChip-deleteIcon:hover {
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 
 /* ========== Avatar 头像增强 ========== */
 
 .cyberpunk-mode .MuiAvatar-colorDefault {
   background-color: rgba(0, 255, 255, 0.20);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiAvatar-group .MuiAvatar-root {
   border-color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
@@ -3159,23 +3159,23 @@ export const cyberpunkComponentStyles = `
 /* ========== Badge 徽章增强 ========== */
 
 .cyberpunk-mode .MuiBadge-colorPrimary {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorSecondary {
-  background-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  background-color: var(--cyber-color-magenta, #ff00ff);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorSuccess {
-  background-color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  background-color: var(--cyber-color-green, #00ff88);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorError {
-  background-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  background-color: var(--cyber-color-danger, #ff4444);
   color: var(--color-surface, var(--color-primary-foreground, #ffffff));
 }
 .cyberpunk-mode .MuiBadge-colorWarning {
-  background-color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
+  background-color: var(--cyber-color-gold, #ffd700);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 
@@ -3188,17 +3188,17 @@ export const cyberpunkComponentStyles = `
 /* ========== IconButton 图标按钮增强 ========== */
 
 .cyberpunk-mode .MuiIconButton-colorPrimary {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiIconButton-colorSecondary {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== Link 链接增强 ========== */
 
 .cyberpunk-mode .MuiLink-underlineHover:hover {
   text-decoration: underline;
-  text-decoration-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  text-decoration-color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== ButtonGroup 按钮组 ========== */
@@ -3219,13 +3219,13 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTextField-root .MuiInputLabel-root.Mui-focused {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root {
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root.Mui-error {
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 
 /* ========== FormControl 表单控件 ========== */
@@ -3234,7 +3234,7 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiFormControl-root .MuiInputLabel-root.Mui-focused {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== FormGroup 表单组 ========== */
@@ -3249,22 +3249,22 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-colorPrimary.Mui-checked {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiCheckbox-colorSecondary {
   color: rgba(255, 0, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-colorSecondary.Mui-checked {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== Switch 开关增强 ========== */
 
 .cyberpunk-mode .MuiSwitch-colorPrimary .MuiSwitch-thumb {
-  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  background-color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiSwitch-colorSecondary .MuiSwitch-thumb {
-  background-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  background-color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== Radio 单选按钮增强 ========== */
@@ -3273,22 +3273,22 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-colorPrimary.Mui-checked {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiRadio-colorSecondary {
   color: rgba(255, 0, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-colorSecondary.Mui-checked {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== Slider 滑块增强 ========== */
 
 .cyberpunk-mode .MuiSlider-colorPrimary {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiSlider-colorSecondary {
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 .cyberpunk-mode .MuiSlider-markLabel {
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
@@ -3318,10 +3318,10 @@ export const cyberpunkComponentStyles = `
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiListItemButton-root:hover .MuiListItemIcon-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 
 /* ========== ListItemAvatar 列表项头像 ========== */
@@ -3438,15 +3438,15 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .cascader-list .MuiListItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
+  border-left: 2px solid var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .cascader-path .MuiListItem-root {
   color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .cascader-path .MuiListItem-root:hover {
   background-color: rgba(0, 255, 255, 0.06);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .cascader-divider {
   border-color: rgba(0, 255, 255, 0.10);
@@ -3468,7 +3468,7 @@ export const cyberpunkComponentStyles = `
   box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 .cyberpunk-mode .date-range-picker .MuiTypography-subtitle1 {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .date-range-picker .MuiTypography-h6 {
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
@@ -3478,12 +3478,12 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .date-range-picker .MuiButton-outlined:hover {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
+  border-color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.08);
 }
 .cyberpunk-mode .date-range-picker .MuiButton-contained {
-  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, #00ffff) 0%, var(--cyber-color-magenta, #ff00ff) 100%);
   color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .date-range-picker .date-cell {
@@ -3491,18 +3491,18 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .date-range-picker .date-cell:hover {
   background-color: rgba(0, 255, 255, 0.10);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-selected {
   background-color: rgba(0, 255, 255, 0.20);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-in-range {
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-today {
-  border-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
-  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  border-color: var(--cyber-color-magenta, #ff00ff);
+  color: var(--cyber-color-magenta, #ff00ff);
 }
 
 /* ========== FileUpload 文件上传组件 ========== */
@@ -3516,7 +3516,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode .file-upload .MuiPaper-root[class*='dragging'] {
-  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, #00ffff);
   background-color: rgba(0, 255, 255, 0.10);
   box-shadow: var(--shadow-custom, 0 0 24px rgba(0, 255, 255, 0.30));
 }
@@ -3530,7 +3530,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .file-upload[class*='dragging'] .upload-icon svg {
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .file-upload .file-item {
@@ -3544,7 +3544,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .file-upload .file-item.file-error .file-icon svg {
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
 }
 .cyberpunk-mode .file-upload .file-name {
   color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
@@ -3554,24 +3554,24 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .file-upload .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.15);
-  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-green, #00ff88);
   border: 1px solid rgba(0, 255, 136, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiChip-colorError {
   background-color: rgba(255, 68, 68, 0.15);
-  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--cyber-color-danger, #ff4444);
   border: 1px solid rgba(255, 68, 68, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiChip-colorPrimary {
   background-color: rgba(0, 255, 255, 0.15);
-  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, #00ffff);
   border: 1px solid rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiLinearProgress-root {
   background-color: rgba(0, 255, 255, 0.10);
 }
 .cyberpunk-mode .file-upload .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  background: linear-gradient(90deg, var(--cyber-color-cyan, #00ffff), var(--cyber-color-magenta, #ff00ff));
   box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 `;

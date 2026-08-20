@@ -49,12 +49,12 @@ export const BIChartColors = {
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
   cyberpunk: {
     series: [
-      'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))', // 霓虹青
-      'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))', // 霓虹品红
-      'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))', // 霓虹金
-      'var(--cyber-color-green, var(--cyber-color-green, #00ff88))', // 霓虹绿
-      'var(--cyber-color-danger, var(--cyber-color-danger, #ff4444))', // 霓虹红
-      'var(--cyber-color-blue, var(--cyber-color-blue, #00aaff))', // 电光蓝
+      'var(--cyber-color-cyan, #00ffff)', // 霓虹青
+      'var(--cyber-color-magenta, #ff00ff)', // 霓虹品红
+      'var(--cyber-color-gold, #ffd700)', // 霓虹金
+      'var(--cyber-color-green, #00ff88)', // 霓虹绿
+      'var(--cyber-color-danger, #ff4444)', // 霓虹红
+      'var(--cyber-color-blue, #00aaff)', // 电光蓝
       'var(--color-warning, #f59e0b)', // 霓虹橙
       'var(--color-fallback-ant-purple, #aa00ff)', // 紫电
     ],
@@ -153,12 +153,12 @@ export const useChartTheme = (): ChartThemeColors => {
       textColor: BIChartColors.cyberpunk.text,
       tooltipBg: BIChartColors.cyberpunk.background,
       borderColor: BIChartColors.cyberpunk.border,
-      primary: 'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))',
-      secondary: 'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))',
-      success: 'var(--cyber-color-green, var(--cyber-color-green, #00ff88))',
-      warning: 'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))',
-      error: 'var(--cyber-color-danger, var(--cyber-color-danger, #ff4444))',
-      info: 'var(--cyber-color-blue, var(--cyber-color-blue, #00aaff))',
+      primary: 'var(--cyber-color-cyan, #00ffff)',
+      secondary: 'var(--cyber-color-magenta, #ff00ff)',
+      success: 'var(--cyber-color-green, #00ff88)',
+      warning: 'var(--cyber-color-gold, #ffd700)',
+      error: 'var(--cyber-color-danger, #ff4444)',
+      info: 'var(--cyber-color-blue, #00aaff)',
       series: BIChartColors.cyberpunk.series,
     };
   }
