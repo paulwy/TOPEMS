@@ -23,4 +23,3 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({ previewFile, onClose 
 };
 
 export default DocumentPreview;
-export { DocumentPreview };

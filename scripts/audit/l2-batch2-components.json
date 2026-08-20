@@ -1,0 +1,129 @@
+{
+  "batch_id": "l2-caution-batch2-components",
+  "date": "2026-08-20",
+  "description": "L2-CAUTION Batch 2: components/ directory value exports conservative removal. Note: L2 items have barrel re-exports - need dual-end edits (def + barrel).",
+  "removal_mode": "conservative-v2-export-keyword-only",
+  "total_exports": 43,
+  "total_files": 38,
+  "targets": {
+    "apps/web/src/components/GlobalSearchBar/SearchInput.tsx": [
+      "SearchInput"
+    ],
+    "apps/web/src/components/GlobalSearchBar/SearchResultList.tsx": [
+      "SearchResultList"
+    ],
+    "apps/web/src/components/common/AdvancedFilter.tsx": [
+      "AdvancedFilterPanel"
+    ],
+    "apps/web/src/components/common/AmountDisplay.tsx": [
+      "AmountDisplay"
+    ],
+    "apps/web/src/components/common/Avatar.tsx": [
+      "AvatarGroup"
+    ],
+    "apps/web/src/components/common/CommentList.tsx": [
+      "CommentList"
+    ],
+    "apps/web/src/components/common/DepartmentSelect.tsx": [
+      "DepartmentSelect"
+    ],
+    "apps/web/src/components/common/StatusTimeline.tsx": [
+      "StatusTimeline"
+    ],
+    "apps/web/src/components/common/TouchButton.tsx": [
+      "TouchRipple"
+    ],
+    "apps/web/src/components/gis/modules/shared/GisContext.tsx": [
+      "GisProvider"
+    ],
+    "apps/web/src/components/layout/ModuleTabs.tsx": [
+      "ModuleTabs"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/DataSourcePanel.tsx": [
+      "DataSourcePanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/FieldSelector.tsx": [
+      "FieldSelector"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/FilterPanel.tsx": [
+      "FilterPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/GroupPanel.tsx": [
+      "GroupPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/LayoutPanel.tsx": [
+      "LayoutPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/mockData.ts": [
+      "MOCK_FIELDS"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerCanvas.tsx": [
+      "DesignerCanvas"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerToolbar.tsx": [
+      "DesignerToolbar"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/NodeEditDialog.tsx": [
+      "NodeEditDialog"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/NodeLibrary.tsx": [
+      "NodeLibrary"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/PropertiesPanel.tsx": [
+      "PropertiesPanel"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/DataTableSection.tsx": [
+      "DataTableSection"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/EntityFormModal.tsx": [
+      "EntityFormModal"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/ImportModal.tsx": [
+      "ImportModal"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/MapSection.tsx": [
+      "MapSection"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/StatsSection.tsx": [
+      "StatsSection"
+    ],
+    "apps/web/src/pages/doc/DocumentsPage/components/DocumentList.tsx": [
+      "DocumentList"
+    ],
+    "apps/web/src/pages/doc/DocumentsPage/components/DocumentPreview.tsx": [
+      "DocumentPreview"
+    ],
+    "apps/web/src/pages/doc/DocumentsPage/components/DocumentTree.tsx": [
+      "DocumentTree"
+    ],
+    "apps/web/src/pages/doc/DocumentsPage/components/UploadDialog.tsx": [
+      "UploadDialog"
+    ],
+    "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx": [
+      "ScopeFormDialog",
+      "AddCompanyDialog",
+      "RuleConfigDialog"
+    ],
+    "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx": [
+      "ConsolidationScopeTable",
+      "ConsolidationCompanyTable"
+    ],
+    "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalActions.tsx": [
+      "buildActions"
+    ],
+    "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalTimeline.tsx": [
+      "RecordsTabContent",
+      "TimelineTabContent",
+      "FormDataTabContent"
+    ],
+    "apps/web/src/pages/workflow/WorkflowSettingsPage/components/ApprovalSettings.tsx": [
+      "ApprovalSettings"
+    ],
+    "apps/web/src/pages/workflow/WorkflowSettingsPage/components/FormSettings.tsx": [
+      "FormSettings"
+    ],
+    "apps/web/src/pages/workflow/WorkflowSettingsPage/components/SettingSidebar.tsx": [
+      "SettingSidebar"
+    ]
+  }
+}

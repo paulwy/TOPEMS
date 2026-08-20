@@ -66,4 +66,3 @@ const UploadDialog: React.FC<UploadDialogProps> = ({ uploading, uploadProgress }
 };
 
 export default UploadDialog;
-export { UploadDialog };

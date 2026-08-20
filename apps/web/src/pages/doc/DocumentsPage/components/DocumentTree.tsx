@@ -96,4 +96,3 @@ const DocumentTree: React.FC<DocumentTreeProps> = ({
 };
 
 export default DocumentTree;
-export { DocumentTree };

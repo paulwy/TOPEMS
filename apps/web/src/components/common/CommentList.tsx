@@ -162,7 +162,7 @@ const CommentItem: React.FC<{
   );
 };
 
-export const CommentList: React.FC<CommentListProps> = ({
+const CommentList: React.FC<CommentListProps> = ({
   comments,
   onAddComment,
   onLike,

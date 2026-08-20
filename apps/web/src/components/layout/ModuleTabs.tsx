@@ -529,7 +529,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export const ModuleTabs: React.FC<ModuleTabsProps> = ({
+const ModuleTabs: React.FC<ModuleTabsProps> = ({
   items,
   showHomeTab = true,
   pluginCode,

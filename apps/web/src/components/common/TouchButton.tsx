@@ -95,7 +95,7 @@ interface TouchRippleProps {
   minTouchTarget?: number;
 }
 
-export const TouchRipple: React.FC<TouchRippleProps> = ({
+const TouchRipple: React.FC<TouchRippleProps> = ({
   children,
   className,
   onClick,
