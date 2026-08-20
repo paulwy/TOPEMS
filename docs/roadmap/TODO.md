@@ -193,7 +193,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 
 > **方案文档**: [v68.1-implementation-plan.md](file:///Users/air/TOPEMS/docs/plans/v68.1-implementation-plan.md)
 > **来源**: [shortcomings-analysis.md](file:///Users/air/TOPEMS/docs/plans/shortcomings-analysis.md) 重新评估后启动
-> **已闭环**: S3（插件 token）✅ · E2（Vite Proxy）✅ · S2（JWT 默认密钥）✅ 严格校验已下沉到 `AuthState::new`（P1-1 已完成）
+> **已闭环**: S3（插件 token）✅ · E2（Vite Proxy）✅ · S2（JWT 默认密钥）✅ 严格校验已下沉到 `AuthState::new`（P1-1 已完成）**· V257 Phase 2（2026-08-20）追加：全仓 25+ 配置模板/部署脚本 0 处残留 `topems-*` 默认值 + `config/env/.env.production.template` 31 字符弱长度隐藏 panic Bug 修复（commits ebf380f15 / 3f97e2c0e / c37f148fe）**
 > **范围**: S1（BI SQL 注入防御深化）+ A2（unified-core 瘦身）+ A4（topems_shared 去门面化）+ **安全短板 P0/P1 修复（本轮新推进）**
 
 ### 🔴 P0 — S1 BI 模块 SQL 注入防御深化
@@ -212,7 +212,7 @@ Iteration 3（全局辅助元素）    Iteration 4（UI统一规范收尾）
 | **sec-audit** | BI 全链路 SQL 审计 | 审计 BI 模块 8 个 handler，识别 4 处 `format!` 拼接 SQL（LIMIT/OFFSET + 字段） | 输出分级清单 P0/P1，零遗漏 | ✅ 完成 |
 | **sec-bi-param** | filter_data / pivot_table 参数化 | 修复 `multidimensional_analysis.rs` + `row_level_permission.rs` + `self_service_report.rs` LIMIT/OFFSET 改为 `.bind()` 参数化 | `grep 'LIMIT \${'` analytics → 0 命中 | ✅ 完成 |
 | **sec-bi-whitelist** | self_service_report + predictive_analysis 接入白名单 | 为 self_service_report.rs 的维度/指标/sort 接入 `quote_identifier` + `validate_columns`；为 predictive_analysis.rs 4 个 handler（MA/ES/趋势/对比）抽出 `validate_prediction_fields` 统一校验 | `cargo test -p topems-analytics --lib` → **107 passed / 0 failed** | ✅ 完成 |
-| **sec-auth** | `AuthState::new` 下沉密钥校验 | 将 32 字符最小长度 + 默认密钥拒绝规则从 `from_env` 下沉到 `AuthState::new`，引入 `DEFAULT_JWT_SECRET`/`DEFAULT_REFRESH_SECRET` 常量 + `validate_secrets(strict)` 共享校验路径；默认密钥在任何环境（含开发）一律 panic | `cargo test -p topems-shared-auth auth::tests::test_auth_state_*` → 全部通过，短密钥/默认密钥构造均触发 panic | ✅ 完成 |
+| **sec-auth** | `AuthState::new` 下沉密钥校验 | 将 32 字符最小长度 + 默认密钥拒绝规则从 `from_env` 下沉到 `AuthState::new`，引入 `DEFAULT_JWT_SECRET`/`DEFAULT_REFRESH_SECRET` 常量 + `validate_secrets(strict)` 共享校验路径；默认密钥在任何环境（含开发）一律 panic。**V257 Phase 2（2026-08-20，commits ebf380f15 / 3f97e2c0e / c37f148fe）追加治理**：① 全仓 25+ 份 `.env*` 模板 / `topems-docker.sh` 部署脚本 `topems-*` 默认硬编码清理率 100%；② `config/env/.env.production.template` 原 31 字符弱长度隐藏 panic Bug 修复 → 现统一 64 字符占位符 + 双密钥独立；③ `.gitignore` 精确白名单（`!.sqlx/query-*.json` + `*.env.example`）保证模板随仓提交 | `cargo test -p topems-shared-auth auth::tests::test_auth_state_*` → 全部通过，短密钥/默认密钥构造均触发 panic | ✅ 完成 |
 | **sec-id-white** | `validate_identifier` 扩充字符白名单 | 新增字节级白名单（ASCII 字母/数字/下划线）+ NUL/控制字符/高位字节拦截 + 63 字节长度上限 + SQL 关键字子串兜底（`select/drop/union/...` 带空格匹配，避免误伤合法列名） | 新增 3 个测试：控制字符拒绝 + SQL 关键字拒绝 + 长度上限；`cargo test` 全部通过 | ✅ 完成 |
 | **sec-verify** | 综合验收 | `cargo check --workspace` 通过 · `cargo test -p topems-analytics --lib` 107/107 · `cargo test -p topems-shared-auth --lib` 203/203 · 唯一 pre-existing 失败 `test_get_module_analytics_invalid_module` 与本轮无关（已验证 master 同样失败） | 验收通过 | ✅ 完成 |
 
@@ -785,7 +785,7 @@ mes(25→30页) / hrm(16→21页) / wms(16→21页) / pdm(16→21页) / scm(15�
 |---|------|---------|-----------|
 | **1** | A2 瘦身后续：5 独立服务 build cache 优化 + 覆盖率补齐 | ✅ 完成。3 层缓存架构文档；monitor/plugin-registry 修复 SimpleHealthConfig 编译 bug；3 服务 smoke 测试全部通过（Phase 1.0 基线） | [a2-build-cache.md](file:///Users/xingzhai/TOPEMS/docs/architecture/a2-build-cache.md) |
 | **2** | V67.2 审计余留复盘：P2×4 + P3×3 | ✅ 全部闭环（P2-1~P2-4 + P3-1~P3-3 均在 §4-2 完成，status=✅） | [§4-2 V68.1 顺手项](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md#L255-L265) |
-| **3** | CI 性能：8+ 门禁脚本分层分组缓存 | ✅ 完成。`ci-cache-utils.sh` 4 层工具 + 2 个包装脚本（verify-mes-schema-truth / check-entityschema-maxlength）；同 hash 二次执行命中跳过 node 启动 | [ci-cache-utils.sh](file:///Users/xingzhai/TOPEMS/scripts/ci-cache-utils.sh) |
+| **3** | CI 性能：8+ 门禁脚本分层分组缓存 | ✅ 完成。`ci-cache-utils.sh` 4 层工具 + 2 个包装脚本（verify-mes-schema-truth / check-entityschema-maxlength）；同 hash 二次执行命中跳过 node 启动；**2026-08-20（V257 章）补充**：根 `.sqlx/` 调整为白名单模式（`.gitignore` → `!.sqlx/query-*.json`），多包 prepare 补齐 wms/portal/analytics 合计 104 条 query 离线缓存 → `ci.yml` L195（unified-core）/ L314（portal）`SQLX_OFFLINE=true` 两处离线编译全绿；`scripts/dev/sqlx-prepare.sh` 多包正确语法：`./scripts/dev/sqlx-prepare.sh -p topems-wms -p topems-portal -p topems-analytics`（**注意：多 -p，不是空格传参**） | [ci-cache-utils.sh](file:///Users/xingzhai/TOPEMS/scripts/ci-cache-utils.sh) · [sqlx-prepare.sh](file:///Users/xingzhai/TOPEMS/scripts/dev/sqlx-prepare.sh) |
 
 ---
 
