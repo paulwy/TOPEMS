@@ -25,8 +25,8 @@ import apiClient, { downloadBlob } from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
 import config from '../../config/runtime';
 
-export type ImportType = 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
-export type ImportStatus =
+type ImportType = 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+type ImportStatus =
   'pending' | 'validating' | 'valid' | 'invalid' | 'importing' | 'completed' | 'failed';
 
 export interface ImportTask {
@@ -66,12 +66,12 @@ export interface ExportTask {
   completed_at?: string;
 }
 
-export interface BatchUpdateRequest {
+interface BatchUpdateRequest {
   ids: string[];
   fields: Record<string, unknown>;
 }
 
-export interface BatchDeleteRequest {
+interface BatchDeleteRequest {
   ids: string[];
   confirm: boolean;
 }
@@ -82,7 +82,7 @@ export interface BatchTagRequest {
   action: 'add' | 'remove' | 'replace';
 }
 
-export interface BatchGroupRequest {
+interface BatchGroupRequest {
   contact_ids: string[];
   group_id: string;
   action: 'add' | 'remove';

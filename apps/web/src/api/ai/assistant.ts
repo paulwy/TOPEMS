@@ -2,13 +2,13 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 // 报表助手 - 自然语言生成报表
-export interface ReportMetric {
+interface ReportMetric {
   label: string;
   value: number;
   unit?: string;
 }
 
-export interface ReportAssistantRequest {
+interface ReportAssistantRequest {
   query: string;
   data_source?: string;
   time_range?: string;
@@ -27,7 +27,7 @@ export interface ReportAssistantResponse {
 }
 
 // 流程助手 - 流程分析与优化建议
-export interface FlowStep {
+interface FlowStep {
   step: number;
   name: string;
   description: string;
@@ -35,7 +35,7 @@ export interface FlowStep {
   estimated_time?: string;
 }
 
-export interface FlowAssistantRequest {
+interface FlowAssistantRequest {
   query: string;
   module?: string;
   context?: Record<string, unknown>;
@@ -50,7 +50,7 @@ export interface FlowAssistantResponse {
 }
 
 // 异常预测
-export interface AnomalyPoint {
+interface AnomalyPoint {
   timestamp: string;
   value: number;
   expected?: number;
@@ -58,7 +58,7 @@ export interface AnomalyPoint {
   reason?: string;
 }
 
-export interface AnomalyPredictRequest {
+interface AnomalyPredictRequest {
   metric: string;
   time_range?: string;
   data_source?: string;
@@ -74,13 +74,13 @@ export interface AnomalyPredictResponse {
 }
 
 // 知识库问答
-export interface KnowledgeSource {
+interface KnowledgeSource {
   title: string;
   content?: string;
   relevance?: number;
 }
 
-export interface KnowledgeAskRequest {
+interface KnowledgeAskRequest {
   question: string;
   knowledge_base?: string;
   top_k?: number;

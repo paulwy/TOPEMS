@@ -33,7 +33,7 @@ export type AutomationActionType =
 export type AutomationRuleStatus = 'enabled' | 'disabled' | 'draft';
 
 /** 触发器配置：不同 trigger_type 对应不同 payload 形状 */
-export interface AutomationTrigger {
+interface AutomationTrigger {
   type: AutomationTriggerType;
   /**
    * 触发器载荷：
@@ -47,7 +47,7 @@ export interface AutomationTrigger {
 }
 
 /** 动作配置：不同 action_type 对应不同 target */
-export interface AutomationAction {
+interface AutomationAction {
   type: AutomationActionType;
   /**
    * 动作目标：
@@ -65,7 +65,7 @@ export interface AutomationAction {
 }
 
 /** 成功后的副作用 */
-export interface AutomationOnSuccess {
+interface AutomationOnSuccess {
   /** 通知接收人/通道列表 */
   notify?: string[];
   /** 是否回写低代码应用的记录 */
@@ -76,7 +76,7 @@ export interface AutomationOnSuccess {
 }
 
 /** 失败后的副作用 */
-export interface AutomationOnError {
+interface AutomationOnError {
   /** 通知接收人/通道列表 */
   notify?: string[];
   /** 重试次数 */
@@ -138,7 +138,7 @@ export interface UpdateAutomationRuleRequest {
 export type AutomationRunStatus =
   'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'timeout';
 
-export interface AutomationRunStep {
+interface AutomationRunStep {
   /** 步骤序号 */
   step: number;
   /** 步骤名（如 trigger / action / onSuccess） */
@@ -237,7 +237,7 @@ export interface AutomationDesignerNode {
   }>;
 }
 
-export interface AutomationDesignerEdge {
+interface AutomationDesignerEdge {
   id: string;
   /** 起点节点 ID */
   source: string;
@@ -270,7 +270,7 @@ export interface SaveAutomationCanvasRequest {
 }
 
 /** 设计器可选资源：触发器/动作候选 */
-export interface AutomationTriggerOption {
+interface AutomationTriggerOption {
   type: AutomationTriggerType;
   label: string;
   description: string;
@@ -278,7 +278,7 @@ export interface AutomationTriggerOption {
   payload_schema?: Record<string, unknown>;
 }
 
-export interface AutomationActionOption {
+interface AutomationActionOption {
   type: AutomationActionType;
   label: string;
   description: string;
@@ -374,7 +374,7 @@ export interface AutomationDashboardStats {
 }
 
 /** 触发一次手动运行 */
-export interface TriggerRunRequest {
+interface TriggerRunRequest {
   /** 输入变量 */
   input_variables?: Record<string, unknown>;
 }

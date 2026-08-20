@@ -14,9 +14,9 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type BatchTaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
+type BatchTaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
 
-export interface BatchTask {
+interface BatchTask {
   id: string;
   task_type: string;
   status: BatchTaskStatus;

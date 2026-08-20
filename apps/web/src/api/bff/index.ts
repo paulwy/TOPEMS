@@ -20,7 +20,7 @@ const perfLogger = logger.child({ prefix: 'BFF-GraphQL' });
 
 // ==================== V40.0: 性能监控回调注册 ====================
 
-export type PerformanceCallback = (
+type PerformanceCallback = (
   query: string,
   duration: number,
   success: boolean,
@@ -73,7 +73,7 @@ export interface ServiceStats {
   available: boolean;
 }
 
-export interface BusinessStatsAggregation {
+interface BusinessStatsAggregation {
   erp: ServiceStats;
   crm: ServiceStats;
   hrm: ServiceStats;
@@ -580,7 +580,7 @@ export interface MasterDataRef {
 }
 
 // V35.0 AC-7: 审计追踪 + 数据血缘
-export interface MasterDataAuditEvent {
+interface MasterDataAuditEvent {
   id: string;
   master_data_id: string;
   domain: string;
@@ -593,7 +593,7 @@ export interface MasterDataAuditEvent {
   created_at: string;
 }
 
-export interface DataLineageNode {
+interface DataLineageNode {
   service: string;
   domain: string;
   code: string;
@@ -604,7 +604,7 @@ export interface DataLineageNode {
   last_synced_at: string;
 }
 
-export interface DataLineageResponse {
+interface DataLineageResponse {
   master_data_id: string;
   source_service: string;
   domain: string;
@@ -615,7 +615,7 @@ export interface DataLineageResponse {
 }
 
 // V36.0 AC-8: 主数据版本管理 + 回滚
-export interface MasterDataVersion {
+interface MasterDataVersion {
   id: string;
   master_data_id: string;
   version_number: number;
@@ -986,7 +986,7 @@ export const masterDataApi = {
 };
 
 // V37.0 AC-9: 主数据冲突类型
-export interface MasterDataConflict {
+interface MasterDataConflict {
   id: string;
   master_data_id: string;
   domain: string;
@@ -1004,7 +1004,7 @@ export interface MasterDataConflict {
 }
 
 // V39.0 AC-11: 主数据质量规则引擎类型
-export interface QualityRule {
+interface QualityRule {
   id: string;
   name: string;
   description: string;
@@ -1029,7 +1029,7 @@ export interface QualityIssue {
   suggestion?: string;
 }
 
-export interface QualityReport {
+interface QualityReport {
   id: string;
   domain?: string;
   total_checked: number;
@@ -1043,7 +1043,7 @@ export interface QualityReport {
 
 // ==================== V40.0 AC-12: 主数据治理仪表盘 + 数据资产目录 + 血缘可视化 ====================
 
-export interface GovernanceDashboardStats {
+interface GovernanceDashboardStats {
   total_domains: number;
   total_records: number;
   active_records: number;
@@ -1061,7 +1061,7 @@ export interface GovernanceDashboardStats {
   sync_coverage: number;
 }
 
-export interface DataAssetField {
+interface DataAssetField {
   field_name: string;
   field_label: string;
   data_type: string;
@@ -1069,7 +1069,7 @@ export interface DataAssetField {
   description?: string;
 }
 
-export interface DataAssetSummary {
+interface DataAssetSummary {
   domain: string;
   domain_name: string;
   record_count: number;
@@ -1080,7 +1080,7 @@ export interface DataAssetSummary {
   fields: DataAssetField[];
 }
 
-export interface LineageNode {
+interface LineageNode {
   id: string;
   label: string;
   node_type: 'master_data' | 'service' | 'system';
@@ -1088,26 +1088,26 @@ export interface LineageNode {
   service?: string;
 }
 
-export interface LineageEdge {
+interface LineageEdge {
   source: string;
   target: string;
   edge_type: 'sync' | 'reference' | 'dependency';
   direction: 'upstream' | 'downstream';
 }
 
-export interface LineageGraph {
+interface LineageGraph {
   nodes: LineageNode[];
   edges: LineageEdge[];
 }
 
-export interface QualityTrendPoint {
+interface QualityTrendPoint {
   date: string;
   quality_score: number;
   issues_count: number;
   checked_count: number;
 }
 
-export interface QualityTrend {
+interface QualityTrend {
   period: string;
   points: QualityTrendPoint[];
   trend_direction: 'improving' | 'stable' | 'declining';
@@ -1253,7 +1253,7 @@ export interface ListEntitiesParams {
 }
 
 /** V39.0: 通用实体列表查询结果 */
-export interface ListEntitiesResult<T = unknown> {
+interface ListEntitiesResult<T = unknown> {
   items: T[];
   total: number;
   page: number;
@@ -1636,7 +1636,7 @@ export async function getFederatedDashboard() {
  * 返回所有联邦实体及其关系的可视化数据，
  * 可用于绘制实体关系图（ER图）。
  */
-export interface EntityRelation {
+interface EntityRelation {
   from_type: string;
   to_type: string;
   relation_type: string;
@@ -1645,7 +1645,7 @@ export interface EntityRelation {
   service: string;
 }
 
-export interface EntityRelationshipGraph {
+interface EntityRelationshipGraph {
   entities: string[];
   relations: EntityRelation[];
 }
@@ -1679,7 +1679,7 @@ export async function getEntityRelationshipGraph(): Promise<EntityRelationshipGr
  * - 已解析实体数
  * - 跨服务 Join 数
  */
-export interface FederationStats {
+interface FederationStats {
   total_requests: number;
   cache_hits: number;
   cache_misses: number;
@@ -1779,7 +1779,7 @@ export async function getFederatedDashboardV2() {
  */
 
 /** 主数据变更事件 */
-export interface MasterDataEvent {
+interface MasterDataEvent {
   domain: string;
   action: string;
   master_data_id: string;
@@ -1788,7 +1788,7 @@ export interface MasterDataEvent {
 }
 
 /** 通知接收事件 */
-export interface NotificationEvent {
+interface NotificationEvent {
   id: string;
   user_id: string;
   title: string;
@@ -1798,7 +1798,7 @@ export interface NotificationEvent {
 }
 
 /** 工作流任务分配事件 */
-export interface WorkflowTaskEvent {
+interface WorkflowTaskEvent {
   task_id: string;
   assignee_id: string;
   instance_title: string;
@@ -1808,7 +1808,7 @@ export interface WorkflowTaskEvent {
 }
 
 /** 订单状态变更事件 */
-export interface OrderStatusEvent {
+interface OrderStatusEvent {
   order_id: string;
   order_type: string;
   old_status: string;
@@ -2174,7 +2174,7 @@ export async function publishOrderStatus(data: {
  *
  * 返回白名单是否启用、已注册的查询哈希数量、以及前 10 个哈希预览。
  */
-export interface WhitelistStatus {
+interface WhitelistStatus {
   enabled: boolean;
   size: number;
   preview: string[];
@@ -2183,7 +2183,7 @@ export interface WhitelistStatus {
 /**
  * V39.0: 查询审计日志条目
  */
-export interface QueryAuditLog {
+interface QueryAuditLog {
   query_hash: string | null;
   operation_name: string | null;
   complexity: number;
@@ -2197,7 +2197,7 @@ export interface QueryAuditLog {
 /**
  * V39.0: 审计日志查询响应
  */
-export interface AuditLogResponse {
+interface AuditLogResponse {
   logs: QueryAuditLog[];
   count: number;
   total: number;
@@ -2268,7 +2268,7 @@ export async function getAuditLogs(limit = 50): Promise<AuditLogResponse> {
 /**
  * V40.0: 安全统计数据
  */
-export interface SecurityStats {
+interface SecurityStats {
   total_security_events: number;
   depth_exceeded_count: number;
   complexity_exceeded_count: number;
@@ -2284,7 +2284,7 @@ export interface SecurityStats {
 /**
  * V40.0: 安全事件条目
  */
-export interface SecurityEvent {
+interface SecurityEvent {
   event_type: string;
   ip: string | null;
   query_hash: string | null;
@@ -2295,7 +2295,7 @@ export interface SecurityEvent {
 /**
  * V40.0: 安全事件查询响应
  */
-export interface SecurityEventsResponse {
+interface SecurityEventsResponse {
   events: SecurityEvent[];
   count: number;
   total: number;
@@ -2304,7 +2304,7 @@ export interface SecurityEventsResponse {
 /**
  * V40.0: IP 黑名单响应
  */
-export interface IpBlacklistResponse {
+interface IpBlacklistResponse {
   blacklist: string[];
   size: number;
 }
@@ -2312,7 +2312,7 @@ export interface IpBlacklistResponse {
 /**
  * V40.0: 黑名单操作响应
  */
-export interface BlacklistActionResponse {
+interface BlacklistActionResponse {
   success: boolean;
   ip?: string;
   size?: number;
@@ -2424,13 +2424,13 @@ export async function removeFromIpBlacklist(ip: string): Promise<BlacklistAction
 
 // ==================== V41.0 Track B: GraphQL 智能缓存 API ====================
 
-export interface HotQuery {
+interface HotQuery {
   query_name: string;
   hit_count: number;
   avg_latency_ms: number;
 }
 
-export interface CacheStats {
+interface CacheStats {
   l1_size: number;
   l2_size: number;
   l1_hits: number;
@@ -2442,27 +2442,27 @@ export interface CacheStats {
   top_hot_queries: HotQuery[];
 }
 
-export interface CacheOptimizationSuggestion {
+interface CacheOptimizationSuggestion {
   suggestion: string;
   impact: 'high' | 'medium' | 'low';
   current_metric: string;
   expected_improvement: string;
 }
 
-export interface PrefetchTarget {
+interface PrefetchTarget {
   query_name: string;
   query_hash: string;
   variables_template: Record<string, unknown>;
   priority: number;
 }
 
-export interface QueryPrefetchRule {
+interface QueryPrefetchRule {
   trigger_query: string;
   prefetch_queries: PrefetchTarget[];
   confidence: number;
 }
 
-export interface CacheInvalidationRule {
+interface CacheInvalidationRule {
   mutation_name: string;
   invalidation_patterns: string[];
   entity_type: string;
@@ -2617,7 +2617,7 @@ export async function triggerPrefetch(queryName: string): Promise<boolean> {
 /**
  * V41.0: 发现的查询
  */
-export interface DiscoveredQuery {
+interface DiscoveredQuery {
   query_hash: string;
   query_name: string;
   first_seen: string;
@@ -2636,7 +2636,7 @@ export interface DiscoveredQuery {
 /**
  * V41.0: 发现的查询响应
  */
-export interface DiscoveredQueriesResponse {
+interface DiscoveredQueriesResponse {
   queries: DiscoveredQuery[];
   count: number;
 }
@@ -2644,7 +2644,7 @@ export interface DiscoveredQueriesResponse {
 /**
  * V41.0: 自动审批策略
  */
-export interface AutoApprovalPolicy {
+interface AutoApprovalPolicy {
   enabled: boolean;
   min_calls_for_auto: number;
   max_depth_for_auto: number;
@@ -2656,7 +2656,7 @@ export interface AutoApprovalPolicy {
 /**
  * V41.0: 自动审批策略更新输入
  */
-export interface AutoApprovalPolicyInput {
+interface AutoApprovalPolicyInput {
   enabled?: boolean;
   min_calls_for_auto?: number;
   max_depth_for_auto?: number;
@@ -2668,7 +2668,7 @@ export interface AutoApprovalPolicyInput {
 /**
  * V41.0: IP 统计
  */
-export interface IpStat {
+interface IpStat {
   ip: string;
   request_count: number;
   blocked_count: number;
@@ -2678,7 +2678,7 @@ export interface IpStat {
 /**
  * V41.0: 每日安全统计
  */
-export interface DailySecurityStat {
+interface DailySecurityStat {
   date: string;
   total_requests: number;
   blocked_requests: number;
@@ -2688,7 +2688,7 @@ export interface DailySecurityStat {
 /**
  * V41.0: 安全事件摘要
  */
-export interface SecurityEventSummary {
+interface SecurityEventSummary {
   event_type: string;
   count: number;
   percentage: number;
@@ -2698,7 +2698,7 @@ export interface SecurityEventSummary {
 /**
  * V41.0: 安全审计报表
  */
-export interface SecurityAuditReport {
+interface SecurityAuditReport {
   period: string;
   start_date: string;
   end_date: string;
@@ -2715,7 +2715,7 @@ export interface SecurityAuditReport {
 /**
  * V41.0: 性能调优建议
  */
-export interface PerformanceTuningSuggestion {
+interface PerformanceTuningSuggestion {
   id: string;
   category: 'caching' | 'query_complexity' | 'batching' | 'network' | 'resource';
   severity: 'info' | 'warning' | 'critical';
@@ -2730,7 +2730,7 @@ export interface PerformanceTuningSuggestion {
 /**
  * V41.0: 性能基线
  */
-export interface PerformanceBaseline {
+interface PerformanceBaseline {
   avg_query_time_ms: number;
   p95_query_time_ms: number;
   p99_query_time_ms: number;
@@ -2742,7 +2742,7 @@ export interface PerformanceBaseline {
 /**
  * V41.0: 性能分析
  */
-export interface PerformanceAnalysis {
+interface PerformanceAnalysis {
   total_suggestions: number;
   critical_issues: number;
   warning_issues: number;
@@ -2755,7 +2755,7 @@ export interface PerformanceAnalysis {
 /**
  * V41.0: 白名单健康度
  */
-export interface WhitelistHealth {
+interface WhitelistHealth {
   total_queries: number;
   whitelisted_queries: number;
   coverage_rate: number;
@@ -2989,7 +2989,7 @@ export async function getWhitelistHealth(): Promise<WhitelistHealth> {
 /**
  * V42.0: 字段元数据
  */
-export interface FieldMetadata {
+interface FieldMetadata {
   name: string;
   fieldType: string;
   nullable: boolean;
@@ -2999,7 +2999,7 @@ export interface FieldMetadata {
 /**
  * V42.0: 关系元数据
  */
-export interface RelationMetadata {
+interface RelationMetadata {
   fieldName: string;
   targetEntity: string;
   targetService: string;
@@ -3010,7 +3010,7 @@ export interface RelationMetadata {
 /**
  * V42.0: 实体元数据
  */
-export interface EntityMetadata {
+interface EntityMetadata {
   name: string;
   service: string;
   keyField: string;
@@ -3024,7 +3024,7 @@ export interface EntityMetadata {
 /**
  * V42.0: 服务元数据
  */
-export interface ServiceMetadata {
+interface ServiceMetadata {
   name: string;
   baseUrl: string;
   entities: EntityMetadata[];
@@ -3035,7 +3035,7 @@ export interface ServiceMetadata {
 /**
  * V42.0: 查询计划步骤
  */
-export interface PlanStep {
+interface PlanStep {
   stepId: string;
   stepType: string;
   entity: string | null;
@@ -3048,7 +3048,7 @@ export interface PlanStep {
 /**
  * V42.0: 并行执行组
  */
-export interface ParallelGroup {
+interface ParallelGroup {
   groupId: string;
   steps: string[];
   executionMode: string;
@@ -3057,7 +3057,7 @@ export interface ParallelGroup {
 /**
  * V42.0: 联邦查询计划
  */
-export interface FederationQueryPlan {
+interface FederationQueryPlan {
   queryHash: string;
   steps: PlanStep[];
   parallelGroups: ParallelGroup[];
@@ -3068,7 +3068,7 @@ export interface FederationQueryPlan {
 /**
  * V42.0: 联邦 V2 统计
  */
-export interface FederationV2Stats {
+interface FederationV2Stats {
   totalQueries: number;
   totalSteps: number;
   parallelSteps: number;
@@ -3307,7 +3307,7 @@ export async function getFederationV2Sdl(): Promise<string> {
 // ==================== V42.0 Track E: GraphQL 企业级安全 ====================
 
 /** V42.0: 字段权限规则 */
-export interface FieldPermission {
+interface FieldPermission {
   entity_type: string;
   field_name: string;
   allowed_roles: string[];
@@ -3316,10 +3316,10 @@ export interface FieldPermission {
 }
 
 /** V42.0: 掩码类型 */
-export type MaskType = 'Full' | 'Partial' | 'Hash' | 'Truncate' | 'Null' | 'Range';
+type MaskType = 'Full' | 'Partial' | 'Hash' | 'Truncate' | 'Null' | 'Range';
 
 /** V42.0: 掩码规则 */
-export interface MaskingRule {
+interface MaskingRule {
   entity_type: string;
   field_name: string;
   mask_type: MaskType;
@@ -3327,7 +3327,7 @@ export interface MaskingRule {
 }
 
 /** V42.0: 字段访问审计 */
-export interface FieldAccessAudit {
+interface FieldAccessAudit {
   id: string;
   timestamp: string;
   user_id: string | null;
@@ -3342,7 +3342,7 @@ export interface FieldAccessAudit {
 }
 
 /** V42.0: 字段变更记录 */
-export interface FieldChange {
+interface FieldChange {
   field_name: string;
   old_value: unknown;
   new_value: unknown;
@@ -3350,7 +3350,7 @@ export interface FieldChange {
 }
 
 /** V42.0: 数据变更审计 */
-export interface DataChangeAudit {
+interface DataChangeAudit {
   id: string;
   timestamp: string;
   user_id: string | null;
@@ -3364,7 +3364,7 @@ export interface DataChangeAudit {
 }
 
 /** V42.0: 安全配置 */
-export interface SecurityConfig {
+interface SecurityConfig {
   field_permissions_enabled: boolean;
   data_masking_enabled: boolean;
   field_audit_enabled: boolean;
@@ -3586,7 +3586,7 @@ export async function updateSecurityConfig(
 // ==================== V43.0 Track B: 订阅增强 API ====================
 
 /** 数据变更事件 */
-export interface DataChangeEvent {
+interface DataChangeEvent {
   entity_type: string;
   entity_id: string;
   update_type: 'Created' | 'Updated' | 'Deleted' | 'Delta' | 'Full';
@@ -3598,7 +3598,7 @@ export interface DataChangeEvent {
 }
 
 /** 订阅过滤器 */
-export interface SubscriptionFilter {
+interface SubscriptionFilter {
   include_fields?: string[];
   exclude_fields?: string[];
   conditions?: Array<{
@@ -3611,7 +3611,7 @@ export interface SubscriptionFilter {
 }
 
 /** 订阅信息 */
-export interface SubscriptionInfo {
+interface SubscriptionInfo {
   id: string;
   operation_name?: string;
   query: string;
@@ -3624,7 +3624,7 @@ export interface SubscriptionInfo {
 }
 
 /** 订阅会话 */
-export interface SubscriptionSession {
+interface SubscriptionSession {
   session_id: string;
   connection_id: string;
   user_id?: string;
@@ -3635,14 +3635,14 @@ export interface SubscriptionSession {
 }
 
 /** 频道统计 */
-export interface ChannelStat {
+interface ChannelStat {
   channel: string;
   subscription_count: number;
   events_published: number;
 }
 
 /** 订阅统计 */
-export interface SubscriptionStats {
+interface SubscriptionStats {
   total_sessions: number;
   total_subscriptions: number;
   active_connections: number;
@@ -3782,7 +3782,7 @@ export async function cancelAllSubscriptions(connectionId: string): Promise<numb
 // ==================== V43.0 Track E: GraphQL AI 辅助 API ====================
 
 /** V43.0: 查询优化建议 */
-export interface QueryOptimizationSuggestion {
+interface QueryOptimizationSuggestion {
   id: string;
   query_hash: string;
   query_name: string;
@@ -3799,7 +3799,7 @@ export interface QueryOptimizationSuggestion {
 }
 
 /** V43.0: 查询健康度评分 */
-export interface QueryHealthScore {
+interface QueryHealthScore {
   query_hash: string;
   overall_score: number;
   performance_score: number;
@@ -3814,7 +3814,7 @@ export interface QueryHealthScore {
 }
 
 /** V43.0: 优化路线图 */
-export interface OptimizationRoadmap {
+interface OptimizationRoadmap {
   total_suggestions: number;
   quick_wins: number;
   short_term: number;
@@ -3824,14 +3824,14 @@ export interface OptimizationRoadmap {
 }
 
 /** V43.0: NL 过滤器 */
-export interface NlFilter {
+interface NlFilter {
   field: string;
   operator: string;
   value: string;
 }
 
 /** V43.0: NL2GraphQL 解析结果 */
-export interface Nl2GraphqlResult {
+interface Nl2GraphqlResult {
   query: string;
   variables: Record<string, unknown>;
   operation_type: string;
@@ -3845,7 +3845,7 @@ export interface Nl2GraphqlResult {
 }
 
 /** V43.0: 缓存推荐 */
-export interface CacheRecommendation {
+interface CacheRecommendation {
   query_hash: string;
   query_name: string;
   recommended_tier: string;
@@ -3858,7 +3858,7 @@ export interface CacheRecommendation {
 }
 
 /** V43.0: 缓存推荐报告 */
-export interface CacheRecommendationReport {
+interface CacheRecommendationReport {
   total_queries: number;
   recommended_changes: number;
   quick_wins: number;
@@ -3869,7 +3869,7 @@ export interface CacheRecommendationReport {
 }
 
 /** V43.0: AI 优化统计 */
-export interface AiOptimizationStats {
+interface AiOptimizationStats {
   total_queries_analyzed: number;
   total_suggestions: number;
   critical_issues: number;
@@ -4110,7 +4110,7 @@ export async function acceptCacheRecommendation(queryHash: string): Promise<bool
 // ==================== V44.0 Track B: Federation V3 — 分布式查询计划 + 容错降级 + 缓存 + 监控 ====================
 
 /** V44.0: V3 查询计划节点 */
-export interface PlanNodeV3 {
+interface PlanNodeV3 {
   id: string;
   step_type: string;
   service: string | null;
@@ -4122,7 +4122,7 @@ export interface PlanNodeV3 {
 }
 
 /** V44.0: 查询依赖图 */
-export interface QueryDependencyGraphV3 {
+interface QueryDependencyGraphV3 {
   nodes: string[];
   edges: string[];
   critical_path: string[];
@@ -4130,7 +4130,7 @@ export interface QueryDependencyGraphV3 {
 }
 
 /** V44.0: V3 联邦查询计划 */
-export interface FederationV3Plan {
+interface FederationV3Plan {
   plan_id: string;
   query_hash: string;
   root_steps: string[];
@@ -4144,7 +4144,7 @@ export interface FederationV3Plan {
 }
 
 /** V44.0: 熔断器状态 */
-export interface CircuitBreakerState {
+interface CircuitBreakerState {
   service: string;
   state: string;
   failure_count: number;
@@ -4156,7 +4156,7 @@ export interface CircuitBreakerState {
 }
 
 /** V44.0: 熔断器配置输入 */
-export interface CircuitBreakerConfigInput {
+interface CircuitBreakerConfigInput {
   failure_threshold: number;
   success_threshold: number;
   timeout_ms: number;
@@ -4164,7 +4164,7 @@ export interface CircuitBreakerConfigInput {
 }
 
 /** V44.0: 服务统计 */
-export interface FederationServiceStats {
+interface FederationServiceStats {
   service_name: string;
   request_count: number;
   success_count: number;
@@ -4175,7 +4175,7 @@ export interface FederationServiceStats {
 }
 
 /** V44.0: V3 网关统计 */
-export interface FederationV3Stats {
+interface FederationV3Stats {
   total_queries: number;
   cache_hits: number;
   cache_misses: number;
@@ -4191,7 +4191,7 @@ export interface FederationV3Stats {
 }
 
 /** V44.0: 计划步骤轨迹 */
-export interface PlanStepTrace {
+interface PlanStepTrace {
   step_id: string;
   step_type: string;
   service: string | null;
@@ -4204,7 +4204,7 @@ export interface PlanStepTrace {
 }
 
 /** V44.0: 计划执行轨迹 */
-export interface PlanExecutionTrace {
+interface PlanExecutionTrace {
   plan_id: string;
   query_hash: string;
   total_time_ms: number;
@@ -4216,7 +4216,7 @@ export interface PlanExecutionTrace {
 }
 
 /** V44.0: 缓存统计 */
-export interface FederationCacheStats {
+interface FederationCacheStats {
   query_cache_size: number;
   query_cache_max_size: number;
   query_cache_hit_rate: number;
@@ -4486,7 +4486,7 @@ export async function setFederationCircuitBreakerConfig(
 
 // ==================== V44.0 Track E: GraphQL 生产级监控 ====================
 
-export type SpanType =
+type SpanType =
   | 'PARSE'
   | 'VALIDATE'
   | 'RESOLVE'
@@ -4507,9 +4507,9 @@ export type AlertType =
   | 'SERVICE_DOWN'
   | 'SECURITY_BREACH';
 
-export type MetricsWindow = 'ONE_MINUTE' | 'FIVE_MINUTES' | 'FIFTEEN_MINUTES' | 'ONE_HOUR';
+type MetricsWindow = 'ONE_MINUTE' | 'FIVE_MINUTES' | 'FIFTEEN_MINUTES' | 'ONE_HOUR';
 
-export interface QuerySpan {
+interface QuerySpan {
   span_id: string;
   parent_span_id: string | null;
   name: string;
@@ -4523,7 +4523,7 @@ export interface QuerySpan {
   error_message: string | null;
 }
 
-export interface QueryTrace {
+interface QueryTrace {
   trace_id: string;
   query_hash: string | null;
   operation_name: string | null;
@@ -4537,7 +4537,7 @@ export interface QueryTrace {
   client_info: string | null;
 }
 
-export interface OperationMetric {
+interface OperationMetric {
   operation_name: string;
   count: number;
   avg_duration_ms: number;
@@ -4546,14 +4546,14 @@ export interface OperationMetric {
   cache_hit_rate: number;
 }
 
-export interface ServiceMetric {
+interface ServiceMetric {
   service_name: string;
   request_count: number;
   avg_latency_ms: number;
   error_count: number;
 }
 
-export interface GraphqlMetrics {
+interface GraphqlMetrics {
   qps: number;
   latency_p50_ms: number;
   latency_p95_ms: number;
@@ -4573,7 +4573,7 @@ export interface GraphqlMetrics {
   window_size: string;
 }
 
-export interface GraphqlAlert {
+interface GraphqlAlert {
   id: string;
   alert_type: AlertType;
   level: AlertLevel;
@@ -4599,7 +4599,7 @@ export interface AlertRule {
   cooldown_seconds: number;
 }
 
-export interface AlertRuleInput {
+interface AlertRuleInput {
   name: string;
   alert_type: AlertType;
   level: AlertLevel;
@@ -4610,7 +4610,7 @@ export interface AlertRuleInput {
   cooldown_seconds: number;
 }
 
-export interface MonitoringDashboardStats {
+interface MonitoringDashboardStats {
   total_queries: number;
   total_errors: number;
   total_traces: number;
@@ -4628,13 +4628,13 @@ export interface MonitoringDashboardStats {
   federation_cache_misses: number;
 }
 
-export interface QueryLatencyDistribution {
+interface QueryLatencyDistribution {
   buckets: number[];
   counts: number[];
   total_count: number;
 }
 
-export interface TopSlowQuery {
+interface TopSlowQuery {
   query_hash: string | null;
   operation_name: string | null;
   avg_duration_ms: number;
@@ -4643,7 +4643,7 @@ export interface TopSlowQuery {
   max_duration_ms: number;
 }
 
-export interface ErrorRateTrend {
+interface ErrorRateTrend {
   timestamps: string[];
   error_rates: number[];
   total_requests: number[];
@@ -5040,7 +5040,7 @@ export async function resetGraphqlMetrics(): Promise<boolean> {
 // ==================== V45.0 Track B: GraphQL 边缘计算 + CDN 缓存 + 流式响应 ====================
 
 /** V45.0: 边缘节点 */
-export interface EdgeNode {
+interface EdgeNode {
   id: string;
   region: string;
   location: string;
@@ -5052,7 +5052,7 @@ export interface EdgeNode {
 }
 
 /** V45.0: 边缘函数 */
-export interface EdgeFunction {
+interface EdgeFunction {
   id: string;
   name: string;
   handler: string;
@@ -5064,7 +5064,7 @@ export interface EdgeFunction {
 }
 
 /** V45.0: 按区域统计 */
-export interface EdgeNodeRegionStat {
+interface EdgeNodeRegionStat {
   region: string;
   node_count: number;
   healthy_count: number;
@@ -5072,7 +5072,7 @@ export interface EdgeNodeRegionStat {
 }
 
 /** V45.0: 边缘计算统计 */
-export interface EdgeComputeStats {
+interface EdgeComputeStats {
   total_nodes: number;
   healthy_nodes: number;
   total_functions: number;
@@ -5083,7 +5083,7 @@ export interface EdgeComputeStats {
 }
 
 /** V45.0: CDN 缓存层 */
-export interface CdnCacheLayer {
+interface CdnCacheLayer {
   layer_name: string;
   ttl_ms: number;
   max_entries: number;
@@ -5092,7 +5092,7 @@ export interface CdnCacheLayer {
 }
 
 /** V45.0: CDN 缓存条目 */
-export interface CdnCacheEntry {
+interface CdnCacheEntry {
   key: string;
   value: string;
   content_type: string;
@@ -5105,7 +5105,7 @@ export interface CdnCacheEntry {
 }
 
 /** V45.0: CDN 按层统计 */
-export interface CdnLayerStat {
+interface CdnLayerStat {
   layer: string;
   entries: number;
   size_mb: number;
@@ -5113,7 +5113,7 @@ export interface CdnLayerStat {
 }
 
 /** V45.0: CDN 统计 */
-export interface CdnStats {
+interface CdnStats {
   total_entries: number;
   total_size_mb: number;
   hit_rate: number;
@@ -5125,7 +5125,7 @@ export interface CdnStats {
 }
 
 /** V45.0: 流式配置 */
-export interface StreamConfig {
+interface StreamConfig {
   enabled: boolean;
   chunk_size: number;
   flush_interval_ms: number;
@@ -5133,7 +5133,7 @@ export interface StreamConfig {
 }
 
 /** V45.0: 流式配置输入 */
-export interface StreamConfigInput {
+interface StreamConfigInput {
   enabled?: boolean;
   chunk_size?: number;
   flush_interval_ms?: number;
@@ -5141,7 +5141,7 @@ export interface StreamConfigInput {
 }
 
 /** V45.0: 延迟字段 */
-export interface DeferredField {
+interface DeferredField {
   path: string;
   label?: string | null;
   depends_on: string[];
@@ -5149,7 +5149,7 @@ export interface DeferredField {
 }
 
 /** V45.0: 流式统计 */
-export interface StreamStats {
+interface StreamStats {
   total_streams: number;
   active_streams: number;
   total_chunks: number;
@@ -5480,10 +5480,10 @@ export async function updateStreamConfig(config: StreamConfigInput): Promise<boo
 // ==================== V45.0 Track E: GraphQL 企业级治理 ====================
 
 /** V45.0: Schema 版本状态 */
-export type SchemaVersionStatus = 'DRAFT' | 'STAGING' | 'ACTIVE' | 'DEPRECATED' | 'RETIRED';
+type SchemaVersionStatus = 'DRAFT' | 'STAGING' | 'ACTIVE' | 'DEPRECATED' | 'RETIRED';
 
 /** V45.0: Schema 变更类型 */
-export type SchemaChangeType =
+type SchemaChangeType =
   | 'TYPE_ADDED'
   | 'TYPE_REMOVED'
   | 'FIELD_ADDED'
@@ -5497,7 +5497,7 @@ export type SchemaChangeType =
   | 'INTERFACE_REMOVED';
 
 /** V45.0: 契约违规类型 */
-export type ViolationType =
+type ViolationType =
   | 'MISSING_FIELD'
   | 'EXTRA_FIELD'
   | 'TYPE_MISMATCH'
@@ -5505,7 +5505,7 @@ export type ViolationType =
   | 'DEPRECATION_VIOLATION';
 
 /** V45.0: Schema 变更记录 */
-export interface SchemaChange {
+interface SchemaChange {
   version: string;
   changeType: SchemaChangeType;
   description: string;
@@ -5515,7 +5515,7 @@ export interface SchemaChange {
 }
 
 /** V45.0: Schema 注册表条目 */
-export interface SchemaRegistryEntry {
+interface SchemaRegistryEntry {
   serviceName: string;
   version: string;
   sdl: string;
@@ -5528,7 +5528,7 @@ export interface SchemaRegistryEntry {
 }
 
 /** V45.0: 契约违规 */
-export interface ContractViolation {
+interface ContractViolation {
   fieldPath: string;
   expected: string;
   actual: string;
@@ -5537,7 +5537,7 @@ export interface ContractViolation {
 }
 
 /** V45.0: 契约测试结果 */
-export interface ContractTestResult {
+interface ContractTestResult {
   testId: string;
   passed: boolean;
   errors: string[];
@@ -5548,7 +5548,7 @@ export interface ContractTestResult {
 }
 
 /** V45.0: 契约测试定义 */
-export interface ContractTest {
+interface ContractTest {
   id: string;
   name: string;
   service: string;
@@ -5563,7 +5563,7 @@ export interface ContractTest {
 }
 
 /** V45.0: 契约测试输入 */
-export interface ContractTestInput {
+interface ContractTestInput {
   name: string;
   service: string;
   operationType: string;
@@ -5575,7 +5575,7 @@ export interface ContractTestInput {
 }
 
 /** V45.0: 版本变更日志 */
-export interface VersionChangelog {
+interface VersionChangelog {
   version: string;
   changes: SchemaChange[];
   breakingChangesCount: number;
@@ -5585,7 +5585,7 @@ export interface VersionChangelog {
 }
 
 /** V45.0: Schema 版本 */
-export interface SchemaVersion {
+interface SchemaVersion {
   service: string;
   version: string;
   semver: string;
@@ -5613,7 +5613,7 @@ export interface VersionDiff {
 }
 
 /** V45.0: 治理统计 */
-export interface SchemaGovernanceStats {
+interface SchemaGovernanceStats {
   totalServices: number;
   totalVersions: number;
   activeSchemas: number;
@@ -5625,7 +5625,7 @@ export interface SchemaGovernanceStats {
 }
 
 /** V45.0: 服务治理信息 */
-export interface ServiceGovernanceInfo {
+interface ServiceGovernanceInfo {
   service: string;
   currentVersion: string;
   versionsCount: number;

@@ -27,7 +27,7 @@ export interface OperationLog {
   created_at: string;
 }
 
-export interface OperationLogQueryParams {
+interface OperationLogQueryParams {
   page?: number;
   page_size?: number;
   user_id?: string;
@@ -42,14 +42,14 @@ export interface OperationLogQueryParams {
   success?: boolean;
 }
 
-export interface PaginatedOperationLogs {
+interface PaginatedOperationLogs {
   items: OperationLog[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface OperationLogStats {
+interface OperationLogStats {
   total: number;
   by_module: Record<string, number>;
   by_operation: Record<string, number>;

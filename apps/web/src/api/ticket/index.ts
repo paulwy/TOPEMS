@@ -56,7 +56,7 @@ export type {
   CreateWorkflowRequest,
 } from './workflow';
 export type { TicketAttachment, UploadAttachmentRequest } from './attachment';
-export type { TicketTag, BatchUpdateRequest, BatchResult } from './batch';
+export type { TicketTag, BatchResult } from './batch';
 
 export const ticketApi = {
   // 基础工单操作（推荐通过 BFF）

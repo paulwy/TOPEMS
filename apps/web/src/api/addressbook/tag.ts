@@ -22,7 +22,7 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-export interface ContactTag {
+interface ContactTag {
   id: string;
   name: string;
   color: string;
@@ -47,16 +47,16 @@ export interface UpdateTagRequest {
   description?: string;
 }
 
-export interface AddTagToContactRequest {
+interface AddTagToContactRequest {
   tag_ids: string[];
 }
 
-export interface AddContactToTagRequest {
+interface AddContactToTagRequest {
   contact_ids: string[];
   contact_type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
 }
 
-export interface TagColor {
+interface TagColor {
   name: string;
   hex: string;
 }

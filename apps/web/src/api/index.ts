@@ -79,7 +79,7 @@ export {
   subscribeServiceHealth,
   masterDataApi,
 } from './bff';
-export type { ServiceStats, BusinessStatsAggregation, UnifiedTodo, MasterDataRef } from './bff';
+export type { ServiceStats, UnifiedTodo, MasterDataRef } from './bff';
 
 // Plugin system
 export * as pluginApi from './plugin';

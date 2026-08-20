@@ -35,7 +35,7 @@ export interface PaymentRecord {
   updated_at: string;
 }
 
-export interface CreatePaymentRequest {
+interface CreatePaymentRequest {
   invoice_id: string;
   amount: number;
   currency?: string;
@@ -43,7 +43,7 @@ export interface CreatePaymentRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface PaymentQuery {
+interface PaymentQuery {
   invoice_id?: string;
   status?: PaymentStatus;
   method?: PaymentMethod;

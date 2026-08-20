@@ -122,7 +122,7 @@ export interface DrillRecordListQuery {
   keyword?: string;
 }
 
-export interface CreateDrillPlanRequest {
+interface CreateDrillPlanRequest {
   title: string;
   description?: string;
   drill_type: string;
@@ -176,7 +176,7 @@ export interface UpdateDrillRecordRequest {
   status?: string;
 }
 
-export interface CreateDrillEvaluationRequest {
+interface CreateDrillEvaluationRequest {
   evaluator?: string;
   overall_score?: number;
   overall_comment?: string;
@@ -187,7 +187,7 @@ export interface CreateDrillEvaluationRequest {
   equipment_score?: number;
 }
 
-export interface CreateDrillProblemRequest {
+interface CreateDrillProblemRequest {
   description: string;
   category?: string;
   severity?: string;

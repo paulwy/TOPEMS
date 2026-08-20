@@ -5,31 +5,31 @@ import type { ApiResponse } from '../client';
  * V19.0 Stub: BI 数据分析（销售/区域/透视）
  * 后端尚未实现，前端先建立接口契约；后端就绪后此文件无需改动。
  */
-export interface SalesTrendItem {
+interface SalesTrendItem {
   month: string;
   sales_amount: number;
   order_count: number;
   customer_count: number;
 }
 
-export interface RegionSalesItem {
+interface RegionSalesItem {
   region: string;
   sales_amount: number;
   percentage: number;
 }
 
-export interface CategoryPivotItem {
+interface CategoryPivotItem {
   category: string;
   [month: string]: string | number;
 }
 
-export interface DataAnalysisResult {
+interface DataAnalysisResult {
   salesTrend: SalesTrendItem[];
   regionSales: RegionSalesItem[];
   categoryPivot: CategoryPivotItem[];
 }
 
-export interface DataAnalysisParams {
+interface DataAnalysisParams {
   time_range?: string;
   region?: string;
   category?: string;

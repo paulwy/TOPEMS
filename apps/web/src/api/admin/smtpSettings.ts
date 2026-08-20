@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface SmtpConfig {
+interface SmtpConfig {
   enabled: boolean;
   host: string;
   port: number;
@@ -13,7 +13,7 @@ export interface SmtpConfig {
   from_name: string;
 }
 
-export interface TestEmailResult {
+interface TestEmailResult {
   sent: boolean;
   to: string;
 }

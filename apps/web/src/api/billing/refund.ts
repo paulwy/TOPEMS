@@ -13,9 +13,9 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type RefundStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'failed';
+type RefundStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'failed';
 
-export interface RefundRecord {
+interface RefundRecord {
   id: string;
   payment_id: string;
   invoice_id?: string;
@@ -33,14 +33,14 @@ export interface RefundRecord {
   updated_at: string;
 }
 
-export interface CreateRefundRequest {
+interface CreateRefundRequest {
   payment_id: string;
   amount: number;
   reason?: string;
   metadata?: Record<string, unknown>;
 }
 
-export interface RefundQuery {
+interface RefundQuery {
   payment_id?: string;
   invoice_id?: string;
   status?: RefundStatus;

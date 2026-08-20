@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    Extension,
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -9,6 +10,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
+use topems_shared::auth::Claims;
 use crate::models::{
     Contract, ContractPaginationParams, ContractRenewal, CreateContractRequest,
     CreateRenewalRequest, UpdateContractRequest,
@@ -51,11 +53,12 @@ async fn list_contracts(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts
-        WHERE ($1::uuid IS NULL OR employee_id = $1)
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR contract_type = $3)
         ORDER BY created_at DESC
@@ -121,11 +124,12 @@ async fn list_expiring_contracts(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
         FROM hrm.contracts
-        WHERE end_date IS NOT NULL
+        WHERE deleted_at IS NULL
+          AND end_date IS NOT NULL
           AND end_date <= $1
           AND status = 'active'
         ORDER BY end_date ASC
@@ -185,6 +189,7 @@ pub struct ExpiringParams {
 
 async fn create_contract(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
@@ -198,6 +203,11 @@ async fn create_contract(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let contract_no = req.contract_no.clone().unwrap_or_else(|| {
         format!(
             "HT{}{}",
@@ -211,16 +221,17 @@ async fn create_contract(
     let result = sqlx::query_as::<_, Contract>(
         r#"
         INSERT INTO hrm.contracts (
-            id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+            id, tenant_id, organization_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'active', $15, $16, $17)
-        RETURNING id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18)
+        RETURNING id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                   contract_file_path, reminder_days, status, notes, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(claims_tenant)
     .bind(req.employee_id)
     .bind(&contract_no)
     .bind(&req.contract_type)
@@ -286,10 +297,10 @@ async fn get_contract(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts WHERE id = $1
+        FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)

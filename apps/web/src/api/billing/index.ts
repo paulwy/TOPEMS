@@ -32,9 +32,7 @@ export type {
   ListInvoiceQuery,
 } from './invoice';
 
-export type { PaymentStatus, CreatePaymentRequest, PaymentQuery } from './payment';
-
-export type { RefundStatus, RefundRecord, CreateRefundRequest, RefundQuery } from './refund';
+export type { PaymentStatus } from './payment';
 
 export type {
   MetricUsage,
@@ -65,10 +63,6 @@ export type {
   CreateTaxCalculationRequest,
   CreateTaxFilingRequest,
 } from './tax';
-
-export type { BillReminder, CreateReminderRequest, ReminderType } from './reminder';
-
-export type { BatchTask, BatchTaskStatus } from './batch';
 
 const billingModule = {
   ...billingApi,

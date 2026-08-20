@@ -1,15 +1,15 @@
 import type { ApiResponse, PaginatedResponse } from '../client';
 
-export type ConsolidationMethod = 'full' | 'equity' | 'proportional';
-export type ScopeStatus = 'active' | 'inactive' | 'draft';
-export type ControlType = 'full_control' | 'joint_venture' | 'associate';
-export type EliminationDirection = 'debit' | 'credit' | 'both';
-export type EliminationStatus = 'pending' | 'eliminated' | 'partial' | 'not_applicable';
+type ConsolidationMethod = 'full' | 'equity' | 'proportional';
+type ScopeStatus = 'active' | 'inactive' | 'draft';
+type ControlType = 'full_control' | 'joint_venture' | 'associate';
+type EliminationDirection = 'debit' | 'credit' | 'both';
+type EliminationStatus = 'pending' | 'eliminated' | 'partial' | 'not_applicable';
 export type ReportStatus = 'draft' | 'calculating' | 'completed' | 'published';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 export type CompanyRelationType =
   'parent' | 'subsidiary' | 'associate' | 'joint_venture' | 'branch';
-export type CompanyRelationStatus = 'active' | 'inactive';
+type CompanyRelationStatus = 'active' | 'inactive';
 
 export interface ConsolidationScope {
   id: string;
@@ -346,5 +346,5 @@ export interface CompanyFinancialData {
   net_cash_flow: number;
 }
 
-export type ConsolidationApiResponse<T> = ApiResponse<T>;
+type ConsolidationApiResponse<T> = ApiResponse<T>;
 export type ConsolidationPaginatedResponse<T> = PaginatedResponse<T>;

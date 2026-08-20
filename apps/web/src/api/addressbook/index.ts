@@ -106,8 +106,8 @@ export default addressbookApi;
 export { addressbookGroupApi, addressbookImportExportApi, addressbookFavoriteApi };
 
 // Re-export sub-module types
-export type { ContactGroup, CreateGroupRequest, UpdateGroupRequest, GroupShare } from './group';
-export type { ContactTag, CreateTagRequest, UpdateTagRequest } from './tag';
+export type { ContactGroup, CreateGroupRequest } from './group';
+export type { CreateTagRequest, UpdateTagRequest } from './tag';
 export type {
   ImportTask,
   ImportValidateResult,
@@ -116,4 +116,3 @@ export type {
   MergeContactsRequest,
   ActivityLog,
 } from './importExport';
-export type { FavoriteContact, RecentContact, SharedContact } from './favorite';

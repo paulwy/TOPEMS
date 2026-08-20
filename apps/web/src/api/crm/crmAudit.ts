@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface AuditLogItem {
+interface AuditLogItem {
   id: string;
   action: string;
   entity_type: string;
@@ -16,7 +16,7 @@ export interface AuditLogItem {
   created_at?: string;
 }
 
-export interface AuditLogListQuery {
+interface AuditLogListQuery {
   page?: number;
   page_size?: number;
   action?: string;
@@ -27,7 +27,7 @@ export interface AuditLogListQuery {
   end_date?: string;
 }
 
-export interface AuditLogListResponse {
+interface AuditLogListResponse {
   items: AuditLogItem[];
   total: number;
   page: number;

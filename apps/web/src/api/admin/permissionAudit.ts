@@ -28,7 +28,7 @@ export interface PermissionChange {
   created_at: string;
 }
 
-export interface PermissionAuditQueryParams {
+interface PermissionAuditQueryParams {
   page?: number;
   pagesize?: number;
   user_id?: string;
@@ -91,7 +91,7 @@ export interface AccessControlLog {
   created_at: string;
 }
 
-export interface AccessControlQueryParams {
+interface AccessControlQueryParams {
   page?: number;
   pagesize?: number;
   user_id?: string;

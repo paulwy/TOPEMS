@@ -260,7 +260,7 @@ async fn create_attendance(
         INSERT INTO hrm.attendance_records (
             id, organization_id, employee_id, date, check_in_time, check_out_time,
             status, work_hours, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ) VALUES ($1, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
         RETURNING id, organization_id AS tenant_id, employee_id, date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours, notes, created_at, updated_at
