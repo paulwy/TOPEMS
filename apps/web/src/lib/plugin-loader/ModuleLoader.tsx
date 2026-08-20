@@ -252,7 +252,7 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
 /**
  * Dynamic Module Loader with retry support
  */
-export class DynamicModuleLoader {
+class DynamicModuleLoader {
   private cache: Map<string, { default: React.ComponentType<unknown> }> = new Map();
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
