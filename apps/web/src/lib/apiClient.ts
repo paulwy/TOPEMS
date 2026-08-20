@@ -13,15 +13,15 @@
 
 import { apiClient as axiosApiClient } from '@/api/client';
 import type { ApiResponse, PaginatedResponse } from '@/api/client';
-import { handleResponse } from '@/api/request';
-import type { RequestOptions as ApiRequestOptions, PaginatedRequestParams } from '@/api/request';
+import { handleResponse } from '@/api/client';
+import type { RequestOptions as ApiRequestOptions, PaginatedRequestParams } from '@/api/client';
 
 // Re-export core types
 export type { ApiResponse, PaginatedResponse, PaginationParams } from '@/api/client';
-export type { RequestOptions, PaginatedRequestParams } from '@/api/request';
+export type { RequestOptions, PaginatedRequestParams } from '@/api/client';
 
 // Re-export request utilities
-export { handleResponse, safeRequest, paginatedRequest, handleRequestError } from '@/api/request';
+export { handleResponse, safeRequest, paginatedRequest, handleRequestError } from '@/api/client';
 
 // Re-export the underlying multi-service client
 export { apiClient } from '@/api/client';

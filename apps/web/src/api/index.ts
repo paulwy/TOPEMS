@@ -12,8 +12,8 @@ export { apiClient, downloadBlob, createBaseAxiosClient } from './client';
 export type { ApiResponse, PaginatedResponse, PaginationParams } from './client';
 
 // Request utilities
-export { handleResponse, safeRequest, paginatedRequest, handleRequestError } from './request';
-export type { RequestOptions, PaginatedRequestParams } from './request';
+export { handleResponse, safeRequest, paginatedRequest, handleRequestError } from './client';
+export type { RequestOptions, PaginatedRequestParams } from './client';
 
 // Permission interceptor
 export {
