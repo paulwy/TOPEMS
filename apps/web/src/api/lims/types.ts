@@ -84,7 +84,7 @@ export interface TransitionStageRequest {
   remarks?: string;
 }
 
-export interface TraceabilityRecord {
+interface TraceabilityRecord {
   id: string;
   sample_id: string;
   operation_type: string;
@@ -106,7 +106,7 @@ export interface SampleTraceability {
   related_records: InspectionRecord[];
 }
 
-export interface InspectionStep {
+interface InspectionStep {
   id: string;
   name: string;
   description: string;
@@ -993,7 +993,7 @@ export interface UpdateInstrumentDataRequest {
   error_msg?: string;
 }
 
-export interface TestItemResult {
+interface TestItemResult {
   testitem: string;
   testitem_name?: string;
   result?: string;

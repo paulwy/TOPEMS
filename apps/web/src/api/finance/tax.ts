@@ -1,11 +1,11 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export type TaxFormType = 'VAT' | 'CIT' | 'PIT' | 'STAMP' | 'CUSTOMS' | 'OTHER';
-export type TaxFormStatus = 'draft' | 'pending' | 'submitted' | 'approved' | 'rejected' | 'amended';
-export type TaxScenarioType = 'forecast' | 'optimization' | 'comparison' | 'what-if';
+type TaxFormType = 'VAT' | 'CIT' | 'PIT' | 'STAMP' | 'CUSTOMS' | 'OTHER';
+type TaxFormStatus = 'draft' | 'pending' | 'submitted' | 'approved' | 'rejected' | 'amended';
+type TaxScenarioType = 'forecast' | 'optimization' | 'comparison' | 'what-if';
 
-export interface TaxForm {
+interface TaxForm {
   id: string;
   tenant_id: string;
   form_type: TaxFormType;
@@ -22,7 +22,7 @@ export interface TaxForm {
   updated_at: string;
 }
 
-export interface TaxFormGenerateRequest {
+interface TaxFormGenerateRequest {
   form_type: TaxFormType;
   tax_period: string;
   jurisdiction?: string;
@@ -30,12 +30,12 @@ export interface TaxFormGenerateRequest {
   auto_calculate?: boolean;
 }
 
-export interface TaxFormSubmitRequest {
+interface TaxFormSubmitRequest {
   comment?: string;
   attachments?: string[];
 }
 
-export interface TaxSummary {
+interface TaxSummary {
   period: string;
   jurisdiction?: string;
   forms_total: number;
@@ -49,7 +49,7 @@ export interface TaxSummary {
   generated_at: string;
 }
 
-export interface TaxSchedule {
+interface TaxSchedule {
   upcoming: Array<{
     form_type: TaxFormType;
     due_date: string;
@@ -70,7 +70,7 @@ export interface TaxSchedule {
   }>;
 }
 
-export interface TaxCalculateRequest {
+interface TaxCalculateRequest {
   form_type: TaxFormType;
   tax_period?: string;
   amount: number;
@@ -95,7 +95,7 @@ export interface TaxRate {
   effective_to?: string;
 }
 
-export interface TaxBreakdown {
+interface TaxBreakdown {
   gross_amount: number;
   tax_free_amount: number;
   taxable_amount: number;
@@ -110,14 +110,14 @@ export interface TaxBreakdown {
   form_type: TaxFormType;
 }
 
-export interface TaxValidation {
+interface TaxValidation {
   is_valid: boolean;
   errors: Array<{ field: string; message: string }>;
   warnings: Array<{ field?: string; message: string }>;
   suggestions: string[];
 }
 
-export interface TaxPlan {
+interface TaxPlan {
   id: string;
   tenant_id: string;
   name: string;
@@ -134,7 +134,7 @@ export interface TaxPlan {
   approved_by?: string;
 }
 
-export interface TaxScenario {
+interface TaxScenario {
   id: string;
   plan_id?: string;
   name: string;
@@ -148,7 +148,7 @@ export interface TaxScenario {
   notes?: string;
 }
 
-export interface TaxSuggestion {
+interface TaxSuggestion {
   id: string;
   title: string;
   category: 'deduction' | 'credit' | 'exemption' | 'deferral' | 'restructure';
@@ -159,7 +159,7 @@ export interface TaxSuggestion {
   action?: string;
 }
 
-export interface TaxComparison {
+interface TaxComparison {
   id: string;
   scenarios: Array<{
     name: string;

@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface ReportParams {
+interface ReportParams {
   start_date?: string;
   end_date?: string;
   department_id?: string;

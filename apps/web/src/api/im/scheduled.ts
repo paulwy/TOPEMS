@@ -71,7 +71,7 @@ export interface ScheduledMessageQuery {
   pagesize?: number;
 }
 
-export interface BatchScheduledRequest {
+interface BatchScheduledRequest {
   ids: string[];
 }
 

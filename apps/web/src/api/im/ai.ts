@@ -35,13 +35,13 @@ export interface TranslationResult {
   tokens_used: number;
 }
 
-export interface BatchTranslationResult {
+interface BatchTranslationResult {
   translations: TranslationResult[];
   total_tokens: number;
   total_time_ms: number;
 }
 
-export interface DetectLanguageResult {
+interface DetectLanguageResult {
   language: string;
   confidence: number;
   alternatives: Array<{ language: string; confidence: number }>;

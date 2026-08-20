@@ -490,7 +490,7 @@ export interface ChatMessage {
   is_read: boolean;
 }
 
-export interface CreateChatMessageRequest {
+interface CreateChatMessageRequest {
   chat_id: string;
   sender_id: string;
   sender_name: string;
@@ -571,7 +571,7 @@ export interface Friend {
   last_seen?: string;
 }
 
-export interface CreateFriendRequest {
+interface CreateFriendRequest {
   friend_id: string;
   friend_name: string;
 }
@@ -583,24 +583,24 @@ export interface ContactGroup {
   updated_at: string;
 }
 
-export interface CreateContactGroupRequest {
+interface CreateContactGroupRequest {
   name: string;
 }
 
-export interface UploadedFileInfo {
+interface UploadedFileInfo {
   file_path: string;
   file_name: string;
 }
 
-export interface UploadFileResponseData {
+interface UploadFileResponseData {
   files: UploadedFileInfo[];
 }
 
-export interface ListFriendsResponseData {
+interface ListFriendsResponseData {
   friends: Friend[];
 }
 
-export interface ListContactGroupsResponseData {
+interface ListContactGroupsResponseData {
   groups: ContactGroup[];
 }
 

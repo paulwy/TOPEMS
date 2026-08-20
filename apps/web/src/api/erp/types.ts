@@ -251,7 +251,7 @@ export interface ProjectFinancialSummary {
   status: string;
 }
 
-export interface KeyRatios {
+interface KeyRatios {
   current_ratio: number;
   debt_ratio: number;
   return_on_equity: number;
@@ -321,20 +321,20 @@ export interface ExpenseAnalysis {
   monthly_trend: MonthlyExpense[];
 }
 
-export interface DepartmentExpense {
+interface DepartmentExpense {
   department_id?: string;
   department_name: string;
   amount: number;
   percentage: number;
 }
 
-export interface CategoryExpense {
+interface CategoryExpense {
   category: string;
   amount: number;
   percentage: number;
 }
 
-export interface MonthlyExpense {
+interface MonthlyExpense {
   month: string;
   amount: number;
   growth_rate: number;
@@ -351,7 +351,7 @@ export interface ProfitAnalysis {
   profit_trend: MonthlyProfit[];
 }
 
-export interface MonthlyProfit {
+interface MonthlyProfit {
   month: string;
   gross_profit: number;
   operating_profit: number;

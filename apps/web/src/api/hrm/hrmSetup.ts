@@ -1,21 +1,21 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface StepStatusInfo {
+interface StepStatusInfo {
   name: string;
   order: number;
   status: string;
   is_current: boolean;
 }
 
-export interface InitProgressResponse {
+interface InitProgressResponse {
   is_completed: boolean;
   current_step: number;
   steps: StepStatusInfo[];
   org_id?: string | null;
 }
 
-export interface CompanyInfoRequest {
+interface CompanyInfoRequest {
   name: string;
   short_name?: string;
   registration_number?: string;
@@ -27,12 +27,12 @@ export interface CompanyInfoRequest {
   description?: string;
 }
 
-export interface CompanyInfoResponse {
+interface CompanyInfoResponse {
   org_id: string;
   name: string;
 }
 
-export interface DepartmentBatchItem {
+interface DepartmentBatchItem {
   name: string;
   code?: string;
   parent_id?: string;
@@ -40,22 +40,22 @@ export interface DepartmentBatchItem {
   description?: string;
 }
 
-export interface DepartmentsBatchRequest {
+interface DepartmentsBatchRequest {
   departments: DepartmentBatchItem[];
 }
 
-export interface DepartmentResult {
+interface DepartmentResult {
   id: string;
   name: string;
   code?: string;
 }
 
-export interface DepartmentsBatchResponse {
+interface DepartmentsBatchResponse {
   created_count: number;
   departments: DepartmentResult[];
 }
 
-export interface PositionBatchItem {
+interface PositionBatchItem {
   name: string;
   code?: string;
   department_id?: string;
@@ -63,22 +63,22 @@ export interface PositionBatchItem {
   description?: string;
 }
 
-export interface PositionsBatchRequest {
+interface PositionsBatchRequest {
   positions: PositionBatchItem[];
 }
 
-export interface PositionResult {
+interface PositionResult {
   id: string;
   name: string;
   code?: string;
 }
 
-export interface PositionsBatchResponse {
+interface PositionsBatchResponse {
   created_count: number;
   positions: PositionResult[];
 }
 
-export interface AdminUserRequest {
+interface AdminUserRequest {
   name: string;
   employee_number: string;
   gender?: string;
@@ -95,18 +95,18 @@ export interface AdminUserRequest {
   password: string;
 }
 
-export interface AdminUserResponse {
+interface AdminUserResponse {
   employee_id: string;
   employee_number: string;
   name: string;
   message: string;
 }
 
-export interface CompleteInitRequest {
+interface CompleteInitRequest {
   confirm: boolean;
 }
 
-export interface CompleteInitResponse {
+interface CompleteInitResponse {
   is_completed: boolean;
   completed_at: string;
 }

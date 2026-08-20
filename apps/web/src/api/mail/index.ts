@@ -81,7 +81,7 @@ export interface EmailStats {
   last_sent_at?: string;
 }
 
-export interface ResendResult {
+interface ResendResult {
   total: number;
   success: number;
   failed: number;

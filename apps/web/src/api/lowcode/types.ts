@@ -19,7 +19,7 @@ export interface LowcodePaginationParams {
 // 1. 应用（App）
 // ============================================================================
 
-export type LowcodeAppStatus = 'draft' | 'published' | 'unpublished' | 'archived';
+type LowcodeAppStatus = 'draft' | 'published' | 'unpublished' | 'archived';
 
 export interface LowcodeApp {
   id: string;
@@ -68,7 +68,7 @@ export interface UpdateLowcodeAppRequest {
 // 2. 数据模型（DataModel）
 // ============================================================================
 
-export type DataModelFieldType =
+type DataModelFieldType =
   | 'string'
   | 'text'
   | 'integer'
@@ -83,7 +83,7 @@ export type DataModelFieldType =
   | 'file'
   | 'image';
 
-export interface DataModelField {
+interface DataModelField {
   id: string;
   model_id: string;
   /** 字段物理名（表列名），snake_case */
@@ -223,7 +223,7 @@ export interface DataSourceTestResult {
 // 4. 表单（Form）
 // ============================================================================
 
-export type FormFieldType =
+type FormFieldType =
   | 'text'
   | 'textarea'
   | 'number'
@@ -320,7 +320,7 @@ export interface UpdateLowcodeFormRequest {
 
 export type LowcodePageType = 'list' | 'detail' | 'form' | 'dashboard' | 'custom' | 'external_link';
 
-export interface PageComponent {
+interface PageComponent {
   id: string;
   /** 组件类型：table / form / chart / button / container / ... */
   type: string;
@@ -398,7 +398,7 @@ export interface FormSubmitHookResponse {
 export type LowcodeWorkflowTriggerType =
   'manual' | 'form_submit' | 'schedule' | 'event' | 'webhook';
 
-export type LowcodeWorkflowNodeType =
+type LowcodeWorkflowNodeType =
   | 'start'
   | 'end'
   | 'approval'
@@ -409,7 +409,7 @@ export type LowcodeWorkflowNodeType =
   | 'delay'
   | 'subprocess';
 
-export interface LowcodeWorkflowNode {
+interface LowcodeWorkflowNode {
   id: string;
   /** 节点类型 */
   type: LowcodeWorkflowNodeType;

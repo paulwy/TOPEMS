@@ -8,7 +8,7 @@ export type LifecycleStageV62 =
   'design' | 'development' | 'staging' | 'production' | 'deprecated' | 'retired';
 export type ApiStatusV62 = 'active' | 'testing' | 'paused' | 'archived';
 
-export interface ApiEndpointV62 {
+interface ApiEndpointV62 {
   id: string;
   name: string;
   type: ApiType;
@@ -36,7 +36,7 @@ export interface ApiVersionInfoV62 {
   is_recommended: boolean;
 }
 
-export interface ApiConsumption {
+interface ApiConsumption {
   id: string;
   api_id: string;
   consumer_service: string;
@@ -49,7 +49,7 @@ export interface ApiConsumption {
   since: string;
 }
 
-export interface ApiDeploymentV62 {
+interface ApiDeploymentV62 {
   id: string;
   api_id: string;
   environment: 'dev' | 'staging' | 'prod';
@@ -64,7 +64,7 @@ export interface ApiDeploymentV62 {
   };
 }
 
-export interface ApiChangeLogV62 {
+interface ApiChangeLogV62 {
   id: string;
   api_id: string;
   version: string;

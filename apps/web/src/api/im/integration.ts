@@ -19,7 +19,7 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 
 export type IntegrationTarget = 'ticket' | 'task' | 'calendar' | 'approval' | 'webhook';
 export type IntegrationStatus = 'pending' | 'success' | 'failed' | 'cancelled';
-export type WebhookTriggerType =
+type WebhookTriggerType =
   'message_received' | 'message_mention' | 'reaction_added' | 'file_shared' | 'custom';
 
 export interface IntegrationRecord {
@@ -64,7 +64,7 @@ export interface CreateTaskFromMessageRequest {
   tags?: string[];
 }
 
-export interface CreateCalendarEventFromMessageRequest {
+interface CreateCalendarEventFromMessageRequest {
   message_id: string;
   title: string;
   description?: string;
@@ -77,7 +77,7 @@ export interface CreateCalendarEventFromMessageRequest {
   calendar_id?: string;
 }
 
-export interface CreateApprovalFromMessageRequest {
+interface CreateApprovalFromMessageRequest {
   message_id: string;
   approval_type: string;
   title: string;
@@ -89,14 +89,14 @@ export interface CreateApprovalFromMessageRequest {
   form_data?: Record<string, unknown>;
 }
 
-export interface TriggerWebhookRequest {
+interface TriggerWebhookRequest {
   message_id: string;
   trigger_type: WebhookTriggerType;
   webhook_id: string;
   custom_payload?: Record<string, unknown>;
 }
 
-export interface IntegrationHistoryQuery {
+interface IntegrationHistoryQuery {
   target_type?: IntegrationTarget;
   status?: IntegrationStatus;
   from_date?: string;

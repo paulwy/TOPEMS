@@ -30,7 +30,7 @@ export interface VoucherTemplateEntry {
   sequence?: number;
 }
 
-export interface VoucherGenerationRule {
+interface VoucherGenerationRule {
   id?: string;
   name: string;
   description?: string;
@@ -43,7 +43,7 @@ export interface VoucherGenerationRule {
   updated_at?: string;
 }
 
-export interface VoucherGenerateRequest {
+interface VoucherGenerateRequest {
   period: string;
   template_id?: string;
   rule_id?: string;
@@ -52,7 +52,7 @@ export interface VoucherGenerateRequest {
   description?: string;
 }
 
-export interface VoucherBatchGenerateRequest {
+interface VoucherBatchGenerateRequest {
   period: string;
   template_ids?: string[];
   rule_ids?: string[];

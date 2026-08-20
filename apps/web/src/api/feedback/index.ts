@@ -19,7 +19,7 @@ import { aiAnalysisApi } from './aiAnalysis';
 
 export * from './types';
 
-export interface FeedbackComment {
+interface FeedbackComment {
   id: string;
   feedback_id: string;
   author_id: string;
@@ -28,7 +28,7 @@ export interface FeedbackComment {
   created_at?: string;
 }
 
-export interface FeedbackStats {
+interface FeedbackStats {
   total: number;
   by_status: Record<string, number>;
   by_type: Record<string, number>;
@@ -275,8 +275,6 @@ export type {
   CreateCategoryRequest,
   CreateTagRequest,
 } from './category';
-
-export type { FeedbackAttachment, UploadAttachmentRequest, BulkUploadResult } from './attachment';
 
 export type {
   DashboardSummary,

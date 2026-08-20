@@ -6,7 +6,7 @@
 import { apiClient, downloadBlob } from '../client';
 import config from '../../config/runtime';
 
-export interface ConsolidationEntity {
+interface ConsolidationEntity {
   id: string;
   name: string;
   code: string;

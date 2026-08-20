@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
 
-export interface ExpenseApprovalItem {
+interface ExpenseApprovalItem {
   id?: string;
   date: string;
   category: string;
@@ -10,7 +10,7 @@ export interface ExpenseApprovalItem {
   description?: string;
 }
 
-export interface ExpenseApproval {
+interface ExpenseApproval {
   id?: string;
   expense_no: string;
   employee_id: string;
@@ -29,7 +29,7 @@ export interface ExpenseApproval {
   updated_at?: string;
 }
 
-export interface CreateExpenseApprovalRequest {
+interface CreateExpenseApprovalRequest {
   expense_no: string;
   employee_id: string;
   employee_name?: string;
@@ -45,7 +45,7 @@ export interface CreateExpenseApprovalRequest {
   items?: ExpenseApprovalItem[];
 }
 
-export interface UpdateExpenseApprovalRequest {
+interface UpdateExpenseApprovalRequest {
   expense_no?: string;
   employee_id?: string;
   employee_name?: string;
@@ -61,7 +61,7 @@ export interface UpdateExpenseApprovalRequest {
   items?: ExpenseApprovalItem[];
 }
 
-export interface ExpenseApprovalQueryParams {
+interface ExpenseApprovalQueryParams {
   page?: number;
   pagesize?: number;
   search?: string;

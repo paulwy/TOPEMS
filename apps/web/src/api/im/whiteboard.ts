@@ -33,8 +33,8 @@ export type WhiteboardToolType =
   | 'sticky_note'
   | 'eraser'
   | 'shapes';
-export type WhiteboardStatus = 'active' | 'archived' | 'deleted';
-export type WhiteboardPermission = 'view' | 'edit' | 'admin' | 'owner';
+type WhiteboardStatus = 'active' | 'archived' | 'deleted';
+type WhiteboardPermission = 'view' | 'edit' | 'admin' | 'owner';
 export type ExportFormat = 'png' | 'pdf' | 'svg' | 'jpeg';
 
 export interface Whiteboard {
@@ -83,13 +83,13 @@ export interface WhiteboardSnapshot {
   created_at: string;
 }
 
-export interface CreateSnapshotRequest {
+interface CreateSnapshotRequest {
   name?: string;
   description?: string;
   auto_save?: boolean;
 }
 
-export interface WhiteboardCollaborator {
+interface WhiteboardCollaborator {
   user_id: string;
   user_name: string;
   user_avatar?: string;
@@ -100,14 +100,14 @@ export interface WhiteboardCollaborator {
   joined_at: string;
 }
 
-export interface ShareWhiteboardRequest {
+interface ShareWhiteboardRequest {
   user_ids: string[];
   permission: WhiteboardPermission;
   message?: string;
   send_notification?: boolean;
 }
 
-export interface ExportWhiteboardRequest {
+interface ExportWhiteboardRequest {
   format: ExportFormat;
   width?: number;
   height?: number;

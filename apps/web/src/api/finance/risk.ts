@@ -2,10 +2,10 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type FraudAlertStatus = 'open' | 'acknowledged' | 'resolved' | 'dismissed';
-export type ComplianceStatus = 'pending' | 'reviewing' | 'approved' | 'rejected';
+type FraudAlertStatus = 'open' | 'acknowledged' | 'resolved' | 'dismissed';
+type ComplianceStatus = 'pending' | 'reviewing' | 'approved' | 'rejected';
 
-export interface RiskDashboard {
+interface RiskDashboard {
   total_alerts: number;
   open_alerts: number;
   acknowledged_alerts: number;
@@ -20,7 +20,7 @@ export interface RiskDashboard {
   trend?: Array<{ date: string; count: number }>;
 }
 
-export interface FraudAlert {
+interface FraudAlert {
   id: string;
   tenant_id: string;
   alert_type: string;
@@ -36,7 +36,7 @@ export interface FraudAlert {
   created_at: string;
 }
 
-export interface FraudScoreRequest {
+interface FraudScoreRequest {
   transaction_id?: string;
   amount: number;
   currency?: string;
@@ -52,7 +52,7 @@ export interface FraudScoreRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface FraudScoreResult {
+interface FraudScoreResult {
   transaction_id: string;
   score: number;
   risk_level: RiskLevel;
@@ -77,7 +77,7 @@ export interface FraudScoreResult {
   recommendations?: string[];
 }
 
-export interface FraudRule {
+interface FraudRule {
   id: string;
   tenant_id: string;
   name: string;
@@ -91,7 +91,7 @@ export interface FraudRule {
   updated_at: string;
 }
 
-export interface FraudRuleUpdate {
+interface FraudRuleUpdate {
   name?: string;
   description?: string;
   rule_type?: FraudRule['rule_type'];
@@ -101,7 +101,7 @@ export interface FraudRuleUpdate {
   priority?: number;
 }
 
-export interface ComplianceReviewRequest {
+interface ComplianceReviewRequest {
   entity_type: 'transaction' | 'voucher' | 'payment' | 'expense' | 'invoice';
   entity_id: string;
   amount?: number;
@@ -110,7 +110,7 @@ export interface ComplianceReviewRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface ComplianceResult {
+interface ComplianceResult {
   id: string;
   tenant_id: string;
   entity_type: string;
@@ -129,7 +129,7 @@ export interface ComplianceResult {
   created_at: string;
 }
 
-export interface ComplianceWorkflow {
+interface ComplianceWorkflow {
   id: string;
   tenant_id: string;
   result_id: string;

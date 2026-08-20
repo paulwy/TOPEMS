@@ -6,12 +6,12 @@ import type { ApiResponse } from '../client';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
-export type FraudRuleType = 'velocity' | 'amount' | 'location' | 'device' | 'behavior';
-export type FraudRecommendation = 'approve' | 'review' | 'block';
+type FraudRuleType = 'velocity' | 'amount' | 'location' | 'device' | 'behavior';
+type FraudRecommendation = 'approve' | 'review' | 'block';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-export type ReviewWorkflowStatus = 'pending' | 'in_progress' | 'completed' | 'rejected';
+type ReviewWorkflowStatus = 'pending' | 'in_progress' | 'completed' | 'rejected';
 export type ReviewSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ReviewAction = 'approve' | 'reject' | 'escalate' | 'flag';
+type ReviewAction = 'approve' | 'reject' | 'escalate' | 'flag';
 
 export interface RiskIndicator {
   id: string;
@@ -54,7 +54,7 @@ export interface FraudRule {
   enabled: boolean;
 }
 
-export interface FraudScore {
+interface FraudScore {
   id: string;
   transaction_id: string;
   score: number;
@@ -64,7 +64,7 @@ export interface FraudScore {
   scored_at: string;
 }
 
-export interface Transaction {
+interface Transaction {
   id: string;
   account_id: string;
   amount: number;
@@ -95,7 +95,7 @@ export interface ReviewResult {
   reviewer: string;
 }
 
-export interface ReviewWorkflow {
+interface ReviewWorkflow {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -122,28 +122,28 @@ export interface ComplianceReport {
 
 // ==================== 请求类型 ====================
 
-export interface RiskAlertsQuery {
+interface RiskAlertsQuery {
   category?: string;
   entity?: string;
 }
 
-export interface ScoreTransactionRequest {
+interface ScoreTransactionRequest {
   transaction: Transaction;
 }
 
-export interface UpdateFraudRuleRequest {
+interface UpdateFraudRuleRequest {
   name?: string;
   condition?: string;
   threshold?: number;
   enabled?: boolean;
 }
 
-export interface ReviewEntityRequest {
+interface ReviewEntityRequest {
   entity_type: string;
   entity_id: string;
 }
 
-export interface ReviewResultsQuery {
+interface ReviewResultsQuery {
   entity_type?: string;
   entity_id?: string;
 }
@@ -155,7 +155,7 @@ export interface CreateWorkflowRequest {
   steps: string[];
 }
 
-export interface ComplianceReportQuery {
+interface ComplianceReportQuery {
   entity_type?: string;
   entity_id?: string;
 }

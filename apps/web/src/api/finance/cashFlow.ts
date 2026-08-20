@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '../../types/finance';
 
-export interface LedgerQueryParams {
+interface LedgerQueryParams {
   account_id?: string;
   account_code?: string;
   start_date?: string;
@@ -10,7 +10,7 @@ export interface LedgerQueryParams {
   period?: string;
 }
 
-export interface LedgerEntry {
+interface LedgerEntry {
   id?: string;
   date?: string;
   account_id?: string;
@@ -24,7 +24,7 @@ export interface LedgerEntry {
   counterparty?: string;
 }
 
-export interface TrialBalanceItem {
+interface TrialBalanceItem {
   account_id?: string;
   account_code?: string;
   account_name?: string;

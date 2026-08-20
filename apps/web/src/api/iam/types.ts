@@ -13,9 +13,9 @@ import type { IamTypes } from '@topems/shared-types';
 // 4. Role 生成类型有 code 字段，手写类型（旧版）暂无
 // 5. Permission 生成类型：待确认 module/category 字段（当前 schema 中暂未暴露）
 
-export type GeneratedUser = IamTypes.User;
-export type GeneratedRole = IamTypes.Role;
-export type GeneratedPermission = IamTypes.Permission;
+type GeneratedUser = IamTypes.User;
+type GeneratedRole = IamTypes.Role;
+type GeneratedPermission = IamTypes.Permission;
 
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
@@ -29,12 +29,12 @@ export type GeneratedPermission = IamTypes.Permission;
  * 生成类型 User 的字段重映射：
  * - status（string） → isactive（boolean），约定 status === 'active' 为激活
  */
-export type AdaptedUser = Omit<IamTypes.User, 'status'> & {
+type AdaptedUser = Omit<IamTypes.User, 'status'> & {
   isactive?: boolean;
 };
 
 /** 生成类型 Permission 的字段重映射（待 schema 补充 module/category 字段后启用） */
-export type AdaptedPermission = IamTypes.Permission & {
+type AdaptedPermission = IamTypes.Permission & {
   category?: string;
 };
 
@@ -101,7 +101,7 @@ export interface User {
   current_tenant_id?: string;
 }
 
-export interface UserTenantInfo {
+interface UserTenantInfo {
   tenant_id: string;
   tenant_name: string;
   tenant_slug: string;
@@ -180,7 +180,7 @@ export interface UserWithPermissions {
   permissions: Permission[];
 }
 
-export interface PermissionCheckRequest {
+interface PermissionCheckRequest {
   permission: string;
 }
 

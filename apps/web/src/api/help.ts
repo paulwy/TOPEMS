@@ -14,28 +14,28 @@ export interface Faq {
   updated_at: string;
 }
 
-export interface FaqQuery {
+interface FaqQuery {
   category?: string;
   keyword?: string;
   page?: number;
   page_size?: number;
 }
 
-export interface FaqListResponse {
+interface FaqListResponse {
   items: Faq[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface CreateFaqRequest {
+interface CreateFaqRequest {
   question: string;
   answer: string;
   category: string;
   sort_order?: number;
 }
 
-export interface UpdateFaqRequest {
+interface UpdateFaqRequest {
   question?: string;
   answer?: string;
   category?: string;
@@ -56,7 +56,7 @@ export interface Guide {
   updated_at: string;
 }
 
-export interface GuideLesson {
+interface GuideLesson {
   id: string;
   guide_id: string;
   title: string;
@@ -67,7 +67,7 @@ export interface GuideLesson {
   created_at: string;
 }
 
-export interface GuideProgress {
+interface GuideProgress {
   guide_id: string;
   user_id: string;
   completed_lessons: string[];
@@ -76,27 +76,27 @@ export interface GuideProgress {
   updated_at: string;
 }
 
-export interface GuideQuery {
+interface GuideQuery {
   category?: string;
   keyword?: string;
   page?: number;
   page_size?: number;
 }
 
-export interface GuideListResponse {
+interface GuideListResponse {
   items: Guide[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface GuideDetailResponse {
+interface GuideDetailResponse {
   guide: Guide;
   lessons: GuideLesson[];
   progress?: GuideProgress;
 }
 
-export interface CreateGuideRequest {
+interface CreateGuideRequest {
   title: string;
   description: string;
   category: string;
@@ -105,7 +105,7 @@ export interface CreateGuideRequest {
   sort_order?: number;
 }
 
-export interface CreateLessonRequest {
+interface CreateLessonRequest {
   title: string;
   content: string;
   duration: string;
