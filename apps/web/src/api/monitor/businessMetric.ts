@@ -115,7 +115,7 @@ export interface KpiDashboard {
   }>;
 }
 
-export interface CreateBusinessMetricRequest {
+interface CreateBusinessMetricRequest {
   name: string;
   code: string;
   description?: string;

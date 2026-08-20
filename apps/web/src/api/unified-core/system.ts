@@ -62,7 +62,7 @@ export interface LogConfig {
   rotate_count?: number;
 }
 
-export interface SmtpSettings {
+interface SmtpSettings {
   host: string;
   port: number;
   username?: string;
@@ -72,7 +72,7 @@ export interface SmtpSettings {
   use_tls?: boolean;
 }
 
-export interface SystemParam {
+interface SystemParam {
   key: string;
   value: string;
   description?: string;

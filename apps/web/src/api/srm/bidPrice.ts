@@ -79,7 +79,7 @@ export interface UpdateBidRequestBid {
   remarks?: string;
 }
 
-export interface BidComparisonItem {
+interface BidComparisonItem {
   bid_id: string;
   supplier_id?: string;
   supplier_name?: string;

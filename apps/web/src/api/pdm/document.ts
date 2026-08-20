@@ -52,7 +52,7 @@ export interface DocumentVersion {
   updated_at?: string;
 }
 
-export interface CreateDocumentVersionRequest {
+interface CreateDocumentVersionRequest {
   document_id: string;
   version_number: string;
   title: string;
@@ -61,7 +61,7 @@ export interface CreateDocumentVersionRequest {
   changes: string[];
 }
 
-export interface DocumentSearchParams {
+interface DocumentSearchParams {
   keyword?: string;
   type?: string;
   category?: string;

@@ -35,10 +35,10 @@ import type {
 
 export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notification';
 
-export type VariableType =
+type VariableType =
   'string' | 'number' | 'date' | 'select' | 'multiselect' | 'lookup' | 'user' | 'now' | 'context';
 
-export interface SelectOption {
+interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
@@ -121,7 +121,7 @@ export interface PaginationParams {
   is_public?: boolean;
 }
 
-export interface RenderTemplateRequest {
+interface RenderTemplateRequest {
   variables: Record<string, unknown>;
 }
 

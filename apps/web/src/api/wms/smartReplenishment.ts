@@ -34,7 +34,7 @@ import type { ApiResponse } from '../client';
 export type SuggestionStatus = 'pending' | 'confirmed' | 'rejected';
 export type RuleType = 'reorder_point' | 'safety_stock' | 'eoq' | 'periodic';
 export type OrderStatus = 'draft' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
-export type OrderType = 'purchase' | 'transfer' | 'production';
+type OrderType = 'purchase' | 'transfer' | 'production';
 
 export interface ReplenishmentSuggestion {
   id: string;
@@ -56,7 +56,7 @@ export interface ReplenishmentSuggestion {
   updated_at: string;
 }
 
-export interface ReplenishmentRule {
+interface ReplenishmentRule {
   id: string;
   name: string;
   rule_type: RuleType;
@@ -110,7 +110,7 @@ export interface ReplenishmentOrderItem {
   remarks?: string;
 }
 
-export interface SafetyStock {
+interface SafetyStock {
   id: string;
   material_id: string;
   material_code: string;
@@ -128,33 +128,33 @@ export interface SafetyStock {
   updated_at: string;
 }
 
-export interface SuggestionListResponse {
+interface SuggestionListResponse {
   suggestions: ReplenishmentSuggestion[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface RuleListResponse {
+interface RuleListResponse {
   rules: ReplenishmentRule[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface OrderListResponse {
+interface OrderListResponse {
   orders: ReplenishmentOrder[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface OrderItemListResponse {
+interface OrderItemListResponse {
   items: ReplenishmentOrderItem[];
   total: number;
 }
 
-export interface SafetyStockListResponse {
+interface SafetyStockListResponse {
   items: SafetyStock[];
   total: number;
   page: number;
@@ -173,7 +173,7 @@ export interface ReplenishmentStatistics {
   byWarehouse: Array<{ warehouse_id: string; warehouse_name: string; count: number }>;
 }
 
-export interface CreateReplenishmentRuleRequest {
+interface CreateReplenishmentRuleRequest {
   name: string;
   rule_type: RuleType;
   material_id?: string;
@@ -191,7 +191,7 @@ export interface CreateReplenishmentRuleRequest {
   remarks?: string;
 }
 
-export interface UpdateReplenishmentRuleRequest {
+interface UpdateReplenishmentRuleRequest {
   name?: string;
   rule_type?: RuleType;
   min_quantity?: number;
@@ -206,14 +206,14 @@ export interface UpdateReplenishmentRuleRequest {
   remarks?: string;
 }
 
-export interface ComputeReplenishmentRequest {
+interface ComputeReplenishmentRequest {
   warehouse_id?: string;
   material_ids?: string[];
   rule_ids?: string[];
   min_quantity?: number;
 }
 
-export interface ConfirmSuggestionRequest {
+interface ConfirmSuggestionRequest {
   confirmed_quantity?: number;
   notes?: string;
 }
@@ -233,7 +233,7 @@ export interface CreateReplenishmentOrderRequest {
   }>;
 }
 
-export interface UpdateReplenishmentOrderRequest {
+interface UpdateReplenishmentOrderRequest {
   status?: OrderStatus;
   supplier_id?: string;
   expected_date?: string;
@@ -246,7 +246,7 @@ export interface UpdateSafetyStockRequest {
   max_stock?: number;
 }
 
-export interface BatchUpdateSafetyStockRequest {
+interface BatchUpdateSafetyStockRequest {
   updates: Array<{
     id: string;
     safety_stock: number;
@@ -255,7 +255,7 @@ export interface BatchUpdateSafetyStockRequest {
   }>;
 }
 
-export interface CalculateSafetyStockRequest {
+interface CalculateSafetyStockRequest {
   material_id: string;
   warehouse_id: string;
   service_level?: number;

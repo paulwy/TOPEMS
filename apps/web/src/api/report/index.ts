@@ -62,7 +62,7 @@ export interface FilterConfig {
   sort_by: Record<string, any>[];
 }
 
-export interface StyleConfig {
+interface StyleConfig {
   theme: string;
   colors: Record<string, any>;
   fonts: Record<string, any>;
@@ -170,23 +170,23 @@ export interface DashboardStats {
   recentActivities: number;
 }
 
-export interface UserGrowthDataPoint {
+interface UserGrowthDataPoint {
   month: string;
   新增用户: number;
   活跃用户: number;
 }
 
-export interface RoleDistributionDataPoint {
+interface RoleDistributionDataPoint {
   name: string;
   value: number;
 }
 
-export interface ActivityTypeDataPoint {
+interface ActivityTypeDataPoint {
   name: string;
   count: number;
 }
 
-export interface ReportsCenterStats {
+interface ReportsCenterStats {
   dashboard: DashboardStats;
   userGrowth: UserGrowthDataPoint[];
   roleDistribution: RoleDistributionDataPoint[];

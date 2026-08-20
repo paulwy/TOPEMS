@@ -42,7 +42,7 @@ export interface ProjectMember {
   joined_at: string;
 }
 
-export interface AddProjectMemberRequest {
+interface AddProjectMemberRequest {
   project_id: string;
   user_id: string;
   role: 'manager' | 'developer' | 'reviewer' | 'viewer';
@@ -61,7 +61,7 @@ export interface ProjectPhase {
   created_at: string;
 }
 
-export interface CreateProjectPhaseRequest {
+interface CreateProjectPhaseRequest {
   project_id: string;
   phase: string;
   name: string;

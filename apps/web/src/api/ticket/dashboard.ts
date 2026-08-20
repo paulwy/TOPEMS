@@ -39,7 +39,7 @@ export interface TrendPoint {
   breached: number;
 }
 
-export interface AssigneeLoad {
+interface AssigneeLoad {
   assignee_id: string;
   assignee_name: string;
   open_count: number;

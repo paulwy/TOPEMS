@@ -16,14 +16,14 @@ export interface SearchResult {
   url: string;
 }
 
-export interface SearchResponse {
+interface SearchResponse {
   total: number;
   by_service: Record<string, number>;
   results: SearchResult[];
   duration_ms: number;
 }
 
-export interface SearchSuggestionsResponse {
+interface SearchSuggestionsResponse {
   suggestions: string[];
 }
 

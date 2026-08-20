@@ -29,7 +29,7 @@ export interface BusinessMetric {
   last_updated: string;
 }
 
-export interface BusinessMetricCategory {
+interface BusinessMetricCategory {
   code: string;
   name: string;
   metric_count: number;
@@ -38,7 +38,7 @@ export interface BusinessMetricCategory {
   critical_count: number;
 }
 
-export interface BusinessMetricTrend {
+interface BusinessMetricTrend {
   metric_code: string;
   metric_name: string;
   unit: string;
@@ -47,7 +47,7 @@ export interface BusinessMetricTrend {
   target_value: number | null;
 }
 
-export interface BusinessMetricSummary {
+interface BusinessMetricSummary {
   total_metrics: number;
   healthy_count: number;
   warning_count: number;
@@ -176,14 +176,14 @@ export interface SloQuery {
 
 // ==================== 告警规则类型 ====================
 
-export interface RuleCondition {
+interface RuleCondition {
   field: string;
   operator: string;
   value: unknown;
   comparison_type?: string | null;
 }
 
-export interface RuleAction {
+interface RuleAction {
   action_type: string;
   target?: string | null;
   config: Record<string, unknown>;

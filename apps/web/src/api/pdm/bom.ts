@@ -62,7 +62,7 @@ export interface CreateBomItemRequest {
   remarks?: string;
 }
 
-export interface BomComparison {
+interface BomComparison {
   id: string;
   name: string;
   bom_version_a_id: string;

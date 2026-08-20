@@ -82,7 +82,7 @@ export interface PendingTaskCount {
   }>;
 }
 
-export interface WorkflowActionRequest {
+interface WorkflowActionRequest {
   action: WorkflowAction;
   comment?: string;
   assignee?: string;

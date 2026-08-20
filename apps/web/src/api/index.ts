@@ -17,7 +17,6 @@ export type { RequestOptions, PaginatedRequestParams } from './client';
 
 // Permission interceptor
 export { createPermissionInterceptor } from './permissionInterceptor';
-export type { PermissionError } from './permissionInterceptor';
 
 // Domain modules - Business APIs
 export { authApi, iamApi } from './iam';

@@ -18,9 +18,8 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 export type PushPlatform = 'ios' | 'android';
-export type PushNotificationType =
-  'system' | 'approval' | 'task' | 'alert' | 'message' | 'marketing';
-export type TargetType = 'user' | 'role' | 'department' | 'all';
+type PushNotificationType = 'system' | 'approval' | 'task' | 'alert' | 'message' | 'marketing';
+type TargetType = 'user' | 'role' | 'department' | 'all';
 
 export interface MobilePushDevice {
   id: string;

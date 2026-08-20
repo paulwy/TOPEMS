@@ -2,7 +2,7 @@ import apiClient from './client';
 import { apiLogger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-export interface PermissionError {
+interface PermissionError {
   code: number;
   message: string;
   requiredPermission?: string;

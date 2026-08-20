@@ -191,7 +191,7 @@ export interface ProjectApproval {
   updated_at: string;
 }
 
-export interface ProjectProgress {
+interface ProjectProgress {
   planned: number;
   actual: number;
   trend: 'ahead' | 'behind' | 'normal';
@@ -199,7 +199,7 @@ export interface ProjectProgress {
   total_phases: number;
 }
 
-export interface ProjectBenefits {
+interface ProjectBenefits {
   spi: number;
   milestones_achieved: number;
   total_milestones: number;
@@ -234,7 +234,7 @@ export interface GanttMilestone {
   status: string;
 }
 
-export interface GanttResource {
+interface GanttResource {
   id: string;
   resource_type: string;
   name: string;
@@ -699,33 +699,33 @@ export interface PmStatistics {
   low_risk_projects?: number;
 }
 
-export interface StatusCount {
+interface StatusCount {
   status: string;
   count: number;
 }
 
-export interface TypeCount {
+interface TypeCount {
   type: string;
   count: number;
 }
 
-export interface LeaderCount {
+interface LeaderCount {
   leader: string;
   count: number;
 }
 
-export interface CategoryCount {
+interface CategoryCount {
   category: string;
   total: number;
   spent: number;
 }
 
-export interface LevelCount {
+interface LevelCount {
   level: string;
   count: number;
 }
 
-export interface PriorityCount {
+interface PriorityCount {
   priority: string;
   count: number;
 }

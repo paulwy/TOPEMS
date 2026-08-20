@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface PdmVersion {
+interface PdmVersion {
   id: string;
   version_no: string;
   version: string;
@@ -13,7 +13,7 @@ export interface PdmVersion {
   updated_at?: string;
 }
 
-export interface CreatePdmVersionRequest {
+interface CreatePdmVersionRequest {
   version_no: string;
   version: string;
   change_summary?: string;

@@ -19,7 +19,7 @@ export interface Tenant {
   };
 }
 
-export interface TenantBilling {
+interface TenantBilling {
   tenant_id: string;
   plan: string;
   status: string;
@@ -46,7 +46,7 @@ export interface TenantStats {
   api_usage_per_day?: Array<{ date: string; requests: number }>;
 }
 
-export interface TenantUsage {
+interface TenantUsage {
   storage_bytes: number;
   requests_this_month: number;
   active_users: number;

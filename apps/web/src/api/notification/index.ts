@@ -130,13 +130,13 @@ export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
   id: string;
 }
 
-export interface NotificationListQuery {
+interface NotificationListQuery {
   page?: number;
   pagesize?: number;
   notification_type?: NotificationTypeEnum;
 }
 
-export interface NotificationListResponse<T = Notification> {
+interface NotificationListResponse<T = Notification> {
   notifications: T[];
   total: number;
   page: number;
@@ -298,7 +298,7 @@ export const getMyNotificationStats = async (): Promise<ApiResponse<Notification
   return response;
 };
 
-export interface NotificationTemplateListResponse {
+interface NotificationTemplateListResponse {
   templates: NotificationTemplate[];
   total: number;
   page: number;
@@ -386,7 +386,7 @@ export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiRespons
   return response;
 };
 
-export interface HealthResponse {
+interface HealthResponse {
   status: string;
   uptime: string;
   dependencies: {

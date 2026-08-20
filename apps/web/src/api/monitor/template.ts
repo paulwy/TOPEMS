@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface AlertTemplate {
+interface AlertTemplate {
   id: string;
   name: string;
   description?: string;

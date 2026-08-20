@@ -140,7 +140,7 @@ export interface BatchCreateDictItemRequest {
   items: Partial<DictItem>[];
 }
 
-export interface DictItemExport {
+interface DictItemExport {
   code: string;
   name: string;
   value?: string;

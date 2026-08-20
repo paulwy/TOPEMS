@@ -58,7 +58,7 @@ export interface ProductionStep {
   created_at: string;
 }
 
-export interface UpdateProductionStepRequest {
+interface UpdateProductionStepRequest {
   step_no?: string;
   name?: string;
   description?: string;
@@ -67,7 +67,7 @@ export interface UpdateProductionStepRequest {
   sort_order?: number;
 }
 
-export interface CreateProductionStepRequest {
+interface CreateProductionStepRequest {
   process_id: string;
   step_no: string;
   name: string;
@@ -89,7 +89,7 @@ export interface ProductionFormula {
   updated_at: string;
 }
 
-export interface CreateProductionFormulaRequest {
+interface CreateProductionFormulaRequest {
   formula_no: string;
   name: string;
   description?: string;
@@ -116,7 +116,7 @@ export interface ProductionBatch {
   updated_at: string;
 }
 
-export interface CreateProductionBatchRequest {
+interface CreateProductionBatchRequest {
   batch_no: string;
   product_name: string;
   formula_id?: string;
@@ -141,7 +141,7 @@ export interface ProductionStatistics {
   created_at: string;
 }
 
-export interface PdmStatistics {
+interface PdmStatistics {
   total_processes: number;
   active_processes: number;
   total_formulas: number;
@@ -270,7 +270,7 @@ export interface CreateChangeOrderRequest {
   remarks?: string;
 }
 
-export interface UpdateChangeOrderRequest {
+interface UpdateChangeOrderRequest {
   title?: string;
   type?: string;
   priority?: string;
@@ -301,7 +301,7 @@ export interface ProductConfig {
   created_at: string;
 }
 
-export interface CreateProductConfigRequest {
+interface CreateProductConfigRequest {
   name: string;
   code: string;
   status: string;

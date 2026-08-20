@@ -149,7 +149,7 @@ export interface SupplierContract {
   updated_at: string;
 }
 
-export interface CreateSupplierContractRequest {
+interface CreateSupplierContractRequest {
   contractNo: string;
   supplier_id: string;
   supplier_name?: string;
@@ -165,7 +165,7 @@ export interface CreateSupplierContractRequest {
 }
 
 // Statistics types
-export interface SrmStatistics {
+interface SrmStatistics {
   total_suppliers: number;
   active_suppliers: number;
   total_evaluations: number;
@@ -178,7 +178,7 @@ export interface SrmStatistics {
   active_contracts: number;
 }
 
-export interface SupplierWithStats {
+interface SupplierWithStats {
   supplier: Supplier;
   total_orders: number;
   total_amount: number;
@@ -196,12 +196,12 @@ export interface StatusCount {
   count: number;
 }
 
-export interface ScoreDistribution {
+interface ScoreDistribution {
   range: string;
   count: number;
 }
 
-export interface MonthlyOrderTrend {
+interface MonthlyOrderTrend {
   month: string;
   order_count: number;
   total_amount: number;
@@ -247,7 +247,7 @@ export interface ScoringDimension {
   updated_at: string;
 }
 
-export interface CreateScoringDimensionRequest {
+interface CreateScoringDimensionRequest {
   name: string;
   code: string;
   weight: number;
@@ -272,19 +272,19 @@ export interface PerformanceSummary {
   }[];
 }
 
-export interface ScoreLevelDistribution {
+interface ScoreLevelDistribution {
   level: string;
   label: string;
   count: number;
 }
 
-export interface ScoreLevelDefinitions {
+interface ScoreLevelDefinitions {
   level: string;
   range: string;
   description: string;
 }
 
-export interface PerformanceReportParams {
+interface PerformanceReportParams {
   page?: number;
   pagesize?: number;
   search?: string;
@@ -296,7 +296,7 @@ export interface PerformanceReportParams {
   [key: string]: string | number | boolean | undefined;
 }
 
-export interface PerformanceReportDetail {
+interface PerformanceReportDetail {
   id: string;
   supplier_id: string;
   supplier_name: string;
@@ -317,7 +317,7 @@ export interface PerformanceReportDetail {
   generated_at: string;
 }
 
-export interface PerformanceTrendItem {
+interface PerformanceTrendItem {
   period: string;
   avg_overall_score: number;
   avg_quality_score?: number;
@@ -328,14 +328,14 @@ export interface PerformanceTrendItem {
   total_amount: number;
 }
 
-export interface PerformanceTrendResponse {
+interface PerformanceTrendResponse {
   supplier_id?: string;
   supplier_name?: string;
   period: string;
   trends: PerformanceTrendItem[];
 }
 
-export interface SupplierComparison {
+interface SupplierComparison {
   supplier_id: string;
   supplier_name: string;
   overall_score: number;
@@ -351,7 +351,7 @@ export interface SupplierComparison {
   rank: number;
 }
 
-export interface SupplierComparisonResponse {
+interface SupplierComparisonResponse {
   suppliers: SupplierComparison[];
   comparison_date: string;
   best_supplier?: string;
@@ -391,7 +391,7 @@ export interface Inquiry {
   updated_at: string;
 }
 
-export interface InquiryItem {
+interface InquiryItem {
   id: string;
   sku: string;
   material_name: string;
@@ -402,7 +402,7 @@ export interface InquiryItem {
   remark?: string;
 }
 
-export interface CreateInquiryRequest {
+interface CreateInquiryRequest {
   inquiry_no: string;
   title: string;
   description?: string;
@@ -434,7 +434,7 @@ export interface Quotation {
   updated_at: string;
 }
 
-export interface QuotationItem {
+interface QuotationItem {
   id: string;
   sku: string;
   material_name: string;
@@ -447,7 +447,7 @@ export interface QuotationItem {
   remark?: string;
 }
 
-export interface CreateQuotationRequest {
+interface CreateQuotationRequest {
   inquiry_id: string;
   supplier_id: string;
   title: string;
@@ -486,7 +486,7 @@ export interface Bidding {
   updated_at: string;
 }
 
-export interface BiddingItem {
+interface BiddingItem {
   id: string;
   sku: string;
   material_name: string;
@@ -497,7 +497,7 @@ export interface BiddingItem {
   remark?: string;
 }
 
-export interface CreateBiddingRequest {
+interface CreateBiddingRequest {
   bidding_no: string;
   title: string;
   description?: string;

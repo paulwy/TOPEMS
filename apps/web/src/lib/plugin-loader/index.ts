@@ -6,7 +6,7 @@ export {
   PluginLoaderProvider,
   pluginLoader,
 } from './PluginLoader';
-export type { PluginManifest, PluginInfo } from './PluginLoader';
+export type { PluginManifest } from './PluginLoader';
 export {
   DynamicRouter,
   preloadRemoteModules,

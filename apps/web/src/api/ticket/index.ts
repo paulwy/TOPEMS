@@ -46,7 +46,7 @@ export type {
   UpdateSlaPolicyRequest,
 } from './types';
 
-export type { DashboardSummary, TrendPoint, AssigneeLoad } from './dashboard';
+export type { DashboardSummary, TrendPoint } from './dashboard';
 export type {
   TicketTransition,
   TicketWorkflow,
@@ -55,8 +55,7 @@ export type {
   CreateTicketTransitionRequest,
   CreateWorkflowRequest,
 } from './workflow';
-export type { TicketAttachment } from './attachment';
-export type { TicketTag, BatchResult } from './batch';
+export type { BatchResult } from './batch';
 
 export const ticketApi = {
   // 基础工单操作（推荐通过 BFF）

@@ -1,4 +1,4 @@
-export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
+type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
 
 export type TenantPlan = 'basic' | 'professional' | 'enterprise';
 
@@ -6,13 +6,13 @@ export type TenantRole = 'superadmin' | 'admin' | 'member' | 'guest' | 'owner';
 
 export type UserStatus = 'active' | 'invited' | 'suspended';
 
-export interface TenantBrandingSettings {
+interface TenantBrandingSettings {
   primary_color: string;
   secondary_color: string;
   custom_domain?: string;
 }
 
-export interface TenantSecuritySettings {
+interface TenantSecuritySettings {
   sso_enabled: boolean;
   two_factor_required: boolean;
   ip_whitelist_enabled: boolean;
@@ -20,7 +20,7 @@ export interface TenantSecuritySettings {
   allowed_ip_ranges?: string[];
 }
 
-export interface TenantSettings {
+interface TenantSettings {
   max_users: number;
   max_storage_gb: number;
   max_api_requests_per_day: number;
@@ -140,14 +140,14 @@ export interface TenantContext {
   permissions: string[];
 }
 
-export interface ListTenantsResponse {
+interface ListTenantsResponse {
   items: Tenant[];
   total: number;
   page: number;
   pageSize: number;
 }
 
-export interface ListTenantUsersResponse {
+interface ListTenantUsersResponse {
   items: TenantUser[];
   total: number;
   page: number;

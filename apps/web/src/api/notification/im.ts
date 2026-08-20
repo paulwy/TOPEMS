@@ -8,7 +8,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type ChatRoomType = 'private' | 'group' | 'project' | 'system';
+type ChatRoomType = 'private' | 'group' | 'project' | 'system';
 
 export type MessageType = 'text' | 'image' | 'file' | 'video' | 'audio' | 'system';
 
@@ -87,7 +87,7 @@ export interface CreateRoomRequest {
   member_ids?: string[];
 }
 
-export interface UpdateRoomRequest {
+interface UpdateRoomRequest {
   name?: string;
   room_type?: ChatRoomType;
 }
@@ -98,12 +98,12 @@ export interface SendMessageRequest {
   file_url?: string;
 }
 
-export interface UpdateMessageRequest {
+interface UpdateMessageRequest {
   content?: string;
   message_type?: MessageType;
 }
 
-export interface AddMemberRequest {
+interface AddMemberRequest {
   user_id: string;
   role?: string;
 }
@@ -128,7 +128,7 @@ export interface CreateContactGroupRequest {
   member_ids: string[];
 }
 
-export interface UpdateContactGroupRequest {
+interface UpdateContactGroupRequest {
   name?: string;
   member_ids?: string[];
 }
@@ -139,7 +139,7 @@ export interface CreateProjectGroupRequest {
   member_ids: string[];
 }
 
-export interface MuteRoomRequest {
+interface MuteRoomRequest {
   muted: boolean;
   duration_minutes?: number;
 }

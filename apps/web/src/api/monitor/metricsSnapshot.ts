@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface MetricsSnapshot {
+interface MetricsSnapshot {
   timestamp: string;
   system: {
     cpu_usage: number;

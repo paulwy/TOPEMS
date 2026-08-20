@@ -41,22 +41,22 @@ export { PaginatedResponse };
 // ============================================================================
 // 生成类型与手写 Backend 类型字段高度匹配，可作为 Backend 类型的类型源真相。
 // 手写 Backend 类型保留必填字段约束，生成类型字段全可选作为参考。
-export type GeneratedQualityStandard = QmsTypes.QualityStandard;
-export type GeneratedInspection = QmsTypes.Inspection;
-export type GeneratedInspectionAudit = QmsTypes.InspectionAudit;
-export type GeneratedInspectionResultItem = QmsTypes.InspectionResultItem;
-export type GeneratedQualityIssue = QmsTypes.QualityIssue;
-export type GeneratedQualityIssueWithWorkflow = QmsTypes.QualityIssueWithWorkflow;
-export type GeneratedStandardRevision = QmsTypes.StandardRevision;
-export type GeneratedCreateStandardRequest = QmsTypes.CreateStandardRequest;
-export type GeneratedUpdateStandardRequest = QmsTypes.UpdateStandardRequest;
-export type GeneratedCreateInspectionRequest = QmsTypes.CreateInspectionRequest;
-export type GeneratedUpdateInspectionRequest = QmsTypes.UpdateInspectionRequest;
-export type GeneratedAssignInspectionRequest = QmsTypes.AssignInspectionRequest;
-export type GeneratedSubmitInspectionResultRequest = QmsTypes.SubmitInspectionResultRequest;
-export type GeneratedAuditInspectionRequest = QmsTypes.AuditInspectionRequest;
-export type GeneratedCreateIssueRequest = QmsTypes.CreateIssueRequest;
-export type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
+type GeneratedQualityStandard = QmsTypes.QualityStandard;
+type GeneratedInspection = QmsTypes.Inspection;
+type GeneratedInspectionAudit = QmsTypes.InspectionAudit;
+type GeneratedInspectionResultItem = QmsTypes.InspectionResultItem;
+type GeneratedQualityIssue = QmsTypes.QualityIssue;
+type GeneratedQualityIssueWithWorkflow = QmsTypes.QualityIssueWithWorkflow;
+type GeneratedStandardRevision = QmsTypes.StandardRevision;
+type GeneratedCreateStandardRequest = QmsTypes.CreateStandardRequest;
+type GeneratedUpdateStandardRequest = QmsTypes.UpdateStandardRequest;
+type GeneratedCreateInspectionRequest = QmsTypes.CreateInspectionRequest;
+type GeneratedUpdateInspectionRequest = QmsTypes.UpdateInspectionRequest;
+type GeneratedAssignInspectionRequest = QmsTypes.AssignInspectionRequest;
+type GeneratedSubmitInspectionResultRequest = QmsTypes.SubmitInspectionResultRequest;
+type GeneratedAuditInspectionRequest = QmsTypes.AuditInspectionRequest;
+type GeneratedCreateIssueRequest = QmsTypes.CreateIssueRequest;
+type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
 
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
@@ -69,7 +69,7 @@ export type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
 // 因此 QualityIssue 需要适配类型补充字段。
 
 /** 生成类型 QualityIssue 扩展手写 Backend 字段（assigned_to/priority/due_date） */
-export type AdaptedQualityIssue = QmsTypes.QualityIssue & {
+type AdaptedQualityIssue = QmsTypes.QualityIssue & {
   assigned_to?: string;
   priority?: string;
   due_date?: string;
@@ -571,7 +571,7 @@ export interface ApqpProgressStatistics {
   phase_progress: PhaseProgress[];
 }
 
-export interface PhaseProgress {
+interface PhaseProgress {
   phase_id: string;
   phase_name: string;
   phase_code: string;
@@ -1487,7 +1487,7 @@ export interface AuditTaskFrontend {
   updatedAt: string;
 }
 
-export interface CreateAuditTaskRequest {
+interface CreateAuditTaskRequest {
   planId: string;
   title: string;
   description?: string;
@@ -1497,7 +1497,7 @@ export interface CreateAuditTaskRequest {
   dueDate?: string;
 }
 
-export interface CreateAuditTaskRequestBackend {
+interface CreateAuditTaskRequestBackend {
   plan_id: string;
   title: string;
   description?: string;
@@ -1524,7 +1524,7 @@ export interface AuditFindingFrontend {
   updatedAt: string;
 }
 
-export interface CreateAuditFindingRequest {
+interface CreateAuditFindingRequest {
   taskId: string;
   title: string;
   description: string;
@@ -1535,7 +1535,7 @@ export interface CreateAuditFindingRequest {
   dueDate?: string;
 }
 
-export interface CreateAuditFindingRequestBackend {
+interface CreateAuditFindingRequestBackend {
   task_id: string;
   title: string;
   description: string;
@@ -1670,7 +1670,7 @@ export interface ApqpApprovalFrontend {
 // ============================================================================
 // 通用审批 DTO（Frontend camelCase）
 // ============================================================================
-export type ApprovalAction = 'approve' | 'reject' | 'rework' | 'cancel';
+type ApprovalAction = 'approve' | 'reject' | 'rework' | 'cancel';
 
 export type ApprovalEntityType =
   | 'inspection'

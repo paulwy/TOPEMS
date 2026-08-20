@@ -19,7 +19,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'failed';
-export type OperationType = 'create' | 'update' | 'delete';
+type OperationType = 'create' | 'update' | 'delete';
 
 export interface OfflineOperation {
   id: string;

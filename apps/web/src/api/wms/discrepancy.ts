@@ -14,7 +14,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface DiscrepancyRecord {
+interface DiscrepancyRecord {
   id: string;
   stock_take_id: string;
   stock_take_item_id?: string;
@@ -36,7 +36,7 @@ export interface DiscrepancyRecord {
   updated_at: string;
 }
 
-export interface CreateDiscrepancyRequest {
+interface CreateDiscrepancyRequest {
   stock_take_id: string;
   stock_take_item_id?: string;
   inventory_id?: string;
@@ -49,13 +49,13 @@ export interface CreateDiscrepancyRequest {
   notes?: string;
 }
 
-export interface ApproveDiscrepancyRequest {
+interface ApproveDiscrepancyRequest {
   approved?: boolean;
   reason?: string;
   adjustment_quantity?: number;
 }
 
-export interface DiscrepancyQueryParams {
+interface DiscrepancyQueryParams {
   page?: number;
   page_size?: number;
   stock_take_id?: string;

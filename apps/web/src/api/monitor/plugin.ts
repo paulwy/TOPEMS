@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface PluginHealth {
+interface PluginHealth {
   plugin_id: string;
   plugin_name: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -13,7 +13,7 @@ export interface PluginHealth {
   details?: Record<string, unknown>;
 }
 
-export interface PluginInfo {
+interface PluginInfo {
   id: string;
   name: string;
   display_name?: string;
