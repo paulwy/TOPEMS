@@ -192,7 +192,6 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
-mod middleware;
 mod models;
 mod openapi;
 mod shared;

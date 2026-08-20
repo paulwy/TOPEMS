@@ -204,7 +204,6 @@ use utoipa::OpenApi;
 
 mod cache;
 mod event_handlers;
-mod middleware;
 mod models;
 pub mod modules;
 mod repositories;

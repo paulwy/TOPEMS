@@ -189,7 +189,6 @@
     clippy::useless_format
 )]
 mod event_handlers;
-mod middleware;
 mod models;
 mod modules;
 mod schema_defense;

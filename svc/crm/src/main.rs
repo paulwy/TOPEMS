@@ -203,7 +203,6 @@ use topems_shared_service_client::service_client::{
     create_erp_client, create_wms_client, create_workflow_client,
 };
 
-mod middleware;
 mod models;
 mod schema_defense;
 mod services;
