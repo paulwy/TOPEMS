@@ -266,8 +266,8 @@ EOF
 DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
 REDIS_URL=redis://:topems_redis_secret@localhost:6379
 OLLAMA_HOST=http://localhost:11434
-JWT_SECRET=topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256
-REFRESH_SECRET=topems-refresh-secret-key-must-be-at-least-32-characters-long
+JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
+REFRESH_SECRET="${REFRESH_SECRET:-$(openssl rand -hex 32)}"
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EOF
