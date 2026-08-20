@@ -160,6 +160,7 @@ pub async fn get_announcement(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["portal:announcement:admin"])),

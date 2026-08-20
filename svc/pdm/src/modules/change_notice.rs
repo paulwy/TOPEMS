@@ -184,6 +184,7 @@ pub async fn list_change_notices(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["pdm:change:admin"])),
@@ -398,6 +399,7 @@ pub async fn update_change_notice(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["pdm:change:admin"])),
@@ -435,6 +437,7 @@ pub async fn delete_change_notice(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["pdm:change:admin"])),

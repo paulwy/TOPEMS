@@ -126,6 +126,7 @@ pub async fn reset_setting(
     }))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["unified-core:flow:setting:admin"])),

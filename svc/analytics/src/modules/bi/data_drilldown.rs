@@ -446,6 +446,7 @@ pub async fn drill_down(
     }))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:viz:admin"])),

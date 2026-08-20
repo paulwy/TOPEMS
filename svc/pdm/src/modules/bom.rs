@@ -845,6 +845,7 @@ async fn update_bom_status(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["pdm:bom:admin"])),
@@ -862,6 +863,7 @@ pub async fn activate_bom_version(
     update_bom_status(state, claims, headers, id, "active", "启用 BOM 版本成功").await
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["pdm:bom:admin"])),

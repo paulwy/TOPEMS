@@ -24,6 +24,7 @@ pub async fn compat_get_api_bi_dashboards_dashboardid_links() {}
 )]
 pub async fn compat_get_api_bi_permissions_data() {}
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:acl:admin"])),
@@ -33,6 +34,7 @@ pub async fn compat_get_api_bi_permissions_data() {}
 )]
 pub async fn compat_post_api_bi_permissions_data() {}
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["analytics:acl:admin"])),
@@ -43,6 +45,7 @@ pub async fn compat_post_api_bi_permissions_data() {}
 )]
 pub async fn compat_delete_api_bi_permissions_data_id() {}
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["analytics:acl:admin"])),
@@ -511,6 +514,7 @@ pub async fn compat_get_api_bi_health() {}
 )]
 pub async fn compat_get_api_bi_reports_center_stats() {}
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:report:admin"])),

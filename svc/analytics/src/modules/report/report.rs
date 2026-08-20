@@ -375,6 +375,7 @@ pub async fn delete_report(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:report:admin"])),
@@ -466,6 +467,7 @@ pub async fn download_export(
     }))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:report:admin"])),

@@ -112,6 +112,7 @@ pub async fn get_mes_qms_stats_api(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:sync:admin"])),

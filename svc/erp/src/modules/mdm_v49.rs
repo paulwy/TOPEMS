@@ -803,6 +803,7 @@ pub async fn get_lifecycle_entity(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -886,6 +887,7 @@ pub async fn create_lifecycle_entity(
     Json(ApiResponse::success(entity, "生命周期实体已创建"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -944,6 +946,7 @@ pub async fn transition_lifecycle_stage(
     Json(ApiResponse::success(entity.clone(), "阶段已流转"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),

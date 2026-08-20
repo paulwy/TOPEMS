@@ -664,6 +664,7 @@ pub async fn delete_datasource(
 /// sqlx pool; for other types it reports `success` based on the presence of
 /// host/port/database/connection_string so the UI can mark the result
 /// accordingly.
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:datasource:admin"])),
@@ -759,6 +760,7 @@ pub async fn test_datasource(
 ///
 /// Updates `last_sync`, increments `data_volume` (heuristic based on type)
 /// and marks the datasource as `active` on success.
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:datasource:admin"])),

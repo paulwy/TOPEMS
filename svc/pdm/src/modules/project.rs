@@ -404,6 +404,7 @@ pub async fn delete_project(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(put, path = "/api/pdm/projects/{id}/status", request_body = UpdateProjectStatusRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_project_status(
     State(state): State<AppState>,
@@ -493,6 +494,7 @@ pub async fn list_members(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(post, path = "/api/pdm/projects/{projectId}/members", request_body = AddProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn add_member(
     State(state): State<AppState>,
@@ -534,6 +536,7 @@ pub async fn add_member(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(put, path = "/api/pdm/projects/{projectId}/members/{userId}", request_body = UpdateProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_member(
     State(state): State<AppState>,
@@ -572,6 +575,7 @@ pub async fn update_member(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(delete, path = "/api/pdm/projects/{projectId}/members/{userId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn remove_member(
     State(state): State<AppState>,

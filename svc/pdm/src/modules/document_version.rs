@@ -600,6 +600,7 @@ pub async fn delete_version(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions/{versionId}/publish", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:admin"])))]
 pub async fn publish_version(
     State(state): State<AppState>,
