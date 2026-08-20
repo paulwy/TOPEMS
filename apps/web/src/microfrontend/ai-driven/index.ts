@@ -1,30 +1,16 @@
 /**
- * V48.0 微前端 AI 驱动 — 智能路由推荐 + 自动化运维 + 预测性扩展
+ * V51 AI-Driven Microfrontends - 智能驱动子模块
  *
- * 统一导出 AI 驱动模块的所有功能:
- * - smart-router: 智能路由推荐（用户行为画像 + 导航模式 + 路由预测 + 预加载）
- * - auto-ops: 自动化运维（规则引擎 + 触发器 + 动作执行 + 维护窗口 + 仪表盘）
- * - predictive-scaler: 预测性扩展（指标采集 + 模型训练 + 负载预测 + 容量规划 + 策略优化）
+ * 导出三个核心能力模块：
+ *   1. Smart Router - 智能路由推荐（基于用户行为 + 实时指标）
+ *   2. Auto Ops - 自动化运维（规则引擎 + 触发器 + 维护窗口）
+ *   3. Predictive Scaler - 预测性扩缩（指标预测 + 模型驱动）
  *
- * @example
- * import {
- *   smartRouter,
- *   autoOps,
- *   predictiveScaler,
- *   SmartRouter,
- *   AutoOps,
- *   PredictiveScaler,
- *   RecommendationStrategy,
- *   OpsActionType,
- *   ScalingAction,
- * } from '@/microfrontend/ai-driven';
+ * @module
  */
 
 // ==================== 智能路由推荐 ====================
 export {
-  smartRouter,
-  SmartRouter,
-  RecommendationStrategy,
   type RouteRecommendation,
   type UserBehaviorProfile,
   type NavigationPattern,
@@ -35,11 +21,7 @@ export {
 
 // ==================== 自动化运维 ====================
 export {
-  autoOps,
-  AutoOps,
-  OpsActionType,
   TriggerType,
-  OpsStatus,
   type OpsAction,
   type OpsTrigger,
   type OpsRule,
@@ -51,10 +33,7 @@ export {
 
 // ==================== 预测性扩展 ====================
 export {
-  predictiveScaler,
-  PredictiveScaler,
   ScalingAction,
-  ModelAlgorithm,
   type ScalingMetric,
   type ScalingPrediction,
   type ScalingModel,

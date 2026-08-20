@@ -168,10 +168,30 @@ function getMicroFrontendApis(): MicroFrontendApi[] {
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k20'),
       props: [
-        { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_21') },
-        { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_22') },
-        { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k23') },
-        { name: 'errorBoundary', type: 'boolean', required: false, description: i18n.t('shared.code-completion.k24') },
+        {
+          name: 'moduleId',
+          type: 'string',
+          required: true,
+          description: i18n.t('shared.code-completion.id_21'),
+        },
+        {
+          name: 'entryUrl',
+          type: 'string',
+          required: true,
+          description: i18n.t('shared.code-completion.url_22'),
+        },
+        {
+          name: 'fallback',
+          type: 'ReactNode',
+          required: false,
+          description: i18n.t('shared.code-completion.k23'),
+        },
+        {
+          name: 'errorBoundary',
+          type: 'boolean',
+          required: false,
+          description: i18n.t('shared.code-completion.k24'),
+        },
       ],
     },
     {
@@ -179,46 +199,96 @@ function getMicroFrontendApis(): MicroFrontendApi[] {
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k25'),
       props: [
-        { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_26') },
-        { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_27') },
+        {
+          name: 'moduleId',
+          type: 'string',
+          required: true,
+          description: i18n.t('shared.code-completion.id_26'),
+        },
+        {
+          name: 'entryUrl',
+          type: 'string',
+          required: true,
+          description: i18n.t('shared.code-completion.url_27'),
+        },
         {
           name: 'isolation',
           type: 'SandboxedRemoteLoaderIsolation',
           required: true,
           description: i18n.t('shared.code-completion.k28'),
         },
-        { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k29') },
+        {
+          name: 'fallback',
+          type: 'ReactNode',
+          required: false,
+          description: i18n.t('shared.code-completion.k29'),
+        },
       ],
     },
     {
       name: 'ModuleMarketplace',
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k30'),
-      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k31') }],
+      props: [
+        {
+          name: 'onClose',
+          type: '() => void',
+          required: true,
+          description: i18n.t('shared.code-completion.k31'),
+        },
+      ],
     },
     {
       name: 'DependencyGovernance',
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k32'),
-      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k33') }],
+      props: [
+        {
+          name: 'onClose',
+          type: '() => void',
+          required: true,
+          description: i18n.t('shared.code-completion.k33'),
+        },
+      ],
     },
     {
       name: 'SecurityCenter',
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k34'),
-      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k35') }],
+      props: [
+        {
+          name: 'onClose',
+          type: '() => void',
+          required: true,
+          description: i18n.t('shared.code-completion.k35'),
+        },
+      ],
     },
     {
       name: 'RuntimeDashboard',
       path: '@/microfrontend',
       description: i18n.t('shared.code-completion.k36'),
-      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k37') }],
+      props: [
+        {
+          name: 'onClose',
+          type: '() => void',
+          required: true,
+          description: i18n.t('shared.code-completion.k37'),
+        },
+      ],
     },
     {
       name: 'AIOpsPanel',
       path: '@/microfrontend',
       description: i18n.t('microfrontend.code-completion.k1'),
-      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k38') }],
+      props: [
+        {
+          name: 'onClose',
+          type: '() => void',
+          required: true,
+          description: i18n.t('shared.code-completion.k38'),
+        },
+      ],
     },
   ];
 }

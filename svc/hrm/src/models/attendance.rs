@@ -10,8 +10,8 @@ pub struct AttendanceRecord {
     pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub date: DateTime<Utc>,
-    pub check_in: Option<DateTime<Utc>>,
-    pub check_out: Option<DateTime<Utc>>,
+    pub check_in: Option<String>,
+    pub check_out: Option<String>,
     pub status: Option<String>,
     pub work_hours: Option<f64>,
     pub notes: Option<String>,
@@ -23,8 +23,8 @@ pub struct AttendanceRecord {
 pub struct CreateAttendanceRequest {
     pub employee_id: Uuid,
     pub date: DateTime<Utc>,
-    pub check_in: Option<DateTime<Utc>>,
-    pub check_out: Option<DateTime<Utc>>,
+    pub check_in: Option<String>,
+    pub check_out: Option<String>,
     pub status: Option<String>,
     pub work_hours: Option<f64>,
     pub notes: Option<String>,
@@ -32,8 +32,8 @@ pub struct CreateAttendanceRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateAttendanceRequest {
-    pub check_in: Option<DateTime<Utc>>,
-    pub check_out: Option<DateTime<Utc>>,
+    pub check_in: Option<String>,
+    pub check_out: Option<String>,
     pub status: Option<String>,
     pub work_hours: Option<f64>,
     pub notes: Option<String>,
@@ -55,7 +55,7 @@ mod tests {
             tenant_id,
             employee_id,
             date: now,
-            check_in: Some(now),
+            check_in: Some("09:00:00".to_string()),
             check_out: None,
             status: Some("present".to_string()),
             work_hours: Some(8.0),
@@ -106,7 +106,7 @@ mod tests {
         let req = CreateAttendanceRequest {
             employee_id,
             date: now,
-            check_in: Some(now),
+            check_in: Some("09:00:00".to_string()),
             check_out: None,
             status: Some("late".to_string()),
             work_hours: Some(7.5),
@@ -122,7 +122,7 @@ mod tests {
     fn test_update_attendance_request_partial() {
         let req = UpdateAttendanceRequest {
             check_in: None,
-            check_out: Some(Utc::now()),
+            check_out: Some("18:00:00".to_string()),
             status: Some("left_early".to_string()),
             work_hours: None,
             notes: None,

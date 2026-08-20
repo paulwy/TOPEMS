@@ -64,7 +64,7 @@ async fn list_companies(
         r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        FROM "public"."companies"
+        FROM hrm.companies
         WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -82,7 +82,7 @@ async fn list_companies(
         Ok(companies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM "public"."companies"
+                SELECT COUNT(*) FROM hrm.companies
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,

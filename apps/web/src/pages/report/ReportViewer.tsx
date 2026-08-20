@@ -39,7 +39,11 @@ const ReportViewerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: report, isLoading, error } = useQuery({
+  const {
+    data: report,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['report', 'viewer', id],
     queryFn: async () => {
       const res = await reportApi.getReport(id!);
@@ -67,7 +71,10 @@ const ReportViewerPage: React.FC = () => {
           <Typography color='error'>
             {error ? String(error) : i18n.t('pages.report_viewer.k4')}
           </Typography>
-          <Button onClick={onClose} sx={{ mt: 2 }}>
+          <Button
+            onClick={onClose}
+            sx={{ mt: 2 }}
+          >
             {i18n.t('pages.report_viewer.k5')}
           </Button>
         </Box>
@@ -75,7 +82,12 @@ const ReportViewerPage: React.FC = () => {
     );
   }
 
-  return <ReportViewerContent report={report} onClose={onClose} />;
+  return (
+    <ReportViewerContent
+      report={report}
+      onClose={onClose}
+    />
+  );
 };
 
 interface ReportViewerProps {

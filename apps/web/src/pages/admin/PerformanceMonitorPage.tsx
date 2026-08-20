@@ -23,7 +23,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { adminApi } from '@/api/admin';
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 const PerformanceMonitorPage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['admin', 'performanceMonitor'],
@@ -259,7 +259,9 @@ const PerformanceMonitorPage: React.FC = () => {
             <CheckCircle
               style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }}
             />
-            <p style={{ color: ct.grey[500] }}>{i18n.t('admin.performance_monitor_page.no_slow_api')}</p>
+            <p style={{ color: ct.grey[500] }}>
+              {i18n.t('admin.performance_monitor_page.no_slow_api')}
+            </p>
           </div>
         ) : (
           <div
@@ -286,7 +288,13 @@ const PerformanceMonitorPage: React.FC = () => {
               >
                 <div>
                   <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
-                  <p style={{ fontSize: '0.75rem', color: ct.grey[500], margin: `${designTokens.spacing.xs} 0 0` }}>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      color: ct.grey[500],
+                      margin: `${designTokens.spacing.xs} 0 0`,
+                    }}
+                  >
                     {new Date(call.timestamp).toLocaleString()}
                   </p>
                 </div>

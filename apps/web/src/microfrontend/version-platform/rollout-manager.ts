@@ -324,5 +324,5 @@ class RolloutManager {
   }
 }
 
-export const rolloutManager = RolloutManager.getInstance();
+const rolloutManager = RolloutManager.getInstance();
 export default rolloutManager;

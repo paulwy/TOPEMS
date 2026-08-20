@@ -122,7 +122,10 @@ const DatabaseStructurePage: React.FC = () => {
     if (tablesQuery.isError) {
       showNotification(
         'error',
-        extractErrorMessage(tablesQuery.error, i18n.t('admin.database_structure_page.loading_list_fail'))
+        extractErrorMessage(
+          tablesQuery.error,
+          i18n.t('admin.database_structure_page.loading_list_fail')
+        )
       );
     }
   }, [tablesQuery.isError, tablesQuery.error]);
@@ -138,7 +141,10 @@ const DatabaseStructurePage: React.FC = () => {
     if (tableDetailQuery.isError) {
       showNotification(
         'error',
-        extractErrorMessage(tableDetailQuery.error, i18n.t('admin.database_structure_page.loading_fail'))
+        extractErrorMessage(
+          tableDetailQuery.error,
+          i18n.t('admin.database_structure_page.loading_fail')
+        )
       );
     }
   }, [tableDetailQuery.isError, tableDetailQuery.error]);
@@ -155,12 +161,11 @@ const DatabaseStructurePage: React.FC = () => {
       throw new Error(res.message || i18n.t('admin.database_structure_page.sql_fail'));
     },
     onSuccess: (data) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setSqlPreview(data);
       setPendingColumn(newColumn);
       setShowPreviewModal(true);
@@ -189,17 +194,22 @@ const DatabaseStructurePage: React.FC = () => {
         default_value: '',
         max_length: 255,
       });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
-      showNotification('error', extractErrorMessage(err, i18n.t('admin.database_structure_page.fail')));
+      showNotification(
+        'error',
+        extractErrorMessage(err, i18n.t('admin.database_structure_page.fail'))
+      );
     },
   });
   const dropColumnMutation = useMutation({
@@ -210,14 +220,16 @@ const DatabaseStructurePage: React.FC = () => {
     },
     onSuccess: async () => {
       showNotification('success', i18n.t('admin.database_structure_page.delete_success'));
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       showNotification(
@@ -245,7 +257,8 @@ const DatabaseStructurePage: React.FC = () => {
   };
   const handleDropColumn = async (columnName: string) => {
     if (!selectedTable) return;
-    if (!confirm(i18n.t('admin:database_structure_page.confirm_delete_column', { columnName }))) return;
+    if (!confirm(i18n.t('admin:database_structure_page.confirm_delete_column', { columnName })))
+      return;
     dropColumnMutation.mutate({
       tableName: selectedTable.table_name,
       columnName,
@@ -654,7 +667,9 @@ const DatabaseStructurePage: React.FC = () => {
                                       sx={{
                                         '&:hover': { bgcolor: 'error.lighter' },
                                       }}
-                                      aria-label={i18n.t('admin.database_structure_page.delete_action')}
+                                      aria-label={i18n.t(
+                                        'admin.database_structure_page.delete_action'
+                                      )}
                                     >
                                       <Trash2 size={16} />
                                     </IconButton>

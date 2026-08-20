@@ -35,7 +35,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const sampleDocuments = [
   {
@@ -71,8 +71,7 @@ const sampleDocuments = [
 const sampleAnswers = [
   {
     question: i18n.t('ai.ai_knowledge_base_page.k1'),
-    answer:
-      i18n.t('pages.ai_knowledge_base_page.k3'),
+    answer: i18n.t('pages.ai_knowledge_base_page.k3'),
     sources: [
       { title: i18n.t('pages.ai_knowledge_base_page.erp_4'), similarity: 0.92 },
       { title: i18n.t('ai.ai_knowledge_base_page.k2'), similarity: 0.85 },
@@ -81,7 +80,11 @@ const sampleAnswers = [
   },
 ];
 
-const getSampleFollowUp = () => [i18n.t('ai.ai_knowledge_base_page.k5'), i18n.t('ai.ai_knowledge_base_page.k4'), i18n.t('ai.ai_knowledge_base_page.k3')];
+const getSampleFollowUp = () => [
+  i18n.t('ai.ai_knowledge_base_page.k5'),
+  i18n.t('ai.ai_knowledge_base_page.k4'),
+  i18n.t('ai.ai_knowledge_base_page.k3'),
+];
 
 type ChatMessage = {
   id: string;
@@ -256,7 +259,9 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   {['all', 'manual', 'guide', 'process'].map((type) => (
                     <Chip
                       key={type}
-                      label={type === 'all' ? i18n.t('ai.knowledge_base.label.all') : getTypeLabel(type)}
+                      label={
+                        type === 'all' ? i18n.t('ai.knowledge_base.label.all') : getTypeLabel(type)
+                      }
                       size='small'
                       variant={filterType === type ? 'filled' : 'outlined'}
                       onClick={() => setFilterType(type)}
@@ -296,7 +301,9 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1 }}
                   >
-                    {i18n.t('ai.knowledge_base.label.selected_docs', { count: selectedDocs.length })}
+                    {i18n.t('ai.knowledge_base.label.selected_docs', {
+                      count: selectedDocs.length,
+                    })}
                   </Typography>
                   <Button
                     fullWidth

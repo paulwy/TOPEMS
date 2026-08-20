@@ -141,10 +141,12 @@ pub struct UpdateInterviewRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct JobOpeningQueryParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub department_id: Option<Uuid>,
     pub status: Option<String>,
+    pub employment_type: Option<String>,
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -189,21 +191,25 @@ async fn list_job_openings(
     let search = params.search.unwrap_or_default();
     let dept_id = params.department_id;
     let status_filter = params.status;
+    let employment_type_filter = params.employment_type;
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
         SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        FROM plugin_hrm.job_openings
-        WHERE ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%')
+        FROM hrm.job_openings
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
           AND ($3::text IS NULL OR status = $3)
+          AND ($4::text IS NULL OR employment_type = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
     .bind(&search)
     .bind(dept_id)
     .bind(&status_filter)
+    .bind(&employment_type_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -213,15 +219,18 @@ async fn list_job_openings(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_hrm.job_openings
-                WHERE ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%')
+                SELECT COUNT(*) FROM hrm.job_openings
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::text IS NULL OR status = $3)
+                  AND ($4::text IS NULL OR employment_type = $4)
                 "#,
             )
             .bind(&search)
             .bind(dept_id)
             .bind(&status_filter)
+            .bind(&employment_type_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -261,7 +270,7 @@ async fn create_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        INSERT INTO plugin_hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
+        INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13)
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#
@@ -329,7 +338,7 @@ async fn get_job_opening(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let result = sqlx::query_as::<_, JobOpening>(
-        "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM plugin_hrm.job_openings WHERE id = $1"
+        "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM hrm.job_openings WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -354,7 +363,7 @@ async fn update_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE plugin_hrm.job_openings
+        UPDATE hrm.job_openings
         SET
             title = COALESCE($1, title),
             code = COALESCE($2, code),
@@ -367,7 +376,7 @@ async fn update_job_opening(
             salary_min = COALESCE($9, salary_min),
             salary_max = COALESCE($10, salary_max),
             updated_at = $11
-        WHERE id = $12
+        WHERE deleted_at IS NULL AND id = $12
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#
     )
@@ -402,7 +411,7 @@ async fn delete_job_opening(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query(
-        "UPDATE plugin_hrm.job_openings SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
+        "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'",
     )
     .bind(id)
     .execute(&state.db)
@@ -462,9 +471,9 @@ async fn publish_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE plugin_hrm.job_openings
+        UPDATE hrm.job_openings
         SET status = 'published', publish_date = $2, updated_at = $2
-        WHERE id = $1 AND status = 'draft'
+        WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#
     )
@@ -494,9 +503,9 @@ async fn close_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE plugin_hrm.job_openings
+        UPDATE hrm.job_openings
         SET status = 'closed', close_date = $2, updated_at = $2
-        WHERE id = $1 AND status = 'published'
+        WHERE deleted_at IS NULL AND id = $1 AND status = 'published'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#
     )
@@ -533,8 +542,9 @@ async fn list_candidates(
     let result = sqlx::query_as::<_, Candidate>(
         r#"
         SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
-        FROM plugin_hrm.candidates
-        WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
+        FROM hrm.candidates
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR job_opening_id = $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -553,8 +563,9 @@ async fn list_candidates(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_hrm.candidates
-                WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
+                SELECT COUNT(*) FROM hrm.candidates
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR job_opening_id = $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -601,7 +612,7 @@ async fn create_candidate(
 
     let result = sqlx::query_as::<_, Candidate>(
         r#"
-        INSERT INTO plugin_hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
+        INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10)
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#
@@ -666,7 +677,7 @@ async fn get_candidate(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Candidate>> {
     let result = sqlx::query_as::<_, Candidate>(
-        "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM plugin_hrm.candidates WHERE id = $1"
+        "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM hrm.candidates WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -691,7 +702,7 @@ async fn update_candidate(
 
     let result = sqlx::query_as::<_, Candidate>(
         r#"
-        UPDATE plugin_hrm.candidates
+        UPDATE hrm.candidates
         SET
             name = COALESCE($1, name),
             email = COALESCE($2, email),
@@ -702,7 +713,7 @@ async fn update_candidate(
             source = COALESCE($7, source),
             status = COALESCE($8, status),
             updated_at = $9
-        WHERE id = $10
+        WHERE deleted_at IS NULL AND id = $10
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#
     )
@@ -734,10 +745,12 @@ async fn delete_candidate(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE plugin_hrm.candidates SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE hrm.candidates SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -799,8 +812,9 @@ async fn list_interviews(
     let result = sqlx::query_as::<_, Interview>(
         r#"
         SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
-        FROM plugin_hrm.interviews
-        WHERE ($1::uuid IS NULL OR candidate_id = $1)
+        FROM hrm.interviews
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR candidate_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY scheduled_at DESC
         LIMIT $3 OFFSET $4
@@ -817,7 +831,7 @@ async fn list_interviews(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_hrm.interviews
+                SELECT COUNT(*) FROM hrm.interviews
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR candidate_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -860,7 +874,7 @@ async fn create_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        INSERT INTO plugin_hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
+        INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
@@ -890,7 +904,7 @@ async fn get_interview(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interview>> {
     let result = sqlx::query_as::<_, Interview>(
-        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM plugin_hrm.interviews WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM hrm.interviews WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -915,7 +929,7 @@ async fn update_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        UPDATE plugin_hrm.interviews
+        UPDATE hrm.interviews
         SET
             interviewer_id = COALESCE($1, interviewer_id),
             round = COALESCE($2, round),
@@ -927,7 +941,7 @@ async fn update_interview(
             notes = COALESCE($8, notes),
             score = COALESCE($9, score),
             updated_at = $10
-        WHERE id = $11
+        WHERE deleted_at IS NULL AND id = $11
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
     )
@@ -959,10 +973,12 @@ async fn delete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE plugin_hrm.interviews SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "UPDATE hrm.interviews SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(id.to_string(), "面试已取消")),
@@ -982,7 +998,7 @@ async fn complete_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        UPDATE plugin_hrm.interviews
+        UPDATE hrm.interviews
         SET
             actual_at = COALESCE($1, NOW()),
             status = 'completed',
@@ -990,7 +1006,7 @@ async fn complete_interview(
             notes = COALESCE($3, notes),
             score = COALESCE($4, score),
             updated_at = $5
-        WHERE id = $6 AND status = 'scheduled'
+        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled'
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
     )

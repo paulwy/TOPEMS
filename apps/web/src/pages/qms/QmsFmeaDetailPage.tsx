@@ -41,7 +41,7 @@ export default function QmsFmeaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<(ReturnType<typeof getTabs>)[number]['id']>('info');
+  const [activeTab, setActiveTab] = useState<ReturnType<typeof getTabs>[number]['id']>('info');
 
   const analysis = useMemo(() => {
     const list = data.fmeaAnalyses ?? [];

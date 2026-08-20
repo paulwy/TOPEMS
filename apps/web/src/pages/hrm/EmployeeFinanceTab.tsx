@@ -31,10 +31,7 @@ interface EmployeeFinanceTabProps {
   employeeName: string;
 }
 
-const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
-  employeeId,
-  employeeName,
-}) => {
+const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({ employeeId, employeeName }) => {
   const { t } = useTranslation();
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();

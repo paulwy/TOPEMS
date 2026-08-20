@@ -174,19 +174,16 @@ const cyberpunkTokens = {
     // 金色渐变
     gold: 'linear-gradient(135deg, #ffd700 0%, #f59e0b 100%)',
     // 成功渐变
-    success:
-      'linear-gradient(135deg, #00ff88 0%, #22c55e 100%)',
+    success: 'linear-gradient(135deg, #00ff88 0%, #22c55e 100%)',
     // 背景渐变 — 深空
-    background:
-      'linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #162038 100%)',
+    background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #162038 100%)',
     // 侧边栏选中渐变
     sidebarActive: 'linear-gradient(90deg, rgba(0, 255, 255, 0.20) 0%, transparent 100%)',
     // 扫光效果
     scanline:
       'linear-gradient(90deg, transparent 0%, rgba(0, 255, 255, 0.15) 50%, transparent 100%)',
     // 边框渐变
-    borderGradient:
-      'linear-gradient(135deg, #00ffff 0%, #ff00ff 100%)',
+    borderGradient: 'linear-gradient(135deg, #00ffff 0%, #ff00ff 100%)',
   },
 } as const;
 

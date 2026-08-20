@@ -46,7 +46,7 @@ export function useErpConnections(params?: {
 /**
  * 获取连接详情
  */
-export function useErpConnection(connectionId: string) {
+function useErpConnection(connectionId: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTION_BASE, connectionId],
     queryFn: () => externalErpApi.getConnection(connectionId),
@@ -58,7 +58,7 @@ export function useErpConnection(connectionId: string) {
 /**
  * 创建连接配置
  */
-export function useCreateErpConnection() {
+function useCreateErpConnection() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -90,7 +90,7 @@ export function useCreateErpConnection() {
 /**
  * 更新连接配置
  */
-export function useUpdateErpConnection() {
+function useUpdateErpConnection() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -119,7 +119,7 @@ export function useUpdateErpConnection() {
 /**
  * 删除连接配置
  */
-export function useDeleteErpConnection() {
+function useDeleteErpConnection() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -142,7 +142,7 @@ export function useDeleteErpConnection() {
 /**
  * 测试连接
  */
-export function useTestErpConnection() {
+function useTestErpConnection() {
   const { success, error } = useNotification();
 
   return useMutation({
@@ -168,7 +168,7 @@ export function useTestErpConnection() {
 /**
  * 启用/禁用连接
  */
-export function useToggleErpConnection() {
+function useToggleErpConnection() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -196,7 +196,7 @@ export function useToggleErpConnection() {
 /**
  * 同步科目
  */
-export function useSyncAccounts() {
+function useSyncAccounts() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -227,7 +227,7 @@ export function useSyncAccounts() {
 /**
  * 同步客户
  */
-export function useSyncCustomers() {
+function useSyncCustomers() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -258,7 +258,7 @@ export function useSyncCustomers() {
 /**
  * 同步供应商
  */
-export function useSyncSuppliers() {
+function useSyncSuppliers() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -289,7 +289,7 @@ export function useSyncSuppliers() {
 /**
  * 同步凭证
  */
-export function useSyncVouchers() {
+function useSyncVouchers() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -328,7 +328,7 @@ export function useSyncVouchers() {
 /**
  * 全量同步
  */
-export function useFullSync() {
+function useFullSync() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -356,7 +356,7 @@ export function useFullSync() {
 /**
  * 获取同步日志列表
  */
-export function useSyncLogs(params?: {
+function useSyncLogs(params?: {
   config_id?: string;
   type?: string;
   status?: string;
@@ -375,7 +375,7 @@ export function useSyncLogs(params?: {
 /**
  * 获取同步日志详情
  */
-export function useSyncLogDetail(logId: string) {
+function useSyncLogDetail(logId: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOG_BASE, logId],
     queryFn: () => externalErpApi.getSyncLog(logId),
@@ -387,7 +387,7 @@ export function useSyncLogDetail(logId: string) {
 /**
  * 获取同步统计
  */
-export function useSyncStatistics(
+function useSyncStatistics(
   connectionId: string,
   params?: {
     start_date?: string;
@@ -409,7 +409,7 @@ export function useSyncStatistics(
 /**
  * 获取科目映射列表
  */
-export function useAccountMappings(
+function useAccountMappings(
   connectionId: string,
   params?: {
     page?: number;
@@ -427,7 +427,7 @@ export function useAccountMappings(
 /**
  * 批量导入科目映射
  */
-export function useImportAccountMappings() {
+function useImportAccountMappings() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -457,7 +457,7 @@ export function useImportAccountMappings() {
 /**
  * 自动匹配科目映射
  */
-export function useAutoMatchAccountMappings() {
+function useAutoMatchAccountMappings() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -481,7 +481,7 @@ export function useAutoMatchAccountMappings() {
 /**
  * 更新科目映射
  */
-export function useUpdateAccountMapping() {
+function useUpdateAccountMapping() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -517,7 +517,7 @@ export function useUpdateAccountMapping() {
 /**
  * 获取客户映射列表
  */
-export function useCustomerMappings(
+function useCustomerMappings(
   connectionId: string,
   params?: {
     page?: number;
@@ -535,7 +535,7 @@ export function useCustomerMappings(
 /**
  * 批量导入客户映射
  */
-export function useImportCustomerMappings() {
+function useImportCustomerMappings() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -565,7 +565,7 @@ export function useImportCustomerMappings() {
 /**
  * 更新客户映射
  */
-export function useUpdateCustomerMapping() {
+function useUpdateCustomerMapping() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -601,7 +601,7 @@ export function useUpdateCustomerMapping() {
 /**
  * 获取供应商映射列表
  */
-export function useSupplierMappings(
+function useSupplierMappings(
   connectionId: string,
   params?: {
     page?: number;
@@ -619,7 +619,7 @@ export function useSupplierMappings(
 /**
  * 批量导入供应商映射
  */
-export function useImportSupplierMappings() {
+function useImportSupplierMappings() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -649,7 +649,7 @@ export function useImportSupplierMappings() {
 /**
  * 更新供应商映射
  */
-export function useUpdateSupplierMapping() {
+function useUpdateSupplierMapping() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -685,7 +685,7 @@ export function useUpdateSupplierMapping() {
 /**
  * 预览外部ERP科目
  */
-export function usePreviewExternalAccounts(
+function usePreviewExternalAccounts(
   connectionId: string,
   params?: {
     keyword?: string;
@@ -704,7 +704,7 @@ export function usePreviewExternalAccounts(
 /**
  * 预览外部ERP客户
  */
-export function usePreviewExternalCustomers(
+function usePreviewExternalCustomers(
   connectionId: string,
   params?: {
     keyword?: string;
@@ -723,7 +723,7 @@ export function usePreviewExternalCustomers(
 /**
  * 预览外部ERP供应商
  */
-export function usePreviewExternalSuppliers(
+function usePreviewExternalSuppliers(
   connectionId: string,
   params?: {
     keyword?: string;
@@ -746,7 +746,7 @@ export function usePreviewExternalSuppliers(
 /**
  * 导出同步日志
  */
-export function useExportSyncLogs() {
+function useExportSyncLogs() {
   const { success, error } = useNotification();
 
   return useMutation({
@@ -786,7 +786,7 @@ export function useExportSyncLogs() {
 /**
  * 导出映射规则
  */
-export function useExportMappingRules() {
+function useExportMappingRules() {
   const { success, error } = useNotification();
 
   return useMutation({

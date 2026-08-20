@@ -217,16 +217,13 @@ const BudgetManagementPage: React.FC = () => {
     [t, handleBatchUpdateStatus, handleBatchDelete]
   );
 
-  const schema = useMemo<EntitySchema>(
-    () => {
-      const baseBudgetSchema = getBudgetSchema();
-      return {
-        ...baseBudgetSchema,
-        batchActions,
-      };
-    },
-    [batchActions]
-  );
+  const schema = useMemo<EntitySchema>(() => {
+    const baseBudgetSchema = getBudgetSchema();
+    return {
+      ...baseBudgetSchema,
+      batchActions,
+    };
+  }, [batchActions]);
 
   const headerContent = useCallback(
     (rows: Record<string, unknown>[]) => {

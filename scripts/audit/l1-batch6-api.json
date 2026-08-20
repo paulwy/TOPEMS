@@ -1,0 +1,556 @@
+{
+  "batch_id": "l1-safe-batch6-api",
+  "date": "2026-08-20",
+  "description": "L1-SAFE Batch 6: api/ directory value exports conservative removal (recursive).",
+  "removal_mode": "conservative-v2-export-keyword-only",
+  "total_exports": 278,
+  "total_files": 134,
+  "targets": {
+    "apps/web/src/api/addressbook/favorite.ts": [
+      "addressbookFavoriteApi"
+    ],
+    "apps/web/src/api/addressbook/group.ts": [
+      "addressbookGroupApi"
+    ],
+    "apps/web/src/api/addressbook/importExport.ts": [
+      "addressbookImportExportApi"
+    ],
+    "apps/web/src/api/addressbook/index.ts": [
+      "addressbookTagApi"
+    ],
+    "apps/web/src/api/admin/auditLog.ts": [
+      "auditLogApi"
+    ],
+    "apps/web/src/api/admin/index.ts": [
+      "systemSettingApi"
+    ],
+    "apps/web/src/api/automation/dashboard.ts": [
+      "automationDashboardApi"
+    ],
+    "apps/web/src/api/billing/billing.ts": [
+      "billingApi"
+    ],
+    "apps/web/src/api/billing/index.ts": [
+      "invoiceApi",
+      "paymentApi",
+      "refundApi",
+      "statementApi",
+      "taxApi",
+      "reminderApi"
+    ],
+    "apps/web/src/api/client.ts": [
+      "createBaseAxiosClient",
+      "handleResponse",
+      "handleRequestError"
+    ],
+    "apps/web/src/api/consolidation-contract/company.ts": [
+      "companyRelationApi"
+    ],
+    "apps/web/src/api/consolidation-contract/elimination.ts": [
+      "eliminationRuleApi"
+    ],
+    "apps/web/src/api/consolidation-contract/index.ts": [
+      "consolidationScopeApi",
+      "consolidationScopeCompanyApi",
+      "internalTransactionApi",
+      "consolidationReportApi"
+    ],
+    "apps/web/src/api/crm/contact.ts": [
+      "contactApi"
+    ],
+    "apps/web/src/api/crm/crmAudit.ts": [
+      "crmAuditApi"
+    ],
+    "apps/web/src/api/crm/customer.ts": [
+      "tagApi"
+    ],
+    "apps/web/src/api/crm/customerProfile.ts": [
+      "customerProfileApi"
+    ],
+    "apps/web/src/api/crm/forecast.ts": [
+      "salesForecastApi"
+    ],
+    "apps/web/src/api/crm/index.ts": [
+      "useCrmMockDefault",
+      "opportunityApi",
+      "customerScoringApi",
+      "customerSegmentationApi",
+      "customerRecommendationApi",
+      "salesFunnelApi"
+    ],
+    "apps/web/src/api/ehs/accident.ts": [
+      "accidentApi"
+    ],
+    "apps/web/src/api/ehs/compliance.ts": [
+      "complianceApi"
+    ],
+    "apps/web/src/api/ehs/emergency.ts": [
+      "emergencyApi"
+    ],
+    "apps/web/src/api/ehs/emergencyDrill.ts": [
+      "emergencyDrillApi"
+    ],
+    "apps/web/src/api/ehs/emergencyPlan.ts": [
+      "emergencyPlanApi"
+    ],
+    "apps/web/src/api/ehs/environment.ts": [
+      "environmentApi"
+    ],
+    "apps/web/src/api/ehs/environmentalCompliance.ts": [
+      "environmentalComplianceApi"
+    ],
+    "apps/web/src/api/ehs/hazard.ts": [
+      "hazardApi"
+    ],
+    "apps/web/src/api/ehs/healthMonitoring.ts": [
+      "healthMonitoringApi"
+    ],
+    "apps/web/src/api/ehs/incident.ts": [
+      "incidentApi"
+    ],
+    "apps/web/src/api/ehs/index.ts": [
+      "occupationalDiseaseApi",
+      "occupationalHealthApi",
+      "riskApi",
+      "safetyCheckApi",
+      "safetyTrainingApi",
+      "syncApi"
+    ],
+    "apps/web/src/api/erp/admin/announcement.ts": [
+      "announcementCrudApi"
+    ],
+    "apps/web/src/api/erp/admin/meeting.ts": [
+      "meetingRoomCrudApi",
+      "meetingBookingCrudApi"
+    ],
+    "apps/web/src/api/erp/finance/bank.ts": [
+      "bankTransactionApi"
+    ],
+    "apps/web/src/api/erp/index.ts": [
+      "masterDataSyncApi"
+    ],
+    "apps/web/src/api/erp/masterData.ts": [
+      "knowledgeGraphApi"
+    ],
+    "apps/web/src/api/external-erp/connection.ts": [
+      "connectionApi"
+    ],
+    "apps/web/src/api/external-erp/export.ts": [
+      "exportApi"
+    ],
+    "apps/web/src/api/external-erp/index.ts": [
+      "mappingApi",
+      "syncLogsApi",
+      "previewApi"
+    ],
+    "apps/web/src/api/finance/cashFlow.ts": [
+      "cashFlowApi"
+    ],
+    "apps/web/src/api/finance/counterparty.ts": [
+      "counterpartyFinanceApi"
+    ],
+    "apps/web/src/api/finance/expenseApproval.ts": [
+      "expenseApprovalApi"
+    ],
+    "apps/web/src/api/finance/index.ts": [
+      "receivablePayableApi",
+      "periodApi",
+      "settlementCenterApi",
+      "reconciliationApi",
+      "riskV54Api",
+      "riskV59Api"
+    ],
+    "apps/web/src/api/finance/riskV54.ts": [
+      "ReviewSeverity"
+    ],
+    "apps/web/src/api/financialReport/index.ts": [
+      "financialReportApi"
+    ],
+    "apps/web/src/api/gis/business.ts": [
+      "businessApi"
+    ],
+    "apps/web/src/api/gis/index.ts": [
+      "pipelineApi",
+      "storageApi",
+      "mapApi"
+    ],
+    "apps/web/src/api/hrm/contract.ts": [
+      "contractRenewalApi"
+    ],
+    "apps/web/src/api/hrm/employee.ts": [
+      "employeePerformanceApi"
+    ],
+    "apps/web/src/api/hrm/hrmAudit.ts": [
+      "hrmAuditApi"
+    ],
+    "apps/web/src/api/hrm/hrmReports.ts": [
+      "hrmReportsApi"
+    ],
+    "apps/web/src/api/hrm/hrmSetup.ts": [
+      "hrmSetupApi"
+    ],
+    "apps/web/src/api/hrm/index.ts": [
+      "jobOpeningApi",
+      "candidateApi",
+      "interviewApi",
+      "payrollItemApi",
+      "performanceGoalApi",
+      "trainingPlanApi",
+      "trainingRecordApi"
+    ],
+    "apps/web/src/api/index.ts": [
+      "checkPermissionBeforeRequest",
+      "withPermissionCheck",
+      "logPermissionAccess",
+      "consolidationContract"
+    ],
+    "apps/web/src/api/integration/conversionRule.ts": [
+      "conversionRuleApi"
+    ],
+    "apps/web/src/api/integration/types.ts": [
+      "MappingDirection"
+    ],
+    "apps/web/src/api/lims/barcode.ts": [
+      "barcodeApi",
+      "rfidTagApi",
+      "printConfigApi"
+    ],
+    "apps/web/src/api/lims/index.ts": [
+      "sampleApi",
+      "lifecycleStageApi",
+      "processApi",
+      "taskApi",
+      "instrumentApi",
+      "maintenanceApi",
+      "testMethodApi",
+      "methodCategoryApi",
+      "methodValidationApi",
+      "ptSampleApi",
+      "ptResultApi",
+      "ptEvaluationApi",
+      "ptCorrectiveActionApi",
+      "uncertaintyProjectApi",
+      "uncertaintySourceApi",
+      "uncertaintyComponentApi",
+      "syncRecordApi"
+    ],
+    "apps/web/src/api/master/aiGovernance.ts": [
+      "aiGovernanceApi"
+    ],
+    "apps/web/src/api/master/aiGovernanceV59.ts": [
+      "aiGovernanceApiV59"
+    ],
+    "apps/web/src/api/master/apiLifecycleV62.ts": [
+      "apiLifecycleApiV62"
+    ],
+    "apps/web/src/api/master/commercialV55.ts": [
+      "commercialApiV55"
+    ],
+    "apps/web/src/api/master/complianceReportV70.ts": [
+      "complianceReportApiV70"
+    ],
+    "apps/web/src/api/master/dataAssetCatalogV66.ts": [
+      "dataAssetCatalogApiV66"
+    ],
+    "apps/web/src/api/master/dataContractV61.ts": [
+      "dataContractApiV61"
+    ],
+    "apps/web/src/api/master/dataFederationMeshV75.ts": [
+      "dataFederationMeshApiV75"
+    ],
+    "apps/web/src/api/master/dataGovernanceDashboardV74.ts": [
+      "dataGovernanceDashboardApiV74"
+    ],
+    "apps/web/src/api/master/dataLifecycleV68.ts": [
+      "dataLifecycleApiV68"
+    ],
+    "apps/web/src/api/master/dataLineageEnhancedV77.ts": [
+      "dataLineageEnhancedApiV77"
+    ],
+    "apps/web/src/api/master/dataMarketplaceV69.ts": [
+      "marketplaceApiV69"
+    ],
+    "apps/web/src/api/master/dataMaskingV64.ts": [
+      "dataMaskingApiV64"
+    ],
+    "apps/web/src/api/master/dataPolicyConfigurationV79.ts": [
+      "dataPolicyConfigurationApiV79"
+    ],
+    "apps/web/src/api/master/dataProductCatalogV72.ts": [
+      "dataProductCatalogApiV72"
+    ],
+    "apps/web/src/api/master/dataQualityEnhancedV65.ts": [
+      "dataQualityEnhancedApiV65"
+    ],
+    "apps/web/src/api/master/dataSecurityAuditV76.ts": [
+      "dataSecurityAuditApiV76"
+    ],
+    "apps/web/src/api/master/dataSecurityV67.ts": [
+      "dataSecurityApiV67"
+    ],
+    "apps/web/src/api/master/dataServiceMarketplaceV73.ts": [
+      "dataServiceMarketplaceApiV73"
+    ],
+    "apps/web/src/api/master/dataServiceOrchestrationV71.ts": [
+      "dataServiceOrchestrationApiV71"
+    ],
+    "apps/web/src/api/master/dataStandardV63.ts": [
+      "dataStandardApiV63"
+    ],
+    "apps/web/src/api/master/dataWorkflowAutomationV78.ts": [
+      "dataWorkflowAutomationApiV78"
+    ],
+    "apps/web/src/api/master/dictionary.ts": [
+      "dictionaryApi"
+    ],
+    "apps/web/src/api/master/disasterRecovery.ts": [
+      "disasterRecoveryApi"
+    ],
+    "apps/web/src/api/master/gatewayV54.ts": [
+      "gatewayApiV54"
+    ],
+    "apps/web/src/api/master/governance.ts": [
+      "governanceApi"
+    ],
+    "apps/web/src/api/master/governanceV2.ts": [
+      "governanceApiV2"
+    ],
+    "apps/web/src/api/master/index.ts": [
+      "schemaRegistryApi",
+      "lineageApi",
+      "metadataApi",
+      "semanticSearchApi",
+      "versioningApi",
+      "metadataApiV60"
+    ],
+    "apps/web/src/api/mes/equipment.ts": [
+      "equipmentOeeApi"
+    ],
+    "apps/web/src/api/mes/index.ts": [
+      "productionProcessApi",
+      "materialBomApi",
+      "materialIssueApi",
+      "materialReturnApi",
+      "workReportApi",
+      "workOrderApi",
+      "teamApi",
+      "materialRequirementApi",
+      "productionKanbanApi"
+    ],
+    "apps/web/src/api/monitor/alert.ts": [
+      "alertApi"
+    ],
+    "apps/web/src/api/monitor/alertBatch.ts": [
+      "alertBatchApi"
+    ],
+    "apps/web/src/api/monitor/businessMetric.ts": [
+      "businessMetricApi"
+    ],
+    "apps/web/src/api/monitor/index.ts": [
+      "performanceExtendedApi",
+      "ruleAdvancedApi",
+      "ruleTypedApi",
+      "metricTypedApi",
+      "suppressionApi",
+      "thresholdApi",
+      "metricsSnapshotApi",
+      "routingApi",
+      "sloApi"
+    ],
+    "apps/web/src/api/notification/channel.ts": [
+      "channelApi"
+    ],
+    "apps/web/src/api/notification/config.ts": [
+      "configApi"
+    ],
+    "apps/web/src/api/notification/delivery.ts": [
+      "deliveryApi"
+    ],
+    "apps/web/src/api/notification/digest.ts": [
+      "digestApi"
+    ],
+    "apps/web/src/api/notification/group.ts": [
+      "groupApi"
+    ],
+    "apps/web/src/api/notification/index.ts": [
+      "pushConfigApi",
+      "preferenceApi",
+      "webhookApi",
+      "subscriptionApi"
+    ],
+    "apps/web/src/api/pdm/changeNoticeAction.ts": [
+      "changeNoticeActionApi"
+    ],
+    "apps/web/src/api/pdm/documentApproval.ts": [
+      "documentApprovalApi"
+    ],
+    "apps/web/src/api/pdm/index.ts": [
+      "pdmVersionApi",
+      "pdmMaterialApi",
+      "pdmProductApi"
+    ],
+    "apps/web/src/api/plugin/index.ts": [
+      "fetchPluginInfo",
+      "checkPluginHealth",
+      "marketplaceApi"
+    ],
+    "apps/web/src/api/pm/acceptance.ts": [
+      "acceptancePlanApi",
+      "acceptanceItemApi",
+      "acceptanceRecordApi"
+    ],
+    "apps/web/src/api/pm/benefit.ts": [
+      "benefitApi"
+    ],
+    "apps/web/src/api/pm/budget.ts": [
+      "budgetItemApi"
+    ],
+    "apps/web/src/api/pm/contract.ts": [
+      "contractMilestoneApi",
+      "contractPaymentApi",
+      "projectContractApi",
+      "contractTemplateApi"
+    ],
+    "apps/web/src/api/pm/document.ts": [
+      "documentVersionApi",
+      "documentFolderApi"
+    ],
+    "apps/web/src/api/pm/index.ts": [
+      "phaseApi",
+      "milestoneApi",
+      "memberApi",
+      "resourceApi",
+      "riskEventApi",
+      "qualityCheckApi",
+      "defectApi",
+      "settlementApi",
+      "settlementItemApi",
+      "settlementAdjustmentApi",
+      "reportTemplateApi",
+      "notificationSettingApi",
+      "notificationTypeApi"
+    ],
+    "apps/web/src/api/qms/apqp.ts": [
+      "apqpApi"
+    ],
+    "apps/web/src/api/qms/correctiveAction.ts": [
+      "correctiveActionApi"
+    ],
+    "apps/web/src/api/qms/improvement.ts": [
+      "improvementApi"
+    ],
+    "apps/web/src/api/qms/index.ts": [
+      "useQmsMockDefault",
+      "standardApi",
+      "issueApi"
+    ],
+    "apps/web/src/api/rd/bug.ts": [
+      "bugApi"
+    ],
+    "apps/web/src/api/rd/experiment.ts": [
+      "experimentApi"
+    ],
+    "apps/web/src/api/rd/index.ts": [
+      "rdStatisticsApi",
+      "testApi"
+    ],
+    "apps/web/src/api/response-normalize.ts": [
+      "shouldNormalize"
+    ],
+    "apps/web/src/api/scm/deliveryAppointment.ts": [
+      "deliveryAppointmentApi"
+    ],
+    "apps/web/src/api/scm/incomingInspection.ts": [
+      "incomingInspectionApi"
+    ],
+    "apps/web/src/api/scm/index.ts": [
+      "purchaseItemApi",
+      "supplierEvaluationApi",
+      "mrpPlanApi",
+      "mrpSuggestionApi",
+      "inspectionRecordApi",
+      "inventoryTurnoverApi",
+      "supplyChainDashboardApi",
+      "priceComparisonApi",
+      "purchaseRequisitionApi",
+      "purchaseContractApi",
+      "supplierAdmissionApi"
+    ],
+    "apps/web/src/api/srm/bidPrice.ts": [
+      "bidPriceApi"
+    ],
+    "apps/web/src/api/srm/index.ts": [
+      "supplierCategoryApi",
+      "supplierProductApi",
+      "tenderApi"
+    ],
+    "apps/web/src/api/tenant/analytics.ts": [
+      "tenantAnalyticsApi"
+    ],
+    "apps/web/src/api/tenant/config.ts": [
+      "tenantConfigApi"
+    ],
+    "apps/web/src/api/tenant/index.ts": [
+      "tenantSecurityApi"
+    ],
+    "apps/web/src/api/unified-core/iamAuth.ts": [
+      "iamAuthApi"
+    ],
+    "apps/web/src/api/unified-core/index.ts": [
+      "unifiedSearchApi"
+    ],
+    "apps/web/src/api/wms/cycleCount.ts": [
+      "cycleCountApi"
+    ],
+    "apps/web/src/api/wms/discrepancy.ts": [
+      "discrepancyApi"
+    ],
+    "apps/web/src/api/wms/inbound.ts": [
+      "inboundOrderApi"
+    ],
+    "apps/web/src/api/wms/index.ts": [
+      "inventoryAlertsApi",
+      "inventoryStatsApi",
+      "outboundOrderApi",
+      "wavePickApi",
+      "stockTakeApi",
+      "transferApi",
+      "smartReplenishmentApi",
+      "serialNumberApi",
+      "inventoryAlertApi",
+      "inventoryMovementApi",
+      "advancedReplenishmentApi",
+      "slottingApi",
+      "kittingApi",
+      "laborApi",
+      "pickingApi",
+      "putawayApi",
+      "manifestApi",
+      "wmsApprovalApi"
+    ],
+    "apps/web/src/api/wms/types.ts": [
+      "INBOUND_ORDER_STATES",
+      "OUTBOUND_ORDER_STATES",
+      "STOCK_TAKE_STATES",
+      "TRANSFER_ORDER_STATES",
+      "WAVE_PICK_STATES",
+      "INVENTORY_MOVEMENT_STATES",
+      "SERIAL_NUMBER_STATES"
+    ],
+    "apps/web/src/api/workflow/delegate.ts": [
+      "delegateApi"
+    ],
+    "apps/web/src/api/workflow/form.ts": [
+      "formDefinitionApi",
+      "formInstanceApi"
+    ],
+    "apps/web/src/api/workflow/history.ts": [
+      "historyApi"
+    ],
+    "apps/web/src/api/workflow/index.ts": [
+      "settingApi",
+      "ruleApi",
+      "variableApi"
+    ]
+  }
+}

@@ -15,15 +15,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import {
-  crmApi,
-  useCrmMock,
-} from '@/api/crm';
-import type {
-  BillingRecord,
-  BillingAnalyticsData,
-  Period,
-} from '@/api/crm';
+import { crmApi, useCrmMock } from '@/api/crm';
+import type { BillingRecord, BillingAnalyticsData, Period } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
 const statusColorMap: Record<string, { main: string; light: string }> = {

@@ -28,7 +28,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const loginFormSchema = z.object({
   username: z
@@ -494,7 +494,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 }}
                 disabled={loading}
               >
-                {loading ? i18n.t('pages.login_page.k2') : isRegister ? i18n.t('pages.login_page.k26') : i18n.t('pages.login_page.k25')}
+                {loading
+                  ? i18n.t('pages.login_page.k2')
+                  : isRegister
+                    ? i18n.t('pages.login_page.k26')
+                    : i18n.t('pages.login_page.k25')}
               </Button>
             </Box>
           </form>
@@ -521,7 +525,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 variant='caption'
                 sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
               >
-                {i18n.t('pages.login_page.k5')}: admin / admin123 (管理员) | user / user123 (普通员工)
+                {i18n.t('pages.login_page.k5')}: admin / admin123 (管理员) | user / user123
+                (普通员工)
               </Typography>
             </Box>
           )}

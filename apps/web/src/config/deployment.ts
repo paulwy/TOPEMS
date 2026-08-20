@@ -111,7 +111,6 @@ const showTenantManagement = (): boolean =>
 /**
  * 获取功能开关状态
  */
-const getFeatureFlag = (flag: keyof FeatureFlags): boolean =>
-  deploymentConfig.features[flag];
+const getFeatureFlag = (flag: keyof FeatureFlags): boolean => deploymentConfig.features[flag];
 
 export default deploymentConfig;

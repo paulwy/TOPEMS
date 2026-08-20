@@ -10,7 +10,7 @@ use topems_shared_core::response::{api_error, ApiResponse};
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InitializationStatus {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    pub organization_id: Uuid,
     pub step_name: String,
     pub step_order: i32,
     pub status: String,
@@ -118,9 +118,9 @@ async fn get_init_progress(
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
         r#"
-        SELECT id, tenant_id, step_name, step_order, status, completed_at, created_at, updated_at
-        FROM plugin_hrm.initialization_status
-        WHERE tenant_id = $1
+        SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
+        FROM hrm.initialization_status
+        WHERE organization_id = $1
         ORDER BY step_order
         "#,
     )
@@ -224,9 +224,9 @@ async fn setup_company_info(
             // 更新初始化状态
             let _ = sqlx::query(
                 r#"
-                UPDATE plugin_hrm.initialization_status
+                UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'company_info'
+                WHERE organization_id = $2 AND step_name = 'company_info'
                 "#,
             )
             .bind(now)
@@ -237,7 +237,7 @@ async fn setup_company_info(
             // 记录日志
             let _ = sqlx::query(
                 r#"
-                INSERT INTO plugin_hrm.initialization_logs (id, tenant_id, step_name, action, new_data, created_at)
+                INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at)
                 VALUES ($1, $2, 'company_info', 'update', $3, $4)
                 "#
             )
@@ -308,9 +308,9 @@ async fn setup_departments(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             r#"
-            INSERT INTO hrm.departments (id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
+            INSERT INTO hrm.departments (id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -345,9 +345,9 @@ async fn setup_departments(
     // 更新初始化状态
     let _ = sqlx::query(
         r#"
-        UPDATE plugin_hrm.initialization_status
+        UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE tenant_id = $2 AND step_name = 'departments'
+        WHERE organization_id = $2 AND step_name = 'departments'
         "#,
     )
     .bind(now)
@@ -409,9 +409,9 @@ async fn setup_positions(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             r#"
-            INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, description, status, created_at, updated_at)
+            INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, tenant_id, org_id, department_id, name, code, level, description, status, created_at, updated_at
+            RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, description, status, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -446,9 +446,9 @@ async fn setup_positions(
     // 更新初始化状态
     let _ = sqlx::query(
         r#"
-        UPDATE plugin_hrm.initialization_status
+        UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE tenant_id = $2 AND step_name = 'positions'
+        WHERE organization_id = $2 AND step_name = 'positions'
         "#,
     )
     .bind(now)
@@ -516,13 +516,13 @@ async fn setup_admin_user(
     let result = sqlx::query_as::<_, Employee>(
         r#"
         INSERT INTO hrm.employees (
-            id, tenant_id, org_id, department_id, position_id,
+            id, tenant_id, organization_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,
             emergency_contact_name, emergency_contact_phone, address,
             status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
-        RETURNING id, tenant_id, org_id, department_id, position_id,
+        RETURNING id, tenant_id, organization_id AS org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#,
     )
@@ -555,9 +555,9 @@ async fn setup_admin_user(
             // 更新初始化状态
             let _ = sqlx::query(
                 r#"
-                UPDATE plugin_hrm.initialization_status
+                UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'admin_user'
+                WHERE organization_id = $2 AND step_name = 'admin_user'
                 "#,
             )
             .bind(now)
@@ -611,9 +611,9 @@ async fn complete_initialization(
     // 检查前置步骤是否完成
     let steps = sqlx::query_as::<_, InitializationStatus>(
         r#"
-        SELECT id, tenant_id, step_name, step_order, status, completed_at, created_at, updated_at
-        FROM plugin_hrm.initialization_status
-        WHERE tenant_id = $1 AND step_name != 'completion'
+        SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
+        FROM hrm.initialization_status
+        WHERE organization_id = $1 AND step_name != 'completion'
         ORDER BY step_order
         "#,
     )
@@ -639,9 +639,9 @@ async fn complete_initialization(
             // 更新完成状态
             let _ = sqlx::query(
                 r#"
-                UPDATE plugin_hrm.initialization_status
+                UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'completion'
+                WHERE organization_id = $2 AND step_name = 'completion'
                 "#,
             )
             .bind(now)

@@ -246,7 +246,9 @@ const PmProjectDetailPage: React.FC = () => {
               </Typography>
               <StatusBadge
                 status={project.risklevel || 'low'}
-                label={getRiskLabels()[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')}
+                label={
+                  getRiskLabels()[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')
+                }
                 color={
                   project.risklevel === 'high'
                     ? 'error'

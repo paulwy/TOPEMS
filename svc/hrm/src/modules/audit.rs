@@ -26,6 +26,7 @@ pub struct ListAuditLogsQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
 }
 
@@ -39,10 +40,10 @@ async fn list_audit_logs(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs
+        FROM hrm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -68,7 +69,7 @@ async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM public.audit_logs
+                SELECT COUNT(*) FROM hrm.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -111,10 +112,10 @@ async fn get_audit_log(
 ) -> Json<ApiResponse<AuditLog>> {
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs WHERE id = $1
+        FROM hrm.audit_logs WHERE id = $1
         "#,
     )
     .bind(id)
@@ -159,11 +160,12 @@ pub async fn log_audit_event(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (
+        INSERT INTO hrm.audit_logs (
             action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
-            status, error_message, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            status, error_message, ip_address, user_agent,
+            organization_id, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, '00000000-0000-0000-0000-000000000000'::uuid, '00000000-0000-0000-0000-000000000000'::uuid)
         "#,
     )
     .bind(action)

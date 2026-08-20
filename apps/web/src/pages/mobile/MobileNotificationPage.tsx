@@ -44,79 +44,79 @@ interface Notification {
 }
 function getMockNotifications(): Notification[] {
   return [
-  {
-    id: 'notif-001',
-    title: i18n.t('mobile.mobile_notification_page.k0'),
-    content: i18n.t('mobile.mobile_notification_page.k1'),
-    type: 'approval',
-    priority: 'high',
-    read: false,
-    created_at: i18n.t('pages.mobile_notification_page.10_0'),
-  },
-  {
-    id: 'notif-002',
-    title: i18n.t('mobile.mobile_notification_page.k2'),
-    content: i18n.t('pages.mobile_notification_page.k1'),
-    type: 'task',
-    priority: 'medium',
-    read: false,
-    created_at: i18n.t('pages.mobile_notification_page.30_2'),
-  },
-  {
-    id: 'notif-003',
-    title: i18n.t('mobile.mobile_notification_page.k3'),
-    content: i18n.t('pages.mobile_notification_page.k3'),
-    type: 'system',
-    priority: 'high',
-    read: true,
-    created_at: i18n.t('pages.mobile_notification_page.1_4'),
-  },
-  {
-    id: 'notif-004',
-    title: i18n.t('mobile.mobile_notification_page.k4'),
-    content: i18n.t('mobile.mobile_notification_page.k5'),
-    type: 'message',
-    priority: 'low',
-    read: true,
-    created_at: i18n.t('pages.mobile_notification_page.2_5'),
-  },
-  {
-    id: 'notif-005',
-    title: i18n.t('mobile.mobile_notification_page.k6'),
-    content: i18n.t('mobile.mobile_notification_page.3_7'),
-    type: 'approval',
-    priority: 'medium',
-    read: true,
-    created_at: i18n.t('pages.mobile_notification_page.3_6'),
-  },
-  {
-    id: 'notif-006',
-    title: i18n.t('mobile.mobile_notification_page.k8'),
-    content: i18n.t('pages.mobile_notification_page.k7'),
-    type: 'system',
-    priority: 'low',
-    read: true,
-    created_at: i18n.t('pages.mobile_notification_page.1_8'),
-  },
-  {
-    id: 'notif-007',
-    title: i18n.t('mobile.mobile_notification_page.k9'),
-    content: i18n.t('pages.mobile_notification_page.k9'),
-    type: 'task',
-    priority: 'medium',
-    read: true,
-    created_at: i18n.t('pages.mobile_notification_page.1_10'),
-  },
-  {
-    id: 'notif-008',
-    title: i18n.t('mobile.mobile_notification_page.k10'),
-    content: i18n.t('pages.mobile_notification_page.k11'),
-    type: 'system',
-    priority: 'high',
-    read: false,
-    created_at: i18n.t('mobile.mobile_notification_page.k11'),
-  },
-];
+    {
+      id: 'notif-001',
+      title: i18n.t('mobile.mobile_notification_page.k0'),
+      content: i18n.t('mobile.mobile_notification_page.k1'),
+      type: 'approval',
+      priority: 'high',
+      read: false,
+      created_at: i18n.t('pages.mobile_notification_page.10_0'),
+    },
+    {
+      id: 'notif-002',
+      title: i18n.t('mobile.mobile_notification_page.k2'),
+      content: i18n.t('pages.mobile_notification_page.k1'),
+      type: 'task',
+      priority: 'medium',
+      read: false,
+      created_at: i18n.t('pages.mobile_notification_page.30_2'),
+    },
+    {
+      id: 'notif-003',
+      title: i18n.t('mobile.mobile_notification_page.k3'),
+      content: i18n.t('pages.mobile_notification_page.k3'),
+      type: 'system',
+      priority: 'high',
+      read: true,
+      created_at: i18n.t('pages.mobile_notification_page.1_4'),
+    },
+    {
+      id: 'notif-004',
+      title: i18n.t('mobile.mobile_notification_page.k4'),
+      content: i18n.t('mobile.mobile_notification_page.k5'),
+      type: 'message',
+      priority: 'low',
+      read: true,
+      created_at: i18n.t('pages.mobile_notification_page.2_5'),
+    },
+    {
+      id: 'notif-005',
+      title: i18n.t('mobile.mobile_notification_page.k6'),
+      content: i18n.t('mobile.mobile_notification_page.3_7'),
+      type: 'approval',
+      priority: 'medium',
+      read: true,
+      created_at: i18n.t('pages.mobile_notification_page.3_6'),
+    },
+    {
+      id: 'notif-006',
+      title: i18n.t('mobile.mobile_notification_page.k8'),
+      content: i18n.t('pages.mobile_notification_page.k7'),
+      type: 'system',
+      priority: 'low',
+      read: true,
+      created_at: i18n.t('pages.mobile_notification_page.1_8'),
+    },
+    {
+      id: 'notif-007',
+      title: i18n.t('mobile.mobile_notification_page.k9'),
+      content: i18n.t('pages.mobile_notification_page.k9'),
+      type: 'task',
+      priority: 'medium',
+      read: true,
+      created_at: i18n.t('pages.mobile_notification_page.1_10'),
+    },
+    {
+      id: 'notif-008',
+      title: i18n.t('mobile.mobile_notification_page.k10'),
+      content: i18n.t('pages.mobile_notification_page.k11'),
+      type: 'system',
+      priority: 'high',
+      read: false,
+      created_at: i18n.t('mobile.mobile_notification_page.k11'),
+    },
+  ];
 }
 function getTypeLabels(): Record<NotificationType, string> {
   return {
@@ -137,7 +137,7 @@ export const MobileNotificationPage: React.FC = () => {
     queryKey: ['mobile-notification-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.push.listPushNotifications() ?? {};
+        return (await mobileApi.push.listPushNotifications()) ?? {};
       } catch (e) {
         return {};
       }
@@ -314,7 +314,9 @@ export const MobileNotificationPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={18} />
-            <Typography variant='subtitle2'>{i18n.t('mobile.mobile_notification_page.k29')}</Typography>
+            <Typography variant='subtitle2'>
+              {i18n.t('mobile.mobile_notification_page.k29')}
+            </Typography>
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 3, mt: 1.5 }}>

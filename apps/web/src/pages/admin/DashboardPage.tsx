@@ -12,7 +12,7 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { adminApi } from '@/api/admin';
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
   Shield: <Shield size={24} />,
@@ -92,7 +92,12 @@ export const DashboardPage: React.FC = () => {
     {
       id: 'user-role-distribution',
       title: i18n.t('admin.dashboard_page.k11'),
-      chart: <LazyChart type='pie' data={getPieData()} />,
+      chart: (
+        <LazyChart
+          type='pie'
+          data={getPieData()}
+        />
+      ),
       height: 300,
     },
   ];

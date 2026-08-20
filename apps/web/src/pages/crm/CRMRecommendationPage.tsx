@@ -29,10 +29,7 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { recommendationSchema } from '@/schemas/crm';
-import {
-  crmApi,
-  useCrmMock,
-} from '@/api/crm';
+import { crmApi, useCrmMock } from '@/api/crm';
 import type {
   RecommendationResult,
   RecommendationRequest,

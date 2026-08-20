@@ -5,7 +5,6 @@
  */
 
 export type {
-  CompletionKind,
   CompletionContext,
   CompletionItem,
   SnippetDefinition,

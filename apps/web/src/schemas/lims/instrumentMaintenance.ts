@@ -77,138 +77,138 @@ export const getInstrumentMaintenanceSchema = (): EntitySchema => {
   return {
     entity: 'limsInstrumentMaintenance',
     title: i18n.t('lims.instrument_maintenance.k10'),
-  description: i18n.t('lims.instrument_maintenance.k11'),
+    description: i18n.t('lims.instrument_maintenance.k11'),
 
-  api: {
-    module: 'lims',
-    resource: 'maintenance',
-  },
+    api: {
+      module: 'lims',
+      resource: 'maintenance',
+    },
 
-  fields: [
-    {
-      name: 'maintenance_type',
-      label: i18n.t('lims.instrument_maintenance.k12'),
-      type: 'select',
-      required: true,
-      defaultValue: 'routine',
-      options: {
-        type: 'static',
-        options: MAINTENANCE_TYPE_OPTIONS,
-      },
-      listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
-        const type = String(row.maintenance_type || '');
-        const label = getMaintenanceTypeLabels()[type] || type;
-        const color = MAINTENANCE_TYPE_COLORS[type] || 'default';
-        return renderBadge(label, color);
-      },
-    },
-    {
-      name: 'description',
-      label: i18n.t('lims.instrument_maintenance.k13'),
-      type: 'text',
-      required: true,
-      sortable: false,
-      listWidth: 200,
-    },
-    {
-      name: 'performed_by',
-      label: i18n.t('lims.instrument_maintenance.k14'),
-      type: 'text',
-      required: true,
-      listWidth: 100,
-    },
-    {
-      name: 'performed_at',
-      label: i18n.t('lims.instrument_maintenance.k15'),
-      type: 'datetime',
-      required: true,
-      sortable: true,
-      listWidth: 160,
-    },
-    {
-      name: 'next_maintenance_date',
-      label: i18n.t('lims.instrument_maintenance.k16'),
-      type: 'date',
-      listWidth: 130,
-    },
-    {
-      name: 'cost',
-      label: i18n.t('lims.instrument_maintenance.k17'),
-      type: 'number',
-      listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
-        const cost = row.cost;
-        if (cost === undefined || cost === null) return '-';
-        return `¥${Number(cost).toFixed(2)}`;
-      },
-    },
-    {
-      name: 'instrument_id',
-      label: i18n.t('lims.instrument_maintenance.id_18'),
-      type: 'text',
-      showInList: false,
-      required: true,
-    },
-    {
-      name: 'notes',
-      label: i18n.t('lims.instrument_maintenance.k19'),
-      type: 'textarea',
-      showInList: false,
-    },
-    {
-      name: 'created_at',
-      label: i18n.t('lims.instrument_maintenance.k20'),
-      type: 'datetime',
-      readonly: true,
-      showInList: false,
-    },
-  ],
-
-  list: {
-    columns: [
-      'maintenance_type',
-      'description',
-      'performed_by',
-      'performed_at',
-      'next_maintenance_date',
-      'cost',
-    ],
-    searchFields: ['description', 'performed_by'],
-    pageSize: 10,
-    filters: [
+    fields: [
       {
-        id: 'maintenance_type',
-        label: i18n.t('lims.instrument_maintenance.k21'),
+        name: 'maintenance_type',
+        label: i18n.t('lims.instrument_maintenance.k12'),
         type: 'select',
-        options: [
-          { label: i18n.t('lims.instrument_maintenance.k22'), value: 'all' },
-          ...MAINTENANCE_TYPE_OPTIONS,
-        ],
+        required: true,
+        defaultValue: 'routine',
+        options: {
+          type: 'static',
+          options: MAINTENANCE_TYPE_OPTIONS,
+        },
+        listWidth: 120,
+        renderCell: (row: Record<string, unknown>) => {
+          const type = String(row.maintenance_type || '');
+          const label = getMaintenanceTypeLabels()[type] || type;
+          const color = MAINTENANCE_TYPE_COLORS[type] || 'default';
+          return renderBadge(label, color);
+        },
+      },
+      {
+        name: 'description',
+        label: i18n.t('lims.instrument_maintenance.k13'),
+        type: 'text',
+        required: true,
+        sortable: false,
+        listWidth: 200,
+      },
+      {
+        name: 'performed_by',
+        label: i18n.t('lims.instrument_maintenance.k14'),
+        type: 'text',
+        required: true,
+        listWidth: 100,
+      },
+      {
+        name: 'performed_at',
+        label: i18n.t('lims.instrument_maintenance.k15'),
+        type: 'datetime',
+        required: true,
+        sortable: true,
+        listWidth: 160,
+      },
+      {
+        name: 'next_maintenance_date',
+        label: i18n.t('lims.instrument_maintenance.k16'),
+        type: 'date',
+        listWidth: 130,
+      },
+      {
+        name: 'cost',
+        label: i18n.t('lims.instrument_maintenance.k17'),
+        type: 'number',
+        listWidth: 110,
+        renderCell: (row: Record<string, unknown>) => {
+          const cost = row.cost;
+          if (cost === undefined || cost === null) return '-';
+          return `¥${Number(cost).toFixed(2)}`;
+        },
+      },
+      {
+        name: 'instrument_id',
+        label: i18n.t('lims.instrument_maintenance.id_18'),
+        type: 'text',
+        showInList: false,
+        required: true,
+      },
+      {
+        name: 'notes',
+        label: i18n.t('lims.instrument_maintenance.k19'),
+        type: 'textarea',
+        showInList: false,
+      },
+      {
+        name: 'created_at',
+        label: i18n.t('lims.instrument_maintenance.k20'),
+        type: 'datetime',
+        readonly: true,
+        showInList: false,
       },
     ],
-  },
 
-  actions: ['create', 'edit', 'detail', 'delete'],
+    list: {
+      columns: [
+        'maintenance_type',
+        'description',
+        'performed_by',
+        'performed_at',
+        'next_maintenance_date',
+        'cost',
+      ],
+      searchFields: ['description', 'performed_by'],
+      pageSize: 10,
+      filters: [
+        {
+          id: 'maintenance_type',
+          label: i18n.t('lims.instrument_maintenance.k21'),
+          type: 'select',
+          options: [
+            { label: i18n.t('lims.instrument_maintenance.k22'), value: 'all' },
+            ...MAINTENANCE_TYPE_OPTIONS,
+          ],
+        },
+      ],
+    },
 
-  formSections: [
-    {
-      title: i18n.t('lims.instrument_maintenance.k23'),
-      fields: ['instrument_id', 'maintenance_type', 'description'],
-    },
-    {
-      title: i18n.t('lims.instrument_maintenance.k24'),
-      fields: ['performed_by', 'performed_at', 'next_maintenance_date', 'cost'],
-    },
-    {
-      title: i18n.t('lims.instrument_maintenance.k25'),
-      fields: ['notes'],
-    },
-  ],
+    actions: ['create', 'edit', 'detail', 'delete'],
 
-  formColCount: 2,
-  createTitle: i18n.t('lims.instrument_maintenance.k26'),
-  editTitle: i18n.t('lims.instrument_maintenance.k27'),
-  detailTitle: i18n.t('lims.instrument_maintenance.k28'),
+    formSections: [
+      {
+        title: i18n.t('lims.instrument_maintenance.k23'),
+        fields: ['instrument_id', 'maintenance_type', 'description'],
+      },
+      {
+        title: i18n.t('lims.instrument_maintenance.k24'),
+        fields: ['performed_by', 'performed_at', 'next_maintenance_date', 'cost'],
+      },
+      {
+        title: i18n.t('lims.instrument_maintenance.k25'),
+        fields: ['notes'],
+      },
+    ],
+
+    formColCount: 2,
+    createTitle: i18n.t('lims.instrument_maintenance.k26'),
+    editTitle: i18n.t('lims.instrument_maintenance.k27'),
+    detailTitle: i18n.t('lims.instrument_maintenance.k28'),
   };
 };

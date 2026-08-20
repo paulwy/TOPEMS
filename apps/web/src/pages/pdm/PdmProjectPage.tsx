@@ -464,7 +464,9 @@ const PdmProjectPage: React.FC = () => {
                   }}
                 >
                   <Chip
-                    label={getPhaseOptions().find((p) => p.value === phase.phase)?.label || phase.phase}
+                    label={
+                      getPhaseOptions().find((p) => p.value === phase.phase)?.label || phase.phase
+                    }
                     color={PHASE_COLORS[phase.phase] || 'default'}
                     size='small'
                   />
