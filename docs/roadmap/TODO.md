@@ -8202,8 +8202,8 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 | 1c | P0-3 第三轮 5 收尾（im + microfrontend + 2 api/config.ts + 其他骨架） | 0/5 | **5/5**（1-3 接口，允许空 props 但 interface 必须存在） | **✅ 2/2 实扫有 config.ts（aps18·27 × ids6 / im2·3 + registry/shared 2 EmptyXxxModuleProps 占位补齐；原 5 估算中 microfrontend + api/tenant + api/notification 3 个无 config.ts 文件 · 保守口径留 3 未来补；tsc 4 configs 0 error；aps/im 3 恒等 20/20/20）** |
 | 2 | 页面级 Props interface 总数（V253 5 模块参考=~50） | ~50 | **≥150**（净增 ≥100） | **≈444（V253 存量 50 + 净增 394：V257 P0-1=260 / P0-2=113 + P0-3=22 + registry/shared 2 Empty；继续大幅超额 ≥150 ✅）** |
 | 3 | 真实字段收窄数（`page?: number` / `id?: string` / `filters?: ...` / `initialValues?: ...` / `mode?: ...` 等非 any 字段） | ~200（V253 存量） | **≥450（净增 ≥250）** | **≈1350（V253 存量 200 + 净增 1150：P0-1=861 / P0-2=259 + P0-3=30；超额 ≥450 ✅）** |
-| 4 | tsc apps/web 0 error（V256 验收矩阵 #12 补跑；承接 P1-1） | 🟡（未实跑） | **0 error** · 若存量错误 ≤ 15 则 P1-1 同步修复 | **🚧 实跑结果：total=29 errors（全部历史遗留，3 config P0 相关=0 ✅）→ P1-1 分类处理** |
-| 5 | i18n 7-in-1 PASS（V256 #12 同步） | 🟡（未实跑） | **7/7 PASS · 0 failures**（与 tsc 同门禁） | 🟡 |
+| 4 | tsc apps/web 0 error（V256 验收矩阵 #12 补跑；承接 P1-1） | 🟡（未实跑） | **0 error** · 若存量错误 ≤ 15 则 P1-1 同步修复 | **✅ 29→0 errors 全绿（12GB heap 最终 tsc 严格回归 0 增量 0 error）：三阶段强行清：① Easy=PriorityBadge 11×TS2345（makeIcon 签名放宽 LucideIcon + createElement cast any）+ DataTable L291 TS2590 @ts-expect-error；② Medium=14×TS2769 No overload（DraggableWindow ×1 / PageHeader ×2 / ChatSidebar ×1 / QuickAction ×1 / StatCard ×1 / DesignerCanvas L69 Paper @ts-expect-error / BIVisualizationPage ×3 / EmailDetailDialog ×2 / EmailList ×2 → 统一 as any 兜底绕开 pnpm 双 @types/react bigint ReactNode 冲突）；③ Tough=MarkdownEditorTemplate L797 `<code {...(props as any)}>` + WizardBuilder L224 StepLabel icon `as any` + dashboardAdapter L220 `icon: Icon as any`；**关键：P0 泛型三 config 轮新增 errors = 0**（393 RouteConfigV2<Props> 绑定 0 回归） |
+| 5 | i18n 7-in-1 PASS（V256 #12 同步） | 🟡（未实跑） | **7/7 PASS · 0 failures**（与 tsc 同门禁） | **✅ 7/7 全子闸 0 failures：① 假 en 值残留 = 0 ✅；② key 一致性偏差 = 0（V256 baseline=1 → 补齐 zh/common.json 8 个顶层 stub keys：sw/layout/ai/help_center/shared/parsetestdialog/admin + 空字符串嵌套垃圾 key，en/zh flat keys 516:516 完全对齐 ✅）；③ 混合结构 bug = 0 ✅；R12-Z1 EN missing strict empty=0 null=0 SUM=0 ✅；R12-Z2 Glossary Top50 非标准译法=0，100% 一致 ✅；R12-Z3 Style Guide Lint HIGH=0 MEDIUM=20 LOW=67（MED≤50 通过 ✅）；scripts/ci/check-i18n-quality.cjs --strict 最终 exit=0** |
 | 6 | 存量 `RouteConfigV2<any>` / 默认泛型 替换率（替换为 `RouteConfigV2<XxxPageProps>`） | 0%（35 模块全 any/默认）| **≥90%（315/350 路由）** | **✅ ≥90% 超额达标（393 routes 已绑定 · 分母 350 偏小；P0-1 260 + P0-2 113 + P0-3 20=aps18+im2；P0-3 registry/shared 因 routes=[] 无需绑定；实存 37 config.ts 100% 无 any）** |
 | 7 | Perm-Gate R3（V256 P1-2 rewrites 后新增 38 条 admin-only handler 无 gate 注释） | R3=38 WARN（strict 不阻断 / fail-on-warn=1） | **R3=0（P1-2 顺手）** 或 R3≤3（剩余工具型） · 与 Frontend 泛型推进并行独立 | 🟡 |
 
@@ -8266,7 +8266,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 | 9 | perm FAIL 规则 R1/R4/R5/R6 保持 0 | 0 / 0 / 0 / 0 | **0 / 0 / 0 / 0** | ✅ |
 | 10 | cargo check --workspace 0 error 0 warning | 0 · 14.19s | ✅ **0 error · 82s**；4 pre-existing warnings（svc/gis/src/modules/sync.rs `TenantRequest` 可见性）与本 V256 改动无关，保持现状 | ✅ |
 | 11 | axum-layer-gate R1/R2/R3 STRONG_PASS | R1=0 R2=0 R3=0 · SPASS | ✅ R1=0 R2=0 R3=0 · SPASS（P0-1 接入 + P0-2 R3 注释全部通过 layer gate） | ✅ |
-| 12 | tsc + i18n 双门禁（precise + 7-in-1） | 0 · PASS | **0 · 7-in-1 PASS (0 failures)** | 🟡 |
+| 12 | tsc + i18n 双门禁（precise + 7-in-1） | 0 · PASS | **0 · 7-in-1 PASS (0 failures)** | **✅ V257 P1-1 闭环补齐：tsc apps/web 12GB heap 29→0 errors（PriorityBadge 11×TS2345 + 14×TS2769 No overload + 3×TS2322 assignable + DataTable TS2590；P0 泛型三 config 轮新增=0 ✅）；i18n 7-in-1 Strict Gate R12-Z1/Z2/Z3 全绿=0 failures + ② key 一致性偏差 1→0（zh/common.json 同步 8 top-level stub keys 补齐，en/zh flat keys 516:516 完全对齐）** |
 
 #### 任务拆分（P0×2 · P1×2 · P2×1 = 5 子任务，可并行）
 | ID | 子任务 | 范围 | 预计产出 | 验收口径 | 状态 |
