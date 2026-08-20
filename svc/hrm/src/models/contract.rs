@@ -96,6 +96,7 @@ pub struct CreateRenewalRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ContractPaginationParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub status: Option<String>,

@@ -30,7 +30,7 @@ export function useCustomerFinanceInfo(customerId: string) {
 /**
  * 更新客户财务信息
  */
-export function useUpdateCustomerFinanceInfo() {
+function useUpdateCustomerFinanceInfo() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -82,7 +82,7 @@ export function useSalesInvoices(params?: {
 /**
  * 获取销售发票详情
  */
-export function useSalesInvoice(invoiceId: string) {
+function useSalesInvoice(invoiceId: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_SALES_INVOICE_BASE, invoiceId],
     queryFn: () => crmFinanceApi.getSalesInvoice(invoiceId),
@@ -95,7 +95,7 @@ export function useSalesInvoice(invoiceId: string) {
 /**
  * 创建销售发票
  */
-export function useCreateSalesInvoice() {
+function useCreateSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -123,7 +123,7 @@ export function useCreateSalesInvoice() {
 /**
  * 更新销售发票
  */
-export function useUpdateSalesInvoice() {
+function useUpdateSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -152,7 +152,7 @@ export function useUpdateSalesInvoice() {
 /**
  * 删除销售发票
  */
-export function useDeleteSalesInvoice() {
+function useDeleteSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -180,7 +180,7 @@ export function useDeleteSalesInvoice() {
 /**
  * 开具发票
  */
-export function useIssueSalesInvoice() {
+function useIssueSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -208,7 +208,7 @@ export function useIssueSalesInvoice() {
 /**
  * 作废发票
  */
-export function useVoidSalesInvoice() {
+function useVoidSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -237,7 +237,7 @@ export function useVoidSalesInvoice() {
 /**
  * 红冲发票
  */
-export function useRedFlushSalesInvoice() {
+function useRedFlushSalesInvoice() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -288,7 +288,7 @@ export function useCollectionRecords(params?: {
 /**
  * 获取收款记录详情
  */
-export function useCollectionRecord(recordId: string) {
+function useCollectionRecord(recordId: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORD_BASE, recordId],
     queryFn: () => crmFinanceApi.getCollectionRecord(recordId),
@@ -301,7 +301,7 @@ export function useCollectionRecord(recordId: string) {
 /**
  * 创建收款记录
  */
-export function useCreateCollectionRecord() {
+function useCreateCollectionRecord() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -336,7 +336,7 @@ export function useCreateCollectionRecord() {
 /**
  * 确认收款
  */
-export function useConfirmCollection() {
+function useConfirmCollection() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -371,7 +371,7 @@ export function useConfirmCollection() {
 /**
  * 批量确认收款
  */
-export function useBatchConfirmCollections() {
+function useBatchConfirmCollections() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
 
@@ -420,7 +420,7 @@ export function useBatchConfirmCollections() {
 /**
  * 获取应收账龄分析
  */
-export function useReceivableAging(params: {
+function useReceivableAging(params: {
   company_id?: string;
   customer_ids?: string[];
   as_of_date: string;
@@ -436,7 +436,7 @@ export function useReceivableAging(params: {
 /**
  * 获取客户应收账款汇总
  */
-export function useCustomerReceivableSummary(customerId?: string) {
+function useCustomerReceivableSummary(customerId?: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_RECEIVABLE_SUMMARY_BASE, customerId],
     queryFn: () => crmFinanceApi.getReceivableSummary(customerId),
@@ -448,7 +448,7 @@ export function useCustomerReceivableSummary(customerId?: string) {
 /**
  * 获取逾期应收账款列表
  */
-export function useOverdueReceivables(params?: {
+function useOverdueReceivables(params?: {
   company_id?: string;
   customer_id?: string;
   min_overdue_days?: number;
@@ -469,7 +469,7 @@ export function useOverdueReceivables(params?: {
 /**
  * 导出销售发票
  */
-export function useExportSalesInvoices() {
+function useExportSalesInvoices() {
   const { success, error } = useNotification();
 
   return useMutation({
@@ -509,7 +509,7 @@ export function useExportSalesInvoices() {
 /**
  * 导出收款记录
  */
-export function useExportCollectionRecords() {
+function useExportCollectionRecords() {
   const { success, error } = useNotification();
 
   return useMutation({
@@ -547,7 +547,7 @@ export function useExportCollectionRecords() {
 /**
  * 导出应收账龄分析
  */
-export function useExportReceivableAging() {
+function useExportReceivableAging() {
   const { success, error } = useNotification();
 
   return useMutation({

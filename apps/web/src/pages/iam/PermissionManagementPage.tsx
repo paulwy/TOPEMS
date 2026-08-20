@@ -89,7 +89,11 @@ const PermissionManagementPage: React.FC = () => {
     <CrudPage
       schema={permissionSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: i18n.t('iam.permission_management_page.k6'), href: '/' }, { label: i18n.t('iam.permission_management_page.k5') }, { label: i18n.t('iam.permission_management_page.k4') }]}
+      breadcrumbs={[
+        { label: i18n.t('iam.permission_management_page.k6'), href: '/' },
+        { label: i18n.t('iam.permission_management_page.k5') },
+        { label: i18n.t('iam.permission_management_page.k4') },
+      ]}
       headerContent={headerContent}
     />
   );

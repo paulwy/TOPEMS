@@ -27,9 +27,9 @@ import { PageContainer } from '@/components/common';
 import { qmsApi, useQmsMock, type QmsMockShape } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: mockData, mockEnabled } = useQmsMock<QmsMockShape>();
@@ -49,11 +49,12 @@ const QmsDashboardPage: React.FC = () => {
       }
       return overviewRes.data ?? null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,
-      initialData: mockEnabled ? mockData?.qualityOverview ?? null : undefined,
-      enabled: !mockEnabled,});
-  const effectiveOverview = mockEnabled ? mockData?.qualityOverview ?? null : overview;
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+    initialData: mockEnabled ? (mockData?.qualityOverview ?? null) : undefined,
+    enabled: !mockEnabled,
+  });
+  const effectiveOverview = mockEnabled ? (mockData?.qualityOverview ?? null) : overview;
   const effectiveLoading = mockEnabled ? false : loading;
   const stats: StatCard[] = [
     {
@@ -68,7 +69,8 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'pass-rate',
       title: i18n.t('qms.qms_dashboard_page.k3'),
-      value: effectiveOverview?.passRate != null ? `${effectiveOverview.passRate.toFixed(1)}%` : '0%',
+      value:
+        effectiveOverview?.passRate != null ? `${effectiveOverview.passRate.toFixed(1)}%` : '0%',
       icon: <CheckCircle style={{ width: 24, height: 24 }} />,
       color: 'success',
       change: effectiveOverview?.passRate && effectiveOverview.passRate >= 95 ? 1.2 : -0.3,
@@ -238,7 +240,8 @@ const QmsDashboardPage: React.FC = () => {
                 preserveAspectRatio='none'
               >
                 {effectiveOverview.trendData.map((item, index) => {
-                  const x = (index / Math.max(effectiveOverview!.trendData.length - 1, 1)) * 380 + 10;
+                  const x =
+                    (index / Math.max(effectiveOverview!.trendData.length - 1, 1)) * 380 + 10;
                   const y = 200 - (item.passRate / 100) * 180 - 10;
                   return (
                     <React.Fragment key={index}>
@@ -253,9 +256,15 @@ const QmsDashboardPage: React.FC = () => {
                           x1={x}
                           y1={y}
                           x2={
-                            ((index + 1) / Math.max(effectiveOverview!.trendData.length - 1, 1)) * 380 + 10
+                            ((index + 1) / Math.max(effectiveOverview!.trendData.length - 1, 1)) *
+                              380 +
+                            10
                           }
-                          y2={200 - (effectiveOverview!.trendData[index + 1].passRate / 100) * 180 - 10}
+                          y2={
+                            200 -
+                            (effectiveOverview!.trendData[index + 1].passRate / 100) * 180 -
+                            10
+                          }
                           stroke={ct.secondary[400]}
                           strokeWidth={2}
                         />
@@ -317,7 +326,9 @@ const QmsDashboardPage: React.FC = () => {
               </svg>
             </Box>
           ) : (
-            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.spc_12')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('qms.qms_dashboard_page.spc_12')}
+            </Typography>
           )}
         </Box>
       ),

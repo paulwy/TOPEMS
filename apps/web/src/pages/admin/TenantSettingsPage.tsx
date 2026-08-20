@@ -46,7 +46,7 @@ import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
 import type { Tenant, TenantUser, TenantRole } from '@/api/tenant/types';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 const roleLabels: Record<TenantRole, string> = {
   owner: i18n.t('pages.tenant_settings_page.k0'),
@@ -59,7 +59,7 @@ const roleLabels: Record<TenantRole, string> = {
 const TenantSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: tenant, isPending: loading} = useQuery<Tenant | null>({
+  const { data: tenant, isPending: loading } = useQuery<Tenant | null>({
     queryKey: QUERY_KEYS.TENANT.CURRENT,
     queryFn: async () => {
       const contextRes = await tenantApi.getCurrentTenantContext();
@@ -72,8 +72,9 @@ const TenantSettingsPage: React.FC = () => {
       }
       return tenantRes.data;
     },
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
 
   const { data: members = [] } = useQuery<TenantUser[]>({
     queryKey: QUERY_KEYS.TENANT.USERS,
@@ -86,8 +87,9 @@ const TenantSettingsPage: React.FC = () => {
       return res.data.items;
     },
     enabled: !!tenant,
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
 
   const [activeSection, setActiveSection] = useState('general');
   const [saving, setSaving] = useState(false);
@@ -137,10 +139,11 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.TENANT.CURRENT,
+        exact: false,
+        refetchType: 'active',
+      });
     } catch (error) {
       logger.error('Failed to save settings:', error);
     } finally {
@@ -164,10 +167,11 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.TENANT.CURRENT,
+        exact: false,
+        refetchType: 'active',
+      });
     } catch (error) {
       logger.error('Failed to save security settings:', error);
     } finally {
@@ -182,10 +186,11 @@ const TenantSettingsPage: React.FC = () => {
       if (res.success) {
         setShowInviteDialog(false);
         setInviteForm({ email: '', role: 'member' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.TENANT.USERS,
+          exact: false,
+          refetchType: 'active',
+        });
       }
     } catch (error) {
       logger.error('Failed to invite member:', error);
@@ -196,10 +201,11 @@ const TenantSettingsPage: React.FC = () => {
     if (!tenant) return;
     try {
       await tenantApi.removeMember(tenant.id, userId);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.TENANT.USERS,
+        exact: false,
+        refetchType: 'active',
+      });
     } catch (error) {
       logger.error('Failed to remove member:', error);
     }
@@ -210,7 +216,11 @@ const TenantSettingsPage: React.FC = () => {
     { id: 'branding', label: i18n.t('pages.tenant_settings_page.k9'), icon: <Palette size={18} /> },
     { id: 'security', label: i18n.t('pages.tenant_settings_page.k10'), icon: <Shield size={18} /> },
     { id: 'members', label: i18n.t('pages.tenant_settings_page.k11'), icon: <Users size={18} /> },
-    { id: 'notifications', label: i18n.t('pages.tenant_settings_page.k12'), icon: <Bell size={18} /> },
+    {
+      id: 'notifications',
+      label: i18n.t('pages.tenant_settings_page.k12'),
+      icon: <Bell size={18} />,
+    },
   ];
 
   if (loading || !tenant) {
@@ -590,7 +600,9 @@ const TenantSettingsPage: React.FC = () => {
                         <MenuItem value={60}>{i18n.t('admin.tenant_settings_page.k4')}</MenuItem>
                         <MenuItem value={120}>{i18n.t('admin.tenant_settings_page.k3')}</MenuItem>
                         <MenuItem value={480}>{i18n.t('admin.tenant_settings_page.k2')}</MenuItem>
-                        <MenuItem value={1440}>{i18n.t('admin.tenant_settings_page.24_1')}</MenuItem>
+                        <MenuItem value={1440}>
+                          {i18n.t('admin.tenant_settings_page.24_1')}
+                        </MenuItem>
                       </Select>
                     </FormControl>
                   </ListItem>
@@ -642,7 +654,14 @@ const TenantSettingsPage: React.FC = () => {
                 <Alert
                   severity='info'
                   sx={{ mb: 2 }}
-                >{i18n.t('admin:tenant_settings_page.k0', { v0: (members.length), v1: (tenant.settings.max_users), v2: (' '), v3: (i18n.t('pages.tenant_settings_page.k15')) })}</Alert>
+                >
+                  {i18n.t('admin:tenant_settings_page.k0', {
+                    v0: members.length,
+                    v1: tenant.settings.max_users,
+                    v2: ' ',
+                    v3: i18n.t('pages.tenant_settings_page.k15'),
+                  })}
+                </Alert>
 
                 <List disablePadding>
                   {members.map((member: TenantUser) => (
@@ -786,7 +805,9 @@ const TenantSettingsPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowInviteDialog(false)}>{i18n.t('pages.tenant_settings_page.k46')}</Button>
+          <Button onClick={() => setShowInviteDialog(false)}>
+            {i18n.t('pages.tenant_settings_page.k46')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleInviteMember}

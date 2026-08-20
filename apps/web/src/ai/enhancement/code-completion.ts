@@ -13,7 +13,7 @@ import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
  * - 多语言支持 (TypeScript, CSS, JSON)
  */
 
-export enum CompletionKind {
+enum CompletionKind {
   SNIPPET = 'snippet',
   PROPERTY = 'property',
   FUNCTION = 'function',
@@ -612,4 +612,3 @@ const TYPE_PROPERTY_MAP: Record<string, Array<{ name: string; type: string }>> =
     { name: 'toString', type: '() => string' },
   ],
 };
-

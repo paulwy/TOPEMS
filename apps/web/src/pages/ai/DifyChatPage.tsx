@@ -112,53 +112,50 @@ export const DifyChatPage: React.FC = () => {
     }
   }, [selectedConversationId]);
 
-  const loadMessages = useCallback(
-    async (conversationId: string) => {
-      if (!conversationId) {
-        setMessages([]);
-        return;
-      }
-      setIsLoadingMessages(true);
-      try {
-        const res = await difyApi.listMessages({
-          conversation_id: conversationId,
-          user: DEFAULT_USER_ID,
-          limit: 100,
-        });
-        if (res.success && res.data) {
-          const rawMsgs = Array.isArray(res.data)
-            ? (res.data as unknown as DifyMessage[])
-            : (res.data as { data?: DifyMessage[] }).data || [];
+  const loadMessages = useCallback(async (conversationId: string) => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+    setIsLoadingMessages(true);
+    try {
+      const res = await difyApi.listMessages({
+        conversation_id: conversationId,
+        user: DEFAULT_USER_ID,
+        limit: 100,
+      });
+      if (res.success && res.data) {
+        const rawMsgs = Array.isArray(res.data)
+          ? (res.data as unknown as DifyMessage[])
+          : (res.data as { data?: DifyMessage[] }).data || [];
 
-          const uiMsgs: UiMessage[] = [];
-          rawMsgs.forEach((m) => {
-            if (m.query) {
-              uiMsgs.push({
-                id: `q-${m.id}`,
-                role: 'user',
-                content: m.query,
-                timestamp: new Date(m.created_at),
-              });
-            }
+        const uiMsgs: UiMessage[] = [];
+        rawMsgs.forEach((m) => {
+          if (m.query) {
             uiMsgs.push({
-              id: `a-${m.id}`,
-              role: 'assistant',
-              content: m.answer || '',
+              id: `q-${m.id}`,
+              role: 'user',
+              content: m.query,
               timestamp: new Date(m.created_at),
-              message_id: m.id,
-              feedback: m.feedback?.rating || null,
             });
+          }
+          uiMsgs.push({
+            id: `a-${m.id}`,
+            role: 'assistant',
+            content: m.answer || '',
+            timestamp: new Date(m.created_at),
+            message_id: m.id,
+            feedback: m.feedback?.rating || null,
           });
-          setMessages(uiMsgs);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setIsLoadingMessages(false);
+        });
+        setMessages(uiMsgs);
       }
-    },
-    []
-  );
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadConversations();
@@ -251,9 +248,7 @@ export const DifyChatPage: React.FC = () => {
           if (event.answer) {
             setMessages((prev) =>
               prev.map((m) =>
-                m.id === assistantTempId
-                  ? { ...m, content: m.content + (event.answer || '') }
-                  : m
+                m.id === assistantTempId ? { ...m, content: m.content + (event.answer || '') } : m
               )
             );
           }
@@ -334,9 +329,7 @@ export const DifyChatPage: React.FC = () => {
             ? {
                 ...m,
                 isStreaming: false,
-                content:
-                  m.content +
-                  `\n\n${i18n.t('ai.dify.error.stream_prefix')}${errorMsg}`,
+                content: m.content + `\n\n${i18n.t('ai.dify.error.stream_prefix')}${errorMsg}`,
               }
             : m
         )
@@ -361,17 +354,12 @@ export const DifyChatPage: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleFeedback = async (
-    messageId: string,
-    rating: 'like' | 'dislike'
-  ) => {
+  const handleFeedback = async (messageId: string, rating: 'like' | 'dislike') => {
     try {
       const res = await difyApi.feedback(messageId, rating, DEFAULT_USER_ID);
       if (res.success) {
         setMessages((prev) =>
-          prev.map((m) =>
-            m.message_id === messageId ? { ...m, feedback: rating } : m
-          )
+          prev.map((m) => (m.message_id === messageId ? { ...m, feedback: rating } : m))
         );
         addNotification({
           title: i18n.t('ai.dify.feedback.success_title'),
@@ -505,14 +493,8 @@ export const DifyChatPage: React.FC = () => {
                   cursor: 'pointer',
                   borderRadius: 1,
                   border: 1,
-                  borderColor:
-                    selectedConversationId === conv.id
-                      ? 'primary.main'
-                      : 'transparent',
-                  bgcolor:
-                    selectedConversationId === conv.id
-                      ? 'primary.50'
-                      : 'transparent',
+                  borderColor: selectedConversationId === conv.id ? 'primary.main' : 'transparent',
+                  bgcolor: selectedConversationId === conv.id ? 'primary.50' : 'transparent',
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
                 onClick={() => handleSelectConversation(conv.id)}
@@ -594,9 +576,7 @@ export const DifyChatPage: React.FC = () => {
                 size={20}
                 color={theme.palette.primary.main}
               />
-              <Typography variant='h6'>
-                {appInfo?.name || t('ai.dify.page.title')}
-              </Typography>
+              <Typography variant='h6'>{appInfo?.name || t('ai.dify.page.title')}</Typography>
               {appInfo?.description && (
                 <Typography
                   variant='caption'
@@ -638,15 +618,10 @@ export const DifyChatPage: React.FC = () => {
                 >
                   <Avatar
                     sx={{
-                      bgcolor:
-                        msg.role === 'user' ? 'primary.main' : 'secondary.main',
+                      bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main',
                     }}
                   >
-                    {msg.role === 'user' ? (
-                      <User size={20} />
-                    ) : (
-                      <Sparkles size={20} />
-                    )}
+                    {msg.role === 'user' ? <User size={20} /> : <Sparkles size={20} />}
                   </Avatar>
                   <Box sx={{ flex: 1, maxWidth: '100%' }}>
                     <Box
@@ -695,13 +670,9 @@ export const DifyChatPage: React.FC = () => {
                             >
                               <IconButton
                                 size='small'
-                                onClick={() =>
-                                  handleFeedback(msg.message_id!, 'like')
-                                }
+                                onClick={() => handleFeedback(msg.message_id!, 'like')}
                                 disabled={msg.feedback === 'like'}
-                                color={
-                                  msg.feedback === 'like' ? 'primary' : 'default'
-                                }
+                                color={msg.feedback === 'like' ? 'primary' : 'default'}
                               >
                                 <ThumbsUp size={14} />
                               </IconButton>
@@ -712,15 +683,9 @@ export const DifyChatPage: React.FC = () => {
                             >
                               <IconButton
                                 size='small'
-                                onClick={() =>
-                                  handleFeedback(msg.message_id!, 'dislike')
-                                }
+                                onClick={() => handleFeedback(msg.message_id!, 'dislike')}
                                 disabled={msg.feedback === 'dislike'}
-                                color={
-                                  msg.feedback === 'dislike'
-                                    ? 'error'
-                                    : 'default'
-                                }
+                                color={msg.feedback === 'dislike' ? 'error' : 'default'}
                               >
                                 <ThumbsDown size={14} />
                               </IconButton>
@@ -731,10 +696,7 @@ export const DifyChatPage: React.FC = () => {
                     <Paper
                       sx={{
                         p: 2,
-                        bgcolor:
-                          msg.role === 'user'
-                            ? 'primary.light'
-                            : 'background.paper',
+                        bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
                         position: 'relative',
                       }}
                     >
@@ -797,8 +759,7 @@ export const DifyChatPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}
                 >
-                  {appInfo?.description ||
-                    i18n.t('ai.dify.empty.start_subtitle')}
+                  {appInfo?.description || i18n.t('ai.dify.empty.start_subtitle')}
                 </Typography>
               </Box>
             )}

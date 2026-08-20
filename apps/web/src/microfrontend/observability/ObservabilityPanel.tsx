@@ -306,7 +306,8 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            {i18n.t('microfrontend.observability_panel.k4')}: {formatDurationShort(m.whiteScreenTime)}
+                            {i18n.t('microfrontend.observability_panel.k4')}:{' '}
+                            {formatDurationShort(m.whiteScreenTime)}
                           </span>
                           <span>FCP: {formatDurationShort(m.fcp)}</span>
                           <span>TTI: {formatDurationShort(m.tti)}</span>
@@ -534,9 +535,14 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            {i18n.t('microfrontend.observability_panel.k13')}: {formatDurationShort(s.averageDuration)}
+                            {i18n.t('microfrontend.observability_panel.k13')}:{' '}
+                            {formatDurationShort(s.averageDuration)}
                           </span>
-                          <span>{i18n.t('microfrontend.observability_panel.sactionount_0', { s: { actionCount: s.actionCount } })}</span>
+                          <span>
+                            {i18n.t('microfrontend.observability_panel.sactionount_0', {
+                              s: { actionCount: s.actionCount },
+                            })}
+                          </span>
                         </Box>
                       </Box>
                     ))}
@@ -572,7 +578,8 @@ const ObservabilityPanel: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {slowModules.length}{i18n.t('microfrontend.observability_panel.k22')} {SLOW_MODULE_THRESHOLD}ms:
+                  {slowModules.length}
+                  {i18n.t('microfrontend.observability_panel.k22')} {SLOW_MODULE_THRESHOLD}ms:
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
                   {slowModules.map((m) => (

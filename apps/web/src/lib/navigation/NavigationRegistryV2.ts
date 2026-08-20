@@ -139,9 +139,10 @@ export class NavigationRegistryV2 {
 
   private toModuleCard(module: ModuleNavConfig): ModuleCardConfig {
     const resolvedName = module.nameKey ? i18n.t(module.nameKey) : module.name;
-    const resolvedDescription = module.description && module.description.includes('.')
-      ? i18n.t(module.description, { defaultValue: module.description })
-      : module.description;
+    const resolvedDescription =
+      module.description && module.description.includes('.')
+        ? i18n.t(module.description, { defaultValue: module.description })
+        : module.description;
     return {
       code: module.code,
       name: resolvedName,

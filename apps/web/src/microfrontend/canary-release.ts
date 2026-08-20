@@ -204,7 +204,9 @@ class CanaryReleaseManager {
       // 若此时直接 response.json() 会抛 SyntaxError: Unexpected token '<'。
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
-        logger.debug(`[CanaryRelease] server config not found (content-type: ${contentType || 'n/a'}, using local fallback)`);
+        logger.debug(
+          `[CanaryRelease] server config not found (content-type: ${contentType || 'n/a'}, using local fallback)`
+        );
         return;
       }
 

@@ -213,7 +213,6 @@ export class PluginManager {
     return keys[code] || '';
   }
 
-
   async initialize(): Promise<void> {
     if (this.isInitialized) {
       return;

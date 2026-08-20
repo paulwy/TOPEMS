@@ -7,16 +7,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { customerScoringSchema } from '@/schemas/crm';
-import {
-  crmApi,
-  useCrmMock,
-} from '@/api/crm';
-import type {
-  CustomerScore,
-  ScoreFactor,
-  ScoringData,
-  Period,
-} from '@/api/crm';
+import { crmApi, useCrmMock } from '@/api/crm';
+import type { CustomerScore, ScoreFactor, ScoringData, Period } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';

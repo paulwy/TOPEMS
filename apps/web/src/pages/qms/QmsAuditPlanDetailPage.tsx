@@ -23,7 +23,7 @@ export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<(ReturnType<typeof getTabs>)[number]['id']>('info');
+  const [activeTab, setActiveTab] = useState<ReturnType<typeof getTabs>[number]['id']>('info');
   const plan = useMemo(() => {
     const list = data.auditPlans ?? [];
     return list.find((p) => p.id === id) ?? list[0];
@@ -73,7 +73,9 @@ export default function QmsAuditPlanDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_audit_plan_detail_page.k4')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_audit_plan_detail_page.k4')}
+        </p>
         <FSMActionButtons
           fsm='audit_plan'
           currentStatus={plan.status}

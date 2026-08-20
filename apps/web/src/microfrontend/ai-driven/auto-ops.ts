@@ -12,7 +12,7 @@
 
 // ==================== 枚举 ====================
 
-export enum OpsActionType {
+enum OpsActionType {
   DEPLOY = 'deploy',
   ROLLBACK = 'rollback',
   SCALE = 'scale',
@@ -34,7 +34,7 @@ export enum TriggerType {
   DEPENDENCY = 'dependency',
 }
 
-export enum OpsStatus {
+enum OpsStatus {
   IDLE = 'idle',
   RUNNING = 'running',
   SUCCESS = 'success',
@@ -142,7 +142,7 @@ export interface MaintenanceWindow {
 
 // ==================== AutoOps 类 ====================
 
-export class AutoOps {
+class AutoOps {
   private config: AutoOpsConfig;
   private rules: Map<string, OpsRule> = new Map();
   private executionHistory: OpsAction[] = [];
@@ -543,5 +543,5 @@ export class AutoOps {
 
 // ==================== 单例 ====================
 
-export const autoOps = new AutoOps();
+const autoOps = new AutoOps();
 export default autoOps;

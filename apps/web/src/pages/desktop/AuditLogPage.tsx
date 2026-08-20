@@ -99,7 +99,9 @@ const AuditLogPage = () => {
       if (f.from) params.from = f.from;
       if (f.to) params.to = f.to;
 
-      const result = await tauriApi.getAuditLogs(Object.keys(params).length > 0 ? params : undefined);
+      const result = await tauriApi.getAuditLogs(
+        Object.keys(params).length > 0 ? params : undefined
+      );
 
       let data: AuditLog[] = [];
       if (Array.isArray(result)) {
@@ -191,14 +193,22 @@ const AuditLogPage = () => {
 
   const actionColor = (action: string) => {
     switch (action) {
-      case 'CREATE': return 'success' as const;
-      case 'UPDATE': return 'info' as const;
-      case 'DELETE': return 'error' as const;
-      case 'LOGIN': return 'primary' as const;
-      case 'LOGOUT': return 'default' as const;
-      case 'EXPORT': return 'warning' as const;
-      case 'IMPORT': return 'secondary' as const;
-      default: return 'default' as const;
+      case 'CREATE':
+        return 'success' as const;
+      case 'UPDATE':
+        return 'info' as const;
+      case 'DELETE':
+        return 'error' as const;
+      case 'LOGIN':
+        return 'primary' as const;
+      case 'LOGOUT':
+        return 'default' as const;
+      case 'EXPORT':
+        return 'warning' as const;
+      case 'IMPORT':
+        return 'secondary' as const;
+      default:
+        return 'default' as const;
     }
   };
 
@@ -207,12 +217,13 @@ const AuditLogPage = () => {
       <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
         <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center' }}>
           <BugReportIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h5" gutterBottom>
+          <Typography
+            variant='h5'
+            gutterBottom
+          >
             {t('admin.audit_log.title')}
           </Typography>
-          <Typography color="text.secondary">
-            {t('admin.audit_log.not_desktop')}
-          </Typography>
+          <Typography color='text.secondary'>{t('admin.audit_log.not_desktop')}</Typography>
         </Paper>
       </Box>
     );
@@ -222,38 +233,45 @@ const AuditLogPage = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ ...row, ...center, justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ ...row, ...center, ...gap(2) }}>
-          <BugReportIcon color="primary" />
-          <Typography variant="h5">{t('admin.audit_log.title')}</Typography>
+          <BugReportIcon color='primary' />
+          <Typography variant='h5'>{t('admin.audit_log.title')}</Typography>
           {lastRefresh && (
             <Chip
               label={t('admin.audit_log.updated_at', { time: lastRefresh.toLocaleTimeString() })}
-              size="small"
-              variant="outlined"
+              size='small'
+              variant='outlined'
             />
           )}
         </Box>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={1}
+          sx={{ alignItems: 'center' }}
+        >
           <FormControlLabel
             control={
               <Switch
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                size="small"
+                size='small'
               />
             }
-            label={<Typography variant="body2">{t('admin.audit_log.auto_refresh')}</Typography>}
+            label={<Typography variant='body2'>{t('admin.audit_log.auto_refresh')}</Typography>}
           />
           <Tooltip title={t('admin.audit_log.export_json')}>
-            <IconButton onClick={handleExport} disabled={logs.length === 0}>
+            <IconButton
+              onClick={handleExport}
+              disabled={logs.length === 0}
+            >
               <FileDownloadIcon />
             </IconButton>
           </Tooltip>
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={loading ? <CircularProgress size={18} /> : <RefreshIcon />}
             onClick={() => fetchLogs(appliedFilters)}
             disabled={loading}
-            size="small"
+            size='small'
           >
             {t('admin.audit_log.refresh')}
           </Button>
@@ -261,7 +279,11 @@ const AuditLogPage = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+          onClose={() => setError(null)}
+        >
           {error}
         </Alert>
       )}
@@ -270,27 +292,42 @@ const AuditLogPage = () => {
         <CardContent sx={{ pb: filterOpen ? 2 : 0 }}>
           <Box sx={{ ...row, ...center, justifyContent: 'space-between', mb: filterOpen ? 2 : 0 }}>
             <Box sx={{ ...row, ...center, ...gap(1) }}>
-              <FilterListIcon fontSize="small" color="action" />
-              <Typography variant="subtitle2">{t('admin.audit_log.filter_conditions')}</Typography>
+              <FilterListIcon
+                fontSize='small'
+                color='action'
+              />
+              <Typography variant='subtitle2'>{t('admin.audit_log.filter_conditions')}</Typography>
             </Box>
-            <IconButton size="small" onClick={() => setFilterOpen((v) => !v)}>
+            <IconButton
+              size='small'
+              onClick={() => setFilterOpen((v) => !v)}
+            >
               {filterOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
           </Box>
 
           {filterOpen && (
-            <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap', gap: 2 }}>
+            <Stack
+              direction='row'
+              spacing={2}
+              sx={{ mb: 2, flexWrap: 'wrap', gap: 2 }}
+            >
               <TextField
                 select
                 label={t('admin.audit_log.action_type')}
                 value={filters.action}
                 onChange={(e) => setFilters((f) => ({ ...f, action: e.target.value }))}
-                size="small"
+                size='small'
                 sx={{ minWidth: 140 }}
               >
-                <MenuItem value="">{t('admin.audit_log.all')}</MenuItem>
+                <MenuItem value=''>{t('admin.audit_log.all')}</MenuItem>
                 {ACTION_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                  <MenuItem
+                    key={opt}
+                    value={opt}
+                  >
+                    {opt}
+                  </MenuItem>
                 ))}
               </TextField>
 
@@ -299,12 +336,17 @@ const AuditLogPage = () => {
                 label={t('admin.audit_log.target_type')}
                 value={filters.target_type}
                 onChange={(e) => setFilters((f) => ({ ...f, target_type: e.target.value }))}
-                size="small"
+                size='small'
                 sx={{ minWidth: 140 }}
               >
-                <MenuItem value="">{t('admin.audit_log.all')}</MenuItem>
+                <MenuItem value=''>{t('admin.audit_log.all')}</MenuItem>
                 {TARGET_TYPE_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                  <MenuItem
+                    key={opt}
+                    value={opt}
+                  >
+                    {opt}
+                  </MenuItem>
                 ))}
               </TextField>
 
@@ -312,27 +354,27 @@ const AuditLogPage = () => {
                 label={t('admin.audit_log.user_id')}
                 value={filters.user_id}
                 onChange={(e) => setFilters((f) => ({ ...f, user_id: e.target.value }))}
-                size="small"
+                size='small'
                 sx={{ minWidth: 160 }}
                 placeholder={t('admin.audit_log.enter_user_id')}
               />
 
               <TextField
                 label={t('admin.audit_log.start_time')}
-                type="datetime-local"
+                type='datetime-local'
                 value={filters.from}
                 onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
-                size="small"
+                size='small'
                 sx={{ minWidth: 200 }}
                 slotProps={{ inputLabel: { shrink: true } }}
               />
 
               <TextField
                 label={t('admin.audit_log.end_time')}
-                type="datetime-local"
+                type='datetime-local'
                 value={filters.to}
                 onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
-                size="small"
+                size='small'
                 sx={{ minWidth: 200 }}
                 slotProps={{ inputLabel: { shrink: true } }}
               />
@@ -342,15 +384,15 @@ const AuditLogPage = () => {
           {filterOpen && (
             <Box sx={{ ...row, justifyContent: 'flex-end', ...gap(1) }}>
               <Button
-                variant="outlined"
-                size="small"
+                variant='outlined'
+                size='small'
                 onClick={handleReset}
               >
                 {t('admin.audit_log.reset')}
               </Button>
               <Button
-                variant="contained"
-                size="small"
+                variant='contained'
+                size='small'
                 startIcon={<SearchIcon />}
                 onClick={handleSearch}
               >
@@ -370,14 +412,12 @@ const AuditLogPage = () => {
           ) : logs.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <BugReportIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-              <Typography color="text.secondary">
-                {t('admin.audit_log.no_records')}
-              </Typography>
+              <Typography color='text.secondary'>{t('admin.audit_log.no_records')}</Typography>
             </Box>
           ) : (
             <>
               <TableContainer>
-                <Table size="small">
+                <Table size='small'>
                   <TableHead>
                     <TableRow>
                       <TableCell
@@ -386,12 +426,20 @@ const AuditLogPage = () => {
                       >
                         <Box sx={{ ...row, ...center, ...gap(0.5) }}>
                           {t('admin.audit_log.timestamp')}
-                          {sortAsc ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
+                          {sortAsc ? (
+                            <ExpandMoreIcon fontSize='small' />
+                          ) : (
+                            <ExpandLessIcon fontSize='small' />
+                          )}
                         </Box>
                       </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.action')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.target_type')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.target_id')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {t('admin.audit_log.target_type')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {t('admin.audit_log.target_id')}
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.user_id')}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.details')}</TableCell>
                     </TableRow>
@@ -404,23 +452,29 @@ const AuditLogPage = () => {
                           onClick={() => setExpandedId((prev) => (prev === log.id ? null : log.id))}
                           sx={{ cursor: 'pointer' }}
                         >
-                          <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontSize: 12 }}>
+                          <TableCell
+                            sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontSize: 12 }}
+                          >
                             {new Date(log.timestamp).toLocaleString()}
                           </TableCell>
                           <TableCell>
                             <Chip
                               label={log.action}
-                              size="small"
+                              size='small'
                               color={actionColor(log.action)}
-                              variant="outlined"
+                              variant='outlined'
                             />
                           </TableCell>
                           <TableCell>{log.target_type}</TableCell>
-                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{log.target_id}</TableCell>
-                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>{log.user_id}</TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                            {log.target_id}
+                          </TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+                            {log.user_id}
+                          </TableCell>
                           <TableCell>
                             <Typography
-                              variant="body2"
+                              variant='body2'
                               sx={{
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -429,15 +483,16 @@ const AuditLogPage = () => {
                                 color: 'text.secondary',
                               }}
                             >
-                              {log.details
-                                ? JSON.stringify(log.details)
-                                : '—'}
+                              {log.details ? JSON.stringify(log.details) : '—'}
                             </Typography>
                           </TableCell>
                         </TableRow>
                         {expandedId === log.id && log.details && (
                           <TableRow key={`${log.id}-expanded`}>
-                            <TableCell colSpan={6} sx={{ py: 0 }}>
+                            <TableCell
+                              colSpan={6}
+                              sx={{ py: 0 }}
+                            >
                               <Box
                                 sx={{
                                   bgcolor: 'grey.50',
@@ -446,7 +501,10 @@ const AuditLogPage = () => {
                                   m: 1,
                                 }}
                               >
-                                <Typography component="pre" sx={{ fontSize: 12, m: 0, overflow: 'auto' }}>
+                                <Typography
+                                  component='pre'
+                                  sx={{ fontSize: 12, m: 0, overflow: 'auto' }}
+                                >
                                   {JSON.stringify(log.details, null, 2)}
                                 </Typography>
                               </Box>
@@ -460,14 +518,21 @@ const AuditLogPage = () => {
               </TableContainer>
 
               <Box sx={{ ...row, justifyContent: 'space-between', mt: 2, ...center }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('admin.audit_log.pagination_info', { count: logs.length, current: page, total: totalPages })}
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('admin.audit_log.pagination_info', {
+                    count: logs.length,
+                    current: page,
+                    total: totalPages,
+                  })}
                 </Typography>
                 <Pagination
                   count={totalPages}
                   page={page}
                   onChange={(_, p) => setPage(p)}
-                  size="small"
+                  size='small'
                   disabled={loading}
                 />
               </Box>

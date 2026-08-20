@@ -30,7 +30,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 // 用于统计计算的字段（原页面使用的字段集合）
 interface HazardousMaterialItem {
@@ -131,8 +131,11 @@ const EhsHazardousMaterialPage: React.FC = () => {
     return {
       total: allMaterials.length,
       expiring: allMaterials.filter(isExpiring).length,
-      severe: allMaterials.filter((m) => m.danger_level === t('ehs.ehs_hazardous_material_page.k1') || m.danger_level === t('ehs.ehs_hazardous_material_page.k0'))
-        .length,
+      severe: allMaterials.filter(
+        (m) =>
+          m.danger_level === t('ehs.ehs_hazardous_material_page.k1') ||
+          m.danger_level === t('ehs.ehs_hazardous_material_page.k0')
+      ).length,
       thisMonth: allMaterials.filter((m) => {
         if (!m.created_at) return false;
         const d = new Date(m.created_at);
@@ -240,7 +243,10 @@ const EhsHazardousMaterialPage: React.FC = () => {
       <CrudPage
         schema={hazardousMaterialSchema}
         apiAdapter={materialAdapter}
-        breadcrumbs={[{ label: t('ehs.title') }, { label: i18n.t('pages.ehs_hazardous_material_page.k0') }]}
+        breadcrumbs={[
+          { label: t('ehs.title') },
+          { label: i18n.t('pages.ehs_hazardous_material_page.k0') },
+        ]}
         headerContent={headerContent}
         customRowActions={customRowActions}
       />
@@ -271,7 +277,9 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   mb: 2,
                 }}
               />
-              <Typography sx={{ color: 'slate.600' }}>{i18n.t('pages.ehs_hazardous_material_page.msds_1')}</Typography>
+              <Typography sx={{ color: 'slate.600' }}>
+                {i18n.t('pages.ehs_hazardous_material_page.msds_1')}
+              </Typography>
             </Box>
           ) : msdsData ? (
             <Box sx={{ pt: 2 }}>
@@ -361,11 +369,15 @@ const EhsHazardousMaterialPage: React.FC = () => {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>{t('ehs.ehs_hazardous_material_page.msds_3')}</Box>
+            <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
+              {t('ehs.ehs_hazardous_material_page.msds_3')}
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowMSDSModal(false)}>{t('ehs.ehs_hazardous_material_page.k4')}</Button>
+          <Button onClick={() => setShowMSDSModal(false)}>
+            {t('ehs.ehs_hazardous_material_page.k4')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

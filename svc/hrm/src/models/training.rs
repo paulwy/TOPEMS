@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -6,14 +7,15 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingPlan {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub description: Option<String>,
     pub start_date: DateTime<Utc>,
     pub end_date: DateTime<Utc>,
     pub status: String,
-    pub budget: Option<f64>,
+    pub budget: Option<Decimal>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -25,7 +27,7 @@ pub struct CreateTrainingPlanRequest {
     pub description: Option<String>,
     pub start_date: DateTime<Utc>,
     pub end_date: DateTime<Utc>,
-    pub budget: Option<f64>,
+    pub budget: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -36,20 +38,21 @@ pub struct UpdateTrainingPlanRequest {
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
     pub status: Option<String>,
-    pub budget: Option<f64>,
+    pub budget: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingCourse {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub plan_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub category: String,
     pub level: String,
     pub description: Option<String>,
-    pub duration_hours: Option<f64>,
+    pub duration_hours: Option<Decimal>,
     pub instructor_id: Option<Uuid>,
     pub instructor_name: Option<String>,
     pub location: Option<String>,
@@ -67,7 +70,7 @@ pub struct CreateTrainingCourseRequest {
     pub category: String,
     pub level: String,
     pub description: Option<String>,
-    pub duration_hours: Option<f64>,
+    pub duration_hours: Option<Decimal>,
     pub instructor_id: Option<Uuid>,
     pub instructor_name: Option<String>,
     pub location: Option<String>,
@@ -81,7 +84,7 @@ pub struct UpdateTrainingCourseRequest {
     pub category: Option<String>,
     pub level: Option<String>,
     pub description: Option<String>,
-    pub duration_hours: Option<f64>,
+    pub duration_hours: Option<Decimal>,
     pub instructor_id: Option<Uuid>,
     pub instructor_name: Option<String>,
     pub location: Option<String>,
@@ -92,13 +95,14 @@ pub struct UpdateTrainingCourseRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingRecord {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub course_id: Uuid,
     pub employee_id: Uuid,
     pub enrollment_date: DateTime<Utc>,
     pub attendance_status: String,
     pub completion_status: String,
-    pub score: Option<f64>,
+    pub score: Option<Decimal>,
     pub certificate_no: Option<String>,
     pub completed_at: Option<DateTime<Utc>>,
     pub feedback: Option<String>,
@@ -117,7 +121,7 @@ pub struct CreateTrainingRecordRequest {
 pub struct UpdateTrainingRecordRequest {
     pub attendance_status: Option<String>,
     pub completion_status: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<Decimal>,
     pub certificate_no: Option<String>,
     pub completed_at: Option<DateTime<Utc>>,
     pub feedback: Option<String>,
@@ -126,6 +130,7 @@ pub struct UpdateTrainingRecordRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct TrainingPaginationParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub plan_id: Option<Uuid>,
     pub course_id: Option<Uuid>,

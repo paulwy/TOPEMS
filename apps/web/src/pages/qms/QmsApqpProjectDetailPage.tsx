@@ -26,7 +26,7 @@ export default function QmsApqpProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<(ReturnType<typeof getTabs>)[number]['id']>('phases');
+  const [activeTab, setActiveTab] = useState<ReturnType<typeof getTabs>[number]['id']>('phases');
   const project = useMemo(() => {
     const list = data.apqpProjects ?? [];
     return list.find((p) => p.id === id) ?? list[0];
@@ -93,7 +93,9 @@ export default function QmsApqpProjectDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_apqp_project_detail_page.k5')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_apqp_project_detail_page.k5')}
+        </p>
         <FSMActionButtons
           fsm='apqp'
           currentStatus={project.status ?? 'planning'}
@@ -194,7 +196,9 @@ export default function QmsApqpProjectDetailPage() {
                       style={{ width: `${p.progress ?? 0}%` }}
                     />
                   </div>
-                  <p className='mt-1 text-xs text-gray-500'>{i18n.t('pages.qms_apqp_project_detail_page.k0')}</p>
+                  <p className='mt-1 text-xs text-gray-500'>
+                    {i18n.t('pages.qms_apqp_project_detail_page.k0')}
+                  </p>
                 </div>
               ))}
             </div>
@@ -205,7 +209,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k16')}</h3>
           {tasks.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k17')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k17')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
@@ -241,7 +247,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k23')}</h3>
           {risks.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k24')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k24')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
@@ -279,7 +287,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k28')}</h3>
           {approvals.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k29')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k29')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>

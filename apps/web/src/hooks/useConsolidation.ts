@@ -150,7 +150,7 @@ export const useAddCompanyToScope = () => {
 /**
  * 更新合并范围公司
  */
-export const useUpdateScopeCompany = () => {
+const useUpdateScopeCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ companyId, data }: { companyId: string; data: Partial<ConsolidationCompany> }) =>
@@ -189,7 +189,7 @@ export const useRemoveCompanyFromScope = () => {
 /**
  * 获取抵消规则列表
  */
-export const useEliminationRules = (params: EliminationRuleQueryParams) => {
+const useEliminationRules = (params: EliminationRuleQueryParams) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, params],
     queryFn: () => consolidationApi.getEliminationRules(params),
@@ -201,7 +201,7 @@ export const useEliminationRules = (params: EliminationRuleQueryParams) => {
 /**
  * 获取抵消规则详情
  */
-export const useEliminationRule = (ruleId: string) => {
+const useEliminationRule = (ruleId: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULE_BASE, ruleId],
     queryFn: () => consolidationApi.getEliminationRule(ruleId),
@@ -214,7 +214,7 @@ export const useEliminationRule = (ruleId: string) => {
 /**
  * 创建抵消规则
  */
-export const useCreateEliminationRule = () => {
+const useCreateEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<EliminationRule>) => consolidationApi.createEliminationRule(data),
@@ -232,7 +232,7 @@ export const useCreateEliminationRule = () => {
 /**
  * 更新抵消规则
  */
-export const useUpdateEliminationRule = () => {
+const useUpdateEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ ruleId, data }: { ruleId: string; data: Partial<EliminationRule> }) =>
@@ -251,7 +251,7 @@ export const useUpdateEliminationRule = () => {
 /**
  * 删除抵消规则
  */
-export const useDeleteEliminationRule = () => {
+const useDeleteEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (ruleId: string) => consolidationApi.deleteEliminationRule(ruleId),
@@ -272,7 +272,7 @@ export const useDeleteEliminationRule = () => {
 /**
  * 获取内部交易列表
  */
-export const useInternalTransactions = (params?: InternalTransactionQueryParams) => {
+const useInternalTransactions = (params?: InternalTransactionQueryParams) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTIONS_BASE, params],
     queryFn: () => consolidationApi.getInternalTransactions(params),
@@ -284,7 +284,7 @@ export const useInternalTransactions = (params?: InternalTransactionQueryParams)
 /**
  * 获取内部交易详情
  */
-export const useInternalTransaction = (transactionId: string) => {
+const useInternalTransaction = (transactionId: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTION_BASE, transactionId],
     queryFn: () => consolidationApi.getInternalTransaction(transactionId),
@@ -297,7 +297,7 @@ export const useInternalTransaction = (transactionId: string) => {
 /**
  * 执行内部交易抵消
  */
-export const useExecuteElimination = () => {
+const useExecuteElimination = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: { scope_id: string; period: string; rule_ids?: string[] }) =>
@@ -332,7 +332,7 @@ export const useConsolidationReports = (params?: ConsolidationReportQueryParams)
 /**
  * 获取合并报表详情
  */
-export const useConsolidationReport = (reportId: string) => {
+const useConsolidationReport = (reportId: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_BASE, reportId],
     queryFn: () => consolidationApi.getConsolidationReport(reportId),
@@ -417,7 +417,7 @@ export const usePublishConsolidationReport = () => {
 /**
  * 删除合并报表
  */
-export const useDeleteConsolidationReport = () => {
+const useDeleteConsolidationReport = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.deleteConsolidationReport(reportId),

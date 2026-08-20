@@ -14,7 +14,7 @@
 
 // ── 后端服务 / 基础设施端口（80xx + 其他） ──────────────────────────
 // 与 config/ports.env 完全对齐；端口权威来源为 ports.env
-const BACKEND_PORTS: Record<string, number> = {
+export const BACKEND_PORTS: Record<string, number> = {
   // Core virtual services (统一入口 8000)
   core: 8000,
   iam: 8000,

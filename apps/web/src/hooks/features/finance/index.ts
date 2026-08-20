@@ -1,45 +1,8 @@
-/**
- * Features - Finance
- *
- * 财务相关：ERP 主数据、外部 ERP 对接、基础财务、CRM/HRM/PM 财务模块
- */
-
-// ERP 主数据（包含 useAssets/useExpenses/useBudgets 等多个 hooks）
+// 财务模块聚合导出
 export type { UseErpResult } from '../../useErp';
 
 // 外部 ERP 对接（包含多个 hooks）
-export {
-  useErpConnections,
-  useErpConnection,
-  useCreateErpConnection,
-  useUpdateErpConnection,
-  useDeleteErpConnection,
-  useTestErpConnection,
-  useToggleErpConnection,
-  useSyncAccounts,
-  useSyncCustomers,
-  useSyncSuppliers,
-  useSyncVouchers,
-  useFullSync,
-  useSyncLogs,
-  useSyncLogDetail,
-  useSyncStatistics,
-  useAccountMappings,
-  useImportAccountMappings,
-  useAutoMatchAccountMappings,
-  useUpdateAccountMapping,
-  useCustomerMappings,
-  useImportCustomerMappings,
-  useUpdateCustomerMapping,
-  useSupplierMappings,
-  useImportSupplierMappings,
-  useUpdateSupplierMapping,
-  usePreviewExternalAccounts,
-  usePreviewExternalCustomers,
-  usePreviewExternalSuppliers,
-  useExportSyncLogs,
-  useExportMappingRules,
-} from '../../useExternalErp';
+export { useErpConnections } from '../../useExternalErp';
 
 // 基础财务（账户/科目/期初余额等）
 export {
@@ -52,26 +15,8 @@ export {
 // CRM 财务（销售发票/收款等）
 export {
   useCustomerFinanceInfo,
-  useUpdateCustomerFinanceInfo,
   useSalesInvoices,
-  useSalesInvoice,
-  useCreateSalesInvoice,
-  useUpdateSalesInvoice,
-  useDeleteSalesInvoice,
-  useIssueSalesInvoice,
-  useVoidSalesInvoice,
-  useRedFlushSalesInvoice,
   useCollectionRecords,
-  useCollectionRecord,
-  useCreateCollectionRecord,
-  useConfirmCollection,
-  useBatchConfirmCollections,
-  useReceivableAging,
-  useCustomerReceivableSummary,
-  useOverdueReceivables,
-  useExportSalesInvoices,
-  useExportCollectionRecords,
-  useExportReceivableAging,
 } from '../../useCrmFinance';
 
 // HRM 财务（员工薪资等）
@@ -91,23 +36,12 @@ export {
   useDeleteConsolidationScope,
   useScopeCompanies,
   useAddCompanyToScope,
-  useUpdateScopeCompany,
   useRemoveCompanyFromScope,
-  useEliminationRules,
-  useEliminationRule,
-  useCreateEliminationRule,
-  useUpdateEliminationRule,
-  useDeleteEliminationRule,
-  useInternalTransactions,
-  useInternalTransaction,
-  useExecuteElimination,
   useConsolidationReports,
-  useConsolidationReport,
   useGenerateConsolidationReport,
   useConsolidationReportLines,
   useApproveConsolidationReport,
   usePublishConsolidationReport,
-  useDeleteConsolidationReport,
   useCompanyRelations,
   useCreateCompanyRelation,
   useUpdateCompanyRelation,

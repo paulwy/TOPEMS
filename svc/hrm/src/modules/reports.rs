@@ -471,7 +471,7 @@ async fn attendance_summary(
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.leave_requests WHERE start_date <= $2 AND end_date >= $1 AND status = 'approved'"#,
+        r#"SELECT COUNT(*) FROM hrm.leave_records WHERE start_date <= $2 AND end_date >= $1 AND approval_status = 'approved'"#,
     )
     .bind(&start_date)
     .bind(&end_date)

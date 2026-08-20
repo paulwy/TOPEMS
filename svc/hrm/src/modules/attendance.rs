@@ -102,8 +102,8 @@ async fn get_today_status(
     } else if let Some(eid) = employee_id {
         sqlx::query(
             r#"
-            SELECT check_in, check_out
-            FROM plugin_hrm.attendance_records
+            SELECT check_in_time, check_out_time
+            FROM hrm.attendance_records
             WHERE employee_id = $1 AND date::date = CURRENT_DATE
             ORDER BY date DESC
             LIMIT 1
@@ -121,13 +121,13 @@ async fn get_today_status(
             let has_check_in: bool = if user_id.is_some() {
                 row.get::<Option<String>, _>("check_in_time").is_some()
             } else {
-                row.get::<Option<chrono::DateTime<Utc>>, _>("check_in")
+                row.get::<Option<chrono::NaiveTime>, _>("check_in_time")
                     .is_some()
             };
             let has_check_out: bool = if user_id.is_some() {
                 row.get::<Option<String>, _>("check_out_time").is_some()
             } else {
-                row.get::<Option<chrono::DateTime<Utc>>, _>("check_out")
+                row.get::<Option<chrono::NaiveTime>, _>("check_out_time")
                     .is_some()
             };
 
@@ -158,8 +158,10 @@ async fn get_today_status(
 #[derive(Debug, Deserialize)]
 pub struct AttendancePaginationParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
+    pub date: Option<String>,
 }
 
 async fn list_attendance(
@@ -176,18 +178,23 @@ async fn list_attendance(
     let offset = (page - 1) * page_size;
 
     let emp_filter = params.employee_id;
+    let date_filter = params.date;
 
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        SELECT id, employee_id, date, check_in, check_out, 
-               status, work_hours, notes, created_at, updated_at
-        FROM plugin_hrm.attendance_records
-        WHERE ($1::uuid IS NULL OR employee_id = $1)
+        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+               check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+               status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+        FROM hrm.attendance_records
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR employee_id = $1)
+          AND ($2::text IS NULL OR date::text = $2)
         ORDER BY date DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(emp_filter)
+    .bind(&emp_filter)
+    .bind(&date_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -197,11 +204,14 @@ async fn list_attendance(
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_hrm.attendance_records
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR employee_id = $1)
+                SELECT COUNT(*) FROM hrm.attendance_records
+                WHERE deleted_at IS NULL
+                  AND ($1::uuid IS NULL OR employee_id = $1)
+                  AND ($2::text IS NULL OR date::text = $2)
                 "#,
             )
-            .bind(emp_filter)
+            .bind(&emp_filter)
+            .bind(&date_filter)
             .fetch_one(&state.db)
             .await;
 
@@ -229,6 +239,7 @@ async fn list_attendance(
 
 async fn create_attendance(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
@@ -238,22 +249,29 @@ async fn create_attendance(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let org_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        INSERT INTO plugin_hrm.attendance_records (
-            id, employee_id, date, check_in, check_out, 
+        INSERT INTO hrm.attendance_records (
+            id, organization_id, employee_id, date, check_in_time, check_out_time,
             status, work_hours, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, employee_id, date, check_in, check_out, 
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id, organization_id AS tenant_id, employee_id, date,
+                  check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours, notes, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(org_id)
     .bind(req.employee_id)
     .bind(req.date)
-    .bind(req.check_in)
-    .bind(req.check_out)
+    .bind(req.check_in.clone())
+    .bind(req.check_out.clone())
     .bind(&req.status)
     .bind(req.work_hours)
     .bind(&req.notes)
@@ -310,9 +328,10 @@ async fn get_attendance(
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        SELECT id, employee_id, date, check_in, check_out, 
-               status, work_hours, notes, created_at, updated_at
-        FROM plugin_hrm.attendance_records WHERE id = $1
+        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+               check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+               status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+        FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)
@@ -342,8 +361,10 @@ async fn update_attendance(
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let existing = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        SELECT id, employee_id, date, check_in, check_out, 
-               status, work_hours, notes, created_at, updated_at FROM plugin_hrm.attendance_records WHERE id = $1
+        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+               check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+               status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+        FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
         "#,
     )
     .bind(id)
@@ -375,11 +396,12 @@ async fn update_attendance(
 
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
-        UPDATE plugin_hrm.attendance_records SET
-            check_in = $2, check_out = $3, status = $4, 
+        UPDATE hrm.attendance_records SET
+            check_in_time = $2, check_out_time = $3, status = $4,
             work_hours = $5, notes = $6, updated_at = $7
-        WHERE id = $1
-        RETURNING id, employee_id, date, check_in, check_out, 
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, organization_id AS tenant_id, employee_id, date,
+                  check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours, notes, created_at, updated_at
         "#,
     )
@@ -410,11 +432,10 @@ async fn delete_attendance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result =
-        sqlx::query("UPDATE plugin_hrm.attendance_records SET deleted_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query("UPDATE hrm.attendance_records SET deleted_at = NOW() WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

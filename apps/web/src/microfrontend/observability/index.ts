@@ -22,13 +22,7 @@ export {
 export { ObservabilityPanel } from './ObservabilityPanel';
 
 // V217: MF 运行时可观测性埋点
-export {
-  initMFObservability,
-  getMFErrorEvents,
-  getMFErrorStats,
-  clearMFErrorEvents,
-  mfObservabilityPlugin,
-} from './mf-runtime-plugin';
+export { initMFObservability } from './mf-runtime-plugin';
 
 export {
   classifyMFError,

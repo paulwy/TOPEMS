@@ -16,6 +16,7 @@ use topems_shared_core::response::{api_error, ApiResponse};
 #[derive(Debug, Deserialize)]
 pub struct SalaryAdjustmentPaginationParams {
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub status: Option<String>,
@@ -51,27 +52,29 @@ async fn list_salary_adjustments(
 
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        SELECT 
-            sa.id, 
-            sa.employee_id, 
-            e.name as employee_name, 
+        SELECT
+            sa.id,
+            sa.tenant_id,
+            sa.employee_id,
+            e.name as employee_name,
             d.name as department,
-            sa.adjustment_type, 
-            sa.old_salary, 
-            sa.new_salary, 
+            sa.adjustment_type,
+            sa.previous_salary AS old_salary,
+            sa.new_salary,
             sa.adjustment_amount,
-            sa.reason, 
-            sa.effective_date, 
-            sa.status, 
-            sa.approver_id, 
-            sa.approved_at, 
+            sa.reason,
+            sa.effective_date::timestamptz AS effective_date,
+            sa.status,
+            sa.approver_id,
+            sa.approval_date::timestamptz AS approved_at,
             sa.rejection_reason,
-            sa.created_at, 
+            sa.created_at,
             sa.updated_at
-        FROM plugin_hrm.salary_adjustments sa
+        FROM hrm.salary_adjustments sa
         LEFT JOIN hrm.employees e ON sa.employee_id = e.id
         LEFT JOIN hrm.departments d ON e.department_id = d.id
-        WHERE ($1::uuid IS NULL OR sa.employee_id = $1)
+        WHERE sa.deleted_at IS NULL
+          AND ($1::uuid IS NULL OR sa.employee_id = $1)
           AND ($2::text IS NULL OR sa.status = $2)
         ORDER BY sa.created_at DESC
         LIMIT $3 OFFSET $4
@@ -88,8 +91,9 @@ async fn list_salary_adjustments(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_hrm.salary_adjustments sa
-                WHERE ($1::uuid IS NULL OR sa.employee_id = $1)
+                SELECT COUNT(*) FROM hrm.salary_adjustments sa
+                WHERE sa.deleted_at IS NULL
+                  AND ($1::uuid IS NULL OR sa.employee_id = $1)
                   AND ($2::text IS NULL OR sa.status = $2)
                 "#,
             )
@@ -123,24 +127,25 @@ async fn get_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        SELECT 
-            sa.id, 
-            sa.employee_id, 
-            e.name as employee_name, 
+        SELECT
+            sa.id,
+            sa.tenant_id,
+            sa.employee_id,
+            e.name as employee_name,
             d.name as department,
-            sa.adjustment_type, 
-            sa.old_salary, 
-            sa.new_salary, 
+            sa.adjustment_type,
+            sa.previous_salary AS old_salary,
+            sa.new_salary,
             sa.adjustment_amount,
-            sa.reason, 
-            sa.effective_date, 
-            sa.status, 
-            sa.approver_id, 
-            sa.approved_at, 
+            sa.reason,
+            sa.effective_date::timestamptz AS effective_date,
+            sa.status,
+            sa.approver_id,
+            sa.approval_date::timestamptz AS approved_at,
             sa.rejection_reason,
-            sa.created_at, 
+            sa.created_at,
             sa.updated_at
-        FROM plugin_hrm.salary_adjustments sa
+        FROM hrm.salary_adjustments sa
         LEFT JOIN hrm.employees e ON sa.employee_id = e.id
         LEFT JOIN hrm.departments d ON e.department_id = d.id
         WHERE sa.id = $1
@@ -172,12 +177,19 @@ async fn create_salary_adjustment(
 
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        INSERT INTO plugin_hrm.salary_adjustments (
-            id, employee_id, adjustment_type, old_salary, new_salary, adjustment_amount, reason, effective_date, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
-        RETURNING id, employee_id, NULL as employee_name, NULL as department,
-                  adjustment_type, old_salary, new_salary, adjustment_amount,
-                  reason, effective_date, status, NULL as approver_id, NULL as approved_at,
+        INSERT INTO hrm.salary_adjustments (
+            id, organization_id, tenant_id, employee_id, adjustment_type,
+            previous_salary, new_salary, adjustment_amount, reason, effective_date, status
+        ) VALUES (
+            $1,
+            (SELECT organization_id FROM hrm.employees WHERE id = $2),
+            (SELECT tenant_id FROM hrm.employees WHERE id = $2),
+            $2, $3, $4, $5, $6, $7, $8, 'pending'
+        )
+        RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
+                  adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
+                  reason, effective_date::timestamptz AS effective_date, status,
+                  NULL as approver_id, NULL as approved_at,
                   NULL as rejection_reason, created_at, updated_at
         "#,
     )
@@ -208,24 +220,25 @@ async fn update_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let existing = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        SELECT 
-            sa.id, 
-            sa.employee_id, 
-            NULL as employee_name, 
+        SELECT
+            sa.id,
+            sa.tenant_id,
+            sa.employee_id,
+            NULL as employee_name,
             NULL as department,
-            sa.adjustment_type, 
-            sa.old_salary, 
-            sa.new_salary, 
+            sa.adjustment_type,
+            sa.previous_salary AS old_salary,
+            sa.new_salary,
             sa.adjustment_amount,
-            sa.reason, 
-            sa.effective_date, 
-            sa.status, 
-            sa.approver_id, 
-            sa.approved_at, 
+            sa.reason,
+            sa.effective_date::timestamptz AS effective_date,
+            sa.status,
+            sa.approver_id,
+            sa.approval_date::timestamptz AS approved_at,
             sa.rejection_reason,
-            sa.created_at, 
+            sa.created_at,
             sa.updated_at
-        FROM plugin_hrm.salary_adjustments sa WHERE sa.id = $1
+        FROM hrm.salary_adjustments sa WHERE sa.id = $1
         "#,
     )
     .bind(id)
@@ -250,10 +263,10 @@ async fn update_salary_adjustment(
 
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE plugin_hrm.salary_adjustments
-        SET 
+        UPDATE hrm.salary_adjustments
+        SET
             adjustment_type = COALESCE($1, adjustment_type),
-            old_salary = COALESCE($2, old_salary),
+            previous_salary = COALESCE($2, previous_salary),
             new_salary = COALESCE($3, new_salary),
             adjustment_amount = COALESCE($4, adjustment_amount),
             reason = COALESCE($5, reason),
@@ -261,9 +274,10 @@ async fn update_salary_adjustment(
             status = COALESCE($7, status),
             updated_at = NOW()
         WHERE id = $8
-        RETURNING id, employee_id, NULL as employee_name, NULL as department,
-                  adjustment_type, old_salary, new_salary, adjustment_amount,
-                  reason, effective_date, status, approver_id, approved_at,
+        RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
+                  adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
+                  reason, effective_date::timestamptz AS effective_date, status,
+                  approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
         "#,
     )
@@ -294,16 +308,17 @@ async fn approve_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE plugin_hrm.salary_adjustments
-        SET 
+        UPDATE hrm.salary_adjustments
+        SET
             status = 'approved',
             approver_id = $1,
-            approved_at = NOW(),
+            approval_date = NOW(),
             updated_at = NOW()
         WHERE id = $2
-        RETURNING id, employee_id, NULL as employee_name, NULL as department,
-                  adjustment_type, old_salary, new_salary, adjustment_amount,
-                  reason, effective_date, status, approver_id, approved_at,
+        RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
+                  adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
+                  reason, effective_date::timestamptz AS effective_date, status,
+                  approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
         "#,
     )
@@ -328,16 +343,17 @@ async fn reject_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE plugin_hrm.salary_adjustments
-        SET 
+        UPDATE hrm.salary_adjustments
+        SET
             status = 'rejected',
             approver_id = $1,
             rejection_reason = $2,
             updated_at = NOW()
         WHERE id = $3
-        RETURNING id, employee_id, NULL as employee_name, NULL as department,
-                  adjustment_type, old_salary, new_salary, adjustment_amount,
-                  reason, effective_date, status, approver_id, approved_at,
+        RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
+                  adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
+                  reason, effective_date::timestamptz AS effective_date, status,
+                  approver_id, approval_date::timestamptz AS approved_at,
                   rejection_reason, created_at, updated_at
         "#,
     )

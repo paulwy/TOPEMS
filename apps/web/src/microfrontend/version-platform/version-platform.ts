@@ -323,5 +323,5 @@ class VersionPlatform {
   }
 }
 
-export const versionPlatform = VersionPlatform.getInstance();
+const versionPlatform = VersionPlatform.getInstance();
 export default versionPlatform;

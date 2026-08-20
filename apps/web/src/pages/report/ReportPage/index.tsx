@@ -59,10 +59,7 @@ const ReportPage: React.FC = () => {
     return serviceStatuses[serviceName] || false;
   };
 
-  const checkServiceStatus = async (
-    serviceName: string,
-    setStatus: (up: boolean) => void
-  ) => {
+  const checkServiceStatus = async (serviceName: string, setStatus: (up: boolean) => void) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -89,9 +86,7 @@ const ReportPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('bi', (up) =>
-        setServiceStatuses((prev) => ({ ...prev, report: up }))
-      );
+      checkServiceStatus('bi', (up) => setServiceStatuses((prev) => ({ ...prev, report: up })));
     };
 
     checkAllServices();

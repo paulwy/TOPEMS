@@ -46,23 +46,11 @@ const ISSUE_STATES = ['open', 'in_progress', 'resolved', 'closed', 'reopened'] a
 export type IssueState = (typeof ISSUE_STATES)[number];
 
 /** 纠正措施 FSM 状态 */
-const ACTION_STATES = [
-  'pending',
-  'in_progress',
-  'implemented',
-  'verified',
-  'closed',
-] as const;
+const ACTION_STATES = ['pending', 'in_progress', 'implemented', 'verified', 'closed'] as const;
 export type ActionState = (typeof ACTION_STATES)[number];
 
 /** 审核计划 FSM 状态 */
-const AUDIT_PLAN_STATES = [
-  'draft',
-  'planned',
-  'in_progress',
-  'completed',
-  'cancelled',
-] as const;
+const AUDIT_PLAN_STATES = ['draft', 'planned', 'in_progress', 'completed', 'cancelled'] as const;
 export type AuditPlanState = (typeof AUDIT_PLAN_STATES)[number];
 
 /** 审核发现 FSM 状态 */

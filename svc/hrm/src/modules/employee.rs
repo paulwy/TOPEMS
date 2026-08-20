@@ -61,6 +61,7 @@ fn employee_cache_key(id: &Uuid) -> String {
 pub struct EmployeePaginationParams {
     #[schema(example = 1)]
     pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
     #[schema(example = 20)]
     pub page_size: Option<i64>,
     #[schema(example = "张三")]

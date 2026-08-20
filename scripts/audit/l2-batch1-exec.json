@@ -1,0 +1,856 @@
+{
+  "batch_id": "l2-caution-batch1-final-dead-chains",
+  "date": "2026-08-20",
+  "description": "L2-CAUTION Batch 1 final: dead VALUE chains only. For every L2 VALUE candidate, performed strip-comments+strings analysis on ALL files containing that ID to determine if ID only appears in (a) def file itself, (b) pure transit import/export-from blocks directly pointing to defFile ancestor chain (= barrel aggregation). Any remaining ID occurrence (non-transitive local usage in any file) marks it as ALIVE and skipped.",
+  "level": "L2",
+  "classification": "dead-chain-strict-comments-strings-localuse",
+  "removal_mode": "def-side export-kw-only first, then barrel chain repair guided by TSC errors.",
+  "total_exports": 88,
+  "total_def_files": 19,
+  "alive_excluded": 196,
+  "targets": {
+    "apps/web/src/ai/agent/workflow-engine.ts": [
+      "TriggerType"
+    ],
+    "apps/web/src/ai/automation/smart-testing.ts": [
+      "TestType",
+      "TestPriority",
+      "TestStatus"
+    ],
+    "apps/web/src/ai/enhancement/code-completion.ts": [
+      "CompletionKind"
+    ],
+    "apps/web/src/ai/enhancement/test-generator.ts": [
+      "TestFramework"
+    ],
+    "apps/web/src/api/feedback/workflow.ts": [
+      "ActionType"
+    ],
+    "apps/web/src/api/plugin/registry.ts": [
+      "getSuites",
+      "getPluginRegistry"
+    ],
+    "apps/web/src/components/common/AdvancedFilter.tsx": [
+      "AdvancedFilterPanel"
+    ],
+    "apps/web/src/components/common/TouchButton.tsx": [
+      "TouchRipple"
+    ],
+    "apps/web/src/components/layout/ModuleTabs.tsx": [
+      "ModuleTabs"
+    ],
+    "apps/web/src/hooks/useConsolidation.ts": [
+      "useUpdateScopeCompany",
+      "useEliminationRules",
+      "useEliminationRule",
+      "useCreateEliminationRule",
+      "useUpdateEliminationRule",
+      "useDeleteEliminationRule",
+      "useInternalTransactions",
+      "useInternalTransaction",
+      "useExecuteElimination",
+      "useConsolidationReport",
+      "useDeleteConsolidationReport"
+    ],
+    "apps/web/src/hooks/useCrmFinance.ts": [
+      "useUpdateCustomerFinanceInfo",
+      "useSalesInvoice",
+      "useCreateSalesInvoice",
+      "useUpdateSalesInvoice",
+      "useDeleteSalesInvoice",
+      "useIssueSalesInvoice",
+      "useVoidSalesInvoice",
+      "useRedFlushSalesInvoice",
+      "useCollectionRecord",
+      "useCreateCollectionRecord",
+      "useConfirmCollection",
+      "useBatchConfirmCollections",
+      "useReceivableAging",
+      "useCustomerReceivableSummary",
+      "useOverdueReceivables",
+      "useExportSalesInvoices",
+      "useExportCollectionRecords",
+      "useExportReceivableAging"
+    ],
+    "apps/web/src/hooks/useExternalErp.ts": [
+      "useErpConnection",
+      "useCreateErpConnection",
+      "useUpdateErpConnection",
+      "useDeleteErpConnection",
+      "useTestErpConnection",
+      "useToggleErpConnection",
+      "useSyncAccounts",
+      "useSyncCustomers",
+      "useSyncSuppliers",
+      "useSyncVouchers",
+      "useFullSync",
+      "useSyncLogs",
+      "useSyncLogDetail",
+      "useSyncStatistics",
+      "useAccountMappings",
+      "useImportAccountMappings",
+      "useAutoMatchAccountMappings",
+      "useUpdateAccountMapping",
+      "useCustomerMappings",
+      "useImportCustomerMappings",
+      "useUpdateCustomerMapping",
+      "useSupplierMappings",
+      "useImportSupplierMappings",
+      "useUpdateSupplierMapping",
+      "usePreviewExternalAccounts",
+      "usePreviewExternalCustomers",
+      "usePreviewExternalSuppliers",
+      "useExportSyncLogs",
+      "useExportMappingRules"
+    ],
+    "apps/web/src/microfrontend/ai-driven/auto-ops.ts": [
+      "OpsActionType",
+      "OpsStatus",
+      "AutoOps",
+      "autoOps"
+    ],
+    "apps/web/src/microfrontend/ai-driven/index.ts": [
+      "smartRouter",
+      "SmartRouter",
+      "RecommendationStrategy",
+      "predictiveScaler",
+      "PredictiveScaler",
+      "ModelAlgorithm"
+    ],
+    "apps/web/src/microfrontend/observability/index.ts": [
+      "getMFErrorEvents",
+      "getMFErrorStats",
+      "clearMFErrorEvents",
+      "mfObservabilityPlugin"
+    ],
+    "apps/web/src/microfrontend/version-platform/rollout-manager.ts": [
+      "rolloutManager"
+    ],
+    "apps/web/src/microfrontend/version-platform/version-platform.ts": [
+      "versionPlatform"
+    ],
+    "apps/web/src/schemas/hrm/department.ts": [
+      "getDepartmentSchema"
+    ],
+    "apps/web/src/schemas/hrm/employee.ts": [
+      "getEmployeeSchema"
+    ]
+  },
+  "chains": [
+    {
+      "name": "TriggerType",
+      "defFile": "apps/web/src/ai/agent/workflow-engine.ts",
+      "refCount": 4,
+      "sampleRefs": [
+        "apps/web/src/ai/agent/index.ts",
+        "apps/web/src/ai/automation/index.ts",
+        "apps/web/src/api/feedback/index.ts",
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "TestType",
+      "defFile": "apps/web/src/ai/automation/smart-testing.ts",
+      "refCount": 3,
+      "sampleRefs": [
+        "apps/web/src/ai/automation/index.ts",
+        "apps/web/src/ai/enhancement/index.ts",
+        "apps/web/src/ai/quality/index.ts"
+      ]
+    },
+    {
+      "name": "TestPriority",
+      "defFile": "apps/web/src/ai/automation/smart-testing.ts",
+      "refCount": 2,
+      "sampleRefs": [
+        "apps/web/src/ai/automation/index.ts",
+        "apps/web/src/ai/quality/index.ts"
+      ]
+    },
+    {
+      "name": "TestStatus",
+      "defFile": "apps/web/src/ai/automation/smart-testing.ts",
+      "refCount": 3,
+      "sampleRefs": [
+        "apps/web/src/ai/automation/index.ts",
+        "apps/web/src/ai/quality/index.ts",
+        "apps/web/src/ai/security/index.ts"
+      ]
+    },
+    {
+      "name": "CompletionKind",
+      "defFile": "apps/web/src/ai/enhancement/code-completion.ts",
+      "refCount": 3,
+      "sampleRefs": [
+        "apps/web/src/ai/enhancement/index.ts",
+        "apps/web/src/microfrontend/devex/index.ts",
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "TestFramework",
+      "defFile": "apps/web/src/ai/enhancement/test-generator.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/enhancement/index.ts"
+      ]
+    },
+    {
+      "name": "ActionType",
+      "defFile": "apps/web/src/api/feedback/workflow.ts",
+      "refCount": 2,
+      "sampleRefs": [
+        "apps/web/src/api/feedback/index.ts",
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "getSuites",
+      "defFile": "apps/web/src/api/plugin/registry.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/plugin/index.ts"
+      ]
+    },
+    {
+      "name": "getPluginRegistry",
+      "defFile": "apps/web/src/api/plugin/registry.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/plugin/index.ts"
+      ]
+    },
+    {
+      "name": "AdvancedFilterPanel",
+      "defFile": "apps/web/src/components/common/AdvancedFilter.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/index.ts"
+      ]
+    },
+    {
+      "name": "TouchRipple",
+      "defFile": "apps/web/src/components/common/TouchButton.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/foundation/index.ts"
+      ]
+    },
+    {
+      "name": "ModuleTabs",
+      "defFile": "apps/web/src/components/layout/ModuleTabs.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateScopeCompany",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useEliminationRules",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useInternalTransactions",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useInternalTransaction",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExecuteElimination",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useConsolidationReport",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteConsolidationReport",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateCustomerFinanceInfo",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useIssueSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useVoidSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useRedFlushSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCollectionRecord",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateCollectionRecord",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useConfirmCollection",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useBatchConfirmCollections",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useReceivableAging",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCustomerReceivableSummary",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useOverdueReceivables",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportSalesInvoices",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportCollectionRecords",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportReceivableAging",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useTestErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useToggleErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncAccounts",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncCustomers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncSuppliers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncVouchers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useFullSync",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncLogs",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncLogDetail",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncStatistics",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useAutoMatchAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateAccountMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCustomerMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportCustomerMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateCustomerMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSupplierMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportSupplierMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateSupplierMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalAccounts",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalCustomers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalSuppliers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportSyncLogs",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportMappingRules",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "OpsActionType",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "OpsStatus",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "AutoOps",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "autoOps",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "smartRouter",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "SmartRouter",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "RecommendationStrategy",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "predictiveScaler",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "PredictiveScaler",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "ModelAlgorithm",
+      "defFile": "apps/web/src/microfrontend/ai-driven/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "getMFErrorEvents",
+      "defFile": "apps/web/src/microfrontend/observability/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "getMFErrorStats",
+      "defFile": "apps/web/src/microfrontend/observability/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "clearMFErrorEvents",
+      "defFile": "apps/web/src/microfrontend/observability/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "mfObservabilityPlugin",
+      "defFile": "apps/web/src/microfrontend/observability/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "rolloutManager",
+      "defFile": "apps/web/src/microfrontend/version-platform/rollout-manager.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "versionPlatform",
+      "defFile": "apps/web/src/microfrontend/version-platform/version-platform.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "getDepartmentSchema",
+      "defFile": "apps/web/src/schemas/hrm/department.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/schemas/hrm/index.ts"
+      ]
+    },
+    {
+      "name": "getEmployeeSchema",
+      "defFile": "apps/web/src/schemas/hrm/employee.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/schemas/hrm/index.ts"
+      ]
+    }
+  ]
+}
