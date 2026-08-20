@@ -156,7 +156,7 @@ export interface AvatarGroupProps {
   sx?: SxProps<Theme>;
 }
 
-export const AvatarGroup: React.FC<AvatarGroupProps> = ({
+const AvatarGroup: React.FC<AvatarGroupProps> = ({
   avatars,
   max = 5,
   size = 'md',

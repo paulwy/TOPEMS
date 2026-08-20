@@ -64,7 +64,7 @@ const formatNumber = (value: number, decimalPlaces: number, thousandSeparator: b
   return parts.join('.');
 };
 
-export const AmountDisplay: React.FC<AmountDisplayProps> = ({
+const AmountDisplay: React.FC<AmountDisplayProps> = ({
   amount,
   currency = 'CNY',
   showUnit = true,

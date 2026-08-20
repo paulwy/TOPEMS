@@ -42,7 +42,7 @@ const flattenDepartments = (departments: Department[], depth = 0): Department[] 
   return result;
 };
 
-export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
+const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   value,
   onChange,
   multiple = false,

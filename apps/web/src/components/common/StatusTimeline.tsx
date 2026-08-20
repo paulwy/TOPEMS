@@ -59,7 +59,7 @@ const statusConfig = {
   },
 };
 
-export const StatusTimeline: React.FC<StatusTimelineProps> = ({
+const StatusTimeline: React.FC<StatusTimelineProps> = ({
   items,
   orientation = 'vertical',
   showLabels = true,

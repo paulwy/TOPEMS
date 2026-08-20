@@ -223,7 +223,7 @@ interface GisProviderProps {
   initialState?: Partial<GisState>;
 }
 
-export function GisProvider({ children, initialState: customState }: GisProviderProps) {
+function GisProvider({ children, initialState: customState }: GisProviderProps) {
   const [state, dispatch] = useReducer(gisReducer, {
     ...initialState,
     ...customState,

@@ -181,7 +181,7 @@ export { CurrencyField, type CurrencyFieldProps } from './NumberFields';
 export { PercentField, type PercentFieldProps } from './NumberFields';
 
 // TouchButton - 触控按钮组件
-export { TouchButton, TouchRipple } from './TouchButton';
+export { TouchButton } from './TouchButton';
 
 // TouchComponents - 触控交互组件扩展
 export {
