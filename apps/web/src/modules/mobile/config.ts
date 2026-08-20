@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 MOBILE_PATHS.xxx，而非硬编码字符串
+
 export const MOBILE_PATHS = {
   root: '/mobile',
   home: '/mobile/home',
@@ -23,6 +24,226 @@ export const MOBILE_PATHS = {
   settingsApp: '/mobile/settings-app',
   offlineSync: '/mobile/offline-sync',
 } as const;
+export interface MobileHomePageProps {}
+
+export interface MobileWorkbenchPageProps {}
+
+export interface MobileAttendancePageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface MobileTaskListPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MobileApprovalPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MobileInventoryPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MobileQualityPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MobileProductionPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface MobileScanPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface MobileNotificationPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MobileProfilePageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface MobileSettingsPageProps {}
+
+const mobileHomeRoute: RouteConfigV2<MobileHomePageProps> = {
+  path: MOBILE_PATHS.home,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileHomePage'), 'MobileHomePage'),
+  module: 'mobile',
+  code: 'mobile-home',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['mobile:home:read'],
+  action: 'read',
+};
+
+const mobileWorkbenchRoute: RouteConfigV2<MobileWorkbenchPageProps> = {
+  path: MOBILE_PATHS.workbench,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileWorkbenchPage'), 'MobileWorkbenchPage'),
+  module: 'mobile',
+  code: 'mobile-workbench',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['mobile:home:read'],
+  action: 'read',
+};
+
+const mobileAttendanceRoute: RouteConfigV2<MobileAttendancePageProps> = {
+  path: MOBILE_PATHS.attendance,
+  element: lazyWithRetry(
+    () => import('@/pages/mobile/MobileAttendancePage'),
+    'MobileAttendancePage'
+  ),
+  module: 'mobile',
+  code: 'mobile-attendance',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['mobile:attendance:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileTaskListRoute: RouteConfigV2<MobileTaskListPageProps> = {
+  path: MOBILE_PATHS.tasks,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileTaskListPage'), 'MobileTaskListPage'),
+  module: 'mobile',
+  code: 'mobile-tasks',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['mobile:task:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileApprovalRoute: RouteConfigV2<MobileApprovalPageProps> = {
+  path: MOBILE_PATHS.approvals,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileApprovalPage'), 'MobileApprovalPage'),
+  module: 'mobile',
+  code: 'mobile-approvals',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['mobile:approval:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileInventoryRoute: RouteConfigV2<MobileInventoryPageProps> = {
+  path: MOBILE_PATHS.inventory,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileInventoryPage'), 'MobileInventoryPage'),
+  module: 'mobile',
+  code: 'mobile-inventory',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['mobile:inventory:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileQualityRoute: RouteConfigV2<MobileQualityPageProps> = {
+  path: MOBILE_PATHS.quality,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileQualityPage'), 'MobileQualityPage'),
+  module: 'mobile',
+  code: 'mobile-quality',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['mobile:quality:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileProductionRoute: RouteConfigV2<MobileProductionPageProps> = {
+  path: MOBILE_PATHS.production,
+  element: lazyWithRetry(
+    () => import('@/pages/mobile/MobileProductionPage'),
+    'MobileProductionPage'
+  ),
+  module: 'mobile',
+  code: 'mobile-production',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['mobile:production:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileScanRoute: RouteConfigV2<MobileScanPageProps> = {
+  path: MOBILE_PATHS.scan,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileScanPage'), 'MobileScanPage'),
+  module: 'mobile',
+  code: 'mobile-scan',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['mobile:scan:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileNotificationRoute: RouteConfigV2<MobileNotificationPageProps> = {
+  path: MOBILE_PATHS.notifications,
+  element: lazyWithRetry(
+    () => import('@/pages/mobile/MobileNotificationPage'),
+    'MobileNotificationPage'
+  ),
+  module: 'mobile',
+  code: 'mobile-notifications',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['mobile:notification:read', 'mobile:home:read'],
+  action: 'read',
+};
+
+const mobileProfileRoute: RouteConfigV2<MobileProfilePageProps> = {
+  path: MOBILE_PATHS.profile,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileProfilePage'), 'MobileProfilePage'),
+  module: 'mobile',
+  code: 'mobile-profile',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'detail',
+  group: 'setting',
+  requiredPermissions: ['mobile:home:read'],
+  action: 'read',
+};
+
+const mobileSettingsRoute: RouteConfigV2<MobileSettingsPageProps> = {
+  path: MOBILE_PATHS.settings,
+  element: lazyWithRetry(() => import('@/pages/mobile/MobileSettingsPage'), 'MobileSettingsPage'),
+  module: 'mobile',
+  code: 'mobile-settings',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['mobile:home:admin'],
+  action: 'admin',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const mobileModuleConfig: RouteModuleConfig = {
@@ -38,174 +259,18 @@ export const mobileModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'mobile:home:read',
   routes: [
-    {
-      path: MOBILE_PATHS.home,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileHomePage'), 'MobileHomePage'),
-      module: 'mobile',
-      code: 'mobile-home',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.workbench,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileWorkbenchPage'),
-        'MobileWorkbenchPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-workbench',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.attendance,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileAttendancePage'),
-        'MobileAttendancePage'
-      ),
-      module: 'mobile',
-      code: 'mobile-attendance',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['mobile:attendance:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.tasks,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileTaskListPage'),
-        'MobileTaskListPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-tasks',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['mobile:task:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.approvals,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileApprovalPage'),
-        'MobileApprovalPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-approvals',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['mobile:approval:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.inventory,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileInventoryPage'),
-        'MobileInventoryPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-inventory',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['mobile:inventory:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.quality,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileQualityPage'), 'MobileQualityPage'),
-      module: 'mobile',
-      code: 'mobile-quality',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['mobile:quality:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.production,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileProductionPage'),
-        'MobileProductionPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-production',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['mobile:production:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.scan,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileScanPage'), 'MobileScanPage'),
-      module: 'mobile',
-      code: 'mobile-scan',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['mobile:scan:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.notifications,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileNotificationPage'),
-        'MobileNotificationPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-notifications',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['mobile:notification:read', 'mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.profile,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileProfilePage'), 'MobileProfilePage'),
-      module: 'mobile',
-      code: 'mobile-profile',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'detail',
-      group: 'setting',
-      requiredPermissions: ['mobile:home:read'],
-      action: 'read',
-    },
-    {
-      path: MOBILE_PATHS.settings,
-      element: lazyWithRetry(
-        () => import('@/pages/mobile/MobileSettingsPage'),
-        'MobileSettingsPage'
-      ),
-      module: 'mobile',
-      code: 'mobile-settings',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['mobile:home:admin'],
-      action: 'admin',
-    },
+    mobileHomeRoute,
+    mobileWorkbenchRoute,
+    mobileAttendanceRoute,
+    mobileTaskListRoute,
+    mobileApprovalRoute,
+    mobileInventoryRoute,
+    mobileQualityRoute,
+    mobileProductionRoute,
+    mobileScanRoute,
+    mobileNotificationRoute,
+    mobileProfileRoute,
+    mobileSettingsRoute,
   ],
 };
 

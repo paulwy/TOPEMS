@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 EHS_PATHS.xxx，而非硬编码字符串
+
 export const EHS_PATHS = {
   root: '/ehs',
   check: '/ehs/check',
@@ -23,6 +24,289 @@ export const EHS_PATHS = {
   incidentReport: '/ehs/incident-report',
   dashboard: '/ehs/dashboard',
 } as const;
+export interface EhsCheckPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsHazardPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsHazardDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface EhsAccidentPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsPlanPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface CompliancePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EnvironmentPageProps {}
+
+export interface TrainingPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsOccupationalDiseasePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface HealthManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsHazardousMaterialPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EmergencyPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsDrillPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface EhsIncidentReportPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface EhsDashboardPageProps {}
+
+const ehsCheckRoute: RouteConfigV2<EhsCheckPageProps> = {
+  path: EHS_PATHS.check,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsCheckPage'), 'EhsCheckPage'),
+  module: 'ehs',
+  code: 'ehs-check',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:check:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsHazardRoute: RouteConfigV2<EhsHazardPageProps> = {
+  path: EHS_PATHS.hazard,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsHazardPage'), 'EhsHazardPage'),
+  module: 'ehs',
+  code: 'ehs-hazard',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:hazard:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsHazardDetailRoute: RouteConfigV2<EhsHazardDetailPageProps> = {
+  path: EHS_PATHS.hazardDetail,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsHazardDetailPage'), 'EhsHazardDetailPage'),
+  module: 'ehs',
+  code: 'ehs-hazard-detail',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['ehs:hazard:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsAccidentRoute: RouteConfigV2<EhsAccidentPageProps> = {
+  path: EHS_PATHS.accident,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsAccidentPage'), 'EhsAccidentPage'),
+  module: 'ehs',
+  code: 'ehs-accident',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:accident:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsPlanRoute: RouteConfigV2<EhsPlanPageProps> = {
+  path: EHS_PATHS.plan,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsPlanPage'), 'EhsPlanPage'),
+  module: 'ehs',
+  code: 'ehs-plan',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:plan:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const complianceRoute: RouteConfigV2<CompliancePageProps> = {
+  path: EHS_PATHS.compliance,
+  element: lazyWithRetry(() => import('@/pages/ehs/CompliancePage'), 'CompliancePage'),
+  module: 'ehs',
+  code: 'ehs-compliance',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:compliance:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const environmentRoute: RouteConfigV2<EnvironmentPageProps> = {
+  path: EHS_PATHS.environment,
+  element: lazyWithRetry(() => import('@/pages/ehs/EnvironmentPage'), 'EnvironmentPage'),
+  module: 'ehs',
+  code: 'ehs-environment',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['ehs:environment:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const trainingRoute: RouteConfigV2<TrainingPageProps> = {
+  path: EHS_PATHS.training,
+  element: lazyWithRetry(() => import('@/pages/ehs/TrainingPage'), 'TrainingPage'),
+  module: 'ehs',
+  code: 'ehs-training',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:training:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsOccupationalDiseaseRoute: RouteConfigV2<EhsOccupationalDiseasePageProps> = {
+  path: EHS_PATHS.occupationalDisease,
+  element: lazyWithRetry(
+    () => import('@/pages/ehs/EhsOccupationalDiseasePage'),
+    'EhsOccupationalDiseasePage'
+  ),
+  module: 'ehs',
+  code: 'ehs-occupational-disease',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:occupational_disease:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const healthManagementRoute: RouteConfigV2<HealthManagementPageProps> = {
+  path: EHS_PATHS.healthManagement,
+  element: lazyWithRetry(() => import('@/pages/ehs/HealthManagementPage'), 'HealthManagementPage'),
+  module: 'ehs',
+  code: 'ehs-health-management',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:health:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsHazardousMaterialRoute: RouteConfigV2<EhsHazardousMaterialPageProps> = {
+  path: EHS_PATHS.hazardousMaterial,
+  element: lazyWithRetry(
+    () => import('@/pages/ehs/EhsHazardousMaterialPage'),
+    'EhsHazardousMaterialPage'
+  ),
+  module: 'ehs',
+  code: 'ehs-hazardous-material',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:hazardous_material:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const emergencyRoute: RouteConfigV2<EmergencyPageProps> = {
+  path: EHS_PATHS.emergency,
+  element: lazyWithRetry(() => import('@/pages/ehs/EmergencyPage'), 'EmergencyPage'),
+  module: 'ehs',
+  code: 'ehs-emergency',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:emergency:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsDrillRoute: RouteConfigV2<EhsDrillPageProps> = {
+  path: EHS_PATHS.drill,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsDrillPage'), 'EhsDrillPage'),
+  module: 'ehs',
+  code: 'ehs-drill',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['ehs:drill:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsIncidentReportRoute: RouteConfigV2<EhsIncidentReportPageProps> = {
+  path: EHS_PATHS.incidentReport,
+  element: lazyWithRetry(
+    () => import('@/pages/ehs/EhsIncidentReportPage'),
+    'EhsIncidentReportPage'
+  ),
+  module: 'ehs',
+  code: 'ehs-incident-report',
+  title: i18n.t('shared.config.k15'),
+  titleKey: 'shared.config.k15',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['ehs:incident:read', 'ehs:dashboard:read'],
+  action: 'read',
+};
+
+const ehsDashboardRoute: RouteConfigV2<EhsDashboardPageProps> = {
+  path: EHS_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/ehs/EhsDashboardPage'), 'EhsDashboardPage'),
+  module: 'ehs',
+  code: 'ehs-dashboard',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['ehs:dashboard:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const ehsModuleConfig: RouteModuleConfig = {
@@ -38,201 +322,21 @@ export const ehsModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'ehs:dashboard:read',
   routes: [
-    {
-      path: EHS_PATHS.check,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsCheckPage'), 'EhsCheckPage'),
-      module: 'ehs',
-      code: 'ehs-check',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:check:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.hazard,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsHazardPage'), 'EhsHazardPage'),
-      module: 'ehs',
-      code: 'ehs-hazard',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:hazard:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.hazardDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/ehs/EhsHazardDetailPage'),
-        'EhsHazardDetailPage'
-      ),
-      module: 'ehs',
-      code: 'ehs-hazard-detail',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['ehs:hazard:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.accident,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsAccidentPage'), 'EhsAccidentPage'),
-      module: 'ehs',
-      code: 'ehs-accident',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:accident:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.plan,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsPlanPage'), 'EhsPlanPage'),
-      module: 'ehs',
-      code: 'ehs-plan',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:plan:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.compliance,
-      element: lazyWithRetry(() => import('@/pages/ehs/CompliancePage'), 'CompliancePage'),
-      module: 'ehs',
-      code: 'ehs-compliance',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:compliance:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.environment,
-      element: lazyWithRetry(() => import('@/pages/ehs/EnvironmentPage'), 'EnvironmentPage'),
-      module: 'ehs',
-      code: 'ehs-environment',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['ehs:environment:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.training,
-      element: lazyWithRetry(() => import('@/pages/ehs/TrainingPage'), 'TrainingPage'),
-      module: 'ehs',
-      code: 'ehs-training',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:training:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.occupationalDisease,
-      element: lazyWithRetry(
-        () => import('@/pages/ehs/EhsOccupationalDiseasePage'),
-        'EhsOccupationalDiseasePage'
-      ),
-      module: 'ehs',
-      code: 'ehs-occupational-disease',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:occupational_disease:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.healthManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/ehs/HealthManagementPage'),
-        'HealthManagementPage'
-      ),
-      module: 'ehs',
-      code: 'ehs-health-management',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:health:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.hazardousMaterial,
-      element: lazyWithRetry(
-        () => import('@/pages/ehs/EhsHazardousMaterialPage'),
-        'EhsHazardousMaterialPage'
-      ),
-      module: 'ehs',
-      code: 'ehs-hazardous-material',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:hazardous_material:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.emergency,
-      element: lazyWithRetry(() => import('@/pages/ehs/EmergencyPage'), 'EmergencyPage'),
-      module: 'ehs',
-      code: 'ehs-emergency',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:emergency:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.drill,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsDrillPage'), 'EhsDrillPage'),
-      module: 'ehs',
-      code: 'ehs-drill',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['ehs:drill:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.incidentReport,
-      element: lazyWithRetry(
-        () => import('@/pages/ehs/EhsIncidentReportPage'),
-        'EhsIncidentReportPage'
-      ),
-      module: 'ehs',
-      code: 'ehs-incident-report',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['ehs:incident:read', 'ehs:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: EHS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/ehs/EhsDashboardPage'), 'EhsDashboardPage'),
-      module: 'ehs',
-      code: 'ehs-dashboard',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['ehs:dashboard:read'],
-      action: 'read',
-    },
+    ehsCheckRoute,
+    ehsHazardRoute,
+    ehsHazardDetailRoute,
+    ehsAccidentRoute,
+    ehsPlanRoute,
+    complianceRoute,
+    environmentRoute,
+    trainingRoute,
+    ehsOccupationalDiseaseRoute,
+    healthManagementRoute,
+    ehsHazardousMaterialRoute,
+    emergencyRoute,
+    ehsDrillRoute,
+    ehsIncidentReportRoute,
+    ehsDashboardRoute,
   ],
 };
 

@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 PDM_PATHS.xxx，而非硬编码字符串
+
 export const PDM_PATHS = {
   root: '/pdm',
   product: '/pdm/product',
@@ -28,6 +29,365 @@ export const PDM_PATHS = {
   settingDocApprovalFlow: '/pdm/setting/doc-approval-flow',
   settingChangeTemplate: '/pdm/setting/change-template',
 } as const;
+export interface ProductPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MaterialPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BomPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmBomPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface DocumentPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmVersionPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ChangePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmProjectPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmProductConfigPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface PdmFormulaPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmProcessPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmBatchPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmStepPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PdmStatsPageProps {}
+
+export interface PdmDashboardPageProps {}
+
+export interface PdmProductCategoryPageProps {}
+
+export interface BomTemplatePageProps {}
+
+export interface CategoryRulePageProps {}
+
+export interface DocApprovalFlowPageProps {}
+
+export interface ChangeTemplatePageProps {}
+
+const productRoute: RouteConfigV2<ProductPageProps> = {
+  path: PDM_PATHS.product,
+  element: lazyWithRetry(() => import('@/pages/pdm/ProductPage'), 'ProductPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'pdm-product',
+  requiredPermissions: ['pdm:product:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const materialRoute: RouteConfigV2<MaterialPageProps> = {
+  path: PDM_PATHS.material,
+  element: lazyWithRetry(() => import('@/pages/pdm/MaterialPage'), 'MaterialPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  code: 'pdm-material',
+  requiredPermissions: ['pdm:material:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const bomRoute: RouteConfigV2<BomPageProps> = {
+  path: PDM_PATHS.bom,
+  element: lazyWithRetry(() => import('@/pages/pdm/BomPage'), 'BomPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.bom_0'),
+  titleKey: 'shared.config.bom_0',
+  code: 'pdm-bom',
+  requiredPermissions: ['pdm:bom:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmBomRoute: RouteConfigV2<PdmBomPageProps> = {
+  path: PDM_PATHS.pdmBom,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmBomPage'), 'PdmBomPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.pdm_7'),
+  titleKey: 'shared.config.pdm_7',
+  code: 'pdm-pdm-bom',
+  requiredPermissions: ['pdm:bom:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const documentRoute: RouteConfigV2<DocumentPageProps> = {
+  path: PDM_PATHS.document,
+  element: lazyWithRetry(() => import('@/pages/pdm/DocumentPage'), 'DocumentPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  code: 'pdm-document',
+  requiredPermissions: ['pdm:document:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmVersionRoute: RouteConfigV2<PdmVersionPageProps> = {
+  path: PDM_PATHS.version,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmVersionPage'), 'PdmVersionPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  code: 'pdm-version',
+  requiredPermissions: ['pdm:version:read'],
+  action: 'read',
+  template: 'list',
+  group: 'process',
+};
+
+const changeRoute: RouteConfigV2<ChangePageProps> = {
+  path: PDM_PATHS.change,
+  element: lazyWithRetry(() => import('@/pages/pdm/ChangePage'), 'ChangePage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  code: 'pdm-change',
+  requiredPermissions: ['pdm:change:read'],
+  action: 'read',
+  template: 'list',
+  group: 'process',
+};
+
+const pdmProjectRoute: RouteConfigV2<PdmProjectPageProps> = {
+  path: PDM_PATHS.project,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmProjectPage'), 'PdmProjectPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  code: 'pdm-project',
+  requiredPermissions: ['pdm:project:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmProductConfigRoute: RouteConfigV2<PdmProductConfigPageProps> = {
+  path: PDM_PATHS.productConfig,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmProductConfigPage'), 'PdmProductConfigPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  code: 'pdm-product-config',
+  requiredPermissions: ['pdm:product:read'],
+  action: 'read',
+  template: 'form',
+  group: 'master',
+};
+
+const pdmFormulaRoute: RouteConfigV2<PdmFormulaPageProps> = {
+  path: PDM_PATHS.formula,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmFormulaPage'), 'PdmFormulaPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  code: 'pdm-formula',
+  requiredPermissions: ['pdm:formula:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmProcessRoute: RouteConfigV2<PdmProcessPageProps> = {
+  path: PDM_PATHS.process,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmProcessPage'), 'PdmProcessPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  code: 'pdm-process',
+  requiredPermissions: ['pdm:process:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmBatchRoute: RouteConfigV2<PdmBatchPageProps> = {
+  path: PDM_PATHS.batch,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmBatchPage'), 'PdmBatchPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  code: 'pdm-batch',
+  requiredPermissions: ['pdm:batch:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmStepRoute: RouteConfigV2<PdmStepPageProps> = {
+  path: PDM_PATHS.step,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmStepPage'), 'PdmStepPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  code: 'pdm-step',
+  requiredPermissions: ['pdm:step:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
+const pdmStatsRoute: RouteConfigV2<PdmStatsPageProps> = {
+  path: PDM_PATHS.stats,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmStatsPage'), 'PdmStatsPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  code: 'pdm-stats',
+  requiredPermissions: ['pdm:stats:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
+
+const pdmDashboardRoute: RouteConfigV2<PdmDashboardPageProps> = {
+  path: PDM_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmDashboardPage'), 'PdmDashboardPage'),
+  module: 'pdm',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  code: 'pdm-dashboard',
+  requiredPermissions: ['pdm:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const pdmProductCategoryRoute: RouteConfigV2<PdmProductCategoryPageProps> = {
+  path: PDM_PATHS.productCategory,
+  element: lazyWithRetry(
+    () => import('@/pages/pdm/PdmProductCategoryPage'),
+    'PdmProductCategoryPage'
+  ),
+  module: 'pdm',
+  title: i18n.t('shared.config.k15'),
+  titleKey: 'shared.config.k15',
+  code: 'pdm-product-category',
+  requiredPermissions: ['pdm:product_category:read'],
+  action: 'read',
+  template: 'tree',
+  group: 'master',
+};
+
+const bomTemplateRoute: RouteConfigV2<BomTemplatePageProps> = {
+  path: PDM_PATHS.settingBomTemplate,
+  element: lazyWithRetry(() => import('@/pages/pdm/setting/BomTemplatePage'), 'BomTemplatePage'),
+  module: 'pdm',
+  code: 'pdm-bom-template',
+  title: i18n.t('shared.config.bom_1'),
+  titleKey: 'shared.config.bom_1',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['pdm:bom_template:read'],
+  action: 'read',
+};
+
+const categoryRuleRoute: RouteConfigV2<CategoryRulePageProps> = {
+  path: PDM_PATHS.settingCategoryRule,
+  element: lazyWithRetry(() => import('@/pages/pdm/setting/CategoryRulePage'), 'CategoryRulePage'),
+  module: 'pdm',
+  code: 'pdm-category-rule',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['pdm:category_rule:read'],
+  action: 'read',
+};
+
+const docApprovalFlowRoute: RouteConfigV2<DocApprovalFlowPageProps> = {
+  path: PDM_PATHS.settingDocApprovalFlow,
+  element: lazyWithRetry(
+    () => import('@/pages/pdm/setting/DocApprovalFlowPage'),
+    'DocApprovalFlowPage'
+  ),
+  module: 'pdm',
+  code: 'pdm-doc-approval-flow',
+  title: i18n.t('shared.config.k17'),
+  titleKey: 'shared.config.k17',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['pdm:doc_approval_flow:read'],
+  action: 'read',
+};
+
+const changeTemplateRoute: RouteConfigV2<ChangeTemplatePageProps> = {
+  path: PDM_PATHS.settingChangeTemplate,
+  element: lazyWithRetry(
+    () => import('@/pages/pdm/setting/ChangeTemplatePage'),
+    'ChangeTemplatePage'
+  ),
+  module: 'pdm',
+  code: 'pdm-change-template',
+  title: i18n.t('shared.config.k18'),
+  titleKey: 'shared.config.k18',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['pdm:change_template:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const pdmModuleConfig: RouteModuleConfig = {
@@ -43,264 +403,26 @@ export const pdmModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.bom_1'),
   permission: 'pdm:module:read',
   routes: [
-    {
-      path: PDM_PATHS.product,
-      element: lazyWithRetry(() => import('@/pages/pdm/ProductPage'), 'ProductPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'pdm-product',
-      requiredPermissions: ['pdm:product:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.material,
-      element: lazyWithRetry(() => import('@/pages/pdm/MaterialPage'), 'MaterialPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      code: 'pdm-material',
-      requiredPermissions: ['pdm:material:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.bom,
-      element: lazyWithRetry(() => import('@/pages/pdm/BomPage'), 'BomPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.bom_0'),
-      titleKey: 'shared.config.bom_0',
-      code: 'pdm-bom',
-      requiredPermissions: ['pdm:bom:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.pdmBom,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmBomPage'), 'PdmBomPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.pdm_7'),
-      titleKey: 'shared.config.pdm_7',
-      code: 'pdm-pdm-bom',
-      requiredPermissions: ['pdm:bom:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.document,
-      element: lazyWithRetry(() => import('@/pages/pdm/DocumentPage'), 'DocumentPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      code: 'pdm-document',
-      requiredPermissions: ['pdm:document:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.version,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmVersionPage'), 'PdmVersionPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      code: 'pdm-version',
-      requiredPermissions: ['pdm:version:read'],
-      action: 'read',
-      template: 'list',
-      group: 'process',
-    },
-    {
-      path: PDM_PATHS.change,
-      element: lazyWithRetry(() => import('@/pages/pdm/ChangePage'), 'ChangePage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      code: 'pdm-change',
-      requiredPermissions: ['pdm:change:read'],
-      action: 'read',
-      template: 'list',
-      group: 'process',
-    },
-    {
-      path: PDM_PATHS.project,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmProjectPage'), 'PdmProjectPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      code: 'pdm-project',
-      requiredPermissions: ['pdm:project:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.productConfig,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/PdmProductConfigPage'),
-        'PdmProductConfigPage'
-      ),
-      module: 'pdm',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      code: 'pdm-product-config',
-      requiredPermissions: ['pdm:product:read'],
-      action: 'read',
-      template: 'form',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.formula,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmFormulaPage'), 'PdmFormulaPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      code: 'pdm-formula',
-      requiredPermissions: ['pdm:formula:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.process,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmProcessPage'), 'PdmProcessPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      code: 'pdm-process',
-      requiredPermissions: ['pdm:process:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.batch,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmBatchPage'), 'PdmBatchPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      code: 'pdm-batch',
-      requiredPermissions: ['pdm:batch:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.step,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmStepPage'), 'PdmStepPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      code: 'pdm-step',
-      requiredPermissions: ['pdm:step:read'],
-      action: 'read',
-      template: 'list',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.stats,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmStatsPage'), 'PdmStatsPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      code: 'pdm-stats',
-      requiredPermissions: ['pdm:stats:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
-    {
-      path: PDM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/pdm/PdmDashboardPage'), 'PdmDashboardPage'),
-      module: 'pdm',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      code: 'pdm-dashboard',
-      requiredPermissions: ['pdm:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: PDM_PATHS.productCategory,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/PdmProductCategoryPage'),
-        'PdmProductCategoryPage'
-      ),
-      module: 'pdm',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      code: 'pdm-product-category',
-      requiredPermissions: ['pdm:product_category:read'],
-      action: 'read',
-      template: 'tree',
-      group: 'master',
-    },
-    {
-      path: PDM_PATHS.settingBomTemplate,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/setting/BomTemplatePage'),
-        'BomTemplatePage'
-      ),
-      module: 'pdm',
-      code: 'pdm-bom-template',
-      title: i18n.t('shared.config.bom_1'),
-      titleKey: 'shared.config.bom_1',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['pdm:bom_template:read'],
-      action: 'read',
-    },
-    {
-      path: PDM_PATHS.settingCategoryRule,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/setting/CategoryRulePage'),
-        'CategoryRulePage'
-      ),
-      module: 'pdm',
-      code: 'pdm-category-rule',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['pdm:category_rule:read'],
-      action: 'read',
-    },
-    {
-      path: PDM_PATHS.settingDocApprovalFlow,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/setting/DocApprovalFlowPage'),
-        'DocApprovalFlowPage'
-      ),
-      module: 'pdm',
-      code: 'pdm-doc-approval-flow',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['pdm:doc_approval_flow:read'],
-      action: 'read',
-    },
-    {
-      path: PDM_PATHS.settingChangeTemplate,
-      element: lazyWithRetry(
-        () => import('@/pages/pdm/setting/ChangeTemplatePage'),
-        'ChangeTemplatePage'
-      ),
-      module: 'pdm',
-      code: 'pdm-change-template',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['pdm:change_template:read'],
-      action: 'read',
-    },
+    productRoute,
+    materialRoute,
+    bomRoute,
+    pdmBomRoute,
+    documentRoute,
+    pdmVersionRoute,
+    changeRoute,
+    pdmProjectRoute,
+    pdmProductConfigRoute,
+    pdmFormulaRoute,
+    pdmProcessRoute,
+    pdmBatchRoute,
+    pdmStepRoute,
+    pdmStatsRoute,
+    pdmDashboardRoute,
+    pdmProductCategoryRoute,
+    bomTemplateRoute,
+    categoryRuleRoute,
+    docApprovalFlowRoute,
+    changeTemplateRoute,
   ],
 };
 

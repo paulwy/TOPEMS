@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -8,6 +8,40 @@ export const TICKET_PATHS = {
   dashboard: '/ticket/dashboard',
   center: '/ticket/center',
 } as const;
+
+export interface DashboardPageProps {}
+
+export interface TicketCenterPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
+  path: TICKET_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/ticket/DashboardPage'), 'DashboardPage'),
+  module: 'ticket',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'ticket-dashboard',
+  requiredPermissions: ['ticket:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const ticketCenterRoute: RouteConfigV2<TicketCenterPageProps> = {
+  path: TICKET_PATHS.center,
+  element: lazyWithRetry(() => import('@/pages/ticket/TicketCenterPage'), 'TicketCenterPage'),
+  module: 'ticket',
+  code: 'ticket-center',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['system:center:read'],
+  action: 'read',
+};
 
 export const ticketModuleConfig: RouteModuleConfig = {
   code: 'ticket',
@@ -21,32 +55,7 @@ export const ticketModuleConfig: RouteModuleConfig = {
   order: 6,
   description: i18n.t('shared.config.k1'),
   permission: 'system:center:read',
-  routes: [
-    {
-      path: TICKET_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/ticket/DashboardPage'), 'DashboardPage'),
-      module: 'ticket',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'ticket-dashboard',
-      requiredPermissions: ['ticket:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: TICKET_PATHS.center,
-      element: lazyWithRetry(() => import('@/pages/ticket/TicketCenterPage'), 'TicketCenterPage'),
-      module: 'ticket',
-      code: 'ticket-center',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['system:center:read'],
-      action: 'read',
-    },
-  ],
+  routes: [dashboardRoute, ticketCenterRoute],
 };
 
 export const ticketNavConfig: ModuleNavConfig = {

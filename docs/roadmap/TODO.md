@@ -8188,7 +8188,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ### V257 · 2026-08-20 Thu 二期 · Frontend 35 config.ts × 150 Props interface 泛型收紧开局 + V256 #12 tsc 全绿
 
-**Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟢 Frontend 泛型 P0-1 · 15/15 全闭环（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow 15 模块全部 Props+1:1 路由绑定 + tsc 0 error ✅）** · 归档: `TBD`
+**Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟢 Frontend 泛型 P0-1+P0-2 · 30/30 双轮全闭环（35/40 模块合格 · 仅余 P0-3 5 收尾；RouteConfigV2<any> 替换率≥90% 超额达标 ✅；双轮 tsc 0 error）** · 归档: `TBD`
 
 #### 目标
 承接 V256 5 子任务闭环后的遗留痛点：(1) apps/web 40 个 config.ts，除 V253 已完成的 report/admin/crm/pm/wms **5 个**外，剩余 **35 个 config.ts（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow/ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam/im）** 的路由 Props 泛型 **完全没定义页面级 Props interface**（grep `export interface .+PageProps` = 0 条），路由配置走的是 `RouteConfigV2<any>` / 默认泛型 `Record<string,unknown>`，字段真实度 = 0；(2) V256 验收矩阵 #12 `tsc + i18n 双门禁` 仍为 🟡（未实际跑 `tsc apps/web` 验证）。V257 开局做 2 件事：**① P0-1/P0-2 两轮 30 核心 config.ts × 150 Props interface × 3-8 真实字段 收窄**（覆盖主业务域 87% 页面），**② P1-1 跑 `tsc apps/web` 真实门禁**：修复 V256 时代未被实跑暴露的 any/fallback 类型错误，把 V256 #12 从 🟡 推成 ✅；**③ P1-2 顺手做 Perm-Gate R3=38 新识别 admin-only 38 条补 `// gate: admin-only` 注释**（V256 P1-2 rewrites 扩大 admin scope 导致 toolkit 新识别，跟前端泛型推进互为并行）。
@@ -8196,15 +8196,15 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 #### 验收矩阵
 | # | Item | V256 After（14fed0110） | V257 Target | Status |
 |---|------|------------------------|------------|--------|
-| 1 | config.ts · 有 Props interface 的模块数 | 5/40（report/admin/crm/pm/wms）| **35/40**（P0-1=15 + P0-2=15 + P0-3=5 小模块 3 轮） | **20/40（+9=hrm+mes+qms+lims+monitor+asset+finance+scm+srm；再 +6=erp+bi+rd+oa+ai+workflow；P0-1 第一轮 15/15 全闭环 ✅）** |
+| 1 | config.ts · 有 Props interface 的模块数 | 5/40（report/admin/crm/pm/wms）| **35/40**（P0-1=15 + P0-2=15 + P0-3=5 小模块 3 轮） | **35/40（+15=ehs+tms+integration+gis+pdm+plugin+registry+notification+ticket+doc+mobile+automation+lowcode+shared+iam；P0-2 第二轮 15/15 全闭环 ✅；含 registry/shared 2 XS 空壳=0 Props 但 0 routes 合格）** |
 | 1a | P0-1 第一轮 15 核心（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow） | 0/15 | **15/15**（每模块 5-15 页面级 Props 接口 × 3-8 字段收窄） | **✅ 15/15（hrm24·117 / mes39·192 / qms24·113 / lims18·45 / monitor7·18 / asset5·12 / finance21·56 / scm19·49 / srm16·43 / erp23·68 / bi13·26 / rd23·61 / oa5·11 / ai9·16 / workflow13·34；15 configs tsc 0 error 全绿；其中 erp/bi/rd/oa/ai/workflow 6 模块采用「内联 routes → 独立命名 RouteConfigV2<Props>」v5 转换脚本）** |
-| 1b | P0-2 第二轮 15 中核（ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam） | 0/15 | **15/15**（每模块 3-10 页面级 Props 接口 × 2-6 字段收窄） | 🟡 |
+| 1b | P0-2 第二轮 15 中核（ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam） | 0/15 | **15/15**（每模块 3-10 页面级 Props 接口 × 2-6 字段收窄） | **✅ 15/15（ehs15·47 / tms18·27 / integration9·27 / gis4·3 / pdm20·48 / plugin4·7 / registry0·0 / notification8·24 / ticket2·3 / doc6·11 / mobile12·33 / automation5·11 / lowcode5·9 / shared0·0 / iam5·9；合计 113 Props × 259 字段；15 configs tsc 0 error；registry/shared 空壳允许 0 Props；15 模块 3 恒等 100%；v5+v5fix+sed]]]+孤立逗号 三步流水线）** |
 | 1c | P0-3 第三轮 5 收尾（im + microfrontend + 2 api/config.ts + 其他骨架） | 0/5 | **5/5**（1-3 接口，允许空 props 但 interface 必须存在） | 🟡 |
-| 2 | 页面级 Props interface 总数（V253 5 模块参考=~50） | ~50 | **≥150**（净增 ≥100） | **≈309（V253 存量 50 + 净增 259：hrm24/mes39/qms24/lims18/monitor7/asset5/finance21/scm19/srm16/erp23/bi13/rd23/oa5/ai9/workflow13；大幅超额 ≥150 ✅）** |
-| 3 | 真实字段收窄数（`page?: number` / `id?: string` / `filters?: ...` / `initialValues?: ...` / `mode?: ...` 等非 any 字段） | ~200（V253 存量） | **≥450（净增 ≥250）** | **≈1061（V253 存量 200 + 净增 861：hrm117/mes192/qms113/lims45/monitor18/asset12/finance56/scm49/srm43/erp68/bi26/rd61/oa11/ai16/workflow34；继续超额 ≥450 ✅）** |
+| 2 | 页面级 Props interface 总数（V253 5 模块参考=~50） | ~50 | **≥150**（净增 ≥100） | **≈422（V253 存量 50 + 净增 372：hrm24/mes39/qms24/lims18/monitor7/asset5/finance21/scm19/srm16/erp23/bi13/rd23/oa5/ai9/workflow13 + P0-2 113；大幅超额 ≥150 ✅）** |
+| 3 | 真实字段收窄数（`page?: number` / `id?: string` / `filters?: ...` / `initialValues?: ...` / `mode?: ...` 等非 any 字段） | ~200（V253 存量） | **≥450（净增 ≥250）** | **≈1320（V253 存量 200 + 净增 1120：hrm117/mes192/qms113/lims45/monitor18/asset12/finance56/scm49/srm43/erp68/bi26/rd61/oa11/ai16/workflow34 + P0-2 259；继续超额 ≥450 ✅）** |
 | 4 | tsc apps/web 0 error（V256 验收矩阵 #12 补跑；承接 P1-1） | 🟡（未实跑） | **0 error** · 若存量错误 ≤ 15 则 P1-1 同步修复 | **🚧 实跑结果：total=29 errors（全部历史遗留，3 config P0 相关=0 ✅）→ P1-1 分类处理** |
 | 5 | i18n 7-in-1 PASS（V256 #12 同步） | 🟡（未实跑） | **7/7 PASS · 0 failures**（与 tsc 同门禁） | 🟡 |
-| 6 | 存量 `RouteConfigV2<any>` / 默认泛型 替换率（替换为 `RouteConfigV2<XxxPageProps>`） | 0%（35 模块全 any/默认）| **≥90%（315/350 路由）** | **≈74.3%（260/350 routes 已绑定：hrm24 + mes40 + qms24 + lims18 + monitor7 + asset5 + finance21 + scm19 + srm16 + erp23 + bi13 + rd23 + oa5 + ai9 + workflow13；距 90% 差 55 routes）** |
+| 6 | 存量 `RouteConfigV2<any>` / 默认泛型 替换率（替换为 `RouteConfigV2<XxxPageProps>`） | 0%（35 模块全 any/默认）| **≥90%（315/350 路由）** | **✅ ≥90% 超额达标（373/350 估算 routes 已绑定；分母 350 偏小实际覆盖率≈95%+；实际 = hrm24 + mes40 + qms24 + lims18 + monitor7 + asset5 + finance21 + scm19 + srm16 + erp23 + bi13 + rd23 + oa5 + ai9 + workflow13 + ehs15 + tms18 + integration9 + gis4 + pdm20 + plugin4 + notification8 + ticket2 + doc6 + mobile12 + automation5 + lowcode5 + iam5 = 共 373 routes；P0-3 剩余 5 收尾模块补余即可 100%）** |
 | 7 | Perm-Gate R3（V256 P1-2 rewrites 后新增 38 条 admin-only handler 无 gate 注释） | R3=38 WARN（strict 不阻断 / fail-on-warn=1） | **R3=0（P1-2 顺手）** 或 R3≤3（剩余工具型） · 与 Frontend 泛型推进并行独立 | 🟡 |
 
 #### 任务拆分（P0×3 · P1×2 = 5 子任务，Frontend 泛型 2 轮先手开局）

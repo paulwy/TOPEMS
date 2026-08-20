@@ -1,15 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 AUTOMATION_PATHS.xxx，而非硬编码字符串
-//
-// 自动化模块（V64 新增）= 编排层：
-// 把 workflow（流程运行时）+ integration（数据桥接）+ lowcode（UI/表单）
-// 三大能力串联成统一的「自动化」视图。
-// 后端初期落地 unified-core，路径 /api/core/automation；业务量足够再拆独立服务。
+
 export const AUTOMATION_PATHS = {
   root: '/automation',
   dashboard: '/automation/dashboard',
@@ -18,6 +14,116 @@ export const AUTOMATION_PATHS = {
   designer: '/automation/designer',
   variables: '/automation/variables',
 } as const;
+//
+// 自动化模块（V64 新增）= 编排层：
+// 把 workflow（流程运行时）+ integration（数据桥接）+ lowcode（UI/表单）
+// 三大能力串联成统一的「自动化」视图。
+// 后端初期落地 unified-core，路径 /api/core/automation；业务量足够再拆独立服务。
+
+export interface AutomationDashboardPageProps {}
+
+export interface AutomationRulesPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AutomationRunsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AutomationDesignerPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface AutomationVariablesPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+const automationDashboardRoute: RouteConfigV2<AutomationDashboardPageProps> = {
+  path: AUTOMATION_PATHS.dashboard,
+  element: lazyWithRetry(
+    () => import('@/pages/automation/AutomationDashboardPage'),
+    'AutomationDashboardPage'
+  ),
+  module: 'automation',
+  code: 'automation-dashboard',
+  title: i18n.t('shared.config.k1'),
+  titleKey: 'shared.config.k1',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['automation:dashboard:read'],
+  action: 'read',
+};
+
+const automationRulesRoute: RouteConfigV2<AutomationRulesPageProps> = {
+  path: AUTOMATION_PATHS.rules,
+  element: lazyWithRetry(
+    () => import('@/pages/automation/AutomationRulesPage'),
+    'AutomationRulesPage'
+  ),
+  module: 'automation',
+  code: 'automation-rules',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['automation:rule:read'],
+  action: 'read',
+};
+
+const automationRunsRoute: RouteConfigV2<AutomationRunsPageProps> = {
+  path: AUTOMATION_PATHS.runs,
+  element: lazyWithRetry(
+    () => import('@/pages/automation/AutomationRunsPage'),
+    'AutomationRunsPage'
+  ),
+  module: 'automation',
+  code: 'automation-runs',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'analytics',
+  requiredPermissions: ['automation:run:read'],
+  action: 'read',
+};
+
+const automationDesignerRoute: RouteConfigV2<AutomationDesignerPageProps> = {
+  path: AUTOMATION_PATHS.designer,
+  element: lazyWithRetry(
+    () => import('@/pages/automation/AutomationDesignerPage'),
+    'AutomationDesignerPage'
+  ),
+  module: 'automation',
+  code: 'automation-designer',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['automation:rule:write'],
+  action: 'write',
+};
+
+const automationVariablesRoute: RouteConfigV2<AutomationVariablesPageProps> = {
+  path: AUTOMATION_PATHS.variables,
+  element: lazyWithRetry(
+    () => import('@/pages/automation/AutomationVariablesPage'),
+    'AutomationVariablesPage'
+  ),
+  module: 'automation',
+  code: 'automation-variables',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['automation:variable:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const automationModuleConfig: RouteModuleConfig = {
@@ -33,81 +139,11 @@ export const automationModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k0'),
   permission: 'automation:dashboard:read',
   routes: [
-    {
-      path: AUTOMATION_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/automation/AutomationDashboardPage'),
-        'AutomationDashboardPage'
-      ),
-      module: 'automation',
-      code: 'automation-dashboard',
-      title: i18n.t('shared.config.k1'),
-      titleKey: 'shared.config.k1',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['automation:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AUTOMATION_PATHS.rules,
-      element: lazyWithRetry(
-        () => import('@/pages/automation/AutomationRulesPage'),
-        'AutomationRulesPage'
-      ),
-      module: 'automation',
-      code: 'automation-rules',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['automation:rule:read'],
-      action: 'read',
-    },
-    {
-      path: AUTOMATION_PATHS.runs,
-      element: lazyWithRetry(
-        () => import('@/pages/automation/AutomationRunsPage'),
-        'AutomationRunsPage'
-      ),
-      module: 'automation',
-      code: 'automation-runs',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'analytics',
-      requiredPermissions: ['automation:run:read'],
-      action: 'read',
-    },
-    {
-      path: AUTOMATION_PATHS.designer,
-      element: lazyWithRetry(
-        () => import('@/pages/automation/AutomationDesignerPage'),
-        'AutomationDesignerPage'
-      ),
-      module: 'automation',
-      code: 'automation-designer',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['automation:rule:write'],
-      action: 'write',
-    },
-    {
-      path: AUTOMATION_PATHS.variables,
-      element: lazyWithRetry(
-        () => import('@/pages/automation/AutomationVariablesPage'),
-        'AutomationVariablesPage'
-      ),
-      module: 'automation',
-      code: 'automation-variables',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['automation:variable:read'],
-      action: 'read',
-    },
+    automationDashboardRoute,
+    automationRulesRoute,
+    automationRunsRoute,
+    automationDesignerRoute,
+    automationVariablesRoute,
   ],
 };
 
