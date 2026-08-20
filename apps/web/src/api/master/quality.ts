@@ -1,14 +1,14 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type QualityStatus = 'passed' | 'failed' | 'warning';
-export type FixStatus = 'pending' | 'applied' | 'verified' | 'failed';
+type QualityStatus = 'passed' | 'failed' | 'warning';
+type FixStatus = 'pending' | 'applied' | 'verified' | 'failed';
 export type SuggestionType = 'standardize' | 'enrich' | 'deprecate' | 'merge';
 export type SuggestionStatus = 'pending' | 'approved' | 'rejected';
-export type AutoFixActionType =
+type AutoFixActionType =
   'normalize' | 'default_value' | 'map_value' | 'remove_duplicate' | 'standardize';
 
-export interface QualityCheckV51 {
+interface QualityCheckV51 {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -32,7 +32,7 @@ export interface QualityRule {
   updated_at?: string;
 }
 
-export interface QualityDashboard {
+interface QualityDashboard {
   total_entities: number;
   passed_checks: number;
   failed_checks: number;
@@ -57,7 +57,7 @@ export interface QualityScore {
   warning_checks: number;
 }
 
-export interface AutoFixAction {
+interface AutoFixAction {
   id: string;
   rule_id: string;
   entity_type: string;
@@ -83,7 +83,7 @@ export interface GovernanceSuggestion {
   created_at: string;
 }
 
-export interface GovernanceInsight {
+interface GovernanceInsight {
   insight_type: string;
   severity: string;
   affected_records: number;
@@ -109,19 +109,19 @@ export interface UpdateQualityRuleRequest {
   enabled?: boolean;
 }
 
-export interface RunQualityCheckRequest {
+interface RunQualityCheckRequest {
   entity_type: string;
   entity_id: string;
   rule_ids?: string[];
 }
 
-export interface AutoFixRequest {
+interface AutoFixRequest {
   entity_type?: string;
   rule_ids?: string[];
   dry_run?: boolean;
 }
 
-export interface GenerateSuggestionsRequest {
+interface GenerateSuggestionsRequest {
   entity_type: string;
   entity_id?: string;
   suggestion_types?: SuggestionType[];

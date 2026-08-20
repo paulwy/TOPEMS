@@ -15,7 +15,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 export type DeviceType = 'phone' | 'tablet' | 'desktop' | 'watch';
-export type OsType = 'ios' | 'android' | 'windows' | 'macos' | 'linux';
+type OsType = 'ios' | 'android' | 'windows' | 'macos' | 'linux';
 
 export interface DeviceInfo {
   id: string;
@@ -43,7 +43,7 @@ export interface RegisterDeviceRequest {
   push_token?: string;
 }
 
-export interface UpdatePushTokenRequest {
+interface UpdatePushTokenRequest {
   device_id: string;
   push_token: string;
 }

@@ -32,16 +32,16 @@ import type { MesTypes } from '@topems/shared-types';
 // ============================================================================
 // OpenAPI 生成类型别名（推广阶段）
 // ============================================================================
-export type GeneratedWorkOrderResponse = MesTypes.WorkOrderResponse;
-export type GeneratedWorkReportResponse = MesTypes.WorkReportResponse;
-export type GeneratedProductionOrderResponse = MesTypes.ProductionOrderResponse;
-export type GeneratedCreateWorkOrderRequest = MesTypes.CreateWorkOrderRequest;
-export type GeneratedUpdateWorkOrderRequest = MesTypes.UpdateWorkOrderRequest;
-export type GeneratedCreateWorkReportRequest = MesTypes.CreateWorkReportRequest;
-export type GeneratedUpdateWorkReportRequest = MesTypes.UpdateWorkReportRequest;
-export type GeneratedCreateProductionOrderRequest = MesTypes.CreateProductionOrderRequest;
-export type GeneratedUpdateProductionOrderRequest = MesTypes.UpdateProductionOrderRequest;
-export type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
+type GeneratedWorkOrderResponse = MesTypes.WorkOrderResponse;
+type GeneratedWorkReportResponse = MesTypes.WorkReportResponse;
+type GeneratedProductionOrderResponse = MesTypes.ProductionOrderResponse;
+type GeneratedCreateWorkOrderRequest = MesTypes.CreateWorkOrderRequest;
+type GeneratedUpdateWorkOrderRequest = MesTypes.UpdateWorkOrderRequest;
+type GeneratedCreateWorkReportRequest = MesTypes.CreateWorkReportRequest;
+type GeneratedUpdateWorkReportRequest = MesTypes.UpdateWorkReportRequest;
+type GeneratedCreateProductionOrderRequest = MesTypes.CreateProductionOrderRequest;
+type GeneratedUpdateProductionOrderRequest = MesTypes.UpdateProductionOrderRequest;
+type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
 
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
@@ -53,7 +53,7 @@ export type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
 // - actual_start_time/actual_end_time（手写） ↔ actualStartDate/actualEndDate（生成）
 
 /** 生成类型 WorkOrderResponse 的字段重映射到手写 WorkOrder 命名 */
-export type AdaptedWorkOrder = Omit<
+type AdaptedWorkOrder = Omit<
   MesTypes.WorkOrderResponse,
   | 'order_no'
   | 'planned_quantity'
@@ -71,7 +71,7 @@ export type AdaptedWorkOrder = Omit<
 };
 
 /** 生成类型 ProductionOrderResponse 的字段重映射到手写 ProductionOrder 命名 */
-export type AdaptedProductionOrder = Omit<
+type AdaptedProductionOrder = Omit<
   MesTypes.ProductionOrderResponse,
   'order_no' | 'planned_start_date' | 'planned_end_date'
 > & {
@@ -522,7 +522,7 @@ export interface AdjustScheduleRequest {
   reason?: string;
 }
 
-export interface GanttTask {
+interface GanttTask {
   id: string;
   name: string;
   order_id: string;
@@ -672,7 +672,7 @@ export interface CreateMaterialReturnRequest {
   }>;
 }
 
-export interface TraceNode {
+interface TraceNode {
   id: string;
   type: string;
   name: string;
@@ -682,7 +682,7 @@ export interface TraceNode {
   timestamp?: string;
 }
 
-export interface TraceLink {
+interface TraceLink {
   from_id: string;
   to_id: string;
   relation_type: string;

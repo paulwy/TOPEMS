@@ -24,7 +24,7 @@ export interface QualityInspection {
   updated_at: string;
 }
 
-export interface CreateQualityInspectionRequest {
+interface CreateQualityInspectionRequest {
   order_id?: string;
   product_code: string;
   product_name: string;
@@ -37,7 +37,7 @@ export interface CreateQualityInspectionRequest {
   memo?: string;
 }
 
-export interface UpdateQualityInspectionRequest {
+interface UpdateQualityInspectionRequest {
   qualified_quantity?: number;
   unqualified_quantity?: number;
   inspector?: string;
@@ -47,7 +47,7 @@ export interface UpdateQualityInspectionRequest {
   memo?: string;
 }
 
-export interface PatrolInspection {
+interface PatrolInspection {
   id: string;
   patrol_no: string;
   production_line?: string;
@@ -63,7 +63,7 @@ export interface PatrolInspection {
   updated_at: string;
 }
 
-export interface CreatePatrolInspectionRequest {
+interface CreatePatrolInspectionRequest {
   production_line?: string;
   workstation_id?: string;
   inspector: string;
@@ -74,14 +74,14 @@ export interface CreatePatrolInspectionRequest {
   memo?: string;
 }
 
-export interface UpdatePatrolInspectionRequest {
+interface UpdatePatrolInspectionRequest {
   status?: string;
   result?: string;
   findings?: string;
   memo?: string;
 }
 
-export interface PatrolInspectionItem {
+interface PatrolInspectionItem {
   id: string;
   patrol_id: string;
   item_name: string;
@@ -91,7 +91,7 @@ export interface PatrolInspectionItem {
   remark?: string;
 }
 
-export interface AddPatrolInspectionItemRequest {
+interface AddPatrolInspectionItemRequest {
   item_name: string;
   standard?: string;
   actualValue?: string;
@@ -115,7 +115,7 @@ export interface QualityStandard {
   updated_at: string;
 }
 
-export interface QualityStandardValue {
+interface QualityStandardValue {
   id: string;
   standard_id: string;
   item_name: string;

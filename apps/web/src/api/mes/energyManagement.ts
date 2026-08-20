@@ -1,6 +1,6 @@
 import { apiClient } from '../client';
 
-export interface RealTimeConsumption {
+interface RealTimeConsumption {
   equipment_id: string;
   equipment_code: string;
   equipment_name: string;
@@ -10,7 +10,7 @@ export interface RealTimeConsumption {
   status: 'normal' | 'warning' | 'critical';
 }
 
-export interface EnergyConsumptionRecord {
+interface EnergyConsumptionRecord {
   id: string;
   equipment_id: string;
   equipment_code: string;
@@ -23,7 +23,7 @@ export interface EnergyConsumptionRecord {
   source: string;
 }
 
-export interface EnergyStatistic {
+interface EnergyStatistic {
   period: string;
   total_consumption: number;
   avg_consumption: number;
@@ -33,7 +33,7 @@ export interface EnergyStatistic {
   min_time: string;
 }
 
-export interface EnergyByEquipment {
+interface EnergyByEquipment {
   equipment_id: string;
   equipment_code: string;
   equipment_name: string;
@@ -42,21 +42,21 @@ export interface EnergyByEquipment {
   avg_consumption: number;
 }
 
-export interface EnergyByWorkshop {
+interface EnergyByWorkshop {
   workshop_id: string;
   workshop_name: string;
   total_consumption: number;
   percentage: number;
 }
 
-export interface EnergyTrendData {
+interface EnergyTrendData {
   period: string;
   consumption: number;
   trend_direction: 'up' | 'down' | 'stable';
   change_rate: number;
 }
 
-export interface EnergyReportResponse {
+interface EnergyReportResponse {
   report_id: string;
   start_date: string;
   end_date: string;
@@ -69,7 +69,7 @@ export interface EnergyReportResponse {
   trend_data: EnergyTrendData[];
 }
 
-export interface EnergyForecastResponse {
+interface EnergyForecastResponse {
   forecast_period: string;
   forecast_consumption: number;
   forecast_cost: number;
@@ -78,7 +78,7 @@ export interface EnergyForecastResponse {
   seasonality_factor: number;
 }
 
-export interface EnergyAlert {
+interface EnergyAlert {
   id: string;
   equipment_id: string;
   equipment_code: string;
@@ -92,7 +92,7 @@ export interface EnergyAlert {
   status: 'active' | 'resolved';
 }
 
-export interface EnergyAlertsResponse {
+interface EnergyAlertsResponse {
   alerts: EnergyAlert[];
   total_count: number;
   critical_count: number;

@@ -23,7 +23,7 @@ export interface LineageGraph {
   edges: LineageEdge[];
 }
 
-export interface ImpactReport {
+interface ImpactReport {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -35,7 +35,7 @@ export interface ImpactReport {
   generated_at: string;
 }
 
-export interface PropagationRule {
+interface PropagationRule {
   id: string;
   name: string;
   source_type: string;

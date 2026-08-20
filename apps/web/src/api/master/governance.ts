@@ -1,14 +1,14 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface MaturityDimension {
+interface MaturityDimension {
   name: string;
   score: number;
   weight: number;
   details?: string;
 }
 
-export interface MaturityAssessment {
+interface MaturityAssessment {
   id: string;
   overall_score: number;
   level: 'initial' | 'managed' | 'defined' | 'quantitatively_managed' | 'optimized';
@@ -17,7 +17,7 @@ export interface MaturityAssessment {
   assessed_by?: string;
 }
 
-export interface ImprovementPlan {
+interface ImprovementPlan {
   id: string;
   title: string;
   description?: string;
@@ -31,7 +31,7 @@ export interface ImprovementPlan {
   created_at?: string;
 }
 
-export interface GovernanceWorkflow {
+interface GovernanceWorkflow {
   id: string;
   name: string;
   description?: string;
@@ -61,7 +61,7 @@ export interface DataProduct {
   updated_at?: string;
 }
 
-export interface DataContract {
+interface DataContract {
   id: string;
   version: string;
   schema: Record<string, unknown>;

@@ -12,7 +12,7 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 
 // ============ 类型定义 ============
 
-export interface SchemaDefinition {
+interface SchemaDefinition {
   id: string;
   name: string;
   title: string;
@@ -25,28 +25,28 @@ export interface SchemaDefinition {
   updated_at: string;
 }
 
-export interface CreateSchemaRequest {
+interface CreateSchemaRequest {
   name: string;
   title: string;
   description?: string;
   schema_json: Record<string, unknown>;
 }
 
-export interface UpdateSchemaRequest {
+interface UpdateSchemaRequest {
   title?: string;
   description?: string;
   schema_json?: Record<string, unknown>;
   isActive?: boolean;
 }
 
-export interface ListSchemaQuery {
+interface ListSchemaQuery {
   page?: number;
   page_size?: number;
   search?: string;
   isActive?: boolean;
 }
 
-export interface DynamicDataRecord {
+interface DynamicDataRecord {
   id: string;
   schema_id: string;
   data: Record<string, unknown>;
@@ -54,7 +54,7 @@ export interface DynamicDataRecord {
   updated_at: string;
 }
 
-export interface ListDataQuery {
+interface ListDataQuery {
   page?: number;
   page_size?: number;
   search?: string;

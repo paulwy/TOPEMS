@@ -4,10 +4,10 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type RouteStatus = 'active' | 'inactive' | 'deprecated';
-export type RateLimitType = 'fixed_window' | 'token_bucket' | 'leaky_bucket';
-export type AuthType = 'api_key' | 'oauth2' | 'jwt' | 'basic';
-export type DeveloperStatus = 'active' | 'pending' | 'disabled';
-export type APIKeyStatus = 'active' | 'revoked' | 'expired';
+type RateLimitType = 'fixed_window' | 'token_bucket' | 'leaky_bucket';
+type AuthType = 'api_key' | 'oauth2' | 'jwt' | 'basic';
+type DeveloperStatus = 'active' | 'pending' | 'disabled';
+type APIKeyStatus = 'active' | 'revoked' | 'expired';
 
 export interface GatewayRoute {
   id: string;
@@ -32,7 +32,7 @@ export interface RateLimitRule {
   enabled: boolean;
 }
 
-export interface AuthConfig {
+interface AuthConfig {
   id: string;
   route_id: string;
   auth_type: AuthType;
@@ -40,7 +40,7 @@ export interface AuthConfig {
   enabled: boolean;
 }
 
-export interface APILog {
+interface APILog {
   id: string;
   route_id: string;
   developer_id: string;
@@ -54,7 +54,7 @@ export interface APILog {
   timestamp: string;
 }
 
-export interface Developer {
+interface Developer {
   id: string;
   tenant_id: string;
   name: string;
@@ -65,7 +65,7 @@ export interface Developer {
   last_active_at?: string;
 }
 
-export interface APIKey {
+interface APIKey {
   id: string;
   developer_id: string;
   name: string;
@@ -89,7 +89,7 @@ export interface UsageStats {
   period_end: string;
 }
 
-export interface GatewayDashboard {
+interface GatewayDashboard {
   total_routes: number;
   active_routes: number;
   total_developers: number;
@@ -123,7 +123,7 @@ export interface UpdateRouteRequest {
   status?: RouteStatus;
 }
 
-export interface CreateRateLimitRuleRequest {
+interface CreateRateLimitRuleRequest {
   route_id: string;
   limit_type: RateLimitType;
   limit_value: number;
@@ -131,20 +131,20 @@ export interface CreateRateLimitRuleRequest {
   burst_size?: number;
 }
 
-export interface CreateAuthConfigRequest {
+interface CreateAuthConfigRequest {
   route_id: string;
   auth_type: AuthType;
   config: Record<string, unknown>;
 }
 
-export interface CreateDeveloperRequest {
+interface CreateDeveloperRequest {
   tenant_id: string;
   name: string;
   email: string;
   company?: string;
 }
 
-export interface CreateAPIKeyRequest {
+interface CreateAPIKeyRequest {
   developer_id: string;
   name: string;
   rate_limit_per_min?: number;
@@ -152,7 +152,7 @@ export interface CreateAPIKeyRequest {
   expires_at?: string;
 }
 
-export interface LogsQueryParams {
+interface LogsQueryParams {
   route_id?: string;
   developer_id?: string;
   method?: string;

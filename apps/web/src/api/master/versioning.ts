@@ -5,7 +5,7 @@ import type { ApiResponse } from '../client';
 
 export type SnapshotType = 'full' | 'incremental' | 'differential';
 
-export interface VersionSnapshot {
+interface VersionSnapshot {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -39,7 +39,7 @@ export interface VersionDiff {
   changes: Array<{ field: string; from: unknown; to: unknown }>;
 }
 
-export interface VersionBranch {
+interface VersionBranch {
   id: string;
   name: string;
   parent_version: string;
@@ -48,7 +48,7 @@ export interface VersionBranch {
   status: 'active' | 'merged' | 'abandoned';
 }
 
-export interface AuditLogEntry {
+interface AuditLogEntry {
   id: string;
   timestamp: string;
   user_id: string;
@@ -71,7 +71,7 @@ export interface Permission {
   expires_at?: string;
 }
 
-export interface UserPermissions {
+interface UserPermissions {
   user_id: string;
   permissions: Permission[];
   roles: Array<{ id: string; name: string }>;
@@ -105,34 +105,34 @@ export interface CreateSnapshotRequest {
   note?: string;
 }
 
-export interface DiffVersionsParams {
+interface DiffVersionsParams {
   entity_type: string;
   entity_id: string;
   from_version: string;
   to_version: string;
 }
 
-export interface RestoreVersionRequest {
+interface RestoreVersionRequest {
   entity_type: string;
   entity_id: string;
   version: string;
   note?: string;
 }
 
-export interface CreateBranchRequest {
+interface CreateBranchRequest {
   name: string;
   entity_type: string;
   entity_id: string;
   source_version: string;
 }
 
-export interface MergeBranchRequest {
+interface MergeBranchRequest {
   branch_id: string;
   target_version: string;
   strategy: 'auto' | 'manual' | 'ours' | 'theirs';
 }
 
-export interface GrantPermissionRequest {
+interface GrantPermissionRequest {
   user_id: string;
   resource_type: string;
   resource_id?: string;
@@ -140,18 +140,18 @@ export interface GrantPermissionRequest {
   expires_at?: string;
 }
 
-export interface CreateRoleRequest {
+interface CreateRoleRequest {
   name: string;
   description?: string;
   permissions: Array<{ resource: string; actions: string[] }>;
 }
 
-export interface AssignRoleRequest {
+interface AssignRoleRequest {
   user_id: string;
   role_id: string;
 }
 
-export interface QueryAuditParams {
+interface QueryAuditParams {
   entity_type?: string;
   entity_id?: string;
   user_id?: string;

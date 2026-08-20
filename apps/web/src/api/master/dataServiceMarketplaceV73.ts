@@ -4,9 +4,9 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 type ListingStatus = 'draft' | 'published' | 'suspended' | 'deleted';
-export type OrderStatus = 'pending' | 'paid' | 'completed' | 'cancelled' | 'refunded';
+type OrderStatus = 'pending' | 'paid' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'processing' | 'success' | 'failed' | 'refunded';
-export type ServiceCategory =
+type ServiceCategory =
   | 'data_integration'
   | 'data_transformation'
   | 'data_analytics'
@@ -144,7 +144,7 @@ interface CreateListingRequest {
   tags?: string[];
 }
 
-export interface UpdateListingRequest {
+interface UpdateListingRequest {
   title?: string;
   description?: string;
   category?: ServiceCategory;
@@ -165,7 +165,7 @@ interface CreateOrderRequest {
   payment_method?: MarketplacePayment['method'];
 }
 
-export interface PayOrderRequest {
+interface PayOrderRequest {
   payment_method: MarketplacePayment['method'];
 }
 
@@ -175,7 +175,7 @@ export interface WriteReviewRequest {
   comment?: string;
 }
 
-export interface ReplyReviewRequest {
+interface ReplyReviewRequest {
   reply: string;
 }
 

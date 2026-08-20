@@ -1,7 +1,7 @@
 import apiClient, { downloadBlob } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface MetadataRecord {
+interface MetadataRecord {
   id: string;
   entity_type: string;
   entity_id: string;

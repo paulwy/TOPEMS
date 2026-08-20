@@ -3,14 +3,14 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type SnapshotType = 'full' | 'incremental' | 'differential';
-export type RecoveryPlanPriority = 'critical' | 'high' | 'medium' | 'low';
-export type RecoveryPlanStatus = 'draft' | 'active' | 'executing' | 'completed' | 'failed';
-export type ContinuityPlanStatus = 'draft' | 'active' | 'testing' | 'archived';
-export type ReplicationStatus = 'idle' | 'replicating' | 'paused' | 'error';
-export type FailoverStatus = 'initiating' | 'in_progress' | 'completed' | 'failed';
+type SnapshotType = 'full' | 'incremental' | 'differential';
+type RecoveryPlanPriority = 'critical' | 'high' | 'medium' | 'low';
+type RecoveryPlanStatus = 'draft' | 'active' | 'executing' | 'completed' | 'failed';
+type ContinuityPlanStatus = 'draft' | 'active' | 'testing' | 'archived';
+type ReplicationStatus = 'idle' | 'replicating' | 'paused' | 'error';
+type FailoverStatus = 'initiating' | 'in_progress' | 'completed' | 'failed';
 
-export interface RecoveryPoint {
+interface RecoveryPoint {
   id: string;
   snapshot_type: SnapshotType;
   created_at: string;
@@ -19,7 +19,7 @@ export interface RecoveryPoint {
   created_by: string;
 }
 
-export interface RecoveryPlan {
+interface RecoveryPlan {
   id: string;
   name: string;
   priority: RecoveryPlanPriority;
@@ -32,7 +32,7 @@ export interface RecoveryPlan {
   updated_at: string;
 }
 
-export interface RecoveryPlanProgress {
+interface RecoveryPlanProgress {
   plan_id: string;
   current_step: number;
   total_steps: number;
@@ -42,7 +42,7 @@ export interface RecoveryPlanProgress {
   error?: string;
 }
 
-export interface ContinuityPlan {
+interface ContinuityPlan {
   id: string;
   name: string;
   critical_function: string;
@@ -55,7 +55,7 @@ export interface ContinuityPlan {
   updated_at: string;
 }
 
-export interface ContinuityImpact {
+interface ContinuityImpact {
   severity: 'low' | 'medium' | 'high' | 'critical';
   affected_systems: string[];
   estimated_downtime_minutes: number;
@@ -63,7 +63,7 @@ export interface ContinuityImpact {
   revenue_impact?: number;
 }
 
-export interface ContinuityScore {
+interface ContinuityScore {
   score: number;
   total_plans: number;
   tested_plans: number;
@@ -71,7 +71,7 @@ export interface ContinuityScore {
   risk_level: 'low' | 'medium' | 'high';
 }
 
-export interface ReplicationConfig {
+interface ReplicationConfig {
   id?: string;
   source_region: string;
   target_region: string;
@@ -80,7 +80,7 @@ export interface ReplicationConfig {
   status?: ReplicationStatus;
 }
 
-export interface FailoverRecord {
+interface FailoverRecord {
   id: string;
   from_region: string;
   to_region: string;
@@ -91,7 +91,7 @@ export interface FailoverRecord {
   completed_at?: string;
 }
 
-export interface RegionHealth {
+interface RegionHealth {
   region: string;
   status: 'healthy' | 'degraded' | 'down';
   latency_ms: number;
@@ -100,12 +100,12 @@ export interface RegionHealth {
 
 // ============ Request Types ============
 
-export interface CreateRecoveryPointRequest {
+interface CreateRecoveryPointRequest {
   snapshot_type: SnapshotType;
   note?: string;
 }
 
-export interface CreateRecoveryPlanRequest {
+interface CreateRecoveryPlanRequest {
   name: string;
   priority: RecoveryPlanPriority;
   snapshot_type: SnapshotType;
@@ -113,7 +113,7 @@ export interface CreateRecoveryPlanRequest {
   steps?: string[];
 }
 
-export interface CreateContinuityPlanRequest {
+interface CreateContinuityPlanRequest {
   name: string;
   critical_function: string;
   rto_minutes: number;
@@ -121,13 +121,13 @@ export interface CreateContinuityPlanRequest {
   dependencies?: string[];
 }
 
-export interface ConfigureReplicationRequest {
+interface ConfigureReplicationRequest {
   source_region: string;
   target_region: string;
   tables: string[];
 }
 
-export interface InitiateFailoverRequest {
+interface InitiateFailoverRequest {
   from_region: string;
   to_region: string;
   reason: string;

@@ -57,7 +57,7 @@ export interface ProcessFlowStep {
   created_at: string;
 }
 
-export interface AddProcessFlowStepRequest {
+interface AddProcessFlowStepRequest {
   process_id: string;
   sequence: number;
   work_station_id?: string;
@@ -69,7 +69,7 @@ export interface AddProcessFlowStepRequest {
   description?: string;
 }
 
-export interface UpdateProcessFlowStepRequest {
+interface UpdateProcessFlowStepRequest {
   sequence?: number;
   work_station_id?: string;
   equipment_ids?: string[];

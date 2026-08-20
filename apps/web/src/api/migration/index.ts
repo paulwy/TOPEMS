@@ -11,7 +11,7 @@ export interface MigrationService {
   tables: number;
 }
 
-export interface AppliedMigration {
+interface AppliedMigration {
   version: string;
   name: string;
   applied_at: string;
@@ -23,7 +23,7 @@ export interface MigrationStatus {
   applied: AppliedMigration[];
 }
 
-export interface MigrationReport {
+interface MigrationReport {
   file: string;
   success: boolean;
   message?: string;

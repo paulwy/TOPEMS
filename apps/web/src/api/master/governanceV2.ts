@@ -3,13 +3,12 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type MaturityLevel =
-  'initial' | 'managed' | 'defined' | 'quantitatively_managed' | 'optimized';
+type MaturityLevel = 'initial' | 'managed' | 'defined' | 'quantitatively_managed' | 'optimized';
 export type WorkflowStatus = 'draft' | 'active' | 'completed' | 'failed' | 'archived';
-export type StepStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'skipped';
+type StepStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'skipped';
 export type ProductStatus = 'proposed' | 'designing' | 'active' | 'deprecated' | 'retired';
 
-export interface MaturityDimensionScore {
+interface MaturityDimensionScore {
   name: string;
   score: number;
   weight: number;
@@ -17,7 +16,7 @@ export interface MaturityDimensionScore {
   details?: string;
 }
 
-export interface MaturityAssessmentResult {
+interface MaturityAssessmentResult {
   id: string;
   overall_score: number;
   level: MaturityLevel;
@@ -26,14 +25,14 @@ export interface MaturityAssessmentResult {
   assessed_by?: string;
 }
 
-export interface MaturityHistoryEntry {
+interface MaturityHistoryEntry {
   date: string;
   score: number;
   level: MaturityLevel;
   change: number;
 }
 
-export interface BenchmarkComparison {
+interface BenchmarkComparison {
   dimension: string;
   our_score: number;
   industry_avg: number;
@@ -108,7 +107,7 @@ export interface DataContract {
   updated_at: string;
 }
 
-export interface ProductLineage {
+interface ProductLineage {
   product_id: string;
   upstream: Array<{ entity_type: string; entity_id: string; role: string }>;
   downstream: Array<{ entity_type: string; entity_id: string; role: string }>;
@@ -116,13 +115,13 @@ export interface ProductLineage {
 
 // ============ Request Types ============
 
-export interface AssessMaturityRequest {
+interface AssessMaturityRequest {
   scope?: 'full' | 'domain' | 'entity';
   domain?: string;
   dimensions?: string[];
 }
 
-export interface CreateImprovementPlanRequest {
+interface CreateImprovementPlanRequest {
   title: string;
   dimension: string;
   target_score: number;
@@ -138,13 +137,13 @@ export interface CreateWorkflowRequest {
   steps?: Array<{ name: string; approvers?: string[]; condition?: string }>;
 }
 
-export interface AdvanceStepRequest {
+interface AdvanceStepRequest {
   action: 'approve' | 'reject' | 'skip';
   comment?: string;
   approver?: string;
 }
 
-export interface CreateDataProductRequest {
+interface CreateDataProductRequest {
   name: string;
   description: string;
   owner: string;

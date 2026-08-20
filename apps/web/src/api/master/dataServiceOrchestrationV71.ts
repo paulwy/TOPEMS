@@ -4,13 +4,13 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type ServiceStatus = 'draft' | 'published' | 'deprecated' | 'archived';
-export type OrchestrationStatus = 'designing' | 'testing' | 'active' | 'inactive' | 'error';
+type OrchestrationStatus = 'designing' | 'testing' | 'active' | 'inactive' | 'error';
 export type ExecutionStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
 export type ServiceType =
   'integration' | 'transformation' | 'validation' | 'enrichment' | 'delivery';
 export type DeploymentStatus = 'deploying' | 'active' | 'failed' | 'rolled_back';
 
-export interface DataService {
+interface DataService {
   id: string;
   tenant_id: string;
   name: string;
@@ -28,7 +28,7 @@ export interface DataService {
   published_at?: string;
 }
 
-export interface OrchestrationFlow {
+interface OrchestrationFlow {
   id: string;
   tenant_id: string;
   name: string;
@@ -55,7 +55,7 @@ export interface OrchestrationFlow {
   last_executed_at?: string;
 }
 
-export interface ServiceExecution {
+interface ServiceExecution {
   id: string;
   flow_id: string;
   service_id?: string;
@@ -70,7 +70,7 @@ export interface ServiceExecution {
   triggered_by: 'manual' | 'scheduled' | 'event';
 }
 
-export interface ServiceLog {
+interface ServiceLog {
   id: string;
   execution_id: string;
   level: 'info' | 'warning' | 'error' | 'debug';
@@ -79,7 +79,7 @@ export interface ServiceLog {
   timestamp: string;
 }
 
-export interface ServiceVersion {
+interface ServiceVersion {
   id: string;
   service_id: string;
   version: string;
@@ -89,7 +89,7 @@ export interface ServiceVersion {
   published_at: string;
 }
 
-export interface ServiceDeployment {
+interface ServiceDeployment {
   id: string;
   service_id: string;
   version_id: string;
@@ -100,7 +100,7 @@ export interface ServiceDeployment {
   deployment_log?: string[];
 }
 
-export interface ServiceDashboard {
+interface ServiceDashboard {
   total_services: number;
   published_services: number;
   active_flows: number;
@@ -121,7 +121,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface CreateServiceRequest {
+interface CreateServiceRequest {
   name: string;
   description: string;
   service_type: ServiceType;
@@ -130,7 +130,7 @@ export interface CreateServiceRequest {
   configuration?: Record<string, unknown>;
 }
 
-export interface UpdateServiceRequest {
+interface UpdateServiceRequest {
   name?: string;
   description?: string;
   input_schema?: Record<string, unknown>;
@@ -139,7 +139,7 @@ export interface UpdateServiceRequest {
   status?: ServiceStatus;
 }
 
-export interface CreateOrchestrationRequest {
+interface CreateOrchestrationRequest {
   name: string;
   description: string;
   trigger_type: 'manual' | 'scheduled' | 'event' | 'api';
@@ -149,7 +149,7 @@ export interface CreateOrchestrationRequest {
   variables?: Record<string, unknown>;
 }
 
-export interface UpdateOrchestrationRequest {
+interface UpdateOrchestrationRequest {
   name?: string;
   description?: string;
   trigger_type?: 'manual' | 'scheduled' | 'event' | 'api';
@@ -160,12 +160,12 @@ export interface UpdateOrchestrationRequest {
   status?: OrchestrationStatus;
 }
 
-export interface ExecuteFlowRequest {
+interface ExecuteFlowRequest {
   input_data?: Record<string, unknown>;
   variables?: Record<string, unknown>;
 }
 
-export interface DeployServiceRequest {
+interface DeployServiceRequest {
   version_id: string;
   environment: 'development' | 'staging' | 'production';
 }
