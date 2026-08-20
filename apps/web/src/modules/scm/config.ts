@@ -1,10 +1,183 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 SCM_PATHS.xxx，而非硬编码字符串
+/** DashboardPage 路由 Props · 模板=dashboard */
+export interface DashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmPurchaseOrderPage 路由 Props · 模板=list */
+export interface ScmPurchaseOrderPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** PurchaseRequisitionPage 路由 Props · 模板=list */
+export interface PurchaseRequisitionPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmPurchaseItemPage 路由 Props · 模板=list */
+export interface ScmPurchaseItemPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmSupplierPage 路由 Props · 模板=list */
+export interface ScmSupplierPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SupplierAdmissionPage 路由 Props · 模板=list */
+export interface SupplierAdmissionPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmEvaluationPage 路由 Props · 模板=list */
+export interface ScmEvaluationPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** PurchaseContractPage 路由 Props · 模板=list */
+export interface PurchaseContractPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmDeliveryAppointmentPage 路由 Props · 模板=list */
+export interface ScmDeliveryAppointmentPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MrpPlanPage 路由 Props · 模板=list */
+export interface MrpPlanPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MrpSuggestionPage 路由 Props · 模板=list */
+export interface MrpSuggestionPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmOverviewPage 路由 Props · 模板=dashboard */
+export interface ScmOverviewPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** ScmInventoryTurnoverPage 路由 Props · 模板=stats */
+export interface ScmInventoryTurnoverPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** ScmPriceComparisonPage 路由 Props · 模板=stats */
+export interface ScmPriceComparisonPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** ScmPurchaseContractPage 路由 Props · 模板=list */
+export interface ScmPurchaseContractPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SourcingStrategyPage 路由 Props · 模板=settings */
+export interface SourcingStrategyPageProps {
+  /** 当前定位的设置分组 key */
+  section?: string;
+  /** 设置面板主题（预留） */
+  theme?: 'light' | 'dark';
+}
+
+/** QuotaTemplatePage 路由 Props · 模板=settings */
+export interface QuotaTemplatePageProps {
+  /** 当前定位的设置分组 key */
+  section?: string;
+  /** 设置面板主题（预留） */
+  theme?: 'light' | 'dark';
+}
+
+/** PurchaseThresholdPage 路由 Props · 模板=settings */
+export interface PurchaseThresholdPageProps {
+  /** 当前定位的设置分组 key */
+  section?: string;
+  /** 设置面板主题（预留） */
+  theme?: 'light' | 'dark';
+}
+
+/** SupplierTierPage 路由 Props · 模板=settings */
+export interface SupplierTierPageProps {
+  /** 当前定位的设置分组 key */
+  section?: string;
+  /** 设置面板主题（预留） */
+  theme?: 'light' | 'dark';
+}
 export const SCM_PATHS = {
   root: '/scm',
   dashboard: '/scm/dashboard',
@@ -53,7 +226,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['scm:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<DashboardPageProps>,
     {
       path: SCM_PATHS.purchaseOrders,
       element: lazyWithRetry(
@@ -68,7 +241,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['scm:purchase_order:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmPurchaseOrderPageProps>,
     {
       path: SCM_PATHS.purchaseRequisition,
       element: lazyWithRetry(
@@ -83,7 +256,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['scm:purchase_requisition:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<PurchaseRequisitionPageProps>,
     {
       path: SCM_PATHS.purchaseItems,
       element: lazyWithRetry(
@@ -98,7 +271,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['scm:purchase_item:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmPurchaseItemPageProps>,
     {
       path: SCM_PATHS.suppliers,
       element: lazyWithRetry(() => import('@/pages/scm/ScmSupplierPage'), 'ScmSupplierPage'),
@@ -110,7 +283,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['scm:supplier:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmSupplierPageProps>,
     {
       path: SCM_PATHS.supplierAdmission,
       element: lazyWithRetry(
@@ -125,7 +298,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['scm:supplier_admission:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<SupplierAdmissionPageProps>,
     {
       path: SCM_PATHS.supplierEvaluation,
       element: lazyWithRetry(() => import('@/pages/scm/ScmEvaluationPage'), 'ScmEvaluationPage'),
@@ -137,7 +310,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:supplier_evaluation:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmEvaluationPageProps>,
     {
       path: SCM_PATHS.contracts,
       element: lazyWithRetry(
@@ -152,7 +325,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:contract:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<PurchaseContractPageProps>,
     {
       path: SCM_PATHS.deliveryAppointment,
       element: lazyWithRetry(
@@ -167,7 +340,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:delivery_appointment:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmDeliveryAppointmentPageProps>,
     {
       path: SCM_PATHS.mrpPlan,
       element: lazyWithRetry(() => import('@/pages/scm/MrpPlanPage'), 'MrpPlanPage'),
@@ -179,7 +352,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:mrp_plan:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MrpPlanPageProps>,
     {
       path: SCM_PATHS.mrpSuggestion,
       element: lazyWithRetry(() => import('@/pages/scm/MrpSuggestionPage'), 'MrpSuggestionPage'),
@@ -191,7 +364,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:mrp_suggestion:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MrpSuggestionPageProps>,
     {
       path: SCM_PATHS.overview,
       element: lazyWithRetry(() => import('@/pages/scm/ScmOverviewPage'), 'ScmOverviewPage'),
@@ -203,7 +376,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['scm:overview:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmOverviewPageProps>,
     {
       path: SCM_PATHS.inventoryTurnover,
       element: lazyWithRetry(
@@ -218,7 +391,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['scm:inventory_turnover:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmInventoryTurnoverPageProps>,
     {
       path: SCM_PATHS.priceComparison,
       element: lazyWithRetry(
@@ -233,7 +406,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['scm:price_comparison:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmPriceComparisonPageProps>,
     {
       path: SCM_PATHS.purchaseContract,
       element: lazyWithRetry(
@@ -248,7 +421,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['scm:contract:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<ScmPurchaseContractPageProps>,
     {
       path: SCM_PATHS.settingSourcingStrategy,
       element: lazyWithRetry(
@@ -263,7 +436,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['scm:sourcing_strategy:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<SourcingStrategyPageProps>,
     {
       path: SCM_PATHS.settingQuotaTemplate,
       element: lazyWithRetry(
@@ -278,7 +451,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['scm:quota_template:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<QuotaTemplatePageProps>,
     {
       path: SCM_PATHS.settingPurchaseThreshold,
       element: lazyWithRetry(
@@ -293,7 +466,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['scm:purchase_threshold:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<PurchaseThresholdPageProps>,
     {
       path: SCM_PATHS.settingSupplierTier,
       element: lazyWithRetry(
@@ -308,7 +481,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['scm:supplier_tier:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<SupplierTierPageProps>,
   ],
 };
 

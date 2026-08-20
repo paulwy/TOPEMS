@@ -1,10 +1,159 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 SRM_PATHS.xxx，而非硬编码字符串
+/** SrmDashboardPage 路由 Props · 模板=dashboard */
+export interface SrmDashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmSupplierPage 路由 Props · 模板=list */
+export interface SrmSupplierPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmSupplierDetailPage 路由 Props · 模板=detail */
+export interface SrmSupplierDetailPageProps {
+  /** 主实体 ID（如凭证号、合同编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** SrmCategoryPage 路由 Props · 模板=list */
+export interface SrmCategoryPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmSupplierProductPage 路由 Props · 模板=list */
+export interface SrmSupplierProductPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmContractPage 路由 Props · 模板=list */
+export interface SrmContractPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmContractDetailPage 路由 Props · 模板=detail */
+export interface SrmContractDetailPageProps {
+  /** 主实体 ID（如凭证号、合同编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** SrmOrderPage 路由 Props · 模板=list */
+export interface SrmOrderPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmEvaluationPage 路由 Props · 模板=list */
+export interface SrmEvaluationPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmPerformancePage 路由 Props · 模板=stats */
+export interface SrmPerformancePageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** SrmScoringDimensionPage 路由 Props · 模板=list */
+export interface SrmScoringDimensionPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** InquiryQuotationPage 路由 Props · 模板=list */
+export interface InquiryQuotationPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** BiddingPage 路由 Props · 模板=list */
+export interface BiddingPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmFinancePage 路由 Props · 模板=list */
+export interface SrmFinancePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** SupplierPortalPage 路由 Props · 模板=dashboard */
+export interface SupplierPortalPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** SrmQuotationPage 路由 Props · 模板=list */
+export interface SrmQuotationPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
 export const SRM_PATHS = {
   root: '/srm',
   dashboard: '/srm/dashboard',
@@ -50,7 +199,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'dashboard',
       group: 'overview',
-    },
+    } satisfies RouteConfigV2<SrmDashboardPageProps>,
     {
       path: SRM_PATHS.supplier,
       element: lazyWithRetry(() => import('@/pages/srm/SrmSupplierPage'), 'SrmSupplierPage'),
@@ -62,7 +211,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<SrmSupplierPageProps>,
     {
       path: SRM_PATHS.supplierDetail,
       element: lazyWithRetry(
@@ -77,7 +226,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<SrmSupplierDetailPageProps>,
     {
       path: SRM_PATHS.category,
       element: lazyWithRetry(() => import('@/pages/srm/SrmCategoryPage'), 'SrmCategoryPage'),
@@ -89,7 +238,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<SrmCategoryPageProps>,
     {
       path: SRM_PATHS.product,
       element: lazyWithRetry(
@@ -104,7 +253,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<SrmSupplierProductPageProps>,
     {
       path: SRM_PATHS.contract,
       element: lazyWithRetry(() => import('@/pages/srm/SrmContractPage'), 'SrmContractPage'),
@@ -116,7 +265,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<SrmContractPageProps>,
     {
       path: SRM_PATHS.contractDetail,
       element: lazyWithRetry(
@@ -131,7 +280,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<SrmContractDetailPageProps>,
     {
       path: SRM_PATHS.order,
       element: lazyWithRetry(() => import('@/pages/srm/SrmOrderPage'), 'SrmOrderPage'),
@@ -143,7 +292,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<SrmOrderPageProps>,
     {
       path: SRM_PATHS.evaluation,
       element: lazyWithRetry(() => import('@/pages/srm/SrmEvaluationPage'), 'SrmEvaluationPage'),
@@ -155,7 +304,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'analytics',
-    },
+    } satisfies RouteConfigV2<SrmEvaluationPageProps>,
     {
       path: SRM_PATHS.performance,
       element: lazyWithRetry(() => import('@/pages/srm/SrmPerformancePage'), 'SrmPerformancePage'),
@@ -167,7 +316,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'stats',
       group: 'analytics',
-    },
+    } satisfies RouteConfigV2<SrmPerformancePageProps>,
     {
       path: SRM_PATHS.scoringDimension,
       element: lazyWithRetry(
@@ -182,7 +331,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'setting',
-    },
+    } satisfies RouteConfigV2<SrmScoringDimensionPageProps>,
     {
       path: SRM_PATHS.inquiry,
       element: lazyWithRetry(
@@ -197,7 +346,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<InquiryQuotationPageProps>,
     {
       path: SRM_PATHS.bidding,
       element: lazyWithRetry(() => import('@/pages/srm/BiddingPage'), 'BiddingPage'),
@@ -209,7 +358,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<BiddingPageProps>,
     {
       path: SRM_PATHS.finance,
       element: lazyWithRetry(() => import('@/pages/srm/SrmFinancePage'), 'SrmFinancePage'),
@@ -221,7 +370,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<SrmFinancePageProps>,
     {
       path: SRM_PATHS.portal,
       element: lazyWithRetry(() => import('@/pages/srm/SupplierPortalPage'), 'SupplierPortalPage'),
@@ -233,7 +382,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'dashboard',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<SupplierPortalPageProps>,
     {
       path: SRM_PATHS.quotation,
       element: lazyWithRetry(() => import('@/pages/srm/SrmQuotationPage'), 'SrmQuotationPage'),
@@ -245,7 +394,7 @@ export const srmModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<SrmQuotationPageProps>,
   ],
 };
 
