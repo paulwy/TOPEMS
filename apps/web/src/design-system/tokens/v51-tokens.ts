@@ -6,7 +6,7 @@ import { designTokens as baseTokens, type DesignTokens } from '@topems/tokens';
 // 支持 light/dark 双主题，导出 CSS 自定义属性和 TypeScript 常量
 // ============================================================
 
-export const v51ColorPalette = {
+const v51ColorPalette = {
   primary: {
     50: 'var(--color-primary-50, #eff6ff)',
     100: 'var(--color-primary-100, #dbeafe)',
@@ -105,7 +105,7 @@ export const v51ColorPalette = {
   },
 } as const;
 
-export const v51DarkColorPalette = {
+const v51DarkColorPalette = {
   primary: {
     ...v51ColorPalette.primary,
     50: 'background.selectedDark',
@@ -155,7 +155,7 @@ export const v51DarkColorPalette = {
   },
 } as const;
 
-export const v51Typography = {
+const v51Typography = {
   fontFamily:
     '"Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   fontFamilyMono: "'SF Mono', Monaco, 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace",
@@ -261,7 +261,7 @@ export const v51Typography = {
   },
 } as const;
 
-export const v51Spacing = {
+const v51Spacing = {
   none: 0,
   px: 0.25,
   xs: '4px',
@@ -278,7 +278,7 @@ export const v51Spacing = {
   '7xl': '80px',
 } as const;
 
-export const v51BorderRadius = {
+const v51BorderRadius = {
   none: '0',
   xs: '2px',
   sm: '4px',
@@ -291,7 +291,7 @@ export const v51BorderRadius = {
   full: '9999px',
 } as const;
 
-export const v51Shadows = {
+const v51Shadows = {
   none: 'none',
   xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
   sm: '0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
@@ -302,7 +302,7 @@ export const v51Shadows = {
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.06)',
 } as const;
 
-export const v51DarkShadows = {
+const v51DarkShadows = {
   none: 'none',
   xs: '0 1px 2px 0 rgb(0 0 0 / 0.3)',
   sm: '0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3)',
@@ -313,7 +313,7 @@ export const v51DarkShadows = {
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.4)',
 } as const;
 
-export const v51ZIndex = {
+const v51ZIndex = {
   hide: -1,
   base: 0,
   dropdown: 1000,
@@ -327,7 +327,7 @@ export const v51ZIndex = {
   snackbarContent: 1800,
 } as const;
 
-export const v51Breakpoints = {
+const v51Breakpoints = {
   xs: 0,
   sm: 480,
   md: 768,
@@ -337,7 +337,7 @@ export const v51Breakpoints = {
   '3xl': 1920,
 } as const;
 
-export const v51Motion = {
+const v51Motion = {
   duration: {
     instant: '0ms',
     fast: '100ms',
@@ -361,26 +361,26 @@ export const v51Motion = {
   },
 } as const;
 
-export const v51Opacity = {
+const v51Opacity = {
   disabled: 0.5,
   hover: 0.08,
   focus: 0.12,
   selected: 0.12,
 } as const;
 
-export const v51BorderWidth = {
+const v51BorderWidth = {
   thin: '1px',
   medium: '2px',
   thick: '4px',
 } as const;
 
-export const v51StrokeWidth = {
+const v51StrokeWidth = {
   thin: 1,
   medium: 2,
   thick: 3,
 } as const;
 
-export const v51Radius = {
+const v51Radius = {
   sm: '4px',
   md: '6px',
   lg: '8px',
@@ -389,7 +389,7 @@ export const v51Radius = {
   pill: '9999px',
 } as const;
 
-export const v51SemanticTokens = {
+const v51SemanticTokens = {
   surface: {
     page: {
       light: 'var(--color-background, var(--color-background, #f8fafc))',
@@ -510,7 +510,7 @@ export const v51DesignTokens: V51DesignTokens = {
   semantic: v51SemanticTokens,
 };
 
-export function generateV51CSSVariables(mode: 'light' | 'dark' = 'light'): string {
+function generateV51CSSVariables(mode: 'light' | 'dark' = 'light'): string {
   const colors = mode === 'dark' ? v51DarkColorPalette : v51ColorPalette;
   const shadows = mode === 'dark' ? v51DarkShadows : v51Shadows;
   const surface = mode === 'dark' ? v51SemanticTokens.surface : v51SemanticTokens.surface;
@@ -632,4 +632,3 @@ export function injectV51CSSVariables(): void {
   styleEl.textContent = `${lightCSS}\n\n${darkCSS}`;
 }
 
-export { baseTokens };

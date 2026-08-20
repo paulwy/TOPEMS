@@ -3,4 +3,3 @@
 // 解构出 named export "useSyncExternalStore" 导致的 SyntaxError / 白屏问题。
 // 注：不能直接 alias 到 "react"，否则会干扰 Vite 的 dep pre-bundle，引发
 //     "react.js does not provide an export named 'forwardRef'" 副次报错。
-export { useSyncExternalStore } from 'react';

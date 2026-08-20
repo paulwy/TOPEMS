@@ -24,7 +24,7 @@ export interface ProfileNotificationPrefsProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileNotificationPrefs: React.FC<ProfileNotificationPrefsProps> = ({ profile }) => {
+const ProfileNotificationPrefs: React.FC<ProfileNotificationPrefsProps> = ({ profile }) => {
   const { t } = useTranslation();
   const { notificationSettings, handleNotificationSettingChange } = profile;
 

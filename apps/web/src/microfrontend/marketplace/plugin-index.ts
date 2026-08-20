@@ -15,4 +15,3 @@ export {
   type DependencyConflict,
 } from './plugin-market';
 
-export { default as defaultPluginMarket } from './plugin-market';

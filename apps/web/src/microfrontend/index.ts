@@ -123,41 +123,16 @@ export {
 export type { RemoteLoaderProps } from './RemoteLoader';
 
 // ==================== 模块注册表 ====================
-export { microFrontendRegistry, type RegisteredModule, type ModuleStatus } from './registry';
+export { type RegisteredModule, type ModuleStatus } from './registry'
 
 // ==================== 模块注册中心（V41.0新版）====================
-export {
-  moduleRegistry,
-  ModuleRegistry,
-  type ModuleRegistration,
-  type ModuleType,
-  type ModuleFilter,
-} from './registry/module-registry';
-export {
-  registryApi,
-  type RegistryFetchResult,
-  type ModuleHealthStatus,
-} from './registry/registry-api';
+export { moduleRegistry, type ModuleRegistration, type ModuleType, type ModuleFilter } from './registry/module-registry'
+export { type RegistryFetchResult, type ModuleHealthStatus } from './registry/registry-api'
 export { default as RegistryPanel } from './registry/RegistryPanel';
 
 // ==================== 版本管理平台（V41.0）====================
-export {
-  versionPlatform,
-  VersionPlatform,
-  type ModuleVersion,
-  type VersionStatus,
-  type VersioningStrategy,
-  type VersionComparison,
-} from './version-platform/version-platform';
-export {
-  rolloutManager,
-  RolloutManager,
-  type Rollout,
-  type RolloutStrategy,
-  type RolloutType,
-  type RolloutStatus,
-  type CanaryContext as RolloutCanaryContext,
-} from './version-platform/rollout-manager';
+export { type ModuleVersion, type VersionStatus, type VersioningStrategy, type VersionComparison } from './version-platform/version-platform'
+export { type Rollout, type RolloutStrategy, type RolloutType, type RolloutStatus, type CanaryContext as RolloutCanaryContext } from './version-platform/rollout-manager'
 export { default as VersionPanel } from './version-platform/VersionPanel';
 
 // ==================== 可观测性仪表盘（V41.0）====================

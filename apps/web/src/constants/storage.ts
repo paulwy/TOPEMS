@@ -7,7 +7,11 @@
  */
 
 /** Key for storing authentication token in localStorage */
+const TOKEN_KEY = 'token' as const;
+
 /** Key for storing tenant ID in localStorage */
+const TENANT_KEY = 'tenant_id' as const;
+
 /**
  * Unified storage key set.
  * Compatible with historical definitions in both utils/storage.ts

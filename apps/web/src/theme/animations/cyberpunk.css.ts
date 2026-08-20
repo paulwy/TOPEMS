@@ -5,7 +5,7 @@
  * 使用方式：在 sx prop 中引用 className，或直接使用 CSS 变量
  */
 
-export const cyberpunkGlassClasses = {
+const cyberpunkGlassClasses = {
   // 基础玻璃卡片
   glassCard: 'cyber-glass-card',
   // 悬浮态玻璃卡片
@@ -20,7 +20,7 @@ export const cyberpunkGlassClasses = {
   glassHeader: 'cyber-glass-header',
 } as const;
 
-export const cyberpunkGlassStyles = `
+const cyberpunkGlassStyles = `
 /* ========================================
    {i18n.t('theme.cyberpunk.css.k0')}
    ======================================== */
@@ -276,7 +276,7 @@ export const cyberpunkGlassStyles = `
  * 使用全局 CSS 覆盖各 MUI 组件在 .cyberpunk-mode 下的样式
  * 避免在 theme.ts 中重复定义组件导致 TS 报错
  */
-export const cyberpunkComponentStyles = `
+const cyberpunkComponentStyles = `
 /* ========================================
    {i18n.t('theme.cyberpunk.css.mui_6')}
    {i18n.t('theme.cyberpunk.css.k7')}

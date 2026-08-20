@@ -139,7 +139,7 @@ export const BOOTSTRAP_NAMESPACES: readonly string[] = Object.freeze([
   'services', // 服务层公共文案
 ]);
 
-export const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
+const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
   'common', // → 该部分当前实际位于 zh.json/en.json 根（common.save/cancel）
   'system', // system 参数设置、日志等平台功能
   'store', // 状态相关消息
@@ -171,7 +171,7 @@ export const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
   'oa', // OA 办公基础
 ]);
 
-export const BUSINESS_MODULE_NAMESPACES: readonly string[] = Object.freeze([
+const BUSINESS_MODULE_NAMESPACES: readonly string[] = Object.freeze([
   'iam',
   'admin',
   'crm',
@@ -203,7 +203,7 @@ const FRAMEWORK_SET = new Set(FRAMEWORK_NAMESPACES);
 const BUSINESS_SET = new Set(BUSINESS_MODULE_NAMESPACES);
 
 export type NamespaceTier = 'bootstrap' | 'framework' | 'business' | 'unknown';
-export function classifyNamespaceTier(ns: string): NamespaceTier {
+function classifyNamespaceTier(ns: string): NamespaceTier {
   if (BOOTSTRAP_SET.has(ns)) return 'bootstrap';
   if (FRAMEWORK_SET.has(ns)) return 'framework';
   if (BUSINESS_SET.has(ns)) return 'business';

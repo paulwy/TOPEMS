@@ -72,7 +72,7 @@ interface ColorScaleProps {
   skipKeys?: string[];
 }
 
-export function ColorScale({ name, colors, skipKeys = [] }: ColorScaleProps) {
+function ColorScale({ name, colors, skipKeys = [] }: ColorScaleProps) {
   const entries = Object.entries(colors).filter(([key]) => !skipKeys.includes(key));
   return (
     <Box sx={{ mb: 4 }}>
@@ -112,7 +112,7 @@ interface StatusColorGroupProps {
   };
 }
 
-export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
+function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
   return (
     <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end', mb: 3 }}>
       <Box
@@ -218,7 +218,7 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
 
 // ─── Spacing Demo ─────────────────────────────────────────────────────────────
 
-export function SpacingDemo() {
+function SpacingDemo() {
   const spacingEntries = Object.entries(designTokens.spacing);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -257,7 +257,7 @@ export function SpacingDemo() {
 
 // ─── Radius Demo ──────────────────────────────────────────────────────────────
 
-export function RadiusDemo() {
+function RadiusDemo() {
   const radiusEntries = Object.entries(designTokens.borderRadius);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -297,7 +297,7 @@ export function RadiusDemo() {
 
 // ─── Shadow Demo ──────────────────────────────────────────────────────────────
 
-export function ShadowDemo() {
+function ShadowDemo() {
   const shadowEntries = Object.entries(designTokens.shadows);
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -342,7 +342,7 @@ export function ShadowDemo() {
 
 // ─── Typography Showcase ───────────────────────────────────────────────────────
 
-export function TypographyShowcase() {
+function TypographyShowcase() {
   const variants: Array<{ variant: string; label: string; props: Record<string, unknown> }> = [
     { variant: 'h1', label: 'Heading 1', props: designTokens.typography.h1 },
     { variant: 'h2', label: 'Heading 2', props: designTokens.typography.h2 },
@@ -424,7 +424,7 @@ export function TypographyShowcase() {
 
 // ─── Surface Hierarchy ───────────────────────────────────────────────────────
 
-export function SurfaceHierarchy() {
+function SurfaceHierarchy() {
   const surfaces = [
     {
       name: 'Background Default',
@@ -491,7 +491,7 @@ export function SurfaceHierarchy() {
 
 // ─── Module Gradients ─────────────────────────────────────────────────────────
 
-export function ModuleGradients() {
+function ModuleGradients() {
   const modules = Object.entries(gradients.modules);
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -547,7 +547,7 @@ interface TokenRowProps {
   type?: string;
 }
 
-export function TokenTable({ tokens }: { tokens: TokenRowProps[] }) {
+function TokenTable({ tokens }: { tokens: TokenRowProps[] }) {
   return (
     <Box
       component='table'
@@ -601,7 +601,7 @@ export function TokenTable({ tokens }: { tokens: TokenRowProps[] }) {
 
 // ─── Dark Mode Token Comparison ───────────────────────────────────────────────
 
-export function DarkShadowComparison() {
+function DarkShadowComparison() {
   const lightEntries = Object.entries(designTokens.shadows).slice(1); // skip 'none'
   const darkEntries = Object.entries(designTokens.darkShadows).slice(1);
 

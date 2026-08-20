@@ -71,7 +71,7 @@ export const registerSW = async (): Promise<ServiceWorkerRegistration | null> =>
   }
 };
 
-export const checkForUpdate = async (): Promise<boolean> => {
+const checkForUpdate = async (): Promise<boolean> => {
   if (!registration) {
     return false;
   }
@@ -85,12 +85,12 @@ export const checkForUpdate = async (): Promise<boolean> => {
   }
 };
 
-export const getRegistration = (): ServiceWorkerRegistration | null => {
+const getRegistration = (): ServiceWorkerRegistration | null => {
   return registration;
 };
 
 // V24.0 模块 D: 主动触发关键路由预缓存
-export const precacheRoutes = async (): Promise<void> => {
+const precacheRoutes = async (): Promise<void> => {
   if (!registration?.active) {
     logger.debug('Service Worker not active, skip precache');
     return;
@@ -135,7 +135,7 @@ export const prefetchRemoteEntries = (entryUrls: string[]): void => {
 };
 
 // V24.0 模块 D: 自定义安装提示（PWA install prompt）
-export const promptInstall = async (): Promise<boolean> => {
+const promptInstall = async (): Promise<boolean> => {
   if (!deferredInstallPrompt) {
     logger.debug('Install prompt not available');
     return false;
@@ -150,10 +150,10 @@ export const promptInstall = async (): Promise<boolean> => {
   }
 };
 
-export const canInstall = (): boolean => deferredInstallPrompt !== null;
+const canInstall = (): boolean => deferredInstallPrompt !== null;
 
 // V24.0 模块 D: 检测是否以 PWA 模式运行
-export const isStandalone = (): boolean =>
+const isStandalone = (): boolean =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (window.navigator as unknown as { standalone?: boolean }).standalone === true;
 
@@ -167,7 +167,7 @@ export interface PushSubscriptionOptions {
  * 请求通知权限（Web Notifications API）
  * @returns 'granted' | 'denied' | 'default'
  */
-export const requestNotificationPermission = async (): Promise<NotificationPermission> => {
+const requestNotificationPermission = async (): Promise<NotificationPermission> => {
   if (!('Notification' in window)) {
     logger.debug('Notifications not supported');
     return 'denied';
@@ -182,7 +182,7 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
  * 订阅 Web Push 服务
  * @returns PushSubscription 订阅对象（需发送到后端保存）
  */
-export const subscribePush = async (
+const subscribePush = async (
   options: PushSubscriptionOptions
 ): Promise<PushSubscription | null> => {
   if (!registration) {
@@ -226,7 +226,7 @@ export const subscribePush = async (
 /**
  * 取消订阅 Web Push 服务
  */
-export const unsubscribePush = async (): Promise<boolean> => {
+const unsubscribePush = async (): Promise<boolean> => {
   if (!registration) {
     return false;
   }
@@ -247,7 +247,7 @@ export const unsubscribePush = async (): Promise<boolean> => {
 /**
  * 获取当前推送订阅状态
  */
-export const getPushSubscription = async (): Promise<PushSubscription | null> => {
+const getPushSubscription = async (): Promise<PushSubscription | null> => {
   if (!registration) {
     return null;
   }
@@ -261,7 +261,7 @@ export const getPushSubscription = async (): Promise<PushSubscription | null> =>
 /**
  * 检测推送通知支持情况
  */
-export const getPushSupportStatus = (): {
+const getPushSupportStatus = (): {
   pushSupported: boolean;
   notificationSupported: boolean;
   permission: NotificationPermission;
@@ -288,10 +288,10 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 // V24.0 模块 D: 网络状态监听
 export type NetworkStatus = 'online' | 'offline';
 
-export const getNetworkStatus = (): NetworkStatus =>
+const getNetworkStatus = (): NetworkStatus =>
   typeof navigator !== 'undefined' && navigator.onLine ? 'online' : 'offline';
 
-export const onNetworkStatusChange = (callback: (status: NetworkStatus) => void): (() => void) => {
+const onNetworkStatusChange = (callback: (status: NetworkStatus) => void): (() => void) => {
   const handleOnline = () => callback('online');
   const handleOffline = () => callback('offline');
   window.addEventListener('online', handleOnline);
@@ -303,7 +303,7 @@ export const onNetworkStatusChange = (callback: (status: NetworkStatus) => void)
 };
 
 // V24.0 模块 D: 清理缓存（用于设置页/诊断）
-export const clearAllCaches = async (): Promise<boolean> => {
+const clearAllCaches = async (): Promise<boolean> => {
   if (!registration?.active) return false;
   registration.active.postMessage({ type: 'CLEAR_CACHE' });
   logger.info('Clear cache triggered');
@@ -311,7 +311,7 @@ export const clearAllCaches = async (): Promise<boolean> => {
 };
 
 // V24.0 模块 D: 将失败的写请求加入同步队列（用于离线场景）
-export const enqueueSyncRequest = async (
+const enqueueSyncRequest = async (
   url: string,
   method: string,
   body?: unknown,

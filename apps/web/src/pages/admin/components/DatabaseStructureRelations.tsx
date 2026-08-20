@@ -37,7 +37,7 @@ interface DatabaseStructureRelationsProps {
   sqlPreview: SqlPreview | null;
   onExecute: () => void;
 }
-export const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProps> = ({
+const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProps> = ({
   showAddColumnModal,
   onCloseAddColumn,
   newColumn,

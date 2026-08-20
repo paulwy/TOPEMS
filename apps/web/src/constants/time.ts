@@ -6,13 +6,20 @@
  */
 
 /** 1 秒 = 1000 毫秒 */
+const SECOND_MS = 1_000;
 /** 1 分钟 = 60 秒 */
+const MINUTE_MS = 60 * SECOND_MS;
 /** 1 小时 = 60 分钟 */
+const HOUR_MS = 60 * MINUTE_MS;
 /** 1 天 = 24 小时 */
 export const DAY_MS = 24 * HOUR_MS;
 /** 1 周 = 7 天 */
+const WEEK_MS = 7 * DAY_MS;
 /** 30 天 ≈ 1 个月（用于阈值判断的近似） */
+const MONTH_APPROX_MS = 30 * DAY_MS;
 /** 365 天 ≈ 1 年 */
+const YEAR_APPROX_MS = 365 * DAY_MS;
+
 /** 秒 → 毫秒 */
 export const seconds = (s: number): number => s * SECOND_MS;
 /** 分钟 → 毫秒 */

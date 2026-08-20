@@ -159,7 +159,7 @@ const AchievementBar: React.FC<{ value: number; target: number; unit: string }> 
     </Box>
   );
 };
-export const MetricsDashboardPage: React.FC = () => {
+const MetricsDashboardPage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [keyword, setKeyword] = useState('');

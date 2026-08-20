@@ -73,11 +73,11 @@ export function ModRootRedirect(): React.ReactElement {
  * 注意：该 map 不需要与模块真实路由时刻一致，只是性能优化 hint；
  * 当此处返回 null 时，上层仍应回落异步 loadModuleConfig 解析。
  */
-export const MODULE_ROOT_HINT: Readonly<Record<string, string>> = {
+const MODULE_ROOT_HINT: Readonly<Record<string, string>> = {
   // 以下仅为高频 code 的 hint，其余 code 一律走异步 loadModuleConfig 取路由首项
 };
 
-export function resolveModuleDashboardHint(code: string): string | null {
+function resolveModuleDashboardHint(code: string): string | null {
   return MODULE_ROOT_HINT[code] ?? null;
 }
 

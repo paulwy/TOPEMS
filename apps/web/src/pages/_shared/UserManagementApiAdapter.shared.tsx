@@ -27,7 +27,7 @@ export interface CreateUserApiAdapterOptions {
  * Extracted here to avoid duplicate maintenance of list/create/update/delete logic.
  * Differences (e.g., breadcrumbs, role management) are handled separately in each page.
  */
-export function createUserApiAdapter(options: CreateUserApiAdapterOptions): CrudApiAdapter<User> {
+function createUserApiAdapter(options: CreateUserApiAdapterOptions): CrudApiAdapter<User> {
   const prefix = options.i18nPrefix || 'admin.usermanagementpage';
   const { t } = options;
 

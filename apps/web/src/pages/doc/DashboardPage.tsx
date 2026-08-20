@@ -42,7 +42,7 @@ const getGreeting = (): string => {
   return i18n.t('pages.dashboard_page.k2');
 };
 
-export const DocumentDashboardPage: React.FC = () => {
+const DocumentDashboardPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { data: statsData, isPending: loading } = useQuery<DocDashboardStats | null>({

@@ -20,7 +20,7 @@ interface WorkflowApprovalDetailTabsProps {
   approval: Approval | null;
   records: ApprovalRecord[];
 }
-export function WorkflowApprovalDetailTabs({
+function WorkflowApprovalDetailTabs({
   approval,
   records,
 }: WorkflowApprovalDetailTabsProps): TabConfig[] {

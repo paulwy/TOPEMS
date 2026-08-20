@@ -392,7 +392,7 @@ const DEFAULT_RATINGS: PluginRating[] = [
   },
 ];
 
-export class PluginMarketplace {
+class PluginMarketplace {
   private plugins: Map<string, PluginManifest> = new Map();
   private installed: Map<string, InstalledPlugin> = new Map();
   private ratings: Map<string, PluginRating[]> = new Map();

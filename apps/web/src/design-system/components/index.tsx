@@ -1016,7 +1016,7 @@ export interface V51ToastContextValue {
 const V51ToastContext = React.createContext<V51ToastContextValue | null>(null);
 
 /** @deprecated 迁移到 useNotification 或 react-hot-toast */
-export const useV51Toast = (): V51ToastContextValue => {
+const useV51Toast = (): V51ToastContextValue => {
   const ctx = React.useContext(V51ToastContext);
   if (!ctx) throw new Error('useV51Toast must be used within V51ToastProvider');
   return ctx;
@@ -1124,7 +1124,7 @@ const V51ToastItem: React.FC<{
 };
 
 /** @deprecated 迁移到 NotificationProvider（@/components/notification）或 react-hot-toast */
-export const V51ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const V51ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = React.useState<V51ToastMessage[]>([]);
 
   const removeToast = React.useCallback((id: string) => {

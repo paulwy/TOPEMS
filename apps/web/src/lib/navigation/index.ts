@@ -79,8 +79,3 @@ export { navigationRegistryV2 };
 export * from './types';
 export * from './hooks';
 export { default as SidebarNavGroup } from './components/SidebarNavGroup';
-export {
-  lazyLoadModuleConfig,
-  preloadModuleConfigs,
-  getAvailableModuleCodes,
-} from './modules/lazy';

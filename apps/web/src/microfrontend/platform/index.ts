@@ -21,4 +21,3 @@ export {
   type DeploymentStatus,
 } from './unified-dev-platform';
 
-export { default as defaultPlatform } from './unified-dev-platform';

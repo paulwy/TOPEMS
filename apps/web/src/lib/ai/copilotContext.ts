@@ -29,7 +29,7 @@ export interface AICopilotContextInput {
   moduleCode?: string;
 }
 
-export const AI_COPILOT_CONTEXT_KEY = 'ai-copilot-context';
+const AI_COPILOT_CONTEXT_KEY = 'ai-copilot-context';
 
 const moduleLabelMap: Record<string, string> = {
   dashboard: i18n.t('shared.copilot_context.k0'),
@@ -75,7 +75,7 @@ export function getModuleFromPath(pathname: string): string {
   return moduleMap[firstSegment] || firstSegment;
 }
 
-export function getBreadcrumbsFromPath(pathname: string): string[] {
+function getBreadcrumbsFromPath(pathname: string): string[] {
   const moduleCode = getModuleFromPath(pathname);
   const label = moduleLabelMap[moduleCode] || moduleCode.toUpperCase();
   const segments = pathname.split('/').filter(Boolean);
@@ -121,7 +121,7 @@ export function writeAICopilotContext(input: AICopilotContextInput): AICopilotCo
   return context;
 }
 
-export function readAICopilotContext(): AICopilotContext | null {
+function readAICopilotContext(): AICopilotContext | null {
   try {
     const raw = window.localStorage.getItem(AI_COPILOT_CONTEXT_KEY);
     return raw ? (JSON.parse(raw) as AICopilotContext) : null;

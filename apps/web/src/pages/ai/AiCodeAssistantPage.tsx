@@ -88,7 +88,7 @@ interface CounterProps {
   onUpdate?: (value: number) => void;
 }
 
-export const Counter: React.FC<CounterProps> = ({
+const Counter: React.FC<CounterProps> = ({
   initialValue = 0,
   onUpdate,
 }) => {

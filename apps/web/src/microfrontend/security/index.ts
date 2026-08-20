@@ -19,23 +19,8 @@ export {
   type CSPDirective,
 } from './csp-manager';
 
-export {
-  ModuleSigner,
-  moduleSigner,
-  TrustLevel,
-  type ModuleSignature,
-  type TrustedPublisher,
-  type VerificationResult,
-} from './module-signer';
+export { type ModuleSignature, type TrustedPublisher, type VerificationResult } from './module-signer'
 
-export {
-  RuntimeProtector,
-  runtimeProtector,
-  ProtectionType,
-  ProtectionSeverity,
-  type ProtectionConfig,
-  type ProtectionEvent,
-  type SandboxContext,
-} from './runtime-protection';
+export { type ProtectionConfig, type ProtectionEvent, type SandboxContext } from './runtime-protection'
 
 export { default as SecurityCenter } from './SecurityCenter';

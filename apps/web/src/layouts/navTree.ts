@@ -150,7 +150,7 @@ function moduleCardToL2Node(module: ModuleCardConfig): L2NavNode {
   };
 }
 
-export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
+function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
   return useMemo(() => {
     const allModuleCodes = navigationRegistryV2.getAllModuleCodes();
     const l1Bucket: Record<string, L2NavNode[]> = {};
@@ -204,7 +204,7 @@ export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
   }, [checkPermission, i18n.language]);
 }
 
-export function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
+function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
   const { l1Domains } = useNavTree(checkPermission);
 
   return useMemo(() => {
@@ -232,7 +232,7 @@ export function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
   }, [l1Domains, i18n.language]);
 }
 
-export function useDomainGroupedNavItems(
+function useDomainGroupedNavItems(
   checkPermission: PermissionChecker
 ): Record<string, NavItem[]> {
   const { l1Domains } = useNavTree(checkPermission);

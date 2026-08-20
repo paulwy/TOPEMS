@@ -157,7 +157,7 @@ const MiniLineChart: React.FC<{ data: number[]; color?: string; height?: number 
   );
 };
 
-export const SLOStatusPage: React.FC = () => {
+const SLOStatusPage: React.FC = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);

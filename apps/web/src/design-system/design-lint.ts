@@ -80,7 +80,7 @@ export interface ColorContrastCheck {
   label: string;
 }
 
-export function checkColorContrast(
+function checkColorContrast(
   foreground: string,
   background: string,
   label: string,
@@ -212,7 +212,7 @@ const validSpacingValues = new Set([
   'var(--v51-spacing-xl)',
 ]);
 
-export function lintSpacing(
+function lintSpacing(
   components: Array<{ name: string; spacingValues: string[] }>
 ): LintIssue[] {
   const issues: LintIssue[] = [];
@@ -247,7 +247,7 @@ const validFontSizes = new Set<string>(Object.values(v51DesignTokens.typography.
 const validFontWeights = new Set<number>(Object.values(v51DesignTokens.typography.fontWeight));
 const validLineHeights = new Set<number>(Object.values(v51DesignTokens.typography.lineHeight));
 
-export function lintTypography(
+function lintTypography(
   components: Array<{
     name: string;
     fontSize?: string;
@@ -318,7 +318,7 @@ export interface ComponentUsageCheck {
   issues: string[];
 }
 
-export function lintComponentUsage(
+function lintComponentUsage(
   usages: Array<{ component: string; sx?: boolean; ariaLabel?: boolean }>
 ): LintIssue[] {
   const issues: LintIssue[] = [];
@@ -397,7 +397,7 @@ export function generateLintReport(
   };
 }
 
-export function runAllChecks(
+function runAllChecks(
   components: Array<{
     name: string;
     spacingValues?: string[];

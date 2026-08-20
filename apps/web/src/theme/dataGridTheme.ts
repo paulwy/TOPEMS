@@ -17,7 +17,7 @@ import { designTokens } from '@topems/tokens';
  * until the package is installed.
  */
 
-export const getDataGridTheme = (): Record<string, unknown> => ({
+const getDataGridTheme = (): Record<string, unknown> => ({
   MuiDataGrid: {
     styleOverrides: {
       root: {

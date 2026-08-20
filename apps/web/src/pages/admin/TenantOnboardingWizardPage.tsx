@@ -72,7 +72,7 @@ const initialFormData: TenantFormData = {
   default_department_name: i18n.t('admin.tenant_onboarding_wizard_page.k0'),
   default_department_description: '',
 };
-export const TenantOnboardingWizardPage: React.FC = () => {
+const TenantOnboardingWizardPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<TenantFormData>(initialFormData);

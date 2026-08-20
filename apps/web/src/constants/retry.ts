@@ -29,3 +29,7 @@ export const RETRY_DELAY_MS = 1000;
  * 退避策略：exponential backoff + jitter
  *   delay = min(BASE_DELAY * 2^retries + jitter, MAX_DELAY)
  */
+const API_MAX_RETRIES = 2;
+const API_RETRY_BASE_DELAY_MS = 500;
+const API_RETRY_MAX_DELAY_MS = 3000;
+const API_RETRY_MAX_TOTAL_WAIT_MS = 10_000;

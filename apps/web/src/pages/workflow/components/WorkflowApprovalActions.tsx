@@ -34,7 +34,7 @@ interface WorkflowApprovalActionsProps {
   processing: boolean;
   delegateLoading: boolean;
 }
-export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = ({
+const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = ({
   approval,
   showApprovalModal,
   setShowApprovalModal,
@@ -226,7 +226,7 @@ interface UseApprovalActionsReturn {
     color: 'success' | 'error' | 'primary' | 'info';
   }>;
 }
-export const useApprovalActions = (
+const useApprovalActions = (
   approval: Approval | null,
   setApprovalAction: (action: 'approve' | 'reject') => void,
   setComment: (comment: string) => void,

@@ -84,7 +84,7 @@ export interface GeneratedVoucher {
  * 简单的表达式求值器
  * 支持基本运算、字段引用、条件判断
  */
-export class ExpressionEvaluator {
+class ExpressionEvaluator {
   private context: TemplateContext;
 
   constructor(context: TemplateContext) {
@@ -211,7 +211,7 @@ export interface AccountFinder {
 /**
  * 凭证模板引擎
  */
-export class VoucherTemplateEngine {
+class VoucherTemplateEngine {
   private accountFinder: AccountFinder;
   private accountCache: Map<string, { id: string; code: string; name: string }>;
 
@@ -467,7 +467,7 @@ export class VoucherTemplateEngine {
 /**
  * 工资计提凭证模板
  */
-export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
+const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
   id: 'tpl-payroll-accrual',
   code: 'PAYROLL_ACCRUAL',
   name: i18n.t('shared.voucher_template_engine.k1'),
@@ -551,7 +551,7 @@ export const PAYROLL_ACCURAL_TEMPLATE: VoucherTemplate = {
 /**
  * 销售发票应收凭证模板
  */
-export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
+const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
   id: 'tpl-sales-invoice',
   code: 'SALES_INVOICE',
   name: i18n.t('shared.voucher_template_engine.k3'),
@@ -627,7 +627,7 @@ export const SALES_INVOICE_TEMPLATE: VoucherTemplate = {
 /**
  * 收款凭证模板
  */
-export const COLLECTION_TEMPLATE: VoucherTemplate = {
+const COLLECTION_TEMPLATE: VoucherTemplate = {
   id: 'tpl-collection',
   code: 'COLLECTION',
   name: i18n.t('shared.voucher_template_engine.k8'),
@@ -685,7 +685,7 @@ export const COLLECTION_TEMPLATE: VoucherTemplate = {
 /**
  * 采购发票应付凭证模板
  */
-export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
+const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
   id: 'tpl-purchase-invoice',
   code: 'PURCHASE_INVOICE',
   name: i18n.t('shared.voucher_template_engine.k11'),
@@ -761,7 +761,7 @@ export const PURCHASE_INVOICE_TEMPLATE: VoucherTemplate = {
 /**
  * 付款凭证模板
  */
-export const PAYMENT_TEMPLATE: VoucherTemplate = {
+const PAYMENT_TEMPLATE: VoucherTemplate = {
   id: 'tpl-payment',
   code: 'PAYMENT',
   name: i18n.t('shared.voucher_template_engine.k15'),
@@ -819,7 +819,7 @@ export const PAYMENT_TEMPLATE: VoucherTemplate = {
 /**
  * 固定资产折旧凭证模板
  */
-export const DEPRECIATION_TEMPLATE: VoucherTemplate = {
+const DEPRECIATION_TEMPLATE: VoucherTemplate = {
   id: 'tpl-depreciation',
   code: 'DEPRECIATION',
   name: i18n.t('shared.voucher_template_engine.k18'),
