@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 TMS_PATHS.xxx，而非硬编码字符串
+
 export const TMS_PATHS = {
   root: '/tms',
   dashboard: '/tms/dashboard',
@@ -28,6 +29,340 @@ export const TMS_PATHS = {
   routeDetail: '/tms/routes/:id',
   transportPlanDetail: '/tms/transport-plans/:id',
 } as const;
+export interface TmsDashboardPageProps {}
+
+export interface VehicleManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface DriverManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface CarrierManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface RouteManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ShipmentManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ShipmentTrendPageProps {}
+
+export interface VehicleUtilizationPageProps {}
+
+export interface DriverPerformancePageProps {}
+
+export interface CarrierPerformancePageProps {}
+
+export interface RouteEfficiencyPageProps {}
+
+export interface FreightCostPageProps {}
+
+export interface ShipmentDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface VehicleDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface DriverDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface CarrierDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface RouteDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface TransportPlanDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+const tmsDashboardRoute: RouteConfigV2<TmsDashboardPageProps> = {
+  path: TMS_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/tms/TmsDashboardPage'), 'TmsDashboardPage'),
+  module: 'tms',
+  code: 'tms-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['tms:dashboard:read'],
+  action: 'read',
+};
+
+const vehicleManagementRoute: RouteConfigV2<VehicleManagementPageProps> = {
+  path: TMS_PATHS.vehicles,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/VehicleManagementPage'),
+    'VehicleManagementPage'
+  ),
+  module: 'tms',
+  code: 'tms-vehicles',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['tms:vehicle:read'],
+  action: 'read',
+};
+
+const driverManagementRoute: RouteConfigV2<DriverManagementPageProps> = {
+  path: TMS_PATHS.drivers,
+  element: lazyWithRetry(() => import('@/pages/tms/DriverManagementPage'), 'DriverManagementPage'),
+  module: 'tms',
+  code: 'tms-drivers',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['tms:driver:read'],
+  action: 'read',
+};
+
+const carrierManagementRoute: RouteConfigV2<CarrierManagementPageProps> = {
+  path: TMS_PATHS.carriers,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/CarrierManagementPage'),
+    'CarrierManagementPage'
+  ),
+  module: 'tms',
+  code: 'tms-carriers',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['tms:carrier:read'],
+  action: 'read',
+};
+
+const routeManagementRoute: RouteConfigV2<RouteManagementPageProps> = {
+  path: TMS_PATHS.routes,
+  element: lazyWithRetry(() => import('@/pages/tms/RouteManagementPage'), 'RouteManagementPage'),
+  module: 'tms',
+  code: 'tms-routes',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['tms:route:read'],
+  action: 'read',
+};
+
+const shipmentManagementRoute: RouteConfigV2<ShipmentManagementPageProps> = {
+  path: TMS_PATHS.shipments,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/ShipmentManagementPage'),
+    'ShipmentManagementPage'
+  ),
+  module: 'tms',
+  code: 'tms-shipments',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['tms:shipment:read'],
+  action: 'read',
+};
+
+const shipmentTrendRoute: RouteConfigV2<ShipmentTrendPageProps> = {
+  path: TMS_PATHS.shipmentTrend,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/analytics/ShipmentTrendPage'),
+    'ShipmentTrendPage'
+  ),
+  module: 'tms',
+  code: 'tms-shipment-trend',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const vehicleUtilizationRoute: RouteConfigV2<VehicleUtilizationPageProps> = {
+  path: TMS_PATHS.vehicleUtilization,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/analytics/VehicleUtilizationPage'),
+    'VehicleUtilizationPage'
+  ),
+  module: 'tms',
+  code: 'tms-vehicle-utilization',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const driverPerformanceRoute: RouteConfigV2<DriverPerformancePageProps> = {
+  path: TMS_PATHS.driverPerformance,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/analytics/DriverPerformancePage'),
+    'DriverPerformancePage'
+  ),
+  module: 'tms',
+  code: 'tms-driver-performance',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const carrierPerformanceRoute: RouteConfigV2<CarrierPerformancePageProps> = {
+  path: TMS_PATHS.carrierPerformance,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/analytics/CarrierPerformancePage'),
+    'CarrierPerformancePage'
+  ),
+  module: 'tms',
+  code: 'tms-carrier-performance',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const routeEfficiencyRoute: RouteConfigV2<RouteEfficiencyPageProps> = {
+  path: TMS_PATHS.routeEfficiency,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/analytics/RouteEfficiencyPage'),
+    'RouteEfficiencyPage'
+  ),
+  module: 'tms',
+  code: 'tms-route-efficiency',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const freightCostRoute: RouteConfigV2<FreightCostPageProps> = {
+  path: TMS_PATHS.freightCost,
+  element: lazyWithRetry(() => import('@/pages/tms/analytics/FreightCostPage'), 'FreightCostPage'),
+  module: 'tms',
+  code: 'tms-freight-cost',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const shipmentDetailRoute: RouteConfigV2<ShipmentDetailPageProps> = {
+  path: TMS_PATHS.shipmentDetail,
+  element: lazyWithRetry(() => import('@/pages/tms/ShipmentDetailPage'), 'ShipmentDetailPage'),
+  module: 'tms',
+  code: 'tms-shipment-detail',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const vehicleDetailRoute: RouteConfigV2<VehicleDetailPageProps> = {
+  path: TMS_PATHS.vehicleDetail,
+  element: lazyWithRetry(() => import('@/pages/tms/VehicleDetailPage'), 'VehicleDetailPage'),
+  module: 'tms',
+  code: 'tms-vehicle-detail',
+  title: i18n.t('shared.config.k15'),
+  titleKey: 'shared.config.k15',
+  template: 'detail',
+  group: 'master',
+  requiredPermissions: ['tms:vehicle:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const driverDetailRoute: RouteConfigV2<DriverDetailPageProps> = {
+  path: TMS_PATHS.driverDetail,
+  element: lazyWithRetry(() => import('@/pages/tms/DriverDetailPage'), 'DriverDetailPage'),
+  module: 'tms',
+  code: 'tms-driver-detail',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'detail',
+  group: 'master',
+  requiredPermissions: ['tms:driver:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const carrierDetailRoute: RouteConfigV2<CarrierDetailPageProps> = {
+  path: TMS_PATHS.carrierDetail,
+  element: lazyWithRetry(() => import('@/pages/tms/CarrierDetailPage'), 'CarrierDetailPage'),
+  module: 'tms',
+  code: 'tms-carrier-detail',
+  title: i18n.t('shared.config.k17'),
+  titleKey: 'shared.config.k17',
+  template: 'detail',
+  group: 'master',
+  requiredPermissions: ['tms:carrier:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const routeDetailRoute: RouteConfigV2<RouteDetailPageProps> = {
+  path: TMS_PATHS.routeDetail,
+  element: lazyWithRetry(() => import('@/pages/tms/RouteDetailPage'), 'RouteDetailPage'),
+  module: 'tms',
+  code: 'tms-route-detail',
+  title: i18n.t('shared.config.k18'),
+  titleKey: 'shared.config.k18',
+  template: 'detail',
+  group: 'master',
+  requiredPermissions: ['tms:route:read', 'tms:dashboard:read'],
+  action: 'read',
+};
+
+const transportPlanDetailRoute: RouteConfigV2<TransportPlanDetailPageProps> = {
+  path: TMS_PATHS.transportPlanDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/tms/TransportPlanDetailPage'),
+    'TransportPlanDetailPage'
+  ),
+  module: 'tms',
+  code: 'tms-transport-plan-detail',
+  title: i18n.t('shared.config.k19'),
+  titleKey: 'shared.config.k19',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const tmsModuleConfig: RouteModuleConfig = {
@@ -43,260 +378,24 @@ export const tmsModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'tms:module:read',
   routes: [
-    {
-      path: TMS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/tms/TmsDashboardPage'), 'TmsDashboardPage'),
-      module: 'tms',
-      code: 'tms-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.vehicles,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/VehicleManagementPage'),
-        'VehicleManagementPage'
-      ),
-      module: 'tms',
-      code: 'tms-vehicles',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['tms:vehicle:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.drivers,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/DriverManagementPage'),
-        'DriverManagementPage'
-      ),
-      module: 'tms',
-      code: 'tms-drivers',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['tms:driver:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.carriers,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/CarrierManagementPage'),
-        'CarrierManagementPage'
-      ),
-      module: 'tms',
-      code: 'tms-carriers',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['tms:carrier:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.routes,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/RouteManagementPage'),
-        'RouteManagementPage'
-      ),
-      module: 'tms',
-      code: 'tms-routes',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['tms:route:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.shipments,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/ShipmentManagementPage'),
-        'ShipmentManagementPage'
-      ),
-      module: 'tms',
-      code: 'tms-shipments',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['tms:shipment:read'],
-      action: 'read',
-    },
-    // ---- BI 分析页（6 个） ----
-    {
-      path: TMS_PATHS.shipmentTrend,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/ShipmentTrendPage'),
-        'ShipmentTrendPage'
-      ),
-      module: 'tms',
-      code: 'tms-shipment-trend',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.vehicleUtilization,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/VehicleUtilizationPage'),
-        'VehicleUtilizationPage'
-      ),
-      module: 'tms',
-      code: 'tms-vehicle-utilization',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.driverPerformance,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/DriverPerformancePage'),
-        'DriverPerformancePage'
-      ),
-      module: 'tms',
-      code: 'tms-driver-performance',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.carrierPerformance,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/CarrierPerformancePage'),
-        'CarrierPerformancePage'
-      ),
-      module: 'tms',
-      code: 'tms-carrier-performance',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.routeEfficiency,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/RouteEfficiencyPage'),
-        'RouteEfficiencyPage'
-      ),
-      module: 'tms',
-      code: 'tms-route-efficiency',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.freightCost,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/analytics/FreightCostPage'),
-        'FreightCostPage'
-      ),
-      module: 'tms',
-      code: 'tms-freight-cost',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['tms:analytics:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    // ---- 详情页（6 个） ----
-    {
-      path: TMS_PATHS.shipmentDetail,
-      element: lazyWithRetry(() => import('@/pages/tms/ShipmentDetailPage'), 'ShipmentDetailPage'),
-      module: 'tms',
-      code: 'tms-shipment-detail',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.vehicleDetail,
-      element: lazyWithRetry(() => import('@/pages/tms/VehicleDetailPage'), 'VehicleDetailPage'),
-      module: 'tms',
-      code: 'tms-vehicle-detail',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'detail',
-      group: 'master',
-      requiredPermissions: ['tms:vehicle:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.driverDetail,
-      element: lazyWithRetry(() => import('@/pages/tms/DriverDetailPage'), 'DriverDetailPage'),
-      module: 'tms',
-      code: 'tms-driver-detail',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'detail',
-      group: 'master',
-      requiredPermissions: ['tms:driver:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.carrierDetail,
-      element: lazyWithRetry(() => import('@/pages/tms/CarrierDetailPage'), 'CarrierDetailPage'),
-      module: 'tms',
-      code: 'tms-carrier-detail',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'detail',
-      group: 'master',
-      requiredPermissions: ['tms:carrier:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.routeDetail,
-      element: lazyWithRetry(() => import('@/pages/tms/RouteDetailPage'), 'RouteDetailPage'),
-      module: 'tms',
-      code: 'tms-route-detail',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'detail',
-      group: 'master',
-      requiredPermissions: ['tms:route:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: TMS_PATHS.transportPlanDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/TransportPlanDetailPage'),
-        'TransportPlanDetailPage'
-      ),
-      module: 'tms',
-      code: 'tms-transport-plan-detail',
-      title: i18n.t('shared.config.k19'),
-      titleKey: 'shared.config.k19',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['tms:shipment:read', 'tms:dashboard:read'],
-      action: 'read',
-    },
+    tmsDashboardRoute,
+    vehicleManagementRoute,
+    driverManagementRoute,
+    carrierManagementRoute,
+    routeManagementRoute,
+    shipmentManagementRoute,
+    shipmentTrendRoute,
+    vehicleUtilizationRoute,
+    driverPerformanceRoute,
+    carrierPerformanceRoute,
+    routeEfficiencyRoute,
+    freightCostRoute,
+    shipmentDetailRoute,
+    vehicleDetailRoute,
+    driverDetailRoute,
+    carrierDetailRoute,
+    routeDetailRoute,
+    transportPlanDetailRoute,
   ],
 };
 

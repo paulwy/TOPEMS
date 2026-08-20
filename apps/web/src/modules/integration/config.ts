@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 INTEGRATION_PATHS.xxx，而非硬编码字符串
+
 export const INTEGRATION_PATHS = {
   root: '/integration',
   dashboard: '/integration/dashboard',
@@ -18,6 +19,191 @@ export const INTEGRATION_PATHS = {
   wmsScm: '/integration/wms-scm',
   settings: '/integration/settings',
 } as const;
+export interface IntegrationDashboardPageProps {}
+
+export interface IntegrationConnectionsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface IntegrationMappingsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface IntegrationEventsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface IntegrationErpOverviewPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface IntegrationLimsQmsPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface IntegrationMesErpPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface IntegrationWmsScmPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface IntegrationSettingsPageProps {}
+
+const integrationDashboardRoute: RouteConfigV2<IntegrationDashboardPageProps> = {
+  path: INTEGRATION_PATHS.dashboard,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationDashboardPage'),
+    'IntegrationDashboardPage'
+  ),
+  module: 'integration',
+  code: 'integration-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationConnectionsRoute: RouteConfigV2<IntegrationConnectionsPageProps> = {
+  path: INTEGRATION_PATHS.connections,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationConnectionsPage'),
+    'IntegrationConnectionsPage'
+  ),
+  module: 'integration',
+  code: 'integration-connections',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['integration:connection:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationMappingsRoute: RouteConfigV2<IntegrationMappingsPageProps> = {
+  path: INTEGRATION_PATHS.mappings,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationMappingsPage'),
+    'IntegrationMappingsPage'
+  ),
+  module: 'integration',
+  code: 'integration-mappings',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['integration:mapping:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationEventsRoute: RouteConfigV2<IntegrationEventsPageProps> = {
+  path: INTEGRATION_PATHS.events,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationEventsPage'),
+    'IntegrationEventsPage'
+  ),
+  module: 'integration',
+  code: 'integration-events',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'analytics',
+  requiredPermissions: ['integration:event:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationErpOverviewRoute: RouteConfigV2<IntegrationErpOverviewPageProps> = {
+  path: INTEGRATION_PATHS.erpOverview,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationErpOverviewPage'),
+    'IntegrationErpOverviewPage'
+  ),
+  module: 'integration',
+  code: 'integration-erp',
+  title: i18n.t('shared.config.erp_0'),
+  titleKey: 'shared.config.erp_0',
+  template: 'detail',
+  group: 'process',
+  requiredPermissions: ['integration:erp:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationLimsQmsRoute: RouteConfigV2<IntegrationLimsQmsPageProps> = {
+  path: INTEGRATION_PATHS.limsQms,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationLimsQmsPage'),
+    'IntegrationLimsQmsPage'
+  ),
+  module: 'integration',
+  code: 'integration-lims-qms',
+  title: i18n.t('shared.config.limsqms_1'),
+  titleKey: 'shared.config.limsqms_1',
+  template: 'detail',
+  group: 'process',
+  requiredPermissions: ['integration:lims:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationMesErpRoute: RouteConfigV2<IntegrationMesErpPageProps> = {
+  path: INTEGRATION_PATHS.mesErp,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationMesErpPage'),
+    'IntegrationMesErpPage'
+  ),
+  module: 'integration',
+  code: 'integration-mes-erp',
+  title: i18n.t('shared.config.meserp_2'),
+  titleKey: 'shared.config.meserp_2',
+  template: 'detail',
+  group: 'process',
+  requiredPermissions: ['integration:mes:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationWmsScmRoute: RouteConfigV2<IntegrationWmsScmPageProps> = {
+  path: INTEGRATION_PATHS.wmsScm,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationWmsScmPage'),
+    'IntegrationWmsScmPage'
+  ),
+  module: 'integration',
+  code: 'integration-wms-scm',
+  title: i18n.t('shared.config.wmsscm_3'),
+  titleKey: 'shared.config.wmsscm_3',
+  template: 'detail',
+  group: 'process',
+  requiredPermissions: ['integration:wms:read', 'integration:dashboard:read'],
+  action: 'read',
+};
+
+const integrationSettingsRoute: RouteConfigV2<IntegrationSettingsPageProps> = {
+  path: INTEGRATION_PATHS.settings,
+  element: lazyWithRetry(
+    () => import('@/pages/integration/IntegrationSettingsPage'),
+    'IntegrationSettingsPage'
+  ),
+  module: 'integration',
+  code: 'integration-settings',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['integration:dashboard:admin'],
+  action: 'admin',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const integrationModuleConfig: RouteModuleConfig = {
@@ -33,141 +219,15 @@ export const integrationModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.api_1'),
   permission: 'integration:dashboard:read',
   routes: [
-    {
-      path: INTEGRATION_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationDashboardPage'),
-        'IntegrationDashboardPage'
-      ),
-      module: 'integration',
-      code: 'integration-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.connections,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationConnectionsPage'),
-        'IntegrationConnectionsPage'
-      ),
-      module: 'integration',
-      code: 'integration-connections',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['integration:connection:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.mappings,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationMappingsPage'),
-        'IntegrationMappingsPage'
-      ),
-      module: 'integration',
-      code: 'integration-mappings',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['integration:mapping:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.events,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationEventsPage'),
-        'IntegrationEventsPage'
-      ),
-      module: 'integration',
-      code: 'integration-events',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'analytics',
-      requiredPermissions: ['integration:event:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.erpOverview,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationErpOverviewPage'),
-        'IntegrationErpOverviewPage'
-      ),
-      module: 'integration',
-      code: 'integration-erp',
-      title: i18n.t('shared.config.erp_0'),
-      titleKey: 'shared.config.erp_0',
-      template: 'detail',
-      group: 'process',
-      requiredPermissions: ['integration:erp:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.limsQms,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationLimsQmsPage'),
-        'IntegrationLimsQmsPage'
-      ),
-      module: 'integration',
-      code: 'integration-lims-qms',
-      title: i18n.t('shared.config.limsqms_1'),
-      titleKey: 'shared.config.limsqms_1',
-      template: 'detail',
-      group: 'process',
-      requiredPermissions: ['integration:lims:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.mesErp,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationMesErpPage'),
-        'IntegrationMesErpPage'
-      ),
-      module: 'integration',
-      code: 'integration-mes-erp',
-      title: i18n.t('shared.config.meserp_2'),
-      titleKey: 'shared.config.meserp_2',
-      template: 'detail',
-      group: 'process',
-      requiredPermissions: ['integration:mes:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.wmsScm,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationWmsScmPage'),
-        'IntegrationWmsScmPage'
-      ),
-      module: 'integration',
-      code: 'integration-wms-scm',
-      title: i18n.t('shared.config.wmsscm_3'),
-      titleKey: 'shared.config.wmsscm_3',
-      template: 'detail',
-      group: 'process',
-      requiredPermissions: ['integration:wms:read', 'integration:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: INTEGRATION_PATHS.settings,
-      element: lazyWithRetry(
-        () => import('@/pages/integration/IntegrationSettingsPage'),
-        'IntegrationSettingsPage'
-      ),
-      module: 'integration',
-      code: 'integration-settings',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['integration:dashboard:admin'],
-      action: 'admin',
-    },
+    integrationDashboardRoute,
+    integrationConnectionsRoute,
+    integrationMappingsRoute,
+    integrationEventsRoute,
+    integrationErpOverviewRoute,
+    integrationLimsQmsRoute,
+    integrationMesErpRoute,
+    integrationWmsScmRoute,
+    integrationSettingsRoute,
   ],
 };
 

@@ -1,4 +1,4 @@
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import i18n from '@/i18n';
 
 export const SHARED_PATHS = {

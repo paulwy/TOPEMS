@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -11,6 +11,94 @@ export const LOWCODE_PATHS = {
   pages: '/lowcode/pages',
   workflows: '/lowcode/workflows',
 } as const;
+
+export interface DashboardPageProps {}
+
+export interface AppListPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface FormDesignPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface PageDesignPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface WorkflowConfigPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
+  path: LOWCODE_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/lowcode/DashboardPage'), 'DashboardPage'),
+  module: 'lowcode',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'lowcode-dashboard',
+  requiredPermissions: ['lowcode:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const appListRoute: RouteConfigV2<AppListPageProps> = {
+  path: LOWCODE_PATHS.apps,
+  element: lazyWithRetry(() => import('@/pages/lowcode/AppListPage'), 'AppListPage'),
+  module: 'lowcode',
+  code: 'lowcode-apps',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['lowcode:apps:read'],
+  action: 'read',
+};
+
+const formDesignRoute: RouteConfigV2<FormDesignPageProps> = {
+  path: LOWCODE_PATHS.forms,
+  element: lazyWithRetry(() => import('@/pages/lowcode/FormDesignPage'), 'FormDesignPage'),
+  module: 'lowcode',
+  code: 'lowcode-forms',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['lowcode:form:read'],
+  action: 'read',
+};
+
+const pageDesignRoute: RouteConfigV2<PageDesignPageProps> = {
+  path: LOWCODE_PATHS.pages,
+  element: lazyWithRetry(() => import('@/pages/lowcode/PageDesignPage'), 'PageDesignPage'),
+  module: 'lowcode',
+  code: 'lowcode-pages',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['lowcode:page:read'],
+  action: 'read',
+};
+
+const workflowConfigRoute: RouteConfigV2<WorkflowConfigPageProps> = {
+  path: LOWCODE_PATHS.workflows,
+  element: lazyWithRetry(() => import('@/pages/lowcode/WorkflowConfigPage'), 'WorkflowConfigPage'),
+  module: 'lowcode',
+  code: 'lowcode-workflows',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'form',
+  group: 'setting',
+  requiredPermissions: ['lowcode:workflow:read'],
+  action: 'read',
+};
 
 export const lowcodeModuleConfig: RouteModuleConfig = {
   code: 'lowcode',
@@ -24,71 +112,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
   order: 90,
   description: i18n.t('shared.config.k1'),
   permission: 'lowcode:apps:read',
-  routes: [
-    {
-      path: LOWCODE_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/lowcode/DashboardPage'), 'DashboardPage'),
-      module: 'lowcode',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'lowcode-dashboard',
-      requiredPermissions: ['lowcode:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: LOWCODE_PATHS.apps,
-      element: lazyWithRetry(() => import('@/pages/lowcode/AppListPage'), 'AppListPage'),
-      module: 'lowcode',
-      code: 'lowcode-apps',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['lowcode:apps:read'],
-      action: 'read',
-    },
-    {
-      path: LOWCODE_PATHS.forms,
-      element: lazyWithRetry(() => import('@/pages/lowcode/FormDesignPage'), 'FormDesignPage'),
-      module: 'lowcode',
-      code: 'lowcode-forms',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['lowcode:form:read'],
-      action: 'read',
-    },
-    {
-      path: LOWCODE_PATHS.pages,
-      element: lazyWithRetry(() => import('@/pages/lowcode/PageDesignPage'), 'PageDesignPage'),
-      module: 'lowcode',
-      code: 'lowcode-pages',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['lowcode:page:read'],
-      action: 'read',
-    },
-    {
-      path: LOWCODE_PATHS.workflows,
-      element: lazyWithRetry(
-        () => import('@/pages/lowcode/WorkflowConfigPage'),
-        'WorkflowConfigPage'
-      ),
-      module: 'lowcode',
-      code: 'lowcode-workflows',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'form',
-      group: 'setting',
-      requiredPermissions: ['lowcode:workflow:read'],
-      action: 'read',
-    },
-  ],
+  routes: [dashboardRoute, appListRoute, formDesignRoute, pageDesignRoute, workflowConfigRoute],
 };
 
 export const lowcodeNavConfig: ModuleNavConfig = {

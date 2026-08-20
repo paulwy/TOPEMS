@@ -1,9 +1,8 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-// ---- 第一部分：路径常量（唯一真相源） ----
 export const NOTIFICATION_PATHS = {
   root: '/notification',
   dashboard: '/notification/dashboard',
@@ -15,6 +14,170 @@ export const NOTIFICATION_PATHS = {
   statistics: '/notification/statistics',
   settings: '/notification/settings',
 } as const;
+// ---- 第一部分：路径常量（唯一真相源） ----
+
+export interface NotificationDashboardPageProps {}
+
+export interface NotificationListPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface NotificationArchivePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface NotificationDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface NotificationCenterPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface NotificationTemplatesPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface NotificationStatsPageProps {}
+
+export interface NotificationSettingsPageProps {}
+
+const notificationDashboardRoute: RouteConfigV2<NotificationDashboardPageProps> = {
+  path: NOTIFICATION_PATHS.dashboard,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationDashboardPage'),
+    'NotificationDashboardPage'
+  ),
+  module: 'notification',
+  code: 'notification-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationListRoute: RouteConfigV2<NotificationListPageProps> = {
+  path: NOTIFICATION_PATHS.list,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationListPage'),
+    'NotificationListPage'
+  ),
+  module: 'notification',
+  code: 'notification-list',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationArchiveRoute: RouteConfigV2<NotificationArchivePageProps> = {
+  path: NOTIFICATION_PATHS.archive,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationArchivePage'),
+    'NotificationArchivePage'
+  ),
+  module: 'notification',
+  code: 'notification-archive',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationDetailRoute: RouteConfigV2<NotificationDetailPageProps> = {
+  path: NOTIFICATION_PATHS.detail,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationDetailPage'),
+    'NotificationDetailPage'
+  ),
+  module: 'notification',
+  code: 'notification-detail',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationCenterRoute: RouteConfigV2<NotificationCenterPageProps> = {
+  path: NOTIFICATION_PATHS.center,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationCenter'),
+    'NotificationCenter'
+  ),
+  module: 'notification',
+  code: 'notification-center',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationTemplatesRoute: RouteConfigV2<NotificationTemplatesPageProps> = {
+  path: NOTIFICATION_PATHS.templates,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationTemplatesPage'),
+    'NotificationTemplatesPage'
+  ),
+  module: 'notification',
+  code: 'notification-templates',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
+  path: NOTIFICATION_PATHS.statistics,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationStatsPage'),
+    'NotificationStatsPage'
+  ),
+  module: 'notification',
+  code: 'notification-statistics',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
+const notificationSettingsRoute: RouteConfigV2<NotificationSettingsPageProps> = {
+  path: NOTIFICATION_PATHS.settings,
+  element: lazyWithRetry(
+    () => import('@/pages/notification/NotificationSettingsPage'),
+    'NotificationSettingsPage'
+  ),
+  module: 'notification',
+  code: 'notification-settings',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
 
 // ---- 第二部分：路由配置 ----
 export const notificationModuleConfig: RouteModuleConfig = {
@@ -30,126 +193,14 @@ export const notificationModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'notification:dashboard:read',
   routes: [
-    {
-      path: NOTIFICATION_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationDashboardPage'),
-        'NotificationDashboardPage'
-      ),
-      module: 'notification',
-      code: 'notification-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.list,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationListPage'),
-        'NotificationListPage'
-      ),
-      module: 'notification',
-      code: 'notification-list',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.archive,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationArchivePage'),
-        'NotificationArchivePage'
-      ),
-      module: 'notification',
-      code: 'notification-archive',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.detail,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationDetailPage'),
-        'NotificationDetailPage'
-      ),
-      module: 'notification',
-      code: 'notification-detail',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.center,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationCenter'),
-        'NotificationCenter'
-      ),
-      module: 'notification',
-      code: 'notification-center',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.templates,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationTemplatesPage'),
-        'NotificationTemplatesPage'
-      ),
-      module: 'notification',
-      code: 'notification-templates',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.statistics,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationStatsPage'),
-        'NotificationStatsPage'
-      ),
-      module: 'notification',
-      code: 'notification-statistics',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: NOTIFICATION_PATHS.settings,
-      element: lazyWithRetry(
-        () => import('@/pages/notification/NotificationSettingsPage'),
-        'NotificationSettingsPage'
-      ),
-      module: 'notification',
-      code: 'notification-settings',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['notification:dashboard:read'],
-      action: 'read',
-    },
+    notificationDashboardRoute,
+    notificationListRoute,
+    notificationArchiveRoute,
+    notificationDetailRoute,
+    notificationCenterRoute,
+    notificationTemplatesRoute,
+    notificationStatsRoute,
+    notificationSettingsRoute,
   ],
 };
 

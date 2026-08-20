@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 GIS_PATHS.xxx，而非硬编码字符串
+
 export const GIS_PATHS = {
   root: '/gis',
   dashboard: '/gis/dashboard',
@@ -12,6 +13,69 @@ export const GIS_PATHS = {
   tracking: '/gis/tracking',
   fence: '/gis/fence',
 } as const;
+export interface DashboardPageProps {}
+
+export interface GisMapPageProps {}
+
+export interface GisTrackingPageProps {}
+
+export interface GisFencePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
+  path: GIS_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/gis/DashboardPage'), 'DashboardPage'),
+  module: 'gis',
+  title: i18n.t('shared.config.gis_0'),
+  titleKey: 'shared.config.gis_0',
+  code: 'gis-dashboard',
+  requiredPermissions: ['gis:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const gisMapRoute: RouteConfigV2<GisMapPageProps> = {
+  path: GIS_PATHS.map,
+  element: lazyWithRetry(() => import('@/pages/gis/index'), 'GisMapPage'),
+  module: 'gis',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'gis-map',
+  requiredPermissions: ['gis:map:read', 'gis:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'process',
+};
+
+const gisTrackingRoute: RouteConfigV2<GisTrackingPageProps> = {
+  path: GIS_PATHS.tracking,
+  element: lazyWithRetry(() => import('@/pages/gis/GisTrackingPage'), 'GisTrackingPage'),
+  module: 'gis',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  code: 'gis-tracking',
+  requiredPermissions: ['gis:tracking:read', 'gis:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'process',
+};
+
+const gisFenceRoute: RouteConfigV2<GisFencePageProps> = {
+  path: GIS_PATHS.fence,
+  element: lazyWithRetry(() => import('@/pages/gis/GisFencePage'), 'GisFencePage'),
+  module: 'gis',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  code: 'gis-fence',
+  requiredPermissions: ['gis:fence:read', 'gis:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'process',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const gisModuleConfig: RouteModuleConfig = {
@@ -26,56 +90,7 @@ export const gisModuleConfig: RouteModuleConfig = {
   order: 12,
   description: i18n.t('shared.config.k1'),
   permission: 'gis:dashboard:read',
-  routes: [
-    {
-      path: GIS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/gis/DashboardPage'), 'DashboardPage'),
-      module: 'gis',
-      title: i18n.t('shared.config.gis_0'),
-      titleKey: 'shared.config.gis_0',
-      code: 'gis-dashboard',
-      requiredPermissions: ['gis:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: GIS_PATHS.map,
-      element: lazyWithRetry(() => import('@/pages/gis/index'), 'GisMapPage'),
-      module: 'gis',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'gis-map',
-      requiredPermissions: ['gis:map:read', 'gis:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'process',
-    },
-    {
-      path: GIS_PATHS.tracking,
-      element: lazyWithRetry(() => import('@/pages/gis/GisTrackingPage'), 'GisTrackingPage'),
-      module: 'gis',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      code: 'gis-tracking',
-      requiredPermissions: ['gis:tracking:read', 'gis:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'process',
-    },
-    {
-      path: GIS_PATHS.fence,
-      element: lazyWithRetry(() => import('@/pages/gis/GisFencePage'), 'GisFencePage'),
-      module: 'gis',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      code: 'gis-fence',
-      requiredPermissions: ['gis:fence:read', 'gis:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'process',
-    },
-  ],
+  routes: [dashboardRoute, gisMapRoute, gisTrackingRoute, gisFenceRoute],
 };
 
 // ---- 导航配置（供导航注册表使用） ----
