@@ -123,6 +123,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/payroll-details",
             get(list_payroll_details).post(create_payroll_detail),
         )
+        .route("/payroll-slips", get(list_payroll_slips))
 }
 
 async fn list_payroll_runs(
@@ -852,6 +853,116 @@ async fn generate_payroll_voucher(
             Json(ApiResponse::<PayrollVoucherResponse>::error(
                 500,
                 &format!("薪资凭证生成失败: {}", e),
+            ))
+        }
+    }
+}
+
+/// 工资单（员工视角的薪资明细，JOIN payroll_items + payroll_runs + employees）
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PayrollSlip {
+    pub id: Uuid,
+    pub payroll_run_id: Uuid,
+    pub pay_period: String,
+    pub run_status: String,
+    pub employee_id: Uuid,
+    pub employee_name: Option<String>,
+    pub employee_number: Option<String>,
+    pub department_name: Option<String>,
+    pub gross_amount: BigDecimal,
+    pub net_amount: BigDecimal,
+    pub deductions: BigDecimal,
+    pub taxes: BigDecimal,
+    pub slip_status: String,
+    pub bank_account: Option<String>,
+    pub paid_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+async fn list_payroll_slips(
+    State(state): State<ApiState>,
+    Query(params): Query<QueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+
+    let payroll_run_id = params.payroll_run_id;
+    let emp_id = params.employee_id;
+    let status_filter = params.status;
+
+    let result = sqlx::query_as::<_, PayrollSlip>(
+        r#"
+        SELECT
+            pi.id,
+            pi.payroll_run_id,
+            pr.pay_period,
+            pr.status AS run_status,
+            pi.employee_id,
+            e.name AS employee_name,
+            e.employee_number,
+            d.name AS department_name,
+            pi.gross_amount,
+            pi.net_amount,
+            pi.deductions,
+            pi.taxes,
+            pi.status AS slip_status,
+            pi.bank_account,
+            pi.paid_at,
+            pi.created_at
+        FROM hrm.payroll_items pi
+        INNER JOIN hrm.payroll_runs pr ON pi.payroll_run_id = pr.id
+        LEFT JOIN hrm.employees e ON pi.employee_id = e.id
+        LEFT JOIN hrm.departments d ON e.department_id = d.id
+        WHERE ($1::uuid IS NULL OR pi.payroll_run_id = $1)
+          AND ($2::uuid IS NULL OR pi.employee_id = $2)
+          AND ($3::text IS NULL OR pi.status = $3)
+        ORDER BY pi.created_at DESC
+        LIMIT $4 OFFSET $5
+        "#,
+    )
+    .bind(payroll_run_id)
+    .bind(emp_id)
+    .bind(&status_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(items) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*)
+                FROM hrm.payroll_items pi
+                WHERE ($1::uuid IS NULL OR pi.payroll_run_id = $1)
+                  AND ($2::uuid IS NULL OR pi.employee_id = $2)
+                  AND ($3::text IS NULL OR pi.status = $3)
+                "#,
+            )
+            .bind(payroll_run_id)
+            .bind(emp_id)
+            .bind(&status_filter)
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "查询工资单成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("查询工资单失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询工资单失败",
             ))
         }
     }

@@ -113,7 +113,7 @@ export interface WarehouseDto {
   updated_at: string;
 }
 
-export interface CreateWarehouseDto {
+interface CreateWarehouseDto {
   code: string;
   name: string;
   address?: string | null;
@@ -126,7 +126,7 @@ export interface CreateWarehouseDto {
   created_by?: string;
 }
 
-export interface UpdateWarehouseDto {
+interface UpdateWarehouseDto {
   name?: string;
   address?: string | null;
   contact?: string | null;
@@ -174,7 +174,7 @@ export interface LocationDto {
   updated_at: string;
 }
 
-export interface CreateLocationDto {
+interface CreateLocationDto {
   warehouse_id: string;
   code: string;
   name: string;
@@ -197,7 +197,7 @@ export interface CreateLocationDto {
   remarks?: string | null;
 }
 
-export interface UpdateLocationDto {
+interface UpdateLocationDto {
   name?: string;
   zone_id?: string | null;
   aisle?: string | null;
@@ -245,7 +245,7 @@ export interface InboundOrderDto {
   updated_at: string;
 }
 
-export interface CreateInboundOrderDto {
+interface CreateInboundOrderDto {
   order_number: string;
   order_type: string;
   warehouse_id: string;
@@ -257,7 +257,7 @@ export interface CreateInboundOrderDto {
   created_by?: string;
 }
 
-export interface UpdateInboundOrderDto {
+interface UpdateInboundOrderDto {
   order_type?: string;
   warehouse_id?: string;
   supplier_id?: string | null;
@@ -268,7 +268,7 @@ export interface UpdateInboundOrderDto {
   status?: InboundOrderState | string;
 }
 
-export interface InboundOrderItemDto {
+interface InboundOrderItemDto {
   id: string;
   tenant_id: string;
   order_id: string;
@@ -290,7 +290,7 @@ export interface InboundOrderItemDto {
   updated_at: string;
 }
 
-export interface CreateInboundOrderItemDto {
+interface CreateInboundOrderItemDto {
   material_code: string;
   material_name: string;
   specification?: string | null;
@@ -302,7 +302,7 @@ export interface CreateInboundOrderItemDto {
   remarks?: string | null;
 }
 
-export interface UpdateInboundOrderItemDto {
+interface UpdateInboundOrderItemDto {
   received_quantity?: number;
   location_id?: string | null;
   batch_number?: string | null;
@@ -343,7 +343,7 @@ export interface OutboundOrderDto {
   updated_at: string;
 }
 
-export interface CreateOutboundOrderDto {
+interface CreateOutboundOrderDto {
   order_number: string;
   order_type: string;
   warehouse_id: string;
@@ -359,7 +359,7 @@ export interface CreateOutboundOrderDto {
   created_by?: string;
 }
 
-export interface UpdateOutboundOrderDto {
+interface UpdateOutboundOrderDto {
   order_type?: string;
   warehouse_id?: string;
   customer_id?: string | null;
@@ -376,7 +376,7 @@ export interface UpdateOutboundOrderDto {
   tracking_number?: string | null;
 }
 
-export interface OutboundOrderItemDto {
+interface OutboundOrderItemDto {
   id: string;
   tenant_id: string;
   order_id: string;
@@ -399,7 +399,7 @@ export interface OutboundOrderItemDto {
   updated_at: string;
 }
 
-export interface CreateOutboundOrderItemDto {
+interface CreateOutboundOrderItemDto {
   material_code: string;
   material_name: string;
   specification?: string | null;
@@ -411,7 +411,7 @@ export interface CreateOutboundOrderItemDto {
   remarks?: string | null;
 }
 
-export interface UpdateOutboundOrderItemDto {
+interface UpdateOutboundOrderItemDto {
   picked_quantity?: number;
   shipped_quantity?: number;
   location_id?: string | null;
@@ -457,7 +457,7 @@ export interface StockTakeDto {
   updated_at: string;
 }
 
-export interface CreateStockTakeDto {
+interface CreateStockTakeDto {
   stock_take_number: string;
   warehouse_id: string;
   location_id?: string | null;
@@ -467,7 +467,7 @@ export interface CreateStockTakeDto {
   created_by?: string;
 }
 
-export interface UpdateStockTakeDto {
+interface UpdateStockTakeDto {
   location_id?: string | null;
   stock_take_type?: string;
   planned_date?: string | null;
@@ -477,7 +477,7 @@ export interface UpdateStockTakeDto {
   counter?: string | null;
 }
 
-export interface StockTakeItemDto {
+interface StockTakeItemDto {
   id: string;
   tenant_id: string;
   stock_take_id: string;
@@ -511,7 +511,7 @@ export interface StockTakeItemDto {
   updated_at: string;
 }
 
-export interface CreateStockTakeItemDto {
+interface CreateStockTakeItemDto {
   material_code: string;
   material_name: string;
   specification?: string | null;
@@ -522,7 +522,7 @@ export interface CreateStockTakeItemDto {
   unit_price?: number | null;
 }
 
-export interface CountStockTakeItemDto {
+interface CountStockTakeItemDto {
   counted_quantity: number;
   discrepancy_reason?: string | null;
   remarks?: string | null;
@@ -566,7 +566,7 @@ export interface TransferOrderDto {
   updated_at: string;
 }
 
-export interface CreateTransferOrderDto {
+interface CreateTransferOrderDto {
   order_number: string;
   transfer_type?: string;
   from_warehouse_id: string;
@@ -581,7 +581,7 @@ export interface CreateTransferOrderDto {
   created_by?: string;
 }
 
-export interface UpdateTransferOrderDto {
+interface UpdateTransferOrderDto {
   transfer_type?: string;
   from_location_id?: string | null;
   to_location_id?: string | null;
@@ -594,7 +594,7 @@ export interface UpdateTransferOrderDto {
   status?: TransferOrderState | string;
 }
 
-export interface TransferOrderItemDto {
+interface TransferOrderItemDto {
   id: string;
   tenant_id: string;
   transfer_id: string;
@@ -617,7 +617,7 @@ export interface TransferOrderItemDto {
   updated_at: string;
 }
 
-export interface CreateTransferOrderItemDto {
+interface CreateTransferOrderItemDto {
   sku: string;
   material_name: string;
   specification?: string | null;
@@ -657,7 +657,7 @@ export interface WavePickDto {
   updated_at: string;
 }
 
-export interface CreateWavePickDto {
+interface CreateWavePickDto {
   wave_pick_number: string;
   wave_pick_type: string;
   warehouse_id: string;
@@ -667,7 +667,7 @@ export interface CreateWavePickDto {
   created_by?: string;
 }
 
-export interface UpdateWavePickDto {
+interface UpdateWavePickDto {
   wave_pick_type?: string;
   priority?: string | null;
   assigned_to?: string | null;
@@ -676,11 +676,11 @@ export interface UpdateWavePickDto {
   status?: WavePickState | string;
 }
 
-export interface AssignWavePickDto {
+interface AssignWavePickDto {
   assigned_to: string;
 }
 
-export interface WavePickItemDto {
+interface WavePickItemDto {
   id: string;
   tenant_id: string;
   wave_pick_id: string;
@@ -732,7 +732,7 @@ export interface InventoryMovementDto {
   updated_at: string;
 }
 
-export interface CreateInventoryMovementDto {
+interface CreateInventoryMovementDto {
   movement_number: string;
   movement_type: string;
   warehouse_id: string;
@@ -749,7 +749,7 @@ export interface CreateInventoryMovementDto {
   created_by?: string;
 }
 
-export interface UpdateInventoryMovementDto {
+interface UpdateInventoryMovementDto {
   movement_type?: string;
   source_location_id?: string | null;
   target_location_id?: string | null;
@@ -793,7 +793,7 @@ export interface InventoryItemDto {
   updated_at: string;
 }
 
-export interface CreateInventoryItemDto {
+interface CreateInventoryItemDto {
   warehouse_id: string;
   location_id: string;
   sku: string;
@@ -809,7 +809,7 @@ export interface CreateInventoryItemDto {
   purchase_price?: number | null;
 }
 
-export interface UpdateInventoryItemDto {
+interface UpdateInventoryItemDto {
   warehouse_id?: string;
   location_id?: string;
   sku?: string;
@@ -825,7 +825,7 @@ export interface UpdateInventoryItemDto {
   expiry_date?: string | null;
 }
 
-export interface InventoryAlertDto {
+interface InventoryAlertDto {
   id: string;
   tenant_id: string;
   rule_id: string | null;
@@ -884,7 +884,7 @@ export interface SerialNumberDto {
   updated_at: string;
 }
 
-export interface CreateSerialNumberDto {
+interface CreateSerialNumberDto {
   serial_no: string;
   sku: string;
   material_name: string;
@@ -903,7 +903,7 @@ export interface CreateSerialNumberDto {
   remark?: string | null;
 }
 
-export interface UpdateSerialNumberDto {
+interface UpdateSerialNumberDto {
   location_id?: string | null;
   quality_status?: string;
   status?: SerialNumberState | string;
@@ -948,7 +948,7 @@ export interface BatchDto {
   updated_at: string;
 }
 
-export interface CreateBatchDto {
+interface CreateBatchDto {
   batch_no: string;
   sku: string;
   material_name: string;
@@ -968,7 +968,7 @@ export interface CreateBatchDto {
   remark?: string | null;
 }
 
-export interface UpdateBatchDto {
+interface UpdateBatchDto {
   quantity?: number;
   location_id?: string | null;
   quality_status?: string;
@@ -981,7 +981,7 @@ export interface UpdateBatchDto {
 // E-12 CycleCountTask（循环盘点任务）
 // ============================================================================
 
-export interface CycleCountTaskDto {
+interface CycleCountTaskDto {
   id: string;
   tenant_id: string;
   task_number: string;
@@ -1009,7 +1009,7 @@ export interface CycleCountTaskDto {
   updated_at: string;
 }
 
-export interface CreateCycleCountTaskDto {
+interface CreateCycleCountTaskDto {
   task_number: string;
   warehouse_id: string;
   location_id?: string | null;
@@ -1022,7 +1022,7 @@ export interface CreateCycleCountTaskDto {
   created_by?: string;
 }
 
-export interface UpdateCycleCountTaskDto {
+interface UpdateCycleCountTaskDto {
   count_type?: string;
   cycle_code?: string;
   frequency?: string;
