@@ -23,7 +23,7 @@ export interface DocUploadDialogProps {
   onStartSummary: () => void;
 }
 
-export const DocUploadDialog: React.FC<DocUploadDialogProps> = ({
+const DocUploadDialog: React.FC<DocUploadDialogProps> = ({
   open,
   docFile,
   onClose,

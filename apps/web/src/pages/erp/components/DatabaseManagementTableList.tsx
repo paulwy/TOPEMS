@@ -36,7 +36,7 @@ interface DatabaseManagementTableListProps {
   onRowsPerPageChange: (value: number) => void;
   onViewStructure: (table: TableInfo) => void;
 }
-export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListProps> = ({
+const DatabaseManagementTableList: React.FC<DatabaseManagementTableListProps> = ({
   searchQuery,
   onSearchChange,
   filteredTables,

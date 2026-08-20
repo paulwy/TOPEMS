@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FeatureCard } from './FeatureCard';
 import type { FeatureCardData } from '../hooks/useAiDashboard';
 
-export const DashboardFeatures: React.FC<{ features: FeatureCardData[] }> = ({ features }) => {
+const DashboardFeatures: React.FC<{ features: FeatureCardData[] }> = ({ features }) => {
   const { t } = useTranslation();
 
   return (

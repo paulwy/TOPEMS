@@ -27,7 +27,7 @@ interface AntiReplayConfigPanelProps {
   onSave: () => void;
   isSaving: boolean;
 }
-export const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
+const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
   antiReplay,
   setAntiReplay,
   newEnforcePath,

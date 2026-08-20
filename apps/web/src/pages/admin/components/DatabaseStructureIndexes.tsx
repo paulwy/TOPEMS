@@ -21,9 +21,7 @@ import type { DbChange } from '@/api/system';
 interface DatabaseStructureIndexesProps {
   dbChanges: DbChange[];
 }
-export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({
-  dbChanges,
-}) => {
+const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbChanges }) => {
   const changeTypeLabels: Record<string, string> = {
     add_column: i18n.t('admin.database_structure.add_field'),
     modify_column: i18n.t('admin.database_structure.modify_field'),

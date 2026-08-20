@@ -34,7 +34,7 @@ export interface ChatSidebarProps {
   formatTime: (date: Date) => string;
 }
 
-export const ChatSidebar: React.FC<ChatSidebarProps> = ({
+const ChatSidebar: React.FC<ChatSidebarProps> = ({
   sessions,
   selectedSessionId,
   activeTab,

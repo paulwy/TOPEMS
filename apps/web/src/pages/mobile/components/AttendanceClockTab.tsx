@@ -15,7 +15,7 @@ interface AttendanceClockTabProps {
   onCheckIn: () => void;
   onCheckOut: () => void;
 }
-export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
+const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
   attendanceStats,
   checkingIn,
   todayStatus,

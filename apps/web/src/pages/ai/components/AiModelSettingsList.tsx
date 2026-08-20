@@ -11,7 +11,7 @@ interface AiModelSettingsListProps {
   onSelectModel: (model: AIModel) => void;
 }
 
-export const AiModelSettingsList: React.FC<AiModelSettingsListProps> = ({
+const AiModelSettingsList: React.FC<AiModelSettingsListProps> = ({
   selectedModel,
   onSelectModel,
 }) => {

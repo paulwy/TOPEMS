@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Chip, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { MiniChart } from './MiniChart';
 
-export const DashboardTrend: React.FC<{ usageData: number[] }> = ({ usageData }) => {
+const DashboardTrend: React.FC<{ usageData: number[] }> = ({ usageData }) => {
   const { t } = useTranslation();
   const theme = useTheme();
 

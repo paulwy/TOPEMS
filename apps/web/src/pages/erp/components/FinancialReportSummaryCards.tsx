@@ -54,7 +54,7 @@ const SummaryCard: React.FC<{ config: SummaryCardConfig }> = ({ config }) => {
     </Box>
   );
 };
-export const FinancialReportSummaryCards: React.FC<FinancialReportSummaryCardsProps> = ({
+const FinancialReportSummaryCards: React.FC<FinancialReportSummaryCardsProps> = ({
   activeTab,
   balanceSheet,
   incomeStatement,

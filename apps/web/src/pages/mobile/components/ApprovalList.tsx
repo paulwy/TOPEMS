@@ -19,7 +19,7 @@ interface ApprovalListProps {
   onApprove?: (approval: ApprovalItem) => void;
   onReject?: (approval: ApprovalItem) => void;
 }
-export const ApprovalList: React.FC<ApprovalListProps> = ({
+const ApprovalList: React.FC<ApprovalListProps> = ({
   loading,
   filteredApprovals,
   searchQuery,

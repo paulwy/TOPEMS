@@ -28,7 +28,7 @@ export interface ChatHeaderProps {
   onChangeTab: (tab: ChatMode) => void;
 }
 
-export const ChatHeader: React.FC<ChatHeaderProps> = ({
+const ChatHeader: React.FC<ChatHeaderProps> = ({
   selectedSession,
   selectedModel,
   activeTab,

@@ -26,7 +26,7 @@ export interface PluginMarketplaceFiltersProps {
   onRefresh: () => void;
 }
 
-export const PluginMarketplaceFilters: React.FC<PluginMarketplaceFiltersProps> = ({
+const PluginMarketplaceFilters: React.FC<PluginMarketplaceFiltersProps> = ({
   searchQuery,
   selectedSuite,
   sortBy,

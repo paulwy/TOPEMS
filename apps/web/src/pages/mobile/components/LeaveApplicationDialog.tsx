@@ -26,7 +26,7 @@ interface LeaveApplicationDialogProps {
   onFormChange: (updater: (prev: LeaveForm) => LeaveForm) => void;
   onSubmit: () => void;
 }
-export const LeaveApplicationDialog: React.FC<LeaveApplicationDialogProps> = ({
+const LeaveApplicationDialog: React.FC<LeaveApplicationDialogProps> = ({
   open,
   leaveForm,
   isSubmitting,
