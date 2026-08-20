@@ -75,7 +75,12 @@ const DynamicRoutes: React.FC = () => {
               if (!rootPathAlreadyExists) {
                 mappedRoutes.unshift({
                   path: moduleRootPath,
-                  element: <Navigate to={dashboardPath} replace />,
+                  element: (
+                    <Navigate
+                      to={dashboardPath}
+                      replace
+                    />
+                  ),
                   module: moduleCode,
                   action: 'read',
                 });

@@ -165,5 +165,4 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   );
 };
 
-export { BatchOperations };
 export default BatchOperations;

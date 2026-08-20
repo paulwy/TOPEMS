@@ -23,7 +23,7 @@ export interface AIAnomalyAssistantProps {
   initialMetric?: string;
 }
 
-export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialMetric }) => {
+const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialMetric }) => {
   const [metric, setMetric] = useState(initialMetric || '');
   const [timeRange, setTimeRange] = useState('7d');
   const [threshold, setThreshold] = useState(2);

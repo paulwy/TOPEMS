@@ -682,7 +682,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
 /**
  * 成功警告卡片
  */
-export const SuccessAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+const SuccessAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
   <AlertCard
     {...props}
     level='success'
@@ -692,7 +692,7 @@ export const SuccessAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props)
 /**
  * 警告警告卡片
  */
-export const WarningAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+const WarningAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
   <AlertCard
     {...props}
     level='warning'
@@ -702,7 +702,7 @@ export const WarningAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props)
 /**
  * 错误警告卡片
  */
-export const ErrorAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+const ErrorAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
   <AlertCard
     {...props}
     level='error'
@@ -712,7 +712,7 @@ export const ErrorAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) =
 /**
  * 信息警告卡片
  */
-export const InfoAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+const InfoAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
   <AlertCard
     {...props}
     level='info'

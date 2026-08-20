@@ -74,7 +74,7 @@ interface ExtendedLoadingOptions extends LoadingOptions {
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
-export const useLoading = () => {
+const useLoading = () => {
   const context = useContext(LoadingContext);
   if (!context) {
     throw new Error('useLoading must be used within a LoadingProvider');
@@ -206,7 +206,6 @@ const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = memo(
   }
 );
 SkeletonTable.displayName = 'SkeletonTable';
-
 
 // ============================================================================
 // Progress Components

@@ -54,7 +54,7 @@ const sizeConfig = {
   },
 };
 
-export const DescriptionList: React.FC<DescriptionListProps> = ({
+const DescriptionList: React.FC<DescriptionListProps> = ({
   items,
   columns = 2,
   direction = 'horizontal',

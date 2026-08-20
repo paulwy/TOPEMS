@@ -827,13 +827,15 @@ export function DataTable<TData, TValue>({
                 value={localSearch}
                 onChange={(event) => handleSearch(event.target.value)}
                 sx={{ width: '100%', maxWidth: 320 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
-                    ),
-                  },
-                } as any}
+                slotProps={
+                  {
+                    input: {
+                      startAdornment: (
+                        <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
+                      ),
+                    },
+                  } as any
+                }
               />
             )}
 
@@ -1686,7 +1688,7 @@ export interface MobileCardViewProps<TData> {
  * 在小屏设备下替代表格视图，将每行数据渲染为卡片
  * 符合 project_memory 约束：DataTable/DataGrid 组件必须包含移动端优化的卡片视图
  */
-export function MobileCardView<TData>({
+function MobileCardView<TData>({
   data,
   cardRender,
   titleKey,

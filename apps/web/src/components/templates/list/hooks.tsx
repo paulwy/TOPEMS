@@ -56,7 +56,7 @@ export interface UseInlineEditingResult<T> {
  * 行内编辑 Hook
  * 提供行内编辑状态管理与保存/取消逻辑
  */
-export function useInlineEditing<T>({
+function useInlineEditing<T>({
   editingRowIdProp,
   onEditingRowIdChange,
   onInlineEditSave,
@@ -159,7 +159,7 @@ export interface UseTreeTableResult<T> {
  * 树形表格 Hook
  * 提供树形数据的扁平化、展开/折叠管理
  */
-export function useTreeTable<T>({
+function useTreeTable<T>({
   data,
   treeView,
   treeChildrenField,
@@ -294,7 +294,7 @@ export interface UseExportFeatureResult {
  * 导出功能 Hook
  * 提供导出菜单状态、数据转换与下载逻辑
  */
-export function useExportFeature<T>({
+function useExportFeature<T>({
   exportable,
   exportFileName,
   exportFormats,
@@ -526,7 +526,7 @@ export interface UseColumnConfigStateResult {
  * 列配置状态 Hook
  * 管理列的显示/隐藏、顺序、持久化、URL 同步
  */
-export function useColumnConfigState<T>({
+function useColumnConfigState<T>({
   columns,
   resolvedColumns,
   defaultColumnConfig,
@@ -711,7 +711,7 @@ export interface UseBatchOperationsResult<T> {
  * 批量操作 Hook
  * 管理批量选择、确认对话框、进度状态
  */
-export function useBatchOperations<T>({
+function useBatchOperations<T>({
   data,
   getRowId,
   filterStorageKey,
@@ -924,7 +924,7 @@ export interface UseCrudFormResult<T extends { id?: string | number }> {
  * CRUD 表单 Hook
  * 管理表单状态、验证、提交、自动渲染
  */
-export function useCrudForm<T extends { id?: string | number }>({
+function useCrudForm<T extends { id?: string | number }>({
   crud,
   getRowId,
   crudResult,
@@ -1212,10 +1212,7 @@ export interface UseCrudFetchParamsParams<T> {
  * CRUD fetch 参数构建 Hook
  * 将内部状态转换为后端期望的参数格式
  */
-export function useCrudFetchParams<T>({
-  crud,
-  internalListStateResult,
-}: UseCrudFetchParamsParams<T>) {
+function useCrudFetchParams<T>({ crud, internalListStateResult }: UseCrudFetchParamsParams<T>) {
   const buildCrudFetchParams = useCallback((): Record<string, unknown> => {
     if (!crud || !internalListStateResult) return {};
     const stateParams: ListPageStateParams = {
@@ -1275,7 +1272,7 @@ export interface UseListPageFiltersResult {
  * 列表页筛选状态 Hook
  * 管理筛选条件、URL 同步、localStorage 持久化
  */
-export function useListPageFilters({
+function useListPageFilters({
   filtersValue,
   persistFilters,
   filterStorageKey,
@@ -1353,7 +1350,7 @@ export interface UseListPageSearchResult {
  * 列表页搜索状态 Hook
  * 管理搜索输入框的本地状态、URL 同步、localStorage 持久化
  */
-export function useListPageSearch({
+function useListPageSearch({
   searchValue,
   persistSearch,
   filterStorageKey,
@@ -1417,7 +1414,7 @@ export interface UseViewModeResult {
  * 视图模式 Hook
  * 管理表格视图/卡片视图的切换状态
  */
-export function useViewMode({
+function useViewMode({
   viewModeProp,
   defaultViewMode = 'table',
   onViewModeChange,
@@ -1467,7 +1464,7 @@ export interface UseCrudRowActionsParams<T> {
  * CRUD 行操作生成 Hook
  * 在 crud 模式下自动生成行操作（编辑/删除）并合并自定义操作
  */
-export function useCrudRowActions<T>({
+function useCrudRowActions<T>({
   crud,
   hasForm,
   rowActions,
@@ -1508,11 +1505,7 @@ export interface UseCrudBatchActionsParams<T> {
  * CRUD 批量操作生成 Hook
  * 在 crud 模式下自动生成批量删除并合并自定义操作
  */
-export function useCrudBatchActions<T>({
-  crud,
-  crudResult,
-  batchActions,
-}: UseCrudBatchActionsParams<T>) {
+function useCrudBatchActions<T>({ crud, crudResult, batchActions }: UseCrudBatchActionsParams<T>) {
   const resolvedBatchActions = useMemo(() => {
     if (!crud) return batchActions;
     const builtInActions: BatchAction<T>[] = [];
@@ -1560,12 +1553,7 @@ export interface UseCrudActionsParams<T> {
  * CRUD 操作按钮生成 Hook
  * 在 crud 模式下自动生成t('components.hooks.26bb84')按钮并合并自定义操作
  */
-export function useCrudActions<T>({
-  crud,
-  hasForm,
-  actions,
-  openCreateForm,
-}: UseCrudActionsParams<T>) {
+function useCrudActions<T>({ crud, hasForm, actions, openCreateForm }: UseCrudActionsParams<T>) {
   const effectiveActions = useMemo(() => {
     if (!hasForm || !crud || crud.showCreateButton === false) return actions;
     const createAction = {
@@ -1590,7 +1578,7 @@ export interface UseResolvedColumnsParams<T> {
 /**
  * CRUD 模式下从 formFields 自动生成表格列
  */
-export function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParams<T>) {
+function useResolvedColumns<T>({ columns, crud }: UseResolvedColumnsParams<T>) {
   const resolvedColumns = useMemo<ColumnDef<T>[]>(() => {
     if (columns && columns.length > 0) return columns;
     if (!crud?.formFields) return columns;
@@ -1707,7 +1695,7 @@ export interface UseResolvedCrudConfigParams {
  * CRUD 模式下自动推断各项配置
  * 当外部未显式传入时，从 crud 配置推导默认值
  */
-export function useResolvedCrudConfig({
+function useResolvedCrudConfig({
   crud,
   columnResizable,
   treeView,

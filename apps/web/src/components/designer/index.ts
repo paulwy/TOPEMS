@@ -9,11 +9,8 @@ export type {
 } from './types';
 
 export {
-  FORM_COMPONENTS,
-  LAYOUT_COMPONENTS,
   BUILTIN_COMPONENTS,
   getComponentByType,
-  getComponentsByCategory,
   schemaToCanvasNodes,
   canvasNodesToSchema,
 } from './types';

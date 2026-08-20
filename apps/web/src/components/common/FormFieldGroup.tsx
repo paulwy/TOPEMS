@@ -17,7 +17,7 @@ export interface FormFieldGroupProps {
   sx?: SxProps<Theme>;
 }
 
-export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
+const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
   title,
   description,
   tooltip,

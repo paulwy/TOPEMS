@@ -27,13 +27,10 @@ export interface AITextOptimizerProps {
 
 function getSystemPromptTemplates(): Record<string, string> {
   return {
-    description:
-      i18n.t('components.ai_text_optimizer.k0'),
+    description: i18n.t('components.ai_text_optimizer.k0'),
     duty: i18n.t('components.ai_text_optimizer.k1'),
-    profile:
-      i18n.t('components.ai_text_optimizer.k2'),
-    clause:
-      i18n.t('components.ai_text_optimizer.k3'),
+    profile: i18n.t('components.ai_text_optimizer.k2'),
+    clause: i18n.t('components.ai_text_optimizer.k3'),
   };
 }
 
@@ -53,9 +50,21 @@ function getOptimizationStyles() {
       label: i18n.t('components.ai_text_optimizer.k8'),
       description: i18n.t('components.ai_text_optimizer.k9'),
     },
-    { value: 'concise', label: i18n.t('components.ai_text_optimizer.k11'), description: i18n.t('components.ai_text_optimizer.k10') },
-    { value: 'detailed', label: i18n.t('components.ai_text_optimizer.k13'), description: i18n.t('components.ai_text_optimizer.k12') },
-    { value: 'friendly', label: i18n.t('components.ai_text_optimizer.k15'), description: i18n.t('components.ai_text_optimizer.k14') },
+    {
+      value: 'concise',
+      label: i18n.t('components.ai_text_optimizer.k11'),
+      description: i18n.t('components.ai_text_optimizer.k10'),
+    },
+    {
+      value: 'detailed',
+      label: i18n.t('components.ai_text_optimizer.k13'),
+      description: i18n.t('components.ai_text_optimizer.k12'),
+    },
+    {
+      value: 'friendly',
+      label: i18n.t('components.ai_text_optimizer.k15'),
+      description: i18n.t('components.ai_text_optimizer.k14'),
+    },
   ];
 }
 
@@ -349,7 +358,11 @@ export function AITextOptimizer({
               )
             }
           >
-            {isLoading ? i18n.t('components.ai_text_optimizer.k11') : optimizedText ? i18n.t('components.ai_text_optimizer.k20') : i18n.t('components.ai_text_optimizer.ai_12')}
+            {isLoading
+              ? i18n.t('components.ai_text_optimizer.k11')
+              : optimizedText
+                ? i18n.t('components.ai_text_optimizer.k20')
+                : i18n.t('components.ai_text_optimizer.ai_12')}
           </Button>
         </Box>
 
@@ -405,7 +418,9 @@ export function AITextOptimizer({
                     )
                   }
                 >
-                  {copied ? i18n.t('components.ai_text_optimizer.k22') : i18n.t('components.ai_text_optimizer.k21')}
+                  {copied
+                    ? i18n.t('components.ai_text_optimizer.k22')
+                    : i18n.t('components.ai_text_optimizer.k21')}
                 </Button>
               </Box>
             </Box>

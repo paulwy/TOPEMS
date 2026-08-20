@@ -69,7 +69,7 @@ function resetPresetCSS() {
   root.removeAttribute('data-theme-preset');
 }
 
-export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
+function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activePreset, setActivePreset] = useState<string>('default');
 

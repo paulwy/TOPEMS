@@ -37,7 +37,7 @@ interface ReportResult {
   description: string;
 }
 
-export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQuery }) => {
+const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQuery }) => {
   const [query, setQuery] = useState(initialQuery || '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ReportResult | null>(null);

@@ -336,7 +336,10 @@ const ColorPaletteGrid: Story = {
                     sx={{
                       fontSize: 9,
                       fontWeight: 500,
-                      color: shade >= 500 ? designTokens.colors.cyber.metal.topLight : designTokens.colors.cyber.glass.divider,
+                      color:
+                        shade >= 500
+                          ? designTokens.colors.cyber.metal.topLight
+                          : designTokens.colors.cyber.glass.divider,
                       userSelect: 'none',
                     }}
                   >

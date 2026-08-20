@@ -14,14 +14,86 @@ interface Employee {
 }
 
 const mockEmployees: Employee[] = [
-  { id: '1', name: '张三', department: '研发部', position: '高级工程师', status: 'active', joinDate: '2022-03-15', email: 'zhangsan@topems.com', salary: 25000 },
-  { id: '2', name: '李四', department: '市场部', position: '市场经理', status: 'active', joinDate: '2021-08-20', email: 'lisi@topems.com', salary: 22000 },
-  { id: '3', name: '王五', department: '销售部', position: '销售总监', status: 'active', joinDate: '2020-06-10', email: 'wangwu@topems.com', salary: 35000 },
-  { id: '4', name: '赵六', department: '财务部', position: '财务主管', status: 'leave', joinDate: '2019-11-05', email: 'zhaoliu@topems.com', salary: 20000 },
-  { id: '5', name: '钱七', department: '研发部', position: '前端工程师', status: 'active', joinDate: '2023-01-18', email: 'qianqi@topems.com', salary: 18000 },
-  { id: '6', name: '孙八', department: '人力资源', position: 'HR 专员', status: 'active', joinDate: '2022-09-01', email: 'sunba@topems.com', salary: 15000 },
-  { id: '7', name: '周九', department: '运营部', position: '运营经理', status: 'resigned', joinDate: '2021-04-22', email: 'zhoujiu@topems.com', salary: 20000 },
-  { id: '8', name: '吴十', department: '研发部', position: '后端工程师', status: 'active', joinDate: '2023-05-10', email: 'wushi@topems.com', salary: 20000 },
+  {
+    id: '1',
+    name: '张三',
+    department: '研发部',
+    position: '高级工程师',
+    status: 'active',
+    joinDate: '2022-03-15',
+    email: 'zhangsan@topems.com',
+    salary: 25000,
+  },
+  {
+    id: '2',
+    name: '李四',
+    department: '市场部',
+    position: '市场经理',
+    status: 'active',
+    joinDate: '2021-08-20',
+    email: 'lisi@topems.com',
+    salary: 22000,
+  },
+  {
+    id: '3',
+    name: '王五',
+    department: '销售部',
+    position: '销售总监',
+    status: 'active',
+    joinDate: '2020-06-10',
+    email: 'wangwu@topems.com',
+    salary: 35000,
+  },
+  {
+    id: '4',
+    name: '赵六',
+    department: '财务部',
+    position: '财务主管',
+    status: 'leave',
+    joinDate: '2019-11-05',
+    email: 'zhaoliu@topems.com',
+    salary: 20000,
+  },
+  {
+    id: '5',
+    name: '钱七',
+    department: '研发部',
+    position: '前端工程师',
+    status: 'active',
+    joinDate: '2023-01-18',
+    email: 'qianqi@topems.com',
+    salary: 18000,
+  },
+  {
+    id: '6',
+    name: '孙八',
+    department: '人力资源',
+    position: 'HR 专员',
+    status: 'active',
+    joinDate: '2022-09-01',
+    email: 'sunba@topems.com',
+    salary: 15000,
+  },
+  {
+    id: '7',
+    name: '周九',
+    department: '运营部',
+    position: '运营经理',
+    status: 'resigned',
+    joinDate: '2021-04-22',
+    email: 'zhoujiu@topems.com',
+    salary: 20000,
+  },
+  {
+    id: '8',
+    name: '吴十',
+    department: '研发部',
+    position: '后端工程师',
+    status: 'active',
+    joinDate: '2023-05-10',
+    email: 'wushi@topems.com',
+    salary: 20000,
+  },
 ];
 
 let employeeStore = [...mockEmployees];
@@ -34,7 +106,7 @@ const employeeApi: CrudApiAdapter<Employee> = {
     const pageSize = params?.pageSize ?? 10;
     const search = (params?.search as string) || '';
     const filtered = employeeStore.filter(
-      (e) => !search || e.name.includes(search) || e.department.includes(search),
+      (e) => !search || e.name.includes(search) || e.department.includes(search)
     );
     return {
       data: filtered.slice(page * pageSize, (page + 1) * pageSize),
@@ -69,9 +141,26 @@ const employeeSchema: EntitySchema<Employee> = {
   description: '公司员工信息管理',
   fields: [
     { name: 'name', label: '姓名', type: 'text', required: true, placeholder: '请输入姓名' },
-    { name: 'department', label: '部门', type: 'select', required: true, options: ['研发部', '市场部', '销售部', '财务部', '人力资源', '运营部'] },
+    {
+      name: 'department',
+      label: '部门',
+      type: 'select',
+      required: true,
+      options: ['研发部', '市场部', '销售部', '财务部', '人力资源', '运营部'],
+    },
     { name: 'position', label: '职位', type: 'text', required: true },
-    { name: 'status', label: '状态', type: 'select', required: true, defaultValue: 'active', options: [{ value: 'active', label: '在职' }, { value: 'leave', label: '休假' }, { value: 'resigned', label: '离职' }] },
+    {
+      name: 'status',
+      label: '状态',
+      type: 'select',
+      required: true,
+      defaultValue: 'active',
+      options: [
+        { value: 'active', label: '在职' },
+        { value: 'leave', label: '休假' },
+        { value: 'resigned', label: '离职' },
+      ],
+    },
     { name: 'email', label: '邮箱', type: 'text', required: true },
     { name: 'salary', label: '薪资', type: 'number', required: false, placeholder: '月薪（元）' },
     { name: 'joinDate', label: '入职日期', type: 'date', required: true },
@@ -89,7 +178,8 @@ const meta = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Schema 驱动的完整 CRUD 页面模板。一个 EntitySchema + API 适配器 = 列表 + 创建 + 编辑 + 详情 + 删除 + 批量操作。',
+        component:
+          'Schema 驱动的完整 CRUD 页面模板。一个 EntitySchema + API 适配器 = 列表 + 创建 + 编辑 + 详情 + 删除 + 批量操作。',
       },
     },
   },
@@ -129,10 +219,6 @@ const WithBreadcrumbs: Story = {
     schema: employeeSchema,
     apiAdapter: employeeApi,
     idField: 'id',
-    breadcrumbs: [
-      { label: '首页', href: '#' },
-      { label: '人事管理' },
-      { label: '员工列表' },
-    ],
+    breadcrumbs: [{ label: '首页', href: '#' }, { label: '人事管理' }, { label: '员工列表' }],
   },
 };

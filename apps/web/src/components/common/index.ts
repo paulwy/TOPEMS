@@ -23,12 +23,6 @@ export type { DialogProps, DialogSize } from './Dialog';
 // [shared] ConfirmDialog - 已提升到 @topems/shared-components
 export {
   ConfirmDialog,
-  AlertDialog,
-  InfoDialog,
-  SuccessDialog,
-  WarningDialog,
-  ErrorDialog,
-  ConfirmationDialog,
   type ConfirmDialogConfig,
   type DialogType,
   type DialogButtonType,
@@ -157,8 +151,6 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 
 export {
   ListEmptyState,
-  SearchEmptyState,
-  PermissionEmptyState,
   ErrorEmptyState,
   type ErrorEmptyStateProps,
 } from '@topems/shared-components';
