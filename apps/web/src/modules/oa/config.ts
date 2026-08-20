@@ -13,7 +13,7 @@ const OA_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface DocumentManagementPageProps {
+interface DocumentManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
@@ -25,12 +25,12 @@ export interface AnnouncementPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface MeetingManagementPageProps {
+interface MeetingManagementPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface VehicleManagementPageProps {
+interface VehicleManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;

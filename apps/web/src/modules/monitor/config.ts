@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 MONITOR_PATHS.xxx，而非硬编码字符串
 /** MonitorDashboardPage 路由 Props · 模板=dashboard */
-export interface MonitorDashboardPageProps {
+interface MonitorDashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
@@ -14,7 +14,7 @@ export interface MonitorDashboardPageProps {
 }
 
 /** MonitorAlertsPage 路由 Props · 模板=list */
-export interface MonitorAlertsPageProps {
+interface MonitorAlertsPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -24,7 +24,7 @@ export interface MonitorAlertsPageProps {
 }
 
 /** MonitorAlertHistoryPage 路由 Props · 模板=list */
-export interface MonitorAlertHistoryPageProps {
+interface MonitorAlertHistoryPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -34,7 +34,7 @@ export interface MonitorAlertHistoryPageProps {
 }
 
 /** MonitorAlertRulesPage 路由 Props · 模板=list */
-export interface MonitorAlertRulesPageProps {
+interface MonitorAlertRulesPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -44,7 +44,7 @@ export interface MonitorAlertRulesPageProps {
 }
 
 /** MonitorMetricsPage 路由 Props · 模板=stats */
-export interface MonitorMetricsPageProps {
+interface MonitorMetricsPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -52,7 +52,7 @@ export interface MonitorMetricsPageProps {
 }
 
 /** MonitorLogsPage 路由 Props · 模板=list */
-export interface MonitorLogsPageProps {
+interface MonitorLogsPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -62,7 +62,7 @@ export interface MonitorLogsPageProps {
 }
 
 /** MonitorSettingsPage 路由 Props · 模板=settings */
-export interface MonitorSettingsPageProps {
+interface MonitorSettingsPageProps {
   /** 当前定位的设置分组 key */
   section?: string;
   /** 设置面板主题（预留） */

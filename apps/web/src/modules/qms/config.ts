@@ -40,7 +40,7 @@ export const QMS_PATHS = {
 // 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
 // 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
 
-export interface QmsDashboardPageProps {
+interface QmsDashboardPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -62,7 +62,7 @@ export interface QmsDashboardPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface QmsInspectionPageProps {
+interface QmsInspectionPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -88,7 +88,7 @@ export interface QmsInspectionPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsQualityControlPageProps {
+interface QmsQualityControlPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -114,7 +114,7 @@ export interface QmsQualityControlPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsNonconformancePageProps {
+interface QmsNonconformancePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -140,7 +140,7 @@ export interface QmsNonconformancePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsAuditManagementPageProps {
+interface QmsAuditManagementPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -166,7 +166,7 @@ export interface QmsAuditManagementPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsStandardListPageProps {
+interface QmsStandardListPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -192,7 +192,7 @@ export interface QmsStandardListPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsStandardDetailPageProps {
+interface QmsStandardDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -210,7 +210,7 @@ export interface QmsStandardDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsApqpPageProps {
+interface QmsApqpPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -236,7 +236,7 @@ export interface QmsApqpPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsFmeaPageProps {
+interface QmsFmeaPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -262,7 +262,7 @@ export interface QmsFmeaPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsSpcPageProps {
+interface QmsSpcPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -280,7 +280,7 @@ export interface QmsSpcPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsEightDPageProps {
+interface QmsEightDPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -306,7 +306,7 @@ export interface QmsEightDPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QmsQualityCostPageProps {
+interface QmsQualityCostPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -324,7 +324,7 @@ export interface QmsQualityCostPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsQualityTrendPageProps {
+interface QmsQualityTrendPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -342,7 +342,7 @@ export interface QmsQualityTrendPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsDefectParetoPageProps {
+interface QmsDefectParetoPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -360,7 +360,7 @@ export interface QmsDefectParetoPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsCostAnalysisPageProps {
+interface QmsCostAnalysisPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -378,7 +378,7 @@ export interface QmsCostAnalysisPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsSpcControlChartPageProps {
+interface QmsSpcControlChartPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -396,7 +396,7 @@ export interface QmsSpcControlChartPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsFmeaRiskMatrixPageProps {
+interface QmsFmeaRiskMatrixPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -414,7 +414,7 @@ export interface QmsFmeaRiskMatrixPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsAuditCompliancePageProps {
+interface QmsAuditCompliancePageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -432,7 +432,7 @@ export interface QmsAuditCompliancePageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface QmsInspectionDetailPageProps {
+interface QmsInspectionDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -450,7 +450,7 @@ export interface QmsInspectionDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsIssueDetailPageProps {
+interface QmsIssueDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -468,7 +468,7 @@ export interface QmsIssueDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsAuditPlanDetailPageProps {
+interface QmsAuditPlanDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -486,7 +486,7 @@ export interface QmsAuditPlanDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsEightDDetailPageProps {
+interface QmsEightDDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -504,7 +504,7 @@ export interface QmsEightDDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsApqpProjectDetailPageProps {
+interface QmsApqpProjectDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -522,7 +522,7 @@ export interface QmsApqpProjectDetailPageProps {
   version?: string | number;
 }
 
-export interface QmsFmeaDetailPageProps {
+interface QmsFmeaDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;

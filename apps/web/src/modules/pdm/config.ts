@@ -29,96 +29,96 @@ const PDM_PATHS = {
   settingDocApprovalFlow: '/pdm/setting/doc-approval-flow',
   settingChangeTemplate: '/pdm/setting/change-template',
 } as const;
-export interface ProductPageProps {
+interface ProductPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MaterialPageProps {
+interface MaterialPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BomPageProps {
+interface BomPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmBomPageProps {
+interface PdmBomPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface DocumentPageProps {
+interface DocumentPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmVersionPageProps {
+interface PdmVersionPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ChangePageProps {
+interface ChangePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmProjectPageProps {
+interface PdmProjectPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmProductConfigPageProps {
+interface PdmProductConfigPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface PdmFormulaPageProps {
+interface PdmFormulaPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmProcessPageProps {
+interface PdmProcessPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmBatchPageProps {
+interface PdmBatchPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmStepPageProps {
+interface PdmStepPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PdmStatsPageProps {}
+interface PdmStatsPageProps {}
 
-export interface PdmDashboardPageProps {}
+interface PdmDashboardPageProps {}
 
-export interface PdmProductCategoryPageProps {}
+interface PdmProductCategoryPageProps {}
 
-export interface BomTemplatePageProps {}
+interface BomTemplatePageProps {}
 
-export interface CategoryRulePageProps {}
+interface CategoryRulePageProps {}
 
-export interface DocApprovalFlowPageProps {}
+interface DocApprovalFlowPageProps {}
 
-export interface ChangeTemplatePageProps {}
+interface ChangeTemplatePageProps {}
 
 const productRoute: RouteConfigV2<ProductPageProps> = {
   path: PDM_PATHS.product,

@@ -3,18 +3,18 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export interface ReportDashboardPageProps {}
-export interface ReportListPageProps {}
-export interface ReportViewerPageRouteProps {
+interface ReportDashboardPageProps {}
+interface ReportListPageProps {}
+interface ReportViewerPageRouteProps {
   reportId?: string;
   templateId?: string;
   parameters?: Record<string, unknown>;
 }
-export interface ReportDesignPageProps {}
+interface ReportDesignPageProps {}
 export interface ReportBuilderPageProps {}
-export interface ReportSchedulePageProps {}
-export interface ReportSubscriptionPageProps {}
-export interface TemplateManagementPageProps {}
+interface ReportSchedulePageProps {}
+interface ReportSubscriptionPageProps {}
+interface TemplateManagementPageProps {}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 REPORT_PATHS.xxx，而非硬编码字符串

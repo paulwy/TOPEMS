@@ -40,7 +40,7 @@ export interface ModuleConfig {
   icon?: string;
 }
 
-export interface ModuleRoute {
+interface ModuleRoute {
   /** Route path */
   path: string;
   /** Route name */
