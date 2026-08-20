@@ -1,6 +1,5 @@
 export {
   smartDebugger,
-  SmartDebugger,
   type ComponentTreeNode,
   type ComponentNodeType,
   type StateStoreInfo,
@@ -16,7 +15,6 @@ export {
 
 export {
   performanceAnalyzer,
-  PerformanceAnalyzer,
   type CoreWebVital,
   type CoreWebVitalName,
   type ModuleLoadMetric,
