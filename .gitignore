@@ -28,6 +28,9 @@ $RECYCLE.BIN/
 .env.*.local
 auth-state.json
 *.env.*
+# 例外：所有 .env.example 模板文件必须可追踪（保证部署 / 模块 / standalone 示例能分发）
+!.env.example
+!*.env.example
 
 # Frontend
 frontend/node_modules/
@@ -158,6 +161,10 @@ __pycache__/
 .venv/
 venv/
 env/
+# 例外：config/env/ 是 TOPEMS 服务级环境模板目录，必须可追踪
+# （其他 env/ 目录如 Python venv 仍保持忽略）
+!config/env/
+!config/env/**
 .env/
 .pytest_cache/
 *.egg-info/
