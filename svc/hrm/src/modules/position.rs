@@ -62,8 +62,9 @@ pub struct UpdatePositionRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct QueryParams {
-    #[serde(flatten)]
-    pub pagination: PaginationQuery,
+    pub page: Option<i64>,
+    #[serde(alias = "pagesize")]
+    pub page_size: Option<i64>,
     pub search: Option<String>,
     pub department_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
@@ -85,7 +86,10 @@ async fn list_positions(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
 ) -> Json<ApiResponse<PaginatedResult<Position>>> {
-    let pagination = params.pagination;
+    let pagination = PaginationQuery {
+        page: params.page,
+        page_size: params.page_size,
+    };
     let offset = pagination.offset();
     let page_size = pagination.page_size();
 
