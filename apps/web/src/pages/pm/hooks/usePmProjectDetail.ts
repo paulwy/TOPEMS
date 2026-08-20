@@ -41,7 +41,7 @@ const formatCurrency = (amount?: number) => {
   }).format(amount);
 };
 
-export const usePmProjectDetail = (): UsePmProjectDetailReturn => {
+const usePmProjectDetail = (): UsePmProjectDetailReturn => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();

@@ -10,8 +10,6 @@ export type { AuthState, LoginCredentials } from '../../useAuth';
 
 export { usePermission } from '../../usePermission';
 
-export { usePermissionCheck } from '../../usePermissionCheck';
-
 export { useRole } from '../../useRole';
 export type { Role } from '../../useRole';
 

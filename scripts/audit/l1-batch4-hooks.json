@@ -1,0 +1,217 @@
+{
+  "batch_id": "l1-safe-batch4-hooks",
+  "date": "2026-08-20",
+  "description": "L1-SAFE Batch 4: hooks/ directory value exports conservative removal.",
+  "removal_mode": "conservative-v2-export-keyword-only",
+  "total_exports": 155,
+  "total_files": 26,
+  "targets": {
+    "apps/web/src/hooks/bff/index.ts": [
+      "BffLoadingFallback",
+      "useBffDetailPage",
+      "useBffFormPage",
+      "BFF_DASHBOARD_QUERY_KEY",
+      "useSlowQueryAlert",
+      "useQueryCost",
+      "useSmartPrefetch",
+      "useBffSuspenseQuery",
+      "useBffSuspenseInfinite",
+      "useSuspensePerfTracker",
+      "BffSuspenseBoundary",
+      "recordSuspenseMount",
+      "prefetchRouteShell",
+      "registerRouteShell",
+      "unregisterRouteShell",
+      "clearPrefetchedShells",
+      "StreamingSlot",
+      "StaticShell",
+      "recordPPRSlot",
+      "useRouteDataLoader",
+      "createDeferred",
+      "DeferredData",
+      "RouteDataBoundary",
+      "useEdgeCompute",
+      "useEdgeCache",
+      "useOptimalEndpoint",
+      "useEdgeComputeConfig",
+      "useIsrCache",
+      "useRevalidate",
+      "useIsrStats",
+      "useIsrEntry",
+      "useIsrConfig",
+      "useBffError",
+      "useBffRetry",
+      "useBffFallback",
+      "useErrorReport",
+      "useExperiment",
+      "useTrackConversion"
+    ],
+    "apps/web/src/hooks/domain/index.ts": [
+      "useCrudForm",
+      "useModuleData"
+    ],
+    "apps/web/src/hooks/features/auth/index.ts": [
+      "usePermissionCheck"
+    ],
+    "apps/web/src/hooks/features/finance/index.ts": [
+      "useAssets",
+      "useExpenses",
+      "useBudgets",
+      "useReceivables",
+      "usePayables",
+      "useAccountingSubjects",
+      "useVouchers",
+      "useOfficeSupplies",
+      "useMeetingRooms",
+      "useMeetingBookings",
+      "useVehicles",
+      "useVehicleRequests",
+      "useAnnouncements",
+      "useFinanceReports",
+      "useAccounts",
+      "useAccount",
+      "useAccountBalances",
+      "useCreateAccount",
+      "useUpdateAccount",
+      "useDeleteAccount",
+      "useEmployeeFinance",
+      "useEmployeePayrolls",
+      "useDepartmentPayrollSummary",
+      "usePayrollPeriods",
+      "useProjectFinance",
+      "useProjectBudgetItems",
+      "useProjectCostPerformance",
+      "useVoucherTemplates",
+      "useCreateVoucherTemplate",
+      "useUpdateVoucherTemplate",
+      "useDeleteVoucherTemplate",
+      "useCopyVoucherTemplate",
+      "useSetDefaultVoucherTemplate",
+      "useToggleVoucherTemplate",
+      "usePreviewGeneratedVouchers",
+      "useGenerateVoucherFromSource",
+      "useBatchGenerateVouchers",
+      "useAutoGenerateVouchers",
+      "useRegenerateReversedVoucher",
+      "useMatchVoucherTemplate",
+      "useVoucherTemplateUsageStats",
+      "useGenerationRules",
+      "useCreateGenerationRule",
+      "useUpdateGenerationRule",
+      "useDeleteGenerationRule",
+      "useToggleGenerationRule"
+    ],
+    "apps/web/src/hooks/features/offline/index.ts": [
+      "useOnline",
+      "useOffline",
+      "useNetworkCondition",
+      "useOfflineQuery",
+      "useOfflineMutation",
+      "useOfflineSync"
+    ],
+    "apps/web/src/hooks/features/system/index.ts": [
+      "useLoading",
+      "useNextCode",
+      "useReserveCodes",
+      "useReleaseCodes",
+      "useCodeRules",
+      "useCodeRule",
+      "CodeGenerator",
+      "CODE_RULES",
+      "getCodeRuleForEntity",
+      "generateCodeForEntity",
+      "batchGenerateCodesForEntity",
+      "useModal",
+      "useDrawer",
+      "useTabs",
+      "useCollapse",
+      "useSelection",
+      "useSort",
+      "useFilter"
+    ],
+    "apps/web/src/hooks/foundation/index.ts": [
+      "useThrottledCallback",
+      "useDebouncedValue",
+      "useDebouncedCallback",
+      "useThrottle",
+      "useThrottledValue",
+      "useIntersectionObserver",
+      "useInView",
+      "useDoubleTap",
+      "useVirtualScroll",
+      "useWebVitals",
+      "getWebVitalsSnapshot"
+    ],
+    "apps/web/src/hooks/shortcuts.ts": [
+      "useKeyboardShortcuts",
+      "useShortcutsHelp"
+    ],
+    "apps/web/src/hooks/ui/index.ts": [
+      "useDialogForm",
+      "useBatchSelection",
+      "useImportExport"
+    ],
+    "apps/web/src/hooks/useBIQueries.ts": [
+      "useBISummary",
+      "useBIDevelopment",
+      "useBIQuality",
+      "useBIProduction",
+      "useBILaboratory",
+      "useBILoading",
+      "useBIError"
+    ],
+    "apps/web/src/hooks/useFeatureFlag.ts": [
+      "useFeatureFlag",
+      "useFeatureFlags"
+    ],
+    "apps/web/src/hooks/useUnifiedWebSocket.ts": [
+      "useWebSocketSubscription",
+      "useWebSocketConnection",
+      "useWebSocketNotifications",
+      "useWebSocketNotificationChannel",
+      "useWebSocketAlertChannel"
+    ],
+    "apps/web/src/pages/admin/hooks/useDatabaseStructure.ts": [
+      "useDatabaseStructure"
+    ],
+    "apps/web/src/pages/admin/hooks/useDictionaryManagement.ts": [
+      "useDictionaryManagement"
+    ],
+    "apps/web/src/pages/admin/hooks/useMonitoringAlert.ts": [
+      "useMonitoringAlert"
+    ],
+    "apps/web/src/pages/admin/hooks/useOperationAuditLog.tsx": [
+      "useOperationAuditLog"
+    ],
+    "apps/web/src/pages/admin/hooks/usePluginManagement.tsx": [
+      "getPluginDisplayNames"
+    ],
+    "apps/web/src/pages/admin/hooks/useTenantDetail.ts": [
+      "useTenantDetail"
+    ],
+    "apps/web/src/pages/ai/hooks/useAiAssistant.ts": [
+      "useAiAssistant"
+    ],
+    "apps/web/src/pages/monitor/hooks/useMonitorSettings.tsx": [
+      "useMonitorSettings"
+    ],
+    "apps/web/src/pages/plugin/hooks/usePluginDetail.ts": [
+      "usePluginDetail"
+    ],
+    "apps/web/src/pages/pm/hooks/usePmProjectDetail.ts": [
+      "usePmProjectDetail"
+    ],
+    "apps/web/src/pages/report/hooks/useTemplateManagement.ts": [
+      "useTemplateManagement"
+    ],
+    "apps/web/src/pages/shared/hooks/useDashboardData.tsx": [
+      "useDashboardData"
+    ],
+    "apps/web/src/pages/wms/hooks/useInventoryReport.ts": [
+      "useInventoryReport"
+    ],
+    "apps/web/src/pages/workflow/hooks/useWorkflowApprovalDetail.ts": [
+      "useWorkflowApprovalDetail"
+    ]
+  }
+}

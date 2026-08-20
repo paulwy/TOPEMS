@@ -44,7 +44,7 @@ export type {
   SubscriptionStatus,
 } from './useBffSubscription';
 
-export { useBffDashboard, BFF_DASHBOARD_QUERY_KEY } from './useBffDashboard';
+export { useBffDashboard } from './useBffDashboard';
 export type {
   UseBffDashboardOptions,
   UseBffDashboardResult,
@@ -54,33 +54,24 @@ export type {
 export { useBffPerformance } from './useBffPerformance';
 export type { UseBffPerformanceResult, SlowQueryCallback } from './useBffPerformance';
 
-export { useSlowQueryAlert } from './useSlowQueryAlert';
 export type {
   SlowQueryAlertOptions,
   UseSlowQueryAlertResult,
   AlertLevel,
 } from './useSlowQueryAlert';
 
-export { useQueryCost } from './useQueryCost';
 export type { UseQueryCostOptions, UseQueryCostResult, HighCostCallback } from './useQueryCost';
 
 export { useAutoSharding } from './useAutoSharding';
 export type { UseAutoShardingOptions, UseAutoShardingResult } from './useAutoSharding';
 
-export { useSmartPrefetch } from './useSmartPrefetch';
 export type { UseSmartPrefetchOptions, UseSmartPrefetchResult } from './useSmartPrefetch';
 
 // ==================== V42.0 Track D: Suspense 数据加载 ====================
 
 export {
-  useBffSuspenseQuery,
-  useBffSuspenseInfinite,
   usePrefetchBffSuspenseQuery,
-  useSuspensePerfTracker,
-  BffSuspenseBoundary,
   BffErrorFallback,
-  BffLoadingFallback,
-  recordSuspenseMount,
   getSuspenseStats,
   onSuspenseStatsChange,
 } from './useBffSuspense';
@@ -98,18 +89,7 @@ export type {
 
 // ==================== V42.0 Track D: 部分预渲染（PPR） ====================
 
-export {
-  usePartialPreRender,
-  prefetchRouteShell,
-  registerRouteShell,
-  unregisterRouteShell,
-  clearPrefetchedShells,
-  StreamingSlot,
-  StaticShell,
-  recordPPRSlot,
-  getPPRStats,
-  onPPRStatsChange,
-} from './usePartialPreRender';
+export { usePartialPreRender, getPPRStats, onPPRStatsChange } from './usePartialPreRender';
 export type {
   RouteShellConfig,
   ShellRenderer,
@@ -121,12 +101,6 @@ export type {
 
 // ==================== V42.0 Track D: 路由级数据加载器 ====================
 
-export {
-  useRouteDataLoader,
-  createDeferred,
-  DeferredData,
-  RouteDataBoundary,
-} from './useRouteDataLoader';
 export type {
   RouteParams,
   RouteLoaderConfig,
@@ -140,12 +114,6 @@ export type {
 
 // ==================== V43.0 Track D: 边缘计算（Edge Compute） ====================
 
-export {
-  useEdgeCompute,
-  useEdgeCache,
-  useOptimalEndpoint,
-  useEdgeComputeConfig,
-} from './useEdgeCompute';
 export type {
   UseEdgeComputeOptions,
   UseEdgeComputeResult,
@@ -156,7 +124,6 @@ export type {
 
 // ==================== V43.0 Track D: 增量静态再生（ISR） ====================
 
-export { useIsrCache, useRevalidate, useIsrStats, useIsrEntry, useIsrConfig } from './useIsr';
 export type {
   UseIsrCacheOptions,
   UseIsrCacheResult,
@@ -168,7 +135,7 @@ export type {
 
 // ==================== V44.0 Track D: 页面级 BFF Hooks ====================
 
-export { useBffListPage, useBffDetailPage, useBffFormPage } from './useBffPage';
+export { useBffListPage } from './useBffPage';
 export type {
   UseBffListPageOptions,
   UseBffListPageResult,
@@ -182,7 +149,6 @@ export type {
 
 // ==================== V45.0 Track D: BFF 生产化（错误边界 + 降级 + A/B 测试） ====================
 
-export { useBffError, useBffRetry, useBffFallback, useErrorReport } from './useBffErrorHandling';
 export type {
   UseBffErrorResult,
   UseBffRetryOptions,
@@ -191,13 +157,7 @@ export type {
   UseErrorReportResult,
 } from './useBffErrorHandling';
 
-export {
-  useExperiment,
-  useTrackConversion,
-  useExperimentResult,
-  useActiveExperiments,
-  useExperimentAdmin,
-} from './useABTest';
+export { useExperimentResult, useActiveExperiments, useExperimentAdmin } from './useABTest';
 export type {
   UseExperimentOptions,
   UseExperimentResult,

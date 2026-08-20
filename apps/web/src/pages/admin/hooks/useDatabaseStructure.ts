@@ -23,7 +23,7 @@ export type NotificationState = {
   message: string;
 } | null;
 
-export const useDatabaseStructure = () => {
+const useDatabaseStructure = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 

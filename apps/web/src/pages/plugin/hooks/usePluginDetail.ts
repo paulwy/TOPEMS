@@ -9,7 +9,7 @@ import { logger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-export function usePluginDetail() {
+function usePluginDetail() {
   const { t } = useTranslation();
   const { pluginCode } = useParams<{ pluginCode: string }>();
   const { installPlugin, isPluginInstalled, fetchHealthStatus, healthStatus } = usePluginStore();

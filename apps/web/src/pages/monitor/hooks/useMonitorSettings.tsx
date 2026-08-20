@@ -804,7 +804,7 @@ function buildSettingsTabs(
     },
   ];
 }
-export const useMonitorSettings = () => {
+const useMonitorSettings = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
     monitoringEnabled: true,

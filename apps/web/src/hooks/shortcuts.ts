@@ -208,7 +208,7 @@ export interface ShortcutBinding {
   config: ShortcutConfig;
 }
 
-export function useKeyboardShortcuts(bindings: ShortcutBinding[], enabled = true) {
+function useKeyboardShortcuts(bindings: ShortcutBinding[], enabled = true) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return;
@@ -294,7 +294,7 @@ export function getShortcutsByCategory(
   return grouped;
 }
 
-export function useShortcutsHelp() {
+function useShortcutsHelp() {
   const [isOpen, setIsOpen] = useState(false);
 
   const bindings: ShortcutBinding[] = [

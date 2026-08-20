@@ -15,7 +15,7 @@ import type {
   TenantInvoice,
 } from '@/api/tenant/types';
 
-export const useTenantDetail = () => {
+const useTenantDetail = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
