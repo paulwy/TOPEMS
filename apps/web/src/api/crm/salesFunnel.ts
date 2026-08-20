@@ -9,7 +9,7 @@ export interface FunnelStage {
   probability?: number;
 }
 
-export interface FunnelMetrics {
+interface FunnelMetrics {
   total_opportunities: number;
   total_value: number;
   avg_value: number;
@@ -17,21 +17,21 @@ export interface FunnelMetrics {
   weighted_value: number;
 }
 
-export interface FunnelConversion {
+interface FunnelConversion {
   from_stage: string;
   to_stage: string;
   conversion_count: number;
   conversion_rate: number;
 }
 
-export interface FunnelTrend {
+interface FunnelTrend {
   period: string;
   stage: string;
   count: number;
   value: number;
 }
 
-export interface FunnelQueryParams {
+interface FunnelQueryParams {
   page?: number;
   page_size?: number;
   stage?: string;

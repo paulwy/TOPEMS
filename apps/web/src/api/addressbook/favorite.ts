@@ -17,7 +17,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface FavoriteContact {
+interface FavoriteContact {
   id: string;
   contact_id: string;
   contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
@@ -31,16 +31,16 @@ export interface FavoriteContact {
   added_at: string;
 }
 
-export interface AddFavoriteRequest {
+interface AddFavoriteRequest {
   contact_id: string;
   contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
 }
 
-export interface SortFavoritesRequest {
+interface SortFavoritesRequest {
   contact_ids: string[];
 }
 
-export interface RecentContact {
+interface RecentContact {
   id: string;
   contact_id: string;
   contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
@@ -51,7 +51,7 @@ export interface RecentContact {
   interaction_count: number;
 }
 
-export interface SharedContact {
+interface SharedContact {
   id: string;
   contact_id: string;
   contact_name: string;
@@ -64,7 +64,7 @@ export interface SharedContact {
   expires_at?: string;
 }
 
-export interface SharedWithUser {
+interface SharedWithUser {
   id: string;
   user_id: string;
   user_name: string;

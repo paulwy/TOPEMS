@@ -53,7 +53,7 @@ export interface CreateGroupRequest {
   icon?: string;
 }
 
-export interface UpdateGroupRequest {
+interface UpdateGroupRequest {
   name?: string;
   description?: string;
   parent_id?: string;
@@ -63,16 +63,16 @@ export interface UpdateGroupRequest {
   sort_order?: number;
 }
 
-export interface AddContactToGroupRequest {
+interface AddContactToGroupRequest {
   contact_id: string;
   contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
 }
 
-export interface BatchAddContactsRequest {
+interface BatchAddContactsRequest {
   contact_ids: Array<{ id: string; type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY' }>;
 }
 
-export interface GroupShare {
+interface GroupShare {
   id: string;
   group_id: string;
   user_id: string;
@@ -82,18 +82,18 @@ export interface GroupShare {
   created_at: string;
 }
 
-export interface ShareGroupRequest {
+interface ShareGroupRequest {
   user_ids: string[];
   permission: 'view' | 'edit' | 'manage';
 }
 
-export interface CopyGroupRequest {
+interface CopyGroupRequest {
   name?: string;
   target_parent_id?: string;
   include_contacts?: boolean;
 }
 
-export interface MoveGroupRequest {
+interface MoveGroupRequest {
   source_ids: string[];
   target_parent_id: string;
 }

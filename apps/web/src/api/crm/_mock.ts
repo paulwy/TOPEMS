@@ -75,7 +75,7 @@ export interface AgingBucket {
   amount: number;
 }
 
-export interface RecommendationItem {
+interface RecommendationItem {
   id: string;
   customerName: string;
   type: 'cross-sell' | 'upsell' | 'followup';

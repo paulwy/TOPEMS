@@ -61,7 +61,7 @@ export interface FileVersion {
   download_url?: string;
 }
 
-export interface FileListResponse {
+interface FileListResponse {
   files?: FileMetadata[];
   items?: FileMetadata[];
   total: number;
@@ -78,7 +78,7 @@ export interface Folder {
   created_by: string;
 }
 
-export interface ListFoldersData {
+interface ListFoldersData {
   folders?: Folder[];
   items?: Folder[];
   total: number;
@@ -86,12 +86,12 @@ export interface ListFoldersData {
   pagesize: number;
 }
 
-export interface CreateFolderRequest {
+interface CreateFolderRequest {
   name: string;
   parentId?: string;
 }
 
-export interface UploadFileResponse {
+interface UploadFileResponse {
   id: string;
   name: string;
   size: number;

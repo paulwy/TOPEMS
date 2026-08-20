@@ -116,7 +116,7 @@ export interface UpdateAlertRuleRequest {
   mute_until?: string;
 }
 
-export interface SystemMetric {
+interface SystemMetric {
   id: string;
   name: string;
   category: string;

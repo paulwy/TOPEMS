@@ -34,7 +34,7 @@ export interface DocumentQAAnswer {
   follow_up_questions: string[];
 }
 
-export interface DocumentQASource {
+interface DocumentQASource {
   document_id: string;
   document_title: string;
   chunk_content: string;
@@ -102,7 +102,7 @@ export interface ChatResponse {
   sources?: DocumentSource[];
 }
 
-export interface DocumentSource {
+interface DocumentSource {
   document_id: string;
   title: string;
   snippet: string;
@@ -140,7 +140,7 @@ export interface ClassifyTextRequest {
   categories?: string[];
 }
 
-export interface CategoryScore {
+interface CategoryScore {
   category: string;
   score: number;
 }
@@ -173,7 +173,7 @@ export interface ExtractKeywordsRequest {
   max_keywords?: number;
 }
 
-export interface Keyword {
+interface Keyword {
   text: string;
   score: number;
   frequency: number;
@@ -245,7 +245,7 @@ export interface DifyInfoResponse {
   meta?: Record<string, unknown>;
 }
 
-export interface DifyParameter {
+interface DifyParameter {
   name: string;
   label: string;
   type: 'string' | 'number' | 'boolean' | 'select' | 'paragraph';

@@ -1,7 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-export interface CustomerProfileItem {
+interface CustomerProfileItem {
   id: string;
   name: string;
   code?: string;
@@ -29,13 +29,13 @@ export interface CustomerProfileItem {
   profile_tags?: string[];
 }
 
-export interface CustomerScoreSummary {
+interface CustomerScoreSummary {
   score: number;
   level?: string;
   last_evaluated?: string;
 }
 
-export interface OpportunitySummary {
+interface OpportunitySummary {
   id: string;
   title: string;
   value?: number;
@@ -43,14 +43,14 @@ export interface OpportunitySummary {
   created_at?: string;
 }
 
-export interface InteractionSummary {
+interface InteractionSummary {
   id: string;
   type: string;
   summary?: string;
   created_at?: string;
 }
 
-export interface ContactSummary {
+interface ContactSummary {
   id: string;
   name: string;
   position?: string;
@@ -58,7 +58,7 @@ export interface ContactSummary {
   email?: string;
 }
 
-export interface CustomerProfileListQuery {
+interface CustomerProfileListQuery {
   page?: number;
   page_size?: number;
   status?: string;

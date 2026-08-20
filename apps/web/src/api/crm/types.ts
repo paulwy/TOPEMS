@@ -214,7 +214,7 @@ export interface Interaction {
   updated_at: string;
 }
 
-export interface CreateInteractionRequest {
+interface CreateInteractionRequest {
   customer_id?: string;
   contact_id?: string;
   type: string;
@@ -224,7 +224,7 @@ export interface CreateInteractionRequest {
   notes?: string;
 }
 
-export interface UpdateInteractionRequest {
+interface UpdateInteractionRequest {
   customer_id?: string;
   contact_id?: string;
   type?: string;
@@ -287,7 +287,7 @@ export interface SalesForecast {
   updated_at: string;
 }
 
-export interface ForecastFactor {
+interface ForecastFactor {
   name: string;
   impact: number;
   description?: string;
@@ -318,7 +318,7 @@ export interface BillingRecord {
   updated_at: string;
 }
 
-export interface BillingItem {
+interface BillingItem {
   id?: string;
   name: string;
   quantity: number;
@@ -326,7 +326,7 @@ export interface BillingItem {
   amount: number;
 }
 
-export interface CreateBillingRequest {
+interface CreateBillingRequest {
   customer_id: string;
   invoice_no?: string;
   amount: number;

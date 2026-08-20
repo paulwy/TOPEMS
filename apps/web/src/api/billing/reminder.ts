@@ -16,9 +16,9 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type ReminderType = 'payment_reminder' | 'overdue_notice' | 'subscription_renewal';
+type ReminderType = 'payment_reminder' | 'overdue_notice' | 'subscription_renewal';
 
-export interface BillReminder {
+interface BillReminder {
   id: string;
   tenant_id: string;
   invoice_id?: string;
@@ -33,7 +33,7 @@ export interface BillReminder {
   created_at: string;
 }
 
-export interface CreateReminderRequest {
+interface CreateReminderRequest {
   tenant_id: string;
   invoice_id?: string;
   reminder_type: ReminderType;

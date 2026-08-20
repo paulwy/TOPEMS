@@ -2,17 +2,17 @@
 
 // ---- FSM 状态联合类型（与 svc/aps/src/shared/fsm.rs 1:1 对齐） ----
 
-export type ProductionPlanStatus =
+type ProductionPlanStatus =
   'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
 
 export type ScheduleStatus = 'pending' | 'released' | 'running' | 'completed' | 'cancelled';
 
-export type CapacityStatus = 'available' | 'allocated' | 'consumed' | 'maintenance' | 'released';
+type CapacityStatus = 'available' | 'allocated' | 'consumed' | 'maintenance' | 'released';
 
-export type MaterialPlanStatus =
+type MaterialPlanStatus =
   'pending' | 'requisitioned' | 'sourced' | 'satisfied' | 'shortage' | 'cancelled';
 
-export type DemandForecastStatus =
+type DemandForecastStatus =
   'draft' | 'calculated' | 'validated' | 'adopted' | 'superseded' | 'cancelled';
 
 // ---- 实体接口 ----

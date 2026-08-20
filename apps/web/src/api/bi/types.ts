@@ -2,18 +2,18 @@ export interface DashboardLayout {
   [key: string]: unknown;
 }
 
-export interface WidgetConfig {
+interface WidgetConfig {
   [key: string]: unknown;
 }
 
-export interface WidgetPosition {
+interface WidgetPosition {
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-export interface ReportConfig {
+interface ReportConfig {
   [key: string]: unknown;
 }
 
@@ -67,7 +67,7 @@ export interface Report {
   updated_at: string;
 }
 
-export interface KeyMetric {
+interface KeyMetric {
   title: string;
   value: number;
   unit: string;
@@ -76,7 +76,7 @@ export interface KeyMetric {
   icon: string;
 }
 
-export interface RecentActivity {
+interface RecentActivity {
   id: number;
   type: string;
   title: string;
@@ -156,11 +156,11 @@ export interface LaboratoryAnalytics {
   generated_at: string;
 }
 
-export interface ModuleAnalyticsData {
+interface ModuleAnalyticsData {
   [key: string]: unknown;
 }
 
-export interface ModuleAnalytics {
+interface ModuleAnalytics {
   rs?: ModuleAnalyticsData;
   lims?: ModuleAnalyticsData;
   qms?: ModuleAnalyticsData;
@@ -189,7 +189,7 @@ export interface DataSource {
   updated_at: string;
 }
 
-export interface ComparisonAnalysisFilters {
+interface ComparisonAnalysisFilters {
   [key: string]: string | number | boolean | undefined;
 }
 
@@ -209,7 +209,7 @@ export interface ComparisonAnalysis {
   updated_at: string;
 }
 
-export interface ComparisonResultSummary {
+interface ComparisonResultSummary {
   [key: string]: unknown;
 }
 
@@ -377,7 +377,7 @@ export interface FilterConfig {
   required?: boolean;
 }
 
-export interface PivotTableConfig {
+interface PivotTableConfig {
   rows: string[];
   columns: string[];
   values: Array<{

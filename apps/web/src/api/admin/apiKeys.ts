@@ -1,9 +1,9 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type ApiKeyType = 'feishu' | 'dingtalk' | 'wecom' | 'smtp' | 'other';
+type ApiKeyType = 'feishu' | 'dingtalk' | 'wecom' | 'smtp' | 'other';
 
-export interface ApiKeyEntry {
+interface ApiKeyEntry {
   id: string;
   name: string;
   key_type: ApiKeyType;
@@ -13,7 +13,7 @@ export interface ApiKeyEntry {
   last_used: string | null;
 }
 
-export interface CreateApiKeyRequest {
+interface CreateApiKeyRequest {
   name: string;
   key_type: ApiKeyType;
   secret: string;
