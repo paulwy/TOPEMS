@@ -35,7 +35,7 @@ function getSystemPreference(): ResolvedThemeMode {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-export function useThemeMode(): UseThemeModeResult {
+function useThemeMode(): UseThemeModeResult {
   const mode = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);

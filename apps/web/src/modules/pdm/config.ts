@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 PDM_PATHS.xxx，而非硬编码字符串
 
-export const PDM_PATHS = {
+const PDM_PATHS = {
   root: '/pdm',
   product: '/pdm/product',
   material: '/pdm/material',

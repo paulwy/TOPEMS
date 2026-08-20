@@ -3,12 +3,12 @@ import i18n from '@/i18n';
 
 export interface EmptyRegistryModuleProps {}
 
-export const REGISTRY_PATHS = {
+const REGISTRY_PATHS = {
   root: '/registry',
   dashboard: '/registry/dashboard',
 } as const;
 
-export const registryModuleConfig: RouteModuleConfig = {
+const registryModuleConfig: RouteModuleConfig = {
   code: 'registry',
   name: i18n.t('shared.registry.k0'),
   nameKey: 'shared.registry.k0',

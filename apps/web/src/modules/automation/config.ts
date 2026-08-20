@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 AUTOMATION_PATHS.xxx，而非硬编码字符串
 
-export const AUTOMATION_PATHS = {
+const AUTOMATION_PATHS = {
   root: '/automation',
   dashboard: '/automation/dashboard',
   rules: '/automation/rules',

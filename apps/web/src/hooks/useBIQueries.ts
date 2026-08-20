@@ -54,7 +54,7 @@ import type {
 
 // ============ Query Keys ============
 
-export const BI_QUERY_KEYS = {
+const BI_QUERY_KEYS = {
   all: ['bi'] as const,
   analytics: ['bi', 'analytics'] as const,
   summary: ['bi', 'analytics', 'summary'] as const,
@@ -170,7 +170,7 @@ export interface UseBIAllAnalyticsResult {
  *
  * @param options.enabled 是否启用查询（默认 true）
  */
-export function useBIAllAnalytics(options: { enabled?: boolean } = {}): UseBIAllAnalyticsResult {
+function useBIAllAnalytics(options: { enabled?: boolean } = {}): UseBIAllAnalyticsResult {
   const { enabled = true } = options;
 
   const summaryQuery = useBISummary();
@@ -314,7 +314,7 @@ export function useBIError(): string | null {
  * 替代原 `useBIStore().refreshData()`：返回一个调用函数，
  * 内部对全部 BI query 执行 refetch。
  */
-export function useBIRefresh(): () => Promise<void> {
+function useBIRefresh(): () => Promise<void> {
   const queryClient = useQueryClient();
   return useCallback(async () => {
     await queryClient.refetchQueries({ queryKey: BI_QUERY_KEYS.analytics });
@@ -327,7 +327,7 @@ export function useBIRefresh(): () => Promise<void> {
  * 替代原 `useBIStore().clearError()`：React Query 的错误状态无法直接清除，
  * 这里通过 invalidate 触发重新查询以清除错误。
  */
-export function useBIClearError(): () => void {
+function useBIClearError(): () => void {
   const queryClient = useQueryClient();
   return useCallback(() => {
     queryClient.resetQueries({ queryKey: BI_QUERY_KEYS.analytics });
@@ -342,7 +342,7 @@ export function useBIClearError(): () => void {
  * 适用于不希望组件挂载即自动加载、而是在用户操作时才触发的场景。
  * 内部通过 invalidateQueries 触发已注册的 useQuery 重新获取。
  */
-export function useBILoadAllData() {
+function useBILoadAllData() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {

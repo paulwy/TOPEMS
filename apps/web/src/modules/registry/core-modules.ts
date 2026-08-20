@@ -33,7 +33,7 @@ const getRemoteEntryUrl = (name: string, _port: number): string | undefined => {
   return undefined;
 };
 
-export const CORE_MODULES_CONFIG: ModuleConfig[] = [
+const CORE_MODULES_CONFIG: ModuleConfig[] = [
   {
     id: 'topems_core',
     name: i18n.t('shared.core-modules.k0'),

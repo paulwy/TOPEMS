@@ -253,7 +253,7 @@ export function useKeyboardShortcuts(bindings: ShortcutBinding[], enabled = true
   }, [handleKeyDown]);
 }
 
-export function isMacOS(): boolean {
+function isMacOS(): boolean {
   if (typeof navigator !== 'undefined') {
     return /Mac|iPod|iPhone|iPad/.test(navigator.platform);
   }
