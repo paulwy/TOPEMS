@@ -219,7 +219,7 @@ function initErrorCapture() {
   }
 }
 
-export function getTracer(): Tracer {
+function getTracer(): Tracer {
   if (!tracer) {
     tracer = trace.getTracer('topems-web');
   }
