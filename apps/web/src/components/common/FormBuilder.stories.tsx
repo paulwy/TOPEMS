@@ -15,15 +15,66 @@ interface UserForm {
 }
 
 const baseFields: FormBuilderConfig<UserForm>['fields'] = [
-  { name: 'username', label: '用户名', type: 'text', required: true, placeholder: '请输入用户名', validation: [{ type: 'minLength', value: 3 }, { type: 'maxLength', value: 20 }] },
-  { name: 'email', label: '邮箱', type: 'email', required: true, placeholder: 'user@example.com', validation: [{ type: 'email' }] },
-  { name: 'password', label: '密码', type: 'password', required: true, placeholder: '至少 8 位', validation: [{ type: 'minLength', value: 8 }] },
-  { name: 'role', label: '角色', type: 'select', required: true, options: [{ value: 'admin', label: '管理员' }, { value: 'user', label: '普通用户' }, { value: 'guest', label: '访客' }] },
-  { name: 'department', label: '部门', type: 'autocomplete', required: false, options: [{ value: 'rd', label: '研发部' }, { value: 'mkt', label: '市场部' }, { value: 'hr', label: '人力资源' }, { value: 'fin', label: '财务部' }] },
+  {
+    name: 'username',
+    label: '用户名',
+    type: 'text',
+    required: true,
+    placeholder: '请输入用户名',
+    validation: [
+      { type: 'minLength', value: 3 },
+      { type: 'maxLength', value: 20 },
+    ],
+  },
+  {
+    name: 'email',
+    label: '邮箱',
+    type: 'email',
+    required: true,
+    placeholder: 'user@example.com',
+    validation: [{ type: 'email' }],
+  },
+  {
+    name: 'password',
+    label: '密码',
+    type: 'password',
+    required: true,
+    placeholder: '至少 8 位',
+    validation: [{ type: 'minLength', value: 8 }],
+  },
+  {
+    name: 'role',
+    label: '角色',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'admin', label: '管理员' },
+      { value: 'user', label: '普通用户' },
+      { value: 'guest', label: '访客' },
+    ],
+  },
+  {
+    name: 'department',
+    label: '部门',
+    type: 'autocomplete',
+    required: false,
+    options: [
+      { value: 'rd', label: '研发部' },
+      { value: 'mkt', label: '市场部' },
+      { value: 'hr', label: '人力资源' },
+      { value: 'fin', label: '财务部' },
+    ],
+  },
   { name: 'phone', label: '手机号', type: 'text', required: false, placeholder: '11 位手机号' },
   { name: 'joinDate', label: '入职日期', type: 'date', required: true },
   { name: 'notifyEmail', label: '接收邮件通知', type: 'checkbox', defaultValue: true },
-  { name: 'bio', label: '个人简介', type: 'textarea', colSpan: 2, placeholder: '简要描述一下自己...' },
+  {
+    name: 'bio',
+    label: '个人简介',
+    type: 'textarea',
+    colSpan: 2,
+    placeholder: '简要描述一下自己...',
+  },
 ];
 
 const meta = {
@@ -122,9 +173,7 @@ const AsyncAutocomplete: Story = {
         optionsAsync: async (search) => {
           await new Promise((r) => setTimeout(r, 400));
           const cities = ['北京', '上海', '广州', '深圳', '杭州', '成都', '南京', '武汉'];
-          return cities
-            .filter((c) => c.includes(search))
-            .map((c) => ({ value: c, label: c }));
+          return cities.filter((c) => c.includes(search)).map((c) => ({ value: c, label: c }));
         },
       },
       ...baseFields.slice(0, 2),

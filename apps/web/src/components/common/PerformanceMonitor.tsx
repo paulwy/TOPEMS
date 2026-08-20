@@ -38,9 +38,8 @@ export const PerformanceMonitor: React.FC = () => {
     // the deprecated entryTypes array option, which Chromium now warns about:
     // "Deprecated API for given entry type"
     const supported =
-      typeof PerformanceObserver !== 'undefined' &&
-      'supportedEntryTypes' in PerformanceObserver
-        ? (PerformanceObserver as any).supportedEntryTypes as string[]
+      typeof PerformanceObserver !== 'undefined' && 'supportedEntryTypes' in PerformanceObserver
+        ? ((PerformanceObserver as any).supportedEntryTypes as string[])
         : [];
 
     const observeType = (type: string, buffered = true) => {

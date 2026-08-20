@@ -1,0 +1,232 @@
+{
+  "batch_id": "l1-safe-batch8-components",
+  "date": "2026-08-20",
+  "description": "L1-SAFE Batch 8: components/ value exports, barrel pre-filtered (2850 barrel-exported names excluded 80 overlap)",
+  "removal_mode": "conservative-v2-export-keyword-only",
+  "barrel_filter_applied": true,
+  "total_exports": 143,
+  "total_files": 39,
+  "targets": {
+    "apps/web/src/components/LoadingProvider.tsx": [
+      "useLoading"
+    ],
+    "apps/web/src/components/ai/AIAnomalyAssistant.tsx": [
+      "AIAnomalyAssistant"
+    ],
+    "apps/web/src/components/ai/AIFlowAssistant.tsx": [
+      "AIFlowAssistant"
+    ],
+    "apps/web/src/components/ai/AIReportAssistant.tsx": [
+      "AIReportAssistant"
+    ],
+    "apps/web/src/components/ai/PromptTemplateManager.tsx": [
+      "PromptTemplateManager"
+    ],
+    "apps/web/src/components/aps/index.ts": [
+      "StatusBadgeDefault",
+      "FSMActionButtonsDefault"
+    ],
+    "apps/web/src/components/bff/index.ts": [
+      "useBffDetailPage",
+      "useBffFormPage",
+      "QueryBuilder",
+      "MutationBuilder",
+      "queryTemplates",
+      "toCamelCase",
+      "toSnakeCase",
+      "toKebabCase",
+      "pluralize",
+      "singularize",
+      "buildQueryName",
+      "buildMutationName",
+      "generateEntityQueries",
+      "generateTypeScriptTypes",
+      "generateReactQueryHooks",
+      "generateListPageTemplate",
+      "SmartShardingDecider",
+      "ProgressiveLoader",
+      "FallbackManager",
+      "GraphqlToRestFallback",
+      "CacheFallback",
+      "UIFallback",
+      "OfflineFallback",
+      "ABTestEngine",
+      "fnv1aHash"
+    ],
+    "apps/web/src/components/bi/BISkeleton.tsx": [
+      "MetricCardSkeleton",
+      "ChartCardSkeleton",
+      "ModuleCardSkeleton",
+      "VisualizationCardSkeleton",
+      "ActivityItemSkeleton",
+      "TableSkeleton",
+      "DashboardSkeleton",
+      "AnalyticsSkeleton",
+      "VisualizationSkeleton"
+    ],
+    "apps/web/src/components/bi/ChartAnnotations.tsx": [
+      "ChartAnnotations"
+    ],
+    "apps/web/src/components/bi/ChartLibrary.tsx": [
+      "BarChartComponent",
+      "LineChartComponent",
+      "PieChartComponent"
+    ],
+    "apps/web/src/components/bi/ChartLinker.tsx": [
+      "ChartLinkerProvider"
+    ],
+    "apps/web/src/components/bi/DrillDownPanel.tsx": [
+      "DrillDownPanel"
+    ],
+    "apps/web/src/components/charts/_vendors/recharts-cartesian.ts": [
+      "FunnelChart",
+      "Funnel",
+      "ErrorBar",
+      "ReferenceDot",
+      "CartesianAxis",
+      "Label",
+      "LabelList",
+      "Customized"
+    ],
+    "apps/web/src/components/charts/_vendors/recharts-polar.ts": [
+      "Sankey",
+      "SunburstChart",
+      "Treemap"
+    ],
+    "apps/web/src/components/charts/index.ts": [
+      "LazyChartComponent"
+    ],
+    "apps/web/src/components/common/AlertCard.tsx": [
+      "SuccessAlertCard",
+      "WarningAlertCard",
+      "ErrorAlertCard",
+      "InfoAlertCard"
+    ],
+    "apps/web/src/components/common/BatchOperations.tsx": [
+      "BatchOperations"
+    ],
+    "apps/web/src/components/common/DataTable.tsx": [
+      "MobileCardView"
+    ],
+    "apps/web/src/components/common/DescriptionList.tsx": [
+      "DescriptionList"
+    ],
+    "apps/web/src/components/common/FormFieldGroup.tsx": [
+      "FormFieldGroup"
+    ],
+    "apps/web/src/components/common/StatCard.tsx": [
+      "StatCardBase"
+    ],
+    "apps/web/src/components/common/ThemePresetSwitcher.tsx": [
+      "ThemePresetSwitcher"
+    ],
+    "apps/web/src/components/common/index.ts": [
+      "AlertDialog",
+      "InfoDialog",
+      "SuccessDialog",
+      "WarningDialog",
+      "ErrorDialog",
+      "ConfirmationDialog",
+      "PaginationComponent",
+      "SearchEmptyState",
+      "PermissionEmptyState"
+    ],
+    "apps/web/src/components/dashboard/HeroSection.tsx": [
+      "HeroSection"
+    ],
+    "apps/web/src/components/designer/index.ts": [
+      "FORM_COMPONENTS",
+      "LAYOUT_COMPONENTS",
+      "getComponentsByCategory"
+    ],
+    "apps/web/src/components/ehs/index.ts": [
+      "calculateComprehensiveRisk",
+      "getRiskLevelColor",
+      "getLikelihoodLabel",
+      "getExposureLabel",
+      "getEffectivenessLabel",
+      "calculateResidualRisk",
+      "riskMatrixData"
+    ],
+    "apps/web/src/components/finance/FinancialReports.tsx": [
+      "BalanceSheetViewer",
+      "IncomeStatementViewer",
+      "CashFlowStatementViewer"
+    ],
+    "apps/web/src/components/gis/modules/MapModule/OfflineManager.tsx": [
+      "useOfflineManager",
+      "tileToLatLng",
+      "latLngToTile",
+      "getTileBounds"
+    ],
+    "apps/web/src/components/gis/utils/performance.ts": [
+      "throttle",
+      "useThrottledCallback"
+    ],
+    "apps/web/src/components/hrm/DepartmentSelector.tsx": [
+      "DepartmentSelector",
+      "DepartmentBreadcrumb"
+    ],
+    "apps/web/src/components/hrm/index.ts": [
+      "AttendanceStatusBadge",
+      "LeaveStatusBadge"
+    ],
+    "apps/web/src/components/icons/index.ts": [
+      "Accessibility",
+      "ChevronsLeft",
+      "Terminal",
+      "TestTube2",
+      "Touchpad",
+      "X"
+    ],
+    "apps/web/src/components/index.ts": [
+      "EmployeeStatusBadge",
+      "CustomerStatusBadge",
+      "OpportunityStatusBadge",
+      "ProjectStatusBadge",
+      "WorkflowStatusBadge",
+      "FinanceStatusBadge",
+      "DEFAULT_STATUS_MAP",
+      "BISkeleton"
+    ],
+    "apps/web/src/components/security/SafeText.tsx": [
+      "SafeText"
+    ],
+    "apps/web/src/components/security/index.ts": [
+      "validateCsrfToken",
+      "getCsrfHeaderName",
+      "validateUrl",
+      "validateEmail",
+      "generateCsrfToken",
+      "securityConfig"
+    ],
+    "apps/web/src/components/templates/dashboard/ChartCardComponent.tsx": [
+      "ChartCardComponent"
+    ],
+    "apps/web/src/components/templates/index.ts": [
+      "SubTableBuilderDefault",
+      "TreeBuilderDefault",
+      "WizardBuilderDefault"
+    ],
+    "apps/web/src/components/templates/list/hooks.tsx": [
+      "useInlineEditing",
+      "useTreeTable",
+      "useExportFeature",
+      "useColumnConfigState",
+      "useBatchOperations",
+      "useCrudForm",
+      "useCrudFetchParams",
+      "useListPageFilters",
+      "useListPageSearch",
+      "useViewMode",
+      "useCrudRowActions",
+      "useCrudBatchActions",
+      "useCrudActions",
+      "useResolvedColumns",
+      "useResolvedCrudConfig"
+    ],
+    "apps/web/src/components/ui/Loading.tsx": [
+      "LoadingOverlay"
+    ]
+  }
+}

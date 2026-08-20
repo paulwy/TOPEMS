@@ -689,21 +689,21 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   );
 };
 
-export const BarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const BarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='bar'
     {...props}
   />
 );
 
-export const LineChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const LineChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='line'
     {...props}
   />
 );
 
-export const PieChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const PieChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='pie'
     {...props}

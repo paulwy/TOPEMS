@@ -7,9 +7,6 @@
 export { PieChart } from 'recharts/es6/chart/PieChart.js';
 export { RadarChart } from 'recharts/es6/chart/RadarChart.js';
 export { RadialBarChart } from 'recharts/es6/chart/RadialBarChart.js';
-export { Sankey } from 'recharts/es6/chart/Sankey.js';
-export { SunburstChart } from 'recharts/es6/chart/SunburstChart.js';
-export { Treemap } from 'recharts/es6/chart/Treemap.js';
 
 export { Pie } from 'recharts/es6/polar/Pie.js';
 export { Radar } from 'recharts/es6/polar/Radar.js';

@@ -74,16 +74,9 @@ export {
 // [shared] StatusBadge - 已提升到 @topems/shared-components
 export {
   StatusBadge,
-  EmployeeStatusBadge,
   AttendanceStatusBadge,
   LeaveStatusBadge,
-  CustomerStatusBadge,
-  OpportunityStatusBadge,
-  ProjectStatusBadge,
-  WorkflowStatusBadge,
-  FinanceStatusBadge,
   ModuleStatusBadge,
-  DEFAULT_STATUS_MAP,
   type StatusBadgeProps,
   type StatusColor,
   type StatusVariant,

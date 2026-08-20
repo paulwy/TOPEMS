@@ -146,7 +146,9 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
             {collapsedModule?.icon && renderIcon(collapsedModule.icon, 18)}
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: 'text.primary' }}>
-                {collapsedModule?.nameKey ? i18n.t(collapsedModule.nameKey) : collapsedModule?.name || collapsedModuleCode}
+                {collapsedModule?.nameKey
+                  ? i18n.t(collapsedModule.nameKey)
+                  : collapsedModule?.name || collapsedModuleCode}
               </Typography>
               <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                 {i18n.t('components.sidebar_module_tree.k0')}

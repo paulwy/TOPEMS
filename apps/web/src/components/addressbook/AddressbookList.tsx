@@ -9,11 +9,7 @@ interface AddressbookListProps {
   onContactClick: (_contact: AddressbookEntry) => void;
 }
 
-const AddressbookList: React.FC<AddressbookListProps> = ({
-  contacts,
-  loading,
-  onContactClick,
-}) => {
+const AddressbookList: React.FC<AddressbookListProps> = ({ contacts, loading, onContactClick }) => {
   if (loading) {
     return (
       <div

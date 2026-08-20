@@ -10,7 +10,8 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '统一的统计卡片组件库，包含 MetricCard（带 Sparkline）、ChartCard（带图表）、StatCardBase 基类。',
+        component:
+          '统一的统计卡片组件库，包含 MetricCard（带 Sparkline）、ChartCard（带图表）、StatCardBase 基类。',
       },
     },
   },
@@ -101,9 +102,23 @@ const MetricCardStable: Story = {
 const BaseCard: Story = {
   render: () => (
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, width: '100%' }}>
-      <StatCardBase title='简单指标' value={42} subtitle='无变化率' />
-      <StatCardBase title='带后缀' value={128} suffix='万' subtitle='累计' />
-      <StatCardBase title='带单位' value={3.5} unit='天' subtitle='平均完成周期' />
+      <StatCardBase
+        title='简单指标'
+        value={42}
+        subtitle='无变化率'
+      />
+      <StatCardBase
+        title='带后缀'
+        value={128}
+        suffix='万'
+        subtitle='累计'
+      />
+      <StatCardBase
+        title='带单位'
+        value={3.5}
+        unit='天'
+        subtitle='平均完成周期'
+      />
     </Box>
   ),
 };
@@ -117,7 +132,15 @@ const ChartCardPlaceholder: Story = {
       onRefresh={fn()}
       onExport={fn()}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'text.secondary' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: 'text.secondary',
+        }}
+      >
         图表占位内容（实际渲染 ECharts / Recharts）
       </Box>
     </ChartCard>
@@ -126,7 +149,12 @@ const ChartCardPlaceholder: Story = {
 
 const ChartCardLoading: Story = {
   render: () => (
-    <ChartCard title='销售占比' subtitle='按品类分布' height={300} loading>
+    <ChartCard
+      title='销售占比'
+      subtitle='按品类分布'
+      height={300}
+      loading
+    >
       <Box />
     </ChartCard>
   ),

@@ -133,7 +133,7 @@ export const Loading: React.FC<LoadingProps> = ({
 
 export default Loading;
 
-export const LoadingOverlay: React.FC<{
+const LoadingOverlay: React.FC<{
   isLoading: boolean;
   children?: React.ReactNode;
   text?: string;

@@ -118,7 +118,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * 创建节流函数
  */
 
-export function throttle<T extends (...args: unknown[]) => void>(
+function throttle<T extends (...args: unknown[]) => void>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -232,7 +232,7 @@ function useMemoizedTrack<T extends { lat: number; lng: number }>(
  * useThrottledCallback - 节流回调 Hook
  */
 
-export function useThrottledCallback<T extends (...args: unknown[]) => void>(
+function useThrottledCallback<T extends (...args: unknown[]) => void>(
   callback: T,
   limit: number
 ): (...args: Parameters<T>) => void {

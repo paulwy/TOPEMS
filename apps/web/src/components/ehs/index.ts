@@ -17,14 +17,7 @@ export {
 
 export {
   calculateRiskLevel,
-  calculateComprehensiveRisk,
-  getRiskLevelColor,
   getSeverityLabel,
-  getLikelihoodLabel,
-  getExposureLabel,
-  getEffectivenessLabel,
-  calculateResidualRisk,
-  riskMatrixData,
   type SeverityValue,
   type LikelihoodValue,
   type ExposureValue,
