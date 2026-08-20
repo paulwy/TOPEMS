@@ -1,0 +1,415 @@
+{
+  "total_exports": 240,
+  "total_files": 84,
+  "targets": {
+    "apps/web/src/components/GlobalSearchBar/utils.ts": [
+      "SEARCH_HISTORY_KEY",
+      "serviceLabels",
+      "searchSuggestions",
+      "getServiceLabel",
+      "getServiceColor",
+      "groupResultsByService",
+      "fuzzyMatch"
+    ],
+    "apps/web/src/components/gis/utils/performance.ts": [
+      "simplifyTrack",
+      "calculateTrackLength",
+      "getVirtualRange",
+      "MemoCache",
+      "useMemoizedTrack",
+      "preloadAdjacentTiles",
+      "preloadImages"
+    ],
+    "apps/web/src/components/gis/modules/MapModule/useOfflineTiles.ts": [
+      "useOfflineTiles"
+    ],
+    "apps/web/src/components/gis/modules/MapModule/tileImporter.ts": [
+      "createOfflineTileProvider"
+    ],
+    "apps/web/src/components/WorkflowTableExample.tsx": [
+      "WorkflowTableExample"
+    ],
+    "apps/web/src/components/WorkflowFormExample.tsx": [
+      "WorkflowFormExample"
+    ],
+    "apps/web/src/components/BundleSizeMonitor.tsx": [
+      "BundleSizeMonitor"
+    ],
+    "apps/web/src/components/PermissionGate.tsx": [
+      "RoleGate",
+      "AdminGate",
+      "SuperuserGate",
+      "RoleBadge",
+      "PermissionBadge"
+    ],
+    "apps/web/src/components/LoadingProvider.tsx": [
+      "SkeletonText",
+      "SkeletonCard",
+      "SkeletonTable"
+    ],
+    "apps/web/src/components/ValidationError.tsx": [
+      "FieldError",
+      "FormError",
+      "ValidationHint",
+      "InlineValidation",
+      "SuccessMessage"
+    ],
+    "apps/web/src/components/ErrorBoundary.tsx": [
+      "withErrorBoundary",
+      "lazyWithErrorBoundary",
+      "ModuleErrorBoundary",
+      "withComponentErrorBoundary",
+      "SuspenseWithErrorBoundary",
+      "errorHistory"
+    ],
+    "apps/web/src/components/form/FormDateRangePicker.tsx": [
+      "FormDateRangePicker"
+    ],
+    "apps/web/src/components/form/FormCascader.tsx": [
+      "FormCascader"
+    ],
+    "apps/web/src/components/form/FormFileUpload.tsx": [
+      "FormFileUpload"
+    ],
+    "apps/web/src/components/auth/ProtectedRoute.tsx": [
+      "PermissionRoute"
+    ],
+    "apps/web/src/components/notification/NotificationProvider.tsx": [
+      "Toaster"
+    ],
+    "apps/web/src/components/charts/RadarChart.stories.tsx": [
+      "SingleSeries",
+      "NoLegend"
+    ],
+    "apps/web/src/components/charts/PieChart.stories.tsx": [
+      "CustomColors",
+      "SmallDataset"
+    ],
+    "apps/web/src/components/charts/AreaChart.stories.tsx": [
+      "Dashed",
+      "DenseData"
+    ],
+    "apps/web/src/components/common/AlertCard.stories.tsx": [
+      "Expandable",
+      "InlineMode",
+      "PresetComponents"
+    ],
+    "apps/web/src/components/common/CommentList.stories.tsx": [
+      "EmptyComments",
+      "NoReply",
+      "NoLike",
+      "SingleComment"
+    ],
+    "apps/web/src/components/common/PageContainer.stories.tsx": [
+      "WithHeader",
+      "WithCustomWidth",
+      "WithBackgroundColor"
+    ],
+    "apps/web/src/components/common/DraggableWindow.tsx": [
+      "DraggableWindow"
+    ],
+    "apps/web/src/components/common/Stepper.stories.tsx": [
+      "FirstStep",
+      "GradientVariant",
+      "NoDescriptions",
+      "ManySteps"
+    ],
+    "apps/web/src/components/common/ImageUpload.stories.tsx": [
+      "SingleImage",
+      "WithoutCrop"
+    ],
+    "apps/web/src/components/common/AlertPanel.tsx": [
+      "AlertPanel"
+    ],
+    "apps/web/src/components/common/DepartmentSelect.stories.tsx": [
+      "FlatDepartments"
+    ],
+    "apps/web/src/components/common/MasterDataSelector.tsx": [
+      "MasterDataSelector"
+    ],
+    "apps/web/src/components/common/ResponsivePage.tsx": [
+      "ResponsivePage"
+    ],
+    "apps/web/src/components/common/FilterBar.stories.tsx": [
+      "Collapsed",
+      "WithActiveFilters",
+      "Dense",
+      "WithMultiselect",
+      "WithDateRange",
+      "NotCollapsible",
+      "StandardVariant"
+    ],
+    "apps/web/src/components/common/LoadingSpinner.stories.tsx": [
+      "SpinnerDefault",
+      "SpinnerSizes",
+      "OverlayWithToggle",
+      "CardSkeleton"
+    ],
+    "apps/web/src/components/common/Dialog.stories.tsx": [
+      "WithActions",
+      "LargeContent",
+      "DangerConfirm",
+      "Centered",
+      "LoadingConfirm"
+    ],
+    "apps/web/src/components/common/Avatar.stories.tsx": [
+      "WithImage",
+      "StatusOnline",
+      "StatusOffline",
+      "StatusBusy",
+      "StatusAway",
+      "AllSizes",
+      "AvatarGroupDefault",
+      "AvatarGroupSmall",
+      "WithBadgeString",
+      "WithBadgeError",
+      "WithStatusAndBadge",
+      "SquareVariant",
+      "CustomColor"
+    ],
+    "apps/web/src/components/common/FormBuilder.stories.tsx": [
+      "CreateMode",
+      "EditMode",
+      "SingleColumn",
+      "AsyncAutocomplete",
+      "FormSections"
+    ],
+    "apps/web/src/components/common/FormFieldGroup.stories.tsx": [
+      "Collapsible",
+      "MultiColumnGrid",
+      "RequiredMarker",
+      "MultipleGroups",
+      "TwoColumnLayout"
+    ],
+    "apps/web/src/components/common/TreeView.stories.tsx": [
+      "Comfortable",
+      "FileSystem",
+      "WithDisabledNode",
+      "FlatList"
+    ],
+    "apps/web/src/components/common/UserSelect.stories.tsx": [
+      "NoClear"
+    ],
+    "apps/web/src/components/common/NumberFields.stories.tsx": [
+      "NumberFieldDefault",
+      "CurrencyFieldDefault",
+      "PercentFieldDefault",
+      "AllFields"
+    ],
+    "apps/web/src/components/common/RelativeTime.stories.tsx": [
+      "JustNow",
+      "HoursAgo",
+      "DaysAgo",
+      "WeeksAgo",
+      "WithAbsoluteTime",
+      "MultipleTimes"
+    ],
+    "apps/web/src/components/common/TabPanel.stories.tsx": [
+      "EmptyMessage",
+      "WithTabsIntegration",
+      "MixedStates"
+    ],
+    "apps/web/src/components/common/DescriptionList.stories.tsx": [
+      "VerticalLayout",
+      "GridLayout",
+      "WithCopyableItems",
+      "WithTooltips",
+      "LoadingSkeleton",
+      "WithDivider"
+    ],
+    "apps/web/src/components/common/DataExport.stories.tsx": [
+      "CustomFileName",
+      "ExcelOnly",
+      "NoFieldSelection",
+      "LargeDataset"
+    ],
+    "apps/web/src/components/common/DataTable.stories.tsx": [
+      "WithSorting",
+      "WithPagination",
+      "WithExpansion",
+      "WithFiltering"
+    ],
+    "apps/web/src/components/common/QuickSearch.stories.tsx": [
+      "WithSuggestions",
+      "NoShortcut",
+      "WithSuggestionsAndHistory"
+    ],
+    "apps/web/src/components/common/FormFields.tsx": [
+      "FormDateField"
+    ],
+    "apps/web/src/components/common/StatusChip.tsx": [
+      "DEFAULT_STATUS_MAPPING"
+    ],
+    "apps/web/src/components/common/Timeline.stories.tsx": [
+      "Horizontal",
+      "SoftVariant",
+      "WithStatuses",
+      "WithContent",
+      "WithLoading"
+    ],
+    "apps/web/src/components/common/FileUpload.stories.tsx": [
+      "WithFileRestrictions",
+      "SingleFile"
+    ],
+    "apps/web/src/components/common/FormField.stories.tsx": [
+      "Multiline"
+    ],
+    "apps/web/src/components/common/LazyLoadWrapper.tsx": [
+      "LazyLoadWrapper"
+    ],
+    "apps/web/src/components/common/CommandPalette.stories.tsx": [
+      "WithGroups",
+      "WithIcons"
+    ],
+    "apps/web/src/components/common/FormSelect.stories.tsx": [
+      "WithClear"
+    ],
+    "apps/web/src/components/common/ThemePresetSwitcher.stories.tsx": [
+      "AllPresets",
+      "SwitcherInContext",
+      "ColorPaletteGrid"
+    ],
+    "apps/web/src/components/common/ProgressBar.stories.tsx": [
+      "LinearVariants",
+      "Circular",
+      "Segmented",
+      "WithLabel",
+      "Animated",
+      "Striped"
+    ],
+    "apps/web/src/components/common/Pagination.stories.tsx": [
+      "ManyPages",
+      "FirstPage",
+      "LastPage",
+      "WithoutPageSizeSelector",
+      "WithoutTotal",
+      "SmallDataSet"
+    ],
+    "apps/web/src/components/common/MobileRouteAdapter.tsx": [
+      "MobileRouteAdapter"
+    ],
+    "apps/web/src/components/common/DateRangePicker.stories.tsx": [
+      "SameDay",
+      "MediumSize",
+      "WithoutPresets",
+      "CustomPresets"
+    ],
+    "apps/web/src/components/common/BackButton.stories.tsx": [
+      "WithText",
+      "Outlined",
+      "WithCustomLabel",
+      "CustomOnBack"
+    ],
+    "apps/web/src/components/common/StatCard.stories.tsx": [
+      "MetricCardBasic",
+      "MetricCardStable",
+      "BaseCard",
+      "ChartCardPlaceholder",
+      "ChartCardLoading"
+    ],
+    "apps/web/src/components/common/ConfirmDialog.stories.tsx": [
+      "Danger",
+      "WithCustomContent",
+      "WithCustomButtons",
+      "Destructive",
+      "AsyncAction",
+      "AlertDialogStory",
+      "ErrorDialogStory"
+    ],
+    "apps/web/src/components/common/StatusBadge.stories.tsx": [
+      "Clickable",
+      "HRMStatuses",
+      "AttendanceStatuses",
+      "CustomStatusMap"
+    ],
+    "apps/web/src/components/common/EmptyState.stories.tsx": [
+      "NoAction",
+      "SearchEmpty",
+      "ListEmpty",
+      "PermissionEmpty",
+      "ErrorEmpty",
+      "EmojiVariant",
+      "LeftAligned"
+    ],
+    "apps/web/src/components/common/DesignTokens.stories.tsx": [
+      "TypographyDemo",
+      "BorderRadius"
+    ],
+    "apps/web/src/components/common/ActionButton.stories.tsx": [
+      "AllVariants",
+      "IconEnd"
+    ],
+    "apps/web/src/components/mobile/SwipeAction.stories.tsx": [
+      "MultipleActions"
+    ],
+    "apps/web/src/components/mobile/MobileCard.stories.tsx": [
+      "WithoutIcon",
+      "ListStyle"
+    ],
+    "apps/web/src/components/mobile/MobileSkeleton.stories.tsx": [
+      "ListWithoutAvatar"
+    ],
+    "apps/web/src/components/mobile/MobileButton.stories.tsx": [
+      "FullWidth"
+    ],
+    "apps/web/src/components/bff/StreamingBoundary.tsx": [
+      "StreamingBoundary",
+      "StreamingLayer"
+    ],
+    "apps/web/src/components/bff/ProgressiveHydration.tsx": [
+      "recordHydration",
+      "HydrationScheduler",
+      "getHydrationScheduler"
+    ],
+    "apps/web/src/components/bff/RealtimeIndicator.tsx": [
+      "RealtimeIndicator"
+    ],
+    "apps/web/src/components/addressbook/AddressbookHeader.tsx": [
+      "AddressbookHeader"
+    ],
+    "apps/web/src/components/addressbook/AddressbookFilters.tsx": [
+      "AddressbookFilters"
+    ],
+    "apps/web/src/components/addressbook/AddressbookList.tsx": [
+      "AddressbookList"
+    ],
+    "apps/web/src/components/addressbook/AddressbookSidebar.tsx": [
+      "AddressbookSidebar"
+    ],
+    "apps/web/src/components/addressbook/ContactDetailModal.tsx": [
+      "ContactDetailModal"
+    ],
+    "apps/web/src/components/bi/ChartLibrary.tsx": [
+      "AreaChartComponent",
+      "RadarChartComponent",
+      "ScatterChartComponent",
+      "ComposedChartComponent",
+      "HistogramChartComponent",
+      "GaugeChartComponent"
+    ],
+    "apps/web/src/components/bi/ChartLibrary.polar.tsx": [
+      "CustomTooltipPolar"
+    ],
+    "apps/web/src/components/templates/ListPageTemplate.stories.tsx": [
+      "WithRowNumbers"
+    ],
+    "apps/web/src/components/templates/DashboardTemplate.stories.tsx": [
+      "StatsOnly",
+      "StatsWithProgress"
+    ],
+    "apps/web/src/components/templates/DashboardTemplate.tsx": [
+      "dataTableFromSchema"
+    ],
+    "apps/web/src/components/templates/TemplateAIHelper.tsx": [
+      "TemplateAIHelper"
+    ],
+    "apps/web/src/components/templates/CrudPage.stories.tsx": [
+      "LimitedActions",
+      "WithBreadcrumbs"
+    ],
+    "apps/web/src/components/finance/FinancialReports.tsx": [
+      "FinancialReportsViewer"
+    ]
+  },
+  "note": "L2-Batch2 components T3: test-only unused import OR zero-consumer L1"
+}

@@ -1,0 +1,10 @@
+{
+  "total": 1,
+  "hooks_T2": 1,
+  "modules_T2": 0,
+  "targets": {
+    "apps/web/src/hooks/useIsMobile.ts": [
+      "useDeviceType"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "total_exports": 24,
+  "total_files": 13,
+  "targets": {
+    "apps/web/src/fullstack-automation/intelligent-deployment.ts": [
+      "IntelligentDeployer"
+    ],
+    "apps/web/src/config/runtime.ts": [
+      "isTest",
+      "getMode"
+    ],
+    "apps/web/src/constants/pagination.ts": [
+      "DEFAULT_PAGE",
+      "DEFAULT_PAGE_SIZE",
+      "pickPageSize",
+      "toBackendPagination"
+    ],
+    "apps/web/src/theme/presets.ts": [
+      "getPresetColors"
+    ],
+    "apps/web/src/microfrontend/registry.ts": [
+      "microFrontendRegistry"
+    ],
+    "apps/web/src/debug/useDebugTrace.ts": [
+      "clearDebugTrace"
+    ],
+    "apps/web/src/microfrontend/security/runtime-protection.ts": [
+      "ProtectionType",
+      "ProtectionSeverity",
+      "RuntimeProtector",
+      "runtimeProtector"
+    ],
+    "apps/web/src/microfrontend/security/module-signer.ts": [
+      "TrustLevel",
+      "ModuleSigner",
+      "moduleSigner"
+    ],
+    "apps/web/src/microfrontend/version-platform/version-platform.ts": [
+      "VersionPlatform"
+    ],
+    "apps/web/src/microfrontend/version-platform/rollout-manager.ts": [
+      "RolloutManager"
+    ],
+    "apps/web/src/microfrontend/registry/registry-api.ts": [
+      "registryApi"
+    ],
+    "apps/web/src/lib/navigation/modules/lazy.ts": [
+      "lazyLoadModuleConfig",
+      "preloadModuleConfigs",
+      "getAvailableModuleCodes"
+    ],
+    "apps/web/src/common/types/normalize_response.stub.ts": [
+      "normalizeApiResponseWrapper"
+    ]
+  }
+}

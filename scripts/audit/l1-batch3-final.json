@@ -1,0 +1,10 @@
+{
+  "scope": "L1-SAFE Batch 3 FINAL (mid-risk non-pages remainder, validated)",
+  "total_exports": 1,
+  "total_files": 1,
+  "targets": {
+    "apps/web/src/context/PluginContext.tsx": [
+      "useInstalledPlugins"
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "scope": "L2-Batch1 T2 SKIPPED: values actually used in tests (require manual test-code edits)",
+  "total": 59,
+  "targets": {
+    "apps/web/src/utils/websocket-optimizer.ts": [
+      "fullJitterBackoff",
+      "equalJitterBackoff"
+    ],
+    "apps/web/src/utils/mobileDetector.ts": [
+      "getBreakpoint",
+      "isMobileView",
+      "isTabletView",
+      "isDesktopView",
+      "getAppLink",
+      "getDownloadUrl"
+    ],
+    "apps/web/src/utils/apiPath.ts": [
+      "API_VERSION",
+      "SERVICE_CODES",
+      "buildApiPath",
+      "createServiceApi"
+    ],
+    "apps/web/src/utils/themeUtils.ts": [
+      "invertColor"
+    ],
+    "apps/web/src/utils/string.ts": [
+      "trimAll",
+      "uncapitalize",
+      "maskPhone",
+      "maskEmail",
+      "maskIdCard",
+      "slugify",
+      "stripHtml",
+      "unescapeHtml",
+      "isNotEmpty",
+      "limitLength",
+      "snakeToTitle",
+      "camelToTitle"
+    ],
+    "apps/web/src/utils/errors.ts": [
+      "AppExceptionError"
+    ],
+    "apps/web/src/utils/storage.ts": [
+      "LocalStorage",
+      "SessionStorage"
+    ],
+    "apps/web/src/utils/batchOperation.ts": [
+      "createBatchAbortController"
+    ],
+    "apps/web/src/utils/logger.ts": [
+      "errorLogger"
+    ],
+    "apps/web/src/utils/format.ts": [
+      "formatStatus",
+      "formatPhone",
+      "formatEmail",
+      "formatIdCard",
+      "formatDateRange",
+      "formatMonth",
+      "formatWeek"
+    ],
+    "apps/web/src/utils/telemetry.ts": [
+      "getTracer"
+    ],
+    "apps/web/src/utils/importExport.ts": [
+      "parseFileExtension",
+      "getImportModeLabel",
+      "readFileAsBase64"
+    ],
+    "apps/web/src/utils/listParamMapping.ts": [
+      "parsePaginationFromResponse",
+      "topemsStandardParams",
+      "nestedFilterParams",
+      "offsetStyleParams",
+      "buildStandardFilterParams",
+      "buildNestedFilterArray",
+      "serializeFiltersToUrl",
+      "parseFiltersFromUrl"
+    ],
+    "apps/web/src/utils/formSchemas.ts": [
+      "fieldCode",
+      "fieldPhone",
+      "fieldAmount",
+      "baseEntitySchema"
+    ],
+    "apps/web/src/utils/tracing.ts": [
+      "resetTrace",
+      "createSpan",
+      "getTraceHeaders",
+      "instrumentAxios"
+    ],
+    "apps/web/src/utils/normalizePageParams.ts": [
+      "normalizeObjectKeysDeep"
+    ],
+    "apps/web/src/api/wms/index.ts": [
+      "wmsApprovalApi"
+    ]
+  }
+}
