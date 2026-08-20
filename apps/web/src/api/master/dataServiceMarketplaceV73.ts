@@ -3,7 +3,7 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ListingStatus = 'draft' | 'published' | 'suspended' | 'deleted';
+type ListingStatus = 'draft' | 'published' | 'suspended' | 'deleted';
 export type OrderStatus = 'pending' | 'paid' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'processing' | 'success' | 'failed' | 'refunded';
 export type ServiceCategory =
@@ -18,7 +18,7 @@ export type PricingModel = 'free' | 'pay_per_use' | 'subscription' | 'tiered';
 export type BillingCycle = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type ReviewRating = 1 | 2 | 3 | 4 | 5;
 
-export interface MarketplaceListing {
+interface MarketplaceListing {
   id: string;
   tenant_id: string;
   service_id: string;
@@ -42,7 +42,7 @@ export interface MarketplaceListing {
   updated_at: string;
 }
 
-export interface MarketplaceOrder {
+interface MarketplaceOrder {
   id: string;
   tenant_id: string;
   listing_id: string;
@@ -66,7 +66,7 @@ export interface MarketplaceOrder {
   updated_at: string;
 }
 
-export interface MarketplacePayment {
+interface MarketplacePayment {
   id: string;
   order_id: string;
   amount: number;
@@ -78,7 +78,7 @@ export interface MarketplacePayment {
   created_at: string;
 }
 
-export interface MarketplaceReview {
+interface MarketplaceReview {
   id: string;
   listing_id: string;
   service_id: string;
@@ -94,7 +94,7 @@ export interface MarketplaceReview {
   created_at: string;
 }
 
-export interface MarketplaceInvoice {
+interface MarketplaceInvoice {
   id: string;
   order_id: string;
   tenant_id: string;
@@ -131,7 +131,7 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface CreateListingRequest {
+interface CreateListingRequest {
   service_id: string;
   title: string;
   description: string;
@@ -158,7 +158,7 @@ export interface UpdateListingRequest {
   is_featured?: boolean;
 }
 
-export interface CreateOrderRequest {
+interface CreateOrderRequest {
   listing_id: string;
   quantity?: number;
   billing_cycle?: BillingCycle;

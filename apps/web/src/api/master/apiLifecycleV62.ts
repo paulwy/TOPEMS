@@ -3,10 +3,10 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ApiType = 'rest' | 'graphql' | 'grpc' | 'event';
-export type LifecycleStageV62 =
+type ApiType = 'rest' | 'graphql' | 'grpc' | 'event';
+type LifecycleStageV62 =
   'design' | 'development' | 'staging' | 'production' | 'deprecated' | 'retired';
-export type ApiStatusV62 = 'active' | 'testing' | 'paused' | 'archived';
+type ApiStatusV62 = 'active' | 'testing' | 'paused' | 'archived';
 
 interface ApiEndpointV62 {
   id: string;
@@ -26,7 +26,7 @@ interface ApiEndpointV62 {
   spec?: Record<string, unknown>;
 }
 
-export interface ApiVersionInfoV62 {
+interface ApiVersionInfoV62 {
   version: string;
   stage: LifecycleStageV62;
   deprecated_at?: string;
@@ -75,7 +75,7 @@ interface ApiChangeLogV62 {
   published_by?: string;
 }
 
-export interface ApiLifecycleDashboardV62 {
+interface ApiLifecycleDashboardV62 {
   total_apis: number;
   by_stage: Array<{ stage: LifecycleStageV62; count: number }>;
   by_status: Array<{ status: ApiStatusV62; count: number }>;
@@ -89,7 +89,7 @@ export interface ApiLifecycleDashboardV62 {
 
 // ============ Request Types ============
 
-export interface RegisterApiRequestV62 {
+interface RegisterApiRequestV62 {
   name: string;
   type: ApiType;
   path: string;
@@ -101,25 +101,25 @@ export interface RegisterApiRequestV62 {
   spec?: Record<string, unknown>;
 }
 
-export interface UpdateApiRequestV62 {
+interface UpdateApiRequestV62 {
   name?: string;
   description?: string;
   owner?: string;
   spec?: Record<string, unknown>;
 }
 
-export interface PromoteApiRequest {
+interface PromoteApiRequest {
   target_stage: LifecycleStageV62;
   changelog?: string;
 }
 
-export interface DeprecateApiRequest {
+interface DeprecateApiRequest {
   reason: string;
   replacement_api_id?: string;
   sunset_date?: string;
 }
 
-export interface RetireApiRequest {
+interface RetireApiRequest {
   confirmation: boolean;
   reason: string;
 }
@@ -131,7 +131,7 @@ export interface CreateVersionRequest {
   migration_guide?: string;
 }
 
-export interface DeployApiRequest {
+interface DeployApiRequest {
   environment: 'dev' | 'staging' | 'prod';
   version: string;
 }

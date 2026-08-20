@@ -3,13 +3,13 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type AssetType = 'table' | 'view' | 'function' | 'api' | 'file' | 'report' | 'dashboard';
-export type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
-export type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
-export type LineageDirection = 'upstream' | 'downstream' | 'both';
-export type LineageDepth = 1 | 2 | 3;
+type AssetType = 'table' | 'view' | 'function' | 'api' | 'file' | 'report' | 'dashboard';
+type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
+type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
+type LineageDirection = 'upstream' | 'downstream' | 'both';
+type LineageDepth = 1 | 2 | 3;
 
-export interface DataAsset {
+interface DataAsset {
   id: string;
   name: string;
   display_name?: string;
@@ -35,7 +35,7 @@ export interface DataAsset {
   updated_at: string;
 }
 
-export interface AssetColumn {
+interface AssetColumn {
   name: string;
   type: string;
   description?: string;
@@ -47,7 +47,7 @@ export interface AssetColumn {
   sample_values?: unknown[];
 }
 
-export interface AssetLineageNode {
+interface AssetLineageNode {
   id: string;
   asset_id?: string;
   name: string;
@@ -61,7 +61,7 @@ export interface AssetLineageNode {
   metadata?: Record<string, unknown>;
 }
 
-export interface AssetLineageEdge {
+interface AssetLineageEdge {
   id: string;
   source_id: string;
   target_id: string;
@@ -71,7 +71,7 @@ export interface AssetLineageEdge {
   created_at: string;
 }
 
-export interface AssetLineageGraph {
+interface AssetLineageGraph {
   nodes: AssetLineageNode[];
   edges: AssetLineageEdge[];
   root_asset_id?: string;
@@ -79,7 +79,7 @@ export interface AssetLineageGraph {
   direction: LineageDirection;
 }
 
-export interface AssetTag {
+interface AssetTag {
   id: string;
   name: string;
   color?: string;
@@ -101,7 +101,7 @@ export interface AssetCategory {
   children?: AssetCategory[];
 }
 
-export interface DataMap {
+interface DataMap {
   id: string;
   name: string;
   description?: string;
@@ -116,7 +116,7 @@ export interface DataMap {
   updated_at: string;
 }
 
-export interface AssetSearchResult {
+interface AssetSearchResult {
   assets: DataAsset[];
   total: number;
   facets: {
@@ -129,7 +129,7 @@ export interface AssetSearchResult {
   suggestions?: string[];
 }
 
-export interface AssetCatalogDashboard {
+interface AssetCatalogDashboard {
   total_assets: number;
   active_assets: number;
   deprecated_assets: number;
@@ -145,7 +145,7 @@ export interface AssetCatalogDashboard {
 
 // ============ Request Types ============
 
-export interface CreateDataAssetRequest {
+interface CreateDataAssetRequest {
   name: string;
   display_name?: string;
   type: AssetType;
@@ -164,7 +164,7 @@ export interface CreateDataAssetRequest {
   data_source?: string;
 }
 
-export interface UpdateDataAssetRequest {
+interface UpdateDataAssetRequest {
   name?: string;
   display_name?: string;
   description?: string;
@@ -178,7 +178,7 @@ export interface UpdateDataAssetRequest {
   update_frequency?: string;
 }
 
-export interface CatalogAssetParams {
+interface CatalogAssetParams {
   type?: AssetType;
   status?: AssetStatus;
   sensitivity?: AssetSensitivity;
@@ -194,7 +194,7 @@ export interface CatalogAssetParams {
   pageSize?: number;
 }
 
-export interface SearchAssetsRequest {
+interface SearchAssetsRequest {
   query?: string;
   filters?: {
     types?: AssetType[];
@@ -210,7 +210,7 @@ export interface SearchAssetsRequest {
   pageSize?: number;
 }
 
-export interface GetLineageRequest {
+interface GetLineageRequest {
   asset_id: string;
   direction?: LineageDirection;
   depth?: LineageDepth;
@@ -221,7 +221,7 @@ export interface GetLineageRequest {
   };
 }
 
-export interface CreateAssetTagRequest {
+interface CreateAssetTagRequest {
   name: string;
   color?: string;
   category?: string;
@@ -237,7 +237,7 @@ export interface CreateAssetCategoryRequest {
   color?: string;
 }
 
-export interface CreateDataMapRequest {
+interface CreateDataMapRequest {
   name: string;
   description?: string;
   scope?: 'global' | 'domain' | 'team';

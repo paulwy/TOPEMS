@@ -15,13 +15,13 @@ export type LifecycleEvent =
   | 'retain'
   | 'compliance_hold'
   | 'release';
-export type ArchiveFormat = 'parquet' | 'avro' | 'json' | 'csv' | 'orc';
-export type StorageTier = 'hot' | 'warm' | 'cold' | 'archive' | 'glacier';
-export type RetentionType = 'permanent' | 'fixed_term' | 'event_based' | 'compliance';
-export type DestructionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-export type VersionAction = 'create' | 'publish' | 'deprecate' | 'archive' | 'restore' | 'destroy';
+type ArchiveFormat = 'parquet' | 'avro' | 'json' | 'csv' | 'orc';
+type StorageTier = 'hot' | 'warm' | 'cold' | 'archive' | 'glacier';
+type RetentionType = 'permanent' | 'fixed_term' | 'event_based' | 'compliance';
+type DestructionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+type VersionAction = 'create' | 'publish' | 'deprecate' | 'archive' | 'restore' | 'destroy';
 
-export interface LifecyclePolicy {
+interface LifecyclePolicy {
   id: string;
   name: string;
   description?: string;
@@ -65,7 +65,7 @@ export interface RetentionPolicy {
   updated_at: string;
 }
 
-export interface ArchiveStrategy {
+interface ArchiveStrategy {
   id: string;
   name: string;
   description?: string;
@@ -85,7 +85,7 @@ export interface ArchiveStrategy {
   updated_at: string;
 }
 
-export interface DestructionPolicy {
+interface DestructionPolicy {
   id: string;
   name: string;
   description?: string;
@@ -103,7 +103,7 @@ export interface DestructionPolicy {
   updated_at: string;
 }
 
-export interface LifecycleTransition {
+interface LifecycleTransition {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -119,7 +119,7 @@ export interface LifecycleTransition {
   created_at: string;
 }
 
-export interface LifecycleHistory {
+interface LifecycleHistory {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -136,7 +136,7 @@ export interface LifecycleHistory {
   updated_at: string;
 }
 
-export interface ArchiveJob {
+interface ArchiveJob {
   id: string;
   strategy_id: string;
   strategy_name?: string;
@@ -154,7 +154,7 @@ export interface ArchiveJob {
   created_at: string;
 }
 
-export interface DestructionJob {
+interface DestructionJob {
   id: string;
   policy_id: string;
   policy_name?: string;
@@ -172,7 +172,7 @@ export interface DestructionJob {
   created_at: string;
 }
 
-export interface LifecycleVersion {
+interface LifecycleVersion {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -237,7 +237,7 @@ export interface ComplianceReport {
 
 // ============ Request Types ============
 
-export interface CreateLifecyclePolicyRequest {
+interface CreateLifecyclePolicyRequest {
   name: string;
   description?: string;
   entity_type: string;
@@ -258,7 +258,7 @@ export interface CreateLifecyclePolicyRequest {
   };
 }
 
-export interface CreateRetentionPolicyRequest {
+interface CreateRetentionPolicyRequest {
   name: string;
   description?: string;
   entity_type: string;
@@ -274,7 +274,7 @@ export interface CreateRetentionPolicyRequest {
   exclude_entities?: string[];
 }
 
-export interface CreateArchiveStrategyRequest {
+interface CreateArchiveStrategyRequest {
   name: string;
   description?: string;
   entity_type: string;
@@ -291,7 +291,7 @@ export interface CreateArchiveStrategyRequest {
   retention_after_archive_days?: number;
 }
 
-export interface CreateDestructionPolicyRequest {
+interface CreateDestructionPolicyRequest {
   name: string;
   description?: string;
   entity_type: string;
@@ -306,7 +306,7 @@ export interface CreateDestructionPolicyRequest {
   audit_trail?: boolean;
 }
 
-export interface ExecuteTransitionRequest {
+interface ExecuteTransitionRequest {
   entity_type: string;
   entity_id: string;
   target_state: LifecycleState;
@@ -314,14 +314,14 @@ export interface ExecuteTransitionRequest {
   metadata?: Record<string, unknown>;
 }
 
-export interface ExecuteArchiveRequest {
+interface ExecuteArchiveRequest {
   strategy_id: string;
   entity_ids?: string[];
   entity_type?: string;
   dry_run?: boolean;
 }
 
-export interface ExecuteDestructionRequest {
+interface ExecuteDestructionRequest {
   policy_id: string;
   entity_ids: string[];
   reason?: string;
@@ -329,7 +329,7 @@ export interface ExecuteDestructionRequest {
   verify_only?: boolean;
 }
 
-export interface VersionEntityRequest {
+interface VersionEntityRequest {
   entity_type: string;
   entity_id: string;
   action: VersionAction;

@@ -3,11 +3,11 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type DomainType = 'source' | 'consumer' | 'analytics' | 'platform' | 'reference';
-export type DomainStatus = 'active' | 'inactive' | 'archived';
-export type FederationStatus = 'connected' | 'disconnected' | 'degraded';
-export type SharingStatus = 'draft' | 'active' | 'expired' | 'terminated';
-export type AccessType = 'read' | 'write' | 'admin';
+type DomainType = 'source' | 'consumer' | 'analytics' | 'platform' | 'reference';
+type DomainStatus = 'active' | 'inactive' | 'archived';
+type FederationStatus = 'connected' | 'disconnected' | 'degraded';
+type SharingStatus = 'draft' | 'active' | 'expired' | 'terminated';
+type AccessType = 'read' | 'write' | 'admin';
 export type LineageDirection = 'upstream' | 'downstream' | 'both';
 
 export interface DataDomain {
@@ -26,7 +26,7 @@ export interface DataDomain {
   updated_at: string;
 }
 
-export interface FederationNode {
+interface FederationNode {
   id: string;
   tenant_id: string;
   name: string;
@@ -41,7 +41,7 @@ export interface FederationNode {
   updated_at: string;
 }
 
-export interface FederatedDataProduct {
+interface FederatedDataProduct {
   id: string;
   tenant_id: string;
   name: string;
@@ -59,7 +59,7 @@ export interface FederatedDataProduct {
   updated_at: string;
 }
 
-export interface SharingAgreement {
+interface SharingAgreement {
   id: string;
   tenant_id: string;
   provider_domain_id: string;
@@ -77,7 +77,7 @@ export interface SharingAgreement {
   updated_at: string;
 }
 
-export interface CrossDomainAccess {
+interface CrossDomainAccess {
   id: string;
   agreement_id: string;
   requester_domain_id: string;
@@ -92,7 +92,7 @@ export interface CrossDomainAccess {
   purpose?: string;
 }
 
-export interface FederationLineageNode {
+interface FederationLineageNode {
   id: string;
   data_product_id: string;
   domain_id: string;
@@ -101,7 +101,7 @@ export interface FederationLineageNode {
   layer: 'source' | 'domain' | 'serving';
 }
 
-export interface FederationLineageEdge {
+interface FederationLineageEdge {
   id: string;
   source_node_id: string;
   target_node_id: string;
@@ -110,14 +110,14 @@ export interface FederationLineageEdge {
   confidence: number;
 }
 
-export interface FederationLineageGraph {
+interface FederationLineageGraph {
   data_product_id: string;
   nodes: FederationLineageNode[];
   edges: FederationLineageEdge[];
   cross_domain_paths: number;
 }
 
-export interface FederationDashboard {
+interface FederationDashboard {
   total_domains: number;
   active_domains: number;
   total_data_products: number;
@@ -154,7 +154,7 @@ export interface CreateDomainRequest {
   boundaries?: string[];
 }
 
-export interface UpdateDomainRequest {
+interface UpdateDomainRequest {
   name?: string;
   description?: string;
   owner_id?: string;
@@ -163,7 +163,7 @@ export interface UpdateDomainRequest {
   status?: DomainStatus;
 }
 
-export interface RegisterProductRequest {
+interface RegisterProductRequest {
   name: string;
   description: string;
   domain_id: string;
@@ -173,7 +173,7 @@ export interface RegisterProductRequest {
   data_classification: 'public' | 'internal' | 'confidential' | 'restricted';
 }
 
-export interface CreateAgreementRequest {
+interface CreateAgreementRequest {
   provider_domain_id: string;
   consumer_domain_id: string;
   data_product_id: string;
@@ -186,13 +186,13 @@ export interface CreateAgreementRequest {
   conditions?: Record<string, unknown>;
 }
 
-export interface RequestAccessRequest {
+interface RequestAccessRequest {
   purpose: string;
   access_type: AccessType;
   requested_duration_days?: number;
 }
 
-export interface RegisterNodeRequest {
+interface RegisterNodeRequest {
   name: string;
   endpoint: string;
   protocol: 'grpc' | 'rest' | 'graphql';
@@ -200,7 +200,7 @@ export interface RegisterNodeRequest {
   capabilities?: string[];
 }
 
-export interface UpdateNodeRequest {
+interface UpdateNodeRequest {
   name?: string;
   domain_ids?: string[];
   capabilities?: string[];

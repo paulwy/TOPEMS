@@ -3,8 +3,8 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type MaskingType = 'mask' | 'redact' | 'hash' | 'tokenize' | 'encrypt' | 'generalize';
-export type PiiType =
+type MaskingType = 'mask' | 'redact' | 'hash' | 'tokenize' | 'encrypt' | 'generalize';
+type PiiType =
   'email' | 'phone' | 'id_card' | 'bank_card' | 'address' | 'name' | 'salary' | 'other';
 export type PolicyStatus = 'active' | 'inactive' | 'draft';
 export type AuditAction = 'mask' | 'unmask' | 'policy_create' | 'policy_update' | 'access';
@@ -24,7 +24,7 @@ export interface MaskingRule {
   updated_at: string;
 }
 
-export interface PrivacyPolicy {
+interface PrivacyPolicy {
   id: string;
   name: string;
   description?: string;
@@ -40,7 +40,7 @@ export interface PrivacyPolicy {
   updated_at: string;
 }
 
-export interface PiiDetectionResult {
+interface PiiDetectionResult {
   field_name: string;
   value: string;
   detected_types: PiiType[];
@@ -49,7 +49,7 @@ export interface PiiDetectionResult {
   matched_rule_id?: string;
 }
 
-export interface AccessAuditLog {
+interface AccessAuditLog {
   id: string;
   user_id: string;
   user_email?: string;
@@ -64,7 +64,7 @@ export interface AccessAuditLog {
   was_masked: boolean;
 }
 
-export interface PrivacyDashboardV64 {
+interface PrivacyDashboardV64 {
   total_rules: number;
   active_rules: number;
   by_type: Array<{ type: MaskingType; count: number }>;
@@ -78,7 +78,7 @@ export interface PrivacyDashboardV64 {
 
 // ============ Request Types ============
 
-export interface CreateMaskingRuleRequest {
+interface CreateMaskingRuleRequest {
   name: string;
   type: MaskingType;
   pattern: string;
@@ -89,7 +89,7 @@ export interface CreateMaskingRuleRequest {
   pii_type?: PiiType;
 }
 
-export interface UpdateMaskingRuleRequest {
+interface UpdateMaskingRuleRequest {
   name?: string;
   type?: MaskingType;
   pattern?: string;
@@ -97,7 +97,7 @@ export interface UpdateMaskingRuleRequest {
   status?: 'active' | 'inactive';
 }
 
-export interface CreatePrivacyPolicyRequest {
+interface CreatePrivacyPolicyRequest {
   name: string;
   description?: string;
   scope: 'global' | 'entity' | 'field';
@@ -108,18 +108,18 @@ export interface CreatePrivacyPolicyRequest {
   exclusion_roles?: string[];
 }
 
-export interface DetectPiiRequest {
+interface DetectPiiRequest {
   data: Record<string, unknown>;
   entity_type?: string;
 }
 
-export interface MaskDataRequest {
+interface MaskDataRequest {
   data: Record<string, unknown>;
   entity_type: string;
   policy_id?: string;
 }
 
-export interface UnmaskRequest {
+interface UnmaskRequest {
   data: Record<string, unknown>;
   entity_type: string;
   field_names?: string[];

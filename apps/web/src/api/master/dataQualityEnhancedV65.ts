@@ -3,7 +3,7 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type RuleType =
+type RuleType =
   | 'completeness'
   | 'accuracy'
   | 'consistency'
@@ -13,10 +13,10 @@ export type RuleType =
   | 'integrity';
 export type RuleSeverity = 'critical' | 'warning' | 'info';
 export type RuleStatus = 'active' | 'inactive' | 'draft' | 'archived';
-export type ScoreDimension =
+type ScoreDimension =
   'completeness' | 'accuracy' | 'consistency' | 'timeliness' | 'uniqueness' | 'overall';
-export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'ignored';
-export type ReportFormat = 'pdf' | 'excel' | 'json';
+type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'ignored';
+type ReportFormat = 'pdf' | 'excel' | 'json';
 
 export interface QualityRule {
   id: string;
@@ -38,7 +38,7 @@ export interface QualityRule {
   updated_at: string;
 }
 
-export interface RuleExecutionResult {
+interface RuleExecutionResult {
   rule_id: string;
   rule_name: string;
   passed: boolean;
@@ -53,7 +53,7 @@ export interface RuleExecutionResult {
   executed_at: string;
 }
 
-export interface QualityScore {
+interface QualityScore {
   id: string;
   entity_type: string;
   entity_id?: string;
@@ -108,7 +108,7 @@ export interface QualityReport {
   summary?: QualityReportSummary;
 }
 
-export interface QualityReportSummary {
+interface QualityReportSummary {
   total_rules: number;
   passed_rules: number;
   failed_rules: number;
@@ -122,7 +122,7 @@ export interface QualityReportSummary {
   trend?: Array<{ date: string; score: number }>;
 }
 
-export interface QualityDashboardV65 {
+interface QualityDashboardV65 {
   entity_types_monitored: number;
   total_rules: number;
   active_rules: number;
@@ -168,13 +168,13 @@ export interface UpdateQualityRuleRequest {
   expression?: string;
 }
 
-export interface TestRuleRequest {
+interface TestRuleRequest {
   entity_type?: string;
   entity_ids?: string[];
   sample_data?: Record<string, unknown>[];
 }
 
-export interface ExecuteRulesRequest {
+interface ExecuteRulesRequest {
   rule_ids?: string[];
   entity_types?: string[];
   entity_ids?: string[];

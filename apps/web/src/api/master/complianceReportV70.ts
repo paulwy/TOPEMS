@@ -3,10 +3,10 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type ComplianceFramework = 'GDPR' | 'HIPAA' | 'SOX' | 'CCPA' | 'PCI-DSS' | 'ISO27001';
+type ComplianceFramework = 'GDPR' | 'HIPAA' | 'SOX' | 'CCPA' | 'PCI-DSS' | 'ISO27001';
 export type ReportStatus = 'pending' | 'generating' | 'completed' | 'failed';
-export type SensitivityLevel = 'public' | 'internal' | 'confidential' | 'restricted';
-export type AuditAction = 'read' | 'write' | 'delete' | 'export' | 'copy';
+type SensitivityLevel = 'public' | 'internal' | 'confidential' | 'restricted';
+type AuditAction = 'read' | 'write' | 'delete' | 'export' | 'copy';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface ComplianceReport {
@@ -31,7 +31,7 @@ export interface ComplianceReport {
   updated_at: string;
 }
 
-export interface DataClassificationReport {
+interface DataClassificationReport {
   id: string;
   tenant_id: string;
   framework: ComplianceFramework;
@@ -45,7 +45,7 @@ export interface DataClassificationReport {
   generated_at: string;
 }
 
-export interface AccessAuditReport {
+interface AccessAuditReport {
   id: string;
   tenant_id: string;
   framework: ComplianceFramework;
@@ -67,7 +67,7 @@ export interface AccessAuditReport {
   generated_at: string;
 }
 
-export interface DataBreachAssessment {
+interface DataBreachAssessment {
   id: string;
   tenant_id: string;
   framework: ComplianceFramework;
@@ -83,7 +83,7 @@ export interface DataBreachAssessment {
   created_at: string;
 }
 
-export interface ComplianceDashboard {
+interface ComplianceDashboard {
   tenant_id: string;
   framework: ComplianceFramework;
   overall_score: number;
@@ -123,7 +123,7 @@ export interface GenerateReportRequest {
   report_types?: string[];
 }
 
-export interface CreateBreachAssessmentRequest {
+interface CreateBreachAssessmentRequest {
   framework: ComplianceFramework;
   scenario: string;
   target_asset_ids?: string[];
