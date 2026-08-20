@@ -148,6 +148,7 @@ pub async fn copy_template(
     }))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["unified-core:flow:template:admin"])),

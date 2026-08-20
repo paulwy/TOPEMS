@@ -604,6 +604,7 @@ pub struct DepreciateRequest {
     pub asset_ids: Option<Vec<Uuid>>,
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:asset:admin"])),

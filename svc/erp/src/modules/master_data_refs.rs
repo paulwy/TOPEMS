@@ -11276,6 +11276,7 @@ impl ServiceRegistryStore {
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -11310,6 +11311,7 @@ pub async fn mdm_service_register(
     Json(ApiResponse::success(service, "服务注册成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -11334,6 +11336,7 @@ pub async fn mdm_service_deregister(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -11525,6 +11528,7 @@ impl ApiGatewayStore {
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -11565,6 +11569,7 @@ pub async fn mdm_gateway_route(
     Json(ApiResponse::success(response, "网关路由成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
@@ -11604,6 +11609,7 @@ pub async fn mdm_gateway_batch(
     Json(ApiResponse::success(responses, "批量请求完成"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),

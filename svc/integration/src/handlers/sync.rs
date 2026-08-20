@@ -339,6 +339,7 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:sync:admin"])),
@@ -416,6 +417,7 @@ pub async fn retry_failed(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:sync:admin"])),
@@ -462,6 +464,7 @@ pub async fn trigger_scm_wms(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:sync:admin"])),
@@ -508,6 +511,7 @@ pub async fn trigger_wms_crm(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:sync:admin"])),

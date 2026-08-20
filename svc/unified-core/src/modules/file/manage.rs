@@ -1416,6 +1416,7 @@ pub async fn list_starred_files(
 }
 
 /// 导出文件（批量）
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["unified-core:file:admin"])),
