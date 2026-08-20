@@ -1,4 +1,5 @@
 import React from 'react';
+import type { SelectOption } from '@topems/shared-types';
 import {
   Button as MuiButton,
   Card as MuiCard,
@@ -370,10 +371,7 @@ export const V51Input: React.FC<V51InputProps> = ({
   );
 };
 
-interface V51SelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
+interface V51SelectOption extends SelectOption {
   children?: React.ReactNode;
 }
 

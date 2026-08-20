@@ -16,7 +16,7 @@ pub fn validate_supplier_code(code: &str) -> bool {
 
 /// 归一化供应商编号：去首尾空白、转大写、移除内部空白字符。
 pub fn normalize_supplier_code(code: &str) -> String {
-    code.trim().to_uppercase().replace([' ', '\t', '\n'], "")
+    topems_shared_core::normalize_code(code)
 }
 
 /// 校验统一社会信用代码/税号：长度为 18、仅字母数字。

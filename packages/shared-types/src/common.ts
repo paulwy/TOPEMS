@@ -62,3 +62,9 @@ export interface BatchOperationResult {
     error: string;
   }[];
 }
+
+export interface SelectOption {
+  value: string | number;
+  label: string;
+  disabled?: boolean;
+}

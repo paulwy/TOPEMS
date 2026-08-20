@@ -83,8 +83,8 @@ where
 // =============================================================================
 // V184 统一错误体 ErrorPayload
 // =============================================================================
-// 解决历史 10 种不同错误体格式问题（ApiResponse.error / TopemsError /
-// ErpError / TenantContextRejection / rate_limit / IAM ad-hoc / Analytics ad-hoc /
+// 解决历史 9 种不同错误体格式问题（ApiResponse.error / TopemsError /
+// TenantContextRejection / rate_limit / IAM ad-hoc / Analytics ad-hoc /
 // Portal ad-hoc / GraphQL / WebSocket）。
 //
 // 统一规范（向后兼容 ApiResponse）：

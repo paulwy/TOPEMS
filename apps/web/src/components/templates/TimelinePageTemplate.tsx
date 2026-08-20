@@ -26,6 +26,7 @@ import {
   Users,
   Tag,
 } from 'lucide-react';
+import { ErrorEmptyState } from '@topems/shared-components';
 import type { BreadcrumbItem } from './PageHeader';
 import { PageHeader } from './PageHeader';
 
@@ -637,16 +638,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
 
   const renderTimeline = () => {
     if (error) {
-      return (
-        <Paper sx={{ p: 4, borderRadius: 2 }}>
-          <Typography
-            variant='body1'
-            color='error'
-          >
-            {error}
-          </Typography>
-        </Paper>
-      );
+      return <ErrorEmptyState error={error} />;
     }
 
     if (groups && groups.length > 0) {

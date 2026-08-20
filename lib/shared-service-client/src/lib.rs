@@ -200,7 +200,9 @@ pub mod service_client;
 
 // 细粒度 re-export：基础类型
 pub use service_client::base_client::BaseServiceClient;
-pub use service_client::error::{ServiceClientError, ServiceClientResult};
+pub use service_client::error::ServiceClientResult;
+// ServiceClientError 已合并到 TopemsError，保留 re-export 以向后兼容
+pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use service_client::generic::GenericServiceClient;
 pub use service_client::trait_api::{ServiceApi, TypedServiceClient};
 

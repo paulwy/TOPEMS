@@ -136,16 +136,13 @@ pub fn calc_customer_lifetime_value(
 ///
 /// 规则：未知状态拒绝；自转移拒绝；终态拒绝；必须在 `CUSTOMER_TRANSITIONS` 中。
 pub fn is_valid_customer_status_transition(from: &str, to: &str) -> bool {
-    if !CUSTOMER_STATES.contains(&from) || !CUSTOMER_STATES.contains(&to) {
-        return false;
-    }
-    if CUSTOMER_TERMINAL.contains(&from) {
-        return false;
-    }
-    if from == to {
-        return false;
-    }
-    CUSTOMER_TRANSITIONS.contains(&(from, to))
+    topems_shared_core::is_valid_transition(
+        from,
+        to,
+        CUSTOMER_TRANSITIONS,
+        CUSTOMER_TERMINAL,
+        CUSTOMER_STATES,
+    )
 }
 
 /// 校验联系信息（email + phone）

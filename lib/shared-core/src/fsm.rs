@@ -59,6 +59,22 @@ pub fn check_pair(
     }
 }
 
+/// `check_pair` 的 bool 包装：自转移拒绝，其余同 `check_pair`。
+///
+/// 供各服务的 `is_valid_*_status_transition` 函数复用，消除重复模板代码。
+pub fn is_valid_transition(
+    from: &str,
+    to: &str,
+    allowed_pairs: &[(&str, &str)],
+    terminal: &[&str],
+    all_states: &[&str],
+) -> bool {
+    if from == to {
+        return false;
+    }
+    check_pair(from, to, allowed_pairs, terminal, all_states).is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

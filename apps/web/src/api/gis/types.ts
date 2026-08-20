@@ -1,13 +1,9 @@
 import type { PaginatedResponse } from '@topems/shared-types';
+import type { PaginationParams } from '@/api/client';
 
 export { PaginatedResponse };
 
-export interface ListQueryParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
-  status?: string;
-}
+export type ListQueryParams = PaginationParams & { status?: string };
 
 export interface RawPaginatedResponse {
   [key: string]: unknown;
