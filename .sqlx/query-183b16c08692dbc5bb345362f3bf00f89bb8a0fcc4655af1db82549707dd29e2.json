@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_comparison_analyses\n        SET status = 'completed',\n            last_run_at = $1,\n            updated_at = $1\n        WHERE id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamp",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "183b16c08692dbc5bb345362f3bf00f89bb8a0fcc4655af1db82549707dd29e2"
+}
