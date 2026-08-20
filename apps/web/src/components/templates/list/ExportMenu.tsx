@@ -4,9 +4,9 @@ import { FileJson, FileSpreadsheet, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export type ExportFormat = 'csv' | 'excel' | 'json';
-export type ExportScope = 'current' | 'all' | 'selected';
+type ExportScope = 'current' | 'all' | 'selected';
 
-export interface ExportMenuProps {
+interface ExportMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;

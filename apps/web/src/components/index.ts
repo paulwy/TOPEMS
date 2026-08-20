@@ -17,16 +17,15 @@ export { MobileNav } from './layout/MobileNav';
 
 // Common components
 export { Grid } from './common/Grid';
-export type { GridProps, GridSizeProps } from './common/Grid';
 
 // PageContainer - 使用 web 增强版本
-export { PageContainer, type PageContainerProps } from './common/PageContainer';
+export { PageContainer } from './common/PageContainer';
 
 // [shared] BackButton - 已提升到 @topems/shared-components
-export { BackButton, type BackButtonProps } from '@topems/shared-components';
+export { BackButton } from '@topems/shared-components';
 
 export { default as TreeView } from './common/TreeView';
-export type { TreeNode, TreeViewProps } from './common/TreeView';
+export type { TreeNode } from './common/TreeView';
 
 // [shared] ProgressBar - 已提升到 @topems/shared-components
 export { ProgressBar, type ProgressBarProps } from '@topems/shared-components';
@@ -35,14 +34,13 @@ export { ProgressBar, type ProgressBarProps } from '@topems/shared-components';
 export { Stepper, type StepperProps, type StepItem } from '@topems/shared-components';
 
 export { default as HelpButton } from './common/HelpButton';
-export type { HelpButtonProps } from './common/HelpButton';
 
 // ===== 统一对话框/抽屉组件 =====
 export { default as Dialog } from './common/Dialog';
-export type { DialogProps, DialogSize } from './common/Dialog';
+export type { DialogSize } from './common/Dialog';
 
 export { default as Drawer } from './common/Drawer';
-export type { DrawerProps, DrawerAnchor, DrawerVariant } from './common/Drawer';
+export type { DrawerAnchor } from './common/Drawer';
 
 // [shared] ConfirmDialog - 已提升到 @topems/shared-components
 export {
@@ -61,7 +59,7 @@ export type { ConfirmDialogConfig, DialogType, DialogButtonType } from '@topems/
 export { FormField, type FormFieldProps } from '@topems/shared-components';
 
 // [shared] FormSelect - 已提升到 @topems/shared-components
-export { FormSelect, type FormSelectProps, type FormSelectOption } from '@topems/shared-components';
+export { FormSelect } from '@topems/shared-components';
 
 // [shared] ActionButton - 已提升到 @topems/shared-components
 export {
@@ -119,17 +117,14 @@ export { RelativeTime, type RelativeTimeProps } from '@topems/shared-components'
 
 // ===== 日期选择组件 =====
 export { default as DateRangePicker } from './common/DateRangePicker';
-export type { DateRangePickerProps } from './common/DateRangePicker';
 
 export { default as DateRangeQuickSelect } from './common/DateRangeQuickSelect';
-export type { DateRangeQuickSelectProps, DateRange } from './common/DateRangeQuickSelect';
+export type { DateRange } from './common/DateRangeQuickSelect';
 
 // ===== 文件上传组件 =====
 export { default as FileUpload } from './common/FileUpload';
-export type { FileUploadProps } from './common/FileUpload';
 
 export { default as ImageUpload } from './common/ImageUpload';
-export type { ImageUploadProps } from './common/ImageUpload';
 
 // ===== 数据导出组件 =====
 // [已清理] DataExport - 0 引用（通过 @/components/common 直接导入，审计 P2-9）
@@ -150,7 +145,7 @@ export type { User } from '@topems/shared-types';
 // ===== 统一通知系统 =====
 export { NotificationProvider } from './notification/NotificationProvider';
 
-export { EmptyState, type EmptyStateProps } from './common/EmptyState';
+export { EmptyState } from './common/EmptyState';
 
 export {
   ListEmptyState,
@@ -317,7 +312,6 @@ export type {
 // BI 组件
 export { ChartCard } from './bi/ChartCard';
 export { MetricCard } from './bi/MetricCard';
-export type { MetricCardProps } from './bi/MetricCard';
 export { StatsChart } from './bi/StatsChart';
 export type { StatsChartProps } from './bi/StatsChart';
 export { ChartAnnotations } from './bi/ChartAnnotations';
@@ -365,7 +359,6 @@ export type {
 
 // ===== 访问日志组件 =====
 export { AccessLogger, useAccessLogger, PageAccessLogger, ActionLogger } from './AccessLogger';
-export type { AccessLogEntry } from './AccessLogger';
 
 // ===== V51.0 Design System [已弃用] =====
 // V51 设计系统已被 MUI 主题 + shared-components 体系替代。

@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from '../charts/_vendors/rechart
 import type { ChartData } from '../charts/AreaChart';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-export interface StatsChartPieProps {
+interface StatsChartPieProps {
   title?: string;
   data: ChartData[];
   xKey?: string;

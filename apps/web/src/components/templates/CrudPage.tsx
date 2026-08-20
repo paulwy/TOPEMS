@@ -78,7 +78,7 @@ export interface CrudApiAdapter<T = Record<string, unknown>> {
 
 // ============ Props ============
 
-export interface TreeDataAdapter {
+interface TreeDataAdapter {
   /** 加载树形数据（返回扁平数据，CrudPage 会自动转换为树形） */
   loadAll: () => Promise<Record<string, unknown>[]>;
   /** 根据 Schema 配置构建树形结构的选项 */

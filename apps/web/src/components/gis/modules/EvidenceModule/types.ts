@@ -16,7 +16,7 @@ export interface EvidenceRecord {
   description?: string;
 }
 
-export interface EvidenceCaptureConfig {
+interface EvidenceCaptureConfig {
   maxDuration?: number; // 最大录制时长，秒
   maxFileSize?: number; // 最大文件大小，字节
   compressionQuality?: number; // 压缩质量 0-1

@@ -2,9 +2,9 @@ import React from 'react';
 import { Box, Tooltip, type SxProps, type Theme } from '@mui/material';
 import i18n from '@/i18n';
 
-export type CyberStatusType = 'online' | 'offline' | 'warning' | 'error' | 'idle';
+type CyberStatusType = 'online' | 'offline' | 'warning' | 'error' | 'idle';
 
-export interface CyberStatusIndicatorProps {
+interface CyberStatusIndicatorProps {
   status: CyberStatusType;
   label?: string;
   size?: number;

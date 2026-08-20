@@ -17,7 +17,7 @@ import { useAIHelper } from '../../hooks/useAIHelper';
 import type { TextOptimizeContext } from '@/types/ai';
 import { logger } from '@/utils/logger';
 
-export interface AITextOptimizerProps {
+interface AITextOptimizerProps {
   isOpen: boolean;
   onClose: () => void;
   context: TextOptimizeContext;

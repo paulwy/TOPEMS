@@ -17,7 +17,7 @@ export interface Comment {
   replies?: Comment[];
 }
 
-export interface CommentListProps {
+interface CommentListProps {
   comments: Comment[];
   onAddComment?: (content: string) => void;
   onLike?: (commentId: string) => void;

@@ -11,7 +11,7 @@ export interface TabItem {
   badge?: number;
 }
 
-export interface BottomTabBarProps {
+interface BottomTabBarProps {
   tabs: TabItem[];
   activeTab: string;
   onChange?: (tabId: string) => void;

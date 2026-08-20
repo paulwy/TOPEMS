@@ -51,7 +51,7 @@ const getPresetRange = (presetId: string): { start: string; end: string } => {
   }
 };
 
-export interface DateRangePickerProps {
+interface DateRangePickerProps {
   /** 开始日期 */
   startDate: string;
   /** 结束日期 */

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, type SxProps, type Theme } from '@mui/material';
 
-export interface ShimmerCardProps {
+interface ShimmerCardProps {
   children: React.ReactNode;
   className?: string;
   sx?: SxProps<Theme>;

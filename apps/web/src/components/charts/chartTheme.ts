@@ -94,7 +94,7 @@ export const BIChartColors = {
   },
 } as const;
 
-export type ChartColor = (typeof BIChartColors.series)[number];
+type ChartColor = (typeof BIChartColors.series)[number];
 
 /** Get color by index (cycles through palette) */
 export const getChartColor = (index: number): string =>
@@ -115,7 +115,7 @@ export const createGradientId = (prefix: string, index: number): string =>
 
 // ── Hook: dark-mode-aware chart theme resolved at runtime ──────────────────
 
-export interface ChartThemeColors {
+interface ChartThemeColors {
   /** Grid / axis line color */
   gridColor: string;
   /** Tick / label text color */

@@ -10,7 +10,7 @@ export interface OrganizationFilterValue {
   employeeId?: string;
 }
 
-export interface OrganizationFilterProps {
+interface OrganizationFilterProps {
   value: OrganizationFilterValue;
   onChange: (value: OrganizationFilterValue) => void;
   showCompany?: boolean;

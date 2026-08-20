@@ -10,7 +10,6 @@
  */
 
 export { BffDataTable } from './BffDataTable';
-export type { BffDataTableProps, BffColumn } from './BffDataTable';
 
 export { BffDetailPage } from './BffDetailPage';
 export type {
@@ -21,7 +20,6 @@ export type {
 } from './BffDetailPage';
 
 export { BffFormPage } from './BffFormPage';
-export type { BffFormPageProps, BffFormField, BffFormSection } from './BffFormPage';
 
 // 重新导出 hooks 方便组件同目录引入
 export { useBffListPage, useBffCrud, useAutoSharding } from '@/hooks/bff';
@@ -104,7 +102,6 @@ export type {
 
 // A/B 测试管理面板：实验列表 + 创建表单 + 结果可视化
 export { ABTestPanel } from './ABTestPanel';
-export type { ABTestPanelProps } from './ABTestPanel';
 
 // 降级策略引擎 + A/B 测试引擎（工具单例）
 export { FallbackLevel, fallbackManager } from '@/utils/bff/fallback-strategy';

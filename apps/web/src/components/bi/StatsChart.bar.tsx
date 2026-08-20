@@ -14,7 +14,7 @@ import {
 import type { ChartData } from '../charts/AreaChart';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-export interface StatsChartBarProps {
+interface StatsChartBarProps {
   type: 'bar' | 'line';
   title?: string;
   data: ChartData[];

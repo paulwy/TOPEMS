@@ -1,0 +1,1239 @@
+[
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "NeighborQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "PageInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "PaginatedRepairWorkflows",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "PaginatedTickets",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "PredictQualityParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityAiScore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityAiStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityAiStatsParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityAnomaly",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityAnomalyQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityLoopStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityPrediction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityRiskLevel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "QualityTicketStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "RejectTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "RepairResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "RepairStep",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "RepairStrategy",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "RepairWorkflow",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "ShortestPathParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SimilarEntity",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SimilarEntityQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SubmitTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SuggestMergeRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SuggestTagsResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SyncEngineStatsV2",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SyncJobPriority",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SyncJobV2",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SyncStep",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "SystemSyncStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "TenantSyncStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "TicketHistoryEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "TripleQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/masterData.ts",
+    "name": "VerifyTicketRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/types.ts",
+    "name": "CategoryExpense",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/types.ts",
+    "name": "DepartmentExpense",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/types.ts",
+    "name": "KeyRatios",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/types.ts",
+    "name": "MonthlyExpense",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/erp/types.ts",
+    "name": "MonthlyProfit",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/feedback/attachment.ts",
+    "name": "BulkUploadResult",
+    "sampleRefs": [
+      "apps/web/src/api/feedback/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/api/feedback/attachment.ts",
+    "name": "FeedbackAttachment",
+    "sampleRefs": [
+      "apps/web/src/api/feedback/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/api/feedback/attachment.ts",
+    "name": "UploadAttachmentRequest",
+    "sampleRefs": [
+      "apps/web/src/api/feedback/index.ts",
+      "apps/web/src/api/ticket/index.ts"
+    ]
+  },
+  {
+    "defFile": "apps/web/src/api/feedback/index.ts",
+    "name": "FeedbackComment",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/feedback/index.ts",
+    "name": "FeedbackStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "FilePermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "FileStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "ListFilesQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "PagedResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "ShareFileRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "ShareInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/file/index.ts",
+    "name": "SharedWith",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/approvalConfig.ts",
+    "name": "CreateApprovalConfigRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/cashFlow.ts",
+    "name": "LedgerEntry",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/cashFlow.ts",
+    "name": "LedgerQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/cashFlow.ts",
+    "name": "TrialBalanceItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/expenseApproval.ts",
+    "name": "CreateExpenseApprovalRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/expenseApproval.ts",
+    "name": "ExpenseApproval",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/expenseApproval.ts",
+    "name": "ExpenseApprovalItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/expenseApproval.ts",
+    "name": "ExpenseApprovalQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/expenseApproval.ts",
+    "name": "UpdateExpenseApprovalRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "ExecutePaymentRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "ExportPaymentRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "ExportPaymentResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "PaymentItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "PaymentQueryParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/payment.ts",
+    "name": "WriteOffRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/reconciliation.ts",
+    "name": "ReconciliationCreateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/reconciliation.ts",
+    "name": "ReconciliationItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/reconciliation.ts",
+    "name": "ReconciliationOrder",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "ComplianceResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "ComplianceReviewRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "ComplianceStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "ComplianceWorkflow",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudAlert",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudAlertStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudRuleUpdate",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudScoreRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "FraudScoreResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/risk.ts",
+    "name": "RiskDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ComplianceReportQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "FraudRecommendation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "FraudRuleType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "FraudScore",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ReviewAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ReviewEntityRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ReviewResultsQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ReviewWorkflow",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ReviewWorkflowStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "RiskAlertsQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "ScoreTransactionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "Transaction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV54.ts",
+    "name": "UpdateFraudRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "AddRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "AnalyzeTransactionRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "BulkScoreRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CalculateScoreRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CompareScenariosRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CreateDeviceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CreateScenarioRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CreditGrade",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "CreditProfile",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "DeviceProfile",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "FactorsQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "FraudAction",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "FraudDecision",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "FraudSignal",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "FraudSignalType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "ModelComparisonQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "RunStressTestRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "ScenarioParameter",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "ScenarioParamsQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "ScoringModel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "ShockType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "SignalsQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "StressResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "StressScenario",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "StressScenarioType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/riskV59.ts",
+    "name": "UpdateModelRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/settlementCenter.ts",
+    "name": "SettlementDashboard",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/settlementCenter.ts",
+    "name": "SettlementDifference",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/settlementCenter.ts",
+    "name": "SettlementLink",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/settlementCenter.ts",
+    "name": "SettlementReconciliation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxBreakdown",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxCalculateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxComparison",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxForm",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxFormGenerateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxFormStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxFormSubmitRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxFormType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxPlan",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxScenario",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxScenarioType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxSchedule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxSummary",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/tax.ts",
+    "name": "TaxValidation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/voucherTemplate.ts",
+    "name": "VoucherBatchGenerateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/voucherTemplate.ts",
+    "name": "VoucherGenerateRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/finance/voucherTemplate.ts",
+    "name": "VoucherGenerationRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/financialReport/index.ts",
+    "name": "ConsolidationEntity",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/gis/fence.ts",
+    "name": "CreateGeoFenceRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/gis/fence.ts",
+    "name": "GeoFenceRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/gis/types.ts",
+    "name": "WarehouseLocation",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "CreateFaqRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "CreateGuideRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "CreateLessonRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "FaqListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "FaqQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "GuideDetailResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "GuideLesson",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "GuideListResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "GuideProgress",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "GuideQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/help.ts",
+    "name": "UpdateFaqRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+    "name": "ReportParams",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "AdminUserRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "AdminUserResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "CompanyInfoRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "CompanyInfoResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "CompleteInitRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "CompleteInitResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "DepartmentBatchItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "DepartmentResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "DepartmentsBatchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "DepartmentsBatchResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "InitProgressResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "PositionBatchItem",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "PositionResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "PositionsBatchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "PositionsBatchResponse",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/hrm/hrmSetup.ts",
+    "name": "StepStatusInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "AdaptedPermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "AdaptedUser",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "GeneratedPermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "GeneratedRole",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "GeneratedUser",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "PermissionCheckRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/iam/types.ts",
+    "name": "UserTenantInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/ai.ts",
+    "name": "BatchTranslationResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/ai.ts",
+    "name": "DetectLanguageResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/assistant.ts",
+    "name": "AssistantConfigStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "CreateChatMessageRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "CreateContactGroupRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "CreateFriendRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "ListContactGroupsResponseData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "ListFriendsResponseData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "UploadFileResponseData",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/index.ts",
+    "name": "UploadedFileInfo",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/integration.ts",
+    "name": "CreateApprovalFromMessageRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/integration.ts",
+    "name": "CreateCalendarEventFromMessageRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/integration.ts",
+    "name": "IntegrationHistoryQuery",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/integration.ts",
+    "name": "TriggerWebhookRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/integration.ts",
+    "name": "WebhookTriggerType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/interaction.ts",
+    "name": "SubmitCheckInRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/scheduled.ts",
+    "name": "BatchScheduledRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/taskSync.ts",
+    "name": "BatchCreateTasksRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/taskSync.ts",
+    "name": "CreatePersonalTodoRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/taskSync.ts",
+    "name": "CreateTaskReminderRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/taskSync.ts",
+    "name": "TodoStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/voice.ts",
+    "name": "TranscribeVoiceMessageRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/voice.ts",
+    "name": "TransferVoiceCallRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "CreateSnapshotRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "ExportWhiteboardRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "ShareWhiteboardRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "WhiteboardCollaborator",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "WhiteboardPermission",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/im/whiteboard.ts",
+    "name": "WhiteboardStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/integration/types.ts",
+    "name": "ErpConnectionType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/integration/types.ts",
+    "name": "IntegrationEventPayload",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lims/types.ts",
+    "name": "InspectionStep",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lims/types.ts",
+    "name": "TestItemResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lims/types.ts",
+    "name": "TraceabilityRecord",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "DataModelField",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "DataModelFieldType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "FormFieldType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "LowcodeAppStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "LowcodeWorkflowNode",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "LowcodeWorkflowNodeType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/lowcode/types.ts",
+    "name": "PageComponent",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/mail/index.ts",
+    "name": "ResendResult",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernance.ts",
+    "name": "AIGovernanceModel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernance.ts",
+    "name": "Classifier",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernance.ts",
+    "name": "GovernanceAnalysis",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernance.ts",
+    "name": "GovernanceSuggestion",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernance.ts",
+    "name": "MatchRule",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "ClassifierType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "ClassifyEntityRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "CreateClassifierRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "CreateMatchRuleRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "GovernanceModel",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "GovernanceSuggestionV59",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "MatchEntitiesRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "MatchStats",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "MatchStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "ReviewClassificationRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "ReviewMatchRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "SuggestionStatus",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "SuggestionType",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/aiGovernanceV59.ts",
+    "name": "TrainModelRequest",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/apiLifecycleV62.ts",
+    "name": "ApiChangeLogV62",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/apiLifecycleV62.ts",
+    "name": "ApiConsumption",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/apiLifecycleV62.ts",
+    "name": "ApiDeploymentV62",
+    "sampleRefs": []
+  },
+  {
+    "defFile": "apps/web/src/api/master/apiLifecycleV62.ts",
+    "name": "ApiEndpointV62",
+    "sampleRefs": []
+  }
+]

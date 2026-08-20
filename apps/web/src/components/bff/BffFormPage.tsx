@@ -47,7 +47,7 @@ import type { UseBffCrudOptions } from '@/hooks/bff/useBffCrud';
 
 // ============ 类型定义 ============
 
-export interface BffFormField {
+interface BffFormField {
   name: string;
   label: string;
   type:
@@ -86,13 +86,13 @@ export interface BffFormField {
   ) => React.ReactNode;
 }
 
-export interface BffFormSection {
+interface BffFormSection {
   title?: string;
   description?: string;
   fields: BffFormField[];
 }
 
-export interface BffFormPageProps<T extends FieldValues = FieldValues> {
+interface BffFormPageProps<T extends FieldValues = FieldValues> {
   /** 实体类型 */
   entityType: string;
   /** 服务名 */

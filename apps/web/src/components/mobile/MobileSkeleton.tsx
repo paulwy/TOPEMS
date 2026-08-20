@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Skeleton, useTheme } from '@mui/material';
 
-export interface MobileSkeletonProps {
+interface MobileSkeletonProps {
   type?: 'list' | 'card' | 'detail' | 'dashboard';
   count?: number;
   avatar?: boolean;

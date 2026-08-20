@@ -22,7 +22,7 @@ import { Stack } from '@mui/material';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { ContextHelpButton } from '../ContextHelpButton';
 
-export interface FloatingDockProps {
+interface FloatingDockProps {
   /** 是否显示 ContextHelp（默认 true） */
   showHelp?: boolean;
   /** 是否显示 AICopilot（默认 true） */

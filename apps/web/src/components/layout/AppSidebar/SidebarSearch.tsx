@@ -16,7 +16,7 @@ import { Search, X, Star } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
 import { getNavigablePath, getAllNavItems } from './shared';
 
-export interface SidebarSearchProps {
+interface SidebarSearchProps {
   collapsed: boolean;
 }
 

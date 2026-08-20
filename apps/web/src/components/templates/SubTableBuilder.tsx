@@ -53,7 +53,7 @@ import type { SchemaField } from '@/schema/types';
 
 // ============ Props ============
 
-export interface SubTableBuilderProps<T extends Record<string, unknown> = Record<string, unknown>> {
+interface SubTableBuilderProps<T extends Record<string, unknown> = Record<string, unknown>> {
   /** 嵌套表配置 */
   config: NestedTableConfig;
   /** 当前行数据 */

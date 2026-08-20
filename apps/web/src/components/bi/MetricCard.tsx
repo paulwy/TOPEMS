@@ -118,7 +118,7 @@ const Sparkline: React.FC<SparklineProps> = ({
   );
 };
 
-export interface MetricCardProps {
+interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;

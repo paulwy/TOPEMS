@@ -14,7 +14,7 @@ import {
 import i18n from '@/i18n';
 import { Search, X, History } from 'lucide-react';
 
-export interface MobileSearchProps {
+interface MobileSearchProps {
   onSearch?: (query: string) => void;
   placeholder?: string;
   history?: string[];

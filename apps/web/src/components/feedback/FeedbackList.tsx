@@ -42,7 +42,7 @@ import { FEEDBACK_TYPE_LABELS, FEEDBACK_STATUS_LABELS } from '@/api/feedback/typ
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-export interface FeedbackListProps {
+interface FeedbackListProps {
   onAddFeedback?: () => void;
 }
 

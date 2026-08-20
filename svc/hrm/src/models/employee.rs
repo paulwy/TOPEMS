@@ -225,7 +225,7 @@ impl EmployeeFinance {
 }))]
 pub struct CreateEmployeeRequest {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
-    pub org_id: Uuid,
+    pub org_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]

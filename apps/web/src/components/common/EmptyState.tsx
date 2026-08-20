@@ -4,7 +4,7 @@ import { Inbox } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-export interface EmptyStateProps {
+interface EmptyStateProps {
   icon?: React.ReactNode;
   emoji?: string;
   title?: string;

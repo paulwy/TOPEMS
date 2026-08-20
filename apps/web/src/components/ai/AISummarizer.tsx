@@ -16,7 +16,7 @@ import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { SummarizeRequest, SummarizeResponse } from '@/types/ai';
 
-export interface AISummarizerProps {
+interface AISummarizerProps {
   isOpen: boolean;
   onClose: () => void;
   summarizeRequest: SummarizeRequest;

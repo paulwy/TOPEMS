@@ -19,7 +19,7 @@ export interface Department {
   depth?: number;
 }
 
-export interface DepartmentSelectProps {
+interface DepartmentSelectProps {
   value?: Department | Department[] | null;
   onChange: (value: Department | Department[] | null) => void;
   multiple?: boolean;

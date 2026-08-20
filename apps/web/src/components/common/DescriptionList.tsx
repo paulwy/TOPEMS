@@ -13,7 +13,7 @@ import i18n from '@/i18n';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Copy, Check } from 'lucide-react';
 
-export interface DescriptionItem {
+interface DescriptionItem {
   label: string;
   value: React.ReactNode;
   span?: number | 'full';
@@ -22,7 +22,7 @@ export interface DescriptionItem {
   loading?: boolean;
 }
 
-export interface DescriptionListProps {
+interface DescriptionListProps {
   items: DescriptionItem[];
   columns?: number | { xs?: number; sm?: number; md?: number; lg?: number };
   direction?: 'horizontal' | 'vertical';

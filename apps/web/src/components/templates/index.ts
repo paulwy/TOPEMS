@@ -24,17 +24,14 @@ export type { BreadcrumbItem, PageAction, PageHeaderProps } from './PageHeader';
 // 表单内嵌子表组件
 export { SubTableBuilder } from './SubTableBuilder';
 export { default as SubTableBuilderDefault } from './SubTableBuilder';
-export type { SubTableBuilderProps } from './SubTableBuilder';
 
 // 树形视图组件
 export { TreeBuilder } from './TreeBuilder';
 export { default as TreeBuilderDefault } from './TreeBuilder';
-export type { TreeBuilderProps } from './TreeBuilder';
 
 // 向导表单组件
 export { WizardBuilder } from './WizardBuilder';
 export { default as WizardBuilderDefault } from './WizardBuilder';
-export type { WizardBuilderProps } from './WizardBuilder';
 
 // 向后兼容别名导出（原 index.ts 中存在，部分业务页面在使用的别名）
 // 这些类型在 core/extensions 分层中未导出，单独保留以维持兼容性
@@ -57,7 +54,7 @@ export {
   getHighFrequencyTemplates,
   recommendTemplate,
 } from './classification';
-export type { PageTemplateType, TemplateClassification } from './classification';
+export type { PageTemplateType } from './classification';
 
 // 模板辅助工具
 export { default as TemplateDemoPage } from './TemplateDemoPage';

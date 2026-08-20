@@ -5,7 +5,7 @@ import { AIGenerateModal } from './AIGenerateModal';
 import type { CodeGenerateContext } from '@/types/ai';
 import i18n from '@/i18n';
 
-export interface AICodeGeneratorProps {
+interface AICodeGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   context: CodeGenerateContext;

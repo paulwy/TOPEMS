@@ -1054,7 +1054,7 @@ export interface CrudFormFieldConfig {
 }
 
 /** 表单字段验证规则 */
-export interface CrudFormFieldRule {
+interface CrudFormFieldRule {
   /** 验证类型 */
   type?: 'required' | 'email' | 'number' | 'min' | 'max' | 'minLength' | 'maxLength' | 'pattern';
   /** 验证失败时的提示信息 */

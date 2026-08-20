@@ -6,7 +6,7 @@ import { useNavHierarchy, useCurrentNavItem } from '@/lib/navigation/hooks';
 import { findRouteByPathSync } from '@/routes/v2';
 import { useLocation } from 'react-router-dom';
 
-export interface PageContainerProps {
+interface PageContainerProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;

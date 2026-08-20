@@ -21,7 +21,7 @@ import { masterDataApi, type MasterDataRef } from '@/api/bff';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-export interface MasterDataSelectorProps {
+interface MasterDataSelectorProps {
   /** 主数据域：material / customer / supplier / account_subject 等 */
   domain: string;
   /** 当前选中的 master_data_id */

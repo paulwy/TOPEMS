@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { authApi } from '@/api/iam';
 import { logger } from '@/utils/logger';
 
-export interface AccessLogEntry {
+interface AccessLogEntry {
   id?: string;
   user_id: string;
   username: string;

@@ -16,7 +16,7 @@ export interface TimelineItem {
   loading?: boolean;
 }
 
-export interface TimelineProps {
+interface TimelineProps {
   items: TimelineItem[];
   orientation?: 'vertical' | 'horizontal';
   variant?: 'outlined' | 'filled' | 'soft';

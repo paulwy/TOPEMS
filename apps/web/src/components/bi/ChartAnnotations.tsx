@@ -4,7 +4,7 @@ import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-export interface Annotation {
+interface Annotation {
   id: string;
   type: 'flag' | 'note' | 'tag';
   position: { x: number; y: number };

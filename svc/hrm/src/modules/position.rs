@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    Extension,
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -11,6 +12,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
+use topems_shared::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -34,7 +36,7 @@ pub struct Position {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePositionRequest {
-    pub tenant_id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
@@ -156,6 +158,7 @@ async fn list_positions(
 
 async fn create_position(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<ApiResponse<Position>> {
@@ -166,6 +169,15 @@ async fn create_position(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 从 JWT claims 自动填充 tenant_id 和 org_id
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+    let tenant_id = req.tenant_id.unwrap_or(claims_tenant);
+    let org_id = req.org_id.unwrap_or(claims_tenant);
+
     let result = sqlx::query_as::<_, Position>(
         r#"
         INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at)
@@ -174,8 +186,8 @@ async fn create_position(
         "#
     )
     .bind(id)
-    .bind(req.tenant_id)
-    .bind(req.org_id)
+    .bind(tenant_id)
+    .bind(org_id)
     .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)

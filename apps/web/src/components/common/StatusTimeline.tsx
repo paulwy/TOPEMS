@@ -17,7 +17,7 @@ export interface TimelineItem {
   dotColor?: string;
 }
 
-export interface StatusTimelineProps {
+interface StatusTimelineProps {
   items: TimelineItem[];
   orientation?: 'vertical' | 'horizontal';
   showLabels?: boolean;

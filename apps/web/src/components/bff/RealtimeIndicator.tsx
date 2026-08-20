@@ -43,7 +43,7 @@ const STATUS_LABEL: Record<SubscriptionStatus, string> = {
 };
 
 /** RealtimeIndicator Props */
-export interface RealtimeIndicatorProps {
+interface RealtimeIndicatorProps {
   /** 紧凑模式：仅显示状态圆点，不显示文字详情，默认 false */
   compact?: boolean;
   /** 是否显示缓存版本，默认 true */

@@ -635,7 +635,7 @@ const CreateExperimentForm: React.FC<{
 // ==================== ABTestPanel 主组件 ====================
 
 /** ABTestPanel Props */
-export interface ABTestPanelProps {
+interface ABTestPanelProps {
   /** 是否默认展开，默认 false */
   defaultExpanded?: boolean;
   /** 面板最大高度（px），默认 600 */

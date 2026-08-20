@@ -11,7 +11,7 @@ import type { CreateFeedbackRequest } from '@/api/feedback/types';
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-export interface FeedbackModalProps {
+interface FeedbackModalProps {
   open: boolean;
   onClose: () => void;
 }

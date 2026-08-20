@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 
-export interface HeaderLogoProps {
+interface HeaderLogoProps {
   showBackButton?: boolean;
   onBack?: () => void;
   title?: string;

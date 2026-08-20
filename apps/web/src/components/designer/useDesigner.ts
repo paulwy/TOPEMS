@@ -64,7 +64,7 @@ function removeNodeRecursive(nodes: CanvasNode[], id: string): CanvasNode[] {
 }
 
 /** useDesigner 选项 */
-export interface UseDesignerOptions {
+interface UseDesignerOptions {
   /** 初始 Schema（用于编辑现有页面） */
   initialSchema?: EntitySchema;
   /** 初始画布节点 */
@@ -72,7 +72,7 @@ export interface UseDesignerOptions {
 }
 
 /** useDesigner 返回值 */
-export interface UseDesignerResult {
+interface UseDesignerResult {
   /** 画布状态 */
   state: CanvasState;
   /** 所有节点（扁平化） */

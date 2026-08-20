@@ -16,7 +16,6 @@ export {
 } from './types';
 
 export { useDesigner } from './useDesigner';
-export type { UseDesignerOptions, UseDesignerResult } from './useDesigner';
 
 export { ComponentPalette } from './ComponentPalette';
 export { DesignCanvas } from './DesignCanvas';

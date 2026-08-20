@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 
-export type BackButtonVariant = 'back' | 'home' | 'close' | 'text';
-export type BackButtonSize = 'small' | 'medium';
+type BackButtonVariant = 'back' | 'home' | 'close' | 'text';
+type BackButtonSize = 'small' | 'medium';
 
-export interface BackButtonProps {
+interface BackButtonProps {
   variant?: BackButtonVariant;
   size?: BackButtonSize;
   onClick?: () => void;

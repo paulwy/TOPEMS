@@ -3,9 +3,9 @@ import { Chip } from '@mui/material';
 import type { ChipProps } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
-export type StatusChipSize = 'sm' | 'md';
+type StatusChipSize = 'sm' | 'md';
 
-export interface StatusMapping {
+interface StatusMapping {
   color: ChipProps['color'];
   label: string;
   variant?: 'filled' | 'outlined';

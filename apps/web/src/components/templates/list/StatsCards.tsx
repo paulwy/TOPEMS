@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 
-export interface StatsCardItem {
+interface StatsCardItem {
   key: string;
   label: string;
   value?: number | string;
@@ -9,7 +9,7 @@ export interface StatsCardItem {
   icon?: React.ReactNode;
 }
 
-export interface StatsCardsProps {
+interface StatsCardsProps {
   cards: StatsCardItem[];
 }
 

@@ -34,7 +34,7 @@ export interface SearchSuggestion {
 /**
  * 搜索历史项
  */
-export interface SearchHistoryItem {
+interface SearchHistoryItem {
   /** 历史文本 */
   text: string;
   /** 时间戳 */
@@ -46,7 +46,7 @@ export interface SearchHistoryItem {
 /**
  * 快速搜索组件属性
  */
-export interface QuickSearchProps {
+interface QuickSearchProps {
   /** 搜索回调 */
   onSearch?: (query: string) => void;
   /** 搜索建议列表 */

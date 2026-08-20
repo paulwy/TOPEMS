@@ -8,7 +8,7 @@ import React from 'react';
 import { Tab } from '@mui/material';
 import { usePlugins } from '@/context/PluginContext';
 
-export interface ExtendedTabConfig {
+interface ExtendedTabConfig {
   /** 关联模块 code */
   moduleCode: string;
   /** Tab label */
@@ -19,7 +19,7 @@ export interface ExtendedTabConfig {
   value: string;
 }
 
-export interface ExtendedTabProps {
+interface ExtendedTabProps {
   /** 扩展 Tab 配置 */
   configs: ExtendedTabConfig[];
   /** 当前激活的 Tab 值 */

@@ -31,7 +31,7 @@ import { designTokens, semanticTokens } from '@topems/tokens';
 
 export type ExportFormat = 'excel' | 'pdf' | 'csv' | 'json' | 'html' | 'markdown' | 'image' | 'xml';
 
-export interface ExportOptions {
+interface ExportOptions {
   format: ExportFormat;
   includeHeaders: boolean;
   includeSummary: boolean;

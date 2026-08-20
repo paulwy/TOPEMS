@@ -21,7 +21,7 @@ export interface FilterCondition {
   value: string | number | Date | null;
 }
 
-export interface AdvancedFilterProps<T> {
+interface AdvancedFilterProps<T> {
   fields: {
     key: keyof T;
     label: string;

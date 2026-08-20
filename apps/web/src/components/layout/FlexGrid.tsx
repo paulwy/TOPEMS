@@ -4,7 +4,7 @@ import type { Breakpoint } from '@mui/material';
 
 type ResponsiveValue<T> = T | Partial<Record<Breakpoint, T>>;
 
-export interface FlexGridProps {
+interface FlexGridProps {
   container?: boolean;
   item?: boolean;
   xs?: number | boolean;
@@ -122,7 +122,7 @@ export const FlexGrid: React.FC<FlexGridProps> = ({
   return <>{children}</>;
 };
 
-export interface FlexItemProps {
+interface FlexItemProps {
   xs?: number | boolean;
   sm?: number | boolean;
   md?: number | boolean;

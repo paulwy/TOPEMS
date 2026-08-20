@@ -53,7 +53,7 @@ export interface TreeNode {
   [key: string]: unknown;
 }
 
-export interface TreeBuilderProps {
+interface TreeBuilderProps {
   config: TreeConfig;
   data: TreeNode[];
   fields?: SchemaField[];

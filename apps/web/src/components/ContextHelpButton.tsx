@@ -34,7 +34,7 @@ import { findHelpByPath } from '@/config/help-mapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useTranslation } from 'react-i18next';
 
-export interface ContextHelpButtonProps {
+interface ContextHelpButtonProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   offset?: { x?: number; y?: number };
   showOnMobile?: boolean;

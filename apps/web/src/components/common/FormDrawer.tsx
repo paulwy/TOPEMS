@@ -33,7 +33,7 @@ import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
-export interface FormDrawerProps {
+interface FormDrawerProps {
   /** 是否打开 */
   open: boolean;
   /** 标题 */

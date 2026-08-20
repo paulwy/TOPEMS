@@ -12,7 +12,7 @@ export interface DateRange {
   label: string;
 }
 
-export interface DateRangeQuickSelectProps {
+interface DateRangeQuickSelectProps {
   value?: DateRange;
   onChange: (range: DateRange) => void;
   label?: string;

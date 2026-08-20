@@ -11,7 +11,7 @@ const _CURRENCY_SYMBOLS: Record<string, string> = {
   JPY: '¥',
 };
 
-export interface AmountDisplayProps {
+interface AmountDisplayProps {
   /** 金额数值 */
   amount: number | string;
   /** 货币符号或代码，默认 CNY (¥) */

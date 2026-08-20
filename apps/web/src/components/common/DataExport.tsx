@@ -35,7 +35,7 @@ export type ExportFormat = 'xlsx' | 'csv' | 'pdf';
 /**
  * 导出字段配置
  */
-export interface ExportField {
+interface ExportField {
   /** 字段键名，对应数据对象的属性名 */
   key: string;
   /** 显示标题，导出时作为列标题 */
@@ -49,7 +49,7 @@ export interface ExportField {
 /**
  * 数据导出组件属性
  */
-export interface DataExportProps {
+interface DataExportProps {
   /** 数据源，数组形式，每个元素为一个对象 */
   data: Record<string, unknown>[];
   /** 可导出的字段配置 */

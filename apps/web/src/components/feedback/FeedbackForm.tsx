@@ -37,7 +37,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export interface FeedbackFormProps {
+interface FeedbackFormProps {
   onSubmit: (data: CreateFeedbackRequest) => void;
   loading?: boolean;
 }

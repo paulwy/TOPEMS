@@ -15,7 +15,7 @@ export interface TreeNode {
   [key: string]: unknown;
 }
 
-export interface TreeViewProps {
+interface TreeViewProps {
   data: TreeNode[];
   selected?: string;
   expanded?: string[];

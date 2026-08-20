@@ -1,7 +1,7 @@
 import React from 'react';
 import { Skeleton, Box, type SxProps, type Theme } from '@mui/material';
 
-export interface NeonSkeletonProps {
+interface NeonSkeletonProps {
   variant?: 'text' | 'rectangular' | 'rounded' | 'circular';
   width?: number | string;
   height?: number | string;

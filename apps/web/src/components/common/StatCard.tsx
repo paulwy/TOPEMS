@@ -44,7 +44,7 @@ import { designTokens } from '@topems/tokens';
 /**
  * 趋势类型
  */
-export type TrendType = 'up' | 'down' | 'stable' | 'neutral';
+type TrendType = 'up' | 'down' | 'stable' | 'neutral';
 
 /**
  * 颜色类型
@@ -70,7 +70,7 @@ export type ChartType = 'bar' | 'line' | 'area' | 'pie';
 /**
  * 卡片尺寸
  */
-export type CardSize = 'sm' | 'md' | 'lg';
+type CardSize = 'sm' | 'md' | 'lg';
 
 /**
  * Sparkline属性
@@ -93,7 +93,7 @@ export interface SparklineProps {
 /**
  * 统计卡片属性（基类）
  */
-export interface StatCardBaseProps {
+interface StatCardBaseProps {
   /** 标题 */
   title: string;
   /** 值 */

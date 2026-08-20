@@ -2,7 +2,7 @@ import React from 'react';
 import type { BoxProps } from '@mui/material';
 import { Box } from '@mui/material';
 
-export interface GridSizeProps {
+interface GridSizeProps {
   xs?: number;
   sm?: number;
   md?: number;
@@ -10,7 +10,7 @@ export interface GridSizeProps {
   xl?: number;
 }
 
-export interface GridProps extends BoxProps {
+interface GridProps extends BoxProps {
   xs?: number;
   sm?: number;
   md?: number;

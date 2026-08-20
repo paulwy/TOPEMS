@@ -9,10 +9,10 @@ import {
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 
-export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type AvatarStatus = 'online' | 'offline' | 'busy' | 'away';
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type AvatarStatus = 'online' | 'offline' | 'busy' | 'away';
 
-export interface CustomAvatarProps {
+interface CustomAvatarProps {
   src?: string;
   name?: string;
   label?: string;
@@ -148,7 +148,7 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   return withStatus;
 };
 
-export interface AvatarGroupProps {
+interface AvatarGroupProps {
   avatars: Array<Omit<CustomAvatarProps, 'size'>>;
   max?: number;
   size?: AvatarSize;

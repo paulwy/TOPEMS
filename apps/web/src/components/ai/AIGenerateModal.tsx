@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogTitle, Button } from '@mui/material';
 import { Sparkles } from 'lucide-react';
 import i18n from '@/i18n';
 
-export interface AIGenerateModalProps {
+interface AIGenerateModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;

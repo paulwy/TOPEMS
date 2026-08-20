@@ -31,7 +31,7 @@ import { designTokens } from '@topems/tokens';
 /**
  * 文件上传组件属性
  */
-export interface FileUploadProps {
+interface FileUploadProps {
   /** 当前文件URL列表 */
   value?: string[];
   /** 值改变回调 */

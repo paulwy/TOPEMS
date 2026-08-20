@@ -25,7 +25,7 @@ import { logger } from '@/utils/logger';
 /**
  * 图片上传组件属性
  */
-export interface ImageUploadProps {
+interface ImageUploadProps {
   /** 当前图片URL列表，支持受控模式 */
   value?: string[];
   /** 值改变回调，返回更新后的图片URL列表 */

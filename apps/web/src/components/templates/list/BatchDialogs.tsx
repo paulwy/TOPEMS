@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
-export interface BatchConfirmDialogProps {
+interface BatchConfirmDialogProps {
   open: boolean;
   actionLabel: string;
   selectedCount: number;
@@ -68,7 +68,7 @@ const BatchConfirmDialog: React.FC<BatchConfirmDialogProps> = ({
   );
 };
 
-export interface BatchProgressDialogProps {
+interface BatchProgressDialogProps {
   open: boolean;
   actionLabel: string;
   processed: number;

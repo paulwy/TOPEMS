@@ -3,7 +3,7 @@ import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { RefreshCw } from 'lucide-react';
 import i18n from '@/i18n';
 
-export interface PullToRefreshProps {
+interface PullToRefreshProps {
   children: React.ReactNode;
   onRefresh: () => Promise<void> | void;
   threshold?: number;

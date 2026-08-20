@@ -25,7 +25,7 @@ import { toFormField } from '@/schema/types';
 
 // ============ Props ============
 
-export interface WizardBuilderProps {
+interface WizardBuilderProps {
   config: WizardConfig;
   fields: SchemaField[];
   values: Record<string, unknown>;

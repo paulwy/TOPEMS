@@ -201,7 +201,7 @@ export interface ValidationToast {
 /**
  * 表单草稿配置
  */
-export interface DraftConfig {
+interface DraftConfig {
   /** 是否启用草稿保存 */
   enabled?: boolean;
   /** 草稿存储key */
@@ -217,7 +217,7 @@ export interface DraftConfig {
 /**
  * 表单版本配置
  */
-export interface VersionConfig {
+interface VersionConfig {
   /** 是否启用版本对比 */
   enabled?: boolean;
   /** 当前版本 */

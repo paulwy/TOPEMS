@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePlugins } from '@/context/PluginContext';
 import i18n from '@/i18n';
 
-export interface RelatedModuleItem {
+interface RelatedModuleItem {
   /** 数据标签 */
   label: string;
   /** 数据值 */
@@ -23,7 +23,7 @@ export interface RelatedModuleItem {
   description?: string;
 }
 
-export interface RelatedModuleCardProps {
+interface RelatedModuleCardProps {
   /** 关联模块 code（如 'finance', 'crm', 'wms'） */
   moduleCode: string;
   /** 模块显示名称 */

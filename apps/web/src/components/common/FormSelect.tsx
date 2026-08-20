@@ -9,13 +9,13 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 
-export interface FormSelectOption {
+interface FormSelectOption {
   value: string | number;
   label: string;
   disabled?: boolean;
 }
 
-export interface FormSelectProps {
+interface FormSelectProps {
   name?: string;
   label?: string;
   options: FormSelectOption[];

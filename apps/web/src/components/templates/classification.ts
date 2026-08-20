@@ -17,7 +17,7 @@ export type PageTemplateType =
   | 'report-designer'
   | 'gis-map';
 
-export interface TemplateClassification {
+interface TemplateClassification {
   type: PageTemplateType;
   name: string;
   category: 'overview' | 'data-display' | 'data-entry' | 'analytics' | 'special';

@@ -330,15 +330,15 @@ function EditCellComponent({
 /**
  * 行内编辑保存回调类型
  */
-export type InlineEditSaveCallback<TData> = (row: TData, changes: Partial<TData>) => void;
+type InlineEditSaveCallback<TData> = (row: TData, changes: Partial<TData>) => void;
 /**
  * 行内编辑类型
  */
-export type InlineEditType = 'text' | 'select' | 'number' | 'date' | 'datetime' | 'checkbox';
+type InlineEditType = 'text' | 'select' | 'number' | 'date' | 'datetime' | 'checkbox';
 /**
  * 行内编辑配置
  */
-export interface InlineEditConfig {
+interface InlineEditConfig {
   type?: InlineEditType;
   options?: {
     value: string | number;
@@ -348,7 +348,7 @@ export interface InlineEditConfig {
 /**
  * 带行内编辑配置的列定义
  */
-export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
+type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
   inlineEdit?: InlineEditConfig;
 };
 /**
@@ -1655,7 +1655,7 @@ export default MemoizedDataTable;
 /**
  * 移动端卡片视图属性
  */
-export interface MobileCardViewProps<TData> {
+interface MobileCardViewProps<TData> {
   /** 数据 */
   data: TData[];
   /** 卡片渲染函数（完全自定义） */

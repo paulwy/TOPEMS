@@ -31,7 +31,7 @@ import { aiApi } from '@/api/ai';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
-export interface DocumentManagerProps {
+interface DocumentManagerProps {
   className?: string;
 }
 

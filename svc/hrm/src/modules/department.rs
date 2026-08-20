@@ -140,8 +140,14 @@ async fn create_department(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 如果没有提供 tenant_id，使用默认的 organization
-    let org_id = req.tenant_id.unwrap_or_else(Uuid::nil);
+    // 从 JWT claims 自动填充 tenant_id 和 organization_id
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
+    let tenant_id = req.tenant_id.unwrap_or(claims_tenant);
+    let org_id = req.org_id.unwrap_or(claims_tenant);
 
     let result = sqlx::query_as::<_, Department>(
         r#"
@@ -152,8 +158,8 @@ async fn create_department(
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(org_id)
-    .bind(req.org_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(req.parent_id)

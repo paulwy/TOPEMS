@@ -19,7 +19,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-export interface AIAnomalyAssistantProps {
+interface AIAnomalyAssistantProps {
   initialMetric?: string;
 }
 

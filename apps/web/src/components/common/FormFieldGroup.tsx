@@ -4,7 +4,7 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronDown, Info } from 'lucide-react';
 import i18n from '@/i18n';
 
-export interface FormFieldGroupProps {
+interface FormFieldGroupProps {
   title: string;
   description?: string;
   tooltip?: string;

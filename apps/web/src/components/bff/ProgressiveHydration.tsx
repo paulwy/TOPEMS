@@ -37,16 +37,16 @@ const hydrationLogger = logger.child({ prefix: 'ProgressiveHydration' });
 // ==================== 类型定义 ====================
 
 /** 水合优先级 */
-export type HydrationPriority = 'high' | 'medium' | 'low';
+type HydrationPriority = 'high' | 'medium' | 'low';
 
 /** 水合触发时机 */
-export type HydrationTrigger = 'immediate' | 'idle' | 'visible' | 'interaction';
+type HydrationTrigger = 'immediate' | 'idle' | 'visible' | 'interaction';
 
 /** 水合状态 */
-export type HydrationStatus = 'pending' | 'hydrating' | 'hydrated';
+type HydrationStatus = 'pending' | 'hydrating' | 'hydrated';
 
 /** ProgressiveHydration Props */
-export interface ProgressiveHydrationProps {
+interface ProgressiveHydrationProps {
   children: ReactNode;
   /** 优先级：high(立即) / medium(空闲) / low(延迟) */
   priority?: HydrationPriority;

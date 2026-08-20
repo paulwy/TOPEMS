@@ -21,7 +21,6 @@ export type {
 } from '../useCrudQueries';
 
 // CrudForm
-export type { UseCrudFormResult } from '../useCrudForm';
 
 // ListPageState
 export { useListPageState } from '../useListPageState';

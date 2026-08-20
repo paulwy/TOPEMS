@@ -1,7 +1,7 @@
 import React, { useState, useContext, createContext, useCallback } from 'react';
 import type { ChartData } from '../charts/AreaChart';
 
-export interface ChartSelection {
+interface ChartSelection {
   chartId: string;
   selectedData: ChartData[];
 }

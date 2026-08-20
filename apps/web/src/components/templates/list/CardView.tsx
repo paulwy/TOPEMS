@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import type { CardViewConfig, CardViewAction } from './types';
 
-export interface CardViewProps<T = Record<string, unknown>> {
+interface CardViewProps<T = Record<string, unknown>> {
   data: T[];
   config: CardViewConfig<T>;
   columns?: { xs?: number; sm?: number; md?: number; lg?: number; xl?: number };

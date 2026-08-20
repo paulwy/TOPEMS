@@ -282,7 +282,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
 };
 
 // 今日概览分区
-export interface TodayOverviewSectionProps {
+interface TodayOverviewSectionProps {
   children: React.ReactNode;
 }
 
@@ -298,7 +298,7 @@ export const TodayOverviewSection: React.FC<TodayOverviewSectionProps> = ({ chil
 };
 
 // 快捷入口分区
-export interface QuickAccessSectionProps {
+interface QuickAccessSectionProps {
   children: React.ReactNode;
   defaultExpanded?: boolean;
 }
@@ -319,7 +319,7 @@ export const QuickAccessSection: React.FC<QuickAccessSectionProps> = ({
 };
 
 // 待办事项分区
-export interface TodoListSectionProps {
+interface TodoListSectionProps {
   children: React.ReactNode;
 }
 
@@ -336,7 +336,7 @@ export const TodoListSection: React.FC<TodoListSectionProps> = ({ children }) =>
 };
 
 // 模块导航分区
-export interface ModuleNavigationSectionProps {
+interface ModuleNavigationSectionProps {
   children: React.ReactNode;
   title?: string;
   icon?: React.ReactNode;
@@ -364,7 +364,7 @@ export const ModuleNavigationSection: React.FC<ModuleNavigationSectionProps> = (
 };
 
 // 服务状态监测分区
-export interface ServiceMonitorSectionProps {
+interface ServiceMonitorSectionProps {
   children: React.ReactNode;
   collapsible?: boolean;
   defaultExpanded?: boolean;
@@ -387,7 +387,7 @@ export const ServiceMonitorSection: React.FC<ServiceMonitorSectionProps> = ({
 };
 
 // 最近活动分区
-export interface RecentActivitySectionProps {
+interface RecentActivitySectionProps {
   children: React.ReactNode;
   headerRight?: React.ReactNode;
   defaultExpanded?: boolean;

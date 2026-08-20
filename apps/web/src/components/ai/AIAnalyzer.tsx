@@ -26,14 +26,14 @@ import { AIGenerateModal } from './AIGenerateModal';
 import { aiApi } from '../../api/ai';
 import { logger } from '@/utils/logger';
 
-export interface AIAnalyzerProps {
+interface AIAnalyzerProps {
   isOpen: boolean;
   onClose: () => void;
   initialText?: string;
   onAnalysisComplete?: (_results: AnalysisResults) => void;
 }
 
-export interface AnalysisResults {
+interface AnalysisResults {
   sentiment?: SentimentResult;
   classification?: ClassificationResult;
   entities?: Entity[];
