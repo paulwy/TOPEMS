@@ -30,11 +30,11 @@ export const initCsrfProtection = (): void => {
   initCsrfToken();
 };
 
-export const validateCsrfToken = (token: string | undefined): boolean => {
+const validateCsrfToken = (token: string | undefined): boolean => {
   if (!token) return false;
   return verifyCsrfToken(token);
 };
 
-export const getCsrfHeaderName = (): string => {
+const getCsrfHeaderName = (): string => {
   return CSRF_HEADER;
 };
