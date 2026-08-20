@@ -1,0 +1,1992 @@
+{
+  "batch_id": "l2-caution-batch1-dead-chains",
+  "date": "2026-08-20",
+  "description": "L2-CAUTION Batch 1: only dead VALUE chains with NO REAL CONSUMER outside barrels. Confirmed via full src grep. Strategy: remove export kw @ def-side (conservative-remove-v2) + TSC Gate will reveal how far up the dead barrel chain reaches we need to clean (each barrel import fails with TS2305/TS2614: chain-stop, repair each one until consumer) — if at any point error is at NON-barrel file, rollback entire chain.",
+  "level": "L2",
+  "classification": "grep-dead-chain (no non-barrel consumer found)",
+  "removal_mode": "def-side export-kw-only (then gate-driven barrel chain repair)",
+  "total_exports": 193,
+  "total_def_files": 120,
+  "targets": {
+    "apps/web/src/api/ai/analysis.ts": [
+      "analysisApi"
+    ],
+    "apps/web/src/api/ai/chat.ts": [
+      "chatApi"
+    ],
+    "apps/web/src/api/ai/qa.ts": [
+      "qaApi"
+    ],
+    "apps/web/src/api/ai/vector.ts": [
+      "vectorApi"
+    ],
+    "apps/web/src/api/consolidation-contract/index.ts": [
+      "consolidationContractApi"
+    ],
+    "apps/web/src/api/doc/collaboration.ts": [
+      "docCollaborationApi"
+    ],
+    "apps/web/src/api/doc/versionControl.ts": [
+      "docVersionApi"
+    ],
+    "apps/web/src/api/doc/workspace.ts": [
+      "docWorkspaceApi"
+    ],
+    "apps/web/src/api/feedback/aiAnalysis.ts": [
+      "aiAnalysisApi"
+    ],
+    "apps/web/src/api/feedback/assignmentRule.ts": [
+      "assignmentRuleApi"
+    ],
+    "apps/web/src/api/file/image.ts": [
+      "fileImageApi"
+    ],
+    "apps/web/src/api/file/index.ts": [
+      "fileApi"
+    ],
+    "apps/web/src/api/file/scan.ts": [
+      "fileScanApi"
+    ],
+    "apps/web/src/api/file/storage.ts": [
+      "fileStorageApi"
+    ],
+    "apps/web/src/api/iam/auth.ts": [
+      "authModuleApi"
+    ],
+    "apps/web/src/api/im/ai.ts": [
+      "imAiApi"
+    ],
+    "apps/web/src/api/im/archive.ts": [
+      "imArchiveApi"
+    ],
+    "apps/web/src/api/im/bot.ts": [
+      "imBotApi"
+    ],
+    "apps/web/src/api/im/bridge.ts": [
+      "imBridgeApi"
+    ],
+    "apps/web/src/api/im/call.ts": [
+      "imCallApi"
+    ],
+    "apps/web/src/api/im/channel.ts": [
+      "imChannelApi"
+    ],
+    "apps/web/src/api/im/conference.ts": [
+      "imConferenceApi"
+    ],
+    "apps/web/src/api/im/group.ts": [
+      "imGroupApi"
+    ],
+    "apps/web/src/api/im/inAppNotification.ts": [
+      "imNotificationApi"
+    ],
+    "apps/web/src/api/im/messageState.ts": [
+      "imMessageStateApi"
+    ],
+    "apps/web/src/api/im/presence.ts": [
+      "imPresenceApi"
+    ],
+    "apps/web/src/api/im/push.ts": [
+      "imPushApi"
+    ],
+    "apps/web/src/api/im/reaction.ts": [
+      "imReactionApi"
+    ],
+    "apps/web/src/api/im/roaming.ts": [
+      "imRoamingApi"
+    ],
+    "apps/web/src/api/im/screenShare.ts": [
+      "imScreenShareApi"
+    ],
+    "apps/web/src/api/im/search.ts": [
+      "imSearchApi"
+    ],
+    "apps/web/src/api/im/typing.ts": [
+      "imTypingApi"
+    ],
+    "apps/web/src/api/im/voice.ts": [
+      "imVoiceApi"
+    ],
+    "apps/web/src/api/im/webhook.ts": [
+      "imWebhookApi"
+    ],
+    "apps/web/src/api/im/websocket.ts": [
+      "imWebSocketApi"
+    ],
+    "apps/web/src/api/index.ts": [
+      "getBusinessStatsGql",
+      "getUnifiedTodosGql",
+      "getServiceHealthGql",
+      "createTodoGql",
+      "deleteTodoGql"
+    ],
+    "apps/web/src/api/lims/collection.ts": [
+      "collectionTaskApi",
+      "parseRuleApi"
+    ],
+    "apps/web/src/api/mobile/aiAssistant.ts": [
+      "aiAssistantApi"
+    ],
+    "apps/web/src/api/mobile/analytics.ts": [
+      "analyticsApi"
+    ],
+    "apps/web/src/api/mobile/approvalEnhanced.ts": [
+      "approvalEnhancedApi"
+    ],
+    "apps/web/src/api/mobile/bpm.ts": [
+      "bpmApi"
+    ],
+    "apps/web/src/api/mobile/media.ts": [
+      "mediaApi"
+    ],
+    "apps/web/src/api/mobile/offline.ts": [
+      "offlineApi"
+    ],
+    "apps/web/src/api/mobile/production.ts": [
+      "productionApi"
+    ],
+    "apps/web/src/api/mobile/push.ts": [
+      "pushApi"
+    ],
+    "apps/web/src/api/mobile/shortcut.ts": [
+      "shortcutApi"
+    ],
+    "apps/web/src/api/plugin/registry.ts": [
+      "getSuites",
+      "getPluginRegistry"
+    ],
+    "apps/web/src/api/template/approval.ts": [
+      "templateApprovalApi"
+    ],
+    "apps/web/src/api/template/assignment.ts": [
+      "templateAssignmentApi"
+    ],
+    "apps/web/src/api/template/version.ts": [
+      "templateVersionApi"
+    ],
+    "apps/web/src/components/GlobalSearchBar/SearchInput.tsx": [
+      "SearchInput"
+    ],
+    "apps/web/src/components/GlobalSearchBar/SearchResultList.tsx": [
+      "SearchResultList"
+    ],
+    "apps/web/src/components/common/AdvancedFilter.tsx": [
+      "AdvancedFilterPanel"
+    ],
+    "apps/web/src/components/layout/ModuleTabs.tsx": [
+      "ModuleTabs"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/DataSourcePanel.tsx": [
+      "DataSourcePanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/FieldSelector.tsx": [
+      "FieldSelector"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/FilterPanel.tsx": [
+      "FilterPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/GroupPanel.tsx": [
+      "GroupPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/components/LayoutPanel.tsx": [
+      "LayoutPanel"
+    ],
+    "apps/web/src/components/templates/ReportDesignerTemplate/mockData.ts": [
+      "MOCK_FIELDS"
+    ],
+    "apps/web/src/config/plugins.config.ts": [
+      "getModulesByCategory"
+    ],
+    "apps/web/src/debug/useDebugTrace.ts": [
+      "setDebugTrace"
+    ],
+    "apps/web/src/design-system/theme-manager.tsx": [
+      "themeManager"
+    ],
+    "apps/web/src/hooks/useConsolidation.ts": [
+      "useUpdateScopeCompany",
+      "useEliminationRules",
+      "useEliminationRule",
+      "useCreateEliminationRule",
+      "useUpdateEliminationRule",
+      "useDeleteEliminationRule",
+      "useInternalTransactions",
+      "useInternalTransaction",
+      "useExecuteElimination",
+      "useConsolidationReport",
+      "useDeleteConsolidationReport"
+    ],
+    "apps/web/src/hooks/useCrmFinance.ts": [
+      "useUpdateCustomerFinanceInfo",
+      "useSalesInvoice",
+      "useCreateSalesInvoice",
+      "useUpdateSalesInvoice",
+      "useDeleteSalesInvoice",
+      "useIssueSalesInvoice",
+      "useVoidSalesInvoice",
+      "useRedFlushSalesInvoice",
+      "useCollectionRecord",
+      "useCreateCollectionRecord",
+      "useConfirmCollection",
+      "useBatchConfirmCollections",
+      "useReceivableAging",
+      "useCustomerReceivableSummary",
+      "useOverdueReceivables",
+      "useExportSalesInvoices",
+      "useExportCollectionRecords",
+      "useExportReceivableAging"
+    ],
+    "apps/web/src/hooks/useExternalErp.ts": [
+      "useErpConnection",
+      "useCreateErpConnection",
+      "useUpdateErpConnection",
+      "useDeleteErpConnection",
+      "useTestErpConnection",
+      "useToggleErpConnection",
+      "useSyncAccounts",
+      "useSyncCustomers",
+      "useSyncSuppliers",
+      "useSyncVouchers",
+      "useFullSync",
+      "useSyncLogs",
+      "useSyncLogDetail",
+      "useSyncStatistics",
+      "useAccountMappings",
+      "useImportAccountMappings",
+      "useAutoMatchAccountMappings",
+      "useUpdateAccountMapping",
+      "useCustomerMappings",
+      "useImportCustomerMappings",
+      "useUpdateCustomerMapping",
+      "useSupplierMappings",
+      "useImportSupplierMappings",
+      "useUpdateSupplierMapping",
+      "usePreviewExternalAccounts",
+      "usePreviewExternalCustomers",
+      "usePreviewExternalSuppliers",
+      "useExportSyncLogs",
+      "useExportMappingRules"
+    ],
+    "apps/web/src/microfrontend/ai-driven/auto-ops.ts": [
+      "OpsActionType",
+      "OpsStatus",
+      "AutoOps",
+      "autoOps"
+    ],
+    "apps/web/src/microfrontend/version-platform/rollout-manager.ts": [
+      "rolloutManager"
+    ],
+    "apps/web/src/microfrontend/version-platform/version-platform.ts": [
+      "versionPlatform"
+    ],
+    "apps/web/src/modules/ai/config.ts": [
+      "aiModuleConfig"
+    ],
+    "apps/web/src/modules/aps/config.ts": [
+      "apsModuleConfig"
+    ],
+    "apps/web/src/modules/asset/config.ts": [
+      "assetModuleConfig"
+    ],
+    "apps/web/src/modules/automation/config.ts": [
+      "automationModuleConfig"
+    ],
+    "apps/web/src/modules/bi/config.ts": [
+      "biModuleConfig"
+    ],
+    "apps/web/src/modules/doc/config.ts": [
+      "docModuleConfig"
+    ],
+    "apps/web/src/modules/ehs/config.ts": [
+      "ehsModuleConfig"
+    ],
+    "apps/web/src/modules/erp/config.ts": [
+      "erpModuleConfig"
+    ],
+    "apps/web/src/modules/finance/config.ts": [
+      "financeModuleConfig"
+    ],
+    "apps/web/src/modules/gis/config.ts": [
+      "gisModuleConfig"
+    ],
+    "apps/web/src/modules/hrm/config.ts": [
+      "hrmModuleConfig"
+    ],
+    "apps/web/src/modules/im/config.ts": [
+      "imModuleConfig"
+    ],
+    "apps/web/src/modules/integration/config.ts": [
+      "integrationModuleConfig"
+    ],
+    "apps/web/src/modules/lims/config.ts": [
+      "limsModuleConfig"
+    ],
+    "apps/web/src/modules/lowcode/config.ts": [
+      "lowcodeModuleConfig"
+    ],
+    "apps/web/src/modules/mes/config.ts": [
+      "mesModuleConfig"
+    ],
+    "apps/web/src/modules/mobile/config.ts": [
+      "mobileModuleConfig"
+    ],
+    "apps/web/src/modules/monitor/config.ts": [
+      "monitorModuleConfig"
+    ],
+    "apps/web/src/modules/notification/config.ts": [
+      "notificationModuleConfig"
+    ],
+    "apps/web/src/modules/oa/config.ts": [
+      "oaModuleConfig"
+    ],
+    "apps/web/src/modules/pdm/config.ts": [
+      "pdmModuleConfig"
+    ],
+    "apps/web/src/modules/plugin/config.ts": [
+      "pluginModuleConfig"
+    ],
+    "apps/web/src/modules/pm/config.ts": [
+      "pmModuleConfig"
+    ],
+    "apps/web/src/modules/qms/config.ts": [
+      "qmsModuleConfig"
+    ],
+    "apps/web/src/modules/rd/config.ts": [
+      "rdModuleConfig"
+    ],
+    "apps/web/src/modules/report/config.ts": [
+      "reportModuleConfig"
+    ],
+    "apps/web/src/modules/scm/config.ts": [
+      "scmModuleConfig"
+    ],
+    "apps/web/src/modules/srm/config.ts": [
+      "srmModuleConfig"
+    ],
+    "apps/web/src/modules/ticket/config.ts": [
+      "ticketModuleConfig"
+    ],
+    "apps/web/src/modules/tms/config.ts": [
+      "tmsModuleConfig"
+    ],
+    "apps/web/src/modules/wms/config.ts": [
+      "wmsModuleConfig"
+    ],
+    "apps/web/src/modules/workflow/config.ts": [
+      "workflowModuleConfig"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerToolbar.tsx": [
+      "DesignerToolbar"
+    ],
+    "apps/web/src/pages/automation/AutomationDesignerPage/useAutomationDesigner.ts": [
+      "useAutomationDesigner"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/EntityFormModal.tsx": [
+      "EntityFormModal"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/ImportModal.tsx": [
+      "ImportModal"
+    ],
+    "apps/web/src/pages/bi/GisPage/components/MapSection.tsx": [
+      "MapSection"
+    ],
+    "apps/web/src/pages/doc/DocumentsPage/components/DocumentList.tsx": [
+      "DocumentList"
+    ],
+    "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx": [
+      "ScopeFormDialog",
+      "AddCompanyDialog",
+      "RuleConfigDialog"
+    ],
+    "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx": [
+      "ConsolidationCompanyTable"
+    ],
+    "apps/web/src/pages/im/MailPage/hooks.tsx": [
+      "useMailPage"
+    ],
+    "apps/web/src/pages/mes/ProductionDashboardPage/constants.tsx": [
+      "REFRESH_INTERVAL_MS",
+      "EQUIPMENT_STATUS_META"
+    ],
+    "apps/web/src/pages/mes/ProductionDashboardPage/utils.ts": [
+      "safeNumber",
+      "buildHourlyTrend",
+      "buildDailyTarget"
+    ],
+    "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalActions.tsx": [
+      "buildActions"
+    ],
+    "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalTimeline.tsx": [
+      "RecordsTabContent",
+      "TimelineTabContent",
+      "FormDataTabContent"
+    ],
+    "apps/web/src/pages/workflow/WorkflowSettingsPage/constants.tsx": [
+      "SETTING_GROUPS"
+    ],
+    "apps/web/src/routes/index.ts": [
+      "getModuleRoutes",
+      "findRouteByPath"
+    ],
+    "apps/web/src/schemas/hrm/department.ts": [
+      "getDepartmentSchema"
+    ],
+    "apps/web/src/schemas/hrm/employee.ts": [
+      "getEmployeeSchema"
+    ],
+    "apps/web/src/store/featureFlagStore.ts": [
+      "useFeatureFlagStore"
+    ],
+    "apps/web/src/utils/graphql-performance.ts": [
+      "performanceMark",
+      "performanceMeasure"
+    ]
+  },
+  "chains": [
+    {
+      "name": "analysisApi",
+      "defFile": "apps/web/src/api/ai/analysis.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/ai/index.ts"
+      ]
+    },
+    {
+      "name": "chatApi",
+      "defFile": "apps/web/src/api/ai/chat.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/ai/index.ts"
+      ]
+    },
+    {
+      "name": "qaApi",
+      "defFile": "apps/web/src/api/ai/qa.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/ai/index.ts"
+      ]
+    },
+    {
+      "name": "vectorApi",
+      "defFile": "apps/web/src/api/ai/vector.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/ai/index.ts"
+      ]
+    },
+    {
+      "name": "consolidationContractApi",
+      "defFile": "apps/web/src/api/consolidation-contract/index.ts",
+      "refCount": 2,
+      "sampleRefs": [
+        "apps/web/src/api/index.ts",
+        "apps/web/src/pages/finance/ConsolidationScopePage/index.tsx"
+      ]
+    },
+    {
+      "name": "docCollaborationApi",
+      "defFile": "apps/web/src/api/doc/collaboration.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/doc/index.ts"
+      ]
+    },
+    {
+      "name": "docVersionApi",
+      "defFile": "apps/web/src/api/doc/versionControl.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/doc/index.ts"
+      ]
+    },
+    {
+      "name": "docWorkspaceApi",
+      "defFile": "apps/web/src/api/doc/workspace.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/doc/index.ts"
+      ]
+    },
+    {
+      "name": "aiAnalysisApi",
+      "defFile": "apps/web/src/api/feedback/aiAnalysis.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/feedback/index.ts"
+      ]
+    },
+    {
+      "name": "assignmentRuleApi",
+      "defFile": "apps/web/src/api/feedback/assignmentRule.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/feedback/index.ts"
+      ]
+    },
+    {
+      "name": "fileImageApi",
+      "defFile": "apps/web/src/api/file/image.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/file/index.ts"
+      ]
+    },
+    {
+      "name": "fileApi",
+      "defFile": "apps/web/src/api/file/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/index.ts"
+      ]
+    },
+    {
+      "name": "fileScanApi",
+      "defFile": "apps/web/src/api/file/scan.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/file/index.ts"
+      ]
+    },
+    {
+      "name": "fileStorageApi",
+      "defFile": "apps/web/src/api/file/storage.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/file/index.ts"
+      ]
+    },
+    {
+      "name": "authModuleApi",
+      "defFile": "apps/web/src/api/iam/auth.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/admin/index.ts"
+      ]
+    },
+    {
+      "name": "imAiApi",
+      "defFile": "apps/web/src/api/im/ai.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imArchiveApi",
+      "defFile": "apps/web/src/api/im/archive.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imBotApi",
+      "defFile": "apps/web/src/api/im/bot.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imBridgeApi",
+      "defFile": "apps/web/src/api/im/bridge.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imCallApi",
+      "defFile": "apps/web/src/api/im/call.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imChannelApi",
+      "defFile": "apps/web/src/api/im/channel.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imConferenceApi",
+      "defFile": "apps/web/src/api/im/conference.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imGroupApi",
+      "defFile": "apps/web/src/api/im/group.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imNotificationApi",
+      "defFile": "apps/web/src/api/im/inAppNotification.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imMessageStateApi",
+      "defFile": "apps/web/src/api/im/messageState.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imPresenceApi",
+      "defFile": "apps/web/src/api/im/presence.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imPushApi",
+      "defFile": "apps/web/src/api/im/push.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imReactionApi",
+      "defFile": "apps/web/src/api/im/reaction.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imRoamingApi",
+      "defFile": "apps/web/src/api/im/roaming.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imScreenShareApi",
+      "defFile": "apps/web/src/api/im/screenShare.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imSearchApi",
+      "defFile": "apps/web/src/api/im/search.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imTypingApi",
+      "defFile": "apps/web/src/api/im/typing.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imVoiceApi",
+      "defFile": "apps/web/src/api/im/voice.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imWebhookApi",
+      "defFile": "apps/web/src/api/im/webhook.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "imWebSocketApi",
+      "defFile": "apps/web/src/api/im/websocket.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/im/index.ts"
+      ]
+    },
+    {
+      "name": "getBusinessStatsGql",
+      "defFile": "apps/web/src/api/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "getUnifiedTodosGql",
+      "defFile": "apps/web/src/api/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "getServiceHealthGql",
+      "defFile": "apps/web/src/api/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "createTodoGql",
+      "defFile": "apps/web/src/api/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "deleteTodoGql",
+      "defFile": "apps/web/src/api/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "collectionTaskApi",
+      "defFile": "apps/web/src/api/lims/collection.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/lims/LimsInstrumentDataPage/index.tsx"
+      ]
+    },
+    {
+      "name": "parseRuleApi",
+      "defFile": "apps/web/src/api/lims/collection.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/lims/LimsInstrumentDataPage/index.tsx"
+      ]
+    },
+    {
+      "name": "aiAssistantApi",
+      "defFile": "apps/web/src/api/mobile/aiAssistant.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "analyticsApi",
+      "defFile": "apps/web/src/api/mobile/analytics.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "approvalEnhancedApi",
+      "defFile": "apps/web/src/api/mobile/approvalEnhanced.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "bpmApi",
+      "defFile": "apps/web/src/api/mobile/bpm.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "mediaApi",
+      "defFile": "apps/web/src/api/mobile/media.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "offlineApi",
+      "defFile": "apps/web/src/api/mobile/offline.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "productionApi",
+      "defFile": "apps/web/src/api/mobile/production.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "pushApi",
+      "defFile": "apps/web/src/api/mobile/push.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "shortcutApi",
+      "defFile": "apps/web/src/api/mobile/shortcut.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "name": "getSuites",
+      "defFile": "apps/web/src/api/plugin/registry.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/plugin/index.ts"
+      ]
+    },
+    {
+      "name": "getPluginRegistry",
+      "defFile": "apps/web/src/api/plugin/registry.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/plugin/index.ts"
+      ]
+    },
+    {
+      "name": "templateApprovalApi",
+      "defFile": "apps/web/src/api/template/approval.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/template/index.ts"
+      ]
+    },
+    {
+      "name": "templateAssignmentApi",
+      "defFile": "apps/web/src/api/template/assignment.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/template/index.ts"
+      ]
+    },
+    {
+      "name": "templateVersionApi",
+      "defFile": "apps/web/src/api/template/version.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/template/index.ts"
+      ]
+    },
+    {
+      "name": "SearchInput",
+      "defFile": "apps/web/src/components/GlobalSearchBar/SearchInput.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/GlobalSearchBar/index.tsx"
+      ]
+    },
+    {
+      "name": "SearchResultList",
+      "defFile": "apps/web/src/components/GlobalSearchBar/SearchResultList.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/GlobalSearchBar/index.tsx"
+      ]
+    },
+    {
+      "name": "AdvancedFilterPanel",
+      "defFile": "apps/web/src/components/common/AdvancedFilter.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/index.ts"
+      ]
+    },
+    {
+      "name": "ModuleTabs",
+      "defFile": "apps/web/src/components/layout/ModuleTabs.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/index.ts"
+      ]
+    },
+    {
+      "name": "DataSourcePanel",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/components/DataSourcePanel.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "FieldSelector",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/components/FieldSelector.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "FilterPanel",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/components/FilterPanel.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "GroupPanel",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/components/GroupPanel.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "LayoutPanel",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/components/LayoutPanel.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "MOCK_FIELDS",
+      "defFile": "apps/web/src/components/templates/ReportDesignerTemplate/mockData.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/ReportDesignerTemplate/index.tsx"
+      ]
+    },
+    {
+      "name": "getModulesByCategory",
+      "defFile": "apps/web/src/config/plugins.config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/modules/registry/index.ts"
+      ]
+    },
+    {
+      "name": "setDebugTrace",
+      "defFile": "apps/web/src/debug/useDebugTrace.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/debug/index.ts"
+      ]
+    },
+    {
+      "name": "themeManager",
+      "defFile": "apps/web/src/design-system/theme-manager.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/design-system/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateScopeCompany",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useEliminationRules",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteEliminationRule",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useInternalTransactions",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useInternalTransaction",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExecuteElimination",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useConsolidationReport",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteConsolidationReport",
+      "defFile": "apps/web/src/hooks/useConsolidation.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateCustomerFinanceInfo",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useIssueSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useVoidSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useRedFlushSalesInvoice",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCollectionRecord",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateCollectionRecord",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useConfirmCollection",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useBatchConfirmCollections",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useReceivableAging",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCustomerReceivableSummary",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useOverdueReceivables",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportSalesInvoices",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportCollectionRecords",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportReceivableAging",
+      "defFile": "apps/web/src/hooks/useCrmFinance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCreateErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useDeleteErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useTestErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useToggleErpConnection",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncAccounts",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncCustomers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncSuppliers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncVouchers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useFullSync",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncLogs",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncLogDetail",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSyncStatistics",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useAutoMatchAccountMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateAccountMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useCustomerMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportCustomerMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateCustomerMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useSupplierMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useImportSupplierMappings",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useUpdateSupplierMapping",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalAccounts",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalCustomers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "usePreviewExternalSuppliers",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportSyncLogs",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "useExportMappingRules",
+      "defFile": "apps/web/src/hooks/useExternalErp.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/finance/index.ts"
+      ]
+    },
+    {
+      "name": "OpsActionType",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "OpsStatus",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "AutoOps",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "autoOps",
+      "defFile": "apps/web/src/microfrontend/ai-driven/auto-ops.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "rolloutManager",
+      "defFile": "apps/web/src/microfrontend/version-platform/rollout-manager.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "versionPlatform",
+      "defFile": "apps/web/src/microfrontend/version-platform/version-platform.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/microfrontend/index.ts"
+      ]
+    },
+    {
+      "name": "aiModuleConfig",
+      "defFile": "apps/web/src/modules/ai/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "apsModuleConfig",
+      "defFile": "apps/web/src/modules/aps/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "assetModuleConfig",
+      "defFile": "apps/web/src/modules/asset/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "automationModuleConfig",
+      "defFile": "apps/web/src/modules/automation/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "biModuleConfig",
+      "defFile": "apps/web/src/modules/bi/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "docModuleConfig",
+      "defFile": "apps/web/src/modules/doc/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "ehsModuleConfig",
+      "defFile": "apps/web/src/modules/ehs/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "erpModuleConfig",
+      "defFile": "apps/web/src/modules/erp/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "financeModuleConfig",
+      "defFile": "apps/web/src/modules/finance/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "gisModuleConfig",
+      "defFile": "apps/web/src/modules/gis/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "hrmModuleConfig",
+      "defFile": "apps/web/src/modules/hrm/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "imModuleConfig",
+      "defFile": "apps/web/src/modules/im/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "integrationModuleConfig",
+      "defFile": "apps/web/src/modules/integration/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "limsModuleConfig",
+      "defFile": "apps/web/src/modules/lims/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "lowcodeModuleConfig",
+      "defFile": "apps/web/src/modules/lowcode/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "mesModuleConfig",
+      "defFile": "apps/web/src/modules/mes/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "mobileModuleConfig",
+      "defFile": "apps/web/src/modules/mobile/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "monitorModuleConfig",
+      "defFile": "apps/web/src/modules/monitor/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "notificationModuleConfig",
+      "defFile": "apps/web/src/modules/notification/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "oaModuleConfig",
+      "defFile": "apps/web/src/modules/oa/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "pdmModuleConfig",
+      "defFile": "apps/web/src/modules/pdm/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "pluginModuleConfig",
+      "defFile": "apps/web/src/modules/plugin/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "pmModuleConfig",
+      "defFile": "apps/web/src/modules/pm/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "qmsModuleConfig",
+      "defFile": "apps/web/src/modules/qms/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "rdModuleConfig",
+      "defFile": "apps/web/src/modules/rd/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "reportModuleConfig",
+      "defFile": "apps/web/src/modules/report/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "scmModuleConfig",
+      "defFile": "apps/web/src/modules/scm/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "srmModuleConfig",
+      "defFile": "apps/web/src/modules/srm/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "ticketModuleConfig",
+      "defFile": "apps/web/src/modules/ticket/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "tmsModuleConfig",
+      "defFile": "apps/web/src/modules/tms/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "wmsModuleConfig",
+      "defFile": "apps/web/src/modules/wms/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "workflowModuleConfig",
+      "defFile": "apps/web/src/modules/workflow/config.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "DesignerToolbar",
+      "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerToolbar.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/automation/AutomationDesignerPage/index.tsx"
+      ]
+    },
+    {
+      "name": "useAutomationDesigner",
+      "defFile": "apps/web/src/pages/automation/AutomationDesignerPage/useAutomationDesigner.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/automation/AutomationDesignerPage/index.tsx"
+      ]
+    },
+    {
+      "name": "EntityFormModal",
+      "defFile": "apps/web/src/pages/bi/GisPage/components/EntityFormModal.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/bi/GisPage/index.tsx"
+      ]
+    },
+    {
+      "name": "ImportModal",
+      "defFile": "apps/web/src/pages/bi/GisPage/components/ImportModal.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/bi/GisPage/index.tsx"
+      ]
+    },
+    {
+      "name": "MapSection",
+      "defFile": "apps/web/src/pages/bi/GisPage/components/MapSection.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/bi/GisPage/index.tsx"
+      ]
+    },
+    {
+      "name": "DocumentList",
+      "defFile": "apps/web/src/pages/doc/DocumentsPage/components/DocumentList.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/doc/DocumentsPage/index.tsx"
+      ]
+    },
+    {
+      "name": "ScopeFormDialog",
+      "defFile": "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/finance/ConsolidationScopePage/index.tsx"
+      ]
+    },
+    {
+      "name": "AddCompanyDialog",
+      "defFile": "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/finance/ConsolidationScopePage/index.tsx"
+      ]
+    },
+    {
+      "name": "RuleConfigDialog",
+      "defFile": "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/finance/ConsolidationScopePage/index.tsx"
+      ]
+    },
+    {
+      "name": "ConsolidationCompanyTable",
+      "defFile": "apps/web/src/pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/finance/ConsolidationScopePage/index.tsx"
+      ]
+    },
+    {
+      "name": "useMailPage",
+      "defFile": "apps/web/src/pages/im/MailPage/hooks.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/im/MailPage/index.tsx"
+      ]
+    },
+    {
+      "name": "REFRESH_INTERVAL_MS",
+      "defFile": "apps/web/src/pages/mes/ProductionDashboardPage/constants.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/mes/ProductionDashboardPage/index.tsx"
+      ]
+    },
+    {
+      "name": "EQUIPMENT_STATUS_META",
+      "defFile": "apps/web/src/pages/mes/ProductionDashboardPage/constants.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/mes/ProductionDashboardPage/index.tsx"
+      ]
+    },
+    {
+      "name": "safeNumber",
+      "defFile": "apps/web/src/pages/mes/ProductionDashboardPage/utils.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/mes/ProductionDashboardPage/index.tsx"
+      ]
+    },
+    {
+      "name": "buildHourlyTrend",
+      "defFile": "apps/web/src/pages/mes/ProductionDashboardPage/utils.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/mes/ProductionDashboardPage/index.tsx"
+      ]
+    },
+    {
+      "name": "buildDailyTarget",
+      "defFile": "apps/web/src/pages/mes/ProductionDashboardPage/utils.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/mes/ProductionDashboardPage/index.tsx"
+      ]
+    },
+    {
+      "name": "buildActions",
+      "defFile": "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalActions.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/index.tsx"
+      ]
+    },
+    {
+      "name": "RecordsTabContent",
+      "defFile": "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalTimeline.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/index.tsx"
+      ]
+    },
+    {
+      "name": "TimelineTabContent",
+      "defFile": "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalTimeline.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/index.tsx"
+      ]
+    },
+    {
+      "name": "FormDataTabContent",
+      "defFile": "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/components/ApprovalTimeline.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/workflow/WorkflowApprovalDetailPage/index.tsx"
+      ]
+    },
+    {
+      "name": "SETTING_GROUPS",
+      "defFile": "apps/web/src/pages/workflow/WorkflowSettingsPage/constants.tsx",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/workflow/WorkflowSettingsPage/index.tsx"
+      ]
+    },
+    {
+      "name": "getModuleRoutes",
+      "defFile": "apps/web/src/routes/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "findRouteByPath",
+      "defFile": "apps/web/src/routes/index.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/routes/v2/index.ts"
+      ]
+    },
+    {
+      "name": "getDepartmentSchema",
+      "defFile": "apps/web/src/schemas/hrm/department.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/schemas/hrm/index.ts"
+      ]
+    },
+    {
+      "name": "getEmployeeSchema",
+      "defFile": "apps/web/src/schemas/hrm/employee.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/schemas/hrm/index.ts"
+      ]
+    },
+    {
+      "name": "useFeatureFlagStore",
+      "defFile": "apps/web/src/store/featureFlagStore.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/pages/system/FeatureFlagPage/index.tsx"
+      ]
+    },
+    {
+      "name": "performanceMark",
+      "defFile": "apps/web/src/utils/graphql-performance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    },
+    {
+      "name": "performanceMeasure",
+      "defFile": "apps/web/src/utils/graphql-performance.ts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/bff/index.ts"
+      ]
+    }
+  ]
+}

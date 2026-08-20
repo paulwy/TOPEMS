@@ -52,7 +52,7 @@ export function getDebugTrace(): DebugTraceConfig {
   }
 }
 
-export function setDebugTrace(config: Partial<DebugTraceConfig>): void {
+function setDebugTrace(config: Partial<DebugTraceConfig>): void {
   if (typeof localStorage === 'undefined') return;
   const current = getDebugTrace();
   const next: DebugTraceConfig = { ...current, ...config };
