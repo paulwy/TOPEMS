@@ -29,7 +29,7 @@ export const useUIStore = create<UIState>()(
 
 const useSidebarOpen = () => useUIStore((state) => state.sidebarOpen);
 const useSidebarCollapsed = () => useUIStore((state) => state.sidebarCollapsed);
-export const useToggleSidebar = () => useUIStore((state) => state.toggleSidebar);
+const useToggleSidebar = () => useUIStore((state) => state.toggleSidebar);
 const useSetSidebarOpen = () => useUIStore((state) => state.setSidebarOpen);
 const useToggleSidebarCollapsed = () => useUIStore((state) => state.toggleSidebarCollapsed);
 const useSetSidebarCollapsed = () => useUIStore((state) => state.setSidebarCollapsed);

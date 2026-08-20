@@ -490,17 +490,17 @@ const useIsPluginActive = (code: string) => {
   return plugin?.isactive === true;
 };
 
-export const usePluginHealth = (code: string) => {
+const usePluginHealth = (code: string) => {
   const healthStatus = usePluginHealthStatus();
   return healthStatus[code] || { healthy: false };
 };
 
-export const useInstalledPlugin = (code: string) => {
+const useInstalledPlugin = (code: string) => {
   const installedPlugins = useInstalledPlugins();
   return installedPlugins.find((p) => p.plugin_id === code);
 };
 
-export const useMarketplacePlugin = (code: string) => {
+const useMarketplacePlugin = (code: string) => {
   const marketplacePlugins = useMarketplacePlugins();
   return marketplacePlugins.find((p) => p.code === code);
 };

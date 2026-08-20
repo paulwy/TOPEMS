@@ -11,5 +11,4 @@ const useWorkflowStore = create<WorkflowState>()((set) => ({
 }));
 
 const useSelectedWorkflowId = () => useWorkflowStore((state) => state.selectedWorkflowId);
-const useSetSelectedWorkflowId = () =>
-  useWorkflowStore((state) => state.setSelectedWorkflowId);
+const useSetSelectedWorkflowId = () => useWorkflowStore((state) => state.setSelectedWorkflowId);
