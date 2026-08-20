@@ -795,6 +795,7 @@ ${content
                           </SyntaxHighlighter>
                         ) : (
                           <code
+                            {...(props as any)}
                             className={className}
                             style={{
                               backgroundColor: 'var(--mui-palette-action-hover)',
