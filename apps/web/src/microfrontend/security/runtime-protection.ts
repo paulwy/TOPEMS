@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 
-export enum ProtectionType {
+enum ProtectionType {
   PROTOTYPEPOLLUTION = 'prototype_pollution',
   GLOBALTAMPERING = 'global_tampering',
   DANGEROUSAPI = 'dangerous_api',
@@ -8,7 +8,7 @@ export enum ProtectionType {
   ANOMALY = 'anomaly',
 }
 
-export enum ProtectionSeverity {
+enum ProtectionSeverity {
   CRITICAL = 'critical',
   HIGH = 'high',
   MEDIUM = 'medium',
@@ -53,7 +53,7 @@ const DEFAULT_CONFIG: ProtectionConfig = {
   enableAnomalyDetection: false,
 };
 
-export class RuntimeProtector {
+class RuntimeProtector {
   private config: ProtectionConfig;
   private events: ProtectionEvent[] = [];
   private enabled = false;
@@ -489,5 +489,5 @@ export class RuntimeProtector {
   }
 }
 
-export const runtimeProtector = new RuntimeProtector();
+const runtimeProtector = new RuntimeProtector();
 export default runtimeProtector;

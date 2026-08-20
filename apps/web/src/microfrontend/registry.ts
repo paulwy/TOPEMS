@@ -79,5 +79,5 @@ class MicroFrontendRegistry {
   }
 }
 
-export const microFrontendRegistry = new MicroFrontendRegistry();
+const microFrontendRegistry = new MicroFrontendRegistry();
 export type { RegisteredModule, ModuleStatus };

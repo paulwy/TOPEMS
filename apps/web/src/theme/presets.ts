@@ -187,7 +187,7 @@ export const themePresets: ThemePreset[] = [
 export const getPresetById = (id: string): ThemePreset | undefined =>
   themePresets.find((p) => p.id === id);
 
-export const getPresetColors = (preset: ThemePreset) => ({
+const getPresetColors = (preset: ThemePreset) => ({
   primary: preset.primary || themePresets[0].primary!,
   secondary: preset.secondary || themePresets[0].secondary!,
 });

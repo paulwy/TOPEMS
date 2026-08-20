@@ -12,7 +12,7 @@
 
 // @done V79 normalize-api-response completed（已在 api/client.ts interceptor 中统一调用）
 /*
-export function normalizeApiResponseWrapper<T>(resp: any) {
+function normalizeApiResponseWrapper<T>(resp: any) {
   // 变体 1: { code, msg, payload }  → { code, message: msg, data: payload }
   if (resp?.data?.msg !== undefined && resp?.data?.message === undefined) {
     resp.data.message = resp.data.msg;
