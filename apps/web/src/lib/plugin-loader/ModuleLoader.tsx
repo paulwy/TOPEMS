@@ -309,7 +309,7 @@ export class DynamicModuleLoader {
   }
 }
 
-export const moduleLoader = new DynamicModuleLoader();
+const moduleLoader = new DynamicModuleLoader();
 
 // ============================================================================
 // Route Wrapper with Module Loading
@@ -325,7 +325,7 @@ export interface ModuleRouteWrapperProps {
 /**
  * Route Wrapper with automatic module loading
  */
-export const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
+const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
   routePath,
   component,
   moduleId,

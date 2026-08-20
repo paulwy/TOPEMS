@@ -6,5 +6,5 @@
  */
 export { default as DebugOverlay } from './DebugOverlay';
 export { default as useDebugTrace } from './useDebugTrace';
-export { getDebugTrace, setDebugTrace, clearDebugTrace } from './useDebugTrace';
+export { getDebugTrace } from './useDebugTrace'
 export type { DebugLevel, DebugTraceConfig, UseDebugTraceReturn } from './useDebugTrace';

@@ -13,7 +13,7 @@ export * from './design-lint';
 export { V51DesignSystemPanel } from './DesignSystemPanel';
 
 /** @deprecated 使用 MUI ThemeProvider 直接包裹 app root 即可，无需单独初始化。 */
-export function initializeDesignSystem(options?: { autoInit?: boolean }): void {
+function initializeDesignSystem(options?: { autoInit?: boolean }): void {
   if (options?.autoInit !== false) {
     injectV51CSSVariables();
     themeManager.init();

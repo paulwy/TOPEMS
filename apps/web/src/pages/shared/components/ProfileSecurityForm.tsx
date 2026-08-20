@@ -27,7 +27,7 @@ export interface ProfileSecurityFormProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileSecurityForm: React.FC<ProfileSecurityFormProps> = ({ profile }) => {
+const ProfileSecurityForm: React.FC<ProfileSecurityFormProps> = ({ profile }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const {

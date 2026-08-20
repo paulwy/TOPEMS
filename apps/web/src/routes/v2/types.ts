@@ -98,7 +98,7 @@ export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
  * currently pass an empty set, which means advanced modules are hidden
  * until the integration is completed in a later phase.
  */
-export function filterModulesByTier(
+function filterModulesByTier(
   modules: RouteModuleConfig[],
   activeAdvancedModuleCodes: Set<string> = new Set()
 ): RouteModuleConfig[] {
@@ -115,7 +115,7 @@ export function filterModulesByTier(
  * but operates on a flat list of routes. `advancedRouteCodes` is the set of
  * route `code` values explicitly activated for the current tenant.
  */
-export function filterRoutesByTier(
+function filterRoutesByTier(
   routes: RouteConfigV2[],
   activeAdvancedRouteCodes: Set<string> = new Set()
 ): RouteConfigV2[] {

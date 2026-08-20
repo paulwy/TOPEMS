@@ -49,6 +49,10 @@ export function isDev(): boolean {
 }
 
 /** Whether production mode (equivalent to import.meta.env.PROD) */
+function isProd(): boolean {
+  return getEnv<boolean>('PROD', false) ?? false;
+}
+
 /**
  * Deployment mode: static | module-federation | hybrid | standalone
  *

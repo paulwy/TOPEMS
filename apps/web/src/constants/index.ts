@@ -23,11 +23,9 @@ export * from './routes';
 export * from './pagination';
 export * from './validation';
 export * from './retry';
-export * from './version';
 export * from './time';
 
-export {    
-  normalizePaginationParams } from './pagination';
+export { normalizePaginationParams } from './pagination'
 export type {
   PageSizeField,
   PaginationParamsInput,

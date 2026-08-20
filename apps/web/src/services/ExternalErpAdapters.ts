@@ -197,7 +197,7 @@ abstract class BaseAdapter implements ErpAdapter {
 // 三、金蝶K3 Cloud适配器
 // ============================================
 
-export class KingdeeAdapter extends BaseAdapter {
+class KingdeeAdapter extends BaseAdapter {
   /**
    * 连接测试
    */
@@ -419,7 +419,7 @@ export class KingdeeAdapter extends BaseAdapter {
 // 四、用友U8适配器
 // ============================================
 
-export class YonyouAdapter extends BaseAdapter {
+class YonyouAdapter extends BaseAdapter {
   private session: string = '';
 
   /**
@@ -637,7 +637,7 @@ export class YonyouAdapter extends BaseAdapter {
 // 五、SAP S/4HANA适配器
 // ============================================
 
-export class SapAdapter extends BaseAdapter {
+class SapAdapter extends BaseAdapter {
   /**
    * 连接测试
    */

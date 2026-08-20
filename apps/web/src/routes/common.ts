@@ -2,7 +2,7 @@ import { createSafeLazy, type RouteConfig } from './utils';
 import { EHS_PATHS } from '@/modules/ehs/config';
 import { DOC_PATHS } from '@/modules/doc/config';
 
-export const COMMON_PATHS = {
+const COMMON_PATHS = {
   v4Demo: '/v4-demo',
   desktopMonitor: '/desktop/monitor',
   desktopAuditLogs: '/desktop/audit-logs',

@@ -1,0 +1,1 @@
+const APP_SDK_VERSION = 'V78.0';

@@ -9,7 +9,7 @@
 
 export * from './env';
 export {    
-  default as getEnv as isDevelopment,
+  getEnv as isDevelopment,
   isProduction } from './runtime';
 export * from './types';
 export * from './deployment';

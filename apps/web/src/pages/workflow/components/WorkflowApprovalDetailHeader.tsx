@@ -51,7 +51,7 @@ export const getStatusColor = (status: string) => getChipStatusColor(status, 'wo
 interface WorkflowApprovalDetailHeaderProps {
   approval: Approval | null;
 }
-export const WorkflowApprovalDetailHeader: React.FC<WorkflowApprovalDetailHeaderProps> = ({
+const WorkflowApprovalDetailHeader: React.FC<WorkflowApprovalDetailHeaderProps> = ({
   approval,
 }) => {
   if (!approval) return null;

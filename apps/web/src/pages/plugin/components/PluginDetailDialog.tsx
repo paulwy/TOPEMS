@@ -30,7 +30,7 @@ export interface PluginDetailDialogProps {
   onClose: () => void;
 }
 
-export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, onClose }) => {
+const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, onClose }) => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [rating, setRating] = useState(0);

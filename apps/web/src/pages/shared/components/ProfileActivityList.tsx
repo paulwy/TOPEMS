@@ -13,7 +13,7 @@ export interface ProfileActivityListProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileActivityList: React.FC<ProfileActivityListProps> = ({ profile }) => {
+const ProfileActivityList: React.FC<ProfileActivityListProps> = ({ profile }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const { activities, loadingActivities, handleRefreshActivities } = profile;

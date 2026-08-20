@@ -3,7 +3,7 @@ import { navigationRegistryV2 } from './NavigationRegistryV2';
 import type { NavItem, ModuleNavConfig, ModuleCardConfig, NavGroup } from './types';
 import { useLocation } from 'react-router-dom';
 
-export function useNavigation() {
+function useNavigation() {
   const [, setUpdateKey] = useState(0);
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function useNavigation() {
   };
 }
 
-export function useCurrentModule() {
+function useCurrentModule() {
   const location = useLocation();
 
   return useMemo(() => {
@@ -94,7 +94,7 @@ export function useCurrentNavItem(): NavItem | undefined {
   }, [location.pathname]);
 }
 
-export function useSidebarNav(moduleCode?: string) {
+function useSidebarNav(moduleCode?: string) {
   const [, setUpdateKey] = useState(0);
   const currentModule = useCurrentModule();
   const effectiveModule = moduleCode || currentModule?.code || '';
@@ -118,7 +118,7 @@ export function useSidebarNav(moduleCode?: string) {
   return { items, grouped, moduleCode: effectiveModule };
 }
 
-export function useModuleTabs(moduleCode?: string) {
+function useModuleTabs(moduleCode?: string) {
   const [, setUpdateKey] = useState(0);
   const currentModule = useCurrentModule();
   const effectiveModule = moduleCode || currentModule?.code || '';

@@ -7,7 +7,7 @@
  */
 import React from 'react';
 
-export const useAriaLiveRegion = (): [(message: string) => void, React.ReactNode] => {
+const useAriaLiveRegion = (): [(message: string) => void, React.ReactNode] => {
   const [message, setMessage] = React.useState('');
   const announce = React.useCallback((msg: string) => {
     setMessage('');
@@ -25,7 +25,7 @@ export const useAriaLiveRegion = (): [(message: string) => void, React.ReactNode
   return [announce, liveRegion];
 };
 
-export const useKeyboardNavigation = (
+const useKeyboardNavigation = (
   callbacks: {
     onEscape?: () => void;
     onEnter?: () => void;
@@ -75,6 +75,6 @@ export const useKeyboardNavigation = (
   }, deps);
 };
 
-export const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <span className='sr-only'>{children}</span>;
 };

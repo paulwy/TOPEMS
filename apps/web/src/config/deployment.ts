@@ -70,26 +70,48 @@ export const deploymentConfig: DeploymentConfig = {
 /**
  * 是否为 SaaS 模式
  */
+const isSaaS = (): boolean => deploymentConfig.mode === 'saas';
+
 /**
  * 是否为 On-Premise 模式
  */
+const isOnPremise = (): boolean => deploymentConfig.mode === 'on-premise';
+
 /**
  * 是否启用多租户
  */
+const isMultiTenant = (): boolean => deploymentConfig.multiTenantEnabled;
+
 /**
  * 检查租户访问权限
  *
  * On-Premise 模式下跳过租户检查
  */
+const checkTenantAccess = (userTenantId: string, resourceTenantId: string): boolean => {
+  if (!deploymentConfig.multiTenantEnabled) {
+    return true;
+  }
+  return userTenantId === resourceTenantId;
+};
+
 /**
  * 是否应该检查配额
  *
  * On-Premise 模式下跳过配额检查
  */
+const shouldCheckQuota = (): boolean =>
+  deploymentConfig.features.quotaEnabled && deploymentConfig.multiTenantEnabled;
+
 /**
  * 是否显示租户管理UI
  */
+const showTenantManagement = (): boolean =>
+  deploymentConfig.features.tenantManagement && deploymentConfig.multiTenantEnabled;
+
 /**
  * 获取功能开关状态
  */
+const getFeatureFlag = (flag: keyof FeatureFlags): boolean =>
+  deploymentConfig.features[flag];
+
 export default deploymentConfig;

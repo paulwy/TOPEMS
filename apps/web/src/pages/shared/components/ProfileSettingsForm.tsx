@@ -13,7 +13,7 @@ export interface ProfileSettingsFormProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileSettingsForm: React.FC<ProfileSettingsFormProps> = ({ profile }) => {
+const ProfileSettingsForm: React.FC<ProfileSettingsFormProps> = ({ profile }) => {
   const { t } = useTranslation();
   const { user, profileForm, handleProfileUpdate } = profile;
 

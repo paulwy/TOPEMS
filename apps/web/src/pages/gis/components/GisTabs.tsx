@@ -14,7 +14,7 @@ interface GisTabsProps {
   onChange: (tab: TabType) => void;
 }
 
-export const GisTabs: React.FC<GisTabsProps> = ({ tabs, activeTab, onChange }) => {
+const GisTabs: React.FC<GisTabsProps> = ({ tabs, activeTab, onChange }) => {
   return (
     <Box
       sx={{

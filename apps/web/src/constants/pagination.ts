@@ -9,6 +9,7 @@
 
 // Re-export from shared constants to avoid components depending directly on
 // shared-constants internal paths
+
 /** Default page number (starting from 1) */
 export const DEFAULT_PAGE = 1 as const;
 
@@ -16,8 +17,14 @@ export const DEFAULT_PAGE = 1 as const;
 export const DEFAULT_PAGE_SIZE = 20 as const;
 
 /** Available page size options (consistent with shared PAGINATION.PAGE_SIZE_OPTIONS) */
+const PAGE_SIZES: readonly number[] = [10, 20, 50, 100] as const;
+
 /** Compact page size for detail dialogs and other tight scenarios */
+const COMPACT_PAGE_SIZE = 10 as const;
+
 /** Large page size for audit / log and other large-list scenarios */
+const LARGE_PAGE_SIZE = 50 as const;
+
 /**
  * 分页参数命名归一化（pageSize ↔ page_size ↔ pagesize 三种历史命名兼容）。
  *

@@ -18,4 +18,3 @@ export {
   type DataSourceType,
 } from './builder';
 
-export { default as defaultBuilder } from './builder';

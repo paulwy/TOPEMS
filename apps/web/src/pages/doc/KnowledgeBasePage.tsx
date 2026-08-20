@@ -193,7 +193,7 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'default',
 };
 
-export const DocumentKnowledgeBasePage: React.FC = () => {
+const DocumentKnowledgeBasePage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['doc', 'knowledgeBase'],
     queryFn: async () => {

@@ -31,7 +31,7 @@ interface EmployeeFinanceTabProps {
   employeeName: string;
 }
 
-export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
+const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   employeeId,
   employeeName,
 }) => {

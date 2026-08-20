@@ -42,7 +42,7 @@ export interface ActionButtonsProps {
   onEdit: (item: GisEntity) => void;
   onDelete: (id: string) => void;
 }
-export const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDelete }) => (
+const ActionButtons: React.FC<ActionButtonsProps> = ({ item, onEdit, onDelete }) => (
   <Stack
     direction='row'
     spacing={1}

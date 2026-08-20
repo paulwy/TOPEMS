@@ -14,7 +14,7 @@ export interface ProfileHeaderProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile }) => {
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile }) => {
   const { t } = useTranslation();
   const { user, avatarUrl, fileInputRef, handleAvatarUpload } = profile;
 

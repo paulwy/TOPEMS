@@ -40,3 +40,4 @@ export const PUBLIC_API_PATTERNS = [
 /**
  * Event name dispatched when authentication fails.
  */
+const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized' as const;

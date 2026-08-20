@@ -31,7 +31,7 @@
 // ============================================================================
 
 /** 质量检验 FSM 状态 */
-export const INSPECTION_STATES = [
+const INSPECTION_STATES = [
   'pending',
   'assigned',
   'in_progress',
@@ -42,11 +42,11 @@ export const INSPECTION_STATES = [
 export type InspectionState = (typeof INSPECTION_STATES)[number];
 
 /** 质量问题 FSM 状态 */
-export const ISSUE_STATES = ['open', 'in_progress', 'resolved', 'closed', 'reopened'] as const;
+const ISSUE_STATES = ['open', 'in_progress', 'resolved', 'closed', 'reopened'] as const;
 export type IssueState = (typeof ISSUE_STATES)[number];
 
 /** 纠正措施 FSM 状态 */
-export const ACTION_STATES = [
+const ACTION_STATES = [
   'pending',
   'in_progress',
   'implemented',
@@ -56,7 +56,7 @@ export const ACTION_STATES = [
 export type ActionState = (typeof ACTION_STATES)[number];
 
 /** 审核计划 FSM 状态 */
-export const AUDIT_PLAN_STATES = [
+const AUDIT_PLAN_STATES = [
   'draft',
   'planned',
   'in_progress',
@@ -66,7 +66,7 @@ export const AUDIT_PLAN_STATES = [
 export type AuditPlanState = (typeof AUDIT_PLAN_STATES)[number];
 
 /** 审核发现 FSM 状态 */
-export const AUDIT_FINDING_STATES = [
+const AUDIT_FINDING_STATES = [
   'open',
   'in_review',
   'confirmed',
@@ -77,7 +77,7 @@ export const AUDIT_FINDING_STATES = [
 export type AuditFindingState = (typeof AUDIT_FINDING_STATES)[number];
 
 /** 8D 报告 FSM 状态 */
-export const EIGHT_D_STATES = [
+const EIGHT_D_STATES = [
   'draft',
   'd1_team',
   'd2_describe',
@@ -92,7 +92,7 @@ export const EIGHT_D_STATES = [
 export type EightDState = (typeof EIGHT_D_STATES)[number];
 
 /** APQP 项目 FSM 状态 */
-export const APQP_STATES = [
+const APQP_STATES = [
   'concept',
   'planning',
   'product_design',

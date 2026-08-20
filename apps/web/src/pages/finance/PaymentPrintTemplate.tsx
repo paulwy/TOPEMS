@@ -39,7 +39,7 @@ const statusOptions: Record<string, string> = {
   cancelled: i18n.t('finance.payment_print_template.cancelled'),
 };
 
-export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ payment }) => {
+const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ payment }) => {
   const { t } = useTranslation();
   return (
     <PageContainer

@@ -75,7 +75,7 @@ interface IntegrationSettings {
   apiRateLimit: number;
 }
 type TranslateFn = (key: string) => string;
-export function buildSettingsTabs(
+function buildSettingsTabs(
   t: TranslateFn,
   generalSettings: GeneralSettings,
   alertSettings: AlertSettings,

@@ -5,7 +5,7 @@
  * 对比度：所有文字色均满足 WCAG AA 标准（≥ 4.5:1）
  */
 
-export const cyberpunkTokens = {
+const cyberpunkTokens = {
   colors: {
     // 主色 — 霓虹青
     primary: {
@@ -196,7 +196,7 @@ export type CyberpunkTokens = typeof cyberpunkTokens;
  * 赛博朋克主题的语义化 Token
  * 覆盖 semanticTokens 中的关键字段
  */
-export const cyberpunkSemanticTokens = {
+const cyberpunkSemanticTokens = {
   // 玻璃拟态卡片
   glassCard: {
     background: 'action.disabledBackground',

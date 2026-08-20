@@ -212,7 +212,7 @@ const moduleColorMap: Record<string, string> = {
 
 const defaultColor = 'bg-blue-500';
 
-export function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): ModuleItem {
+function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): ModuleItem {
   const Icon = iconMap[moduleCard.icon] || defaultIcon;
 
   return {
@@ -229,6 +229,6 @@ export function convertModuleCardToModuleItem(moduleCard: ModuleCardConfig): Mod
   };
 }
 
-export function convertModuleCardsToModuleItems(moduleCards: ModuleCardConfig[]): ModuleItem[] {
+function convertModuleCardsToModuleItems(moduleCards: ModuleCardConfig[]): ModuleItem[] {
   return moduleCards.map(convertModuleCardToModuleItem);
 }
