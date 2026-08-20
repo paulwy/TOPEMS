@@ -4,8 +4,6 @@ export { commonRoutes } from './common';
 
 export {
   getAllRoutes,
-  getModuleRoutes,
-  findRouteByPath,
   findRouteByPathSync,
   coreModuleCodes,
   loadModuleConfig,

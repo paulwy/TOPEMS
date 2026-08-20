@@ -118,7 +118,7 @@ interface RoutePerformanceRecord {
 
 // ==================== SmartRouter 类 ====================
 
-export class SmartRouter {
+class SmartRouter {
   private config: SmartRouterConfig;
   private navigationHistory: NavigationRecord[] = [];
   private userProfiles: Map<string, UserBehaviorProfile> = new Map();
@@ -563,5 +563,5 @@ export class SmartRouter {
 
 // ==================== 单例 ====================
 
-export const smartRouter = new SmartRouter();
+const smartRouter = new SmartRouter();
 export default smartRouter;

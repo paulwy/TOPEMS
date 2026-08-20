@@ -68,7 +68,6 @@ export { default as StatCard } from './StatCard';
 export type { StatCardBaseProps, MetricCardProps, ChartCardProps } from './StatCard';
 
 // AmountDisplay - 保留原导出
-export { default as AmountDisplay } from './AmountDisplay';
 export type { AmountDisplayProps } from './AmountDisplay';
 
 // DateRangeQuickSelect - 快速日期范围选择
@@ -99,11 +98,9 @@ export { default as QuickSearch } from './QuickSearch';
 export type { QuickSearchProps, SearchSuggestion, SearchHistoryItem } from './QuickSearch';
 
 // StatusTimeline - 保留原导出
-export { default as StatusTimeline } from './StatusTimeline';
 export type { StatusTimelineProps, TimelineItem } from './StatusTimeline';
 
 // CommentList - 保留原导出
-export { default as CommentList } from './CommentList';
 export type { CommentListProps, Comment } from './CommentList';
 
 // [shared] UserSelect - 已提升到 @topems/shared-components
@@ -111,7 +108,6 @@ export { UserSelect, type UserSelectProps } from '@topems/shared-components';
 export type { User } from '@topems/shared-types';
 
 // DepartmentSelect - 保留原导出
-export { default as DepartmentSelect } from './DepartmentSelect';
 export type { DepartmentSelectProps, Department } from './DepartmentSelect';
 
 // Grid - Grid2 兼容组件
@@ -140,7 +136,6 @@ export {
 export { LoadingSpinner } from '@topems/shared-components';
 
 // AdvancedFilterPanel - 高级筛选面板组件
-export { default as AdvancedFilterPanel } from './AdvancedFilter';
 export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';
 
 // PageContainer - 统一页面容器组件 (支持autoTitle和autoBreadcrumbs)

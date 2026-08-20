@@ -63,7 +63,7 @@ export interface SendWithTemplateRequest {
   bcc?: string[];
 }
 
-export const mailApi = {
+const mailApi = {
   listEmails: async (): Promise<ApiResponse<Email[]>> => {
     return apiClient.notification.get('/mail/emails');
   },

@@ -46,7 +46,7 @@ async fn list_audit_logs(
         FROM hrm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::text IS NULL OR user_id = $3)
+          AND ($3::text IS NULL OR user_id::text = $3)
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
@@ -72,7 +72,7 @@ async fn list_audit_logs(
                 SELECT COUNT(*) FROM hrm.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
-                  AND ($3::text IS NULL OR user_id = $3)
+                  AND ($3::text IS NULL OR user_id::text = $3)
                   AND ($4::text IS NULL OR status = $4)
                   AND ($5::text IS NULL OR created_at >= $5::timestamptz)
                   AND ($6::text IS NULL OR created_at <= $6::timestamptz)
