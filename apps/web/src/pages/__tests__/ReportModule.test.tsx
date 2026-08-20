@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import ReportBuilder from '../report/ReportBuilder';
 import ReportDesignPage from '../report/ReportDesignPage';
 import ReportPage from '../report/ReportPage';
-import ReportViewer from '../report/ReportViewer';
+import { ReportViewer } from '../report/ReportViewer';
 import TemplateManagementPage from '../report/TemplateManagementPage';
 import { reportApi } from '@/api/report';
 import { useNotificationStore, useAuthStore } from '@/store';

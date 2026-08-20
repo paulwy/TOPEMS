@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   FileText,
   Download,
@@ -27,16 +29,61 @@ import {
   Paper,
   IconButton,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { reportApi } from '@/api/report';
 import type { ReportData } from '@/api/report';
+
+const ReportViewerPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { data: report, isLoading, error } = useQuery({
+    queryKey: ['report', 'viewer', id],
+    queryFn: async () => {
+      const res = await reportApi.getReport(id!);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  const onClose = () => navigate(-1);
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  if (error || !report) {
+    return (
+      <PageContainer>
+        <Box sx={{ textAlign: 'center', py: 10 }}>
+          <Typography color='error'>
+            {error ? String(error) : i18n.t('pages.report_viewer.k4')}
+          </Typography>
+          <Button onClick={onClose} sx={{ mt: 2 }}>
+            {i18n.t('pages.report_viewer.k5')}
+          </Button>
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  return <ReportViewerContent report={report} onClose={onClose} />;
+};
 
 interface ReportViewerProps {
   report: ReportData;
   onClose: () => void;
 }
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
+const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAllColumns, setShowAllColumns] = useState(false);
@@ -485,4 +532,5 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   );
 };
 
-export default ReportViewer;
+export default ReportViewerPage;
+export { ReportViewerContent as ReportViewer };

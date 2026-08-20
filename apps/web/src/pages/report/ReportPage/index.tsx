@@ -14,7 +14,7 @@ import type {
 import i18n from '@/i18n';
 import { reportApi } from '@/api/report';
 import ReportBuilder from '../ReportBuilder';
-import ReportViewer from '../ReportViewer';
+import { ReportViewer } from '../ReportViewer';
 import { ExportModal } from '@/components/export';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
