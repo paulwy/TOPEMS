@@ -42,13 +42,13 @@ export enum NodeStatus {
   SKIPPED = 'skipped',
 }
 
-export enum ExecutionMode {
+enum ExecutionMode {
   SEQUENTIAL = 'sequential',
   PARALLEL = 'parallel',
   HYBRID = 'hybrid',
 }
 
-export enum DataFormat {
+enum DataFormat {
   JSON = 'json',
   XML = 'xml',
   CSV = 'csv',
@@ -124,7 +124,7 @@ export interface FlowValidation {
 
 // ==================== 数据流编排器 ====================
 
-export class DataflowOrchestrator {
+class DataflowOrchestrator {
   private flows: Map<
     string,
     { nodes: Map<string, FlowNode>; connections: FlowConnection[]; executionMode: ExecutionMode }

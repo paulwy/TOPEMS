@@ -153,7 +153,7 @@ export const formatRelativeTime = (dateString: string): string => {
   }
 };
 
-export const formatStatus = (status: string | number): string => {
+const formatStatus = (status: string | number): string => {
   const statusMap: Record<string, string> = {
     0: i18n.t('shared.format.k1'),
     1: i18n.t('shared.format.k2'),
@@ -192,24 +192,24 @@ export const formatFileSize = (bytes: number | string): string => {
   return `${sharedFormatNumber(number / Math.pow(k, i), 2)} ${sizes[i]}`;
 };
 
-export const formatPhone = (phone: string): string => {
+const formatPhone = (phone: string): string => {
   if (!phone) return '';
   return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 };
 
-export const formatEmail = (email: string): string => {
+const formatEmail = (email: string): string => {
   if (!email) return '';
   const [prefix, domain] = email.split('@');
   if (!prefix || !domain) return email;
   return `${prefix.slice(0, 2)}***@${domain}`;
 };
 
-export const formatIdCard = (idCard: string): string => {
+const formatIdCard = (idCard: string): string => {
   if (!idCard) return '';
   return idCard.replace(/(\d{4})\d+(\d{4})/, '$1**********$2');
 };
 
-export const formatDateRange = (startDate: string, endDate: string): string => {
+const formatDateRange = (startDate: string, endDate: string): string => {
   const start = new Date(startDate);
   const end = new Date(endDate);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) return `${startDate} - ${endDate}`;
@@ -229,11 +229,11 @@ export const formatDateRange = (startDate: string, endDate: string): string => {
   }
 };
 
-export const formatMonth = (dateString: string): string => {
+const formatMonth = (dateString: string): string => {
   return formatDate(dateString, i18n.t('shared.format.yyyymm_12'));
 };
 
-export const formatWeek = (dateString: string): string => {
+const formatWeek = (dateString: string): string => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
 

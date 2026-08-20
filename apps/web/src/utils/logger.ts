@@ -198,7 +198,7 @@ export const authLogger = createLogger('Auth', {
   prefix: 'AUTH',
 });
 
-export const errorLogger = createLogger('Error', {
+const errorLogger = createLogger('Error', {
   level: 'error',
   prefix: 'ERROR',
 });

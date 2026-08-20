@@ -140,6 +140,6 @@ export function classifyError(error: unknown): AppError {
 /**
  * 获取用户友好的错误消息
  */
-export function getUserFriendlyError(error: unknown): string {
+function getUserFriendlyError(error: unknown): string {
   return classifyError(error).message;
 }

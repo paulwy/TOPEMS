@@ -4,7 +4,7 @@ import i18n from '@/i18n';
 export const fieldName = () =>
   z.string().min(2, i18n.t('shared.form_schemas.2_1')).max(50, i18n.t('shared.form_schemas.50_0'));
 
-export const fieldCode = () =>
+const fieldCode = () =>
   z
     .string()
     .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, i18n.t('shared.form_schemas.k2'))
@@ -14,16 +14,15 @@ export const fieldCode = () =>
 const fieldDescription = () =>
   z.string().max(500, i18n.t('shared.form_schemas.500_5')).optional().or(z.literal(''));
 
-const fieldEmail = () =>
-  z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
+const fieldEmail = () => z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
 
-export const fieldPhone = () =>
+const fieldPhone = () =>
   z
     .string()
     .regex(/^1[3-9]\d{9}$/, i18n.t('shared.form_schemas.k7'))
     .or(z.literal(''));
 
-export const fieldAmount = () =>
+const fieldAmount = () =>
   z
     .number()
     .min(0, i18n.t('shared.form_schemas.k8'))
@@ -60,7 +59,7 @@ const fieldSort = () =>
     })
     .optional();
 
-export const baseEntitySchema = z.object({
+const baseEntitySchema = z.object({
   id: z.string().optional(),
   name: fieldName(),
   code: fieldCode().optional(),

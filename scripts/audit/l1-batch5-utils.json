@@ -1,0 +1,252 @@
+{
+  "batch_id": "l1-safe-batch5-utils",
+  "date": "2026-08-20",
+  "description": "L1-SAFE Batch 5: utils/ directory value exports conservative removal.",
+  "removal_mode": "conservative-v2-export-keyword-only",
+  "total_exports": 170,
+  "total_files": 36,
+  "targets": {
+    "apps/web/src/components/gis/utils/performance.ts": [
+      "throttle",
+      "useThrottledCallback"
+    ],
+    "apps/web/src/utils/a2ui/ai-ui-generator.ts": [
+      "UIGenerationMode",
+      "LayoutStrategy",
+      "ComponentLevel",
+      "AIUIGenerator",
+      "aiUiGenerator"
+    ],
+    "apps/web/src/utils/a2ui/auto-test-generator.ts": [
+      "TestGenerationStrategy",
+      "MockType",
+      "AutoTestGenerator",
+      "autoTestGenerator"
+    ],
+    "apps/web/src/utils/a2ui/index.ts": [
+      "ReviewSeverity",
+      "SmartCodeReviewer",
+      "smartCodeReviewer",
+      "ReviewCategory",
+      "FixDifficulty",
+      "ReviewStatus",
+      "defaultAiUiGenerator",
+      "defaultAutoTestGenerator",
+      "defaultSmartCodeReviewer"
+    ],
+    "apps/web/src/utils/ai/code-completion.ts": [
+      "CompletionType",
+      "CompletionMode",
+      "CodeCompletionEngine",
+      "codeCompletionEngine"
+    ],
+    "apps/web/src/utils/ai/index.ts": [
+      "codeCompletionDefault",
+      "TestGenerator",
+      "testGenerator",
+      "testGeneratorDefault",
+      "MockStrategy",
+      "TestCaseDesignMethod",
+      "UIRecommender",
+      "uiRecommender",
+      "uiRecommenderDefault",
+      "UILibrary",
+      "ResponsiveStrategy"
+    ],
+    "apps/web/src/utils/apiCache.ts": [
+      "apiCache"
+    ],
+    "apps/web/src/utils/apiPath.ts": [
+      "API_VERSION",
+      "GROUP1_CORE_SERVICES",
+      "GROUP2_INDEPENDENT_SERVICES",
+      "SERVICE_CODES",
+      "buildApiPath",
+      "createServiceApi"
+    ],
+    "apps/web/src/utils/bff/ab-testing.ts": [
+      "ABTestEngine",
+      "fnv1aHash"
+    ],
+    "apps/web/src/utils/bff/auto-sharding-v2.ts": [
+      "SmartShardingDecider",
+      "ProgressiveLoader"
+    ],
+    "apps/web/src/utils/bff/codegen.ts": [
+      "toCamelCase",
+      "toSnakeCase",
+      "toKebabCase",
+      "pluralize",
+      "singularize",
+      "buildQueryName",
+      "buildMutationName",
+      "generateEntityQueries",
+      "generateTypeScriptTypes",
+      "generateReactQueryHooks",
+      "generateListPageTemplate"
+    ],
+    "apps/web/src/utils/bff/fallback-strategy.ts": [
+      "FallbackManager",
+      "GraphqlToRestFallback",
+      "CacheFallback",
+      "UIFallback",
+      "OfflineFallback"
+    ],
+    "apps/web/src/utils/bff/query-builder.ts": [
+      "QueryBuilder",
+      "MutationBuilder",
+      "queryTemplates"
+    ],
+    "apps/web/src/utils/date.ts": [
+      "parseDate",
+      "isSameDay",
+      "getDaysBetween",
+      "getWeekday",
+      "isToday",
+      "isYesterday",
+      "isTomorrow",
+      "getWeekStart",
+      "getWeekEnd"
+    ],
+    "apps/web/src/utils/errorHandler.ts": [
+      "getUserFriendlyError"
+    ],
+    "apps/web/src/utils/errors.ts": [
+      "ErrorCode",
+      "AppExceptionError"
+    ],
+    "apps/web/src/utils/formSchemas.ts": [
+      "fieldCode",
+      "fieldPhone",
+      "fieldAmount",
+      "baseEntitySchema"
+    ],
+    "apps/web/src/utils/format.ts": [
+      "formatStatus",
+      "formatPhone",
+      "formatEmail",
+      "formatIdCard",
+      "formatDateRange",
+      "formatMonth",
+      "formatWeek"
+    ],
+    "apps/web/src/utils/importExport.ts": [
+      "parseFileExtension",
+      "getImportModeLabel",
+      "readFileAsBase64"
+    ],
+    "apps/web/src/utils/index.ts": [
+      "FlowNodeType",
+      "lazyImportDefault",
+      "apiVisualIntegration",
+      "dataflowOrchestrator",
+      "autoDocGenerator",
+      "HttpMethod",
+      "DocFormat",
+      "defaultApiVisualIntegration",
+      "defaultDataflowOrchestrator",
+      "defaultAutoDocGenerator"
+    ],
+    "apps/web/src/utils/listParamMapping.ts": [
+      "parsePaginationFromResponse",
+      "topemsStandardParams",
+      "nestedFilterParams",
+      "offsetStyleParams",
+      "buildStandardFilterParams",
+      "buildNestedFilterArray",
+      "serializeFiltersToUrl",
+      "parseFiltersFromUrl"
+    ],
+    "apps/web/src/utils/logger.ts": [
+      "errorLogger"
+    ],
+    "apps/web/src/utils/mobileDetector.ts": [
+      "getBreakpoint",
+      "isMobileView",
+      "isTabletView",
+      "isDesktopView",
+      "getAppLink",
+      "getDownloadUrl"
+    ],
+    "apps/web/src/utils/observability/e2e-tracing.ts": [
+      "E2ETracer",
+      "e2eTracer"
+    ],
+    "apps/web/src/utils/observability/index.ts": [
+      "SessionReplayer",
+      "sessionReplayer",
+      "ReplayEventType",
+      "PerformanceBottleneckDetector",
+      "performanceBottleneckDetector",
+      "BottleneckType",
+      "BottleneckSeverity"
+    ],
+    "apps/web/src/utils/storage.ts": [
+      "localStorage2",
+      "sessionStorage2",
+      "LocalStorage",
+      "SessionStorage"
+    ],
+    "apps/web/src/utils/string.ts": [
+      "trimAll",
+      "uncapitalize",
+      "maskPhone",
+      "maskEmail",
+      "maskIdCard",
+      "slugify",
+      "stripHtml",
+      "unescapeHtml",
+      "isNotEmpty",
+      "limitLength",
+      "snakeToTitle",
+      "camelToTitle"
+    ],
+    "apps/web/src/utils/tracing.ts": [
+      "resetTrace",
+      "createSpan",
+      "getTraceHeaders",
+      "instrumentAxios"
+    ],
+    "apps/web/src/utils/websocket-optimizer.ts": [
+      "fullJitterBackoff",
+      "equalJitterBackoff"
+    ],
+    "apps/web/src/utils/worker.ts": [
+      "validateEmail"
+    ],
+    "apps/web/src/utils/workflow/auto-trigger.ts": [
+      "LogicalOperator",
+      "TriggerFireResult",
+      "AutoTriggerEngine",
+      "autoTriggerEngine"
+    ],
+    "apps/web/src/utils/workflow/drag-orchestrator.ts": [
+      "DragState",
+      "AlignType",
+      "DragOrchestrator",
+      "dragOrchestrator"
+    ],
+    "apps/web/src/utils/workflow/index.ts": [
+      "WorkflowEditor",
+      "workflowEditor",
+      "NodeStatus",
+      "defaultWorkflowEditor",
+      "defaultDragOrchestrator",
+      "defaultAutoTriggerEngine"
+    ],
+    "apps/web/src/utils/zerocode/api-visual-integration.ts": [
+      "MappingDirection",
+      "EndpointStatus",
+      "ApiVisualIntegration"
+    ],
+    "apps/web/src/utils/zerocode/auto-doc-generator.ts": [
+      "DocSectionType",
+      "AutoDocGenerator"
+    ],
+    "apps/web/src/utils/zerocode/dataflow-orchestrator.ts": [
+      "ExecutionMode",
+      "DataFormat",
+      "DataflowOrchestrator"
+    ]
+  }
+}

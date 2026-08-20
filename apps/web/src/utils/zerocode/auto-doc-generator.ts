@@ -28,7 +28,7 @@ export enum DocFormat {
   OPENAPI = 'openapi',
 }
 
-export enum DocSectionType {
+enum DocSectionType {
   OVERVIEW = 'overview',
   ENDPOINTS = 'endpoints',
   SCHEMA = 'schema',
@@ -177,7 +177,7 @@ const DOC_TEMPLATES = {
 
 // ==================== 自动化文档生成器 ====================
 
-export class AutoDocGenerator {
+class AutoDocGenerator {
   private documents: Map<string, GeneratedDoc> = new Map();
   private components: Map<string, ComponentDoc> = new Map();
   private apiSourceCache: Map<string, EndpointDocConfig> = new Map();

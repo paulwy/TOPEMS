@@ -1,8 +1,6 @@
-export { E2ETracer, e2eTracer, SpanStatusCode } from './e2e-tracing';
+export { SpanStatusCode } from './e2e-tracing';
 
 export type { Span, SpanEvent, SpanStatus, Trace, TracingConfig } from './e2e-tracing';
-
-export { SessionReplayer, sessionReplayer, ReplayEventType } from './session-replay';
 
 export type {
   ReplaySession,
@@ -18,13 +16,6 @@ export type {
   ResizeData,
   ReplayConfig,
 } from './session-replay';
-
-export {
-  PerformanceBottleneckDetector,
-  performanceBottleneckDetector,
-  BottleneckType,
-  BottleneckSeverity,
-} from './performance-bottleneck';
 
 export type {
   BottleneckInfo,

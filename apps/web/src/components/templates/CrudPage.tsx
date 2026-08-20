@@ -765,7 +765,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             <Tab
               key={tab.id}
               label={tab.label}
-              icon={tab.icon ? <>{tab.icon}</> : undefined}
+              icon={(tab.icon as React.ReactElement | string) || undefined}
               iconPosition='start'
               value={tab.id}
               disabled={tab.disabled}

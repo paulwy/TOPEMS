@@ -20,4 +20,4 @@ export * from './ui';
 export * from './server';
 
 // Error handling utilities
-export { classifyError, getUserFriendlyError } from '../utils/errorHandler';
+export { classifyError } from '../utils/errorHandler';

@@ -37,12 +37,12 @@ export enum TriggerType {
   COMPOUND = 'compound',
 }
 
-export enum LogicalOperator {
+enum LogicalOperator {
   AND = 'and',
   OR = 'or',
 }
 
-export enum TriggerFireResult {
+enum TriggerFireResult {
   SUCCESS = 'success',
   FAILED = 'failed',
   SKIPPED = 'skipped',
@@ -150,7 +150,7 @@ export interface AnomalyDetection {
 
 // ==================== 触发引擎 ====================
 
-export class AutoTriggerEngine {
+class AutoTriggerEngine {
   private triggers: Map<string, Trigger> = new Map();
   private histories: TriggerHistory[] = [];
   private metricSamples: Map<string, number[]> = new Map();
@@ -507,5 +507,5 @@ export class AutoTriggerEngine {
   }
 }
 
-export const autoTriggerEngine = new AutoTriggerEngine();
+const autoTriggerEngine = new AutoTriggerEngine();
 export default autoTriggerEngine;

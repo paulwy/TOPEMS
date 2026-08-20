@@ -132,7 +132,7 @@ export interface FallbackStats {
  * 当 GraphQL 请求失败时，自动回退到 REST API。
  * condition：错误包含 GraphQL/Network/Timeout 标志时触发。
  */
-export class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
+class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'GraphqlToRestFallback';
   level = FallbackLevel.SECONDARY;
   priority = 100;
@@ -167,7 +167,7 @@ export class GraphqlToRestFallback<T = unknown> implements FallbackStrategy<T> {
  * 当网络请求失败时，使用缓存数据兜底。
  * condition：上下文携带 cachedData 且错误为网络错误时触发。
  */
-export class CacheFallback<T = unknown> implements FallbackStrategy<T> {
+class CacheFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'CacheFallback';
   level = FallbackLevel.TERTIARY;
   priority = 80;
@@ -198,7 +198,7 @@ export class CacheFallback<T = unknown> implements FallbackStrategy<T> {
  * 当所有数据源都失败时，返回一个降级 UI 标记，由组件层渲染降级 UI。
  * condition：始终为 true（责任链末端兜底）。
  */
-export class UIFallback<T = unknown> implements FallbackStrategy<T> {
+class UIFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'UIFallback';
   level = FallbackLevel.TERTIARY;
   priority = 10;
@@ -225,7 +225,7 @@ export class UIFallback<T = unknown> implements FallbackStrategy<T> {
  * 当 navigator.onLine === false 时，使用本地数据（IndexedDB / localStorage）。
  * condition：检测到离线状态时触发。
  */
-export class OfflineFallback<T = unknown> implements FallbackStrategy<T> {
+class OfflineFallback<T = unknown> implements FallbackStrategy<T> {
   name = 'OfflineFallback';
   level = FallbackLevel.OFFLINE;
   priority = 90;
@@ -251,7 +251,7 @@ const STORAGE_KEY = 'topems:bff:fallback-records';
 const MAX_RECORDS = 500;
 
 /** 降级管理器：责任链调度降级策略 */
-export class FallbackManager {
+class FallbackManager {
   private strategies: Map<string, FallbackStrategy> = new Map();
   private records: FallbackRecord[] = [];
   private listeners: Set<(stats: FallbackStats) => void> = new Set();

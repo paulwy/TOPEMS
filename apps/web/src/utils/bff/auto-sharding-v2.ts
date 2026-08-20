@@ -117,7 +117,7 @@ function sleep(ms: number): Promise<void> {
 
 // ============ SmartShardingDecider: 智能分片决策 ============
 
-export class SmartShardingDecider {
+class SmartShardingDecider {
   private options: Required<ShardDeciderOptions>;
 
   constructor(options: ShardDeciderOptions = {}) {
@@ -351,7 +351,7 @@ export class SmartShardingDecider {
 
 // ============ ProgressiveLoader: 渐进式加载 ============
 
-export class ProgressiveLoader<T = unknown> {
+class ProgressiveLoader<T = unknown> {
   private query: string;
   private plan: ShardPlanV2;
   private options: Required<ProgressiveLoadOptions>;

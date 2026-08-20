@@ -44,7 +44,7 @@ export function getDeviceInfo(): DeviceInfo {
   };
 }
 
-export function getBreakpoint(): 'xs' | 'sm' | 'md' | 'lg' | 'xl' {
+function getBreakpoint(): 'xs' | 'sm' | 'md' | 'lg' | 'xl' {
   const width = window.innerWidth;
   if (width < 576) return 'xs';
   if (width < 768) return 'sm';
@@ -53,19 +53,19 @@ export function getBreakpoint(): 'xs' | 'sm' | 'md' | 'lg' | 'xl' {
   return 'xl';
 }
 
-export function isMobileView(): boolean {
+function isMobileView(): boolean {
   return getDeviceInfo().isMobile || window.innerWidth < 768;
 }
 
-export function isTabletView(): boolean {
+function isTabletView(): boolean {
   return getDeviceInfo().isTablet || (window.innerWidth >= 768 && window.innerWidth < 1024);
 }
 
-export function isDesktopView(): boolean {
+function isDesktopView(): boolean {
   return getDeviceInfo().isDesktop && window.innerWidth >= 1024;
 }
 
-export function getAppLink(): string {
+function getAppLink(): string {
   const deviceInfo = getDeviceInfo();
   if (deviceInfo.isIOS) {
     return 'https://apps.apple.com/cn/app/topems/id1234567890';
@@ -76,7 +76,7 @@ export function getAppLink(): string {
   return '/';
 }
 
-export function getDownloadUrl(): string {
+function getDownloadUrl(): string {
   const deviceInfo = getDeviceInfo();
   if (deviceInfo.isIOS) {
     return 'https://apps.apple.com/cn/app/topems/id1234567890';

@@ -37,7 +37,6 @@ export type {
 } from '@/hooks/bff';
 
 // 重新导出工具函数
-export { QueryBuilder, MutationBuilder, queryTemplates } from '@/utils/bff/query-builder';
 export type {
   FieldType,
   FieldSelection,
@@ -48,27 +47,10 @@ export type {
   BuiltQuery,
 } from '@/utils/bff/query-builder';
 
-export {
-  toPascalCase,
-  toCamelCase,
-  toSnakeCase,
-  toKebabCase,
-  pluralize,
-  singularize,
-  buildQueryName,
-  buildMutationName,
-  generateEntityQueries,
-  generateTypeScriptTypes,
-  generateReactQueryHooks,
-  generateListPageTemplate,
-} from '@/utils/bff/codegen';
+export { toPascalCase } from '@/utils/bff/codegen';
 export type { FieldDefinition, EntitySchema } from '@/utils/bff/codegen';
 
-export {
-  SmartShardingDecider,
-  ProgressiveLoader,
-  executeParallelShards,
-} from '@/utils/bff/auto-sharding-v2';
+export { executeParallelShards } from '@/utils/bff/auto-sharding-v2';
 export type {
   ShardStrategyV2,
   ShardInfoV2,
@@ -125,15 +107,7 @@ export { ABTestPanel } from './ABTestPanel';
 export type { ABTestPanelProps } from './ABTestPanel';
 
 // 降级策略引擎 + A/B 测试引擎（工具单例）
-export {
-  FallbackLevel,
-  FallbackManager,
-  GraphqlToRestFallback,
-  CacheFallback,
-  UIFallback,
-  OfflineFallback,
-  fallbackManager,
-} from '@/utils/bff/fallback-strategy';
+export { FallbackLevel, fallbackManager } from '@/utils/bff/fallback-strategy';
 export type {
   FallbackContext,
   FallbackResult,
@@ -142,7 +116,7 @@ export type {
   FallbackStats,
 } from '@/utils/bff/fallback-strategy';
 
-export { ABTestEngine, ExperimentStatus, fnv1aHash, abTestEngine } from '@/utils/bff/ab-testing';
+export { ExperimentStatus, abTestEngine } from '@/utils/bff/ab-testing';
 export type {
   TargetingOperator,
   TargetingRule,
