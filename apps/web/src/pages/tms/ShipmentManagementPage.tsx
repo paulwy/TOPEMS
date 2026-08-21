@@ -24,7 +24,7 @@ import { Search, RefreshCw, Send, MapPin, XCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { shipmentApi } from '@/api/tms';
-import type { Shipment } from '@/api/tms';
+import type { Shipment, CreateShipmentRequest } from '@/api/tms';
 
 type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 const statusMeta: Record<
@@ -55,7 +55,7 @@ const ShipmentManagementPage: React.FC = () => {
     pagination: { page, pageSize, total, setPage, setPageSize },
     fetch,
     refresh,
-  } = useCrudOperations<Shipment>({
+  } = useCrudOperations<Shipment, CreateShipmentRequest>({
     api: shipmentApi,
     queryKey: 'tms-shipments',
     pageParamName: 'page',
