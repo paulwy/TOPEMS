@@ -428,7 +428,7 @@ pub async fn list_work_reports(
             "reports": reports,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取工报列表成功",
     ))

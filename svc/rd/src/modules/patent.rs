@@ -12,12 +12,12 @@ use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+pub struct ListParams {
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
 }
@@ -114,11 +114,11 @@ fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
 
 async fn list_patents(
     State(state): State<crate::modules::ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query(
         r#"
@@ -133,7 +133,7 @@ async fn list_patents(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(&params.status)
     .bind(params.project_id)
     .bind(page_size)
@@ -152,7 +152,7 @@ async fn list_patents(
                   AND ($3::uuid IS NULL OR project_id = $3)
                 "#,
             )
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(&params.status)
             .bind(params.project_id)
             .fetch_one(&state.db)

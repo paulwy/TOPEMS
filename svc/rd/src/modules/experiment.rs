@@ -12,6 +12,7 @@ use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::repository::ListQueryParams;
 
 fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
     claims
@@ -28,10 +29,9 @@ fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+pub struct ListParams {
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
     pub experiment_type: Option<String>,
@@ -63,13 +63,13 @@ pub fn create_routes() -> Router<super::ApiState> {
 async fn list_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -88,7 +88,7 @@ async fn list_experiments(
         "#,
     )
     .bind(tenant_id)
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(&params.status)
     .bind(params.project_id)
     .bind(&params.experiment_type)
@@ -110,7 +110,7 @@ async fn list_experiments(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(&params.status)
             .bind(params.project_id)
             .bind(&params.experiment_type)
@@ -521,13 +521,13 @@ async fn create_experiment_record(
 async fn list_lab_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -545,7 +545,7 @@ async fn list_lab_experiments(
         "#,
     )
     .bind(tenant_id)
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
@@ -564,7 +564,7 @@ async fn list_lab_experiments(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(&params.status)
             .fetch_one(&state.db)
             .await;
@@ -591,13 +591,13 @@ async fn list_lab_experiments(
 async fn list_pilot_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -615,7 +615,7 @@ async fn list_pilot_experiments(
         "#,
     )
     .bind(tenant_id)
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
@@ -634,7 +634,7 @@ async fn list_pilot_experiments(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(&params.status)
             .fetch_one(&state.db)
             .await;
@@ -661,13 +661,13 @@ async fn list_pilot_experiments(
 async fn list_scaleup_experiments(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -685,7 +685,7 @@ async fn list_scaleup_experiments(
         "#,
     )
     .bind(tenant_id)
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
@@ -704,7 +704,7 @@ async fn list_scaleup_experiments(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(&params.status)
             .fetch_one(&state.db)
             .await;

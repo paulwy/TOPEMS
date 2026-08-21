@@ -314,7 +314,7 @@ pub async fn list_process_flows(
             "flows": flows,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取工艺流程列表成功",
     ))

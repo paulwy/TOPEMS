@@ -108,13 +108,8 @@ interface ComplianceDashboard {
   last_updated: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 export interface GenerateReportRequest {
   framework: ComplianceFramework;

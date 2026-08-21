@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -27,11 +26,10 @@ import {
 import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store/notificationStore';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { vehicleApi } from '@/api/tms';
 import type { Vehicle, CreateVehicleRequest, VehicleStatus } from '@/api/tms';
 
-const QUERY_KEY = 'tms-vehicles';
 function getStatusOptions() {
   return [
     { value: 'active', label: i18n.t('tms.vehicle_management_page.k0') },
@@ -72,82 +70,28 @@ const renderStatusChip = (status?: string) => {
   );
 };
 const VehicleManagementPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState<Partial<Vehicle>>({});
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
-  const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-  const { data, isLoading } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const res = await vehicleApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error(i18n.t('tms.vehicle_management_page.k5'));
-      return { items: res.data?.items || [], total: res.data?.total || 0 };
-    },
-  });
-  const createMutation = useMutation({
-    mutationFn: (data: CreateVehicleRequest) => vehicleApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.vehicle_management_page.k7'),
-        message: i18n.t('tms.vehicle_management_page.k6'),
-      });
-      setFormOpen(false);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.vehicle_management_page.k8'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
-  });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateVehicleRequest> }) =>
-      vehicleApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.vehicle_management_page.k10'),
-        message: i18n.t('tms.vehicle_management_page.k9'),
-      });
-      setFormOpen(false);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.vehicle_management_page.k11'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
-  });
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => vehicleApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.vehicle_management_page.k13'),
-        message: i18n.t('tms.vehicle_management_page.k12'),
-      });
-      setDeleteTarget(null);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.vehicle_management_page.k14'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
+  const {
+    data: rows,
+    loading: isLoading,
+    pagination: { page, pageSize, total, setPage, setPageSize },
+    fetch,
+    refresh,
+    create: createItem,
+    update: updateItem,
+    delete: deleteItem,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+  } = useCrudOperations<Vehicle, CreateVehicleRequest>({
+    api: vehicleApi,
+    queryKey: 'tms-vehicles',
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
   });
   const handleOpenCreate = () => {
     setFormMode('create');
@@ -159,7 +103,7 @@ const VehicleManagementPage: React.FC = () => {
     setFormData({ ...row });
     setFormOpen(true);
   };
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const payload = {
       vehicle_no: formData.vehicle_no || '',
       plate_number: formData.plate_number,
@@ -169,21 +113,28 @@ const VehicleManagementPage: React.FC = () => {
       status: formData.status,
       notes: formData.notes,
     } as CreateVehicleRequest;
-    if (formMode === 'create') {
-      createMutation.mutate(payload);
-    } else if (formData.id) {
-      updateMutation.mutate({ id: formData.id, data: payload });
+    try {
+      if (formMode === 'create') {
+        await createItem(payload);
+      } else if (formData.id) {
+        await updateItem(formData.id, payload);
+      }
+      setFormOpen(false);
+    } catch {
+      // Error notification handled by hook
     }
   };
-  const handleSearchSubmit = () => {
-    setSearch(searchInput);
-    setPage(1);
+  const handleSearchSubmit = () => fetch({ search: searchInput || undefined });
+  const handleRefresh = () => refresh();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteItem(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch {
+      // Error notification handled by hook
+    }
   };
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-  };
-  const rows = data?.items || [];
-  const total = data?.total || 0;
   const submitting = createMutation.isPending || updateMutation.isPending;
   return (
     <PageContainer
@@ -331,10 +282,7 @@ const VehicleManagementPage: React.FC = () => {
           page={page - 1}
           onPageChange={(_, p) => setPage(p + 1)}
           rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-          }}
+          onRowsPerPageChange={(e) => setPageSize(Number(e.target.value))}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.vehicle_management_page.k28')}
           labelDisplayedRows={({ from, to, count }) =>
@@ -462,7 +410,7 @@ const VehicleManagementPage: React.FC = () => {
           <Button
             color='error'
             variant='contained'
-            onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+            onClick={handleDelete}
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending

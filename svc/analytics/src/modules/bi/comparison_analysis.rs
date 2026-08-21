@@ -206,11 +206,7 @@ pub async fn list_comparisons(
         })
         .collect();
 
-    let total_pages = if page_size == 0 {
-        0
-    } else {
-        (total + page_size - 1) / page_size
-    };
+    let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
 
     Json(serde_json::json!({
         "success": true,

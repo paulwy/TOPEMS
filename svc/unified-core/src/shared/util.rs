@@ -71,13 +71,7 @@ pub fn build_pagination(
     }
 }
 
-pub fn total_pages(total: i64, page_size: i64) -> i64 {
-    if total <= 0 {
-        return 0;
-    }
-    let s = page_size.max(1);
-    (total + s - 1) / s
-}
+pub use topems_shared_core::response::total_pages_of as total_pages;
 
 // ============================================================================
 // 3. RBAC 位打包 / 解包
@@ -305,14 +299,7 @@ pub fn normalize_tag_list(tags: Vec<String>) -> Vec<String> {
 // 9. 附加：API 标准响应 DTO（纯 serde 版）
 // ============================================================================
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ApiListResp<T> {
-    pub items: Vec<T>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-    pub total_pages: i64,
-}
+pub type ApiListResp<T> = topems_shared_core::response::PaginatedResponse<T>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TenantScope {
@@ -472,19 +459,6 @@ mod tests {
         let j = serde_json::to_string(&p).unwrap();
         let d: Pagination = serde_json::from_str(&j).unwrap();
         assert_eq!(d, p);
-    }
-
-    #[test]
-    fn total_pages_zero_or_negative_total() {
-        assert_eq!(total_pages(0, 20), 0);
-        assert_eq!(total_pages(-10, 20), 0);
-    }
-
-    #[test]
-    fn total_pages_rounds_up() {
-        assert_eq!(total_pages(1, 10), 1);
-        assert_eq!(total_pages(10, 10), 1);
-        assert_eq!(total_pages(11, 10), 2);
     }
 
     // ---------- rbac bits ----------
@@ -725,16 +699,14 @@ mod tests {
 
     #[test]
     fn api_list_resp_roundtrip() {
-        let resp = ApiListResp {
-            items: vec![Item { id: 1 }, Item { id: 2 }],
-            total: 42,
-            page: 2,
-            page_size: 20,
-            total_pages: 3,
-        };
+        let resp = ApiListResp::<Item>::new(vec![Item { id: 1 }, Item { id: 2 }], 42, 2, 20);
         let j = serde_json::to_string(&resp).unwrap();
         let d: ApiListResp<Item> = serde_json::from_str(&j).unwrap();
-        assert_eq!(d, resp);
+        assert_eq!(d.items, resp.items);
+        assert_eq!(d.total, resp.total);
+        assert_eq!(d.page, resp.page);
+        assert_eq!(d.page_size, resp.page_size);
+        assert_eq!(d.total_pages, resp.total_pages);
     }
 
     #[test]

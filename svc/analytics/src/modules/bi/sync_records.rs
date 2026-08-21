@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
@@ -32,14 +33,7 @@ pub struct SyncRecordResponse {
     pub updated_at: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SyncRecordListResponse {
-    pub items: Vec<SyncRecordResponse>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-    pub total_pages: i64,
-}
+pub type SyncRecordListResponse = PaginatedResponse<SyncRecordResponse>;
 
 #[derive(Debug, Deserialize)]
 pub struct SyncRecordQuery {
@@ -226,22 +220,11 @@ pub async fn list_sync_records(
     };
 
     let items: Vec<SyncRecordResponse> = rows.into_iter().map(Into::into).collect();
-    let total_pages = if page_size > 0 {
-        (total + page_size - 1) / page_size
-    } else {
-        0
-    };
 
     Json(serde_json::json!({
         "success": true,
         "message": "List sync records",
-        "data": SyncRecordListResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages,
-        }
+        "data": PaginatedResponse::new(items, total, page, page_size)
     }))
 }
 

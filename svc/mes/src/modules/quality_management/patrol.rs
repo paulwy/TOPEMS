@@ -197,7 +197,7 @@ pub async fn list_patrols(
             "patrols": patrols,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取巡检记录列表成功",
     ))

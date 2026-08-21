@@ -29,14 +29,7 @@ pub fn sort_plugins_by_popularity(mut plugins: Vec<(String, u32, f64)>) -> Vec<(
 
 /// Compute the total pages for a paginated plugin list.
 pub fn calculate_total_pages(total: i64, page_size: u32) -> u32 {
-    if page_size == 0 {
-        return 0;
-    }
-    let ps = page_size as i64;
-    if total <= 0 {
-        return 0;
-    }
-    ((total as f64) / (ps as f64)).ceil() as u32
+    topems_shared_core::response::total_pages_of(total, page_size as i64) as u32
 }
 
 /// Clamp page number to the valid range [1, ..] and compute the SQL OFFSET.
@@ -223,7 +216,7 @@ pub async fn list_plugins(
         total: total.0,
         page,
         page_size,
-        total_pages: ((total.0 as f64) / (page_size as f64)).ceil() as u32,
+        total_pages: topems_shared_core::response::total_pages_of(total.0, page_size as i64) as u32,
     };
 
     Json(CoreResponse::success(response, "Plugins retrieved"))

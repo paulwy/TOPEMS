@@ -102,13 +102,8 @@ interface SLAIncident {
   status: IncidentStatus;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 interface SLAStatusInfo {
   config_id: string;

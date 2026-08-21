@@ -26,6 +26,17 @@ const logger = createLogger('ApiClient');
 
 export type ApiResponse<T = unknown> = SharedApiResponse<T>;
 export type PaginatedResponse<T = unknown> = SharedPaginatedResponse<T>;
+export type { PaginatedResult } from '@topems/shared-types';
+/**
+ * 宽松的列表响应类型（4 字段，无 total_pages/camelCase 双写要求）。
+ * 历史：apps 里有 WMS/mobile 两处本地定义，统一后统一走这里。
+ */
+export type ListResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+};
 
 export interface PaginationParams {
   page?: number;

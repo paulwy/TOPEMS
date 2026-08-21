@@ -275,7 +275,7 @@ pub async fn list_material_requirements(
             "requirements": requirements,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取物料需求列表成功",
     ))

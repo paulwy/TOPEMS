@@ -305,7 +305,7 @@ pub async fn list_schemas(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": (total + page_size - 1) / page_size,
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }
     })))
 }
@@ -531,7 +531,7 @@ pub async fn list_data(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": (total + page_size - 1) / page_size,
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
             "schema": {
                 "id": schema.id,
                 "name": schema.name,

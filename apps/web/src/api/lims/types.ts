@@ -190,12 +190,7 @@ export interface ListParams {
   [key: string]: string | number | undefined;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+export type { PaginatedResult } from '@/api/client';
 
 export interface Instrument {
   id: string;

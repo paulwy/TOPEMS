@@ -74,13 +74,7 @@ pub struct AiChatResponse {
     pub answer: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PaginatedResponse<T> {
-    pub items: Vec<T>,
-    pub total: i64,
-    pub page: i32,
-    pub page_size: i32,
-}
+pub use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
 struct ListQueryParams {
@@ -126,12 +120,7 @@ async fn list_analyses(
     match (result, total) {
         (Ok(items), Ok(total_count)) => {
             let response = ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total: total_count,
-                    page,
-                    page_size,
-                },
+                PaginatedResponse::new(items, total_count, page as i64, page_size as i64),
                 "AI分析列表获取成功",
             );
             (StatusCode::OK, Json(response))

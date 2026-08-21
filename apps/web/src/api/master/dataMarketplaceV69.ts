@@ -110,13 +110,8 @@ interface MarketplaceDashboard {
   top_categories: Array<{ category: AssetCategory; count: number }>;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 interface PublishAssetRequest {
   name: string;

@@ -371,12 +371,7 @@ export interface ListParams {
   [key: string]: string | number | boolean | undefined;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+export type { PaginatedResult } from '@/api/client';
 
 // ==================== 表单相关类型 ====================
 

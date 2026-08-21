@@ -164,13 +164,8 @@ export interface GovernanceDashboard {
   owner_coverage_stats: Array<{ owner_id: string; assets_count: number; compliance_rate: number }>;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 interface CreateRuleRequest {
   name: string;

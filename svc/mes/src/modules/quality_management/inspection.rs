@@ -255,7 +255,7 @@ pub async fn list_inspections(
             "inspections": inspections,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取检验记录列表成功",
     ))

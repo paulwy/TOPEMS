@@ -910,7 +910,7 @@ pub async fn list_transactions_handler(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "事务列表",
     ))

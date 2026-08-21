@@ -777,7 +777,7 @@ pub async fn list_quality_checks(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "质量检查列表",
     ))
@@ -1142,7 +1142,7 @@ pub async fn get_fix_actions(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "修复操作列表",
     ))
@@ -1364,7 +1364,7 @@ pub async fn get_suggestions(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "治理建议列表",
     ))

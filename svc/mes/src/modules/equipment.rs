@@ -823,7 +823,7 @@ pub async fn list_maintenances(
             "items": maintenance_records,
             "total": total,
             "page": page,
-            "pagesize": page_size,
+            "page_size": page_size,
         }),
         "获取维护记录列表成功",
     ))
@@ -1181,7 +1181,7 @@ pub async fn list_inspections(
                     "records": inspections,
                     "total": total,
                     "page": page,
-                    "pagesize": pagesize,
+                    "page_size": pagesize,
                 }),
                 "获取点检记录列表成功",
             ))

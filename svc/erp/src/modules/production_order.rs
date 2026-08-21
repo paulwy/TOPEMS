@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -18,10 +19,9 @@ use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub status: Option<String>,
-    pub search: Option<String>,
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -65,11 +65,11 @@ pub async fn list_production_orders(
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let _page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
-    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, ProductionOrder>(

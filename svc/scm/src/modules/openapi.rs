@@ -1,6 +1,7 @@
 // SCM 服务 OpenAPI 文档
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_db::repository::ListQueryParams;
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
@@ -94,9 +95,8 @@ pub struct SupplierDeliveryAppointment {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub status: Option<String>,
 }
 

@@ -279,7 +279,7 @@ pub async fn list_standards(
             "standards": standards,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取质量标准列表成功",
     ))

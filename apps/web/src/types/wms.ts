@@ -84,12 +84,7 @@ export type SerialNumberState = (typeof SERIAL_NUMBER_STATES)[number];
 // ============================================================================
 // ListResponse 泛型包装（通用分页响应）
 // ============================================================================
-export interface ListResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-}
+export type { ListResponse } from '@/api/client';
 
 // ============================================================================
 // E-1 Warehouse（仓库）

@@ -264,7 +264,7 @@ pub async fn list_permission_changes(
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
-                "pagesize": paginated.pagesize,
+                "page_size": paginated.pagesize,
             })))
         }
         None => Json(api_error(result.code, &result.message)),
@@ -428,7 +428,7 @@ pub async fn list_access_logs(
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
-                "pagesize": paginated.pagesize,
+                "page_size": paginated.pagesize,
             })))
         }
         None => Json(api_error(result.code, &result.message)),

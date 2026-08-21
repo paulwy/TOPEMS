@@ -34,9 +34,9 @@ pub async fn list_scopes(
         return e;
     }
 
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"

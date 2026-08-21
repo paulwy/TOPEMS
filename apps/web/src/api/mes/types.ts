@@ -149,12 +149,7 @@ export interface ListParams {
 
 export type PaginationParams = ListParams;
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+export type { PaginatedResult } from '@/api/client';
 
 export interface ProductionOrder {
   id: string;

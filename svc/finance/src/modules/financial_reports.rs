@@ -220,11 +220,7 @@ pub async fn get_report_item_vouchers(
                     })
                 })
                 .collect();
-            let total_pages = if page_size > 0 {
-                (total + page_size - 1) / page_size
-            } else {
-                0
-            };
+            let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
             Json(ApiResponse::success(
                 serde_json::json!({
                     "items": items,
@@ -730,7 +726,7 @@ pub async fn get_consolidation_entities(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": if page_size > 0 { (total + page_size - 1) / page_size } else { 0 },
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
     ))
@@ -884,7 +880,7 @@ pub async fn get_intercompany_elims(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": if page_size > 0 { (total + page_size - 1) / page_size } else { 0 },
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
     ))
@@ -1124,7 +1120,7 @@ pub async fn get_report_subscriptions(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": if page_size > 0 { (total + page_size - 1) / page_size } else { 0 },
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
     ))
@@ -1346,7 +1342,7 @@ pub async fn get_subscription_history(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": if page_size > 0 { (total + page_size - 1) / page_size } else { 0 },
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
     ))

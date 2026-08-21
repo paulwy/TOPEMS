@@ -256,7 +256,7 @@ pub async fn list_process_routes(
             "routes": routes,
             "total": total.unwrap_or(0),
             "page": page,
-            "pagesize": pagesize,
+            "page_size": pagesize,
         }),
         "获取工艺路线列表成功",
     ))

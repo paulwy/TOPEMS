@@ -405,7 +405,7 @@ pub async fn list_appointments(
                     "total": total,
                     "page": page,
                     "page_size": page_size,
-                    "total_pages": ((total + page_size - 1) / page_size).max(1),
+                    "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
                 }),
                 "获取供应商送货预约列表成功",
             ))

@@ -10,12 +10,12 @@ use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+pub struct ListParams {
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub project_id: Option<Uuid>,
     pub experiment_id: Option<Uuid>,
 }
@@ -77,11 +77,11 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 async fn list_material_tests(
     State(state): State<super::ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -95,7 +95,7 @@ async fn list_material_tests(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(&params.search)
+    .bind(&params.base.search)
     .bind(params.project_id)
     .bind(params.experiment_id)
     .bind(page_size)
@@ -113,7 +113,7 @@ async fn list_material_tests(
                   AND ($3::uuid IS NULL OR experiment_id = $3)
                 "#,
             )
-            .bind(&params.search)
+            .bind(&params.base.search)
             .bind(params.project_id)
             .bind(params.experiment_id)
             .fetch_one(&state.db)

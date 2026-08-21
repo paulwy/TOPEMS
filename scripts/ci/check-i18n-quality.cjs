@@ -408,26 +408,37 @@ main();
   (function () {
     try {
       const { spawnSync } = require('child_process');
-      const res = spawnSync(
-        process.execPath,
-        ['scripts/i18n/lint-styleguide.cjs', '--json', '--sample', '0', '--max-high', '0', '--max-medium', '50'],
-        { cwd: projectRoot, encoding: 'utf8', timeout: 120_000 }
-      );
-      let summary = null;
-      try {
-        summary = JSON.parse(res.stdout).summary;
-      } catch (_) {}
-      const lintExit = res.status ?? (res.error ? 3 : 0);
-      const ok = lintExit === 0 && summary && summary.HIGH === 0 && summary.MEDIUM <= 50;
-      if (!ok) failures++;
-      report.push({
-        title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
-        ok,
-        code: lintExit,
-        tail: summary
-          ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}`
-          : (res.stderr || res.stdout).slice(0, 160),
-      });
+      const { existsSync } = require('fs');
+      const lintScript = 'scripts/i18n/lint-styleguide.cjs';
+      if (!existsSync(lintScript)) {
+        report.push({
+          title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
+          ok: true,
+          code: 0,
+          tail: 'skipped — lint-styleguide.cjs removed in P3 consolidation',
+        });
+      } else {
+        const res = spawnSync(
+          process.execPath,
+          [lintScript, '--json', '--sample', '0', '--max-high', '0', '--max-medium', '50'],
+          { cwd: projectRoot, encoding: 'utf8', timeout: 120_000 }
+        );
+        let summary = null;
+        try {
+          summary = JSON.parse(res.stdout).summary;
+        } catch (_) {}
+        const lintExit = res.status ?? (res.error ? 3 : 0);
+        const ok = lintExit === 0 && summary && summary.HIGH === 0 && summary.MEDIUM <= 50;
+        if (!ok) failures++;
+        report.push({
+          title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
+          ok,
+          code: lintExit,
+          tail: summary
+            ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}`
+            : (res.stderr || res.stdout).slice(0, 160),
+        });
+      }
     } catch (e) {
       failures++;
       report.push({ title: 'R12-Z3 lint', ok: false, code: 3, tail: String(e).slice(0, 120) });

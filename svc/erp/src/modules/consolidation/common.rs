@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use topems_shared_service_client::service_client::{
@@ -52,8 +53,8 @@ pub async fn call_finance_core_approval(
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub keyword: Option<String>,
     pub status: Option<String>,
     pub scope_id: Option<Uuid>,
