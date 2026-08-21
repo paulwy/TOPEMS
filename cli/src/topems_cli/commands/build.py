@@ -1,5 +1,6 @@
 """构建命令模块"""
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -132,23 +133,39 @@ def build_lib(release: bool):
 
 @build.command(name="frontend")
 @click.option("--dev", is_flag=True, help="开发模式")
-def build_frontend(dev: bool):
+@click.option("--skip-install", is_flag=True, help="跳过依赖安装检查（假设 node_modules 已就绪）")
+def build_frontend(dev: bool, skip_install: bool):
     """构建前端"""
     console.print("[bold]构建前端...[/bold]")
-    
+
     project_root = Path(__file__).parent.parent.parent.parent.parent
     web_path = project_root / "apps" / "web"
-    
+
     if not web_path.exists():
         console.print("[red]前端目录不存在[/red]")
         return
-    
+
+    # 对标 scripts/topems.sh ensure_frontend_deps
+    # node_modules 缺失时自动 pnpm install，并设置 PUPPETEER_SKIP_DOWNLOAD 避免 Chromium 下载阻塞
+    if not skip_install and not (web_path / "node_modules").exists():
+        console.print("[yellow]node_modules 缺失，自动安装依赖...[/yellow]")
+        if not os.environ.get("PUPPETEER_SKIP_DOWNLOAD"):
+            os.environ["PUPPETEER_SKIP_DOWNLOAD"] = "true"
+            console.print("[blue]已自动设置 PUPPETEER_SKIP_DOWNLOAD=true（本机 dev 模式）[/blue]")
+        install_result = subprocess.run(
+            ["pnpm", "install", "--silent"],
+            cwd=str(project_root),
+        )
+        if install_result.returncode != 0:
+            console.print("[red]✗[/red] 依赖安装失败，中止构建")
+            return
+
     if dev:
         console.print("[yellow]开发模式启动前端开发服务器...[/yellow]")
         subprocess.run(["pnpm", "dev"], cwd=str(web_path))
     else:
         result = subprocess.run(["pnpm", "build"], cwd=str(web_path))
-        
+
         if result.returncode == 0:
             console.print("[green]✓[/green] 前端构建成功")
         else:
