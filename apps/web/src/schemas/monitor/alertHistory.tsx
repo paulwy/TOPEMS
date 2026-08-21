@@ -9,6 +9,7 @@ import React from 'react';
 import { Box, Chip, Typography, Paper, Stack } from '@mui/material';
 import { Clock, AlertTriangle, AlertCircle, CheckCircle, Bell } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import { StatusChip } from '@/components/common';
 import i18n from '@/i18n';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
@@ -34,19 +35,6 @@ const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'def
       return 'warning';
     case 'info':
       return 'info';
-    default:
-      return 'default';
-  }
-};
-
-const getStatusColor = (status: string): 'error' | 'warning' | 'success' | 'default' => {
-  switch (status) {
-    case 'active':
-      return 'error';
-    case 'acknowledged':
-      return 'warning';
-    case 'resolved':
-      return 'success';
     default:
       return 'default';
   }
@@ -110,10 +98,14 @@ const alertHistoryFields: SchemaField[] = [
     type: 'select',
     listWidth: 100,
     renderCell: (row: Record<string, unknown>) => (
-      <Chip
-        size='small'
-        color={getStatusColor(row.status as string)}
-        label={STATUS_LABELS[row.status as string] || (row.status as string)}
+      <StatusChip
+        size='sm'
+        status={row.status as string}
+        mapping={{
+          active: { color: 'error', label: STATUS_LABELS.active },
+          acknowledged: { color: 'warning', label: STATUS_LABELS.acknowledged },
+          resolved: { color: 'success', label: STATUS_LABELS.resolved },
+        }}
         variant='outlined'
       />
     ),
@@ -209,10 +201,14 @@ const renderHistoryDetail = (row: Record<string, unknown>): React.ReactNode => {
                 >
                   {i18n.t('schemas.alert_history.k2')}
                 </Typography>
-                <Chip
-                  size='small'
-                  color={getStatusColor(status)}
-                  label={STATUS_LABELS[status] || status}
+                <StatusChip
+                  size='sm'
+                  status={status}
+                  mapping={{
+                    active: { color: 'error', label: STATUS_LABELS.active },
+                    acknowledged: { color: 'warning', label: STATUS_LABELS.acknowledged },
+                    resolved: { color: 'success', label: STATUS_LABELS.resolved },
+                  }}
                   variant='outlined'
                 />
               </Box>

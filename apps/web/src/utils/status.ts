@@ -76,6 +76,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   scrapped: 'error',
   error: 'error',
   normal: 'success',
+  'in-progress': 'info',
 };
 
 const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
