@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "equipment_ids",
-        "type_info": "Text"
+        "type_info": "UuidArray"
       },
       {
         "ordinal": 6,
@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "transfer_time",
-        "type_info": "Timestamp"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 9,
@@ -70,10 +70,10 @@
         "Uuid",
         "Int4",
         "Uuid",
-        "Text",
+        "UuidArray",
         "Numeric",
         "Numeric",
-        "Timestamp",
+        "Numeric",
         "Bool",
         "Text"
       ]
@@ -81,8 +81,8 @@
     "nullable": [
       false,
       false,
-      true,
-      true,
+      false,
+      false,
       true,
       true,
       true,
