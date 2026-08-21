@@ -180,7 +180,7 @@ pub struct UpdateProjectPhaseByIdRequest {
 
 const PROJECT_COLUMNS: &str = r#"
     p.id, p.tenant_id, p.project_no, p.name, p.description, p.status, p.phase,
-    p.start_date, p.end_date, p.manager_id, p.manager_name, p.budget, p.progress,
+    p.start_date, p.end_date, p.manager_id, p.manager_name, p.budget::float8 AS budget, p.progress,
     (SELECT COUNT(*) FROM pdm_project_members m WHERE m.project_id = p.id AND m.tenant_id = p.tenant_id) AS member_count,
     p.created_by, p.created_at, p.updated_at
 "#;

@@ -97,7 +97,7 @@ pub async fn list_opening_balances(
     let result = sqlx::query_as::<_, OpeningBalance>(
         r#"
         SELECT ob.id, ob.company_id, ob.subject_code, ob.subject_name, ob.period, 
-               ob.debit_balance, ob.credit_balance, ob.created_at, ob.updated_at
+               ob.debit_balance::float8 AS debit_balance, ob.credit_balance::float8 AS credit_balance, ob.created_at, ob.updated_at
         FROM opening_balances ob
         WHERE ($1::uuid IS NULL OR ob.company_id = $1)
           AND ($2::text IS NULL OR ob.period = $2)
@@ -182,9 +182,9 @@ pub async fn create_opening_balance(
 
     let result = sqlx::query_as::<_, OpeningBalance>(
         r#"
-        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
+        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
+        RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -257,7 +257,7 @@ pub async fn get_opening_balance(
 ) -> Json<ApiResponse<OpeningBalance>> {
     let result = sqlx::query_as::<_, OpeningBalance>(
         r#"
-        SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
+        SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
         FROM opening_balances WHERE id = $1
         "#,
     )
@@ -290,7 +290,7 @@ pub async fn update_opening_balance(
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let existing = sqlx::query_as::<_, OpeningBalance>(
-        "SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at FROM opening_balances WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM opening_balances WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -312,7 +312,7 @@ pub async fn update_opening_balance(
         r#"
         UPDATE opening_balances SET debit_balance = $2, credit_balance = $3, updated_at = $4
         WHERE id = $1
-        RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
+        RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -463,7 +463,7 @@ pub async fn import_opening_balances(
 
         let result = sqlx::query(
             r#"
-            INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
+            INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#,
         )
@@ -540,7 +540,7 @@ pub async fn carry_forward_opening_balance(
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
-        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
+        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
         SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW()
         FROM opening_balances
         WHERE period = $1
