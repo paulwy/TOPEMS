@@ -283,6 +283,25 @@ export type {
   FileDownloadResult,
 } from './file';
 
+export {
+  SupplierStatus,
+  SupplierCategory,
+  SupplierRiskLevel,
+  parseSupplierStatus,
+  parseSupplierCategory,
+  mapSrmSupplierToCore,
+  mapScmSupplierToCore,
+  mapErpSupplierToCore,
+  mapMobileSupplierToCore,
+} from './supplier';
+
+export type {
+  SupplierCore,
+  CreateSupplierRequest,
+  UpdateSupplierRequest,
+  SupplierSync,
+} from './supplier';
+
 export type {
   DictItem,
   DictType,
