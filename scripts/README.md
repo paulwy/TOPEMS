@@ -35,10 +35,6 @@ scripts/
 │   ├── database-performance-test.js  # k6 数据库并发性能测试
 │   └── baseline.md            # 性能基线与方法论文档
 │
-├── security/                  # 【安全扫描】
-│   ├── scan.sh
-│   └── tenant-audit.sh
-│
 ├── migration/                 # 【迁移校验】
 │   └── validate.sh
 │
@@ -67,7 +63,7 @@ scripts/
 ├── sccache-setup.sh           # Rust 编译缓存设置
 ├── patch-react-transition-group.js  # ESM 兼容性补丁（pnpm install 后执行）
 │
-└── archive/                   # 【归档】历史一次性脚本（不再使用）
+└── MAP.md                     # 完整脚本索引（scripts/MAP.md）
 ```
 
 ## 统一服务配置
@@ -241,11 +237,8 @@ node scripts/patch-react-transition-group.js --check
 
 ## 文档
 
+- [完整脚本索引](./MAP.md)
 - [Python CLI](../cli/README.md)
 - [部署文档](../docs/deployment/README.md)
 - [Windows 部署](./windows/README_WINDOWS.md)
 - [Code Wiki](../docs/architecture/code-wiki.md)
-
-## 归档说明
-
-`scripts/archive/` 目录存放历史一次性修复脚本（如 i18n 迁移、模块重构、代码批量修复等）。这些脚本已完成使命，不再常规使用，保留仅供历史参考。

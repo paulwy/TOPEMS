@@ -1,6 +1,0 @@
-{
-  "total_exports": 0,
-  "total_files": 0,
-  "targets": {},
-  "scope": "L1-SAFE schemas-only full zero-consumer exports (no refs anywhere in src incl tests/stories/mocks)"
-}
