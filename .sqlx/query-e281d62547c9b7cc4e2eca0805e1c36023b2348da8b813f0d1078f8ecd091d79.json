@@ -56,7 +56,7 @@
       {
         "ordinal": 10,
         "name": "result",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 11,
@@ -91,10 +91,10 @@
       true,
       false,
       false,
+      false,
       true,
       true,
-      true,
-      true,
+      false,
       true,
       true,
       true,

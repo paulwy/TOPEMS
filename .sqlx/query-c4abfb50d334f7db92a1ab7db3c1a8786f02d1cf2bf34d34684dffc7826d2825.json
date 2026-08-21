@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "result",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 9,
@@ -73,17 +73,17 @@
       "Left": [
         "Uuid",
         "Varchar",
-        "Text",
+        "Varchar",
         "Timestamp"
       ]
     },
     "nullable": [
       false,
       true,
+      false,
       true,
       true,
-      true,
-      true,
+      false,
       true,
       true,
       true,

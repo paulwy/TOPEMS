@@ -71,7 +71,7 @@
       {
         "ordinal": 13,
         "name": "required_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 14,
@@ -114,16 +114,16 @@
       false,
       true,
       true,
+      true,
+      true,
       false,
       false,
+      true,
       false,
       false,
       true,
       true,
-      false,
       true,
-      true,
-      false,
       true,
       true,
       true,

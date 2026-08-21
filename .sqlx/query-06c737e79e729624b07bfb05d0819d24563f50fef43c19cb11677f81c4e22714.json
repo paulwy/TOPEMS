@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "result",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 9,
@@ -78,7 +78,7 @@
         "Timestamp",
         "Timestamp",
         "Numeric",
-        "Text",
+        "Varchar",
         "Varchar",
         "Text",
         "Timestamp"
@@ -87,10 +87,10 @@
     "nullable": [
       false,
       true,
+      false,
       true,
       true,
-      true,
-      true,
+      false,
       true,
       true,
       true,
