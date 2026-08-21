@@ -52,7 +52,7 @@ pub async fn call_finance_core_approval(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
+pub struct ConsolidationListParams {
     #[serde(flatten)]
     pub base: ListQueryParams,
     pub keyword: Option<String>,

@@ -22,7 +22,7 @@ use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
+pub struct SupplierListParams {
     #[serde(flatten)]
     pub base: ListQueryParams,
     pub status: Option<String>,
@@ -52,7 +52,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<SupplierListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Supplier>>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;

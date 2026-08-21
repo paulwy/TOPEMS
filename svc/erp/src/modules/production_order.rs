@@ -18,7 +18,7 @@ use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
-pub struct PaginationParams {
+pub struct ProductionOrderListParams {
     #[serde(flatten)]
     pub base: ListQueryParams,
     pub status: Option<String>,
@@ -63,7 +63,7 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_production_orders(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ProductionOrderListParams>,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
     let _page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();

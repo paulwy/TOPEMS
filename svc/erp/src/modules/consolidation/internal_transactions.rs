@@ -9,7 +9,7 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::PaginationParams;
+use super::common::ConsolidationListParams;
 use super::ApiState;
 
 macro_rules! log_audit {
@@ -25,7 +25,7 @@ macro_rules! log_audit {
 )]
 pub async fn list_internal_transactions(
     State(state): State<ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ConsolidationListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<InternalTransaction>>> {
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();

@@ -9,7 +9,7 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 
-use super::common::PaginationParams;
+use super::common::ConsolidationListParams;
 use super::ApiState;
 
 macro_rules! log_audit {
@@ -25,7 +25,7 @@ macro_rules! log_audit {
 )]
 pub async fn list_company_relations(
     State(state): State<ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ConsolidationListParams>,
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
@@ -247,7 +247,7 @@ pub async fn delete_company_relation(
 pub async fn get_company_financial_data(
     State(_state): State<ApiState>,
     Path(company_id): Path<Uuid>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ConsolidationListParams>,
 ) -> Json<ApiResponse<CompanyFinancialData>> {
     Json(ApiResponse::success(
         CompanyFinancialData {

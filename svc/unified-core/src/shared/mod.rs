@@ -119,22 +119,4 @@ impl<T> CoreResponse<T> {
     }
 }
 
-/// Pagination parameters
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<u32>,
-    pub page_size: Option<u32>,
-    pub search: Option<String>,
-}
-
-impl Default for PaginationParams {
-    fn default() -> Self {
-        Self {
-            page: Some(1),
-            page_size: Some(20),
-            search: None,
-        }
-    }
-}
-
 pub use topems_shared_core::response::{total_pages_of, PaginatedResponse};
