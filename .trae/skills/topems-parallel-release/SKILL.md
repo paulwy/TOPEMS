@@ -133,7 +133,7 @@ for pkg in "@topems/tokens" "@topems/shared-types" ...; do
 done
 
 # C 轨 Perm/Axum Gate 数值
-node scripts/ci/check-perm-gate.cjs --mode dry-run 2>&1 | grep -E "R[1-6]:\s+\d"
+node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run 2>&1 | grep -E "R[1-6]:\s+\d"
 node scripts/ci/check-axum-layer-order.cjs 2>&1 | grep -E "R[1-3]:\s+\d|Integrity conclusion"
 
 # D 轨 YAML 结构

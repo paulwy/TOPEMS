@@ -1,10 +1,14 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig, ListPageProps } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import type { SupplierCategoryQuery, SupplierProductQuery } from '@/api/srm';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 SRM_PATHS.xxx，而非硬编码字符串
+
+// V259 TypeMap: list 页统一 extends ListPageProps，已对齐后端 DTO 的实体标注查询类型
+// dashboard/stats/detail 模板保留自定义 Props（非 list 模式，字段结构不同）
 /** SrmDashboardPage 路由 Props · 模板=dashboard */
 interface SrmDashboardPageProps {
   /** 仪表盘视图类型 */
@@ -14,14 +18,7 @@ interface SrmDashboardPageProps {
 }
 
 /** SrmSupplierPage 路由 Props · 模板=list */
-interface SrmSupplierPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmSupplierPageProps extends ListPageProps {}
 
 /** SrmSupplierDetailPage 路由 Props · 模板=detail */
 interface SrmSupplierDetailPageProps {
@@ -31,35 +28,14 @@ interface SrmSupplierDetailPageProps {
   entityType?: string;
 }
 
-/** SrmCategoryPage 路由 Props · 模板=list */
-interface SrmCategoryPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+/** SrmCategoryPage 路由 Props · 模板=list · filters 对齐 SupplierCategoryQuery */
+interface SrmCategoryPageProps extends ListPageProps<SupplierCategoryQuery> {}
 
-/** SrmSupplierProductPage 路由 Props · 模板=list */
-interface SrmSupplierProductPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+/** SrmSupplierProductPage 路由 Props · 模板=list · filters 对齐 SupplierProductQuery */
+interface SrmSupplierProductPageProps extends ListPageProps<SupplierProductQuery> {}
 
 /** SrmContractPage 路由 Props · 模板=list */
-interface SrmContractPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmContractPageProps extends ListPageProps {}
 
 /** SrmContractDetailPage 路由 Props · 模板=detail */
 interface SrmContractDetailPageProps {
@@ -70,24 +46,10 @@ interface SrmContractDetailPageProps {
 }
 
 /** SrmOrderPage 路由 Props · 模板=list */
-interface SrmOrderPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmOrderPageProps extends ListPageProps {}
 
 /** SrmEvaluationPage 路由 Props · 模板=list */
-interface SrmEvaluationPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmEvaluationPageProps extends ListPageProps {}
 
 /** SrmPerformancePage 路由 Props · 模板=stats */
 interface SrmPerformancePageProps {
@@ -98,44 +60,16 @@ interface SrmPerformancePageProps {
 }
 
 /** SrmScoringDimensionPage 路由 Props · 模板=list */
-interface SrmScoringDimensionPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmScoringDimensionPageProps extends ListPageProps {}
 
 /** InquiryQuotationPage 路由 Props · 模板=list */
-interface InquiryQuotationPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface InquiryQuotationPageProps extends ListPageProps {}
 
 /** BiddingPage 路由 Props · 模板=list */
-interface BiddingPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface BiddingPageProps extends ListPageProps {}
 
 /** SrmFinancePage 路由 Props · 模板=list */
-interface SrmFinancePageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmFinancePageProps extends ListPageProps {}
 
 /** SupplierPortalPage 路由 Props · 模板=dashboard */
 interface SupplierPortalPageProps {
@@ -146,14 +80,7 @@ interface SupplierPortalPageProps {
 }
 
 /** SrmQuotationPage 路由 Props · 模板=list */
-interface SrmQuotationPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
+interface SrmQuotationPageProps extends ListPageProps {}
 export const SRM_PATHS = {
   root: '/srm',
   dashboard: '/srm/dashboard',

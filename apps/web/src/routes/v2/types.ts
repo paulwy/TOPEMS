@@ -69,6 +69,47 @@ export interface RouteModuleConfig {
   routes: RouteConfigV2[];
 }
 
+// ============ 页面 Props 基础类型（V259 TypeMap 基础设施）============
+//
+// 目标：消除各模块 config.ts 中重复的 `{ page?, pageSize?, filters?: Record<string, unknown> }`
+// 与 `{ mode?, initialValues?: Record<string, unknown> }` 模式，将 `Record<string, unknown>`
+// 升级为具体 schema（TypeMap<Entity>），需 tsc + 后端 DTO 联动。
+//
+// 使用方式：
+//   // config.ts
+//   import type { ListPageProps, FormPageProps } from '@/routes/v2/types';
+//   import type { ProductQuery } from '@/api/pdm';
+//   interface ProductPageProps extends ListPageProps<ProductQuery> {}
+//   interface PdmProductConfigPageProps extends FormPageProps<CreateProductRequest> {}
+
+/**
+ * 列表页 Props 基础类型。
+ *
+ * @template TFilters - 筛选参数 schema，默认 `Record<string, unknown>`（向后兼容）。
+ *                      升级为具体类型后可与后端 DTO 联动（如 `ProductQuery`）。
+ */
+export interface ListPageProps<TFilters = Record<string, unknown>> {
+  /** 当前页码（1-based） */
+  page?: number;
+  /** 每页条数 */
+  pageSize?: number;
+  /** 筛选参数 — 升级为 TypeMap<Entity> 后由具体 schema 描述 */
+  filters?: TFilters;
+}
+
+/**
+ * 表单页 Props 基础类型。
+ *
+ * @template TValues - 表单初始值 schema，默认 `Record<string, unknown>`（向后兼容）。
+ *                      升级为具体类型后可与后端 Create{Entity}Request / Update{Entity}Request DTO 联动。
+ */
+export interface FormPageProps<TValues = Record<string, unknown>> {
+  /** 表单模式 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 初始值 — 升级为 TypeMap<Entity> 后由具体 schema 描述 */
+  initialValues?: TValues;
+}
+
 export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
   const result: RouteConfigV2[] = [];
 

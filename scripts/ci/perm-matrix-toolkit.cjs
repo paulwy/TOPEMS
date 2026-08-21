@@ -556,6 +556,81 @@ function scanR7MiddlewareDuplicate() {
   return hits;
 }
 
+/* ============================================================
+ *  scanFrontendPerms() — AST-based requiredPermissions extraction (V258)
+ *
+ *  Uses typescript.createSourceFile to parse config.ts files,
+ *  eliminating cross-line array / multiline string false negatives
+ *  that plague line-by-line regex approaches.
+ *
+ *  Returns: { codes: Set<string>, fileCount: number, available: boolean }
+ * ============================================================ */
+function scanFrontendPerms() {
+  let ts;
+  try { ts = require('typescript'); } catch { return { codes: new Set(), fileCount: 0, available: false }; }
+
+  const webModulesDir = path.join(ROOT, 'apps/web/src/modules');
+  const codes = new Set();
+  let fileCount = 0;
+
+  if (!fs.existsSync(webModulesDir)) return { codes, fileCount, available: true };
+
+  for (const entry of fs.readdirSync(webModulesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const configPath = path.join(webModulesDir, entry.name, 'config.ts');
+    if (!fs.existsSync(configPath)) continue;
+    fileCount++;
+
+    const content = fs.readFileSync(configPath, 'utf8');
+    const sourceFile = ts.createSourceFile(configPath, content, ts.ScriptTarget.Latest, true);
+
+    function visit(node) {
+      if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'requiredPermissions') {
+        const init = node.initializer;
+        if (init && ts.isArrayLiteralExpression(init)) {
+          for (const elem of init.elements) {
+            if (ts.isStringLiteral(elem) || ts.isNoSubstitutionTemplateLiteral(elem)) {
+              codes.add(elem.text);
+            }
+          }
+        } else if (init && ts.isStringLiteral(init)) {
+          codes.add(init.text);
+        }
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(sourceFile);
+  }
+
+  return { codes, fileCount, available: true };
+}
+
+/* scanFrontendConstants() — AST-based permission code extraction from permissions.ts */
+function scanFrontendConstants() {
+  let ts;
+  try { ts = require('typescript'); } catch { return { codes: new Set(), available: false }; }
+
+  const permPath = path.join(ROOT, 'apps/web/src/config/permissions.ts');
+  if (!fs.existsSync(permPath)) return { codes: new Set(), available: true };
+
+  const content = fs.readFileSync(permPath, 'utf8');
+  const sourceFile = ts.createSourceFile(permPath, content, ts.ScriptTarget.Latest, true);
+  const codes = new Set();
+
+  function visit(node) {
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      const text = node.text;
+      if (/^[a-z_]+:[a-z_]+(:[a-z_]+)?$/.test(text)) {
+        codes.add(text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+
+  return { codes, available: true };
+}
+
 function buildRules() {
   return [
     { id: 'R1', desc: 'permission module missing in lib.rs (no pub mod permission;)', severity: 'FAIL', count: 0 },
@@ -651,7 +726,24 @@ function runScan() {
     if (r.id === 'R7') { r.count = r7Count; r.hits = r7Hits; }
   }
 
-  const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, null);
+  // V258: AST-based frontend scanning (replaces hardcoded placeholder values)
+  const fePerms = scanFrontendPerms();
+  const feConstants = scanFrontendConstants();
+  const svcNames = listSvcDirs();
+  const backendFileCount = svcNames.reduce((sum, name) =>
+    sum + walkRsFiles(path.join(SVC_DIR, name, 'src')).length, 0);
+  const scanners = {
+    scannedBackendFiles: backendFileCount,
+    scannedFrontendConfigs: fePerms.fileCount,
+    totalBackendCodes: 0,
+    totalFrontendNavCodes: fePerms.codes.size,
+    backendCommentSkips: 0,
+    frontendPERMSetSize: fePerms.codes.size + feConstants.codes.size,
+    backendModuleCodeSize: svcNames.length,
+    frontendASTAvailable: fePerms.available,
+  };
+
+  const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, scanners);
 
   const report = {
     version: 'perm-gate-scan@1.0.0',
@@ -736,7 +828,24 @@ function runCiReport() {
     if (r.id === 'R7') { r.count = r7Count; r.hits = r7Hits; }
   }
 
-  const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, null);
+  // V258: AST-based frontend scanning (replaces hardcoded placeholder values)
+  const fePerms = scanFrontendPerms();
+  const feConstants = scanFrontendConstants();
+  const svcNames = listSvcDirs();
+  const backendFileCount = svcNames.reduce((sum, name) =>
+    sum + walkRsFiles(path.join(SVC_DIR, name, 'src')).length, 0);
+  const scanners = {
+    scannedBackendFiles: backendFileCount,
+    scannedFrontendConfigs: fePerms.fileCount,
+    totalBackendCodes: 0,
+    totalFrontendNavCodes: fePerms.codes.size,
+    backendCommentSkips: 0,
+    frontendPERMSetSize: fePerms.codes.size + feConstants.codes.size,
+    backendModuleCodeSize: svcNames.length,
+    frontendASTAvailable: fePerms.available,
+  };
+
+  const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, scanners);
 
   const report = {
     version: 'perm-gate-ci-report@1.0.0',
@@ -1147,3 +1256,6 @@ switch (subcommand) {
     printUsage();
     process.exitCode = 1;
 }
+
+// Export for programmatic use (e.g. permission-matrix-guard.test.ts interop)
+module.exports = { runScan, runCiReport, buildRules, buildCompatReport, scanFrontendPerms, scanFrontendConstants };

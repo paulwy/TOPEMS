@@ -29,7 +29,8 @@ export interface UpdateMaterialRequest {
   status?: string;
 }
 
-interface MaterialQuery {
+/** V259 TypeMap: 导出供 config.ts ListPageProps<MaterialQuery> 使用 */
+export interface MaterialQuery {
   page?: number;
   page_size?: number;
   search?: string;

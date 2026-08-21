@@ -1,6 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig, ListPageProps, FormPageProps } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import type { ProductQuery, MaterialQuery, CreateProductRequest } from '@/api/pdm';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -29,82 +30,22 @@ const PDM_PATHS = {
   settingDocApprovalFlow: '/pdm/setting/doc-approval-flow',
   settingChangeTemplate: '/pdm/setting/change-template',
 } as const;
-interface ProductPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface MaterialPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface BomPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmBomPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface DocumentPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmVersionPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface ChangePageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmProjectPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmProductConfigPageProps {
-  mode?: 'create' | 'edit' | 'view';
-  initialValues?: Record<string, unknown>;
-}
-
-interface PdmFormulaPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmProcessPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmBatchPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface PdmStepPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
+// V259 TypeMap: filters/initialValues 从 Record<string, unknown> 升级为具体 schema
+// 已对齐后端 DTO: Product ← ProductQuery, Material ← MaterialQuery, ProductConfig ← CreateProductRequest
+// 其余实体暂用 ListPageProps 默认（Record<string, unknown>），待后端 DTO 联动后逐一收紧
+interface ProductPageProps extends ListPageProps<ProductQuery> {}
+interface MaterialPageProps extends ListPageProps<MaterialQuery> {}
+interface BomPageProps extends ListPageProps {}
+interface PdmBomPageProps extends ListPageProps {}
+interface DocumentPageProps extends ListPageProps {}
+interface PdmVersionPageProps extends ListPageProps {}
+interface ChangePageProps extends ListPageProps {}
+interface PdmProjectPageProps extends ListPageProps {}
+interface PdmProductConfigPageProps extends FormPageProps<CreateProductRequest> {}
+interface PdmFormulaPageProps extends ListPageProps {}
+interface PdmProcessPageProps extends ListPageProps {}
+interface PdmBatchPageProps extends ListPageProps {}
+interface PdmStepPageProps extends ListPageProps {}
 
 interface PdmStatsPageProps {}
 

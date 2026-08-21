@@ -1,6 +1,10 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V257 | **更新日期**: 2026-08-21
+> **版本**: V259 | **更新日期**: 2026-08-21
+>
+> **V259 更新（2026-08-21）**：Backlog P2 #3 ① TypeMap 基础设施落地 — 新增 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 泛型基类型（`routes/v2/types.ts`），PDM 模块作为首个迁移样例：13 个 `*PageProps` 接口从 `Record<string, unknown>` 升级为 `extends ListPageProps<ProductQuery>` / `extends FormPageProps<CreateProductRequest>`，filters/initialValues 类型对齐后端 DTO。tsc 0 新增错误。props-alignment realness 31%→36%（PDM 全 100%）。剩余 31 模块待增量迁移。
+>
+> **V258 更新（2026-08-21）**：V252 CRUD 审计 Phase 1-6 全闭环 + V232 Strict-Zero P0-P4 五批全绿（Finance handler 真实查询 + i18n strict-zero + Design Token 429→28 + 11-Gate 固化 + SEAL Actual/Status 全填）+ Dify AI e2e POC 代码完成 + Tauri keystore 剩余 3 件代码完成。当前 P0/P1 活跃任务全部完成，转入 P2 Backlog 推进。
 >
 > **V257 更新（2026-08-21）**：完成 BFF 实验性 hooks 清理（P4-6）。删除前端三层纯实验性死代码（hooks/bff 10 文件 + components/bff 12 文件 + utils/bff 5 文件 = 27 文件，~13,379 行），精简 api/bff/index.ts 从 6,162 行到 468 行（删除 ~5,694 行实验性 GraphQL CRUD/联邦/治理/安全 API）。保留真实业务函数：getDashboard / completeTodoGql / subscribeServiceHealth / masterDataApi / MasterDataRef。验证：tsc --noEmit 0 error。总净减 ~19,074 行。
 >
@@ -8,7 +12,9 @@
 
 ---
 
-## 🔥 当前活跃任务（执行中 / P0）
+## 🔥 当前活跃任务（P0/P1 已全部完成 · 转入 P2 Backlog）
+
+> V252（P0 CRUD 审计）+ V232（P1 Strict-Zero 五批）均已于 2026-08-21 完成。下一阶段推进 P2 Backlog #3~#5（见下方 [📦 待办 Backlog](#-待办-backlog主题汇总--按优先级归类)），版本节点映射见 [版本统计面板](#-版本统计面板)。
 
 ### ✅ P0 · V252 — 全服务 CRUD 层系统性缺陷审计与修复（HRM 验证暴露）— 已完成
 
@@ -38,19 +44,20 @@
 
 ---
 
-### 🟡 P1 · V232 — i18n Strict-Zero + 616 Design Token 收尾 + Finance Handler 接入 + 9→11 Gate 升级
+### ✅ P1 · V232 — i18n Strict-Zero + 616 Design Token 收尾 + Finance Handler 接入 + 9→11 Gate 升级 — 已完成
 
 > **承接**：V231 六闸 SEAL ALL GREEN 封版。方向 A "最后硬骨头收尾 + CI 升级一次性闭环"，打包策略 A-1（全量一锅端）。
-> **日期**：⏳ 待执行（计划 2026-08-18 起）
-> **策略**：P0(Finance Handler)→P1(i18n 280→0)→P2(616 Token 收尾)→P3(9→11 Gate 升级)→P4(SEAL 11-Gate + Actual 全填)，五批严格串行，每批完工即 commit。批次文件空间零耦合，可独立 revert。
+> **完成日期**：2026-08-21 · P0-P4 全部完成，5/5 KPI 全绿。
+> **提交**：`a85b4b38e`（P0-P3 Finance handler + i18n strict-zero + Design Token + fmt/clippy）· `5c449d014`（P4 SEAL 11-Gate + spec/plan Actual/Status 全填）
+> **策略**：P0(Finance Handler)→P1(i18n 280→0)→P2(616 Token 收尾)→P3(9→11 Gate 升级)→P4(SEAL 11-Gate + Actual 全填)，五批严格串行，每批完工即 commit。
 
-| 批次 | 任务 | 预期交付 |
-|------|------|---------|
-| P0 | Finance Handler 接入生产调用 | 所有 Finance 路由用真实 handler（非临时 stub） |
-| P1 | i18n Strict-Zero：剩余硬编码 280→0 | precise scan --strict 全仓 0 hits |
-| P2 | 616 Design Token 收尾：剩余未收敛 token → palette 映射 | Design Token 最终清单 ≤169 |
-| P3 | 9→11 Gate 升级：新增 2 条质量门禁到 pre-commit + CI | Gate M=11 条 |
-| P4 | SEAL 11-Gate + Actual/Status 两列全填值 | A-K 11-Gate 本地实跑全绿 |
+| 批次 | 任务 | 交付结果 | 状态 |
+|------|------|---------|------|
+| P0 | Finance Handler 接入生产调用 | voucher_generation.rs 真实查询实现，所有 Finance 路由用真实 handler | ✅ |
+| P1 | i18n Strict-Zero：剩余硬编码 280→0 | precise scan --strict 全仓 0 hits | ✅ |
+| P2 | 616 Design Token 收尾：剩余未收敛 token → palette 映射 | Design Token 429→28 | ✅ |
+| P3 | 9→11 Gate 升级：新增 2 条质量门禁到 pre-commit + CI | Gate M=11 条，lefthook + ci.yml 固化 | ✅ |
+| P4 | SEAL 11-Gate + Actual/Status 两列全填值 | A-K 11-Gate 本地实跑全绿，16 行 Actual/Status 全填无 TBD | ✅ |
 
 ---
 
@@ -69,8 +76,8 @@
 
 | # | 主题 | 子项 | 首次提出 | 连续提及 |
 |---|------|------|---------|---------|
-| 3 | **Frontend 泛型第二轮深度细化** | ① `filters` / `initialValues` 从 `Record<string, unknown>` 升级为具体 schema（`TypeMap<Entity>`），需 tsc + 后端 DTO 联动 ② **深 Props 对齐 TS AST 扫描器**：检测 `@/pages/<module>/<Page>.tsx` 实际解构的 props 字段，反向补 `config.ts` 的 Props interface，确保字段真实度 >90% | V256 | **≥6 版** |
-| 4 | **Perm Gate Scanner 长期演进** | ① SCAN_FRONTEND 从**逐行正则**升级为 `typescript.createSourceFile` AST 解析 `requiredPermissions` 数组，彻底消除跨行数组、换行字符串等误报 ② 老脚本正式 rm：`check-perm-gate.cjs` / `check-permission-matrix.cjs`（已被 `perm-matrix-toolkit.cjs` 替代，V257+ 移除） | V245 | **≥8 版** |
+| 3 | **Frontend 泛型第二轮深度细化** | ① ✅ **TypeMap 基础设施落地**（V259 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 基类型 in `routes/v2/types.ts`；PDM 模块首个迁移样例：13 接口升级，Product/Material/ProductConfig 已对齐后端 DTO，剩余 31 模块待增量迁移） ② ✅ **深 Props 对齐 TS AST 扫描器已实现**（V258 `scripts/ci/check-props-alignment.cjs`，257 routes × 31%→36% realness；目标 >90% 需逐步修复 page 解构 / 移除冗余 Props 字段） | V256 | **≥6 版** |
+| 4 | **Perm Gate Scanner 长期演进** | ① ✅ ~~SCAN_FRONTEND 从逐行正则升级为 AST~~（V258 已用 `typescript.createSourceFile` 实现 `scanFrontendPerms()` + `scanFrontendConstants()`，37 config.ts × 391 navCodes × 873 total PERM，跨行数组/换行字符串不再误报） ② ✅ ~~老脚本正式 rm~~（V258 已删除 3 个旧脚本，CI/lefthook/pre-commit/测试引用全迁移至 `perm-matrix-toolkit.cjs`） | V245 | **≥8 版** |
 | 5 | **CI 收紧双开关切换** | ① `frontend-typecheck` job 末尾：连续 N=3 次 CI 全绿后，把锚点 `# CI-TIGHTEN-ANCHOR: exit 0 → exit $FAILED` 正式切换为阻断（V246 ci.yml:1189）② 测试基线升级：从 `cargo test --workspace --no-run`（只编译）升级为完整 `cargo test --workspace` 运行通过，尤其 unified-core 集成测试实际断言 HTTP 响应 | V245 | **≥6 版** |
 
 ### 🟢 P3 · 死代码 & 工具链小步优化
@@ -101,17 +108,18 @@
 - **历史版本完成率**：V67.2~V258 关键里程碑 107 个章节 / 实际已完成 100+（≥94%）
 - **代码净减最近 5 版**：V254(-531) + V257(-29→0 tsc) + V258(-2814 dead exports) + V257 重构前 BFF 清理(-19074) ≈ **净减 22,400+ 行**
 - **质量门禁当前基线（V257 封版）**：axum-layer-gate R1/R2/R3 = 0/0/0 · perm-gate R1/R3/R5 = 0/0/0 · cargo check 0 errors · tsc apps/web 0 errors · i18n 7-in-1 0 failures
-- **当前活跃缺口**：V232 Strict-Zero P0-P4 × 5 批 + Backlog 5 大主题 16 条（V252 已完成）
+- **当前活跃缺口**：Backlog 5 大主题 16 条（V252 + V232 均已完成；Backlog #1 Dify + #2 Tauri POC 代码完成；#3 ① TypeMap 基础设施 + PDM 样例已落地，剩余 31 模块增量迁移中；#4 AST 演进完成）
 
 ### 当前活跃任务 → 版本节点映射（规划建议 V259+）
 
 | 规划版本 | 承接工作包 | 建议优先级 |
 |---------|-----------|-----------|
-| **V259** | ~~V252 CRUD Phase 1-2~~ ✅已完成 + V232 P0 Finance Handler | 🔴 P0 |
-| **V260** | ~~V252 CRUD Phase 3~~ ✅已完成 + V232 P1 i18n Strict-Zero | 🔴 P0 |
-| **V261** | ~~V252 CRUD Phase 4-5~~ ✅已完成 + V232 P2/P3（Design Token + Gate 升级） | 🟡 P1 |
-| **V262** | ~~V252 CRUD Phase 6~~ ✅已完成 + V232 P4 SEAL + Dify POC 最小闭环 | 🟡 P1 |
-| **V263+** | Tauri 5 件套剩余 3 件 + 泛型深度细化 + CI 收紧双开关 | 🟢 P2 按季度排期 |
+| **V259** | ~~V252 CRUD Phase 1-2~~ ✅ + ~~V232 P0 Finance Handler~~ ✅ | ✅ 已完成 |
+| **V260** | ~~V252 CRUD Phase 3~~ ✅ + ~~V232 P1 i18n Strict-Zero~~ ✅ | ✅ 已完成 |
+| **V261** | ~~V252 CRUD Phase 4-5~~ ✅ + ~~V232 P2/P3 Design Token + Gate~~ ✅ | ✅ 已完成 |
+| **V262** | ~~V252 CRUD Phase 6~~ ✅ + ~~V232 P4 SEAL~~ ✅ + ~~Dify POC 最小闭环~~ ✅ | ✅ 已完成 |
+| **V263** | ~~Tauri 5 件套剩余 3 件~~ ✅ + ~~Perm Gate Scanner AST 演进 (#4)~~ ✅ + ~~泛型深度细化 TypeMap 基础设施 (#3 ①)~~ ✅ + 泛型剩余 31 模块增量迁移 (#3 ① 后续) | 🟡 P2 |
+| **V264+** | CI 收紧双开关切换 (#5) + ts-unused-exports 扩面清理 (#6) + Tauri 生态完善 (#7) | 🟢 P3 按季度排期 |
 
 ---
 

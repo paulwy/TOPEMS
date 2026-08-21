@@ -303,15 +303,15 @@ echo "🛂 Checking permission matrix 3-way gate (dry-run)..."
 HAS_PERM_FILES=$(echo "$STAGED_FILES" | grep -E "(^svc/.*\.rs$|^lib/shared-auth/.*\.rs$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/|^apps/web/src/config/permissions\.ts$|^apps/web/src/lib/routes/v2\.tsx$)" | head -1)
 
 if [ -n "$HAS_PERM_FILES" ]; then
-  if [ -f "scripts/ci/check-permission-matrix.cjs" ]; then
+  if [ -f "scripts/ci/perm-matrix-toolkit.cjs" ]; then
     # Pre-commit: ALWAYS dry-run. Never block for R1/R2/R3/R4/R5/R6 count
     # — blocking reserved for CI-level --fail-fast only.
-    node scripts/ci/check-permission-matrix.cjs --dry-run --report-json=/tmp/.perm-gate-precommit.json
+    node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run --report-json=/tmp/.perm-gate-precommit.json
     PERM_EXIT=$?
     if [ $PERM_EXIT -eq 2 ]; then
       echo "❌ Perm-Gate INTEGRITY FAILED (扫描器覆盖度不足 · regex/path 疑似损坏)"
       echo "   请检查 svc/ lib/shared-auth/ apps/web/src/modules/*/config.ts 路径是否存在"
-      echo "   或联系平台组修复 scripts/ci/check-permission-matrix.cjs"
+      echo "   或联系平台组修复 scripts/ci/perm-matrix-toolkit.cjs"
       ERRORS=$((ERRORS + 1))
     elif [ $PERM_EXIT -eq 0 ]; then
       echo "✅ Perm-Gate dry-run passed (Integrity OK)"
@@ -322,7 +322,7 @@ if [ -n "$HAS_PERM_FILES" ]; then
       echo "⚠️  Perm-Gate reported exit=$PERM_EXIT (CI 阶段会以 --fail-fast 严格执行)"
     fi
   else
-    echo "⏭️  Skipped (check-permission-matrix.cjs not found)"
+    echo "⏭️  Skipped (perm-matrix-toolkit.cjs not found)"
   fi
 else
   echo "⏭️  Skipped (no backend routes / frontend nav / PERMISSIONS table files staged)"

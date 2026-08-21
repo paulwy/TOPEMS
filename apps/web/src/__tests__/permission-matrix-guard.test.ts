@@ -10,7 +10,7 @@
  *   R3 (frontend nav EXISTENCE violations)  MUST ≤ 0    (baseline count = 0)
  *   Integrity L2                            MUST PASS   (never false-green)
  *
- * Runs runGate() directly from scripts/ci/check-permission-matrix.cjs via
+ * Runs runScan() directly from scripts/ci/perm-matrix-toolkit.cjs via
  * Node CJS interop. Takes ~2-5s for 1500+ backend files scan.
  *
  * CI / PR / `pnpm test` all run this; any regression → red build.
@@ -24,10 +24,10 @@ import path from 'node:path';
 // CJS interop: scripts/ci/*.cjs lives outside tsconfig root, so we use Node require()
 // through createRequire anchored at the absolute CJS script path.
 // Note: apps/web vitest runs with process.cwd() = apps/web/.
-const _cjsAbs = path.resolve(process.cwd(), '../../scripts/ci/check-permission-matrix.cjs');
+const _cjsAbs = path.resolve(process.cwd(), '../../scripts/ci/perm-matrix-toolkit.cjs');
 const _require = createRequire(`file://${_cjsAbs}`);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { runGate } = _require(_cjsAbs);
+const { runScan } = _require(_cjsAbs);
 
 // Baseline thresholds (from rN-perm-matrix-baseline.json)
 const BASELINE = Object.freeze({
@@ -45,7 +45,7 @@ describe('Permission Matrix 3-Way Gate · Guardian (never rebound vs baseline)',
 
   beforeAll(async () => {
     // dry-run is enough for guardian (never exit≠1)
-    report = (await runGate({ scan: ['backend', 'frontend', 'constants'] })) as any;
+    report = runScan() as any;
     // Console visibility for CI logs
     console.log('\n==== Permission Matrix Guardian Run ====');
     console.log('  Integrity PASS  :', report.integrity.passed);
