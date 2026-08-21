@@ -170,7 +170,7 @@ export function useWebVitals(onReport?: WebVitalsCallback) {
 /**
  * 获取当前所有 Web Vitals 指标（同步读取）
  */
-export function getWebVitalsSnapshot(): WebVitalsMetrics {
+function getWebVitalsSnapshot(): WebVitalsMetrics {
   if (typeof window === 'undefined') return {};
 
   const metrics: WebVitalsMetrics = {};

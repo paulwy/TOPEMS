@@ -111,7 +111,7 @@ interface ListDeadLettersParams {
 
 // ==================== API 方法 ====================
 
-export const masterDataSyncApi = {
+const masterDataSyncApi = {
   // --- 同步任务 ---
 
   async createSyncJob(data: CreateSyncJobRequest): Promise<ApiResponse<SyncJob>> {

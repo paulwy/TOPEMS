@@ -762,5 +762,5 @@ export class PerformanceBottleneckDetector {
   }
 }
 
-export const performanceBottleneckDetector = new PerformanceBottleneckDetector();
+const performanceBottleneckDetector = new PerformanceBottleneckDetector();
 export default performanceBottleneckDetector;

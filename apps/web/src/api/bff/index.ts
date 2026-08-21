@@ -34,7 +34,7 @@ const performanceCallbacks = new Set<PerformanceCallback>();
  * 注册性能监控回调
  * @returns 取消注册的函数
  */
-export function onBffPerformance(callback: PerformanceCallback): () => void {
+function onBffPerformance(callback: PerformanceCallback): () => void {
   performanceCallbacks.add(callback);
   return () => {
     performanceCallbacks.delete(callback);

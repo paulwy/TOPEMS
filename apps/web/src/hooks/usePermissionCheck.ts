@@ -3,7 +3,7 @@ import { authApi } from '@/api/iam';
 import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
 
-export const usePermissionCheck = () => {
+const usePermissionCheck = () => {
   const { hasPermission } = useAuth();
 
   const checkPermissionFromServer = useCallback(async (permission: string) => {

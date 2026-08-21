@@ -183,7 +183,7 @@ function hydrateSSRData(): SSRDataCollection {
  * @param key 数据 key
  * @returns 数据载荷（未找到返回 undefined）
  */
-export function readSSRData<T = unknown>(key: string): T | undefined {
+function readSSRData<T = unknown>(key: string): T | undefined {
   const collection = hydrateSSRData();
   const entry = collection.entries.find((e) => e.key === key);
   return entry?.payload as T | undefined;

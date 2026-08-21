@@ -507,7 +507,7 @@ export function migrateColumn<TData>(
  * @param columns - Array of DataTable ColumnDef
  * @returns Array of ProDataTableColumn
  */
-export function migrateColumns<TData>(
+function migrateColumns<TData>(
   columns: ColumnDef<TData, unknown>[]
 ): ProDataTableColumn<TData>[] {
   return columns.map((col, index) => migrateColumn<TData>(col, index));
@@ -519,7 +519,7 @@ export function migrateColumns<TData>(
  * Converts DataGrid Pro's rowSelectionModel (array) to DataTable's
  * onSelectionChange signature (Set<string> | string[]).
  */
-export function adaptSelectionCallback(
+function adaptSelectionCallback(
   onSelectionChange: (keys: Set<string> | string[]) => void
 ): (model: GridRowSelectionModel) => void {
   return (model: GridRowSelectionModel) => {
@@ -534,7 +534,7 @@ export function adaptSelectionCallback(
  * Splits DataGrid Pro's unified paginationModel callback into the
  * separate onPageChange / onPageSizeChange callbacks used by DataTable.
  */
-export function adaptPaginationCallbacks(options: {
+function adaptPaginationCallbacks(options: {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
 }): (model: GridPaginationModel) => void {

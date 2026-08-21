@@ -315,7 +315,7 @@ export const clearCache = (): void => {
   cache.clear();
 };
 
-export const clearCacheByKey = (
+const clearCacheByKey = (
   url: string,
   method: string = 'GET',
   params?: Record<string, unknown>,
@@ -324,7 +324,7 @@ export const clearCacheByKey = (
   cache.delete(key);
 };
 
-export const getCacheSize = (): number => {
+const getCacheSize = (): number => {
   return cache.size;
 };
 

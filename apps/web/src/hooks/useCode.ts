@@ -196,7 +196,7 @@ const codeApi = {
 /**
  * 获取下一个编码
  */
-export function useNextCode(entityType: EntityType, module?: ModuleType) {
+function useNextCode(entityType: EntityType, module?: ModuleType) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.NEXT_CODE_BASE, entityType, module],
     queryFn: () => codeApi.getNextCode({ entity_type: entityType, module }),
@@ -248,7 +248,7 @@ export function useValidateCode() {
 /**
  * 预留编码
  */
-export function useReserveCodes() {
+function useReserveCodes() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -267,7 +267,7 @@ export function useReserveCodes() {
 /**
  * 释放预留编码
  */
-export function useReleaseCodes() {
+function useReleaseCodes() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -285,7 +285,7 @@ export function useReleaseCodes() {
 /**
  * 获取编码规则列表
  */
-export function useCodeRules(params?: { module?: ModuleType; entity_type?: EntityType }) {
+function useCodeRules(params?: { module?: ModuleType; entity_type?: EntityType }) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULES_BASE, params],
     queryFn: () => codeApi.getRules(params),
@@ -296,7 +296,7 @@ export function useCodeRules(params?: { module?: ModuleType; entity_type?: Entit
 /**
  * 获取编码规则详情
  */
-export function useCodeRule(id: string) {
+function useCodeRule(id: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULE_BASE, id],
     queryFn: () => codeApi.getRule(id),
@@ -564,7 +564,7 @@ export function getCodeRuleForEntity(entityType: EntityType): Partial<CodeRule> 
 /**
  * 生成实体编码（前端预览用）
  */
-export function generateCodeForEntity(entityType: EntityType): string {
+function generateCodeForEntity(entityType: EntityType): string {
   const rule = getCodeRuleForEntity(entityType);
   const generator = new CodeGenerator(rule);
   return generator.generate();
@@ -573,7 +573,7 @@ export function generateCodeForEntity(entityType: EntityType): string {
 /**
  * 批量生成实体编码
  */
-export function batchGenerateCodesForEntity(entityType: EntityType, count: number): string[] {
+function batchGenerateCodesForEntity(entityType: EntityType, count: number): string[] {
   const rule = getCodeRuleForEntity(entityType);
   const generator = new CodeGenerator(rule);
   return generator.generateBatch(count);

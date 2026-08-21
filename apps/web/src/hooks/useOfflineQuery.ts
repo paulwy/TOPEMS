@@ -20,7 +20,7 @@ interface OfflineConfig {
   fallbackToCache?: boolean;
 }
 
-export function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData = TQueryFnData>(
+function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData = TQueryFnData>(
   options: UseQueryOptions<TQueryFnData, TError, TData> & { offlineConfig?: OfflineConfig }
 ) {
   const { offlineConfig, queryFn, ...queryOptions } = options;
@@ -69,7 +69,7 @@ export function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData 
   });
 }
 
-export function useOfflineMutation<TData = unknown, TError = unknown, TVariables = void>(
+function useOfflineMutation<TData = unknown, TError = unknown, TVariables = void>(
   options: UseMutationOptions<TData, TError, TVariables> & { offlineConfig?: OfflineConfig }
 ) {
   const { offlineConfig, mutationFn, ...mutationOptions } = options;

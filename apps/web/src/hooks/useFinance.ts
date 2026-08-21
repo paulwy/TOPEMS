@@ -18,7 +18,7 @@ import i18n from '@/i18n';
 /**
  * 获取科目列表
  */
-export const useAccounts = (params?: {
+const useAccounts = (params?: {
   page?: number;
   pageSize?: number;
   search?: string;
@@ -52,7 +52,7 @@ export const useAccountTree = (params?: {
 /**
  * 获取科目详情
  */
-export const useAccount = (id: string) => {
+const useAccount = (id: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BASE, id],
     queryFn: () => accountApi.get(id),
@@ -65,7 +65,7 @@ export const useAccount = (id: string) => {
 /**
  * 获取科目余额
  */
-export const useAccountBalances = (params: {
+const useAccountBalances = (params: {
   account_ids?: string[];
   period: string;
   company_id?: string;
@@ -101,7 +101,7 @@ export const useOpeningBalances = (params: {
 /**
  * 创建科目
  */
-export const useCreateAccount = () => {
+const useCreateAccount = () => {
   const queryClient = useQueryClient();
   const { success, error: notifyError } = useNotification();
 
@@ -129,7 +129,7 @@ export const useCreateAccount = () => {
 /**
  * 更新科目
  */
-export const useUpdateAccount = () => {
+const useUpdateAccount = () => {
   const queryClient = useQueryClient();
   const { success, error: notifyError } = useNotification();
 
@@ -158,7 +158,7 @@ export const useUpdateAccount = () => {
 /**
  * 删除科目
  */
-export const useDeleteAccount = () => {
+const useDeleteAccount = () => {
   const queryClient = useQueryClient();
   const { success, error: notifyError } = useNotification();
 

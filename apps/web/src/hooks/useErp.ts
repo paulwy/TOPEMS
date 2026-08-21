@@ -250,31 +250,31 @@ function useErpBase<T extends { id?: string }>(
   };
 }
 
-export function useAssets() {
+function useAssets() {
   return useErpBase<Asset>(assetApi);
 }
 
-export function useExpenses() {
+function useExpenses() {
   return useErpBase<Expense>(expenseApi);
 }
 
-export function useBudgets() {
+function useBudgets() {
   return useErpBase<Budget>(budgetApi);
 }
 
-export function useReceivables() {
+function useReceivables() {
   return useErpBase<Receivable>(receivableApi);
 }
 
-export function usePayables() {
+function usePayables() {
   return useErpBase<Payable>(payableApi);
 }
 
-export function useAccountingSubjects() {
+function useAccountingSubjects() {
   return useErpBase<AccountingSubject>(accountingSubjectApi);
 }
 
-export function useVouchers() {
+function useVouchers() {
   return useErpBase<FinancialVoucher>(
     voucherApi as typeof voucherApi & {
       list: (
@@ -293,31 +293,31 @@ export function useVouchers() {
   );
 }
 
-export function useOfficeSupplies() {
+function useOfficeSupplies() {
   return useErpBase<OfficeSupply>(officeSupplyApi);
 }
 
-export function useMeetingRooms() {
+function useMeetingRooms() {
   return useErpBase<MeetingRoom>(meetingRoomApi);
 }
 
-export function useMeetingBookings() {
+function useMeetingBookings() {
   return useErpBase<MeetingBooking>(meetingBookingApi);
 }
 
-export function useVehicles() {
+function useVehicles() {
   return useErpBase<Vehicle>(vehicleApi);
 }
 
-export function useVehicleRequests() {
+function useVehicleRequests() {
   return useErpBase<VehicleRequest>(vehicleRequestApi);
 }
 
-export function useAnnouncements() {
+function useAnnouncements() {
   return useErpBase<Announcement>(announcementApi);
 }
 
-export function useFinanceReports() {
+function useFinanceReports() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);

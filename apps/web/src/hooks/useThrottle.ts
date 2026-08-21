@@ -83,7 +83,7 @@ export function useThrottledCallback<T extends (...args: Parameters<T>) => Retur
   );
 }
 
-export function useThrottledValue<T>(value: T, delay: number): T {
+function useThrottledValue<T>(value: T, delay: number): T {
   return useThrottle(value, delay);
 }
 

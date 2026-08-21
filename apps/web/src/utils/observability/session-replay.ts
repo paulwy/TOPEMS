@@ -642,5 +642,5 @@ export class SessionReplayer {
   }
 }
 
-export const sessionReplayer = new SessionReplayer();
+const sessionReplayer = new SessionReplayer();
 export default sessionReplayer;

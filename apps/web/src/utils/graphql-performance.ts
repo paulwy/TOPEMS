@@ -150,7 +150,7 @@ function calculatePercentile(sortedValues: number[], percentile: number): number
 /**
  * 从记录数组计算统计数据
  */
-export function calculateStats(
+function calculateStats(
   operationName: string,
   records: QueryPerformanceRecord[]
 ): QueryPerformanceStats {

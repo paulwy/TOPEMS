@@ -30,7 +30,7 @@ export function useCustomerFinanceInfo(customerId: string) {
 /**
  * 更新客户财务信息
  */
-export function useUpdateCustomerFinanceInfo() {
+function useUpdateCustomerFinanceInfo() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 

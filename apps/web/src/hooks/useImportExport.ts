@@ -4,7 +4,7 @@ interface UseImportExportOptions {
   apiEndpoint: string;
 }
 
-export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
+const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
   const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
