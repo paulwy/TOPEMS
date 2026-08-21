@@ -4,7 +4,6 @@ import apiCache from './apiCache';
 
 export { default as createLogger, type LogLevel } from './logger';
 export * from './format';
-export * from './string';
 export { default as session } from './session';
 export * from './errors';
 export { lazyImport, default as lazyImportDefault } from './lazyImport';
