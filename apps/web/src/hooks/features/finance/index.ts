@@ -21,12 +21,6 @@ export {
 // HRM 财务（员工薪资等）
 export { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '../../useHrmFinance';
 
-// PM 财务（项目财务等）
-export {
-  useProjectFinance,
-  useProjectBudgetItems,
-  useProjectCostPerformance,
-} from '../../usePmFinance';
 
 // 凭证模板
 export { useVoucherTemplate } from '../../useVoucherTemplate';
