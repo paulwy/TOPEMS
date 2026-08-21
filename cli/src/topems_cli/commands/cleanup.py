@@ -160,3 +160,77 @@ def clean_services(yes: bool):
     manager.stop_all()
 
     console.print("[green]✓[/green] 服务清理完成")
+
+
+@cleanup.command(name="node_modules")
+@click.option("-y", "--yes", is_flag=True, help="跳过确认")
+@click.option("--dry-run", is_flag=True, help="预演模式，仅显示将删除的内容")
+def clean_node_modules(yes: bool, dry_run: bool):
+    """深度清理所有 node_modules 目录并 pnpm store prune
+
+    对标 scripts/topems.sh clean --deep。
+    用于解决 dual @types/react 残留 / node_modules 与 lockfile 不一致等系统性问题。
+    """
+    console.print("[bold]深度清理 node_modules...[/bold]")
+
+    project_root = _get_project_root()
+
+    # 收集所有 node_modules 目录：根 + apps/* + packages/*
+    target_dirs: list[Path] = []
+    for pattern in [
+        "node_modules",
+        "apps/*/node_modules",
+        "packages/*/node_modules",
+    ]:
+        for p in project_root.glob(pattern):
+            if p.is_dir() and p.name == "node_modules":
+                target_dirs.append(p)
+
+    if not target_dirs:
+        console.print("[yellow]未发现任何 node_modules 目录[/yellow]")
+        return
+
+    if not yes and not dry_run:
+        console.print("[yellow]警告: 将删除以下目录并执行 pnpm store prune[/yellow]")
+        for p in target_dirs:
+            console.print(f"  {p.relative_to(project_root)}")
+        if not click.confirm("继续?"):
+            return
+
+    import shutil
+
+    for p in target_dirs:
+        try:
+            size = sum(f.stat().st_size for f in p.rglob("*") if f.is_file()) // (1024 * 1024)
+            size_str = f"{size}M" if size > 0 else "<1M"
+        except (PermissionError, OSError):
+            size_str = "?"
+        rel = p.relative_to(project_root)
+        if dry_run:
+            console.print(f"[blue][DRY-RUN] 将删除: {rel} ({size_str})[/blue]")
+        else:
+            try:
+                shutil.rmtree(p, ignore_errors=True)
+                console.print(f"[green]✓[/green] 已删除 {rel} ({size_str})")
+            except Exception as e:
+                console.print(f"[red]✗[/red] 删除失败 {rel}: {e}")
+
+    # pnpm store prune（清理未引用包，不影响其他项目）
+    if dry_run:
+        console.print("[blue][DRY-RUN] 将执行 pnpm store prune[/blue]")
+    else:
+        console.print("执行 pnpm store prune...")
+        result = subprocess.run(
+            ["pnpm", "store", "prune"],
+            cwd=str(project_root),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            console.print("[green]✓[/green] pnpm store 已清理")
+        else:
+            console.print(f"[yellow]⚠[/yellow] pnpm store prune 失败: {result.stderr[:200]}")
+
+    console.print(
+        "[green]✓[/green] 深度清理完成。下次运行 build/dev 时会自动 pnpm install 重新安装"
+    )
