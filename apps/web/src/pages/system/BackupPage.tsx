@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Download,
@@ -20,33 +20,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Chip,
   CircularProgress,
-  IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Alert,
-  Card,
-  CardContent,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { formatDateTime } from '@/utils/date';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
@@ -199,7 +187,7 @@ const BackupPage: React.FC = () => {
         },
       });
     },
-    [deleteBackupMutation, openConfirmDialog]
+    [deleteBackupMutation, openConfirmDialog, t]
   );
 
   const handleOpenRestoreModal = useCallback((backup: BackupRecord) => {
@@ -219,208 +207,214 @@ const BackupPage: React.FC = () => {
     setSelectedBackup(null);
   }, []);
 
-  const getBackupTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      full: t('system.backup_page.k14'),
-      incremental: t('system.backup_page.k15'),
-      schema: t('system.backup_page.k16'),
-    };
-    return labels[type] || type;
-  };
+  const getBackupTypeLabel = useCallback(
+    (type: string) => {
+      const labels: Record<string, string> = {
+        full: t('system.backup_page.k14'),
+        incremental: t('system.backup_page.k15'),
+        schema: t('system.backup_page.k16'),
+      };
+      return labels[type] || type;
+    },
+    [t]
+  );
 
-  const getBackupTypeChip = (type: string) => {
-    const chips: Record<string, { color: 'primary' | 'secondary' | 'default'; label: string }> = {
-      full: { color: 'primary', label: t('system.backup_page.k17') },
-      incremental: { color: 'secondary', label: t('system.backup_page.k18') },
-      schema: { color: 'default', label: t('system.backup_page.k19') },
-    };
-    const chip = chips[type];
-    return (
-      <Chip
-        size='small'
-        label={chip?.label || type}
-        color={chip?.color}
-      />
-    );
-  };
+  const getBackupTypeChip = useCallback(
+    (type: string) => {
+      const chips: Record<string, { color: 'primary' | 'secondary' | 'default'; label: string }> = {
+        full: { color: 'primary', label: t('system.backup_page.k17') },
+        incremental: { color: 'secondary', label: t('system.backup_page.k18') },
+        schema: { color: 'default', label: t('system.backup_page.k19') },
+      };
+      const chip = chips[type];
+      return (
+        <Chip
+          size='small'
+          label={chip?.label || type}
+          color={chip?.color}
+        />
+      );
+    },
+    [t]
+  );
 
-  const getStatusChip = (status: string) => {
-    const chips: Record<
-      string,
-      { color: 'success' | 'error' | 'warning' | 'default'; label: string }
-    > = {
-      completed: { color: 'success', label: t('system.backup_page.k20') },
-      failed: { color: 'error', label: t('system.backup_page.k21') },
-      in_progress: { color: 'warning', label: t('system.backup_page.k22') },
-      pending: { color: 'default', label: t('system.backup_page.k23') },
-    };
-    const chip = chips[status];
-    return (
-      <Chip
-        size='small'
-        label={chip?.label || status}
-        color={chip?.color}
-      />
-    );
-  };
+  const getStatusChip = useCallback(
+    (status: string) => {
+      const chips: Record<
+        string,
+        { color: 'success' | 'error' | 'warning' | 'default'; label: string }
+      > = {
+        completed: { color: 'success', label: t('system.backup_page.k20') },
+        failed: { color: 'error', label: t('system.backup_page.k21') },
+        in_progress: { color: 'warning', label: t('system.backup_page.k22') },
+        pending: { color: 'default', label: t('system.backup_page.k23') },
+      };
+      const chip = chips[status];
+      return (
+        <Chip
+          size='small'
+          label={chip?.label || status}
+          color={chip?.color}
+        />
+      );
+    },
+    [t]
+  );
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = useCallback((bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-  };
+  }, []);
 
-  const displayBackups = backups || [];
+  const columns: ColumnDef<BackupRecord>[] = useMemo(
+    () => [
+      {
+        id: 'backup_name',
+        label: t('system.backup_page.k25'),
+        render: (row) => (
+          <Typography
+            noWrap
+            title={row.backup_name}
+          >
+            {row.backup_name}
+          </Typography>
+        ),
+      },
+      {
+        id: 'backup_type',
+        label: t('system.backup_page.k26'),
+        render: (row) => getBackupTypeChip(row.backup_type),
+      },
+      {
+        id: 'status',
+        label: t('system.backup_page.k27'),
+        render: (row) => getStatusChip(row.status),
+      },
+      {
+        id: 'file_size',
+        label: t('system.backup_page.k28'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FileText size={14} />
+            <Typography>{formatFileSize(row.file_size || 0)}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: t('system.backup_page.k29'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Calendar size={14} />
+            <Typography>{formatDateTime(row.created_at)}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'duration_seconds',
+        label: t('system.backup_page.k30'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Clock size={14} />
+            <Typography>{t('system.backup_page.m1', { v1: row.duration_seconds })}</Typography>
+          </Box>
+        ),
+      },
+    ],
+    [t, getBackupTypeChip, getStatusChip, formatFileSize]
+  );
+
+  const rowActions: RowAction<BackupRecord>[] = useMemo(
+    () => [
+      {
+        key: 'view',
+        label: t('system.backup_page.k35'),
+        icon: <Eye size={16} />,
+        onClick: (row) => handleOpenDetailModal(row),
+        color: 'info',
+      },
+      {
+        key: 'restore',
+        label: t('system.backup_page.k37'),
+        icon: <Upload size={16} />,
+        onClick: (row) => handleOpenRestoreModal(row),
+        color: 'warning',
+        disabled: (row: BackupRecord) =>
+          row.status !== 'completed' || restoreBackupMutation.isPending,
+      },
+      {
+        key: 'download',
+        label: t('system.backup_page.k39'),
+        icon: <Download size={16} />,
+        onClick: () => {
+          // TODO: implement download
+        },
+        color: 'primary',
+        disabled: (row: BackupRecord) => row.status !== 'completed',
+      },
+      {
+        key: 'delete',
+        label: t('system.backup_page.k41'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteBackup(row.id),
+        color: 'error',
+        disabled: () => deleteBackupMutation.isPending,
+      },
+    ],
+    [
+      t,
+      handleOpenDetailModal,
+      handleOpenRestoreModal,
+      handleDeleteBackup,
+      restoreBackupMutation.isPending,
+      deleteBackupMutation.isPending,
+    ]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: t('system.backup_page.e1'),
+        icon: createBackupMutation.isPending ? (
+          <CircularProgress size={16} />
+        ) : (
+          <Package size={16} />
+        ),
+        onClick: () => setShowCreateModal(true),
+        variant: 'contained' as const,
+        disabled: createBackupMutation.isPending,
+      },
+      {
+        label: t('system.action.refresh'),
+        icon: <Clock size={16} />,
+        onClick: () => refetch(),
+        variant: 'outlined' as const,
+      },
+    ],
+    [t, createBackupMutation.isPending, refetch]
+  );
 
   return (
-    <PageContainer title={t('system.backup_page.k24')}>
-      <Box sx={{ mb: 3 }}>
-        <Button
-          variant='contained'
-          startIcon={<Package />}
-          onClick={() => setShowCreateModal(true)}
-          disabled={createBackupMutation.isPending}
-        >
-          {createBackupMutation.isPending ? (
-            <CircularProgress
-              size={18}
-              sx={{ mr: 1 }}
-            />
-          ) : null}
-          {t('system.backup_page.e1')}
-        </Button>
-      </Box>
-
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('system.backup_page.k25')}</TableCell>
-                  <TableCell>{t('system.backup_page.k26')}</TableCell>
-                  <TableCell>{t('system.backup_page.k27')}</TableCell>
-                  <TableCell>{t('system.backup_page.k28')}</TableCell>
-                  <TableCell>{t('system.backup_page.k29')}</TableCell>
-                  <TableCell>{t('system.backup_page.k30')}</TableCell>
-                  <TableCell>{t('system.backup_page.k31')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {isPending ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      align='center'
-                    >
-                      <CircularProgress />
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      align='center'
-                    >
-                      <Alert severity='error'>
-                        {extractErrorMessage(error, t('system.backup_page.k32'))}
-                      </Alert>
-                    </TableCell>
-                  </TableRow>
-                ) : displayBackups.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      align='center'
-                    >
-                      <Typography color='text.secondary'>{t('system.backup_page.k33')}</Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  displayBackups.map((backup) => (
-                    <TableRow key={backup.backup_id}>
-                      <TableCell>
-                        <Tooltip title={backup.backup_name}>
-                          <Typography noWrap>{backup.backup_name}</Typography>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{getBackupTypeChip(backup.backup_type)}</TableCell>
-                      <TableCell>{getStatusChip(backup.status)}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <FileText size={14} />
-                          <Typography>{formatFileSize(backup.file_size || 0)}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Calendar size={14} />
-                          <Typography>{formatDateTime(backup.created_at)}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Clock size={14} />
-                          <Typography>
-                            {t('system.backup_page.m1', { v1: backup.duration_seconds })}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title={t('system.backup_page.k34')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleOpenDetailModal(backup)}
-                              aria-label={t('system.backup_page.k35')}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          {backup.status === 'completed' && (
-                            <Tooltip title={t('system.backup_page.k36')}>
-                              <IconButton
-                                size='small'
-                                onClick={() => handleOpenRestoreModal(backup)}
-                                disabled={restoreBackupMutation.isPending}
-                                aria-label={t('system.backup_page.k37')}
-                              >
-                                <Upload size={16} />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          {backup.status === 'completed' && (
-                            <Tooltip title={t('system.backup_page.k38')}>
-                              <IconButton
-                                size='small'
-                                aria-label={t('system.backup_page.k39')}
-                              >
-                                <Download size={16} />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                          <Tooltip title={t('system.backup_page.k40')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleDeleteBackup(backup.id)}
-                              disabled={deleteBackupMutation.isPending}
-                              sx={{ color: 'error.main' }}
-                              aria-label={t('system.backup_page.k41')}
-                            >
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate<BackupRecord>
+        title={t('system.backup_page.k24')}
+        columns={columns}
+        data={backups}
+        loading={isPending}
+        error={error ? extractErrorMessage(error, t('system.backup_page.k32')) : undefined}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: backups.length,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={actions}
+        rowActions={rowActions}
+        emptyMessage={t('system.backup_page.k33')}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -566,90 +560,40 @@ const BackupPage: React.FC = () => {
           {selectedBackup && (
             <Box sx={{ mt: 2 }}>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e7')}
-                  </Typography>
-                  <Typography>{selectedBackup.backup_name}</Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e8')}
-                  </Typography>
-                  <Typography>{getBackupTypeLabel(selectedBackup.backup_type)}</Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e9')}
-                  </Typography>
-                  {getStatusChip(selectedBackup.status)}
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e10')}
-                  </Typography>
-                  <Typography>{formatFileSize(selectedBackup.file_size || 0)}</Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e11')}
-                  </Typography>
-                  <Typography>{formatDateTime(selectedBackup.created_at)}</Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e12')}
-                  </Typography>
-                  <Typography>
-                    {t('system.backup_page.m1', { v1: selectedBackup.duration_seconds })}
-                  </Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e13')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {selectedBackup.backup_id}
-                  </Typography>
-                </Box>
-                <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {t('system.backup_page.e14')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {selectedBackup.file_path || '-'}
-                  </Typography>
-                </Box>
+                <GridItem
+                  label={t('system.backup_page.e7')}
+                  value={selectedBackup.backup_name}
+                />
+                <GridItem
+                  label={t('system.backup_page.e8')}
+                  value={getBackupTypeLabel(selectedBackup.backup_type)}
+                />
+                <GridItem
+                  label={t('system.backup_page.e9')}
+                  value={getStatusChip(selectedBackup.status)}
+                />
+                <GridItem
+                  label={t('system.backup_page.e10')}
+                  value={formatFileSize(selectedBackup.file_size || 0)}
+                />
+                <GridItem
+                  label={t('system.backup_page.e11')}
+                  value={formatDateTime(selectedBackup.created_at)}
+                />
+                <GridItem
+                  label={t('system.backup_page.e12')}
+                  value={t('system.backup_page.m1', { v1: selectedBackup.duration_seconds })}
+                />
+                <GridItem
+                  label={t('system.backup_page.e13')}
+                  value={selectedBackup.backup_id}
+                  monospace
+                />
+                <GridItem
+                  label={t('system.backup_page.e14')}
+                  value={selectedBackup.file_path || '-'}
+                  monospace
+                />
                 {selectedBackup.error_message && (
                   <Box sx={{ width: '100%' }}>
                     <Typography
@@ -687,8 +631,37 @@ const BackupPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </PageContainer>
+    </>
   );
 };
+
+const GridItem = ({
+  label,
+  value,
+  monospace,
+}: {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  monospace?: boolean;
+}) => (
+  <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+    <Typography
+      variant='subtitle2'
+      sx={{ fontWeight: 600 }}
+    >
+      {label}
+    </Typography>
+    {typeof value === 'string' || typeof value === 'number' ? (
+      <Typography
+        variant='body2'
+        sx={monospace ? { fontFamily: 'monospace' } : undefined}
+      >
+        {value}
+      </Typography>
+    ) : (
+      value
+    )}
+  </Box>
+);
 
 export default BackupPage;

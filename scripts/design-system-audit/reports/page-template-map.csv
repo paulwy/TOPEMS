@@ -213,7 +213,7 @@ apps/web/src/pages/integration/IntegrationMesErpPage.tsx,integration,crud,CrudPa
 apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/integration/IntegrationWmsScmPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/lims/BarcodePage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/lims/InspectionResultPage.tsx,lims,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/lims/InspectionResultPage.tsx,lims,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/lims/InspectionTaskPage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/lims/LimsDashboardPage.tsx,lims,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/lims/LimsInstrumentDataPage/index.tsx,lims,unknown / custom,,none,PageContainer; ConfirmDialog,yes,no,no,no,no,2
@@ -315,7 +315,7 @@ apps/web/src/pages/notification/NotificationListPage.tsx,notification,crud,CrudP
 apps/web/src/pages/notification/NotificationSettingsPage.tsx,notification,settings,SettingsPageTemplate,SettingsPageTemplate; SettingTab; SettingValueType,none,no,no,no,no,yes,0
 apps/web/src/pages/notification/NotificationStatsPage.tsx,notification,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,crud,CrudPage,none,ConfirmDialog,no,yes,no,yes,yes,1
-apps/web/src/pages/oa/AnnouncementPage.tsx,oa,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/oa/AnnouncementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/oa/DashboardPage.tsx,oa,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/oa/DocumentManagementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/oa/MeetingManagementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
@@ -466,7 +466,7 @@ apps/web/src/pages/srm/SrmSupplierPage.tsx,srm,crud,CrudPage,CrudPage,none,no,ye
 apps/web/src/pages/srm/SrmSupplierProductPage.tsx,srm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/srm/SupplierPortalPage.tsx,srm,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/system/AuditLogPage/index.tsx,system,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/system/BackupPage.tsx,system,unknown / custom,,none,PageContainer; ConfirmDialog,yes,no,no,no,no,2
+apps/web/src/pages/system/BackupPage.tsx,system,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/system/FeatureFlagPage/index.tsx,system,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/system/SystemParamsPage/index.tsx,system,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/ticket/DashboardPage.tsx,ticket,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
