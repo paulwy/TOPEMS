@@ -178,6 +178,9 @@ svc/archive/
 archive/
 old/
 backup/
+# Keep roadmap archive tracked
+!docs/roadmap/archive/
+!docs/roadmap/archive/**
 
 # Storybook
 *storybook.log
