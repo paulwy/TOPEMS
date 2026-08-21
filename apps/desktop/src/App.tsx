@@ -8,6 +8,7 @@ import CRM from './pages/CRM';
 import ERP from './pages/ERP';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import AuditLog from './pages/AuditLogPage';
 import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -37,6 +38,7 @@ function App() {
                   <Route path="/crm" element={<CRM />} />
                   <Route path="/erp" element={<ERP />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/audit" element={<AuditLog />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>

@@ -18,6 +18,7 @@ import {
   Briefcase,
   BarChart3,
   Settings,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Moon,
@@ -37,6 +38,7 @@ const iconMap: Record<string, React.ElementType> = {
   Briefcase,
   BarChart3,
   Settings,
+  ShieldCheck,
 };
 
 const Sidebar = () => {
