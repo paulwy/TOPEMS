@@ -1,5 +1,6 @@
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { hazardSchema } from '@/schemas/ehs/hazard';
 import { ehsApi } from '@/api/ehs';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -139,52 +140,12 @@ const HazardStats: React.FC = () => {
   );
 };
 
-const hazardApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await ehsApi.listHazards({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-    } as Parameters<typeof ehsApi.listHazards>[0]);
-    if (!response.success) {
-      throw new Error(i18n.t('ehs.hazard_page.k5'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.items || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-
-  create: async (data) => {
-    const response = await ehsApi.createHazard(
-      data as unknown as Parameters<typeof ehsApi.createHazard>[0]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('ehs.hazard_page.k6'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  update: async (id, data) => {
-    const response = await ehsApi.updateHazard(
-      id,
-      data as Parameters<typeof ehsApi.updateHazard>[1]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('ehs.hazard_page.k7'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  delete: async (id) => {
-    const response = await ehsApi.deleteHazard(id);
-    if (!response.success) {
-      throw new Error(i18n.t('ehs.hazard_page.k8'));
-    }
-  },
-};
+const hazardApiAdapter = createCrudPageAdapter({
+  list: (params?: any) => ehsApi.listHazards(params),
+  create: (data: any) => ehsApi.createHazard(data),
+  update: (id: string, data: any) => ehsApi.updateHazard(id, data),
+  delete: (id: string) => ehsApi.deleteHazard(id),
+});
 
 const HazardPage: React.FC = () => {
   return (
