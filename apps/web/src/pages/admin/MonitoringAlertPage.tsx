@@ -57,6 +57,7 @@ import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
 interface MonitoringAlertPageProps {
   onNavigate?: (page: string) => void;
@@ -399,23 +400,6 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
       dismissed: i18n.t('pages.monitoring_alert_page.k16'),
     };
     return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'acknowledged':
-        return 'info';
-      case 'resolved':
-        return 'success';
-      case 'escalated':
-        return 'error';
-      case 'dismissed':
-        return 'default';
-      default:
-        return 'default';
-    }
   };
 
   const getHealthStatus = (value: number, type: 'cpu' | 'memory' | 'disk' | 'network') => {

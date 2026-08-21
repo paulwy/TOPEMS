@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
 import i18n from '@/i18n';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
 const ct = designTokens.colors;
 const EquipmentDetailPage: React.FC = () => {
@@ -71,20 +72,6 @@ const EquipmentDetailPage: React.FC = () => {
   const handleDelete = () => {
     if (!id) return;
     deleteMutation.mutate(id);
-  };
-  const getStatusColor = (status: string): ChipProps['color'] => {
-    switch (status) {
-      case 'idle':
-        return 'default';
-      case 'in_use':
-        return 'info';
-      case 'maintenance':
-        return 'warning';
-      case 'scrapped':
-        return 'error';
-      default:
-        return 'default';
-    }
   };
   const getStatusLabel = (status: string) => {
     switch (status) {

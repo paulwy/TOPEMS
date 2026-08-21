@@ -11,6 +11,7 @@ import ListPageTemplate, {
 } from '@/components/templates/ListPageTemplate';
 import i18n from '@/i18n';
 import type { Alert } from '@/api/admin/monitoring';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
 interface MonitoringAlertTableProps {
   alerts: Alert[];
@@ -115,22 +116,6 @@ const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       dismissed: i18n.t('admin.monitoring_alert.dismissed'),
     };
     return labels[status] || status;
-  };
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'acknowledged':
-        return 'info';
-      case 'resolved':
-        return 'success';
-      case 'escalated':
-        return 'error';
-      case 'dismissed':
-        return 'default';
-      default:
-        return 'default';
-    }
   };
   const alertColumns: ColumnDef<Alert>[] = useMemo(
     () => [

@@ -134,6 +134,10 @@ export type { FilterCondition } from './AdvancedFilter';
 // PageContainer - 统一页面容器组件 (支持autoTitle和autoBreadcrumbs)
 export { default as PageContainer } from './PageContainer';
 
+// StatusChip - 统一状态标签组件 (支持默认映射和自定义 mapping)
+export { default as StatusChip } from './StatusChip';
+export type { StatusChipProps } from './StatusChip';
+
 export { EmptyState } from './EmptyState';
 
 export {
