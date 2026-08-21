@@ -253,7 +253,7 @@ export class IsrManager {
   }
 }
 
-export const isrManager = new IsrManager({
+const isrManager = new IsrManager({
   revalidate: 60 * 1000,
   maxEntries: 500,
   staleWhileRevalidate: 24 * 60 * 60 * 1000,

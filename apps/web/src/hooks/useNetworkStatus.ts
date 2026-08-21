@@ -94,17 +94,17 @@ export function useNetworkStatus(): NetworkInfo {
   };
 }
 
-export function useOnline(): boolean {
+function useOnline(): boolean {
   const { status } = useNetworkStatus();
   return status === 'online';
 }
 
-export function useOffline(): boolean {
+function useOffline(): boolean {
   const { status } = useNetworkStatus();
   return status === 'offline';
 }
 
-export function useNetworkCondition(): 'slow' | 'medium' | 'fast' | 'unknown' {
+function useNetworkCondition(): 'slow' | 'medium' | 'fast' | 'unknown' {
   const { effectiveType, rtt } = useNetworkStatus();
 
   if (!effectiveType || !rtt) {

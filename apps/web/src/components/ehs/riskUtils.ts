@@ -78,7 +78,7 @@ export function calculateRiskLevel(
  * Calculate comprehensive risk score including exposure
  * More detailed risk assessment
  */
-export function calculateComprehensiveRisk(
+function calculateComprehensiveRisk(
   severity: SeverityValue | string,
   likelihood: LikelihoodValue | string,
   exposure: ExposureValue | string
@@ -136,7 +136,7 @@ export function calculateComprehensiveRisk(
 /**
  * Get risk level color class for styling
  */
-export function getRiskLevelColor(level: string): string {
+function getRiskLevelColor(level: string): string {
   const colorMap: Record<string, string> = {
     high: 'bg-red-100 text-red-700',
     [i18n.t('components.risk_utils.k0')]: 'bg-red-100 text-red-700',
@@ -163,7 +163,7 @@ export function getSeverityLabel(severity: string): string {
 /**
  * Get likelihood label in Chinese
  */
-export function getLikelihoodLabel(likelihood: string): string {
+function getLikelihoodLabel(likelihood: string): string {
   const labelMap: Record<string, string> = {
     high: i18n.t('shared.risk_utils.k18'),
     medium: i18n.t('shared.risk_utils.k19'),
@@ -175,7 +175,7 @@ export function getLikelihoodLabel(likelihood: string): string {
 /**
  * Get exposure label in Chinese
  */
-export function getExposureLabel(exposure: string): string {
+function getExposureLabel(exposure: string): string {
   const labelMap: Record<string, string> = {
     high: i18n.t('shared.risk_utils.k21'),
     medium: i18n.t('shared.risk_utils.k22'),
@@ -187,7 +187,7 @@ export function getExposureLabel(exposure: string): string {
 /**
  * Risk matrix data for visualization
  */
-export const riskMatrixData = [
+const riskMatrixData = [
   // High severity
   {
     severity: 'high',
@@ -261,7 +261,7 @@ export const riskMatrixData = [
  */
 export type EffectivenessLevel = 'high' | 'medium' | 'low';
 
-export function getEffectivenessLabel(effectiveness: string): string {
+function getEffectivenessLabel(effectiveness: string): string {
   const labelMap: Record<string, string> = {
     high: i18n.t('shared.risk_utils.k33'),
     medium: i18n.t('shared.risk_utils.k34'),
@@ -273,7 +273,7 @@ export function getEffectivenessLabel(effectiveness: string): string {
 /**
  * Calculate residual risk after control measures
  */
-export function calculateResidualRisk(
+function calculateResidualRisk(
   initialRisk: RiskCalculationResult,
   controlEffectiveness: EffectivenessLevel | string
 ): RiskCalculationResult {

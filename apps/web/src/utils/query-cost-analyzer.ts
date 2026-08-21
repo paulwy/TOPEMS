@@ -429,7 +429,7 @@ function suggestOptimization(query: string): string[] {
   return analysis.suggestions;
 }
 
-export function validateQuery(
+function validateQuery(
   query: string,
   maxScore: number,
   variables?: Record<string, unknown>
@@ -445,7 +445,7 @@ export function validateQuery(
   };
 }
 
-export function getCostLevelColor(level: CostLevel): string {
+function getCostLevelColor(level: CostLevel): string {
   const colors: Record<CostLevel, string> = {
     low: designTokens.colors.success.dark,
     medium: designTokens.colors.warning.main,
@@ -455,7 +455,7 @@ export function getCostLevelColor(level: CostLevel): string {
   return colors[level];
 }
 
-export function getCostLevelLabel(level: CostLevel): string {
+function getCostLevelLabel(level: CostLevel): string {
   const labels: Record<CostLevel, string> = {
     low: i18n.t('shared.query-cost-analyzer.k4'),
     medium: i18n.t('shared.query-cost-analyzer.k5'),

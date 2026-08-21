@@ -57,7 +57,7 @@ export const useUpdateEmployeeFinanceInfo = () => {
 /**
  * 获取员工工资条列表
  */
-export const useEmployeePayrolls = (employeeId: string) => {
+const useEmployeePayrolls = (employeeId: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_PAYROLLS_BASE, employeeId],
     queryFn: async () => {
@@ -75,7 +75,7 @@ export const useEmployeePayrolls = (employeeId: string) => {
 /**
  * 获取部门工资汇总
  */
-export const useDepartmentPayrollSummary = (departmentId: string, period: string) => {
+const useDepartmentPayrollSummary = (departmentId: string, period: string) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.DEPARTMENT_PAYROLL_SUMMARY_BASE, departmentId, period],
     queryFn: async () => {
@@ -106,7 +106,7 @@ export const useDepartmentPayrollSummary = (departmentId: string, period: string
 /**
  * 获取工资期间列表
  */
-export const usePayrollPeriods = () => {
+const usePayrollPeriods = () => {
   return useQuery({
     queryKey: QUERY_KEYS.AD_HOC.PAYROLL_PERIODS_BASE,
     queryFn: async () => {

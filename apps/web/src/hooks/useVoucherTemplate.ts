@@ -18,7 +18,7 @@ import i18n from '@/i18n';
 /**
  * 获取凭证模板列表
  */
-export function useVoucherTemplates(params?: {
+function useVoucherTemplates(params?: {
   type?: VoucherTemplateType | VoucherTemplateType[];
   module?: string;
   isactive?: boolean;
@@ -47,7 +47,7 @@ export function useVoucherTemplate(templateId: string) {
 /**
  * 创建凭证模板
  */
-export function useCreateVoucherTemplate() {
+function useCreateVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -79,7 +79,7 @@ export function useCreateVoucherTemplate() {
 /**
  * 更新凭证模板
  */
-export function useUpdateVoucherTemplate() {
+function useUpdateVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -103,7 +103,7 @@ export function useUpdateVoucherTemplate() {
 /**
  * 删除凭证模板
  */
-export function useDeleteVoucherTemplate() {
+function useDeleteVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -126,7 +126,7 @@ export function useDeleteVoucherTemplate() {
 /**
  * 复制凭证模板
  */
-export function useCopyVoucherTemplate() {
+function useCopyVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -157,7 +157,7 @@ export function useCopyVoucherTemplate() {
 /**
  * 设置默认模板
  */
-export function useSetDefaultVoucherTemplate() {
+function useSetDefaultVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -181,7 +181,7 @@ export function useSetDefaultVoucherTemplate() {
 /**
  * 启用/禁用模板
  */
-export function useToggleVoucherTemplate() {
+function useToggleVoucherTemplate() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -209,7 +209,7 @@ export function useToggleVoucherTemplate() {
 /**
  * 预览生成的凭证
  */
-export function usePreviewGeneratedVouchers() {
+function usePreviewGeneratedVouchers() {
   const { success, error } = useNotification();
 
   return useMutation({
@@ -237,7 +237,7 @@ export function usePreviewGeneratedVouchers() {
 /**
  * 从源单据生成凭证
  */
-export function useGenerateVoucherFromSource() {
+function useGenerateVoucherFromSource() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -274,7 +274,7 @@ export function useGenerateVoucherFromSource() {
 /**
  * 批量从源单据生成凭证
  */
-export function useBatchGenerateVouchers() {
+function useBatchGenerateVouchers() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -310,7 +310,7 @@ export function useBatchGenerateVouchers() {
 /**
  * 自动生成凭证
  */
-export function useAutoGenerateVouchers() {
+function useAutoGenerateVouchers() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -343,7 +343,7 @@ export function useAutoGenerateVouchers() {
 /**
  * 重新生成已冲销凭证
  */
-export function useRegenerateReversedVoucher() {
+function useRegenerateReversedVoucher() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -378,7 +378,7 @@ export function useRegenerateReversedVoucher() {
 /**
  * 根据源单据匹配模板
  */
-export function useMatchVoucherTemplate() {
+function useMatchVoucherTemplate() {
   return useMutation({
     mutationFn: (data: {
       source_module: string;
@@ -401,7 +401,7 @@ export function useMatchVoucherTemplate() {
 /**
  * 获取模板使用统计
  */
-export function useVoucherTemplateUsageStats(
+function useVoucherTemplateUsageStats(
   templateId: string,
   params?: {
     start_date?: string;
@@ -423,7 +423,7 @@ export function useVoucherTemplateUsageStats(
 /**
  * 获取生成规则列表
  */
-export function useGenerationRules(params?: {
+function useGenerationRules(params?: {
   source_module?: string;
   isactive?: boolean;
   page?: number;
@@ -439,7 +439,7 @@ export function useGenerationRules(params?: {
 /**
  * 创建生成规则
  */
-export function useCreateGenerationRule() {
+function useCreateGenerationRule() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -470,7 +470,7 @@ export function useCreateGenerationRule() {
 /**
  * 更新生成规则
  */
-export function useUpdateGenerationRule() {
+function useUpdateGenerationRule() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -507,7 +507,7 @@ export function useUpdateGenerationRule() {
 /**
  * 删除生成规则
  */
-export function useDeleteGenerationRule() {
+function useDeleteGenerationRule() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
@@ -530,7 +530,7 @@ export function useDeleteGenerationRule() {
 /**
  * 启用/禁用生成规则
  */
-export function useToggleGenerationRule() {
+function useToggleGenerationRule() {
   const queryClient = useQueryClient();
   const { success, error } = useNotification();
 

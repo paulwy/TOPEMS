@@ -257,7 +257,7 @@ export function useSwipeGesture(options?: {
   };
 }
 
-export function useDoubleTap(callback?: () => void, delay: number = 300) {
+function useDoubleTap(callback?: () => void, delay: number = 300) {
   const lastTapTime = useRef(0);
 
   const handleTap = useCallback(() => {

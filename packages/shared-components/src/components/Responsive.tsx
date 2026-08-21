@@ -101,7 +101,7 @@ export const Hidden: React.FC<{
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function visibleByBreakpoint(
+function visibleByBreakpoint(
   breakpoint: Breakpoint,
   props: Partial<Record<Breakpoint, boolean>>
 ): boolean {
@@ -120,7 +120,7 @@ export function visibleByBreakpoint(
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function getBreakpointWidth(breakpoint: Breakpoint): number {
+function getBreakpointWidth(breakpoint: Breakpoint): number {
   return breakpointValues[breakpoint];
 }
 

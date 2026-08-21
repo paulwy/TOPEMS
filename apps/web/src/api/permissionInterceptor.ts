@@ -52,7 +52,7 @@ export const createPermissionInterceptor = () => {
   });
 };
 
-export const checkPermissionBeforeRequest = (permission: string, callback: () => void) => {
+const checkPermissionBeforeRequest = (permission: string, callback: () => void) => {
   const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
   const isSuperuser = JSON.parse(localStorage.getItem('user') || '{}')?.is_superuser;
 
@@ -71,7 +71,7 @@ export const checkPermissionBeforeRequest = (permission: string, callback: () =>
   }
 };
 
-export const withPermissionCheck = async <T>(
+const withPermissionCheck = async <T>(
   permission: string,
   apiCall: () => Promise<T>
 ): Promise<{ success: boolean; data?: T; error?: PermissionError }> => {
@@ -94,7 +94,7 @@ export const withPermissionCheck = async <T>(
   }
 };
 
-export const logPermissionAccess = async (
+const logPermissionAccess = async (
   action: string,
   resource: string,
   success: boolean,
