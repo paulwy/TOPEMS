@@ -1,14 +1,24 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V265 | **更新日期**: 2026-08-22
+> **版本**: V266 | **更新日期**: 2026-08-22
 >
-> **V259-V264+ Backlog 全量收闭**。当前进入 V265 设计系统样式硬编码清理收尾阶段。
+> **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V266 设计系统模板迁移收尾阶段。
 
 ---
 
 ## 📊 当前状态
 
-### 活跃任务：设计系统样式硬编码清理收尾
+### 活跃任务：设计系统模板迁移收尾（V266）
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| system/AuditLogPage 迁移到 ListPageTemplate | 保留统计卡片、筛选、分页、行操作、详情弹窗；移除自定义 Filters/Table | ✅ |
+| apps/web tsc 验证 | 0 errors | ✅ |
+| apps/web eslint 验证 | 0 errors | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 77.7% → 77.8% | ✅ |
+| 下一批 List 页待迁移 | 剩余 119 个未标准化页面，优先候选：ERP DatabaseManagementPage、Finance OpeningBalancePage/ConsolidationScopePage、LIMS InspectionResultPage、Workflow VersionHistoryPage 等 | 🔄 |
+
+### V265 归档：设计系统样式硬编码清理收尾
 
 | 子任务 | 交付结果 | 状态 |
 |--------|---------|------|

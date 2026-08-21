@@ -48,7 +48,7 @@
 | 编号 | 任务 | 负责人 | 优先级 | 计划周期 | 状态 | 验收标准 | 输出物 |
 |------|------|--------|--------|----------|------|----------|--------|
 | 1.1 | 统一 Dashboard 入口页 | 业务前端 | P0 | 第 3 周 | 已完成 | `DashboardPage`、`HybridHomePage`、`ModulesOverviewPage` 均接入 `DashboardTemplate`；tsc/eslint 通过；设计系统审计覆盖率提升 | 3 个页面重构 |
-| 1.2 | 统一 List 类型页面 | 业务前端 | P0 | 第 3-5 周 | 进行中 | 150-200 个列表页使用 `ListPageTemplate` + `DataTable` + `Pagination`；已完成：`tms/ShipmentManagementPage`、`lowcode/AppListPage`、`lowcode/PageListPage`、`lowcode/FormListPage`、`lowcode/DataModelListPage`、`erp/AuditLogPage`；`oa/DocumentManagementPage`、`oa/MeetingManagementPage`、`oa/VehicleManagementPage` 迁移到 `ListPageTemplate`；ERP DatabaseManagementPage 使用 `DataTable` + `Pagination` 替换自定义表格；ERP FinancialAnalysisPage / FinancialReportPage 迁移到 `StatsPageTemplate`；`mes/AnomalyDetectionPage`、`mes/EnergyManagementPage`、`mes/ProductionCostPage`、`mes/ApsSchedulingPage`、`mes/ProductionKanbanPage`、`mes/QualityTraceabilityPage`、`mes/ProductionDashboardPage` 及 MES analytics 6 页迁移到 `StatsPageTemplate` / `DashboardTemplate`；QMS 剩余 analytics 6 页（`QmsAuditCompliancePage`、`QmsCostAnalysisPage`、`QmsDefectParetoPage`、`QmsFmeaRiskMatrixPage`、`QmsQualityTrendPage`、`QmsSpcControlChartPage`）迁移到 `StatsPageTemplate`；MES/QMS 模块全部页面已接入标准模板；当前标准模板覆盖率 77.7%，DataTable 使用率 45.4% | 列表页重构批次 |
+| 1.2 | 统一 List 类型页面 | 业务前端 | P0 | 第 3-5 周 | 进行中 | 150-200 个列表页使用 `ListPageTemplate` + `DataTable` + `Pagination`；已完成：`tms/ShipmentManagementPage`、`lowcode/AppListPage`、`lowcode/PageListPage`、`lowcode/FormListPage`、`lowcode/DataModelListPage`、`erp/AuditLogPage`；`oa/DocumentManagementPage`、`oa/MeetingManagementPage`、`oa/VehicleManagementPage` 迁移到 `ListPageTemplate`；ERP DatabaseManagementPage 使用 `DataTable` + `Pagination` 替换自定义表格；ERP FinancialAnalysisPage / FinancialReportPage 迁移到 `StatsPageTemplate`；`mes/AnomalyDetectionPage`、`mes/EnergyManagementPage`、`mes/ProductionCostPage`、`mes/ApsSchedulingPage`、`mes/ProductionKanbanPage`、`mes/QualityTraceabilityPage`、`mes/ProductionDashboardPage` 及 MES analytics 6 页迁移到 `StatsPageTemplate` / `DashboardTemplate`；QMS 剩余 analytics 6 页（`QmsAuditCompliancePage`、`QmsCostAnalysisPage`、`QmsDefectParetoPage`、`QmsFmeaRiskMatrixPage`、`QmsQualityTrendPage`、`QmsSpcControlChartPage`）迁移到 `StatsPageTemplate`；MES/QMS 模块全部页面已接入标准模板；`system/AuditLogPage` 迁移到 `ListPageTemplate`；当前标准模板覆盖率 77.8%，DataTable 使用率 45.4% | 列表页重构批次 |
 | 1.3 | 统一 Detail 类型页面 | 业务前端 | P0 | 第 4-5 周 | 已完成 | MES/WMS/CRM/Finance/HRM 详情页此前已使用 `DetailPageTemplate`；QMS 剩余 6 个详情页（`QmsInspectionDetailPage`、`QmsEightDDetailPage`、`QmsIssueDetailPage`、`QmsAuditPlanDetailPage`、`QmsFmeaDetailPage`、`QmsApqpProjectDetailPage`）已迁移到 `DetailPageTemplate`；tsc/eslint 通过 | 详情页重构批次 |
 | 1.4 | 统一 Form 类型页面 | 业务前端 | P0 | 第 4-6 周 | 已完成 | 现有 page 级表单页（CRM `CustomerEditPage`/`CustomerCreatePage`、Finance `VoucherCreatePage`、HRM `HrmEmployeeEditPage`/`HrmEmployeeCreatePage`）已使用 `FormPageTemplate`；ERP 详情/表单功能以内嵌 Dialog/Tab 组件形式存在，未新建独立页面；tsc/eslint 通过 | 表单页重构批次 |
 | 1.5 | Kanban 看板页试点 | 业务前端 | P1 | 第 5-6 周 | 已完成 | `pm/ProjectTaskKanbanPage` 已完整使用 `KanbanPageTemplate`（列拖拽、搜索/筛选、卡片增删归档、后端数据接入占位、统计面板）；tsc/eslint 通过 | 看板页试点 |
@@ -162,10 +162,10 @@
 | 指标 | 当前值 | 目标值 |
 |------|--------|--------|
 | 页面总数 | 537 | 控制增长 |
-| 模板覆盖率 | 77.7% | ≥ 80%（阶段 3）/ ≥ 90%（长期） |
+| 模板覆盖率 | 77.8% | ≥ 80%（阶段 3）/ ≥ 90%（长期） |
 | DataTable 使用率 | 45.4% | ≥ 80% |
-| PageContainer 使用率 | 58.5% | ≥ 90% |
-| 公共/共享组件使用率 | 60.3% | ≥ 85% |
+| PageContainer 使用率 | 58.3% | ≥ 90% |
+| 公共/共享组件使用率 | 60.1% | ≥ 85% |
 | 硬编码样式问题 | 113 处 / 28 文件 | 新增 0，存量 ≤ 50 |
 | Token 合规率 | 待精确统计 | 新增 100%，存量 ≥ 90% |
 
@@ -202,3 +202,4 @@ CSV 字段：阶段、编号、任务、负责人、优先级、计划周期、�
 | V1.5 | 2026-08-21 | 阶段 1.2 OA 批次：完成 `oa/DocumentManagementPage`、`oa/MeetingManagementPage`、`oa/VehicleManagementPage` 到 `ListPageTemplate` 的迁移；同步补充 `zh/oa.json` 与 `en/oa.json` 翻译 key；tsc/eslint 通过；模板覆盖率由 71.9% 提升至 72.4% |
 | V1.6 | 2026-08-21 | 阶段 1.2 lowcode 批次：完成 `lowcode/PageListPage`、`lowcode/FormListPage`、`lowcode/DataModelListPage` 到 `ListPageTemplate` 的迁移，保留预览/发布/设为首页等自定义行操作；tsc/eslint 通过；模板覆盖率由 72.4% 提升至 73.0% |
 | V1.7 | 2026-08-22 | 设计系统样式硬编码清理收尾：完成剩余 6 处 rem 字号/间距硬编码替换（`PerformanceTestPage` 4 处、`DashboardPage` 2 处）；设计系统审计扫描回归通过；硬编码样式问题由 162 处降至 113 处；tsc/eslint 通过 |
+| V1.8 | 2026-08-22 | 阶段 1.2 system 模块：将 `system/AuditLogPage` 迁移到 `ListPageTemplate`，保留统计卡片、筛选、分页、行操作、详情弹窗；移除 `AuditLogFilters` 与 `AuditLogTable` 自定义组件；tsc/eslint 通过；模板覆盖率由 77.7% 提升至 77.8% |
