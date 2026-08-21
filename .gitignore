@@ -242,8 +242,6 @@ build/
 apps/web/dist/*.bak
 *.bak_pass*
 
-# V68.1-2 流水线临时产物
-scripts/v68-1-2/.run/
 tmp/
 # CI ci.yml L195/L314 SQLX_OFFLINE=true cargo check · scripts/dev/sqlx-prepare.sh 末尾指引
 # 共同要求：根 .sqlx/ 下的 query/data JSON 必须提交（CI 无 DB、纯离线编译依赖它）
