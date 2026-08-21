@@ -1,30 +1,17 @@
-//! Tauri KeyStore 模块（V251 接入 tauri-plugin-stronghold）
-//!
-//! 目标：替代 secure_store.rs 的文件加密方案
-//! - V249: 仅骨架，trait + FileKeyStore 占位
-//! - V251: 接入 tauri-plugin-stronghold，StrongholdKeyStore 作为主实现
-//!         使用 stronghold::Stronghold + client.store() 真实读写
-//!         FileKeyStore 保留为 fallback / 测试用
+//! Stronghold 加密存储实现 + FileKeyStore fallback stub
+//! 迁移自原 keystore.rs（V251 接入 tauri-plugin-stronghold）
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tauri::Manager;
 use tauri_plugin_stronghold::stronghold::Stronghold;
+
+use super::store::KeyStore;
 
 const DEFAULT_CLIENT: &[u8] = b"topems-keystore-client";
 const DEFAULT_VAULT: &[u8] = b"topems-keystore-vault";
 
-/// KeyStore trait，定义统一的密钥存取接口
-pub trait KeyStore: Send + Sync {
-    /// 保存密钥
-    fn set(&self, key: &str, value: &str) -> Result<(), String>;
-    /// 读取密钥
-    fn get(&self, key: &str) -> Result<Option<String>, String>;
-    /// 删除密钥
-    fn delete(&self, key: &str) -> Result<(), String>;
-}
-
-/// 文件系统 KeyStore（fallback / 测试用）
+/// 文件系统 KeyStore（fallback / 测试用，未实现真实文件读写）
+#[allow(dead_code)]
 pub struct FileKeyStore {
     store: HashMap<String, String>,
 }
@@ -66,12 +53,6 @@ pub struct StrongholdKeyStore {
 
 impl StrongholdKeyStore {
     /// 创建 StrongholdKeyStore 实例（不立即初始化 Stronghold）
-    ///
-    /// # Arguments
-    /// * `path` - Stronghold 快照文件路径
-    /// * `password` - 用于加密快照的密码（会被派生为 keyprovider）
-    ///
-    /// 使用前需调用 init() 初始化 Stronghold 实例。
     pub fn new(path: &Path, password: Vec<u8>) -> Self {
         Self {
             path: path.to_path_buf(),
@@ -171,60 +152,4 @@ impl KeyStore for StrongholdKeyStore {
 #[allow(dead_code)]
 fn _default_vault() -> &'static [u8] {
     DEFAULT_VAULT
-}
-
-#[tauri::command]
-pub async fn keystore_set(
-    app: tauri::AppHandle,
-    key: String,
-    value: String,
-    password: Option<String>,
-) -> Result<(), String> {
-    let path = app
-        .path()
-        .app_config_dir()
-        .map(|p| p.join("keystore.stronghold"))
-        .map_err(|e| e.to_string())?;
-    let mut store =
-        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
-    store.init()?;
-    store.set(&key, &value)?;
-    store.save()?;
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn keystore_get(
-    app: tauri::AppHandle,
-    key: String,
-    password: Option<String>,
-) -> Result<Option<String>, String> {
-    let path = app
-        .path()
-        .app_config_dir()
-        .map(|p| p.join("keystore.stronghold"))
-        .map_err(|e| e.to_string())?;
-    let mut store =
-        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
-    store.init()?;
-    store.get(&key)
-}
-
-#[tauri::command]
-pub async fn keystore_delete(
-    app: tauri::AppHandle,
-    key: String,
-    password: Option<String>,
-) -> Result<(), String> {
-    let path = app
-        .path()
-        .app_config_dir()
-        .map(|p| p.join("keystore.stronghold"))
-        .map_err(|e| e.to_string())?;
-    let mut store =
-        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
-    store.init()?;
-    store.delete(&key)?;
-    store.save()?;
-    Ok(())
 }

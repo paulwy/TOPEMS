@@ -5,7 +5,10 @@ pub mod keystore;
 pub mod offline_cache;
 pub mod secure_store;
 
-use keystore::{keystore_set, keystore_get, keystore_delete};
+use keystore::commands::{
+    keystore_set, keystore_get, keystore_delete, keystore_unlocked_status,
+    keystore_unlock_with_password, keystore_migrate_status, keystore_import_json,
+};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{
@@ -172,6 +175,21 @@ pub fn build_app() -> tauri::Builder<tauri::Wry> {
 
             ipc::setup_initial_data(&app_handle);
 
+            // V257: 启动自动解锁 keystore + 迁移 auth_token.enc
+            if let Ok(master) = keystore::master_key::ensure_unlocked(&app_handle) {
+                let path = app_handle
+                    .path()
+                    .app_config_dir()
+                    .ok()
+                    .map(|p| p.join("keystore.stronghold"));
+                if let Some(path) = path {
+                    let mut sh = keystore::StrongholdKeyStore::new(&path, master);
+                    if sh.init().is_ok() {
+                        let _ = keystore::migration::migrate_auth_token(&sh);
+                    }
+                }
+            }
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -251,5 +269,9 @@ pub fn build_app() -> tauri::Builder<tauri::Wry> {
             keystore_set,
             keystore_get,
             keystore_delete,
+            keystore_unlocked_status,
+            keystore_unlock_with_password,
+            keystore_migrate_status,
+            keystore_import_json,
         ])
 }
