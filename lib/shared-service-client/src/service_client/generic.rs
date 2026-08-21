@@ -15,7 +15,6 @@ pub struct ServiceHealth {
     pub uptime: String,
 }
 
-
 #[derive(Clone)]
 pub struct GenericServiceClient {
     base_client: BaseServiceClient,
