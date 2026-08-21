@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { FileText, X } from 'lucide-react';
 import {
@@ -279,7 +280,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                     style={{
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'grey.800',
                     }}
                   >
@@ -304,7 +305,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                     style={{
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'grey.800',
                     }}
                   >

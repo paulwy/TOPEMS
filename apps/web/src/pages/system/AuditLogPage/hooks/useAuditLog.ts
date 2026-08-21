@@ -2,46 +2,39 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { systemAuditApi, type AuditLog } from '@/api/system';
+import { systemAuditApi } from '@/api/system';
 import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
 export interface AuditLogFilters {
-  searchQuery: string;
-  userFilter: string;
-  actionFilter: string;
-  entityTypeFilter: string;
-  statusFilter: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface AuditLogPagination {
-  page: number;
-  rowsPerPage: number;
+  keyword: string;
+  operator: string;
+  type: string;
+  module: string;
+  status: string;
+  start_date: string;
+  end_date: string;
 }
 
 export const useAuditLog = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  // Filter states
+  // Filter states (key names aligned with ListPageTemplate filter ids)
   const [filters, setFilters] = useState<AuditLogFilters>({
-    searchQuery: '',
-    userFilter: '',
-    actionFilter: '',
-    entityTypeFilter: '',
-    statusFilter: '',
-    startDate: '',
-    endDate: '',
+    keyword: '',
+    operator: '',
+    type: '',
+    module: '',
+    status: '',
+    start_date: '',
+    end_date: '',
   });
 
   // Pagination states
-  const [pagination, setPagination] = useState<AuditLogPagination>({
-    page: 0,
-    rowsPerPage: 10,
-  });
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   // Query
   const {
@@ -52,27 +45,27 @@ export const useAuditLog = () => {
   } = useQuery({
     queryKey: [
       QUERY_KEYS.SYSTEM.AUDIT,
-      pagination.page + 1,
-      pagination.rowsPerPage,
-      filters.searchQuery,
-      filters.userFilter,
-      filters.actionFilter,
-      filters.entityTypeFilter,
-      filters.statusFilter,
-      filters.startDate,
-      filters.endDate,
+      page + 1,
+      pageSize,
+      filters.keyword,
+      filters.operator,
+      filters.type,
+      filters.module,
+      filters.status,
+      filters.start_date,
+      filters.end_date,
     ],
     queryFn: async () => {
       const params = {
-        page: pagination.page + 1,
-        pagesize: pagination.rowsPerPage,
-        search: filters.searchQuery || undefined,
-        user_name: filters.userFilter || undefined,
-        action: filters.actionFilter || undefined,
-        entity_type: filters.entityTypeFilter || undefined,
-        status: filters.statusFilter || undefined,
-        start_date: filters.startDate || undefined,
-        end_date: filters.endDate || undefined,
+        page: page + 1,
+        pagesize: pageSize,
+        search: filters.keyword || undefined,
+        user_name: filters.operator || undefined,
+        action: filters.type || undefined,
+        entity_type: filters.module || undefined,
+        status: filters.status || undefined,
+        start_date: filters.start_date || undefined,
+        end_date: filters.end_date || undefined,
       };
       apiLogger.debug(t('system.auditPage.load_params'), params);
       const response = await systemAuditApi.list(params);
@@ -84,7 +77,7 @@ export const useAuditLog = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const logs = logsData?.items || [];
+  const logs = useMemo(() => logsData?.items || [], [logsData]);
   const totalCount = logsData?.total || 0;
 
   // Error handling
@@ -97,20 +90,19 @@ export const useAuditLog = () => {
     });
   }
 
-  // Filtered logs (client-side filtering as backup)
+  // Client-side filtering as backup for search/or/and consistency
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const matchesSearch =
-        !filters.searchQuery ||
-        log.user_name?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        log.action?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        log.entity_type?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        log.ip_address?.includes(filters.searchQuery);
-      const matchesUser = !filters.userFilter || log.user_name === filters.userFilter;
-      const matchesAction = !filters.actionFilter || log.action === filters.actionFilter;
-      const matchesEntityType =
-        !filters.entityTypeFilter || log.entity_type === filters.entityTypeFilter;
-      const matchesStatus = !filters.statusFilter || log.status === filters.statusFilter;
+        !filters.keyword ||
+        log.user_name?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+        log.action?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+        log.entity_type?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+        log.ip_address?.includes(filters.keyword);
+      const matchesUser = !filters.operator || log.user_name === filters.operator;
+      const matchesAction = !filters.type || log.action === filters.type;
+      const matchesEntityType = !filters.module || log.entity_type === filters.module;
+      const matchesStatus = !filters.status || log.status === filters.status;
       return matchesSearch && matchesUser && matchesAction && matchesEntityType && matchesStatus;
     });
   }, [logs, filters]);
@@ -143,34 +135,43 @@ export const useAuditLog = () => {
   );
 
   // Handlers
-  const updateFilter = (key: keyof AuditLogFilters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setPagination((prev) => ({ ...prev, page: 0 }));
+  const updateFilter = (values: Record<string, string>) => {
+    setFilters((prev) => ({ ...prev, ...values }));
+    setPage(0);
   };
 
   const clearFilters = () => {
     setFilters({
-      searchQuery: '',
-      userFilter: '',
-      actionFilter: '',
-      entityTypeFilter: '',
-      statusFilter: '',
-      startDate: '',
-      endDate: '',
+      keyword: '',
+      operator: '',
+      type: '',
+      module: '',
+      status: '',
+      start_date: '',
+      end_date: '',
     });
-    setPagination((prev) => ({ ...prev, page: 0 }));
+    setPage(0);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(0);
   };
 
   const handleExport = async () => {
     try {
       const params = {
-        search: filters.searchQuery || undefined,
-        user_name: filters.userFilter || undefined,
-        action: filters.actionFilter || undefined,
-        entity_type: filters.entityTypeFilter || undefined,
-        status: filters.statusFilter || undefined,
-        start_date: filters.startDate || undefined,
-        end_date: filters.endDate || undefined,
+        search: filters.keyword || undefined,
+        user_name: filters.operator || undefined,
+        action: filters.type || undefined,
+        entity_type: filters.module || undefined,
+        status: filters.status || undefined,
+        start_date: filters.start_date || undefined,
+        end_date: filters.end_date || undefined,
       };
       const blob = await systemAuditApi.export(params);
       const url = window.URL.createObjectURL(blob);
@@ -212,8 +213,10 @@ export const useAuditLog = () => {
     uniqueEntityTypes,
 
     // Pagination
-    pagination,
-    setPagination,
+    page,
+    pageSize,
+    onPageChange: handlePageChange,
+    onPageSizeChange: handlePageSizeChange,
 
     // Stats
     stats,
