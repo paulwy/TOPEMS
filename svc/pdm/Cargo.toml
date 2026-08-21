@@ -32,7 +32,6 @@ reqwest.workspace = true
 bigdecimal = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-tokio-test.workspace = true
 topems-shared-event = { workspace = true }
 
 [[bin]]

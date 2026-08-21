@@ -39,7 +39,6 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-mobile"

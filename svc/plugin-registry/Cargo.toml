@@ -33,7 +33,6 @@ rust_decimal = { workspace = true, features = ["db-postgres", "serde"] }
 futures-util.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 
 [lints]
 workspace = true

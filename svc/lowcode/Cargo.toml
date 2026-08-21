@@ -22,7 +22,6 @@ topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-lowcode"

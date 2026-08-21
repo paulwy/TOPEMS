@@ -35,7 +35,6 @@ reqwest.workspace = true
 bcrypt.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 axum-test.workspace = true
 
 [[bin]]
