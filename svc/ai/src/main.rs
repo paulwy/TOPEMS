@@ -261,6 +261,14 @@ async fn main() -> anyhow::Result<()> {
 
     // 创建 Agent / 推荐 / 多模态服务
     let agent_service = crate::services::AgentService::new(qa_service.clone());
+
+    // WorkflowOrchestrator with DifyService integration (must be after agent_service)
+    let workflow_orchestrator =
+        std::sync::Arc::new(crate::services::agent::WorkflowOrchestrator::new(
+            agent_service.clone(),
+            Some(dify_service.clone()),
+        ));
+
     let recommendation_service =
         RecommendationService::new(vector_service.db().clone(), qa_service.clone());
     let multimodal_service = MultimodalService::new(qa_service.clone());
@@ -276,6 +284,7 @@ async fn main() -> anyhow::Result<()> {
         recommendation_service,
         multimodal_service,
         dify_service,
+        workflow_orchestrator,
         event_publisher: ctx.event_publisher.clone(),
     };
 

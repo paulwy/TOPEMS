@@ -62,7 +62,7 @@
 
 | # | 主题 | 子项 | 首次提出 | 连续提及 |
 |---|------|------|---------|---------|
-| 1 | **Dify AI 端到端闭环** | ① Dify 侧配置 LLM Provider（Ollama / OpenAI API key），完成 `/dify/chat` 端到端验证 ② 前端创建 Dify 对话页面，接入 `chat_stream` SSE 流式接口 ③ 与 AI 模块 `AIWorkFlowEngine` 联动 POC | V238 | **≥15 版** |
+| 1 | **Dify AI 端到端闭环** ✅ POC 代码完成 | ① ✅ Docker Compose + Ollama 配置就绪（`docker-compose.dify.yml`） ② ✅ 前端 DifyChatPage + SSE `chat_stream` 已有（V238 完成） ③ ✅ WorkflowOrchestrator 接入 DifyService（executor="dify"）+ `dify_qa` workflow + 3 个 e2e 冒烟测试（需 `DIFY_API_KEY` 运行） | V238 | **≥15 版** |
 | 2 | **Tauri 5 件套剩余 3 件**（① Stronghold ✅/④ IPC ✅ 已完成） | ② **平台原生 Keychain API 对接**：macOS Keychain / Windows Credential Manager / Linux Secret Service，作为 Stronghold 之外的本地加密备选 ③ **启动时自动解锁 keystore**：强密码从 Tauri AppHandle 安全存储或用户首次输入 ⑤ **迁移 FileKeyStore 遗留数据到 Stronghold**：一次性脚本扫描 `~/.topems/keystore/*.json`，导入 Stronghold 快照后清理 | V244 | **≥12 版** |
 
 ### 🟡 P2 · 质量深化（类型 / 工具链 / CI 持续收紧）

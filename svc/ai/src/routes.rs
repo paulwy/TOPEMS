@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health};
+use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health, workflow_handlers};
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
     RecommendationApi, VectorApi,
@@ -297,6 +297,27 @@ pub fn create_routes(
         ))
         .with_state(app_state.clone());
 
+    // Workflow orchestration API
+    let workflow_router = Router::new()
+        .route("/workflows", get(workflow_handlers::list_workflows))
+        .route(
+            "/workflows/execute",
+            post(workflow_handlers::execute_workflow),
+        )
+        .route(
+            "/workflows/{workflow_id}",
+            get(workflow_handlers::get_workflow),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -316,6 +337,7 @@ pub fn create_routes(
         .merge(recommendation_router)
         .merge(multimodal_router)
         .merge(dify_router)
+        .merge(workflow_router)
         .layer(rate_limit_layer);
 
     let app = register_routes_with_legacy_alias(

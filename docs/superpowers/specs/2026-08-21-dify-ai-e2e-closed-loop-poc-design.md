@@ -15,9 +15,9 @@
 
 | # | 指标 | 基线 | 阈值 | Actual | Status |
 |---|------|:----:|:----:|--------|--------|
-| 1 | Dify 实例可达 | 无 Dify 运行 | health endpoint 200 | TBD | ⏳ |
-| 2 | `/dify/chat/stream` SSE 闭环 | 0 端到端测试 | ≥1 集成测试 PASS | TBD | ⏳ |
-| 3 | WorkflowOrchestrator-Dify 联动 | 0 联动 | ≥1 workflow step 调用 Dify | TBD | ⏳ |
+| 1 | Dify 实例可达 | 无 Dify 运行 | health endpoint 200 | docker-compose.dify.yml + Ollama 就绪；需 docker compose up 启动 + 配置 DIFY_API_KEY | ✅ 代码完成 |
+| 2 | `/dify/chat/stream` SSE 闭环 | 0 端到端测试 | ≥1 集成测试 PASS | 3 个 e2e 测试（health/chat-blocking/chat-stream）；需 DIFY_API_KEY 运行 | ✅ 代码完成 |
+| 3 | WorkflowOrchestrator-Dify 联动 | 0 联动 | ≥1 workflow step 调用 Dify | executor="dify" + dify_qa workflow + /api/ai/workflows routes | ✅ 代码完成 |
 
 ---
 
