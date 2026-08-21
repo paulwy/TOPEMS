@@ -141,11 +141,17 @@ const handleServiceUnavailable = (url: string): void => {
 
 const handleAuthError = (): void => {
   if (localStorage.getItem('token')) {
+    // 开发模式下通过 URL 注入的测试身份仅用于 UI 验证，后端未就绪时避免 401 触发登出
+    if (isDevelopment() && localStorage.getItem('dev_auth_bypass')) {
+      logger.warn('Dev auth bypass active: skipping logout on 401');
+      return;
+    }
     logger.warn('Unauthorized, clearing invalid token');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     localStorage.removeItem('permissions');
+    localStorage.removeItem('dev_auth_bypass');
     apiClient.clearAuthToken();
     window.dispatchEvent(new CustomEvent('auth:unauthorized'));
   }

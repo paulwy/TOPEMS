@@ -34,11 +34,22 @@ const REFRESH_INTERVAL = {
 // 默认 token 过期时间（24小时，毫秒）- 当无法解析 JWT 时使用
 const DEFAULT_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+// 解码 base64url 编码的 JWT segment
+const base64UrlDecode = (value: string): string => {
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (base64.length % 4)) % 4;
+  return atob(base64.padEnd(base64.length + padLength, '='));
+};
+
 // 从 JWT token payload 解析过期时间戳（毫秒）
 // 这确保前端与后端的 token 过期时间保持一致
 const parseTokenExpiryFromJWT = (token: string): number => {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
     if (payload.exp && typeof payload.exp === 'number') {
       // JWT 的 exp 是 Unix 时间戳（秒），转为毫秒
       return payload.exp * 1000;
