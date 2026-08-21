@@ -36,7 +36,7 @@
       {
         "ordinal": 6,
         "name": "patrol_time",
-        "type_info": "Timestamp"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 7,
@@ -80,7 +80,7 @@
       true,
       true,
       true,
-      true,
+      false,
       true,
       true,
       true,
