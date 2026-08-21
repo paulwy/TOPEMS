@@ -301,7 +301,6 @@ export type { StatusBadgeProps } from './StatusBadge';
 | 推荐组件 | 路径 | 使用场景 | 状态 |
 | -------- | ---- | -------- | ---- |
 | **DataTable** | `common/DataTable.tsx` | 标准列表页、数据展示、CRUD 操作 | ✅ 推荐 |
-| BffDataTable | `bff/BffDataTable.tsx` | BFF GraphQL 数据驱动的表格 | ✅ 推荐 (BFF场景) |
 | MobileDataTable | `mobile/MobileDataTable.tsx` | 移动端列表展示 | ✅ 推荐 (移动端) |
 | ui/DataTable | `ui/DataTable.tsx` | - | ❌ 遗留，待迁移 |
 
