@@ -25,6 +25,7 @@ import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
 const ct = designTokens.colors;
 interface InstanceDetails {
@@ -113,21 +114,6 @@ const FlowInstanceDetailPage: React.FC = () => {
       approved: i18n.t('workflow.workflow_instance_detail_page.k7'),
     };
     return statusMap[status] || status;
-  };
-  const getStatusColor = (status: string): 'success' | 'error' | 'info' | 'warning' | 'default' => {
-    switch (status) {
-      case 'completed':
-      case 'approved':
-        return 'success';
-      case 'rejected':
-        return 'error';
-      case 'running':
-        return 'info';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'default';
-    }
   };
   const tabs = useMemo<TabConfig[]>(() => {
     if (!details) return [];

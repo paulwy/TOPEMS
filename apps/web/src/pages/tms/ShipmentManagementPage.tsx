@@ -21,31 +21,17 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Search, RefreshCw, Send, MapPin, XCircle } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusChip } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { shipmentApi } from '@/api/tms';
 import type { Shipment, CreateShipmentRequest } from '@/api/tms';
 
 type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-const statusMeta: Record<
-  ShipmentStatus,
-  { label: string; color: 'warning' | 'info' | 'success' | 'default' }
-> = {
+const shipmentStatusMapping: Record<string, { label: string; color: 'warning' | 'info' | 'success' | 'default' }> = {
   pending: { label: i18n.t('tms.shipment_management_page.k0'), color: 'warning' },
   in_transit: { label: i18n.t('tms.shipment_management_page.k1'), color: 'info' },
   delivered: { label: i18n.t('tms.shipment_management_page.k2'), color: 'success' },
   cancelled: { label: i18n.t('tms.shipment_management_page.k3'), color: 'default' },
-};
-const renderStatusChip = (status?: string) => {
-  const key = (status as ShipmentStatus) || 'pending';
-  const meta = statusMeta[key] || { label: status || '-', color: 'default' as const };
-  return (
-    <Chip
-      size='small'
-      color={meta.color}
-      label={meta.label}
-    />
-  );
 };
 const ShipmentManagementPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -280,7 +266,7 @@ const ShipmentManagementPage: React.FC = () => {
                     <TableCell>{row.route_id || '-'}</TableCell>
                     <TableCell>{row.origin || '-'}</TableCell>
                     <TableCell>{row.destination || '-'}</TableCell>
-                    <TableCell>{renderStatusChip(row.status)}</TableCell>
+                    <TableCell><StatusChip status={row.status || 'pending'} mapping={shipmentStatusMapping} /></TableCell>
                     <TableCell>{row.planned_departure || '-'}</TableCell>
                     <TableCell>{row.planned_arrival || '-'}</TableCell>
                     <TableCell align='center'>{renderActions(row)}</TableCell>

@@ -21,9 +21,11 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   pending: 'warning',
   completed: 'success',
   cancelled: 'error',
+  canceled: 'error',
   paused: 'default',
   released: 'info',
   in_progress: 'primary',
+  in_transit: 'info',
   success: 'success',
   failed: 'error',
   running: 'info',
@@ -39,6 +41,41 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   critical: 'error.main',
   info: 'info.main',
   warning: 'warning.main',
+  draft: 'warning',
+  archived: 'default',
+  submitted: 'info',
+  confirmed: 'info',
+  waiting: 'warning',
+  shipped: 'primary',
+  delivered: 'success',
+  paid: 'success',
+  unpaid: 'warning',
+  acknowledged: 'info',
+  resolved: 'success',
+  escalated: 'error',
+  dismissed: 'default',
+  testing: 'warning',
+  enabled: 'success',
+  disabled: 'default',
+  suspended: 'error',
+  valid: 'success',
+  invalid: 'error',
+  expired: 'error',
+  overdue: 'error',
+  open: 'error',
+  closed: 'default',
+  partial: 'warning',
+  claimed: 'info',
+  receiving: 'primary',
+  processing: 'primary',
+  progressing: 'warning',
+  deprecated: 'warning',
+  idle: 'default',
+  in_use: 'info',
+  maintenance: 'warning',
+  scrapped: 'error',
+  error: 'error',
+  normal: 'success',
 };
 
 const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
@@ -78,7 +115,7 @@ export const getStatusColor = (
       case 'pending':
         return 'warning';
       default:
-        return 'default';
+        return STATUS_COLOR_MAP[normalized] || fallback;
     }
   }
 
@@ -97,7 +134,7 @@ export const getStatusColor = (
       case 'paused':
         return 'default';
       default:
-        return 'default';
+        return STATUS_COLOR_MAP[normalized] || fallback;
     }
   }
 
@@ -110,7 +147,7 @@ export const getStatusColor = (
       case 'unhealthy':
         return 'error.main';
       default:
-        return 'grey.500';
+        return STATUS_COLOR_MAP[normalized] || fallback;
     }
   }
 

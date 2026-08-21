@@ -11,6 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
 const ct = designTokens.colors;
 
@@ -81,23 +82,6 @@ const evaluationApiAdapter: CrudApiAdapter = {
     const response = await srmApi.deleteEvaluation(id);
     if (!response.success) throw new Error(i18n.t('pages.srm_evaluation_page.k2'));
   },
-};
-
-const getStatusColor = (
-  status: string
-): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
-  switch (status) {
-    case 'in_progress':
-      return 'primary';
-    case 'completed':
-      return 'success';
-    case 'pending':
-      return 'warning';
-    case 'rejected':
-      return 'error';
-    default:
-      return 'default';
-  }
 };
 
 const getStatusLabel = (status: string): string => {

@@ -23,6 +23,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { getChipStatusColor as getStatusColor } from '@/utils/status';
 import {
   Layers as LayersIcon,
   X as XIcon,
@@ -133,21 +134,6 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
   const handleCheckCircular = () => {
     const result = moduleRegistry.checkCircularDependencies();
     setCircularResult(result);
-  };
-
-  const getStatusColor = (status: ModuleStatus) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'disabled':
-        return 'default';
-      case 'deprecated':
-        return 'warning';
-      case 'error':
-        return 'error';
-      default:
-        return 'default';
-    }
   };
 
   const formatDate = (timestamp: number): string => {
