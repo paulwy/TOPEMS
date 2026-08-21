@@ -118,8 +118,8 @@
 | **V260** | ~~V252 CRUD Phase 3~~ ✅ + ~~V232 P1 i18n Strict-Zero~~ ✅ | ✅ 已完成 |
 | **V261** | ~~V252 CRUD Phase 4-5~~ ✅ + ~~V232 P2/P3 Design Token + Gate~~ ✅ | ✅ 已完成 |
 | **V262** | ~~V252 CRUD Phase 6~~ ✅ + ~~V232 P4 SEAL~~ ✅ + ~~Dify POC 最小闭环~~ ✅ | ✅ 已完成 |
-| **V263** | ~~Tauri 5 件套剩余 3 件~~ ✅ + ~~Perm Gate Scanner AST 演进 (#4)~~ ✅ + ~~泛型深度细化 TypeMap 基础设施 (#3 ①)~~ ✅ + 泛型剩余 31 模块增量迁移 (#3 ① 后续) | 🟡 P2 |
-| **V264+** | CI 收紧双开关切换 (#5) + ts-unused-exports 扩面清理 (#6) + Tauri 生态完善 (#7) | 🟢 P3 按季度排期 |
+| **V263** | ~~Tauri 5 件套剩余 3 件~~ ✅ + ~~Perm Gate Scanner AST 演进 (#4)~~ ✅ + ~~泛型深度细化 TypeMap 基础设施 (#3 ①)~~ ✅ + ~~泛型 32 模块全量迁移~~ ✅ | ✅ 已完成 |
+| **V264+** | ~~CI 收紧双开关切换 (#5)~~ ✅ + ~~ts-unused-exports 扩面清理 (#6)~~ ✅ + ~~Tauri 生态完善 (#7)~~ ✅ | ✅ 已完成 |
 
 ---
 
