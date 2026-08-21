@@ -66,7 +66,6 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
 }) => {
   const { t } = useTranslation('automation');
   return (
-    // @ts-expect-error TS2769: MUI Paper overloads conflict when onWheel/onScroll handlers are combined with ref
     <Paper
       ref={canvasViewportRef}
       onScroll={onCanvasScroll}

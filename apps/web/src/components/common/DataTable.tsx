@@ -288,7 +288,6 @@ function EditCellComponent({
           autoFocus
           onBlur={handleBlur}
           sx={{ width: '100%', minWidth: 120 }}
-          // @ts-expect-error TS2590: MUI TextField slotProps produces a union type that is too complex to represent
           slotProps={{ inputLabel: { shrink: true } }}
         />
       );
