@@ -1,4 +1,4 @@
-import { WS_TIMEOUT } from '@topems/shared-constants';
+import { WS_TIMEOUT } from '@topems/tokens';
 import type { RuntimeConfig } from './types';
 
 function getImportMetaEnvSafe(): Record<string, string | boolean | undefined> {

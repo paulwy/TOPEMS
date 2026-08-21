@@ -8,8 +8,6 @@ import { versionManager } from './version-manager';
 import { canaryRelease } from './canary-release';
 import { modulePerformanceMetrics, errorTracker, userBehaviorAnalytics } from './observability';
 import i18n from '@/i18n';
-// V42.0: 沙箱管理器（可选启用）
-import { sandboxManager, type SandboxBundle } from './sandbox/sandbox-manager';
 
 /**
  * 远程模块加载状态
@@ -141,17 +139,6 @@ interface RemoteLoaderProps {
   onError?: (error: Error) => void;
   /** 自定义加载占位 */
   fallback?: React.ReactNode;
-  /** V42.0: 是否启用沙箱隔离（默认 false，保持向后兼容） */
-  useSandbox?: boolean;
-  /** V42.0: 沙箱配置（仅当 useSandbox=true 时生效） */
-  sandboxOptions?: {
-    /** 启用 JS 沙箱 */
-    js?: boolean;
-    /** 样式隔离模式 */
-    style?: 'shadow' | 'scoped' | 'css_modules' | 'none';
-    /** 启用事件隔离 */
-    events?: boolean;
-  };
 }
 
 /**
@@ -159,21 +146,6 @@ interface RemoteLoaderProps {
  *
  * 使用 React.lazy 动态加载远程模块，配合 ErrorBoundary 提供错误恢复。
  *
- * V42.0: 新增 useSandbox 选项，启用后自动创建沙箱隔离（JS + 样式 + 事件），
- * 卸载时自动销毁沙箱，清理事件/定时器/样式/全局变量。默认不启用，保持向后兼容。
- *
- * @example
- * // 基础用法（无沙箱，向后兼容）
- * <RemoteLoader moduleName="topems_erp" component="./ErpApp" />
- *
- * @example
- * // V42.0: 启用沙箱隔离
- * <RemoteLoader
- *   moduleName="topems_erp"
- *   component="./ErpApp"
- *   useSandbox
- *   sandboxOptions={{ js: true, style: 'scoped', events: true }}
- * />
  */
 export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
   moduleName,
@@ -181,14 +153,10 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
   props,
   onError,
   fallback,
-  useSandbox = false,
-  sandboxOptions,
 }) => {
   const startTimeRef = useRef<number>(performance.now());
   const renderTimeRef = useRef<number>(0);
   const moduleId = `${moduleName}/${component}`;
-  const sandboxId = `remote-${moduleName}`;
-  const sandboxBundleRef = useRef<SandboxBundle | null>(null);
 
   React.useEffect(() => {
     modulePerformanceMetrics.recordNavigationStart(moduleId);
@@ -199,39 +167,14 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
       moduleId: moduleName,
       componentName: component,
       url: typeof window !== 'undefined' ? window.location.href : undefined,
-      extra: { sandboxed: useSandbox },
     });
 
-    // V42.0: 启用沙箱时创建 SandboxBundle
-    if (useSandbox) {
-      const opts = sandboxOptions ?? {};
-      const bundle = sandboxManager.createSandbox(sandboxId, {
-        js: opts.js ? { interceptWindow: true } : undefined,
-        style:
-          opts.style && opts.style !== 'none'
-            ? { mode: opts.style, scopePrefix: `mf-${moduleName}` }
-            : undefined,
-        events: opts.events ?? true,
-      });
-      sandboxBundleRef.current = bundle;
-      if (opts.js) bundle.jsSandbox.activate();
-      if (opts.events ?? true) bundle.eventIsolation.activate();
-      bundle.status = 'active';
-      logger.info(
-        `${i18n.t('microfrontend.remote_loader.remoteloader_2')}${moduleName}${i18n.t('microfrontend.remote_loader.k3')}`
-      );
-    }
 
     return () => {
       userBehaviorAnalytics.endModuleVisit(moduleName);
       errorTracker.clearModuleErrorContext(moduleName);
-      // V42.0: 卸载时销毁沙箱
-      if (useSandbox) {
-        sandboxManager.destroySandbox(sandboxId);
-        sandboxBundleRef.current = null;
-      }
     };
-  }, [moduleName, component, moduleId, useSandbox, sandboxId]);
+  }, [moduleName, component, moduleId]);
 
   const LazyComponent = React.useMemo(
     () =>

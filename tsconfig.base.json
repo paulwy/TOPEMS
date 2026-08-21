@@ -22,8 +22,6 @@
       "@topems/tokens/*": ["./packages/tokens/src/*"],
       "@topems/shared-types": ["./packages/shared-types/src/index.ts"],
       "@topems/shared-types/*": ["./packages/shared-types/src/*"],
-      "@topems/shared-constants": ["./packages/shared-constants/src/index.ts"],
-      "@topems/shared-constants/*": ["./packages/shared-constants/src/*"],
       "@topems/shared-utils": ["./packages/shared-utils/src"],
       "@topems/shared-utils/*": ["./packages/shared-utils/src/*"],
       "@topems/shared-hooks": ["./packages/shared-hooks/src"],

@@ -2,7 +2,7 @@
  * Web application API client related constants
  *
  * Note: timeout configurations (API_TIMEOUT / PLUGIN_TIMEOUT / WS_TIMEOUT, etc.)
- * are provided by `@topems/shared-constants` and should not be redefined here.
+ * are provided by `@topems/tokens` and should not be redefined here.
  * This file only carries web-specific request retry strategy and public API
  * path whitelist.
  */

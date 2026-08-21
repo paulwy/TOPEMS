@@ -3,7 +3,7 @@
  *
  * Design principles:
  * 1. Cross-platform shared constants (web + desktop) belong in
- *    `@topems/shared-constants` and should not be redefined here.
+ *    `@topems/tokens` and should not be redefined here.
  * 2. This directory only carries web-specific constants:
  *    - storage.ts  — localStorage / sessionStorage keys
  *    - api.ts      — web axios client retry strategy and public API paths

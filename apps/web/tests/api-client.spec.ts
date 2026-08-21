@@ -154,7 +154,7 @@ vi.mock('@/config/runtime', () => ({
   isDevelopment: vi.fn(() => true),
 }));
 
-vi.mock('@topems/shared-constants', () => ({
+vi.mock('@topems/tokens', () => ({
   API_TIMEOUT: { AI: 60000 },
 }));
 

@@ -11,7 +11,6 @@ export default defineConfig({
       { find: "@topems/shared-utils", replacement: path.resolve(__dirname, "../../packages/shared-utils/src") },
       { find: "@topems/shared-components", replacement: path.resolve(__dirname, "../../packages/shared-components/src") },
       { find: "@topems/shared-hooks", replacement: path.resolve(__dirname, "../../packages/shared-hooks/src") },
-      { find: "@topems/shared-constants", replacement: path.resolve(__dirname, "../../packages/shared-constants/src") },
       { find: "@topems/tokens", replacement: path.resolve(__dirname, "../../packages/tokens/src") },
     ],
     dedupe: ["react", "react-dom", "scheduler"],

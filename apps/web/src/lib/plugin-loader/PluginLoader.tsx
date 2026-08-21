@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { CircularProgress, Box, Typography, Alert, AlertTitle } from '@mui/material';
-import { LOADER_TIMEOUT } from '@topems/shared-constants';
+import { LOADER_TIMEOUT } from '@topems/tokens';
 import { EventEmitter } from 'eventemitter3';
 import i18n from '@/i18n';
 

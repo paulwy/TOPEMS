@@ -8,7 +8,7 @@ import i18n from '@/i18n';
 import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
 import { createLogger, apiLogger } from '../utils/logger';
-import { API_TIMEOUT } from '@topems/shared-constants';
+import { API_TIMEOUT } from '@topems/tokens';
 import type {
   ApiResponse as SharedApiResponse,
   PaginatedResponse as SharedPaginatedResponse,

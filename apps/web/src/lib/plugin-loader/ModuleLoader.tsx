@@ -4,7 +4,7 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { CircularProgress, Box, Typography } from '@mui/material';
-import { LOADER_TIMEOUT } from '@topems/shared-constants';
+import { LOADER_TIMEOUT } from '@topems/tokens';
 import type { ModuleStatus } from '@/store/moduleLoadingStore';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 import { ModuleLoadingProgress } from './ModuleLoadingProgress';
