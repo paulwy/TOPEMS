@@ -14,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { getChipStatusColor } from '@/utils/status';
 import {
   Calendar,
   Filter,
@@ -212,20 +213,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'in-progress':
-        return 'info';
-      case 'pending':
-        return 'warning';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  const getStatusColor = (status?: string) => getChipStatusColor(status || '');
 
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
