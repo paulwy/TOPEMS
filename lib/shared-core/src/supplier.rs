@@ -392,11 +392,26 @@ mod tests {
 
     #[test]
     fn supplier_status_from_str_lossy_compat() {
-        assert_eq!(SupplierStatus::from_str_lossy("active"), SupplierStatus::Active);
-        assert_eq!(SupplierStatus::from_str_lossy("disabled"), SupplierStatus::Inactive);
-        assert_eq!(SupplierStatus::from_str_lossy("draft"), SupplierStatus::Pending);
-        assert_eq!(SupplierStatus::from_str_lossy("blocked"), SupplierStatus::Blacklisted);
-        assert_eq!(SupplierStatus::from_str_lossy("unknown"), SupplierStatus::Active);
+        assert_eq!(
+            SupplierStatus::from_str_lossy("active"),
+            SupplierStatus::Active
+        );
+        assert_eq!(
+            SupplierStatus::from_str_lossy("disabled"),
+            SupplierStatus::Inactive
+        );
+        assert_eq!(
+            SupplierStatus::from_str_lossy("draft"),
+            SupplierStatus::Pending
+        );
+        assert_eq!(
+            SupplierStatus::from_str_lossy("blocked"),
+            SupplierStatus::Blacklisted
+        );
+        assert_eq!(
+            SupplierStatus::from_str_lossy("unknown"),
+            SupplierStatus::Active
+        );
     }
 
     #[test]
