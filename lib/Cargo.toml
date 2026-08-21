@@ -134,7 +134,6 @@ prost = { version = "0.13", optional = true }
 http = "1"
 
 [dev-dependencies]
-tokio-test.workspace = true
 tempdir = "0.3"
 
 [build-dependencies]

@@ -42,4 +42,3 @@ sha2 = "0.10"
 utoipa = "=4.2.3"
 
 [dev-dependencies]
-tokio-test = "0.4"

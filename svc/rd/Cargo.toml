@@ -39,7 +39,6 @@ jsonwebtoken.workspace = true
 [dev-dependencies]
 tower = { workspace = true }
 axum = { workspace = true }
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-rd"

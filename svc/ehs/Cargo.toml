@@ -31,7 +31,6 @@ anyhow.workspace = true
 reqwest.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 
 [[bin]]
 name = "topems-ehs"

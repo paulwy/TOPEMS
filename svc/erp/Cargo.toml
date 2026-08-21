@@ -42,7 +42,6 @@ hex = "0.4"
 async-trait.workspace = true
 
 [dev-dependencies]
-tokio-test.workspace = true
 
 [lib]
 name = "topems_erp"
