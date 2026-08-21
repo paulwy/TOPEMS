@@ -730,6 +730,9 @@ pub struct WorkflowStep {
     pub name: String,
     pub description: String,
     pub tool: Option<AgentTool>,
+    /// Step executor: "dify" delegates to DifyService.chat(), None uses agent_service
+    #[serde(default)]
+    pub executor: Option<String>,
     pub prompt: String,
     pub condition: Option<String>,
     pub retry_count: i32,
@@ -788,11 +791,15 @@ pub struct WorkflowExecutionResponse {
 
 pub struct WorkflowOrchestrator {
     agent_service: AgentService,
+    dify_service: Option<crate::services::DifyService>,
     workflows: HashMap<String, AgentWorkflow>,
 }
 
 impl WorkflowOrchestrator {
-    pub fn new(agent_service: AgentService) -> Self {
+    pub fn new(
+        agent_service: AgentService,
+        dify_service: Option<crate::services::DifyService>,
+    ) -> Self {
         let mut workflows = HashMap::new();
 
         // Predefined workflow: Customer Service Automation
@@ -808,6 +815,7 @@ impl WorkflowOrchestrator {
                         name: "问题分类".to_string(),
                         description: "识别客户问题的类型".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "分析以下客户问题，判断其类型（咨询/投诉/技术问题/其他）："
                             .to_string(),
                         condition: None,
@@ -819,6 +827,7 @@ impl WorkflowOrchestrator {
                         name: "知识库检索".to_string(),
                         description: "从知识库中查找相关解答".to_string(),
                         tool: Some(AgentTool::Search),
+                        executor: None,
                         prompt: "搜索与客户问题相关的知识库内容".to_string(),
                         condition: Some("classify.status == 'success'".to_string()),
                         retry_count: 2,
@@ -829,6 +838,7 @@ impl WorkflowOrchestrator {
                         name: "生成回复".to_string(),
                         description: "根据检索结果生成回复".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "基于以下信息生成专业的客户回复：".to_string(),
                         condition: Some("search_kb.status == 'success'".to_string()),
                         retry_count: 3,
@@ -853,6 +863,7 @@ impl WorkflowOrchestrator {
                         name: "数据收集".to_string(),
                         description: "从多个数据源收集数据".to_string(),
                         tool: Some(AgentTool::DatabaseQuery),
+                        executor: None,
                         prompt: "执行数据查询，获取最新业务数据".to_string(),
                         condition: None,
                         retry_count: 3,
@@ -863,6 +874,7 @@ impl WorkflowOrchestrator {
                         name: "趋势分析".to_string(),
                         description: "分析数据趋势和模式".to_string(),
                         tool: Some(AgentTool::Calculator),
+                        executor: None,
                         prompt: "计算关键指标，分析趋势".to_string(),
                         condition: Some("collect_data.status == 'success'".to_string()),
                         retry_count: 2,
@@ -873,6 +885,7 @@ impl WorkflowOrchestrator {
                         name: "生成报告".to_string(),
                         description: "生成分析报告摘要".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "基于分析结果生成结构化报告".to_string(),
                         condition: Some("analyze_trends.status == 'success'".to_string()),
                         retry_count: 2,
@@ -897,6 +910,7 @@ impl WorkflowOrchestrator {
                         name: "内容提取".to_string(),
                         description: "从文档中提取关键信息".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "提取文档的主要内容要点".to_string(),
                         condition: None,
                         retry_count: 2,
@@ -907,6 +921,7 @@ impl WorkflowOrchestrator {
                         name: "文档分类".to_string(),
                         description: "对文档进行分类".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "根据内容判断文档类型（合同/报告/发票/其他）".to_string(),
                         condition: Some("extract_content.status == 'success'".to_string()),
                         retry_count: 2,
@@ -917,6 +932,7 @@ impl WorkflowOrchestrator {
                         name: "实体提取".to_string(),
                         description: "提取文档中的关键实体".to_string(),
                         tool: Some(AgentTool::DocumentQA),
+                        executor: None,
                         prompt: "从文档中提取关键实体（日期、金额、名称等）".to_string(),
                         condition: Some("classify_doc.status == 'success'".to_string()),
                         retry_count: 2,
@@ -928,8 +944,33 @@ impl WorkflowOrchestrator {
             },
         );
 
+        // Predefined workflow: Dify Q&A (POC - single step delegating to DifyService)
+        workflows.insert(
+            "dify_qa".to_string(),
+            AgentWorkflow {
+                id: "dify_qa".to_string(),
+                name: "Dify问答".to_string(),
+                description: "单步 Dify 对话，用于 POC 验证 WorkflowOrchestrator-DifyService 联动"
+                    .to_string(),
+                steps: vec![WorkflowStep {
+                    id: "ask_dify".to_string(),
+                    name: "Dify问答".to_string(),
+                    description: "调用 DifyService.chat() 获取 AI 回答".to_string(),
+                    tool: None,
+                    executor: Some("dify".to_string()),
+                    prompt: "请回答以下问题：".to_string(),
+                    condition: None,
+                    retry_count: 1,
+                    timeout_seconds: 60,
+                }],
+                max_parallel_steps: 1,
+                on_failure: "abort".to_string(),
+            },
+        );
+
         Self {
             agent_service,
+            dify_service,
             workflows,
         }
     }
@@ -1079,8 +1120,35 @@ impl WorkflowOrchestrator {
     async fn execute_step(
         &self,
         step: &WorkflowStep,
-        _context: &HashMap<String, serde_json::Value>,
+        context: &HashMap<String, serde_json::Value>,
     ) -> Result<String, String> {
+        // Dify executor: delegate to DifyService.chat() (blocking mode)
+        if step.executor.as_deref() == Some("dify") {
+            if let Some(ref dify) = self.dify_service {
+                if !dify.is_configured() {
+                    return Err("Dify未配置：缺少DIFY_API_KEY或DIFY_BASE_URL".to_string());
+                }
+                let query = context
+                    .get("query")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(&step.prompt);
+                let req = crate::models::DifyChatRequest {
+                    inputs: serde_json::json!({}),
+                    query: query.to_string(),
+                    response_mode: "blocking".to_string(),
+                    conversation_id: String::new(),
+                    user: "workflow-executor".to_string(),
+                };
+                let resp = dify
+                    .chat(req)
+                    .await
+                    .map_err(|e| format!("Difystepfailed:{}", e))?;
+                return Ok(resp.answer);
+            } else {
+                return Err("Difystep配置但DifyService不可用".to_string());
+            }
+        }
+
         let prompt = format!("{}\n\n请给出简洁的回答。", step.prompt);
 
         if let Some(tool) = &step.tool {
@@ -1334,6 +1402,7 @@ mod tests {
             name: "搜索".into(),
             description: "执行搜索".into(),
             tool: Some(AgentTool::Search),
+            executor: None,
             prompt: "请搜索...".into(),
             condition: Some("step1.status == 'success'".into()),
             retry_count: 3,
@@ -1353,6 +1422,7 @@ mod tests {
             name: "n".into(),
             description: "d".into(),
             tool: None,
+            executor: None,
             prompt: "p".into(),
             condition: None,
             retry_count: 0,

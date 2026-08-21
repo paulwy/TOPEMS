@@ -1,0 +1,177 @@
+# Dify AI + Ollama - 端到端闭环 POC
+#
+# Usage:
+#   docker compose -f deploy/docker/docker-compose.dify.yml up -d
+#   # Wait for Dify to be ready (~30s), then configure LLM in Dify Console:
+#   #   1. Open http://localhost:8180
+#   #   2. Create admin account
+#   #   3. Settings -> Model Provider -> Ollama -> Add
+#   #      Server: http://ollama:11434
+#   #      Model: llama3.2 (or qwen2.5:7b)
+#   #   4. Create Chat App -> API Access -> copy API Key
+#   #   5. Set DIFY_API_KEY=app-xxx in .env
+#   #   6. Restart AI service: topems.sh restart ai
+
+version: '3.8'
+
+volumes:
+  dify_db_data:
+  dify_redis_data:
+  dify_storage_data:
+  ollama_models:
+
+services:
+  # --- Dify Web (nginx frontend) ---
+  dify-web:
+    image: langgenius/dify-web:1.1.1
+    container_name: topems-dify-web
+    ports:
+      - "${DIFY_WEB_PORT:-8180}:3000"
+    environment:
+      - CONSOLE_API_URL=http://localhost:${DIFY_WEB_PORT:-8180}
+      - APP_API_URL=http://localhost:${DIFY_WEB_PORT:-8180}
+      - SENTRY_DSN=
+    depends_on:
+      - dify-api
+    networks:
+      - dify-network
+
+  # --- Dify API (backend) ---
+  dify-api:
+    image: langgenius/dify-api:1.1.1
+    container_name: topems-dify-api
+    environment:
+      - MODE=api
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=dify-secret-key-change-in-production-32chars
+      - CONSOLE_WEB_URL=http://localhost:${DIFY_WEB_PORT:-8180}
+      - SERVICE_API_URL=http://localhost:${DIFY_WEB_PORT:-8180}
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=dify_password
+      - DB_HOST=dify-db
+      - DB_PORT=5432
+      - DB_DATABASE=dify
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/api/storage
+      - OLLAMA_API_BASE=http://ollama:11434
+    volumes:
+      - dify_storage_data:/app/api/storage
+    depends_on:
+      dify-db:
+        condition: service_healthy
+      dify-redis:
+        condition: service_started
+    networks:
+      - dify-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # --- Dify Worker (celery) ---
+  dify-worker:
+    image: langgenius/dify-api:1.1.1
+    container_name: topems-dify-worker
+    environment:
+      - MODE=worker
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=dify-secret-key-change-in-production-32chars
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=dify_password
+      - DB_HOST=dify-db
+      - DB_PORT=5432
+      - DB_DATABASE=dify
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/api/storage
+      - OLLAMA_API_BASE=http://ollama:11434
+    volumes:
+      - dify_storage_data:/app/api/storage
+    depends_on:
+      dify-db:
+        condition: service_healthy
+      dify-redis:
+        condition: service_started
+    networks:
+      - dify-network
+
+  # --- Dify PostgreSQL ---
+  dify-db:
+    image: postgres:16-alpine
+    container_name: topems-dify-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dify_password
+      POSTGRES_DB: dify
+    volumes:
+      - dify_db_data:/var/lib/postgresql/data
+    networks:
+      - dify-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dify"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # --- Dify Redis ---
+  dify-redis:
+    image: redis:7-alpine
+    container_name: topems-dify-redis
+    volumes:
+      - dify_redis_data:/data
+    networks:
+      - dify-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- Ollama (local LLM inference) ---
+  ollama:
+    image: ollama/ollama:latest
+    container_name: topems-ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - dify-network
+    # On Apple Silicon, uncomment for GPU acceleration:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # --- Ollama model puller (one-shot) ---
+  # Auto-pulls a small model on first run. Change model as needed.
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: topems-ollama-init
+    depends_on:
+      ollama:
+        condition: service_started
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sleep 10 && ollama pull ${OLLAMA_MODEL:-qwen2.5:7b} || echo 'Pull failed, run manually: docker exec topems-ollama ollama pull qwen2.5:7b'"]
+    networks:
+      - dify-network
+    restart: "no"
+
+networks:
+  dify-network:
+    driver: bridge

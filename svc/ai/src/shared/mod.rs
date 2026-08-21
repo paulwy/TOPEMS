@@ -16,6 +16,7 @@ pub struct AppState {
     pub recommendation_service: crate::services::RecommendationService,
     pub multimodal_service: crate::services::MultimodalService,
     pub dify_service: crate::services::DifyService,
+    pub workflow_orchestrator: std::sync::Arc<crate::services::agent::WorkflowOrchestrator>,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
