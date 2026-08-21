@@ -10,20 +10,20 @@
 
 ## 🔥 当前活跃任务（执行中 / P0）
 
-### 🔴 P0 · V252 — 全服务 CRUD 层系统性缺陷审计与修复（HRM 验证暴露）
+### ✅ P0 · V252 — 全服务 CRUD 层系统性缺陷审计与修复（HRM 验证暴露）— 已完成
 
 > **触发**：HRM 模块 CRUD 深度验证（21/21 通过）过程中暴露出 5 类跨服务系统性缺陷，经全仓扫描确认。
 > **参考实现**：[svc/hrm/src/modules/contract.rs](file:///Users/xingzhai/TOPEMS/svc/hrm/src/modules/contract.rs) · [svc/hrm/src/modules/attendance.rs](file:///Users/xingzhai/TOPEMS/svc/hrm/src/modules/attendance.rs)
-> **预期工作量**：6 Phase，以 P0→P1→P2 优先级串行，每 Phase 完成后 cargo check + CRUD 深度验证。
+> **完成日期**：2026-08-21 · Phase 1-6 全部完成，7/7 验收标准全绿。
 
-| Phase | 范围 | 优先级 | 涉及服务数 |
-|-------|------|--------|-----------|
-| Phase 1 | CRM + ERP SELECT 补齐 tenant_id | P0 | 2 |
-| Phase 2 | WMS SELECT 补齐 tenant_id | P0 | 1 |
-| Phase 3 | 全服务加密字段 VARCHAR → TEXT | P0 | 7+ |
-| Phase 4 | 全服务 f64/DateTime 类型转型 | P1 | 8+ |
-| Phase 5 | 全服务 deleted_at IS NULL 过滤补齐 | P1 | 全仓 |
-| Phase 6 | FK 约束 + CHECK 约束审计 | P2 | ✅ 完成 | 全仓 |
+| Phase | 范围 | 优先级 | 状态 | 涉及服务数 |
+|-------|------|--------|------|-----------|
+| Phase 1 | CRM + ERP SELECT 补齐 tenant_id | P0 | ✅ | 2 |
+| Phase 2 | WMS SELECT 补齐 tenant_id | P0 | ✅ | 1 |
+| Phase 3 | 全服务加密字段 VARCHAR → TEXT | P0 | ✅ | 7+ |
+| Phase 4 | 全服务 f64/DateTime 类型转型 | P1 | ✅ | 8+ |
+| Phase 5 | 全服务 deleted_at IS NULL 过滤补齐 | P1 | ✅ | 全仓 |
+| Phase 6 | FK 约束 + CHECK 约束审计 | P2 | ✅ | 全仓 |
 
 **详细缺陷清单与修复计划见文档末尾 [V252 CRUD 审计详情（原文保留）](#v252--全服务-crud-层系统性缺陷审计与修复hrm-验证暴露)**
 
@@ -101,16 +101,16 @@
 - **历史版本完成率**：V67.2~V258 关键里程碑 107 个章节 / 实际已完成 100+（≥94%）
 - **代码净减最近 5 版**：V254(-531) + V257(-29→0 tsc) + V258(-2814 dead exports) + V257 重构前 BFF 清理(-19074) ≈ **净减 22,400+ 行**
 - **质量门禁当前基线（V257 封版）**：axum-layer-gate R1/R2/R3 = 0/0/0 · perm-gate R1/R3/R5 = 0/0/0 · cargo check 0 errors · tsc apps/web 0 errors · i18n 7-in-1 0 failures
-- **当前活跃缺口**：V252 CRUD P0 × 3 Phase + V232 Strict-Zero P0-P4 × 5 批 + Backlog 5 大主题 16 条
+- **当前活跃缺口**：V232 Strict-Zero P0-P4 × 5 批 + Backlog 5 大主题 16 条（V252 已完成）
 
 ### 当前活跃任务 → 版本节点映射（规划建议 V259+）
 
 | 规划版本 | 承接工作包 | 建议优先级 |
 |---------|-----------|-----------|
-| **V259** | V252 CRUD Phase 1-2（CRM+ERP+WMS tenant_id 补齐）+ V232 P0 Finance Handler | 🔴 P0 并行 2 轨 |
-| **V260** | V252 CRUD Phase 3（加密字段 VARCHAR→TEXT）+ V232 P1 i18n Strict-Zero | 🔴 P0 并行 2 轨 |
-| **V261** | V252 CRUD Phase 4-5（f64 转型 + deleted_at）+ V232 P2/P3（Design Token + Gate 升级） | 🟡 P1 |
-| **V262** | V252 CRUD Phase 6（FK+CHECK）+ V232 P4 SEAL + Dify POC 最小闭环 | 🟡 P1 |
+| **V259** | ~~V252 CRUD Phase 1-2~~ ✅已完成 + V232 P0 Finance Handler | 🔴 P0 |
+| **V260** | ~~V252 CRUD Phase 3~~ ✅已完成 + V232 P1 i18n Strict-Zero | 🔴 P0 |
+| **V261** | ~~V252 CRUD Phase 4-5~~ ✅已完成 + V232 P2/P3（Design Token + Gate 升级） | 🟡 P1 |
+| **V262** | ~~V252 CRUD Phase 6~~ ✅已完成 + V232 P4 SEAL + Dify POC 最小闭环 | 🟡 P1 |
 | **V263+** | Tauri 5 件套剩余 3 件 + 泛型深度细化 + CI 收紧双开关 | 🟢 P2 按季度排期 |
 
 ---
