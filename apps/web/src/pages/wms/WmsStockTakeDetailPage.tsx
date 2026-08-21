@@ -1,11 +1,26 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
+import { WmsFSMActionButtons, WmsStatusBadge } from '@/components/wms';
+import { DataTable, PageContainer } from '@/components/common';
+import { DetailPageTemplate } from '@/components/templates';
 import type { StockTakeDto } from '@/types/wms';
 import i18n from '@/i18n';
 
-function buildStockTakeItems(id: string, count: number) {
+interface StockTakeItemRow {
+  id: string;
+  sku: string;
+  name: string;
+  location: string;
+  systemQty: number;
+  actualQty: number;
+  diff: number;
+  reason: string;
+}
+
+function buildStockTakeItems(id: string, count: number): StockTakeItemRow[] {
   return Array.from({ length: count }, (_, i) => {
     const system = 20 + i * 15;
     const actual = system + (i % 3 === 0 ? -2 : i % 3 === 1 ? 1 : 0);
@@ -27,11 +42,21 @@ function buildStockTakeItems(id: string, count: number) {
     };
   });
 }
+
+function DiffCell({ diff }: { diff: number }) {
+  const color = diff === 0 ? 'success.main' : diff > 0 ? 'warning.main' : 'error.main';
+  return (
+    <Typography variant='body2' sx={{ textAlign: 'right', color, fontWeight: 600 }}>
+      {diff > 0 ? '+' : ''}
+      {diff}
+    </Typography>
+  );
+}
+
 export default function WmsStockTakeDetailPage() {
-  const { id } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const { data } = useWmsMock<WmsMockShape>();
+
   const task = useMemo<StockTakeDto | undefined>(() => {
     if (!id) return data.stockTakeList?.[0];
     return (
@@ -39,119 +64,147 @@ export default function WmsStockTakeDetailPage() {
       data.stockTakeList?.[0]
     );
   }, [id, data.stockTakeList]);
-  const items = useMemo(() => (task ? buildStockTakeItems(task.id, 8) : []), [task]);
+
+  const items = useMemo<StockTakeItemRow[]>(() => (task ? buildStockTakeItems(task.id, 8) : []), [task]);
+
   const diffSummary = useMemo(() => {
     const over = items.filter((i) => i.diff > 0).length;
     const under = items.filter((i) => i.diff < 0).length;
     const ok = items.filter((i) => i.diff === 0).length;
-    return { over, under, ok, total: items.length };
+    const total = items.length;
+    const accuracy = total ? Math.round((ok / total) * 100) : 0;
+    return { over, under, ok, total, accuracy };
   }, [items]);
-  if (!task) return <div className='p-8'>{i18n.t('pages.wms_stock_take_detail_page.k1')}</div>;
+
+  const columns = useMemo<ColumnDef<StockTakeItemRow>[]>(
+    () => [
+      {
+        accessorKey: 'sku',
+        header: 'SKU',
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+            {row.original.sku}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'name',
+        header: i18n.t('pages.wms_stock_take_detail_page.k8'),
+        cell: ({ row }) => <Typography variant='body2'>{row.original.name}</Typography>,
+      },
+      {
+        accessorKey: 'location',
+        header: i18n.t('pages.wms_stock_take_detail_page.k9'),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+            {row.original.location}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'systemQty',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_stock_take_detail_page.k10')}</Box>
+        ),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+            {row.original.systemQty}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'actualQty',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_stock_take_detail_page.k11')}</Box>
+        ),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+            {row.original.actualQty}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'diff',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_stock_take_detail_page.k12')}</Box>
+        ),
+        cell: ({ row }) => <DiffCell diff={row.original.diff} />,
+      },
+      {
+        accessorKey: 'reason',
+        header: i18n.t('pages.wms_stock_take_detail_page.k13'),
+        cell: ({ row }) => <Typography variant='body2'>{row.original.reason}</Typography>,
+      },
+    ],
+    []
+  );
+
+  if (!task) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('pages.wms_stock_take_detail_page.k1')}</Typography>
+      </PageContainer>
+    );
+  }
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div>
-          <h1 className='text-2xl font-bold'>
-            {i18n.t('wms.stockTakeDetail.k0')} {task.stock_take_number}
-          </h1>
-          <p className='text-sm text-gray-500'>
-            {i18n.t('pages.wms_stock_take_detail_page.k2')}
-            {task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')}{' '}
-            {i18n.t('wms.stockTakeDetail.k1')}
-            {task.warehouse_name ?? '-'}
-          </p>
-        </div>
-        <div className='flex items-center gap-3'>
-          <WmsStatusBadge
-            fsm='stocktake'
-            status={task.status}
-          />
-          <WmsFSMActionButtons
-            fsm='stocktake'
-            currentStatus={task.status}
-            onAction={() => {}}
-          />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border-l-4 border-green-500 p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{diffSummary.ok}</p>
-        </div>
-        <div className='rounded-lg border-l-4 border-amber-500 p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k5')}</p>
-          <p className='mt-1 text-3xl font-bold text-amber-600'>{diffSummary.over}</p>
-        </div>
-        <div className='rounded-lg border-l-4 border-red-500 p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k6')}</p>
-          <p className='mt-1 text-3xl font-bold text-red-600'>{diffSummary.under}</p>
-        </div>
-        <div className='rounded-lg border-l-4 border-blue-500 p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_stock_take_detail_page.k7')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>
-            {diffSummary.total ? Math.round((diffSummary.ok / diffSummary.total) * 100) : 0}%
-          </p>
-        </div>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('wms.stockTakeDetail.k2')}</h3>
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-3 py-2 text-left'>SKU</th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k8')}
-                </th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k9')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k10')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k11')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k12')}
-                </th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_stock_take_detail_page.k13')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it) => (
-                <tr
-                  key={it.id}
-                  className='border-t'
-                >
-                  <td className='px-3 py-2 font-mono'>{it.sku}</td>
-                  <td className='px-3 py-2'>{it.name}</td>
-                  <td className='px-3 py-2 font-mono'>{it.location}</td>
-                  <td className='px-3 py-2 text-right'>{it.systemQty}</td>
-                  <td className='px-3 py-2 text-right'>{it.actualQty}</td>
-                  <td
-                    className={`px-3 py-2 text-right font-semibold ${
-                      it.diff === 0
-                        ? 'text-green-600'
-                        : it.diff > 0
-                          ? 'text-amber-600'
-                          : 'text-red-600'
-                    }`}
-                  >
-                    {it.diff > 0 ? '+' : ''}
-                    {it.diff}
-                  </td>
-                  <td className='px-3 py-2'>{it.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <PageContainer autoTitle autoBreadcrumbs>
+      <DetailPageTemplate
+        title={`${i18n.t('wms.stockTakeDetail.k0')} ${task.stock_take_number}`}
+        subtitle={`${i18n.t('pages.wms_stock_take_detail_page.k2')}${
+          task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')
+        } ${i18n.t('wms.stockTakeDetail.k1')}${task.warehouse_name ?? '-'}`}
+        detailItemName={task.stock_take_number}
+        headerContent={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WmsStatusBadge fsm='stocktake' status={task.status} />
+            <WmsFSMActionButtons fsm='stocktake' currentStatus={task.status} onAction={() => {}} />
+          </Box>
+        }
+        infoCard={{
+          title: task.stock_take_number,
+          subtitle: `${i18n.t('pages.wms_stock_take_detail_page.k2')}${
+            task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')
+          }`,
+          tags: [task.warehouse_name ?? '-'],
+          stats: [
+            {
+              label: i18n.t('pages.wms_stock_take_detail_page.k4'),
+              value: String(diffSummary.ok),
+            },
+            {
+              label: i18n.t('pages.wms_stock_take_detail_page.k5'),
+              value: String(diffSummary.over),
+            },
+            {
+              label: i18n.t('pages.wms_stock_take_detail_page.k6'),
+              value: String(diffSummary.under),
+            },
+            {
+              label: i18n.t('pages.wms_stock_take_detail_page.k7'),
+              value: `${diffSummary.accuracy}%`,
+            },
+          ],
+        }}
+        sections={[
+          {
+            id: 'items',
+            title: i18n.t('wms.stockTakeDetail.k2'),
+            content: (
+              <DataTable
+                columns={columns}
+                data={items}
+                enablePagination={false}
+                showSearch={false}
+                showFilters={false}
+                showExport={false}
+                showCreate={false}
+                showSelection={false}
+              />
+            ),
+          },
+        ]}
+      />
+    </PageContainer>
   );
 }

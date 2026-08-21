@@ -898,6 +898,8 @@
   "wms.wavePickDetail.k0": "TODO: translate",
   "wms.wavePickDetail.k1": "TODO: translate",
   "wms.wavePickDetail.k2": "TODO: translate",
+  "wms_wave_pick_detail_page.v0_0": "Wave Pick Detail — {{v0}}",
+  "wms_wave_pick_detail_page.v0_1": "Created at {{v0}}",
   "wms.analytics.locationUtilization.k0": "TODO: translate",
   "wms": {
     "area": {

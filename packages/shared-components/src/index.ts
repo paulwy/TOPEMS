@@ -24,7 +24,18 @@ export { RelativeTime, type RelativeTimeProps } from './components/RelativeTime'
 export { BackButton, type BackButtonProps } from './components/BackButton';
 export { default as ConfirmDialog, AlertDialog, InfoDialog, SuccessDialog, WarningDialog, ErrorDialog, ConfirmationDialog, type ConfirmDialogConfig, type DialogType, type DialogButtonType, type DialogSize, type DialogButton } from './components/ConfirmDialog';
 
-export { DataTable, MobileCardView, type DataTableProps, type DataTableRow, type ExpandedRowRender, type AdvancedFilter, type ExportResult, type ExportDataFn, type MobileCardViewProps } from './components/DataTable';
+export {
+  DataTable,
+  MobileCardView,
+  type DataTableProps,
+  type DataTableRow,
+  type ExpandedRowRender,
+  type AdvancedFilter,
+  type ExportResult,
+  type ExportDataFn,
+  type MobileCardViewProps,
+  type DataTableLabels,
+} from './components/DataTable';
 export { PageContainer, type PageContainerProps } from './components/PageContainer';
 export { CommandPalette, type CommandItem, type CommandGroup, type CommandPaletteProps } from './components/CommandPalette';
 

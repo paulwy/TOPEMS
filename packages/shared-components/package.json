@@ -44,20 +44,23 @@
     "react-router-dom": "^6.0.0 || ^7.0.0"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
     "@topems/shared-hooks": "workspace:*",
     "@topems/shared-types": "workspace:*",
     "@topems/shared-utils": "workspace:*",
-    "@tanstack/react-table": "^8.21.3"
+    "react-window": "^1.8.11"
   },
   "devDependencies": {
     "@mui/material": "^9.1.1",
     "@mui/x-date-pickers": "^9.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@types/react-window": "^1.8.8",
     "dayjs": "^1.11.21",
     "i18next": "^26.0.0",
+    "lucide-react": "^1.18.0",
     "react-router-dom": "^7.17.0",
     "typescript": "^6.0.3"
   }

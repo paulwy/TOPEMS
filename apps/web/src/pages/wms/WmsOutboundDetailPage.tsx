@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, Chip, LinearProgress, Typography } from '@mui/material';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { OutboundOrderDto } from '@/types/wms';
+import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
+import { PageContainer } from '@/components/common';
+import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
 
 const OUTBOUND_STAGES = ['created', 'confirmed', 'picking', 'packing', 'shipping', 'completed'];
+
 function getStageLabels(): Record<string, string> {
   return {
     created: i18n.t('pages.wms_outbound_detail_page.k0'),
@@ -15,6 +19,70 @@ function getStageLabels(): Record<string, string> {
     shipping: i18n.t('pages.wms_outbound_detail_page.k4'),
     completed: i18n.t('pages.wms_outbound_detail_page.k5'),
   };
+}
+
+function StageProgress({ stageIndex }: { stageIndex: number }) {
+  const labels = getStageLabels();
+  const total = OUTBOUND_STAGES.length;
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        {OUTBOUND_STAGES.map((s, i) => {
+          const completed = i <= stageIndex;
+          const isLast = i === total - 1;
+          return (
+            <Box
+              key={s}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                flex: isLast ? '0 0 auto' : 1,
+              }}
+            >
+              <Chip
+                size='small'
+                label={i + 1}
+                color={completed ? 'primary' : 'default'}
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  '& .MuiChip-label': { p: 0, fontWeight: 600 },
+                }}
+              />
+              <Typography
+                variant='caption'
+                sx={{
+                  ml: 1,
+                  mr: isLast ? 0 : 1,
+                  color: completed ? 'text.primary' : 'text.secondary',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {labels[s]}
+              </Typography>
+              {!isLast && (
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: 2,
+                    bgcolor: i < stageIndex ? 'primary.main' : 'divider',
+                    mx: 1,
+                  }}
+                />
+              )}
+            </Box>
+          );
+        })}
+      </Box>
+      <LinearProgress
+        variant='determinate'
+        value={(stageIndex / (total - 1)) * 100}
+        sx={{ height: 8, borderRadius: 1 }}
+      />
+    </Box>
+  );
 }
 
 export default function WmsOutboundDetailPage() {
@@ -33,90 +101,61 @@ export default function WmsOutboundDetailPage() {
     return i < 0 ? 0 : i;
   }, [order]);
 
-  if (!order) return <div className='p-8'>{i18n.t('pages.wms_outbound_detail_page.k0')}</div>;
+  if (!order) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('pages.wms_outbound_detail_page.k0')}</Typography>
+      </PageContainer>
+    );
+  }
 
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div>
-          <h1 className='text-2xl font-bold'>
-            {i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
-          </h1>
-          <p className='text-sm text-gray-500'>
-            {i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
-          </p>
-        </div>
-        <div className='flex items-center gap-3'>
-          <WmsStatusBadge
-            fsm='outbound'
-            status={order.status}
-          />
-          <WmsFSMActionButtons
-            fsm='outbound'
-            currentStatus={order.status}
-            onAction={() => {}}
-          />
-        </div>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>{i18n.t('pages.wms_outbound_detail_page.k6')}</h3>
-        <div className='flex items-center justify-between'>
-          {OUTBOUND_STAGES.map((s, i) => (
-            <div
-              key={s}
-              className='flex items-center flex-1'
-            >
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                  i <= stageIndex
-                    ? 'bg-blue-600 text-var(--color-primary-foreground)'
-                    : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {i + 1}
-              </div>
-              <div className='ml-2 text-xs'>{getStageLabels()[s]}</div>
-              {i < OUTBOUND_STAGES.length - 1 && (
-                <div
-                  className={`mx-2 h-0.5 flex-1 ${i < stageIndex ? 'bg-blue-600' : 'bg-gray-200'}`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className='mt-3 h-2 w-full rounded-full bg-gray-200'>
-          <div
-            className='h-2 rounded-full bg-blue-600 transition-all'
-            style={{ width: `${(stageIndex / (OUTBOUND_STAGES.length - 1)) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_outbound_detail_page.k7')}</p>
-          <p className='mt-1 font-semibold'>{order.warehouse_name ?? '-'}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_outbound_detail_page.k1')}</p>
-          <p className='mt-1 font-semibold'>
-            {order.carrier ?? '-'} / {order.tracking_number ?? '-'}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_outbound_detail_page.k0')}</p>
-          <p className='mt-1 font-semibold'>
-            {order.picked_quantity ?? 0} / {order.shipped_quantity ?? 0}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_outbound_detail_page.k8')}</p>
-          <p className='mt-1 font-semibold text-green-700'>
-            ¥{(order.total_amount ?? 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
-    </div>
+    <PageContainer autoTitle autoBreadcrumbs>
+      <DetailPageTemplate
+        title={i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
+        subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
+        detailItemName={order.order_number}
+        headerContent={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WmsStatusBadge fsm='outbound' status={order.status} />
+            <WmsFSMActionButtons
+              fsm='outbound'
+              currentStatus={order.status}
+              onAction={() => {}}
+            />
+          </Box>
+        }
+        infoCard={{
+          title: order.order_number,
+          subtitle: i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' }),
+          tags: [order.warehouse_name ?? '-', order.carrier ?? '-'],
+          stats: [
+            {
+              label: i18n.t('pages.wms_outbound_detail_page.k7'),
+              value: order.warehouse_name ?? '-',
+            },
+            {
+              label: i18n.t('wms:wms_outbound_detail_page.k1'),
+              value: `${order.carrier ?? '-'} / ${order.tracking_number ?? '-'}`,
+            },
+            {
+              label: i18n.t('wms:wms_outbound_detail_page.k0'),
+              value: `${order.picked_quantity ?? 0} / ${order.shipped_quantity ?? 0}`,
+            },
+            {
+              label: i18n.t('pages.wms_outbound_detail_page.k8'),
+              value: `¥${(order.total_amount ?? 0).toLocaleString()}`,
+            },
+          ],
+        }}
+        sections={[
+          {
+            id: 'progress',
+            title: i18n.t('pages.wms_outbound_detail_page.k6'),
+            content: <StageProgress stageIndex={stageIndex} />,
+          },
+        ]}
+      />
+    </PageContainer>
   );
 }
