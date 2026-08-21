@@ -258,7 +258,7 @@ apps/web/src/pages/mes/ProcessFlowPage.tsx,mes,crud,CrudPage,CrudPage,PageContai
 apps/web/src/pages/mes/ProcessRoutePage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/ProductionCostPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
 apps/web/src/pages/mes/ProductionDashboardPage/constants.tsx,mes,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/mes/ProductionDashboardPage/index.tsx,mes,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/mes/ProductionDashboardPage/index.tsx,mes,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,none,no,no,no,no,yes,0
 apps/web/src/pages/mes/ProductionKanbanPage.tsx,mes,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,LoadingSpinner,no,no,no,no,yes,1
 apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/mes/ProductionOrderManagementPage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -360,29 +360,29 @@ apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,master-detail,MasterDetailP
 apps/web/src/pages/pm/ProjectTaskKanbanPage.tsx,pm,kanban,KanbanPageTemplate,KanbanPageTemplate; KanbanColumn,none,no,no,no,no,yes,0
 apps/web/src/pages/pm/ProjectTimelinePage.tsx,pm,timeline,TimelinePageTemplate,TimelinePageTemplate; TimelineGroup,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/qms/QmsApqpPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/qms/QmsApqpProjectDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsApqpProjectDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsAuditManagementPage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
-apps/web/src/pages/qms/QmsAuditPlanDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsAuditPlanDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; DetailField,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsDashboardPage.tsx,qms,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/qms/QmsEightDDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsEightDDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsEightDPage.tsx,qms,crud,CrudPage,TreeBuilder; TreeNode,none,no,yes,no,yes,yes,0
-apps/web/src/pages/qms/QmsFmeaDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsFmeaDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsFmeaPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/qms/QmsInspectionDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsInspectionDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsInspectionPage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
-apps/web/src/pages/qms/QmsIssueDetailPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/QmsIssueDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; DetailField,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsNonconformancePage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsQualityControlPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsQualityCostPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsSpcPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsStandardDetailPage.tsx,qms,crud; detail,CrudPage; DetailPageTemplate,DetailPageTemplate; CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/qms/QmsStandardListPage.tsx,qms,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/qms/analytics/QmsAuditCompliancePage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/qms/analytics/QmsCostAnalysisPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/qms/analytics/QmsDefectParetoPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/qms/analytics/QmsFmeaRiskMatrixPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/qms/analytics/QmsQualityTrendPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
-apps/web/src/pages/qms/analytics/QmsSpcControlChartPage.tsx,qms,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/qms/analytics/QmsAuditCompliancePage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate; StatCard,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/analytics/QmsCostAnalysisPage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate; StatCard,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/analytics/QmsDefectParetoPage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate; StatCard,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/analytics/QmsFmeaRiskMatrixPage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/analytics/QmsQualityTrendPage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/analytics/QmsSpcControlChartPage.tsx,qms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/rd/DashboardPage.tsx,rd,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/rd/RsBugPage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/rd/RsBuildPage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
