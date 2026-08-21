@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, TextField, Grid, Chip, InputAdornment } from '@mui/material';
-import { Search, Layers } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
-import { PageContainer } from '@/components';
+import { DashboardTemplate } from '@/components/templates';
 import { lucideIcons } from '@/lib/iconMapping';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
@@ -313,15 +313,9 @@ const ModulesOverviewPage: React.FC = () => {
   }, [suiteCards]);
 
   return (
-    <PageContainer
+    <DashboardTemplate
       title={i18n.t('pages.modules_overview_page.k16')}
       subtitle={i18n.t('pages.modules_overview_page.k17')}
-      headerProps={{
-        pageIcon: <Layers sx={{ width: 24, height: 24 }} />,
-        pageColor: 'primary.main',
-      }}
-      padding={true}
-      maxWidth='xl'
     >
       {/* Search bar */}
       <TextField
@@ -373,7 +367,7 @@ const ModulesOverviewPage: React.FC = () => {
           onCardClick={handleCardClick}
         />
       )}
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
 

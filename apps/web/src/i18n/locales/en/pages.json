@@ -684,6 +684,8 @@
   "pages.comments_page.k17": "EntityType",
   "pages.comments_page.id_18": "Entity ID",
   "pages.comments_page.k19": "No Comments",
+  "pages.hybrid_home_page.title": "Home",
+  "pages.hybrid_home_page.subtitle": "Personal workbench and business overview",
   "pages.dashboard_page.k0": "System",
   "pages.dashboard_page.k1": "Just Now",
   "pages.dashboard_page.k2": "SystemAction",

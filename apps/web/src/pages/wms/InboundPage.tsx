@@ -1,19 +1,40 @@
-import React from 'react';
-import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import type { RowAction } from '@/components/templates/list/types';
-import { inboundOrderSchema } from '@/schemas/wms';
-import { wmsApi } from '@/api/wms';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
 import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
 import { Download, Check, Package, ClipboardCheck } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { RowAction } from '@/components/templates/list/types';
+import type { CrudOperations } from '@/hooks';
+import { getColumns, getFormFields } from '@/schema';
+import type { EntitySchema } from '@/schema';
+import { FormBuilder } from '@/components/common';
+import { inboundOrderSchema } from '@/schemas/wms';
+import { wmsApi } from '@/api/wms';
+import type { InboundOrder, PaginationParams } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
+
+const inboundCrudApi: CrudOperations<InboundOrder> = {
+  list: (params) =>
+    wmsApi.inboundOrders.list(params as PaginationParams) as ReturnType<
+      CrudOperations<InboundOrder>['list']
+    >,
+  get: (id) => wmsApi.inboundOrders.get(id) as ReturnType<CrudOperations<InboundOrder>['get']>,
+  create: (data) =>
+    wmsApi.inboundOrders.create(data as Parameters<typeof wmsApi.inboundOrders.create>[0]) as ReturnType<
+      CrudOperations<InboundOrder>['create']
+    >,
+  update: (id, data) =>
+    wmsApi.inboundOrders.update(id, data as Partial<InboundOrder>) as ReturnType<
+      CrudOperations<InboundOrder>['update']
+    >,
+  delete: (id) =>
+    wmsApi.inboundOrders.delete(id) as ReturnType<CrudOperations<InboundOrder>['delete']>,
+};
 
 const InboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
@@ -46,48 +67,28 @@ const InboundStats: React.FC = () => {
       value: stats.total,
       color: ct.success.main,
       bgColor: 'grey.100',
-      icon: (
-        <Download
-          size={20}
-          color={ct.success.main}
-        />
-      ),
+      icon: <Download size={20} color={ct.success.main} />,
     },
     {
       label: i18n.t('pages.inbound_page.k1'),
       value: stats.pending,
       color: 'warning.dark',
       bgColor: 'warning.light',
-      icon: (
-        <Check
-          size={20}
-          color='warning.dark'
-        />
-      ),
+      icon: <Check size={20} color='warning.dark' />,
     },
     {
       label: i18n.t('pages.inbound_page.k2'),
       value: stats.receiving,
       color: 'info.dark',
       bgColor: 'info.light',
-      icon: (
-        <Package
-          size={20}
-          color='info.dark'
-        />
-      ),
+      icon: <Package size={20} color='info.dark' />,
     },
     {
       label: i18n.t('pages.inbound_page.k3'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.light',
-      icon: (
-        <ClipboardCheck
-          size={20}
-          color='success.dark'
-        />
-      ),
+      icon: <ClipboardCheck size={20} color='success.dark' />,
     },
   ];
 
@@ -97,17 +98,12 @@ const InboundStats: React.FC = () => {
         display: 'grid',
         gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
-        mb: 4,
       }}
     >
       {statCards.map((card) => (
         <Card key={card.label}>
           <CardContent sx={{ p: 2 }}>
-            <Stack
-              direction='row'
-              spacing={1.5}
-              sx={{ alignItems: 'center' }}
-            >
+            <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
               <Box
                 sx={{
                   width: 40,
@@ -122,16 +118,10 @@ const InboundStats: React.FC = () => {
                 {card.icon}
               </Box>
               <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
+                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
                   {card.label}
                 </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700 }}
-                >
+                <Typography variant='h5' sx={{ fontWeight: 700 }}>
                   {card.value}
                 </Typography>
               </Box>
@@ -201,33 +191,74 @@ export default function InboundPage() {
     [queryClient, addNotification]
   );
 
-    const inboundApiAdapter = createCrudPageAdapter(wmsApi.inboundOrders);
+  const customRowActions: RowAction<InboundOrder>[] = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.inbound_page.k16'),
+        icon: <Check size={16} />,
+        onClick: (row) => handleConfirm(row.id as string),
+        color: 'info',
+        show: (row) => row.status === 'pending',
+      },
+      {
+        label: i18n.t('pages.inbound_page.k17'),
+        icon: <ClipboardCheck size={16} />,
+        onClick: (row) => handleComplete(row.id as string),
+        color: 'success',
+        show: (row) => row.status === 'receiving' || row.status === 'quality_check',
+      },
+    ],
+    [handleConfirm, handleComplete]
+  );
 
-  const customRowActions: RowAction[] = [
-    {
-      label: i18n.t('pages.inbound_page.k16'),
-      icon: <Check size={16} />,
-      onClick: (row: Record<string, unknown>) => handleConfirm(row.id as string),
-      color: 'info',
-      show: (row: Record<string, unknown>) => row.status === 'pending',
-    },
-    {
-      label: i18n.t('pages.inbound_page.k17'),
-      icon: <ClipboardCheck size={16} />,
-      onClick: (row: Record<string, unknown>) => handleComplete(row.id as string),
-      color: 'success',
-      show: (row: Record<string, unknown>) =>
-        row.status === 'receiving' || row.status === 'quality_check',
-    },
-  ];
+  const columns = useMemo(
+    () => getColumns<InboundOrder>((inboundOrderSchema as unknown) as EntitySchema<InboundOrder>),
+    []
+  );
 
   return (
-    <CrudPage
-      schema={inboundOrderSchema}
-      apiAdapter={inboundApiAdapter}
-      customRowActions={customRowActions}
+    <ListPageTemplate<InboundOrder>
+      title={i18n.t('pages.inbound_page.k18')}
       breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.inbound_page.k18') }]}
+      columns={columns}
+      data={[]}
       headerContent={<InboundStats />}
+      crud={{
+        api: inboundCrudApi,
+        queryKey: 'wms-inbound-orders',
+        entityName: i18n.t('pages.inbound_page.k18'),
+        renderForm: ({ mode, record, onSubmit, onClose }) => {
+          const fields = getFormFields<InboundOrder>(
+            (inboundOrderSchema as unknown) as EntitySchema<InboundOrder>,
+            mode === 'view' ? 'view' : mode
+          );
+          return (
+            <FormBuilder
+              fields={fields}
+              mode={mode}
+              initialValues={((record as unknown) as Record<string, unknown>) || {}}
+              colCount={inboundOrderSchema.formColCount || 2}
+              showReset={mode !== 'view'}
+              submitLabel={
+                mode === 'create'
+                  ? i18n.t('common.create')
+                  : mode === 'edit'
+                    ? i18n.t('common.save')
+                    : undefined
+              }
+              resetLabel={i18n.t('common.cancel')}
+              onSubmit={async (values) => {
+                const ok = await onSubmit(values as Partial<InboundOrder>);
+                if (!ok) {
+                  throw new Error(i18n.t('common.submit_failed'));
+                }
+              }}
+              onReset={onClose}
+            />
+          );
+        },
+        rowActions: customRowActions,
+      }}
     />
   );
 }

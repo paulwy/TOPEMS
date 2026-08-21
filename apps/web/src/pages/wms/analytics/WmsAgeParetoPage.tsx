@@ -13,7 +13,8 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 
 export default function WmsAgeParetoPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -23,27 +24,42 @@ export default function WmsAgeParetoPage() {
     return count > 0 ? count : pareto.length;
   }, [pareto]);
   const totalAmount = useMemo(() => pareto.reduce((s, p) => s + p.amount, 0), [pareto]);
+
+  const statCards = useMemo(
+    () => [
+      {
+        id: 'total-amount',
+        title: i18n.t('pages.wms_age_pareto_page.k0'),
+        value: `¥${totalAmount.toLocaleString()}`,
+        color: 'success' as const,
+      },
+      {
+        id: 'top80-count',
+        title: i18n.t('pages.wms_age_pareto_page.80sku_1'),
+        value: top80,
+        color: 'info' as const,
+      },
+      {
+        id: 'sku-count',
+        title: i18n.t('wms.analytics.agePareto.k1'),
+        value: pareto.length,
+        color: 'secondary' as const,
+      },
+    ],
+    [totalAmount, top80, pareto.length]
+  );
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('wms.analytics.agePareto.k0')}</h1>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_age_pareto_page.k0')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>¥{totalAmount.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_age_pareto_page.80sku_1')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{top80}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('wms.analytics.agePareto.k1')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>{pareto.length}</p>
-        </div>
-      </div>
-
+    <StatsPageTemplate
+      title={i18n.t('wms.analytics.agePareto.k0')}
+      statCards={statCards}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+    >
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_age_pareto_page.k0')}</h3>
         <ResponsiveContainer
@@ -118,6 +134,6 @@ export default function WmsAgeParetoPage() {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </StatsPageTemplate>
   );
 }

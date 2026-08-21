@@ -1,94 +1,198 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  FileText,
-  Search,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
   Download,
+  Eye,
+  FileText,
+  Info,
+  Monitor,
   RefreshCw,
   User,
-  Monitor,
-  Clock,
-  CheckCircle,
   XCircle,
-  AlertCircle,
-  Info,
-  Eye,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { PageContainer, StatusBadge } from '@/components/common';
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  CircularProgress,
-  TablePagination,
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  InputAdornment,
-} from '@mui/material';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import type { FilterConfig } from '@topems/shared-components';
+import { StatusBadge } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
 import { auditApi, type AuditLog } from '@/api/erp/audit';
-import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
+const ct = designTokens.colors;
+
+interface AuditLogStatsProps {
+  stats: {
+    total: number;
+    success: number;
+    failed: number;
+    warning: number;
+  };
+}
+
+const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
+  const statCards = [
+    {
+      label: i18n.t('pages.audit_log_page.k11'),
+      value: stats.total,
+      color: 'primary.dark' as const,
+      bgColor: 'primary.light' as const,
+      icon: (
+        <FileText
+          size={20}
+          color={ct.primary.main}
+        />
+      ),
+    },
+    {
+      label: i18n.t('pages.audit_log_page.k12'),
+      value: stats.success,
+      color: 'success.dark' as const,
+      bgColor: 'success.light' as const,
+      icon: (
+        <CheckCircle
+          size={20}
+          color={ct.success.main}
+        />
+      ),
+    },
+    {
+      label: i18n.t('pages.audit_log_page.k13'),
+      value: stats.failed,
+      color: 'error.dark' as const,
+      bgColor: 'error.light' as const,
+      icon: (
+        <XCircle
+          size={20}
+          color={ct.error.main}
+        />
+      ),
+    },
+    {
+      label: i18n.t('pages.audit_log_page.k14'),
+      value: stats.warning,
+      color: 'warning.dark' as const,
+      bgColor: 'warning.light' as const,
+      icon: (
+        <AlertCircle
+          size={20}
+          color={ct.warning.main}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+      }}
+    >
+      {statCards.map((card) => (
+        <Card key={card.label}>
+          <CardContent sx={{ p: 2 }}>
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
+            >
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: card.bgColor,
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {card.icon}
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  {card.label}
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700 }}
+                >
+                  {card.value}
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </Box>
+  );
+};
 
 const AuditLogPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [operatorFilter, setOperatorFilter] = useState('');
-  const [moduleFilter, setModuleFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filtersValue, setFiltersValue] = useState<Record<string, string>>({
+    keyword: '',
+    operator: '',
+    module: '',
+    type: '',
+    status: '',
+    start_date: '',
+    end_date: '',
+  });
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentLog, setCurrentLog] = useState<AuditLog | null>(null);
+
+  const apiParams = useMemo(
+    () => ({
+      page: page + 1,
+      page_size: rowsPerPage,
+      action: filtersValue.type || undefined,
+      entity_type: filtersValue.module || undefined,
+      user_id: filtersValue.operator || undefined,
+      status: filtersValue.status || undefined,
+      start_date: filtersValue.start_date || undefined,
+      end_date: filtersValue.end_date || undefined,
+    }),
+    [page, rowsPerPage, filtersValue]
+  );
+
   const logsQuery = useQuery<{
     items: AuditLog[];
     total: number;
   }>({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.ERP_AUDIT_LOGS_BASE,
-      page,
-      rowsPerPage,
-      typeFilter,
-      moduleFilter,
-      operatorFilter,
-      statusFilter,
-      dateRange,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.ERP_AUDIT_LOGS_BASE, apiParams],
     queryFn: async () => {
-      const params = {
-        page: page + 1,
-        page_size: rowsPerPage,
-        action: typeFilter || undefined,
-        entity_type: moduleFilter || undefined,
-        user_id: operatorFilter || undefined,
-        status: statusFilter || undefined,
-        start_date: dateRange.start || undefined,
-        end_date: dateRange.end || undefined,
-      };
-      const res = await auditApi.list(params);
+      const res = await auditApi.list(apiParams);
       if (res.success && res.data) {
         return { items: res.data.audit_logs || [], total: res.data.total || 0 };
       }
@@ -96,9 +200,7 @@ const AuditLogPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const logs = logsQuery.data?.items ?? [];
-  const total = logsQuery.data?.total ?? 0;
-  const loading = logsQuery.isLoading;
+
   useEffect(() => {
     if (logsQuery.isError) {
       apiLogger.error(i18n.t('pages.audit_log_page.k0'), logsQuery.error);
@@ -109,37 +211,53 @@ const AuditLogPage: React.FC = () => {
       });
     }
   }, [logsQuery.isError, logsQuery.error, addNotification]);
-  const filteredLogs = useMemo(() => {
+
+  const logs = useMemo(() => logsQuery.data?.items ?? [], [logsQuery.data]);
+  const total = logsQuery.data?.total ?? 0;
+
+  const displayedLogs = useMemo(() => {
+    const keyword = filtersValue.keyword;
+    if (!keyword) return logs;
+    const lower = keyword.toLowerCase();
     return logs.filter((log) => {
       const matchesSearch =
-        !searchQuery ||
-        log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        false ||
-        log.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        false ||
-        log.entity_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        false ||
-        log.ip_address?.includes(searchQuery) ||
-        false;
-      const matchesOperator = !operatorFilter || log.user_name === operatorFilter;
-      const matchesModule = !moduleFilter || log.entity_type === moduleFilter;
-      const matchesType = !typeFilter || log.action === typeFilter;
-      const matchesStatus = !statusFilter || log.status === statusFilter;
+        (log.user_name?.toLowerCase().includes(lower) ?? false) ||
+        (log.action?.toLowerCase().includes(lower) ?? false) ||
+        (log.entity_type?.toLowerCase().includes(lower) ?? false) ||
+        (log.ip_address?.includes(keyword) ?? false);
+      const matchesOperator = !filtersValue.operator || log.user_name === filtersValue.operator;
+      const matchesModule = !filtersValue.module || log.entity_type === filtersValue.module;
+      const matchesType = !filtersValue.type || log.action === filtersValue.type;
+      const matchesStatus = !filtersValue.status || log.status === filtersValue.status;
       return matchesSearch && matchesOperator && matchesModule && matchesType && matchesStatus;
     });
-  }, [logs, searchQuery, operatorFilter, moduleFilter, typeFilter, statusFilter]);
+  }, [logs, filtersValue]);
+
+  const stats = useMemo(
+    () => ({
+      total: logs.length,
+      success: logs.filter((l) => l.status === 'success').length,
+      failed: logs.filter((l) => l.status === 'failed').length,
+      warning: logs.filter((l) => l.status === 'warning').length,
+    }),
+    [logs]
+  );
+
   const operators = useMemo(() => {
     const unique = new Set(logs.map((l) => l.user_name).filter(Boolean));
-    return Array.from(unique);
+    return Array.from(unique) as string[];
   }, [logs]);
+
   const modules = useMemo(() => {
     const unique = new Set(logs.map((l) => l.entity_type));
-    return Array.from(unique);
+    return Array.from(unique) as string[];
   }, [logs]);
+
   const operationTypes = useMemo(() => {
     const unique = new Set(logs.map((l) => l.action));
-    return Array.from(unique);
+    return Array.from(unique) as string[];
   }, [logs]);
+
   const getStatusBadge = (status: string) => {
     const badges: Record<
       string,
@@ -175,6 +293,7 @@ const AuditLogPage: React.FC = () => {
       />
     );
   };
+
   const getTypeChip = (type: string) => {
     const colorMap: Record<
       string,
@@ -198,430 +317,242 @@ const AuditLogPage: React.FC = () => {
       />
     );
   };
-  const handleViewDetail = (log: AuditLog) => {
+
+  const handleViewDetail = useCallback((log: AuditLog) => {
     setCurrentLog(log);
     setShowDetailModal(true);
-  };
-  const handleExport = () => {
+  }, []);
+
+  const handleExport = useCallback(() => {
     addNotification({
       title: i18n.t('pages.audit_log_page.k5'),
       message: i18n.t('pages.audit_log_page.k6'),
       type: 'success',
     });
-  };
-  const stats = useMemo(
-    () => ({
-      total: logs.length,
-      success: logs.filter((l) => l.status === 'success').length,
-      failed: logs.filter((l) => l.status === 'failed').length,
-      warning: logs.filter((l) => l.status === 'warning').length,
-    }),
-    [logs]
-  );
-  return (
-    <PageContainer
-      title={i18n.t('pages.audit_log_page.k7')}
-      subtitle={i18n.t('pages.audit_log_page.k8')}
-      maxWidth='xl'
-      headerProps={{
-        backButton: {
-          onClick: () => navigate(ERP_PATHS.dashboard),
-        },
-        actions: [
-          {
-            label: i18n.t('pages.audit_log_page.k9'),
-            icon: <Download size={16} />,
-            onClick: handleExport,
-            variant: 'outlined',
-          },
-          {
-            label: i18n.t('pages.audit_log_page.k10'),
-            icon: <RefreshCw size={16} />,
-            onClick: () => logsQuery.refetch(),
-            variant: 'outlined',
-          },
+  }, [addNotification]);
+
+  const handleFilterChange = useCallback((values: Record<string, unknown>) => {
+    setFiltersValue((prev) => ({ ...prev, ...(values as Record<string, string>) }));
+    setPage(0);
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setRowsPerPage(size);
+    setPage(0);
+  }, []);
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'keyword',
+        label: i18n.t('pages.audit_log_page.ip_9'),
+        type: 'text',
+        width: 280,
+      },
+      {
+        id: 'operator',
+        label: i18n.t('pages.audit_log_page.k15'),
+        type: 'select',
+        options: operators.map((value) => ({ label: value, value })),
+        width: 130,
+      },
+      {
+        id: 'module',
+        label: i18n.t('pages.audit_log_page.k18'),
+        type: 'select',
+        options: modules.map((value) => ({ label: value, value })),
+        width: 140,
+      },
+      {
+        id: 'type',
+        label: i18n.t('pages.audit_log_page.k21'),
+        type: 'select',
+        options: operationTypes.map((value) => ({ label: value, value })),
+        width: 120,
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.audit_log_page.k24'),
+        type: 'select',
+        options: [
+          { label: i18n.t('pages.audit_log_page.k27'), value: 'success' },
+          { label: i18n.t('pages.audit_log_page.k28'), value: 'failed' },
+          { label: i18n.t('pages.audit_log_page.k29'), value: 'warning' },
         ],
-      }}
-    >
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 2, md: 4 },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        {[
-          {
-            label: i18n.t('pages.audit_log_page.k11'),
-            value: stats.total,
-            icon: <FileText size={20} />,
-            color: 'primary',
-            bg: 'primary.100',
-          },
-          {
-            label: i18n.t('pages.audit_log_page.k12'),
-            value: stats.success,
-            icon: <CheckCircle size={20} />,
-            color: 'success',
-            bg: 'success.100',
-          },
-          {
-            label: i18n.t('pages.audit_log_page.k13'),
-            value: stats.failed,
-            icon: <XCircle size={20} />,
-            color: 'error',
-            bg: 'error.100',
-          },
-          {
-            label: i18n.t('pages.audit_log_page.k14'),
-            value: stats.warning,
-            icon: <AlertCircle size={20} />,
-            color: 'warning',
-            bg: 'warning.100',
-          },
-        ].map((stat) => (
-          <Box
-            key={stat.label}
-            sx={{
-              p: 2.5,
-              bgcolor: 'background.paper',
-              borderRadius: 3,
-              boxShadow: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
+        width: 120,
+      },
+      {
+        id: 'start_date',
+        label: i18n.t('pages.audit_log_page.k30'),
+        type: 'date',
+        width: 180,
+      },
+      {
+        id: 'end_date',
+        label: i18n.t('pages.audit_log_page.k31'),
+        type: 'date',
+        width: 180,
+      },
+    ],
+    [operators, modules, operationTypes]
+  );
+
+  const columns: ColumnDef<AuditLog>[] = useMemo(
+    () => [
+      {
+        id: 'operator',
+        label: i18n.t('pages.audit_log_page.k33'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                p: 1.5,
-                borderRadius: 1.5,
-                bgcolor: stat.bg,
-                color: `${stat.color}.main`,
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                bgcolor: 'primary.100',
+                color: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              {stat.icon}
+              <User size={14} />
             </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                {stat.label}
-              </Typography>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {stat.value}
-              </Typography>
-            </Box>
+            <Typography sx={{ fontWeight: 500 }}>{row.user_name || '-'}</Typography>
           </Box>
-        ))}
-      </Box>
-
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 1,
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            p: 2,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            alignItems: 'center',
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <TextField
-            size='small'
-            placeholder={i18n.t('pages.audit_log_page.ip_9')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search
-                      size={16}
-                      style={{ opacity: 0.5 }}
-                    />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ minWidth: 280 }}
-          />
-          <FormControl
-            size='small'
-            sx={{ minWidth: 130 }}
-          >
-            <InputLabel>{i18n.t('pages.audit_log_page.k15')}</InputLabel>
-            <Select
-              value={operatorFilter}
-              label={i18n.t('pages.audit_log_page.k16')}
-              onChange={(e) => {
-                setOperatorFilter(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value=''>{i18n.t('pages.audit_log_page.k17')}</MenuItem>
-              {operators.map((op) => (
-                <MenuItem
-                  key={op}
-                  value={op}
-                >
-                  {op}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 140 }}
-          >
-            <InputLabel>{i18n.t('pages.audit_log_page.k18')}</InputLabel>
-            <Select
-              value={moduleFilter}
-              label={i18n.t('pages.audit_log_page.k19')}
-              onChange={(e) => {
-                setModuleFilter(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value=''>{i18n.t('pages.audit_log_page.k20')}</MenuItem>
-              {modules.map((m) => (
-                <MenuItem
-                  key={m}
-                  value={m}
-                >
-                  {m}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 120 }}
-          >
-            <InputLabel>{i18n.t('pages.audit_log_page.k21')}</InputLabel>
-            <Select
-              value={typeFilter}
-              label={i18n.t('pages.audit_log_page.k22')}
-              onChange={(e) => {
-                setTypeFilter(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value=''>{i18n.t('pages.audit_log_page.k23')}</MenuItem>
-              {operationTypes.map((t) => (
-                <MenuItem
-                  key={t}
-                  value={t}
-                >
-                  {t}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 120 }}
-          >
-            <InputLabel>{i18n.t('pages.audit_log_page.k24')}</InputLabel>
-            <Select
-              value={statusFilter}
-              label={i18n.t('pages.audit_log_page.k25')}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value=''>{i18n.t('pages.audit_log_page.k26')}</MenuItem>
-              <MenuItem value='success'>{i18n.t('pages.audit_log_page.k27')}</MenuItem>
-              <MenuItem value='failed'>{i18n.t('pages.audit_log_page.k28')}</MenuItem>
-              <MenuItem value='warning'>{i18n.t('pages.audit_log_page.k29')}</MenuItem>
-            </Select>
-          </FormControl>
-          <Box sx={{ flexGrow: 1 }} />
-          <TextField
-            size='small'
-            label={i18n.t('pages.audit_log_page.k30')}
-            type='date'
-            value={dateRange.start}
-            onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } } as const}
-          />
-          <TextField
-            size='small'
-            label={i18n.t('pages.audit_log_page.k31')}
-            type='date'
-            value={dateRange.end}
-            onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } } as const}
-          />
-        </Box>
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 'bold', width: 80 }}>
-                      {i18n.t('pages.audit_log_page.k32')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k33')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k34')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k35')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k36')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.auditLog.k0')}</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k37')}
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>
-                      {i18n.t('pages.audit_log_page.k38')}
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredLogs.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        sx={{ py: 8, textAlign: 'center' }}
-                      >
-                        <FileText
-                          sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }}
-                        />
-                        <Typography
-                          variant='body1'
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          {i18n.t('pages.audit_log_page.k10')}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredLogs.map((log) => (
-                      <TableRow
-                        key={log.id}
-                        hover
-                      >
-                        <TableCell>
-                          <Tooltip title={i18n.t('pages.audit_log_page.k39')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleViewDetail(log)}
-                              aria-label={i18n.t('pages.audit_log_page.k40')}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Box
-                              sx={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: '50%',
-                                bgcolor: 'primary.100',
-                                color: 'primary.main',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <User size={14} />
-                            </Box>
-                            <Typography sx={{ fontWeight: 500 }}>{log.user_name || '-'}</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Monitor
-                              size={14}
-                              style={{ opacity: 0.5 }}
-                            />
-                            {log.entity_type}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{getTypeChip(log.action)}</TableCell>
-                        <TableCell>
-                          <Typography
-                            sx={{
-                              maxWidth: 300,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {log.action} {log.entity_type}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                            {log.ip_address || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(log.status)}</TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Clock
-                              size={14}
-                              style={{ opacity: 0.5 }}
-                            />
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {log.created_at.replace('T', ' ')}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component='div'
-              count={total}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              labelRowsPerPage={i18n.t('pages.audit_log_page.k41')}
+        ),
+      },
+      {
+        id: 'module',
+        label: i18n.t('pages.audit_log_page.k34'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Monitor
+              size={14}
+              style={{ opacity: 0.5 }}
             />
-          </>
-        )}
-      </Box>
+            {row.entity_type}
+          </Box>
+        ),
+      },
+      {
+        id: 'type',
+        label: i18n.t('pages.audit_log_page.k35'),
+        render: (row) => getTypeChip(row.action),
+      },
+      {
+        id: 'description',
+        label: i18n.t('pages.audit_log_page.k36'),
+        render: (row) => (
+          <Typography
+            sx={{
+              maxWidth: 300,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {row.action} {row.entity_type}
+          </Typography>
+        ),
+      },
+      {
+        id: 'ip_address',
+        label: i18n.t('erp.auditLog.k0'),
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            {row.ip_address || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.audit_log_page.k37'),
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('pages.audit_log_page.k38'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Clock
+              size={14}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
+              {row.created_at.replace('T', ' ')}
+            </Typography>
+          </Box>
+        ),
+      },
+    ],
+    []
+  );
 
+  const rowActions: RowAction<AuditLog>[] = useMemo(
+    () => [
+      {
+        key: 'view',
+        label: i18n.t('pages.audit_log_page.k39'),
+        icon: <Eye size={16} />,
+        onClick: (row) => handleViewDetail(row),
+        color: 'info',
+      },
+    ],
+    [handleViewDetail]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.audit_log_page.k9'),
+        icon: <Download size={16} />,
+        onClick: handleExport,
+        variant: 'outlined' as const,
+      },
+      {
+        label: i18n.t('pages.audit_log_page.k10'),
+        icon: <RefreshCw size={16} />,
+        onClick: () => logsQuery.refetch(),
+        variant: 'outlined' as const,
+      },
+    ],
+    [handleExport, logsQuery]
+  );
+
+  return (
+    <ListPageTemplate<AuditLog>
+      title={i18n.t('pages.audit_log_page.k7')}
+      subtitle={i18n.t('pages.audit_log_page.k8')}
+      backButton={{
+        onClick: () => navigate(ERP_PATHS.dashboard),
+      }}
+      columns={columns}
+      data={displayedLogs}
+      loading={logsQuery.isLoading}
+      error={
+        logsQuery.error
+          ? extractErrorMessage(logsQuery.error, i18n.t('pages.audit_log_page.k1'))
+          : undefined
+      }
+      filters={filters}
+      filtersValue={filtersValue}
+      onFilterChange={handleFilterChange}
+      pagination={{
+        page,
+        pageSize: rowsPerPage,
+        total,
+        onPageChange: setPage,
+        onPageSizeChange: handlePageSizeChange,
+      }}
+      actions={actions}
+      rowActions={rowActions}
+      headerContent={<AuditLogStats stats={stats} />}
+      emptyMessage={i18n.t('pages.audit_log_page.k10')}
+    >
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
@@ -746,7 +677,8 @@ const AuditLogPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </ListPageTemplate>
   );
 };
+
 export default AuditLogPage;

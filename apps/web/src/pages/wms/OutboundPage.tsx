@@ -1,19 +1,40 @@
-import React from 'react';
-import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import type { RowAction } from '@/components/templates/list/types';
-import { outboundOrderSchema } from '@/schemas/wms';
-import { wmsApi } from '@/api/wms';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo } from 'react';
 import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
 import { Upload, Check, ClipboardList, Truck, Package } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { RowAction } from '@/components/templates/list/types';
+import type { CrudOperations } from '@/hooks';
+import { getColumns, getFormFields } from '@/schema';
+import type { EntitySchema } from '@/schema';
+import { FormBuilder } from '@/components/common';
+import { outboundOrderSchema } from '@/schemas/wms';
+import { wmsApi } from '@/api/wms';
+import type { OutboundOrder, PaginationParams } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
+
+const outboundCrudApi: CrudOperations<OutboundOrder> = {
+  list: (params) =>
+    wmsApi.outboundOrders.list(params as PaginationParams) as ReturnType<
+      CrudOperations<OutboundOrder>['list']
+    >,
+  get: (id) => wmsApi.outboundOrders.get(id) as ReturnType<CrudOperations<OutboundOrder>['get']>,
+  create: (data) =>
+    wmsApi.outboundOrders.create(data as Parameters<typeof wmsApi.outboundOrders.create>[0]) as ReturnType<
+      CrudOperations<OutboundOrder>['create']
+    >,
+  update: (id, data) =>
+    wmsApi.outboundOrders.update(id, data as Partial<OutboundOrder>) as ReturnType<
+      CrudOperations<OutboundOrder>['update']
+    >,
+  delete: (id) =>
+    wmsApi.outboundOrders.delete(id) as ReturnType<CrudOperations<OutboundOrder>['delete']>,
+};
 
 const OutboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
@@ -48,48 +69,28 @@ const OutboundStats: React.FC = () => {
       value: stats.total,
       color: ct.warning.main,
       bgColor: 'grey.100',
-      icon: (
-        <Upload
-          size={20}
-          color={ct.warning.main}
-        />
-      ),
+      icon: <Upload size={20} color={ct.warning.main} />,
     },
     {
       label: i18n.t('pages.outbound_page.k1'),
       value: stats.pending,
       color: 'warning.dark',
       bgColor: 'warning.light',
-      icon: (
-        <Check
-          size={20}
-          color='warning.dark'
-        />
-      ),
+      icon: <Check size={20} color='warning.dark' />,
     },
     {
       label: i18n.t('pages.outbound_page.k2'),
       value: stats.picking,
       color: 'info.dark',
       bgColor: 'info.light',
-      icon: (
-        <ClipboardList
-          size={20}
-          color='info.dark'
-        />
-      ),
+      icon: <ClipboardList size={20} color='info.dark' />,
     },
     {
       label: i18n.t('pages.outbound_page.k3'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.light',
-      icon: (
-        <Package
-          size={20}
-          color='success.dark'
-        />
-      ),
+      icon: <Package size={20} color='success.dark' />,
     },
   ];
 
@@ -99,17 +100,12 @@ const OutboundStats: React.FC = () => {
         display: 'grid',
         gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
-        mb: 4,
       }}
     >
       {statCards.map((card) => (
         <Card key={card.label}>
           <CardContent sx={{ p: 2 }}>
-            <Stack
-              direction='row'
-              spacing={1.5}
-              sx={{ alignItems: 'center' }}
-            >
+            <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
               <Box
                 sx={{
                   width: 40,
@@ -124,16 +120,10 @@ const OutboundStats: React.FC = () => {
                 {card.icon}
               </Box>
               <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
+                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
                   {card.label}
                 </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700 }}
-                >
+                <Typography variant='h5' sx={{ fontWeight: 700 }}>
                   {card.value}
                 </Typography>
               </Box>
@@ -257,47 +247,88 @@ export default function OutboundPage() {
     [queryClient, addNotification]
   );
 
-    const outboundApiAdapter = createCrudPageAdapter(wmsApi.outboundOrders);
+  const customRowActions: RowAction<OutboundOrder>[] = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.outbound_page.k24'),
+        icon: <Check size={16} />,
+        onClick: (row) => handleConfirm(row.id as string),
+        color: 'info',
+        show: (row) => row.status === 'pending',
+      },
+      {
+        label: i18n.t('pages.outbound_page.k25'),
+        icon: <ClipboardList size={16} />,
+        onClick: (row) => handlePick(row.id as string),
+        color: 'info',
+        show: (row) => row.status === 'confirmed' || row.status === 'picking',
+      },
+      {
+        label: i18n.t('pages.outbound_page.k26'),
+        icon: <Truck size={16} />,
+        onClick: (row) => handleShip(row.id as string),
+        color: 'warning',
+        show: (row) => row.status === 'picked' || row.status === 'packing',
+      },
+      {
+        label: i18n.t('pages.outbound_page.k27'),
+        icon: <Package size={16} />,
+        onClick: (row) => handleComplete(row.id as string),
+        color: 'success',
+        show: (row) => row.status === 'shipped',
+      },
+    ],
+    [handleConfirm, handlePick, handleShip, handleComplete]
+  );
 
-  const customRowActions: RowAction[] = [
-    {
-      label: i18n.t('pages.outbound_page.k24'),
-      icon: <Check size={16} />,
-      onClick: (row: Record<string, unknown>) => handleConfirm(row.id as string),
-      color: 'info',
-      show: (row: Record<string, unknown>) => row.status === 'pending',
-    },
-    {
-      label: i18n.t('pages.outbound_page.k25'),
-      icon: <ClipboardList size={16} />,
-      onClick: (row: Record<string, unknown>) => handlePick(row.id as string),
-      color: 'info',
-      show: (row: Record<string, unknown>) =>
-        row.status === 'confirmed' || row.status === 'picking',
-    },
-    {
-      label: i18n.t('pages.outbound_page.k26'),
-      icon: <Truck size={16} />,
-      onClick: (row: Record<string, unknown>) => handleShip(row.id as string),
-      color: 'warning',
-      show: (row: Record<string, unknown>) => row.status === 'picked' || row.status === 'packing',
-    },
-    {
-      label: i18n.t('pages.outbound_page.k27'),
-      icon: <Package size={16} />,
-      onClick: (row: Record<string, unknown>) => handleComplete(row.id as string),
-      color: 'success',
-      show: (row: Record<string, unknown>) => row.status === 'shipped',
-    },
-  ];
+  const columns = useMemo(
+    () => getColumns<OutboundOrder>((outboundOrderSchema as unknown) as EntitySchema<OutboundOrder>),
+    []
+  );
 
   return (
-    <CrudPage
-      schema={outboundOrderSchema}
-      apiAdapter={outboundApiAdapter}
-      customRowActions={customRowActions}
+    <ListPageTemplate<OutboundOrder>
+      title={i18n.t('pages.outbound_page.k28')}
       breadcrumbs={[{ label: 'WMS' }, { label: i18n.t('pages.outbound_page.k28') }]}
+      columns={columns}
+      data={[]}
       headerContent={<OutboundStats />}
+      crud={{
+        api: outboundCrudApi,
+        queryKey: 'wms-outbound-orders',
+        entityName: i18n.t('pages.outbound_page.k28'),
+        renderForm: ({ mode, record, onSubmit, onClose }) => {
+          const fields = getFormFields<OutboundOrder>(
+            (outboundOrderSchema as unknown) as EntitySchema<OutboundOrder>,
+            mode === 'view' ? 'view' : mode
+          );
+          return (
+            <FormBuilder
+              fields={fields}
+              mode={mode}
+              initialValues={((record as unknown) as Record<string, unknown>) || {}}
+              colCount={outboundOrderSchema.formColCount || 2}
+              showReset={mode !== 'view'}
+              submitLabel={
+                mode === 'create'
+                  ? i18n.t('common.create')
+                  : mode === 'edit'
+                    ? i18n.t('common.save')
+                    : undefined
+              }
+              resetLabel={i18n.t('common.cancel')}
+              onSubmit={async (values) => {
+                const ok = await onSubmit(values as Partial<OutboundOrder>);
+                if (!ok) {
+                  throw new Error(i18n.t('common.submit_failed'));
+                }
+              }}
+              onReset={onClose}
+            />
+          );
+        },
+        rowActions: customRowActions,
+      }}
     />
   );
 }

@@ -1,22 +1,14 @@
 import { useMemo, useState } from 'react';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend,
-} from 'recharts';
+import { FormControl, Select, MenuItem } from '@mui/material';
 import i18n from '@/i18n';
 import type { DeliveryAnalyticsData } from '@/api/mes/types';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import {
+  StatsPageTemplate,
+  type StatCard,
+  type ChartConfig,
+  type DataTable,
+} from '@/components/templates/StatsPageTemplate';
 
 const DONUT_COLORS = [
   designTokens.colors.success.dark,
@@ -24,6 +16,7 @@ const DONUT_COLORS = [
   designTokens.colors.error.main,
   designTokens.colors.secondary.dark,
 ];
+
 function useDeliveryMock(): DeliveryAnalyticsData {
   return useMemo(() => {
     const reasons = [
@@ -50,9 +43,11 @@ function useDeliveryMock(): DeliveryAnalyticsData {
     };
   }, []);
 }
+
 export default function MesDeliveryAnalyticsPage() {
   const data = useDeliveryMock();
   const [productFamily, setProductFamily] = useState('all');
+
   const donutData = useMemo(
     () => [
       { name: i18n.t('mes.mes_delivery_analytics_page.k6'), value: 32 },
@@ -62,6 +57,7 @@ export default function MesDeliveryAnalyticsPage() {
     ],
     []
   );
+
   const boxApprox = useMemo(
     () =>
       Array.from({ length: 6 }, (_, i) => ({
@@ -74,192 +70,131 @@ export default function MesDeliveryAnalyticsPage() {
       })),
     []
   );
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('mes.mes_delivery_analytics_page.k10')}</h1>
-        <select
+
+  const statCards: StatCard[] = useMemo(
+    () => [
+      {
+        id: 'on-time-rate',
+        title: i18n.t('mes.mes_delivery_analytics_page.k13'),
+        value: data.on_time_rate.toFixed(1),
+        suffix: '%',
+        color: 'success',
+        description: i18n.t('mes:mes_delivery_analytics_page.slav0_1', {
+          v0: data.sla_achievement.toFixed(1),
+        }),
+      },
+      {
+        id: 'delayed-orders',
+        title: i18n.t('mes.mes_delivery_analytics_page.top10_20'),
+        value: data.top10_delayed.length,
+        color: 'warning',
+      },
+      {
+        id: 'distribution-records',
+        title: i18n.t('mes.mes_delivery_analytics_page.k15'),
+        value: data.distribution.length,
+        color: 'info',
+      },
+    ],
+    [data]
+  );
+
+  const charts: ChartConfig[] = useMemo(
+    () => [
+      {
+        id: 'delivery-status-distribution',
+        title: i18n.t('mes.mes_delivery_analytics_page.k14'),
+        type: 'donut',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: donutData,
+        colors: DONUT_COLORS,
+      },
+      {
+        id: 'delivery-cycle-trend',
+        title: i18n.t('mes.mes_delivery_analytics_page.k15'),
+        type: 'area',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: boxApprox.map((item) => ({ name: item.week, value: item.max })),
+      },
+      {
+        id: 'delivery-cycle-stats',
+        title: i18n.t('mes.mes_delivery_analytics_page.top6_16'),
+        type: 'bar',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: boxApprox.map((item) => ({ name: item.week, value: item.median })),
+      },
+    ],
+    [donutData, boxApprox]
+  );
+
+  const tables: DataTable[] = useMemo(
+    () => [
+      {
+        id: 'top-delayed-orders',
+        title: i18n.t('mes.mes_delivery_analytics_page.top10_20'),
+        columns: [
+          {
+            id: 'order_no',
+            label: i18n.t('mes.mes_delivery_analytics_page.k21'),
+            field: 'order_no',
+          },
+          {
+            id: 'delay_days',
+            label: i18n.t('mes.mes_delivery_analytics_page.k22'),
+            field: 'delay_days',
+            render: (value) =>
+              i18n.t('mes:mes_delivery_analytics_page.v0_0', {
+                v0: Number(value).toFixed(1),
+              }),
+          },
+          {
+            id: 'reason',
+            label: i18n.t('mes.mes_delivery_analytics_page.k23'),
+            field: 'reason',
+          },
+        ],
+        data: data.top10_delayed as Record<string, unknown>[],
+      },
+    ],
+    [data.top10_delayed]
+  );
+
+  const customToolbar = useMemo(
+    () => (
+      <FormControl
+        size='small'
+        sx={{ minWidth: 200 }}
+      >
+        <Select
           value={productFamily}
           onChange={(e) => setProductFamily(e.target.value)}
-          className='border rounded px-3 py-1.5 text-sm'
           aria-label={i18n.t('mes.mes_delivery_analytics_page.k11')}
         >
-          <option value='all'>{i18n.t('mes.mes_delivery_analytics_page.k12')}</option>
-          <option value='fa'>{i18n.t('mes:mes_delivery_analytics_page.k3')}</option>
-          <option value='fb'>{i18n.t('mes:mes_delivery_analytics_page.k2')}</option>
-        </select>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-1 font-semibold'>{i18n.t('mes.mes_delivery_analytics_page.k13')}</h3>
-          <p className='text-3xl font-bold text-emerald-600'>{data.on_time_rate.toFixed(1)}%</p>
-          <p className='mt-1 text-xs text-gray-500'>
-            {i18n.t('mes:mes_delivery_analytics_page.slav0_1', {
-              v0: data.sla_achievement.toFixed(1),
-            })}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4 md:col-span-2'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_delivery_analytics_page.k14')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={220}
-          >
-            <PieChart>
-              <Pie
-                data={donutData}
-                dataKey='value'
-                nameKey='name'
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={2}
-              >
-                {donutData.map((entry, idx) => (
-                  <Cell
-                    key={entry.name}
-                    fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_delivery_analytics_page.k15')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={260}
-          >
-            <AreaChart data={boxApprox}>
-              <defs>
-                <linearGradient
-                  id='deliveryArea'
-                  x1='0'
-                  y1='0'
-                  x2='0'
-                  y2='1'
-                >
-                  <stop
-                    offset='5%'
-                    stopColor={designTokens.colors.secondary.dark}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset='95%'
-                    stopColor={designTokens.colors.secondary.dark}
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='week'
-                fontSize={11}
-              />
-              <YAxis />
-              <Tooltip />
-              <Area
-                type='monotone'
-                dataKey='max'
-                stroke={designTokens.colors.secondary.dark}
-                fill='url(#deliveryArea)'
-                strokeWidth={2}
-              />
-              <Area
-                type='monotone'
-                dataKey='median'
-                stroke={designTokens.colors.success.dark}
-                fill='transparent'
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>
-            {i18n.t('mes.mes_delivery_analytics_page.top6_16')}
-          </h3>
-          <ResponsiveContainer
-            width='100%'
-            height={260}
-          >
-            <BarChart data={boxApprox}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='week'
-                fontSize={11}
-              />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar
-                dataKey='min'
-                stackId='box'
-                fill={designTokens.colors.success['200']}
-                name={i18n.t('mes.mes_delivery_analytics_page.k17')}
-              />
-              <Bar
-                dataKey='q1'
-                stackId='box'
-                fill='colors.success.light'
-                name='Q1'
-              />
-              <Bar
-                dataKey='median'
-                stackId='box'
-                fill={designTokens.colors.success.dark}
-                name={i18n.t('mes.mes_delivery_analytics_page.k18')}
-              />
-              <Bar
-                dataKey='q3'
-                stackId='box'
-                fill='var(--color-success-400)'
-                name='Q3'
-              />
-              <Bar
-                dataKey='max'
-                stackId='box'
-                fill={designTokens.colors.success.dark}
-                name={i18n.t('mes.mes_delivery_analytics_page.k19')}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_delivery_analytics_page.top10_20')}</h3>
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-gray-50 text-left text-gray-600'>
-              <tr>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_delivery_analytics_page.k21')}</th>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_delivery_analytics_page.k22')}</th>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_delivery_analytics_page.k23')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.top10_delayed.map((row) => (
-                <tr
-                  key={row.order_no}
-                  className='border-b'
-                >
-                  <td className='px-3 py-2 font-mono'>{row.order_no}</td>
-                  <td className='px-3 py-2 text-amber-600'>
-                    {i18n.t('mes:mes_delivery_analytics_page.v0_0', {
-                      v0: row.delay_days.toFixed(1),
-                    })}
-                  </td>
-                  <td className='px-3 py-2'>{row.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          <MenuItem value='all'>{i18n.t('mes.mes_delivery_analytics_page.k12')}</MenuItem>
+          <MenuItem value='fa'>{i18n.t('mes:mes_delivery_analytics_page.k3')}</MenuItem>
+          <MenuItem value='fb'>{i18n.t('mes:mes_delivery_analytics_page.k2')}</MenuItem>
+        </Select>
+      </FormControl>
+    ),
+    [productFamily]
+  );
+
+  return (
+    <StatsPageTemplate
+      title={i18n.t('mes.mes_delivery_analytics_page.k10')}
+      statCards={statCards}
+      statColumns={3}
+      charts={charts}
+      chartColumns={{ xs: 1, md: 2 }}
+      tables={tables}
+      customToolbar={customToolbar}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+    />
   );
 }

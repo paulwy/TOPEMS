@@ -1,15 +1,16 @@
 import React from 'react';
+import i18n from '@/i18n';
 import { HybridDashboard } from '../../components/dashboard/HybridDashboard';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate } from '@/components/templates';
 
 export const HybridHomePage: React.FC = () => {
   return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
+    <DashboardTemplate
+      title={i18n.t('pages.hybrid_home_page.title')}
+      subtitle={i18n.t('pages.hybrid_home_page.subtitle')}
     >
       <HybridDashboard />
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
 

@@ -1,241 +1,181 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
-import {
-  Plus as AddIcon,
-  Trash2 as DeleteOutlineIcon,
-  Copy as ContentCopyIcon,
-} from 'lucide-react';
-import { lowcodeAppsApi } from '@/api/lowcode';
-import type { LowcodeApp } from '@/api/lowcode';
-import { PageContainer } from '@/components/common';
+import React, { useCallback, useMemo } from 'react';
+import { TextField } from '@mui/material';
+import { Copy } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { ColumnDef, RowAction } from '@/components/templates/list';
+import type { CrudOperations } from '@/hooks';
+import { lowcodeAppsApi } from '@/api/lowcode';
+import type { LowcodeApp, CreateLowcodeAppRequest } from '@/api/lowcode';
+import { useNotificationStore } from '@/store';
 
-export const AppListPage: React.FC = () => {
+const QUERY_KEY = 'lowcode-apps';
+
+const lowcodeAppCrudApi: CrudOperations<LowcodeApp> = {
+  list: (params) => {
+    const { page, pagesize, keyword, ...rest } = params ?? {};
+    return lowcodeAppsApi.list({
+      page: typeof page === 'number' ? page : undefined,
+      pageSize: typeof pagesize === 'number' ? pagesize : undefined,
+      search: typeof keyword === 'string' ? keyword : undefined,
+      ...rest,
+    }) as ReturnType<CrudOperations<LowcodeApp>['list']>;
+  },
+  get: (id) => lowcodeAppsApi.get(id) as ReturnType<CrudOperations<LowcodeApp>['get']>,
+  create: (data) =>
+    lowcodeAppsApi.create(data as CreateLowcodeAppRequest) as ReturnType<
+      CrudOperations<LowcodeApp>['create']
+    >,
+  update: (id, data) =>
+    lowcodeAppsApi.update(id, data as Partial<LowcodeApp>) as ReturnType<
+      CrudOperations<LowcodeApp>['update']
+    >,
+  delete: async (id) => {
+    const response = await lowcodeAppsApi.remove(id);
+    return {
+      success: response.success,
+      code: response.code,
+      message: response.message,
+      data: id,
+    };
+  },
+};
+
+export function AppListPage() {
   const { t } = useTranslation('lowcode');
-  const [apps, setApps] = useState<LowcodeApp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ name: '', code: '', description: '' });
-  const [creating, setCreating] = useState(false);
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotificationStore();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await lowcodeAppsApi.list({ page: 1, pageSize: 50 });
-      setApps(res.data?.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.app_list_page.k0'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const columns = useMemo<ColumnDef<LowcodeApp>[]>(
+    () => [
+      { id: 'id', label: t('lowcode.app_list_page.k23'), width: 120 },
+      { id: 'name', label: t('lowcode.app_list_page.k6'), minWidth: 160 },
+      { id: 'code', label: t('lowcode.app_list_page.k7'), minWidth: 120 },
+      { id: 'description', label: t('lowcode.app_list_page.k20'), minWidth: 200 },
+      { id: 'status', label: t('lowcode.app_list_page.k8'), width: 100 },
+      {
+        id: 'version',
+        label: t('lowcode.app_list_page.k9'),
+        width: 80,
+        render: (row) => `v${row.version}`,
+      },
+      { id: 'created_at', label: t('lowcode.app_list_page.k24'), width: 160 },
+    ],
+    [t]
+  );
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const handleDuplicate = useCallback(
+    async (row: LowcodeApp) => {
+      if (!window.confirm(t('lowcode.app_list_page.k25'))) {
+        return;
+      }
+      try {
+        const response = await lowcodeAppsApi.duplicate(row.id);
+        if (!response.success) {
+          throw new Error(response.message || t('lowcode.app_list_page.k3'));
+        }
+        addNotification({
+          type: 'success',
+          title: t('lowcode.app_list_page.k12'),
+          message: t('lowcode.app_list_page.k12'),
+        });
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEY, 'list'],
+          exact: false,
+          refetchType: 'active',
+        });
+      } catch (err) {
+        addNotification({
+          type: 'error',
+          title: t('lowcode.app_list_page.k3'),
+          message: err instanceof Error ? err.message : t('lowcode.app_list_page.k3'),
+        });
+      }
+    },
+    [queryClient, addNotification, t]
+  );
 
-  const handleCreate = async () => {
-    if (!createForm.name || !createForm.code) return;
-    setCreating(true);
-    try {
-      await lowcodeAppsApi.create({
-        name: createForm.name,
-        code: createForm.code,
-        description: createForm.description || undefined,
-      });
-      setCreateOpen(false);
-      setCreateForm({ name: '', code: '', description: '' });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.app_list_page.k1'));
-    } finally {
-      setCreating(false);
-    }
-  };
+  const customRowActions: RowAction<LowcodeApp>[] = useMemo(
+    () => [
+      {
+        key: 'duplicate',
+        label: t('lowcode.app_list_page.k12'),
+        icon: <Copy size={16} />,
+        onClick: (row) => {
+          void handleDuplicate(row);
+        },
+      },
+    ],
+    [handleDuplicate, t]
+  );
 
-  const handleDelete = async (id: string) => {
-    try {
-      await lowcodeAppsApi.remove(id);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.app_list_page.k2'));
-    }
-  };
-
-  const handleDuplicate = async (id: string) => {
-    try {
-      await lowcodeAppsApi.duplicate(id);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.app_list_page.k3'));
-    }
-  };
+  const formFields = useMemo(
+    () => [
+      {
+        key: 'name',
+        label: t('lowcode.app_list_page.k17'),
+        type: 'text' as const,
+        required: true,
+      },
+      {
+        key: 'code',
+        label: t('lowcode.app_list_page.k18'),
+        type: 'text' as const,
+        required: true,
+        render: ({
+          value,
+          onChange,
+          mode,
+        }: {
+          value: unknown;
+          onChange: (value: unknown) => void;
+          mode: 'create' | 'edit' | 'view';
+        }) => (
+          <TextField
+            fullWidth
+            size='small'
+            label={t('lowcode.app_list_page.k18')}
+            value={value ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            required
+            disabled={mode !== 'create'}
+            helperText={mode === 'create' ? t('lowcode.app_list_page.k19') : undefined}
+          />
+        ),
+      },
+      {
+        key: 'description',
+        label: t('lowcode.app_list_page.k20'),
+        type: 'textarea' as const,
+        rows: 2,
+      },
+    ],
+    [t]
+  );
 
   return (
-    <PageContainer title={t('lowcode.app_list_page.k4')}>
-      <Box sx={{ p: 3 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          <Typography variant='h5'>{t('lowcode.app_list_page.k5')}</Typography>
-          <Button
-            variant='contained'
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
-          >
-            {t('lowcode.app_list_page.e1')}
-          </Button>
-        </Stack>
-
-        {error && (
-          <Typography
-            color='error'
-            variant='body2'
-            sx={{ mb: 1 }}
-          >
-            {error}
-          </Typography>
-        )}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            variant='outlined'
-          >
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('lowcode.app_list_page.k6')}</TableCell>
-                  <TableCell>{t('lowcode.app_list_page.k7')}</TableCell>
-                  <TableCell>{t('lowcode.app_list_page.k8')}</TableCell>
-                  <TableCell>{t('lowcode.app_list_page.k9')}</TableCell>
-                  <TableCell>{t('lowcode.app_list_page.k10')}</TableCell>
-                  <TableCell align='right'>{t('lowcode.app_list_page.k11')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {apps.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      align='center'
-                    >
-                      {t('lowcode.app_list_page.e2')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  apps.map((app) => (
-                    <TableRow key={app.id}>
-                      <TableCell>{app.name}</TableCell>
-                      <TableCell>{app.code}</TableCell>
-                      <TableCell>{app.status}</TableCell>
-                      <TableCell>v{app.version}</TableCell>
-                      <TableCell>{app.updated_at}</TableCell>
-                      <TableCell align='right'>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleDuplicate(app.id)}
-                          aria-label={t('lowcode.app_list_page.k12')}
-                          title={t('lowcode.app_list_page.k13')}
-                        >
-                          <ContentCopyIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={() => handleDelete(app.id)}
-                          aria-label={t('lowcode.app_list_page.k14')}
-                          title={t('lowcode.app_list_page.k15')}
-                        >
-                          <DeleteOutlineIcon size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        <Dialog
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          maxWidth='sm'
-          fullWidth
-        >
-          <DialogTitle>{t('lowcode.app_list_page.k16')}</DialogTitle>
-          <DialogContent>
-            <Stack
-              spacing={2}
-              sx={{ mt: 1 }}
-            >
-              <TextField
-                label={t('lowcode.app_list_page.k17')}
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label={t('lowcode.app_list_page.k18')}
-                value={createForm.code}
-                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
-                fullWidth
-                required
-                helperText={t('lowcode.app_list_page.k19')}
-              />
-              <TextField
-                label={t('lowcode.app_list_page.k20')}
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>{t('lowcode.app_list_page.k21')}</Button>
-            <Button
-              onClick={handleCreate}
-              variant='contained'
-              disabled={creating || !createForm.name || !createForm.code}
-            >
-              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.app_list_page.k22')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </PageContainer>
+    <ListPageTemplate<LowcodeApp>
+      title={t('lowcode.app_list_page.k5')}
+      breadcrumbs={[{ label: t('lowcode.title') }, { label: t('lowcode.app_list_page.k4') }]}
+      columns={columns}
+      data={[]}
+      emptyMessage={t('lowcode.app_list_page.e2')}
+      crud={{
+        api: lowcodeAppCrudApi,
+        queryKey: QUERY_KEY,
+        entityName: t('lowcode.app_list_page.k4'),
+        createButtonText: t('lowcode.app_list_page.e1'),
+        formFields,
+        formColCount: 1,
+        rowActions: customRowActions,
+        clickRowToView: false,
+        doubleClickToEdit: false,
+        searchable: true,
+        searchFields: ['name', 'code', 'description'],
+      }}
+    />
   );
-};
+}
 
 export default AppListPage;

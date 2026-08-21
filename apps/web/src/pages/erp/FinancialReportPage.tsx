@@ -1,48 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  FileText,
+  PieChart,
   TrendingUp,
   TrendingDown,
   DollarSign,
   BarChart3,
-  Download,
-  RefreshCw,
-  PieChart,
   Activity,
   Wallet,
   Building2,
+  FileText,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { PageContainer } from '@/components/common';
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
 import { financeReportApi } from '@/api/erp';
-import type {
-  BalanceSheet,
-  IncomeStatement,
-  CashFlowStatement,
-  BalanceItem,
-  IncomeItem,
-  CashFlowItem,
-} from '@/api/erp/types';
+import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -53,6 +27,7 @@ const FinancialReportPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('balance-sheet');
   const [periodType, setPeriodType] = useState('year');
   const [period, setPeriod] = useState('2024');
+
   const balanceSheetQuery = useQuery<BalanceSheet | null>({
     queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
     queryFn: async () => {
@@ -80,6 +55,7 @@ const FinancialReportPage: React.FC = () => {
     enabled: activeTab === 'cash-flow',
     staleTime: 5 * 60 * 1000,
   });
+
   const balanceSheet = balanceSheetQuery.data ?? null;
   const incomeStatement = incomeStatementQuery.data ?? null;
   const cashFlowStatement = cashFlowQuery.data ?? null;
@@ -93,6 +69,7 @@ const FinancialReportPage: React.FC = () => {
     (activeTab === 'cash-flow' && cashFlowQuery.isError)
       ? i18n.t('erp.financial_report_page.k0')
       : null;
+
   useEffect(() => {
     if (balanceSheetQuery.isError) {
       apiLogger.error(i18n.t('pages.financial_report_page.k0'), balanceSheetQuery.error);
@@ -123,6 +100,7 @@ const FinancialReportPage: React.FC = () => {
       });
     }
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE,
@@ -130,8 +108,10 @@ const FinancialReportPage: React.FC = () => {
       refetchType: 'active',
     });
   };
+
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+
   const handleExport = () => {
     addNotification({
       title: i18n.t('erp.financial_report_page.k7'),
@@ -139,6 +119,7 @@ const FinancialReportPage: React.FC = () => {
       type: 'success',
     });
   };
+
   const periodOptions = useMemo(() => {
     if (periodType === 'year') {
       return [
@@ -165,698 +146,437 @@ const FinancialReportPage: React.FC = () => {
       ];
     }
   }, [periodType]);
-  const tabs = [
-    {
-      label: i18n.t('erp.financial_report_page.k9'),
-      value: 'balance-sheet',
-      icon: <PieChart sx={{ width: 16, height: 16 }} />,
-    },
-    {
-      label: i18n.t('erp.financial_report_page.k10'),
-      value: 'income-statement',
-      icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
-    },
-    {
-      label: i18n.t('erp.financial_report_page.k11'),
-      value: 'cash-flow',
-      icon: <Activity sx={{ width: 16, height: 16 }} />,
-    },
-    {
-      label: i18n.t('erp.financial_report_page.k12'),
-      value: 'equity-change',
-      icon: <Building2 sx={{ width: 16, height: 16 }} />,
-    },
-  ];
-  const renderSummaryCards = () => {
+
+  const tabs = useMemo(
+    () => [
+      {
+        label: i18n.t('erp.financial_report_page.k9'),
+        value: 'balance-sheet',
+        icon: <PieChart sx={{ width: 16, height: 16 }} />,
+      },
+      {
+        label: i18n.t('erp.financial_report_page.k10'),
+        value: 'income-statement',
+        icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
+      },
+      {
+        label: i18n.t('erp.financial_report_page.k11'),
+        value: 'cash-flow',
+        icon: <Activity sx={{ width: 16, height: 16 }} />,
+      },
+      {
+        label: i18n.t('erp.financial_report_page.k12'),
+        value: 'equity-change',
+        icon: <Building2 sx={{ width: 16, height: 16 }} />,
+      },
+    ],
+    []
+  );
+
+  const statCards = useMemo<StatCard[]>(() => {
     if (activeTab === 'balance-sheet' && balanceSheet) {
-      return (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 3 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
-                <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k0')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(balanceSheet.total_assets)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'warning.100' }}>
-                <TrendingDown sx={{ width: 24, height: 24, color: 'warning.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k1')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(balanceSheet.total_liabilities)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
-                <Wallet sx={{ width: 24, height: 24, color: 'success.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k2')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(balanceSheet.total_equity)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      );
+      return [
+        {
+          id: 'total-assets',
+          title: i18n.t('pages.financial_report_page.k0'),
+          value: formatCurrency(balanceSheet.total_assets),
+          icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+          color: 'primary',
+        },
+        {
+          id: 'total-liabilities',
+          title: i18n.t('pages.financial_report_page.k1'),
+          value: formatCurrency(balanceSheet.total_liabilities),
+          icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
+          color: 'warning',
+        },
+        {
+          id: 'total-equity',
+          title: i18n.t('pages.financial_report_page.k2'),
+          value: formatCurrency(balanceSheet.total_equity),
+          icon: <Wallet sx={{ width: 24, height: 24 }} />,
+          color: 'success',
+        },
+      ];
     }
     if (activeTab === 'income-statement' && incomeStatement) {
-      return (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
-                <TrendingUp sx={{ width: 24, height: 24, color: 'success.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k3')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0))}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'error.100' }}>
-                <TrendingDown sx={{ width: 24, height: 24, color: 'error.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k4')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0))}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
-                <BarChart3 sx={{ width: 24, height: 24, color: 'primary.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k5')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(incomeStatement.operating_profit)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  bgcolor: incomeStatement.net_profit >= 0 ? 'success.100' : 'error.100',
-                }}
-              >
-                <DollarSign
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    color: incomeStatement.net_profit >= 0 ? 'success.main' : 'error.main',
-                  }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k6')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: incomeStatement.net_profit >= 0 ? 'success.main' : 'error.main',
-                  }}
-                >
-                  {formatCurrency(incomeStatement.net_profit)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      );
+      return [
+        {
+          id: 'revenue',
+          title: i18n.t('pages.financial_report_page.k3'),
+          value: formatCurrency(incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0)),
+          icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
+          color: 'success',
+        },
+        {
+          id: 'cost',
+          title: i18n.t('pages.financial_report_page.k4'),
+          value: formatCurrency(incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0)),
+          icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
+          color: 'error',
+        },
+        {
+          id: 'operating-profit',
+          title: i18n.t('pages.financial_report_page.k5'),
+          value: formatCurrency(incomeStatement.operating_profit),
+          icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
+          color: 'primary',
+        },
+        {
+          id: 'net-profit',
+          title: i18n.t('pages.financial_report_page.k6'),
+          value: formatCurrency(incomeStatement.net_profit),
+          icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+          color: incomeStatement.net_profit >= 0 ? 'success' : 'error',
+        },
+      ];
     }
     if (activeTab === 'cash-flow' && cashFlowStatement) {
-      return (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
-                <Activity sx={{ width: 24, height: 24, color: 'success.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k7')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(
-                    cashFlowStatement.operating_activities.reduce((sum, i) => sum + i.amount, 0)
-                  )}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'warning.100' }}>
-                <Building2 sx={{ width: 24, height: 24, color: 'warning.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k8')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(
-                    cashFlowStatement.investing_activities.reduce((sum, i) => sum + i.amount, 0)
-                  )}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
-                <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k9')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(
-                    cashFlowStatement.financing_activities.reduce((sum, i) => sum + i.amount, 0)
-                  )}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  bgcolor: cashFlowStatement.net_cash_flow >= 0 ? 'success.100' : 'error.100',
-                }}
-              >
-                <Wallet
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    color: cashFlowStatement.net_cash_flow >= 0 ? 'success.main' : 'error.main',
-                  }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {i18n.t('pages.financial_report_page.k10')}
-                </Typography>
-                <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: cashFlowStatement.net_cash_flow >= 0 ? 'success.main' : 'error.main',
-                  }}
-                >
-                  {formatCurrency(cashFlowStatement.net_cash_flow)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      );
+      return [
+        {
+          id: 'operating',
+          title: i18n.t('pages.financial_report_page.k7'),
+          value: formatCurrency(
+            cashFlowStatement.operating_activities.reduce((sum, i) => sum + i.amount, 0)
+          ),
+          icon: <Activity sx={{ width: 24, height: 24 }} />,
+          color: 'success',
+        },
+        {
+          id: 'investing',
+          title: i18n.t('pages.financial_report_page.k8'),
+          value: formatCurrency(
+            cashFlowStatement.investing_activities.reduce((sum, i) => sum + i.amount, 0)
+          ),
+          icon: <Building2 sx={{ width: 24, height: 24 }} />,
+          color: 'warning',
+        },
+        {
+          id: 'financing',
+          title: i18n.t('pages.financial_report_page.k9'),
+          value: formatCurrency(
+            cashFlowStatement.financing_activities.reduce((sum, i) => sum + i.amount, 0)
+          ),
+          icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+          color: 'primary',
+        },
+        {
+          id: 'net-cash-flow',
+          title: i18n.t('pages.financial_report_page.k10'),
+          value: formatCurrency(cashFlowStatement.net_cash_flow),
+          icon: <Wallet sx={{ width: 24, height: 24 }} />,
+          color: cashFlowStatement.net_cash_flow >= 0 ? 'success' : 'error',
+        },
+      ];
     }
-    return null;
-  };
-  const renderReportTable = () => {
-    if (loading) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
+    return [];
+  }, [activeTab, balanceSheet, incomeStatement, cashFlowStatement]);
+
+  const tables = useMemo<DataTable[]>(() => {
     if (activeTab === 'balance-sheet' && balanceSheet) {
-      return (
-        <TableContainer
-          component={Paper}
-          sx={{ boxShadow: 1 }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  {i18n.t('erp.financial_report_page.k13')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  {i18n.t('erp.financial_report_page.k14')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold', width: 180 }}
-                >
-                  {i18n.t('pages.financial_report_page.k11')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold', width: 120 }}
-                >
-                  {i18n.t('pages.financial_report_page.k12')}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k13')}
-                </TableCell>
-              </TableRow>
-              {balanceSheet.assets.map((item: BalanceItem) => (
-                <TableRow
-                  key={`asset-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
-                  <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k14')}
-                </TableCell>
-              </TableRow>
-              {balanceSheet.liabilities.map((item: BalanceItem) => (
-                <TableRow
-                  key={`liability-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
-                  <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k15')}
-                </TableCell>
-              </TableRow>
-              {balanceSheet.equity.map((item: BalanceItem) => (
-                <TableRow
-                  key={`equity-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
-                  <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      );
+      const columns: TableColumn[] = [
+        {
+          id: 'code',
+          label: i18n.t('erp.financial_report_page.k13'),
+          field: 'code',
+          width: 120,
+        },
+        {
+          id: 'name',
+          label: i18n.t('erp.financial_report_page.k14'),
+          field: 'name',
+          render: (_value, row) =>
+            row._isSection ? <strong>{String(row.name)}</strong> : String(row.name),
+        },
+        {
+          id: 'amount',
+          label: i18n.t('pages.financial_report_page.k11'),
+          field: 'amount',
+          align: 'right',
+          width: 180,
+        },
+        {
+          id: 'percentage',
+          label: i18n.t('pages.financial_report_page.k12'),
+          field: 'percentage',
+          align: 'right',
+          width: 120,
+        },
+      ];
+      const data: Record<string, unknown>[] = [
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k13'),
+          amount: '',
+          percentage: '',
+        },
+        ...balanceSheet.assets.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+          percentage: item.percentage.toFixed(2),
+        })),
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k14'),
+          amount: '',
+          percentage: '',
+        },
+        ...balanceSheet.liabilities.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+          percentage: item.percentage.toFixed(2),
+        })),
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k15'),
+          amount: '',
+          percentage: '',
+        },
+        ...balanceSheet.equity.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+          percentage: item.percentage.toFixed(2),
+        })),
+      ];
+      return [{ id: 'balance-sheet-table', columns, data }];
     }
+
     if (activeTab === 'income-statement' && incomeStatement) {
-      return (
-        <TableContainer
-          component={Paper}
-          sx={{ boxShadow: 1 }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  {i18n.t('erp.financial_report_page.k15')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  {i18n.t('erp.financial_report_page.k16')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold', width: 180 }}
-                >
-                  {i18n.t('pages.financial_report_page.k16')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold', width: 120 }}
-                >
-                  {i18n.t('pages.financial_report_page.k17')}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k18')}
-                </TableCell>
-              </TableRow>
-              {incomeStatement.revenues.map((item: IncomeItem) => (
-                <TableRow
-                  key={`revenue-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{ color: 'success.main' }}
-                  >
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                  <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  sx={{ bgcolor: 'error.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k19')}
-                </TableCell>
-              </TableRow>
-              {incomeStatement.expenses.map((item: IncomeItem) => (
-                <TableRow
-                  key={`expense-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{ color: 'error.main' }}
-                  >
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                  <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell
-                  colSpan={2}
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k20')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(incomeStatement.operating_profit)}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell
-                  colSpan={2}
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k21')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {formatCurrency(incomeStatement.gross_profit)}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-              <TableRow sx={{ bgcolor: 'primary.50' }}>
-                <TableCell
-                  colSpan={2}
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k22')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: incomeStatement.net_profit >= 0 ? 'success.main' : 'error.main',
-                  }}
-                >
-                  {formatCurrency(incomeStatement.net_profit)}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      );
+      const columns: TableColumn[] = [
+        {
+          id: 'code',
+          label: i18n.t('erp.financial_report_page.k15'),
+          field: 'code',
+          width: 120,
+        },
+        {
+          id: 'name',
+          label: i18n.t('erp.financial_report_page.k16'),
+          field: 'name',
+          render: (_value, row) =>
+            row._isSection || row._isTotal ? <strong>{String(row.name)}</strong> : String(row.name),
+        },
+        {
+          id: 'amount',
+          label: i18n.t('pages.financial_report_page.k16'),
+          field: 'amount',
+          align: 'right',
+          width: 180,
+          render: (_value, row) =>
+            row._isSection ? (
+              ''
+            ) : row._isTotal ? (
+              <strong>{String(row.amount)}</strong>
+            ) : (
+              String(row.amount)
+            ),
+        },
+        {
+          id: 'percentage',
+          label: i18n.t('pages.financial_report_page.k17'),
+          field: 'percentage',
+          align: 'right',
+          width: 120,
+        },
+      ];
+      const data: Record<string, unknown>[] = [
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k18'),
+          amount: '',
+          percentage: '',
+        },
+        ...incomeStatement.revenues.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+          percentage: item.percentage.toFixed(2),
+        })),
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k19'),
+          amount: '',
+          percentage: '',
+        },
+        ...incomeStatement.expenses.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+          percentage: item.percentage.toFixed(2),
+        })),
+        {
+          _isTotal: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k20'),
+          amount: formatCurrency(incomeStatement.operating_profit),
+          percentage: '',
+        },
+        {
+          _isTotal: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k21'),
+          amount: formatCurrency(incomeStatement.gross_profit),
+          percentage: '',
+        },
+        {
+          _isTotal: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k22'),
+          amount: formatCurrency(incomeStatement.net_profit),
+          percentage: '',
+        },
+      ];
+      return [{ id: 'income-statement-table', columns, data }];
     }
+
     if (activeTab === 'cash-flow' && cashFlowStatement) {
-      return (
-        <TableContainer
-          component={Paper}
-          sx={{ boxShadow: 1 }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
-                  {i18n.t('erp.financial_report_page.k17')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  {i18n.t('erp.financial_report_page.k18')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 'bold', width: 180 }}
-                >
-                  {i18n.t('pages.financial_report_page.k23')}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k24')}
-                </TableCell>
-              </TableRow>
-              {cashFlowStatement.operating_activities.map((item: CashFlowItem) => (
-                <TableRow
-                  key={`op-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
-                  >
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k25')}
-                </TableCell>
-              </TableRow>
-              {cashFlowStatement.investing_activities.map((item: CashFlowItem) => (
-                <TableRow
-                  key={`inv-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
-                  >
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k26')}
-                </TableCell>
-              </TableRow>
-              {cashFlowStatement.financing_activities.map((item: CashFlowItem) => (
-                <TableRow
-                  key={`fin-${item.code}`}
-                  hover
-                >
-                  <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
-                  >
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell
-                  colSpan={2}
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {i18n.t('pages.financial_report_page.k27')}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: cashFlowStatement.net_cash_flow >= 0 ? 'success.main' : 'error.main',
-                  }}
-                >
-                  {formatCurrency(cashFlowStatement.net_cash_flow)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      );
+      const columns: TableColumn[] = [
+        {
+          id: 'code',
+          label: i18n.t('erp.financial_report_page.k17'),
+          field: 'code',
+          width: 120,
+        },
+        {
+          id: 'name',
+          label: i18n.t('erp.financial_report_page.k18'),
+          field: 'name',
+          render: (_value, row) =>
+            row._isSection || row._isTotal ? <strong>{String(row.name)}</strong> : String(row.name),
+        },
+        {
+          id: 'amount',
+          label: i18n.t('pages.financial_report_page.k23'),
+          field: 'amount',
+          align: 'right',
+          width: 180,
+          render: (_value, row) =>
+            row._isSection ? (
+              ''
+            ) : row._isTotal ? (
+              <strong>{String(row.amount)}</strong>
+            ) : (
+              String(row.amount)
+            ),
+        },
+      ];
+      const data: Record<string, unknown>[] = [
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k24'),
+          amount: '',
+        },
+        ...cashFlowStatement.operating_activities.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+        })),
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k25'),
+          amount: '',
+        },
+        ...cashFlowStatement.investing_activities.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+        })),
+        {
+          _isSection: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k26'),
+          amount: '',
+        },
+        ...cashFlowStatement.financing_activities.map((item) => ({
+          code: item.code,
+          name: item.name,
+          amount: formatCurrency(item.amount),
+        })),
+        {
+          _isTotal: true,
+          code: '',
+          name: i18n.t('pages.financial_report_page.k27'),
+          amount: formatCurrency(cashFlowStatement.net_cash_flow),
+        },
+      ];
+      return [{ id: 'cash-flow-table', columns, data }];
     }
-    if (activeTab === 'equity-change') {
-      return (
-        <Box sx={{ py: 8, textAlign: 'center' }}>
-          <FileText sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }} />
-          <Typography
-            variant='body1'
-            sx={{ color: 'text.secondary' }}
+
+    return [];
+  }, [activeTab, balanceSheet, incomeStatement, cashFlowStatement]);
+
+  const customToolbar = useMemo(
+    () => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 120 }}
+        >
+          <InputLabel>{i18n.t('erp.financial_report_page.k23')}</InputLabel>
+          <Select
+            value={periodType}
+            label={i18n.t('erp.financial_report_page.k24')}
+            onChange={(e) => {
+              setPeriodType(e.target.value);
+              setPeriod(periodOptions[0]?.value || '');
+            }}
           >
-            {i18n.t('pages.financial_report_page.k28')}
-          </Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
+            <MenuItem value='year'>{i18n.t('erp.financial_report_page.k25')}</MenuItem>
+            <MenuItem value='quarter'>{i18n.t('erp.financial_report_page.k26')}</MenuItem>
+            <MenuItem value='month'>{i18n.t('erp.financial_report_page.k27')}</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 160 }}
+        >
+          <InputLabel>{i18n.t('erp.financial_report_page.k28')}</InputLabel>
+          <Select
+            value={period}
+            label={i18n.t('erp.financial_report_page.k29')}
+            onChange={(e) => setPeriod(e.target.value)}
+          >
+            {periodOptions.map((opt) => (
+              <MenuItem
+                key={opt.value}
+                value={opt.value}
+              >
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+    ),
+    [periodType, period, periodOptions]
+  );
+
   return (
-    <PageContainer
+    <StatsPageTemplate
       title={i18n.t('erp.financial_report_page.k19')}
       subtitle={i18n.t('erp.financial_report_page.k20')}
-      maxWidth='xl'
-      headerProps={{
-        actions: [
-          {
-            label: i18n.t('erp.financial_report_page.k21'),
-            icon: <RefreshCw size={16} />,
-            onClick: handleRefresh,
-            variant: 'outlined',
-          },
-          {
-            label: i18n.t('erp.financial_report_page.k22'),
-            icon: <Download size={16} />,
-            onClick: handleExport,
-            variant: 'contained',
-          },
-        ],
-      }}
+      tabs={tabs}
+      tabValue={activeTab}
+      onTabChange={setActiveTab}
+      statCards={statCards}
+      statColumns={4}
+      tables={tables}
+      loading={loading}
+      onRefresh={handleRefresh}
+      onExport={handleExport}
+      customToolbar={customToolbar}
+      showSearch={false}
+      showTimeRange={false}
     >
       {error && (
         <Alert
@@ -866,72 +586,19 @@ const FinancialReportPage: React.FC = () => {
           {error}
         </Alert>
       )}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-        >
-          {tabs.map((tab) => (
-            <Tab
-              key={tab.value}
-              value={tab.value}
-              label={tab.label}
-              icon={tab.icon}
-              iconPosition='start'
-            />
-          ))}
-        </Tabs>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 120 }}
+      {!error && activeTab === 'equity-change' && (
+        <Box sx={{ py: 8, textAlign: 'center' }}>
+          <FileText sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }} />
+          <Typography
+            variant='body1'
+            sx={{ color: 'text.secondary' }}
           >
-            <InputLabel>{i18n.t('erp.financial_report_page.k23')}</InputLabel>
-            <Select
-              value={periodType}
-              label={i18n.t('erp.financial_report_page.k24')}
-              onChange={(e) => {
-                setPeriodType(e.target.value);
-                setPeriod(periodOptions[0]?.value || '');
-              }}
-            >
-              <MenuItem value='year'>{i18n.t('erp.financial_report_page.k25')}</MenuItem>
-              <MenuItem value='quarter'>{i18n.t('erp.financial_report_page.k26')}</MenuItem>
-              <MenuItem value='month'>{i18n.t('erp.financial_report_page.k27')}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 160 }}
-          >
-            <InputLabel>{i18n.t('erp.financial_report_page.k28')}</InputLabel>
-            <Select
-              value={period}
-              label={i18n.t('erp.financial_report_page.k29')}
-              onChange={(e) => setPeriod(e.target.value)}
-            >
-              {periodOptions.map((opt) => (
-                <MenuItem
-                  key={opt.value}
-                  value={opt.value}
-                >
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            {i18n.t('pages.financial_report_page.k28')}
+          </Typography>
         </Box>
-      </Box>
-      {renderSummaryCards()}
-      {renderReportTable()}
-    </PageContainer>
+      )}
+    </StatsPageTemplate>
   );
 };
+
 export default FinancialReportPage;

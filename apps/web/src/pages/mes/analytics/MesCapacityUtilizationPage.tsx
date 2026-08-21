@@ -1,4 +1,16 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -17,7 +29,8 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import type { CapacityUtilizationData } from '@/api/mes/types';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import { DashboardTemplate, type DataTableConfig } from '@/components/templates/DashboardTemplate';
 
 const SCHEDULE_COLORS = [
   designTokens.colors.success.dark,
@@ -25,6 +38,10 @@ const SCHEDULE_COLORS = [
   designTokens.colors.error.main,
   designTokens.colors.secondary.dark,
 ];
+
+const HEATMAP_HEIGHT = 320;
+const CHART_HEIGHT = 260;
+
 function useCapacityMock(): CapacityUtilizationData {
   return useMemo(() => {
     const equipments = [
@@ -91,160 +108,222 @@ function useCapacityMock(): CapacityUtilizationData {
     };
   }, []);
 }
+
 const SCHEDULE_PIE = [
   { name: i18n.t('mes.mes_capacity_utilization_page.k17'), value: 42 },
   { name: i18n.t('mes.mes_capacity_utilization_page.k18'), value: 38 },
   { name: i18n.t('mes.mes_capacity_utilization_page.k19'), value: 14 },
   { name: i18n.t('mes.mes_capacity_utilization_page.k20'), value: 6 },
 ];
+
 export default function MesCapacityUtilizationPage() {
   const data = useCapacityMock();
   const [workCenter, setWorkCenter] = useState('all');
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('mes.mes_capacity_utilization_page.k21')}</h1>
-        <select
-          value={workCenter}
-          onChange={(e) => setWorkCenter(e.target.value)}
-          className='border rounded px-3 py-1.5 text-sm'
-          aria-label={i18n.t('mes.mes_capacity_utilization_page.k22')}
-        >
-          <option value='all'>{i18n.t('mes.mes_capacity_utilization_page.k23')}</option>
-          <option value='wc1'>WC-A</option>
-          <option value='wc2'>WC-B</option>
-        </select>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('mes.analytics.capacityUtilization.k0')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={320}
-        >
-          <ScatterChart>
-            <CartesianGrid />
-            <XAxis
-              dataKey='equipment'
-              name={i18n.t('mes.mes_capacity_utilization_page.k24')}
-              type='category'
-              fontSize={11}
-            />
-            <YAxis
-              dataKey='shift'
-              name={i18n.t('mes.mes_capacity_utilization_page.k25')}
-              type='category'
-              fontSize={11}
-            />
-            <ZAxis
-              dataKey='utilization'
-              range={[50, 400]}
-              name={i18n.t('mes.mes_capacity_utilization_page.k26')}
-              unit='%'
-            />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Scatter
-              data={data.heatmap}
-              fill={designTokens.colors.secondary.dark}
-            />
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_capacity_utilization_page.k27')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={260}
-          >
-            <BarChart data={data.waterfall}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='stage'
-                fontSize={10}
-                angle={-15}
-                textAnchor='end'
-                height={60}
-              />
-              <YAxis unit='%' />
-              <Tooltip />
-              <Legend />
-              <Bar
-                dataKey='value'
-                name={i18n.t('mes.mes_capacity_utilization_page.k28')}
-                fill={designTokens.colors.warning.main}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_capacity_utilization_page.k29')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={260}
-          >
-            <PieChart>
-              <Pie
-                data={SCHEDULE_PIE}
-                dataKey='value'
-                nameKey='name'
-                innerRadius={50}
-                outerRadius={90}
-                label
+
+  const handleWorkCenterChange = (event: SelectChangeEvent) => {
+    setWorkCenter(event.target.value);
+  };
+
+  const tableConfig: DataTableConfig = useMemo(
+    () => ({
+      title: i18n.t('mes.mes_capacity_utilization_page.top10_30'),
+      columns: [
+        { id: 'equipment', label: i18n.t('mes.mes_capacity_utilization_page.k31') },
+        { id: 'utilization', label: i18n.t('mes.mes_capacity_utilization_page.k32') },
+        {
+          id: 'status',
+          label: i18n.t('mes.mes_capacity_utilization_page.k33'),
+          render: (value: unknown) => {
+            const utilization = Number(value);
+            const isBottleneck = utilization < 80;
+            return (
+              <Box
+                component='span'
+                sx={{
+                  display: 'inline-block',
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontSize: '0.75rem',
+                  bgcolor: isBottleneck
+                    ? designTokens.colors.error[100]
+                    : designTokens.colors.success[100],
+                  color: isBottleneck
+                    ? designTokens.colors.error[700]
+                    : designTokens.colors.success[700],
+                }}
               >
-                {SCHEDULE_PIE.map((entry, idx) => (
-                  <Cell
-                    key={entry.name}
-                    fill={SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>
-          {i18n.t('mes.mes_capacity_utilization_page.top10_30')}
-        </h3>
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-gray-50 text-left text-gray-600'>
-              <tr>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_capacity_utilization_page.k31')}</th>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_capacity_utilization_page.k32')}</th>
-                <th className='px-3 py-2'>{i18n.t('mes.mes_capacity_utilization_page.k33')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.bottleneck_top10.map((row) => (
-                <tr
-                  key={row.equipment}
-                  className='border-b'
+                {isBottleneck
+                  ? i18n.t('mes.mes_capacity_utilization_page.k35')
+                  : i18n.t('mes.mes_capacity_utilization_page.k34')}
+              </Box>
+            );
+          },
+        },
+      ],
+      data: data.bottleneck_top10.map((item) => ({
+        equipment: item.equipment,
+        utilization: `${item.utilization}%`,
+        status: item.utilization,
+      })),
+    }),
+    [data]
+  );
+
+  return (
+    <DashboardTemplate
+      title={i18n.t('mes.mes_capacity_utilization_page.k21')}
+      table={tableConfig}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <FormControl
+            size='small'
+            sx={{ minWidth: 200 }}
+          >
+            <InputLabel id='work-center-label'>
+              {i18n.t('mes.mes_capacity_utilization_page.k22')}
+            </InputLabel>
+            <Select
+              labelId='work-center-label'
+              id='work-center'
+              value={workCenter}
+              label={i18n.t('mes.mes_capacity_utilization_page.k22')}
+              onChange={handleWorkCenterChange}
+            >
+              <MenuItem value='all'>{i18n.t('mes.mes_capacity_utilization_page.k23')}</MenuItem>
+              <MenuItem value='wc1'>WC-A</MenuItem>
+              <MenuItem value='wc2'>WC-B</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Card variant='outlined'>
+          <CardContent>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('mes.analytics.capacityUtilization.k0')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={HEATMAP_HEIGHT}
+            >
+              <ScatterChart>
+                <CartesianGrid />
+                <XAxis
+                  dataKey='equipment'
+                  name={i18n.t('mes.mes_capacity_utilization_page.k24')}
+                  type='category'
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis
+                  dataKey='shift'
+                  name={i18n.t('mes.mes_capacity_utilization_page.k25')}
+                  type='category'
+                  tick={{ fontSize: 11 }}
+                />
+                <ZAxis
+                  dataKey='utilization'
+                  range={[50, 400]}
+                  name={i18n.t('mes.mes_capacity_utilization_page.k26')}
+                  unit='%'
+                />
+                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                <Scatter
+                  data={data.heatmap}
+                  fill={designTokens.colors.secondary.dark}
+                />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card
+              variant='outlined'
+              sx={{ height: '100%' }}
+            >
+              <CardContent>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600, mb: 2 }}
                 >
-                  <td className='px-3 py-2 font-mono'>{row.equipment}</td>
-                  <td className='px-3 py-2'>{row.utilization}%</td>
-                  <td className='px-3 py-2'>
-                    <span
-                      className={
-                        row.utilization < 80
-                          ? 'rounded bg-red-100 px-2 py-0.5 text-xs text-red-700'
-                          : 'rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700'
-                      }
+                  {i18n.t('mes.mes_capacity_utilization_page.k27')}
+                </Typography>
+                <ResponsiveContainer
+                  width='100%'
+                  height={CHART_HEIGHT}
+                >
+                  <BarChart data={data.waterfall}>
+                    <CartesianGrid strokeDasharray='3 3' />
+                    <XAxis
+                      dataKey='stage'
+                      tick={{ fontSize: 10 }}
+                      angle={-15}
+                      textAnchor='end'
+                      height={60}
+                    />
+                    <YAxis unit='%' />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey='value'
+                      name={i18n.t('mes.mes_capacity_utilization_page.k28')}
+                      fill={designTokens.colors.warning.main}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card
+              variant='outlined'
+              sx={{ height: '100%' }}
+            >
+              <CardContent>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600, mb: 2 }}
+                >
+                  {i18n.t('mes.mes_capacity_utilization_page.k29')}
+                </Typography>
+                <ResponsiveContainer
+                  width='100%'
+                  height={CHART_HEIGHT}
+                >
+                  <PieChart>
+                    <Pie
+                      data={SCHEDULE_PIE}
+                      dataKey='value'
+                      nameKey='name'
+                      innerRadius={50}
+                      outerRadius={90}
+                      label
                     >
-                      {row.utilization < 80
-                        ? i18n.t('mes.mes_capacity_utilization_page.k35')
-                        : i18n.t('mes.mes_capacity_utilization_page.k34')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+                      {SCHEDULE_PIE.map((entry, idx) => (
+                        <Cell
+                          key={entry.name}
+                          fill={SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+    </DashboardTemplate>
   );
 }

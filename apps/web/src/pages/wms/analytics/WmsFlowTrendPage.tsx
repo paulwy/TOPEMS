@@ -11,7 +11,14 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+
+const RANGE_OPTIONS = [
+  { label: i18n.t('pages.wms_flow_trend_page.7_2'), value: '7d' },
+  { label: i18n.t('pages.wms_flow_trend_page.15_3'), value: '15d' },
+  { label: i18n.t('pages.wms_flow_trend_page.30_4'), value: '30d' },
+];
 
 export default function WmsFlowTrendPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -31,50 +38,67 @@ export default function WmsFlowTrendPage() {
     return { inb, out, net, days: flow.length };
   }, [flow]);
 
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_flow_trend_page.30_0')}</h1>
-        <select
-          value={range}
-          onChange={(e) => setRange(e.target.value as '7d' | '15d' | '30d')}
-          className='border rounded px-3 py-1.5 text-sm'
-          aria-label={i18n.t('pages.wms_flow_trend_page.k1')}
+  const statCards = useMemo(
+    () => [
+      {
+        id: 'total-inbound',
+        title: i18n.t('pages.wms_flow_trend_page.k5'),
+        value: totals.inb.toLocaleString(),
+        color: 'success' as const,
+      },
+      {
+        id: 'total-outbound',
+        title: i18n.t('pages.wms_flow_trend_page.k6'),
+        value: totals.out.toLocaleString(),
+        color: 'info' as const,
+      },
+      {
+        id: 'net-flow',
+        title: i18n.t('pages.wms_flow_trend_page.k7'),
+        value: `${totals.net >= 0 ? '+' : ''}${totals.net.toLocaleString()}`,
+        color: totals.net >= 0 ? ('success' as const) : ('error' as const),
+      },
+      {
+        id: 'days',
+        title: i18n.t('pages.wms_flow_trend_page.k8'),
+        value: totals.days,
+        suffix: i18n.t('pages.wms_flow_trend_page.totalsdays_0'),
+        color: 'secondary' as const,
+      },
+    ],
+    [totals]
+  );
+
+  const customToolbar = (
+    <select
+      value={range}
+      onChange={(e) => setRange(e.target.value as '7d' | '15d' | '30d')}
+      className='border rounded px-3 py-1.5 text-sm'
+      aria-label={i18n.t('pages.wms_flow_trend_page.k1')}
+    >
+      {RANGE_OPTIONS.map((option) => (
+        <option
+          key={option.value}
+          value={option.value}
         >
-          <option value='7d'>{i18n.t('pages.wms_flow_trend_page.7_2')}</option>
-          <option value='15d'>{i18n.t('pages.wms_flow_trend_page.15_3')}</option>
-          <option value='30d'>{i18n.t('pages.wms_flow_trend_page.30_4')}</option>
-        </select>
-      </div>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
 
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k5')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{totals.inb.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k6')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{totals.out.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k7')}</p>
-          <p
-            className={`mt-1 text-3xl font-bold ${
-              totals.net >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {totals.net >= 0 ? '+' : ''}
-            {totals.net.toLocaleString()}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k8')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>
-            {i18n.t('pages.wms_flow_trend_page.totalsdays_0')}
-          </p>
-        </div>
-      </div>
-
+  return (
+    <StatsPageTemplate
+      title={i18n.t('pages.wms_flow_trend_page.30_0')}
+      statCards={statCards}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+      customToolbar={customToolbar}
+    >
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_flow_trend_page.k1')}</h3>
         <ResponsiveContainer
@@ -183,6 +207,6 @@ export default function WmsFlowTrendPage() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </StatsPageTemplate>
   );
 }

@@ -1,70 +1,58 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tab,
-  Typography,
-  Alert,
-  AlertTitle,
-} from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Alert, AlertTitle, Box, Chip, Typography } from '@mui/material';
 import i18n from '@/i18n';
 import {
-  BatteryCharging,
   Activity,
-  BarChart3,
-  AlertTriangle,
   AlertCircle,
+  AlertTriangle,
+  BarChart3,
+  BatteryCharging,
   CheckCircle,
-  Download,
-  RefreshCw,
 } from 'lucide-react';
-import { energyManagementApi } from '../../api/mes/energyManagement';
+import { energyManagementApi } from '@/api/mes/energyManagement';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
-import { PageContainer } from '@/components/common';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type {
+  ChartConfig,
+  DataTable,
+  StatCard,
+  TabItem,
+} from '@/components/templates/StatsPageTemplate';
+
+type TabValue = 'realtime' | 'report' | 'forecast' | 'alerts';
 
 const EnergyManagementPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabValue>('realtime');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
+
   const realTimeConsumption = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
     queryFn: () => energyManagementApi.getRealTimeConsumption(),
     refetchInterval: 10000,
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const energyReport = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYREPORT_BASE,
     queryFn: () => energyManagementApi.getEnergyReport(),
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const energyForecast = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYFORECAST_BASE,
     queryFn: () => energyManagementApi.getEnergyForecast({ months: 3 }),
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const energyAlerts = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYALERTS_BASE,
     queryFn: () => energyManagementApi.getEnergyAlerts(),
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
@@ -77,6 +65,7 @@ const EnergyManagementPage: React.FC = () => {
       type: 'success',
     });
   };
+
   const handleExport = async () => {
     try {
       await energyManagementApi.exportEnergyReport();
@@ -93,7 +82,8 @@ const EnergyManagementPage: React.FC = () => {
       });
     }
   };
-  const getStatusColor = (status: string) => {
+
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
     switch (status) {
       case 'normal':
         return 'success';
@@ -102,37 +92,24 @@ const EnergyManagementPage: React.FC = () => {
       case 'critical':
         return 'error';
       default:
-        return 'default';
+        return 'success';
     }
   };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'normal':
-        return (
-          <CheckCircle
-            style={{ color: 'success.500' }}
-            size={24}
-          />
-        );
+        return <CheckCircle size={24} />;
       case 'warning':
-        return (
-          <AlertCircle
-            style={{ color: 'warning.500' }}
-            size={24}
-          />
-        );
+        return <AlertCircle size={24} />;
       case 'critical':
-        return (
-          <AlertTriangle
-            style={{ color: 'error.500' }}
-            size={24}
-          />
-        );
+        return <AlertTriangle size={24} />;
       default:
         return null;
     }
   };
-  const getSeverityColor = (severity: string) => {
+
+  const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'success' => {
     switch (severity) {
       case 'critical':
         return 'error';
@@ -144,9 +121,11 @@ const EnergyManagementPage: React.FC = () => {
         return 'success';
     }
   };
+
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2 }).format(value);
   };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
@@ -154,396 +133,416 @@ const EnergyManagementPage: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(value);
   };
-  const realTimeData = realTimeConsumption.data?.data || [];
+
+  const realTimeData = useMemo(
+    () => realTimeConsumption.data?.data || [],
+    [realTimeConsumption.data]
+  );
   const reportData = energyReport.data?.data;
   const forecastData = energyForecast.data?.data;
   const alertsData = energyAlerts.data?.data;
+
+  const loading = useMemo(() => {
+    switch (activeTab) {
+      case 'realtime':
+        return realTimeConsumption.isPending;
+      case 'report':
+        return energyReport.isPending;
+      case 'forecast':
+        return energyForecast.isPending;
+      case 'alerts':
+        return energyAlerts.isPending;
+      default:
+        return false;
+    }
+  }, [
+    activeTab,
+    realTimeConsumption.isPending,
+    energyReport.isPending,
+    energyForecast.isPending,
+    energyAlerts.isPending,
+  ]);
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        value: 'realtime',
+        label: i18n.t('mes.energy_management_page.k7'),
+        icon: <Activity size={18} />,
+      },
+      {
+        value: 'report',
+        label: i18n.t('mes.energy_management_page.k8'),
+        icon: <BarChart3 size={18} />,
+      },
+      {
+        value: 'forecast',
+        label: i18n.t('mes.energy_management_page.k9'),
+        icon: <BatteryCharging size={18} />,
+      },
+      {
+        value: 'alerts',
+        label: i18n.t('mes.energy_management_page.k10'),
+        icon: <AlertTriangle size={18} />,
+      },
+    ],
+    []
+  );
+
+  const statCards = useMemo<StatCard[]>(() => {
+    switch (activeTab) {
+      case 'realtime':
+        return realTimeData.map((item) => ({
+          id: item.equipment_id,
+          title: item.equipment_name,
+          value: formatNumber(item.current_value),
+          suffix: item.unit,
+          color: getStatusColor(item.status),
+          icon: getStatusIcon(item.status),
+          description:
+            item.status === 'normal'
+              ? i18n.t('mes.energy_management_page.k12')
+              : item.status === 'warning'
+                ? i18n.t('mes.energy_management_page.k13')
+                : i18n.t('mes.energy_management_page.k14'),
+        }));
+
+      case 'report':
+        if (!reportData) return [];
+        return [
+          {
+            id: 'total-consumption',
+            title: i18n.t('pages.energy_management_page.k3'),
+            value: formatNumber(reportData.total_consumption),
+            suffix: 'kWh',
+            color: 'warning',
+            icon: <BatteryCharging size={18} />,
+          },
+          {
+            id: 'total-cost',
+            title: i18n.t('pages.energy_management_page.k4'),
+            value: formatCurrency(reportData.total_cost),
+            color: 'primary',
+          },
+          {
+            id: 'avg-cost',
+            title: i18n.t('pages.energy_management_page.k5'),
+            value: formatCurrency(reportData.avg_cost_per_unit),
+            color: 'secondary',
+          },
+        ];
+
+      case 'forecast':
+        if (!forecastData) return [];
+        return [
+          {
+            id: 'forecast-consumption',
+            title: i18n.t('pages.energy_management_page.k6'),
+            value: formatNumber(forecastData.forecast_consumption),
+            suffix: 'kWh',
+            color: 'warning',
+            icon: <BatteryCharging size={18} />,
+          },
+          {
+            id: 'forecast-cost',
+            title: i18n.t('pages.energy_management_page.k7'),
+            value: formatCurrency(forecastData.forecast_cost),
+            color: 'primary',
+          },
+          {
+            id: 'confidence-interval',
+            title: i18n.t('mes.energy_management_page.k31'),
+            value: `${formatNumber(forecastData.confidence_interval[0])} - ${formatNumber(forecastData.confidence_interval[1])}`,
+            suffix: 'kWh',
+            color: 'info',
+          },
+        ];
+
+      case 'alerts':
+        if (!alertsData) return [];
+        return [
+          {
+            id: 'total-alerts',
+            title: i18n.t('pages.energy_management_page.k0'),
+            value: alertsData.total_count,
+            color: 'primary',
+            icon: <Activity size={18} />,
+          },
+          {
+            id: 'critical-alerts',
+            title: i18n.t('pages.energy_management_page.k1'),
+            value: alertsData.critical_count,
+            color: 'error',
+            icon: <AlertTriangle size={18} />,
+          },
+          {
+            id: 'warning-alerts',
+            title: i18n.t('pages.energy_management_page.k2'),
+            value: alertsData.warning_count,
+            color: 'warning',
+            icon: <AlertCircle size={18} />,
+          },
+        ];
+
+      default:
+        return [];
+    }
+  }, [activeTab, realTimeData, reportData, forecastData, alertsData]);
+
+  const charts = useMemo<ChartConfig[]>(() => {
+    if (activeTab === 'report' && reportData) {
+      return [
+        {
+          id: 'workshop-distribution',
+          title: i18n.t('mes.energy_management_page.k22'),
+          type: 'pie',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: reportData.by_workshop.map((item) => ({
+            name: item.workshop_name,
+            value: item.total_consumption,
+          })),
+        },
+        {
+          id: 'trend-bar',
+          title: i18n.t('mes.energy_management_page.k26'),
+          type: 'bar',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: reportData.trend_data.map((item) => ({
+            name: item.period,
+            value: item.consumption,
+          })),
+        },
+      ];
+    }
+
+    if (activeTab === 'forecast' && forecastData) {
+      return [
+        {
+          id: 'forecast-bar',
+          title: i18n.t('mes.energy_management_page.k30'),
+          type: 'bar',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: [
+            {
+              name: i18n.t('pages.energy_management_page.k6'),
+              value: forecastData.forecast_consumption,
+            },
+          ],
+        },
+      ];
+    }
+
+    return [];
+  }, [activeTab, reportData, forecastData]);
+
+  const tables = useMemo<DataTable[]>(() => {
+    if (activeTab === 'report' && reportData) {
+      return [
+        {
+          id: 'by-equipment',
+          title: i18n.t('mes.energy_management_page.k16'),
+          columns: [
+            {
+              id: 'equipment_code',
+              label: i18n.t('mes.energy_management_page.k17'),
+              field: 'equipment_code',
+            },
+            {
+              id: 'equipment_name',
+              label: i18n.t('mes.energy_management_page.k18'),
+              field: 'equipment_name',
+            },
+            {
+              id: 'total_consumption',
+              label: i18n.t('mes.energy_management_page.kwh_19'),
+              field: 'total_consumption',
+              align: 'right',
+            },
+            {
+              id: 'avg_consumption',
+              label: i18n.t('mes.energy_management_page.kwh_20'),
+              field: 'avg_consumption',
+              align: 'right',
+            },
+            {
+              id: 'percentage',
+              label: i18n.t('mes.energy_management_page.k21'),
+              field: 'percentage',
+              align: 'center',
+              render: (value) => (
+                <Chip
+                  label={`${value}%`}
+                  size='small'
+                />
+              ),
+            },
+          ],
+          data: reportData.by_equipment.map((item) => ({
+            equipment_code: item.equipment_code,
+            equipment_name: item.equipment_name,
+            total_consumption: formatNumber(item.total_consumption),
+            avg_consumption: formatNumber(item.avg_consumption),
+            percentage: item.percentage,
+          })),
+        },
+        {
+          id: 'by-workshop',
+          title: i18n.t('mes.energy_management_page.k22'),
+          columns: [
+            {
+              id: 'workshop_name',
+              label: i18n.t('mes.energy_management_page.k23'),
+              field: 'workshop_name',
+            },
+            {
+              id: 'total_consumption',
+              label: i18n.t('mes.energy_management_page.kwh_24'),
+              field: 'total_consumption',
+              align: 'right',
+            },
+            {
+              id: 'percentage',
+              label: i18n.t('mes.energy_management_page.k25'),
+              field: 'percentage',
+              align: 'center',
+              render: (value) => (
+                <Chip
+                  label={`${value}%`}
+                  size='small'
+                />
+              ),
+            },
+          ],
+          data: reportData.by_workshop.map((item) => ({
+            workshop_name: item.workshop_name,
+            total_consumption: formatNumber(item.total_consumption),
+            percentage: item.percentage,
+          })),
+        },
+        {
+          id: 'trend-data',
+          title: i18n.t('mes.energy_management_page.k26'),
+          columns: [
+            {
+              id: 'period',
+              label: i18n.t('mes.energy_management_page.k27'),
+              field: 'period',
+            },
+            {
+              id: 'consumption',
+              label: i18n.t('mes.energy_management_page.kwh_28'),
+              field: 'consumption',
+              align: 'right',
+            },
+            {
+              id: 'change_rate',
+              label: i18n.t('mes.energy_management_page.k29'),
+              field: 'change_rate',
+              align: 'center',
+              render: (value) => {
+                const rate = Number(value);
+                return (
+                  <Chip
+                    label={`${rate > 0 ? '+' : ''}${rate.toFixed(2)}%`}
+                    size='small'
+                    color={rate > 0 ? 'error' : rate < 0 ? 'success' : 'default'}
+                  />
+                );
+              },
+            },
+          ],
+          data: reportData.trend_data.map((item) => ({
+            period: item.period,
+            consumption: formatNumber(item.consumption),
+            change_rate: item.change_rate,
+          })),
+        },
+      ];
+    }
+
+    return [];
+  }, [activeTab, reportData]);
+
+  const customContent = useMemo(() => {
+    if (activeTab === 'forecast' && forecastData) {
+      return (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant='subtitle1'>
+            {i18n.t('pages.energy_management_page.k8')}: {forecastData.forecast_period}
+          </Typography>
+          <Typography variant='subtitle1'>{i18n.t('pages.energy_management_page.k0')}</Typography>
+          <Typography variant='subtitle1'>
+            {i18n.t('pages.energy_management_page.k9')}: {forecastData.seasonality_factor}
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (activeTab === 'alerts' && alertsData) {
+      return alertsData.alerts.map((alert) => (
+        <Alert
+          key={alert.id}
+          severity={getSeverityColor(alert.severity)}
+          sx={{ mb: 2 }}
+        >
+          <AlertTitle>{alert.equipment_name}</AlertTitle>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
+            <span>{alert.message}</span>
+            <span>
+              <Chip
+                label={
+                  alert.status === 'active'
+                    ? i18n.t('mes.energy_management_page.k34')
+                    : i18n.t('mes.energy_management_page.k33')
+                }
+                size='small'
+              />
+            </span>
+          </Box>
+          <Box sx={{ mt: 1 }}>
+            <Typography variant='body2'>
+              {i18n.t('pages.energy_management_page.k10')}: {alert.threshold_value} |{' '}
+              {i18n.t('pages.energy_management_page.k11')}
+              {alert.actualValue} | {alert.timestamp}
+            </Typography>
+          </Box>
+        </Alert>
+      ));
+    }
+
+    return null;
+  }, [activeTab, forecastData, alertsData]);
+
   return (
-    <PageContainer title={i18n.t('mes.energy_management_page.k6')}>
-      <Box sx={{ p: 3 }}>
-        <Typography
-          variant='h4'
-          sx={{ mb: 4 }}
-        >
-          {i18n.t('pages.energy_management_page.k0')}
-        </Typography>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          sx={{ mb: 4 }}
-        >
-          <Tab
-            label={i18n.t('mes.energy_management_page.k7')}
-            icon={<Activity size={20} />}
-          />
-          <Tab
-            label={i18n.t('mes.energy_management_page.k8')}
-            icon={<BarChart3 size={20} />}
-          />
-          <Tab
-            label={i18n.t('mes.energy_management_page.k9')}
-            icon={<BatteryCharging size={20} />}
-          />
-          <Tab
-            label={i18n.t('mes.energy_management_page.k10')}
-            icon={<AlertTriangle size={20} />}
-          />
-        </Tabs>
-        {activeTab === 0 && (
-          <Card>
-            <CardHeader
-              title={i18n.t('mes.energy_management_page.k11')}
-              action={
-                <Button
-                  onClick={handleRefresh}
-                  startIcon={<RefreshCw size={20} />}
-                >
-                  {i18n.t('pages.energy_management_page.k1')}
-                </Button>
-              }
-            />
-            <CardContent>
-              <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
-                {realTimeData.map((item) => (
-                  <Grid
-                    sx={{ gridColumn: 'span 4' }}
-                    key={item.equipment_id}
-                  >
-                    <Card
-                      sx={{
-                        borderLeft: `4px solid ${item.status === 'normal' ? 'colors.success.main' : item.status === 'warning' ? designTokens.colors.warning.main : designTokens.colors.error.main}`,
-                      }}
-                    >
-                      <CardContent>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            mb: 2,
-                          }}
-                        >
-                          <Typography
-                            variant='subtitle1'
-                            sx={{ fontWeight: 'bold' }}
-                          >
-                            {item.equipment_name}
-                          </Typography>
-                          {getStatusIcon(item.status)}
-                        </Box>
-                        <Typography
-                          variant='h3'
-                          sx={{ mb: 1 }}
-                        >
-                          {formatNumber(item.current_value)}
-                          <Typography
-                            variant='body1'
-                            component='span'
-                            sx={{ ml: 1, color: 'text.secondary' }}
-                          >
-                            {item.unit}
-                          </Typography>
-                        </Typography>
-                        <Chip
-                          label={
-                            item.status === 'normal'
-                              ? i18n.t('mes.energy_management_page.k12')
-                              : item.status === 'warning'
-                                ? i18n.t('mes.energy_management_page.k13')
-                                : i18n.t('mes.energy_management_page.k14')
-                          }
-                          color={getStatusColor(item.status)}
-                          size='small'
-                        />
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </Card>
-        )}
-        {activeTab === 1 && reportData && (
-          <Card>
-            <CardHeader
-              title={i18n.t('mes.energy_management_page.k15')}
-              action={
-                <Button
-                  onClick={handleExport}
-                  startIcon={<Download size={20} />}
-                >
-                  {i18n.t('pages.energy_management_page.k2')}
-                </Button>
-              }
-            />
-            <CardContent>
-              <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3, mb: 4 }}>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <BatteryCharging
-                        style={{ fontSize: 40, color: 'warning.500', marginBottom: 8 }}
-                      />
-                      <Typography variant='h5'>
-                        {formatNumber(reportData.total_consumption)} kWh
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='textSecondary'
-                      >
-                        {i18n.t('pages.energy_management_page.k3')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h5'>{formatCurrency(reportData.total_cost)}</Typography>
-                      <Typography
-                        variant='body2'
-                        color='textSecondary'
-                      >
-                        {i18n.t('pages.energy_management_page.k4')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h5'>
-                        {formatCurrency(reportData.avg_cost_per_unit)}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='textSecondary'
-                      >
-                        {i18n.t('pages.energy_management_page.k5')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-              <Card sx={{ mt: 3 }}>
-                <CardHeader title={i18n.t('mes.energy_management_page.k16')} />
-                <CardContent>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{i18n.t('mes.energy_management_page.k17')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.k18')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.kwh_19')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.kwh_20')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.k21')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {reportData.by_equipment.map((item) => (
-                        <TableRow key={item.equipment_id}>
-                          <TableCell>{item.equipment_code}</TableCell>
-                          <TableCell>{item.equipment_name}</TableCell>
-                          <TableCell>{formatNumber(item.total_consumption)}</TableCell>
-                          <TableCell>{formatNumber(item.avg_consumption)}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={`${item.percentage}%`}
-                              size='small'
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-              <Card sx={{ mt: 3 }}>
-                <CardHeader title={i18n.t('mes.energy_management_page.k22')} />
-                <CardContent>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{i18n.t('mes.energy_management_page.k23')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.kwh_24')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.k25')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {reportData.by_workshop.map((item) => (
-                        <TableRow key={item.workshop_id}>
-                          <TableCell>{item.workshop_name}</TableCell>
-                          <TableCell>{formatNumber(item.total_consumption)}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={`${item.percentage}%`}
-                              size='small'
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-              <Card sx={{ mt: 3 }}>
-                <CardHeader title={i18n.t('mes.energy_management_page.k26')} />
-                <CardContent>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{i18n.t('mes.energy_management_page.k27')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.kwh_28')}</TableCell>
-                        <TableCell>{i18n.t('mes.energy_management_page.k29')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {reportData.trend_data.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.period}</TableCell>
-                          <TableCell>{formatNumber(item.consumption)}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={`${item.change_rate > 0 ? '+' : ''}${item.change_rate.toFixed(2)}%`}
-                              size='small'
-                              color={
-                                item.change_rate > 0
-                                  ? 'error'
-                                  : item.change_rate < 0
-                                    ? 'success'
-                                    : 'default'
-                              }
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </CardContent>
-          </Card>
-        )}
-        {activeTab === 2 && forecastData && (
-          <Card>
-            <CardHeader title={i18n.t('mes.energy_management_page.k30')} />
-            <CardContent>
-              <Grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 3 }}>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <BatteryCharging
-                        style={{ fontSize: 40, color: 'secondary.500', marginBottom: 8 }}
-                      />
-                      <Typography variant='h5'>
-                        {formatNumber(forecastData.forecast_consumption)} kWh
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='textSecondary'
-                      >
-                        {i18n.t('pages.energy_management_page.k6')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h5'>
-                        {formatCurrency(forecastData.forecast_cost)}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='textSecondary'
-                      >
-                        {i18n.t('pages.energy_management_page.k7')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid sx={{ gridColumn: 'span 4' }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h6'>
-                        {i18n.t('mes.energy_management_page.k31')}
-                      </Typography>
-                      <Typography variant='h5'>
-                        {formatNumber(forecastData.confidence_interval[0])} -{' '}
-                        {formatNumber(forecastData.confidence_interval[1])} kWh
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-              <Box sx={{ mt: 4 }}>
-                <Typography variant='subtitle1'>
-                  [i18n.t('pages.energy_management_page.k8')]: {forecastData.forecast_period}
-                </Typography>
-                <Typography variant='subtitle1'>
-                  {i18n.t('pages.energy_management_page.k0')}
-                </Typography>
-                <Typography variant='subtitle1'>
-                  [i18n.t('pages.energy_management_page.k9')]: {forecastData.seasonality_factor}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-        {activeTab === 3 && alertsData && (
-          <Card>
-            <CardHeader title={i18n.t('mes.energy_management_page.k32')} />
-            <CardContent>
-              <Grid sx={{ display: 'flex', gap: 2, mb: 4 }}>
-                <Grid>
-                  <Chip
-                    label={`${i18n.t('pages.energy_management_page.k0')}${alertsData.total_count}`}
-                  />
-                </Grid>
-                <Grid>
-                  <Chip
-                    label={`${i18n.t('pages.energy_management_page.k1')}${alertsData.critical_count}`}
-                    color='error'
-                  />
-                </Grid>
-                <Grid>
-                  <Chip
-                    label={`${i18n.t('pages.energy_management_page.k2')}${alertsData.warning_count}`}
-                    color='warning'
-                  />
-                </Grid>
-              </Grid>
-              {alertsData.alerts.map((alert) => (
-                <Alert
-                  key={alert.id}
-                  severity={getSeverityColor(alert.severity)}
-                  sx={{ mb: 2 }}
-                >
-                  <AlertTitle>{alert.equipment_name}</AlertTitle>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <span>{alert.message}</span>
-                    <span>
-                      <Chip
-                        label={
-                          alert.status === 'active'
-                            ? i18n.t('mes.energy_management_page.k34')
-                            : i18n.t('mes.energy_management_page.k33')
-                        }
-                        size='small'
-                      />
-                    </span>
-                  </Box>
-                  <Box sx={{ mt: 1, fontSize: '0.875rem' }}>
-                    [i18n.t('pages.energy_management_page.k10')]: {alert.threshold_value} |{' '}
-                    {i18n.t('pages.energy_management_page.k11')}
-                    {alert.actualValue} | {alert.timestamp}
-                  </Box>
-                </Alert>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </Box>
-    </PageContainer>
+    <StatsPageTemplate
+      title={i18n.t('mes.energy_management_page.k6')}
+      subtitle={i18n.t('pages.energy_management_page.k0')}
+      tabs={tabs}
+      tabValue={activeTab}
+      onTabChange={(value) => setActiveTab(value as TabValue)}
+      statCards={statCards}
+      statColumns={3}
+      charts={charts}
+      tables={tables}
+      loading={loading}
+      onRefresh={handleRefresh}
+      onExport={activeTab === 'report' ? handleExport : undefined}
+      exportText={i18n.t('pages.energy_management_page.k2')}
+      showSearch={false}
+      showTimeRange={false}
+    >
+      {customContent}
+    </StatsPageTemplate>
   );
 };
+
 export default EnergyManagementPage;

@@ -1,43 +1,51 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PageContainer } from '@/components/common';
-import { MapPin } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { mesApi } from '@/api/mes';
+import i18n from '@/i18n';
 
-const ct = designTokens.colors;
+type TraceabilityApi = {
+  forward?: (lot: string) => Promise<{ data?: unknown }>;
+  forwardTraceability?: (lot: string) => Promise<{ data?: unknown }>;
+};
 
 const QualityTraceabilityPage: React.FC = () => {
-  const { data: backendData, isLoading } = useQuery({
+  const { isLoading, refetch } = useQuery({
     queryKey: ['mes-quality-traceability'],
     queryFn: async () => {
       try {
-        if (typeof (mesApi.traceability as any)?.forward === 'function') {
-          const res = await (mesApi.traceability as any).forward('SAMPLE-LOT');
+        const traceability = mesApi.traceability as unknown as TraceabilityApi;
+        if (typeof traceability.forward === 'function') {
+          const res = await traceability.forward('SAMPLE-LOT');
           return res?.data ?? {};
         }
-        if (typeof mesApi.traceability?.forwardTraceability === 'function') {
-          const res = await mesApi.traceability.forwardTraceability('SAMPLE-LOT');
+        if (typeof traceability.forwardTraceability === 'function') {
+          const res = await traceability.forwardTraceability('SAMPLE-LOT');
           return res?.data ?? {};
         }
         const [records] = await Promise.all([mesApi.records.list({ pageSize: 10 })]);
         return records?.data ?? {};
-      } catch (e) {
+      } catch (_e) {
         return {};
       }
     },
   });
+
   return (
-    <PageContainer
-      autoTitle
-      autoBreadcrumbs
-      headerProps={{
-        pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[900]} 100%)`,
+    <StatsPageTemplate
+      title={i18n.t('mes.quality_traceability.title')}
+      subtitle={i18n.t('mes.quality_traceability.description')}
+      loading={isLoading}
+      onRefresh={refetch}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      emptyState={{
+        emoji: '🔍',
+        title: i18n.t('mes.quality_traceability.title'),
+        description: i18n.t('mes.quality_traceability.description'),
       }}
-    >
-      {null}
-    </PageContainer>
+    />
   );
 };
 

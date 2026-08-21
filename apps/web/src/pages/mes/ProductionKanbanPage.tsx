@@ -16,7 +16,7 @@ import {
   Divider,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate, type StatCardConfig } from '@/components/templates/DashboardTemplate';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -37,7 +37,11 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 const ProductionKanbanPage: React.FC = () => {
-  const { data: kanbanData, isPending: loading } = useQuery<ProductionKanbanData | null>({
+  const {
+    data: kanbanData,
+    isPending: loading,
+    refetch,
+  } = useQuery<ProductionKanbanData | null>({
     queryKey: QUERY_KEYS.MES.KANBAN_DASHBOARD,
     queryFn: async () => {
       const response = await mesApi.kanban.getDashboard();
@@ -47,9 +51,9 @@ const ProductionKanbanPage: React.FC = () => {
       return null;
     },
     refetchInterval: 60000,
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const statusColorMap = useMemo<Record<string, string>>(
     () => ({
       running: 'success.main',
@@ -62,6 +66,7 @@ const ProductionKanbanPage: React.FC = () => {
     }),
     []
   );
+
   const getStatusColor = (status: string) => statusColorMap[status] || 'text.secondary';
   const getStatusText = (status: string) => {
     const textMap: Record<string, string> = {
@@ -75,8 +80,10 @@ const ProductionKanbanPage: React.FC = () => {
     };
     return textMap[status] || status;
   };
+
   if (loading) return <LoadingSpinner />;
   if (!kanbanData) return null;
+
   const {
     summary,
     order_progress: orderProgress = [],
@@ -84,131 +91,54 @@ const ProductionKanbanPage: React.FC = () => {
     quality_trend: qualityTrend = [],
     equipment_status: equipmentStatus = [],
   } = kanbanData;
+
   if (!summary) return null;
+
+  const statCards: StatCardConfig[] = [
+    {
+      title: i18n.t('mes.production_kanban_page.stat_total_orders'),
+      value: summary.total_orders,
+      icon: <Factory size={24} />,
+      color: 'primary',
+    },
+    {
+      title: i18n.t('mes.production_kanban_page.stat_in_progress'),
+      value: summary.in_progress_orders,
+      icon: <Activity size={24} />,
+      color: 'info',
+    },
+    {
+      title: i18n.t('mes.production_kanban_page.stat_completed'),
+      value: summary.completed_orders,
+      icon: <CheckCircle size={24} />,
+      color: 'success',
+    },
+    {
+      title: i18n.t('mes.production_kanban_page.stat_today_output'),
+      value: summary.today_output,
+      icon: <Package size={24} />,
+      color: 'warning',
+    },
+    {
+      title: i18n.t('mes.production_kanban_page.stat_pass_rate'),
+      value: `${summary.pass_rate.toFixed(2)}%`,
+      icon: <TrendingUp size={24} />,
+      color: 'secondary',
+    },
+    {
+      title: i18n.t('mes.production_kanban_page.stat_oee'),
+      value: `${summary.oee.toFixed(2)}%`,
+      icon: <Gauge size={24} />,
+      color: 'secondary',
+    },
+  ];
+
   return (
-    <PageContainer
-      autoTitle
-      autoBreadcrumbs
-      headerProps={{
-        pageIcon: <Monitor style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
-      }}
+    <DashboardTemplate
+      title={i18n.t('mes.index.k16')}
+      statCards={statCards}
+      onRefresh={refetch}
     >
-      <Box sx={{ mb: 3 }}>
-        <Grid
-          container
-          spacing={2}
-        >
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Factory size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_total_orders')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.total_orders}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'info.light', color: 'info.contrastText' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Activity size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_in_progress')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.in_progress_orders}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'success.light', color: 'success.contrastText' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <CheckCircle size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_completed')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.completed_orders}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'warning.light', color: 'warning.contrastText' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Package size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_today_output')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.today_output}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: ct.secondary[100], color: 'secondary.700' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <TrendingUp size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_pass_rate')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.pass_rate.toFixed(2)}%
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'secondary.100', color: ct.secondary[700] }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Gauge size={24} />
-                  <Typography variant='body2'>
-                    {i18n.t('mes.production_kanban_page.stat_oee')}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {summary.oee.toFixed(2)}%
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
       <Grid
         container
         spacing={3}
@@ -219,7 +149,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Package
                   size={20}
-                  color='primary.main'
+                  color={ct.primary.main}
                 />
                 <Typography
                   variant='h6'
@@ -245,7 +175,7 @@ const ProductionKanbanPage: React.FC = () => {
                         sx={{
                           p: 2,
                           bgcolor: 'grey.50',
-                          borderRadius: 1,
+                          borderRadius: 2,
                         }}
                       >
                         <Box
@@ -305,8 +235,8 @@ const ProductionKanbanPage: React.FC = () => {
                               variant='determinate'
                               value={order.progress}
                               sx={{
-                                height: 8,
-                                borderRadius: 4,
+                                height: 1,
+                                borderRadius: 9999,
                                 bgcolor: 'grey.200',
                                 '& .MuiLinearProgress-bar': {
                                   bgcolor: order.progress >= 100 ? 'success.main' : 'primary.main',
@@ -335,7 +265,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Monitor
                   size={20}
-                  color='primary.main'
+                  color={ct.primary.main}
                 />
                 <Typography
                   variant='h6'
@@ -362,7 +292,7 @@ const ProductionKanbanPage: React.FC = () => {
                           p: 1.5,
                           border: 1,
                           borderColor: 'grey.200',
-                          borderRadius: 1,
+                          borderRadius: 2,
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -386,7 +316,7 @@ const ProductionKanbanPage: React.FC = () => {
                           sx={{
                             width: 12,
                             height: 12,
-                            borderRadius: '50%',
+                            borderRadius: 9999,
                             bgcolor: getStatusColor(ws.status),
                           }}
                         />
@@ -404,7 +334,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <TrendingUp
                   size={20}
-                  color='success.main'
+                  color={ct.success.main}
                 />
                 <Typography
                   variant='h6'
@@ -491,7 +421,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Wrench
                   size={20}
-                  color='warning.main'
+                  color={ct.warning.main}
                 />
                 <Typography
                   variant='h6'
@@ -576,7 +506,8 @@ const ProductionKanbanPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
+
 export default ProductionKanbanPage;
