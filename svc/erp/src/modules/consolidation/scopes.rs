@@ -11,7 +11,7 @@ use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::PaginationParams;
+use super::common::ConsolidationListParams;
 use super::ApiState;
 
 macro_rules! log_audit {
@@ -28,7 +28,7 @@ macro_rules! log_audit {
 pub async fn list_scopes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ConsolidationListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationScope>>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;

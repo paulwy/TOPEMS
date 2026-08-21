@@ -10,7 +10,7 @@ pub mod reports;
 pub mod scope_companies;
 pub mod scopes;
 
-pub use common::{call_finance_core_approval, PaginationParams};
+pub use common::{call_finance_core_approval, ConsolidationListParams};
 
 pub use scopes::{create_scope, delete_scope, get_scope, list_scopes, update_scope};
 
