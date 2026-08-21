@@ -212,9 +212,10 @@ pub use auth::{
 };
 pub use middleware::{
     current_timestamp, department_middleware, enhanced_rate_limit_middleware, generate_nonce,
-    get_tenant_id, get_tenant_id_from_claims, require_department, require_module_active, require_module_permission, require_permission,
-    require_role, require_tenant_status, tenant_middleware, AntiReplayConfig,
-    EnhancedRateLimitConfig, EnhancedRateLimitMiddleware, EnhancedRateLimitRule, LimitDimension,
+    get_tenant_id, get_tenant_id_from_claims, require_department, require_module_active,
+    require_module_permission, require_permission, require_role, require_tenant_status,
+    tenant_middleware, AntiReplayConfig, EnhancedRateLimitConfig, EnhancedRateLimitMiddleware,
+    EnhancedRateLimitRule, LimitDimension,
 };
 pub use permission::{
     check_any_module_permission, check_module_permission, check_resource_permission,
