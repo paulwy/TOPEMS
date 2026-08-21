@@ -1,55 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil } from 'lucide-react';
-import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { projectSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
-import type { Project } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
 
-const projectApiAdapter: CrudApiAdapter<Project> = {
-  list: async (params) => {
-    const queryParams: Record<string, unknown> = {
-      page: params?.page,
-      pagesize: params?.pageSize,
-    };
-    if (params?.search) queryParams.search = params.search;
-    if (params?.status) queryParams.status = params.status;
-    const response = await rdApi.listProjects(queryParams);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_project_list_page.k0'));
-    }
-    return {
-      data: response.data.projects || [],
-      total: response.data.total || 0,
-    };
+const projectApiAdapter = createCrudPageAdapter(
+  {
+    list: (params?: any) => rdApi.listProjects(params),
+    create: (data: any) => rdApi.createProject(data),
+    update: (id: string, data: any) => rdApi.updateProject(id, data),
+    delete: (id: string) => rdApi.deleteProject(id),
   },
-  create: async (data) => {
-    const response = await rdApi.createProject(data as Parameters<typeof rdApi.createProject>[0]);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_project_list_page.k1'));
-    }
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await rdApi.updateProject(
-      id,
-      data as Parameters<typeof rdApi.updateProject>[1]
-    );
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_project_list_page.k2'));
-    }
-    return response.data;
-  },
-  delete: async (id) => {
-    const response = await rdApi.deleteProject(id);
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('rd.rs_project_list_page.k3'));
-    }
-  },
-};
+  { itemsField: 'projects' }
+);
 const RsProjectListPage: React.FC = () => {
   const navigate = useNavigate();
   const customRowActions: RowAction[] = [

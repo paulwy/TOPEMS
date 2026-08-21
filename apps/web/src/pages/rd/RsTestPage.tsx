@@ -1,56 +1,26 @@
 import React from 'react';
 import { Play } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { testSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
-import type { TestCase, UpdateTestCaseRequest } from '@/api/rd';
+import type { UpdateTestCaseRequest } from '@/api/rd';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-const testApiAdapter: CrudApiAdapter<TestCase> = {
-  list: async (params) => {
-    const queryParams: Record<string, unknown> = {
-      page: params?.page,
-      pagesize: params?.pageSize,
-    };
-    if (params?.search) queryParams.search = params.search;
-    if (params?.case_type) queryParams.case_type = params.case_type;
-    if (params?.priority) queryParams.priority = params.priority;
-    if (params?.status) queryParams.status = params.status;
-    const response = await rdApi.listTests(queryParams);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_test_page.k0'));
-    }
-    return {
-      data: response.data.test_cases || [],
-      total: response.data.total || 0,
-    };
+const testApiAdapter = createCrudPageAdapter(
+  {
+    list: (params?: any) => rdApi.listTests(params),
+    create: (data: any) => rdApi.createTest(data),
+    update: (id: string, data: any) => rdApi.updateTest(id, data),
+    delete: (id: string) => rdApi.deleteTest(id),
   },
-  create: async (data) => {
-    const response = await rdApi.createTest(data as Parameters<typeof rdApi.createTest>[0]);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_test_page.k1'));
-    }
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await rdApi.updateTest(id, data as Parameters<typeof rdApi.updateTest>[1]);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || i18n.t('rd.rs_test_page.k2'));
-    }
-    return response.data;
-  },
-  delete: async (id) => {
-    const response = await rdApi.deleteTest(id);
-    if (!response.success) {
-      throw new Error(response.message || i18n.t('rd.rs_test_page.k3'));
-    }
-  },
-};
+  { itemsField: 'test_cases' }
+);
 const RsTestPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
