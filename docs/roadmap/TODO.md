@@ -63,7 +63,7 @@
 | # | 主题 | 子项 | 首次提出 | 连续提及 |
 |---|------|------|---------|---------|
 | 1 | **Dify AI 端到端闭环** ✅ POC 代码完成 | ① ✅ Docker Compose + Ollama 配置就绪（`docker-compose.dify.yml`） ② ✅ 前端 DifyChatPage + SSE `chat_stream` 已有（V238 完成） ③ ✅ WorkflowOrchestrator 接入 DifyService（executor="dify"）+ `dify_qa` workflow + 3 个 e2e 冒烟测试（需 `DIFY_API_KEY` 运行） | V238 | **≥15 版** |
-| 2 | **Tauri 5 件套剩余 3 件**（① Stronghold ✅/④ IPC ✅ 已完成） | ② **平台原生 Keychain API 对接**：macOS Keychain / Windows Credential Manager / Linux Secret Service，作为 Stronghold 之外的本地加密备选 ③ **启动时自动解锁 keystore**：强密码从 Tauri AppHandle 安全存储或用户首次输入 ⑤ **迁移 FileKeyStore 遗留数据到 Stronghold**：一次性脚本扫描 `~/.topems/keystore/*.json`，导入 Stronghold 快照后清理 | V244 | **≥12 版** |
+| 2 | **Tauri 5 件套剩余 3 件** ✅ 代码完成（① Stronghold ✅/④ IPC ✅ 已完成） | ② ✅ 平台原生 Keychain：`keyring` crate 统三平台（PlatformKeyStore，mac/win/linux） ③ ✅ 启动自动解锁：首启随机生成 32B 主密码写入 Keychain，启动读出解锁 Stronghold（修掉空密码隐患） ⑤ ✅ 迁移 `secure_store.rs` 的 `auth_token.enc` -> Stronghold(key="auth_token") + 一次性 JSON 导入工具（注：原描述 `~/.topems/keystore/*.json` 不存在，实际迁移源为 auth_token.enc） | V244 | **≥12 版** |
 
 ### 🟡 P2 · 质量深化（类型 / 工具链 / CI 持续收紧）
 
