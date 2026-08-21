@@ -25,9 +25,9 @@
 | F9 | `apps/web/src/{styles,components,pages}/**/*.{css,scss,tsx}` (≈586 处脚本 apply + 30 处人工) | Modify (P2 三阶段) | 616→0 硬编码色值/box-shadow，severity high+medium apply · low 30 人工改 |
 | F10 | `.lefthook.yml` | Modify (新增 pre-push 段 · ~55 行) | pre-push parallel=true + 8 commands（Rust: F/G/J/K · TS: A/B/C/D/E/I），Changes filter 用 `git diff --name-only @{push}...HEAD --` 过滤 |
 | F11 | `.github/workflows/ci.yml` | Modify (jobs 段新增 Gate J/K 两个 job · ~35 行) | `fmt-check` job：`cargo fmt --all --check`；`clippy-check` job：`cargo clippy --workspace --all-targets -- -D warnings` |
-| F12 | `scripts/ci/*.cjs --help` 输出中 "六闸" 文本（批量 replace） | Modify (8 scripts · 每行 text replace) | grep -rlE '六闸|6-Gate' scripts | xargs sed -i '' 's/六闸/11-Gate/g; s/6-Gate/11-Gate/g' |
+| F12 | `scripts/ci/*.cjs --help` 输出中 "11-Gate" 文本（批量 replace） | Modify (8 scripts · 每行 text replace) | grep -rlE '11-Gate|11-Gate' scripts | xargs sed -i '' 's/11-Gate/11-Gate/g; s/11-Gate/11-Gate/g' |
 | F13 | `docs/roadmap/TODO.md` | Modify (插入 V232 章节于 V231 之后 / 16 行填 Actual) | 先占位（本 Plan 执行前一次性插入 L3289 之前），P4 完工填双表 Actual/Status 16 行全实值 |
-| F14 | `docs/roadmap/artifacts/v232-baseline.json` | Create (~25L) | Phase-0 基线快照：P1 i18n strict 真实数 / P2 Design Token 真实数 / 11-Gate 现状态 baseline 9-Gate exit code |
+| F14 | `docs/roadmap/artifacts/v232-baseline.json` | Create (~25L) | Phase-0 基线快照：P1 i18n strict 真实数 / P2 Design Token 真实数 / 11-Gate 现状态 baseline 11-Gate exit code |
 | F15 | `docs/roadmap/artifacts/v232-seal-11gate.json` | Create (~60L) | P4 SEAL 实跑结果：11 gates × {id, name, cmd, exit_code, summary}；`jq '[.gates[].exit_code] | add' = 0` |
 | F16 | 无（cargo fmt/clippy baseline auto-fix 产生 diff 但无新文件） | Modify (跨 ~200 .rs files) | Step 7.1 `cargo fmt --all` + `cargo clippy --fix --allow-dirty` 自动修基线，无业务改动 |
 
@@ -68,7 +68,7 @@ echo "P2_HARDCODED=$P2_HARDCODED" >> /tmp/v232-baseline.env
 
 Expected: `P2_HARDCODED` 真实数字（接近 616 上下 ±15% 正常）。**写入 P2 文档 "616" 统一替换成真实值**。
 
-- [ ] **Step 0.3：实跑 9-Gate（V232 升级前 exit_code 快照）**
+- [ ] **Step 0.3：实跑 11-Gate（V232 升级前 exit_code 快照）**
 
 Run:
 ```bash
@@ -106,7 +106,7 @@ git commit -m 'chore(v232): phase-0 baseline snapshot (i18n/design-token/9-gate 
 
 - P1 i18n strict baseline: '"${P1_FAIL}"' FAIL (real scan dfaaedd4a)
 - P2 Design Token baseline: '"${P2_HARDCODED}"' 条 (real scan)
-- 9-Gate baseline: A-I exit codes snapshot (green gate guard)
+- 11-Gate baseline: A-I exit codes snapshot (green gate guard)
 '
 ```
 
@@ -992,26 +992,26 @@ git commit -m 'feat(ci): V232 P3 Gate 9→11 upgrade + pre-push Changes filter d
 '
 ```
 
-### Task 9 / Commit 9："六闸/6-Gate/Six Gate" → "11-Gate" 文本替换（docs + scripts --help，归档历史语境保留）
+### Task 9 / Commit 9："11-Gate/11-Gate/11-Gate" → "11-Gate" 文本替换（docs + scripts --help，归档历史语境保留）
 
 **Files:**
-- Modify: `scripts/**/*.cjs --help` 输出（8 scripts）+ `docs/roadmap/TODO.md` V232 之后章节（V231/V213 归档历史"六闸 SEAL" 不替换，保留历史语境）+ `docs/superpowers/**/*.md` 新文档
+- Modify: `scripts/**/*.cjs --help` 输出（8 scripts）+ `docs/roadmap/TODO.md` V232 之后章节（V231/V213 归档历史"11-Gate SEAL" 不替换，保留历史语境）+ `docs/superpowers/**/*.md` 新文档
 
 - [ ] **Step 9.1：只替换非归档文本（V231 历史章节不碰）**
 
 ```bash
 cd /Users/xingzhai/TOPEMS
 # 1) scripts/ 目录全替换（没有历史语境问题）
-grep -rlE '六闸|6-Gate|Six Gate' scripts 2>/dev/null | xargs -I {} sed -i '' \
-  -e 's/六闸/11-Gate/g' \
-  -e 's/6-Gate/11-Gate/g' \
-  -e 's/Six Gate/11-Gate/g' {}
+grep -rlE '11-Gate|11-Gate|11-Gate' scripts 2>/dev/null | xargs -I {} sed -i '' \
+  -e 's/11-Gate/11-Gate/g' \
+  -e 's/11-Gate/11-Gate/g' \
+  -e 's/11-Gate/11-Gate/g' {}
 
 # 2) docs/superpowers/ 全替换（新文档/计划/规范 无历史语境）
-grep -rlE '六闸|6-Gate|Six Gate' docs/superpowers 2>/dev/null | xargs -I {} sed -i '' \
-  -e 's/六闸/11-Gate/g' -e 's/6-Gate/11-Gate/g' -e 's/Six Gate/11-Gate/g' {}
+grep -rlE '11-Gate|11-Gate|11-Gate' docs/superpowers 2>/dev/null | xargs -I {} sed -i '' \
+  -e 's/11-Gate/11-Gate/g' -e 's/11-Gate/11-Gate/g' -e 's/11-Gate/11-Gate/g' {}
 
-# 3) TODO.md：只替换 V232 章节及之后（V231/V213 等归档行 "六闸 SEAL" 不替换）
+# 3) TODO.md：只替换 V232 章节及之后（V231/V213 等归档行 "11-Gate SEAL" 不替换）
 #    → 用 Python 精准只改 V232 之后内容，不碰 V231 及以前章节
 python3 - <<'PY'
 import re
@@ -1022,7 +1022,7 @@ m = re.search(r'^## .* V232 ', text, flags=re.M)
 if not m:
   raise SystemExit("V232 章节未插入 → 先插入 V232 章节占位再跑文本替换")
 before, after = text[:m.start()], text[m.start():]
-after = after.replace('六闸', '11-Gate').replace('6-Gate', '11-Gate').replace('Six Gate', '11-Gate')
+after = after.replace('11-Gate', '11-Gate').replace('11-Gate', '11-Gate').replace('11-Gate', '11-Gate')
 open(p, 'w', encoding='utf-8').write(before + after)
 print("TODO.md: V232+ sections replaced; V231- sections untouched")
 PY
@@ -1033,11 +1033,11 @@ PY
 ```bash
 git add scripts docs
 FILES=$(git status --short | wc -l | awk '{print $1}')
-git commit -m 'docs(ci): V232 P3 "六闸/6-Gate" → "11-Gate" 文本替换（scripts + superpowers + V232+）
+git commit -m 'docs(ci): V232 P3 "11-Gate/11-Gate" → "11-Gate" 文本替换（scripts + superpowers + V232+）
 
-- scripts/ 8 ci.cjs --help 输出：六闸 / 6-Gate → 11-Gate
-- docs/superpowers/ (spec + plan 新文档)：六闸 / 6-Gate → 11-Gate
-- TODO.md：精确 V232 章节及之后替换；V231/V213 等归档 "六闸 SEAL" 保留 (历史语境)
+- scripts/ 8 ci.cjs --help 输出：11-Gate / 11-Gate → 11-Gate
+- docs/superpowers/ (spec + plan 新文档)：11-Gate / 11-Gate → 11-Gate
+- TODO.md：精确 V232 章节及之后替换；V231/V213 等归档 "11-Gate SEAL" 保留 (历史语境)
 - 总改动 files：'"$FILES"'
 '
 ```
