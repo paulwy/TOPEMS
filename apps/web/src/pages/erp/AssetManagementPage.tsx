@@ -2,7 +2,8 @@
  * 资产管理页面 — Schema 驱动的 CRUD 页面
  */
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { assetSchema } from '@/schemas/erp/asset';
 import { assetApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -89,44 +90,7 @@ const AssetStats: React.FC = () => {
     </Box>
   );
 };
-const assetApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await assetApi.list({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-    });
-    if (!response.success) {
-      throw new Error(i18n.t('erp.asset_management_page.k5'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.items || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-  create: async (data) => {
-    const response = await assetApi.create(data as Parameters<typeof assetApi.create>[0]);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.asset_management_page.k6'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  update: async (id, data) => {
-    const response = await assetApi.update(id, data as Parameters<typeof assetApi.update>[1]);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.asset_management_page.k7'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  delete: async (id) => {
-    const response = await assetApi.delete(id);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.asset_management_page.k8'));
-    }
-  },
-};
+const assetApiAdapter = createCrudPageAdapter(assetApi);
 const AssetManagementPage: React.FC = () => {
   return (
     <CrudPage

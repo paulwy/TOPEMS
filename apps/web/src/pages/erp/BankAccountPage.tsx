@@ -2,7 +2,8 @@
  * 银行账户管理页面 — Schema 驱动的 CRUD 页面
  */
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { bankAccountSchema } from '@/schemas/erp/bankAccount';
 import { bankAccountApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -89,49 +90,7 @@ const BankAccountStats: React.FC = () => {
     </Box>
   );
 };
-const bankAccountApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await bankAccountApi.list({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-    });
-    if (!response.success) {
-      throw new Error(i18n.t('erp.bank_account_page.k5'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.items || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-  create: async (data) => {
-    const response = await bankAccountApi.create(
-      data as Parameters<typeof bankAccountApi.create>[0]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.bank_account_page.k6'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  update: async (id, data) => {
-    const response = await bankAccountApi.update(
-      id,
-      data as Parameters<typeof bankAccountApi.update>[1]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.bank_account_page.k7'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  delete: async (id) => {
-    const response = await bankAccountApi.delete(id);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.bank_account_page.k8'));
-    }
-  },
-};
+const bankAccountApiAdapter = createCrudPageAdapter(bankAccountApi);
 const BankAccountPage: React.FC = () => {
   return (
     <CrudPage

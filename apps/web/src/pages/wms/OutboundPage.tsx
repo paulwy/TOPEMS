@@ -1,5 +1,6 @@
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { outboundOrderSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
@@ -256,39 +257,7 @@ export default function OutboundPage() {
     [queryClient, addNotification]
   );
 
-  const outboundApiAdapter: CrudApiAdapter = {
-    list: async (params) => {
-      const response = await wmsApi.outboundOrders.list(
-        params as Parameters<typeof wmsApi.outboundOrders.list>[0]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k20'));
-      const items = response.data?.items || [];
-      const total = response.data?.total || 0;
-      return { data: items as unknown as Record<string, unknown>[], total };
-    },
-
-    create: async (data) => {
-      const response = await wmsApi.outboundOrders.create(
-        data as unknown as Parameters<typeof wmsApi.outboundOrders.create>[0]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k21'));
-      return response.data as unknown as Record<string, unknown>;
-    },
-
-    update: async (id, data) => {
-      const response = await wmsApi.outboundOrders.update(
-        id,
-        data as Parameters<typeof wmsApi.outboundOrders.update>[1]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k22'));
-      return response.data as unknown as Record<string, unknown>;
-    },
-
-    delete: async (id) => {
-      const response = await wmsApi.outboundOrders.delete(id);
-      if (!response.success) throw new Error(i18n.t('pages.outbound_page.k23'));
-    },
-  };
+    const outboundApiAdapter = createCrudPageAdapter(wmsApi.outboundOrders);
 
   const customRowActions: RowAction[] = [
     {

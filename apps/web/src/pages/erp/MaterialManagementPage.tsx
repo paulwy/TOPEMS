@@ -5,7 +5,8 @@
  * 代码量从 ~700 行缩减到 ~120 行，减少约 83%。
  */
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { materialSchema } from '@/schemas/erp/material';
 import { erpApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -90,50 +91,7 @@ const MaterialStats: React.FC = () => {
 /**
  * 物料管理 API 适配器
  */
-const materialApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await erpApi.materials.list({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-      category: params?.category as string | undefined,
-    } as Parameters<typeof erpApi.materials.list>[0]);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.material_management_page.k5'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.materials || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-  create: async (data) => {
-    const response = await erpApi.materials.create(
-      data as unknown as Parameters<typeof erpApi.materials.create>[0]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.material_management_page.k6'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  update: async (id, data) => {
-    const response = await erpApi.materials.update(
-      id,
-      data as unknown as Parameters<typeof erpApi.materials.update>[1]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.material_management_page.k7'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  delete: async (id) => {
-    const response = await erpApi.materials.delete(id);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.material_management_page.k8'));
-    }
-  },
-};
+const materialApiAdapter = createCrudPageAdapter(erpApi.materials);
 /**
  * 物料管理页面组件
  */

@@ -1,5 +1,6 @@
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { inventorySchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
 import { useQuery } from '@tanstack/react-query';
@@ -140,39 +141,7 @@ const InventoryStats: React.FC = () => {
   );
 };
 
-const inventoryApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await wmsApi.inventory.list(
-      params as Parameters<typeof wmsApi.inventory.list>[0]
-    );
-    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k4'));
-    const items = response.data?.items || [];
-    const total = response.data?.total || 0;
-    return { data: items as unknown as Record<string, unknown>[], total };
-  },
-
-  create: async (data) => {
-    const response = await wmsApi.inventory.create(
-      data as unknown as Parameters<typeof wmsApi.inventory.create>[0]
-    );
-    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k5'));
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  update: async (id, data) => {
-    const response = await wmsApi.inventory.update(
-      id,
-      data as Parameters<typeof wmsApi.inventory.update>[1]
-    );
-    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k6'));
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  delete: async (id) => {
-    const response = await wmsApi.inventory.delete(id);
-    if (!response.success) throw new Error(i18n.t('pages.inventory_page.k7'));
-  },
-};
+const inventoryApiAdapter = createCrudPageAdapter(wmsApi.inventory);
 
 export default function InventoryPage() {
   return (

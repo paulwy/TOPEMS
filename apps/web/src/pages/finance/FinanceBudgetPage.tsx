@@ -1,5 +1,6 @@
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { getBudgetSchema } from '@/schemas/finance/budget';
 import { budgetApi, type Budget } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -197,47 +198,7 @@ const FinanceBudgetStats: React.FC = () => {
   );
 };
 
-const budgetApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await budgetApi.list({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-    } as Parameters<typeof budgetApi.list>[0]);
-    if (!response.success) {
-      throw new Error(i18n.t('finance.finance_budget_page.k9'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.items || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-
-  create: async (data) => {
-    const response = await budgetApi.create(data as Parameters<typeof budgetApi.create>[0]);
-    if (!response.success) {
-      throw new Error(i18n.t('finance.finance_budget_page.k10'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  update: async (id, data) => {
-    const response = await budgetApi.update(id, data as Parameters<typeof budgetApi.update>[1]);
-    if (!response.success) {
-      throw new Error(i18n.t('finance.finance_budget_page.k11'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-
-  delete: async (id) => {
-    const response = await budgetApi.delete(id);
-    if (!response.success) {
-      throw new Error(i18n.t('finance.finance_budget_page.k12'));
-    }
-  },
-};
+const budgetApiAdapter = createCrudPageAdapter(budgetApi);
 
 const FinanceBudgetPage: React.FC = () => {
   const { t } = useTranslation('finance');
