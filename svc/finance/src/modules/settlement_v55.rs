@@ -41,6 +41,7 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== ValidationError ====================
@@ -395,14 +396,6 @@ impl InvoiceWithItems {
         }
         Ok(())
     }
-}
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
 }
 
 // ==================== 枚举类型 ====================
@@ -2010,7 +2003,7 @@ async fn reconcile_batch_handler(
         return ve.into_api_response();
     }
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
         Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
@@ -2038,7 +2031,7 @@ async fn reconcile_single_handler(
         return ve.into_api_response();
     }
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
@@ -2062,7 +2055,7 @@ async fn get_recon_results_handler(
     Query(params): Query<ReconResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2085,7 +2078,7 @@ async fn create_recon_rule_handler(
     Json(req): Json<CreateRuleRequest>,
 ) -> Json<ApiResponse<ReconciliationRule>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::create_rule(&pool, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2111,7 +2104,7 @@ async fn list_recon_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReconciliationRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::list_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2134,7 +2127,7 @@ async fn approve_match_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::approve_match(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "审批通过")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2157,7 +2150,7 @@ async fn dispute_match_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::dispute_match(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "已标记争议")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2192,7 +2185,7 @@ async fn recognize_invoice_handler(
     Json(req): Json<RecognizeInvoiceRequest>,
 ) -> Json<ApiResponse<RecognizedInvoice>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     // OCR 识别层不强制校验未来日期（允许识别后走审批流修正），只在 prevalidate_recognize 之前先兜底：
     // 如果用户显式输入 number / vendor，就要求非空（其他字段由内部 prevalidate_recognize 守护）。
     if let Some(n) = req.number.as_deref() {
@@ -2234,7 +2227,7 @@ async fn get_invoice_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InvoiceWithItems>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2257,7 +2250,7 @@ async fn list_invoices_handler(
     Query(params): Query<InvoiceListQueryParams>,
 ) -> Json<ApiResponse<Vec<Invoice>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
         Ok(invoices) => Json(ApiResponse::success(invoices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2280,7 +2273,7 @@ async fn validate_invoice_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
     // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/422）。
     match InvoiceRecognizer::validate_invoice(&pool, tenant_id, id).await {
@@ -2309,7 +2302,7 @@ async fn post_invoice_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     // 默认 strict：不允许未来日期发票直接过账（allow_future_date=false）；
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
@@ -2341,7 +2334,7 @@ async fn match_invoice_handler(
     Json(req): Json<MatchInvoiceRequest>,
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match InvoiceRecognizer::match_invoice_to_purchase(&pool, tenant_id, id, req.purchase_order_id)
         .await
     {
@@ -2406,7 +2399,7 @@ async fn initiate_payment_handler(
         return ve.into_api_response();
     }
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
@@ -2430,7 +2423,7 @@ async fn get_payment_status_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2461,7 +2454,7 @@ async fn reverse_payment_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 422 返回精确语义错误。
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
@@ -2486,7 +2479,7 @@ pub async fn list_payments_handler(
     Query(params): Query<PaymentListQueryParams>,
 ) -> Json<ApiResponse<Vec<PaymentRequest>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
         Ok(payments) => Json(ApiResponse::success(payments, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2536,7 +2529,7 @@ async fn schedule_payment_handler(
         return ve.into_api_response();
     }
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at)
         .await
     {

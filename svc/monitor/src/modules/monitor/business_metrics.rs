@@ -16,6 +16,7 @@ use crate::AppState;
 use prometheus::{GaugeVec, Opts};
 use std::sync::OnceLock;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== Prometheus 业务指标注册 ====================
@@ -192,14 +193,6 @@ pub struct BusinessMetricRequest {
 }
 
 // ==================== 辅助函数 ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 fn seed_business_metrics(tenant_id: Uuid) -> Vec<BusinessMetric> {
     vec![
@@ -688,7 +681,7 @@ pub async fn list_business_metrics(
     Extension(claims): Extension<Claims>,
     Query(query): Query<BusinessMetricQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let metrics = seed_business_metrics(tenant_id);
 
     let filtered: Vec<BusinessMetric> = metrics
@@ -755,7 +748,7 @@ pub async fn get_business_metric(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ApiResponse<BusinessMetric>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id,
         tenant_id,
@@ -791,7 +784,7 @@ pub async fn create_business_metric(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BusinessMetricRequest>,
 ) -> Json<ApiResponse<BusinessMetric>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id: Uuid::new_v4(),
         tenant_id,
@@ -832,7 +825,7 @@ pub async fn update_business_metric(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<BusinessMetricRequest>,
 ) -> Json<ApiResponse<BusinessMetric>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id,
         tenant_id,
@@ -890,7 +883,7 @@ pub async fn get_business_metric_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<BusinessMetricSummary>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let metrics = seed_business_metrics(tenant_id);
     update_business_metric_gauges(tenant_id, &metrics);
 

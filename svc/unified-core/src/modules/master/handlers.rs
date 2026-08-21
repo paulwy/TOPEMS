@@ -26,6 +26,7 @@ use super::models::{
     ReconciliationLog, ReconciliationResult, ReviewApprovalRequest, StaleRecord, SyncStatus,
     UpdateMasterDataRefRequest,
 };
+use topems_shared_auth::get_tenant_id_from_claims;
 
 /// MDM 服务
 pub struct MasterDataService {
@@ -1059,7 +1060,7 @@ pub async fn create_ref_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMasterDataRefRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1076,7 +1077,7 @@ pub async fn update_ref_handler(
     Path(master_data_id): Path<String>,
     Json(req): Json<UpdateMasterDataRefRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1095,7 +1096,7 @@ pub async fn delete_ref_handler(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1114,7 +1115,7 @@ pub async fn get_ref_handler(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_ref(tenant_id, &master_data_id).await {
@@ -1130,7 +1131,7 @@ pub async fn get_ref_by_code_handler(
     Extension(claims): Extension<Claims>,
     Path((domain, code)): Path<(String, String)>,
 ) -> Json<ApiResponse<MasterDataRef>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_ref_by_code(tenant_id, &domain, &code).await {
@@ -1146,7 +1147,7 @@ pub async fn list_refs_handler(
     Extension(claims): Extension<Claims>,
     Query(query): Query<MasterDataQuery>,
 ) -> Json<ApiResponse<MasterDataListResponse>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     let page = query.page.unwrap_or(1).max(1);
@@ -1172,7 +1173,7 @@ pub async fn list_changes_handler(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<Vec<MasterDataChangeLog>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.list_changes(tenant_id, &master_data_id, 50).await {
@@ -1186,7 +1187,7 @@ pub async fn get_overall_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<MdmOverallStats>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_overall_stats(tenant_id).await {
@@ -1200,7 +1201,7 @@ pub async fn get_sync_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<SyncStatus>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_sync_status(tenant_id).await {
@@ -1217,7 +1218,7 @@ pub async fn get_quality_report_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<QualityReportQuery>,
 ) -> Json<ApiResponse<QualityReport>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let stale_hours = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1232,7 +1233,7 @@ pub async fn list_duplicates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DuplicateRecord>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.list_duplicates(tenant_id).await {
@@ -1247,7 +1248,7 @@ pub async fn list_stale_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<StaleQuery>,
 ) -> Json<ApiResponse<Vec<StaleRecord>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1264,7 +1265,7 @@ pub async fn run_reconciliation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ReconciliationResult>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.run_reconciliation(tenant_id).await {
@@ -1279,7 +1280,7 @@ pub async fn list_reconciliation_logs_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconciliationLogQuery>,
 ) -> Json<ApiResponse<Vec<ReconciliationLog>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let unresolved = params.unresolved_only.unwrap_or(false);
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::new(state.pool.clone());
@@ -1299,7 +1300,7 @@ pub async fn resolve_reconciliation_issue_handler(
     Extension(claims): Extension<Claims>,
     Path(issue_id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service
@@ -1339,7 +1340,7 @@ pub async fn create_approval_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateApprovalRequest>,
 ) -> Json<ApiResponse<MasterDataApproval>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let requested_by = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1363,7 +1364,7 @@ pub async fn review_approval_handler(
     Path(approval_id): Path<Uuid>,
     Json(req): Json<ReviewApprovalRequest>,
 ) -> Json<ApiResponse<MasterDataApproval>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1390,7 +1391,7 @@ pub async fn list_pending_approvals_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PendingApprovalQuery>,
 ) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1409,7 +1410,7 @@ pub async fn list_approval_history_handler(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service
@@ -1426,14 +1427,6 @@ pub async fn list_approval_history_handler(
 pub struct PendingApprovalQuery {
     pub domain: Option<String>,
     pub limit: Option<i64>,
-}
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
 }
 
 /// 初始化 MDM 数据库表

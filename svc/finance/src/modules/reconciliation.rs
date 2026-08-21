@@ -9,6 +9,7 @@ use crate::models::*;
 use crate::services::ReconciliationService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -88,7 +89,7 @@ async fn create_session_handler(
     Json(req): Json<CreateReconciliationSessionRequest>,
 ) -> Json<ApiResponse<ReconciliationSession>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     match service.create_session(tenant_id, req, &created_by).await {
@@ -113,7 +114,7 @@ async fn get_session_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationSession>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_session(tenant_id, session_id).await {
         Ok(session) => Json(ApiResponse::success(session, "查询成功")),
@@ -137,7 +138,7 @@ async fn list_sessions_handler(
     Query(params): Query<ReconciliationSessionListQuery>,
 ) -> Json<ApiResponse<ReconciliationSessionListResponse>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
@@ -183,7 +184,7 @@ async fn import_items_handler(
     Json(mut req): Json<ImportReconciliationItemsRequest>,
 ) -> Json<ApiResponse<i32>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     req.session_id = session_id;
 
     match service.import_items(tenant_id, req).await {
@@ -208,7 +209,7 @@ async fn auto_match_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<MatchResult>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.auto_match(tenant_id, session_id).await {
         Ok(result) => Json(ApiResponse::success(result, "自动匹配完成")),
@@ -232,7 +233,7 @@ async fn complete_session_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationSession>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.complete_session(tenant_id, session_id).await {
         Ok(session) => Json(ApiResponse::success(session, "对账会话已完成")),
@@ -265,7 +266,7 @@ async fn get_items_handler(
     Query(params): Query<ItemsQueryParams>,
 ) -> Json<ApiResponse<Vec<ReconciliationItem>>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let source_type = params.source_type.as_ref().and_then(|s| match s.as_str() {
         "bank" => Some(ItemSource::Bank),
@@ -305,7 +306,7 @@ async fn get_summary_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationSummary>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_summary(tenant_id, session_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
@@ -337,7 +338,7 @@ async fn update_diff_handler(
     Json(req): Json<UpdateDiffRequest>,
 ) -> Json<ApiResponse<ReconciliationItem>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service
         .update_diff(tenant_id, item_id, req.diff_reason, req.notes)
@@ -376,7 +377,7 @@ async fn get_report_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<ReconciliationReport>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_report(tenant_id, session_id).await {
         Ok(report) => {
@@ -497,7 +498,7 @@ async fn batch_update_diff_handler(
     Json(req): Json<BatchDiffRequest>,
 ) -> Json<ApiResponse<BatchDiffResponse>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.batch_update_diff(tenant_id, req).await {
         Ok(resp) => Json(ApiResponse::success(resp, "批量差异处理完成")),
@@ -521,7 +522,7 @@ async fn get_diff_statistics_handler(
     Path(session_id): Path<Uuid>,
 ) -> Json<ApiResponse<DiffStatistics>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_diff_statistics(tenant_id, session_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "差异统计查询成功")),
@@ -545,7 +546,7 @@ async fn get_aging_handler(
     Query(params): Query<AgingQueryParams>,
 ) -> Json<ApiResponse<AgingReport>> {
     let service = ReconciliationService::new(state.pool.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let as_of_date = match params.as_of_date {
         Some(s) => chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d")
@@ -561,12 +562,4 @@ async fn get_aging_handler(
         Ok(report) => Json(ApiResponse::success(report, "账龄分析查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
-}
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
 }

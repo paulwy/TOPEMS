@@ -246,7 +246,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             project_id UUID NOT NULL REFERENCES pdm_projects(id) ON DELETE CASCADE,
             user_id VARCHAR(128) NOT NULL,
             user_name VARCHAR(128),
-            user_email VARCHAR(256),
+            user_email TEXT,
             role VARCHAR(32) NOT NULL,
             joined_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),

@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // Alert Rule Types
@@ -297,14 +298,6 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
-}
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["monitor:alert:read"])),
@@ -319,7 +312,7 @@ pub async fn list_alerts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -445,7 +438,7 @@ pub async fn get_alert(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Alert>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let alert = Alert {
         id,
         tenant_id,
@@ -482,7 +475,7 @@ pub async fn update_alert(
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Alert>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let status = req
         .get("status")
         .and_then(|v| v.as_str())
@@ -645,7 +638,7 @@ pub async fn list_rules(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertRule>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rules = vec![
         AlertRule {
             id: Uuid::new_v4(),
@@ -740,7 +733,7 @@ pub async fn create_rule(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AlertRuleRequest>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id: Uuid::new_v4(),
         tenant_id,
@@ -776,7 +769,7 @@ pub async fn get_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
         tenant_id,
@@ -823,7 +816,7 @@ pub async fn update_rule(
     Path(id): Path<Uuid>,
     Json(req): Json<AlertRuleRequest>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
         tenant_id,
@@ -883,7 +876,7 @@ pub async fn enable_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
         tenant_id,
@@ -924,7 +917,7 @@ pub async fn disable_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AlertRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
         tenant_id,

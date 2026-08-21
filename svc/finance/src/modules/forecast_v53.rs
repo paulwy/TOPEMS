@@ -30,17 +30,10 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1257,7 +1250,7 @@ async fn predict_cash_flow_handler(
     Json(req): Json<PredictCashFlowRequest>,
 ) -> Json<ApiResponse<PredictionResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match CashFlowPredictor::predict(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "预测完成")),
@@ -1281,7 +1274,7 @@ async fn get_predictions_handler(
     Query(params): Query<PredictionsQueryParams>,
 ) -> Json<ApiResponse<Vec<CashFlowPrediction>>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
@@ -1316,7 +1309,7 @@ async fn retrain_model_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PredictionModelRecord>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let model_str = req
         .get("model")
@@ -1350,7 +1343,7 @@ async fn get_accuracy_handler(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<Vec<PredictionAccuracy>>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let model_type = params
         .get("model_type")
@@ -1381,7 +1374,7 @@ async fn analyze_budget_handler(
     Json(req): Json<AnalyzeBudgetRequest>,
 ) -> Json<ApiResponse<VarianceAnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match BudgetAnalyzer::analyze(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "分析完成")),
@@ -1405,7 +1398,7 @@ async fn get_variance_handler(
     Query(params): Query<VarianceQueryParams>,
 ) -> Json<ApiResponse<Vec<BudgetVariance>>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     match BudgetAnalyzer::get_variance(
         &pool,
@@ -1443,7 +1436,7 @@ async fn get_variance_report_handler(
     Query(params): Query<VarianceQueryParams>,
 ) -> Json<ApiResponse<VarianceAnalysisResult>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     match BudgetAnalyzer::get_report(&pool, params.entity_id, params.period).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
@@ -1467,7 +1460,7 @@ async fn detect_anomalies_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Vec<AnomalyDetection>>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let entity_id = req
         .get("entity_id")
@@ -1497,7 +1490,7 @@ async fn get_variance_trends_handler(
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<VarianceTrendAnalysis>> {
     let pool = state.pool.clone();
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let entity_id = params
         .get("entity_id")

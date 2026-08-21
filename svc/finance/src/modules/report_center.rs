@@ -24,17 +24,10 @@ use crate::models::{BalanceSheet, IncomeStatement};
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 fn safe_divide(numerator: Decimal, denominator: Decimal) -> Decimal {
     if denominator.is_zero() {
@@ -876,7 +869,7 @@ async fn get_enhanced_balance_sheet_handler(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<BalanceSheetEnhanced>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let base = service.get_balance_sheet(tenant_id, &period).await.ok();
     let report = generate_balance_sheet(&period, base.as_ref());
     Json(ApiResponse::success(report, "查询成功"))
@@ -898,7 +891,7 @@ async fn get_enhanced_income_statement_handler(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<IncomeStatementEnhanced>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let base = service.get_income_statement(tenant_id, &period).await.ok();
     let report = generate_income_statement(&period, base.as_ref());
     Json(ApiResponse::success(report, "查询成功"))
@@ -920,7 +913,7 @@ async fn get_enhanced_cash_flow_handler(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<CashFlowStatementEnhanced>> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = generate_cash_flow_statement(&period);
     Json(ApiResponse::success(report, "查询成功"))
 }
@@ -941,7 +934,7 @@ async fn get_financial_analysis_handler(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<FinancialAnalysisReport>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let balance_base = service.get_balance_sheet(tenant_id, &period).await.ok();
     let income_base = service.get_income_statement(tenant_id, &period).await.ok();
     let balance = generate_balance_sheet(&period, balance_base.as_ref());
@@ -975,7 +968,7 @@ async fn get_comparative_report_handler(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<ComparativeReport>> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = generate_comparative_report(&period);
     Json(ApiResponse::success(report, "查询成功"))
 }
@@ -996,7 +989,7 @@ async fn export_report_handler(
     Json(req): Json<ExportReportRequest>,
 ) -> Json<ApiResponse<ExportReportResponse>> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let format = req.format.unwrap_or_else(|| "xlsx".to_string());
     let now = Utc::now().to_rfc3339();
     let file_name = format!("{}_{}.{}", req.report_type, req.period, format);

@@ -355,8 +355,8 @@ async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS core_emails (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            from_email VARCHAR(256) NOT NULL,
-            to_email VARCHAR(256) NOT NULL,
+            from_email TEXT NOT NULL,
+            to_email TEXT NOT NULL,
             subject VARCHAR(512),
             body TEXT,
             html_body TEXT,

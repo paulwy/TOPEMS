@@ -20,10 +20,10 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         CREATE TABLE IF NOT EXISTS core_users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             username VARCHAR(64) NOT NULL UNIQUE,
-            email VARCHAR(255) NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
             password_hash VARCHAR(255) NOT NULL,
             full_name VARCHAR(128),
-            phone VARCHAR(32),
+            phone TEXT,
             avatar_url VARCHAR(512),
             status VARCHAR(32) DEFAULT 'active',
             is_superuser BOOLEAN DEFAULT FALSE,

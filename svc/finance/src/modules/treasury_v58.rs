@@ -33,15 +33,8 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1278,7 +1271,7 @@ async fn create_pool_handler(
     Json(req): Json<CreatePoolRequest>,
 ) -> Json<ApiResponse<CashPool>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::create_pool(&pool, tenant_id, req).await {
         Ok(p) => Json(ApiResponse::success(p, "现金池创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1301,7 +1294,7 @@ async fn get_pool_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<CashPool>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::get_pool(&pool, tenant_id, id).await {
         Ok(p) => Json(ApiResponse::success(p, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1323,7 +1316,7 @@ async fn list_pools_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<CashPool>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::list_pools(&pool, tenant_id).await {
         Ok(pools) => Json(ApiResponse::success(pools, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1346,7 +1339,7 @@ async fn allocate_funds_handler(
     Json(req): Json<AllocateFundsRequest>,
 ) -> Json<ApiResponse<Vec<PoolAllocation>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::allocate_funds(&pool, tenant_id, req).await {
         Ok(a) => Json(ApiResponse::success(a, "资金分配成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1374,7 +1367,7 @@ async fn transfer_handler(
     Json(req): Json<TransferRequest>,
 ) -> Json<ApiResponse<PoolTransfer>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::transfer_between_pools(&pool, tenant_id, req).await {
         Ok(t) => Json(ApiResponse::success(t, "资金调拨成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1397,7 +1390,7 @@ async fn get_pool_balance_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<CashPool>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::get_pool_balance(&pool, tenant_id, id).await {
         Ok(b) => Json(ApiResponse::success(b, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1420,7 +1413,7 @@ async fn get_pool_history_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<PoolTransfer>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::get_pool_history(&pool, tenant_id, id).await {
         Ok(h) => Json(ApiResponse::success(h, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1443,7 +1436,7 @@ async fn consolidate_cash_handler(
     Json(req): Json<ConsolidateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::consolidate_cash(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "现金归集完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1473,7 +1466,7 @@ async fn create_scenario_handler(
     Json(req): Json<CreateScenarioRequest>,
 ) -> Json<ApiResponse<ForecastScenario>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::create_scenario(&pool, tenant_id, req).await {
         Ok(s) => Json(ApiResponse::success(s, "场景创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1496,7 +1489,7 @@ async fn run_forecast_handler(
     Json(req): Json<RunForecastRequest>,
 ) -> Json<ApiResponse<Vec<ForecastResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::run_forecast(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "预测运行完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1519,7 +1512,7 @@ async fn get_forecast_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ForecastResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::get_forecast(&pool, tenant_id, id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1541,7 +1534,7 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::list_scenarios(&pool, tenant_id).await {
         Ok(s) => Json(ApiResponse::success(s, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1569,7 +1562,7 @@ async fn compare_scenarios_handler(
     Json(req): Json<CompareScenariosRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
         Ok(r) => Json(ApiResponse::success(r, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1591,7 +1584,7 @@ async fn get_forecast_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::get_forecast_summary(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1615,7 +1608,7 @@ async fn update_assumptions_handler(
     Json(req): Json<UpdateAssumptionsRequest>,
 ) -> Json<ApiResponse<ForecastScenario>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::update_assumptions(&pool, tenant_id, id, req).await {
         Ok(s) => Json(ApiResponse::success(s, "假设更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1639,7 +1632,7 @@ async fn get_liquidity_snapshot_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::get_liquidity_snapshot(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1667,7 +1660,7 @@ async fn optimize_liquidity_handler(
     Json(req): Json<OptimizeRequest>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::optimize_liquidity(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "优化完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1689,7 +1682,7 @@ async fn get_recommendations_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::get_recommendations(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1712,7 +1705,7 @@ async fn execute_action_handler(
     Json(req): Json<ExecuteActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::execute_action(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "操作执行成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1734,7 +1727,7 @@ async fn get_targets_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<LiquidityTarget>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::get_targets(&pool, tenant_id).await {
         Ok(t) => Json(ApiResponse::success(t, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1765,7 +1758,7 @@ async fn set_target_handler(
     Json(req): Json<SetTargetRequest>,
 ) -> Json<ApiResponse<LiquidityTarget>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::set_target(&pool, tenant_id, id, req).await {
         Ok(t) => Json(ApiResponse::success(t, "目标设置成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1787,7 +1780,7 @@ async fn get_optimization_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::get_optimization_history(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

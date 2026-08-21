@@ -1,5 +1,5 @@
 use crate::models::FactoryMap;
-use crate::services::tenant_service::{get_tenant_id, TenantService};
+use crate::services::tenant_service::TenantService;
 use crate::shared::permission::{check_permission, GisPermission};
 use axum::{
     extract::{Extension, Path, State},
@@ -8,6 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 

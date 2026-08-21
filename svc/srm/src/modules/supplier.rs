@@ -8,6 +8,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_db::repository::ListQueryParams as SharedListQueryParams;
 use uuid::Uuid;
 
@@ -95,20 +96,6 @@ pub async fn create_routes(
         .with_state(state);
 
     Ok(app)
-}
-
-fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
 }
 
 fn supplier_cache_key(tenant_id: Uuid, id: Uuid) -> String {

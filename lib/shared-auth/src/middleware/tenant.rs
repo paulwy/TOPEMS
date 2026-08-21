@@ -38,6 +38,18 @@ pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
         .unwrap_or_else(Uuid::new_v4)
 }
 
+/// 仅从 `Claims.tenant_id` 解析租户 ID，不回退到 header。
+///
+/// 适用于 service 层或无 `HeaderMap` 可用的调用点；解析失败返回 nil UUID
+/// （`Uuid::default()`），与各业务服务历史单参数实现行为一致。
+pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_default()
+}
+
 #[derive(Debug, Clone)]
 pub struct TenantDataAccess {
     pub tenant_id: Uuid,

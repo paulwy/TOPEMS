@@ -33,15 +33,8 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1403,7 +1396,7 @@ async fn analyze_transaction_handler(
     Json(req): Json<AnalyzeTransactionRequest>,
 ) -> Json<ApiResponse<FraudDecision>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::analyze_transaction(&pool, tenant_id, req).await {
         Ok(decision) => Json(ApiResponse::success(decision, "分析完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1426,7 +1419,7 @@ async fn get_fraud_decision_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FraudDecision>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
         Ok(decision) => Json(ApiResponse::success(decision, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1454,7 +1447,7 @@ async fn get_signals_handler(
     Query(params): Query<SignalQueryParams>,
 ) -> Json<ApiResponse<Vec<FraudSignal>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
         Ok(signals) => Json(ApiResponse::success(signals, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1477,7 +1470,7 @@ async fn create_device_handler(
     Json(req): Json<CreateDeviceRequest>,
 ) -> Json<ApiResponse<DeviceProfile>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::update_device_profile(&pool, tenant_id, req).await {
         Ok(profile) => Json(ApiResponse::success(profile, "设备画像创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1507,7 +1500,7 @@ async fn get_device_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DeviceProfile>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
         "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance_v59_device_profiles WHERE id = $1 AND tenant_id = $2",
     )
@@ -1537,7 +1530,7 @@ async fn list_blocked_devices_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DeviceProfile>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
         Ok(devices) => Json(ApiResponse::success(devices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1560,7 +1553,7 @@ async fn add_rule_handler(
     Json(req): Json<AddRuleRequest>,
 ) -> Json<ApiResponse<FraudRule>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::add_rule(&pool, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "规则添加成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1582,7 +1575,7 @@ async fn get_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::get_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1612,7 +1605,7 @@ async fn calculate_score_handler(
     Json(req): Json<CalculateScoreRequest>,
 ) -> Json<ApiResponse<CreditProfile>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::calculate_score(&pool, tenant_id, req).await {
         Ok(profile) => Json(ApiResponse::success(profile, "评分完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1635,7 +1628,7 @@ async fn get_credit_profile_handler(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<CreditProfile>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_credit_profile(&pool, tenant_id, id).await {
         Ok(profile) => Json(ApiResponse::success(profile, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1657,7 +1650,7 @@ async fn get_scoring_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ScoringModel>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1680,7 +1673,7 @@ async fn create_model_handler(
     Json(req): Json<CreateModelRequest>,
 ) -> Json<ApiResponse<ScoringModel>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::create_model(&pool, tenant_id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1711,7 +1704,7 @@ async fn update_model_handler(
     Json(req): Json<UpdateModelRequest>,
 ) -> Json<ApiResponse<ScoringModel>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::update_model(&pool, tenant_id, id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1739,7 +1732,7 @@ async fn get_score_factors_handler(
     Query(params): Query<FactorQueryParams>,
 ) -> Json<ApiResponse<Vec<ScoreFactor>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_score_factors(&pool, tenant_id, params.entity_id).await {
         Ok(factors) => Json(ApiResponse::success(factors, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1762,7 +1755,7 @@ async fn get_model_comparison_handler(
     Query(params): Query<CompareModelsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1785,7 +1778,7 @@ async fn bulk_score_handler(
     Json(req): Json<BulkScoreRequest>,
 ) -> Json<ApiResponse<Vec<CreditProfile>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::bulk_score(&pool, tenant_id, req).await {
         Ok(profiles) => Json(ApiResponse::success(profiles, "批量评分完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1815,7 +1808,7 @@ async fn create_scenario_handler(
     Json(req): Json<CreateScenarioRequest>,
 ) -> Json<ApiResponse<StressScenario>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::create_scenario(&pool, tenant_id, req).await {
         Ok(scenario) => Json(ApiResponse::success(scenario, "场景创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1838,7 +1831,7 @@ async fn run_stress_test_handler(
     Json(req): Json<RunStressTestRequest>,
 ) -> Json<ApiResponse<StressResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::run_stress_test(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "压力测试完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1861,7 +1854,7 @@ async fn get_test_result_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<StressResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1883,7 +1876,7 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<StressScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::list_scenarios(&pool, tenant_id).await {
         Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1911,7 +1904,7 @@ async fn compare_scenarios_handler(
     Json(req): Json<CompareScenariosRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1939,7 +1932,7 @@ async fn get_scenario_parameters_handler(
     Query(params): Query<GetParamsQueryParams>,
 ) -> Json<ApiResponse<Vec<ScenarioParameter>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
         Ok(params) => Json(ApiResponse::success(params, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1961,7 +1954,7 @@ async fn get_test_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::get_test_summary(&pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

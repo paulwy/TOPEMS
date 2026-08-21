@@ -6,7 +6,8 @@ use uuid::Uuid;
 use topems_shared_core::response::ApiResponse;
 
 use crate::mes_qms_integration;
-use crate::models::{get_tenant_id, AppState};
+use crate::models::AppState;
+use topems_shared_auth::get_tenant_id_from_claims;
 
 #[utoipa::path(
     get,
@@ -22,7 +23,7 @@ pub async fn list_mes_qms_sync_api(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Query(query): Query<HashMap<String, String>>,
 ) -> Json<ApiResponse<Vec<mes_qms_integration::MesQmsSync>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let sync_type = query.get("sync_type").map(|s| s.as_str());
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
@@ -128,7 +129,7 @@ pub async fn trigger_qms_inspection_api(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match mes_qms_integration::trigger_qms_inspection(
         &state.pool,
         tenant_id,
@@ -167,7 +168,7 @@ pub async fn sync_quality_result_api(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match mes_qms_integration::sync_quality_result_to_mes(
         &state.pool,
         tenant_id,
@@ -206,7 +207,7 @@ pub async fn sync_trace_chain_api(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match mes_qms_integration::sync_trace_chain_data(
         &state.pool,
         tenant_id,
@@ -245,7 +246,7 @@ pub async fn defect_handling_api(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match mes_qms_integration::handle_defect_handling(
         &state.pool,
         tenant_id,

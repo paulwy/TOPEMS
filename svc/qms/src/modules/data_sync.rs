@@ -8,6 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== Data Structures ====================
@@ -46,20 +47,6 @@ pub struct SyncInspectionToLimsRequest {
 #[derive(Debug, Deserialize)]
 pub struct SyncIssueToEhsRequest {
     pub issue_id: String,
-}
-
-fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
 }
 
 // ==================== Handler Functions ====================

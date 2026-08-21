@@ -10,6 +10,7 @@ use axum::{
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -300,14 +301,6 @@ impl AlertEvaluator {
     }
 }
 
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
-}
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["monitor:threshold:read"])),
@@ -321,7 +314,7 @@ pub async fn list_thresholds(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> axum::Json<ApiResponse<Vec<AlertThreshold>>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let thresholds = vec![
         AlertThreshold {
             id: Uuid::new_v4(),
@@ -424,7 +417,7 @@ pub async fn create_threshold(
     Extension(claims): Extension<Claims>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = AlertThreshold {
         id: Uuid::new_v4(),
         name: req.name,
@@ -460,7 +453,7 @@ pub async fn get_threshold(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = AlertThreshold {
         id,
         name: "CPU使用率告警".to_string(),
@@ -498,7 +491,7 @@ pub async fn update_threshold(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = AlertThreshold {
         id,
         name: req.name,
