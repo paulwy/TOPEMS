@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS gis.business_locations (
     position JSONB NOT NULL,
     address TEXT,
     contact_person VARCHAR(255),
-    contact_phone VARCHAR(50),
+    contact_phone TEXT,
     capacity INTEGER,
     current_usage INTEGER,
     status VARCHAR(50) DEFAULT 'active',

@@ -9,6 +9,7 @@ use axum::{
 };
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 const STATUS_VERIFIED: &str = "verified";
@@ -16,20 +17,6 @@ const STATUS_CLOSED: &str = "closed";
 const STATUS_CANCELLED: &str = "cancelled";
 
 const EIGHTD_SELECT_COLS: &str = r#"id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#;
-
-fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 pub async fn list_eightd_reports(
     State(state): State<crate::AppState>,

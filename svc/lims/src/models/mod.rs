@@ -494,7 +494,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             report_deadline TIMESTAMP,
             status VARCHAR(32) DEFAULT 'planning',
             contact_person VARCHAR(64),
-            contact_phone VARCHAR(32),
+            contact_phone TEXT,
             notes TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),

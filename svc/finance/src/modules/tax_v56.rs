@@ -41,15 +41,8 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1567,7 +1560,7 @@ async fn generate_tax_form_handler(
     Json(req): Json<GenerateTaxFormRequest>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::generate_tax_form(&pool, tenant_id, req).await {
         Ok(form) => Json(ApiResponse::success(form, "税务表单生成成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1590,7 +1583,7 @@ async fn get_tax_forms_handler(
     Query(params): Query<TaxFormsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxForm>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
         Ok(forms) => Json(ApiResponse::success(forms, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1613,7 +1606,7 @@ async fn get_tax_form_by_id_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1636,7 +1629,7 @@ async fn submit_tax_form_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::submit_form(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "提交成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1668,7 +1661,7 @@ async fn amend_tax_form_handler(
     Json(req): Json<AmendTaxFormRequest>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::amend_form(&pool, tenant_id, id, req).await {
         Ok(form) => Json(ApiResponse::success(form, "修改成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1691,7 +1684,7 @@ async fn get_tax_summary_handler(
     Query(params): Query<TaxSummaryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1713,7 +1706,7 @@ async fn get_tax_schedule_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_filing_schedule(&pool, tenant_id).await {
         Ok(schedule) => Json(ApiResponse::success(schedule, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1744,7 +1737,7 @@ async fn calculate_tax_handler(
     Json(req): Json<CalculateTaxRequest>,
 ) -> Json<ApiResponse<TaxResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let tax_type = req.tax_type.unwrap_or_else(|| "vat".to_string());
     match tax_type.as_str() {
         "vat" => {
@@ -1811,7 +1804,7 @@ async fn get_rate_schedule_handler(
     Query(params): Query<RateScheduleQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxRate>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxRateCalculator::get_rate_schedule(
         &pool,
         tenant_id,
@@ -1841,7 +1834,7 @@ async fn lookup_rate_handler(
     Query(params): Query<LookupRateParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let tax_type = params.tax_type.unwrap_or_else(|| "vat".to_string());
     match TaxRateCalculator::lookup_rate(
         &pool,
@@ -1876,7 +1869,7 @@ async fn get_tax_breakdown_handler(
     Query(params): Query<BreakdownParams>,
 ) -> Json<ApiResponse<Vec<TaxBreakdown>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxRateCalculator::get_tax_breakdown(
         &pool,
         tenant_id,
@@ -1953,7 +1946,7 @@ async fn create_plan_handler(
     Json(req): Json<CreatePlanRequest>,
 ) -> Json<ApiResponse<TaxPlan>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::create_plan(&pool, tenant_id, req).await {
         Ok(plan) => Json(ApiResponse::success(plan, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1976,7 +1969,7 @@ async fn analyze_scenario_handler(
     Json(req): Json<AnalyzeScenarioRequest>,
 ) -> Json<ApiResponse<ScenarioAnalysis>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::analyze_scenario(&pool, tenant_id, req).await {
         Ok(analysis) => Json(ApiResponse::success(analysis, "分析完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2006,7 +1999,7 @@ async fn get_suggestions_handler(
     Query(params): Query<SuggestionsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxSuggestion>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let plan_id = match params.plan_id {
         Some(id) => id,
         None => return Json(ApiResponse::error(400, "plan_id 参数必填")),
@@ -2033,7 +2026,7 @@ async fn compare_scenarios_handler(
     Json(req): Json<CompareScenarioRequest>,
 ) -> Json<ApiResponse<Vec<ScenarioAnalysis>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::compare_scenarios(&pool, tenant_id, req.scenarios).await {
         Ok(results) => Json(ApiResponse::success(results, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2056,7 +2049,7 @@ async fn list_plans_handler(
     Query(params): Query<PlansQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxPlan>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
         Ok(plans) => Json(ApiResponse::success(plans, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2079,7 +2072,7 @@ async fn approve_plan_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TaxPlan>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::approve_plan(&pool, tenant_id, id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "审批成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2109,7 +2102,7 @@ async fn get_compliance_handler(
     Query(params): Query<ComplianceQueryParams>,
 ) -> Json<ApiResponse<ComplianceCheckResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
         Ok(result) => Json(ApiResponse::success(result, "合规检查完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

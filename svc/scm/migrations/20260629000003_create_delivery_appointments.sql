@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS scm.supplier_delivery_appointments (
     delivery_method VARCHAR(50) NOT NULL,
     vehicle_no VARCHAR(50),
     driver_name VARCHAR(100),
-    driver_phone VARCHAR(50),
+    driver_phone TEXT,
     cargo_description TEXT,
     total_quantity NUMERIC(15,2),
     total_weight NUMERIC(15,2),

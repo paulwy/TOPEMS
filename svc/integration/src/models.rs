@@ -10,6 +10,7 @@ use uuid::Uuid;
 use topems_shared_auth::auth::AuthState;
 
 use crate::mes_erp_sync::MesErpSyncService;
+use topems_shared_auth::get_tenant_id_from_claims;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {
@@ -144,14 +145,6 @@ impl FromRef<AppState> for PgPool {
     fn from_ref(state: &AppState) -> Self {
         state.pool.clone()
     }
-}
-
-pub fn get_tenant_id(claims: &topems_shared_auth::auth::Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
 }
 
 #[cfg(test)]

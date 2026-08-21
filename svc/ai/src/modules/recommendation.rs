@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::services::recommendation::{RecommendationRequest, RecommendationResponse, UserProfile};
 use crate::shared::AppState;
+use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct RecommendationApi;
 
@@ -75,7 +76,7 @@ impl RecommendationApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,
@@ -95,7 +96,7 @@ impl RecommendationApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,
@@ -115,7 +116,7 @@ impl RecommendationApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,

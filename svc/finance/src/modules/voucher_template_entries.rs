@@ -8,15 +8,8 @@ use crate::services::finance::voucher_template::VoucherTemplateLine;
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct TemplateEntryPathParams {
@@ -70,7 +63,7 @@ pub async fn list_entries(
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<VoucherTemplateLine>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(_) => {
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
@@ -102,7 +95,7 @@ pub async fn get_entry(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
         "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
     )
@@ -134,7 +127,7 @@ pub async fn create_entry(
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
     )
@@ -202,7 +195,7 @@ pub async fn update_entry(
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
     )
@@ -265,7 +258,7 @@ pub async fn delete_entry(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
         "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)",
     )
@@ -307,7 +300,7 @@ pub async fn reorder_entries(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
     )

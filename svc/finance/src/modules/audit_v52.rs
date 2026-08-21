@@ -32,15 +32,8 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1668,7 +1661,7 @@ async fn create_audit_rule_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuditRuleRequest>,
 ) -> Json<ApiResponse<AuditRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match AutoAuditEngine::create_rule(&state.pool, tenant_id, req, &created_by).await {
         Ok(rule) => Json(ApiResponse::success(rule, "审计规则创建成功")),
@@ -1691,7 +1684,7 @@ async fn list_audit_rules_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditRuleQueryParams>,
 ) -> Json<ApiResponse<Vec<AuditRule>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
         .await
     {
@@ -1716,7 +1709,7 @@ async fn update_audit_rule_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAuditRuleRequest>,
 ) -> Json<ApiResponse<AuditRule>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::update_rule(&state.pool, id, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1738,7 +1731,7 @@ async fn delete_audit_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::delete_rule(&state.pool, id, tenant_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1760,7 +1753,7 @@ async fn get_audit_findings_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditFindingQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AutoAuditEngine::get_findings(
@@ -1801,7 +1794,7 @@ async fn resolve_finding_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveFindingRequest>,
 ) -> Json<ApiResponse<AuditFinding>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let resolved_by = claims.username.clone();
     match AutoAuditEngine::resolve_finding(
         &state.pool,
@@ -1832,7 +1825,7 @@ async fn run_audit_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunAuditRequest>,
 ) -> Json<ApiResponse<Vec<AuditFinding>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::run_audit(&state.pool, tenant_id, req.rule_ids).await {
         Ok(findings) => Json(ApiResponse::success(findings, "审计执行完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1854,7 +1847,7 @@ async fn detect_anomalies_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<DetectAnomalyRequest>,
 ) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AnomalyDetector::detect(&state.pool, tenant_id, req).await {
         Ok(alerts) => Json(ApiResponse::success(alerts, "异常检测完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1876,7 +1869,7 @@ async fn get_anomaly_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyAlertQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AnomalyDetector::get_alerts(
@@ -1915,7 +1908,7 @@ async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DetectionSummary>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1937,7 +1930,7 @@ async fn configure_detection_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<()>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let detection_type = req
         .get("detection_type")
         .and_then(|v| v.as_str())
@@ -1974,7 +1967,7 @@ async fn get_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertHistoryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AlertManager::get_history(
@@ -2014,7 +2007,7 @@ async fn create_alert_config_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertConfigRequest>,
 ) -> Json<ApiResponse<AlertConfig>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::create_config(&state.pool, tenant_id, req).await {
         Ok(config) => Json(ApiResponse::success(config, "预警配置创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2035,7 +2028,7 @@ async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertConfig>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::list_configs(&state.pool, tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2058,7 +2051,7 @@ async fn acknowledge_alert_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgeAlertRequest>,
 ) -> Json<ApiResponse<AlertHistory>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::acknowledge(&state.pool, id, tenant_id, &req.acknowledged_by).await {
         Ok(history) => Json(ApiResponse::success(history, "预警已确认")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

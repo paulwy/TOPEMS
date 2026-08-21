@@ -18,15 +18,8 @@ use crate::services::finance::voucher_template::CreateVoucherTemplateRequest;
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct TemplatePathParams {
@@ -89,7 +82,7 @@ pub async fn copy_template(
     Json(req): Json<CopyTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
@@ -145,7 +138,7 @@ pub async fn toggle_template(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ToggleTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
@@ -195,7 +188,7 @@ pub async fn match_template(
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let source_type = match req.source_type {
         Some(s) => s,
         None => return Json(ApiResponse::error(400, "source_type 为必填")),
@@ -264,7 +257,7 @@ pub async fn get_usage_stats(
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2",
     )
@@ -301,7 +294,7 @@ pub async fn export_template(
     Path(template_id): Path<Uuid>,
     Query(_params): Query<ExportQueryParams>,
 ) -> axum::response::Response {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
@@ -338,7 +331,7 @@ pub async fn import_template(
     mut multipart: Multipart,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     let mut file_content: Option<Vec<u8>> = None;
@@ -400,7 +393,7 @@ pub async fn toggle_generate_rule(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<ToggleRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
@@ -619,7 +612,7 @@ pub async fn preview_generation(
     Json(req): Json<PreviewGenerationRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let template = match service
         .get_voucher_template(tenant_id, req.template_id)
@@ -706,7 +699,7 @@ pub async fn generate_from_source(
     Json(req): Json<GenerateFromSourceRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     let template = match service
@@ -809,7 +802,7 @@ pub async fn batch_generate(
     Json(req): Json<BatchGenerateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
 
     let mut all_voucher_ids = Vec::new();
@@ -864,7 +857,7 @@ pub async fn auto_generate(
     Json(req): Json<AutoGenerateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
 
     let rule_ids: Vec<Uuid> = if let Some(rule_id) = req.rule_id {
@@ -941,7 +934,7 @@ pub async fn regenerate(
     Path(original_voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     // 获取原始凭证

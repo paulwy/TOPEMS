@@ -2,26 +2,13 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::get_tenant_id;
 use uuid::Uuid;
 
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
-
-fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()

@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 类型定义 ====================
@@ -129,14 +130,6 @@ pub struct SloViolationQuery {
 }
 
 // ==================== 辅助函数 ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 fn compute_status(compliance: f64, burn_rate: f64) -> String {
     if compliance >= 99.0 && burn_rate < 1.0 {
@@ -400,7 +393,7 @@ pub async fn list_slos(
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
 
     let filtered: Vec<Slo> = slos
@@ -461,7 +454,7 @@ pub async fn get_slo(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ApiResponse<Slo>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let slo = slos
         .into_iter()
@@ -505,7 +498,7 @@ pub async fn create_slo(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SloRequest>,
 ) -> Json<ApiResponse<Slo>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let compliance = 100.0;
     let burn = 0.0;
@@ -553,7 +546,7 @@ pub async fn update_slo(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<SloRequest>,
 ) -> Json<ApiResponse<Slo>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let slo = Slo {
         id,
@@ -616,7 +609,7 @@ pub async fn get_slo_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SloSummary>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let violations = seed_violations(tenant_id);
 
@@ -665,7 +658,7 @@ pub async fn get_slo_budget(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<SloBudget>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let now = Utc::now();
 
@@ -765,7 +758,7 @@ pub async fn list_slo_violations(
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloViolationQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

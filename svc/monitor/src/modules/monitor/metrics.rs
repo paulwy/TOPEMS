@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize)]
@@ -256,14 +257,6 @@ pub async fn get_database_metrics(
     Json(ApiResponse::success(metrics, "获取数据库指标成功"))
 }
 
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::new_v4)
-}
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["monitor:read"])),
@@ -277,7 +270,7 @@ pub async fn get_api_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ApiPerformance>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let performances = vec![
         ApiPerformance {
             id: Uuid::new_v4(),
@@ -343,7 +336,7 @@ pub async fn get_performance_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
 ) -> Json<ApiResponse<Vec<PerformanceTrend>>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     let period = params.period.unwrap_or("24h".to_string());
 
     let mut trends = Vec::new();
@@ -386,7 +379,7 @@ pub async fn get_service_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ServicePerformance>>> {
-    let _tenant_id = get_tenant_id(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let services = vec![
         ServicePerformance {
@@ -473,7 +466,7 @@ pub async fn get_performance_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<PerformanceSummary>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let now = chrono::Utc::now();
     let trends = (0..24)
@@ -586,7 +579,7 @@ pub async fn get_slow_queries(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
 ) -> Json<ApiResponse<Vec<SlowQuery>>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let now = chrono::Utc::now();
 
     let queries = vec![
@@ -687,7 +680,7 @@ pub async fn export_performance_data(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let format = req.format.to_lowercase();
 
     let export_data = match format.as_str() {

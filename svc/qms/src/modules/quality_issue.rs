@@ -10,6 +10,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::QmsQualityIssueCreatedPayload;
@@ -19,20 +20,6 @@ use topems_shared_service_client::service_client::CreateInstanceRequest;
 const STATUS_CLOSED: &str = "closed";
 const STATUS_IN_PROGRESS: &str = "in_progress";
 const STATUS_CANCELLED: &str = "cancelled";
-
-fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4)
-}
 
 #[utoipa::path(
     get,

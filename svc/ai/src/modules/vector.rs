@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::modules::models::*;
 use crate::shared::AppState;
+use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct VectorApi;
 
@@ -19,7 +20,7 @@ impl VectorApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<StoreVectorRequest>,
     ) -> Json<ApiResponse<StoreVectorResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let vector_req = crate::services::vector::SaveVectorRequest {
             document_id: req.document_id,
             chunk_id: req.chunk_id,
@@ -53,7 +54,7 @@ impl VectorApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<VectorSearchRequest>,
     ) -> Json<ApiResponse<VectorSearchResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let start = Instant::now();
 
         // 注意：这里需要生成查询向量
@@ -91,7 +92,7 @@ impl VectorApi {
         Path(id): Path<Uuid>,
         Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<crate::services::vector::VectorEmbedding>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.vector_service.get_vector(id, tenant_id).await {
             Ok(Some(vec)) => Json(ApiResponse::success(vec, "Success")),
             Ok(None) => Json(
@@ -109,7 +110,7 @@ impl VectorApi {
         Path(id): Path<Uuid>,
         Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<String>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.vector_service.delete_vector(id, tenant_id).await {
             Ok(true) => Json(ApiResponse::success("向量已删除".to_string(), "Success")),
             Ok(false) => Json(ApiResponse::<String>::error(404, "向量不存在")),
@@ -123,7 +124,7 @@ impl VectorApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<BatchStoreVectorsRequest>,
     ) -> Json<ApiResponse<BatchStoreVectorsResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let vectors: Vec<crate::services::vector::SaveVectorRequest> = req
             .vectors
             .into_iter()
@@ -157,7 +158,7 @@ impl VectorApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<HybridSearchRequest>,
     ) -> Json<ApiResponse<HybridSearchResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let start = Instant::now();
 
         // 注意：这里需要生成查询向量

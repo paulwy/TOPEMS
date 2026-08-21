@@ -116,7 +116,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             template_id UUID NOT NULL REFERENCES report_templates(id),
             user_id VARCHAR(64) NOT NULL,
-            email VARCHAR(256),
+            email TEXT,
             frequency VARCHAR(32) NOT NULL,
             enabled BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT NOW(),

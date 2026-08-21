@@ -14,15 +14,8 @@ use uuid::Uuid;
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 fn parse_period(s: &str) -> Option<(i32, i32)> {
     let parts: Vec<&str> = s.split('-').collect();
@@ -95,7 +88,7 @@ pub async fn get_report_item_details(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemDetailsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
@@ -161,7 +154,7 @@ pub async fn get_report_item_vouchers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemVouchersQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
@@ -264,7 +257,7 @@ pub async fn get_report_comparison(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComparisonQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let report_type = params.report_type.clone().unwrap_or_default();
     let period_from = match params.period_from.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -331,7 +324,7 @@ pub async fn get_report_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
         None => {
@@ -403,7 +396,7 @@ pub async fn get_report_year_over_year(
     Extension(claims): Extension<Claims>,
     Query(params): Query<YearOverYearQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -470,7 +463,7 @@ pub async fn get_report_period_over_period(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodOverPeriodQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -1532,7 +1525,7 @@ pub async fn generate_balance_sheet(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service.get_balance_sheet(tenant_id, &req.period).await {
@@ -1572,7 +1565,7 @@ pub async fn get_balance_sheet(
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
@@ -1617,7 +1610,7 @@ pub async fn get_balance_sheet_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(
@@ -1655,7 +1648,7 @@ pub async fn generate_income_statement(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service.get_income_statement(tenant_id, &req.period).await {
@@ -1695,7 +1688,7 @@ pub async fn get_income_statement(
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
@@ -1743,7 +1736,7 @@ pub async fn get_income_statement_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(
@@ -1781,7 +1774,7 @@ pub async fn generate_cash_flow(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     match service
@@ -1825,7 +1818,7 @@ pub async fn get_cash_flow(
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
@@ -1872,7 +1865,7 @@ pub async fn get_cash_flow_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(

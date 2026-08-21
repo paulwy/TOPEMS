@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS qa_ehs_emergency_plans (
     emergency_level VARCHAR(32),
     responsible_dept VARCHAR(128),
     responsible_person VARCHAR(64),
-    contact_phone VARCHAR(32),
+    contact_phone TEXT,
     content TEXT,
     created_by VARCHAR(64),
     approved_by VARCHAR(64),

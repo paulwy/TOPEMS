@@ -25,15 +25,8 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1313,7 +1306,7 @@ async fn create_template_handler(
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::create_template(&pool, tenant_id, req).await {
         Ok(template) => Json(ApiResponse::success(template, "模板创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1335,7 +1328,7 @@ async fn get_templates_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1360,7 +1353,7 @@ async fn generate_report_handler(
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::generate_report(&pool, tenant_id, req).await {
         Ok(report) => Json(ApiResponse::success(report, "报表生成成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1383,7 +1376,7 @@ async fn list_reports_handler(
     Query(params): Query<ReportListQueryParams>,
 ) -> Json<ApiResponse<Vec<GeneratedReport>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1406,7 +1399,7 @@ async fn get_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1427,7 +1420,7 @@ async fn download_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "下载成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1450,7 +1443,7 @@ async fn delete_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::delete_report(&pool, tenant_id, id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1473,7 +1466,7 @@ async fn schedule_report_handler(
     Json(req): Json<ScheduleReportRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::schedule_report(&pool, tenant_id, req).await {
         Ok(template) => Json(ApiResponse::success(template, "调度设置成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1503,7 +1496,7 @@ async fn analyze_handler(
     Json(req): Json<AnalyzeRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::analyze(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "分析完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1526,7 +1519,7 @@ async fn pivot_handler(
     Json(req): Json<PivotRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::pivot(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Pivot 完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1547,7 +1540,7 @@ async fn drill_down_handler(
     Json(req): Json<DrillDownRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::drill_down(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Drill-down 完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1570,7 +1563,7 @@ async fn roll_up_handler(
     Json(req): Json<RollUpRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::roll_up(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Roll-up 完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1593,7 +1586,7 @@ async fn slice_handler(
     Json(req): Json<SliceRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::slice(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Slice 完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1616,7 +1609,7 @@ async fn dice_handler(
     Json(req): Json<DiceRequest>,
 ) -> Json<ApiResponse<AnalysisResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::dice(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Dice 完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1638,7 +1631,7 @@ async fn get_analysis_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AnalysisResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1671,7 +1664,7 @@ async fn generate_forecast_handler(
     Json(req): Json<GenerateForecastRequest>,
 ) -> Json<ApiResponse<Insight>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::generate_forecast(&pool, tenant_id, req).await {
         Ok(insight) => Json(ApiResponse::success(insight, "预测生成成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1694,7 +1687,7 @@ async fn detect_anomalies_handler(
     Json(req): Json<DetectAnomaliesRequest>,
 ) -> Json<ApiResponse<Insight>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::detect_anomalies(&pool, tenant_id, req).await {
         Ok(insight) => Json(ApiResponse::success(insight, "异常检测完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1717,7 +1710,7 @@ async fn get_insights_handler(
     Query(params): Query<InsightsQueryParams>,
 ) -> Json<ApiResponse<Vec<Insight>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
         Ok(insights) => Json(ApiResponse::success(insights, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1740,7 +1733,7 @@ async fn train_model_handler(
     Json(req): Json<TrainModelRequest>,
 ) -> Json<ApiResponse<ForecastModel>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::train_model(&pool, tenant_id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型训练成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1762,7 +1755,7 @@ async fn list_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastModel>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1792,7 +1785,7 @@ async fn get_trend_handler(
     Query(params): Query<TrendQueryParams>,
 ) -> Json<ApiResponse<Insight>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::get_trend_analysis(&pool, tenant_id, params.metric).await {
         Ok(insight) => Json(ApiResponse::success(insight, "趋势分析完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

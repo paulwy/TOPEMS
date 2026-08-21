@@ -119,7 +119,7 @@ async fn get_customer_profile(
 
     let customer_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, company_size, website, email, phone, fax,
+        SELECT id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers WHERE id = $1
@@ -420,7 +420,7 @@ async fn list_customer_profiles(
 
     let customers_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, company_size, website, email, phone, fax,
+        SELECT id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers

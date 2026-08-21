@@ -8,7 +8,8 @@ use uuid::Uuid;
 use topems_shared_core::response::ApiResponse;
 
 use crate::mes_erp_sync;
-use crate::models::{get_tenant_id, AppState, CreateMesErpSyncRequest, MesErpSync};
+use crate::models::{AppState, CreateMesErpSyncRequest, MesErpSync};
+use topems_shared_auth::get_tenant_id_from_claims;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncErpToMesRequest {
@@ -221,7 +222,7 @@ pub async fn sync_erp_order_to_mes(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncErpToMesRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let erp_order_id = match Uuid::parse_str(&req.erp_order_id) {
         Ok(id) => id,
         Err(e) => {
@@ -260,7 +261,7 @@ pub async fn sync_mes_progress_to_erp(
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncMesToErpRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let mes_order_id = match Uuid::parse_str(&req.mes_order_id) {
         Ok(id) => id,
         Err(e) => {

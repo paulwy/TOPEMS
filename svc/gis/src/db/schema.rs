@@ -534,7 +534,7 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             position JSONB NOT NULL,
             address TEXT,
             contact_person VARCHAR(255),
-            contact_phone VARCHAR(50),
+            contact_phone TEXT,
             capacity INTEGER,
             current_usage INTEGER,
             status VARCHAR(50) NOT NULL DEFAULT 'active',

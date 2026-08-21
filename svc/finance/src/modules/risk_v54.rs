@@ -36,17 +36,10 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
-}
 
 // ==================== 枚举类型 ====================
 
@@ -1285,7 +1278,7 @@ async fn get_risk_dashboard_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskDashboard>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
         Ok(dashboard) => Json(ApiResponse::success(dashboard, "查询成功")),
@@ -1315,7 +1308,7 @@ async fn get_risk_alerts_handler(
     Query(params): Query<AlertQueryParams>,
 ) -> Json<ApiResponse<Vec<RiskAlert>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     if let Some(ref cat) = params.category {
         match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
@@ -1353,7 +1346,7 @@ async fn acknowledge_alert_handler(
     Path(alert_id): Path<Uuid>,
 ) -> Json<ApiResponse<RiskAlert>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match RealTimeRiskMonitor::acknowledge_alert(&pool, tenant_id, alert_id).await {
         Ok(alert) => Json(ApiResponse::success(alert, "已确认")),
@@ -1384,7 +1377,7 @@ async fn resolve_alert_handler(
     Path(alert_id): Path<Uuid>,
 ) -> Json<ApiResponse<RiskAlert>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match RealTimeRiskMonitor::resolve_alert(&pool, tenant_id, alert_id).await {
         Ok(alert) => Json(ApiResponse::success(alert, "已解决")),
@@ -1410,7 +1403,7 @@ async fn score_transaction_handler(
     Json(req): Json<ScoreTransactionRequest>,
 ) -> Json<ApiResponse<FraudScore>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::score_transaction(&pool, tenant_id, req).await {
         Ok(score) => Json(ApiResponse::success(score, "评分完成")),
@@ -1433,7 +1426,7 @@ async fn get_fraud_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
@@ -1473,7 +1466,7 @@ async fn update_fraud_rule_handler(
     Json(req): Json<UpdateFraudRuleRequest>,
 ) -> Json<ApiResponse<FraudRule>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::update_rule(
         &pool,
@@ -1507,7 +1500,7 @@ async fn get_fraud_score_handler(
     Path(transaction_id): Path<String>,
 ) -> Json<ApiResponse<FraudScore>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::get_score(&pool, tenant_id, transaction_id).await {
         Ok(score) => Json(ApiResponse::success(score, "查询成功")),
@@ -1533,7 +1526,7 @@ async fn review_entity_handler(
     Json(req): Json<ReviewEntityRequest>,
 ) -> Json<ApiResponse<Vec<ReviewResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
 
     match AutoComplianceReviewer::review_entity(&pool, tenant_id, req, reviewer).await {
@@ -1571,7 +1564,7 @@ async fn get_review_results_handler(
     Query(params): Query<ReviewResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReviewResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::get_review_results(
         &pool,
@@ -1602,7 +1595,7 @@ async fn get_compliance_status_handler(
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<ReviewWorkflow>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
         .await
@@ -1628,7 +1621,7 @@ async fn create_workflow_handler(
     Json(req): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<ReviewWorkflow>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::create_review_workflow(&pool, tenant_id, req).await {
         Ok(workflow) => Json(ApiResponse::success(workflow, "创建成功")),
@@ -1659,7 +1652,7 @@ async fn advance_workflow_handler(
     Path(workflow_id): Path<Uuid>,
 ) -> Json<ApiResponse<ReviewWorkflow>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::advance_workflow(&pool, tenant_id, workflow_id).await {
         Ok(workflow) => Json(ApiResponse::success(workflow, "推进成功")),
@@ -1689,7 +1682,7 @@ async fn generate_compliance_report_handler(
     Query(params): Query<ComplianceReportQueryParams>,
 ) -> Json<ApiResponse<ComplianceReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::generate_compliance_report(
         &pool,

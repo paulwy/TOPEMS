@@ -8,14 +8,7 @@ use uuid::Uuid;
 
 use crate::modules::models::*;
 use crate::shared::AppState;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .clone()
-        .and_then(|id| Uuid::parse_str(&id).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct DocumentApi;
 
@@ -26,7 +19,7 @@ impl DocumentApi {
         Extension(claims): Extension<Claims>,
         mut multipart: Multipart,
     ) -> Json<ApiResponse<UploadDocumentResponse>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         // 处理 multipart 上传
         let mut title = String::new();
         let mut filename = String::new();
@@ -165,7 +158,7 @@ impl DocumentApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<ProcessDocumentRequest>,
     ) -> Json<ApiResponse<ProcessDocumentResponse>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         // 获取文档
         match state
             .document_service
@@ -199,7 +192,7 @@ impl DocumentApi {
         Path(id): Path<Uuid>,
         Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<crate::services::vector::Document>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.document_service.get_document(id, tenant_id).await {
             Ok(Some(doc)) => Json(ApiResponse::success(doc, "Success")),
             Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::error(
@@ -218,7 +211,7 @@ impl DocumentApi {
         Path(id): Path<Uuid>,
         Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<String>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.document_service.delete_document(id, tenant_id).await {
             Ok(true) => Json(ApiResponse::success("文档已删除".to_string(), "Success")),
             Ok(false) => Json(ApiResponse::<String>::error(404, "文档不存在")),
@@ -231,7 +224,7 @@ impl DocumentApi {
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<Vec<crate::services::vector::Document>>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.document_service.list_documents(tenant_id).await {
             Ok(docs) => Json(ApiResponse::success(docs, "Success")),
             Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e)),
@@ -269,7 +262,7 @@ impl DocumentApi {
         Extension(claims): Extension<Claims>,
         Json(req): Json<ExtractDocumentRequest>,
     ) -> Json<ApiResponse<ExtractDocumentResponse>> {
-        let tenant_id = get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state.document_service.get_document(id, tenant_id).await {
             Ok(Some(doc)) => {
                 let chunks = match state
@@ -441,7 +434,7 @@ impl DocumentApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<VectorizeFromFileRequest>,
     ) -> Json<ApiResponse<VectorizeFromFileResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state
             .document_service
             .vectorize_from_file_service(req.file_id, tenant_id)
@@ -470,7 +463,7 @@ impl DocumentApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<SummarizeDocumentRequest>,
     ) -> Json<ApiResponse<SummarizeDocumentResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state
             .document_service
             .generate_document_summary(id, req.max_length, tenant_id)
@@ -494,7 +487,7 @@ impl DocumentApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<ExtractKeyPointsRequest>,
     ) -> Json<ApiResponse<ExtractKeyPointsResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         match state
             .document_service
             .extract_document_key_points(id, req.max_points, tenant_id)
@@ -517,7 +510,7 @@ impl DocumentApi {
         Extension(claims): Extension<topems_shared_auth::auth::Claims>,
         Json(req): Json<DocumentQAQuestionRequest>,
     ) -> Json<ApiResponse<DocumentQAAnswerResponse>> {
-        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        let tenant_id = get_tenant_id_from_claims(&claims);
         let top_k = req.top_k.unwrap_or(5);
 
         match state

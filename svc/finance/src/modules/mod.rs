@@ -40,6 +40,7 @@ use crate::models::*;
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_event::event::{EventType, FinancePaymentMadePayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -79,14 +80,6 @@ pub struct AuxQueryParams {
     pub period: Option<String>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
-}
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
 }
 
 async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
@@ -165,7 +158,7 @@ async fn create_account(
     Json(req): Json<CreateAccountRequest>,
 ) -> Json<ApiResponse<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_account(tenant_id, req).await {
         Ok(account) => Json(ApiResponse::success(account, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -188,7 +181,7 @@ pub async fn get_account(
     Path(account_id): Path<Uuid>,
 ) -> Json<ApiResponse<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_account(tenant_id, account_id).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -211,7 +204,7 @@ pub async fn get_account_by_code(
     Path(code): Path<String>,
 ) -> Json<ApiResponse<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_account_by_code(tenant_id, &code).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -234,7 +227,7 @@ async fn get_account_balances(
     Query(params): Query<AccountBalanceQueryParams>,
 ) -> Json<ApiResponse<Vec<TrialBalance>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &params.period).await {
         Ok(balances) => {
             let filtered = if let Some(account_ids) = params.account_ids {
@@ -267,7 +260,7 @@ pub async fn list_accounts(
     Query(_params): Query<AccountQueryParams>,
 ) -> Json<ApiResponse<Vec<Account>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.list_accounts(tenant_id).await {
         Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -290,7 +283,7 @@ pub async fn create_voucher(
     Json(req): Json<CreateVoucherRequest>,
 ) -> Json<ApiResponse<VoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_voucher(tenant_id, req, &created_by).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "创建成功")),
@@ -314,7 +307,7 @@ pub async fn get_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<VoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -338,7 +331,7 @@ async fn list_vouchers(
     Query(params): Query<VoucherQueryParams>,
 ) -> Json<ApiResponse<Vec<Voucher>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let status = params.status.map(|s| match s.as_str() {
         "draft" => VoucherStatus::Draft,
         "submitted" => VoucherStatus::Submitted,
@@ -374,7 +367,7 @@ pub async fn submit_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<Voucher>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.submit_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "提交成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -397,7 +390,7 @@ pub async fn approve_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<Voucher>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
         .approve_voucher(tenant_id, voucher_id, &approved_by)
@@ -424,7 +417,7 @@ pub async fn post_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<Voucher>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
         .post_voucher(tenant_id, voucher_id, &posted_by)
@@ -457,7 +450,7 @@ async fn update_voucher(
     Json(req): Json<UpdateVoucherRequest>,
 ) -> Json<ApiResponse<VoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     match service
         .update_voucher(tenant_id, voucher_id, req, &updated_by)
@@ -485,7 +478,7 @@ pub async fn delete_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_voucher(tenant_id, voucher_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -509,7 +502,7 @@ pub async fn unpost_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<Voucher>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.unpost_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "反过账成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -532,7 +525,7 @@ pub async fn get_ledger(
     Query(params): Query<LedgerQueryParams>,
 ) -> Json<ApiResponse<Vec<LedgerEntry>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let ledger_params = crate::models::LedgerQueryParams {
         account_id: params.account_id,
         account_code: params.account_code,
@@ -566,7 +559,7 @@ async fn get_trial_balance(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<TrialBalance>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &period).await {
         Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -589,7 +582,7 @@ async fn get_balance_sheet(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<BalanceSheet>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_balance_sheet(tenant_id, &period).await {
         Ok(sheet) => Json(ApiResponse::success(sheet, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -612,7 +605,7 @@ async fn get_income_statement(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<IncomeStatement>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_income_statement(tenant_id, &period).await {
         Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -635,7 +628,7 @@ async fn close_period(
     Path((year, month)): Path<(i32, i32)>,
 ) -> Json<ApiResponse<Period>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let closed_by = claims.username.clone();
     match service
         .close_period(tenant_id, year, month, &closed_by)
@@ -671,7 +664,7 @@ async fn open_period(
     Path((year, month)): Path<(i32, i32)>,
 ) -> Json<ApiResponse<Period>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.open_period(tenant_id, year, month).await {
         Ok(period) => Json(ApiResponse::success(period, "期间已打开")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -694,7 +687,7 @@ async fn create_aux_account(
     Json(req): Json<CreateAuxiliaryAccountRequest>,
 ) -> Json<ApiResponse<AuxiliaryAccount>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_aux_account(tenant_id, req).await {
         Ok(account) => Json(ApiResponse::success(account, "辅助科目创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -717,7 +710,7 @@ async fn list_aux_accounts(
     Query(params): Query<AuxQueryParams>,
 ) -> Json<ApiResponse<Vec<AuxiliaryAccount>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => Some(AuxType::Project),
         "department" => Some(AuxType::Department),
@@ -758,7 +751,7 @@ async fn get_aux_ledger(
     Query(params): Query<AuxQueryParams>,
 ) -> Json<ApiResponse<Vec<AuxLedgerEntry>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => AuxType::Project,
         "department" => AuxType::Department,
@@ -800,7 +793,7 @@ async fn get_aux_balance(
     Query(params): Query<AuxQueryParams>,
 ) -> Json<ApiResponse<Vec<AuxBalanceReport>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
         "project" => AuxType::Project,
         "department" => AuxType::Department,
@@ -845,7 +838,7 @@ async fn get_cash_flow(
     Path(period): Path<String>,
 ) -> Json<ApiResponse<CashFlowStatement>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_cash_flow_statement(tenant_id, &period).await {
         Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -868,7 +861,7 @@ pub async fn batch_submit_vouchers(
     Json(req): Json<BatchVoucherRequest>,
 ) -> Json<ApiResponse<BatchVoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .batch_submit_vouchers(tenant_id, req.voucher_ids)
         .await
@@ -894,7 +887,7 @@ pub async fn batch_approve_vouchers(
     Json(req): Json<BatchVoucherRequest>,
 ) -> Json<ApiResponse<BatchVoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
     match service
         .batch_approve_vouchers(tenant_id, req.voucher_ids, &approved_by)
@@ -921,7 +914,7 @@ pub async fn batch_post_vouchers(
     Json(req): Json<BatchVoucherRequest>,
 ) -> Json<ApiResponse<BatchVoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
     match service
         .batch_post_vouchers(tenant_id, req.voucher_ids, &posted_by)
@@ -949,7 +942,7 @@ async fn export_vouchers(
     Json(req): Json<ExportVoucherRequest>,
 ) -> Json<ApiResponse<ExportVoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.export_vouchers(tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "导出成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -972,7 +965,7 @@ async fn year_end_close(
     Json(req): Json<YearEndCloseRequest>,
 ) -> Json<ApiResponse<YearEndCloseResult>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service
         .year_end_close(tenant_id, req.year, &created_by, req.description)
@@ -1000,7 +993,7 @@ pub async fn create_payment_handler(
     Json(req): Json<CreatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_payment(tenant_id, req, &created_by).await {
         Ok(payment) => {
@@ -1061,7 +1054,7 @@ pub async fn get_payment_handler(
     Path(payment_id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment(tenant_id, payment_id).await {
         Ok(payment) => Json(ApiResponse::success(payment, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1090,7 +1083,7 @@ pub async fn list_payments_handler(
     Query(params): Query<PaymentListParams>,
 ) -> Json<ApiResponse<PaymentListResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let query = crate::models::PaymentQueryParams {
@@ -1133,7 +1126,7 @@ pub async fn update_payment_handler(
     Json(req): Json<CreatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
     match service
         .update_payment(tenant_id, payment_id, req, &updated_by)
@@ -1162,7 +1155,7 @@ pub async fn delete_payment_handler(
     Path(payment_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment(tenant_id, payment_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1186,7 +1179,7 @@ pub async fn submit_payment_handler(
     Path(payment_id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let _submitted_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
@@ -1219,7 +1212,7 @@ pub async fn approve_payment_handler(
     Path(payment_id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
@@ -1257,7 +1250,7 @@ pub async fn reject_payment_handler(
     Path(payment_id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rejected_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
@@ -1295,7 +1288,7 @@ pub async fn execute_payment_handler(
     Json(req): Json<crate::models::ExecutePaymentRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let executed_by = claims.username.clone();
 
     match service
@@ -1330,7 +1323,7 @@ pub async fn write_off_payment_item_handler(
     Json(req): Json<WriteOffRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let write_off_by = claims.username.clone();
 
     match service
@@ -1360,7 +1353,7 @@ pub async fn export_payments_handler(
     Json(req): Json<ExportPaymentRequest>,
 ) -> Json<ApiResponse<ExportPaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.export_payments(tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "导出成功")),
@@ -1388,7 +1381,7 @@ pub async fn list_approval_configs_handler(
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.list_approval_configs(tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
@@ -1417,7 +1410,7 @@ pub async fn create_approval_config_handler(
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     match service
@@ -1450,7 +1443,7 @@ pub async fn get_approval_config_handler(
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_approval_config(tenant_id, config_id).await {
         Ok(config) => Json(ApiResponse::success(config, "查询成功")),
@@ -1484,7 +1477,7 @@ pub async fn update_approval_config_handler(
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
 
     match service
@@ -1517,7 +1510,7 @@ pub async fn delete_approval_config_handler(
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.delete_approval_config(tenant_id, config_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
@@ -1653,7 +1646,7 @@ pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FinanceDashboardStats>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let total_vouchers = count_table_with_tenant(&state.pool, "vouchers", tenant_id).await;
     let draft_vouchers =
@@ -1722,7 +1715,7 @@ async fn list_voucher_templates_handler(
     Query(params): Query<VoucherTemplateQueryParams>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .list_voucher_templates(tenant_id, params.voucher_type, params.status)
         .await
@@ -1754,7 +1747,7 @@ pub async fn get_voucher_template_handler(
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(template) => Json(ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
@@ -1780,7 +1773,7 @@ pub async fn create_voucher_template_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
         match serde_json::from_value(req) {
@@ -1820,7 +1813,7 @@ async fn update_voucher_template_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -1854,7 +1847,7 @@ pub async fn delete_voucher_template_handler(
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .delete_voucher_template(tenant_id, template_id)
         .await
@@ -1880,7 +1873,7 @@ pub async fn set_default_template_handler(
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.set_default_template(tenant_id, template_id).await {
         Ok(template) => Json(ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
@@ -1911,7 +1904,7 @@ async fn apply_template_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -1938,7 +1931,7 @@ async fn copy_template_handler(
     Json(req): Json<CopyTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
@@ -1989,7 +1982,7 @@ async fn toggle_template_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ToggleTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
@@ -2036,7 +2029,7 @@ async fn match_template_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchTemplateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let source_type = match req.source_type {
         Some(s) => s,
         None => return Json(ApiResponse::error(400, "source_type 为必填")),
@@ -2101,7 +2094,7 @@ async fn get_template_usage_stats_handler(
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2",
     )
@@ -2151,7 +2144,7 @@ async fn add_template_entry_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
     )
@@ -2221,7 +2214,7 @@ async fn update_template_entry_handler(
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3",
     )
@@ -2278,7 +2271,7 @@ async fn delete_template_entry_handler(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
         "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)",
     )
@@ -2312,7 +2305,7 @@ async fn reorder_template_entries_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2",
     )
@@ -2375,7 +2368,7 @@ async fn export_template_handler(
     Path(template_id): Path<Uuid>,
     Query(_params): Query<ExportQueryParams>,
 ) -> axum::response::Response {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
@@ -2402,7 +2395,7 @@ async fn import_template_handler(
     mut multipart: Multipart,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     let mut file_content: Option<Vec<u8>> = None;
@@ -2471,7 +2464,7 @@ pub async fn list_generation_rules_handler(
     Query(params): Query<GenerationRuleQueryParams>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .list_generation_rules(tenant_id, params.source_type, params.status)
         .await
@@ -2503,7 +2496,7 @@ pub async fn get_generation_rule_handler(
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_generation_rule(tenant_id, rule_id).await {
         Ok(rule) => Json(ApiResponse::success(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
@@ -2529,7 +2522,7 @@ pub async fn create_generation_rule_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::CreateGenerationRuleRequest =
         match serde_json::from_value(req) {
@@ -2569,7 +2562,7 @@ pub async fn update_generation_rule_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -2603,7 +2596,7 @@ pub async fn delete_generation_rule_handler(
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_generation_rule(tenant_id, rule_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2631,7 +2624,7 @@ pub async fn toggle_generation_rule_handler(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<ToggleRuleRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
@@ -2694,7 +2687,7 @@ async fn test_rule_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -2725,7 +2718,7 @@ async fn generate_vouchers_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::GenerateVouchersRequest =
         match serde_json::from_value(req) {
@@ -2773,7 +2766,7 @@ async fn import_vouchers_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let imported_by = claims.username.clone();
     let req: crate::services::finance::u8_import::ImportVouchersRequest =
         match serde_json::from_value(req) {
@@ -2805,7 +2798,7 @@ async fn get_import_status_handler(
     Path(import_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_status(tenant_id, import_id).await {
         Ok(status) => Json(ApiResponse::success(
             serde_json::to_value(status).unwrap_or(serde_json::json!({})),
@@ -2831,7 +2824,7 @@ async fn list_import_records_handler(
     Query(params): Query<U8ImportQueryParams>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let query = crate::services::finance::u8_import::ImportRecordQuery {
         status: params.status,
         source_system: params.source_system,
@@ -2873,7 +2866,7 @@ async fn get_import_record_handler(
     Path(import_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_record(tenant_id, import_id).await {
         Ok(record) => Json(ApiResponse::success(
             serde_json::to_value(record).unwrap_or(serde_json::json!({})),
@@ -2899,7 +2892,7 @@ async fn rollback_import_handler(
     Path(import_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.rollback_import(tenant_id, import_id).await {
         Ok(_) => Json(ApiResponse::success((), "回滚成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2932,7 +2925,7 @@ pub async fn list_receivables_handler(
     Query(params): Query<ReceivableQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let customer_id = params
@@ -2954,7 +2947,7 @@ async fn get_receivable_handler(
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable(tenant_id, receivable_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2967,7 +2960,7 @@ async fn create_receivable_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_receivable(tenant_id, req, &created_by).await {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
@@ -2982,7 +2975,7 @@ async fn update_receivable_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_receivable(tenant_id, receivable_id, req)
         .await
@@ -2998,7 +2991,7 @@ async fn delete_receivable_handler(
     Path(receivable_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_receivable(tenant_id, receivable_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3024,7 +3017,7 @@ async fn get_receivable_aging_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3047,7 +3040,7 @@ pub async fn batch_create_receivables_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let items = req
         .get("items")
@@ -3089,7 +3082,7 @@ pub async fn list_payables_handler(
     Query(params): Query<PayableQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let supplier_id = params
@@ -3111,7 +3104,7 @@ async fn get_payable_handler(
     Path(payable_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable(tenant_id, payable_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3124,7 +3117,7 @@ async fn create_payable_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_payable(tenant_id, req, &created_by).await {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
@@ -3139,7 +3132,7 @@ async fn update_payable_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.update_payable(tenant_id, payable_id, req).await {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3152,7 +3145,7 @@ async fn delete_payable_handler(
     Path(payable_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payable(tenant_id, payable_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3178,7 +3171,7 @@ async fn get_payable_aging_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3201,7 +3194,7 @@ pub async fn batch_create_payables_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let items = req
         .get("items")
@@ -3243,7 +3236,7 @@ pub async fn list_collections_handler(
     Query(params): Query<CollectionQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let customer_id = params
@@ -3282,7 +3275,7 @@ async fn get_collection_handler(
     Path(collection_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_collection(tenant_id, collection_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3305,7 +3298,7 @@ pub async fn create_collection_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_collection(tenant_id, req, &created_by).await {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
@@ -3330,7 +3323,7 @@ async fn update_collection_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_collection(tenant_id, collection_id, req)
         .await
@@ -3356,7 +3349,7 @@ async fn delete_collection_handler(
     Path(collection_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_collection(tenant_id, collection_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3384,7 +3377,7 @@ async fn write_off_collection_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let collection_id_str = req
         .get("collection_id")
         .and_then(|v| v.as_str())
@@ -3428,7 +3421,7 @@ async fn batch_write_off_collections_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
@@ -3471,7 +3464,7 @@ pub async fn list_payment_records_handler(
     Query(params): Query<PaymentRecordQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let supplier_id = params
@@ -3503,7 +3496,7 @@ async fn get_payment_record_handler(
     Path(payment_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment_record(tenant_id, payment_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3527,7 +3520,7 @@ pub async fn create_payment_record_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service
         .create_payment_record(tenant_id, req, &created_by)
@@ -3554,7 +3547,7 @@ pub async fn approve_payment_record_handler(
     Path(payment_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(
             tenant_id,
@@ -3586,7 +3579,7 @@ pub async fn reject_payment_record_handler(
     Path(payment_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(
             tenant_id,
@@ -3618,7 +3611,7 @@ async fn update_payment_record_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(tenant_id, payment_id, req)
         .await
@@ -3645,7 +3638,7 @@ async fn delete_payment_record_handler(
     Path(payment_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<()>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment_record(tenant_id, payment_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3669,7 +3662,7 @@ async fn write_off_payment_record_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let payment_id_str = req.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
     let payable_id_str = req.get("payable_id").and_then(|v| v.as_str()).unwrap_or("");
     let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
@@ -3707,7 +3700,7 @@ async fn batch_write_off_payments_handler(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
@@ -3743,7 +3736,7 @@ async fn calculate_receivable_aging_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_receivable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "计算成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3765,7 +3758,7 @@ async fn calculate_payable_aging_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_payable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "计算成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3787,7 +3780,7 @@ async fn get_aging_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -3817,7 +3810,7 @@ async fn get_aging_detail_handler(
     Query(params): Query<AgingQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     match service
         .get_aging_detail(tenant_id, &direction, params.bucket)
@@ -3844,7 +3837,7 @@ async fn get_aging_trend_handler(
     Query(params): Query<AgingQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     let months = params.months.unwrap_or(6);
     match service.get_aging_trend(tenant_id, &direction, months).await {
@@ -3932,7 +3925,7 @@ pub async fn get_voucher_entries(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
         "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY created_at",
     )
@@ -3980,7 +3973,7 @@ pub async fn get_voucher_items(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
         "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY sort_order, created_at",
     )
@@ -4061,7 +4054,7 @@ pub async fn batch_delete_vouchers(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDeleteVouchersRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut deleted = 0i64;
     for id_str in &req.ids {
         if let Ok(id) = Uuid::parse_str(id_str) {
@@ -4097,7 +4090,7 @@ pub async fn unapprove_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query("UPDATE core_finance_vouchers SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')")
         .bind(voucher_id)
         .bind(tenant_id)
@@ -4137,7 +4130,7 @@ pub async fn reverse_voucher(
     Path(voucher_id): Path<Uuid>,
     Json(req): Json<ReverseVoucherRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
     let res = sqlx::query("INSERT INTO core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, is_reversed, original_voucher_id, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', true, $3, created_by, NOW(), NOW() FROM core_finance_vouchers WHERE id = $3 AND tenant_id = $2")
         .bind(reversal_id)
@@ -4175,7 +4168,7 @@ pub async fn get_next_voucher_no(
     Extension(claims): Extension<Claims>,
     Query(params): Query<NextVoucherNoQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let prefix = format!(
         "{}-",
         params.voucher_type.unwrap_or_else(|| "GEN".to_string())
@@ -4213,7 +4206,7 @@ pub async fn generate_voucher_by_template(
         Err(_) => return Json(ApiResponse::error(400, "无效的模板ID")),
     };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(template) => {
             let voucher_id = Uuid::new_v4();
@@ -4379,7 +4372,7 @@ pub async fn open_period_v2(
     Json(req): Json<PeriodActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query("INSERT INTO finance_periods (tenant_id, period, status, created_at, updated_at) VALUES ($1, $2, 'open', NOW(), NOW()) ON CONFLICT (tenant_id, period) DO UPDATE SET status = 'open', updated_at = NOW()")
         .bind(tenant_id)
         .bind(&period)
@@ -4410,7 +4403,7 @@ pub async fn close_period_v2(
     Json(req): Json<PeriodActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query("UPDATE finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND period = $2")
         .bind(tenant_id)
         .bind(&period)
@@ -4551,7 +4544,7 @@ pub async fn get_ar_aging(
     Query(_params): Query<ArAgingQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -4575,7 +4568,7 @@ pub async fn get_ap_aging(
     Query(_params): Query<ArAgingQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -4599,7 +4592,7 @@ pub async fn get_account_tree(
     Extension(claims): Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let rows = sqlx::query(
         "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM core_finance_accounts WHERE tenant_id = $1 AND ($2::text IS NULL OR category = $2) ORDER BY code",
