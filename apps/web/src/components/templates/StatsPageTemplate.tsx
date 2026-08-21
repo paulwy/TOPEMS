@@ -203,6 +203,8 @@ export interface StatsPageTemplateProps {
   showStatCards?: boolean;
   /** 统计卡片排列方向 */
   statCardDirection?: 'row' | 'column';
+  /** 自定义内容，渲染在表格区域之后 */
+  children?: React.ReactNode;
 }
 
 /**
@@ -241,6 +243,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   chartMinHeight = 300,
   showStatCards = true,
   statCardDirection = 'row',
+  children,
 }) => {
   // 内部状态
   const [internalTabValue, setInternalTabValue] = useState<string>('');
@@ -870,6 +873,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
       {/* 数据表格 */}
       {renderTables()}
+
+      {/* 自定义内容 */}
+      {children}
     </Box>
   );
 };

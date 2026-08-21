@@ -898,6 +898,8 @@
   "wms.wavePickDetail.k0": "波次拣货详情 —",
   "wms.wavePickDetail.k1": "· 优先级：",
   "wms.wavePickDetail.k2": "已拣 / 待拣",
+  "wms_wave_pick_detail_page.v0_0": "波次拣货详情 — {{v0}}",
+  "wms_wave_pick_detail_page.v0_1": "创建于 {{v0}}",
   "wms.analytics.locationUtilization.k0": "各库区堆叠柱状（已用 / 空置 / 呆滞）",
   "wms.batch_management_page.text_a230ce": "标签",
   "wms.batch_management_page.outbound": "出库",

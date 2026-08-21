@@ -217,6 +217,7 @@
   "pages.wms_transfer_detail_page.k5": "Receive GoodsTime:",
   "pages.wms_transfer_detail_page.k6": "Remark:",
   "pages.wms_transfer_detail_page.k7": "None",
+  "pages.wms_transfer_detail_page.k8": "Transfer Route",
   "pages.wms_wave_pick_detail_page.k0": "Chen Chen",
   "pages.wms_wave_pick_detail_page.k1": "Zhao Min",
   "pages.wms_wave_pick_detail_page.k2": "Wang Lei",
@@ -7706,6 +7707,7 @@
       "k5": "Receive GoodsTime:",
       "k6": "Remark:",
       "k7": "None",
+      "k8": "Transfer Route",
       "p_0": ">TransportMethod / Type</p>",
       "p_1": ">Carrier / Waybill Number</p>",
       "p_2": ">Quantity / Count</p>"

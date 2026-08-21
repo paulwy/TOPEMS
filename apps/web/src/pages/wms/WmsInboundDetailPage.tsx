@@ -1,9 +1,28 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { Box, Chip, Typography } from '@mui/material';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { InboundOrderDto } from '@/types/wms';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { TimelineItem } from '@/components/common/StatusTimeline';
+import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
+import { DataTable, PageContainer } from '@/components/common';
+import StatusTimeline from '@/components/common/StatusTimeline';
+import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+
+interface InboundItemRow {
+  id: string;
+  line_number: number;
+  material_code: string;
+  material_name: string;
+  unit: string;
+  expected_quantity: number;
+  received_quantity: number;
+  unit_price: number;
+  total_amount: number;
+  status: 'received' | 'pending';
+}
 
 function buildInboundItems(orderId: string, count: number) {
   const mats = [
@@ -26,6 +45,7 @@ function buildInboundItems(orderId: string, count: number) {
   return Array.from({ length: count }, (_, i) => {
     const m = mats[i % mats.length];
     const expected = 10 + i * 15;
+    const status: InboundItemRow['status'] = i % 2 ? 'received' : 'pending';
     return {
       id: `${orderId}-line-${i + 1}`,
       line_number: i + 1,
@@ -36,7 +56,7 @@ function buildInboundItems(orderId: string, count: number) {
       received_quantity: Math.floor(expected * (0.8 + i * 0.1)),
       unit_price: 50 + i * 100,
       total_amount: expected * (50 + i * 100),
-      status: i % 2 ? 'received' : 'pending',
+      status,
     };
   });
 }
@@ -52,145 +72,172 @@ export default function WmsInboundDetailPage() {
     );
   }, [id, data.inboundList]);
 
-  const items = useMemo(() => (order ? buildInboundItems(order.id, 4) : []), [order]);
+  const items = useMemo<InboundItemRow[]>(() => (order ? buildInboundItems(order.id, 4) : []), [order]);
 
-  if (!order) return <div className='p-8'>{i18n.t('pages.wms_inbound_detail_page.k0')}</div>;
+  const columns = useMemo<ColumnDef<InboundItemRow>[]>(
+    () => [
+      {
+        accessorKey: 'line_number',
+        header: i18n.t('pages.wms_inbound_detail_page.k10'),
+        cell: ({ row }) => <Typography variant='body2'>{row.original.line_number}</Typography>,
+      },
+      {
+        accessorKey: 'material_code',
+        header: i18n.t('pages.wms_inbound_detail_page.k11'),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+            {row.original.material_code}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'material_name',
+        header: i18n.t('pages.wms_inbound_detail_page.k12'),
+        cell: ({ row }) => <Typography variant='body2'>{row.original.material_name}</Typography>,
+      },
+      {
+        accessorKey: 'expected_quantity',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k13')}</Box>
+        ),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+            {row.original.expected_quantity}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'received_quantity',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k14')}</Box>
+        ),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+            {row.original.received_quantity}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'unit_price',
+        header: () => (
+          <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k15')}</Box>
+        ),
+        cell: ({ row }) => (
+          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+            ¥{row.original.unit_price.toLocaleString()}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: i18n.t('pages.wms_inbound_detail_page.k16'),
+        cell: ({ row }) => (
+          <Chip
+            size='small'
+            label={
+              row.original.status === 'received'
+                ? i18n.t('pages.wms_inbound_detail_page.k18')
+                : i18n.t('pages.wms_inbound_detail_page.k17')
+            }
+            color={row.original.status === 'received' ? 'success' : 'default'}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  const timelineItems = useMemo<TimelineItem[]>(() => {
+    if (!order) return [];
+    return [
+      {
+        id: 'created',
+        title: i18n.t('pages.wms_inbound_detail_page.k20'),
+        description: i18n.t('wms:wms_inbound_detail_page.v0_0', {
+          v0: order.created_by ?? 'system',
+        }),
+        status: 'completed',
+        time: order.created_at?.slice(0, 19).replace('T', ' '),
+      },
+      {
+        id: 'approved',
+        title: i18n.t('pages.wms_inbound_detail_page.k21'),
+        description: order.approved_by
+          ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: order.approved_by })
+          : undefined,
+        status: order.approved_at ? 'completed' : 'pending',
+        time: order.approved_at?.slice(0, 19).replace('T', ' '),
+      },
+    ];
+  }, [order]);
+
+  if (!order) {
+    return (
+      <PageContainer autoTitle autoBreadcrumbs>
+        <Typography>{i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
+      </PageContainer>
+    );
+  }
 
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div>
-          <h1 className='text-2xl font-bold'>
-            {i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
-          </h1>
-          <p className='text-sm text-gray-500'>
-            {i18n.t('wms:wms_inbound_detail_page.v0_2', { v0: order.created_at.slice(0, 10) })}
-          </p>
-        </div>
-        <div className='flex items-center gap-3'>
-          <WmsStatusBadge
-            fsm='inbound'
-            status={order.status}
-          />
-          <WmsFSMActionButtons
-            fsm='inbound'
-            currentStatus={order.status}
-            onAction={() => {}}
-          />
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k6')}</p>
-          <p className='mt-1 font-semibold'>{order.warehouse_name ?? '-'}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k7')}</p>
-          <p className='mt-1 font-semibold'>{order.supplier_name ?? '-'}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_inbound_detail_page.k1')}</p>
-          <p className='mt-1 font-semibold'>
-            {order.total_quantity ?? 0} / {order.received_quantity ?? 0}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inbound_detail_page.k8')}</p>
-          <p className='mt-1 font-semibold text-green-700'>
-            ¥{(order.total_amount ?? 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inbound_detail_page.k9')}</h3>
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_inbound_detail_page.k10')}
-                </th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_inbound_detail_page.k11')}
-                </th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_inbound_detail_page.k12')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_inbound_detail_page.k13')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_inbound_detail_page.k14')}
-                </th>
-                <th className='px-3 py-2 text-right'>
-                  {i18n.t('pages.wms_inbound_detail_page.k15')}
-                </th>
-                <th className='px-3 py-2 text-left'>
-                  {i18n.t('pages.wms_inbound_detail_page.k16')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it) => (
-                <tr
-                  key={it.id}
-                  className='border-t'
-                >
-                  <td className='px-3 py-2'>{it.line_number}</td>
-                  <td className='px-3 py-2 font-mono'>{it.material_code}</td>
-                  <td className='px-3 py-2'>{it.material_name}</td>
-                  <td className='px-3 py-2 text-right'>{it.expected_quantity}</td>
-                  <td className='px-3 py-2 text-right'>{it.received_quantity}</td>
-                  <td className='px-3 py-2 text-right'>¥{it.unit_price}</td>
-                  <td className='px-3 py-2'>
-                    <span
-                      className={`text-xs ${it.status === 'received' ? 'text-green-600' : 'text-gray-500'}`}
-                    >
-                      {it.status === 'received'
-                        ? i18n.t('pages.wms_inbound_detail_page.k18')
-                        : i18n.t('pages.wms_inbound_detail_page.k17')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inbound_detail_page.k19')}</h3>
-        <ol className='relative border-l border-gray-200 ml-3'>
-          {[
+    <PageContainer autoTitle autoBreadcrumbs>
+      <DetailPageTemplate
+        title={i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
+        subtitle={i18n.t('wms:wms_inbound_detail_page.v0_2', {
+          v0: order.created_at.slice(0, 10),
+        })}
+        detailItemName={order.order_number}
+        headerContent={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WmsStatusBadge fsm='inbound' status={order.status} />
+            <WmsFSMActionButtons
+              fsm='inbound'
+              currentStatus={order.status}
+              onAction={() => {}}
+            />
+          </Box>
+        }
+        infoCard={{
+          title: order.order_number,
+          subtitle: i18n.t('wms:wms_inbound_detail_page.v0_2', {
+            v0: order.created_at.slice(0, 10),
+          }),
+          tags: [order.warehouse_name ?? '-', order.supplier_name ?? '-'],
+          stats: [
             {
-              t: order.created_at,
-              title: i18n.t('pages.wms_inbound_detail_page.k20'),
-              who: order.created_by,
+              label: i18n.t('pages.wms_inbound_detail_page.k8'),
+              value: `¥${(order.total_amount ?? 0).toLocaleString()}`,
             },
             {
-              t: order.approved_at,
-              title: i18n.t('pages.wms_inbound_detail_page.k21'),
-              who: order.approved_by,
+              label: i18n.t('wms:wms_inbound_detail_page.k1'),
+              value: `${order.total_quantity ?? 0} / ${order.received_quantity ?? 0}`,
             },
-          ]
-            .filter((x) => x.t)
-            .map((e, i) => (
-              <li
-                key={i}
-                className='ml-6 pb-4'
-              >
-                <span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-var(--color-primary-foreground)' />
-                <div className='text-sm text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
-                <div className='font-medium'>{e.title}</div>
-                <div className='text-sm text-gray-600'>
-                  {i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: e.who ?? 'system' })}
-                </div>
-              </li>
-            ))}
-        </ol>
-      </div>
-    </div>
+          ],
+        }}
+        sections={[
+          {
+            id: 'summary',
+            title: i18n.t('pages.wms_inbound_detail_page.k9'),
+            content: (
+              <DataTable
+                columns={columns}
+                data={items}
+                searchKey='material_name'
+                showSearch={false}
+                showFilters={false}
+                showExport={false}
+                enablePagination={false}
+                striped
+              />
+            ),
+          },
+          {
+            id: 'timeline',
+            title: i18n.t('pages.wms_inbound_detail_page.k19'),
+            content: <StatusTimeline items={timelineItems} />,
+          },
+        ]}
+      />
+    </PageContainer>
   );
 }

@@ -1,10 +1,10 @@
 /**
- * Shared DataTable component
- * Extracted from apps/web with dependency decoupling.
- * Uses TanStack React Table - supports search, sort, filter, pagination, selection, export.
- * Enhanced features: column config persistence, row expansion, advanced filters, virtual scrolling, mobile card view.
+ * 统一的 DataTable 组件
+ * 迁移自 apps/web，在 shared-components 中自包含，不再依赖 apps/web 专属模块。
+ * 使用 TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能。
+ * 增强特性：列配置持久化、行展开、虚拟滚动、高级筛选、Excel 导出、行内编辑、移动端卡片视图。
  */
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -26,7 +26,13 @@ import {
   TextField,
   Chip,
   Button,
+  useTheme,
+  Stack,
+  FormControl,
+  InputLabel,
+  useMediaQuery,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   Search,
   Filter,
@@ -40,6 +46,8 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Save,
+  XCircle,
 } from 'lucide-react';
 import {
   flexRender,
@@ -47,18 +55,26 @@ import {
   useReactTable,
   getSortedRowModel,
   getFilteredRowModel,
+  type Cell,
   type ColumnDef,
+  type Row,
   type SortingState,
   type ColumnFiltersState,
   type PaginationState,
   type VisibilityState,
-  type RowData,
 } from '@tanstack/react-table';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-// ============ Type Definitions ============
+// ============ 类型定义 ============
 
+/**
+ * 行展开内容渲染函数类型
+ */
 export type ExpandedRowRender<TData> = (row: TData) => React.ReactNode;
 
+/**
+ * 高级筛选配置
+ */
 export interface AdvancedFilter {
   label: string;
   key: string;
@@ -68,87 +84,247 @@ export interface AdvancedFilter {
   onChange?: (value: string) => void;
 }
 
+/**
+ * 导出结果
+ */
 export interface ExportResult {
   success: boolean;
   error?: unknown;
 }
 
-export type ExportDataFn = (format: string, columns: ColumnDef<any, any>[], rows: any[]) => Promise<ExportResult> | ExportResult;
+/**
+ * 自定义导出函数
+ */
+export type ExportDataFn = (
+  format: string,
+  columns: ColumnDef<any, any>[],
+  rows: any[]
+) => Promise<ExportResult> | ExportResult;
 
-export interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  searchKey?: string;
-  searchPlaceholder?: string;
-  showSearch?: boolean;
-  showFilters?: boolean;
-  showExport?: boolean;
-  showSelection?: boolean;
-  showCreate?: boolean;
-  createLabel?: string;
-  onCreate?: () => void;
-  exportFileName?: string;
-  enablePagination?: boolean;
-  totalPages?: number;
-  totalItems?: number;
-  pageSize?: number;
-  currentPage?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (size: number) => void;
-  onRowClick?: (row: TData) => void;
-  onSelectionChange?: (selectedRows: string[]) => void;
-  showRefresh?: boolean;
-  onRefresh?: () => void;
-  loading?: boolean;
-  responsive?: boolean;
-  emptyMessage?: string;
-  getRowKey?: (row: TData) => string;
-  extraActions?: React.ReactNode;
-  sx?: any;
-  persistColumnConfig?: boolean;
-  columnConfigKey?: string;
-  enableRowExpansion?: boolean;
-  expandedRowRender?: ExpandedRowRender<TData>;
-  enableVirtualization?: boolean;
-  rowHeight?: number;
-  enableStickyHeader?: boolean;
-  showRowNumber?: boolean;
-  enableAdvancedFilter?: boolean;
-  advancedFilters?: AdvancedFilter[];
-  striped?: boolean;
-  compact?: boolean;
-  emptyState?: React.ReactNode;
-  selectedIds?: string[];
-  selectedRows?: string[];
+/**
+ * 行内编辑类型
+ */
+type InlineEditType = 'text' | 'select' | 'number' | 'date' | 'datetime' | 'checkbox';
 
-  /** Mobile card view render function */
-  mobileCardRender?: (row: TData, index: number) => React.ReactNode;
-
-  /** Mobile card view title field key */
-  mobileCardTitleKey?: string;
-
-  /** Mobile card view subtitle field key */
-  mobileCardSubtitleKey?: string;
-
-  /** Custom field labels for mobile card view */
-  mobileFieldLabels?: Record<string, string>;
-
-  /** Fields to display in mobile card view */
-  mobileDisplayFields?: string[];
-
-  /** Should use mobile card view (controlled) */
-  useMobileCardView?: boolean;
-
-  // --- Decoupled dependency props ---
-  onExportSuccess?: () => void;
-  onExportError?: (error: Error) => void;
-  exportData?: ExportDataFn;
+/**
+ * 行内编辑配置
+ */
+interface InlineEditConfig {
+  type?: InlineEditType;
+  options?: { value: string | number; label: string }[];
 }
 
+/**
+ * 行内编辑保存回调类型
+ */
+type InlineEditSaveCallback<TData> = (row: TData, changes: Partial<TData>) => void;
+
+/**
+ * 可配置的文案对象
+ */
+export interface DataTableLabels {
+  searchPlaceholder?: string;
+  createLabel?: string;
+  emptyMessage?: string;
+  refreshLabel?: string;
+  exportLabel?: string;
+  exportCsvLabel?: string;
+  exportExcelLabel?: string;
+  columnSettingsLabel?: string;
+  showHideColumnsLabel?: string;
+  resetColumnsLabel?: string;
+  selectedLabel?: string;
+  recordsLabel?: string;
+  cancelSelectionLabel?: string;
+  expandLabel?: string;
+  collapseLabel?: string;
+  loadingLabel?: string;
+  previousPageLabel?: string;
+  nextPageLabel?: string;
+  previousPageAriaLabel?: string;
+  nextPageAriaLabel?: string;
+  pageInfo?: (current: number, total: number) => string;
+  perPageLabel?: string;
+  advancedFilterTitle?: string;
+  allOptionLabel?: string;
+  resetFilterLabel?: string;
+  applyFilterLabel?: string;
+  saveAriaLabel?: string;
+  cancelAriaLabel?: string;
+  yesLabel?: string;
+  noLabel?: string;
+  defaultCardTitle?: string;
+}
+
+/**
+ * DataTable 属性
+ */
+export interface DataTableProps<TData, TValue> {
+  /** 列定义 */
+  columns: (ColumnDef<TData, TValue> & { inlineEdit?: InlineEditConfig })[];
+  /** 数据 */
+  data: TData[];
+  /** 搜索字段名 */
+  searchKey?: string;
+  /** 搜索占位符 */
+  searchPlaceholder?: string;
+  /** 是否显示搜索框 */
+  showSearch?: boolean;
+  /** 是否显示筛选按钮 */
+  showFilters?: boolean;
+  /** 是否显示导出按钮 */
+  showExport?: boolean;
+  /** 是否显示选择框 */
+  showSelection?: boolean;
+  /** 是否显示新建按钮 */
+  showCreate?: boolean;
+  /** 新建按钮标签 */
+  createLabel?: string;
+  /** 新建按钮点击回调 */
+  onCreate?: () => void;
+  /** 导出文件名 */
+  exportFileName?: string;
+  /** 是否启用分页 */
+  enablePagination?: boolean;
+  /** 总页数 */
+  totalPages?: number;
+  /** 总记录数 */
+  totalItems?: number;
+  /** 每页条数 */
+  pageSize?: number;
+  /** 当前页码（受控） */
+  currentPage?: number;
+  /** 页码变化回调 */
+  onPageChange?: (page: number) => void;
+  /** 每页条数变化回调 */
+  onPageSizeChange?: (size: number) => void;
+  /** 行点击回调 */
+  onRowClick?: (row: TData) => void;
+  /** 选择变化回调，始终传入 string[] */
+  onSelectionChange?: (selectedRows: string[]) => void;
+  /** 是否显示刷新按钮 */
+  showRefresh?: boolean;
+  /** 刷新回调 */
+  onRefresh?: () => void;
+  /** 是否加载中 */
+  loading?: boolean;
+  /** 是否响应式 */
+  responsive?: boolean;
+  /** 空数据提示 */
+  emptyMessage?: string;
+  /** 获取行 key 的函数 */
+  getRowKey?: (row: TData) => string;
+  /** 额外操作按钮 */
+  extraActions?: React.ReactNode;
+  /** 自定义样式 */
+  sx?: SxProps<Theme>;
+  /** 是否启用列配置持久化（存储到 localStorage） */
+  persistColumnConfig?: boolean;
+  /** 列配置存储的 key 前缀 */
+  columnConfigKey?: string;
+  /** 是否启用行展开功能 */
+  enableRowExpansion?: boolean;
+  /** 行展开内容渲染函数 */
+  expandedRowRender?: ExpandedRowRender<TData>;
+  /** 是否启用虚拟滚动 */
+  enableVirtualization?: boolean;
+  /** 虚拟滚动的行高 */
+  rowHeight?: number;
+  /** 虚拟滚动区域高度 */
+  virtualHeight?: number;
+  /** 是否启用列固定 */
+  enableStickyHeader?: boolean;
+  /** 是否显示行号 */
+  showRowNumber?: boolean;
+  /** 是否启用高级筛选 */
+  enableAdvancedFilter?: boolean;
+  /** 高级筛选配置 */
+  advancedFilters?: AdvancedFilter[];
+  /** 是否显示行条纹 */
+  striped?: boolean;
+  /** 是否紧凑模式 */
+  compact?: boolean;
+  /** 空状态自定义内容 */
+  emptyState?: React.ReactNode;
+  /** @deprecated 使用 selectedRows 代替。保留用于向后兼容。 */
+  selectedIds?: string[];
+  /** 已选中的行 ID 列表（受控） */
+  selectedRows?: string[];
+  /** 移动端卡片视图渲染函数 */
+  mobileCardRender?: (row: TData, index: number) => React.ReactNode;
+  /** 移动端卡片视图的标题字段名 */
+  mobileCardTitleKey?: string;
+  /** 移动端卡片视图的副标题字段名 */
+  mobileCardSubtitleKey?: string;
+  /** 移动端卡片字段标签映射 */
+  mobileFieldLabels?: Record<string, string>;
+  /** 移动端卡片展示的字段列表 */
+  mobileDisplayFields?: string[];
+  /** 是否强制使用移动端卡片视图（受控） */
+  useMobileCardView?: boolean;
+  /** 是否启用行内编辑 */
+  enableInlineEdit?: boolean;
+  /** 行内编辑模式：cell（单元格编辑）或 row（整行编辑） */
+  inlineEditMode?: 'cell' | 'row';
+  /** 可编辑的列 key 列表 */
+  editableColumns?: string[];
+  /** 行内编辑保存回调 */
+  onInlineEditSave?: InlineEditSaveCallback<TData>;
+  /** 可覆盖的文案对象 */
+  labels?: Partial<DataTableLabels>;
+  /** 自定义导出函数 */
+  exportData?: ExportDataFn;
+  /** 导出成功回调 */
+  onExportSuccess?: () => void;
+  /** 导出失败回调 */
+  onExportError?: (error: Error) => void;
+}
+
+/**
+ * 行数据类型
+ */
 export interface DataTableRow<TData> {
   original: TData;
   id: string;
 }
+
+// ============ 默认文案 ============
+
+const defaultLabels: DataTableLabels = {
+  searchPlaceholder: 'Search...',
+  createLabel: 'Create',
+  emptyMessage: 'No data available',
+  refreshLabel: 'Refresh',
+  exportLabel: 'Export',
+  exportCsvLabel: 'Export CSV',
+  exportExcelLabel: 'Export Excel',
+  columnSettingsLabel: 'Column Settings',
+  showHideColumnsLabel: 'Show/Hide Columns',
+  resetColumnsLabel: 'Reset Columns',
+  selectedLabel: 'Selected',
+  recordsLabel: 'records',
+  cancelSelectionLabel: 'Cancel Selection',
+  expandLabel: 'Expand',
+  collapseLabel: 'Collapse',
+  loadingLabel: 'Loading...',
+  previousPageLabel: 'Previous',
+  nextPageLabel: 'Next',
+  previousPageAriaLabel: 'Previous Page',
+  nextPageAriaLabel: 'Next Page',
+  pageInfo: (current, total) => `Page ${current} / ${total}`,
+  perPageLabel: 'Per page',
+  advancedFilterTitle: 'Advanced Filter',
+  allOptionLabel: 'All',
+  resetFilterLabel: 'Reset',
+  applyFilterLabel: 'Apply',
+  saveAriaLabel: 'Save',
+  cancelAriaLabel: 'Cancel',
+  yesLabel: 'Yes',
+  noLabel: 'No',
+  defaultCardTitle: 'Item',
+};
+
+// ============ 工具函数 ============
 
 const loadColumnVisibility = (key: string): VisibilityState => {
   try {
@@ -170,7 +346,7 @@ const saveColumnVisibility = (key: string, visibility: VisibilityState): void =>
   }
 };
 
-function exportToCSV<TData extends RowData>(
+function exportToCSV<TData>(
   columns: ColumnDef<TData, any>[],
   data: TData[],
   fileName: string = 'export'
@@ -183,7 +359,7 @@ function exportToCSV<TData extends RowData>(
       ...data.map((row) =>
         columns
           .map((col) => {
-            const value = row[col.id as keyof TData];
+            const value = (row as Record<string, unknown>)[col.id as string];
             if (typeof value === 'string') {
               return `"${value.replace(/"/g, '""')}"`;
             }
@@ -211,7 +387,7 @@ function exportToCSV<TData extends RowData>(
   }
 }
 
-function exportToExcel<TData extends RowData>(
+function exportToExcel<TData>(
   columns: ColumnDef<TData, any>[],
   data: TData[],
   fileName: string = 'export'
@@ -221,7 +397,7 @@ function exportToExcel<TData extends RowData>(
 
     const rows = data.map((row) =>
       columns.map((col) => {
-        const value = row[col.id as keyof TData];
+        const value = (row as Record<string, unknown>)[col.id as string];
         return typeof value === 'string' ? value : JSON.stringify(value);
       })
     );
@@ -247,22 +423,45 @@ function exportToExcel<TData extends RowData>(
   }
 }
 
+// ============ 移动端卡片视图 ============
+
+/**
+ * 移动端卡片视图属性
+ */
 export interface MobileCardViewProps<TData> {
+  /** 数据 */
   data: TData[];
+  /** 卡片渲染函数（完全自定义） */
   cardRender?: (row: TData, index: number) => React.ReactNode;
+  /** 标题字段名（用于默认卡片渲染） */
   titleKey?: string;
+  /** 副标题字段名 */
   subtitleKey?: string;
+  /** 自定义字段映射（字段名 → 标签） */
   fieldLabels?: Record<string, string>;
+  /** 需要在卡片中展示的字段列表（默认展示所有字段） */
   displayFields?: string[];
+  /** 行点击回调 */
   onRowClick?: (row: TData) => void;
+  /** 是否加载中 */
   loading?: boolean;
+  /** 空数据提示 */
   emptyMessage?: string;
+  /** 获取行 key */
   getRowKey?: (row: TData) => string;
+  /** 是否显示选择框 */
   showSelection?: boolean;
+  /** 已选中的行 ID 列表 */
   selectedIds?: string[];
+  /** 选择变化回调 */
   onSelectionChange?: (row: TData, selected: boolean) => void;
+  /** 文案对象 */
+  labels?: Partial<DataTableLabels>;
 }
 
+/**
+ * 移动端卡片视图组件
+ */
 export function MobileCardView<TData>({
   data,
   cardRender,
@@ -272,12 +471,15 @@ export function MobileCardView<TData>({
   displayFields,
   onRowClick,
   loading = false,
-  emptyMessage = '暂无数据',
-  getRowKey = (row: TData) => (row as any).id?.toString() || Math.random().toString(),
+  emptyMessage,
+  getRowKey = (row: TData) =>
+    (row as unknown as Record<string, unknown>).id?.toString() || Math.random().toString(),
   showSelection = false,
   selectedIds = [],
   onSelectionChange,
+  labels,
 }: MobileCardViewProps<TData>) {
+  const mergedLabels = { ...defaultLabels, ...labels };
   const isEmpty = !loading && (!data || data.length === 0);
 
   if (loading) {
@@ -302,7 +504,7 @@ export function MobileCardView<TData>({
           variant='body2'
           color='text.secondary'
         >
-          {emptyMessage}
+          {emptyMessage ?? mergedLabels.emptyMessage}
         </Typography>
       </Box>
     );
@@ -329,10 +531,10 @@ export function MobileCardView<TData>({
           );
         }
 
-        const rowObj = row as any;
+        const rowObj = row as unknown as Record<string, unknown>;
         const title = titleKey
           ? rowObj[titleKey]
-          : rowObj.name || rowObj.title || `项目 ${index + 1}`;
+          : rowObj.name || rowObj.title || `${mergedLabels.defaultCardTitle} ${index + 1}`;
         const subtitle = subtitleKey ? rowObj[subtitleKey] : rowObj.code || rowObj.no || '';
 
         const allKeys = Object.keys(rowObj).filter(
@@ -377,7 +579,7 @@ export function MobileCardView<TData>({
                 >
                   {String(title ?? '')}
                 </Typography>
-                {subtitle && (
+                {subtitle ? (
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -391,7 +593,7 @@ export function MobileCardView<TData>({
                   >
                     {String(subtitle)}
                   </Typography>
-                )}
+                ) : null}
               </Box>
               {showSelection && (
                 <Checkbox
@@ -420,8 +622,8 @@ export function MobileCardView<TData>({
                       ? '-'
                       : typeof value === 'boolean'
                         ? value
-                          ? '是'
-                          : '否'
+                          ? mergedLabels.yesLabel
+                          : mergedLabels.noLabel
                         : String(value);
 
                   return (
@@ -463,16 +665,270 @@ export function MobileCardView<TData>({
   );
 }
 
+// ============ 虚拟滚动行数据 ============
+
+interface VirtualRowData {
+  rows: Row<any>[];
+  getRowKey: (data: unknown) => string;
+  onRowClick?: (data: unknown) => void;
+  isSelected: string[];
+  handleSelectRow: (data: unknown) => void;
+  renderRowNumber: (index: number) => React.ReactNode;
+  handleRowExpand: (data: unknown) => void;
+  expandedRows: Set<string>;
+  showSelection: boolean;
+  showRowNumber: boolean;
+  enableRowExpansion: boolean;
+  compact: boolean;
+  striped: boolean;
+  labels: DataTableLabels;
+}
+
+function DataTableVirtualRow({ index, style, data }: ListChildComponentProps<VirtualRowData>) {
+  const {
+    rows,
+    getRowKey,
+    onRowClick,
+    isSelected,
+    handleSelectRow,
+    renderRowNumber,
+    handleRowExpand,
+    expandedRows,
+    showSelection,
+    showRowNumber,
+    enableRowExpansion,
+    compact,
+    striped,
+    labels,
+  } = data;
+  const row = rows[index];
+  if (!row) return null;
+  const rowKey = getRowKey(row.original);
+  const isExpanded = expandedRows.has(rowKey);
+  return (
+    <div style={style}>
+      <TableRow
+        key={row.id}
+        onClick={() => onRowClick?.(row.original)}
+        sx={{
+          cursor: onRowClick ? 'pointer' : 'default',
+          '&:hover': {
+            backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+          },
+          '&:last-child td': { borderBottom: 0 },
+          bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+          ...(compact && { fontSize: '0.875rem' }),
+        }}
+      >
+        {showSelection && (
+          <TableCell
+            padding='checkbox'
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: 1,
+              bgcolor: 'inherit',
+              width: 40,
+            }}
+          >
+            <Checkbox
+              checked={isSelected.includes(rowKey)}
+              onChange={() => handleSelectRow(row.original)}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+          </TableCell>
+        )}
+        {showRowNumber && (
+          <TableCell
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              fontWeight: 500,
+              position: showSelection ? 'sticky' : 'relative',
+              left: showSelection ? 56 : 0,
+              zIndex: 1,
+              bgcolor: 'inherit',
+            }}
+          >
+            {renderRowNumber(index)}
+          </TableCell>
+        )}
+        {enableRowExpansion && (
+          <TableCell
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              position: showSelection || showRowNumber ? 'sticky' : 'relative',
+              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+              zIndex: 1,
+              bgcolor: 'inherit',
+            }}
+          >
+            <IconButton
+              size='small'
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                handleRowExpand(row.original);
+              }}
+              aria-label={isExpanded ? labels.collapseLabel : labels.expandLabel}
+            >
+              {isExpanded ? (
+                <ChevronUp style={{ width: 18, height: 18 }} />
+              ) : (
+                <ChevronDown style={{ width: 18, height: 18 }} />
+              )}
+            </IconButton>
+          </TableCell>
+        )}
+        {row.getVisibleCells().map((cell: Cell<any, any>) => (
+          <TableCell
+            key={cell.id}
+            sx={{
+              whiteSpace: 'nowrap',
+              fontSize: 14,
+              ...(compact && { py: 1 }),
+            }}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    </div>
+  );
+}
+
+// ============ 行内编辑单元格组件 ============
+
+function EditCellComponent({
+  cell,
+  editValue,
+  currentValue,
+  rowKey,
+  onEditChange,
+  onSaveEdit,
+  inlineEditMode,
+}: {
+  cell: Cell<any, any>;
+  editValue: unknown;
+  currentValue: unknown;
+  rowKey: string;
+  onEditChange: (rowKey: string, cellId: string, value: unknown) => void;
+  onSaveEdit: () => void;
+  inlineEditMode: 'cell' | 'row';
+}) {
+  const effectiveValue = editValue !== undefined ? editValue : currentValue;
+  const inlineEditConfig = (cell.column.columnDef as unknown as { inlineEdit?: InlineEditConfig })
+    ?.inlineEdit;
+  const editType = inlineEditConfig?.type ?? 'text';
+  const options = inlineEditConfig?.options ?? [];
+
+  const handleBlur = () => {
+    if (inlineEditMode === 'cell') {
+      onSaveEdit();
+    }
+  };
+
+  switch (editType) {
+    case 'select':
+      return (
+        <FormControl
+          size='small'
+          sx={{ width: '100%', minWidth: 100 }}
+        >
+          <Select
+            value={String(effectiveValue)}
+            onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+            autoFocus
+            onBlur={handleBlur}
+            displayEmpty
+          >
+            {options.map((opt) => (
+              <MenuItem
+                key={opt.value}
+                value={opt.value}
+              >
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      );
+    case 'number':
+      return (
+        <TextField
+          size='small'
+          type='number'
+          value={effectiveValue !== undefined ? String(effectiveValue) : ''}
+          onChange={(e) =>
+            onEditChange(rowKey, cell.id, e.target.value ? Number(e.target.value) : '')
+          }
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 100 }}
+        />
+      );
+    case 'date':
+      return (
+        <TextField
+          size='small'
+          type='date'
+          value={effectiveValue !== undefined ? String(effectiveValue).split('T')[0] : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 120 }}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      );
+    case 'datetime':
+      return (
+        <TextField
+          size='small'
+          type='datetime-local'
+          value={effectiveValue !== undefined ? String(effectiveValue).replace('Z', '') : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 150 }}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+      );
+    case 'checkbox':
+      return (
+        <Checkbox
+          checked={Boolean(effectiveValue)}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.checked)}
+          onBlur={handleBlur}
+        />
+      );
+    case 'text':
+    default:
+      return (
+        <TextField
+          size='small'
+          value={effectiveValue !== undefined ? String(effectiveValue) : ''}
+          onChange={(e) => onEditChange(rowKey, cell.id, e.target.value)}
+          autoFocus
+          onBlur={handleBlur}
+          sx={{ width: '100%', minWidth: 100 }}
+        />
+      );
+  }
+}
+
+// ============ DataTable 组件 ============
+
 export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = '搜索...',
+  searchPlaceholder,
   showSearch = true,
+  showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
-  createLabel = '新建',
+  createLabel,
   onCreate,
   exportFileName = 'export',
   enablePagination = true,
@@ -484,12 +940,15 @@ export function DataTable<TData, TValue>({
   onPageSizeChange,
   onRowClick,
   onSelectionChange,
+  showRefresh = false,
   onRefresh,
   loading = false,
   responsive = true,
-  emptyMessage = '暂无数据',
-  getRowKey = (row: TData) =>
-    (row as any).id?.toString() || (row as any).key || Math.random().toString(),
+  emptyMessage,
+  getRowKey = (row: TData): string =>
+    (row as unknown as Record<string, unknown>).id?.toString() ||
+    (row as unknown as Record<string, unknown>).key?.toString() ||
+    Math.random().toString(),
   extraActions,
   sx,
   persistColumnConfig = false,
@@ -497,13 +956,15 @@ export function DataTable<TData, TValue>({
   enableRowExpansion = false,
   expandedRowRender,
   enableVirtualization = false,
-  rowHeight,
+  rowHeight = 52,
+  virtualHeight = 400,
   enableStickyHeader = false,
   showRowNumber = false,
   enableAdvancedFilter = false,
   advancedFilters = [],
   striped = true,
   compact = false,
+  emptyState: _emptyState,
   selectedIds = [],
   selectedRows,
   mobileCardRender,
@@ -512,10 +973,29 @@ export function DataTable<TData, TValue>({
   mobileFieldLabels,
   mobileDisplayFields,
   useMobileCardView: controlledMobileCardView,
+  enableInlineEdit = false,
+  inlineEditMode = 'cell',
+  editableColumns = [],
+  onInlineEditSave,
+  labels: labelsProp,
+  exportData: customExportData,
   onExportSuccess,
   onExportError,
-  exportData: customExportData,
 }: DataTableProps<TData, TValue>) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const mergedLabels = useMemo(
+    () => ({
+      ...defaultLabels,
+      ...labelsProp,
+      // 以下直接 props 优先级高于 labels 对象，保持向后兼容
+      searchPlaceholder: searchPlaceholder ?? labelsProp?.searchPlaceholder ?? defaultLabels.searchPlaceholder,
+      createLabel: createLabel ?? labelsProp?.createLabel ?? defaultLabels.createLabel,
+      emptyMessage: emptyMessage ?? labelsProp?.emptyMessage ?? defaultLabels.emptyMessage,
+    }),
+    [labelsProp, searchPlaceholder, createLabel, emptyMessage]
+  );
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -525,24 +1005,25 @@ export function DataTable<TData, TValue>({
   const [localSearch, setLocalSearch] = useState('');
   const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
-
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {}
   );
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set(selectedIds));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const [scrollTop, setScrollTop] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  // 行内编辑状态
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editingCellId, setEditingCellId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, unknown>>({});
 
-  useEffect(() => {
-    if (selectedIds) {
-      setSelectedKeys(new Set(selectedIds));
-    }
-  }, [selectedIds]);
+  // 选择状态：优先受控 props，其次内部状态
+  const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
+  const [internalSelected, setInternalSelected] = React.useState<string[]>([]);
+  const isSelected = showSelection
+    ? effectiveSelectedIds.length > 0
+      ? effectiveSelectedIds
+      : internalSelected
+    : [];
 
   useEffect(() => {
     if (persistColumnConfig) {
@@ -550,36 +1031,6 @@ export function DataTable<TData, TValue>({
     }
   }, [columnVisibility, persistColumnConfig, columnConfigKey]);
 
-  useEffect(() => {
-    if (!enableVirtualization || !rowHeight || !scrollContainerRef.current) return;
-
-    const container = scrollContainerRef.current;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const height = entry.contentRect.height;
-        if (height > 0) {
-          setContainerHeight(height);
-        }
-      }
-    });
-    observer.observe(container);
-    if (container.clientHeight > 0) {
-      setContainerHeight(container.clientHeight);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableVirtualization, rowHeight]);
-
-  useEffect(() => {
-    if (enableVirtualization && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-      setScrollTop(0);
-    }
-  }, [data, enableVirtualization]);
-
-  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns functions that cannot be memoized safely
   const table = useReactTable({
     data,
     columns,
@@ -626,38 +1077,31 @@ export function DataTable<TData, TValue>({
     [searchKey, table]
   );
 
-  const effectiveSelectedIds = useMemo(
-    () => selectedRows ?? selectedIds ?? [],
-    [selectedRows, selectedIds]
-  );
-
-  const handleSelectionChange = useCallback(
-    (keys: Set<string> | string[]) => {
-      setSelectedKeys(keys instanceof Set ? keys : new Set(keys));
-      onSelectionChange?.(Array.from(keys));
-    },
-    [onSelectionChange]
-  );
-
-  const handleSelectAll = useCallback(() => {
-    const filteredRows = table.getFilteredRowModel().rows;
-    const allIds = filteredRows.map((row) => String(getRowKey(row.original as TData)));
-    if (effectiveSelectedIds.length === filteredRows.length && filteredRows.length > 0) {
-      handleSelectionChange([]);
+  const handleSelectAll = React.useCallback(() => {
+    const allIds = data.map((row) => getRowKey(row));
+    const newSelected = isSelected.length === allIds.length ? [] : allIds;
+    if (effectiveSelectedIds.length > 0 && onSelectionChange) {
+      onSelectionChange(newSelected);
     } else {
-      handleSelectionChange(allIds);
+      setInternalSelected(newSelected);
+      onSelectionChange?.(newSelected);
     }
-  }, [table, getRowKey, effectiveSelectedIds, handleSelectionChange]);
+  }, [data, isSelected, effectiveSelectedIds, onSelectionChange, getRowKey]);
 
-  const handleSelectRow = useCallback(
+  const handleSelectRow = React.useCallback(
     (row: TData) => {
       const key = getRowKey(row);
-      const newSelected = effectiveSelectedIds.includes(key)
-        ? effectiveSelectedIds.filter((id) => id !== key)
-        : [...effectiveSelectedIds, key];
-      handleSelectionChange(newSelected);
+      const newSelected = isSelected.includes(key)
+        ? isSelected.filter((s) => s !== key)
+        : [...isSelected, key];
+      if (effectiveSelectedIds.length > 0 && onSelectionChange) {
+        onSelectionChange(newSelected);
+      } else {
+        setInternalSelected(newSelected);
+        onSelectionChange?.(newSelected);
+      }
     },
-    [getRowKey, effectiveSelectedIds, handleSelectionChange]
+    [isSelected, effectiveSelectedIds, onSelectionChange, getRowKey]
   );
 
   const handleRowExpand = useCallback(
@@ -674,30 +1118,73 @@ export function DataTable<TData, TValue>({
     [expandedRows, getRowKey]
   );
 
+  // 行内编辑处理函数
+  const handleStartEdit = useCallback(
+    (rowId: string, cellId: string, value: unknown) => {
+      if (inlineEditMode === 'row') {
+        setEditingRowId(rowId);
+        setEditingCellId(null);
+      } else {
+        setEditingRowId(rowId);
+        setEditingCellId(cellId);
+      }
+      setEditValues((prev) => ({ ...prev, [`${rowId}-${cellId}`]: value }));
+    },
+    [inlineEditMode]
+  );
+
+  const handleEditChange = useCallback((rowId: string, cellId: string, value: unknown) => {
+    setEditValues((prev) => ({ ...prev, [`${rowId}-${cellId}`]: value }));
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (row: TData, rowId: string) => {
+      if (!onInlineEditSave) return;
+      const rowChanges: Partial<TData> = {};
+      Object.entries(editValues).forEach(([key, value]) => {
+        if (key.startsWith(`${rowId}-`)) {
+          const fieldKey = key.replace(`${rowId}-`, '') as keyof TData;
+          rowChanges[fieldKey] = value as TData[keyof TData];
+        }
+      });
+      if (Object.keys(rowChanges).length > 0) {
+        await onInlineEditSave(row, rowChanges);
+      }
+      setEditingRowId(null);
+      setEditingCellId(null);
+      setEditValues({});
+    },
+    [editValues, onInlineEditSave]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingRowId(null);
+    setEditingCellId(null);
+    setEditValues({});
+  }, []);
+
   const executeExport = useCallback(
     (format: string, exportFn: () => ExportResult) => {
+      const handleResult = (result: ExportResult) => {
+        if (result.success) {
+          onExportSuccess?.();
+        } else {
+          onExportError?.(
+            result.error instanceof Error ? result.error : new Error(String(result.error))
+          );
+        }
+      };
+
       if (customExportData) {
         const rows = table.getFilteredRowModel().rows.map((r) => r.original);
         const result = customExportData(format, columns, rows);
-        const handleResult = (res: ExportResult) => {
-          if (res.success) {
-            onExportSuccess?.();
-          } else {
-            onExportError?.(res.error instanceof Error ? res.error : new Error(String(res.error)));
-          }
-        };
         if ('then' in result && typeof (result as Promise<ExportResult>).then === 'function') {
           (result as Promise<ExportResult>).then(handleResult);
         } else {
           handleResult(result as ExportResult);
         }
       } else {
-        const result = exportFn();
-        if (result.success) {
-          onExportSuccess?.();
-        } else {
-          onExportError?.(result.error instanceof Error ? result.error : new Error(String(result.error)));
-        }
+        handleResult(exportFn());
       }
     },
     [customExportData, table, columns, onExportSuccess, onExportError]
@@ -713,16 +1200,17 @@ export function DataTable<TData, TValue>({
   const handleExportExcel = useCallback(() => {
     setExportAnchorEl(null);
     executeExport('excel', () =>
-      exportToExcel(columns, table.getFilteredRowModel().rows.map((r) => r.original), exportFileName)
+      exportToExcel(
+        columns,
+        table.getFilteredRowModel().rows.map((r) => r.original),
+        exportFileName
+      )
     );
   }, [executeExport, columns, table, exportFileName]);
 
-  const hasSelected = effectiveSelectedIds.length > 0 || selectedKeys.size > 0;
+  const hasSelected = isSelected.length > 0;
   const isAllSelected =
-    hasSelected &&
-    (effectiveSelectedIds.length === table.getFilteredRowModel().rows.length ||
-      selectedKeys.size === table.getFilteredRowModel().rows.length);
-
+    hasSelected && isSelected.length === table.getFilteredRowModel().rows.length;
   const currentPageIndex = currentPage;
   const totalRecords =
     totalItems !== undefined ? totalItems : table.getFilteredRowModel().rows.length;
@@ -735,58 +1223,54 @@ export function DataTable<TData, TValue>({
     [currentPageIndex, pageSize]
   );
 
-  const isVirtualEnabled = enableVirtualization && !!rowHeight && containerHeight > 0;
-  const allRows = table.getRowModel().rows;
-  const totalHeight = isVirtualEnabled ? allRows.length * rowHeight : undefined;
-  const visibleStart = isVirtualEnabled
-    ? Math.max(0, Math.floor(scrollTop / rowHeight) - 3)
-    : 0;
-  const visibleEnd = isVirtualEnabled
-    ? Math.min(
-        visibleStart + Math.ceil(containerHeight / rowHeight) + 6,
-        allRows.length
-      )
-    : allRows.length;
-  const visibleRows = isVirtualEnabled
-    ? allRows.slice(visibleStart, visibleEnd)
-    : allRows;
-
-  const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      if (isVirtualEnabled) {
-        setScrollTop(e.currentTarget.scrollTop);
-      }
-    },
-    [isVirtualEnabled]
-  );
-
   const shouldUseMobileCard =
     controlledMobileCardView !== undefined
       ? controlledMobileCardView
-      : typeof window !== 'undefined' &&
-        window.innerWidth < 600 &&
-        (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
+      : isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
 
-  const renderRow = (row: any, rowIndex: number) => {
+  const virtualRowData: VirtualRowData = useMemo(
+    () => ({
+      rows: table.getRowModel().rows,
+      getRowKey: getRowKey as (data: unknown) => string,
+      onRowClick: onRowClick as ((data: unknown) => void) | undefined,
+      isSelected,
+      handleSelectRow: handleSelectRow as (data: unknown) => void,
+      renderRowNumber,
+      handleRowExpand: handleRowExpand as (data: unknown) => void,
+      expandedRows,
+      showSelection,
+      showRowNumber,
+      enableRowExpansion,
+      compact,
+      striped,
+      labels: mergedLabels,
+    }),
+    [
+      table.getRowModel().rows,
+      getRowKey,
+      onRowClick,
+      isSelected,
+      handleSelectRow,
+      renderRowNumber,
+      handleRowExpand,
+      expandedRows,
+      showSelection,
+      showRowNumber,
+      enableRowExpansion,
+      compact,
+      striped,
+      mergedLabels,
+    ]
+  );
+
+  const renderRow = (row: Row<any>, rowIndex: number) => {
     const rowKey = getRowKey(row.original);
     const isExpanded = expandedRows.has(rowKey);
 
     return (
       <React.Fragment key={row.id}>
         <TableRow
-          hover={!!onRowClick}
-          tabIndex={onRowClick ? 0 : undefined}
-          onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-          onKeyDown={
-            onRowClick
-              ? (e: React.KeyboardEvent) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onRowClick(row.original);
-                  }
-                }
-              : undefined
-          }
+          onClick={() => onRowClick?.(row.original)}
           sx={{
             cursor: onRowClick ? 'pointer' : 'default',
             '&:hover': {
@@ -809,7 +1293,7 @@ export function DataTable<TData, TValue>({
               }}
             >
               <Checkbox
-                checked={effectiveSelectedIds.includes(String(getRowKey(row.original as TData)))}
+                checked={isSelected.includes(rowKey)}
                 onChange={() => handleSelectRow(row.original)}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               />
@@ -843,11 +1327,11 @@ export function DataTable<TData, TValue>({
             >
               <IconButton
                 size='small'
-                aria-label={isExpanded ? '收起行' : '展开行'}
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   handleRowExpand(row.original);
                 }}
+                aria-label={isExpanded ? mergedLabels.collapseLabel : mergedLabels.expandLabel}
               >
                 {isExpanded ? (
                   <ChevronUp style={{ width: 18, height: 18 }} />
@@ -857,35 +1341,105 @@ export function DataTable<TData, TValue>({
               </IconButton>
             </TableCell>
           )}
-          {row.getVisibleCells().map((cell: any) => (
-            <TableCell
-              key={cell.id}
-              sx={{
-                whiteSpace: 'nowrap',
-                fontSize: 14,
-                ...(compact && { py: 1 }),
-              }}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          {row.getVisibleCells().map((cell: Cell<any, any>) => {
+            const isEditable = enableInlineEdit && editableColumns.includes(cell.id);
+            const isEditing =
+              editingRowId === rowKey && (inlineEditMode === 'row' || editingCellId === cell.id);
+            const editValue = editValues[`${rowKey}-${cell.id}`];
+            const currentValue = cell.getValue() ?? '';
+            return (
+              <TableCell
+                key={cell.id}
+                sx={{
+                  whiteSpace: 'nowrap',
+                  fontSize: 14,
+                  ...(compact && { py: 1 }),
+                  ...(isEditing && { backgroundColor: 'rgba(255, 235, 59, 0.12)' }),
+                }}
+              >
+                {isEditable && isEditing ? (
+                  <EditCellComponent
+                    cell={cell}
+                    editValue={editValue}
+                    currentValue={currentValue}
+                    rowKey={rowKey}
+                    onEditChange={handleEditChange}
+                    onSaveEdit={() => {
+                      inlineEditMode === 'cell' && handleSaveEdit(row.original, rowKey);
+                    }}
+                    inlineEditMode={inlineEditMode}
+                  />
+                ) : isEditable && !isEditing ? (
+                  <div
+                    role='button'
+                    tabIndex={0}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleStartEdit(rowKey, cell.id, currentValue);
+                    }}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStartEdit(rowKey, cell.id, currentValue);
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                ) : (
+                  flexRender(cell.column.columnDef.cell, cell.getContext())
+                )}
+              </TableCell>
+            );
+          })}
+          {enableInlineEdit && editingRowId === rowKey && inlineEditMode === 'row' && (
+            <TableCell sx={{ whiteSpace: 'nowrap' }}>
+              <Stack
+                direction='row'
+                spacing={1}
+              >
+                <IconButton
+                  size='small'
+                  color='success'
+                  onClick={() => handleSaveEdit(row.original, rowKey)}
+                  aria-label={mergedLabels.saveAriaLabel}
+                >
+                  <Save style={{ width: 16, height: 16 }} />
+                </IconButton>
+                <IconButton
+                  size='small'
+                  color='error'
+                  onClick={handleCancelEdit}
+                  aria-label={mergedLabels.cancelAriaLabel}
+                >
+                  <XCircle style={{ width: 16, height: 16 }} />
+                </IconButton>
+              </Stack>
             </TableCell>
-          ))}
+          )}
         </TableRow>
         {enableRowExpansion && isExpanded && expandedRowRender && (
           <TableRow key={`${row.id}-expanded`}>
             <TableCell
-              {...({
-                colSpan:
-                  columns.length +
-                  (showSelection ? 1 : 0) +
-                  (showRowNumber ? 1 : 0) +
-                  (enableRowExpansion ? 1 : 0),
-                sx: {
-                  padding: 2,
-                  bgcolor: 'grey.50',
-                  borderTop: '1px solid',
-                  borderTopColor: 'divider',
-                },
-              } as any)}
+              colSpan={
+                columns.length +
+                (showSelection ? 1 : 0) +
+                (showRowNumber ? 1 : 0) +
+                (enableRowExpansion ? 1 : 0) +
+                (enableInlineEdit && editingRowId === rowKey && inlineEditMode === 'row' ? 1 : 0)
+              }
+              sx={{
+                padding: 2,
+                bgcolor: 'grey.50',
+                borderTop: '1px solid',
+                borderTopColor: 'divider',
+              }}
             >
               {expandedRowRender(row.original)}
             </TableCell>
@@ -919,15 +1473,16 @@ export function DataTable<TData, TValue>({
             {showSearch && searchKey && (
               <TextField
                 size='small'
-                placeholder={searchPlaceholder}
+                placeholder={mergedLabels.searchPlaceholder}
                 value={localSearch}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleSearch(event.target.value)}
-                aria-label={searchPlaceholder || '搜索'}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  handleSearch(event.target.value)
+                }
                 sx={{ width: '100%', maxWidth: 320 }}
                 slotProps={{
                   input: {
                     startAdornment: (
-                      <Search style={{ width: 16, height: 16, marginRight: 4, color: 'rgba(0, 0, 0, 0.54)' }} />
+                      <Search style={{ width: 16, height: 16, marginRight: 4, color: 'text.secondary' }} />
                     ),
                   },
                 }}
@@ -941,7 +1496,7 @@ export function DataTable<TData, TValue>({
                 onClick={() => setShowAdvancedFilterDialog(true)}
                 startIcon={<Filter style={{ width: 16, height: 16 }} />}
               >
-                高级筛选
+                {mergedLabels.advancedFilterTitle}
               </Button>
             )}
           </Box>
@@ -955,14 +1510,14 @@ export function DataTable<TData, TValue>({
               justifyContent: 'center',
             }}
           >
-            {onRefresh && (
+            {showRefresh && onRefresh && (
               <Button
                 variant='outlined'
                 size='small'
                 onClick={onRefresh}
                 startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               >
-                刷新
+                {mergedLabels.refreshLabel}
               </Button>
             )}
 
@@ -971,11 +1526,13 @@ export function DataTable<TData, TValue>({
                 <Button
                   variant='outlined'
                   size='small'
-                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => setExportAnchorEl(e.currentTarget)}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                    setExportAnchorEl(e.currentTarget)
+                  }
                   endIcon={<ChevronDown style={{ width: 16, height: 16 }} />}
                   startIcon={<Download style={{ width: 16, height: 16 }} />}
                 >
-                  导出
+                  {mergedLabels.exportLabel}
                 </Button>
                 <Menu
                   anchorEl={exportAnchorEl}
@@ -984,8 +1541,8 @@ export function DataTable<TData, TValue>({
                   anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                  <MenuItem onClick={handleExportCSV}>导出 CSV</MenuItem>
-                  <MenuItem onClick={handleExportExcel}>导出 Excel</MenuItem>
+                  <MenuItem onClick={handleExportCSV}>{mergedLabels.exportCsvLabel}</MenuItem>
+                  <MenuItem onClick={handleExportExcel}>{mergedLabels.exportExcelLabel}</MenuItem>
                 </Menu>
               </>
             )}
@@ -997,7 +1554,7 @@ export function DataTable<TData, TValue>({
                 onClick={handleMenuOpen}
                 startIcon={<Settings2 style={{ width: 16, height: 16 }} />}
               >
-                列设置
+                {mergedLabels.columnSettingsLabel}
               </Button>
             </Box>
 
@@ -1008,7 +1565,7 @@ export function DataTable<TData, TValue>({
                 onClick={onCreate}
                 startIcon={<Plus style={{ width: 16, height: 16 }} />}
               >
-                {createLabel}
+                {mergedLabels.createLabel}
               </Button>
             )}
 
@@ -1029,16 +1586,19 @@ export function DataTable<TData, TValue>({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
-                已选择{' '}
+              <Box
+                component='span'
+                sx={{ fontSize: '0.875rem', color: 'primary.dark' }}
+              >
+                {mergedLabels.selectedLabel}{' '}
                 <Chip
-                  label={effectiveSelectedIds.length > 0 ? effectiveSelectedIds.length : selectedKeys.size}
+                  label={isSelected.length}
                   size='small'
                   color='primary'
                   sx={{ mx: 0.5 }}
                 />{' '}
-                条记录
-              </span>
+                {mergedLabels.recordsLabel}
+              </Box>
             </Box>
             {onSelectionChange && (
               <Button
@@ -1046,19 +1606,22 @@ export function DataTable<TData, TValue>({
                 size='small'
                 onClick={() => onSelectionChange([])}
               >
-                取消选择
+                {mergedLabels.cancelSelectionLabel}
               </Button>
             )}
           </Box>
         )}
       </Box>
 
+      {/* 列设置菜单 */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>显示/隐藏列</MenuItem>
+        <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>
+          {mergedLabels.showHideColumnsLabel}
+        </MenuItem>
         <Divider />
         {table.getAllLeafColumns().map((column) => (
           <MenuItem
@@ -1072,9 +1635,9 @@ export function DataTable<TData, TValue>({
           >
             <span>{(column.columnDef.header as string) || column.id}</span>
             {column.getIsVisible() ? (
-              <Eye style={{ width: 16, height: 16, color: 'var(--mui-palette-success-main)' }} />
+              <Eye style={{ width: 16, height: 16, color: 'success.main' }} />
             ) : (
-              <EyeOff style={{ width: 16, height: 16, color: 'var(--mui-palette-action-disabled)' }} />
+              <EyeOff style={{ width: 16, height: 16, color: 'text.disabled' }} />
             )}
           </MenuItem>
         ))}
@@ -1089,10 +1652,11 @@ export function DataTable<TData, TValue>({
             handleMenuClose();
           }}
         >
-          重置列配置
+          {mergedLabels.resetColumnsLabel}
         </MenuItem>
       </Menu>
 
+      {/* 数据区域：移动端使用卡片视图，桌面端使用表格视图 */}
       {shouldUseMobileCard ? (
         <Box
           sx={{
@@ -1112,20 +1676,23 @@ export function DataTable<TData, TValue>({
             displayFields={mobileDisplayFields}
             onRowClick={onRowClick}
             loading={loading}
-            emptyMessage={emptyMessage}
+            emptyMessage={mergedLabels.emptyMessage}
             getRowKey={getRowKey}
             showSelection={showSelection}
-            selectedIds={effectiveSelectedIds}
+            selectedIds={isSelected}
             onSelectionChange={(row, selected) => {
               const rowKey = getRowKey(row);
               const newSelected = selected
-                ? [...effectiveSelectedIds, rowKey]
-                : effectiveSelectedIds.filter((id) => id !== rowKey);
+                ? [...isSelected, rowKey]
+                : isSelected.filter((id) => id !== rowKey);
+              setInternalSelected(newSelected);
               onSelectionChange?.(newSelected);
             }}
+            labels={mergedLabels}
           />
         </Box>
       ) : (
+        /* 表格区域 */
         <Box
           sx={{
             borderRadius: 1,
@@ -1135,22 +1702,8 @@ export function DataTable<TData, TValue>({
             bgcolor: 'background.paper',
           }}
         >
-          <Box
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            sx={{
-              overflowX: responsive ? 'auto' : 'hidden',
-              ...(isVirtualEnabled && {
-                overflowY: 'auto',
-                maxHeight: containerHeight || 400,
-              }),
-            }}
-          >
-            {isVirtualEnabled && (
-              <Box component="div" sx={{ height: visibleStart * rowHeight, width: '100%' }} />
-            )}
+          <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
             <Table
-              aria-label='数据表格'
               sx={{
                 minWidth: 640,
                 ...(enableStickyHeader && {
@@ -1171,7 +1724,6 @@ export function DataTable<TData, TValue>({
                   >
                     {showSelection && (
                       <TableCell
-                        scope='col'
                         padding='checkbox'
                         sx={{
                           position: 'sticky',
@@ -1190,7 +1742,6 @@ export function DataTable<TData, TValue>({
                     )}
                     {showRowNumber && (
                       <TableCell
-                        scope='col'
                         sx={{
                           whiteSpace: 'nowrap',
                           fontWeight: 600,
@@ -1209,7 +1760,6 @@ export function DataTable<TData, TValue>({
                     )}
                     {enableRowExpansion && (
                       <TableCell
-                        scope='col'
                         sx={{
                           whiteSpace: 'nowrap',
                           fontWeight: 600,
@@ -1223,13 +1773,12 @@ export function DataTable<TData, TValue>({
                           bgcolor: 'grey.50',
                         }}
                       >
-                        展开
+                        {mergedLabels.expandLabel}
                       </TableCell>
                     )}
                     {headerGroup.headers.map((header) => (
                       <TableCell
                         key={header.id}
-                        scope='col'
                         sx={{
                           whiteSpace: 'nowrap',
                           fontWeight: 600,
@@ -1251,14 +1800,13 @@ export function DataTable<TData, TValue>({
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      {...({
-                        colSpan:
-                          columns.length +
-                          (showSelection ? 1 : 0) +
-                          (showRowNumber ? 1 : 0) +
-                          (enableRowExpansion ? 1 : 0),
-                        sx: { height: 96, textAlign: 'center' },
-                      } as any)}
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 96, textAlign: 'center' }}
                     >
                       <Box
                         sx={{
@@ -1278,52 +1826,64 @@ export function DataTable<TData, TValue>({
                           variant='body2'
                           color='text.secondary'
                         >
-                          加载中...
+                          {mergedLabels.loadingLabel}
                         </Typography>
                       </Box>
                     </TableCell>
                   </TableRow>
-                ) : allRows.length ? (
-                  visibleRows.map((row, rowIndex) => {
-                    const actualRowIndex = isVirtualEnabled ? visibleStart + rowIndex : rowIndex;
-                    return renderRow(row, actualRowIndex);
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      {...({
-                        colSpan:
+                ) : table.getRowModel().rows.length ? (
+                  enableVirtualization ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={
                           columns.length +
                           (showSelection ? 1 : 0) +
                           (showRowNumber ? 1 : 0) +
-                          (enableRowExpansion ? 1 : 0),
-                        sx: { height: 120, textAlign: 'center' },
-                      } as any)}
+                          (enableRowExpansion ? 1 : 0)
+                        }
+                        sx={{ p: 0 }}
+                      >
+                        <List
+                          height={virtualHeight}
+                          itemCount={table.getRowModel().rows.length}
+                          itemSize={rowHeight}
+                          itemData={virtualRowData}
+                          width='100%'
+                        >
+                          {DataTableVirtualRow}
+                        </List>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    table.getRowModel().rows.map((row, rowIndex) => renderRow(row, rowIndex))
+                  )
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 120, textAlign: 'center' }}
                     >
                       <Typography
                         variant='body2'
                         color='text.secondary'
                       >
-                        {emptyMessage}
+                        {mergedLabels.emptyMessage}
                       </Typography>
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-            {isVirtualEnabled && totalHeight != null && (
-              <Box
-                component="div"
-                sx={{
-                  height: Math.max(0, totalHeight - visibleEnd * rowHeight),
-                  width: '100%',
-                }}
-              />
-            )}
           </Box>
         </Box>
       )}
 
+      {/* 分页栏 */}
       {enablePagination && totalPageCount > 1 && (
         <Box
           sx={{
@@ -1343,20 +1903,19 @@ export function DataTable<TData, TValue>({
               flexWrap: 'wrap',
             }}
           >
-            {showSelection && selectedKeys.size > 0 && (
+            {showSelection && isSelected.length > 0 && (
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                已选择 {selectedKeys.size} 条记录
+                {mergedLabels.selectedLabel} {isSelected.length} {mergedLabels.recordsLabel}
               </Typography>
             )}
             <Typography
               variant='body2'
               color='text.secondary'
-              aria-live='polite'
             >
-              共 {totalRecords} 条记录
+              Total {totalRecords} {mergedLabels.recordsLabel}
             </Typography>
             {onPageSizeChange && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -1364,14 +1923,13 @@ export function DataTable<TData, TValue>({
                   variant='body2'
                   color='text.secondary'
                 >
-                  每页
+                  {mergedLabels.perPageLabel}
                 </Typography>
                 <Select
                   size='small'
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
                   sx={{ minWidth: 70, height: 32 }}
-                  aria-label='每页显示条数'
                 >
                   <MenuItem value={10}>10</MenuItem>
                   <MenuItem value={20}>20</MenuItem>
@@ -1390,13 +1948,13 @@ export function DataTable<TData, TValue>({
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
-              上一页
+              {mergedLabels.previousPageLabel}
             </Button>
             <IconButton
-              aria-label='上一页'
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
+              aria-label={mergedLabels.previousPageAriaLabel}
             >
               <ChevronLeft style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1405,7 +1963,7 @@ export function DataTable<TData, TValue>({
               variant='body2'
               sx={{ minWidth: 100, textAlign: 'center' }}
             >
-              第 {currentPageIndex + 1} / {totalPageCount} 页
+              {mergedLabels.pageInfo?.(currentPageIndex + 1, totalPageCount)}
             </Typography>
 
             <Button
@@ -1415,13 +1973,13 @@ export function DataTable<TData, TValue>({
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
-              下一页
+              {mergedLabels.nextPageLabel}
             </Button>
             <IconButton
-              aria-label='下一页'
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
+              aria-label={mergedLabels.nextPageAriaLabel}
             >
               <ChevronRight style={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1429,6 +1987,7 @@ export function DataTable<TData, TValue>({
         </Box>
       )}
 
+      {/* 高级筛选对话框 */}
       {enableAdvancedFilter && advancedFilters.length > 0 && (
         <Dialog
           open={showAdvancedFilterDialog}
@@ -1436,7 +1995,7 @@ export function DataTable<TData, TValue>({
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>高级筛选</DialogTitle>
+          <DialogTitle>{mergedLabels.advancedFilterTitle}</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               {advancedFilters.map((filter) => (
@@ -1457,7 +2016,9 @@ export function DataTable<TData, TValue>({
                     <Box
                       component='select'
                       value={filter.value || ''}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => filter.onChange?.(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        filter.onChange?.(e.target.value)
+                      }
                       sx={{
                         width: '100%',
                         border: '1px solid',
@@ -1470,7 +2031,7 @@ export function DataTable<TData, TValue>({
                         '&:focus': { borderColor: 'primary.main' },
                       }}
                     >
-                      <option value=''>全部</option>
+                      <option value=''>{mergedLabels.allOptionLabel}</option>
                       {filter.options.map((option) => (
                         <option
                           key={option.value}
@@ -1485,7 +2046,9 @@ export function DataTable<TData, TValue>({
                       type={filter.type}
                       size='small'
                       value={filter.value || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => filter.onChange?.(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        filter.onChange?.(e.target.value)
+                      }
                       sx={{ width: '100%' }}
                     />
                   )}
@@ -1506,13 +2069,13 @@ export function DataTable<TData, TValue>({
                     setShowAdvancedFilterDialog(false);
                   }}
                 >
-                  重置
+                  {mergedLabels.resetFilterLabel}
                 </Button>
                 <Button
                   variant='contained'
                   onClick={() => setShowAdvancedFilterDialog(false)}
                 >
-                  应用筛选
+                  {mergedLabels.applyFilterLabel}
                 </Button>
               </Box>
             </Box>
@@ -1523,5 +2086,6 @@ export function DataTable<TData, TValue>({
   );
 }
 
+// ============ 默认导出 ============
 const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
 export default MemoizedDataTable;

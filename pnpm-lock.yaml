@@ -432,8 +432,8 @@ importers:
         specifier: ^11.1.0
         version: 11.1.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-window:
-        specifier: ^2.2.7
-        version: 2.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^1.8.11
+        version: 1.8.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       recharts:
         specifier: ^3.8.1
         version: 3.10.0(patch_hash=jitaei2tgnftowvzjhdsvr2idq)(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react-is@19.2.8)(react@19.2.8)(redux@5.0.1)
@@ -514,8 +514,8 @@ importers:
         specifier: ^15.5.13
         version: 15.5.13
       '@types/react-window':
-        specifier: ^2.0.0
-        version: 2.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^1.8.8
+        version: 1.8.8
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.60.1
         version: 8.65.0(@typescript-eslint/parser@8.65.0(eslint@10.8.0)(typescript@6.0.3))(eslint@10.8.0)(typescript@6.0.3)
@@ -675,6 +675,9 @@ importers:
       '@topems/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
+      react-window:
+        specifier: ^1.8.11
+        version: 1.8.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@mui/material':
         specifier: ^9.1.1
@@ -694,12 +697,18 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.17)
+      '@types/react-window':
+        specifier: ^1.8.8
+        version: 1.8.8
       dayjs:
         specifier: ^1.11.21
         version: 1.11.21
       i18next:
         specifier: ^26.0.0
         version: 26.3.6(typescript@6.0.3)
+      lucide-react:
+        specifier: ^1.18.0
+        version: 1.26.0(react@19.2.8)
       react-router-dom:
         specifier: ^7.17.0
         version: 7.18.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -4634,9 +4643,8 @@ packages:
     peerDependencies:
       '@types/react': 19.2.17
 
-  '@types/react-window@2.0.0':
-    resolution: {integrity: sha512-E8hMDtImEpMk1SjswSvqoSmYvk7GEtyVaTa/GJV++FdDNuMVVEzpAClyJ0nqeKYBrMkGiyH6M1+rPLM0Nu1exQ==}
-    deprecated: This is a stub types definition. react-window provides its own type definitions, so you do not need this installed.
+  '@types/react-window@1.8.8':
+    resolution: {integrity: sha512-8Ls660bHR1AUA2kuRvVG9D/4XpRC6wjAaPT9dil7Ckc76eP9TKWZwwmgfq8Q1LANX3QNDnoU4Zp48A3w+zK69Q==}
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
@@ -6926,6 +6934,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -10482,11 +10491,12 @@ packages:
       react-dom:
         optional: true
 
-  react-window@2.3.0:
-    resolution: {integrity: sha512-FW6TIpaOH646k51X7yE+LSCWGkt5Pfsnc1fVyq/sCI9h0pTqmMiBXM04pzFKg3Bt7NGkeV6kqbU8d/QjmFS7Ug==}
+  react-window@1.8.11:
+    resolution: {integrity: sha512-+SRbUVT2scadgFSWx+R1P754xHPEqvcfSfVX10QYg6POOz+WNgkN48pS+BtZNIMGiL1HYrSEiCkwsMS15QogEQ==}
+    engines: {node: '>8.0.0'}
     peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react@18.2.0:
     resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
@@ -17012,12 +17022,9 @@ snapshots:
     dependencies:
       '@types/react': 19.2.17
 
-  '@types/react-window@2.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@types/react-window@1.8.8':
     dependencies:
-      react-window: 2.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-    transitivePeerDependencies:
-      - react
-      - react-dom
+      '@types/react': 19.2.17
 
   '@types/react@19.2.17':
     dependencies:
@@ -24500,8 +24507,10 @@ snapshots:
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
 
-  react-window@2.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-window@1.8.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
+      '@babel/runtime': 7.29.7
+      memoize-one: 5.2.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
