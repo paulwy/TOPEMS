@@ -16,7 +16,11 @@
 | apps/web tsc 验证 | 0 errors | ✅ |
 | apps/web eslint 验证 | 0 errors | ✅ |
 | 设计系统审计扫描回归 | 模板覆盖率 77.7% → 77.8% | ✅ |
-| 下一批 List 页待迁移 | 剩余 119 个未标准化页面，优先候选：ERP DatabaseManagementPage、Finance OpeningBalancePage/ConsolidationScopePage、LIMS InspectionResultPage、Workflow VersionHistoryPage 等 | 🔄 |
+| system/BackupPage 迁移到 ListPageTemplate | 保留创建/恢复/详情弹窗、行操作；移除自定义 MUI Table | ✅ |
+| oa/AnnouncementPage 迁移到 ListPageTemplate | 接入 ListPageTemplate 并预留列结构 | ✅ |
+| lims/InspectionResultPage 迁移到 ListPageTemplate | 接入 ListPageTemplate 并预留列结构 | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 77.8% → 78.4%；硬编码 113 → 106 | ✅ |
+| 下一批 List 页待迁移 | 剩余 116 个未标准化页面，优先候选：ERP DatabaseManagementPage、Finance OpeningBalancePage/ConsolidationScopePage、Workflow VersionHistoryPage、report/ReportSchedulePage 等 | 🔄 |
 
 ### V265 归档：设计系统样式硬编码清理收尾
 
