@@ -1,5 +1,6 @@
 import React from 'react';
 import { Autocomplete, TextField, CircularProgress } from '@mui/material';
+import i18n from 'i18next';
 import type { User } from '@topems/shared-types';
 
 export interface UserSelectProps {
@@ -17,17 +18,17 @@ export const UserSelect: React.FC<UserSelectProps> = ({
   users,
   value,
   onChange,
-  placeholder = '选择用户',
+  placeholder = i18n.t('shared.user_select.placeholder') || 'Select user',
   disabled,
   loading = false,
 }) => {
   return (
-    <Autocomplete
+    <Autocomplete<User>
       value={value}
-      onChange={(_, newValue) => onChange?.(newValue)}
+      onChange={(_, newValue: User | null) => onChange?.(newValue)}
       options={users}
-      getOptionLabel={(user) => `${user.realName} (${user.username})`}
-      renderOption={(props, user) => (
+      getOptionLabel={(user: User) => `${user.realName} (${user.username})`}
+      renderOption={(props: React.HTMLAttributes<HTMLLIElement>, user: User) => (
         <li {...props} key={user.id}>
           <div>
             <div>{user.realName}</div>

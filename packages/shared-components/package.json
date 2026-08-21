@@ -46,9 +46,11 @@
   "dependencies": {
     "@topems/shared-hooks": "workspace:*",
     "@topems/shared-types": "workspace:*",
-    "@topems/shared-utils": "workspace:*"
+    "@topems/shared-utils": "workspace:*",
+    "@tanstack/react-table": "^8.21.3"
   },
   "devDependencies": {
+    "@mui/material": "^9.1.1",
     "@mui/x-date-pickers": "^9.0.0",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
@@ -56,6 +58,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "dayjs": "^1.11.21",
     "i18next": "^26.0.0",
+    "react-router-dom": "^7.17.0",
     "typescript": "^6.0.3"
   }
 }
