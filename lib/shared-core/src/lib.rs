@@ -277,8 +277,11 @@ pub use service_config::{
     ValidationIssue, ValidationSeverity,
 };
 pub use service_port::*;
+pub use supplier::{
+    CreateSupplierRequest, SupplierCategory, SupplierCore, SupplierRiskLevel, SupplierStatus,
+    SupplierSync, UpdateSupplierRequest,
+};
 pub use validation::{normalize_code, ValidationError, ValidationResult, Validator};
-pub use supplier::{CreateSupplierRequest, SupplierCategory, SupplierCore, SupplierRiskLevel, SupplierStatus, SupplierSync, UpdateSupplierRequest};
 
 #[cfg(test)]
 mod tests {
