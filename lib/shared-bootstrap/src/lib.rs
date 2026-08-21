@@ -1053,9 +1053,7 @@ pub fn overall_health_message(status: &HealthStatus) -> &'static str {
 /// 1) 依次调用 check_database_health + check_iam_health；
 /// 2) 用 rollup_health_status 汇总整体状态；
 /// 3) 映射为英文状态字符串后包装成 ApiResponse。
-pub async fn build_simple_status_response(
-    pool: &sqlx::PgPool,
-) -> axum::Json<ApiResponse<String>> {
+pub async fn build_simple_status_response(pool: &sqlx::PgPool) -> axum::Json<ApiResponse<String>> {
     let database_health = check_database_health(pool).await;
     let iam_health = check_iam_health().await;
     let overall_status = rollup_health_status(&[database_health.status, iam_health.status]);
@@ -1075,18 +1073,15 @@ pub async fn build_detailed_service_health(
     uptime: Option<&str>,
     extra_dependencies: Vec<DependencyHealth>,
 ) -> axum::Json<ApiResponse<ServiceHealth>> {
-    let mut dependencies = vec![
-        check_database_health(pool).await,
-        check_iam_health().await,
-    ];
+    let mut dependencies = vec![check_database_health(pool).await, check_iam_health().await];
     dependencies.extend(extra_dependencies);
 
     let statuses: Vec<HealthStatus> = dependencies.iter().map(|d| d.status.clone()).collect();
     let overall_status = rollup_health_status(&statuses);
     let message = overall_health_message(&overall_status);
 
-    let mut health = ServiceHealth::healthy_with_message(service_name, message)
-        .with_dependencies(dependencies);
+    let mut health =
+        ServiceHealth::healthy_with_message(service_name, message).with_dependencies(dependencies);
     if let Some(up) = uptime {
         health = health.with_uptime(up);
     }
