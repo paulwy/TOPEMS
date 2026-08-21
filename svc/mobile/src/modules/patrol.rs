@@ -113,7 +113,7 @@ pub async fn get_all_patrol_records(
     let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
         "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM patrol_records 
-         WHERE checked_by = $1 
+         WHERE deleted_at IS NULL AND checked_by = $1 
          ORDER BY created_at DESC"
     )
     .bind(&user_id)
@@ -167,7 +167,7 @@ pub async fn get_patrol_record(
     let record = match sqlx::query_as::<_, PatrolRecord>(
         "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM patrol_records 
-         WHERE id = $1 AND checked_by = $2"
+         WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"
     )
     .bind(id)
     .bind(&user_id)
@@ -281,7 +281,7 @@ pub async fn update_patrol_record(
 
     let current_record = match sqlx::query_as::<_, PatrolRecord>(
         "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
-         FROM patrol_records WHERE id = $1 AND checked_by = $2"
+         FROM patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"
     )
     .bind(id)
     .bind(&user_id)
@@ -349,7 +349,7 @@ pub async fn delete_patrol_record(
     };
 
     let result = sqlx::query(
-        "UPDATE patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2",
+        "UPDATE patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(&user_id)

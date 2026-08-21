@@ -490,7 +490,7 @@ impl ControlPoint {
         let mut query = String::from(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE tenant_id = $1",
+             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1",
         );
 
         if category.is_some() {
@@ -531,7 +531,7 @@ impl ControlPoint {
         sqlx::query_as::<_, Self>(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE id = $1 AND tenant_id = $2",
+             FROM finance_control_points WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
         )
         .bind(id)
         .bind(tenant_id)
@@ -597,7 +597,7 @@ impl ControlMatrix {
         let active_controls = sqlx::query_as::<_, ControlPoint>(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE tenant_id = $1 AND is_active = TRUE",
+             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -861,7 +861,7 @@ impl ComplianceReportV51 {
         let controls = sqlx::query_as::<_, ControlPoint>(
             "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
-             FROM finance_control_points WHERE tenant_id = $1 AND is_active = TRUE",
+             FROM finance_control_points WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE",
         )
         .bind(tenant_id)
         .fetch_all(pool)

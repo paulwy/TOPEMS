@@ -67,6 +67,7 @@ async fn list_companies(
         FROM hrm.companies
         WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -85,6 +86,7 @@ async fn list_companies(
                 SELECT COUNT(*) FROM hrm.companies
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(&search_pattern)
@@ -251,7 +253,7 @@ async fn get_company(
         r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        FROM hrm.companies WHERE id = $1
+        FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -299,7 +301,7 @@ async fn update_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -421,7 +423,7 @@ async fn delete_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, tenant_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1 AND deleted_at IS NULL AND deleted_at IS NULL
         "#,
     )
     .bind(id)

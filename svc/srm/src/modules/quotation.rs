@@ -56,7 +56,7 @@ async fn list_quotations(
             FROM plugin_srm.quotations q
             LEFT JOIN plugin_srm.inquiries i ON q.inquiry_id = i.id
             LEFT JOIN plugin_srm.suppliers s ON q.supplier_id = s.id
-            WHERE q.inquiry_id = $1
+            WHERE q.deleted_at IS NULL AND q.inquiry_id = $1
             ORDER BY q.created_at DESC
             "#,
         )
@@ -72,6 +72,7 @@ async fn list_quotations(
             FROM plugin_srm.quotations q
             LEFT JOIN plugin_srm.inquiries i ON q.inquiry_id = i.id
             LEFT JOIN plugin_srm.suppliers s ON q.supplier_id = s.id
+            WHERE q.deleted_at IS NULL
             ORDER BY q.created_at DESC
             "#,
         )
@@ -196,7 +197,7 @@ async fn get_quotation(
         FROM plugin_srm.quotations q
         LEFT JOIN plugin_srm.inquiries i ON q.inquiry_id = i.id
         LEFT JOIN plugin_srm.suppliers s ON q.supplier_id = s.id
-        WHERE q.id = $1
+        WHERE q.id = $1 AND q.deleted_at IS NULL
         "#,
     )
     .bind(id)
