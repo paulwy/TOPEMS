@@ -76,7 +76,7 @@
       {
         "ordinal": 14,
         "name": "inspection_time",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 15,
@@ -109,7 +109,7 @@
         "Numeric",
         "Numeric",
         "Varchar",
-        "Varchar",
+        "Timestamp",
         "Varchar",
         "Varchar",
         "Text",
@@ -121,14 +121,14 @@
       false,
       true,
       true,
-      false,
-      false,
       true,
       true,
-      false,
-      false,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       true,
       true,
       true,
