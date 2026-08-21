@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiLogger } from '@/utils/logger';
-import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
+import { PLUGIN_TIMEOUT } from '@topems/tokens';
 import type { PluginRuntimeInfo, SuiteInfo } from './types';
 import i18n from '@/i18n';
 

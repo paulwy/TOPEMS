@@ -20,7 +20,6 @@ const SEARCH_DIRS = [
   'apps/desktop/src',
   'apps/mobile/src',
   'packages/shared-components/src',
-  'packages/shared-constants/src',
   'packages/shared-hooks/src',
   'packages/shared-types/src',
   'packages/shared-utils/src',

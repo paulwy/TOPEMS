@@ -89,7 +89,6 @@
     "@tanstack/react-table": "^8.21.3",
     "@tauri-apps/api": "^2.11.1",
     "@topems/shared-components": "workspace:*",
-    "@topems/shared-constants": "workspace:*",
     "@topems/shared-hooks": "workspace:*",
     "@topems/shared-types": "workspace:*",
     "@topems/shared-utils": "workspace:*",

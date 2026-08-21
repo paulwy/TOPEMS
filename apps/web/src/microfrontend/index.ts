@@ -14,14 +14,11 @@
  * - version-platform/version-platform: 版本管理平台
  * - version-platform/rollout-manager: 发布管理器
  * - observability/dashboard: 可观测性仪表盘
- * - sandbox: V42.0 沙箱隔离（JS + 样式 + 事件 + 冲突检测）
  * - ai-ops: V43.0 AI 运维（异常检测 + 智能告警 + 趋势预测 + 自动扩缩容）
  * - marketplace: V44.0 模块市场（模块发现 + 分类浏览 + 评分 + 安装/卸载）
  * - governance: V44.0 依赖治理（依赖图 + 循环检测 + 版本冲突 + 升级建议）
  * - security: V44.0 安全扫描（漏洞检测 + 权限审计 + 沙箱合规 + 安全评分）
  * - runtime: V45.0 运行时终极形态（动态加载 + 跨框架兼容 + 统一设计系统 + 生命周期管理）
- * - platform: V47.0 统一开发平台（项目创建向导 + 开发服务器 + 构建 + 部署）
- * - lowcode: V47.0 低代码搭建引擎（拖拽布局 + 属性面板 + 样式编辑 + 事件绑定 + 数据源绑定）
  * - marketplace/plugin-market: V47.0 插件市场（插件全生命周期 + 依赖解析 + 评分评价）
  * - serverless: V48.0 无服务器架构（边缘渲染 + 函数即模块 + 按需加载）
  *
@@ -35,12 +32,6 @@
  *   moduleRegistry,
  *   versionPlatform,
  *   rolloutManager,
- *   sandboxManager,
- *   SandboxedRemoteLoader,
- *   JavaScriptSandbox,
- *   StyleIsolation,
- *   EventIsolation,
- *   conflictDetector,
  *   moduleMarket,
  *   dependencyGovernor,
  *   securityScanner,
@@ -52,8 +43,6 @@
  *   DependencyGovernance,
  *   SecurityCenter,
  *   RuntimeDashboard,
- *   unifiedDevPlatform,
- *   lowCodeBuilder,
  *   pluginMarket,
  * } from '@/microfrontend';
  */
@@ -151,59 +140,6 @@ export { default as ObservabilityDashboard } from './observability/dashboard/Obs
 // ==================== 微前端路由 ====================
 export { MicroAppRouter } from './MicroAppRouter';
 
-// ==================== V42.0 沙箱隔离体系 ====================
-// JS 沙箱（Proxy 代理 window/document）
-export {
-  JavaScriptSandbox,
-  type SandboxOptions,
-  type GlobalVarConflict,
-} from './sandbox/js-sandbox';
-
-// 样式隔离（Shadow DOM / Scoped CSS / CSS Modules）
-export {
-  StyleIsolation,
-  type StyleIsolationMode,
-  type StyleIsolationOptions,
-  type StyleConflict,
-  type CSSSpecificity,
-} from './sandbox/style-isolation';
-
-// 事件隔离（事件/定时器拦截与清理）
-export {
-  EventIsolation,
-  type TimerType,
-  type RegisteredEvent,
-  type RegisteredTimer,
-  type EventLeakReport,
-  type EventConflict,
-} from './sandbox/event-isolation';
-
-// 冲突检测器（单例）
-export {
-  conflictDetector,
-  type ConflictSeverity,
-  type ConflictReport,
-} from './sandbox/conflict-detector';
-
-// 沙箱管理器（单例，统一管理三种隔离）
-export {
-  sandboxManager,
-  type SandboxBundle,
-  type SandboxStatus,
-  type SandboxManagerOptions,
-  type HealthCheckResult,
-  type GlobalLeakReport,
-} from './sandbox/sandbox-manager';
-
-// 沙箱化远程模块加载器
-export {
-  SandboxedRemoteLoader,
-  type SandboxedRemoteLoaderProps,
-  type SandboxedRemoteLoaderIsolation,
-} from './sandbox/SandboxedRemoteLoader';
-
-// 沙箱模块整体导出（便于一次性导入）
-export * as sandbox from './sandbox';
 
 // ==================== V43.0 AI 运维体系 ====================
 // 异常检测
@@ -358,49 +294,7 @@ export { default as RuntimeDashboard } from './runtime/RuntimeDashboard';
 // 运行时模块整体导出
 export * as runtime from './runtime';
 
-// ==================== V47.0 统一开发平台 ====================
-// 项目创建向导（模板选择 + 配置生成 + 依赖安装）
-// 开发服务器管理（启动/停止/重启/多项目并行）
-// 构建管理（构建配置 + 构建任务 + 构建产物管理）
-// 部署管理（环境配置 + 部署流水线 + 回滚）
-export {
-  unifiedDevPlatform,
-  type ProjectTemplate,
-  type ProjectConfig,
-  type DevServerInstance,
-  type DevServerLog,
-  type BuildTask,
-  type BuildArtifact,
-  type DeploymentConfig,
-  type HealthCheckConfig,
-  type RollbackConfig,
-  type DeploymentRecord,
-  type PlatformStats,
-} from './platform';
 
-export * as platform from './platform';
-
-// ==================== V47.0 低代码搭建引擎 ====================
-// 组件拖拽布局 + 属性面板 + 样式编辑器 + 事件绑定 + 数据源绑定 + 响应式设计
-export {
-  lowCodeBuilder,
-  ComponentCategory,
-  ActionType,
-  type ComponentNode,
-  type PageSchema,
-  type DataSourceConfig,
-  type DataSourceBinding,
-  type EventBinding,
-  type BuilderConfig,
-  type ResponsiveBreakpoint,
-  type ComponentDefinition,
-  type PropSchema,
-  type ResponsiveStyle,
-  type ExportCodeResult,
-  type ExportedFile,
-} from './lowcode';
-
-export * as lowcode from './lowcode';
 
 // ==================== V47.0 插件市场 ====================
 // 插件全生命周期：注册/发现/安装/卸载/版本/依赖解析/评分评价/搜索分类
@@ -471,44 +365,7 @@ export {
 
 export * as serverless from './serverless';
 
-// ==================== V48.0 AI 驱动模块 ====================
-export {
-  TriggerType,
-  ScalingAction as PredictiveScalingAction,
-  type RouteRecommendation,
-  type UserBehaviorProfile,
-  type RouteMetrics,
-  type OpsAction,
-  type OpsRule,
-  type OpsExecutionResult,
-  type ScalingMetric as PredictiveScalingMetric,
-  type ScalingPrediction,
-  type ScalingPolicy as PredictiveScalingPolicy,
-} from './ai-driven';
 
-export * as aiDriven from './ai-driven';
-
-// ==================== V50.0 AI 运维模块 ====================
-export {
-  intelligentMonitor,
-  IntelligentMonitor,
-  rootCauseAnalyzer,
-  RootCauseAnalyzer,
-  autoRemediation,
-  AutoRemediation,
-  type MonitorMetric,
-  type MonitorThreshold,
-  type MonitorAlert,
-  type MonitorDashboard,
-  type CausalFactor,
-  type RootCauseResult,
-  type CausalEvent,
-  type RemediationAction,
-  type RetryPolicy,
-  type RemediationWorkflow,
-} from './ai-ops-v2';
-
-export * as aiOpsV2 from './ai-ops-v2';
 
 // ==================== V51.0 DevEx 开发体验 ====================
 // 智能调试器（组件树 + 状态检查 + 网络拦截 + 会话录制回放）

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { LOADER_TIMEOUT } from '@topems/shared-constants';
+import { LOADER_TIMEOUT } from '@topems/tokens';
 
 export type ModuleStatus = 'idle' | 'loading' | 'loaded' | 'error';
 

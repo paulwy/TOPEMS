@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
+import { PLUGIN_TIMEOUT } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface ServiceInfo {

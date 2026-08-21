@@ -2,7 +2,7 @@
  * Web application pagination constants
  *
  * Retry / timeout / global numeric constants are already provided by
- * `@topems/shared-constants`. This file re-exports them and supplements
+ * `@topems/tokens`. This file re-exports them and supplements
  * web-specific semantic aliases for direct consumption by page-level
  * components, avoiding scattered hardcoding.
  */

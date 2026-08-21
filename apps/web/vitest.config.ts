@@ -131,7 +131,6 @@ export default defineConfig({
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
-      '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
       'react-transition-group/TransitionGroupContext': resolveRtgCjs('TransitionGroupContext.js'),
       'react-transition-group/Transition': resolveRtgCjs('Transition.js'),
