@@ -75,7 +75,7 @@ pub async fn list_production_orders(
     let result = sqlx::query_as::<_, ProductionOrder>(
         r#"
         SELECT id, order_no, product_id, product_name, product_code,
-               quantity, completed_quantity, status, source,
+               quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                source_order_id, source_order_number,
                planned_start_date, planned_end_date,
                actual_start_date, actual_end_date,
@@ -162,7 +162,7 @@ pub async fn create_production_order(
             $15, $15
         )
         RETURNING id, order_no, product_id, product_name, product_code,
-                  quantity, completed_quantity, status, source,
+                  quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
                   planned_start_date, planned_end_date,
                   actual_start_date, actual_end_date,
@@ -218,7 +218,7 @@ pub async fn get_production_order(
     let result = sqlx::query_as::<_, ProductionOrder>(
         r#"
         SELECT id, order_no, product_id, product_name, product_code,
-               quantity, completed_quantity, status, source,
+               quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                source_order_id, source_order_number,
                planned_start_date, planned_end_date,
                actual_start_date, actual_end_date,
@@ -273,7 +273,7 @@ pub async fn update_production_order(
             updated_at = $11
         WHERE id = $1 AND status IN ('pending', 'released')
         RETURNING id, order_no, product_id, product_name, product_code,
-                  quantity, completed_quantity, status, source,
+                  quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
                   planned_start_date, planned_end_date,
                   actual_start_date, actual_end_date,
@@ -371,7 +371,7 @@ pub async fn update_production_progress(
             updated_at = $6
         WHERE id = $1
         RETURNING id, order_no, product_id, product_name, product_code,
-                  quantity, completed_quantity, status, source,
+                  quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
                   planned_start_date, planned_end_date,
                   actual_start_date, actual_end_date,
@@ -428,7 +428,7 @@ pub async fn update_production_status(
             updated_at = $3
         WHERE id = $1
         RETURNING id, order_no, product_id, product_name, product_code,
-                  quantity, completed_quantity, status, source,
+                  quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
                   planned_start_date, planned_end_date,
                   actual_start_date, actual_end_date,
@@ -512,7 +512,7 @@ pub async fn receive_mes_progress(
             updated_at = $6
         WHERE id = $1
         RETURNING id, order_no, product_id, product_name, product_code,
-                  quantity, completed_quantity, status, source,
+                  quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
                   planned_start_date, planned_end_date,
                   actual_start_date, actual_end_date,
