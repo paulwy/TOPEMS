@@ -123,13 +123,8 @@ export interface MarketplaceDashboard {
   total_reviews: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 interface CreateListingRequest {
   service_id: string;

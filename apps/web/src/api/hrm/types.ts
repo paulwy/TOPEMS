@@ -365,12 +365,8 @@ export interface PaginationParams extends BasePaginationParams {
   department_id?: string;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+import type { PaginatedResult } from '@/api/client';
+export type { PaginatedResult };
 
 export interface ListParams {
   page?: number;

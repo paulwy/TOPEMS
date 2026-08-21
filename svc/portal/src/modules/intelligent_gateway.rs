@@ -1311,7 +1311,7 @@ pub async fn get_routing_table_handler(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "路由表",
     ))
@@ -1463,7 +1463,7 @@ pub async fn list_conflicts_handler(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "类型冲突列表",
     ))

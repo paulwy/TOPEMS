@@ -137,12 +137,4 @@ impl Default for PaginationParams {
     }
 }
 
-/// Paginated response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PaginatedResponse<T> {
-    pub items: Vec<T>,
-    pub total: u64,
-    pub page: u32,
-    pub page_size: u32,
-    pub total_pages: u32,
-}
+pub use topems_shared_core::response::{total_pages_of, PaginatedResponse};

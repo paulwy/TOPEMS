@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
+use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -19,9 +20,8 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub pagesize: Option<i64>,
-    pub search: Option<String>,
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub status: Option<String>,
     pub customer_type: Option<String>,
 }
@@ -55,14 +55,16 @@ pub async fn list_customers(
         return e;
     }
 
-    let (page, page_size, offset) = normalize_pagination(params.page, params.pagesize);
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
-    let search_pattern = build_search_pattern(params.search.as_deref());
+    let search_pattern = build_search_pattern(params.base.search.as_deref());
     let status_filter = params.status.clone();
     let customer_type_filter = params.customer_type.clone();
 
     let customers_result = if has_customer_filters(
-        params.search.as_deref(),
+        params.base.search.as_deref(),
         status_filter.as_deref(),
         customer_type_filter.as_deref(),
     ) {
@@ -106,7 +108,7 @@ pub async fn list_customers(
     let total = match sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1) AND ($2 = '' OR status = $2) AND ($3 = '' OR customer_type = $3)"#
     )
-    .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
+    .bind(params.base.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_default())
     .bind(status_filter.as_deref().unwrap_or(""))
     .bind(customer_type_filter.as_deref().unwrap_or(""))
     .fetch_one(&state.db)

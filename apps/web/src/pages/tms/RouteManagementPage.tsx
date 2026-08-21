@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -27,11 +26,10 @@ import {
 import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, Search, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store/notificationStore';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { routeApi } from '@/api/tms';
 import type { Route, CreateRouteRequest, RouteStatus } from '@/api/tms';
 
-const QUERY_KEY = 'tms-routes';
 function getStatusOptions() {
   return [
     { value: 'active', label: i18n.t('tms.route_management_page.k0') },
@@ -64,82 +62,28 @@ const renderStatusChip = (status?: string) => {
   );
 };
 const RouteManagementPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [formData, setFormData] = useState<Partial<Route>>({});
   const [deleteTarget, setDeleteTarget] = useState<Route | null>(null);
-  const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-  const { data, isLoading } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const res = await routeApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error(i18n.t('tms.route_management_page.k4'));
-      return { items: res.data?.items || [], total: res.data?.total || 0 };
-    },
-  });
-  const createMutation = useMutation({
-    mutationFn: (data: CreateRouteRequest) => routeApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.route_management_page.k6'),
-        message: i18n.t('tms.route_management_page.k5'),
-      });
-      setFormOpen(false);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.route_management_page.k7'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
-  });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateRouteRequest> }) =>
-      routeApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.route_management_page.k9'),
-        message: i18n.t('tms.route_management_page.k8'),
-      });
-      setFormOpen(false);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.route_management_page.k10'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
-  });
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => routeApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.route_management_page.k12'),
-        message: i18n.t('tms.route_management_page.k11'),
-      });
-      setDeleteTarget(null);
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.route_management_page.k13'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
+  const {
+    data: rows,
+    loading: isLoading,
+    pagination: { page, pageSize, total, setPage, setPageSize },
+    fetch,
+    refresh,
+    create: createItem,
+    update: updateItem,
+    delete: deleteItem,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+  } = useCrudOperations<Route, CreateRouteRequest>({
+    api: routeApi,
+    queryKey: 'tms-routes',
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
   });
   const handleOpenCreate = () => {
     setFormMode('create');
@@ -151,7 +95,7 @@ const RouteManagementPage: React.FC = () => {
     setFormData({ ...row });
     setFormOpen(true);
   };
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const payload: CreateRouteRequest = {
       route_no: formData.route_no || '',
       name: formData.name || '',
@@ -161,21 +105,28 @@ const RouteManagementPage: React.FC = () => {
       estimated_hours: formData.estimated_hours ? Number(formData.estimated_hours) : undefined,
       status: formData.status,
     };
-    if (formMode === 'create') {
-      createMutation.mutate(payload);
-    } else if (formData.id) {
-      updateMutation.mutate({ id: formData.id, data: payload });
+    try {
+      if (formMode === 'create') {
+        await createItem(payload);
+      } else if (formData.id) {
+        await updateItem(formData.id, payload);
+      }
+      setFormOpen(false);
+    } catch {
+      // Error notification handled by hook
     }
   };
-  const handleSearchSubmit = () => {
-    setSearch(searchInput);
-    setPage(1);
+  const handleSearchSubmit = () => fetch({ search: searchInput || undefined });
+  const handleRefresh = () => refresh();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteItem(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch {
+      // Error notification handled by hook
+    }
   };
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-  };
-  const rows = data?.items || [];
-  const total = data?.total || 0;
   const submitting = createMutation.isPending || updateMutation.isPending;
   return (
     <PageContainer
@@ -325,10 +276,7 @@ const RouteManagementPage: React.FC = () => {
           page={page - 1}
           onPageChange={(_, p) => setPage(p + 1)}
           rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-          }}
+          onRowsPerPageChange={(e) => setPageSize(Number(e.target.value))}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.route_management_page.k28')}
           labelDisplayedRows={({ from, to, count }) =>
@@ -451,7 +399,7 @@ const RouteManagementPage: React.FC = () => {
           <Button
             color='error'
             variant='contained'
-            onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+            onClick={handleDelete}
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending

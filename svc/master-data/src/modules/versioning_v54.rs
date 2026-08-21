@@ -884,7 +884,7 @@ pub async fn list_history(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "版本历史",
     ))
@@ -1022,7 +1022,7 @@ pub async fn query_audit_log(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "审计日志",
     ))
@@ -1079,7 +1079,7 @@ pub async fn get_user_activity(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "用户活动记录",
     ))
@@ -1136,7 +1136,7 @@ pub async fn get_entity_history(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "实体操作历史",
     ))

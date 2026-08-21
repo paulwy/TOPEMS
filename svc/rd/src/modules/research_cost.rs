@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 pub struct ResearchCost {
@@ -60,10 +61,9 @@ pub struct UpdateResearchCostRequest {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+pub struct ListParams {
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub project_id: Option<Uuid>,
     pub category: Option<String>,
     pub status: Option<String>,
@@ -87,11 +87,11 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_costs(
     State(state): State<super::ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let mut query = String::from(
         r#"
@@ -118,7 +118,7 @@ async fn list_costs(
     if let Some(_end_date) = &params.end_date {
         query.push_str(" AND cost_date <= $5");
     }
-    if let Some(_search) = &params.search {
+    if let Some(_search) = &params.base.search {
         query.push_str(" AND (description ILIKE $6 OR receipt_no ILIKE $6)");
     }
 
@@ -130,7 +130,7 @@ async fn list_costs(
         .bind(&params.status)
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .bind(search_like(&params.search))
+        .bind(search_like(&params.base.search))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.db)
@@ -156,7 +156,7 @@ async fn list_costs(
     }
 }
 
-async fn count_costs(state: &sqlx::PgPool, params: &PaginationParams) -> i64 {
+async fn count_costs(state: &sqlx::PgPool, params: &ListParams) -> i64 {
     let mut query =
         String::from("SELECT COUNT(*) FROM rs.research_costs WHERE deleted_at IS NULL AND 1=1");
 
@@ -175,7 +175,7 @@ async fn count_costs(state: &sqlx::PgPool, params: &PaginationParams) -> i64 {
     if let Some(_end_date) = &params.end_date {
         query.push_str(" AND cost_date <= $5");
     }
-    if let Some(_search) = &params.search {
+    if let Some(_search) = &params.base.search {
         query.push_str(" AND (description ILIKE $6 OR receipt_no ILIKE $6)");
     }
 
@@ -185,7 +185,7 @@ async fn count_costs(state: &sqlx::PgPool, params: &PaginationParams) -> i64 {
         .bind(&params.status)
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .bind(search_like(&params.search))
+        .bind(search_like(&params.base.search))
         .fetch_one(state)
         .await
         .unwrap_or(0)
@@ -410,7 +410,7 @@ async fn list_costs_by_project(
 
 async fn get_cost_statistics(
     State(state): State<super::ApiState>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut query = String::from(
         r#"

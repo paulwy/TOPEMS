@@ -90,12 +90,8 @@ export interface SqlPreview {
   warning?: string;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+import type { PaginatedResult } from '@/api/client';
+export type { PaginatedResult };
 
 export const dictTypeApi = {
   async list(

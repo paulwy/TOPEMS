@@ -8,6 +8,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_db::repository::ListQueryParams as SharedListQueryParams;
 use uuid::Uuid;
 
 use crate::models::{
@@ -28,9 +29,8 @@ use topems_shared_service_client::service_client::{
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
-    pub page: Option<i64>,
-    pub page_size: Option<i64>,
-    pub search: Option<String>,
+    #[serde(flatten)]
+    pub base: SharedListQueryParams,
     pub status: Option<String>,
     pub category: Option<String>,
     pub sort_by: Option<String>,
@@ -154,9 +154,9 @@ pub async fn list_suppliers(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let page = params.base.page_or_default();
+    let page_size = params.base.page_size_or_default();
+    let offset = params.base.offset();
 
     let sort_by = params
         .sort_by
@@ -171,7 +171,7 @@ pub async fn list_suppliers(
         tenant_id,
         page,
         page_size,
-        &params.search,
+        &params.base.search,
         &params.status,
         &params.category,
         &sort_by,
@@ -183,7 +183,7 @@ pub async fn list_suppliers(
         return Json(ApiResponse::success(cached, "获取供应商列表成功"));
     }
 
-    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let category_filter = params.category.clone();
 

@@ -131,7 +131,7 @@ pub async fn list_wave_picks(
             .await
             .unwrap_or(0);
 
-            let total_pages = (total as f64 / page_size as f64).ceil() as i64;
+            let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
 
             Json(ApiResponse::success(
                 PaginatedResponse {

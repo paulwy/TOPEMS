@@ -168,7 +168,7 @@ pub fn calculate_pagination(page: i64, page_size: i64, total: i64) -> (i64, i64,
     let total_pages = if total <= 0 {
         0
     } else {
-        (total + size - 1) / size
+        topems_shared_core::response::total_pages_of(total, size)
     };
     (offset, total_pages, current_page)
 }

@@ -6,13 +6,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::repository::ListQueryParams;
 
 use super::ApiState;
 
 #[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
 pub struct SearchParams {
+    #[serde(flatten)]
+    pub base: ListQueryParams,
     pub query: String,
-    pub limit: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -39,7 +41,7 @@ async fn global_search(
     State(state): State<ApiState>,
     Query(params): Query<SearchParams>,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
-    let limit = params.limit.unwrap_or(20);
+    let limit = params.base.page_size_or_default();
     let query = params.query.to_lowercase();
     let search_pattern = format!("%{}%", query);
 
@@ -136,7 +138,7 @@ mod tests {
         let json = r#"{"query":"laptop","limit":10}"#;
         let params: SearchParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.query, "laptop");
-        assert_eq!(params.limit, Some(10));
+        assert_eq!(params.base.page_size, Some(10));
     }
 
     #[test]
@@ -144,7 +146,7 @@ mod tests {
         let json = r#"{"query":"test"}"#;
         let params: SearchParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.query, "test");
-        assert_eq!(params.limit, None);
+        assert_eq!(params.base.page_size, None);
     }
 
     #[test]

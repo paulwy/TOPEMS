@@ -12,6 +12,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::time::Duration;
+use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
@@ -89,14 +90,7 @@ pub struct DatasourceResponse {
     pub updated_at: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct DatasourceListResponse {
-    pub items: Vec<DatasourceResponse>,
-    pub total: i64,
-    pub page: i64,
-    pub page_size: i64,
-    pub total_pages: i64,
-}
+pub type DatasourceListResponse = PaginatedResponse<DatasourceResponse>;
 
 #[derive(Debug, Serialize)]
 pub struct TestConnectionResult {
@@ -333,22 +327,10 @@ pub async fn list_datasources(
         })
         .collect();
 
-    let total_pages = if page_size == 0 {
-        0
-    } else {
-        (total + page_size - 1) / page_size
-    };
-
     Json(serde_json::json!({
         "success": true,
         "message": "List datasources",
-        "data": DatasourceListResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages,
-        }
+        "data": PaginatedResponse::new(items, total, page, page_size)
     }))
 }
 

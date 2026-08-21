@@ -280,16 +280,29 @@ pub struct PaginatedResponse<T> {
     #[schema(example = 1)]
     pub page: i64,
     #[schema(example = 20)]
+    #[serde(alias = "pagesize", alias = "pageSize")]
     pub page_size: i64,
     #[schema(example = 5)]
+    #[serde(alias = "totalPages")]
     pub total_pages: i64,
+}
+
+/// 纯函数：统一分页总页数算法。
+/// - `total <= 0` → 0
+/// - `page_size <= 0` → 当作 1（避免除 0 / 负偏移），与 `page_size_or_default().clamp(1, 100)` 语义一致
+pub fn total_pages_of(total: i64, page_size: i64) -> i64 {
+    if total <= 0 {
+        return 0;
+    }
+    let s = page_size.max(1);
+    (total - 1) / s + 1
 }
 
 impl<T> PaginatedResponse<T> {
     pub fn new(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
         let page = page.max(1);
         let page_size = page_size.clamp(1, 100);
-        let total_pages = (total + page_size - 1) / page_size;
+        let total_pages = total_pages_of(total, page_size);
         Self {
             items,
             total,
@@ -308,8 +321,10 @@ pub struct ListResponse<T> {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub page: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "pagesize")]
     pub page_size: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "totalPages")]
     pub total_pages: Option<i64>,
 }
 
@@ -325,17 +340,12 @@ impl<T> ListResponse<T> {
     }
 
     pub fn with_pagination(items: Vec<T>, total: i64, page: i64, page_size: i64) -> Self {
-        let total_pages = if total == 0 {
-            0
-        } else {
-            (total - 1) / page_size.max(1) + 1
-        };
         Self {
             items,
             total,
             page: Some(page),
             page_size: Some(page_size),
-            total_pages: Some(total_pages),
+            total_pages: Some(total_pages_of(total, page_size)),
         }
     }
 

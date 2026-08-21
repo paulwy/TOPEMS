@@ -107,7 +107,7 @@ pub async fn list_users(
                     "total": total,
                     "page": page,
                     "page_size": page_size,
-                    "total_pages": (total + page_size - 1) / page_size
+                    "total_pages": topems_shared_core::response::total_pages_of(total, page_size)
                 },
                 "code": 200
             }))

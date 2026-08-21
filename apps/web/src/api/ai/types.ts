@@ -213,12 +213,7 @@ export interface PaginationParams extends BasePaginationParams {
   category?: string;
 }
 
-export interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
+export type { PaginatedResult } from '@/api/client';
 
 // ========== Dify API 类型定义 ==========
 

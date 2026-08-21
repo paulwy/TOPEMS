@@ -101,13 +101,8 @@ interface GatewayDashboard {
   avg_latency_ms: number;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
+import type { PaginatedResponse } from '@/api/client';
+export type { PaginatedResponse };
 
 export interface CreateRouteRequest {
   path: string;

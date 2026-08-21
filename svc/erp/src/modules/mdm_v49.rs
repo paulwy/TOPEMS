@@ -776,7 +776,7 @@ pub async fn list_lifecycle_entities(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "生命周期实体列表",
     ))
@@ -1143,7 +1143,7 @@ pub async fn list_retirement_plans(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "退役计划列表",
     ))
@@ -1503,7 +1503,7 @@ pub async fn list_archive_policies(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "归档策略列表",
     ))
@@ -1875,7 +1875,7 @@ pub async fn list_archive_records(
             total,
             page,
             page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
+            total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "归档记录列表",
     ))

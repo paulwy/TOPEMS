@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -22,11 +22,10 @@ import {
 import i18n from '@/i18n';
 import { Search, RefreshCw, Send, MapPin, XCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store/notificationStore';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { shipmentApi } from '@/api/tms';
 import type { Shipment } from '@/api/tms';
 
-const QUERY_KEY = 'tms-shipments';
 type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 const statusMeta: Record<
   ShipmentStatus,
@@ -49,87 +48,33 @@ const renderStatusChip = (status?: string) => {
   );
 };
 const ShipmentManagementPage: React.FC = () => {
-  const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const queryKey = useMemo(() => [QUERY_KEY, page, pageSize, search], [page, pageSize, search]);
-  const { data, isLoading } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const res = await shipmentApi.list({ page, pageSize, search: search || undefined });
-      if (!res.success) throw new Error(i18n.t('tms.shipment_management_page.k4'));
-      return { items: res.data?.items || [], total: res.data?.total || 0 };
-    },
+  const {
+    data: rows,
+    loading: isLoading,
+    pagination: { page, pageSize, total, setPage, setPageSize },
+    fetch,
+    refresh,
+  } = useCrudOperations<Shipment>({
+    api: shipmentApi,
+    queryKey: 'tms-shipments',
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
   });
-  const invalidateList = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-  };
   const dispatchMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.dispatch(id),
-    onSuccess: () => {
-      invalidateList();
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.shipment_management_page.k6'),
-        message: i18n.t('tms.shipment_management_page.k5'),
-      });
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.shipment_management_page.k7'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
+    onSuccess: () => refresh(),
   });
   const arriveMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.arrive(id),
-    onSuccess: () => {
-      invalidateList();
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.shipment_management_page.k9'),
-        message: i18n.t('tms.shipment_management_page.k8'),
-      });
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.shipment_management_page.k10'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
+    onSuccess: () => refresh(),
   });
   const cancelMutation = useMutation({
     mutationFn: (id: string) => shipmentApi.cancel(id),
-    onSuccess: () => {
-      invalidateList();
-      addNotification({
-        type: 'success',
-        title: i18n.t('tms.shipment_management_page.k12'),
-        message: i18n.t('tms.shipment_management_page.k11'),
-      });
-    },
-    onError: (err: unknown) => {
-      addNotification({
-        type: 'error',
-        title: i18n.t('tms.shipment_management_page.k13'),
-        message: err instanceof Error ? err.message : '',
-      });
-    },
+    onSuccess: () => refresh(),
   });
-  const handleSearchSubmit = () => {
-    setSearch(searchInput);
-    setPage(1);
-  };
-  const handleRefresh = () => {
-    invalidateList();
-  };
-  const rows = data?.items || [];
-  const total = data?.total || 0;
+  const handleSearchSubmit = () => fetch({ search: searchInput || undefined });
+  const handleRefresh = () => refresh();
   const renderActions = (row: Shipment) => {
     const status = row.status as ShipmentStatus;
     const acting =
@@ -351,10 +296,7 @@ const ShipmentManagementPage: React.FC = () => {
           page={page - 1}
           onPageChange={(_, p) => setPage(p + 1)}
           rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-          }}
+          onRowsPerPageChange={(e) => setPageSize(Number(e.target.value))}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.shipment_management_page.k37')}
           labelDisplayedRows={({ from, to, count }) =>

@@ -150,26 +150,14 @@ pub async fn list_master_data_refs(
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "本地主数据引用列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询本地主数据引用失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "本地主数据引用列表（空）",
             ))
         }
@@ -1115,26 +1103,14 @@ pub async fn get_audit_trail(
                 .collect();
             let total = items.len() as i64;
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "审计追踪列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询审计追踪失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "审计追踪列表（空）",
             ))
         }
@@ -1425,26 +1401,14 @@ pub async fn get_versions(
                 .collect();
             let total = items.len() as i64;
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "版本历史列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本历史失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "版本历史列表（空）",
             ))
         }
@@ -2054,26 +2018,14 @@ pub async fn list_conflicts(
                 .collect();
             let total = items.len() as i64;
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "冲突记录列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突记录失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "冲突记录列表（空）",
             ))
         }
@@ -2990,26 +2942,14 @@ pub async fn list_archived(
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "已归档主数据列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询已归档主数据失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "已归档主数据列表（空）",
             ))
         }
@@ -3077,26 +3017,14 @@ pub async fn list_pending_destruction(
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "待销毁主数据列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询待销毁主数据失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "待销毁主数据列表（空）",
             ))
         }
@@ -3502,26 +3430,14 @@ pub async fn list_quality_rules(
                 .collect();
             let total = items.len() as i64;
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "质量规则列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "质量规则列表（空）",
             ))
         }
@@ -3845,26 +3761,14 @@ pub async fn get_quality_report(
                 .collect();
             let total = items.len() as i64;
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                    total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-                },
+                PaginatedResponse::new(items, total, page, page_size),
                 "质量报告列表",
             ))
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量报告失败: {}", e);
             Json(ApiResponse::success(
-                PaginatedResponse {
-                    items: vec![],
-                    total: 0,
-                    page,
-                    page_size,
-                    total_pages: 0,
-                },
+                PaginatedResponse::new(vec![], 0, page, page_size),
                 "质量报告列表（空）",
             ))
         }
@@ -5830,7 +5734,7 @@ pub async fn list_sync_jobs(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": ((total as f64) / (page_size as f64)).ceil() as i64,
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "同步任务列表",
     ))
@@ -6711,7 +6615,7 @@ pub async fn list_quality_tickets(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": ((total as f64) / (page_size as f64)).ceil() as i64,
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "质量工单列表",
     ))
@@ -7469,7 +7373,7 @@ pub async fn list_repair_workflows(
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": ((total as f64) / (page_size as f64)).ceil() as i64,
+            "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "修复工作流列表",
     ))
@@ -9435,13 +9339,7 @@ pub async fn list_concepts(
         .collect();
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-        },
+        PaginatedResponse::new(items, total, page, page_size),
         "概念列表",
     ))
 }
@@ -9526,13 +9424,7 @@ pub async fn list_triples(
         .collect();
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-        },
+        PaginatedResponse::new(items, total, page, page_size),
         "知识三元组列表",
     ))
 }
@@ -11006,13 +10898,7 @@ pub async fn list_sync_jobs_v2(
         .collect();
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-        },
+        PaginatedResponse::new(items, total, page, page_size),
         "同步任务列表（V2）",
     ))
 }
@@ -12610,13 +12496,7 @@ pub async fn quality_ai_get_anomalies(
         .collect();
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-        },
+        PaginatedResponse::new(items, total, page, page_size),
         "质量异常列表",
     ))
 }
@@ -13272,13 +13152,7 @@ pub async fn matching_find_duplicates(
         .collect();
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items,
-            total,
-            page,
-            page_size,
-            total_pages: ((total as f64) / (page_size as f64)).ceil() as i64,
-        },
+        PaginatedResponse::new(items, total, page, page_size),
         "重复实体列表",
     ))
 }
@@ -16406,11 +16280,7 @@ async fn search_catalog(query: &CatalogSearchQuery) -> CatalogSearchResult {
     let total = filtered.len() as i64;
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
-    let total_pages = if total == 0 {
-        0
-    } else {
-        (total + page_size - 1) / page_size
-    };
+    let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
     let offset = ((page - 1) * page_size) as usize;
     let entries = if offset >= filtered.len() {
         Vec::new()

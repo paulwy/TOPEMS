@@ -275,7 +275,7 @@ pub async fn search_documents(
                     "documents": documents,
                     "total": count_result,
                     "page": page,
-                    "pagesize": page_size
+                    "page_size": page_size
                 }),
                 "搜索文档成功",
             ))

@@ -424,3 +424,100 @@ mod tests {
         assert_eq!(d.sort_dir.as_deref(), Some("desc"));
     }
 }
+
+// ── 通用列表查询参数（可 flatten 到各服务自定义 Query 结构体） ──────────
+
+/// 通用列表查询基础参数（所有服务共用，带 serde 别名兼容多种前端传参风格）。
+///
+/// 典型用法：
+/// ```rust,ignore
+/// #[derive(Debug, Deserialize)]
+/// pub struct SupplierListParams {
+///     #[serde(flatten)]
+///     pub base: ListQueryParams,
+///     pub status: Option<String>,
+///     pub supplier_type: Option<String>,
+/// }
+///
+/// // then: let page = params.base.page_or_default();
+/// ```
+///
+/// 别名说明：
+/// - `pagesize` / `pageSize` → 统一映射到 `page_size`
+/// - `sortorder` / `sortOrder` / `sort_dir` → 统一映射到 `sort_dir`
+/// - `pagesize` 对应 P0~P3 历史遗留字段（例如 ERP/HRM 服务）
+#[derive(Debug, Clone, Default, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct ListQueryParams {
+    /// 页码，默认 1
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+    /// 每页大小，默认 20，最多 100
+    #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    pub page_size: Option<i64>,
+    /// 关键字搜索
+    #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
+    /// 排序字段
+    #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    pub sort_by: Option<String>,
+    /// 排序方向：asc / desc（大小写不敏感）
+    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    pub sort_dir: Option<String>,
+}
+
+impl ListQueryParams {
+    pub fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+
+    pub fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+
+    /// SQL OFFSET 计算
+    pub fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
+
+    /// SQL LIMIT 计算（即 page_size）
+    pub fn limit(&self) -> i64 {
+        self.page_size_or_default()
+    }
+
+    /// 规范化 sort_dir：仅保留 asc / desc，其余统一降为 desc
+    pub fn normalized_sort_dir(&self) -> String {
+        crate::repository::normalize_sort_dir(self.sort_dir.as_deref())
+    }
+
+    /// 转换为 `PaginatedQuery`（内部存储层使用，支持 normalize()/sort 白名单）
+    pub fn to_paginated_query(&self) -> PaginatedQuery {
+        PaginatedQuery {
+            page: self.page_or_default(),
+            page_size: self.page_size_or_default(),
+            sort_by: self.sort_by.clone(),
+            sort_dir: self.sort_dir.clone(),
+            filters: None,
+        }
+    }
+}
+
+/// 便捷 trait：如果业务 struct 包含 `ListQueryParams` 字段，可用 `.page()` 等直接调用。
+///
+/// 推荐用法：在各服务 crate 中直接 `impl ListQueryParamsExt for MyParams`，或手动
+/// 用 `params.base.offset()` 即可（本 trait 为可选 sugar，不强依赖）。
+pub trait ListQueryParamsExt {
+    fn list_params(&self) -> &ListQueryParams;
+
+    fn page(&self) -> i64 {
+        self.list_params().page_or_default()
+    }
+    fn page_size(&self) -> i64 {
+        self.list_params().page_size_or_default()
+    }
+    fn offset(&self) -> i64 {
+        self.list_params().offset()
+    }
+    fn limit(&self) -> i64 {
+        self.list_params().limit()
+    }
+}
