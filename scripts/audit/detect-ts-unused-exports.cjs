@@ -172,9 +172,19 @@ function extractExports(filePath) {
 }
 
 function main() {
+  // CLI args
+  const args = process.argv.slice(2);
+  const noSkipUnderscore = args.includes('--no-skip-underscore');
+  const dirArgs = args.filter(a => a.startsWith('--dir=')).map(a => a.split('=')[1]);
+  const extraDirs = dirArgs.map(d => path.join(ROOT, d));
+
   console.log('\n🔍 扫描文件...');
-  const files = walk(WEB_SRC);
-  console.log(`   文件数: ${files.length}`);
+  const scanDirs = [WEB_SRC, ...extraDirs];
+  let files = [];
+  for (const dir of scanDirs) {
+    files = files.concat(walk(dir));
+  }
+  console.log(`   文件数: ${files.length} (扫描目录: ${scanDirs.length})`);
 
   // phase 1: 收集所有 exports
   console.log('\n📦 阶段 1/3  提取 exports ...');
@@ -252,7 +262,9 @@ function main() {
         const isBarrel = /\/index\.(ts|tsx)$/.test(rf);
         const isTest = /__tests__|\.(test|spec)\.(ts|tsx)$/.test(rf);
         const isStory = /\.stories\.(ts|tsx)$/.test(rf);
-        const isMock = /__mocks__|mock\.ts/.test(rf);
+        const isMock = noSkipUnderscore
+          ? /__mocks__\//.test(rf)
+          : /__mocks__|mock\.ts/.test(rf);
         if (!isBarrel && !isTest && !isStory && !isMock) {
           allL2 = false;
           break;
