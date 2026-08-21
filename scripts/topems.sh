@@ -259,19 +259,25 @@ get_pkg_cmd() {
 ensure_frontend_deps() {
     local pkg_cmd=$1
     local web_dir="$PROJECT_ROOT/apps/web"
-    
+
     if [ ! -d "$web_dir" ]; then
         error "前端目录不存在: $web_dir"
         return 1
     fi
-    
+
     cd "$web_dir"
-    
+
     if [ ! -d "node_modules" ]; then
         info "安装前端依赖..."
+        # 本机 dev 场景跳过 puppeteer Chromium 下载（CI 应通过环境变量显式启用）
+        # 避免 puppeteer postinstall 网络失败阻塞 pnpm install
+        if [ -z "${PUPPETEER_SKIP_DOWNLOAD:-}" ]; then
+            export PUPPETEER_SKIP_DOWNLOAD=true
+            detail "已自动设置 PUPPETEER_SKIP_DOWNLOAD=true（本机 dev 模式）"
+        fi
         $pkg_cmd install --silent
     fi
-    
+
     return 0
 }
 
@@ -2416,6 +2422,7 @@ clean_project() {
     local clean_logs=false
     local clean_ollama=false
     local clean_all=false
+    local clean_deep=false
     local dry_run=false
     local preflight=false
 
@@ -2428,11 +2435,12 @@ clean_project() {
             --logs)         clean_logs=true ;;
             --ollama)       clean_ollama=true ;;
             --all)          clean_all=true ;;
+            --deep)         clean_deep=true ;;
             --dry-run)      dry_run=true ;;
             --preflight)    preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --dry-run --preflight"
+                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
                 return 1
                 ;;
         esac
@@ -2478,6 +2486,10 @@ clean_project() {
         clean_frontend=true
         clean_cache=true
         clean_logs=true
+    fi
+    # --deep 必须配合 --frontend（deep 清理在 frontend 块内执行）
+    if [ "$clean_deep" = true ]; then
+        clean_frontend=true
     fi
 
     # --system-cache 是危险操作，需要二次确认
@@ -2578,6 +2590,48 @@ clean_project() {
                 fi
             fi
         done
+
+        # --deep: 深度清理所有 node_modules（解决 dual versions / lockfile 漂移 / 本机污染）
+        if [ "$clean_deep" = true ]; then
+            warn "--deep 模式: 将删除所有 node_modules 目录并 pnpm store prune"
+            warn "  用于解决 dual @types/react 残留 / node_modules 与 lockfile 不一致等系统性问题"
+            local deep_dirs=(
+                "$PROJECT_ROOT/node_modules"
+                "$PROJECT_ROOT/apps/web/node_modules"
+                "$PROJECT_ROOT/apps/desktop/node_modules"
+                "$PROJECT_ROOT/apps/mobile/node_modules"
+            )
+            # 补齐 packages/*/node_modules
+            local pkg_dir
+            for pkg_dir in "$PROJECT_ROOT/packages"/*/node_modules; do
+                [ -d "$pkg_dir" ] && deep_dirs+=("$pkg_dir")
+            done
+            for dir in "${deep_dirs[@]}"; do
+                if [ -d "$dir" ]; then
+                    local size
+                    size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                    if [ "$dry_run" = true ]; then
+                        info "[DRY-RUN] 将删除: $dir ($size)"
+                    else
+                        rm -rf "$dir"
+                        detail "已删除 $dir ($size)"
+                        did_clean=true
+                    fi
+                fi
+            done
+            # pnpm store prune（清理未引用包，不影响其他项目）
+            if command -v pnpm &>/dev/null; then
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将执行 pnpm store prune"
+                else
+                    info "执行 pnpm store prune..."
+                    pnpm store prune 2>/dev/null
+                    detail "pnpm store 已清理"
+                    did_clean=true
+                fi
+            fi
+            success "深度清理完成。下次运行 build/dev 时会自动 pnpm install 重新安装"
+        fi
     fi
 
     # 项目级缓存（仅影响本项目，安全）
@@ -2847,6 +2901,7 @@ SQLx 离线缓存 (V64+):
   clean [选项]            清理编译产物、缓存、日志
                             --rust         清理 Rust 编译产物 (target/, .sqlx, llvm-cov-target, lib/target) + 终止后台 cargo 进程
                             --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
+                            --deep         深度清理所有 node_modules + pnpm store prune（解决 dual versions / lockfile 漂移）
                             --cache        清理项目级缓存 (.lighthouseci, .venv, .storybook 等)
                             --system-cache 清理系统级缓存 (pnpm/cargo/IDE，危险操作需确认)
                             --ollama       清理 Ollama 模型（保留项目使用的模型）
