@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Chip } from '@mui/material';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
@@ -8,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Layers, ArrowRightLeft } from 'lucide-react';
 import { batchSchema } from '@/schemas/wms/batch';
 import { wmsApi } from '@/api/wms';
-import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
+import type { Batch } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
@@ -220,42 +221,7 @@ const BatchManagementPage: React.FC = () => {
     },
   ];
 
-  const apiAdapter: CrudApiAdapter = {
-    list: async (params) => {
-      const response = await wmsApi.batches.list({
-        page: params?.page ? params.page + 1 : 1,
-        pagesize: params?.pageSize || 10,
-        ...params,
-      });
-      if (!response.success) {
-        throw new Error('Failed to fetch batches');
-      }
-      return {
-        data: response.data.items as unknown as Record<string, unknown>[],
-        total: response.data.total,
-      };
-    },
-    create: async (data) => {
-      const response = await wmsApi.batches.create(data as unknown as CreateBatchRequest);
-      if (!response.success) {
-        throw new Error('Failed to create batch');
-      }
-      return response.data as unknown as Record<string, unknown>;
-    },
-    update: async (id, data) => {
-      const response = await wmsApi.batches.update(id, data as unknown as UpdateBatchRequest);
-      if (!response.success) {
-        throw new Error('Failed to update batch');
-      }
-      return response.data as unknown as Record<string, unknown>;
-    },
-    delete: async (id) => {
-      const response = await wmsApi.batches.delete(id);
-      if (!response.success) {
-        throw new Error('Failed to delete batch');
-      }
-    },
-  };
+    const apiAdapter = createCrudPageAdapter(wmsApi.batches);
 
   return (
     <PageContainer

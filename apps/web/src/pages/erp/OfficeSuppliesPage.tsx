@@ -2,7 +2,8 @@
  * 办公用品管理页面 — Schema 驱动的 CRUD 页面
  */
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { officeSuppliesSchema } from '@/schemas/erp/officeSupplies';
 import { officeSupplyApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -89,50 +90,7 @@ const OfficeSuppliesStats: React.FC = () => {
     </Box>
   );
 };
-const officeSupplyApiAdapter: CrudApiAdapter = {
-  list: async (params) => {
-    const response = await officeSupplyApi.list({
-      page: params?.page,
-      pagesize: params?.pageSize,
-      search: params?.search,
-      status: params?.status as string | undefined,
-      category: params?.category as string | undefined,
-    });
-    if (!response.success) {
-      throw new Error(i18n.t('erp.office_supplies_page.k5'));
-    }
-    const data = response.data;
-    return {
-      data: (data?.items || []) as unknown as Record<string, unknown>[],
-      total: data?.total || 0,
-    };
-  },
-  create: async (data) => {
-    const response = await officeSupplyApi.create(
-      data as Parameters<typeof officeSupplyApi.create>[0]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.office_supplies_page.k6'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  update: async (id, data) => {
-    const response = await officeSupplyApi.update(
-      id,
-      data as Parameters<typeof officeSupplyApi.update>[1]
-    );
-    if (!response.success) {
-      throw new Error(i18n.t('erp.office_supplies_page.k7'));
-    }
-    return response.data as unknown as Record<string, unknown>;
-  },
-  delete: async (id) => {
-    const response = await officeSupplyApi.delete(id);
-    if (!response.success) {
-      throw new Error(i18n.t('erp.office_supplies_page.k8'));
-    }
-  },
-};
+const officeSupplyApiAdapter = createCrudPageAdapter(officeSupplyApi);
 const OfficeSuppliesPage: React.FC = () => {
   return (
     <CrudPage

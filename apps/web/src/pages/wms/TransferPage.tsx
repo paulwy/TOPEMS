@@ -1,5 +1,6 @@
 import React from 'react';
-import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { type RowAction } from '@/components/templates';
 import { transferSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
@@ -485,39 +486,7 @@ export default function TransferPage() {
     [queryClient, addNotification]
   );
 
-  const transferApiAdapter: CrudApiAdapter = {
-    list: async (params) => {
-      const response = await wmsApi.transfers.list(
-        params as Parameters<typeof wmsApi.transfers.list>[0]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.transfer_page.k36'));
-      const items = response.data?.items || [];
-      const total = response.data?.total || 0;
-      return { data: items as unknown as Record<string, unknown>[], total };
-    },
-
-    create: async (data) => {
-      const response = await wmsApi.transfers.create(
-        data as unknown as Parameters<typeof wmsApi.transfers.create>[0]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.transfer_page.k37'));
-      return response.data as unknown as Record<string, unknown>;
-    },
-
-    update: async (id, data) => {
-      const response = await wmsApi.transfers.update(
-        id,
-        data as unknown as Parameters<typeof wmsApi.transfers.update>[1]
-      );
-      if (!response.success) throw new Error(i18n.t('pages.transfer_page.k38'));
-      return response.data as unknown as Record<string, unknown>;
-    },
-
-    delete: async (id) => {
-      const response = await wmsApi.transfers.delete(id);
-      if (!response.success) throw new Error(i18n.t('pages.transfer_page.k39'));
-    },
-  };
+    const transferApiAdapter = createCrudPageAdapter(wmsApi.transfers);
 
   const customRowActions: RowAction[] = [
     {
