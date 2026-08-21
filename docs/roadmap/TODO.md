@@ -108,7 +108,7 @@
 - **历史版本完成率**：V67.2~V258 关键里程碑 107 个章节 / 实际已完成 100+（≥94%）
 - **代码净减最近 5 版**：V254(-531) + V257(-29→0 tsc) + V258(-2814 dead exports) + V257 重构前 BFF 清理(-19074) ≈ **净减 22,400+ 行**
 - **质量门禁当前基线（V259 封版）**：axum-layer-gate R1/R2/R3 = 0/0/0 · perm-gate R1/R3/R5 = 0/0/0 · cargo check 0 errors · tsc apps/web **0 errors** · tsc shared packages **6/6 passed** · props-alignment **100% realness** (359 routes) · CRM 0 warnings
-- **当前活跃缺口**：Backlog 5 大主题 16 条（V252 + V232 均已完成；Backlog #1 Dify + #2 Tauri POC 代码完成；#3 TypeMap + Dead Props + Scanner 全完成；#4 AST 演进完成；#5 CI 双开关已切换 blocking；#6 ①③ 完成 + ② 需人工验证剩余 514 L1-VALUE；#7 全 5 子项完成；#8 完成）
+- **当前活跃缺口**：Backlog 5 大主题 16 条**全部完成**（P1 #1 Dify AI + #2 Tauri 5 件套 POC 代码完成；P2 #3 TypeMap + Dead Props + Scanner + Pattern B 全完成；#4 AST 演进完成；#5 CI 双开关 blocking；P3 #6 ts-unused-exports 3/3 全完成（96 dead exports 已删）；#7 Tauri 生态 5/5 全完成（审计日志页面已接入路由）；#8 CRM 0 warnings）
 
 ### 当前活跃任务 → 版本节点映射（规划建议 V259+）
 
