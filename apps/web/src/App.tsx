@@ -18,23 +18,43 @@ const ObservabilityPanel = import.meta.env.DEV
 // 🔧 Dev auth injector: 从 URL query ?_tok=JWT&_tid=TENANT_ID 注入身份，用于联调
 if (import.meta.env.DEV) {
   try {
+    const base64UrlEncode = (value: string): string =>
+      btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const makeDevToken = (): string => {
+      const header = base64UrlEncode(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+      const payload = base64UrlEncode(
+        JSON.stringify({
+          sub: 'admin',
+          username: 'admin',
+          exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
+        })
+      );
+      return `${header}.${payload}.`;
+    };
+
+    const isJwtLike = (value: string | null): value is string =>
+      !!value && value.split('.').length === 3;
+
     const params = new URLSearchParams(window.location.search);
-    const tok = params.get('_tok');
+    const rawTok = params.get('_tok');
     const tid = params.get('_tid');
+    const tok = isJwtLike(rawTok) ? rawTok : makeDevToken();
     if (tok) localStorage.setItem('token', tok);
     if (tid) localStorage.setItem('tenant_id', tid);
-    if (tok || tid) {
+    if (rawTok || tid) {
       localStorage.setItem(
         'user',
         JSON.stringify({
           id: params.get('_uid') || '11111111-1111-1111-1111-111111111111',
           username: 'admin',
           role: 'admin',
-          isSuperuser: true,
+          is_superuser: true,
         })
       );
       localStorage.setItem('roles', JSON.stringify(['admin', 'user']));
       localStorage.setItem('permissions', JSON.stringify(['*']));
+      localStorage.setItem('dev_auth_bypass', '1');
       localStorage.removeItem('topems-plugin-storage');
       localStorage.removeItem('plugin-persister');
     }
