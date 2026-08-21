@@ -163,7 +163,7 @@ export default function WmsInventoryMovementDetailPage() {
                   className='ml-6'
                 >
                   <span
-                    className={`absolute -left-1.5 mt-1 h-3 w-3 rounded-full ${e.color} border-2 border-var(--color-primary-foreground, #ffffff)`}
+                    className={`absolute -left-1.5 mt-1 h-3 w-3 rounded-full ${e.color} border-2 border-var(--color-primary-foreground)`}
                   />
                   <div className='text-xs text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                   <div className='text-sm font-medium'>{e.title}</div>

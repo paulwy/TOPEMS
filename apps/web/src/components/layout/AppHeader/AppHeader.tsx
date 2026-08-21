@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, useTheme, useMediaQuery } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderSearch } from './HeaderSearch';
 import { HeaderNotifications } from './HeaderNotifications';
@@ -48,7 +49,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         position: 'sticky',
         top: 0,
         zIndex: 1100,
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        boxShadow: `0 1px 2px 0 ${alpha(headerTheme.palette.common.black, 0.03)}`,
       }}
     >
       <Box

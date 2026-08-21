@@ -111,7 +111,7 @@ pub fn calc_remaining_hours(available: f64, used: f64) -> f64 {
 }
 
 pub fn is_priority_valid(priority: i32) -> bool {
-    priority >= -10 && priority <= 10
+    (-10..=10).contains(&priority)
 }
 
 /// Calculate capacity utilization rate (clamped to [0.0, 1.0]).

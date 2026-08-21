@@ -173,7 +173,7 @@ mod tests {
             use_frontend_fallback: true,
             note: String::new(),
         };
-        assert!(format!("{:?}", meta).len() > 0);
+        assert!(!format!("{:?}", meta).is_empty());
     }
 
     #[test]

@@ -336,8 +336,8 @@ mod tests {
     fn test_ci_high_confidence_narrow() {
         let (l, u) = calculate_confidence_interval(0.95);
         // 高置信度 → margin ≈ 0.05 + (1-0.95)*0.15 = 0.0575
-        assert!(l >= 0.85 && l <= 0.95);
-        assert!(u >= 0.95 && u <= 1.0);
+        assert!((0.85..=0.95).contains(&l));
+        assert!((0.95..=1.0).contains(&u));
     }
 
     #[test]

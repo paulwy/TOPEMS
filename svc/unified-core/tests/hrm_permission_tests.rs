@@ -162,37 +162,31 @@ async fn test_hrm_003_update_employee() {
 
     let result = auth_request(&client, &token, "GET", "/api/hrm/employees", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let employees = body["data"]["employees"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let employees = body["data"]["employees"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(emp_list) = employees {
-                if let Some(emp) = emp_list.first() {
-                    if let Some(emp_id) = emp["id"].as_str() {
-                        let update_result = auth_request(
-                            &client,
-                            &token,
-                            "PUT",
-                            &format!("/api/hrm/employees/{}", emp_id),
-                            Some(json!({ "full_name": "更新后的姓名" })),
-                        )
-                        .await;
+        if let Some(emp_list) = employees {
+            if let Some(emp) = emp_list.first() {
+                if let Some(emp_id) = emp["id"].as_str() {
+                    let update_result = auth_request(
+                        &client,
+                        &token,
+                        "PUT",
+                        &format!("/api/hrm/employees/{}", emp_id),
+                        Some(json!({ "full_name": "更新后的姓名" })),
+                    )
+                    .await;
 
-                        match update_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("HRM-003 测试通过: 更新员工信息功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = update_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("HRM-003 测试通过: 更新员工信息功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到员工，跳过测试");
@@ -210,49 +204,38 @@ async fn test_hrm_004_delete_employee() {
 
     let result = auth_request(&client, &token, "GET", "/api/hrm/employees", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let employees = body["data"]["employees"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let employees = body["data"]["employees"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(emp_list) = employees {
-                let test_emp = emp_list.iter().find(|e| {
-                    e["username"]
-                        .as_str()
-                        .map(|s| s.starts_with("hrm_"))
-                        .unwrap_or(false)
-                });
+        if let Some(emp_list) = employees {
+            let test_emp = emp_list.iter().find(|e| {
+                e["username"]
+                    .as_str()
+                    .map(|s| s.starts_with("hrm_"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(emp) = test_emp {
-                    if let Some(emp_id) = emp["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/hrm/employees/{}", emp_id),
-                            None,
-                        )
-                        .await;
+            if let Some(emp) = test_emp {
+                if let Some(emp_id) = emp["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/hrm/employees/{}", emp_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("HRM-004 测试通过: 删除员工功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("HRM-004 测试通过: 删除员工功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的员工，跳过测试");
@@ -490,37 +473,31 @@ async fn test_hrm_012_approve_leave() {
     // 获取待审批的请假申请
     let list_result = auth_request(&client, &token, "GET", "/api/hrm/leave/pending", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let leaves = body["data"]["leaves"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let leaves = body["data"]["leaves"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(leave_list) = leaves {
-                if let Some(leave) = leave_list.first() {
-                    if let Some(leave_id) = leave["id"].as_str() {
-                        let approve_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/hrm/leave/{}/approve", leave_id),
-                            Some(json!({ "comment": "批准" })),
-                        )
-                        .await;
+        if let Some(leave_list) = leaves {
+            if let Some(leave) = leave_list.first() {
+                if let Some(leave_id) = leave["id"].as_str() {
+                    let approve_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/hrm/leave/{}/approve", leave_id),
+                        Some(json!({ "comment": "批准" })),
+                    )
+                    .await;
 
-                        match approve_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("HRM-012 测试通过: 审批请假功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = approve_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("HRM-012 测试通过: 审批请假功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到待审批的请假申请，跳过测试");

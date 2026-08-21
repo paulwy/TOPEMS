@@ -18,7 +18,6 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::models::{BalanceSheet, IncomeStatement};
 use crate::services::FinanceService;

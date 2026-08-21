@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 import { Home, Bell, ChevronRight, X, Menu, Lightbulb, HelpCircle, Search } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -220,7 +221,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             top: 56,
             paddingTop: 0,
             borderRadius: isTablet ? 0 : 0,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
           },
         }}
       >

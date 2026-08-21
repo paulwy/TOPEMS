@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Check, Trash2, ExternalLink } from 'lucide-react';
 import type { Notification } from '@/api/notification';
 import { markAsRead, deleteNotification } from '@/api/notification';
@@ -285,7 +286,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       style={{
         position: 'relative',
         padding: 16,
-        backgroundColor: !notification.is_read ? 'rgba(59, 130, 246, 0.05)' : undefined,
+        backgroundColor: !notification.is_read ? `${alpha(theme.palette.primary.main, 0.05)}` : undefined,
         opacity: isDeleting ? 0.5 : 1,
         cursor: 'pointer',
         transition: 'background-color 0.15s',

@@ -111,7 +111,7 @@ body {
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
   }
   50% {
-    box-shadow: var(--cyber-shadow-pulse-glow-strong, 0 0 40px rgba(96, 165, 250, 0.6));
+    box-shadow: var(--cyber-shadow-pulse-glow-strong);
   }
 }
 
@@ -184,7 +184,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-primary-foreground) 20%, transparent), transparent);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -315,13 +315,13 @@ button:disabled {
 }
 
 .glass-effect {
-  background: rgba(30, 41, 59, 0.8);
+  background: color-mix(in srgb, var(--color-text-primary) 80%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-primary-foreground) 10%, transparent);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary-light, var(--color-primary-light, #60a5fa)), var(--color-secondary-light, var(--color-secondary-light, #a78bfa)), var(--color-error-400, #f87171));
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-secondary-light), var(--color-error-400));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -373,7 +373,7 @@ button:disabled {
 
 .dark .MuiPaper-root:hover,
 .dark .MuiCard-root:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
   box-shadow: var(--cyber-glow-primary);
 }
 
@@ -398,7 +398,7 @@ button:disabled {
 
 /* Sidebar active item glow */
 .dark .MuiListItemButton-root.Mui-selected {
-  box-shadow: inset 3px 0 0 var(--color-primary), 0 0 20px rgba(59, 130, 246, 0.1);
+  box-shadow: inset 3px 0 0 var(--color-primary), 0 0 20px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 /* Table row hover with left accent bar */
@@ -408,18 +408,18 @@ button:disabled {
 
 /* Scrollbar cyber style */
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.3);
+  background: color-mix(in srgb, var(--color-primary) 30%, transparent);
   border-radius: var(--radius-sm);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.5);
+  background: color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
 /* Input focus glow */
 .dark .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: var(--color-primary) !important;
-  box-shadow: var(--cyber-shadow-input-focus, 0 0 0 2px rgba(59, 130, 246, 0.2));
+  box-shadow: var(--cyber-shadow-input-focus);
 }
 
 /* Page enter animation */
@@ -443,17 +443,17 @@ button:disabled {
 /* Subtle grid pattern overlay for dark surfaces */
 .dark .cyber-grid-bg {
   background-image:
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--color-primary) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 3%, transparent) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 /* Progress bar cyber glow */
 .dark .MuiLinearProgress-root {
-  box-shadow: var(--cyber-shadow-progress, 0 0 8px rgba(59, 130, 246, 0.3));
+  box-shadow: var(--cyber-shadow-progress);
 }
 
 /* Badge/Chip accent glow for dark mode */
 .dark .MuiBadge-badge {
-  box-shadow: var(--cyber-shadow-badge, 0 0 8px rgba(239, 68, 68, 0.4));
+  box-shadow: var(--cyber-shadow-badge);
 }

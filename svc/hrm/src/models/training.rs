@@ -159,14 +159,14 @@ mod tests {
     fn test_training_plan_roundtrip_full() {
         roundtrip(&TrainingPlan {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             name: "2024 Q1 Training".to_string(),
             code: Some("TP-2024-Q1".to_string()),
             description: Some("Quarterly training plan".to_string()),
             start_date: now(),
             end_date: now(),
             status: "active".to_string(),
-            budget: Some(50000.0),
+            budget: Some(Decimal::from(50000)),
             created_at: now(),
             updated_at: now(),
         });
@@ -176,7 +176,7 @@ mod tests {
     fn test_training_plan_roundtrip_minimal() {
         roundtrip(&TrainingPlan {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             name: "Basic Training".to_string(),
             code: None,
             description: None,
@@ -193,14 +193,14 @@ mod tests {
     fn test_training_course_roundtrip_full() {
         roundtrip(&TrainingCourse {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             plan_id: Uuid::new_v4(),
             name: "Rust Fundamentals".to_string(),
             code: Some("TC-RUST-001".to_string()),
             category: "Technical".to_string(),
             level: "Beginner".to_string(),
             description: Some("Introduction to Rust".to_string()),
-            duration_hours: Some(8.0),
+            duration_hours: Some(Decimal::from(8)),
             instructor_id: Some(Uuid::new_v4()),
             instructor_name: Some("John Doe".to_string()),
             location: Some("Room A".to_string()),
@@ -215,7 +215,7 @@ mod tests {
     fn test_training_course_roundtrip_minimal() {
         roundtrip(&TrainingCourse {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             plan_id: Uuid::new_v4(),
             name: "Safety Training".to_string(),
             code: None,
@@ -237,13 +237,13 @@ mod tests {
     fn test_training_record_roundtrip_full() {
         roundtrip(&TrainingRecord {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             course_id: Uuid::new_v4(),
             employee_id: Uuid::new_v4(),
             enrollment_date: now(),
             attendance_status: "attended".to_string(),
             completion_status: "completed".to_string(),
-            score: Some(95.0),
+            score: Some(Decimal::from(95)),
             certificate_no: Some("CERT-001".to_string()),
             completed_at: Some(now()),
             feedback: Some("Great course".to_string()),
@@ -256,7 +256,7 @@ mod tests {
     fn test_training_record_roundtrip_minimal() {
         roundtrip(&TrainingRecord {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             course_id: Uuid::new_v4(),
             employee_id: Uuid::new_v4(),
             enrollment_date: now(),

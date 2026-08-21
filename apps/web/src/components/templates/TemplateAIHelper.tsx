@@ -238,7 +238,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
     <Card
       sx={{
         background: `linear-gradient(to bottom right, warning.light, ${designTokens.colors.warning[100]})`,
-        border: '1px solid var(--color-warning-300, #fcd34d)',
+        border: '1px solid var(--color-warning-300)',
       }}
     >
       <CardHeader sx={{ pb: 1.5 }}>

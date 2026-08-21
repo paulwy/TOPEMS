@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS-ERP 企业资源计划系统"
 
+[features]
+erp_http_tests = []
+
 [dependencies]
 axum.workspace = true
 tokio.workspace = true

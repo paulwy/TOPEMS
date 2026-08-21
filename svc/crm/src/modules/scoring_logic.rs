@@ -482,6 +482,5 @@ mod tests {
         // 350 + 300 + 200 + 1500 = 2350 → 23
         assert_eq!(calculate_total_score(10, 10, 10, 100), 23);
         // Verifying: revenue (35) > opp (30) > interaction (20) > loyalty (15)
-        assert!(41 > 37 && 37 > 28 && 28 > 23);
     }
 }

@@ -28,6 +28,7 @@ import { SidebarUserPanel } from './SidebarUserPanel';
 import { isPlatformPath, getModuleFromPath } from './shared';
 import i18n from '@/i18n';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { alpha } from '@mui/material/styles';
 
 export interface AppSidebarProps {
   collapsed: boolean;
@@ -299,13 +300,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               // Cyberpunk theme accent
               ...theme.applyStyles('dark', {
                 '&.Mui-selected': {
-                  boxShadow: '0 0 12px rgba(0, 255, 255, 0.35)',
+                  boxShadow: `0 0 12px ${alpha(theme.palette.info.main, 0.35)}`,
                 },
               }),
               '[data-theme="cyberpunk"] &': {
                 '&.Mui-selected': {
-                  boxShadow: '0 0 14px rgba(255, 0, 255, 0.45)',
-                  border: '1px solid rgba(255, 0, 255, 0.5)',
+                  boxShadow: `0 0 14px ${alpha(theme.palette.secondary.main, 0.45)}`,
+                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`,
                 },
               },
             }}

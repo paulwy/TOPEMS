@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn test_permission_neq_different_variants() {
-        let perms = vec![
+        let perms = [
             ApsPermission::ProductionPlanRead,
             ApsPermission::ProductionPlanWrite,
             ApsPermission::ScheduleRead,

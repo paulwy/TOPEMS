@@ -459,7 +459,7 @@ const ApsSchedulingPage: React.FC = () => {
                                 sx={{
                                   bgcolor:
                                     riskColorMap[item.risk_level] ||
-                                    'var(--color-grey-400, #9ca3af)',
+                                    'var(--color-grey-400)',
                                   color: 'common.white',
                                   fontWeight: 500,
                                 }}
@@ -480,7 +480,7 @@ const ApsSchedulingPage: React.FC = () => {
               <CardContent>
                 <Brain
                   size={64}
-                  color='var(--color-grey-300, #d1d5db)'
+                  color='var(--color-grey-300)'
                   style={{ marginBottom: 16 }}
                 />
                 <Typography

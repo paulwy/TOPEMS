@@ -356,7 +356,7 @@ export function WmsFSMActionButtons({
             className={
               requiresApproval
                 ? 'inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50'
-                : 'inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-var(--color-primary-foreground, #ffffff) hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+                : 'inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-var(--color-primary-foreground) hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
             }
           >
             {t.label}

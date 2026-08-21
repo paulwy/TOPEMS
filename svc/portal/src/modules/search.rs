@@ -547,59 +547,6 @@ fn highlight_text(text: &str, keyword: &str) -> String {
     result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_highlight_basic() {
-        let result = highlight_text("hello world", "world");
-        assert_eq!(result, "hello <mark>world</mark>");
-    }
-
-    #[test]
-    fn test_highlight_multiple() {
-        let result = highlight_text("foo bar foo baz", "foo");
-        assert_eq!(result, "<mark>foo</mark> bar <mark>foo</mark> baz");
-    }
-
-    #[test]
-    fn test_highlight_case_insensitive() {
-        let result = highlight_text("Hello WORLD", "world");
-        assert_eq!(result, "Hello <mark>WORLD</mark>");
-    }
-
-    #[test]
-    fn test_highlight_no_match() {
-        let result = highlight_text("hello world", "xyz");
-        assert_eq!(result, "hello world");
-    }
-
-    #[test]
-    fn test_highlight_empty_keyword() {
-        let result = highlight_text("hello world", "");
-        assert_eq!(result, "hello world");
-    }
-
-    #[test]
-    fn test_highlight_empty_text() {
-        let result = highlight_text("", "test");
-        assert_eq!(result, "");
-    }
-
-    #[test]
-    fn test_highlight_match_at_start() {
-        let result = highlight_text("test hello", "test");
-        assert_eq!(result, "<mark>test</mark> hello");
-    }
-
-    #[test]
-    fn test_highlight_match_at_end() {
-        let result = highlight_text("hello test", "test");
-        assert_eq!(result, "hello <mark>test</mark>");
-    }
-}
-
 fn parse_search_results(
     json: &serde_json::Value,
     service: &str,
@@ -657,4 +604,57 @@ fn parse_search_results(
 
 fn erp_base_url() -> String {
     resolve_service_url("ERP_SERVICE_URL", DEFAULT_ERP_URL, "ERP")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_highlight_basic() {
+        let result = highlight_text("hello world", "world");
+        assert_eq!(result, "hello <mark>world</mark>");
+    }
+
+    #[test]
+    fn test_highlight_multiple() {
+        let result = highlight_text("foo bar foo baz", "foo");
+        assert_eq!(result, "<mark>foo</mark> bar <mark>foo</mark> baz");
+    }
+
+    #[test]
+    fn test_highlight_case_insensitive() {
+        let result = highlight_text("Hello WORLD", "world");
+        assert_eq!(result, "Hello <mark>WORLD</mark>");
+    }
+
+    #[test]
+    fn test_highlight_no_match() {
+        let result = highlight_text("hello world", "xyz");
+        assert_eq!(result, "hello world");
+    }
+
+    #[test]
+    fn test_highlight_empty_keyword() {
+        let result = highlight_text("hello world", "");
+        assert_eq!(result, "hello world");
+    }
+
+    #[test]
+    fn test_highlight_empty_text() {
+        let result = highlight_text("", "test");
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_highlight_match_at_start() {
+        let result = highlight_text("test hello", "test");
+        assert_eq!(result, "<mark>test</mark> hello");
+    }
+
+    #[test]
+    fn test_highlight_match_at_end() {
+        let result = highlight_text("hello test", "test");
+        assert_eq!(result, "hello <mark>test</mark>");
+    }
 }

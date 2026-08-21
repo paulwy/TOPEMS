@@ -309,8 +309,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: showTrackPanel ? 'secondary.main' : 'var(--color-primary-foreground, #ffffff)',
-            color: showTrackPanel ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
+            bgcolor: showTrackPanel ? 'secondary.main' : 'var(--color-primary-foreground)',
+            color: showTrackPanel ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: showTrackPanel ? 'secondary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
@@ -370,8 +370,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             alignItems: 'center',
             gap: 2,
             bgcolor:
-              mapType === 'amap' ? 'primary.dark' : 'var(--color-primary-foreground, #ffffff)',
-            color: mapType === 'amap' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
+              mapType === 'amap' ? 'primary.dark' : 'var(--color-primary-foreground)',
+            color: mapType === 'amap' ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: mapType === 'amap' ? 'primary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
@@ -394,8 +394,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: showHeatmap ? 'error.dark' : 'var(--color-primary-foreground, #ffffff)',
-            color: showHeatmap ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
+            bgcolor: showHeatmap ? 'error.dark' : 'var(--color-primary-foreground)',
+            color: showHeatmap ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: showHeatmap ? 'error.darker' : 'grey.50' },
             textTransform: 'none',
           }}
@@ -454,8 +454,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: showHeatmap ? 'primary.light' : 'var(--color-primary-foreground, #ffffff)',
-            color: showHeatmap ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
+            bgcolor: showHeatmap ? 'primary.light' : 'var(--color-primary-foreground)',
+            color: showHeatmap ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: showHeatmap ? 'primary.main' : 'grey.50' },
             textTransform: 'none',
           }}
@@ -474,8 +474,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: offlineMode ? 'success.dark' : 'var(--color-primary-foreground, #ffffff)',
-            color: offlineMode ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
+            bgcolor: offlineMode ? 'success.dark' : 'var(--color-primary-foreground)',
+            color: offlineMode ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: offlineMode ? 'success.700' : 'grey.50' },
             textTransform: 'none',
           }}

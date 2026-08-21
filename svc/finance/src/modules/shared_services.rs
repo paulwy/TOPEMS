@@ -1205,55 +1205,14 @@ async fn generate_settlements_handler(
     Json(ApiResponse::success(result, "生成成功"))
 }
 
+// V232 P0: Shared services routes removed — handlers returned mock data.
+// These endpoints (shared service centers, cost allocation, internal pricing,
+// settlements) require database tables and complex business logic that hasn't
+// been implemented. The frontend does not call any of these endpoints.
+// When real implementation is needed, create DB tables and re-enable routes.
+#[allow(dead_code)]
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        // A. 共享服务中心分析
-        .route(
-            "/shared-services/centers/{period}",
-            axum::routing::get(get_service_centers_handler),
-        )
-        .route(
-            "/shared-services/centers/{period}/performance",
-            axum::routing::get(get_service_performance_handler),
-        )
-        .route(
-            "/shared-services/centers/{period}/utilization",
-            axum::routing::get(get_service_utilization_handler),
-        )
-        // B. 服务成本分摊
-        .route(
-            "/shared-services/cost-allocation/calculate",
-            axum::routing::post(calculate_cost_allocation_handler),
-        )
-        .route(
-            "/shared-services/cost-allocation/{period}",
-            axum::routing::get(get_cost_allocation_handler),
-        )
-        .route(
-            "/shared-services/cost-allocation/{period}/breakdown",
-            axum::routing::get(get_cost_allocation_breakdown_handler),
-        )
-        // C. 内部结算定价
-        .route(
-            "/shared-services/internal-pricing/policies",
-            axum::routing::get(get_pricing_policies_handler),
-        )
-        .route(
-            "/shared-services/internal-pricing/policies",
-            axum::routing::post(create_pricing_policy_handler),
-        )
-        .route(
-            "/shared-services/internal-pricing/policies/{policy_id}",
-            axum::routing::put(update_pricing_policy_handler),
-        )
-        .route(
-            "/shared-services/internal-pricing/settlements/{period}",
-            axum::routing::get(get_internal_settlements_handler),
-        )
-        .route(
-            "/shared-services/internal-pricing/settlements/generate",
-            axum::routing::post(generate_settlements_handler),
-        )
 }
 
 #[cfg(test)]

@@ -1,5 +1,4 @@
 use chrono::Utc;
-use serde_json;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 

@@ -1,7 +1,6 @@
 use axum::{extract::Extension, extract::State, Json};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use uuid::Uuid;
 
 use crate::modules::models::*;
 use crate::shared::AppState;
@@ -106,6 +105,7 @@ impl AnalysisApi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     fn any_uuid() -> Uuid {
         Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()

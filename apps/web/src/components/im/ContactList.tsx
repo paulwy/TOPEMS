@@ -402,7 +402,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                             height: 12,
                             backgroundColor: theme.palette.success.dark,
                             borderRadius: 'full',
-                            border: '2px solid var(--color-primary-foreground, #ffffff)',
+                            border: '2px solid var(--color-primary-foreground)',
                           }}
                         ></span>
                       )}

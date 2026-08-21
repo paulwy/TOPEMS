@@ -762,7 +762,7 @@ mod tests {
     fn test_monthly_float_value() {
         // 原值 100000，寿命 36 个月 → ≈ 2777.777...
         let m = calculate_monthly_depreciation(100000.0, 36).unwrap();
-        assert!(approx_eq(m, 2777.777_777_777_777_7, 1e-6), "m={}", m);
+        assert!(approx_eq(m, 2_777.777_777_777_778, 1e-6), "m={}", m);
     }
 
     #[test]

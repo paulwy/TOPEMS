@@ -47,7 +47,7 @@ mod common {
         tenant_id: &str,
     ) -> String {
         let response = reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/auth/login", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/auth/login", TEST_BASE_URL))
             .header("X-Tenant-Id", tenant_id)
             .json(&json!({
                 "username": "admin",
@@ -65,7 +65,7 @@ mod common {
 
     pub async fn login_as_system_admin(_app: &impl std::future::Future<Output = ()>) -> String {
         let response = reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/auth/login", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/auth/login", TEST_BASE_URL))
             .json(&json!({
                 "username": "system",
                 "password": "system123"
@@ -86,7 +86,7 @@ mod common {
         data: serde_json::Value,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/users", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/users", TEST_BASE_URL))
             .header("Authorization", token)
             .json(&data)
             .send()
@@ -100,7 +100,7 @@ mod common {
         user_id: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!("{}/api/core/iam/users/{}", TEST_BASE_URL, user_id))
+            .get(format!("{}/api/core/iam/users/{}", TEST_BASE_URL, user_id))
             .header("Authorization", token)
             .send()
             .await
@@ -112,7 +112,7 @@ mod common {
         token: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!("{}/api/core/iam/users", TEST_BASE_URL))
+            .get(format!("{}/api/core/iam/users", TEST_BASE_URL))
             .header("Authorization", token)
             .send()
             .await
@@ -125,7 +125,7 @@ mod common {
         data: serde_json::Value,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/roles", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/roles", TEST_BASE_URL))
             .header("Authorization", token)
             .json(&data)
             .send()
@@ -139,7 +139,7 @@ mod common {
         role_id: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!("{}/api/core/iam/roles/{}", TEST_BASE_URL, role_id))
+            .get(format!("{}/api/core/iam/roles/{}", TEST_BASE_URL, role_id))
             .header("Authorization", token)
             .send()
             .await
@@ -151,7 +151,7 @@ mod common {
         token: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!("{}/api/core/iam/roles", TEST_BASE_URL))
+            .get(format!("{}/api/core/iam/roles", TEST_BASE_URL))
             .header("Authorization", token)
             .send()
             .await
@@ -164,7 +164,7 @@ mod common {
         data: serde_json::Value,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/permissions", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/permissions", TEST_BASE_URL))
             .header("Authorization", token)
             .json(&data)
             .send()
@@ -178,7 +178,7 @@ mod common {
         permission_id: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!(
+            .get(format!(
                 "{}/api/core/iam/permissions/{}",
                 TEST_BASE_URL, permission_id
             ))
@@ -194,7 +194,7 @@ mod common {
         data: serde_json::Value,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/api/core/menu/menus", TEST_BASE_URL))
+            .post(format!("{}/api/core/menu/menus", TEST_BASE_URL))
             .header("Authorization", token)
             .json(&data)
             .send()
@@ -208,10 +208,7 @@ mod common {
         menu_id: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!(
-                "{}/api/core/menu/menus/{}",
-                TEST_BASE_URL, menu_id
-            ))
+            .get(format!("{}/api/core/menu/menus/{}", TEST_BASE_URL, menu_id))
             .header("Authorization", token)
             .send()
             .await
@@ -224,7 +221,7 @@ mod common {
         data: serde_json::Value,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .post(&format!("{}/api/core/iam/tenants", TEST_BASE_URL))
+            .post(format!("{}/api/core/iam/tenants", TEST_BASE_URL))
             .header("Authorization", token)
             .json(&data)
             .send()
@@ -238,7 +235,7 @@ mod common {
         tenant_id: &str,
     ) -> reqwest::Response {
         reqwest::Client::new()
-            .get(&format!(
+            .get(format!(
                 "{}/api/core/iam/tenants/{}",
                 TEST_BASE_URL, tenant_id
             ))
@@ -479,7 +476,7 @@ async fn tenant_isolation_invalid_tenant_id() {
         return;
     }
     let response = reqwest::Client::new()
-        .get(&format!("{}/api/core/iam/users", TEST_BASE_URL))
+        .get(format!("{}/api/core/iam/users", TEST_BASE_URL))
         .header("X-Tenant-Id", "invalid-tenant-id")
         .send()
         .await

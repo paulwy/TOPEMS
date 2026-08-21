@@ -802,14 +802,14 @@ mod tests {
         // 100 values 0..99, p95 should be ~94.05
         let vals: Vec<f64> = (0..100).map(|i| i as f64).collect();
         let p95 = percentile(&vals, 95.0);
-        assert!(p95 >= 94.0 && p95 <= 95.0);
+        assert!((94.0..=95.0).contains(&p95));
     }
 
     #[test]
     fn test_percentile_p99() {
         let vals: Vec<f64> = (0..100).map(|i| i as f64).collect();
         let p99 = percentile(&vals, 99.0);
-        assert!(p99 >= 98.0 && p99 <= 99.0);
+        assert!((98.0..=99.0).contains(&p99));
     }
 
     #[test]

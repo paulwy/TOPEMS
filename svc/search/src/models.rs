@@ -59,7 +59,7 @@ pub enum Visibility {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct SearchFilter {
     pub module_in: Option<Vec<String>>,
     pub tag_all: Option<Vec<String>>,
@@ -67,19 +67,6 @@ pub struct SearchFilter {
     pub created_after_ms: Option<i64>,
     pub created_before_ms: Option<i64>,
     pub visibility_in: Option<Vec<Visibility>>,
-}
-
-impl Default for SearchFilter {
-    fn default() -> Self {
-        Self {
-            module_in: None,
-            tag_all: None,
-            owner_ids: None,
-            created_after_ms: None,
-            created_before_ms: None,
-            visibility_in: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -99,21 +86,11 @@ pub enum SuggestionKind {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct BatchIndexRequest {
     pub upserts: Vec<IndexDocument>,
     pub deletes: Vec<String>,
     pub refresh: bool,
-}
-
-impl Default for BatchIndexRequest {
-    fn default() -> Self {
-        Self {
-            upserts: Vec::new(),
-            deletes: Vec::new(),
-            refresh: false,
-        }
-    }
 }
 
 #[cfg(test)]

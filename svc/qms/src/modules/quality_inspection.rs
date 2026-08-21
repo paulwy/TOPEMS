@@ -751,7 +751,7 @@ mod tests {
         };
 
         assert_eq!(item.item_name, "外观检查");
-        assert_eq!(item.is_qualified, false);
+        assert!(!item.is_qualified);
         assert!(item.remark.is_some());
 
         let cloned = item.clone();

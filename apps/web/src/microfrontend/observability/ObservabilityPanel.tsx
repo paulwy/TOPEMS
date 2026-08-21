@@ -10,6 +10,7 @@ import {
   Chip,
   Divider,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import i18n, { ensureNamespacesLoaded } from '@/i18n';
 import {
@@ -30,10 +31,12 @@ import {
 import { errorTracker, type ErrorStats } from './error-tracker';
 import { userBehaviorAnalytics, type ModuleVisitStats } from './user-behavior-analytics';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 
 const SLOW_MODULE_THRESHOLD = 3000;
 
 const ObservabilityPanel: React.FC = () => {
+  const theme = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const [performanceData, setPerformanceData] = useState<ModulePerformanceMetrics[]>([]);
   const [errorStats, setErrorStats] = useState<ErrorStats | null>(null);
@@ -120,7 +123,7 @@ const ObservabilityPanel: React.FC = () => {
               bgcolor: 'info.600',
               borderRadius: 2,
               textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               '&:hover': {
                 bgcolor: 'primary.700',
               },

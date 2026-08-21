@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Tooltip, type SxProps, type Theme } from '@mui/material';
+import { Box, Tooltip, useTheme, type SxProps, type Theme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 
 type CyberStatusType = 'online' | 'offline' | 'warning' | 'error' | 'idle';
@@ -13,30 +14,30 @@ interface CyberStatusIndicatorProps {
   sx?: SxProps<Theme>;
 }
 
-const statusConfig: Record<CyberStatusType, { color: string; glow: string; label: string }> = {
+const statusConfig: Record<CyberStatusType, { color: string; glow: (theme: Theme) => string; label: string }> = {
   online: {
     color: 'success.500',
-    glow: 'rgba(0, 255, 136, 0.60)',
+    glow: (theme) => alpha(theme.palette.success.main, 0.60),
     label: i18n.t('components.cyber_status_indicator.k0'),
   },
   offline: {
     color: 'error.500',
-    glow: 'rgba(255, 68, 68, 0.60)',
+    glow: (theme) => alpha(theme.palette.error.main, 0.60),
     label: i18n.t('components.cyber_status_indicator.k1'),
   },
   warning: {
     color: 'yellow.400',
-    glow: 'rgba(255, 215, 0, 0.60)',
+    glow: (theme) => alpha(theme.palette.warning.main, 0.60),
     label: i18n.t('components.cyber_status_indicator.k2'),
   },
   error: {
     color: 'purple.600',
-    glow: 'rgba(255, 0, 255, 0.60)',
+    glow: (theme) => alpha(theme.palette.secondary.main, 0.60),
     label: i18n.t('components.cyber_status_indicator.k3'),
   },
   idle: {
     color: 'text.muted',
-    glow: 'rgba(136, 146, 176, 0.40)',
+    glow: (theme) => alpha(theme.palette.grey[500], 0.40),
     label: i18n.t('components.cyber_status_indicator.k4'),
   },
 };
@@ -49,6 +50,7 @@ export const CyberStatusIndicator: React.FC<CyberStatusIndicatorProps> = ({
   tooltip,
   sx,
 }) => {
+  const theme = useTheme();
   const config = statusConfig[status];
   const displayLabel = label || config.label;
 
@@ -67,7 +69,7 @@ export const CyberStatusIndicator: React.FC<CyberStatusIndicatorProps> = ({
           height: size,
           borderRadius: '50%',
           backgroundColor: config.color,
-          boxShadow: `0 0 ${size}px ${config.glow}, 0 0 ${size * 2}px ${config.glow}`,
+          boxShadow: `0 0 ${size}px ${config.glow(theme)}, 0 0 ${size * 2}px ${config.glow(theme)}`,
           position: 'relative',
           animation: pulse ? 'cyber-status-pulse 2s ease-in-out infinite' : 'none',
           '@keyframes cyber-status-pulse': {
@@ -110,7 +112,7 @@ export const CyberStatusIndicator: React.FC<CyberStatusIndicatorProps> = ({
             fontSize: '0.75rem',
             fontWeight: 500,
             color: config.color,
-            textShadow: `0 0 6px ${config.glow}`,
+            textShadow: `0 0 6px ${config.glow(theme)}`,
             letterSpacing: '0.02em',
           }}
         >

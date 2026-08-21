@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography, IconButton, Divider, Paper, Grid } from '@mui/material';
+import { Box, Typography, IconButton, Divider, Paper, Grid, useTheme } from '@mui/material';
 import { X as XIcon, Palette, Type, Layers, Eye, CheckCircle } from 'lucide-react';
 import { v51DesignTokens } from './tokens/v51-tokens';
+import { alpha } from '@mui/material/styles';
 import {
   V51Button,
   V51Card,
@@ -303,6 +304,7 @@ const OverviewTab: React.FC = () => (
 );
 
 const TokensTab: React.FC = () => {
+  const theme = useTheme();
   const colorGroups: Array<{ name: string; colors: Array<{ shade: string; value: string }> }> = [
     {
       name: 'Primary',
@@ -379,7 +381,7 @@ const TokensTab: React.FC = () => {
                         height: 32,
                         borderRadius: 1,
                         bgcolor: c.value,
-                        border: '1px solid rgba(0,0,0,0.1)',
+                        border: `1px solid ${alpha(theme.palette.common.black, 0.1)}`,
                       }}
                     />
                     <Typography

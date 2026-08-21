@@ -45,5 +45,8 @@ mockall.workspace = true
 name = "topems-crm"
 path = "src/main.rs"
 
+[features]
+http_endpoint_tests = []
+
 [lints]
 workspace = true

@@ -11,7 +11,6 @@ use super::ApiState;
 use crate::models::material::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::customer_calc::{
     build_search_pattern, default_credit_limit, default_customer_status, has_customer_filters,
-    normalize_pagination,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;

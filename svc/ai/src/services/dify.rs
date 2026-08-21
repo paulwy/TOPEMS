@@ -174,12 +174,9 @@ impl DifyService {
 
         // 将 reqwest 的 stream 转换为 axum Body
         use futures::TryStreamExt;
-        let stream = resp.bytes_stream().map_err(|e| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("dify stream error: {}", e),
-            )
-        });
+        let stream = resp
+            .bytes_stream()
+            .map_err(|e| std::io::Error::other(format!("dify stream error: {}", e)));
         Ok(Body::from_stream(stream))
     }
 

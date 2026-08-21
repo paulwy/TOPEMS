@@ -175,7 +175,7 @@ const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
     <>
       {isVisible && (
         <div
-          className='fixed bottom-24 right-4 z-50 w-96 bg-var(--color-primary-foreground, #ffffff) rounded-xl shadow-2xl border border-gray-200 overflow-hidden'
+          className='fixed bottom-24 right-4 z-50 w-96 bg-var(--color-primary-foreground) rounded-xl shadow-2xl border border-gray-200 overflow-hidden'
           style={{
             position: 'fixed',
             bottom: '88px',
@@ -235,7 +235,7 @@ const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 justifyContent: 'center',
                 marginBottom: 4,
                 padding: 4,
-                background: `linear-gradient(to bottom right, ${designTokens.colors.secondary[50]}, var(--color-success-50, #f0fdf4))`,
+                background: `linear-gradient(to bottom right, ${designTokens.colors.secondary[50]}, var(--color-success-50))`,
                 borderRadius: 'lg',
               }}
             >

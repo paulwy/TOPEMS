@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, ButtonGroup, useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { X } from 'lucide-react';
 import type { BatchAction } from './types';
 import i18n from '@/i18n';
@@ -55,7 +56,7 @@ export const ListBatchActions = <T,>({
         bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
         borderRadius: 1,
         border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.3)' : 'primary.200',
+        borderColor: theme.palette.mode === 'dark' ? `${alpha(theme.palette.primary.main, 0.3)}` : 'primary.200',
         position: sticky ? 'sticky' : 'static',
         top: sticky ? 0 : undefined,
         zIndex: sticky ? 100 : undefined,

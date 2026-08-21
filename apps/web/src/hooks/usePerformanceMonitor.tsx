@@ -476,7 +476,7 @@ function PerformanceWarnings() {
         bottom: 16,
         right: 16,
         backgroundColor: 'warning.light',
-        border: '1px solid var(--color-warning-light, #fde68a)',
+        border: '1px solid var(--color-warning-light)',
         borderRadius: 3,
         p: 4,
         maxWidth: 450,

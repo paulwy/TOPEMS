@@ -447,6 +447,57 @@ pub async fn get_upload_progress(
     }
 }
 
+pub async fn delete_photo(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let user_id = match Uuid::parse_str(&user_id_str) {
+        Ok(u) => u,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::error(400, "无效的用户ID")),
+            );
+        }
+    };
+
+    let result = sqlx::query("DELETE FROM photo_uploads WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "删除照片成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "照片不存在或无权删除")),
+        ),
+        Err(e) => {
+            tracing::error!("删除照片失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "删除照片失败")),
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -540,56 +591,5 @@ mod tests {
             size: Some(20),
             status: None,
         });
-    }
-}
-
-pub async fn delete_photo(
-    headers: HeaderMap,
-    State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
-        Ok(id) => id,
-        Err(_) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
-            );
-        }
-    };
-
-    let user_id = match Uuid::parse_str(&user_id_str) {
-        Ok(u) => u,
-        Err(_) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
-            );
-        }
-    };
-
-    let result = sqlx::query("DELETE FROM photo_uploads WHERE id = $1 AND user_id = $2")
-        .bind(id)
-        .bind(user_id)
-        .execute(&pool)
-        .await;
-
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "删除照片成功")),
-        ),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "照片不存在或无权删除")),
-        ),
-        Err(e) => {
-            tracing::error!("删除照片失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "删除照片失败")),
-            )
-        }
     }
 }

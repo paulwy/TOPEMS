@@ -219,10 +219,7 @@ pub async fn scan_barcode(
             );
         }
     };
-    let response_json = match serde_json::to_value(&response) {
-        Ok(v) => Some(v),
-        Err(_) => None,
-    };
+    let response_json = serde_json::to_value(&response).ok();
     save_scan_record(
         &pool,
         user_id,
@@ -280,10 +277,7 @@ pub async fn scan_qrcode(
             );
         }
     };
-    let response_json = match serde_json::to_value(&response) {
-        Ok(v) => Some(v),
-        Err(_) => None,
-    };
+    let response_json = serde_json::to_value(&response).ok();
     save_scan_record(
         &pool,
         user_id,
@@ -346,10 +340,7 @@ pub async fn image_ocr(
             );
         }
     };
-    let response_json = match serde_json::to_value(&response) {
-        Ok(v) => Some(v),
-        Err(_) => None,
-    };
+    let response_json = serde_json::to_value(&response).ok();
     save_scan_record(
         &pool,
         user_id,

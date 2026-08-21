@@ -412,7 +412,7 @@ mod tests {
     fn test_create_employee_request() {
         let org_id = Uuid::new_v4();
         let request = CreateEmployeeRequest {
-            org_id,
+            org_id: Some(org_id),
             department_id: None,
             position_id: None,
             employee_number: "EMP002".to_string(),

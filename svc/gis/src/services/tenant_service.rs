@@ -1,10 +1,7 @@
-use axum::http::HeaderMap;
 use sqlx::PgPool;
-use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 use crate::models::*;
-use topems_shared_auth::get_tenant_id;
 
 pub struct TenantService {
     pool: PgPool,

@@ -432,7 +432,7 @@ const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, color })
             cx={point[0]}
             cy={point[1]}
             r='3'
-            fill='var(--color-primary-foreground, #ffffff)'
+            fill='var(--color-primary-foreground)'
             stroke={color}
             strokeWidth='2'
           />

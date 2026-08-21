@@ -149,13 +149,13 @@ pub enum EmailQueueStatus {
     Failed,
 }
 
-impl ToString for EmailQueueStatus {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for EmailQueueStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EmailQueueStatus::Pending => "pending".to_string(),
-            EmailQueueStatus::Sending => "sending".to_string(),
-            EmailQueueStatus::Sent => "sent".to_string(),
-            EmailQueueStatus::Failed => "failed".to_string(),
+            EmailQueueStatus::Pending => write!(f, "pending"),
+            EmailQueueStatus::Sending => write!(f, "sending"),
+            EmailQueueStatus::Sent => write!(f, "sent"),
+            EmailQueueStatus::Failed => write!(f, "failed"),
         }
     }
 }
@@ -1883,6 +1883,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[allow(clippy::await_holding_lock)]
     async fn test_send_notification_email_localhost_preview() {
         let _guard = ENV_LOCK.lock().unwrap();
         std::env::set_var("SMTP_HOST", "localhost");

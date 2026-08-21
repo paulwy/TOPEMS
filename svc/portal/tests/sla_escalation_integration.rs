@@ -57,7 +57,7 @@ fn calculate_due_time(
         let weekday = naive.weekday();
 
         if weekend_excluded && (weekday == Weekday::Sat || weekday == Weekday::Sun) {
-            current = current + Duration::days(1);
+            current += Duration::days(1);
             current = current
                 .date_naive()
                 .and_hms_opt(9, 0, 0)
@@ -85,7 +85,7 @@ fn calculate_due_time(
             }
 
             if current_hour >= end_hour {
-                current = current + Duration::days(1);
+                current += Duration::days(1);
                 current = current
                     .date_naive()
                     .and_hms_opt(start_hour as u32, 0, 0)
@@ -98,11 +98,11 @@ fn calculate_due_time(
                 end_hour as f64 - current_hour as f64 - (naive.minute() as f64 / 60.0);
 
             if remaining_hours <= hours_left_today {
-                current = current + Duration::seconds((remaining_hours * 3600.0) as i64);
+                current += Duration::seconds((remaining_hours * 3600.0) as i64);
                 remaining_hours = 0.0;
             } else {
                 remaining_hours -= hours_left_today;
-                current = current + Duration::days(1);
+                current += Duration::days(1);
                 current = current
                     .date_naive()
                     .and_hms_opt(start_hour as u32, 0, 0)
@@ -110,7 +110,7 @@ fn calculate_due_time(
                     .and_utc();
             }
         } else {
-            current = current + Duration::seconds((remaining_hours * 3600.0) as i64);
+            current += Duration::seconds((remaining_hours * 3600.0) as i64);
             remaining_hours = 0.0;
         }
     }

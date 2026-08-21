@@ -35,6 +35,7 @@ import {
   CardContent,
   Tabs,
   Tab,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -83,12 +84,14 @@ import {
   type RollbackMetric,
 } from './auto-rollback';
 import { designTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 
 type TabId = 'pipelines' | 'deployments' | 'rollbacks' | 'health';
 
 const V55_BADGE = 'V55';
 
 export const V55AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState<TabId>('pipelines');
   const [pipelines, setPipelines] = React.useState<Pipeline[]>([]);
   const [selectedPipeline, setSelectedPipeline] = React.useState<Pipeline | null>(null);
@@ -266,7 +269,7 @@ export const V55AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
           boxShadow: designTokens.darkShadows.xl,
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid rgba(99, 102, 241, 0.2)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1389,6 +1392,7 @@ const HealthTab: React.FC<{
   healthStatus: Record<string, { status: HealthCheckStatus; last_check: string }>;
   deployments: DeploymentRecord[];
 }> = ({ metrics, onSimulateMetric, healthStatus, deployments }) => {
+  const theme = useTheme();
   const [simulatedValues, setSimulatedValues] = React.useState<Record<string, number>>(metrics);
 
   React.useEffect(() => {
@@ -1472,9 +1476,9 @@ const HealthTab: React.FC<{
                       borderRadius: 2,
                       border: `2px solid ${isCritical ? designTokens.colors.error.main : isWarning ? designTokens.colors.warning.main : 'transparent'}`,
                       bgcolor: isCritical
-                        ? 'rgba(239, 68, 68, 0.05)'
+                        ? alpha(theme.palette.error.main, 0.05)
                         : isWarning
-                          ? 'rgba(245, 158, 11, 0.05)'
+                          ? alpha(theme.palette.warning.main, 0.05)
                           : 'transparent',
                     }}
                   >

@@ -593,7 +593,7 @@ async fn create_device_location(
         RETURNING *
         "#,
     )
-    .bind(&payload.map_id)
+    .bind(payload.map_id)
     .bind(&payload.device_name)
     .bind(&payload.device_code)
     .bind(&payload.device_type)
@@ -634,7 +634,7 @@ async fn update_device_location(
         RETURNING *
         "#,
     )
-    .bind(&payload.map_id)
+    .bind(payload.map_id)
     .bind(&payload.device_name)
     .bind(&payload.device_code)
     .bind(&payload.device_type)

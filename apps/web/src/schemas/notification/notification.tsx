@@ -1,7 +1,7 @@
 import type { EntitySchema } from '@/schema';
 import { Settings, CheckSquare, Calendar, MessageSquare } from 'lucide-react';
 import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip , useTheme} from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
@@ -39,7 +39,7 @@ const TYPE_BG_COLORS: Record<string, { bg: string; color: string }> = {
   alert: { bg: designTokens.colors.error[100], color: 'error.main' },
   message: { bg: designTokens.colors.info[100], color: 'info.main' },
   info: { bg: designTokens.colors.info[100], color: 'info.main' },
-  success: { bg: 'rgba(34, 197, 94, 0.1)', color: 'success.main' },
+  success: { bg: designTokens.colors.success[100], color: 'success.main' },
   warning: { bg: designTokens.colors.warning[100], color: 'warning.main' },
   error: { bg: designTokens.colors.error[100], color: 'error.main' },
 };

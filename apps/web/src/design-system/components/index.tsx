@@ -178,8 +178,8 @@ export const V51Card: React.FC<V51CardProps> = ({
     <MuiCard
       sx={{
         borderRadius: v51DesignTokens.borderRadius.xl,
-        backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
-        border: bordered ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))' : 'none',
+        backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground))',
+        border: bordered ? '1px solid var(--v51-border-default)' : 'none',
         boxShadow: elevated ? v51DesignTokens.shadows.md : 'none',
         overflow: 'hidden',
         ...sx,
@@ -190,16 +190,16 @@ export const V51Card: React.FC<V51CardProps> = ({
           sx={{
             padding: '16px 20px',
             borderBottom: children
-              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              ? '1px solid var(--v51-border-default)'
               : 'none',
             '& .MuiCardHeader-title': {
               fontSize: v51DesignTokens.typography.fontSize.lg,
               fontWeight: v51DesignTokens.typography.fontWeight.semibold,
-              color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
+              color: 'var(--v51-text-primary)',
             },
             '& .MuiCardHeader-subheader': {
               fontSize: v51DesignTokens.typography.fontSize.sm,
-              color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+              color: 'var(--v51-text-secondary)',
               mt: 0.5,
             },
             ...headerSx,
@@ -223,7 +223,7 @@ export const V51Card: React.FC<V51CardProps> = ({
         <CardActions
           sx={{
             padding: '16px 20px',
-            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+            borderTop: '1px solid var(--v51-border-default)',
             gap: 1,
             ...footerSx,
           }}
@@ -292,14 +292,14 @@ export const V51Input: React.FC<V51InputProps> = ({
   inputRef,
 }) => {
   const borderColorMap: Record<V51InputValidationState, string> = {
-    default: 'var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+    default: 'var(--v51-border-default)',
     success: v51DesignTokens.colors.success.main,
     warning: v51DesignTokens.colors.warning.main,
     error: v51DesignTokens.colors.error.main,
   };
 
   const helperTextColorMap: Record<V51InputValidationState, string> = {
-    default: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+    default: 'var(--v51-text-secondary)',
     success: v51DesignTokens.colors.success.main,
     warning: v51DesignTokens.colors.warning.main,
     error: v51DesignTokens.colors.error.main,
@@ -331,7 +331,7 @@ export const V51Input: React.FC<V51InputProps> = ({
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
+          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground))',
           transition: `border-color ${v51DesignTokens.motion.transition.fast}, box-shadow ${v51DesignTokens.motion.transition.fast}`,
           '& fieldset': {
             borderColor: borderColorMap[validationState],
@@ -340,7 +340,7 @@ export const V51Input: React.FC<V51InputProps> = ({
           '&:hover fieldset': {
             borderColor:
               validationState === 'default'
-                ? 'var(--v51-border-strong, rgba(0, 0, 0, 0.23))'
+                ? 'var(--v51-border-strong)'
                 : borderColorMap[validationState],
           },
           '&.Mui-focused fieldset': {
@@ -353,7 +353,7 @@ export const V51Input: React.FC<V51InputProps> = ({
           fontSize: v51DesignTokens.typography.fontSize.xs,
         },
         '& .MuiInputLabel-root': {
-          color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+          color: 'var(--v51-text-secondary)',
           '&.Mui-focused': {
             color: borderColorMap[validationState],
           },
@@ -426,9 +426,9 @@ export const V51Select: React.FC<V51SelectProps> = ({
       {label && (
         <InputLabel
           sx={{
-            color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+            color: 'var(--v51-text-secondary)',
             '&.Mui-focused': {
-              color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+              color: 'var(--v51-color-primary-main, var(--color-primary))',
             },
           }}
         >
@@ -444,15 +444,15 @@ export const V51Select: React.FC<V51SelectProps> = ({
         onClose={() => setOpen(false)}
         sx={{
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
+          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground))',
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+            borderColor: 'var(--v51-border-default)',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-border-strong, rgba(0, 0, 0, 0.23))',
+            borderColor: 'var(--v51-border-strong)',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+            borderColor: 'var(--v51-color-primary-main, var(--color-primary))',
             borderWidth: '2px',
           },
         }}
@@ -462,7 +462,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
               sx: {
                 borderRadius: v51DesignTokens.borderRadius.lg,
                 boxShadow: v51DesignTokens.shadows.lg,
-                border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+                border: '1px solid var(--v51-border-default)',
                 mt: 0.5,
               },
             },
@@ -476,7 +476,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
               py: 1,
               position: 'sticky',
               top: 0,
-              bgcolor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
+              bgcolor: 'var(--v51-surface-card, var(--color-primary-foreground))',
               zIndex: 1,
             }}
           >
@@ -488,12 +488,12 @@ export const V51Select: React.FC<V51SelectProps> = ({
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
-                bgcolor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
+                bgcolor: 'var(--v51-fill-subtle)',
               }}
             >
               <Search
                 size={16}
-                style={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
+                style={{ color: 'var(--v51-text-tertiary)' }}
               />
               <input
                 autoFocus
@@ -505,7 +505,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
                   outline: 'none',
                   background: 'transparent',
                   fontSize: v51DesignTokens.typography.fontSize.sm,
-                  color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
+                  color: 'var(--v51-text-primary)',
                   width: '100%',
                 }}
               />
@@ -518,7 +518,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
         >
           <Typography
             sx={{
-              color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))',
+              color: 'var(--v51-text-tertiary)',
               fontSize: v51DesignTokens.typography.fontSize.sm,
             }}
           >
@@ -548,7 +548,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
             fontSize: v51DesignTokens.typography.fontSize.xs,
             color: error
               ? v51DesignTokens.colors.error.main
-              : 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+              : 'var(--v51-text-secondary)',
             mt: 0.5,
           }}
         >
@@ -685,7 +685,7 @@ export function V51Table<T extends Record<string, unknown>>({
     <Paper
       sx={{
         borderRadius: v51DesignTokens.borderRadius.xl,
-        border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+        border: '1px solid var(--v51-border-default)',
         overflow: 'hidden',
         ...sx,
       }}
@@ -701,8 +701,8 @@ export function V51Table<T extends Record<string, unknown>>({
                 <TableCell
                   padding='checkbox'
                   sx={{
-                    bgcolor: 'var(--v51-surface-sunken, rgba(0,0,0,0.02))',
-                    borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+                    bgcolor: 'var(--v51-surface-sunken)',
+                    borderBottom: '1px solid var(--v51-border-default)',
                   }}
                 >
                   <Checkbox
@@ -717,11 +717,11 @@ export function V51Table<T extends Record<string, unknown>>({
                   key={col.id}
                   align={col.align || 'left'}
                   sx={{
-                    bgcolor: 'var(--v51-surface-sunken, rgba(0,0,0,0.02))',
-                    borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+                    bgcolor: 'var(--v51-surface-sunken)',
+                    borderBottom: '1px solid var(--v51-border-default)',
                     fontWeight: v51DesignTokens.typography.fontWeight.semibold,
                     fontSize: v51DesignTokens.typography.fontSize.sm,
-                    color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+                    color: 'var(--v51-text-secondary)',
                     padding: cellPadding,
                     width: col.width,
                   }}
@@ -734,7 +734,7 @@ export function V51Table<T extends Record<string, unknown>>({
                       onClick={() => handleSort(col.id)}
                       sx={{
                         '&.Mui-active': {
-                          color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+                          color: 'var(--v51-color-primary-main, var(--color-primary))',
                         },
                       }}
                     >
@@ -771,7 +771,7 @@ export function V51Table<T extends Record<string, unknown>>({
                 <TableCell
                   colSpan={columns.length + (selectable ? 1 : 0)}
                   align='center'
-                  sx={{ py: 6, color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
+                  sx={{ py: 6, color: 'var(--v51-text-tertiary)' }}
                 >
                   {emptyMessage}
                 </TableCell>
@@ -789,10 +789,10 @@ export function V51Table<T extends Record<string, unknown>>({
                     selected={isRowSelected}
                     sx={{
                       '&.Mui-selected': {
-                        bgcolor: 'var(--v51-color-primary-50, rgba(59,130,246,0.08))',
+                        bgcolor: 'var(--v51-color-primary-50)',
                       },
                       '&:hover': {
-                        bgcolor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
+                        bgcolor: 'var(--v51-fill-subtle)',
                       },
                     }}
                   >
@@ -810,10 +810,10 @@ export function V51Table<T extends Record<string, unknown>>({
                         key={col.id}
                         align={col.align || 'left'}
                         sx={{
-                          borderBottom: '1px solid var(--v51-border-subtle, rgba(0, 0, 0, 0.06))',
+                          borderBottom: '1px solid var(--v51-border-subtle)',
                           padding: cellPadding,
                           fontSize: v51DesignTokens.typography.fontSize.sm,
-                          color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
+                          color: 'var(--v51-text-primary)',
                         }}
                       >
                         {col.render
@@ -858,9 +858,9 @@ export function V51Table<T extends Record<string, unknown>>({
           }}
           rowsPerPageOptions={pageSizeOptions}
           sx={{
-            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+            borderTop: '1px solid var(--v51-border-default)',
             fontSize: v51DesignTokens.typography.fontSize.sm,
-            color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+            color: 'var(--v51-text-secondary)',
           }}
         />
       )}
@@ -916,7 +916,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
         '& .MuiDialog-paper': {
           borderRadius: v51DesignTokens.borderRadius['2xl'],
           boxShadow: v51DesignTokens.shadows['2xl'],
-          border: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+          border: '1px solid var(--v51-border-default)',
         },
         ...sx,
       }}
@@ -928,12 +928,12 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             pb: 1,
-            borderBottom: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+            borderBottom: '1px solid var(--v51-border-default)',
           }}
         >
           <Typography
             variant='h6'
-            sx={{ fontWeight: 600, color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))' }}
+            sx={{ fontWeight: 600, color: 'var(--v51-text-primary)' }}
           >
             {title}
           </Typography>
@@ -941,7 +941,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
             <IconButton
               size='small'
               onClick={onClose}
-              sx={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))' }}
+              sx={{ color: 'var(--v51-text-tertiary)' }}
             >
               <XIcon size={20} />
             </IconButton>
@@ -954,7 +954,7 @@ export const V51Dialog: React.FC<V51DialogProps> = ({
           sx={{
             px: 3,
             py: 2,
-            borderTop: '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))',
+            borderTop: '1px solid var(--v51-border-default)',
             gap: 1,
           }}
         >
@@ -1100,7 +1100,7 @@ const V51ToastItem: React.FC<{
         <Typography
           sx={{
             fontSize: v51DesignTokens.typography.fontSize.sm,
-            color: 'var(--v51-text-primary, rgba(0, 0, 0, 0.87))',
+            color: 'var(--v51-text-primary)',
             lineHeight: 1.5,
           }}
         >
@@ -1113,7 +1113,7 @@ const V51ToastItem: React.FC<{
           setVisible(false);
           setTimeout(onClose, 250);
         }}
-        sx={{ color: 'var(--v51-text-tertiary, rgba(0, 0, 0, 0.38))', flexShrink: 0 }}
+        sx={{ color: 'var(--v51-text-tertiary)', flexShrink: 0 }}
       >
         <XIcon size={16} />
       </IconButton>
@@ -1240,17 +1240,17 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
         sx={{
           borderBottom:
             orientation === 'horizontal'
-              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              ? '1px solid var(--v51-border-default)'
               : 'none',
           borderRight:
             orientation === 'vertical'
-              ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))'
+              ? '1px solid var(--v51-border-default)'
               : 'none',
           minHeight: 44,
           '& .MuiTabs-indicator': {
             height: 3,
             borderRadius: '3px 3px 0 0',
-            backgroundColor: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+            backgroundColor: 'var(--v51-color-primary-main, var(--color-primary))',
           },
           ...tabSx,
         }}
@@ -1269,14 +1269,14 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
               fontSize: v51DesignTokens.typography.fontSize.sm,
               minWidth: 'auto',
               padding: '12px 20px',
-              color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+              color: 'var(--v51-text-secondary)',
               '&.Mui-selected': {
-                color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+                color: 'var(--v51-color-primary-main, var(--color-primary))',
                 fontWeight: v51DesignTokens.typography.fontWeight.semibold,
               },
               '&:hover': {
-                color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
-                backgroundColor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
+                color: 'var(--v51-color-primary-main, var(--color-primary))',
+                backgroundColor: 'var(--v51-fill-subtle)',
               },
             }}
           />
@@ -1304,32 +1304,32 @@ interface V51BadgeProps {
 
 const variantColorMap: Record<V51BadgeVariant, { bg: string; color: string }> = {
   primary: {
-    bg: 'var(--v51-color-primary-50, rgba(59,130,246,0.08))',
-    color: 'var(--v51-color-primary-700, var(--color-primary-700, #1d4ed8))',
+    bg: 'var(--v51-color-primary-50)',
+    color: 'var(--v51-color-primary-700, var(--color-primary-700))',
   },
   secondary: {
-    bg: 'var(--v51-color-secondary-50, rgba(139,92,246,0.08))',
-    color: 'var(--v51-color-secondary-700, var(--color-secondary-700, #6d28d9))',
+    bg: 'var(--v51-color-secondary-50)',
+    color: 'var(--v51-color-secondary-700, var(--color-secondary-700))',
   },
   success: {
-    bg: 'var(--v51-color-success-50, rgba(34,197,94,0.08))',
-    color: 'var(--v51-color-success-700, var(--color-success-700, #15803d))',
+    bg: 'var(--v51-color-success-50)',
+    color: 'var(--v51-color-success-700, var(--color-success-700))',
   },
   warning: {
-    bg: 'var(--v51-color-warning-50, rgba(245,158,11,0.08))',
-    color: 'var(--v51-color-warning-700, var(--color-warning-700, #b45309))',
+    bg: 'var(--v51-color-warning-50)',
+    color: 'var(--v51-color-warning-700, var(--color-warning-700))',
   },
   error: {
-    bg: 'var(--v51-color-error-50, rgba(239,68,68,0.08))',
-    color: 'var(--v51-color-error-700, var(--color-error-700, #b91c1c))',
+    bg: 'var(--v51-color-error-50)',
+    color: 'var(--v51-color-error-700, var(--color-error-700))',
   },
   info: {
-    bg: 'var(--v51-color-info-50, rgba(14,165,233,0.08))',
-    color: 'var(--v51-color-info-700, var(--color-info-700, #0369a1))',
+    bg: 'var(--v51-color-info-50)',
+    color: 'var(--v51-color-info-700, var(--color-info-700))',
   },
   neutral: {
-    bg: 'var(--v51-fill-muted, rgba(0,0,0,0.08))',
-    color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
+    bg: 'var(--v51-fill-muted)',
+    color: 'var(--v51-text-secondary)',
   },
 };
 
@@ -1352,7 +1352,7 @@ export const V51Badge: React.FC<V51BadgeProps> = ({
   > = {
     sm: { px: 1.5, fontSize: v51DesignTokens.typography.fontSize['2xs'], height: 18 },
     md: { px: 2, fontSize: v51DesignTokens.typography.fontSize.xs, height: 22 },
-    lg: { px: '10px 12px', fontSize: v51DesignTokens.typography.fontSize.sm, height: 28 },
+    lg: { px: 1.25, fontSize: v51DesignTokens.typography.fontSize.sm, height: 28 },
   };
 
   const config = sizeConfig[size];
@@ -1407,7 +1407,7 @@ export const V51Skeleton: React.FC<V51SkeletonProps> = ({
       height={height}
       animation={animation}
       sx={{
-        backgroundColor: 'var(--v51-fill-muted, rgba(0,0,0,0.08))',
+        backgroundColor: 'var(--v51-fill-muted)',
         borderRadius: variant === 'circular' ? '50%' : v51DesignTokens.borderRadius.md,
         ...sx,
       }}
@@ -1470,12 +1470,12 @@ interface V51AvatarProps {
 }
 
 const avatarColors = [
-  'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
-  'var(--v51-color-secondary-main, var(--color-secondary, var(--color-secondary, #8b5cf6)))',
-  'var(--v51-color-success-main, var(--color-success, #22c55e))',
-  'var(--v51-color-warning-main, var(--color-warning, #f59e0b))',
-  'var(--v51-color-error-main, var(--color-error, #ef4444))',
-  'var(--v51-color-info-main, var(--color-info, #0ea5e9))',
+  'var(--v51-color-primary-main, var(--color-primary))',
+  'var(--v51-color-secondary-main, var(--color-secondary, var(--color-secondary)))',
+  'var(--v51-color-success-main, var(--color-success))',
+  'var(--v51-color-warning-main, var(--color-warning))',
+  'var(--v51-color-error-main, var(--color-error))',
+  'var(--v51-color-info-main, var(--color-info))',
 ];
 
 function getInitials(name?: string): string {
@@ -1547,7 +1547,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
             height: Math.max(8, config.size * 0.25),
             borderRadius: '50%',
             bgcolor: online ? v51DesignTokens.colors.success.main : 'grey.400',
-            border: '2px solid var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
+            border: '2px solid var(--v51-surface-card, var(--color-primary-foreground))',
           }}
         />
       )}

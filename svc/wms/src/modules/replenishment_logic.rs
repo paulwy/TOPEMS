@@ -282,79 +282,67 @@ mod tests {
     fn test_replenishment_rule_based_only_requires_rule() {
         // rule_based_only=true, rule_exists=false → always false
         // (even if stock is way below reorder point)
-        assert_eq!(
-            determine_replenishment_needed(10.0, 100.0, 500.0, true, false),
-            false
-        );
+        assert!(!determine_replenishment_needed(
+            10.0, 100.0, 500.0, true, false
+        ));
     }
 
     #[test]
     fn test_replenishment_rule_based_passes_with_rule() {
         // rule_exists → evaluates standard condition
-        assert_eq!(
-            determine_replenishment_needed(10.0, 100.0, 500.0, true, true),
-            true
-        ); // stock < reorder_point
+        assert!(determine_replenishment_needed(
+            10.0, 100.0, 500.0, true, true
+        )); // stock < reorder_point
     }
 
     #[test]
     fn test_replenishment_triggered_by_stock_level() {
         // default mode (not rule-based only), below reorder point
-        assert_eq!(
-            determine_replenishment_needed(50.0, 100.0, 0.0, false, false),
-            true
-        );
+        assert!(determine_replenishment_needed(
+            50.0, 100.0, 0.0, false, false
+        ));
     }
 
     #[test]
     fn test_replenishment_triggered_by_suggested_qty() {
         // above reorder point but positive suggested_quantity
         // (e.g. manual trigger or forecast-driven)
-        assert_eq!(
-            determine_replenishment_needed(200.0, 100.0, 50.0, false, false),
-            true
-        );
+        assert!(determine_replenishment_needed(
+            200.0, 100.0, 50.0, false, false
+        ));
     }
 
     #[test]
     fn test_replenishment_not_needed_normal() {
         // above reorder_point AND no suggested qty
-        assert_eq!(
-            determine_replenishment_needed(200.0, 100.0, 0.0, false, false),
-            false
-        );
-        assert_eq!(
-            determine_replenishment_needed(100.0, 100.0, 0.0, false, false),
-            false
-        ); // exactly reorder_point (= not <)
+        assert!(!determine_replenishment_needed(
+            200.0, 100.0, 0.0, false, false
+        ));
+        assert!(!determine_replenishment_needed(
+            100.0, 100.0, 0.0, false, false
+        )); // exactly reorder_point (= not <)
     }
 
     #[test]
     fn test_replenishment_zero_suggested_negative_stock_not_less() {
         // available = 200, reorder = 100 (above) + suggested_qty=0 → false
-        assert_eq!(
-            determine_replenishment_needed(200.0, 100.0, 0.0, false, true),
-            false
-        );
+        assert!(!determine_replenishment_needed(
+            200.0, 100.0, 0.0, false, true
+        ));
         // available = 100 (equal) → not <, suggested=0 → false
-        assert_eq!(
-            determine_replenishment_needed(100.0, 100.0, 0.0, false, true),
-            false
-        );
+        assert!(!determine_replenishment_needed(
+            100.0, 100.0, 0.0, false, true
+        ));
     }
 
     #[test]
     fn test_replenishment_truth_table_last_two_rows() {
         // Rule-based only with rule present but below reorder: true
-        assert_eq!(
-            determine_replenishment_needed(5.0, 100.0, 0.0, true, true),
-            true
-        );
+        assert!(determine_replenishment_needed(5.0, 100.0, 0.0, true, true));
         // Rule-based only with rule present, above reorder, suggested=0: false
-        assert_eq!(
-            determine_replenishment_needed(200.0, 100.0, 0.0, true, true),
-            false
-        );
+        assert!(!determine_replenishment_needed(
+            200.0, 100.0, 0.0, true, true
+        ));
     }
 
     // -----------------------------------------------------------------------

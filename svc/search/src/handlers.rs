@@ -272,7 +272,7 @@ async fn search_all(
     let should_search = |module: &str| {
         modules
             .as_ref()
-            .map_or(true, |mods| mods.iter().any(|m| matches_filter(module, m)))
+            .is_none_or(|mods| mods.iter().any(|m| matches_filter(module, m)))
     };
 
     if should_search("user") {

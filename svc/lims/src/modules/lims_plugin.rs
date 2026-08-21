@@ -195,6 +195,62 @@ fn get_runtime_url() -> String {
     std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8051".to_string())
 }
 
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = get_runtime_url();
+
+    let info = PluginInfo {
+        code: "qa".to_string(),
+        name: "质量管理与安全".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
+            .to_string(),
+        author: "TOPEMS".to_string(),
+        category: "quality".to_string(),
+        plugin_type: "business".to_string(),
+        permissions: vec![],
+        runtime_url,
+        dependencies: vec!["qms".to_string()],
+        navigation_config: Some(serde_json::json!([
+            {"code": "lims-samples", "label": "样品管理", "path": "/lims/samples", "icon": "FlaskConical", "order": 10, "group": "business"},
+            {"code": "lims-tasks", "label": "检验任务", "path": "/lims/tasks", "icon": "ClipboardList", "order": 20, "group": "business"},
+            {"code": "lims-instruments", "label": "仪器设备", "path": "/lims/instruments", "icon": "Microscope", "order": 30, "group": "business"}
+        ])),
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/qa/register", core_url);
+
+    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
+    let mut request = client.post(&url).json(&info);
+    if !token.is_empty() {
+        request = request.header("X-Plugin-Token", &token);
+    }
+    match request.send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!(
+                    "[QA Plugin] Successfully registered to core at {}",
+                    core_url
+                );
+            } else {
+                tracing::warn!(
+                    "[QA Plugin] Failed to register to core: {}",
+                    response.status()
+                );
+            }
+        }
+        Err(e) => {
+            tracing::warn!(
+                "[QA Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -259,61 +315,5 @@ mod tests {
             ])),
         };
         roundtrip(&info);
-    }
-}
-
-/// 启动时自动注册到统一核心
-pub async fn auto_register_to_core(core_url: Option<&str>) {
-    let core_url = core_url.unwrap_or("http://localhost:8000");
-    let runtime_url = get_runtime_url();
-
-    let info = PluginInfo {
-        code: "qa".to_string(),
-        name: "质量管理与安全".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
-            .to_string(),
-        author: "TOPEMS".to_string(),
-        category: "quality".to_string(),
-        plugin_type: "business".to_string(),
-        permissions: vec![],
-        runtime_url,
-        dependencies: vec!["qms".to_string()],
-        navigation_config: Some(serde_json::json!([
-            {"code": "lims-samples", "label": "样品管理", "path": "/lims/samples", "icon": "FlaskConical", "order": 10, "group": "business"},
-            {"code": "lims-tasks", "label": "检验任务", "path": "/lims/tasks", "icon": "ClipboardList", "order": 20, "group": "business"},
-            {"code": "lims-instruments", "label": "仪器设备", "path": "/lims/instruments", "icon": "Microscope", "order": 30, "group": "business"}
-        ])),
-    };
-
-    let client = reqwest::Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/qa/register", core_url);
-
-    let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
-    let mut request = client.post(&url).json(&info);
-    if !token.is_empty() {
-        request = request.header("X-Plugin-Token", &token);
-    }
-    match request.send().await {
-        Ok(response) => {
-            if response.status().is_success() {
-                tracing::info!(
-                    "[QA Plugin] Successfully registered to core at {}",
-                    core_url
-                );
-            } else {
-                tracing::warn!(
-                    "[QA Plugin] Failed to register to core: {}",
-                    response.status()
-                );
-            }
-        }
-        Err(e) => {
-            tracing::warn!(
-                "[QA Plugin] Failed to connect to core at {}: {}",
-                core_url,
-                e
-            );
-        }
     }
 }

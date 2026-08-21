@@ -322,7 +322,7 @@ async fn update_category(
     };
 
     if let Some(level) = req.level {
-        if level < 1 || level > 5 {
+        if !(1..=5).contains(&level) {
             return Json(ApiResponse::<SupplierCategory>::error(
                 400,
                 "分类层级必须在1-5之间",
@@ -341,7 +341,7 @@ async fn update_category(
             }
         };
 
-        if &parent_uuid == &id {
+        if parent_uuid == id {
             return Json(ApiResponse::<SupplierCategory>::error(
                 400,
                 "不能将自己设为父分类",

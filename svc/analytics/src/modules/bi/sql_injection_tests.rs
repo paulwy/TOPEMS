@@ -173,7 +173,7 @@ fn l1_all_six_payloads_are_rejected() {
     ];
 
     for p in payloads {
-        let res = quote_identifier(&p.to_string());
+        let res = quote_identifier(p);
         assert!(
             res.is_err(),
             "Payload '{p}' 应该被 quote_identifier 拒绝，却返回了 {res:?}"

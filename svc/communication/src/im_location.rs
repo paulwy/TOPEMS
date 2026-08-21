@@ -218,7 +218,7 @@ pub async fn send_location_message(
         RETURNING *
         "#,
     )
-    .bind(&payload.chat_id)
+    .bind(payload.chat_id)
     .bind(Uuid::nil())
     .bind(&payload.location_type)
     .bind(&payload.coordinates)
@@ -345,7 +345,7 @@ pub async fn create_geofence(
     )
     .bind(&payload.name)
     .bind(&payload.description)
-    .bind(&payload.chat_id)
+    .bind(payload.chat_id)
     .bind(Uuid::nil())
     .bind(&payload.shape_type)
     .bind(&payload.coordinates)

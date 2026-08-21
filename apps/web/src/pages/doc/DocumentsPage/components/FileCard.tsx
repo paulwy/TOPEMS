@@ -52,7 +52,7 @@ const FileCard: React.FC<FileCardProps> = ({
               justifyContent: 'center',
               transition: 'all 0.2s',
               borderColor: isSelected ? 'primary.main' : 'grey.300',
-              bgcolor: isSelected ? 'primary.main' : 'var(--color-primary-foreground, #ffffff)',
+              bgcolor: isSelected ? 'primary.main' : 'var(--color-primary-foreground)',
               cursor: 'pointer',
             }}
           >

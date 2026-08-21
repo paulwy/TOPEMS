@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS-HRM 人力资源管理系统"
 
+[features]
+http_endpoint_tests = []
+
 [dependencies]
 axum.workspace = true
 tokio.workspace = true

@@ -345,7 +345,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 bgcolor: filterType === type ? 'primary.main' : 'grey.100',
                 color:
                   filterType === type
-                    ? 'var(--color-primary-foreground, #ffffff)'
+                    ? 'var(--color-primary-foreground)'
                     : 'text.secondary',
                 '&:hover': {
                   bgcolor: filterType === type ? 'primary.main' : 'grey.200',

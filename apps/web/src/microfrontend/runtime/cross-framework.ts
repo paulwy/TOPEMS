@@ -240,7 +240,7 @@ export class VueAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
       .join('<br/>');
-    return `<div data-framework="vue" style="padding: designTokens.spacing.md;border:1px solid var(--color-success-400, #4ade80);border-radius:6px;">
+    return `<div data-framework="vue" style="padding: designTokens.spacing.md;border:1px solid var(--color-success-400);border-radius:6px;">
       <strong>[Vue {i18n.t('microfrontend.cross-framework.k0')}]</strong><br/>${entries || i18n.t('microfrontend.cross-framework.k0')}
     </div>`;
   }
@@ -395,7 +395,7 @@ export class SvelteAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(
         ([k, v]) =>
-          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:${designTokens.colors.error['600']};color:var(--color-primary-foreground, #ffffff);border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
+          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:${designTokens.colors.error['600']};color:var(--color-primary-foreground);border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
       )
       .join('');
     return `<div data-framework="svelte" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">

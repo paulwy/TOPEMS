@@ -156,42 +156,36 @@ async fn test_doc_003_edit_others_document() {
     // 先获取文档列表
     let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let docs = body["data"]["documents"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let docs = body["data"]["documents"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(documents) = docs {
-                if let Some(doc) = documents.first() {
-                    if let Some(doc_id) = doc["id"].as_str() {
-                        let update = json!({
-                            "title": "已修改的文档标题",
-                            "content": "修改后的内容"
-                        });
+        if let Some(documents) = docs {
+            if let Some(doc) = documents.first() {
+                if let Some(doc_id) = doc["id"].as_str() {
+                    let update = json!({
+                        "title": "已修改的文档标题",
+                        "content": "修改后的内容"
+                    });
 
-                        let update_result = auth_request(
-                            &client,
-                            &token,
-                            "PUT",
-                            &format!("/api/doc/documents/{}", doc_id),
-                            Some(update),
-                        )
-                        .await;
+                    let update_result = auth_request(
+                        &client,
+                        &token,
+                        "PUT",
+                        &format!("/api/doc/documents/{}", doc_id),
+                        Some(update),
+                    )
+                    .await;
 
-                        match update_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("DOC-003 测试通过: 编辑文档权限控制正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = update_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("DOC-003 测试通过: 编辑文档权限控制正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可编辑的文档，跳过测试");
@@ -210,50 +204,39 @@ async fn test_doc_004_delete_document() {
     // 获取文档列表
     let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let docs = body["data"]["documents"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let docs = body["data"]["documents"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(documents) = docs {
-                // 找一个测试文档
-                let test_doc = documents.iter().find(|d| {
-                    d["title"]
-                        .as_str()
-                        .map(|s| s.starts_with("测试"))
-                        .unwrap_or(false)
-                });
+        if let Some(documents) = docs {
+            // 找一个测试文档
+            let test_doc = documents.iter().find(|d| {
+                d["title"]
+                    .as_str()
+                    .map(|s| s.starts_with("测试"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(doc) = test_doc {
-                    if let Some(doc_id) = doc["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/doc/documents/{}", doc_id),
-                            None,
-                        )
-                        .await;
+            if let Some(doc) = test_doc {
+                if let Some(doc_id) = doc["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/doc/documents/{}", doc_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("DOC-004 测试通过: 删除文档功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("DOC-004 测试通过: 删除文档功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的文档，跳过测试");
@@ -272,42 +255,36 @@ async fn test_doc_005_publish_document() {
     // 获取文档列表
     let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let docs = body["data"]["documents"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let docs = body["data"]["documents"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(documents) = docs {
-                // 找草稿状态的文档
-                let draft_doc = documents
-                    .iter()
-                    .find(|d| d["status"].as_str() == Some("draft"));
+        if let Some(documents) = docs {
+            // 找草稿状态的文档
+            let draft_doc = documents
+                .iter()
+                .find(|d| d["status"].as_str() == Some("draft"));
 
-                if let Some(doc) = draft_doc {
-                    if let Some(doc_id) = doc["id"].as_str() {
-                        let publish_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/doc/documents/{}/publish", doc_id),
-                            None,
-                        )
-                        .await;
+            if let Some(doc) = draft_doc {
+                if let Some(doc_id) = doc["id"].as_str() {
+                    let publish_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/doc/documents/{}/publish", doc_id),
+                        None,
+                    )
+                    .await;
 
-                        match publish_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("DOC-005 测试通过: 发布文档功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = publish_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("DOC-005 测试通过: 发布文档功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到草稿状态的文档，跳过测试");
@@ -326,37 +303,31 @@ async fn test_doc_006_archive_document() {
     // 获取文档列表
     let result = auth_request(&client, &token, "GET", "/api/doc/documents", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let docs = body["data"]["documents"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let docs = body["data"]["documents"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(documents) = docs {
-                if let Some(doc) = documents.first() {
-                    if let Some(doc_id) = doc["id"].as_str() {
-                        let archive_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/doc/documents/{}/archive", doc_id),
-                            None,
-                        )
-                        .await;
+        if let Some(documents) = docs {
+            if let Some(doc) = documents.first() {
+                if let Some(doc_id) = doc["id"].as_str() {
+                    let archive_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/doc/documents/{}/archive", doc_id),
+                        None,
+                    )
+                    .await;
 
-                        match archive_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("DOC-006 测试通过: 归档文档功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = archive_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("DOC-006 测试通过: 归档文档功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可归档的文档，跳过测试");
@@ -375,37 +346,31 @@ async fn test_doc_007_generate_from_template() {
     // 获取模板列表
     let result = auth_request(&client, &token, "GET", "/api/doc/templates", None).await;
 
-    match result {
-        Ok((status, body)) => {
-            if status == 200 {
-                let templates = body["data"].as_array();
+    if let Ok((status, body)) = result {
+        if status == 200 {
+            let templates = body["data"].as_array();
 
-                if let Some(templates) = templates {
-                    if let Some(template) = templates.first() {
-                        if let Some(template_id) = template["id"].as_str() {
-                            let generate_result = auth_request(
-                                &client,
-                                &token,
-                                "POST",
-                                &format!("/api/doc/templates/{}/generate", template_id),
-                                Some(json!({ "title": "从模板生成的文档" })),
-                            )
-                            .await;
+            if let Some(templates) = templates {
+                if let Some(template) = templates.first() {
+                    if let Some(template_id) = template["id"].as_str() {
+                        let generate_result = auth_request(
+                            &client,
+                            &token,
+                            "POST",
+                            &format!("/api/doc/templates/{}/generate", template_id),
+                            Some(json!({ "title": "从模板生成的文档" })),
+                        )
+                        .await;
 
-                            match generate_result {
-                                Ok((gen_status, _)) => {
-                                    assert!(gen_status == 200 || gen_status == 404);
-                                    tracing::info!("DOC-007 测试通过: 模板生成文档功能正常");
-                                    return;
-                                }
-                                Err(_) => {}
-                            }
+                        if let Ok((gen_status, _)) = generate_result {
+                            assert!(gen_status == 200 || gen_status == 404);
+                            tracing::info!("DOC-007 测试通过: 模板生成文档功能正常");
+                            return;
                         }
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到模板，跳过测试");

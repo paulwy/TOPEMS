@@ -9,6 +9,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 import { ChevronRight, MessageSquare, Sparkles, X, Zap } from 'lucide-react';
 import { AICopilotSearchBox } from './AICopilotSearchBox';
@@ -59,7 +60,7 @@ export const AICopilotPanel: React.FC<AICopilotPanelProps> = ({
             maxHeight: 'calc(100vh - 32px)',
             borderRadius: 2.5,
             overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(15, 23, 42, 0.22)',
+            boxShadow: `0 20px 60px ${alpha(theme.palette.grey[900], 0.22)}`,
           },
         },
       }}

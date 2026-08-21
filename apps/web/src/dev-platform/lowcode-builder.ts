@@ -252,7 +252,7 @@ function getDefaultThemeConfig(): ThemeConfig {
       accent: designTokens.colors.warning.main,
       background: 'primary.contrastText',
       surface: designTokens.colors.grey[100],
-      text: '#212121',
+      text: 'colors.grey.900',
       textSecondary: designTokens.colors.grey['600'],
       border: 'colors.grey.300',
       success: designTokens.colors.success.main,

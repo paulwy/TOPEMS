@@ -501,7 +501,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                         sx={{
                           borderColor: config.borderColor,
                           color: action.primary
-                            ? 'var(--color-primary-foreground, #ffffff)'
+                            ? 'var(--color-primary-foreground)'
                             : config.titleColor,
                           bgcolor: action.primary ? config.color : 'transparent',
                           '&:hover': {
@@ -638,7 +638,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   sx={{
                     borderColor: config.borderColor,
                     color: action.primary
-                      ? 'var(--color-primary-foreground, #ffffff)'
+                      ? 'var(--color-primary-foreground)'
                       : config.titleColor,
                     bgcolor: action.primary ? config.color : 'transparent',
                     '&:hover': {

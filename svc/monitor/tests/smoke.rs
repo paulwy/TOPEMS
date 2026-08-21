@@ -1,6 +1,4 @@
 #![allow(unused)]
 
 #[test]
-fn it_compiles() {
-    assert!(true);
-}
+fn it_compiles() {}

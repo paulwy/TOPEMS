@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn mdm_event_service_default() {
-        let svc = MdmEventService::default();
+        let svc = MdmEventService;
         let _ = svc.clone();
     }
 }

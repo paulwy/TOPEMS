@@ -185,7 +185,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
                 .list_sales_orders(1, 1)
                 .await
                 .ok()
-                .and_then(|r| Some(r.len() as u64))
+                .map(|r| r.len() as u64)
                 .unwrap_or(0)
         },
         async {
@@ -193,7 +193,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
                 .list_purchase_orders(1, 1)
                 .await
                 .ok()
-                .and_then(|r| Some(r.len() as u64))
+                .map(|r| r.len() as u64)
                 .unwrap_or(0)
         },
         async {
@@ -201,7 +201,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
                 .list_materials(1, 1)
                 .await
                 .ok()
-                .and_then(|r| Some(r.len() as u64))
+                .map(|r| r.len() as u64)
                 .unwrap_or(0)
         },
         async {
@@ -209,7 +209,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
                 .list_customers(1, 1)
                 .await
                 .ok()
-                .and_then(|r| Some(r.len() as u64))
+                .map(|r| r.len() as u64)
                 .unwrap_or(0)
         },
         async {
@@ -217,7 +217,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
                 .list_suppliers(1, 1)
                 .await
                 .ok()
-                .and_then(|r| Some(r.len() as u64))
+                .map(|r| r.len() as u64)
                 .unwrap_or(0)
         },
     );

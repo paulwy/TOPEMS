@@ -168,37 +168,31 @@ async fn test_file_003_download_file() {
     // 先获取文件列表
     let list_result = auth_request(&client, &token, "GET", "/api/core/file/files", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let files = body["data"]["files"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let files = body["data"]["files"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(file_list) = files {
-                if let Some(file) = file_list.first() {
-                    if let Some(file_id) = file["id"].as_str() {
-                        let download_result = auth_request(
-                            &client,
-                            &token,
-                            "GET",
-                            &format!("/api/core/file/download/{}", file_id),
-                            None,
-                        )
-                        .await;
+        if let Some(file_list) = files {
+            if let Some(file) = file_list.first() {
+                if let Some(file_id) = file["id"].as_str() {
+                    let download_result = auth_request(
+                        &client,
+                        &token,
+                        "GET",
+                        &format!("/api/core/file/download/{}", file_id),
+                        None,
+                    )
+                    .await;
 
-                        match download_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("FILE-003 测试通过: 下载文件功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = download_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("FILE-003 测试通过: 下载文件功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可下载的文件，跳过测试");
@@ -257,50 +251,39 @@ async fn test_file_005_delete_file() {
     // 获取文件列表
     let list_result = auth_request(&client, &token, "GET", "/api/core/file/files", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let files = body["data"]["files"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let files = body["data"]["files"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(file_list) = files {
-                // 找测试文件
-                let test_file = file_list.iter().find(|f| {
-                    f["filename"]
-                        .as_str()
-                        .map(|s| s.starts_with("test"))
-                        .unwrap_or(false)
-                });
+        if let Some(file_list) = files {
+            // 找测试文件
+            let test_file = file_list.iter().find(|f| {
+                f["filename"]
+                    .as_str()
+                    .map(|s| s.starts_with("test"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(file) = test_file {
-                    if let Some(file_id) = file["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/core/file/files/{}", file_id),
-                            None,
-                        )
-                        .await;
+            if let Some(file) = test_file {
+                if let Some(file_id) = file["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/core/file/files/{}", file_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("FILE-005 测试通过: 删除文件功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("FILE-005 测试通过: 删除文件功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的文件，跳过测试");
@@ -319,37 +302,31 @@ async fn test_file_006_move_file() {
     // 获取文件列表
     let list_result = auth_request(&client, &token, "GET", "/api/core/file/files", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let files = body["data"]["files"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let files = body["data"]["files"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(file_list) = files {
-                if let Some(file) = file_list.first() {
-                    if let Some(file_id) = file["id"].as_str() {
-                        let move_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/core/file/files/{}/move", file_id),
-                            Some(json!({ "target_folder_id": null })),
-                        )
-                        .await;
+        if let Some(file_list) = files {
+            if let Some(file) = file_list.first() {
+                if let Some(file_id) = file["id"].as_str() {
+                    let move_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/core/file/files/{}/move", file_id),
+                        Some(json!({ "target_folder_id": null })),
+                    )
+                    .await;
 
-                        match move_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("FILE-006 测试通过: 移动文件功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = move_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("FILE-006 测试通过: 移动文件功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可移动的文件，跳过测试");
@@ -406,50 +383,39 @@ async fn test_file_008_delete_folder() {
     // 获取文件夹列表
     let list_result = auth_request(&client, &token, "GET", "/api/core/file/folders", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let folders = body["data"]["folders"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let folders = body["data"]["folders"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(folder_list) = folders {
-                // 找测试文件夹
-                let test_folder = folder_list.iter().find(|f| {
-                    f["name"]
-                        .as_str()
-                        .map(|s| s.starts_with("测试"))
-                        .unwrap_or(false)
-                });
+        if let Some(folder_list) = folders {
+            // 找测试文件夹
+            let test_folder = folder_list.iter().find(|f| {
+                f["name"]
+                    .as_str()
+                    .map(|s| s.starts_with("测试"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(folder) = test_folder {
-                    if let Some(folder_id) = folder["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/core/file/folders/{}", folder_id),
-                            None,
-                        )
-                        .await;
+            if let Some(folder) = test_folder {
+                if let Some(folder_id) = folder["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/core/file/folders/{}", folder_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("FILE-008 测试通过: 删除文件夹功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("FILE-008 测试通过: 删除文件夹功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的文件夹，跳过测试");

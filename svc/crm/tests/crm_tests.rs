@@ -638,7 +638,7 @@ mod business_logic_tests {
 
     #[test]
     fn test_opportunity_stage_transitions() {
-        let stages = vec!["lead", "qualified", "proposal", "negotiation", "closed_won"];
+        let stages = ["lead", "qualified", "proposal", "negotiation", "closed_won"];
         for window in stages.windows(2) {
             let from = window[0];
             let to = window[1];

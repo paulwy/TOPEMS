@@ -217,7 +217,7 @@ export default function MesDeliveryAnalyticsPage() {
               <Bar
                 dataKey='q3'
                 stackId='box'
-                fill='var(--color-success-400, #4ade80)'
+                fill='var(--color-success-400)'
                 name='Q3'
               />
               <Bar

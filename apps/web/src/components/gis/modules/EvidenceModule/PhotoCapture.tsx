@@ -261,7 +261,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           sx={{
             p: 16,
             borderRadius: 'full',
-            bgcolor: isCapturing ? 'text.secondary' : 'var(--color-primary-foreground, #ffffff)',
+            bgcolor: isCapturing ? 'text.secondary' : 'var(--color-primary-foreground)',
             color: isCapturing ? 'text.disabled' : 'grey.800',
             '&:hover': { bgcolor: isCapturing ? 'text.secondary' : 'grey.200' },
             '&:active': { transform: 'scale(0.95)' },

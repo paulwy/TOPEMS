@@ -82,7 +82,7 @@ impl FinanceService {
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
         let mut query =
-            "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -111,7 +111,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let rule: VoucherGenerationRule = sqlx::query_as(
-            "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -164,7 +164,7 @@ impl FinanceService {
         req: UpdateGenerationRuleRequest,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let existing: VoucherGenerationRule = sqlx::query_as(
-            "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -215,7 +215,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
-            "SELECT id, tenant_id, name, description, source_type, source_module, template_id, trigger_condition, mapping_config, priority, status, created_by, created_at, updated_at FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -294,7 +294,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         req: GenerateVouchersRequest,
-        _generated_by: &str,
+        generated_by: &str,
     ) -> Result<GenerationResult, TopemsError> {
         let rule = self.get_generation_rule(tenant_id, req.rule_id).await?;
 
@@ -302,20 +302,212 @@ impl FinanceService {
             return Err(TopemsError::ValidationFailed("生成规则未启用".to_string()));
         }
 
-        let mut voucher_ids = Vec::new();
-        let errors = Vec::new();
-        let _success_count = 0;
-        let failed_count = 0;
+        // Parse mapping config to get line definitions
+        let mapping = rule
+            .mapping_config
+            .as_object()
+            .ok_or_else(|| TopemsError::ValidationFailed("映射配置格式不正确".to_string()))?;
 
-        let mock_count = 5;
-        for i in 0..mock_count {
+        let lines_config = mapping
+            .get("lines")
+            .and_then(|v| v.as_array())
+            .ok_or_else(|| TopemsError::ValidationFailed("映射配置缺少 lines 数组".to_string()))?;
+
+        if lines_config.is_empty() {
+            return Err(TopemsError::ValidationFailed(
+                "映射配置 lines 不能为空".to_string(),
+            ));
+        }
+
+        let mut voucher_ids = Vec::new();
+        let mut errors = Vec::new();
+        let mut success_count = 0i32;
+        let mut failed_count = 0i32;
+
+        // Query source records based on source_type
+        // Currently supports "payment" source type
+        let source_rows: Vec<(Uuid, String, f64)> = match rule.source_type.as_str() {
+            "payment" => {
+                let mut query = String::from(
+                    "SELECT id, payment_no, total_amount::float8 FROM core_finance_payments \
+                     WHERE tenant_id = $1 AND status = 'approved' AND voucher_id IS NULL",
+                );
+                let mut source_ids_bound = false;
+                let ids: Vec<Uuid> = req
+                    .source_ids
+                    .as_ref()
+                    .map(|sids| {
+                        sids.iter()
+                            .filter_map(|s| Uuid::parse_str(s).ok())
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                if !ids.is_empty() {
+                    query.push_str(" AND id = ANY($2)");
+                    source_ids_bound = true;
+                }
+                query.push_str(" ORDER BY payment_date ASC");
+
+                let mut q = sqlx::query_as::<_, (Uuid, String, f64)>(&query).bind(tenant_id);
+                if source_ids_bound {
+                    q = q.bind(&ids);
+                }
+                q.fetch_all(&self.db_pool).await?
+            }
+            other => {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "不支持的源类型: {}（目前仅支持 payment）",
+                    other
+                )));
+            }
+        };
+
+        if source_rows.is_empty() {
+            return Ok(GenerationResult {
+                success_count: 0,
+                failed_count: 0,
+                voucher_ids: Vec::new(),
+                errors: vec!["未找到符合条件的源数据".to_string()],
+            });
+        }
+
+        let now = Utc::now();
+        let period = format!("{:04}{:02}", now.format("%Y"), now.format("%m"));
+
+        for (source_id, source_no, amount) in &source_rows {
+            // Create voucher header
             let voucher_id = Uuid::new_v4();
-            voucher_ids.push(voucher_id);
-            let _ = i;
+            let voucher_no = format!(
+                "GEN-{}-{}",
+                now.format("%Y%m%d%H%M%S"),
+                &voucher_id.to_string()[..8]
+            );
+            let description = format!("自动生成凭证 - {} (源: {})", rule.name, source_no);
+
+            let voucher_type = rule.output_voucher_type.as_str();
+
+            let insert_result = sqlx::query(
+                r#"INSERT INTO core_finance_vouchers
+                    (id, tenant_id, voucher_no, voucher_date, period, voucher_type,
+                     total_debit, total_credit, status, description, created_by)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)"#,
+            )
+            .bind(voucher_id)
+            .bind(tenant_id)
+            .bind(&voucher_no)
+            .bind(now)
+            .bind(&period)
+            .bind(voucher_type)
+            .bind(amount)
+            .bind(amount)
+            .bind(&description)
+            .bind(generated_by)
+            .execute(&self.db_pool)
+            .await;
+
+            if let Err(e) = insert_result {
+                failed_count += 1;
+                errors.push(format!("源记录 {} 创建凭证头失败: {}", source_no, e));
+                continue;
+            }
+
+            // Create voucher lines based on mapping config
+            let mut line_no = 1i32;
+            let mut lines_ok = true;
+
+            for line_cfg in lines_config {
+                let account_code = line_cfg
+                    .get("account_code")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let direction = line_cfg
+                    .get("direction")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("debit");
+
+                // Look up account by code
+                let account: Option<(Uuid, String)> = sqlx::query_as(
+                    "SELECT id, name FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                )
+                .bind(tenant_id)
+                .bind(account_code)
+                .fetch_optional(&self.db_pool)
+                .await
+                .ok()
+                .flatten();
+
+                let (account_id, account_name) = match account {
+                    Some((id, name)) => (id, name),
+                    None => {
+                        errors.push(format!(
+                            "源记录 {} 行 {}: 账户代码 {} 不存在",
+                            source_no, line_no, account_code
+                        ));
+                        lines_ok = false;
+                        break;
+                    }
+                };
+
+                let (debit, credit) = match direction {
+                    "debit" => (*amount, 0.0),
+                    "credit" => (0.0, *amount),
+                    _ => (0.0, 0.0),
+                };
+
+                let line_result = sqlx::query(
+                    r#"INSERT INTO core_finance_voucher_lines
+                        (voucher_id, line_no, account_id, account_code, account_name,
+                         description, debit, credit)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
+                )
+                .bind(voucher_id)
+                .bind(line_no)
+                .bind(account_id)
+                .bind(account_code)
+                .bind(&account_name)
+                .bind(&description)
+                .bind(debit)
+                .bind(credit)
+                .execute(&self.db_pool)
+                .await;
+
+                if let Err(e) = line_result {
+                    errors.push(format!(
+                        "源记录 {} 行 {} 插入失败: {}",
+                        source_no, line_no, e
+                    ));
+                    lines_ok = false;
+                    break;
+                }
+
+                line_no += 1;
+            }
+
+            if lines_ok {
+                // Link source payment to voucher
+                let _ = sqlx::query(
+                    "UPDATE core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3"
+                )
+                .bind(voucher_id)
+                .bind(source_id)
+                .bind(tenant_id)
+                .execute(&self.db_pool)
+                .await;
+
+                voucher_ids.push(voucher_id);
+                success_count += 1;
+            } else {
+                // Clean up voucher without lines
+                let _ = sqlx::query("DELETE FROM core_finance_vouchers WHERE id = $1")
+                    .bind(voucher_id)
+                    .execute(&self.db_pool)
+                    .await;
+                failed_count += 1;
+            }
         }
 
         Ok(GenerationResult {
-            success_count: mock_count,
+            success_count,
             failed_count,
             voucher_ids,
             errors,

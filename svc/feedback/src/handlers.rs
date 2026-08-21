@@ -172,7 +172,7 @@ pub async fn create_feedback(
     .bind(payload.type_)
     .bind(payload.title)
     .bind(payload.description)
-    .bind(&payload.screenshots.unwrap_or_default())
+    .bind(payload.screenshots.unwrap_or_default())
     .bind(payload.satisfaction.unwrap_or(3))
     .fetch_one(&pool)
     .await;
