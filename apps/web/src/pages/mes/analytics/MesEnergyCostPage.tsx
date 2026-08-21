@@ -94,10 +94,10 @@ export default function MesEnergyCostPage() {
         nameKey: 'name',
         data: stackedTrend.map((item) => ({
           name: item.month,
-          value: Object.values(item).reduce(
+          value: Object.values(item).reduce<number>(
             (sum, value) => (typeof value === 'number' ? sum + value : sum),
             0
-          ) as number,
+          ),
         })),
       },
       {
