@@ -1230,8 +1230,8 @@ jobs:
             echo "::endgroup::"
           done
           echo "Result: $((TOTAL-FAILED))/$TOTAL passed. Failures: $FAILED"
-          # V246-CI-tighten-anchor: after N consecutive 0-errors runs change below to: exit $FAILED
-          exit 0
+          # V259: shared packages tsc all pass, switched from soft-pass to blocking
+          exit $FAILED
 
   # ──────────────────────────────────────────────────────────────────────────
   # Frontend Tests — 9 路并行分片（unit + 8 component shards）

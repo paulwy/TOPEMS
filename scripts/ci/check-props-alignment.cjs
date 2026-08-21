@@ -32,6 +32,9 @@ const ROOT = path.resolve(__dirname, '../..');
 const WEB_SRC = path.join(ROOT, 'apps/web/src');
 const MODULES_DIR = path.join(WEB_SRC, 'modules');
 
+// Built-in TS utility types — not user-defined Props interfaces
+const BUILTIN_TYPES = new Set(['Record', 'Partial', 'Pick', 'Omit', 'Readonly', 'Required', 'string', 'unknown', 'any', 'never', 'void']);
+
 const args = process.argv.slice(2);
 const jsonMode = args.includes('--json');
 const thresholdArg = args.find(a => a.startsWith('--threshold='));
@@ -60,36 +63,54 @@ function resolveImportPath(importSpecifier) {
 /* ============================================================
  *  Step 1: Extract routes from config.ts
  *
- *  Finds: const xxxRoute: RouteConfigV2<PropsType> = { element: lazyWithRetry(() => import('...'), '...'), ... }
+ *  Pattern A: const xxxRoute: RouteConfigV2<PropsType> = { element: lazyWithRetry(() => import('...'), '...'), ... }
+ *  Pattern B: { element: lazyWithRetry(() => import('...'), '...'), ... } as RouteConfigV2<PropsType>
  * ============================================================ */
 function extractRoutesFromConfig(configPath) {
   const sourceFile = parseFile(configPath);
   const routes = [];
 
+  function extractImportPath(exprNode) {
+    const text = exprNode.getText(sourceFile);
+    const m = text.match(/import\s*\(\s*['"]([^'"]+)['"]\s*\)/);
+    return m ? m[1] : null;
+  }
+
   function visit(node) {
-    // Look for variable declarations with type annotation RouteConfigV2<X>
+    // Pattern A: variable declarations with type annotation RouteConfigV2<X>
     if (ts.isVariableStatement(node)) {
       for (const decl of node.declarationList.declarations) {
         if (!decl.type) continue;
         const typeText = decl.type.getText(sourceFile);
-        // Match RouteConfigV2<PropsName> or RouteConfigV2<PropsName, ...>
         const match = typeText.match(/RouteConfigV2<\s*([A-Za-z_][A-Za-z0-9_]*)/);
         if (!match) continue;
 
         const propsTypeName = match[1];
+        if (BUILTIN_TYPES.has(propsTypeName)) continue;
         const varName = decl.name && ts.isIdentifier(decl.name) ? decl.name.text : '?';
-
-        // Extract element import path from initializer
-        let importPath = null;
-        if (decl.initializer) {
-          const initText = decl.initializer.getText(sourceFile);
-          const importMatch = initText.match(/import\s*\(\s*['"]([^'"]+)['"]\s*\)/);
-          if (importMatch) importPath = importMatch[1];
-        }
+        const importPath = decl.initializer ? extractImportPath(decl.initializer) : null;
 
         routes.push({ varName, propsTypeName, importPath, configPath });
       }
     }
+
+    // Pattern B: AsExpression — { ... } as RouteConfigV2<PropsType>
+    if (ts.isAsExpression(node)) {
+      const typeText = node.type.getText(sourceFile);
+      const match = typeText.match(/RouteConfigV2<\s*([A-Za-z_][A-Za-z0-9_]*)/);
+      if (match && !BUILTIN_TYPES.has(match[1])) {
+        const propsTypeName = match[1];
+        const importPath = extractImportPath(node.expression);
+        // Derive varName from import path (e.g., '@/pages/mes/FooPage' → 'fooRoute')
+        let varName = '?';
+        if (importPath) {
+          const base = importPath.split('/').pop() || '?';
+          varName = base.charAt(0).toLowerCase() + base.slice(1) + 'Route';
+        }
+        routes.push({ varName, propsTypeName, importPath, configPath });
+      }
+    }
+
     ts.forEachChild(node, visit);
   }
   visit(sourceFile);
@@ -99,6 +120,10 @@ function extractRoutesFromConfig(configPath) {
 
 /* ============================================================
  *  Step 2: Extract Props interface/type fields from config.ts
+ *
+ *  Note: interfaces that `extends ListPageProps` / `extends FormPageProps`
+ *  have 0 own members → realness defaults to 100% (no fields to mismatch).
+ *  This correctly reflects that the interface is fully typed via base type.
  * ============================================================ */
 function extractPropsFields(configPath, propsTypeName) {
   const sourceFile = parseFile(configPath);
