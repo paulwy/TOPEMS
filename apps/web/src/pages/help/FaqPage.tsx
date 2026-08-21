@@ -26,6 +26,7 @@ import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { debounce } from '@/utils/format';
 
 interface FaqCategories {
   id: string;
@@ -41,14 +42,6 @@ const FaqCategories: FaqCategories[] = [
   { id: 'finance', name: i18n.t('help.faq_page.k4'), icon: '💰' },
   { id: 'system', name: i18n.t('help.faq_page.k5'), icon: '⚙️' },
 ];
-
-const debounce = <T extends (...args: unknown[]) => void>(func: T, delay: number): T => {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: unknown[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => func(...args), delay);
-  }) as T;
-};
 
 export const FaqPage: React.FC = () => {
   const { t } = useTranslation();

@@ -1,7 +1,6 @@
 // SCM 服务 OpenAPI 文档
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use topems_shared_db::repository::ListQueryParams;
 use utoipa::{OpenApi, ToSchema};
 use uuid::Uuid;
 
@@ -93,20 +92,6 @@ pub struct SupplierDeliveryAppointment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct PaginationParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
-    pub status: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: T,
-    pub message: String,
-}
-
 #[derive(OpenApi)]
 #[openapi(
     // V72.5: 12 条 paths 已注册（suppliers×5 + purchase_orders×7），对应 handlers 已补 #[utoipa::path] 宏
@@ -134,7 +119,6 @@ pub struct ApiResponse<T> {
             PurchaseOrder,
             SupplierEvaluation,
             SupplierDeliveryAppointment,
-            PaginationParams,
         ),
     ),
     tags(
