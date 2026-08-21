@@ -119,7 +119,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
             icon={<MapPin size={16} />}
             checked={visibleLayers.devices}
             onChange={() => onToggleLayer('devices')}
-            color='var(--color-fallback-ant-blue, #00c897)'
+            color='var(--color-fallback-ant-blue)'
           />
           <LayerToggle
             label={i18n.t('gis.layer_manager.k1')}

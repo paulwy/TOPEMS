@@ -111,7 +111,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
         alignItems: 'center',
         justifyContent: 'center',
         background:
-          'linear-gradient(135deg, var(--color-primary-100, #dbeafe) 0%, var(--color-primary-200, #bfdbfe) 100%)',
+          'linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-200) 100%)',
       }}
       className={className}
     >

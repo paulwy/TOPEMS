@@ -366,7 +366,7 @@ fn test_get_roles_has_superadmin() {
     let roles = get_roles();
     let superadmin = roles.iter().find(|r| r.id == "superadmin");
     assert!(superadmin.is_some());
-    assert!(superadmin.unwrap().permissions.len() > 0);
+    assert!(!superadmin.unwrap().permissions.is_empty());
 }
 
 #[test]

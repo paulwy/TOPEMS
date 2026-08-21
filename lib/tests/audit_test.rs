@@ -180,6 +180,7 @@ fn test_audit_log_struct() {
 
     let audit_log = AuditLog {
         id,
+        tenant_id: None,
         action: "create".to_string(),
         entity_type: "employee".to_string(),
         entity_id: Some(Uuid::new_v4()),

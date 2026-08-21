@@ -818,88 +818,6 @@ pub struct RejectRequest {
     pub reason: String,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_expiring_params_deserialize_all_none() {
-        let json = r#"{}"#;
-        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
-        assert!(params.days.is_none());
-        assert!(params.page.is_none());
-        assert!(params.page_size.is_none());
-    }
-
-    #[test]
-    fn test_expiring_params_deserialize_all_some() {
-        let json = r#"{"days":60,"page":2,"page_size":50}"#;
-        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(params.days, Some(60));
-        assert_eq!(params.page, Some(2));
-        assert_eq!(params.page_size, Some(50));
-    }
-
-    #[test]
-    fn test_expiring_params_deserialize_partial() {
-        let json = r#"{"days":15}"#;
-        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(params.days, Some(15));
-        assert!(params.page.is_none());
-        assert!(params.page_size.is_none());
-    }
-
-    #[test]
-    fn test_renewal_params_deserialize_all_none() {
-        let json = r#"{}"#;
-        let params: RenewalParams = serde_json::from_str(json).expect("deserialize");
-        assert!(params.page.is_none());
-        assert!(params.page_size.is_none());
-        assert!(params.contract_id.is_none());
-        assert!(params.status.is_none());
-    }
-
-    #[test]
-    fn test_renewal_params_deserialize_all_some() {
-        let cid = Uuid::new_v4();
-        let json = format!(
-            r#"{{"page":1,"page_size":20,"contract_id":"{}","status":"pending"}}"#,
-            cid
-        );
-        let params: RenewalParams = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(params.page, Some(1));
-        assert_eq!(params.page_size, Some(20));
-        assert_eq!(params.contract_id, Some(cid));
-        assert_eq!(params.status.as_deref(), Some("pending"));
-    }
-
-    #[test]
-    fn test_reject_request_deserialize() {
-        let json = r#"{"reason":"Budget not approved"}"#;
-        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(req.reason, "Budget not approved");
-    }
-
-    #[test]
-    fn test_reject_request_deserialize_empty_reason() {
-        let json = r#"{"reason":""}"#;
-        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
-        assert!(req.reason.is_empty());
-    }
-
-    #[test]
-    fn test_reject_request_deserialize_unicode_reason() {
-        let json = r#"{"reason":"预算未批准"}"#;
-        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(req.reason, "预算未批准");
-    }
-
-    #[test]
-    fn test_create_routes_returns_router() {
-        let _router = create_routes();
-    }
-}
-
 async fn execute_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -986,5 +904,87 @@ async fn execute_renewal(
                 "执行合同续签失败",
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expiring_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.days.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_expiring_params_deserialize_all_some() {
+        let json = r#"{"days":60,"page":2,"page_size":50}"#;
+        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(params.days, Some(60));
+        assert_eq!(params.page, Some(2));
+        assert_eq!(params.page_size, Some(50));
+    }
+
+    #[test]
+    fn test_expiring_params_deserialize_partial() {
+        let json = r#"{"days":15}"#;
+        let params: ExpiringParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(params.days, Some(15));
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_renewal_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: RenewalParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.contract_id.is_none());
+        assert!(params.status.is_none());
+    }
+
+    #[test]
+    fn test_renewal_params_deserialize_all_some() {
+        let cid = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":1,"page_size":20,"contract_id":"{}","status":"pending"}}"#,
+            cid
+        );
+        let params: RenewalParams = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.contract_id, Some(cid));
+        assert_eq!(params.status.as_deref(), Some("pending"));
+    }
+
+    #[test]
+    fn test_reject_request_deserialize() {
+        let json = r#"{"reason":"Budget not approved"}"#;
+        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.reason, "Budget not approved");
+    }
+
+    #[test]
+    fn test_reject_request_deserialize_empty_reason() {
+        let json = r#"{"reason":""}"#;
+        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
+        assert!(req.reason.is_empty());
+    }
+
+    #[test]
+    fn test_reject_request_deserialize_unicode_reason() {
+        let json = r#"{"reason":"预算未批准"}"#;
+        let req: RejectRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.reason, "预算未批准");
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
     }
 }

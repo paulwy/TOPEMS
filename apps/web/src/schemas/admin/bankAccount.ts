@@ -138,14 +138,14 @@ export const bankAccountSchema: EntitySchema = {
         const colorMap: Record<string, string> = {
           primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
-          secondary: 'var(--color-secondary-main, #9c27b0)',
+          secondary: `var(--color-secondary-main, ${designTokens.colors.secondary.main})`,
           warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
           default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
         };
         const bgColorMap: Record<string, string> = {
           primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          secondary: 'var(--color-secondary-lighter, var(--color-grey-100, #f3f4f6))',
+          secondary: 'var(--color-secondary-lighter, var(--color-grey-100))',
           warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
           default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };

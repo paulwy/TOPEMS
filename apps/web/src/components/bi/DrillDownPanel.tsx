@@ -11,6 +11,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 
 interface DrillDownData extends Record<string, unknown> {
   id: string;
@@ -107,7 +108,7 @@ export function DrillDownPanel({
         elevation={3}
       >
         <CardHeader
-          sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+          sx={{ borderBottom: `1px solid ${alpha(theme.palette.common.black, 0.1)}` }}
           action={
             <Button
               variant='text'
@@ -137,7 +138,7 @@ export function DrillDownPanel({
         <div
           style={{
             padding: 16,
-            borderBottom: '1px solid rgba(0,0,0,0.1)',
+            borderBottom: `1px solid ${alpha(theme.palette.common.black, 0.1)}`,
             display: 'flex',
             alignItems: 'center',
             gap: 12,
@@ -224,7 +225,7 @@ export function DrillDownPanel({
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
                     style={{
-                      borderBottom: '1px solid rgba(0,0,0,0.05)',
+                      borderBottom: `1px solid ${alpha(theme.palette.common.black, 0.05)}`,
                       cursor: onRowClick ? 'pointer' : 'default',
                     }}
                     onMouseEnter={(e) => {

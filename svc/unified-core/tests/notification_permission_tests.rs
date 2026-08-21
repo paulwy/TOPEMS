@@ -164,40 +164,34 @@ async fn test_notif_003_mark_read() {
     )
     .await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let notifications = body["data"]["notifications"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let notifications = body["data"]["notifications"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(notes) = notifications {
-                // 找未读通知
-                let unread = notes.iter().find(|n| n["is_read"].as_bool() == Some(false));
+        if let Some(notes) = notifications {
+            // 找未读通知
+            let unread = notes.iter().find(|n| n["is_read"].as_bool() == Some(false));
 
-                if let Some(note) = unread {
-                    if let Some(note_id) = note["id"].as_str() {
-                        let mark_result = auth_request(
-                            &client,
-                            &token,
-                            "PUT",
-                            &format!("/api/core/notification/notifications/{}", note_id),
-                            Some(json!({ "is_read": true })),
-                        )
-                        .await;
+            if let Some(note) = unread {
+                if let Some(note_id) = note["id"].as_str() {
+                    let mark_result = auth_request(
+                        &client,
+                        &token,
+                        "PUT",
+                        &format!("/api/core/notification/notifications/{}", note_id),
+                        Some(json!({ "is_read": true })),
+                    )
+                    .await;
 
-                        match mark_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 404);
-                                tracing::info!("NOTIF-003 测试通过: 标记已读功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = mark_result {
+                        assert!(status == 200 || status == 404);
+                        tracing::info!("NOTIF-003 测试通过: 标记已读功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到未读通知，跳过测试");

@@ -1,5 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { Box, Typography, Tooltip, Chip, Badge as MuiBadge, Popover } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
@@ -130,7 +131,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: '0 12px 36px rgba(15, 23, 42, 0.16)',
+            boxShadow: (theme) => `0 12px 36px ${alpha(theme.palette.grey[900], 0.16)}`,
             overflow: 'hidden',
           },
         }}

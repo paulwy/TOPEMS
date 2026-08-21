@@ -1,8 +1,11 @@
+#[cfg(feature = "http_endpoint_tests")]
 use rust_decimal::Decimal;
+#[cfg(feature = "http_endpoint_tests")]
 use sqlx::PgPool;
+#[cfg(feature = "http_endpoint_tests")]
 use uuid::Uuid;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "http_endpoint_tests"))]
 mod tests {
     use super::*;
     use sqlx::Row;

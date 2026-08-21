@@ -633,7 +633,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label={i18n.t('microfrontend.observability_dashboard.k22')}
             value={totalVisits > 0 ? `${((totalErrors / totalVisits) * 100).toFixed(2)}%` : '0%'}
             icon={<TrendingUpIcon size={24} />}
-            color='var(--color-error-700, #b91c1c)'
+            color='var(--color-error-700)'
           />
         </Grid>
       </Grid>

@@ -160,37 +160,31 @@ async fn test_pm_003_update_project() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let projects = body["data"]["projects"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let projects = body["data"]["projects"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(proj_list) = projects {
-                if let Some(proj) = proj_list.first() {
-                    if let Some(proj_id) = proj["id"].as_str() {
-                        let update_result = auth_request(
-                            &client,
-                            &token,
-                            "PUT",
-                            &format!("/api/pm/projects/{}", proj_id),
-                            Some(json!({ "description": "更新后的描述" })),
-                        )
-                        .await;
+        if let Some(proj_list) = projects {
+            if let Some(proj) = proj_list.first() {
+                if let Some(proj_id) = proj["id"].as_str() {
+                    let update_result = auth_request(
+                        &client,
+                        &token,
+                        "PUT",
+                        &format!("/api/pm/projects/{}", proj_id),
+                        Some(json!({ "description": "更新后的描述" })),
+                    )
+                    .await;
 
-                        match update_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("PM-003 测试通过: 更新项目功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = update_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("PM-003 测试通过: 更新项目功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到项目，跳过测试");
@@ -208,49 +202,38 @@ async fn test_pm_004_delete_project() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let projects = body["data"]["projects"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let projects = body["data"]["projects"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(proj_list) = projects {
-                let test_proj = proj_list.iter().find(|p| {
-                    p["name"]
-                        .as_str()
-                        .map(|s| s.starts_with("测试"))
-                        .unwrap_or(false)
-                });
+        if let Some(proj_list) = projects {
+            let test_proj = proj_list.iter().find(|p| {
+                p["name"]
+                    .as_str()
+                    .map(|s| s.starts_with("测试"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(proj) = test_proj {
-                    if let Some(proj_id) = proj["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/pm/projects/{}", proj_id),
-                            None,
-                        )
-                        .await;
+            if let Some(proj) = test_proj {
+                if let Some(proj_id) = proj["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/pm/projects/{}", proj_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("PM-004 测试通过: 删除项目功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("PM-004 测试通过: 删除项目功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的项目，跳过测试");
@@ -268,37 +251,31 @@ async fn test_pm_005_view_project_detail() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let projects = body["data"]["projects"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let projects = body["data"]["projects"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(proj_list) = projects {
-                if let Some(proj) = proj_list.first() {
-                    if let Some(proj_id) = proj["id"].as_str() {
-                        let detail_result = auth_request(
-                            &client,
-                            &token,
-                            "GET",
-                            &format!("/api/pm/projects/{}", proj_id),
-                            None,
-                        )
-                        .await;
+        if let Some(proj_list) = projects {
+            if let Some(proj) = proj_list.first() {
+                if let Some(proj_id) = proj["id"].as_str() {
+                    let detail_result = auth_request(
+                        &client,
+                        &token,
+                        "GET",
+                        &format!("/api/pm/projects/{}", proj_id),
+                        None,
+                    )
+                    .await;
 
-                        match detail_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("PM-005 测试通过: 查看项目详情功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = detail_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("PM-005 测试通过: 查看项目详情功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到项目，跳过测试");
@@ -356,48 +333,40 @@ async fn test_pm_007_add_member() {
     let proj_result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
     let user_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
-    match (proj_result, user_result) {
-        (Ok((_, proj_body)), Ok((_, user_body))) => {
-            let projects = proj_body["data"]["projects"]
-                .as_array()
-                .or_else(|| proj_body["data"].as_array());
-            let users = user_body["data"]["users"]
-                .as_array()
-                .or_else(|| user_body["data"].as_array());
+    if let (Ok((_, proj_body)), Ok((_, user_body))) = (proj_result, user_result) {
+        let projects = proj_body["data"]["projects"]
+            .as_array()
+            .or_else(|| proj_body["data"].as_array());
+        let users = user_body["data"]["users"]
+            .as_array()
+            .or_else(|| user_body["data"].as_array());
 
-            if let (Some(proj_list), Some(user_list)) = (projects, users) {
-                if let (Some(proj), Some(user)) = (proj_list.first(), user_list.first()) {
-                    if let (Some(proj_id), Some(user_id)) =
-                        (proj["id"].as_str(), user["id"].as_str())
-                    {
-                        let add_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/pm/projects/{}/members", proj_id),
-                            Some(json!({ "user_id": user_id, "role": "member" })),
-                        )
-                        .await;
+        if let (Some(proj_list), Some(user_list)) = (projects, users) {
+            if let (Some(proj), Some(user)) = (proj_list.first(), user_list.first()) {
+                if let (Some(proj_id), Some(user_id)) = (proj["id"].as_str(), user["id"].as_str()) {
+                    let add_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/pm/projects/{}/members", proj_id),
+                        Some(json!({ "user_id": user_id, "role": "member" })),
+                    )
+                    .await;
 
-                        match add_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 201
-                                        || status == 403
-                                        || status == 404
-                                        || status == 409
-                                );
-                                tracing::info!("PM-007 测试通过: 添加项目成员功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = add_result {
+                        assert!(
+                            status == 200
+                                || status == 201
+                                || status == 403
+                                || status == 404
+                                || status == 409
+                        );
+                        tracing::info!("PM-007 测试通过: 添加项目成员功能正常");
+                        return;
                     }
                 }
             }
         }
-        _ => {}
     }
 
     tracing::warn!("未找到项目或用户，跳过测试");
@@ -415,72 +384,61 @@ async fn test_pm_008_remove_member() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let projects = body["data"]["projects"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let projects = body["data"]["projects"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(proj_list) = projects {
-                if let Some(proj) = proj_list.first() {
-                    if let Some(proj_id) = proj["id"].as_str() {
-                        // 获取项目成员
-                        let members_result = auth_request(
-                            &client,
-                            &token,
-                            "GET",
-                            &format!("/api/pm/projects/{}/members", proj_id),
-                            None,
-                        )
-                        .await;
+        if let Some(proj_list) = projects {
+            if let Some(proj) = proj_list.first() {
+                if let Some(proj_id) = proj["id"].as_str() {
+                    // 获取项目成员
+                    let members_result = auth_request(
+                        &client,
+                        &token,
+                        "GET",
+                        &format!("/api/pm/projects/{}/members", proj_id),
+                        None,
+                    )
+                    .await;
 
-                        match members_result {
-                            Ok((_, members_body)) => {
-                                let members = members_body["data"]["members"]
-                                    .as_array()
-                                    .or_else(|| members_body["data"].as_array());
+                    if let Ok((_, members_body)) = members_result {
+                        let members = members_body["data"]["members"]
+                            .as_array()
+                            .or_else(|| members_body["data"].as_array());
 
-                                if let Some(member_list) = members {
-                                    if let Some(member) = member_list.first() {
-                                        if let Some(user_id) = member["user_id"].as_str() {
-                                            let remove_result = auth_request(
-                                                &client,
-                                                &token,
-                                                "DELETE",
-                                                &format!(
-                                                    "/api/pm/projects/{}/members/{}",
-                                                    proj_id, user_id
-                                                ),
-                                                None,
-                                            )
-                                            .await;
+                        if let Some(member_list) = members {
+                            if let Some(member) = member_list.first() {
+                                if let Some(user_id) = member["user_id"].as_str() {
+                                    let remove_result = auth_request(
+                                        &client,
+                                        &token,
+                                        "DELETE",
+                                        &format!(
+                                            "/api/pm/projects/{}/members/{}",
+                                            proj_id, user_id
+                                        ),
+                                        None,
+                                    )
+                                    .await;
 
-                                            match remove_result {
-                                                Ok((status, _)) => {
-                                                    assert!(
-                                                        status == 200
-                                                            || status == 204
-                                                            || status == 403
-                                                            || status == 404
-                                                    );
-                                                    tracing::info!(
-                                                        "PM-008 测试通过: 移除项目成员功能正常"
-                                                    );
-                                                    return;
-                                                }
-                                                Err(_) => {}
-                                            }
-                                        }
+                                    if let Ok((status, _)) = remove_result {
+                                        assert!(
+                                            status == 200
+                                                || status == 204
+                                                || status == 403
+                                                || status == 404
+                                        );
+                                        tracing::info!("PM-008 测试通过: 移除项目成员功能正常");
+                                        return;
                                     }
                                 }
                             }
-                            Err(_) => {}
                         }
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到项目成员，跳过测试");
@@ -498,49 +456,38 @@ async fn test_pm_009_create_task() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/projects", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let projects = body["data"]["projects"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let projects = body["data"]["projects"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(proj_list) = projects {
-                if let Some(proj) = proj_list.first() {
-                    if let Some(proj_id) = proj["id"].as_str() {
-                        let timestamp = std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_millis();
+        if let Some(proj_list) = projects {
+            if let Some(proj) = proj_list.first() {
+                if let Some(proj_id) = proj["id"].as_str() {
+                    let timestamp = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis();
 
-                        let new_task = json!({
-                            "project_id": proj_id,
-                            "title": format!("测试任务_{}", timestamp),
-                            "description": "PM测试任务",
-                            "status": "todo"
-                        });
+                    let new_task = json!({
+                        "project_id": proj_id,
+                        "title": format!("测试任务_{}", timestamp),
+                        "description": "PM测试任务",
+                        "status": "todo"
+                    });
 
-                        let create_result =
-                            auth_request(&client, &token, "POST", "/api/pm/tasks", Some(new_task))
-                                .await;
+                    let create_result =
+                        auth_request(&client, &token, "POST", "/api/pm/tasks", Some(new_task))
+                            .await;
 
-                        match create_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 201
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("PM-009 测试通过: 创建任务功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = create_result {
+                        assert!(status == 200 || status == 201 || status == 403 || status == 404);
+                        tracing::info!("PM-009 测试通过: 创建任务功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到项目，跳过测试");
@@ -558,62 +505,47 @@ async fn test_pm_010_assign_task() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/tasks", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let tasks = body["data"]["tasks"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let tasks = body["data"]["tasks"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(task_list) = tasks {
-                if let Some(task) = task_list.first() {
-                    if let Some(task_id) = task["id"].as_str() {
-                        // 获取用户列表
-                        let user_result =
-                            auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
+        if let Some(task_list) = tasks {
+            if let Some(task) = task_list.first() {
+                if let Some(task_id) = task["id"].as_str() {
+                    // 获取用户列表
+                    let user_result =
+                        auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
-                        match user_result {
-                            Ok((_, user_body)) => {
-                                let users = user_body["data"]["users"]
-                                    .as_array()
-                                    .or_else(|| user_body["data"].as_array());
+                    if let Ok((_, user_body)) = user_result {
+                        let users = user_body["data"]["users"]
+                            .as_array()
+                            .or_else(|| user_body["data"].as_array());
 
-                                if let Some(user_list) = users {
-                                    if let Some(user) = user_list.first() {
-                                        if let Some(user_id) = user["id"].as_str() {
-                                            let assign_result = auth_request(
-                                                &client,
-                                                &token,
-                                                "PUT",
-                                                &format!("/api/pm/tasks/{}/assign", task_id),
-                                                Some(json!({ "user_id": user_id })),
-                                            )
-                                            .await;
+                        if let Some(user_list) = users {
+                            if let Some(user) = user_list.first() {
+                                if let Some(user_id) = user["id"].as_str() {
+                                    let assign_result = auth_request(
+                                        &client,
+                                        &token,
+                                        "PUT",
+                                        &format!("/api/pm/tasks/{}/assign", task_id),
+                                        Some(json!({ "user_id": user_id })),
+                                    )
+                                    .await;
 
-                                            match assign_result {
-                                                Ok((status, _)) => {
-                                                    assert!(
-                                                        status == 200
-                                                            || status == 403
-                                                            || status == 404
-                                                    );
-                                                    tracing::info!(
-                                                        "PM-010 测试通过: 分配任务功能正常"
-                                                    );
-                                                    return;
-                                                }
-                                                Err(_) => {}
-                                            }
-                                        }
+                                    if let Ok((status, _)) = assign_result {
+                                        assert!(status == 200 || status == 403 || status == 404);
+                                        tracing::info!("PM-010 测试通过: 分配任务功能正常");
+                                        return;
                                     }
                                 }
                             }
-                            Err(_) => {}
                         }
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到任务或用户，跳过测试");
@@ -631,37 +563,31 @@ async fn test_pm_011_update_task_status() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/tasks", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let tasks = body["data"]["tasks"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let tasks = body["data"]["tasks"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(task_list) = tasks {
-                if let Some(task) = task_list.first() {
-                    if let Some(task_id) = task["id"].as_str() {
-                        let update_result = auth_request(
-                            &client,
-                            &token,
-                            "PUT",
-                            &format!("/api/pm/tasks/{}/status", task_id),
-                            Some(json!({ "status": "in_progress" })),
-                        )
-                        .await;
+        if let Some(task_list) = tasks {
+            if let Some(task) = task_list.first() {
+                if let Some(task_id) = task["id"].as_str() {
+                    let update_result = auth_request(
+                        &client,
+                        &token,
+                        "PUT",
+                        &format!("/api/pm/tasks/{}/status", task_id),
+                        Some(json!({ "status": "in_progress" })),
+                    )
+                    .await;
 
-                        match update_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("PM-011 测试通过: 更新任务状态功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = update_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("PM-011 测试通过: 更新任务状态功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到任务，跳过测试");
@@ -679,49 +605,38 @@ async fn test_pm_012_delete_task() {
 
     let result = auth_request(&client, &token, "GET", "/api/pm/tasks", None).await;
 
-    match result {
-        Ok((_, body)) => {
-            let tasks = body["data"]["tasks"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = result {
+        let tasks = body["data"]["tasks"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(task_list) = tasks {
-                let test_task = task_list.iter().find(|t| {
-                    t["title"]
-                        .as_str()
-                        .map(|s| s.starts_with("测试"))
-                        .unwrap_or(false)
-                });
+        if let Some(task_list) = tasks {
+            let test_task = task_list.iter().find(|t| {
+                t["title"]
+                    .as_str()
+                    .map(|s| s.starts_with("测试"))
+                    .unwrap_or(false)
+            });
 
-                if let Some(task) = test_task {
-                    if let Some(task_id) = task["id"].as_str() {
-                        let delete_result = auth_request(
-                            &client,
-                            &token,
-                            "DELETE",
-                            &format!("/api/pm/tasks/{}", task_id),
-                            None,
-                        )
-                        .await;
+            if let Some(task) = test_task {
+                if let Some(task_id) = task["id"].as_str() {
+                    let delete_result = auth_request(
+                        &client,
+                        &token,
+                        "DELETE",
+                        &format!("/api/pm/tasks/{}", task_id),
+                        None,
+                    )
+                    .await;
 
-                        match delete_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 204
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("PM-012 测试通过: 删除任务功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = delete_result {
+                        assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                        tracing::info!("PM-012 测试通过: 删除任务功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可删除的任务，跳过测试");

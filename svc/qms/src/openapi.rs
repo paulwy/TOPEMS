@@ -82,7 +82,6 @@ pub struct QmsApiDoc;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tracing;
 
     #[test]
     fn extract_openapi_spec() {

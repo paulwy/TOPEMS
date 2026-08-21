@@ -193,7 +193,7 @@ async fn list_attendance(
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(&emp_filter)
+    .bind(emp_filter)
     .bind(&date_filter)
     .bind(page_size)
     .bind(offset)
@@ -210,7 +210,7 @@ async fn list_attendance(
                   AND ($2::text IS NULL OR date::text = $2)
                 "#,
             )
-            .bind(&emp_filter)
+            .bind(emp_filter)
             .bind(&date_filter)
             .fetch_one(&state.db)
             .await;

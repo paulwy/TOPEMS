@@ -30,6 +30,7 @@ import {
   DialogContent,
   DialogActions,
   Card,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -78,6 +79,7 @@ import {
   type RepairType,
 } from './intelligent-repair';
 import { designTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 
 type TabId = 'scaling' | 'rca' | 'repair' | 'timeline';
 
@@ -144,6 +146,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, []);
 
   const refreshData = () => {
+  const theme = useTheme();
     setPolicies(autoScaler.listPolicies());
     setScalingHistory(autoScaler.getScalingHistory());
     setIncidents(rootCauseLocator.getIncidentHistory());
@@ -237,7 +240,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid rgba(249, 115, 22, 0.2)',
+          border: '1px solid ${alpha(theme.palette.warning.main, 0.2)}',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -656,7 +659,7 @@ const ScalingTab: React.FC<{
                         percent > 90
                           ? designTokens.colors.error['200']
                           : percent > 70
-                            ? 'var(--color-error-200, #fecaca)'
+                            ? 'var(--color-error-200)'
                             : 'colors.success.100',
                       '& .MuiLinearProgress-bar': {
                         bgcolor:
@@ -795,8 +798,8 @@ const ScalingTab: React.FC<{
                 textAlign: 'center',
                 bgcolor:
                   p.hour >= 9 && p.hour <= 17
-                    ? 'var(--color-warning-50, #fffbeb)'
-                    : 'var(--color-primary-foreground, #ffffff)',
+                    ? 'var(--color-warning-50)'
+                    : 'var(--color-primary-foreground)',
               }}
             >
               <Typography
@@ -862,7 +865,7 @@ const RCATab: React.FC<{
     };
     const bgColors: Record<string, string> = {
       Open: 'colors.error.50',
-      Investigating: 'var(--color-warning-50, #fffbeb)',
+      Investigating: 'var(--color-warning-50)',
       Resolved: 'colors.success.50',
       Closed: 'colors.grey.100',
     };
@@ -949,8 +952,8 @@ const RCATab: React.FC<{
                     borderRadius: 1,
                     bgcolor:
                       selectedIncident === incident.id
-                        ? 'var(--color-warning-50, #fffbeb)'
-                        : 'var(--color-primary-foreground, #ffffff)',
+                        ? 'var(--color-warning-50)'
+                        : 'var(--color-primary-foreground)',
                     cursor: 'pointer',
                   }}
                   onClick={() => onSelectIncident(incident.id)}
@@ -1239,7 +1242,7 @@ const RepairTab: React.FC<{
                 bgcolor:
                   playbook.status === 'Active'
                     ? 'colors.success.50'
-                    : 'var(--color-primary-foreground, #ffffff)',
+                    : 'var(--color-primary-foreground)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -1542,7 +1545,7 @@ const TimelineTab: React.FC<{
                     height: 12,
                     borderRadius: '50%',
                     bgcolor: event.color,
-                    border: '2px solid var(--color-primary-foreground, #ffffff)',
+                    border: '2px solid var(--color-primary-foreground)',
                     boxShadow: 1,
                   }}
                 />

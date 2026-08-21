@@ -515,7 +515,7 @@ mod tests {
             .expect("Failed to list projects");
         assert!(total >= 5, "列表应该至少返回5个项目，实际: {}", total);
         assert!(
-            projects.len() <= 10 && projects.len() >= 1,
+            projects.len() <= 10 && !projects.is_empty(),
             "分页应该返回1-10个项目，实际: {}",
             projects.len()
         );

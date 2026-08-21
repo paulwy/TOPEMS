@@ -40,6 +40,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
+import { alpha } from '@mui/material/styles';
 
 const ct = designTokens.colors;
 interface ScanHistoryItem {
@@ -418,7 +419,7 @@ const MobileScanPage: React.FC = () => {
                         right: 0,
                         height: 2,
                         bgcolor: 'primary.main',
-                        boxShadow: '0 0 10px rgba(0, 229, 255, 0.8)',
+                        boxShadow: `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
                         animation: 'scanLine 2s ease-in-out infinite',
                       }}
                       style={{
@@ -519,7 +520,7 @@ const MobileScanPage: React.FC = () => {
                     width: 52,
                     height: 52,
                     bgcolor: flashOn ? 'warning.main' : 'grey.100',
-                    color: flashOn ? 'var(--color-primary-foreground, #ffffff)' : 'text.primary',
+                    color: flashOn ? 'var(--color-primary-foreground)' : 'text.primary',
                     '&:hover': {
                       bgcolor: flashOn ? 'warning.dark' : 'grey.200',
                     },

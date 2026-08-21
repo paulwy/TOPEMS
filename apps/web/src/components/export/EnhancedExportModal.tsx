@@ -269,7 +269,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                     bgcolor: selectedFormat === format.id ? format.color : 'action.hover',
                     color:
                       selectedFormat === format.id
-                        ? 'var(--color-primary-foreground, #ffffff)'
+                        ? 'var(--color-primary-foreground)'
                         : 'text.secondary',
                     display: 'flex',
                     alignItems: 'center',

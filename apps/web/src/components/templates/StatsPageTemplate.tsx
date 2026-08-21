@@ -287,7 +287,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
               bgcolor: stat.gradient ? undefined : 'background.paper',
-              color: stat.gradient ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
+              color: stat.gradient ? 'var(--color-primary-foreground)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',
               transition: 'all 0.2s ease',
@@ -309,7 +309,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     justifyContent: 'center',
                     bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
                     color: stat.gradient
-                      ? 'var(--color-primary-foreground, #ffffff)'
+                      ? 'var(--color-primary-foreground)'
                       : `${stat.color || 'primary'}.main`,
                   }}
                 >
@@ -333,7 +333,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       sx={{
                         fontWeight: 700,
                         color: stat.gradient
-                          ? 'var(--color-primary-foreground, #ffffff)'
+                          ? 'var(--color-primary-foreground)'
                           : 'text.primary',
                       }}
                     >
@@ -345,7 +345,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     sx={{
                       fontWeight: 700,
                       color: stat.gradient
-                        ? 'var(--color-primary-foreground, #ffffff)'
+                        ? 'var(--color-primary-foreground)'
                         : 'text.primary',
                     }}
                   >
@@ -403,7 +403,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                           : 'error.light'
                         : 'grey.200',
                   color: stat.gradient
-                    ? 'var(--color-primary-foreground, #ffffff)'
+                    ? 'var(--color-primary-foreground)'
                     : stat.trend.direction === 'up'
                       ? 'success.main'
                       : stat.trend.direction === 'down'

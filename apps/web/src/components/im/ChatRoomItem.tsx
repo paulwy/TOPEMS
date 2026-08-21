@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { MessageSquare, Users, User, Clock, BellOff, Pin, MoreVertical } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
 import { designTokens } from '@topems/tokens';
@@ -113,7 +114,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
         backgroundColor: isActive
           ? designTokens.colors.secondary[50]
           : chatRoom.is_pinned
-            ? 'rgba(251, 191, 36, 0.1)'
+            ? `${alpha(theme.palette.warning.main, 0.1)}`
             : undefined,
         borderLeft: isActive ? '4px solid primary.main' : '4px solid transparent',
       }}
@@ -147,7 +148,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               justifyContent: 'center',
               backgroundColor: isActive ? theme.palette.primary.main : theme.palette.grey[200],
               color: isActive
-                ? 'var(--color-primary-foreground, #ffffff)'
+                ? 'var(--color-primary-foreground)'
                 : theme.palette.text.secondary,
             }}
           >
@@ -163,7 +164,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 height: 14,
                 backgroundColor: theme.palette.success.dark,
                 borderRadius: 'full',
-                border: '2px solid var(--color-primary-foreground, #ffffff)',
+                border: '2px solid var(--color-primary-foreground)',
               }}
             />
           )}

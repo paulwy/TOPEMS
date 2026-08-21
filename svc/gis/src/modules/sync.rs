@@ -18,7 +18,7 @@ pub(crate) struct TenantContext {
     user_id: Uuid,
 }
 
-pub(crate) struct TenantRequest {
+pub struct TenantRequest {
     ctx: TenantContext,
 }
 

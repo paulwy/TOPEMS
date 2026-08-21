@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_permission_neq_different_variants() {
-        let perms = vec![
+        let perms = [
             TmsPermission::VehicleRead,
             TmsPermission::VehicleWrite,
             TmsPermission::DriverRead,

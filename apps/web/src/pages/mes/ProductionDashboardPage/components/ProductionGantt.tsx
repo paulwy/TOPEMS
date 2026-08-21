@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, CircularProgress, Divider, Paper, Tooltip, Typography, Stack } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Calendar } from 'lucide-react';
 import type { ProductionSchedule } from '@/api/mes';
 import { ct, SCHEDULE_STATUS_META } from '../constants';
@@ -194,7 +195,7 @@ const ProductionGantt: React.FC<{
                     height: 10,
                     borderRadius: '50%',
                     backgroundColor: 'error.main',
-                    boxShadow: '0 0 0 4px rgba(239, 68, 68, 0.15)',
+                    boxShadow: (theme) => `0 0 0 4px ${alpha(theme.palette.error.main, 0.15)}`,
                   }}
                 />
               </Box>

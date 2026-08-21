@@ -2622,7 +2622,7 @@ mod tests {
         let arr = alts.as_array().unwrap();
         for alt in arr {
             let score = alt["score"].as_f64().unwrap();
-            assert!(score >= 0.0 && score <= 1.0);
+            assert!((0.0..=1.0).contains(&score));
         }
     }
 

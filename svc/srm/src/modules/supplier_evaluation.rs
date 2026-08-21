@@ -231,7 +231,7 @@ async fn create_evaluation(
 
     let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
         if let Some(s) = score {
-            if s < 0.0 || s > 100.0 {
+            if !(0.0..=100.0).contains(&s) {
                 return Err(format!("{}评分必须在0-100之间", name));
             }
         }
@@ -306,7 +306,7 @@ async fn create_evaluation(
     };
 
     if let Some(os) = overall_score {
-        if os < 0.0 || os > 100.0 {
+        if !(0.0..=100.0).contains(&os) {
             return Json(ApiResponse::<SupplierEvaluation>::error(
                 400,
                 "综合评分必须在0-100之间",
@@ -467,7 +467,7 @@ async fn update_evaluation(
 
     let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
         if let Some(s) = score {
-            if s < 0.0 || s > 100.0 {
+            if !(0.0..=100.0).contains(&s) {
                 return Err(format!("{}评分必须在0-100之间", name));
             }
         }

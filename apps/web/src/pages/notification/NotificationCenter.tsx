@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Check, Settings, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Box, Typography, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { Box, Typography, Dialog, DialogTitle, DialogContent, useTheme } from '@mui/material';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import {
   getNotifications,
@@ -12,6 +12,7 @@ import {
   bulkDeleteNotifications,
 } from '@/api/notification';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 import NotificationItem from '@/components/notification/NotificationItem';
 import NotificationSettings from '@/components/notification/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
@@ -27,6 +28,7 @@ const ct = designTokens.colors;
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
 const NotificationCenter: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
@@ -548,7 +550,7 @@ const NotificationCenter: React.FC = () => {
             color: 'common.white',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
           }}
         >
           <Check size={20} />
@@ -562,7 +564,7 @@ const NotificationCenter: React.FC = () => {
             color: 'inherit',
             border: 'none',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
           }}
         >
           <Settings size={20} />

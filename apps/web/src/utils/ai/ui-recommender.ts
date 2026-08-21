@@ -1007,7 +1007,7 @@ export class UIRecommender {
     return [
       designTokens.colors.primary.dark,
       designTokens.colors.background.paper,
-      'var(--color-surface-light, #f1f5f9)',
+      'var(--color-surface-light)',
     ];
   }
 

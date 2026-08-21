@@ -841,8 +841,8 @@ mod tests_ext {
 
     #[test]
     fn test_coerce_float() {
-        let v = coerce_field_type("3.14", "float").unwrap();
-        assert_eq!(v, serde_json::json!(3.14));
+        let v = coerce_field_type("3.5", "float").unwrap();
+        assert_eq!(v, serde_json::json!(3.5));
     }
 
     #[test]

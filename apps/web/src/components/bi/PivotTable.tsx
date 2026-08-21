@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 
 interface PivotData {
   [key: string]: string | number | boolean;
@@ -276,7 +277,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = 'primary.light';
-                e.target.style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.2)';
+                e.target.style.boxShadow = `0 0 0 2px ${alpha(theme.palette.secondary.main, 0.2)}`;
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = 'border.default';

@@ -41,5 +41,8 @@ rust_decimal = "1.35"
 name = "topems-wms"
 path = "src/main.rs"
 
+[features]
+http_endpoint_tests = []
+
 [lints]
 workspace = true

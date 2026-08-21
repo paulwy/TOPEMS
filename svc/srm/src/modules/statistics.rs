@@ -2,7 +2,6 @@ use axum::{extract::State, routing::get, Extension, Json, Router};
 use sqlx::postgres::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::models::Supplier;
 use topems_shared_auth::auth::Claims;
@@ -152,142 +151,6 @@ pub fn summary_stats(values: &[Option<f64>]) -> (usize, usize, f64, f64, f64) {
     let avg = sum / count as f64;
     let avg = (avg * 100.0).round() / 100.0;
     (total, count, avg, min, max)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // ========== aggregate_status_distribution ==========
-
-    #[test]
-    fn test_status_distribution_empty() {
-        let r = aggregate_status_distribution(&[]);
-        assert_eq!(r.values().sum::<usize>(), 0);
-    }
-
-    #[test]
-    fn test_status_distribution_mixed() {
-        let inputs = [
-            Some("active"),
-            Some("active"),
-            Some("pending"),
-            Some("blacklist"),
-            Some("deleted"),
-            None,
-            Some("inactive"),
-        ];
-        let r = aggregate_status_distribution(&inputs);
-        assert_eq!(*r.get("active").unwrap(), 2);
-        assert_eq!(*r.get("pending").unwrap(), 1);
-        assert_eq!(*r.get("blacklisted").unwrap(), 1);
-        assert_eq!(*r.get("inactive").unwrap(), 1);
-        assert_eq!(*r.get("other").unwrap(), 2); // deleted + None
-    }
-
-    // ========== grade_score_distribution ==========
-
-    #[test]
-    fn test_score_distribution_boundaries() {
-        let inputs = [
-            Some(100.0), // A
-            Some(90.0),  // A
-            Some(89.99), // B
-            Some(75.0),  // B
-            Some(74.9),  // C
-            Some(60.0),  // C
-            Some(59.99), // D
-            Some(0.0),   // D
-            None,        // NA
-        ];
-        let r = grade_score_distribution(&inputs);
-        assert_eq!(*r.get("A").unwrap(), 2);
-        assert_eq!(*r.get("B").unwrap(), 2);
-        assert_eq!(*r.get("C").unwrap(), 2);
-        assert_eq!(*r.get("D").unwrap(), 2);
-        assert_eq!(*r.get("NA").unwrap(), 1);
-    }
-
-    // ========== weighted_moving_average ==========
-
-    #[test]
-    fn test_wma_empty() {
-        assert_eq!(weighted_moving_average(&[], &[1.0]), 0.0);
-        assert_eq!(weighted_moving_average(&[1.0], &[]), 0.0);
-    }
-
-    #[test]
-    fn test_wma_equal_weights() {
-        // values[10,20,30] with weights [1,1,1] = 20
-        assert_eq!(
-            weighted_moving_average(&[10.0, 20.0, 30.0], &[1.0, 1.0, 1.0]),
-            20.0
-        );
-    }
-
-    #[test]
-    fn test_wma_recent_weighted() {
-        // values [100, 90, 80], weights [3,2,1] → 300+180+80 / 6 = 560/6 ≈ 93.33
-        let r = weighted_moving_average(&[100.0, 90.0, 80.0], &[3.0, 2.0, 1.0]);
-        assert!((r - 93.33).abs() < 0.01);
-    }
-
-    #[test]
-    fn test_wma_skips_zero_weights() {
-        // weights[0,1] → only second counts: v=20, wsum=1 → 20
-        assert_eq!(weighted_moving_average(&[10.0, 20.0], &[0.0, 1.0]), 20.0);
-    }
-
-    // ========== spend_pareto_analysis ==========
-
-    #[test]
-    fn test_pareto_empty() {
-        assert_eq!(spend_pareto_analysis(&[], 0.8), (0, 0.0, 0, 0.0));
-    }
-
-    #[test]
-    fn test_pareto_classic_80_20() {
-        // 10个供应商，spend: 80,10,4,2,1,1,1,0.5,0.5,0 (sum=100)
-        // 阈值 80%：取 Top1 (80) 刚到 80%
-        let spend = [80.0, 10.0, 4.0, 2.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.0];
-        let (top_c, top_s, tail_c, tail_s) = spend_pareto_analysis(&spend, 0.8);
-        assert_eq!(top_c, 1);
-        assert_eq!(top_s, 80.0);
-        assert_eq!(tail_c, 9); // rest + zeros
-        assert!((tail_s - 20.0).abs() < 1e-9);
-    }
-
-    // ========== contract_expiry_alerts ==========
-
-    #[test]
-    fn test_expiry_alerts_mixed() {
-        let r = contract_expiry_alerts(&[-5, -1, 0, 7, 14, 60, 180], 30);
-        // -5,-1 => expired(2)
-        // 0,7,14 (<=30) => warning(3)
-        // 60,180 (>30) => healthy(2)
-        assert_eq!(*r.get("expired").unwrap(), 2);
-        assert_eq!(*r.get("warning").unwrap(), 3);
-        assert_eq!(*r.get("healthy").unwrap(), 2);
-    }
-
-    // ========== summary_stats ==========
-
-    #[test]
-    fn test_summary_stats_full() {
-        let inputs = [Some(10.0), Some(20.0), None, Some(30.0), Some(0.0)];
-        let (total, cnt, avg, min, max) = summary_stats(&inputs);
-        assert_eq!(total, 5);
-        assert_eq!(cnt, 4);
-        assert!((avg - 15.0).abs() < 1e-9);
-        assert_eq!(min, 0.0);
-        assert_eq!(max, 30.0);
-    }
-
-    #[test]
-    fn test_summary_stats_no_valid() {
-        let r = summary_stats(&[None, None]);
-        assert_eq!(r, (2, 0, 0.0, 0.0, 0.0));
-    }
 }
 
 pub struct AppState {
@@ -669,5 +532,141 @@ pub async fn get_suppliers_with_stats(
                 "获取供应商统计数据失败",
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ========== aggregate_status_distribution ==========
+
+    #[test]
+    fn test_status_distribution_empty() {
+        let r = aggregate_status_distribution(&[]);
+        assert_eq!(r.values().sum::<usize>(), 0);
+    }
+
+    #[test]
+    fn test_status_distribution_mixed() {
+        let inputs = [
+            Some("active"),
+            Some("active"),
+            Some("pending"),
+            Some("blacklist"),
+            Some("deleted"),
+            None,
+            Some("inactive"),
+        ];
+        let r = aggregate_status_distribution(&inputs);
+        assert_eq!(*r.get("active").unwrap(), 2);
+        assert_eq!(*r.get("pending").unwrap(), 1);
+        assert_eq!(*r.get("blacklisted").unwrap(), 1);
+        assert_eq!(*r.get("inactive").unwrap(), 1);
+        assert_eq!(*r.get("other").unwrap(), 2); // deleted + None
+    }
+
+    // ========== grade_score_distribution ==========
+
+    #[test]
+    fn test_score_distribution_boundaries() {
+        let inputs = [
+            Some(100.0), // A
+            Some(90.0),  // A
+            Some(89.99), // B
+            Some(75.0),  // B
+            Some(74.9),  // C
+            Some(60.0),  // C
+            Some(59.99), // D
+            Some(0.0),   // D
+            None,        // NA
+        ];
+        let r = grade_score_distribution(&inputs);
+        assert_eq!(*r.get("A").unwrap(), 2);
+        assert_eq!(*r.get("B").unwrap(), 2);
+        assert_eq!(*r.get("C").unwrap(), 2);
+        assert_eq!(*r.get("D").unwrap(), 2);
+        assert_eq!(*r.get("NA").unwrap(), 1);
+    }
+
+    // ========== weighted_moving_average ==========
+
+    #[test]
+    fn test_wma_empty() {
+        assert_eq!(weighted_moving_average(&[], &[1.0]), 0.0);
+        assert_eq!(weighted_moving_average(&[1.0], &[]), 0.0);
+    }
+
+    #[test]
+    fn test_wma_equal_weights() {
+        // values[10,20,30] with weights [1,1,1] = 20
+        assert_eq!(
+            weighted_moving_average(&[10.0, 20.0, 30.0], &[1.0, 1.0, 1.0]),
+            20.0
+        );
+    }
+
+    #[test]
+    fn test_wma_recent_weighted() {
+        // values [100, 90, 80], weights [3,2,1] → 300+180+80 / 6 = 560/6 ≈ 93.33
+        let r = weighted_moving_average(&[100.0, 90.0, 80.0], &[3.0, 2.0, 1.0]);
+        assert!((r - 93.33).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_wma_skips_zero_weights() {
+        // weights[0,1] → only second counts: v=20, wsum=1 → 20
+        assert_eq!(weighted_moving_average(&[10.0, 20.0], &[0.0, 1.0]), 20.0);
+    }
+
+    // ========== spend_pareto_analysis ==========
+
+    #[test]
+    fn test_pareto_empty() {
+        assert_eq!(spend_pareto_analysis(&[], 0.8), (0, 0.0, 0, 0.0));
+    }
+
+    #[test]
+    fn test_pareto_classic_80_20() {
+        // 10个供应商，spend: 80,10,4,2,1,1,1,0.5,0.5,0 (sum=100)
+        // 阈值 80%：取 Top1 (80) 刚到 80%
+        let spend = [80.0, 10.0, 4.0, 2.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.0];
+        let (top_c, top_s, tail_c, tail_s) = spend_pareto_analysis(&spend, 0.8);
+        assert_eq!(top_c, 1);
+        assert_eq!(top_s, 80.0);
+        assert_eq!(tail_c, 9); // rest + zeros
+        assert!((tail_s - 20.0).abs() < 1e-9);
+    }
+
+    // ========== contract_expiry_alerts ==========
+
+    #[test]
+    fn test_expiry_alerts_mixed() {
+        let r = contract_expiry_alerts(&[-5, -1, 0, 7, 14, 60, 180], 30);
+        // -5,-1 => expired(2)
+        // 0,7,14 (<=30) => warning(3)
+        // 60,180 (>30) => healthy(2)
+        assert_eq!(*r.get("expired").unwrap(), 2);
+        assert_eq!(*r.get("warning").unwrap(), 3);
+        assert_eq!(*r.get("healthy").unwrap(), 2);
+    }
+
+    // ========== summary_stats ==========
+
+    #[test]
+    fn test_summary_stats_full() {
+        let inputs = [Some(10.0), Some(20.0), None, Some(30.0), Some(0.0)];
+        let (total, cnt, avg, min, max) = summary_stats(&inputs);
+        assert_eq!(total, 5);
+        assert_eq!(cnt, 4);
+        assert!((avg - 15.0).abs() < 1e-9);
+        assert_eq!(min, 0.0);
+        assert_eq!(max, 30.0);
+    }
+
+    #[test]
+    fn test_summary_stats_no_valid() {
+        let r = summary_stats(&[None, None]);
+        assert_eq!(r, (2, 0, 0.0, 0.0, 0.0));
     }
 }

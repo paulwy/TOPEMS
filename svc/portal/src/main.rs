@@ -1278,7 +1278,7 @@ async fn main() -> anyhow::Result<()> {
             let mask_type = body
                 .get("mask_type")
                 .and_then(|v| v.as_str())
-                .map(|s| MaskType::from_str(s))
+                .map(MaskType::from_str)
                 .unwrap_or(MaskType::Full);
             let exempt_roles = body
                 .get("exempt_roles")

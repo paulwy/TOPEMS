@@ -70,7 +70,6 @@ fn build_where_clause(query: &StandardQuery) -> (String, Vec<Value>) {
             param_idx, param_idx
         ));
         params.push(Value::String(format!("%{}%", search)));
-        param_idx += 1;
     }
 
     (where_clause, params)

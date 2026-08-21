@@ -204,11 +204,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
   const getModuleTextColor = (module: string) => {
     const colors: Record<string, string> = {
-      RS: 'var(--color-warning-700, #b45309)',
+      RS: 'var(--color-warning-700)',
       LIMS: 'primary.dark',
       QMS: 'success.700',
       EHS: 'error.darker',
-      SRM: 'var(--color-fallback-ant-purple, #722ed1)',
+      SRM: 'var(--color-fallback-ant-purple)',
       PDM: 'secondary.700',
     };
     return colors[module] || 'grey.700';
@@ -256,7 +256,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             justifyContent: 'space-between',
             alignItems: 'center',
             background:
-              'linear-gradient(to right, primary.light, var(--color-primary-100, #dbeafe))',
+              'linear-gradient(to right, primary.light, var(--color-primary-100))',
           }}
         >
           <div>

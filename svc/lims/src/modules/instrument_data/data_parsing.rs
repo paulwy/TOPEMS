@@ -393,7 +393,7 @@ pub fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
     }
 
     let completeness = has_result_count as f64 / test_items.len() as f64;
-    score = score * (0.5 + 0.5 * completeness);
+    score *= 0.5 + 0.5 * completeness;
 
     (score * 100.0).round() / 100.0
 }

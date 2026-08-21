@@ -391,7 +391,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                           borderRadius: '50%',
                           bgcolor: version.isactive ? 'secondary.main' : 'grey.100',
                           color: version.isactive
-                            ? 'var(--color-primary-foreground, #ffffff)'
+                            ? 'var(--color-primary-foreground)'
                             : 'grey.600',
                           display: 'flex',
                           alignItems: 'center',

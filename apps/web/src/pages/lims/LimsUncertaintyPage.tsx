@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calculator } from 'lucide-react';
 import { Box, Card, CardContent, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
@@ -92,7 +93,7 @@ const StatCard: React.FC<{
             background: gradient
               ? `linear-gradient(135deg, ${iconBgColor}, ${iconColor})`
               : undefined,
-            boxShadow: gradient ? '0 4px 12px rgba(59,130,246,0.3)' : undefined,
+            boxShadow: gradient ? ((theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`) : undefined,
             borderRadius: gradient ? '50%' : 3,
             display: 'flex',
             alignItems: 'center',

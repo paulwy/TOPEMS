@@ -301,7 +301,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     : 'colors.cyber.glass.divider',
                   color: isRecording
                     ? 'text.secondary'
-                    : 'var(--color-primary-foreground, #ffffff)',
+                    : 'var(--color-primary-foreground)',
                   '&:hover': {
                     bgcolor: isRecording
                       ? designTokens.colors.grey[800]

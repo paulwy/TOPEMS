@@ -36,5 +36,8 @@ topems-shared-db = { workspace = true }
 name = "topems-scm"
 path = "src/main.rs"
 
+[features]
+http_endpoint_tests = []
+
 [lints]
 workspace = true

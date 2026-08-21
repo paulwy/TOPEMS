@@ -15,7 +15,7 @@ const useSkeletonSx = () => {
     pageBg: isDark ? 'background.default' : 'grey.50',
     gradientFrom: isDark
       ? designTokens.colors.cyber.glass.bgLight
-      : 'var(--color-background, var(--color-background, #f8fafc))',
+      : 'var(--color-background, var(--color-background))',
     gradientTo: isDark ? designTokens.colors.cyber.glass.bgLight : theme.palette.grey[100],
   };
 };

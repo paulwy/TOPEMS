@@ -23,6 +23,7 @@ import {
   useTheme,
   Button,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
 import { EmptyState } from '@topems/shared-components';
@@ -276,7 +277,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
               bgcolor: stat.gradient ? undefined : 'grey.50',
-              color: stat.gradient ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
+              color: stat.gradient ? 'var(--color-primary-foreground)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -293,7 +294,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     justifyContent: 'center',
                     bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
                     color: stat.gradient
-                      ? 'var(--color-primary-foreground, #ffffff)'
+                      ? 'var(--color-primary-foreground)'
                       : `${stat.color || 'primary'}.main`,
                   }}
                 >
@@ -349,7 +350,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                           : 'error.light'
                         : 'grey.200',
                   color: stat.gradient
-                    ? 'var(--color-primary-foreground, #ffffff)'
+                    ? 'var(--color-primary-foreground)'
                     : stat.trend.direction === 'up'
                       ? 'success.main'
                       : stat.trend.direction === 'down'
@@ -703,7 +704,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               borderColor: 'divider',
               display: 'flex',
               gap: 1,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? `${alpha(theme.palette.common.white, 0.03)}` : 'grey.50',
             }}
             onClick={(e) => e.stopPropagation()}
           >

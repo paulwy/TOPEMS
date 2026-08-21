@@ -440,7 +440,7 @@ mod tests {
         for defects in 0..=200 {
             for total in 1..=100 {
                 let score = calculate_quality_score(defects, total);
-                assert!(score >= 0.0 && score <= 100.0);
+                assert!((0.0..=100.0).contains(&score));
             }
         }
     }

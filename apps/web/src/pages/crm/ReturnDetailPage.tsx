@@ -298,7 +298,7 @@ const ReturnDetailPage: React.FC = () => {
                       ? ct.success.main
                       : isCurrent
                         ? ct.primary.main
-                        : 'var(--color-grey-400, #9ca3af)',
+                        : 'var(--color-grey-400)',
                   }}
                 />
                 <Typography

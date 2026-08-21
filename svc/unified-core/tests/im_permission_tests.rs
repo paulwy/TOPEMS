@@ -159,50 +159,39 @@ async fn test_im_003_send_message() {
     let list_result =
         auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let rooms = body["data"]["rooms"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let rooms = body["data"]["rooms"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(room_list) = rooms {
-                if let Some(room) = room_list.first() {
-                    if let Some(room_id) = room["id"].as_str() {
-                        let timestamp = std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap()
-                            .as_millis();
+        if let Some(room_list) = rooms {
+            if let Some(room) = room_list.first() {
+                if let Some(room_id) = room["id"].as_str() {
+                    let timestamp = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis();
 
-                        let send_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            &format!("/api/communication/im/rooms/{}/messages", room_id),
-                            Some(json!({
-                                "content": format!("测试消息_{}", timestamp),
-                                "type": "text"
-                            })),
-                        )
-                        .await;
+                    let send_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/communication/im/rooms/{}/messages", room_id),
+                        Some(json!({
+                            "content": format!("测试消息_{}", timestamp),
+                            "type": "text"
+                        })),
+                    )
+                    .await;
 
-                        match send_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 201
-                                        || status == 403
-                                        || status == 404
-                                );
-                                tracing::info!("IM-003 测试通过: 发送消息功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = send_result {
+                        assert!(status == 200 || status == 201 || status == 403 || status == 404);
+                        tracing::info!("IM-003 测试通过: 发送消息功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到聊天室，跳过测试");
@@ -222,37 +211,31 @@ async fn test_im_004_view_history() {
     let list_result =
         auth_request(&client, &token, "GET", "/api/communication/im/rooms", None).await;
 
-    match list_result {
-        Ok((_, body)) => {
-            let rooms = body["data"]["rooms"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = list_result {
+        let rooms = body["data"]["rooms"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(room_list) = rooms {
-                if let Some(room) = room_list.first() {
-                    if let Some(room_id) = room["id"].as_str() {
-                        let history_result = auth_request(
-                            &client,
-                            &token,
-                            "GET",
-                            &format!("/api/communication/im/rooms/{}/messages", room_id),
-                            None,
-                        )
-                        .await;
+        if let Some(room_list) = rooms {
+            if let Some(room) = room_list.first() {
+                if let Some(room_id) = room["id"].as_str() {
+                    let history_result = auth_request(
+                        &client,
+                        &token,
+                        "GET",
+                        &format!("/api/communication/im/rooms/{}/messages", room_id),
+                        None,
+                    )
+                    .await;
 
-                        match history_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 403 || status == 404);
-                                tracing::info!("IM-004 测试通过: 查看聊天记录功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = history_result {
+                        assert!(status == 200 || status == 403 || status == 404);
+                        tracing::info!("IM-004 测试通过: 查看聊天记录功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到聊天室，跳过测试");
@@ -311,47 +294,36 @@ async fn test_im_006_add_contact() {
     // 获取用户列表找一个用户作为联系人
     let users_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
-    match users_result {
-        Ok((_, body)) => {
-            let users = body["data"]["users"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = users_result {
+        let users = body["data"]["users"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(user_list) = users {
-                // 找一个不是自己的用户
-                let contact = user_list
-                    .iter()
-                    .find(|u| u["username"].as_str() != Some("admin"));
+        if let Some(user_list) = users {
+            // 找一个不是自己的用户
+            let contact = user_list
+                .iter()
+                .find(|u| u["username"].as_str() != Some("admin"));
 
-                if let Some(user) = contact {
-                    if let Some(user_id) = user["id"].as_str() {
-                        let add_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            "/api/communication/im/contacts",
-                            Some(json!({ "user_id": user_id })),
-                        )
-                        .await;
+            if let Some(user) = contact {
+                if let Some(user_id) = user["id"].as_str() {
+                    let add_result = auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        "/api/communication/im/contacts",
+                        Some(json!({ "user_id": user_id })),
+                    )
+                    .await;
 
-                        match add_result {
-                            Ok((status, _)) => {
-                                assert!(
-                                    status == 200
-                                        || status == 201
-                                        || status == 409
-                                        || status == 404
-                                );
-                                tracing::info!("IM-006 测试通过: 添加联系人功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = add_result {
+                        assert!(status == 200 || status == 201 || status == 409 || status == 404);
+                        tracing::info!("IM-006 测试通过: 添加联系人功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到可添加的联系人，跳过测试");
@@ -370,37 +342,31 @@ async fn test_im_007_view_online_status() {
     // 获取用户列表
     let users_result = auth_request(&client, &token, "GET", "/api/core/iam/users", None).await;
 
-    match users_result {
-        Ok((_, body)) => {
-            let users = body["data"]["users"]
-                .as_array()
-                .or_else(|| body["data"].as_array());
+    if let Ok((_, body)) = users_result {
+        let users = body["data"]["users"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
 
-            if let Some(user_list) = users {
-                if let Some(user) = user_list.first() {
-                    if let Some(user_id) = user["id"].as_str() {
-                        let status_result = auth_request(
-                            &client,
-                            &token,
-                            "GET",
-                            &format!("/api/communication/im/online-status/{}", user_id),
-                            None,
-                        )
-                        .await;
+        if let Some(user_list) = users {
+            if let Some(user) = user_list.first() {
+                if let Some(user_id) = user["id"].as_str() {
+                    let status_result = auth_request(
+                        &client,
+                        &token,
+                        "GET",
+                        &format!("/api/communication/im/online-status/{}", user_id),
+                        None,
+                    )
+                    .await;
 
-                        match status_result {
-                            Ok((status, _)) => {
-                                assert!(status == 200 || status == 404);
-                                tracing::info!("IM-007 测试通过: 查看在线状态功能正常");
-                                return;
-                            }
-                            Err(_) => {}
-                        }
+                    if let Ok((status, _)) = status_result {
+                        assert!(status == 200 || status == 404);
+                        tracing::info!("IM-007 测试通过: 查看在线状态功能正常");
+                        return;
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到用户，跳过测试");

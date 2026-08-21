@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS System Integration Service"
 
+[features]
+http_endpoint_tests = []
+
 [dependencies]
 topems-shared = { workspace = true }
 topems-shared-db = { workspace = true }

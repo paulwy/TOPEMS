@@ -146,7 +146,7 @@ mod tests {
         let json = serde_json::to_string(&ur).unwrap();
         let de: UserResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(de.id, ur.id);
-        assert_eq!(de.is_active, true);
+        assert!(de.is_active);
         assert!(de.full_name.is_some());
     }
 

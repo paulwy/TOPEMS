@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_permission_neq_different_variants() {
-        let perms = vec![
+        let perms = [
             RsPermission::ExperimentView,
             RsPermission::ExperimentCreate,
             RsPermission::MaterialView,

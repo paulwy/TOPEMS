@@ -68,7 +68,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             >
               <Mail
                 size={24}
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               />
             </Box>
           </Box>
@@ -116,7 +116,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             >
               <CheckCircle
                 size={24}
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               />
             </Box>
           </Box>
@@ -164,7 +164,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             >
               <Clock
                 size={24}
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               />
             </Box>
           </Box>
@@ -212,7 +212,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             >
               <XCircle
                 size={24}
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               />
             </Box>
           </Box>

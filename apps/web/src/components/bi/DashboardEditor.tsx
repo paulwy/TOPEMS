@@ -35,6 +35,7 @@ import {
   Chip,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import type { ChartType, ChartDataPoint } from './ChartLibrary';
 import ChartComponent from './ChartLibrary';
 import PivotTable from './PivotTable';
@@ -532,8 +533,8 @@ export const DashboardEditor: React.FC<{
                 borderRadius: 1.5,
                 boxShadow:
                   selectedWidgetId === widget.id
-                    ? '0 0 0 2px primary.light, 0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    : '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                    ? `0 0 0 2px primary.light, 0 4px 6px -1px ${alpha(theme.palette.common.black, 0.1)}`
+                    : `0 1px 3px 0 ${alpha(theme.palette.common.black, 0.1)}`,
                 overflow: 'hidden',
                 cursor: isPreviewMode ? 'default' : 'move',
                 transition: 'box-shadow 0.2s',
@@ -663,7 +664,7 @@ export const DashboardEditor: React.FC<{
           variant='persistent'
           sx={{ width: 320, flexShrink: 0 }}
         >
-          <Box sx={{ p: 3, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+          <Box sx={{ p: 3, borderBottom: `1px solid ${alpha(theme.palette.common.black, 0.1)}` }}>
             <Typography
               variant='h6'
               sx={{ fontWeight: 600 }}

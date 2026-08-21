@@ -223,7 +223,7 @@ fn test_health_check_response_serialization() {
 fn test_service_monitor_new() {
     let monitor = ServiceMonitor::new("test-service", "http://localhost:8080/health");
 
-    assert_eq!(monitor.get_uptime().contains("s"), true);
+    assert!(monitor.get_uptime().contains("s"));
     let metrics = monitor.get_metrics();
     assert_eq!(metrics.service_name, "test-service");
     assert_eq!(metrics.request_count, 0);

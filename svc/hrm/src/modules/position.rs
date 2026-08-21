@@ -190,7 +190,7 @@ async fn create_position(
     .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)
-    .bind(&req.level)
+    .bind(req.level)
     .bind(&req.min_salary)
     .bind(&req.max_salary)
     .bind(&req.description)
@@ -293,7 +293,7 @@ async fn update_position(
     .bind(req.department_id)
     .bind(&req.name)
     .bind(&req.code)
-    .bind(&req.level)
+    .bind(req.level)
     .bind(&req.min_salary)
     .bind(&req.max_salary)
     .bind(&req.description)
@@ -401,7 +401,7 @@ mod tests {
             department_id: Some(Uuid::new_v4()),
             name: "Senior Engineer".to_string(),
             code: Some("SE-001".to_string()),
-            level: Some("P6".to_string()),
+            level: Some(6),
             min_salary: Some(dec(15000)),
             max_salary: Some(dec(30000)),
             description: Some("Senior engineering role".to_string()),
@@ -455,12 +455,12 @@ mod tests {
     #[test]
     fn test_create_position_request_roundtrip_full() {
         roundtrip(&CreatePositionRequest {
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             org_id: Some(Uuid::new_v4()),
             department_id: Some(Uuid::new_v4()),
             name: "Tech Lead".to_string(),
             code: Some("TL-001".to_string()),
-            level: Some("P7".to_string()),
+            level: Some(7),
             min_salary: Some(dec(25000)),
             max_salary: Some(dec(50000)),
             description: Some("Technical leader".to_string()),
@@ -471,7 +471,7 @@ mod tests {
     #[test]
     fn test_create_position_request_roundtrip_minimal() {
         roundtrip(&CreatePositionRequest {
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             org_id: None,
             department_id: None,
             name: "Junior Dev".to_string(),
@@ -507,7 +507,7 @@ mod tests {
             department_id: Some(Uuid::new_v4()),
             name: Some("Updated Name".to_string()),
             code: Some("UPD-001".to_string()),
-            level: Some("P8".to_string()),
+            level: Some(8),
             min_salary: Some(dec(30000)),
             max_salary: Some(dec(60000)),
             description: Some("Updated desc".to_string()),

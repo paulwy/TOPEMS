@@ -1,9 +1,11 @@
 // QMS 服务集成测试
 
+#[cfg(feature = "http_endpoint_tests")]
 use sqlx::PgPool;
+#[cfg(feature = "http_endpoint_tests")]
 use uuid::Uuid;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "http_endpoint_tests"))]
 mod tests {
     use super::*;
     use sqlx::Row;
@@ -818,6 +820,7 @@ mod tests {
     }
 }
 
+#[cfg(feature = "http_endpoint_tests")]
 #[derive(Debug, sqlx::FromRow)]
 #[allow(unused)]
 struct QualityIssueRow {

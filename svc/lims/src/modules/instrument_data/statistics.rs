@@ -107,7 +107,7 @@ pub fn compute_parse_success_rate(success_count: i64, total_count: i64) -> f64 {
 
 /// 给定协议分布，计算占比最高的协议名 + 占比（0.0~1.0）
 /// 分布为空时返回 None
-pub fn top_protocol<'a>(distribution: &'a [ProtocolStat]) -> Option<(&'a str, f64)> {
+pub fn top_protocol(distribution: &[ProtocolStat]) -> Option<(&str, f64)> {
     let total: i64 = distribution.iter().map(|p| p.count).sum();
     if total <= 0 {
         return None;

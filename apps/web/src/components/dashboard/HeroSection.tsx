@@ -1,11 +1,13 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button , useTheme} from '@mui/material';
 import { Sparkles, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 
 export const HeroSection: React.FC = () => {
+  const theme = useTheme();
   const { user } = useAuth();
 
   const getGreeting = (): string => {
@@ -33,7 +35,7 @@ export const HeroSection: React.FC = () => {
             inset: 0,
             opacity: 0.3,
             background:
-              'radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.15) 0%, transparent 50%)',
+              `radial-gradient(circle at 80% 20%, ${alpha(theme.palette.primary.light, 0.15)} 0%, transparent 50%)`,
           }}
         />
         <Box
@@ -42,7 +44,7 @@ export const HeroSection: React.FC = () => {
             inset: 0,
             opacity: 0.2,
             background:
-              'radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.15) 0%, transparent 50%)',
+              `radial-gradient(circle at 20% 80%, ${alpha(theme.palette.secondary.light, 0.15)} 0%, transparent 50%)`,
           }}
         />
 
@@ -61,7 +63,7 @@ export const HeroSection: React.FC = () => {
             >
               <Sparkles
                 size={16}
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               />
             </Box>
             <Typography
@@ -92,7 +94,7 @@ export const HeroSection: React.FC = () => {
               component='span'
               sx={{
                 background:
-                  'linear-gradient(to right, rgb(96, 165, 250), rgb(167, 139, 250), rgb(244, 114, 182))',
+                  `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.secondary.light}, ${theme.palette.secondary.light})`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -122,7 +124,7 @@ export const HeroSection: React.FC = () => {
                 gap: 1,
                 px: 3,
                 py: 1.5,
-                background: 'linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234))',
+                background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                 color: 'common.white',
                 fontWeight: 600,
                 borderRadius: 3,
@@ -167,7 +169,7 @@ export const HeroSection: React.FC = () => {
             right: '-5rem',
             width: '16rem',
             height: '16rem',
-            background: `linear-gradient(to bottom right, ${designTokens.colors.cyber.grid.lineHeavy}, rgba(147, 51, 234, 0.2))`,
+            background: `linear-gradient(to bottom right, ${designTokens.colors.cyber.grid.lineHeavy}, ${alpha(theme.palette.secondary.main, 0.2)})`,
             borderRadius: '50%',
             filter: 'blur(64px)',
           }}

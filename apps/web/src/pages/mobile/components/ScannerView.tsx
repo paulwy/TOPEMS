@@ -117,7 +117,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                   right: 0,
                   height: 2,
                   bgcolor: 'primary.main',
-                  boxShadow: '0 0 10px rgba(0, 229, 255, 0.8)',
+                  boxShadow: (theme) => `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
                   animation: 'scanLine 2s ease-in-out infinite',
                 }}
                 style={{

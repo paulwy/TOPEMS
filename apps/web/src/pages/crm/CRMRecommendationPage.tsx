@@ -328,7 +328,7 @@ const CRMRecommendationPage: React.FC = () => {
       icon: (
         <ShoppingCart
           size={20}
-          color='var(--color-primary-foreground, #ffffff)'
+          color='var(--color-primary-foreground)'
         />
       ),
       gradient: ['colors.primary.dark', 'colors.primary.700'],
@@ -342,7 +342,7 @@ const CRMRecommendationPage: React.FC = () => {
       icon: (
         <TrendingUp
           size={20}
-          color='var(--color-primary-foreground, #ffffff)'
+          color='var(--color-primary-foreground)'
         />
       ),
       gradient: ['colors.success.dark', designTokens.colors.success[700]],
@@ -356,7 +356,7 @@ const CRMRecommendationPage: React.FC = () => {
       icon: (
         <MessageSquare
           size={20}
-          color='var(--color-primary-foreground, #ffffff)'
+          color='var(--color-primary-foreground)'
         />
       ),
       gradient: [designTokens.colors.warning.dark, designTokens.colors.warning[700]],
@@ -404,7 +404,7 @@ const CRMRecommendationPage: React.FC = () => {
                   sx={{
                     p: 2.5,
                     background: `linear-gradient(135deg, ${col.gradient[0]}, ${col.gradient[1]})`,
-                    color: 'var(--color-primary-foreground, #ffffff)',
+                    color: 'var(--color-primary-foreground)',
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

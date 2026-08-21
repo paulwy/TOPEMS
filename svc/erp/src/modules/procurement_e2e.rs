@@ -992,8 +992,7 @@ mod tests {
         req.invoice.lines[0].material_code = "UNKNOWN".into();
         // 物料在 PO 中查不到 → PO 中 qty = 0，GRN 有 10 → 超额
         let e = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
-            .err()
-            .expect("GRN with unknown material should fail excess check");
+            .expect_err("GRN with unknown material should fail excess check");
         match e {
             ErpE2eError::GrnExceedsPoQuantity {
                 line,

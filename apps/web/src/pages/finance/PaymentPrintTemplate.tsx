@@ -396,7 +396,7 @@ const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ payment }) 
           </Box>
         )}
 
-        <Box sx={{ mt: 8, pt: 4, borderTop: '1px dashed var(--color-text-muted, #94a3b8)' }}>
+        <Box sx={{ mt: 8, pt: 4, borderTop: '1px dashed var(--color-text-muted)' }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
               <Typography

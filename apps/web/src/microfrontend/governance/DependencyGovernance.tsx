@@ -145,7 +145,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
       designTokens.colors.primary.dark,
       designTokens.colors.success[600],
       'colors.orange.700',
-      'var(--color-error-700, #b91c1c)',
+      'var(--color-error-700)',
       designTokens.colors.purple['700'],
     ];
     return colors[level % colors.length];
@@ -227,7 +227,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
                   width={150}
                   height={50}
                   rx={8}
-                  fill={isHovered ? `${color}20` : 'var(--color-primary-foreground, #ffffff)'}
+                  fill={isHovered ? `${color}20` : 'var(--color-primary-foreground)'}
                   stroke={color}
                   strokeWidth={isHovered ? 2 : 1}
                 />

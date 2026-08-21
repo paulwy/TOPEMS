@@ -441,7 +441,7 @@ mod tests {
         };
         let v = serde_json::to_value(&cfg).unwrap();
         let back: ArchiveConfig = serde_json::from_value(v).unwrap();
-        assert_eq!(back.enabled, true);
+        assert!(back.enabled);
         assert_eq!(back.retention_days, 30);
         assert_eq!(back.auto_archive_days, 15);
     }

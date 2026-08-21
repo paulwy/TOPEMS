@@ -72,7 +72,7 @@ export function FSMActionButtons({ status, onTransition, disabled }: FSMActionBu
             className={
               requiresApproval
                 ? 'inline-flex items-center rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50'
-                : 'inline-flex items-center rounded-md bg-blue-600 px-3 py-1 text-sm text-var(--color-primary-foreground, #ffffff) hover:bg-blue-700 disabled:opacity-50'
+                : 'inline-flex items-center rounded-md bg-blue-600 px-3 py-1 text-sm text-var(--color-primary-foreground) hover:bg-blue-700 disabled:opacity-50'
             }
           >
             {to.replace(/_/g, ' ')}

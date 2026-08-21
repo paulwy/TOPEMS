@@ -3,6 +3,7 @@ import { Box, Typography, Button, useTheme } from '@mui/material';
 import { Inbox } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -59,7 +60,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         border: '1px dashed',
         borderColor: isDark ? 'glass.topLight' : 'colors.cyber.glass.bgLight',
         borderRadius: 2,
-        bgcolor: isDark ? designTokens.colors.cyber.glass.bgLight : 'rgba(0,0,0,0.01)',
+        bgcolor: isDark ? designTokens.colors.cyber.glass.bgLight : alpha(theme.palette.common.black, 0.01),
         px: compact ? 2 : 3,
         py: compact ? 3 : 4,
         textAlign: align === 'center' ? 'center' : 'left',

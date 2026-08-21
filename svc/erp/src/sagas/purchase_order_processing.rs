@@ -142,12 +142,12 @@ mod tests {
 
     #[test]
     fn test_default_returns_instance() {
-        let _saga = PurchaseOrderProcessingSaga::default();
+        let _saga = PurchaseOrderProcessingSaga;
     }
 
     #[test]
     fn test_new_and_default_are_equivalent() {
         let _a = PurchaseOrderProcessingSaga::new();
-        let _b = PurchaseOrderProcessingSaga::default();
+        let _b = PurchaseOrderProcessingSaga;
     }
 }

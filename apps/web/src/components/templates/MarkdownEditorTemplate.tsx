@@ -451,12 +451,12 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   <title>${i18n.t('components.markdown_editor_template.k14')}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
-    pre { background: var(--color-fallback-panel-bg, #1a1a2e); color: var(--color-grey-300, #d1d5db); padding: 1rem; border-radius: 8px; overflow-x: auto; }
-    code { background: var(--color-grey-100, #f3f4f6); padding: 0.2rem 0.4rem; border-radius: 4px; }
+    pre { background: var(--color-fallback-panel-bg); color: var(--color-grey-300); padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    code { background: var(--color-grey-100); padding: 0.2rem 0.4rem; border-radius: 4px; }
     pre code { background: none; padding: 0; }
-    blockquote { border-left: 4px solid var(--color-fallback-border-light, #dddddd); margin: 0; padding-left: 1rem; color: var(--color-fallback-neutral-grey, #666666); }
+    blockquote { border-left: 4px solid var(--color-fallback-border-light); margin: 0; padding-left: 1rem; color: var(--color-fallback-neutral-grey); }
     table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid var(--color-fallback-border-light, #dddddd); padding: 0.5rem; text-align: left; }
+    th, td { border: 1px solid var(--color-fallback-border-light); padding: 0.5rem; text-align: left; }
     th { background: action.hover; }
   </style>
 </head>

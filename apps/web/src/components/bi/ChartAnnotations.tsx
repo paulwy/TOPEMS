@@ -3,6 +3,7 @@ import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
 import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
 
 interface Annotation {
   id: string;
@@ -40,7 +41,7 @@ const annotationTypes = [
     colors: [
       designTokens.colors.pink.main,
       'colors.teal.500',
-      'var(--color-fallback-ant-green, #52c41a)',
+      'var(--color-fallback-ant-green)',
     ],
   },
 ];
@@ -108,7 +109,7 @@ export function ChartAnnotations({
           backgroundColor: 'common.white',
           '&:hover': { backgroundColor: 'common.white' },
           borderRadius: 1,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.1)}`,
         }}
         title={i18n.t('components.chart_annotations.k3')}
       >
@@ -197,7 +198,7 @@ export function ChartAnnotations({
                       backgroundColor: color,
                       cursor: 'pointer',
                       transform: selectedColor === color ? 'scale(1.25)' : 'scale(1)',
-                      boxShadow: selectedColor === color ? '0 0 0 2px rgba(0,0,0,0.1)' : 'none',
+                      boxShadow: selectedColor === color ? '0 0 0 2px ${alpha(theme.palette.common.black, 0.1)}' : 'none',
                       transition: 'transform 0.2s',
                     }}
                   />
@@ -247,7 +248,7 @@ export function ChartAnnotations({
                 position: 'absolute',
                 backgroundColor: 'common.white',
                 borderRadius: 8,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.15)}`,
                 padding: 8,
                 zIndex: 30,
                 left: `${annotation.position.x}%`,
@@ -292,7 +293,7 @@ export function ChartAnnotations({
               backgroundColor: 'common.white',
               backdropFilter: 'blur(8px)',
               borderRadius: 8,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.15)}`,
               padding: 8,
               zIndex: 30,
               minWidth: 120,

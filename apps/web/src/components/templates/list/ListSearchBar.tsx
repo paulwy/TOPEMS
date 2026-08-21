@@ -236,11 +236,11 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
                 : `1px solid ${designTokens.colors.grey['300']}`,
               backgroundColor: isActive
                 ? 'colors.primary.50'
-                : 'var(--color-surface-light, var(--color-surface-light, #f1f5f9))',
+                : 'var(--color-surface-light, var(--color-surface-light))',
               cursor: 'pointer',
               fontSize: '12px',
               fontWeight: isActive ? 600 : 500,
-              color: isActive ? designTokens.colors.primary.dark : 'var(--color-grey-800, #1f2937)',
+              color: isActive ? designTokens.colors.primary.dark : 'var(--color-grey-800)',
               transition: 'all 0.2s',
             }}
           >

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -25,7 +26,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 
   if (!active || !payload || payload.length === 0) return null;
 
-  const bgColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const bgColor = isDark ? alpha(theme.palette.grey[900], 0.95) : alpha(theme.palette.common.white, 0.95);
   const borderColor = isDark ? 'colors.grey.600' : designTokens.colors.border.default;
   const labelColor = isDark ? designTokens.colors.grey['400'] : 'colors.grey.500';
   const labelBorder = isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default;

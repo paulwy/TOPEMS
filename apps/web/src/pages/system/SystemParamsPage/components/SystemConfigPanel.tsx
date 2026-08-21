@@ -223,7 +223,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     primary_color: e.target.value,
                   }))
                 }
-                placeholder='var(--color-fallback-ant-blue, #1890ff)'
+                placeholder='var(--color-fallback-ant-blue)'
               />
             </Grid>
             <Grid
@@ -240,7 +240,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     secondary_color: e.target.value,
                   }))
                 }
-                placeholder='var(--color-fallback-ant-purple, #722ed1)'
+                placeholder='var(--color-fallback-ant-purple)'
               />
             </Grid>
             <Grid

@@ -27,7 +27,7 @@ fn validate_date_format(date_str: &str) -> bool {
     let day = parts[2].split('T').next().unwrap_or("").parse::<u32>().ok();
     match (year, month, day) {
         (Some(y), Some(m), Some(d)) => {
-            y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31
+            (2000..=2100).contains(&y) && (1..=12).contains(&m) && (1..=31).contains(&d)
         }
         _ => false,
     }
@@ -341,7 +341,7 @@ fn generate_csv(logs: &[AuditLog]) -> String {
         .from_writer(vec![]);
 
     if wtr
-        .write_record(&[
+        .write_record([
             "ID",
             "操作",
             "实体类型",

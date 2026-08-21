@@ -258,13 +258,13 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   error: {
     bg: 'error.main',
-    gradient: `linear-gradient(135deg, var(--color-error-hover, #dc2626), ${designTokens.colors.error['800']})`,
+    gradient: `linear-gradient(135deg, var(--color-error-hover), ${designTokens.colors.error['800']})`,
     light: 'error.lightest',
     main: 'error.main',
   },
   info: {
     bg: 'info.main',
-    gradient: `linear-gradient(135deg, ${designTokens.colors.info[600]}, var(--color-info-hover, #0284c7))`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.info[600]}, var(--color-info-hover))`,
     light: 'info.lightest',
     main: 'info.main',
   },

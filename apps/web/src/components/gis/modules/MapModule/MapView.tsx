@@ -88,7 +88,7 @@ const getStatusColor = (status: string) => {
   if (!status) return 'text.secondary';
   const s = status.toLowerCase();
   if (s.includes('active') || s.includes(i18n.t('gis.map_view.k0')))
-    return 'var(--color-fallback-ant-blue, #00c897)';
+    return 'var(--color-fallback-ant-blue)';
   if (s.includes('pending') || s.includes(i18n.t('gis.map_view.k1'))) return 'warning.main';
   if (s.includes('inactive') || s.includes(i18n.t('gis.map_view.k2'))) return 'error.main';
   return 'text.secondary';
@@ -117,7 +117,7 @@ const MeasureTooltip: React.FC<{
     style={{
       position: 'absolute',
       backgroundColor: 'var(--mui-palette-grey-800)',
-      color: 'var(--mui-palette-common-var(--color-primary-foreground, #ffffff))',
+      color: 'var(--mui-palette-common-var(--color-primary-foreground))',
       fontSize: '0.75rem',
       padding: '0.25rem 0.5rem',
       borderRadius: '0.25rem',

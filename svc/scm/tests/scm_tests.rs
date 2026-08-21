@@ -553,7 +553,7 @@ mod business_logic_tests {
 
         for (category, score) in scores {
             assert!(!category.is_empty());
-            assert!(score >= 0 && score <= 100);
+            assert!((0..=100).contains(&score));
         }
     }
 

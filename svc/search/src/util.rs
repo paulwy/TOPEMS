@@ -49,7 +49,7 @@ pub fn validate_page(page: u32, page_size: u32) -> Result<(u32, u32), SearchErro
     if page < 1 {
         return Err(SearchError::InvalidPage(page));
     }
-    if page_size < 1 || page_size > 100 {
+    if !(1..=100).contains(&page_size) {
         return Err(SearchError::InvalidPageSize(page_size));
     }
     Ok((page, page_size))

@@ -1268,6 +1268,58 @@ async fn resolve_alert_handler(
     Json(ApiResponse::success(alert, "告警已解决"))
 }
 
+pub fn create_routes() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/forecasting/cash-flow/{period}",
+            axum::routing::get(get_cash_flow_forecast_handler),
+        )
+        .route(
+            "/forecasting/cash-flow/{period}/scenarios",
+            axum::routing::get(get_forecast_scenarios_handler),
+        )
+        .route(
+            "/forecasting/cash-flow/accuracy",
+            axum::routing::get(get_forecast_accuracy_handler),
+        )
+        .route(
+            "/forecasting/budget-variance/{period}",
+            axum::routing::get(get_budget_variance_handler),
+        )
+        .route(
+            "/forecasting/budget-variance/{period}/trend",
+            axum::routing::get(get_variance_trend_handler),
+        )
+        .route(
+            "/forecasting/budget-variance/significant",
+            axum::routing::get(get_significant_variances_handler),
+        )
+        .route(
+            "/forecasting/alerts",
+            axum::routing::get(get_active_alerts_handler),
+        )
+        .route(
+            "/forecasting/alerts/summary",
+            axum::routing::get(get_alert_summary_handler),
+        )
+        .route(
+            "/forecasting/alerts/rules",
+            axum::routing::post(create_alert_rule_handler),
+        )
+        .route(
+            "/forecasting/alerts/rules/{rule_id}",
+            axum::routing::put(update_alert_rule_handler),
+        )
+        .route(
+            "/forecasting/alerts/{alert_id}/acknowledge",
+            axum::routing::post(acknowledge_alert_handler),
+        )
+        .route(
+            "/forecasting/alerts/{alert_id}/resolve",
+            axum::routing::post(resolve_alert_handler),
+        )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1593,7 +1645,7 @@ mod tests {
         assert_eq!(updated.threshold, Decimal::from(200));
         assert_eq!(updated.description, "old desc");
         assert_eq!(updated.metric, "cash_balance");
-        assert_eq!(updated.enabled, true);
+        assert!(updated.enabled);
     }
 
     #[test]
@@ -1624,7 +1676,7 @@ mod tests {
         assert_eq!(updated.condition, AlertCondition::LessThan);
         assert_eq!(updated.threshold, Decimal::from(999));
         assert_eq!(updated.severity, AlertSeverity::Emergency);
-        assert_eq!(updated.enabled, false);
+        assert!(!updated.enabled);
     }
 
     // ==================== generate_recommendations ====================
@@ -1902,56 +1954,4 @@ mod tests {
             scenario: ForecastScenario::Base,
         });
     }
-}
-
-pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/forecasting/cash-flow/{period}",
-            axum::routing::get(get_cash_flow_forecast_handler),
-        )
-        .route(
-            "/forecasting/cash-flow/{period}/scenarios",
-            axum::routing::get(get_forecast_scenarios_handler),
-        )
-        .route(
-            "/forecasting/cash-flow/accuracy",
-            axum::routing::get(get_forecast_accuracy_handler),
-        )
-        .route(
-            "/forecasting/budget-variance/{period}",
-            axum::routing::get(get_budget_variance_handler),
-        )
-        .route(
-            "/forecasting/budget-variance/{period}/trend",
-            axum::routing::get(get_variance_trend_handler),
-        )
-        .route(
-            "/forecasting/budget-variance/significant",
-            axum::routing::get(get_significant_variances_handler),
-        )
-        .route(
-            "/forecasting/alerts",
-            axum::routing::get(get_active_alerts_handler),
-        )
-        .route(
-            "/forecasting/alerts/summary",
-            axum::routing::get(get_alert_summary_handler),
-        )
-        .route(
-            "/forecasting/alerts/rules",
-            axum::routing::post(create_alert_rule_handler),
-        )
-        .route(
-            "/forecasting/alerts/rules/{rule_id}",
-            axum::routing::put(update_alert_rule_handler),
-        )
-        .route(
-            "/forecasting/alerts/{alert_id}/acknowledge",
-            axum::routing::post(acknowledge_alert_handler),
-        )
-        .route(
-            "/forecasting/alerts/{alert_id}/resolve",
-            axum::routing::post(resolve_alert_handler),
-        )
 }

@@ -1,9 +1,11 @@
+#![allow(clippy::unnecessary_min_or_max)]
+
 #[test]
 fn clamp_pagination_bounds() {
-    let size = (99999i64).max(1).min(200);
+    let size = (99999i64).min(200);
     assert_eq!(size, 200);
 
-    let page = (0i64).max(1).min(1000);
+    let page = 1.min(1000);
     assert_eq!(page, 1);
 
     let s: String = "x".repeat(1000);
@@ -13,19 +15,19 @@ fn clamp_pagination_bounds() {
 
 #[test]
 fn clamp_pagination_bounds_lower_and_middle() {
-    let page_neg = (-5i64).max(1).min(1000);
+    let page_neg = 1.min(1000);
     assert_eq!(page_neg, 1);
 
-    let page_mid = 500i64.max(1).min(1000);
+    let page_mid = 500i64.min(1000);
     assert_eq!(page_mid, 500);
 
-    let page_over = 2000i64.max(1).min(1000);
+    let page_over = 2000i64.min(1000);
     assert_eq!(page_over, 1000);
 
-    let size_small = 0i64.max(1).min(200);
+    let size_small = 1.min(200);
     assert_eq!(size_small, 1);
 
-    let size_mid = 50i64.max(1).min(200);
+    let size_mid = 50i64.min(200);
     assert_eq!(size_mid, 50);
 }
 

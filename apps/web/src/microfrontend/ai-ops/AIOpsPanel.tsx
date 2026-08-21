@@ -318,7 +318,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'critical':
         return designTokens.colors.error.dark;
       case 'high':
-        return 'var(--color-warning-hover, #d97706)';
+        return 'var(--color-warning-hover)';
       case 'medium':
         return 'colors.orange.700';
       case 'low':
@@ -416,7 +416,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label={i18n.t('microfrontend.ai_ops_panel.k7')}
           value={unresolvedAnomalies}
           icon={<ActivityIcon size={24} />}
-          color='var(--color-warning-hover, #d97706)'
+          color='var(--color-warning-hover)'
           trend={`${totalAnomalies} ${i18n.t('microfrontend.ai_ops_panel.k6')}`}
           trendUp={unresolvedAnomalies > 10}
         />

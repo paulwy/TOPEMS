@@ -178,7 +178,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
               <Typography
                 variant='body2'
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               >
                 {i18n.t('pages.process_flow_page.k8')}
               </Typography>
@@ -192,7 +192,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             <Box sx={{ p: 2, bgcolor: 'success.main', borderRadius: 3 }}>
               <Typography
                 variant='body2'
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               >
                 {i18n.t('pages.process_flow_page.k9')}
               </Typography>
@@ -206,7 +206,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
             <Box sx={{ p: 2, bgcolor: 'warning.main', borderRadius: 3 }}>
               <Typography
                 variant='body2'
-                color='var(--color-primary-foreground, #ffffff)'
+                color='var(--color-primary-foreground)'
               >
                 {i18n.t('pages.process_flow_page.k10')}
               </Typography>

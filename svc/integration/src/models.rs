@@ -10,7 +10,6 @@ use uuid::Uuid;
 use topems_shared_auth::auth::AuthState;
 
 use crate::mes_erp_sync::MesErpSyncService;
-use topems_shared_auth::get_tenant_id_from_claims;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {

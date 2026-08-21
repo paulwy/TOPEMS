@@ -111,9 +111,9 @@ pub(crate) async fn plugin_proxy(
         .bytes()
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
-    Ok(builder
+    builder
         .body(Body::from(body))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
 // ==================== 公共处理函数 ====================

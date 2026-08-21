@@ -298,41 +298,35 @@ async fn test_wf_006_approve_workflow() {
     // 获取待审批列表
     let result = auth_request(&client, &token, "GET", "/api/flow/approvals/pending", None).await;
 
-    match result {
-        Ok((status, body)) => {
-            if status == 200 {
-                // 找到待审批项
-                if let Some(approvals) = body["data"].as_array() {
-                    if let Some(approval) = approvals.first() {
-                        if let Some(approval_id) = approval["id"].as_str() {
-                            let approve_result = auth_request(
-                                &client,
-                                &token,
-                                "POST",
-                                &format!("/api/flow/approvals/{}/approve", approval_id),
-                                None,
-                            )
-                            .await;
+    if let Ok((status, body)) = result {
+        if status == 200 {
+            // 找到待审批项
+            if let Some(approvals) = body["data"].as_array() {
+                if let Some(approval) = approvals.first() {
+                    if let Some(approval_id) = approval["id"].as_str() {
+                        let approve_result = auth_request(
+                            &client,
+                            &token,
+                            "POST",
+                            &format!("/api/flow/approvals/{}/approve", approval_id),
+                            None,
+                        )
+                        .await;
 
-                            match approve_result {
-                                Ok((approve_status, _)) => {
-                                    assert!(
-                                        approve_status == 200
-                                            || approve_status == 403
-                                            || approve_status == 404,
-                                        "审批状态码应为 200、403 或 404"
-                                    );
-                                    tracing::info!("WF-006 测试通过: 审批功能正常");
-                                    return;
-                                }
-                                Err(_) => {}
-                            }
+                        if let Ok((approve_status, _)) = approve_result {
+                            assert!(
+                                approve_status == 200
+                                    || approve_status == 403
+                                    || approve_status == 404,
+                                "审批状态码应为 200、403 或 404"
+                            );
+                            tracing::info!("WF-006 测试通过: 审批功能正常");
+                            return;
                         }
                     }
                 }
             }
         }
-        Err(_) => {}
     }
 
     tracing::warn!("未找到待审批项，跳过测试");

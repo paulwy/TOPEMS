@@ -38,6 +38,7 @@ import {
   Slider,
   Switch,
   FormControlLabel,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -91,6 +92,7 @@ import {
   type CompatibilityCheck,
 } from './plugin-marketplace';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 
 type ConsoleTabId = 'dashboard' | 'platform' | 'builder' | 'marketplace' | 'pipelines' | 'activity';
 
@@ -120,20 +122,21 @@ const ENV_LABELS: Record<EnvironmentName, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   drafting: 'colors.grey.500',
-  development: 'var(--color-fallback-ant-blue, #1890ff)',
+  development: 'var(--color-fallback-ant-blue)',
   building: designTokens.colors.warning.main,
   testing: designTokens.colors.purple['500'],
-  staging: 'var(--color-info, #0ea5e9)',
+  staging: 'var(--color-info)',
   production: designTokens.colors.success.main,
-  archived: 'var(--color-fallback-neutral-grey, #666666)',
+  archived: 'var(--color-fallback-neutral-grey)',
   pending: 'colors.grey.500',
-  running: 'var(--color-fallback-ant-blue, #1890ff)',
+  running: 'var(--color-fallback-ant-blue)',
   success: designTokens.colors.success.main,
   failed: 'colors.error.main',
-  cancelled: 'var(--color-fallback-neutral-grey, #666666)',
+  cancelled: 'var(--color-fallback-neutral-grey)',
 };
 
 const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState<ConsoleTabId>('dashboard');
   const [platformStats, setPlatformStats] = React.useState<DevPlatformStats>(
     unifiedDevPlatform.getStats()
@@ -207,7 +210,7 @@ const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid rgba(99, 102, 241, 0.2)',
+          border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
         }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -314,7 +314,7 @@ const LimsTaskDetailPage: React.FC = () => {
                           fontWeight: 500,
                           bgcolor: isCompleted ? 'success.dark' : 'grey.400',
                           color: isCompleted
-                            ? 'var(--color-primary-foreground, #ffffff)'
+                            ? 'var(--color-primary-foreground)'
                             : 'grey.600',
                         }}
                       >

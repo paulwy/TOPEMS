@@ -183,7 +183,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       border: 'none',
                       backgroundColor:
                         activeChartType === type
-                          ? 'var(--color-primary-foreground, #ffffff)'
+                          ? 'var(--color-primary-foreground)'
                           : 'transparent',
                       color: activeChartType === type ? 'primary.700' : 'text.secondary',
                       cursor: 'pointer',

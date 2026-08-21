@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Button,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 import { Clock, LogOut, Zap, AlertTriangle } from 'lucide-react';
 import { NotificationBell } from '../notification';
@@ -306,7 +307,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               textTransform: 'none',
               borderRadius: 1.5,
               px: 3,
-              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+              boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.error.main, 0.3)}`,
               '&:hover': {
                 boxShadow: `0 6px 16px ${designTokens.colors.error[400]}`,
               },

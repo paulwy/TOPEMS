@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Settings,
   X,
@@ -623,7 +624,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         backgroundColor: 'common.white',
                         borderRadius: 'full',
                         transition: 'left 0.2s',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                        boxShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.2)}`,
                       }}
                     />
                   </div>
@@ -778,7 +779,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 marginBottom: 3,
                 padding: 3,
                 backgroundColor: theme.palette.success.light,
-                border: '1px solid var(--color-success-200, #bbf7d0)',
+                border: '1px solid var(--color-success-200)',
                 borderRadius: 'md',
                 display: 'flex',
                 alignItems: 'center',
@@ -796,7 +797,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 marginBottom: 3,
                 padding: 3,
                 backgroundColor: theme.palette.error.light,
-                border: '1px solid var(--color-error-200, #fecaca)',
+                border: '1px solid var(--color-error-200)',
                 borderRadius: 'md',
                 display: 'flex',
                 alignItems: 'center',
