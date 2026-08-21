@@ -313,7 +313,6 @@ prometheus = "0.13"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
-dotenvy = "0.15"
 thiserror = "2"
 anyhow = "1"
 bcrypt = "0.15"
@@ -348,13 +347,11 @@ rand = "0.8"
 
 # Force tonic version to avoid axum 0.6 conflict
 tonic = "0.14"
-socket2 = { version = "0.5", features = ["all"] }
 tempfile = "3.8"
 time = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }
 tokio-stream = "0.1"
 tokio-util = { version = "0.7", features = ["io"] }
 tower-cookies = "0.11"
-tower-util = "0.1"
 walkdir = "2"
 moka = { version = "0.12", features = ["future", "sync"] }
 
@@ -377,7 +374,6 @@ topems-shared-bootstrap = { path = "lib/shared-bootstrap" }
 # GraphQL BFF 聚合层（V33.0 Portal BFF Phase 3）
 async-graphql = { version = "7", features = ["tokio", "chrono", "uuid", "dataloader", "apollo_persisted_queries"] }
 async-graphql-axum = "7"
-libc = "0.2"
 cron = "0.12"
 job_scheduler_ng = "2.0"
 lettre = { version = "0.11", features = ["default", "smtp-transport", "tokio1-native-tls"] }
