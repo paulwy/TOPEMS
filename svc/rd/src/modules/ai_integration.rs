@@ -77,7 +77,7 @@ pub struct AiChatResponse {
 pub use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
-struct ListQueryParams {
+struct AiAnalysisQuery {
     page: Option<i32>,
     page_size: Option<i32>,
 }
@@ -96,7 +96,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
 
 async fn list_analyses(
     State(state): State<super::ApiState>,
-    axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
+    axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);

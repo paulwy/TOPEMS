@@ -15,14 +15,6 @@ pub struct ServiceHealth {
     pub uptime: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub code: i32,
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: String,
-    pub timestamp: String,
-}
 
 #[derive(Clone)]
 pub struct GenericServiceClient {
@@ -167,91 +159,6 @@ mod tests {
         let health: ServiceHealth = serde_json::from_str(json).unwrap();
         assert_eq!(health.status, "degraded");
         assert_eq!(health.uptime, "1h");
-    }
-
-    // ========== ApiResponse<T> serde tests ==========
-
-    #[test]
-    fn api_response_with_data_serde_roundtrip() {
-        let original = ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(vec![1, 2, 3]),
-            message: "ok".to_string(),
-            timestamp: "2024-01-01T00:00:00Z".to_string(),
-        };
-        let json = serde_json::to_string(&original).unwrap();
-        let deserialized: ApiResponse<Vec<i32>> = serde_json::from_str(&json).unwrap();
-        let val1 = serde_json::to_value(&original).unwrap();
-        let val2 = serde_json::to_value(&deserialized).unwrap();
-        assert_eq!(val1, val2);
-    }
-
-    #[test]
-    fn api_response_without_data_serde_roundtrip() {
-        let original: ApiResponse<i32> = ApiResponse {
-            code: 404,
-            success: false,
-            data: None,
-            message: "not found".to_string(),
-            timestamp: "2024-01-01T00:00:00Z".to_string(),
-        };
-        let json = serde_json::to_string(&original).unwrap();
-        let deserialized: ApiResponse<i32> = serde_json::from_str(&json).unwrap();
-        let val1 = serde_json::to_value(&original).unwrap();
-        let val2 = serde_json::to_value(&deserialized).unwrap();
-        assert_eq!(val1, val2);
-    }
-
-    #[test]
-    fn api_response_with_string_data_serde_roundtrip() {
-        let original = ApiResponse {
-            code: 200,
-            success: true,
-            data: Some("hello".to_string()),
-            message: "success".to_string(),
-            timestamp: "2024-06-15T12:30:00Z".to_string(),
-        };
-        let json = serde_json::to_string(&original).unwrap();
-        let deserialized: ApiResponse<String> = serde_json::from_str(&json).unwrap();
-        let val1 = serde_json::to_value(&original).unwrap();
-        let val2 = serde_json::to_value(&deserialized).unwrap();
-        assert_eq!(val1, val2);
-    }
-
-    #[test]
-    fn api_response_with_json_value_data_serde_roundtrip() {
-        let original = ApiResponse {
-            code: 200,
-            success: true,
-            data: Some(serde_json::json!({"key": "value", "nested": {"a": 1}})),
-            message: "ok".to_string(),
-            timestamp: "2024-01-01T00:00:00Z".to_string(),
-        };
-        let json = serde_json::to_string(&original).unwrap();
-        let deserialized: ApiResponse<serde_json::Value> = serde_json::from_str(&json).unwrap();
-        let val1 = serde_json::to_value(&original).unwrap();
-        let val2 = serde_json::to_value(&deserialized).unwrap();
-        assert_eq!(val1, val2);
-    }
-
-    #[test]
-    fn api_response_deserialize_from_json_with_data() {
-        let json = r#"{"code":200,"success":true,"data":[1,2,3],"message":"ok","timestamp":"t"}"#;
-        let resp: ApiResponse<Vec<i32>> = serde_json::from_str(json).unwrap();
-        assert_eq!(resp.code, 200);
-        assert!(resp.success);
-        assert_eq!(resp.data, Some(vec![1, 2, 3]));
-        assert_eq!(resp.message, "ok");
-    }
-
-    #[test]
-    fn api_response_deserialize_from_json_without_data() {
-        let json = r#"{"code":500,"success":false,"data":null,"message":"error","timestamp":"t"}"#;
-        let resp: ApiResponse<i32> = serde_json::from_str(json).unwrap();
-        assert_eq!(resp.code, 500);
-        assert!(!resp.success);
-        assert!(resp.data.is_none());
     }
 
     // ========== GenericServiceClient construction tests ==========

@@ -43,7 +43,7 @@ pub struct CreateDocumentRelationRequest {
 pub use topems_shared_core::response::PaginatedResponse;
 
 #[derive(Debug, Deserialize)]
-struct ListQueryParams {
+struct DocRelationQuery {
     page: Option<i32>,
     page_size: Option<i32>,
 }
@@ -65,7 +65,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
 
 async fn list_documents(
     State(state): State<super::ApiState>,
-    axum::extract::Query(params): axum::extract::Query<ListQueryParams>,
+    axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,
 ) -> impl IntoResponse {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
