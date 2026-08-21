@@ -84,6 +84,7 @@ pub async fn list_production_orders(
         FROM erp_production_orders
         WHERE ($1::text IS NULL OR product_name ILIKE $1 OR order_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -102,6 +103,7 @@ pub async fn list_production_orders(
                 SELECT COUNT(*) FROM erp_production_orders
                 WHERE ($1::text IS NULL OR product_name ILIKE $1 OR order_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(&search_pattern)
@@ -225,7 +227,7 @@ pub async fn get_production_order(
                workshop_id, workshop_name, priority, notes,
                created_at, updated_at
         FROM erp_production_orders
-        WHERE id = $1
+        WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -481,7 +483,7 @@ pub async fn receive_mes_progress(
         Some(id) => id,
         None => {
             let result = sqlx::query_scalar::<_, Option<Uuid>>(
-                "SELECT id FROM erp_production_orders WHERE source_order_id = $1 LIMIT 1",
+                "SELECT id FROM erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1",
             )
             .bind(req.mes_order_id.to_string())
             .fetch_optional(&state.db)

@@ -151,7 +151,7 @@ pub async fn get_all_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile_tasks 
-         WHERE assignee = $1 OR assignee IS NULL 
+         WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) 
          ORDER BY due_date NULLS LAST, created_at DESC"
     )
     .bind(&user_id)
@@ -205,7 +205,7 @@ pub async fn get_task(
     let task = match sqlx::query_as::<_, MobileTask>(
         "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile_tasks 
-         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)"
+         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
     )
     .bind(id)
     .bind(&user_id)
@@ -341,7 +341,7 @@ pub async fn update_task(
 
     let current_task = match sqlx::query_as::<_, MobileTask>(
         "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-         FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)"
+         FROM mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
     )
     .bind(id)
     .bind(&user_id)
@@ -445,7 +445,7 @@ pub async fn update_task_status(
         Ok(r) if r.rows_affected() > 0 => {
             let task = sqlx::query_as::<_, MobileTask>(
                 "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
-                 FROM mobile_tasks WHERE id = $1"
+                 FROM mobile_tasks WHERE id = $1 AND deleted_at IS NULL"
             )
             .bind(id)
             .fetch_one(&pool)
@@ -511,7 +511,7 @@ pub async fn delete_task(
     };
 
     let result = sqlx::query(
-        "UPDATE mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL)",
+        "UPDATE mobile_tasks SET deleted_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(&user_id)

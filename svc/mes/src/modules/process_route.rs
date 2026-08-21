@@ -153,17 +153,17 @@ pub async fn list_process_routes(
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE pr.deleted_at IS NULL");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE pr.status = $1");
+        where_clause.push_str(" AND pr.status = $1");
         params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" WHERE (pr.code ILIKE $1 OR pr.name ILIKE $1)");
+            where_clause.push_str(" AND (pr.code ILIKE $1 OR pr.name ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
                 " AND (pr.code ILIKE ${} OR pr.name ILIKE ${})",

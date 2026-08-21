@@ -137,17 +137,17 @@ pub async fn list_teams(
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE t.deleted_at IS NULL");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE t.status = $1");
+        where_clause.push_str(" AND t.status = $1");
         params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" WHERE (t.team_code ILIKE $1 OR t.team_name ILIKE $1)");
+            where_clause.push_str(" AND (t.team_code ILIKE $1 OR t.team_name ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
                 " AND (t.team_code ILIKE ${} OR t.team_name ILIKE ${})",

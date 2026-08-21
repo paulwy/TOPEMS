@@ -189,17 +189,17 @@ pub async fn list_work_stations(
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE ws.deleted_at IS NULL");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE ws.status = $1");
+        where_clause.push_str(" AND ws.status = $1");
         params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" WHERE (ws.station_no ILIKE $1 OR ws.name ILIKE $1)");
+            where_clause.push_str(" AND (ws.station_no ILIKE $1 OR ws.name ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
                 " AND (ws.station_no ILIKE ${} OR ws.name ILIKE ${})",

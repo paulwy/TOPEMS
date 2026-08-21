@@ -53,7 +53,7 @@ pub async fn get_photos(
     let photos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
          FROM media_files 
-         WHERE file_type = 'photo' AND uploaded_by = $1 
+         WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1 
          ORDER BY created_at DESC"
     )
     .bind(&user_id)
@@ -91,7 +91,7 @@ pub async fn get_audio(
     let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
          FROM media_files 
-         WHERE file_type = 'audio' AND uploaded_by = $1 
+         WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 
          ORDER BY created_at DESC"
     )
     .bind(&user_id)
@@ -129,7 +129,7 @@ pub async fn get_video(
     let videos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
          FROM media_files 
-         WHERE file_type = 'video' AND uploaded_by = $1 
+         WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1 
          ORDER BY created_at DESC"
     )
     .bind(&user_id)

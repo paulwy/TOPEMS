@@ -237,10 +237,10 @@ pub async fn list_oee_records(
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE oee.deleted_at IS NULL");
 
     if let Some(shift) = query.shift {
-        where_clause.push_str(" WHERE oee.shift = $1");
+        where_clause.push_str(" AND oee.shift = $1");
         params.push(serde_json::Value::String(shift));
     }
 

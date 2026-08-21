@@ -198,17 +198,17 @@ pub async fn list_production_schedules(
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE ps.deleted_at IS NULL");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE ps.status = $1");
+        where_clause.push_str(" AND ps.status = $1");
         params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
         if where_clause.is_empty() {
-            where_clause.push_str(" WHERE (ps.schedule_no ILIKE $1 OR ps.order_no ILIKE $1 OR ps.product_name ILIKE $1 OR ps.product_code ILIKE $1)");
+            where_clause.push_str(" AND (ps.schedule_no ILIKE $1 OR ps.order_no ILIKE $1 OR ps.product_name ILIKE $1 OR ps.product_code ILIKE $1)");
         } else {
             where_clause.push_str(&format!(
                 " AND (ps.schedule_no ILIKE ${} OR ps.order_no ILIKE ${} OR ps.product_name ILIKE ${} OR ps.product_code ILIKE ${})",
