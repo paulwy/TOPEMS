@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -497,7 +498,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
             justifyContent: 'center',
           }}
         >
-          <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['1.125rem'],
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('pages.dashboard_page.k12')}
           </Typography>
         </Box>
@@ -524,7 +530,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
           {i18n.t('pages.dashboard_page.k0')}
           {user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
         </Typography>
-        <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: {
+              xs: designTokens.typography.fontSize.sm,
+              md: designTokens.typography.fontSize.base,
+            },
+          }}
+        >
           {getGreeting()}
           {i18n.t('pages.dashboard_page.k0')} {pendingTodos.length}{' '}
           {i18n.t('pages.dashboard_page.k1')}
@@ -557,7 +571,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <ListTodo size={16} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                     {i18n.t('pages.dashboard_page.k12')}
                   </Typography>
                   <Badge
@@ -573,7 +587,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CheckCircle size={16} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                     {i18n.t('pages.dashboard_page.k13')}
                   </Typography>
                   <Badge
@@ -636,7 +650,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
                     primary={todo.title}
                     sx={{
                       '& .MuiListItemText-primary': {
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: todo.done ? 'grey.500' : 'grey.900',
                         textDecoration: todo.done ? 'line-through' : 'none',
                       },
@@ -680,7 +694,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) =>
         headerRight={
           <Typography
             sx={{
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: 'primary.main',
               cursor: 'pointer',
               '&:hover': { color: 'primary.dark' },

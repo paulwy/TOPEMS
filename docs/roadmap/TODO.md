@@ -1,14 +1,27 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V264+ | **更新日期**: 2026-08-21
+> **版本**: V265 | **更新日期**: 2026-08-22
 >
-> **V259-V264+ Backlog 全量收闭**。5 大主题 16 条全部完成，无活跃缺口。
+> **V259-V264+ Backlog 全量收闭**。当前进入 V265 设计系统样式硬编码清理收尾阶段。
 
 ---
 
 ## 📊 当前状态
 
-**所有 Backlog 已清空**。V259-V264+ 版本节点全部闭环。
+### 活跃任务：设计系统样式硬编码清理收尾
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| 修复 DataTable.tsx ESLint 未使用表达式 | line 1369 `&&` 改为 `if` | ✅ |
+| 更新审计脚本：rem 统计排除已 token 化引用 | scan.mjs regex negative lookbehind/lookahead | ✅ |
+| rem 字号批量替换 | 267 文件已替换为 `designTokens.typography.fontSize.scale` | ✅ |
+| px spacing 修复脚本 | `scripts/design-system-audit/fix-px-spacing.cjs` 创建并运行 | ✅ |
+| px spacing 批量替换 | 74 文件已替换为 `designTokens.spacing.*` | ✅ |
+| 修复 px 脚本生成的数字 key 语法错误 | `spacing.2xl` → `spacing['2xl']` | ✅ |
+| apps/web tsc 验证 | 0 errors | ✅ |
+| apps/web eslint 关键路径验证 | 0 errors（剩余 6 条 pre-existing warning） | ✅ |
+| 剩余 6 处 rem 间距值替换 | `PerformanceTestPage` 4 处、`DashboardPage` 2 处 | ✅ |
+| 设计系统审计扫描回归 | 当前硬编码 113 处（px 113 + rem 0） | ✅ |
 
 ### 质量门禁基线
 
