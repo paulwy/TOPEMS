@@ -11,7 +11,8 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 
 export default function WmsLocationUtilizationPage() {
   const { data } = useWmsMock<WmsMockShape>();
@@ -24,39 +25,51 @@ export default function WmsLocationUtilizationPage() {
     if (locationUtil.length === 0) return 0;
     return Math.round(locationUtil.reduce((s, l) => s + l.deadStock, 0) / locationUtil.length);
   }, [locationUtil]);
+
+  const statCards = useMemo(
+    () => [
+      {
+        id: 'avg-utilization',
+        title: i18n.t('pages.wms_location_utilization_page.k1'),
+        value: avgUtil,
+        suffix: '%',
+        color: 'success' as const,
+      },
+      {
+        id: 'avg-vacancy',
+        title: i18n.t('pages.wms_location_utilization_page.k2'),
+        value: 100 - avgUtil - avgDead,
+        suffix: '%',
+        color: 'info' as const,
+      },
+      {
+        id: 'avg-dead-stock',
+        title: i18n.t('pages.wms_location_utilization_page.k3'),
+        value: avgDead,
+        suffix: '%',
+        color: 'error' as const,
+      },
+      {
+        id: 'area-count',
+        title: i18n.t('pages.wms_location_utilization_page.k4'),
+        value: locationUtil.length,
+        color: 'secondary' as const,
+      },
+    ],
+    [avgUtil, avgDead, locationUtil.length]
+  );
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('pages.wms_location_utilization_page.k0')}</h1>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>
-            {i18n.t('pages.wms_location_utilization_page.k1')}
-          </p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{avgUtil}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>
-            {i18n.t('pages.wms_location_utilization_page.k2')}
-          </p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{100 - avgUtil - avgDead}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>
-            {i18n.t('pages.wms_location_utilization_page.k3')}
-          </p>
-          <p className='mt-1 text-3xl font-bold text-red-600'>{avgDead}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>
-            {i18n.t('pages.wms_location_utilization_page.k4')}
-          </p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>{locationUtil.length}</p>
-        </div>
-      </div>
-
+    <StatsPageTemplate
+      title={i18n.t('pages.wms_location_utilization_page.k0')}
+      statCards={statCards}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+    >
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('wms.analytics.locationUtilization.k0')}</h3>
         <ResponsiveContainer
@@ -109,6 +122,6 @@ export default function WmsLocationUtilizationPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </StatsPageTemplate>
   );
 }

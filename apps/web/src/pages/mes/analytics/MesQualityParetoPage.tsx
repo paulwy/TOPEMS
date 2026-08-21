@@ -1,24 +1,13 @@
 import { useMemo, useState } from 'react';
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-  ScatterChart,
-  Scatter,
-  ZAxis,
-} from 'recharts';
+import { FormControl, Select, MenuItem } from '@mui/material';
 import i18n from '@/i18n';
 import type { QualityParetoData } from '@/api/mes/types';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import {
+  StatsPageTemplate,
+  type StatCard,
+  type ChartConfig,
+} from '@/components/templates/StatsPageTemplate';
 
 const DISPOSITION_COLORS = [
   designTokens.colors.secondary.dark,
@@ -27,6 +16,7 @@ const DISPOSITION_COLORS = [
   designTokens.colors.error.main,
   designTokens.colors.secondary.main,
 ];
+
 function useQualityParetoMock(): QualityParetoData {
   return useMemo(() => {
     const types = [
@@ -68,128 +58,108 @@ function useQualityParetoMock(): QualityParetoData {
     };
   }, []);
 }
+
 export default function MesQualityParetoPage() {
   const data = useQualityParetoMock();
   const [line, setLine] = useState('all');
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('mes.mes_quality_pareto_page.pareto_14')}</h1>
-        <select
+
+  const statCards: StatCard[] = useMemo(() => {
+    const totalDefects = data.defect_types.reduce((sum, item) => sum + item.count, 0);
+    const topDefect = data.defect_types[0];
+    const dispositionTotal = data.disposition.reduce((sum, item) => sum + item.count, 0);
+    return [
+      {
+        id: 'total-defects',
+        title: i18n.t('mes.mes_quality_pareto_page.k19'),
+        value: totalDefects,
+        color: 'error',
+      },
+      {
+        id: 'top-defect',
+        title: topDefect?.type ?? i18n.t('mes.mes_quality_pareto_page.k8'),
+        value: topDefect?.count ?? 0,
+        color: 'warning',
+      },
+      {
+        id: 'disposition-total',
+        title: i18n.t('mes.mes_quality_pareto_page.k24'),
+        value: dispositionTotal,
+        color: 'info',
+      },
+    ];
+  }, [data]);
+
+  const heatmapByDefect = useMemo(() => {
+    const map = new Map<string, number>();
+    data.heatmap.forEach((item) => {
+      map.set(item.defect_type, (map.get(item.defect_type) ?? 0) + item.count);
+    });
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [data.heatmap]);
+
+  const charts: ChartConfig[] = useMemo(
+    () => [
+      {
+        id: 'defect-pareto',
+        title: i18n.t('mes.analytics.qualityPareto.k0'),
+        type: 'bar',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: data.defect_types.map((item) => ({ name: item.type, value: item.count })),
+      },
+      {
+        id: 'defect-heatmap',
+        title: i18n.t('mes.analytics.qualityPareto.k1'),
+        type: 'bar',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: heatmapByDefect,
+      },
+      {
+        id: 'disposition-distribution',
+        title: i18n.t('mes.mes_quality_pareto_page.k24'),
+        type: 'pie',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: data.disposition.map((item) => ({ name: item.category, value: item.count })),
+        colors: DISPOSITION_COLORS,
+      },
+    ],
+    [data, heatmapByDefect]
+  );
+
+  const customToolbar = useMemo(
+    () => (
+      <FormControl
+        size='small'
+        sx={{ minWidth: 200 }}
+      >
+        <Select
           value={line}
           onChange={(e) => setLine(e.target.value)}
-          className='border rounded px-3 py-1.5 text-sm'
           aria-label={i18n.t('mes.mes_quality_pareto_page.k15')}
         >
-          <option value='all'>{i18n.t('mes.mes_quality_pareto_page.k16')}</option>
-          <option value='l1'>{i18n.t('mes.mes_quality_pareto_page.1_17')}</option>
-          <option value='l2'>{i18n.t('mes.mes_quality_pareto_page.2_18')}</option>
-        </select>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('mes.analytics.qualityPareto.k0')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={320}
-        >
-          <ComposedChart data={data.defect_types}>
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='type'
-              fontSize={11}
-              angle={-15}
-              textAnchor='end'
-              height={60}
-            />
-            <YAxis yAxisId='left' />
-            <YAxis
-              yAxisId='right'
-              orientation='right'
-              domain={[0, 100]}
-              unit='%'
-            />
-            <Tooltip />
-            <Legend />
-            <Bar
-              yAxisId='left'
-              dataKey='count'
-              name={i18n.t('mes.mes_quality_pareto_page.k19')}
-              fill={designTokens.colors.secondary.dark}
-              barSize={32}
-            />
-            <Line
-              yAxisId='right'
-              type='monotone'
-              dataKey='cumulative_pct'
-              name={i18n.t('mes.mes_quality_pareto_page.k20')}
-              stroke={designTokens.colors.error.main}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.analytics.qualityPareto.k1')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={280}
-          >
-            <ScatterChart>
-              <CartesianGrid />
-              <XAxis
-                dataKey='defect_type'
-                name={i18n.t('mes.mes_quality_pareto_page.k21')}
-                type='category'
-                fontSize={10}
-              />
-              <YAxis
-                dataKey='process'
-                name={i18n.t('mes.mes_quality_pareto_page.k22')}
-                type='category'
-                fontSize={10}
-              />
-              <ZAxis
-                dataKey='count'
-                range={[40, 360]}
-                name={i18n.t('mes.mes_quality_pareto_page.k23')}
-              />
-              <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-              <Scatter
-                data={data.heatmap}
-                fill={designTokens.colors.warning.main}
-              />
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('mes.mes_quality_pareto_page.k24')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={280}
-          >
-            <PieChart>
-              <Pie
-                data={data.disposition}
-                dataKey='count'
-                nameKey='category'
-                label
-                outerRadius={90}
-              >
-                {data.disposition.map((entry, idx) => (
-                  <Cell
-                    key={entry.category}
-                    fill={DISPOSITION_COLORS[idx % DISPOSITION_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
+          <MenuItem value='all'>{i18n.t('mes.mes_quality_pareto_page.k16')}</MenuItem>
+          <MenuItem value='l1'>{i18n.t('mes.mes_quality_pareto_page.1_17')}</MenuItem>
+          <MenuItem value='l2'>{i18n.t('mes.mes_quality_pareto_page.2_18')}</MenuItem>
+        </Select>
+      </FormControl>
+    ),
+    [line]
+  );
+
+  return (
+    <StatsPageTemplate
+      title={i18n.t('mes.mes_quality_pareto_page.pareto_14')}
+      statCards={statCards}
+      statColumns={3}
+      charts={charts}
+      chartColumns={{ xs: 1, md: 2 }}
+      customToolbar={customToolbar}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+    />
   );
 }

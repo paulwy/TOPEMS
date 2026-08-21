@@ -609,8 +609,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     );
   };
 
+  const hasCustomContent = Boolean(children);
+
   // 渲染加载状态
-  if (loading && statCards.length === 0 && charts.length === 0 && tables.length === 0) {
+  if (loading && statCards.length === 0 && charts.length === 0 && tables.length === 0 && !hasCustomContent) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         {/* 页面标题栏 */}
@@ -669,8 +671,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     );
   }
 
-  // 空状态
-  if (!loading && statCards.length === 0 && charts.length === 0 && tables.length === 0) {
+  // 空状态（有自定义内容时不应进入空状态）
+  if (!loading && statCards.length === 0 && charts.length === 0 && tables.length === 0 && !hasCustomContent) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <EmptyState

@@ -12,13 +12,47 @@
   "oa.approve": "Approval",
   "oa.reject": "Reject",
   "oa.forward": "Forward",
+  "oa.join": "Join",
+  "oa.leave": "Leave",
+  "oa.meeting_type.internal": "Internal",
+  "oa.meeting_type.external": "External",
+  "oa.meeting_type.recurring": "Recurring",
+  "oa.meeting_status.scheduled": "Scheduled",
+  "oa.meeting_status.in_progress": "In Progress",
+  "oa.meeting_status.completed": "Completed",
+  "oa.meeting_status.cancelled": "Cancelled",
   "oa.announcement_page.k0": "Announcements",
   "oa.dashboard_page.k0": "Office Automation Overview",
   "oa.dashboard_page.k1": "Office Automation Data Overview",
   "oa.dashboard_page.k2": "Quick Actions",
   "oa.document_management_page.k0": "Document Management",
+  "oa.document_management_page.k1": "ID",
+  "oa.document_management_page.k2": "Title",
+  "oa.document_management_page.k3": "Type",
+  "oa.document_management_page.k4": "Status",
+  "oa.document_management_page.k5": "Created At",
+  "oa.document_management_page.k6": "No documents",
+  "oa.document_management_page.k7": "The document list is empty; data will be shown once the backend API is ready.",
   "oa.meeting_management_page.k0": "Meeting Management",
+  "oa.meeting_management_page.k1": "Subject",
+  "oa.meeting_management_page.k2": "Type",
+  "oa.meeting_management_page.k3": "Status",
+  "oa.meeting_management_page.k4": "Start Time",
+  "oa.meeting_management_page.k5": "End Time",
+  "oa.meeting_management_page.k6": "Location",
+  "oa.meeting_management_page.k7": "Organizer",
+  "oa.meeting_management_page.k8": "Attendees",
+  "oa.meeting_management_page.k9": "Start Date",
+  "oa.meeting_management_page.k10": "End Date",
   "oa.vehicle_management_page.k0": "Vehicle Management",
+  "oa.vehicle_management_page.k1": "ID",
+  "oa.vehicle_management_page.k2": "Plate Number",
+  "oa.vehicle_management_page.k3": "Brand",
+  "oa.vehicle_management_page.k4": "Model",
+  "oa.vehicle_management_page.k5": "Status",
+  "oa.vehicle_management_page.k6": "Driver",
+  "oa.vehicle_management_page.k7": "No vehicles",
+  "oa.vehicle_management_page.k8": "The vehicle list is empty; data will be shown once the backend API is ready.",
   "oa": {
     "announcement_page": {
       "k0": "Announcements"
@@ -29,13 +63,38 @@
       "k2": "Quick Actions"
     },
     "document_management_page": {
-      "k0": "Document Management"
+      "k0": "Document Management",
+      "k1": "ID",
+      "k2": "Title",
+      "k3": "Type",
+      "k4": "Status",
+      "k5": "Created At",
+      "k6": "No documents",
+      "k7": "The document list is empty; data will be shown once the backend API is ready."
     },
     "meeting_management_page": {
-      "k0": "Meeting Management"
+      "k0": "Meeting Management",
+      "k1": "Subject",
+      "k2": "Type",
+      "k3": "Status",
+      "k4": "Start Time",
+      "k5": "End Time",
+      "k6": "Location",
+      "k7": "Organizer",
+      "k8": "Attendees",
+      "k9": "Start Date",
+      "k10": "End Date"
     },
     "vehicle_management_page": {
-      "k0": "Vehicle Management"
+      "k0": "Vehicle Management",
+      "k1": "ID",
+      "k2": "Plate Number",
+      "k3": "Brand",
+      "k4": "Model",
+      "k5": "Status",
+      "k6": "Driver",
+      "k7": "No vehicles",
+      "k8": "The vehicle list is empty; data will be shown once the backend API is ready."
     },
     "title": "Office Automation",
     "announcements": "Announcements",
@@ -49,6 +108,19 @@
     "submit": "Submit",
     "approve": "Approval",
     "reject": "Reject",
-    "forward": "Forward"
+    "forward": "Forward",
+    "join": "Join",
+    "leave": "Leave",
+    "meeting_type": {
+      "internal": "Internal",
+      "external": "External",
+      "recurring": "Recurring"
+    },
+    "meeting_status": {
+      "scheduled": "Scheduled",
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   }
 }

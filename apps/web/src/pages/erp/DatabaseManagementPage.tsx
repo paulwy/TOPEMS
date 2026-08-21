@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   Database,
   Table,
@@ -17,6 +18,8 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { PageContainer, StatusBadge, ConfirmDialog } from '@/components/common';
+import DataTable from '@/components/common/DataTable';
+import { Pagination } from '@topems/shared-components';
 import {
   Box,
   Typography,
@@ -42,12 +45,9 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
-  TablePagination,
   Tabs,
   Tab,
   LinearProgress,
-  Card,
-  CardContent,
   InputAdornment,
 } from '@mui/material';
 import { useNotificationStore } from '@/store';
@@ -158,7 +158,7 @@ const DatabaseManagementPage: React.FC = () => {
     enabled: activeTab === 'tables',
     staleTime: 5 * 60 * 1000,
   });
-  const tables = tablesQuery.data ?? [];
+  const tables = useMemo(() => tablesQuery.data ?? [], [tablesQuery.data]);
   const loading = tablesQuery.isLoading;
 
   const tableDetailQuery = useQuery<TableDetail | null>({
@@ -210,6 +210,19 @@ const DatabaseManagementPage: React.FC = () => {
     });
   }, [tables, searchQuery]);
 
+  const paginatedTables = useMemo(
+    () => filteredTables.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
+    [filteredTables, page, rowsPerPage]
+  );
+
+  const paginatedBackups = useMemo(
+    () => backups.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
+    [backups, page, rowsPerPage]
+  );
+
+  const tableTotalPages = Math.ceil(filteredTables.length / rowsPerPage);
+  const backupTotalPages = Math.ceil(backups.length / rowsPerPage);
+
   const handleViewStructure = useCallback((table: TableInfo) => {
     setCurrentTable(table);
     setShowStructureModal(true);
@@ -251,10 +264,10 @@ const DatabaseManagementPage: React.FC = () => {
     });
   };
 
-  const handleRestore = (backupId: string) => {
+  const handleRestore = useCallback((backupId: string) => {
     setRestoreBackupId(backupId);
     setShowRestoreModal(true);
-  };
+  }, []);
 
   const confirmRestore = async () => {
     setShowRestoreModal(false);
@@ -266,10 +279,10 @@ const DatabaseManagementPage: React.FC = () => {
     setRestoreBackupId(null);
   };
 
-  const handleDeleteBackup = (id: string) => {
+  const handleDeleteBackup = useCallback((id: string) => {
     setDeletingBackupId(id);
     setDeleteBackupDialogOpen(true);
-  };
+  }, []);
 
   const confirmDeleteBackup = async () => {
     if (!deletingBackupId) return;
@@ -280,7 +293,7 @@ const DatabaseManagementPage: React.FC = () => {
         message: i18n.t('pages.database_management_page.k17'),
         type: 'success',
       });
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       addNotification({
         title: i18n.t('pages.database_management_page.k19'),
         message: i18n.t('pages.database_management_page.k18'),
@@ -292,7 +305,7 @@ const DatabaseManagementPage: React.FC = () => {
     }
   };
 
-  const getBackupStatusBadge = (status: string) => {
+  const getBackupStatusBadge = useCallback((status: string) => {
     const badges: Record<
       string,
       { color: 'success' | 'error' | 'info' | 'default'; label: string; icon: React.ReactNode }
@@ -322,7 +335,7 @@ const DatabaseManagementPage: React.FC = () => {
         icon={config.icon}
       />
     );
-  };
+  }, []);
 
   const stats = useMemo(() => {
     return {
@@ -330,6 +343,186 @@ const DatabaseManagementPage: React.FC = () => {
       backupCount: backups.filter((b) => b.status === 'success').length,
     };
   }, [tables, backups]);
+
+  const tableListColumns = useMemo<ColumnDef<TableInfo>[]>(
+    () => [
+      {
+        accessorKey: 'table_name',
+        header: i18n.t('pages.database_management_page.k36'),
+        cell: ({ getValue }) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Table
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography
+              sx={{
+                fontWeight: 500,
+                color: 'primary.main',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+              }}
+            >
+              {String(getValue())}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'table_type',
+        header: i18n.t('pages.database_management_page.k37'),
+        cell: ({ getValue }) => (
+          <Chip
+            label={String(getValue())}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        header: i18n.t('pages.database_management_page.k4'),
+        cell: ({ row }) => (
+          <Box sx={{ textAlign: 'center' }}>
+            <Tooltip title={i18n.t('pages.database_management_page.k38')}>
+              <IconButton
+                size='small'
+                onClick={() => handleViewStructure(row.original)}
+                aria-label={i18n.t('pages.database_management_page.k39')}
+              >
+                <Eye size={16} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [handleViewStructure]
+  );
+
+  const backupListColumns = useMemo<ColumnDef<BackupRecord>[]>(
+    () => [
+      {
+        accessorKey: 'backup_name',
+        header: i18n.t('pages.database_management_page.k41'),
+        cell: ({ getValue }) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Database
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+              }}
+            >
+              {String(getValue())}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'backup_type',
+        header: i18n.t('pages.database_management_page.k42'),
+        cell: ({ row }) => (
+          <Chip
+            label={
+              row.original.backup_type === 'full'
+                ? i18n.t('pages.database_management_page.k49')
+                : i18n.t('pages.database_management_page.k48')
+            }
+            size='small'
+            color={row.original.backup_type === 'full' ? 'primary' : 'default'}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        accessorKey: 'filesize',
+        header: i18n.t('pages.database_management_page.k43'),
+      },
+      {
+        accessorKey: 'status',
+        header: i18n.t('pages.database_management_page.k44'),
+        cell: ({ row }) => getBackupStatusBadge(row.original.status),
+      },
+      {
+        accessorKey: 'created_by',
+        header: i18n.t('pages.database_management_page.k45'),
+      },
+      {
+        accessorKey: 'created_at',
+        header: i18n.t('pages.database_management_page.k46'),
+        cell: ({ getValue }) => (
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            {String(getValue())}
+          </Typography>
+        ),
+      },
+      {
+        accessorKey: 'remark',
+        header: i18n.t('pages.database_management_page.k47'),
+        cell: ({ getValue }) => (
+          <Typography
+            sx={{
+              maxWidth: 200,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: 'text.secondary',
+            }}
+          >
+            {(getValue() as string) || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'actions',
+        header: i18n.t('pages.database_management_page.k8'),
+        cell: ({ row }) => (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+            <Tooltip title={i18n.t('pages.database_management_page.k50')}>
+              <IconButton
+                size='small'
+                color='primary'
+                aria-label={i18n.t('pages.database_management_page.k51')}
+              >
+                <Download size={16} />
+              </IconButton>
+            </Tooltip>
+            {row.original.status === 'success' && (
+              <Tooltip title={i18n.t('pages.database_management_page.k52')}>
+                <IconButton
+                  size='small'
+                  color='warning'
+                  onClick={() => handleRestore(row.original.id)}
+                  aria-label={i18n.t('pages.database_management_page.k53')}
+                >
+                  <Upload size={16} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title={i18n.t('pages.database_management_page.k54')}>
+              <IconButton
+                size='small'
+                color='error'
+                onClick={() => handleDeleteBackup(row.original.id)}
+                aria-label={i18n.t('pages.database_management_page.k55')}
+              >
+                <Trash2 size={16} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [getBackupStatusBadge, handleRestore, handleDeleteBackup]
+  );
 
   return (
     <PageContainer
@@ -517,116 +710,35 @@ const DatabaseManagementPage: React.FC = () => {
               </FormControl>
             </Box>
 
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <>
-                <TableContainer>
-                  <MuiTable>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>
-                          {i18n.t('pages.database_management_page.k36')}
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>
-                          {i18n.t('pages.database_management_page.k37')}
-                        </TableCell>
-                        <TableCell
-                          align='center'
-                          sx={{ fontWeight: 'bold', width: 120 }}
-                        >
-                          {i18n.t('pages.database_management_page.k4')}
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredTables.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={3}
-                            sx={{ py: 8, textAlign: 'center' }}
-                          >
-                            <Database
-                              sx={{
-                                width: 48,
-                                height: 48,
-                                color: 'text.disabled',
-                                mx: 'auto',
-                                mb: 2,
-                              }}
-                            />
-                            <Typography
-                              variant='body1'
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {i18n.t('pages.database_management_page.k5')}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredTables.map((table) => (
-                          <TableRow
-                            key={table.table_name}
-                            hover
-                          >
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Table
-                                  size={16}
-                                  style={{ opacity: 0.5 }}
-                                />
-                                <Typography
-                                  sx={{
-                                    fontWeight: 500,
-                                    color: 'primary.main',
-                                    fontFamily: 'monospace',
-                                    fontSize: '0.875rem',
-                                  }}
-                                >
-                                  {table.table_name}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={table.table_type}
-                                size='small'
-                                variant='outlined'
-                              />
-                            </TableCell>
-                            <TableCell align='center'>
-                              <Tooltip title={i18n.t('pages.database_management_page.k38')}>
-                                <IconButton
-                                  size='small'
-                                  onClick={() => handleViewStructure(table)}
-                                  aria-label={i18n.t('pages.database_management_page.k39')}
-                                >
-                                  <Eye size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </MuiTable>
-                </TableContainer>
-                <TablePagination
-                  component='div'
-                  count={tables.length}
-                  page={page}
-                  onPageChange={(_, newPage) => setPage(newPage)}
-                  rowsPerPage={rowsPerPage}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
+            <DataTable<TableInfo, unknown>
+              data={paginatedTables}
+              columns={tableListColumns}
+              getRowKey={(row) => row.table_name}
+              loading={loading}
+              enablePagination={false}
+              showSearch={false}
+              showFilters={false}
+              showExport={false}
+              showCreate={false}
+              showRefresh={false}
+              showSelection={false}
+              emptyMessage={i18n.t('pages.database_management_page.k5')}
+            />
+
+            {filteredTables.length > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, py: 1 }}>
+                <Pagination
+                  page={page + 1}
+                  total={tableTotalPages}
+                  pageSize={rowsPerPage}
+                  totalItems={filteredTables.length}
+                  onChange={(newPage) => setPage(newPage - 1)}
+                  onPageSizeChange={(newPageSize) => {
+                    setRowsPerPage(newPageSize);
                     setPage(0);
                   }}
-                  rowsPerPageOptions={[10, 25, 50, 100]}
-                  labelRowsPerPage={i18n.t('pages.database_management_page.k40')}
                 />
-              </>
+              </Box>
             )}
           </>
         )}
@@ -663,168 +775,34 @@ const DatabaseManagementPage: React.FC = () => {
               </Button>
             </Box>
 
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress />
+            <DataTable<BackupRecord, unknown>
+              data={paginatedBackups}
+              columns={backupListColumns}
+              loading={false}
+              enablePagination={false}
+              showSearch={false}
+              showFilters={false}
+              showExport={false}
+              showCreate={false}
+              showRefresh={false}
+              showSelection={false}
+              emptyMessage={i18n.t('pages.database_management_page.k9')}
+            />
+
+            {backups.length > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, py: 1 }}>
+                <Pagination
+                  page={page + 1}
+                  total={backupTotalPages}
+                  pageSize={rowsPerPage}
+                  totalItems={backups.length}
+                  onChange={(newPage) => setPage(newPage - 1)}
+                  onPageSizeChange={(newPageSize) => {
+                    setRowsPerPage(newPageSize);
+                    setPage(0);
+                  }}
+                />
               </Box>
-            ) : (
-              <TableContainer>
-                <MuiTable>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k41')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k42')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k43')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k44')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k45')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k46')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        {i18n.t('pages.database_management_page.k47')}
-                      </TableCell>
-                      <TableCell
-                        align='center'
-                        sx={{ fontWeight: 'bold', width: 160 }}
-                      >
-                        {i18n.t('pages.database_management_page.k8')}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {backups.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={8}
-                          sx={{ py: 8, textAlign: 'center' }}
-                        >
-                          <Download
-                            sx={{
-                              width: 48,
-                              height: 48,
-                              color: 'text.disabled',
-                              mx: 'auto',
-                              mb: 2,
-                            }}
-                          />
-                          <Typography
-                            variant='body1'
-                            sx={{ color: 'text.secondary' }}
-                          >
-                            {i18n.t('pages.database_management_page.k9')}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      backups.map((backup) => (
-                        <TableRow
-                          key={backup.id}
-                          hover
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Database
-                                size={16}
-                                style={{ opacity: 0.5 }}
-                              />
-                              <Typography
-                                sx={{
-                                  fontWeight: 500,
-                                  fontFamily: 'monospace',
-                                  fontSize: '0.875rem',
-                                }}
-                              >
-                                {backup.backup_name}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={
-                                backup.backup_type === 'full'
-                                  ? i18n.t('pages.database_management_page.k49')
-                                  : i18n.t('pages.database_management_page.k48')
-                              }
-                              size='small'
-                              color={backup.backup_type === 'full' ? 'primary' : 'default'}
-                              variant='outlined'
-                            />
-                          </TableCell>
-                          <TableCell>{backup.filesize}</TableCell>
-                          <TableCell>{getBackupStatusBadge(backup.status)}</TableCell>
-                          <TableCell>{backup.created_by}</TableCell>
-                          <TableCell>
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {backup.created_at}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography
-                              sx={{
-                                maxWidth: 200,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                color: 'text.secondary',
-                              }}
-                            >
-                              {backup.remark || '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align='center'>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                              <Tooltip title={i18n.t('pages.database_management_page.k50')}>
-                                <IconButton
-                                  size='small'
-                                  color='primary'
-                                  aria-label={i18n.t('pages.database_management_page.k51')}
-                                >
-                                  <Download size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              {backup.status === 'success' && (
-                                <Tooltip title={i18n.t('pages.database_management_page.k52')}>
-                                  <IconButton
-                                    size='small'
-                                    color='warning'
-                                    onClick={() => handleRestore(backup.id)}
-                                    aria-label={i18n.t('pages.database_management_page.k53')}
-                                  >
-                                    <Upload size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              <Tooltip title={i18n.t('pages.database_management_page.k54')}>
-                                <IconButton
-                                  size='small'
-                                  color='error'
-                                  onClick={() => handleDeleteBackup(backup.id)}
-                                  aria-label={i18n.t('pages.database_management_page.k55')}
-                                >
-                                  <Trash2 size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </MuiTable>
-              </TableContainer>
             )}
           </>
         )}

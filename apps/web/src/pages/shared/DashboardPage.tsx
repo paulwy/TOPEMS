@@ -41,20 +41,19 @@ import { scmApi } from '@/api/scm';
 import { getDashboard, completeTodoGql, subscribeServiceHealth } from '@/api/bff';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
-import { MetricCard } from '@/components/bi/MetricCard';
+import { DashboardTemplate, type StatCardConfig } from '@/components/templates';
 import {
   DashboardQuickActions,
   defaultQuickActions,
   ServiceStatusMonitor,
   RecentActivities,
   type ActivityItem,
-  DashboardSection,
   QuickAccessSection,
   TodoListSection,
   ServiceMonitorSection,
   RecentActivitySection,
 } from '@/components/dashboard';
-import { PageContainer, EmptyState } from '@/components/common';
+import { EmptyState } from '@/components/common';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -84,9 +83,10 @@ interface AuditLog {
   created_at: string;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout: _onLogout }) => {
   const navigate = useNavigate();
-  const { user, logout: authLogout, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  void _onLogout;
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
   const queryClient = useQueryClient();
 
@@ -307,17 +307,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     docCount: 0,
     notificationCount: 0,
   };
-  const moduleStats = moduleStatsQuery.data ?? {
+  // 保留业务数据查询：模块统计与图表数据用于缓存预热 / 后续扩展，当前阶段不直接渲染
+  const _moduleStats = moduleStatsQuery.data ?? {
     qms: { total: 0, active: 0 },
     ehs: { total: 0, active: 0 },
     srm: { total: 0, active: 0 },
     lims: { total: 0, active: 0 },
     rs: { total: 0, active: 0 },
   };
-  const chartData = chartDataQuery.data ?? {
+  const _chartData = chartDataQuery.data ?? {
     moduleDistribution: [] as { name: string; value: number; color: string }[],
     monthlyTrend: [] as { name: string; value: number }[],
   };
+  void _moduleStats;
+  void _chartData;
   const recentActivities = activitiesQuery.data ?? [];
   // V34.0: 从 BFF GraphQL 数据中派生待办列表（保留原始 string id 供 mutation 使用）
   const todos: Array<{ id: string; title: string; type: string; done: boolean }> = (
@@ -394,12 +397,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return unsubscribe;
   }, [isAuthenticated, refreshServiceStatuses]);
 
-  const handleLogout = useCallback(() => {
-    authLogout();
-    navigate(AUTH_PATHS.login);
-    onLogout?.();
-  }, [authLogout, navigate, onLogout]);
-
   const handleQuickAccess = useCallback(
     (path: string) => {
       navigate(path);
@@ -423,25 +420,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         apiLogger[logLvl](i18n.t('pages.dashboard_page.bffmutation_11'), err);
       }
     },
-    [queryClient]
+    [queryClient, logLvl]
   );
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>
-          {i18n.t('pages.dashboard_page.k12')}
-        </Typography>
-      </Box>
-    );
-  }
 
   const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
 
@@ -468,238 +448,251 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   };
 
-  return (
-    <PageContainer
-      autoTitle={false}
-      autoBreadcrumbs={false}
-      sx={{ bgcolor: 'background.default' }}
-    >
-      <Box sx={{ width: '100%' }}>
-        {/* 欢迎标题 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            sx={{
-              fontSize: { xs: '1.5rem', md: '1.875rem' },
-              fontWeight: 700,
-              color: 'text.primary',
-              mb: 1,
-            }}
-          >
-            👋 {i18n.t('pages.dashboard_page.k0')}
-            {user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
-          </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
-            {getGreeting()}
-            {i18n.t('pages.dashboard_page.k0')} {pendingTodos.length}{' '}
-            {i18n.t('pages.dashboard_page.k1')}
+  const statCards: StatCardConfig[] = [
+    {
+      title: i18n.t('pages.dashboard_page.k8'),
+      value: String(onlineServices),
+      icon: <Activity size={24} />,
+      color: 'success',
+      trend: { value: onlineServices > 5 ? 10 : -5 },
+      loading,
+    },
+    {
+      title: i18n.t('pages.dashboard_page.k9'),
+      value: String(stats.fileCount),
+      icon: <FileText size={24} />,
+      color: 'secondary',
+      trend: { value: 8 },
+      loading,
+    },
+    {
+      title: i18n.t('pages.dashboard_page.k10'),
+      value: String(stats.workflowCount),
+      icon: <GitBranch size={24} />,
+      color: 'warning',
+      trend: { value: -3 },
+      loading,
+    },
+    {
+      title: i18n.t('pages.dashboard_page.k11'),
+      value: String(pendingTodos.length),
+      icon: <Clock size={24} />,
+      color: 'primary',
+      loading,
+    },
+  ];
+
+  if (loading) {
+    return (
+      <DashboardTemplate
+        title={i18n.t('pages.dashboard_page.k0')}
+        subtitle={getGreeting()}
+        statCards={statCards}
+      >
+        <Box
+          sx={{
+            minHeight: 200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>
+            {i18n.t('pages.dashboard_page.k12')}
           </Typography>
         </Box>
+      </DashboardTemplate>
+    );
+  }
 
-        {/* 今日概览分区 */}
-        <DashboardSection
-          title={i18n.t('pages.dashboard_page.k7')}
-          sx={{ mb: 3 }}
+  return (
+    <DashboardTemplate
+      title={i18n.t('pages.dashboard_page.k0')}
+      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k0')} ${pendingTodos.length} ${i18n.t('pages.dashboard_page.k1')}`}
+      statCards={statCards}
+    >
+      {/* 欢迎标题 */}
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          sx={{
+            fontSize: { xs: '1.5rem', md: '1.875rem' },
+            fontWeight: 700,
+            color: 'text.primary',
+            mb: 1,
+          }}
         >
-          <Box
+          {i18n.t('pages.dashboard_page.k0')}
+          {user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
+          {getGreeting()}
+          {i18n.t('pages.dashboard_page.k0')} {pendingTodos.length}{' '}
+          {i18n.t('pages.dashboard_page.k1')}
+        </Typography>
+      </Box>
+
+      {/* 快捷入口分区 */}
+      <QuickAccessSection defaultExpanded={true}>
+        <DashboardQuickActions
+          quickActions={defaultQuickActions}
+          serviceStatuses={serviceStatuses}
+          onQuickAccess={handleQuickAccess}
+        />
+      </QuickAccessSection>
+
+      {/* 待办事项分区 */}
+      <TodoListSection>
+        <Box sx={{ mb: 2 }}>
+          <Tabs
+            value={todoTab}
+            onChange={(_, v) => setTodoTab(v)}
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-              gap: { xs: 2, md: 3 },
+              minHeight: 36,
+              '& .MuiTabs-indicator': {
+                bgcolor: 'primary.main',
+              },
             }}
           >
-            <MetricCard
-              title={i18n.t('pages.dashboard_page.k8')}
-              value={String(onlineServices)}
-              icon={<Activity size={24} />}
-              color='green'
-              change={onlineServices > 5 ? 10 : -5}
+            <Tab
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ListTodo size={16} />
+                  <Typography sx={{ fontSize: '0.875rem' }}>
+                    {i18n.t('pages.dashboard_page.k12')}
+                  </Typography>
+                  <Badge
+                    badgeContent={pendingTodos.length}
+                    color='primary'
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              }
+              sx={{ minHeight: 36, py: 1 }}
             />
-            <MetricCard
-              title={i18n.t('pages.dashboard_page.k9')}
-              value={String(stats.fileCount)}
-              icon={<FileText size={24} />}
-              color='purple'
-              change={8}
+            <Tab
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircle size={16} />
+                  <Typography sx={{ fontSize: '0.875rem' }}>
+                    {i18n.t('pages.dashboard_page.k13')}
+                  </Typography>
+                  <Badge
+                    badgeContent={completedTodos.length}
+                    color='success'
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              }
+              sx={{ minHeight: 36, py: 1 }}
             />
-            <MetricCard
-              title={i18n.t('pages.dashboard_page.k10')}
-              value={String(stats.workflowCount)}
-              icon={<GitBranch size={24} />}
-              color='orange'
-              change={-3}
-            />
-            <MetricCard
-              title={i18n.t('pages.dashboard_page.k11')}
-              value={String(pendingTodos.length)}
-              icon={<Clock size={24} />}
-              color='blue'
-            />
-          </Box>
-        </DashboardSection>
-
-        {/* 快捷入口分区 */}
-        <QuickAccessSection defaultExpanded={true}>
-          <DashboardQuickActions
-            quickActions={defaultQuickActions}
-            serviceStatuses={serviceStatuses}
-            onQuickAccess={handleQuickAccess}
-          />
-        </QuickAccessSection>
-
-        {/* 待办事项分区 */}
-        <TodoListSection>
-          <Box sx={{ mb: 2 }}>
-            <Tabs
-              value={todoTab}
-              onChange={(_, v) => setTodoTab(v)}
-              sx={{
-                minHeight: 36,
-                '& .MuiTabs-indicator': {
-                  bgcolor: 'primary.main',
-                },
-              }}
-            >
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ListTodo size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>
-                      {i18n.t('pages.dashboard_page.k12')}
-                    </Typography>
-                    <Badge
-                      badgeContent={pendingTodos.length}
-                      color='primary'
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-                }
-                sx={{ minHeight: 36, py: 1 }}
-              />
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircle size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>
-                      {i18n.t('pages.dashboard_page.k13')}
-                    </Typography>
-                    <Badge
-                      badgeContent={completedTodos.length}
-                      color='success'
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-                }
-                sx={{ minHeight: 36, py: 1 }}
-              />
-            </Tabs>
-          </Box>
-          <List sx={{ py: 0 }}>
-            {(todoTab === 0 ? pendingTodos : completedTodos).length > 0 ? (
-              (todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
-                <ListItem
-                  key={todo.id}
+          </Tabs>
+        </Box>
+        <List sx={{ py: 0 }}>
+          {(todoTab === 0 ? pendingTodos : completedTodos).length > 0 ? (
+            (todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
+              <ListItem
+                key={todo.id}
+                sx={{
+                  px: 0,
+                  borderBottom: '1px solid',
+                  borderColor: 'grey.100',
+                  '&:last-child': { borderBottom: 'none' },
+                }}
+              >
+                <ListItemButton
                   sx={{
-                    px: 0,
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.100',
-                    '&:last-child': { borderBottom: 'none' },
+                    borderRadius: 1,
+                    '&:hover': { bgcolor: 'grey.50' },
                   }}
                 >
-                  <ListItemButton
-                    sx={{
-                      borderRadius: 1,
-                      '&:hover': { bgcolor: 'grey.50' },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <Checkbox
-                        checked={todo.done}
-                        onChange={() => handleTodoToggle(todo.id)}
-                        size='small'
-                        sx={{
-                          color: 'grey.400',
-                          '&.Mui-checked': { color: 'success.main' },
-                        }}
-                      />
-                    </ListItemIcon>
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <Box
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: todo.done ? 'grey.100' : 'primary.50',
-                          color: todo.done ? 'grey.500' : 'primary.main',
-                        }}
-                      >
-                        {getTodoIcon(todo.type)}
-                      </Box>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={todo.title}
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Checkbox
+                      checked={todo.done}
+                      onChange={() => handleTodoToggle(todo.id)}
+                      size='small'
                       sx={{
-                        '& .MuiListItemText-primary': {
-                          fontSize: '0.875rem',
-                          color: todo.done ? 'grey.500' : 'grey.900',
-                          textDecoration: todo.done ? 'line-through' : 'none',
-                        },
+                        color: 'grey.400',
+                        '&.Mui-checked': { color: 'success.main' },
                       }}
                     />
-                  </ListItemButton>
-                </ListItem>
-              ))
-            ) : (
-              <EmptyState
-                height={180}
-                title={
-                  todoTab === 0
-                    ? i18n.t('pages.dashboard_page.k15')
-                    : i18n.t('pages.dashboard_page.k14')
-                }
-                description={
-                  todoTab === 0
-                    ? i18n.t('pages.dashboard_page.k17')
-                    : i18n.t('pages.dashboard_page.k16')
-                }
-                sx={{ border: 'none', bgcolor: 'transparent' }}
-              />
-            )}
-          </List>
-        </TodoListSection>
+                  </ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: todo.done ? 'grey.100' : 'primary.50',
+                        color: todo.done ? 'grey.500' : 'primary.main',
+                      }}
+                    >
+                      {getTodoIcon(todo.type)}
+                    </Box>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={todo.title}
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        fontSize: '0.875rem',
+                        color: todo.done ? 'grey.500' : 'grey.900',
+                        textDecoration: todo.done ? 'line-through' : 'none',
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))
+          ) : (
+            <EmptyState
+              height={180}
+              title={
+                todoTab === 0
+                  ? i18n.t('pages.dashboard_page.k15')
+                  : i18n.t('pages.dashboard_page.k14')
+              }
+              description={
+                todoTab === 0
+                  ? i18n.t('pages.dashboard_page.k17')
+                  : i18n.t('pages.dashboard_page.k16')
+              }
+              sx={{ border: 'none', bgcolor: 'transparent' }}
+            />
+          )}
+        </List>
+      </TodoListSection>
 
-        {/* 服务状态监测分区 */}
-        <ServiceMonitorSection
-          collapsible={true}
-          defaultExpanded={false}
-        >
-          <ServiceStatusMonitor
-            serviceStatuses={serviceStatuses}
-            onRefresh={refreshServiceStatuses}
-          />
-        </ServiceMonitorSection>
+      {/* 服务状态监测分区 */}
+      <ServiceMonitorSection
+        collapsible={true}
+        defaultExpanded={false}
+      >
+        <ServiceStatusMonitor
+          serviceStatuses={serviceStatuses}
+          onRefresh={refreshServiceStatuses}
+        />
+      </ServiceMonitorSection>
 
-        {/* 最近活动分区 */}
-        <RecentActivitySection
-          headerRight={
-            <Typography
-              sx={{
-                fontSize: '0.875rem',
-                color: 'primary.main',
-                cursor: 'pointer',
-                '&:hover': { color: 'primary.dark' },
-              }}
-            >
-              {i18n.t('pages.dashboard_page.k1')}
-            </Typography>
-          }
-        >
-          <RecentActivities activities={recentActivities} />
-        </RecentActivitySection>
-      </Box>
-    </PageContainer>
+      {/* 最近活动分区 */}
+      <RecentActivitySection
+        headerRight={
+          <Typography
+            sx={{
+              fontSize: '0.875rem',
+              color: 'primary.main',
+              cursor: 'pointer',
+              '&:hover': { color: 'primary.dark' },
+            }}
+          >
+            {i18n.t('pages.dashboard_page.k1')}
+          </Typography>
+        }
+      >
+        <RecentActivities activities={recentActivities} />
+      </RecentActivitySection>
+    </DashboardTemplate>
   );
 };
 

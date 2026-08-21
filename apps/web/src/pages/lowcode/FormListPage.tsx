@@ -1,296 +1,250 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
-  Typography,
 } from '@mui/material';
-import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Eye as VisibilityIcon } from 'lucide-react';
-import { lowcodeFormsApi } from '@/api/lowcode';
-import type { LowcodeForm } from '@/api/lowcode';
-import { PageContainer } from '@/components/common';
+import { Eye, Play } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { ColumnDef, RowAction } from '@/components/templates/list';
+import type { CrudOperations } from '@/hooks';
+import { lowcodeFormsApi } from '@/api/lowcode';
+import type { LowcodeForm, CreateLowcodeFormRequest } from '@/api/lowcode';
+import { useNotificationStore } from '@/store';
 
-export const FormListPage: React.FC = () => {
+const QUERY_KEY = 'lowcode-forms';
+
+const lowcodeFormCrudApi: CrudOperations<LowcodeForm> = {
+  list: (params) => {
+    const { page, pagesize, keyword, ...rest } = params ?? {};
+    return lowcodeFormsApi.list({
+      page: typeof page === 'number' ? page : undefined,
+      pageSize: typeof pagesize === 'number' ? pagesize : undefined,
+      search: typeof keyword === 'string' ? keyword : undefined,
+      ...rest,
+    }) as ReturnType<CrudOperations<LowcodeForm>['list']>;
+  },
+  get: (id) => lowcodeFormsApi.get(id) as ReturnType<CrudOperations<LowcodeForm>['get']>,
+  create: (data) =>
+    lowcodeFormsApi.create(data as CreateLowcodeFormRequest) as ReturnType<
+      CrudOperations<LowcodeForm>['create']
+    >,
+  update: (id, data) =>
+    lowcodeFormsApi.update(id, data as Partial<LowcodeForm>) as ReturnType<
+      CrudOperations<LowcodeForm>['update']
+    >,
+  delete: async (id) => {
+    const response = await lowcodeFormsApi.remove(id);
+    return {
+      success: response.success,
+      code: response.code,
+      message: response.message,
+      data: id,
+    };
+  },
+};
+
+export function FormListPage() {
   const { t } = useTranslation('lowcode');
-  const [forms, setForms] = useState<LowcodeForm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotificationStore();
   const [previewForm, setPreviewForm] = useState<LowcodeForm | null>(null);
-  const [createForm, setCreateForm] = useState({
-    app_id: '',
-    code: '',
-    name: '',
-    description: '',
-  });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await lowcodeFormsApi.list({ page: 1, pageSize: 100 });
-      setForms(res.data?.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k0'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const columns = useMemo<ColumnDef<LowcodeForm>[]>(
+    () => [
+      { id: 'name', label: t('lowcode.form_list_page.k7'), minWidth: 160 },
+      { id: 'code', label: t('lowcode.form_list_page.k8'), minWidth: 120 },
+      {
+        id: 'fields',
+        label: t('lowcode.form_list_page.k9'),
+        width: 100,
+        render: (row) => row.fields?.length ?? 0,
+      },
+      {
+        id: 'status',
+        label: t('lowcode.form_list_page.k10'),
+        width: 120,
+        render: (row) => (
+          <Chip
+            size='small'
+            label={row.status}
+            color={row.status === 'published' ? 'success' : 'default'}
+          />
+        ),
+      },
+      {
+        id: 'version',
+        label: t('lowcode.form_list_page.k11'),
+        width: 80,
+        render: (row) => `v${row.version}`,
+      },
+    ],
+    [t]
+  );
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const handlePublish = useCallback(
+    async (row: LowcodeForm) => {
+      try {
+        const response = await lowcodeFormsApi.publish(row.id);
+        if (!response.success) {
+          throw new Error(response.message || t('lowcode.form_list_page.k4'));
+        }
+        addNotification({
+          type: 'success',
+          title: t('lowcode.form_list_page.k16'),
+          message: t('lowcode.form_list_page.k16'),
+        });
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEY, 'list'],
+          exact: false,
+          refetchType: 'active',
+        });
+      } catch (err) {
+        addNotification({
+          type: 'error',
+          title: t('lowcode.form_list_page.k4'),
+          message: err instanceof Error ? err.message : t('lowcode.form_list_page.k4'),
+        });
+      }
+    },
+    [queryClient, addNotification, t]
+  );
 
-  const handleCreate = async () => {
-    if (!createForm.app_id || !createForm.code || !createForm.name) return;
-    setCreating(true);
-    try {
-      await lowcodeFormsApi.create({
-        app_id: createForm.app_id,
-        code: createForm.code,
-        name: createForm.name,
-        description: createForm.description || undefined,
-      });
-      setCreateOpen(false);
-      setCreateForm({ app_id: '', code: '', name: '', description: '' });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k1'));
-    } finally {
-      setCreating(false);
-    }
-  };
+  const handlePreview = useCallback(
+    async (row: LowcodeForm) => {
+      try {
+        const res = await lowcodeFormsApi.preview(row.id);
+        setPreviewForm(res.data ?? null);
+      } catch (err) {
+        addNotification({
+          type: 'error',
+          title: t('lowcode.form_list_page.k3'),
+          message: err instanceof Error ? err.message : t('lowcode.form_list_page.k3'),
+        });
+      }
+    },
+    [addNotification, t]
+  );
 
-  const handleDelete = async (id: string) => {
-    try {
-      await lowcodeFormsApi.remove(id);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k2'));
-    }
-  };
+  const customRowActions: RowAction<LowcodeForm>[] = useMemo(
+    () => [
+      {
+        key: 'preview',
+        label: t('lowcode.form_list_page.k14'),
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          void handlePreview(row);
+        },
+      },
+      {
+        key: 'publish',
+        label: t('lowcode.form_list_page.k16'),
+        icon: <Play size={16} />,
+        color: 'success',
+        onClick: (row) => {
+          void handlePublish(row);
+        },
+      },
+    ],
+    [handlePreview, handlePublish, t]
+  );
 
-  const handlePreview = async (id: string) => {
-    try {
-      const res = await lowcodeFormsApi.preview(id);
-      setPreviewForm(res.data ?? null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k3'));
-    }
-  };
-
-  const handlePublish = async (id: string) => {
-    try {
-      await lowcodeFormsApi.publish(id);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k4'));
-    }
-  };
+  const formFields = useMemo(
+    () => [
+      {
+        key: 'app_id',
+        label: t('lowcode.form_list_page.id_19'),
+        type: 'text' as const,
+        required: true,
+      },
+      {
+        key: 'code',
+        label: t('lowcode.form_list_page.k20'),
+        type: 'text' as const,
+        required: true,
+        render: ({
+          value,
+          onChange,
+          mode,
+        }: {
+          value: unknown;
+          onChange: (value: unknown) => void;
+          mode: 'create' | 'edit' | 'view';
+        }) => (
+          <TextField
+            fullWidth
+            size='small'
+            label={t('lowcode.form_list_page.k20')}
+            value={value ?? ''}
+            onChange={(e) => onChange(e.target.value)}
+            required
+            disabled={mode !== 'create'}
+            helperText={mode === 'create' ? t('lowcode.form_list_page.k21') : undefined}
+          />
+        ),
+      },
+      {
+        key: 'name',
+        label: t('lowcode.form_list_page.k22'),
+        type: 'text' as const,
+        required: true,
+      },
+      {
+        key: 'description',
+        label: t('lowcode.form_list_page.k23'),
+        type: 'textarea' as const,
+        rows: 2,
+      },
+    ],
+    [t]
+  );
 
   return (
-    <PageContainer title={t('lowcode.form_list_page.k5')}>
-      <Box sx={{ p: 3 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          <Typography variant='h5'>{t('lowcode.form_list_page.k6')}</Typography>
-          <Button
-            variant='contained'
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
-          >
-            {t('lowcode.form_list_page.e1')}
-          </Button>
-        </Stack>
-
-        {error && (
-          <Typography
-            color='error'
-            variant='body2'
-            sx={{ mb: 1 }}
-          >
-            {error}
-          </Typography>
-        )}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
+    <>
+      <ListPageTemplate<LowcodeForm>
+        title={t('lowcode.form_list_page.k5')}
+        columns={columns}
+        data={[]}
+        emptyMessage={t('lowcode.form_list_page.e2')}
+        crud={{
+          api: lowcodeFormCrudApi,
+          queryKey: QUERY_KEY,
+          entityName: t('lowcode.form_list_page.k5'),
+          createButtonText: t('lowcode.form_list_page.e1'),
+          formFields,
+          formColCount: 1,
+          rowActions: customRowActions,
+        }}
+      />
+      <Dialog
+        open={!!previewForm}
+        onClose={() => setPreviewForm(null)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>{t('lowcode.form_list_page.r2', { v1: previewForm?.name })}</DialogTitle>
+        <DialogContent>
+          <Paper
             variant='outlined'
+            sx={{ p: 2 }}
+            component='pre'
           >
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('lowcode.form_list_page.k7')}</TableCell>
-                  <TableCell>{t('lowcode.form_list_page.k8')}</TableCell>
-                  <TableCell>{t('lowcode.form_list_page.k9')}</TableCell>
-                  <TableCell>{t('lowcode.form_list_page.k10')}</TableCell>
-                  <TableCell>{t('lowcode.form_list_page.k11')}</TableCell>
-                  <TableCell align='right'>{t('lowcode.form_list_page.k12')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {forms.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      align='center'
-                    >
-                      {t('lowcode.form_list_page.e2')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  forms.map((f) => (
-                    <TableRow key={f.id}>
-                      <TableCell>{f.name}</TableCell>
-                      <TableCell>{f.code}</TableCell>
-                      <TableCell>{f.fields?.length ?? 0}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size='small'
-                          label={f.status}
-                          color={f.status === 'published' ? 'success' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell>v{f.version}</TableCell>
-                      <TableCell align='right'>
-                        <IconButton
-                          size='small'
-                          onClick={() => handlePreview(f.id)}
-                          aria-label={t('lowcode.form_list_page.k13')}
-                          title={t('lowcode.form_list_page.k14')}
-                        >
-                          <VisibilityIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          color='success'
-                          onClick={() => handlePublish(f.id)}
-                          aria-label={t('lowcode.form_list_page.k15')}
-                          title={t('lowcode.form_list_page.k16')}
-                        >
-                          <AddIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={() => handleDelete(f.id)}
-                          aria-label={t('lowcode.form_list_page.k17')}
-                        >
-                          <DeleteOutlineIcon size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        <Dialog
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          maxWidth='sm'
-          fullWidth
-        >
-          <DialogTitle>{t('lowcode.form_list_page.k18')}</DialogTitle>
-          <DialogContent>
-            <Stack
-              spacing={2}
-              sx={{ mt: 1 }}
-            >
-              <TextField
-                label={t('lowcode.form_list_page.id_19')}
-                value={createForm.app_id}
-                onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label={t('lowcode.form_list_page.k20')}
-                value={createForm.code}
-                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
-                fullWidth
-                required
-                helperText={t('lowcode.form_list_page.k21')}
-              />
-              <TextField
-                label={t('lowcode.form_list_page.k22')}
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label={t('lowcode.form_list_page.k23')}
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>{t('lowcode.form_list_page.k24')}</Button>
-            <Button
-              onClick={handleCreate}
-              variant='contained'
-              disabled={creating || !createForm.app_id || !createForm.code || !createForm.name}
-            >
-              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.form_list_page.k25')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={!!previewForm}
-          onClose={() => setPreviewForm(null)}
-          maxWidth='md'
-          fullWidth
-        >
-          <DialogTitle>{t('lowcode.form_list_page.r2', { v1: previewForm?.name })}</DialogTitle>
-          <DialogContent>
-            <Paper
-              variant='outlined'
-              sx={{ p: 2 }}
-              component='pre'
-            >
-              {JSON.stringify(previewForm, null, 2)}
-            </Paper>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setPreviewForm(null)}>{t('lowcode.form_list_page.k26')}</Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </PageContainer>
+            {JSON.stringify(previewForm, null, 2)}
+          </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewForm(null)}>{t('lowcode.form_list_page.k26')}</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
-};
+}
 
 export default FormListPage;

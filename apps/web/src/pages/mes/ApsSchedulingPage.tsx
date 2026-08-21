@@ -1,56 +1,58 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Grid,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
+  Grid,
   Chip,
   LinearProgress,
   Alert,
-  Tabs,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { PageContainer } from '@/components/common';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
-import { Brain, Play, CheckCircle, XCircle, TrendingUp, Gauge, Zap, BarChart3 } from 'lucide-react';
-import { designTokens, semanticTokens } from '@topems/tokens';
-import type {
-  ApsScheduleResult,
-  ApsScheduleItem,
-  OptimizationReport,
-  BottleneckAnalysis,
-  ConstraintCheckResult,
-} from '@/api/mes';
+import {
+  Brain,
+  Play,
+  CheckCircle,
+  XCircle,
+  TrendingUp,
+  Gauge,
+  Zap,
+  BarChart3,
+  Eye,
+} from 'lucide-react';
+import { designTokens } from '@topems/tokens';
+import type { ApsScheduleResult, ApsScheduleItem } from '@/api/mes';
 import { apsApi } from '@/api/mes';
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type {
+  StatCard,
+  ChartConfig,
+  DataTable,
+  TabItem,
+} from '@/components/templates/StatsPageTemplate';
+
+const ct = designTokens.colors;
+
+type TabValue = 'schedule' | 'optimization' | 'bottleneck';
+type Strategy = 'forward' | 'backward' | 'bidirectional' | 'bottleneck_driven';
 
 const riskColorMap: Record<string, string> = {
-  low: designTokens.colors.success.main,
-  medium: designTokens.colors.warning.main,
-  high: 'colors.error.main',
-  critical: designTokens.colors.purple['500'],
+  low: ct.success.main,
+  medium: ct.warning.main,
+  high: ct.error.main,
+  critical: ct.purple['500'],
 };
 
 const riskLabelMap: Record<string, string> = {
@@ -60,12 +62,17 @@ const riskLabelMap: Record<string, string> = {
   critical: i18n.t('pages.aps_scheduling_page.k3'),
 };
 
+const strategyInfoMap: Record<Strategy, string> = {
+  forward: i18n.t('pages.aps_scheduling_page.k6'),
+  backward: i18n.t('pages.aps_scheduling_page.k7'),
+  bidirectional: i18n.t('pages.aps_scheduling_page.k8'),
+  bottleneck_driven: i18n.t('pages.aps_scheduling_page.k9'),
+};
+
 const ApsSchedulingPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
-  const [activeTab, setActiveTab] = useState(0);
-  const [strategy, setStrategy] = useState<
-    'forward' | 'backward' | 'bidirectional' | 'bottleneck_driven'
-  >('forward');
+  const [activeTab, setActiveTab] = useState<TabValue>('schedule');
+  const [strategy, setStrategy] = useState<Strategy>('forward');
   const [scheduleResult, setScheduleResult] = useState<ApsScheduleResult | null>(null);
   const [selectedItem, setSelectedItem] = useState<ApsScheduleItem | null>(null);
 
@@ -112,800 +119,667 @@ const ApsSchedulingPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleRunSchedule = () => {
+  const handleRunSchedule = useCallback(() => {
     scheduleMutation.mutate({
       strategy,
       overwrite_existing: true,
     });
-  };
+  }, [scheduleMutation, strategy]);
 
-  const handleSimulate = () => {
+  const handleSimulate = useCallback(() => {
     addNotification({
       type: 'info',
       title: i18n.t('pages.aps_scheduling_page.k8'),
       message: i18n.t('pages.aps_scheduling_page.k9'),
     });
-  };
+  }, [addNotification]);
 
   const report = optimizationReport?.data;
   const bottleneck = bottleneckAnalysis?.data;
 
-  return (
-    <PageContainer
-      title={i18n.t('pages.aps_scheduling_page.aps_2')}
-      subtitle={i18n.t('pages.aps_scheduling_page.k10')}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-        >
-          <Tab
-            icon={<Brain size={16} />}
-            iconPosition='start'
-            label={i18n.t('pages.aps_scheduling_page.k11')}
-          />
-          <Tab
-            icon={<BarChart3 size={16} />}
-            iconPosition='start'
-            label={i18n.t('pages.aps_scheduling_page.k12')}
-          />
-          <Tab
-            icon={<Gauge size={16} />}
-            iconPosition='start'
-            label={i18n.t('pages.aps_scheduling_page.k13')}
-          />
-        </Tabs>
-      </Box>
+  const tabItems: TabItem[] = useMemo(
+    () => [
+      {
+        value: 'schedule',
+        label: i18n.t('pages.aps_scheduling_page.k11'),
+        icon: <Brain size={16} />,
+      },
+      {
+        value: 'optimization',
+        label: i18n.t('pages.aps_scheduling_page.k12'),
+        icon: <BarChart3 size={16} />,
+      },
+      {
+        value: 'bottleneck',
+        label: i18n.t('pages.aps_scheduling_page.k13'),
+        icon: <Gauge size={16} />,
+      },
+    ],
+    []
+  );
 
-      {activeTab === 0 && (
-        <Box>
-          {/* 排程控制面板 */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography
-                variant='h6'
-                sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                <Brain size={20} />
-                {i18n.t('pages.aps_scheduling_page.k3')}
-              </Typography>
-              <Grid
-                container
-                spacing={3}
-                sx={{ alignItems: 'center' }}
-              >
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>{i18n.t('pages.aps_scheduling_page.k14')}</InputLabel>
-                    <Select
-                      value={strategy}
-                      label={i18n.t('pages.aps_scheduling_page.k15')}
-                      onChange={(e) => setStrategy(e.target.value as typeof strategy)}
-                    >
-                      <MenuItem value='forward'>{i18n.t('pages.aps_scheduling_page.k16')}</MenuItem>
-                      <MenuItem value='backward'>
-                        {i18n.t('pages.aps_scheduling_page.k17')}
-                      </MenuItem>
-                      <MenuItem value='bidirectional'>
-                        {i18n.t('pages.aps_scheduling_page.k18')}
-                      </MenuItem>
-                      <MenuItem value='bottleneck_driven'>
-                        {i18n.t('pages.aps_scheduling_page.k19')}
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                      variant='contained'
-                      startIcon={<Play size={16} />}
-                      onClick={handleRunSchedule}
-                      disabled={scheduleMutation.isPending}
-                      sx={{ flex: 1 }}
-                    >
-                      {scheduleMutation.isPending
-                        ? i18n.t('pages.aps_scheduling_page.k4')
-                        : i18n.t('pages.aps_scheduling_page.k20')}
-                    </Button>
-                    <Button
-                      variant='outlined'
-                      startIcon={<Zap size={16} />}
-                      onClick={handleSimulate}
-                      disabled={scheduleMutation.isPending}
-                    >
-                      {i18n.t('pages.aps_scheduling_page.k5')}
-                    </Button>
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  {strategy === 'forward' && (
-                    <Alert
-                      severity='info'
-                      sx={{ py: 0.5 }}
-                    >
-                      {i18n.t('pages.aps_scheduling_page.k6')}
-                    </Alert>
-                  )}
-                  {strategy === 'backward' && (
-                    <Alert
-                      severity='info'
-                      sx={{ py: 0.5 }}
-                    >
-                      {i18n.t('pages.aps_scheduling_page.k7')}
-                    </Alert>
-                  )}
-                  {strategy === 'bidirectional' && (
-                    <Alert
-                      severity='info'
-                      sx={{ py: 0.5 }}
-                    >
-                      {i18n.t('pages.aps_scheduling_page.k8')}
-                    </Alert>
-                  )}
-                  {strategy === 'bottleneck_driven' && (
-                    <Alert
-                      severity='info'
-                      sx={{ py: 0.5 }}
-                    >
-                      {i18n.t('pages.aps_scheduling_page.k9')}
-                    </Alert>
-                  )}
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+  const loading = useMemo(() => {
+    switch (activeTab) {
+      case 'schedule':
+        return scheduleMutation.isPending;
+      case 'optimization':
+        return reportLoading;
+      case 'bottleneck':
+        return bottleneckLoading;
+      default:
+        return false;
+    }
+  }, [activeTab, scheduleMutation.isPending, reportLoading, bottleneckLoading]);
 
-          {/* 排程结果 */}
-          {scheduleMutation.isPending && (
-            <Box sx={{ mb: 3 }}>
-              <LinearProgress />
-              <Typography
-                variant='body2'
-                sx={{ mt: 1, textAlign: 'center' }}
-              >
-                {i18n.t('pages.aps_scheduling_page.k10')}
-              </Typography>
-            </Box>
-          )}
+  const statCards = useMemo<StatCard[]>(() => {
+    if (activeTab === 'schedule' && scheduleResult) {
+      return [
+        {
+          id: 'scheduled_orders',
+          title: i18n.t('pages.aps_scheduling_page.k11'),
+          value: scheduleResult.scheduled_orders,
+          suffix: ` / ${scheduleResult.total_orders} ${i18n.t('pages.aps_scheduling_page.k0')}`,
+          icon: <CheckCircle size={18} />,
+          color: 'primary',
+        },
+        {
+          id: 'average_utilization',
+          title: i18n.t('pages.aps_scheduling_page.k12'),
+          value: scheduleResult.average_utilization.toFixed(1),
+          suffix: '%',
+          icon: <TrendingUp size={18} />,
+          color: 'success',
+        },
+        {
+          id: 'total_makespan',
+          title: i18n.t('pages.aps_scheduling_page.k13'),
+          value: scheduleResult.total_makespan_hours.toFixed(1),
+          suffix: 'h',
+          icon: <Gauge size={18} />,
+          color: 'warning',
+        },
+        {
+          id: 'tardy_count',
+          title: i18n.t('pages.aps_scheduling_page.k14'),
+          value: scheduleResult.tardy_count,
+          icon: <XCircle size={18} />,
+          color: scheduleResult.tardy_count > 0 ? 'error' : 'success',
+        },
+      ];
+    }
 
-          {scheduleResult && (
-            <>
-              {/* 结果概览 */}
-              <Grid
-                container
-                spacing={2}
-                sx={{ mb: 3 }}
-              >
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='primary'
-                      >
-                        {scheduleResult.scheduled_orders}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k11')}
-                      </Typography>
-                      <Typography variant='caption'>
-                        / {scheduleResult.total_orders} {i18n.t('pages.aps_scheduling_page.k0')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='success.main'
-                      >
-                        {scheduleResult.average_utilization.toFixed(1)}%
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k12')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='warning.main'
-                      >
-                        {scheduleResult.total_makespan_hours.toFixed(1)}h
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k13')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color={scheduleResult.tardy_count > 0 ? 'error' : 'success'}
-                      >
-                        {scheduleResult.tardy_count}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k14')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+    if (activeTab === 'optimization' && report) {
+      return [
+        {
+          id: 'total_orders',
+          title: i18n.t('pages.aps_scheduling_page.k18'),
+          value: report.total_orders,
+          icon: <Brain size={18} />,
+          color: 'primary',
+        },
+        {
+          id: 'on_time_rate',
+          title: i18n.t('pages.aps_scheduling_page.k19'),
+          value: report.on_time_rate.toFixed(1),
+          suffix: '%',
+          icon: <CheckCircle size={18} />,
+          color: 'success',
+        },
+        {
+          id: 'average_lead_time',
+          title: i18n.t('pages.aps_scheduling_page.k20'),
+          value: report.average_lead_time_hours.toFixed(1),
+          suffix: 'h',
+          icon: <TrendingUp size={18} />,
+          color: 'info',
+        },
+        {
+          id: 'unscheduled_orders',
+          title: i18n.t('pages.aps_scheduling_page.k21'),
+          value: report.unscheduled_orders,
+          icon: <XCircle size={18} />,
+          color: 'warning',
+        },
+      ];
+    }
 
-              {scheduleResult.warnings.length > 0 && (
-                <Alert
-                  severity='warning'
-                  sx={{ mb: 3 }}
-                >
-                  {scheduleResult.warnings.map((w, i) => (
-                    <div key={i}>{w}</div>
-                  ))}
-                </Alert>
-              )}
+    if (activeTab === 'bottleneck' && bottleneck) {
+      return [
+        {
+          id: 'total_orders',
+          title: i18n.t('pages.aps_scheduling_page.k29'),
+          value: bottleneck.throughput_analysis.total_orders,
+          icon: <Brain size={18} />,
+          color: 'primary',
+        },
+        {
+          id: 'completed_orders',
+          title: i18n.t('pages.aps_scheduling_page.k30'),
+          value: bottleneck.throughput_analysis.completed_orders,
+          icon: <CheckCircle size={18} />,
+          color: 'success',
+        },
+        {
+          id: 'in_progress_orders',
+          title: i18n.t('pages.aps_scheduling_page.k31'),
+          value: bottleneck.throughput_analysis.in_progress_orders,
+          icon: <Gauge size={18} />,
+          color: 'warning',
+        },
+        {
+          id: 'average_cycle_time',
+          title: i18n.t('pages.aps_scheduling_page.k32'),
+          value: bottleneck.throughput_analysis.average_cycle_time_hours.toFixed(1),
+          suffix: 'h',
+          icon: <TrendingUp size={18} />,
+          color: 'info',
+        },
+      ];
+    }
 
-              {/* 排程明细表格 */}
-              <Card>
-                <CardContent>
-                  <Typography
-                    variant='h6'
-                    sx={{ mb: 2 }}
-                  >
-                    {i18n.t('pages.aps_scheduling_page.k15')}
-                  </Typography>
-                  <TableContainer
-                    component={Paper}
-                    variant='outlined'
-                  >
-                    <Table size='small'>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k21')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k22')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k23')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k24')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k25')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k26')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k27')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k28')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k29')}</TableCell>
-                          <TableCell>{i18n.t('pages.aps_scheduling_page.k30')}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {scheduleResult.items.map((item) => (
-                          <TableRow
-                            key={item.order_id}
-                            hover
-                            onClick={() => setSelectedItem(item)}
-                            sx={{ cursor: 'pointer' }}
-                          >
-                            <TableCell>{item.orderNo}</TableCell>
-                            <TableCell>{item.product_name}</TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>{item.work_station_name}</TableCell>
-                            <TableCell>
-                              {new Date(item.planned_start).toLocaleString('zh-CN', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(item.planned_end).toLocaleString('zh-CN', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </TableCell>
-                            <TableCell>{item.processing_time_hours.toFixed(1)}h</TableCell>
-                            <TableCell>
-                              {item.material_ready ? (
-                                <Chip
-                                  size='small'
-                                  icon={<CheckCircle size={14} />}
-                                  label={i18n.t('pages.aps_scheduling_page.k31')}
-                                  color='success'
-                                />
-                              ) : (
-                                <Chip
-                                  size='small'
-                                  icon={<XCircle size={14} />}
-                                  label={i18n.t('pages.aps_scheduling_page.k32')}
-                                  color='error'
-                                />
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <LinearProgress
-                                  variant='determinate'
-                                  value={item.feasibility_score}
-                                  sx={{ width: 60, height: 6, borderRadius: 3 }}
-                                />
-                                <Typography variant='caption'>
-                                  {item.feasibility_score.toFixed(0)}%
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                size='small'
-                                label={riskLabelMap[item.risk_level] || item.risk_level}
-                                sx={{
-                                  bgcolor:
-                                    riskColorMap[item.risk_level] ||
-                                    'var(--color-grey-400)',
-                                  color: 'common.white',
-                                  fontWeight: 500,
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </>
-          )}
+    return [];
+  }, [activeTab, scheduleResult, report, bottleneck]);
 
-          {!scheduleResult && !scheduleMutation.isPending && (
-            <Card sx={{ textAlign: 'center', py: 8 }}>
-              <CardContent>
-                <Brain
-                  size={64}
-                  color='var(--color-grey-300)'
-                  style={{ marginBottom: 16 }}
+  const charts = useMemo<ChartConfig[]>(() => {
+    if (activeTab === 'schedule' && scheduleResult) {
+      const riskCounts = scheduleResult.items.reduce(
+        (acc, item) => {
+          acc[item.risk_level] = (acc[item.risk_level] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+      const data = Object.entries(riskCounts).map(([level, count]) => ({
+        name: riskLabelMap[level] || level,
+        value: count,
+        color: riskColorMap[level],
+      }));
+      return data.length > 0
+        ? [
+            {
+              id: 'risk-distribution',
+              title: i18n.t('pages.aps_scheduling_page.k15'),
+              type: 'pie',
+              dataKey: 'value',
+              nameKey: 'name',
+              data,
+            },
+          ]
+        : [];
+    }
+
+    if (activeTab === 'optimization' && report) {
+      return [
+        {
+          id: 'bottleneck-utilization',
+          title: i18n.t('pages.aps_scheduling_page.k22'),
+          type: 'bar',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: report.bottleneck_resources
+            .slice()
+            .sort((a, b) => b.utilization_rate - a.utilization_rate)
+            .map((r) => ({
+              name: r.resource_name,
+              value: Math.min(r.utilization_rate, 100),
+              color:
+                r.utilization_rate > 80
+                  ? ct.error.main
+                  : r.utilization_rate > 60
+                    ? ct.warning.main
+                    : ct.success.main,
+            })),
+        },
+      ];
+    }
+
+    if (activeTab === 'bottleneck' && bottleneck) {
+      const utilized = Math.min(bottleneck.capacity_vs_demand.capacity_utilization, 100);
+      return [
+        {
+          id: 'capacity-utilization',
+          title: i18n.t('pages.aps_scheduling_page.vs_33'),
+          type: 'donut',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: [
+            {
+              name: i18n.t('pages.aps_scheduling_page.k35'),
+              value: utilized,
+              color: ct.primary.main,
+            },
+            {
+              name: i18n.t('pages.aps_scheduling_page.k34'),
+              value: Math.max(100 - utilized, 0),
+              color: ct.grey[300],
+            },
+          ],
+        },
+        {
+          id: 'bottleneck-resources',
+          title: i18n.t('pages.aps_scheduling_page.k38'),
+          type: 'bar',
+          dataKey: 'value',
+          nameKey: 'name',
+          data: bottleneck.bottleneck_resources
+            .slice()
+            .sort((a, b) => b.utilization_rate - a.utilization_rate)
+            .map((r) => ({
+              name: r.resource_name,
+              value: Math.min(r.utilization_rate, 100),
+              color: r.utilization_rate > 80 ? ct.error.main : ct.primary.main,
+            })),
+        },
+      ];
+    }
+
+    return [];
+  }, [activeTab, scheduleResult, report, bottleneck]);
+
+  const tables = useMemo<DataTable[]>(() => {
+    if (activeTab === 'schedule' && scheduleResult) {
+      return [
+        {
+          id: 'schedule-items',
+          title: i18n.t('pages.aps_scheduling_page.k15'),
+          columns: [
+            {
+              id: 'orderNo',
+              label: i18n.t('pages.aps_scheduling_page.k21'),
+              field: 'orderNo',
+            },
+            {
+              id: 'product_name',
+              label: i18n.t('pages.aps_scheduling_page.k22'),
+              field: 'product_name',
+            },
+            {
+              id: 'quantity',
+              label: i18n.t('pages.aps_scheduling_page.k23'),
+              field: 'quantity',
+              align: 'center',
+            },
+            {
+              id: 'work_station_name',
+              label: i18n.t('pages.aps_scheduling_page.k24'),
+              field: 'work_station_name',
+            },
+            {
+              id: 'planned_start',
+              label: i18n.t('pages.aps_scheduling_page.k25'),
+              field: 'planned_start',
+              render: (value) =>
+                new Date(String(value)).toLocaleString('zh-CN', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+            },
+            {
+              id: 'planned_end',
+              label: i18n.t('pages.aps_scheduling_page.k26'),
+              field: 'planned_end',
+              render: (value) =>
+                new Date(String(value)).toLocaleString('zh-CN', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+            },
+            {
+              id: 'processing_time_hours',
+              label: i18n.t('pages.aps_scheduling_page.k27'),
+              field: 'processing_time_hours',
+              align: 'center',
+              render: (value) => `${Number(value).toFixed(1)}h`,
+            },
+            {
+              id: 'material_ready',
+              label: i18n.t('pages.aps_scheduling_page.k28'),
+              field: 'material_ready',
+              align: 'center',
+              render: (value) =>
+                value ? (
+                  <Chip
+                    size='small'
+                    icon={<CheckCircle size={14} />}
+                    label={i18n.t('pages.aps_scheduling_page.k31')}
+                    color='success'
+                  />
+                ) : (
+                  <Chip
+                    size='small'
+                    icon={<XCircle size={14} />}
+                    label={i18n.t('pages.aps_scheduling_page.k32')}
+                    color='error'
+                  />
+                ),
+            },
+            {
+              id: 'feasibility_score',
+              label: i18n.t('pages.aps_scheduling_page.k29'),
+              field: 'feasibility_score',
+              align: 'center',
+              render: (value) => (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LinearProgress
+                    variant='determinate'
+                    value={Number(value)}
+                    sx={{
+                      width: 60,
+                      height: 1,
+                      borderRadius: 9999,
+                    }}
+                  />
+                  <Typography variant='caption'>{Number(value).toFixed(0)}%</Typography>
+                </Box>
+              ),
+            },
+            {
+              id: 'risk_level',
+              label: i18n.t('pages.aps_scheduling_page.k30'),
+              field: 'risk_level',
+              align: 'center',
+              render: (value) => (
+                <Chip
+                  size='small'
+                  label={riskLabelMap[String(value)] || String(value)}
+                  sx={{
+                    bgcolor: riskColorMap[String(value)] || ct.grey[400],
+                    color: ct.common.white,
+                    fontWeight: 500,
+                  }}
                 />
-                <Typography
-                  variant='h6'
-                  color='text.secondary'
+              ),
+            },
+            {
+              id: 'detail',
+              label: i18n.t('pages.aps_scheduling_page.k37'),
+              align: 'center',
+              render: (_value, row) => (
+                <IconButton
+                  size='small'
+                  onClick={() => setSelectedItem(row as unknown as ApsScheduleItem)}
+                  aria-label={i18n.t('pages.aps_scheduling_page.k37')}
                 >
-                  {i18n.t('pages.aps_scheduling_page.i18n_16')}.t('pages.aps_scheduling_page.k33')
-                </Typography>
+                  <Eye size={16} />
+                </IconButton>
+              ),
+            },
+          ],
+          data: scheduleResult.items as unknown as Record<string, unknown>[],
+        },
+      ];
+    }
+
+    if (activeTab === 'optimization' && report) {
+      return [
+        {
+          id: 'improvement-suggestions',
+          title: i18n.t('pages.aps_scheduling_page.k26'),
+          columns: [
+            {
+              id: 'category',
+              label: i18n.t('pages.aps_scheduling_page.k23'),
+              field: 'category',
+              align: 'center',
+              render: (value) => (
+                <Chip
+                  size='small'
+                  label={String(value)}
+                  color='primary'
+                  variant='outlined'
+                />
+              ),
+            },
+            {
+              id: 'title',
+              label: i18n.t('pages.aps_scheduling_page.k22'),
+              field: 'title',
+            },
+            {
+              id: 'description',
+              label: i18n.t('pages.aps_scheduling_page.k24'),
+              field: 'description',
+            },
+            {
+              id: 'estimated_impact',
+              label: i18n.t('pages.aps_scheduling_page.k27'),
+              field: 'estimated_impact',
+              align: 'center',
+              render: (value) => (
                 <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ mt: 1 }}
+                  variant='caption'
+                  color='success.main'
                 >
-                  {i18n.t('pages.aps_scheduling_page.k17')}
+                  {String(value)}
                 </Typography>
-              </CardContent>
-            </Card>
-          )}
+              ),
+            },
+          ],
+          data: report.improvement_suggestions as unknown as Record<string, unknown>[],
+        },
+      ];
+    }
+
+    if (activeTab === 'bottleneck' && bottleneck) {
+      return [
+        {
+          id: 'bottleneck-resources',
+          title: i18n.t('pages.aps_scheduling_page.k38'),
+          columns: [
+            {
+              id: 'rank',
+              label: '#',
+              align: 'center',
+              render: (_value, row) => String(Number(row._index) + 1),
+            },
+            {
+              id: 'resource_name',
+              label: i18n.t('pages.aps_scheduling_page.k22'),
+              field: 'resource_name',
+            },
+            {
+              id: 'utilization_rate',
+              label: i18n.t('pages.aps_scheduling_page.k1'),
+              field: 'utilization_rate',
+              align: 'center',
+              render: (value) => `${Number(value).toFixed(1)}%`,
+            },
+            {
+              id: 'queue_length',
+              label: i18n.t('pages.aps_scheduling_page.k2'),
+              field: 'queue_length',
+              align: 'center',
+            },
+          ],
+          data: bottleneck.bottleneck_resources.map((r, index) => ({
+            ...r,
+            _index: index,
+          })) as Record<string, unknown>[],
+        },
+      ];
+    }
+
+    return [];
+  }, [activeTab, scheduleResult, report, bottleneck]);
+
+  const customToolbar = useMemo(
+    () => (
+      <Box>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormControl
+            size='small'
+            sx={{ minWidth: '25ch' }}
+          >
+            <InputLabel>{i18n.t('pages.aps_scheduling_page.k14')}</InputLabel>
+            <Select
+              value={strategy}
+              label={i18n.t('pages.aps_scheduling_page.k15')}
+              onChange={(e) => setStrategy(e.target.value as Strategy)}
+            >
+              <MenuItem value='forward'>{i18n.t('pages.aps_scheduling_page.k16')}</MenuItem>
+              <MenuItem value='backward'>{i18n.t('pages.aps_scheduling_page.k17')}</MenuItem>
+              <MenuItem value='bidirectional'>{i18n.t('pages.aps_scheduling_page.k18')}</MenuItem>
+              <MenuItem value='bottleneck_driven'>
+                {i18n.t('pages.aps_scheduling_page.k19')}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant='contained'
+              startIcon={<Play size={16} />}
+              onClick={handleRunSchedule}
+              disabled={scheduleMutation.isPending}
+            >
+              {scheduleMutation.isPending
+                ? i18n.t('pages.aps_scheduling_page.k4')
+                : i18n.t('pages.aps_scheduling_page.k20')}
+            </Button>
+            <Button
+              variant='outlined'
+              startIcon={<Zap size={16} />}
+              onClick={handleSimulate}
+              disabled={scheduleMutation.isPending}
+            >
+              {i18n.t('pages.aps_scheduling_page.k5')}
+            </Button>
+          </Box>
         </Box>
-      )}
+        <Alert
+          severity='info'
+          sx={{ mt: 2, py: 0.5 }}
+        >
+          {strategyInfoMap[strategy]}
+        </Alert>
+      </Box>
+    ),
+    [strategy, scheduleMutation.isPending, handleRunSchedule, handleSimulate]
+  );
 
-      {activeTab === 1 && (
-        <Box>
-          {reportLoading ? (
-            <LoadingSpinner />
-          ) : report ? (
-            <>
-              <Grid
-                container
-                spacing={3}
-                sx={{ mb: 3 }}
-              >
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h4'>{report.total_orders}</Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k18')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='success.main'
-                      >
-                        {report.on_time_rate.toFixed(1)}%
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k19')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h4'>
-                        {report.average_lead_time_hours.toFixed(1)}h
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k20')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='warning.main'
-                      >
-                        {report.unscheduled_orders}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k21')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+  const children = useMemo(() => {
+    if (activeTab === 'schedule') {
+      if (scheduleMutation.isPending) {
+        return (
+          <Box sx={{ mb: 3 }}>
+            <LinearProgress />
+            <Typography
+              variant='body2'
+              sx={{ mt: 1, textAlign: 'center' }}
+            >
+              {i18n.t('pages.aps_scheduling_page.k10')}
+            </Typography>
+          </Box>
+        );
+      }
 
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card>
-                    <CardContent>
-                      <Typography
-                        variant='h6'
-                        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <Gauge size={18} />
-                        {i18n.t('pages.aps_scheduling_page.k22')}
-                      </Typography>
-                      {report.bottleneck_resources.map((r, i) => (
-                        <Box
-                          key={i}
-                          sx={{ mb: 2 }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant='body2'>{r.resource_name}</Typography>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              [i18n.t('pages.aps_scheduling_page.k23')]: {r.queue_length} |{' '}
-                              {i18n.t('pages.aps_scheduling_page.k24')}
-                              {r.utilization_rate.toFixed(1)}%
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant='determinate'
-                            value={Math.min(r.utilization_rate, 100)}
-                            color={
-                              r.utilization_rate > 80
-                                ? 'error'
-                                : r.utilization_rate > 60
-                                  ? 'warning'
-                                  : 'success'
-                            }
-                            sx={{ height: 8, borderRadius: 4 }}
-                          />
-                        </Box>
-                      ))}
-                      {report.bottleneck_resources.length === 0 && (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {i18n.t('pages.aps_scheduling_page.k25')}
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card>
-                    <CardContent>
-                      <Typography
-                        variant='h6'
-                        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <TrendingUp size={18} />
-                        {i18n.t('pages.aps_scheduling_page.k26')}
-                      </Typography>
-                      {report.improvement_suggestions.map((s, i) => (
-                        <Box
-                          key={i}
-                          sx={{ mb: 2, p: 1.5, bgcolor: 'background.default', borderRadius: 1 }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                            <Chip
-                              size='small'
-                              label={s.category}
-                              color='primary'
-                              variant='outlined'
-                            />
-                            <Typography variant='subtitle2'>{s.title}</Typography>
-                          </Box>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{ mb: 0.5 }}
-                          >
-                            {s.description}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='success.main'
-                          >
-                            [i18n.t('pages.aps_scheduling_page.k27')]: {s.estimated_impact}
-                          </Typography>
-                        </Box>
-                      ))}
-                      {report.improvement_suggestions.length === 0 && (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {i18n.t('pages.aps_scheduling_page.k28')}
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </>
-          ) : (
-            <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k34')}</Alert>
-          )}
-        </Box>
-      )}
+      if (scheduleResult && scheduleResult.warnings.length > 0) {
+        return (
+          <Alert
+            severity='warning'
+            sx={{ mb: 3 }}
+          >
+            {scheduleResult.warnings.map((w, i) => (
+              <div key={i}>{w}</div>
+            ))}
+          </Alert>
+        );
+      }
 
-      {activeTab === 2 && (
-        <Box>
-          {bottleneckLoading ? (
-            <LoadingSpinner />
-          ) : bottleneck ? (
-            <>
-              <Grid
-                container
-                spacing={3}
-                sx={{ mb: 3 }}
-              >
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h4'>
-                        {bottleneck.throughput_analysis.total_orders}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k29')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='success.main'
-                      >
-                        {bottleneck.throughput_analysis.completed_orders}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k30')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='warning.main'
-                      >
-                        {bottleneck.throughput_analysis.in_progress_orders}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k31')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 6, md: 3 }}>
-                  <Card>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='h4'
-                        color='info.main'
-                      >
-                        {bottleneck.throughput_analysis.average_cycle_time_hours.toFixed(1)}h
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k32')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+      if (!scheduleResult && !scheduleMutation.isPending) {
+        return (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 8,
+              bgcolor: 'background.paper',
+              borderRadius: 4,
+            }}
+          >
+            <Brain
+              size={64}
+              color={ct.grey[300]}
+              style={{ marginBottom: 16 }}
+            />
+            <Typography
+              variant='h6'
+              color='text.secondary'
+            >
+              {i18n.t('pages.aps_scheduling_page.k33')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 1 }}
+            >
+              {i18n.t('pages.aps_scheduling_page.k17')}
+            </Typography>
+          </Box>
+        );
+      }
 
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card>
-                    <CardContent>
-                      <Typography
-                        variant='h6'
-                        sx={{ mb: 2 }}
-                      >
-                        {i18n.t('pages.aps_scheduling_page.vs_33')}
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>
-                            {i18n.t('pages.aps_scheduling_page.k35')}
-                          </Typography>
-                          <Typography variant='body2'>
-                            {bottleneck.capacity_vs_demand.capacity_utilization.toFixed(1)}%
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant='determinate'
-                          value={Math.min(bottleneck.capacity_vs_demand.capacity_utilization, 100)}
-                          color={
-                            bottleneck.capacity_vs_demand.capacity_utilization > 90
-                              ? 'error'
-                              : 'primary'
-                          }
-                          sx={{ height: 10, borderRadius: 5 }}
-                        />
-                      </Box>
-                      <Grid
-                        container
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 6 }}>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.aps_scheduling_page.k34')}
-                          </Typography>
-                          <Typography variant='h6'>
-                            {bottleneck.capacity_vs_demand.total_capacity_hours.toFixed(0)}h
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 6 }}>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.aps_scheduling_page.k35')}
-                          </Typography>
-                          <Typography variant='h6'>
-                            {bottleneck.capacity_vs_demand.total_demand_hours.toFixed(0)}h
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                      {bottleneck.capacity_vs_demand.capacity_gap_hours > 0 && (
-                        <Alert
-                          severity='error'
-                          sx={{ mt: 2 }}
-                        >
-                          [i18n.t('pages.aps_scheduling_page.k36')]:{' '}
-                          {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
-                          {i18n.t('pages.aps_scheduling_page.k37')}
-                        </Alert>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Card>
-                    <CardContent>
-                      <Typography
-                        variant='h6'
-                        sx={{ mb: 2 }}
-                      >
-                        {i18n.t('pages.aps_scheduling_page.k38')}
-                      </Typography>
-                      {bottleneck.bottleneck_resources.map((r, i) => (
-                        <Box
-                          key={i}
-                          sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}
-                        >
-                          <Typography
-                            variant='h6'
-                            color='text.secondary'
-                            sx={{ width: 30 }}
-                          >
-                            {i + 1}
-                          </Typography>
-                          <Box sx={{ flex: 1 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                              <Typography variant='body2'>{r.resource_name}</Typography>
-                              <Typography variant='caption'>
-                                {i18n.t('pages.aps_scheduling_page.k1')}{' '}
-                                {r.utilization_rate.toFixed(1)}% |{' '}
-                                {i18n.t('pages.aps_scheduling_page.k2')} {r.queue_length}
-                              </Typography>
-                            </Box>
-                            <LinearProgress
-                              variant='determinate'
-                              value={Math.min(r.utilization_rate, 100)}
-                              color={r.utilization_rate > 80 ? 'error' : 'primary'}
-                              sx={{ height: 8, borderRadius: 4 }}
-                            />
-                          </Box>
-                        </Box>
-                      ))}
-                      {bottleneck.bottleneck_resources.length === 0 && (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {i18n.t('pages.aps_scheduling_page.k39')}
-                        </Typography>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </>
-          ) : (
-            <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k36')}</Alert>
-          )}
-        </Box>
-      )}
+      return null;
+    }
 
-      {/* 详情弹窗 */}
+    if (activeTab === 'optimization') {
+      if (!report && !reportLoading) {
+        return <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k34')}</Alert>;
+      }
+      return null;
+    }
+
+    if (activeTab === 'bottleneck') {
+      if (!bottleneck && !bottleneckLoading) {
+        return <Alert severity='info'>{i18n.t('pages.aps_scheduling_page.k36')}</Alert>;
+      }
+      if (bottleneck && bottleneck.capacity_vs_demand.capacity_gap_hours > 0) {
+        return (
+          <Alert severity='error'>
+            {i18n.t('pages.aps_scheduling_page.k36')}:{' '}
+            {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
+            {i18n.t('pages.aps_scheduling_page.k37')}
+          </Alert>
+        );
+      }
+      return null;
+    }
+
+    return null;
+  }, [
+    activeTab,
+    scheduleMutation.isPending,
+    scheduleResult,
+    report,
+    reportLoading,
+    bottleneck,
+    bottleneckLoading,
+  ]);
+
+  return (
+    <>
+      <StatsPageTemplate
+        title={i18n.t('pages.aps_scheduling_page.aps_2')}
+        subtitle={i18n.t('pages.aps_scheduling_page.k10')}
+        tabs={tabItems}
+        tabValue={activeTab}
+        onTabChange={(value) => setActiveTab(value as TabValue)}
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        tables={tables}
+        loading={loading}
+        customToolbar={customToolbar}
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+      >
+        {children}
+      </StatsPageTemplate>
+
       <Dialog
         open={!!selectedItem}
         onClose={() => setSelectedItem(null)}
@@ -1061,7 +935,7 @@ const ApsSchedulingPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 
