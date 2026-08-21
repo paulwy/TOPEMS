@@ -221,6 +221,7 @@ pub mod plugin;
 pub mod response;
 pub mod service_config;
 pub mod service_port;
+pub mod supplier;
 pub mod validation;
 
 // === gRPC 微服务基础（V24.0 模块 C）===
@@ -277,6 +278,7 @@ pub use service_config::{
 };
 pub use service_port::*;
 pub use validation::{normalize_code, ValidationError, ValidationResult, Validator};
+pub use supplier::{CreateSupplierRequest, SupplierCategory, SupplierCore, SupplierRiskLevel, SupplierStatus, SupplierSync, UpdateSupplierRequest};
 
 #[cfg(test)]
 mod tests {
