@@ -59,8 +59,8 @@ pre-commit:
       tags: permission security
       files: (\.(rs|ts|tsx)$|^apps/web/src/config/permissions\.ts$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/|^apps/web/src/lib/routes/v2\.tsx$)
       run: |
-        if [ -f "scripts/ci/check-permission-matrix.cjs" ]; then
-          node scripts/ci/check-permission-matrix.cjs --dry-run
+        if [ -f "scripts/ci/perm-matrix-toolkit.cjs" ]; then
+          node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run
         fi
 
     # [Gate M] Axum Layer Order Gate (dry-run)

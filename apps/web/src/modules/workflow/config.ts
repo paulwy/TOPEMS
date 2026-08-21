@@ -1,6 +1,7 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig, ListPageProps, FormPageProps } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
+import type { TaskQueryParams } from '@/api/workflow';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -22,63 +23,32 @@ export const WORKFLOW_PATHS = {
   templates: '/workflow/templates',
   settings: '/workflow/settings',
 } as const;
+
+// V259 TypeMap: list 页 extends ListPageProps，form 页 extends FormPageProps
+// detail/empty 模板保留自定义 Props
 interface WorkflowDashboardPageProps {}
-
-interface WorkflowDefinitionsPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface WorkflowDesignerPageProps {
-  mode?: 'create' | 'edit' | 'view';
-  initialValues?: Record<string, unknown>;
-}
-
-interface WorkflowVersionHistoryPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
-interface WorkflowInstancesPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
+interface WorkflowDefinitionsPageProps extends ListPageProps {}
+interface WorkflowDesignerPageProps extends FormPageProps {}
+interface WorkflowVersionHistoryPageProps extends ListPageProps {}
+interface WorkflowInstancesPageProps extends ListPageProps {}
 
 interface WorkflowInstanceDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-interface WorkflowApprovalsPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
+/** filters 对齐 TaskQueryParams（assignee/candidate/priority/due_date） */
+interface WorkflowApprovalsPageProps extends ListPageProps<TaskQueryParams> {}
 
 interface WorkflowApprovalDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-interface WorkflowNotificationCenterPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
+interface WorkflowNotificationCenterPageProps extends ListPageProps {}
 interface WorkflowMonitorPageProps {}
-
 interface WorkflowStatisticsPageProps {}
-
-interface WorkflowTemplatePageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
+interface WorkflowTemplatePageProps extends ListPageProps {}
 interface WorkflowSettingsPageProps {}
 
 const workflowDashboardRoute: RouteConfigV2<WorkflowDashboardPageProps> = {

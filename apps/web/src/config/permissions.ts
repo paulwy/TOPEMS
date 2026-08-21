@@ -607,7 +607,7 @@ const getPermissionsByRole = (roleName: string): string[] => {
  * but NOT captured by the legacy 2-part PERMISSIONS[module][action] Record above.
  *
  * Count: 380 unique codes × 380 entries (flat identity map).
- * Checked by scripts/ci/check-permission-matrix.cjs SCAN_CONSTANTS Part A
+ * Checked by scripts/ci/perm-matrix-toolkit.cjs SCAN_CONSTANTS Part A
  * (brutal regex captures every "<word>:<word>:<word>" string in this file).
  *
  * NOTE: Type uses explicit string literal Record<string,string> to avoid widening

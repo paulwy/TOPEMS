@@ -29,7 +29,8 @@ export interface UpdateProductRequest {
   status?: string;
 }
 
-interface ProductQuery {
+/** V259 TypeMap: 导出供 config.ts ListPageProps<ProductQuery> 使用 */
+export interface ProductQuery {
   page?: number;
   page_size?: number;
   search?: string;

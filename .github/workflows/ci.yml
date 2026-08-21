@@ -119,7 +119,7 @@ jobs:
               - 'apps/web/src/modules/*/config.ts'
               - 'apps/web/src/lib/navigation/**'
               - 'apps/web/src/lib/routes/v2.tsx'
-              - 'scripts/ci/check-permission-matrix.cjs'
+              - 'scripts/ci/perm-matrix-toolkit.cjs'
               - 'docs/roadmap/artifacts/rN-perm-matrix-baseline.json'
               - 'apps/web/src/__tests__/permission-matrix-guard.test.ts'
             menu:

@@ -9,8 +9,8 @@
 - check-i18n.cjs
 - check-icons.cjs
 - check-nav-route.cjs
-- check-permission-matrix.cjs — R1~R7 权限/中间件静态扫描
-- clean-permission-orphans.cjs
+- check-props-alignment.cjs — Props 字段真实度 AST 扫描 (config.ts Props vs page destructured)
+- perm-matrix-toolkit.cjs — R1~R7 权限/中间件静态扫描 (scan/ci-report/matrix/diff)
 - compare-api-modules.cjs
 - coverage-baseline.sh
 - gen-r12-zp0-z4cover-report.cjs
