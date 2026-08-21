@@ -239,15 +239,6 @@ pub struct OfflineDataDownload {
     pub synced_at: DateTime<Utc>,
 }
 
-// ==================== API 响应 ====================
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ApiResponse<T> {
-    pub code: i32,
-    pub message: String,
-    pub data: Option<T>,
-}
-
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -285,7 +276,6 @@ pub struct ApiResponse<T> {
             SyncResponse,
             SyncStatus,
             OfflineDataDownload,
-            ApiResponse<String>,
             CreateLocation,
             CreateMap,
             UpdateMap,
