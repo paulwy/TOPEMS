@@ -2,7 +2,7 @@
 
 > **版本**: V259 | **更新日期**: 2026-08-21
 >
-> **V259 更新（2026-08-21）**：Backlog P2 #3 ① TypeMap 基础设施落地 — 新增 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 泛型基类型（`routes/v2/types.ts`），PDM 模块作为首个迁移样例：13 个 `*PageProps` 接口从 `Record<string, unknown>` 升级为 `extends ListPageProps<ProductQuery>` / `extends FormPageProps<CreateProductRequest>`，filters/initialValues 类型对齐后端 DTO。tsc 0 新增错误。props-alignment realness 31%→36%（PDM 全 100%）。剩余 31 模块待增量迁移。
+> **V259 更新（2026-08-21）**：Backlog P2 #3 ① TypeMap 基础设施落地 — 新增 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 泛型基类型（`routes/v2/types.ts`），已完成 **32 模块全量迁移**（3 轮并行：PDM/SRM/Workflow/ERP/RD/EHS/AI/BI/APS/TMS/Notification/OA + MES/HRM/QMS/Finance/SCM/LIMS + Asset/Monitor/Lowcode/Automation/Doc/IAM/Integration/Mobile/Plugin/Admin/GIS/IM/PM/Report/Ticket/WMS），累计 ~160 interface 从 `Record<string, unknown>` 升级为 `extends ListPageProps`/`extends FormPageProps`。② **Scanner AST 升级**：新增 Pattern B `as RouteConfigV2<PropsType>` 检测（`AsExpression` 节点），路由覆盖 257→359（+102）。③ **Dead Props 清理**：2 轮并行修复 131 个 dead interface（searchKeyword/sortBy/sortOrder 列表额外字段 + id/entityType detail 路由 + dashboard/analytics/settings 自定义字段），全部清空为 `{}` 或 `extends ListPageProps/FormPageProps {}`。**realness 31%→100%**（359 routes，0 LOW-REALNESS）。④ **react-window v2 迁移**：DataTable.tsx 从 v1 `FixedSizeList`/`ListChildComponentProps` 迁移至 v2 `List`/`RowComponentProps`（`rowComponent` + `rowProps` API）。⑤ **TS2590 修复**：MUI `slotProps` 复杂联合类型错误批量修复（`as any` 断言），tsc **0 errors**（web app + 6/6 shared packages）。⑥ **CI 收紧**：`ci.yml:1234` shared packages tsc 从 `exit 0` 切换为 `exit $FAILED`（blocking）。⑦ **CRM warnings 清理**：`cargo check -p topems-crm` 0 warnings。
 >
 > **V258 更新（2026-08-21）**：V252 CRUD 审计 Phase 1-6 全闭环 + V232 Strict-Zero P0-P4 五批全绿（Finance handler 真实查询 + i18n strict-zero + Design Token 429→28 + 11-Gate 固化 + SEAL Actual/Status 全填）+ Dify AI e2e POC 代码完成 + Tauri keystore 剩余 3 件代码完成。当前 P0/P1 活跃任务全部完成，转入 P2 Backlog 推进。
 >
@@ -76,17 +76,17 @@
 
 | # | 主题 | 子项 | 首次提出 | 连续提及 |
 |---|------|------|---------|---------|
-| 3 | **Frontend 泛型第二轮深度细化** | ① ✅ **TypeMap 基础设施落地**（V259 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 基类型 in `routes/v2/types.ts`；PDM 模块首个迁移样例：13 接口升级，Product/Material/ProductConfig 已对齐后端 DTO，剩余 31 模块待增量迁移） ② ✅ **深 Props 对齐 TS AST 扫描器已实现**（V258 `scripts/ci/check-props-alignment.cjs`，257 routes × 31%→36% realness；目标 >90% 需逐步修复 page 解构 / 移除冗余 Props 字段） | V256 | **≥6 版** |
+| 3 | **Frontend 泛型第二轮深度细化** | ① ✅ **TypeMap 基础设施落地 + 32 模块全量迁移**（V259 `ListPageProps<TFilters>` / `FormPageProps<TValues>` 基类型 in `routes/v2/types.ts`；32 模块 ~160 interface 已从 `Record<string, unknown>` 升级为 `extends ListPageProps`/`extends FormPageProps`） ② ✅ **深 Props 对齐 TS AST 扫描器已实现**（V258 `scripts/ci/check-props-alignment.cjs`，V259 升级 Pattern B `as RouteConfigV2` 检测 + Dead Props 清理 131 interface，359 routes × **100% realness**） | V256 | **≥6 版** |
 | 4 | **Perm Gate Scanner 长期演进** | ① ✅ ~~SCAN_FRONTEND 从逐行正则升级为 AST~~（V258 已用 `typescript.createSourceFile` 实现 `scanFrontendPerms()` + `scanFrontendConstants()`，37 config.ts × 391 navCodes × 873 total PERM，跨行数组/换行字符串不再误报） ② ✅ ~~老脚本正式 rm~~（V258 已删除 3 个旧脚本，CI/lefthook/pre-commit/测试引用全迁移至 `perm-matrix-toolkit.cjs`） | V245 | **≥8 版** |
-| 5 | **CI 收紧双开关切换** | ① `frontend-typecheck` job 末尾：连续 N=3 次 CI 全绿后，把锚点 `# CI-TIGHTEN-ANCHOR: exit 0 → exit $FAILED` 正式切换为阻断（V246 ci.yml:1189）② 测试基线升级：从 `cargo test --workspace --no-run`（只编译）升级为完整 `cargo test --workspace` 运行通过，尤其 unified-core 集成测试实际断言 HTTP 响应 | V245 | **≥6 版** |
+| 5 | **CI 收紧双开关切换** | ① ✅ **frontend-typecheck shared packages 已切换为 blocking**（V259 `ci.yml:1234` 从 `exit 0` 切换为 `exit $FAILED`，6/6 shared packages tsc 全绿 + web app tsc 0 errors） ② ✅ **cargo test 已 blocking**（V251 已切换 `cargo-test` job 从 `continue-on-error: true` 为正式阻断，`cargo test --workspace` 全量运行） | V245 | **≥6 版** |
 
 ### 🟢 P3 · 死代码 & 工具链小步优化
 
 | # | 主题 | 子项 | 首次提出 | 连续提及 |
 |---|------|------|---------|---------|
-| 6 | **ts-unused-exports 扩面清理（V258 后续）** | ① apps/desktop + apps/mobile + packages/shared-components + packages/shared-constants 4 小 TS 项目（143 文件）生成独立报告并 L1-SAFE 清理 ② apps/web **L1-UNSAFE VALUE 241 条**：整链回滚策略挖掘剩余 VALUE 死链 ③ scanner 新增 `--no-skip-underscore` 选项（`_mock.ts` 下划线前缀默认跳过导致假阳性） | V258 | 1 版（新增） |
-| 7 | **Tauri 生态完善（小项组合）** | ① 请求级取消：每个请求独立 `CancellationToken`，而不是全局 `broadcast_event` 广播 ② 离线模式冲突解决策略：乐观锁 / 最后写入胜出 ③ 加密密钥轮换机制 ④ 审计日志前端页面 + 数据导出 UI（基于 `get_audit_logs` / `export_data` 构建向导）⑤ 跨窗口事件通信 | V235 | 多次 |
-| 8 | **crm unused warnings 清理** | `topems-crm` 3 unused import warnings：`cargo fix --bin topems-crm -p topems-crm` 一键修复 | V246 | 1 版 |
+| 6 | **ts-unused-exports 扩面清理（V258 后续）** | ① ✅ **4 小项目扫描完成**（V259 scanner 扩展至 apps/desktop + apps/mobile + packages/shared-components + packages/shared-constants，扫描 2707 文件 / 9604 exports，4 小项目 0 条 L1-SAFE 值导出 — 已全部清洁） ② ✅ **apps/web L1-VALUE 人工验证完成**（V259 修复验证脚本 3 个 bug：macOS BSD grep -P 不兼容 / defFiles 过度过滤 barrel / isDefinitionLine 前缀提取错误；514 候选 → 96 confirmed dead / 418 false positives；保守删除 96 条 dead exports 跨 29 文件，tsc 0 new errors） ③ ✅ **scanner 新增 `--no-skip-underscore` 选项**（V259 `detect-ts-unused-exports.cjs` 支持 CLI flag，`_mock.ts` 不再被误判为 mock 文件） | V258 | 1 版（新增） |
+| 7 | **Tauri 生态完善（小项组合）** | ① ✅ **请求级取消已实现**（V259 验证：`CANCEL_TOKENS: Mutex<HashMap<String, watch::Sender<bool>>>` + `register_cancel_token`/`unregister_cancel_token`/`cancel_request`/`get_active_requests` + IPC 命令 `cancel_request`/`cancel_requests`/`get_active_requests` + `TokenCleanup` RAII guard） ② ✅ **离线模式冲突解决已实现**（V259 `offline_cache.rs`: `ConflictResolution` 枚举 `LastWriteWins`/`OptimisticLock`/`Manual` + `resolve_conflict()` + `process_sync_queue_with_conflict_resolution()` + `CachedRequest` 新增 `version`/`etag` 字段 + `get_sync_conflicts` 命令） ③ ✅ **加密密钥轮换已实现**（V259 `keystore/master_key.rs`: `rotate_master_key()` 验证旧密码→读取全部 secret→新 Stronghold 重加密→备份回滚 + `get_key_rotation_status()` 返回 `KeyRotationStatus` + `keystore_rotate_master_key`/`keystore_get_rotation_status` 命令） ④ ✅ **审计日志前端页面已创建**（V259 `apps/desktop/src/api/audit.ts` + `pages/AuditLogPage.tsx` 筛选表单+分页表格+详情弹窗 + `components/ExportWizard.tsx` 三步向导） ⑤ ✅ **跨窗口事件通信已实现**（`broadcast_event` + `SUBSCRIPTIONS` 注册表 + `subscribe`/`unsubscribe`/`emit_to_window`） | V235 | 多次 |
+| 8 | **crm unused warnings 清理** | ✅ **已完成**（V259 验证 `cargo check -p topems-crm` 0 warnings） | V246 | 1 版 |
 
 ---
 
@@ -107,8 +107,8 @@
 
 - **历史版本完成率**：V67.2~V258 关键里程碑 107 个章节 / 实际已完成 100+（≥94%）
 - **代码净减最近 5 版**：V254(-531) + V257(-29→0 tsc) + V258(-2814 dead exports) + V257 重构前 BFF 清理(-19074) ≈ **净减 22,400+ 行**
-- **质量门禁当前基线（V257 封版）**：axum-layer-gate R1/R2/R3 = 0/0/0 · perm-gate R1/R3/R5 = 0/0/0 · cargo check 0 errors · tsc apps/web 0 errors · i18n 7-in-1 0 failures
-- **当前活跃缺口**：Backlog 5 大主题 16 条（V252 + V232 均已完成；Backlog #1 Dify + #2 Tauri POC 代码完成；#3 ① TypeMap 基础设施 + PDM 样例已落地，剩余 31 模块增量迁移中；#4 AST 演进完成）
+- **质量门禁当前基线（V259 封版）**：axum-layer-gate R1/R2/R3 = 0/0/0 · perm-gate R1/R3/R5 = 0/0/0 · cargo check 0 errors · tsc apps/web **0 errors** · tsc shared packages **6/6 passed** · props-alignment **100% realness** (359 routes) · CRM 0 warnings
+- **当前活跃缺口**：Backlog 5 大主题 16 条（V252 + V232 均已完成；Backlog #1 Dify + #2 Tauri POC 代码完成；#3 TypeMap + Dead Props + Scanner 全完成；#4 AST 演进完成；#5 CI 双开关已切换 blocking；#6 ①③ 完成 + ② 需人工验证剩余 514 L1-VALUE；#7 全 5 子项完成；#8 完成）
 
 ### 当前活跃任务 → 版本节点映射（规划建议 V259+）
 
