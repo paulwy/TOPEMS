@@ -113,7 +113,6 @@ async fn home() -> &'static str {
 #[cfg(test)]
 mod openapi_extract_tests {
     use super::*;
-    use tracing;
 
     #[test]
     fn extract_openapi_spec() {

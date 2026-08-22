@@ -55,6 +55,11 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         cargo test --workspace
 
+    # [Gate R] Clippy pre-commit 硬门禁（与 CI clippy-check 对齐）
+    clippy-check:
+      tags: rust lint
+      run: bash scripts/ci/check-clippy.sh
+
     # [Gate G] Permission matrix 3-way gate (dry-run)
     perm-matrix:
       tags: permission security

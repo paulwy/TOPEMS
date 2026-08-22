@@ -464,6 +464,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_defaults_when_no_env_vars() {
         clear_deployment_env_vars();
         let c = DeploymentConfig::from_env();

@@ -641,7 +641,7 @@ mod tests {
         .execute(&pool)
         .await;
 
-        let statuses = vec!["pending", "released", "in_progress", "completed", "closed"];
+        let statuses = ["pending", "released", "in_progress", "completed", "closed"];
 
         for (i, status) in statuses.iter().enumerate() {
             if i == 0 {

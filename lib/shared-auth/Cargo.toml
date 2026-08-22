@@ -42,5 +42,8 @@ dashmap.workspace = true
 # 其他
 rand = "0.8"
 
+[dev-dependencies]
+serial_test = "3"
+
 [lints]
 workspace = true

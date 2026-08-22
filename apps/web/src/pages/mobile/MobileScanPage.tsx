@@ -35,11 +35,11 @@ import {
   Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
+import { BottomTabBar, MobileCard, MobileButton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { alpha } from '@mui/material/styles';
 
 const ct = designTokens.colors;
@@ -285,15 +285,16 @@ const MobileScanPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_scan_page.k26')}
-      showBack={false}
-      showMenu={false}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab='scan'
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab='scan'
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <IconButton
           size='large'
           onClick={() => navigate(MOBILE_PATHS.scan)}
@@ -301,16 +302,14 @@ const MobileScanPage: React.FC = () => {
           aria-label={i18n.t('mobile.mobile_scan_page.k27')}
         >
           <Settings size={20} />
-        </IconButton>
-      }
+        </IconButton>,
+      ]}
+      headerProps={{
+        showBack: false,
+        showMenu: false,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Tabs
+      <Tabs
           value={activeTab}
           onChange={handleTabChange}
           variant='fullWidth'
@@ -838,8 +837,7 @@ const MobileScanPage: React.FC = () => {
             </Box>
           </Box>
         )}
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileScanPage;

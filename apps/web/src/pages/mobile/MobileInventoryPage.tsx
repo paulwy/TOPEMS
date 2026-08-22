@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MobileLayout,
+  BottomTabBar,
   PullToRefresh,
   MobileSkeleton,
   MobileCard,
@@ -47,7 +47,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileInventoryPage: React.FC = () => {
@@ -400,17 +400,16 @@ const MobileInventoryPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_inventory_page.k45')}
-      showBack
-      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab=''
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab=''
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
@@ -418,16 +417,16 @@ const MobileInventoryPage: React.FC = () => {
           aria-label={i18n.t('mobile.mobile_inventory_page.k46')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
-        </IconButton>
-      }
+        </IconButton>,
+      ]}
+      headerProps={{
+        showBack: true,
+        onBackClick: () => navigate(MOBILE_PATHS.workbench),
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Tabs
+      <Tabs
           value={activeTab}
           onChange={handleTabChange}
           variant='fullWidth'
@@ -853,8 +852,7 @@ const MobileInventoryPage: React.FC = () => {
             </>
           )}
         </PullToRefresh>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileInventoryPage;

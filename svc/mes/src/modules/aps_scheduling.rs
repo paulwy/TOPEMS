@@ -63,10 +63,11 @@ pub struct ApsScheduleRequest {
     pub overwrite_existing: Option<bool>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScheduleStrategy {
     /// 前向排程：从最早开始时间往后排
+    #[default]
     Forward,
     /// 后向排程：从最晚完工时间往前排
     Backward,
@@ -74,12 +75,6 @@ pub enum ScheduleStrategy {
     Bidirectional,
     /// 基于瓶颈的排程：先排瓶颈资源，再排其他
     BottleneckDriven,
-}
-
-impl Default for ScheduleStrategy {
-    fn default() -> Self {
-        ScheduleStrategy::Forward
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -1449,7 +1444,7 @@ pub async fn get_bottleneck_analysis(
     .await;
 
     if let Ok(stats) = station_stats {
-        for (_idx, stat) in stats.iter().enumerate() {
+        for stat in stats.iter() {
             let name: String = stat.try_get("name").unwrap_or_default();
             let tasks: i64 = stat.try_get("scheduled_tasks").unwrap_or(0);
             let orders: i64 = stat.try_get("unique_orders").unwrap_or(0);

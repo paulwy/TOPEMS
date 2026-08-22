@@ -37,15 +37,15 @@ import {
   Filter,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
+import { BottomTabBar, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
+import { MobilePageTemplate } from '@/components/templates';
 import { useNotificationStore, useAuthStore } from '@/store';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ListParams } from '@/api/workflow/types';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface ApprovalItem {
@@ -374,19 +374,14 @@ const MobileApprovalPage: React.FC = () => {
   ];
   if (selectedApproval) {
     return (
-      <MobileLayout
+      <MobilePageTemplate
         title={i18n.t('mobile.mobile_approval_page.k22')}
-        showBack
-        onBackClick={() => setSelectedApproval(null)}
-        showTabBar={false}
+        headerProps={{
+          showBack: true,
+          onBackClick: () => setSelectedApproval(null),
+        }}
       >
-        <PageContainer
-          autoTitle={false}
-          autoBreadcrumbs={false}
-          padding={false}
-          maxWidth={false}
-        >
-          <Box sx={{ p: 2, pb: 3 }}>
+        <Box sx={{ p: 2, pb: 3 }}>
             <Paper
               elevation={0}
               sx={{
@@ -695,38 +690,36 @@ const MobileApprovalPage: React.FC = () => {
               </MobileButton>
             </Box>
           </Box>
-        </PageContainer>
-      </MobileLayout>
+      </MobilePageTemplate>
     );
   }
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_approval_page.k27')}
-      showBack={false}
-      showMenu={false}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab='approval'
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab='approval'
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
           aria-label={i18n.t('mobile.mobile_approval_page.k28')}
         >
           <Filter style={{ width: 20, height: 20 }} />
-        </IconButton>
-      }
+        </IconButton>,
+      ]}
+      headerProps={{
+        showBack: false,
+        showMenu: false,
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Box sx={{ px: 2, pt: 2 }}>
+      <Box sx={{ px: 2, pt: 2 }}>
           <TextField
             fullWidth
             size='small'
@@ -966,8 +959,7 @@ const MobileApprovalPage: React.FC = () => {
             </List>
           )}
         </PullToRefresh>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileApprovalPage;

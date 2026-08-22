@@ -33,10 +33,11 @@ use uuid::Uuid;
 ///
 /// 覆盖各服务出现的全部状态值。各服务若仅使用子集，仍可安全使用本枚举；
 /// 序列化为 snake_case 字符串以兼容现有前端 `status: string` 契约。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SupplierStatus {
     /// 活跃（SRM/SCM/ERP/unified-core 通用）
+    #[default]
     Active,
     /// 未激活 / 停用（SCM/ERP）
     Inactive,
@@ -71,12 +72,6 @@ impl SupplierStatus {
 impl std::fmt::Display for SupplierStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
-    }
-}
-
-impl Default for SupplierStatus {
-    fn default() -> Self {
-        Self::Active
     }
 }
 
@@ -133,9 +128,10 @@ impl std::fmt::Display for SupplierCategory {
 }
 
 /// 风险等级（SRM 独有，标准化保留）
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SupplierRiskLevel {
+    #[default]
     Low,
     Medium,
     High,
@@ -150,12 +146,6 @@ impl SupplierRiskLevel {
             Self::High => "high",
             Self::Critical => "critical",
         }
-    }
-}
-
-impl Default for SupplierRiskLevel {
-    fn default() -> Self {
-        Self::Low
     }
 }
 

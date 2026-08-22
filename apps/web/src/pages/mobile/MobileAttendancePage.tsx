@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MobileLayout,
+  BottomTabBar,
   PullToRefresh,
   MobileSkeleton,
   MobileCard,
@@ -45,7 +45,7 @@ import { useNotificationStore } from '@/store';
 import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileAttendancePage: React.FC = () => {
@@ -379,33 +379,32 @@ const MobileAttendancePage: React.FC = () => {
   ];
   const todayStatus = attendanceStats?.today_status;
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_attendance_page.k40')}
-      showBack
-      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab=''
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab=''
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <Button
           size='small'
           onClick={() => setLeaveDialogOpen(true)}
           sx={{ minWidth: 'auto', px: 1 }}
         >
           <Plus style={{ width: 20, height: 20 }} />
-        </Button>
-      }
+        </Button>,
+      ]}
+      headerProps={{
+        showBack: true,
+        onBackClick: () => navigate(MOBILE_PATHS.workbench),
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Tabs
+      <Tabs
           value={activeTab}
           onChange={handleTabChange}
           variant='fullWidth'
@@ -890,8 +889,7 @@ const MobileAttendancePage: React.FC = () => {
             </MobileButton>
           </DialogActions>
         </Dialog>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileAttendancePage;
