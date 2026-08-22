@@ -4,10 +4,10 @@ import { mobileApi } from '@/api/mobile';
 import { IconButton } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User, Barcode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton } from '@/components/mobile';
+import { BottomTabBar, PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { useMobileProduction } from './hooks/useMobileProduction';
 import { MobileProductionFilters } from './components/MobileProductionFilters';
 import { MobileProductionCard } from './components/MobileProductionCard';
@@ -102,17 +102,16 @@ const MobileProductionPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_production_page.k5')}
-      showBack
-      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab=''
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab=''
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
@@ -120,16 +119,16 @@ const MobileProductionPage: React.FC = () => {
           aria-label={i18n.t('mobile.mobile_production_page.k6')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
-        </IconButton>
-      }
+        </IconButton>,
+      ]}
+      headerProps={{
+        showBack: true,
+        onBackClick: () => navigate(MOBILE_PATHS.workbench),
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <MobileProductionFilters
+      <MobileProductionFilters
           activeTab={activeTab}
           onTabChange={handleTabChange}
           searchQuery={searchQuery}
@@ -160,8 +159,7 @@ const MobileProductionPage: React.FC = () => {
           onReportFormChange={setReportForm}
           onSubmit={handleSubmitReport}
         />
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileProductionPage;

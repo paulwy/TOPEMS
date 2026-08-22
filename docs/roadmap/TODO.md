@@ -1,13 +1,90 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V266 | **更新日期**: 2026-08-22
+> **版本**: V267 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V266 设计系统模板迁移收尾阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
+> **V267 四轨并行推进已完成**（clippy 全清 / MobilePageTemplate / clippy Gate / check_allow_baseline 修复）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V267 四轨并行推进（clippy 全清 + MobilePageTemplate + clippy Gate + CI 漏洞修复）
+
+> 日期：2026-08-23 | 代码改动 28 files（Rust A 12 + 前端 B 12 + Gate C 2 + CI D 2）| 验收：clippy exit 0 · tsc exit 0 · lefthook All good · #[allow] 243=243
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A 轨: clippy 警告全清 | shared-core(2) + mes(6) 共 8 条 clippy 警告修复（derivable Default / redundant import / useless vec! / manual RangeInclusive / unused enumerate / unexpected cfg）；额外将 serial_test 修复扩展到 shared-ai/auth/bootstrap/config 的 env-var 测试 | ✅ |
+| B 轨: MobilePageTemplate + 10 页面迁移 | 新建 `apps/web/src/components/templates/MobilePageTemplate.tsx`；10 个 MobileXxxPage 接入模板；template-exceptions.md 例外项 45→35，覆盖率 91.5%→93.4% | ✅ |
+| C 轨: lefthook 新增 clippy Gate (Gate R) | `scripts/ci/check-clippy.sh` 创建 + `lefthook.yml` 新增 clippy-check Gate（staged .rs 文件触发，-D warnings 硬门禁） | ✅ |
+| D 轨: 修复 check_allow_baseline.sh 缺失 | `scripts/check_allow_baseline.sh` + `scripts/check_allow_baseline.txt`（基线 243）创建；CI code-quality job 漏洞修复 | ✅ |
+
+#### A 轨详情：clippy 警告全清
+
+**背景**：CI `clippy-check` job 使用 `-D warnings` 硬门禁，但 workspace 存在 ~10 条警告，导致 Rust 变更 PR 必失败。
+
+**变更（12 files）**：
+- [lib/shared-core/src/supplier.rs](file:///Users/air/TOPEMS/lib/shared-core/src/supplier.rs) — SupplierStatus/SupplierRiskLevel 改为 `#[derive(Default)]` + `#[default]` 变体
+- [svc/mes/src/modules/aps_scheduling.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/aps_scheduling.rs) — ScheduleStrategy derive Default + unused enumerate index 修复
+- [svc/mes/src/main.rs](file:///Users/air/TOPEMS/svc/mes/src/main.rs) — 删除冗余 `use tracing;`
+- [svc/mes/tests/integration_tests.rs](file:///Users/air/TOPEMS/svc/mes/tests/integration_tests.rs) — useless vec! → array literal
+- [svc/mes/tests/mes_tests.rs](file:///Users/air/TOPEMS/svc/mes/tests/mes_tests.rs) — unexpected_cfgs allow + manual_range_contains 修复
+- [lib/shared-ai/Cargo.toml](file:///Users/air/TOPEMS/lib/shared-ai/Cargo.toml) + [lib/shared-ai/src/ai_client/config.rs](file:///Users/air/TOPEMS/lib/shared-ai/src/ai_client/config.rs) — serial_test dev-dep + #[serial] 注解
+- [lib/shared-auth/Cargo.toml](file:///Users/air/TOPEMS/lib/shared-auth/Cargo.toml) + [lib/shared-auth/src/auth.rs](file:///Users/air/TOPEMS/lib/shared-auth/src/auth.rs) — serial_test dev-dep + #[serial] 注解
+- [lib/shared-bootstrap/Cargo.toml](file:///Users/air/TOPEMS/lib/shared-bootstrap/Cargo.toml) + [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) — serial_test dev-dep + #[serial] 注解
+- [lib/shared-core/src/config/deployment.rs](file:///Users/air/TOPEMS/lib/shared-core/src/config/deployment.rs) + [lib/shared-core/src/config/enhanced.rs](file:///Users/air/TOPEMS/lib/shared-core/src/config/enhanced.rs) — #[serial] env-var 测试
+
+**验收**：`cargo clippy --workspace --all-targets -- -D warnings` → exit 0，0 warnings
+
+#### B 轨详情：MobilePageTemplate + 10 页面迁移
+
+**背景**：45 个模板例外中 11 个为移动端页面（最大单一类别）。创建专用 MobilePageTemplate 消除 10 个例外。
+
+**变更（12 files）**：
+- [apps/web/src/components/templates/MobilePageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/MobilePageTemplate.tsx) — 新建模板（title/children/bottomNav/actions/onRefresh props）
+- [apps/web/src/components/templates/extensions/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/templates/extensions/index.ts) — 导出 MobilePageTemplate
+- 10 个 Mobile 页面迁移：MobileApprovalPage / MobileAttendancePage / MobileInventoryPage / MobileProductionPage / MobileProfilePage / MobileQualityPage / MobileScanPage / MobileTaskListPage / MobileWorkbenchPage / PushNotificationPage
+- [docs/design/template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) — 例外项 45→35，覆盖率 91.5%→93.4%
+
+**验收**：`npx tsc --noEmit` → exit 0，0 errors
+
+#### C 轨详情：lefthook 新增 clippy Gate
+
+**背景**：lefthook 14 个 Gate 缺少 clippy 检查，CI clippy-check job 使用 `-D warnings` 但 pre-commit 阶段无防护。
+
+**变更（2 files）**：
+- [scripts/ci/check-clippy.sh](file:///Users/air/TOPEMS/scripts/ci/check-clippy.sh) — 新建脚本（staged .rs 检测 + cargo clippy --workspace --all-targets -- -D warnings）
+- [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — 新增 Gate R `clippy-check`
+
+**验收**：`npx lefthook validate` → "All good"；`bash scripts/ci/check-clippy.sh` → exit 0
+
+#### D 轨详情：修复 check_allow_baseline.sh 缺失
+
+**根因**：ci.yml 第 1583 行 `code-quality` job 调用 `bash scripts/check_allow_baseline.sh`，但脚本不存在，任何触发该 job 的 PR 必失败。
+
+**变更（2 files）**：
+- [scripts/check_allow_baseline.sh](file:///Users/air/TOPEMS/scripts/check_allow_baseline.sh) — 新建脚本（统计 #[allow] 数量，对比基线，支持 --update-baseline）
+- [scripts/check_allow_baseline.txt](file:///Users/air/TOPEMS/scripts/check_allow_baseline.txt) — 基线值 243
+
+**验收**：`bash scripts/check_allow_baseline.sh` → "✅ #[allow] count: 243 (baseline: 243)"
+
+#### 最终验收矩阵
+- [x] `cargo clippy --workspace --all-targets -- -D warnings` — exit 0, 0 warnings
+- [x] `npx tsc --noEmit`（apps/web）— exit 0, 0 errors
+- [x] `npx lefthook validate` — "All good"
+- [x] `bash scripts/check_allow_baseline.sh` — ✅ count: 243 (baseline: 243)
+- [x] `bash scripts/ci/check-clippy.sh` — exit 0
+
+### V267 后续扩展（留给 V268+）
+- [ ] **ChatPageTemplate**：迁移 5 个 AI 对话页 + IMPage（共 6 页），消除 6 个例外
+- [ ] **AuthPageTemplate**：迁移 LoginPage/ForgotPasswordPage/NotFoundPage/ErrorPage（共 4 页）
+- [ ] **DesignerTemplate**：迁移 4 个设计器页（FormDesign/PageDesign/WorkflowDesigner/AutomationDesigner）
+- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
+- [ ] **api-types.ts 类型补齐**：7 处 TODO（lineage/knowledge/versioning/quality_cost/equipment 模块 ToSchema 补齐）
+- [ ] **CI 增强**：新增 Lighthouse 性能门禁 + cargo-deny 许可证/安全公告双查
+- [ ] **clippy Gate 收紧**：Gate R 当前为 buffer 模式，连续 3 次守绿后可收紧为 0 容忍
 
 ### 已完成：架构冗余重构 P2 — FSM 模板代码消除 + 预存在测试修复（V266-P2）
 

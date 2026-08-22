@@ -34,11 +34,11 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton } from '@/components/mobile';
+import { BottomTabBar, PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface Task {
@@ -285,25 +285,24 @@ const MobileTaskListPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_task_list_page.k20')}
-      showBack={false}
-      showMenu={false}
-      showSearch
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab='tasks'
-      onTabChange={handleBottomTabChange}
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab='tasks'
+          onChange={handleBottomTabChange}
+        />
+      }
+      headerProps={{
+        showBack: false,
+        showMenu: false,
+        showSearch: true,
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Box sx={{ px: 2, pt: 2 }}>
+      <Box sx={{ px: 2, pt: 2 }}>
           <TextField
             fullWidth
             size='small'
@@ -559,8 +558,7 @@ const MobileTaskListPage: React.FC = () => {
             )}
           </Box>
         </PullToRefresh>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileTaskListPage;

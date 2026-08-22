@@ -1,3 +1,6 @@
+#![allow(unexpected_cfgs)]
+// V267: test fixture, allow unknown `http_endpoint_tests` cfg until Cargo.toml declares feature
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -631,7 +634,7 @@ mod business_logic_tests {
         let oee = availability * performance * quality;
 
         assert!((oee - 0.72675_f64).abs() < 0.001);
-        assert!(oee >= 0.0 && oee <= 1.0);
+        assert!((0.0..=1.0).contains(&oee));
     }
 
     #[test]

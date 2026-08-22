@@ -29,5 +29,8 @@ sqlx.workspace = true
 default = []
 pgvector = []
 
+[dev-dependencies]
+serial_test = "3"
+
 [lints]
 workspace = true

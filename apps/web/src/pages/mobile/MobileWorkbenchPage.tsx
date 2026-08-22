@@ -1,7 +1,8 @@
 import { designTokens } from '@topems/tokens';
 import React, { useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
-import { Grid, PageContainer } from '@/components/common';
+import { Grid } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import {
   Home,
   ListTodo,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
+import { BottomTabBar, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
 import { type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
@@ -344,25 +345,24 @@ const MobileWorkbenchPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_workbench_page.k31')}
-      showBack={false}
-      showMenu={false}
-      showNotifications
-      notificationCount={unreadCount}
-      showTabBar
-      tabs={tabs}
-      activeTab='home'
-      onTabChange={handleTabChange}
+      onRefresh={handleRefresh}
+      bottomNav={
+        <BottomTabBar
+          tabs={tabs}
+          activeTab='home'
+          onChange={handleTabChange}
+        />
+      }
+      headerProps={{
+        showBack: false,
+        showMenu: false,
+        showNotifications: true,
+        notificationCount: unreadCount,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <PullToRefresh onRefresh={handleRefresh}>
-          <Box sx={{ p: 2, pb: 3 }}>
+      <Box sx={{ p: 2, pb: 3 }}>
             <Paper
               elevation={0}
               sx={{
@@ -659,9 +659,7 @@ const MobileWorkbenchPage: React.FC = () => {
               </>
             )}
           </Box>
-        </PullToRefresh>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileWorkbenchPage;

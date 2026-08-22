@@ -214,6 +214,7 @@ pub fn load_config_from_env() -> AIClientConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_config_defaults() {
@@ -299,6 +300,7 @@ mod tests {
         assert_eq!(config.get_api_key().as_deref(), Some("sk-direct"));
     }
 
+    #[serial]
     #[test]
     fn test_ai_model_config_get_api_key_from_env() {
         std::env::set_var("TEST_AI_API_KEY", "sk-from-env");
@@ -321,6 +323,7 @@ mod tests {
         assert!(config.get_api_key().is_none());
     }
 
+    #[serial]
     #[test]
     fn test_ai_model_config_get_api_key_direct_takes_priority() {
         // api_key 优先于 api_key_env

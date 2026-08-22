@@ -795,6 +795,7 @@ pub fn require_all_permissions<T>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_claims_has_permission() {
@@ -862,6 +863,7 @@ mod tests {
         assert!(!is_websocket_path("/api/orders"));
     }
 
+    #[serial]
     #[test]
     fn test_auth_state_validates_secret_length() {
         // 安全加固：短密钥构造 AuthState 必须 panic，防止绕过安全不变量。

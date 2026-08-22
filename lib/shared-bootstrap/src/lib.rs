@@ -1219,6 +1219,7 @@ pub async fn standard_get_metrics(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use std::sync::Mutex;
     use topems_shared_core::health::HealthStatus;
 
@@ -1362,6 +1363,7 @@ mod tests {
         assert_eq!(cfg.max_db_connections, 20);
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_default_fallback() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -1377,6 +1379,7 @@ mod tests {
         assert_eq!(resolve_port(&cfg), 8010);
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_custom_env_var() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -1393,6 +1396,7 @@ mod tests {
         std::env::remove_var("ERP_PORT");
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_server_port_fallback() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -1409,6 +1413,7 @@ mod tests {
         std::env::remove_var("SERVER_PORT");
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_invalid_env_ignored() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -1790,6 +1795,7 @@ mod tests {
 
     // ===== resolve_port PORT 环境变量分支 =====
 
+    #[serial]
     #[test]
     fn test_resolve_port_port_env_var() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -1806,6 +1812,7 @@ mod tests {
         std::env::remove_var("PORT");
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_priority_order_custom_server_port() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -2084,6 +2091,7 @@ mod tests {
 
     // ===== resolve_port 无 port_env_var + 直接走 PORT/SERVER_PORT =====
 
+    #[serial]
     #[test]
     fn test_resolve_port_without_port_env_var_uses_server_port() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -2099,6 +2107,7 @@ mod tests {
         std::env::remove_var("SERVER_PORT");
     }
 
+    #[serial]
     #[test]
     fn test_resolve_port_invalid_server_port_falls_through_to_default() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -2147,6 +2156,7 @@ mod tests {
 
     // ===== resolve_port: 自定义 port_env_var 为无效数字时回退到 SERVER_PORT =====
 
+    #[serial]
     #[test]
     fn test_resolve_port_bad_custom_env_then_server_port() {
         let _lock = ENV_LOCK.lock().unwrap();
@@ -2165,6 +2175,7 @@ mod tests {
 
     // ===== resolve_port: 全部环境变量无效时使用 config.port =====
 
+    #[serial]
     #[test]
     fn test_resolve_port_all_env_invalid_uses_default() {
         let _lock = ENV_LOCK.lock().unwrap();

@@ -803,6 +803,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn database_config_from_env_missing_url_errors() {
         clear_enhanced_env_vars();
         assert!(DatabaseConfig::from_env().is_err());
@@ -916,6 +917,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn service_config_from_env_defaults() {
         clear_enhanced_env_vars();
         let c = ServiceConfig::from_env("my-svc", 8800).expect("ok");
@@ -975,6 +977,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn redis_config_from_env_missing_url_errors() {
         clear_enhanced_env_vars();
         assert!(RedisConfig::from_env().is_err());
@@ -1048,6 +1051,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn jwt_config_from_env_missing_secret_errors() {
         clear_enhanced_env_vars();
         assert!(JwtConfig::from_env().is_err());
@@ -1103,6 +1107,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn ai_config_from_env_defaults() {
         clear_enhanced_env_vars();
         let c = AIConfig::from_env().expect("ok");
@@ -1140,6 +1145,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cache_config_from_env_defaults() {
         clear_enhanced_env_vars();
         let c = CacheConfig::from_env().expect("ok");

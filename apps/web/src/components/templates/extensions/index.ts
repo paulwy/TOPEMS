@@ -89,3 +89,6 @@ export type {
   TrackPoint,
   GisMapTemplateProps,
 } from '../GisMapTemplate';
+
+export { MobilePageTemplate } from '../MobilePageTemplate';
+export type { MobilePageTemplateProps } from '../MobilePageTemplate';

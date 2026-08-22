@@ -21,11 +21,11 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, MobileCard } from '@/components/mobile';
+import { BottomTabBar, MobileCard } from '@/components/mobile';
+import { MobilePageTemplate } from '@/components/templates';
 import { useAuthStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
-import { PageContainer } from '@/components/common';
 
 interface SettingGroup {
   title: string;
@@ -231,24 +231,23 @@ const MobileSettingsPage: React.FC = () => {
     }
   };
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_profile_page.k27')}
-      showBack={false}
-      showMenu={false}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab='profile'
-      onTabChange={handleBottomTabChange}
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab='profile'
+          onChange={handleBottomTabChange}
+        />
+      }
+      headerProps={{
+        showBack: false,
+        showMenu: false,
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Box sx={{ p: 2, pb: 3 }}>
+      <Box sx={{ p: 2, pb: 3 }}>
           <Box
             sx={{
               display: 'flex',
@@ -365,8 +364,7 @@ const MobileSettingsPage: React.FC = () => {
             </Typography>
           </Box>
         </Box>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileSettingsPage;

@@ -2,13 +2,13 @@ import { designTokens } from '@topems/tokens';
 import React, { useEffect } from 'react';
 import { Box, Typography, Paper, Switch, Chip, Divider, useTheme } from '@mui/material';
 import { Bell } from 'lucide-react';
-import { MobileLayout, MobileSkeleton } from '@/components/mobile';
+import { MobileSkeleton } from '@/components/mobile';
+import { MobilePageTemplate } from '@/components/templates';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { mobileApi, type PushConfig, type PushTemplate, type ListResponse } from '@/api/mobile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -138,40 +138,31 @@ const PushNotificationPage: React.FC = () => {
   };
   if (loading) {
     return (
-      <MobileLayout
+      <MobilePageTemplate
         title={i18n.t('mobile.push_notification_page.k11')}
-        showBack
-        onBackClick={() => navigate(-1)}
+        headerProps={{
+          showBack: true,
+          onBackClick: () => navigate(-1),
+        }}
       >
-        <PageContainer
-          autoTitle={false}
-          autoBreadcrumbs={false}
-          padding={false}
-          maxWidth={false}
-        >
-          <Box sx={{ p: 2 }}>
-            <MobileSkeleton
-              type='list'
-              count={4}
-            />
-          </Box>
-        </PageContainer>
-      </MobileLayout>
+        <Box sx={{ p: 2 }}>
+          <MobileSkeleton
+            type='list'
+            count={4}
+          />
+        </Box>
+      </MobilePageTemplate>
     );
   }
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.push_notification_page.k12')}
-      showBack
-      onBackClick={() => navigate(-1)}
+      headerProps={{
+        showBack: true,
+        onBackClick: () => navigate(-1),
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Box sx={{ p: 2, pb: 3 }}>
+      <Box sx={{ p: 2, pb: 3 }}>
           {/* 推送开关 */}
           <Paper
             elevation={0}
@@ -300,8 +291,7 @@ const PushNotificationPage: React.FC = () => {
             ))}
           </Paper>
         </Box>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default PushNotificationPage;

@@ -37,13 +37,13 @@ import {
   Barcode,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
+import { BottomTabBar, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { useNotificationStore, useAuthStore } from '@/store';
 import { type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileQualityPage: React.FC = () => {
@@ -402,17 +402,16 @@ const MobileQualityPage: React.FC = () => {
     },
   ];
   return (
-    <MobileLayout
+    <MobilePageTemplate
       title={i18n.t('mobile.mobile_quality_page.k41')}
-      showBack
-      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={bottomTabs}
-      activeTab=''
-      onTabChange={handleBottomTabChange}
-      rightActions={
+      bottomNav={
+        <BottomTabBar
+          tabs={bottomTabs}
+          activeTab=''
+          onChange={handleBottomTabChange}
+        />
+      }
+      actions={[
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
@@ -420,16 +419,16 @@ const MobileQualityPage: React.FC = () => {
           aria-label={i18n.t('mobile.mobile_quality_page.k42')}
         >
           <Barcode style={{ width: 20, height: 20 }} />
-        </IconButton>
-      }
+        </IconButton>,
+      ]}
+      headerProps={{
+        showBack: true,
+        onBackClick: () => navigate(MOBILE_PATHS.workbench),
+        showNotifications: true,
+        notificationCount: 5,
+      }}
     >
-      <PageContainer
-        autoTitle={false}
-        autoBreadcrumbs={false}
-        padding={false}
-        maxWidth={false}
-      >
-        <Tabs
+      <Tabs
           value={activeTab}
           onChange={handleTabChange}
           variant='fullWidth'
@@ -871,8 +870,7 @@ const MobileQualityPage: React.FC = () => {
             </MobileButton>
           </DialogActions>
         </Dialog>
-      </PageContainer>
-    </MobileLayout>
+    </MobilePageTemplate>
   );
 };
 export default MobileQualityPage;

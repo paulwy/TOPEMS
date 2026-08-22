@@ -2,18 +2,18 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V266 设计系统模板迁移  
-> 更新日期：2026-08-22
+> 关联 TODO：`docs/roadmap/TODO.md` V267-B MobilePageTemplate 创建 + 10 个 Mobile 页面迁移  
+> 更新日期：2026-08-23
 
 ---
 
 ## 1. 背景
 
-V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/531 页面）。剩余 45 个页面因交互形态特殊、属于子组件/常量文件、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/531 页面）。V267-B 新增 `MobilePageTemplate` 并完成 10 个移动端页面迁移后，覆盖率提升至 **93.4%**（496/531 页面）。剩余 35 个页面因交互形态特殊、属于子组件/常量文件、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表“永不治理”，而是明确：
-- 当前 15 种标准页面模板不覆盖这些场景；
-- 后续如需统一，应优先创建新的专用模板（如 `ChatPageTemplate`、`MobilePageTemplate`、`AuthPageTemplate`），而不是硬塞进现有模板。
+- 当前 15 种标准页面模板不覆盖这些场景（`MobilePageTemplate` 已新增并落地，移动端例外仅剩 `MobileHomePage` 待后续接入 `MobileDashboardTemplate`）；
+- 后续如需统一，应优先创建新的专用模板（如 `ChatPageTemplate`、`AuthPageTemplate`），而不是硬塞进现有模板。
 
 ---
 
@@ -22,7 +22,7 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 类别 | 数量 | 代表页面 | 核心原因 |
 |------|------|----------|----------|
 | AI 对话类 | 5 | `AiChatPage`、`DifyChatPage` 等 | 聊天交互，需要消息列表、输入区、上下文管理，现有模板无法表达 |
-| 移动端页面 | 11 | `MobileHomePage`、`MobileTaskListPage` 等 | 小屏交互、底部导航、触摸优先，需 `MobilePageTemplate` |
+| 移动端页面 | 1 | `MobileHomePage` | 小屏交互、底部导航、触摸优先，10 个页面已迁至 `MobilePageTemplate`，仅剩首页待 `MobileDashboardTemplate` |
 | 设计器/画布类 | 4 | `FormDesignPage`、`PageDesignPage`、`WorkflowDesignerPage`、`AutomationDesignerPage` | 拖拽、画布、属性面板，属于编辑器而非数据页面 |
 | 报表类 | 6 | `ReportBuilder`、`ReportViewer`、`ReportPage` 等 | 报表设计/查看/渲染，已有 `ReportDesignerTemplate` 但业务耦合深 |
 | 认证/错误页 | 4 | `LoginPage`、`ForgotPasswordPage`、`NotFoundPage`、`ErrorPage` | 无导航、无 PageContainer，需 `AuthPageTemplate` |
@@ -33,7 +33,7 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 列表/结构类 | 4 | `DatabaseStructurePage`、`HelpCenterPage`、`CommentsPage`、`AppManagementPage` | 适合模板但优先级低，可待模块重构时处理 |
 | 非页面支持文件 | 2 | `ProductionDashboardPage/constants.tsx`、历史遗留 `_shared/*` | 已改为 `.ts` 或移出 `pages/` |
 
-合计：**45 个页面/文件**。
+合计：**35 个页面/文件**。
 
 ---
 
@@ -49,21 +49,23 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | `apps/web/src/pages/ai/AiKnowledgeBasePage.tsx` | `CardListTemplate` / `ChatPageTemplate` | 知识库 + 问答混合 |
 | `apps/web/src/pages/ai/DifyChatPage.tsx` | `ChatPageTemplate` | Dify 集成对话 |
 
-### 3.2 移动端页面（11）
+### 3.2 移动端页面（1，已迁移 10 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/mobile/MobileApprovalPage.tsx` | `MobilePageTemplate` | 审批列表 |
-| `apps/web/src/pages/mobile/MobileAttendancePage.tsx` | `MobilePageTemplate` | 考勤 |
-| `apps/web/src/pages/mobile/MobileHomePage.tsx` | `MobileDashboardTemplate` | 移动首页 |
-| `apps/web/src/pages/mobile/MobileInventoryPage.tsx` | `MobilePageTemplate` | 库存 |
-| `apps/web/src/pages/mobile/MobileProductionPage.tsx` | `MobilePageTemplate` | 生产 |
-| `apps/web/src/pages/mobile/MobileProfilePage.tsx` | `MobilePageTemplate` | 个人中心 |
-| `apps/web/src/pages/mobile/MobileQualityPage.tsx` | `MobilePageTemplate` | 质检 |
-| `apps/web/src/pages/mobile/MobileScanPage.tsx` | `MobilePageTemplate` | 扫码 |
-| `apps/web/src/pages/mobile/MobileTaskListPage.tsx` | `MobilePageTemplate` | 任务列表 |
-| `apps/web/src/pages/mobile/MobileWorkbenchPage.tsx` | `MobilePageTemplate` | 工作台 |
-| `apps/web/src/pages/mobile/PushNotificationPage.tsx` | `MobilePageTemplate` | 推送通知 |
+V267-B 新增 `MobilePageTemplate`（`apps/web/src/components/templates/MobilePageTemplate.tsx`，由 `MobileLayout` + `PullToRefresh` + `PageContainer` 组合而成，支持 `bottomNav`、`actions`、`onRefresh`、`headerProps` 等移动端专用插槽）。下表中 10 个页面已迁移至该模板，仅剩 `MobileHomePage` 因需要仪表盘风格而保留为例外，待后续 `MobileDashboardTemplate` 落地后再处理。
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/mobile/MobileApprovalPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 审批列表（含详情视图） |
+| `apps/web/src/pages/mobile/MobileAttendancePage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 考勤（含下拉刷新） |
+| `apps/web/src/pages/mobile/MobileHomePage.tsx` | `MobileDashboardTemplate` | ⚠️ 例外 | 移动首页，需仪表盘风格 |
+| `apps/web/src/pages/mobile/MobileInventoryPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 库存（含 Tabs + 搜索） |
+| `apps/web/src/pages/mobile/MobileProductionPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 生产（含自定义过滤器） |
+| `apps/web/src/pages/mobile/MobileProfilePage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 个人中心 |
+| `apps/web/src/pages/mobile/MobileQualityPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 质检（含对话框） |
+| `apps/web/src/pages/mobile/MobileScanPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 扫码（摄像头预览保留在 children） |
+| `apps/web/src/pages/mobile/MobileTaskListPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 任务列表（含 `headerProps.showSearch`） |
+| `apps/web/src/pages/mobile/MobileWorkbenchPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 工作台（含 `onRefresh` 下拉刷新） |
+| `apps/web/src/pages/mobile/PushNotificationPage.tsx` | `MobilePageTemplate` | ✅ 已迁移 | 推送通知（含加载视图与主视图） |
 
 ### 3.3 设计器/画布类（4）
 
@@ -155,8 +157,8 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 指标 | 数值 |
 |------|------|
 | 当前全站页面总数 | 531 |
-| 已使用标准模板 | 486 (91.5%) |
-| 例外项（本文档） | 45 (8.5%) |
+| 已使用标准模板 | 496 (93.4%) |
+| 例外项（本文档） | 35 (6.6%) |
 | 目标覆盖率（不含例外） | 100% |
 
-> 注：覆盖率计算以 `apps/web/src/pages/**/*.tsx` 为分母。非页面支持文件已移出 `pages/` 或改为 `.ts`，不再计入。
+> 注：覆盖率计算以 `apps/web/src/pages/**/*.tsx` 为分母。非页面支持文件已移出 `pages/` 或改为 `.ts`，不再计入。V267-B 迁移 10 个移动端页面至 `MobilePageTemplate` 后，覆盖率自 91.5%（486/531）提升至 93.4%（496/531）。
