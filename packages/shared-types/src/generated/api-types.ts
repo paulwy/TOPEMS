@@ -131,8 +131,100 @@ export namespace MasterDataTypes {
   export type AutoFixRequest = ApiComponents['schemas']['AutoFixRequest'];
   export type GenerateSuggestionsRequest = ApiComponents['schemas']['GenerateSuggestionsRequest'];
 
-  // TODO: 待补充模块（V52-V60）：lineage, knowledge, versioning, commercial,
-  // disaster, semantic, governance, ai_governance, metadata
+  // 数据血缘 + 影响分析（lineage_v52）
+  export type EdgeType = ApiComponents['schemas']['EdgeType'];
+  export type LineageNode = ApiComponents['schemas']['LineageNode'];
+  export type LineageEdge = ApiComponents['schemas']['LineageEdge'];
+  export type LineageGraph = ApiComponents['schemas']['LineageGraph'];
+  export type ChangeType = ApiComponents['schemas']['ChangeType'];
+  export type ImpactAnalysisRequest = ApiComponents['schemas']['ImpactAnalysisRequest'];
+  export type RiskLevel = ApiComponents['schemas']['RiskLevel'];
+  export type AffectedNode = ApiComponents['schemas']['AffectedNode'];
+  export type AffectedService = ApiComponents['schemas']['AffectedService'];
+  export type ChainReaction = ApiComponents['schemas']['ChainReaction'];
+  export type ImpactAnalysisResult = ApiComponents['schemas']['ImpactAnalysisResult'];
+  export type ImpactSimulation = ApiComponents['schemas']['ImpactSimulation'];
+  export type ChangeEvent = ApiComponents['schemas']['ChangeEvent'];
+  export type PropagationAction = ApiComponents['schemas']['PropagationAction'];
+  export type PropagationRule = ApiComponents['schemas']['PropagationRule'];
+  export type PropagationLog = ApiComponents['schemas']['PropagationLog'];
+  export type RegisterLineageRequest = ApiComponents['schemas']['RegisterLineageRequest'];
+  export type LineageQuery = ApiComponents['schemas']['LineageQuery'];
+  export type ExportQuery = ApiComponents['schemas']['ExportQuery'];
+  export type DeleteLineageRequest = ApiComponents['schemas']['DeleteLineageRequest'];
+  export type AnalyzeImpactRequest = ApiComponents['schemas']['AnalyzeImpactRequest'];
+  export type SimulateChangeRequest = ApiComponents['schemas']['SimulateChangeRequest'];
+  export type AffectedScopeQuery = ApiComponents['schemas']['AffectedScopeQuery'];
+  export type PropagateChangeRequest = ApiComponents['schemas']['PropagateChangeRequest'];
+  export type AddPropagationRuleRequest = ApiComponents['schemas']['AddPropagationRuleRequest'];
+  export type PropagationLogQuery = ApiComponents['schemas']['PropagationLogQuery'];
+  export type RollbackPropagationRequest = ApiComponents['schemas']['RollbackPropagationRequest'];
+
+  // 知识图谱 + 推荐系统（knowledge_v53）
+  export type KGNodeType = ApiComponents['schemas']['KGNodeType'];
+  export type KGNode = ApiComponents['schemas']['KGNode'];
+  export type KGRelationType = ApiComponents['schemas']['KGRelationType'];
+  export type KGEdge = ApiComponents['schemas']['KGEdge'];
+  export type KnowledgeGraph = ApiComponents['schemas']['KnowledgeGraph'];
+  export type RecommendationSource = ApiComponents['schemas']['RecommendationSource'];
+  export type Recommendation = ApiComponents['schemas']['Recommendation'];
+  export type InteractionRecord = ApiComponents['schemas']['InteractionRecord'];
+  export type AssetType = ApiComponents['schemas']['AssetType'];
+  export type DataAsset = ApiComponents['schemas']['DataAsset'];
+  export type AssetCategory = ApiComponents['schemas']['AssetCategory'];
+  export type AssetCatalog = ApiComponents['schemas']['AssetCatalog'];
+  export type AssetStats = ApiComponents['schemas']['AssetStats'];
+  export type AddKGNodeRequest = ApiComponents['schemas']['AddKGNodeRequest'];
+  export type AddKGEdgeRequest = ApiComponents['schemas']['AddKGEdgeRequest'];
+  export type SubgraphQuery = ApiComponents['schemas']['SubgraphQuery'];
+  export type PathQuery = ApiComponents['schemas']['PathQuery'];
+  export type SimilarQuery = ApiComponents['schemas']['SimilarQuery'];
+  export type ExportKGQuery = ApiComponents['schemas']['ExportKGQuery'];
+  export type RecommendationQuery = ApiComponents['schemas']['RecommendationQuery'];
+  export type RecordInteractionRequest = ApiComponents['schemas']['RecordInteractionRequest'];
+  export type SimilarItemsQuery = ApiComponents['schemas']['SimilarItemsQuery'];
+  export type TrendingQuery = ApiComponents['schemas']['TrendingQuery'];
+  export type RegisterAssetRequest = ApiComponents['schemas']['RegisterAssetRequest'];
+  export type SearchAssetsQuery = ApiComponents['schemas']['SearchAssetsQuery'];
+  export type UpdateAssetRequest = ApiComponents['schemas']['UpdateAssetRequest'];
+
+  // 版本管理 + 审计 + 权限（versioning_v54）
+  export type VersionSnapshot = ApiComponents['schemas']['VersionSnapshot'];
+  export type VersionDiff = ApiComponents['schemas']['VersionDiff'];
+  export type BranchType = ApiComponents['schemas']['BranchType'];
+  export type VersionBranch = ApiComponents['schemas']['VersionBranch'];
+  export type AuditEventType = ApiComponents['schemas']['AuditEventType'];
+  export type AuditEventCategory = ApiComponents['schemas']['AuditEventCategory'];
+  export type AuditEvent = ApiComponents['schemas']['AuditEvent'];
+  export type AuditExportLog = ApiComponents['schemas']['AuditExportLog'];
+  export type PermissionAction = ApiComponents['schemas']['PermissionAction'];
+  export type DataPermission = ApiComponents['schemas']['DataPermission'];
+  export type PermissionRole = ApiComponents['schemas']['PermissionRole'];
+  export type UserRoleAssignment = ApiComponents['schemas']['UserRoleAssignment'];
+  export type CreateSnapshotRequest = ApiComponents['schemas']['CreateSnapshotRequest'];
+  export type VersionQuery = ApiComponents['schemas']['VersionQuery'];
+  export type VersionDiffQuery = ApiComponents['schemas']['VersionDiffQuery'];
+  export type RestoreVersionRequest = ApiComponents['schemas']['RestoreVersionRequest'];
+  export type VersionHistoryQuery = ApiComponents['schemas']['VersionHistoryQuery'];
+  export type CreateBranchRequest = ApiComponents['schemas']['CreateBranchRequest'];
+  export type MergeBranchRequest = ApiComponents['schemas']['MergeBranchRequest'];
+  export type CherryPickRequest = ApiComponents['schemas']['CherryPickRequest'];
+  export type AuditLogQuery = ApiComponents['schemas']['AuditLogQuery'];
+  export type UserActivityQuery = ApiComponents['schemas']['UserActivityQuery'];
+  export type EntityHistoryQuery = ApiComponents['schemas']['EntityHistoryQuery'];
+  export type ExportAuditLogRequest = ApiComponents['schemas']['ExportAuditLogRequest'];
+  export type ComplianceAuditQuery = ApiComponents['schemas']['ComplianceAuditQuery'];
+  export type GrantPermissionRequest = ApiComponents['schemas']['GrantPermissionRequest'];
+  export type RevokePermissionRequest = ApiComponents['schemas']['RevokePermissionRequest'];
+  export type CheckPermissionQuery = ApiComponents['schemas']['CheckPermissionQuery'];
+  export type UserPermissionsQuery = ApiComponents['schemas']['UserPermissionsQuery'];
+  export type ResourcePermissionsQuery = ApiComponents['schemas']['ResourcePermissionsQuery'];
+  export type CreateRoleRequest = ApiComponents['schemas']['CreateRoleRequest'];
+  export type AssignRoleRequest = ApiComponents['schemas']['AssignRoleRequest'];
+  export type RevokeRoleRequest = ApiComponents['schemas']['RevokeRoleRequest'];
+
+  // TODO: 待补充模块（V55-V60）：commercial, disaster, semantic, governance,
+  // ai_governance, metadata
 }
 
 // ============================================================================
@@ -164,7 +256,18 @@ export namespace QmsTypes {
   export type CreateIssueRequest = ApiComponents['schemas']['CreateIssueRequest'];
   export type UpdateIssueRequest = ApiComponents['schemas']['UpdateIssueRequest'];
 
-  // TODO: 待补充模块：quality_cost, apqp, fmea, eight_d, corrective_action, spc, dashboard
+  // 质量成本（quality_cost）
+  export type QualityCost = ApiComponents['schemas']['QualityCost'];
+  export type QualityCostQuery = ApiComponents['schemas']['QualityCostQuery'];
+  export type ListQualityCostsResponse = ApiComponents['schemas']['ListQualityCostsResponse'];
+  export type CreateQualityCostRequest = ApiComponents['schemas']['CreateQualityCostRequest'];
+  export type UpdateQualityCostRequest = ApiComponents['schemas']['UpdateQualityCostRequest'];
+  export type CostCategorySummary = ApiComponents['schemas']['CostCategorySummary'];
+  export type CostDepartmentSummary = ApiComponents['schemas']['CostDepartmentSummary'];
+  export type CostTrendItem = ApiComponents['schemas']['CostTrendItem'];
+  export type QualityCostStatistics = ApiComponents['schemas']['QualityCostStatistics'];
+
+  // TODO: 待补充模块：apqp, fmea, eight_d, corrective_action, spc, dashboard
   // @差异 手写类型区分 Backend/Frontend 两套命名（snake_case/camelCase）
 }
 
@@ -190,7 +293,16 @@ export namespace MesTypes {
   export type UpdateProductionOrderRequest = ApiComponents['schemas']['UpdateProductionOrderRequest'];
   export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
 
-  // TODO: 待补充模块：equipment, process_flow, process_route, material_bom,
+  // 设备管理（equipment）
+  export type EquipmentResponse = ApiComponents['schemas']['EquipmentResponse'];
+  export type ListEquipmentResponse = ApiComponents['schemas']['ListEquipmentResponse'];
+  export type CreateEquipmentRequest = ApiComponents['schemas']['CreateEquipmentRequest'];
+  export type UpdateEquipmentRequest = ApiComponents['schemas']['UpdateEquipmentRequest'];
+  export type MaintenanceRecord = ApiComponents['schemas']['MaintenanceRecord'];
+  export type CreateMaintenanceRecord = ApiComponents['schemas']['CreateMaintenanceRecord'];
+  export type UpdateMaintenanceStatus = ApiComponents['schemas']['UpdateMaintenanceStatus'];
+
+  // TODO: 待补充模块：process_flow, process_route, material_bom,
   // material_requirement, production_kanban, production_process, production_record,
   // production_scheduling, quality_management, quality_traceability, team, wip,
   // work_station, aps_scheduling, production_cost, energy_management, anomaly_detection

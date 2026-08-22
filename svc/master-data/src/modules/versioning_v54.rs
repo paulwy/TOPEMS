@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -156,7 +157,7 @@ pub fn diff_metadata(a: &[(&str, &str)], b: &[(&str, &str)]) -> Vec<String> {
 
 // ==================== 版本控制 ====================
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct VersionSnapshot {
     pub id: String,
     pub entity_type: String,
@@ -169,7 +170,7 @@ pub struct VersionSnapshot {
     pub comment: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct VersionDiff {
     pub from_version: String,
     pub to_version: String,
@@ -178,7 +179,7 @@ pub struct VersionDiff {
     pub changed_fields: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BranchType {
     Main,
@@ -187,7 +188,7 @@ pub enum BranchType {
     Hotfix,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct VersionBranch {
     pub id: String,
     pub name: String,
@@ -202,7 +203,7 @@ pub struct VersionBranch {
 
 // ==================== 审计日志 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AuditEventType {
     Create,
@@ -213,7 +214,7 @@ pub enum AuditEventType {
     Import,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AuditEventCategory {
     DataAccess,
@@ -222,7 +223,7 @@ pub enum AuditEventCategory {
     Security,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AuditEvent {
     pub id: String,
     pub event_type: AuditEventType,
@@ -237,7 +238,7 @@ pub struct AuditEvent {
     pub session_id: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AuditExportLog {
     pub id: String,
     pub user_id: String,
@@ -249,7 +250,7 @@ pub struct AuditExportLog {
 
 // ==================== 数据权限矩阵 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PermissionAction {
     Read,
@@ -258,7 +259,7 @@ pub enum PermissionAction {
     Admin,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct DataPermission {
     pub id: String,
     pub role_id: String,
@@ -269,7 +270,7 @@ pub struct DataPermission {
     pub inherited: bool,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct PermissionRole {
     pub id: String,
     pub name: String,
@@ -278,7 +279,7 @@ pub struct PermissionRole {
     pub created_at: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct UserRoleAssignment {
     pub id: String,
     pub user_id: String,
@@ -436,7 +437,7 @@ async fn ensure_initialized() {
 
 // --- 版本控制请求 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSnapshotRequest {
     pub entity_type: String,
     pub entity_id: String,
@@ -444,12 +445,12 @@ pub struct CreateSnapshotRequest {
     pub comment: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VersionQuery {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VersionDiffQuery {
     pub entity_type: String,
     pub entity_id: String,
@@ -457,33 +458,33 @@ pub struct VersionDiffQuery {
     pub to_version: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RestoreVersionRequest {
     pub entity_type: String,
     pub entity_id: String,
     pub version: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct VersionHistoryQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateBranchRequest {
     pub name: String,
     pub branch_type: Option<String>,
     pub parent_branch: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct MergeBranchRequest {
     pub source_branch: String,
     pub target_branch: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CherryPickRequest {
     pub branch_name: String,
     pub version: String,
@@ -491,7 +492,7 @@ pub struct CherryPickRequest {
 
 // --- 审计日志请求 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AuditLogQuery {
     pub entity_type: Option<String>,
     pub entity_id: Option<String>,
@@ -504,7 +505,7 @@ pub struct AuditLogQuery {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UserActivityQuery {
     pub event_type: Option<String>,
     pub start_time: Option<String>,
@@ -513,14 +514,14 @@ pub struct UserActivityQuery {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct EntityHistoryQuery {
     pub event_type: Option<String>,
     pub page: Option<i64>,
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExportAuditLogRequest {
     pub entity_type: Option<String>,
     pub start_time: Option<String>,
@@ -528,7 +529,7 @@ pub struct ExportAuditLogRequest {
     pub format: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ComplianceAuditQuery {
     pub framework: Option<String>,
     pub start_time: Option<String>,
@@ -537,7 +538,7 @@ pub struct ComplianceAuditQuery {
 
 // --- 数据权限请求 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct GrantPermissionRequest {
     pub role_id: String,
     pub resource_type: String,
@@ -546,12 +547,12 @@ pub struct GrantPermissionRequest {
     pub condition: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RevokePermissionRequest {
     pub id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CheckPermissionQuery {
     pub user_id: String,
     pub resource_type: String,
@@ -559,32 +560,32 @@ pub struct CheckPermissionQuery {
     pub action: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UserPermissionsQuery {
     pub resource_type: Option<String>,
     pub action: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ResourcePermissionsQuery {
     pub resource_type: Option<String>,
     pub action: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateRoleRequest {
     pub name: String,
     pub description: Option<String>,
     pub inherited_from: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AssignRoleRequest {
     pub user_id: String,
     pub role_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RevokeRoleRequest {
     pub user_id: String,
     pub role_id: String,

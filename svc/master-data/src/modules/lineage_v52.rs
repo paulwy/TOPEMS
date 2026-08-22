@@ -15,12 +15,13 @@ use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
 // ==================== 数据血缘 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum EdgeType {
     DerivesFrom,
@@ -29,7 +30,7 @@ pub enum EdgeType {
     Implements,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct LineageNode {
     pub id: String,
     pub entity_type: String,
@@ -39,7 +40,7 @@ pub struct LineageNode {
     pub created_at: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct LineageEdge {
     pub id: String,
     pub from_node_id: String,
@@ -48,7 +49,7 @@ pub struct LineageEdge {
     pub transformation_description: Option<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct LineageGraph {
     pub nodes: Vec<LineageNode>,
     pub edges: Vec<LineageEdge>,
@@ -58,7 +59,7 @@ pub struct LineageGraph {
 
 // ==================== 影响分析 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ChangeType {
     Create,
@@ -68,7 +69,7 @@ pub enum ChangeType {
     Merge,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ImpactAnalysisRequest {
     pub target_entity_id: String,
     pub analysis_depth: Option<i32>,
@@ -76,7 +77,7 @@ pub struct ImpactAnalysisRequest {
     pub include_chain_reactions: Option<bool>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum RiskLevel {
     Low,
@@ -85,7 +86,7 @@ pub enum RiskLevel {
     Critical,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AffectedNode {
     pub node_id: String,
     pub entity_type: String,
@@ -95,14 +96,14 @@ pub struct AffectedNode {
     pub dependency_depth: i32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AffectedService {
     pub service_name: String,
     pub impact_type: String,
     pub severity: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ChainReaction {
     pub step: i32,
     pub trigger_node_id: String,
@@ -110,7 +111,7 @@ pub struct ChainReaction {
     pub propagation_path: Vec<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ImpactAnalysisResult {
     pub id: String,
     pub target_node: LineageNode,
@@ -122,7 +123,7 @@ pub struct ImpactAnalysisResult {
     pub analyzed_at: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ImpactSimulation {
     pub id: String,
     pub entity_type: String,
@@ -135,7 +136,7 @@ pub struct ImpactSimulation {
 
 // ==================== 变更传播 ====================
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ChangeEvent {
     pub id: String,
     pub entity_type: String,
@@ -146,7 +147,7 @@ pub struct ChangeEvent {
     pub triggered_at: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PropagationAction {
     CascadeUpdate,
@@ -155,7 +156,7 @@ pub enum PropagationAction {
     Transform,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct PropagationRule {
     pub id: String,
     pub source_entity_type: String,
@@ -164,7 +165,7 @@ pub struct PropagationRule {
     pub action: PropagationAction,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct PropagationLog {
     pub id: String,
     pub change_event_id: String,
@@ -1010,7 +1011,7 @@ impl ChangePropagator {
 
 // --- Lineage Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RegisterLineageRequest {
     pub from_entity_type: String,
     pub from_entity_id: String,
@@ -1020,24 +1021,24 @@ pub struct RegisterLineageRequest {
     pub transformation_description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct LineageQuery {
     pub depth: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExportQuery {
     pub format: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct DeleteLineageRequest {
     pub node_id: String,
 }
 
 // --- Impact Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AnalyzeImpactRequest {
     pub target_entity_id: String,
     pub analysis_depth: Option<i32>,
@@ -1045,14 +1046,14 @@ pub struct AnalyzeImpactRequest {
     pub include_chain_reactions: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SimulateChangeRequest {
     pub entity_type: String,
     pub entity_id: String,
     pub change_type: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AffectedScopeQuery {
     pub entity_type: String,
     pub entity_id: String,
@@ -1060,7 +1061,7 @@ pub struct AffectedScopeQuery {
 
 // --- Propagation Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PropagateChangeRequest {
     pub entity_type: String,
     pub entity_id: String,
@@ -1069,7 +1070,7 @@ pub struct PropagateChangeRequest {
     pub new_value: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddPropagationRuleRequest {
     pub source_entity_type: String,
     pub target_entity_type: String,
@@ -1077,7 +1078,7 @@ pub struct AddPropagationRuleRequest {
     pub action: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PropagationLogQuery {
     pub entity_type: Option<String>,
     pub entity_id: Option<String>,
@@ -1085,7 +1086,7 @@ pub struct PropagationLogQuery {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RollbackPropagationRequest {
     pub propagation_id: String,
 }

@@ -1,10 +1,25 @@
 // Master Data 服务 OpenAPI 文档
 //
 // 说明：master-data 有 9 个版本化模块（V51-V60），schemas 数量庞大。
-// 此处先注册 quality_v51 的核心实体与路径，使 /api-docs/openapi.json 端点可用。
-// 后续可逐步在各模块中添加 #[derive(ToSchema)] 并在此注册。
+// 此处注册 quality_v51、lineage_v52、knowledge_v53、versioning_v54 的核心实体，
+// 使 /api-docs/openapi.json 端点可用。后续可逐步在各模块中添加 #[utoipa::path] 并注册 paths。
 use utoipa::OpenApi;
 
+use crate::modules::knowledge_v53::{
+    AddKGEdgeRequest, AddKGNodeRequest, AssetCatalog, AssetCategory, AssetStats, AssetType,
+    DataAsset, ExportKGQuery, InteractionRecord, KGEdge, KGNode, KGNodeType, KGRelationType,
+    KnowledgeGraph, PathQuery, Recommendation, RecommendationQuery, RecommendationSource,
+    RecordInteractionRequest, RegisterAssetRequest, SearchAssetsQuery, SimilarItemsQuery,
+    SimilarQuery, SubgraphQuery, TrendingQuery, UpdateAssetRequest,
+};
+use crate::modules::lineage_v52::{
+    AffectedNode, AffectedScopeQuery, AffectedService, AddPropagationRuleRequest,
+    AnalyzeImpactRequest, ChainReaction, ChangeEvent, ChangeType, DeleteLineageRequest,
+    EdgeType, ExportQuery, ImpactAnalysisRequest, ImpactAnalysisResult, ImpactSimulation,
+    LineageEdge, LineageGraph, LineageNode, LineageQuery, PropagateChangeRequest,
+    PropagationAction, PropagationLog, PropagationLogQuery, PropagationRule,
+    RegisterLineageRequest, RiskLevel, RollbackPropagationRequest, SimulateChangeRequest,
+};
 use crate::modules::quality_v51::{
     AutoFixAction, AutoFixRequest, CreateQualityRuleRequest, GenerateSuggestionsRequest,
     GovernanceInsight, GovernanceSuggestion, QualityCheckV51, QualityDashboard, QualityRule,
@@ -13,11 +28,22 @@ use crate::modules::quality_v51::{
 use crate::modules::schema_registry::{
     CreateSchemaRequest, ListDataQuery, ListSchemaQuery, SchemaDefinition, UpdateSchemaRequest,
 };
+use crate::modules::versioning_v54::{
+    AssignRoleRequest, AuditEvent, AuditEventCategory, AuditEventType, AuditExportLog,
+    AuditLogQuery, BranchType, CheckPermissionQuery, CherryPickRequest, ComplianceAuditQuery,
+    CreateBranchRequest, CreateRoleRequest, CreateSnapshotRequest, DataPermission,
+    EntityHistoryQuery, ExportAuditLogRequest, GrantPermissionRequest, MergeBranchRequest,
+    PermissionAction, PermissionRole, RevokePermissionRequest, RevokeRoleRequest,
+    ResourcePermissionsQuery, RestoreVersionRequest, UserActivityQuery, UserRoleAssignment,
+    UserPermissionsQuery, VersionBranch, VersionDiff, VersionDiffQuery, VersionHistoryQuery,
+    VersionQuery, VersionSnapshot,
+};
 
 #[derive(OpenApi)]
 #[openapi(
     components(
         schemas(
+            // ===== quality_v51 =====
             QualityStatus,
             QualityCheckV51,
             QualityRule,
@@ -30,11 +56,101 @@ use crate::modules::schema_registry::{
             CreateQualityRuleRequest,
             AutoFixRequest,
             GenerateSuggestionsRequest,
+            // ===== schema_registry =====
             SchemaDefinition,
             CreateSchemaRequest,
             UpdateSchemaRequest,
             ListSchemaQuery,
             ListDataQuery,
+            // ===== lineage_v52 =====
+            EdgeType,
+            LineageNode,
+            LineageEdge,
+            LineageGraph,
+            ChangeType,
+            ImpactAnalysisRequest,
+            RiskLevel,
+            AffectedNode,
+            AffectedService,
+            ChainReaction,
+            ImpactAnalysisResult,
+            ImpactSimulation,
+            ChangeEvent,
+            PropagationAction,
+            PropagationRule,
+            PropagationLog,
+            RegisterLineageRequest,
+            LineageQuery,
+            ExportQuery,
+            DeleteLineageRequest,
+            AnalyzeImpactRequest,
+            SimulateChangeRequest,
+            AffectedScopeQuery,
+            PropagateChangeRequest,
+            AddPropagationRuleRequest,
+            PropagationLogQuery,
+            RollbackPropagationRequest,
+            // ===== knowledge_v53 =====
+            KGNodeType,
+            KGNode,
+            KGRelationType,
+            KGEdge,
+            KnowledgeGraph,
+            RecommendationSource,
+            Recommendation,
+            InteractionRecord,
+            AssetType,
+            DataAsset,
+            AssetCategory,
+            AssetCatalog,
+            AssetStats,
+            AddKGNodeRequest,
+            AddKGEdgeRequest,
+            SubgraphQuery,
+            PathQuery,
+            SimilarQuery,
+            ExportKGQuery,
+            RecommendationQuery,
+            RecordInteractionRequest,
+            SimilarItemsQuery,
+            TrendingQuery,
+            RegisterAssetRequest,
+            SearchAssetsQuery,
+            UpdateAssetRequest,
+            // ===== versioning_v54 =====
+            VersionSnapshot,
+            VersionDiff,
+            BranchType,
+            VersionBranch,
+            AuditEventType,
+            AuditEventCategory,
+            AuditEvent,
+            AuditExportLog,
+            PermissionAction,
+            DataPermission,
+            PermissionRole,
+            UserRoleAssignment,
+            CreateSnapshotRequest,
+            VersionQuery,
+            VersionDiffQuery,
+            RestoreVersionRequest,
+            VersionHistoryQuery,
+            CreateBranchRequest,
+            MergeBranchRequest,
+            CherryPickRequest,
+            AuditLogQuery,
+            UserActivityQuery,
+            EntityHistoryQuery,
+            ExportAuditLogRequest,
+            ComplianceAuditQuery,
+            GrantPermissionRequest,
+            RevokePermissionRequest,
+            CheckPermissionQuery,
+            UserPermissionsQuery,
+            ResourcePermissionsQuery,
+            CreateRoleRequest,
+            AssignRoleRequest,
+            RevokeRoleRequest,
         ),
     ),
     paths(

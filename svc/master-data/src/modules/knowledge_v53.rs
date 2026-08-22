@@ -10,6 +10,7 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use utoipa::ToSchema;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
@@ -20,7 +21,7 @@ use crate::shared::AppState;
 
 // ==================== 知识图谱 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum KGNodeType {
     Entity,
@@ -29,7 +30,7 @@ pub enum KGNodeType {
     Relation,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct KGNode {
     pub id: String,
     pub label: String,
@@ -39,7 +40,7 @@ pub struct KGNode {
     pub created_at: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum KGRelationType {
     BelongsTo,
@@ -49,7 +50,7 @@ pub enum KGRelationType {
     DerivedFrom,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct KGEdge {
     pub id: String,
     pub source_id: String,
@@ -59,7 +60,7 @@ pub struct KGEdge {
     pub confidence: f64,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct KnowledgeGraph {
     pub nodes: Vec<KGNode>,
     pub edges: Vec<KGEdge>,
@@ -69,7 +70,7 @@ pub struct KnowledgeGraph {
 
 // ==================== 智能推荐 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum RecommendationSource {
     Collaborative,
@@ -78,7 +79,7 @@ pub enum RecommendationSource {
     Hybrid,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct Recommendation {
     pub id: String,
     pub target_id: String,
@@ -88,7 +89,7 @@ pub struct Recommendation {
     pub source: RecommendationSource,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct InteractionRecord {
     pub id: String,
     pub user_id: String,
@@ -99,7 +100,7 @@ pub struct InteractionRecord {
 
 // ==================== 数据资产目录 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AssetType {
     Entity,
@@ -108,7 +109,7 @@ pub enum AssetType {
     Dataset,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct DataAsset {
     pub id: String,
     pub name: String,
@@ -123,7 +124,7 @@ pub struct DataAsset {
     pub updated_at: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AssetCategory {
     pub id: String,
     pub name: String,
@@ -131,14 +132,14 @@ pub struct AssetCategory {
     pub asset_count: i64,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AssetCatalog {
     pub assets: Vec<DataAsset>,
     pub categories: Vec<AssetCategory>,
     pub search_index: HashMap<String, Vec<String>>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AssetStats {
     pub total_assets: i64,
     pub by_type: HashMap<String, i64>,
@@ -1226,14 +1227,14 @@ impl AssetCatalogManager {
 
 // --- Knowledge Graph Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddKGNodeRequest {
     pub label: String,
     pub node_type: String,
     pub properties: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddKGEdgeRequest {
     pub source_id: String,
     pub target_id: String,
@@ -1242,55 +1243,55 @@ pub struct AddKGEdgeRequest {
     pub confidence: Option<f64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SubgraphQuery {
     pub depth: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PathQuery {
     pub start_id: String,
     pub end_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SimilarQuery {
     pub limit: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExportKGQuery {
     pub format: Option<String>,
 }
 
 // --- Recommendation Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RecommendationQuery {
     pub target_id: Option<String>,
     pub limit: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RecordInteractionRequest {
     pub user_id: String,
     pub item_id: String,
     pub interaction_type: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SimilarItemsQuery {
     pub limit: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct TrendingQuery {
     pub limit: Option<i32>,
 }
 
 // --- Asset Catalog Requests ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RegisterAssetRequest {
     pub name: String,
     pub asset_type: String,
@@ -1300,7 +1301,7 @@ pub struct RegisterAssetRequest {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SearchAssetsQuery {
     pub q: Option<String>,
     pub asset_type: Option<String>,
@@ -1310,7 +1311,7 @@ pub struct SearchAssetsQuery {
     pub page_size: Option<i64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateAssetRequest {
     pub name: Option<String>,
     pub description: Option<String>,

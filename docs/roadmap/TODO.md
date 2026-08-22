@@ -82,7 +82,7 @@
 - [ ] **AuthPageTemplate**：迁移 LoginPage/ForgotPasswordPage/NotFoundPage/ErrorPage（共 4 页）
 - [ ] **DesignerTemplate**：迁移 4 个设计器页（FormDesign/PageDesign/WorkflowDesigner/AutomationDesigner）
 - [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
-- [ ] **api-types.ts 类型补齐**：7 处 TODO（lineage/knowledge/versioning/quality_cost/equipment 模块 ToSchema 补齐）
+- [x] **api-types.ts 类型补齐**：lineage_v52 / knowledge_v53 / versioning_v54 / quality_cost / equipment 模块 ToSchema 补齐 + 注册到 MasterDataApiDoc/QmsApiDoc + codegen pipeline 重新生成 openapi.d.ts，MasterDataTypes/QmsTypes/MesTypes namespace 共补 79 个类型别名 — **V267 已完成**
 - [x] **CI 增强**：新增 Lighthouse 性能门禁 + cargo-deny 许可证/安全公告双查 — **V267 已完成**（commit ca2538798）
 - [ ] **clippy Gate 收紧**：Gate R 当前为 buffer 模式，连续 3 次守绿后可收紧为 0 容忍
 
