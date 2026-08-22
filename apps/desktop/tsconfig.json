@@ -2,7 +2,22 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": "../../",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@/*": ["./apps/desktop/src/*"],
+      "@topems/tokens": ["./packages/tokens/src"],
+      "@topems/tokens/*": ["./packages/tokens/src/*"],
+      "@topems/shared-types": ["./packages/shared-types/src/index.ts"],
+      "@topems/shared-types/*": ["./packages/shared-types/src/*"],
+      "@topems/shared-utils": ["./packages/shared-utils/src"],
+      "@topems/shared-utils/*": ["./packages/shared-utils/src/*"],
+      "@topems/shared-hooks": ["./packages/shared-hooks/src"],
+      "@topems/shared-hooks/*": ["./packages/shared-hooks/src/*"],
+      "@topems/shared-components": ["./packages/shared-components/src/index.ts"],
+      "@topems/shared-components/*": ["./packages/shared-components/src/*"],
+      "@topems/app-shell": ["./packages/app-shell/src"],
+      "@topems/app-shell/*": ["./packages/app-shell/src/*"]
+    }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
