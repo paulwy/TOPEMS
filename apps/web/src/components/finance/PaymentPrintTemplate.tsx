@@ -16,7 +16,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface PaymentPrintTemplateProps {
   payment: Payment;
@@ -472,3 +472,5 @@ const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ payment }) 
     </PageContainer>
   );
 };
+
+export default PaymentPrintTemplate;

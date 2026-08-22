@@ -5,10 +5,8 @@ import { Box } from '@mui/material';
 import type {
   ReportData,
   ReportTypeInfo,
-  ReportType,
   ReportTemplate,
   CreateTemplateRequest,
-  UpdateTemplateRequest,
   CreateReportFromTemplateRequest,
 } from '@/api/report';
 import i18n from '@/i18n';
@@ -29,14 +27,14 @@ import ReportStats from './components/ReportStats';
 import ReportList from './components/ReportList';
 import TemplateList from './components/TemplateList';
 import TemplateFormDialog from './components/TemplateFormDialog';
-import { getModuleFromReportType } from './utils';
+import { getModuleFromReportType } from '@/components/report/ReportPageUtils';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const ReportPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { data: _backendData, isLoading: _isBackendLoading } = useQuery({
     queryKey: ['report-dashboard'],
     queryFn: async () => {
       try {
@@ -435,13 +433,6 @@ const ReportPage: React.FC = () => {
       showNotification('error', (err as { message?: string }).message || i18n.t('pages.index.k62'));
     },
   });
-
-  const actionLoading =
-    deleteReportMutation.isPending ||
-    createTemplateMutation.isPending ||
-    updateTemplateMutation.isPending ||
-    deleteTemplateMutation.isPending ||
-    createReportFromTemplateMutation.isPending;
 
   const handleCreateTemplate = () => {
     createTemplateMutation.mutate(templateFormData);

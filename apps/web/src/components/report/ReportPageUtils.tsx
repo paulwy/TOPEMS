@@ -3,27 +3,28 @@ import { FileSpreadsheet, File, FileText } from 'lucide-react';
 import type { ReportTypeInfo } from '@/api/report';
 
 export const getModuleColor = (module: string) => {
-  const colors: Record<string, 'warning' | 'info' | 'success' | 'error' | 'secondary'> = {
-    RS: 'warning',
-    LIMS: 'info',
-    QMS: 'success',
-    EHS: 'error',
-    SRM: 'secondary',
-    PDM: 'info',
-  };
+  const colors: Record<string, 'warning' | 'info' | 'success' | 'error' | 'secondary' | 'default'> =
+    {
+      RS: 'warning',
+      LIMS: 'info',
+      QMS: 'success',
+      EHS: 'error',
+      SRM: 'secondary',
+      PDM: 'info',
+    };
   return colors[module] || 'default';
 };
 
 export const getFormatIcon = (format: string) => {
   switch (format) {
     case 'excel':
-      return <FileSpreadsheet sx={{ width: 16, height: 16 }} />;
+      return <FileSpreadsheet size={16} />;
     case 'pdf':
-      return <File sx={{ width: 16, height: 16 }} />;
+      return <File size={16} />;
     case 'csv':
-      return <FileText sx={{ width: 16, height: 16 }} />;
+      return <FileText size={16} />;
     default:
-      return <FileText sx={{ width: 16, height: 16 }} />;
+      return <FileText size={16} />;
   }
 };
 

@@ -25,13 +25,17 @@ import { Banknote, DollarSign, Shield, Save, Edit2, X } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+import type { EmployeeFinance } from '@/types/hrm-finance';
 
 interface EmployeeFinanceTabProps {
   employeeId: string;
   employeeName: string;
 }
 
-const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({ employeeId, employeeName }) => {
+const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
+  employeeId,
+  employeeName: _employeeName,
+}) => {
   const { t } = useTranslation();
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();
@@ -39,7 +43,7 @@ const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({ employeeId, emp
   const updateFinanceInfo = useUpdateEmployeeFinanceInfo();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<any>({});
+  const [editData, setEditData] = useState<Partial<EmployeeFinance>>({});
 
   const financeInfo = data;
 
@@ -717,11 +721,11 @@ const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({ employeeId, emp
                   sx={{ mt: 0.5 }}
                 >
                   <Select
-                    value={editData.taxlevel?.toString() || '0'}
+                    value={editData.taxlevel || '0'}
                     onChange={(e) =>
                       setEditData({
                         ...editData,
-                        taxlevel: parseInt(e.target.value),
+                        taxlevel: e.target.value,
                       })
                     }
                   >

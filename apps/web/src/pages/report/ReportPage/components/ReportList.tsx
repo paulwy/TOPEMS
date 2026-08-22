@@ -2,7 +2,11 @@ import React from 'react';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import { FileText, Eye, Download, Trash2, Calendar, Columns } from 'lucide-react';
 import type { ReportData, ReportTypeInfo } from '@/api/report';
-import { getModuleColor, getFormatIcon, getModuleFromReportType } from '../utils';
+import {
+  getModuleColor,
+  getFormatIcon,
+  getModuleFromReportType,
+} from '@/components/report/ReportPageUtils';
 import i18n from '@/i18n';
 
 interface ReportListProps {

@@ -91,9 +91,9 @@
 | 设计系统审计扫描回归 | 模板覆盖率 88.8% → 89.8%；未使用模板页面 60 → 55；P3 剩余 51 | ✅ |
 | P3 第二批可迁移页面收尾 | DesktopMonitorPage→StatsPageTemplate、AiAssistantPage→StatsPageTemplate、ProfilePage→SettingsPageTemplate、PluginDetailPage→DetailPageTemplate；StatsPageTemplate 扩展 StatCard.value 支持 ReactNode | ✅ |
 | 设计系统审计扫描回归 | 模板覆盖率 89.8% → 90.5%；未使用模板页面 55 → 51；P3 剩余 47 | ✅ |
-| P3 非页面支持文件清理 | WorkflowSettingsPage/constants、ReportPage/utils、MailPage/hooks 改为 `.ts`；`_shared/UserManagementApiAdapter.shared.tsx` 移至 `components/shared/`；4 个文件不再被审计为页面 | ✅ |
-| 设计系统审计扫描回归 | 模板覆盖率 90.5% → 91.5%；未使用模板页面 51 → 45；P1/P3 暂停项处理完成 | ✅ |
-| V266 设计系统模板迁移归档 | 剩余 45 个页面为 chat、移动端、设计器、GIS、门户、登录页等高定制场景；已登记 `docs/design/template-exceptions.md` 并结案 | ⏸ |
+| P3 非页面支持文件清理 | WorkflowSettingsPage/constants、ReportPage/utils、MailPage/hooks、ProductionDashboardPage/constants 改为 `.ts`；`_shared/UserManagementApiAdapter.shared.tsx` 移至 `components/shared/`；ProductionDashboardConstants 移至 `components/mes/`；5 个文件不再被审计为页面 | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 90.5% → 91.7%；未使用模板页面 51 → 44；P1/P3 暂停项处理完成 | ✅ |
+| V266 设计系统模板迁移归档 | 剩余 44 个页面为 chat、移动端、设计器、GIS、门户、登录页等高定制场景；已登记 `docs/design/template-exceptions.md` 并结案 | ✅ |
 | 全量 CI Gate 验证 | 14/14 pre-commit Gate 通过（含 hardcoded-precise 0 条、sensitive-info 通过）；frontend-typecheck ✅；cargo fmt --all --check ✅；`cargo test --workspace --no-run` 编译通过；`cargo test --workspace` 因 DB 集成测试运行耗时过长被超时终止，无编译错误 | ✅ |
 | 剩余 54 处硬编码中文清理 | shared-components 三组件改为 i18next 英文默认值 + 新增 `components` 命名空间；6 个 web 页面列标签/确认文案改为 i18n key；desktop Sidebar/WindowList/routes 改为英文标签；补全 zh/en 翻译键 | ✅ |
 | MES 94 处编译错误复查 | 早期 `cargo test --workspace` 报错为 cargo artifact lock 导致的陈旧错误；重新 `cargo test -p topems-mes --tests` 与 `cargo test --workspace --no-run` 均编译通过 | ✅ |

@@ -39,7 +39,12 @@ import type {
   EquipmentStatusBucket,
   RefreshStatus,
 } from './types';
-import { ct, REFRESH_INTERVAL_MS, TREND_HOURS, EQUIPMENT_STATUS_META } from './constants';
+import {
+  ct,
+  REFRESH_INTERVAL_MS,
+  TREND_HOURS,
+  EQUIPMENT_STATUS_META,
+} from '@/components/mes/ProductionDashboardConstants';
 import { safeNumber, formatTime, formatPercent, buildHourlyTrend, buildDailyTarget } from './utils';
 import AlarmList from './components/AlarmList';
 import WorkStationUtilizationCard from './components/WorkStationUtilizationCard';

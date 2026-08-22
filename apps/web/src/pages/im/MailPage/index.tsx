@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useMailPage } from './hooks';
+import { useMailPage } from '@/components/im/MailPageHooks';
 import EmailStatsCards from './components/EmailStatsCards';
 import EmailList from './components/EmailList';
 import TemplateList from './components/TemplateList';
