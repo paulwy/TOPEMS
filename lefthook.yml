@@ -3,92 +3,94 @@ pre-commit:
   commands:
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
-      name: Gate A · Frontend Lint (eslint + prettier)
       tags: frontend lint
-      files: \.(ts|tsx|js|jsx|cjs|mjs|json|css|scss|yml|yaml|md)$
-      run: npx lint-staged
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json|css|scss|yml|yaml|md)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        npx lint-staged
 
     # [Gate B] Frontend typecheck (tsc --noEmit)
     frontend-typecheck:
-      name: Gate B · Frontend Typecheck (tsc --noEmit)
       tags: frontend typecheck
-      files: \.(ts|tsx|js|jsx|cjs|mjs|json)$
-      run: pnpm --filter topems-portal typecheck
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        pnpm --filter topems-portal typecheck
 
     # [Gate C] i18n quality (fake-en + mixed-structure)
     i18n-quality:
-      name: Gate C · i18n Quality (fake-en + mixed-structure)
       tags: frontend i18n
-      files: \.(ts|tsx|js|jsx|cjs|mjs|json)$
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-i18n-quality.cjs" ]; then
           node scripts/ci/check-i18n-quality.cjs --strict
         fi
 
     # [Gate D] Glossary TopN consistency
     glossary-verify:
-      name: Gate D · Glossary TopN 术语一致性
       tags: frontend i18n glossary
-      files: \.(ts|tsx|js|jsx|cjs|mjs|json|csv)$
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|cjs|mjs|json|csv)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/verify-glossary.cjs" ]; then
           node scripts/ci/verify-glossary.cjs --strict
         fi
 
     # [Gate E] Hardcoded CJK precise scan
     hardcoded-precise:
-      name: Gate E · Hardcoded CJK Precise Scan
       tags: frontend i18n hardcoded
-      files: \.(ts|tsx|js|jsx)$
       run: |
         STAGED_TS_TSX=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(ts|tsx)$" | tr '\n' ' ')
-        if [ -n "$STAGED_TS_TSX" ] && [ -f "scripts/i18n/scan-hardcoded-precise.cjs" ]; then
+        [ -z "$STAGED_TS_TSX" ] && exit 0
+        if [ -f "scripts/i18n/scan-hardcoded-precise.cjs" ]; then
           node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 30 $STAGED_TS_TSX
         fi
 
     # [Gate F] cargo test (Rust workspace)
     cargo-test:
-      name: Gate F · cargo test workspace (Rust)
       tags: rust test
-      files: \.(rs|toml|lock)$
-      run: cargo test --workspace
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        cargo test --workspace
 
     # [Gate G] Permission matrix 3-way gate (dry-run)
     perm-matrix:
-      name: Gate G · Permission Matrix 3-way (dry-run)
       tags: permission security
-      files: (\.(rs|ts|tsx)$|^apps/web/src/config/permissions\.ts$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/|^apps/web/src/lib/routes/v2\.tsx$)
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/perm-matrix-toolkit.cjs" ]; then
           node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run
         fi
 
     # [Gate M] Axum Layer Order Gate (dry-run)
     axum-layer:
-      name: Gate M · Axum Layer Order (dry-run, R1 FAIL / R2/R3 WARN)
       tags: rust axum layer
-      files: (\.(rs|toml|lock)$|^scripts/ci/check-axum-layer-order\.cjs$)
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-axum-layer-order.cjs" ]; then
           node scripts/ci/check-axum-layer-order.cjs
         fi
 
     # [Gate H] CRM contract consistency
     crm-contract:
-      name: Gate H · CRM Contract Consistency
       tags: crm contract
-      files: (^apps/web/src/schemas/crm/|^apps/web/src/api/crm/|^svc/crm/src/(models|modules)/customer|\.(rs|ts|tsx)$)
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/dev/check-crm-contract.mjs" ]; then
           node scripts/dev/check-crm-contract.mjs
         fi
 
     # [Gate I] Icon completeness + Page standardization
     icon-page:
-      name: Gate I · Icon Completeness + Page Standardization
       tags: frontend icon page
-      files: (^apps/web/src/lib/iconMapping\.tsx$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/types\.ts$|^apps/web/src/pages/.*\.tsx$|\.(ts|tsx)$)
       run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-icons.cjs" ]; then
           node scripts/ci/check-icons.cjs --strict
         fi
@@ -96,19 +98,70 @@ pre-commit:
           node scripts/ci/page-audit.cjs --diff --strict
         fi
 
+    # [Gate N] Large files check (>1MB) — migrated from husky #1
+    large-files:
+      tags: files size
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+        MAX_SIZE=1048576
+        FOUND=""
+        for f in $STAGED; do
+          case "$f" in
+            pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*) continue ;;
+          esac
+          [ -f "$f" ] || continue
+          SIZE=$(wc -c < "$f")
+          if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+            FOUND="$FOUND  - $f ($((SIZE/1024))KB)\n"
+          fi
+        done
+        if [ -n "$FOUND" ]; then
+          echo "❌ Large files detected:"
+          printf "$FOUND"
+          echo "   Please remove or use Git LFS."
+          exit 1
+        fi
+
+    # [Gate O] Sensitive information scan — migrated from husky #2
+    sensitive-info:
+      tags: security secrets
+      run: bash scripts/ci/check-sensitive-info.sh
+
+    # [Gate P] API path duplicates check — migrated from husky #4
+    api-duplicates:
+      tags: api rust
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/check_api_duplicates_ci.py" ]; then
+          python3 scripts/check_api_duplicates_ci.py --ci
+        fi
+
+    # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
+    i18n-hardcode-admin:
+      tags: frontend i18n hardcoded
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-i18n.cjs" ]; then
+          node scripts/ci/check-i18n.cjs --strict
+        fi
+
 pre-push:
   parallel: true
   commands:
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:
-      name: Gate J · cargo fmt --all --check (Rust workspace)
       tags: rust fmt
-      files: \.(rs|toml|lock)$
-      run: cargo fmt --all --check
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        cargo fmt --all --check
 
     # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
     cargo-clippy-workspace:
-      name: Gate K · cargo clippy --workspace -D warnings
       tags: rust clippy
-      files: \.(rs|toml|lock)$
-      run: cargo clippy --workspace --all-targets -- -D warnings
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        cargo clippy --workspace --all-targets -- -D warnings
