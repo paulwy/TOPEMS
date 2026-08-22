@@ -10,15 +10,7 @@ import {
   Select,
   MenuItem,
   Grid,
-  Paper,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Pagination,
   Switch,
   Dialog,
   DialogTitle,
@@ -26,10 +18,9 @@ import {
   DialogActions,
 } from '@mui/material';
 import i18n from '@/i18n';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Search,
   AlertTriangle,
   AlertCircle,
   CheckCircle,
@@ -56,8 +47,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
+import type { FilterConfig } from '@topems/shared-components';
 
 interface MonitoringAlertPageProps {
   onNavigate?: (page: string) => void;
@@ -137,18 +131,10 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const loading =
-    activeTab === 'alerts'
-      ? alertsQuery.isLoading
-      : activeTab === 'rules'
-        ? rulesQuery.isLoading
-        : healthQuery.isLoading;
   const alerts = alertsQuery.data?.items ?? [];
   const rules = rulesQuery.data?.items ?? [];
   const systemHealth = healthQuery.data ?? null;
   const alertStats = alertStatsQuery.data ?? null;
-  const total =
-    activeTab === 'alerts' ? (alertsQuery.data?.total ?? 0) : (rulesQuery.data?.total ?? 0);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -334,25 +320,37 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
     },
   });
 
-  const handleAcknowledge = (alertId: string) => {
-    acknowledgeMutation.mutate(alertId);
-  };
+  const handleAcknowledge = useCallback(
+    (alertId: string) => {
+      acknowledgeMutation.mutate(alertId);
+    },
+    [acknowledgeMutation]
+  );
 
-  const handleResolve = (alertId: string) => {
-    resolveMutation.mutate(alertId);
-  };
+  const handleResolve = useCallback(
+    (alertId: string) => {
+      resolveMutation.mutate(alertId);
+    },
+    [resolveMutation]
+  );
 
-  const handleEscalate = (alertId: string) => {
-    escalateMutation.mutate(alertId);
-  };
+  const handleEscalate = useCallback(
+    (alertId: string) => {
+      escalateMutation.mutate(alertId);
+    },
+    [escalateMutation]
+  );
 
-  const handleToggleRule = (ruleId: string, enabled: boolean) => {
-    toggleRuleMutation.mutate({ ruleId, enabled });
-  };
+  const handleToggleRule = useCallback(
+    (ruleId: string, enabled: boolean) => {
+      toggleRuleMutation.mutate({ ruleId, enabled });
+    },
+    [toggleRuleMutation]
+  );
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     monitoringApi.exportAlerts({ format: 'excel' });
-  };
+  }, []);
 
   const getLevelIcon = (level: string) => {
     switch (level) {
@@ -445,54 +443,320 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
     </div>
   );
 
+  const isAlertMutating =
+    acknowledgeMutation.isPending || resolveMutation.isPending || escalateMutation.isPending;
+  const isRuleMutating =
+    toggleRuleMutation.isPending || deleteRuleMutation.isPending || saveRuleMutation.isPending;
+
+  const alertColumns: ColumnDef<Alert>[] = useMemo(
+    () => [
+      {
+        id: 'level',
+        label: i18n.t('pages.monitoring_alert_page.k33'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {getLevelIcon(row.level)}
+            <Chip
+              label={getLevelLabel(row.level)}
+              size='small'
+              color={getLevelColor(row.level)}
+            />
+          </Box>
+        ),
+      },
+      {
+        id: 'title',
+        label: i18n.t('pages.monitoring_alert_page.k34'),
+        render: (row) => <Typography sx={{ fontWeight: 'medium' }}>{row.title}</Typography>,
+      },
+      {
+        id: 'message',
+        label: i18n.t('pages.monitoring_alert_page.k35'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            sx={{
+              maxWidth: 300,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={row.message}
+          >
+            {row.message}
+          </Typography>
+        ),
+      },
+      {
+        id: 'source',
+        label: i18n.t('pages.monitoring_alert_page.k36'),
+        render: (row) => (
+          <Chip
+            label={row.source}
+            size='small'
+          />
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('pages.monitoring_alert_page.k37'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Clock className='w-4 h-4' />
+            <Typography variant='body2'>
+              {new Date(row.created_at).toLocaleString('zh-CN')}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.monitoring_alert_page.k38'),
+        render: (row) => (
+          <Chip
+            label={getStatusLabel(row.status)}
+            size='small'
+            color={getStatusColor(row.status)}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  const ruleColumns: ColumnDef<AlertRule>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: i18n.t('pages.monitoring_alert_page.k40'),
+        render: (row) => <Typography sx={{ fontWeight: 'medium' }}>{row.name}</Typography>,
+      },
+      {
+        id: 'level',
+        label: i18n.t('pages.monitoring_alert_page.k41'),
+        render: (row) => (
+          <Chip
+            label={getLevelLabel(row.level)}
+            size='small'
+            color={getLevelColor(row.level)}
+          />
+        ),
+      },
+      {
+        id: 'condition',
+        label: i18n.t('pages.monitoring_alert_page.k42'),
+        render: (row) => <Typography variant='body2'>{row.condition}</Typography>,
+      },
+      {
+        id: 'notification_channels',
+        label: i18n.t('pages.monitoring_alert_page.k43'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {row.notification_channels?.includes('email') && (
+              <Chip
+                label={i18n.t('pages.monitoring_alert_page.k47')}
+                size='small'
+              />
+            )}
+            {row.notification_channels?.includes('sms') && (
+              <Chip
+                label={i18n.t('pages.monitoring_alert_page.k48')}
+                size='small'
+              />
+            )}
+            {row.notification_channels?.includes('internal') && (
+              <Chip
+                label={i18n.t('pages.monitoring_alert_page.k49')}
+                size='small'
+              />
+            )}
+          </Box>
+        ),
+      },
+      {
+        id: 'enabled',
+        label: i18n.t('pages.monitoring_alert_page.k44'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Switch
+              checked={row.enabled}
+              onChange={() => handleToggleRule(row.id, !row.enabled)}
+              color={row.enabled ? 'primary' : 'default'}
+              disabled={isRuleMutating}
+            />
+            <Typography>
+              {row.enabled
+                ? i18n.t('pages.monitoring_alert_page.k51')
+                : i18n.t('pages.monitoring_alert_page.k50')}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('pages.monitoring_alert_page.k45'),
+        render: (row) => (
+          <Typography variant='body2'>
+            {new Date(row.created_at).toLocaleString('zh-CN')}
+          </Typography>
+        ),
+      },
+    ],
+    [isRuleMutating]
+  );
+
+  const alertFilters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'level',
+        label: i18n.t('pages.monitoring_alert_page.k21'),
+        type: 'select',
+        value: filterLevel,
+        options: [
+          { value: 'all', label: i18n.t('pages.monitoring_alert_page.k23') },
+          { value: 'critical', label: i18n.t('pages.monitoring_alert_page.k24') },
+          { value: 'warning', label: i18n.t('pages.monitoring_alert_page.k25') },
+          { value: 'info', label: i18n.t('pages.monitoring_alert_page.k26') },
+        ],
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.monitoring_alert_page.k27'),
+        type: 'select',
+        value: filterStatus,
+        options: [
+          { value: 'all', label: i18n.t('pages.monitoring_alert_page.k29') },
+          { value: 'pending', label: i18n.t('pages.monitoring_alert_page.k30') },
+          { value: 'acknowledged', label: i18n.t('pages.monitoring_alert_page.k31') },
+          { value: 'resolved', label: i18n.t('pages.monitoring_alert_page.k32') },
+        ],
+      },
+    ],
+    [filterLevel, filterStatus]
+  );
+
+  const alertActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.monitoring_alert_page.k9'),
+        icon: <RefreshCw className='w-4 h-4' />,
+        onClick: () => alertsQuery.refetch(),
+        variant: 'outlined' as const,
+      },
+      {
+        label: i18n.t('pages.monitoring_alert_page.k10'),
+        icon: <Download className='w-4 h-4' />,
+        onClick: handleExport,
+        variant: 'contained' as const,
+      },
+    ],
+    [alertsQuery, handleExport]
+  );
+
+  const ruleActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.monitoring_alert_page.k11'),
+        icon: <Settings className='w-4 h-4' />,
+        onClick: () => {
+          setEditingRule(null);
+          setRuleDialogOpen(true);
+        },
+        variant: 'contained' as const,
+      },
+    ],
+    []
+  );
+
+  const renderAlertRowActions = useCallback(
+    (row: Alert) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {row.status === 'pending' && (
+          <Button
+            size='small'
+            onClick={() => handleAcknowledge(row.id)}
+            variant='outlined'
+            disabled={isAlertMutating}
+          >
+            {i18n.t('pages.monitoring_alert_page.k22')}
+          </Button>
+        )}
+        {row.status === 'acknowledged' && (
+          <Button
+            size='small'
+            onClick={() => handleResolve(row.id)}
+            variant='contained'
+            disabled={isAlertMutating}
+          >
+            {i18n.t('pages.monitoring_alert_page.k23')}
+          </Button>
+        )}
+        {row.status !== 'escalated' && row.status !== 'resolved' && (
+          <Button
+            size='small'
+            onClick={() => handleEscalate(row.id)}
+            variant='outlined'
+            color='error'
+            disabled={isAlertMutating}
+          >
+            {i18n.t('pages.monitoring_alert_page.k24')}
+          </Button>
+        )}
+      </Box>
+    ),
+    [isAlertMutating, handleAcknowledge, handleResolve, handleEscalate]
+  );
+
+  const renderRuleRowActions = useCallback(
+    (row: AlertRule) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button
+          size='small'
+          onClick={() => {
+            setEditingRule(row);
+            setRuleDialogOpen(true);
+          }}
+          variant='outlined'
+          disabled={isRuleMutating}
+        >
+          {i18n.t('pages.monitoring_alert_page.k27')}
+        </Button>
+        <Button
+          size='small'
+          onClick={() => deleteRuleMutation.mutate(row.id)}
+          variant='outlined'
+          color='error'
+          disabled={isRuleMutating}
+        >
+          {i18n.t('pages.monitoring_alert_page.k28')}
+        </Button>
+      </Box>
+    ),
+    [isRuleMutating, deleteRuleMutation]
+  );
+
+  const handleAlertFilterChange = useCallback((filters: Record<string, unknown>) => {
+    if (filters.level !== undefined) setFilterLevel(String(filters.level));
+    if (filters.status !== undefined) setFilterStatus(String(filters.status));
+  }, []);
+
   return (
     <PageContainer
       title={i18n.t('pages.monitoring_alert_page.k17')}
       subtitle={i18n.t('pages.monitoring_alert_page.k18')}
       headerActions={
-        activeTab === 'alerts'
+        activeTab === 'health'
           ? [
               <Button
                 key='refresh'
-                onClick={() => alertsQuery.refetch()}
+                onClick={() => healthQuery.refetch()}
                 startIcon={<RefreshCw className='w-4 h-4' />}
                 variant='outlined'
               >
-                {i18n.t('pages.monitoring_alert_page.k9')}
-              </Button>,
-              <Button
-                key='export'
-                onClick={handleExport}
-                startIcon={<Download className='w-4 h-4' />}
-                variant='contained'
-              >
-                {i18n.t('pages.monitoring_alert_page.k10')}
+                {i18n.t('pages.monitoring_alert_page.k12')}
               </Button>,
             ]
-          : activeTab === 'rules'
-            ? [
-                <Button
-                  key='add'
-                  onClick={() => {
-                    setEditingRule(null);
-                    setRuleDialogOpen(true);
-                  }}
-                  startIcon={<Settings className='w-4 h-4' />}
-                  variant='contained'
-                >
-                  {i18n.t('pages.monitoring_alert_page.k11')}
-                </Button>,
-              ]
-            : [
-                <Button
-                  key='refresh'
-                  onClick={() => healthQuery.refetch()}
-                  startIcon={<RefreshCw className='w-4 h-4' />}
-                  variant='outlined'
-                >
-                  {i18n.t('pages.monitoring_alert_page.k12')}
-                </Button>,
-              ]
+          : undefined
       }
     >
       <Grid spacing={3}>
@@ -624,328 +888,40 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
               </Box>
 
               {activeTab === 'alerts' && (
-                <>
-                  <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                    <TextField
-                      fullWidth
-                      label={i18n.t('pages.monitoring_alert_page.k19')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={i18n.t('pages.monitoring_alert_page.k20')}
-                      slotProps={{
-                        input: {
-                          startAdornment: <Search className='w-4 h-4 mr-2 text-gray-400' />,
-                        },
-                      }}
-                    />
-                    <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>{i18n.t('pages.monitoring_alert_page.k21')}</InputLabel>
-                      <Select
-                        value={filterLevel}
-                        onChange={(e) => setFilterLevel(e.target.value)}
-                        label={i18n.t('pages.monitoring_alert_page.k22')}
-                      >
-                        <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k23')}</MenuItem>
-                        <MenuItem value='critical'>
-                          {i18n.t('pages.monitoring_alert_page.k24')}
-                        </MenuItem>
-                        <MenuItem value='warning'>
-                          {i18n.t('pages.monitoring_alert_page.k25')}
-                        </MenuItem>
-                        <MenuItem value='info'>
-                          {i18n.t('pages.monitoring_alert_page.k26')}
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                    <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>{i18n.t('pages.monitoring_alert_page.k27')}</InputLabel>
-                      <Select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        label={i18n.t('pages.monitoring_alert_page.k28')}
-                      >
-                        <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k29')}</MenuItem>
-                        <MenuItem value='pending'>
-                          {i18n.t('pages.monitoring_alert_page.k30')}
-                        </MenuItem>
-                        <MenuItem value='acknowledged'>
-                          {i18n.t('pages.monitoring_alert_page.k31')}
-                        </MenuItem>
-                        <MenuItem value='resolved'>
-                          {i18n.t('pages.monitoring_alert_page.k32')}
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Box>
-
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k33')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k34')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k35')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k36')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k37')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k38')}</TableCell>
-                          <TableCell>{i18n.t('pages.monitoring_alert_page.k39')}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {loading ? (
-                          <TableRow>
-                            <TableCell colSpan={7}>
-                              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                                <Typography
-                                  variant='body1'
-                                  color='textSecondary'
-                                >
-                                  {i18n.t('pages.monitoring_alert_page.k20')}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ) : alerts.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={7}>
-                              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                                <Typography
-                                  variant='body1'
-                                  color='textSecondary'
-                                >
-                                  {i18n.t('pages.monitoring_alert_page.k21')}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          alerts.map((alert) => (
-                            <TableRow key={alert.id}>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  {getLevelIcon(alert.level)}
-                                  <Chip
-                                    label={getLevelLabel(alert.level)}
-                                    size='small'
-                                    color={getLevelColor(alert.level)}
-                                  />
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Typography sx={{ fontWeight: 'medium' }}>{alert.title}</Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Typography
-                                  variant='body2'
-                                  sx={{
-                                    maxWidth: 300,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                  title={alert.message}
-                                >
-                                  {alert.message}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={alert.source}
-                                  size='small'
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Clock className='w-4 h-4' />
-                                  <Typography variant='body2'>
-                                    {new Date(alert.created_at).toLocaleString('zh-CN')}
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={getStatusLabel(alert.status)}
-                                  size='small'
-                                  color={getStatusColor(alert.status)}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  {alert.status === 'pending' && (
-                                    <Button
-                                      size='small'
-                                      onClick={() => handleAcknowledge(alert.id)}
-                                      variant='outlined'
-                                    >
-                                      {i18n.t('pages.monitoring_alert_page.k22')}
-                                    </Button>
-                                  )}
-                                  {alert.status === 'acknowledged' && (
-                                    <Button
-                                      size='small'
-                                      onClick={() => handleResolve(alert.id)}
-                                      variant='contained'
-                                    >
-                                      {i18n.t('pages.monitoring_alert_page.k23')}
-                                    </Button>
-                                  )}
-                                  {alert.status !== 'escalated' && alert.status !== 'resolved' && (
-                                    <Button
-                                      size='small'
-                                      onClick={() => handleEscalate(alert.id)}
-                                      variant='outlined'
-                                      color='error'
-                                    >
-                                      {i18n.t('pages.monitoring_alert_page.k24')}
-                                    </Button>
-                                  )}
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                    <Pagination
-                      count={Math.ceil(total / PER_PAGE)}
-                      page={currentPage}
-                      onChange={(_, page) => setCurrentPage(page)}
-                      siblingCount={1}
-                      boundaryCount={2}
-                    />
-                  </Box>
-                </>
+                <ListPageTemplate<Alert>
+                  breadcrumbs={[]}
+                  columns={alertColumns}
+                  data={alerts}
+                  loading={alertsQuery.isLoading}
+                  actions={alertActions}
+                  renderRowActions={renderAlertRowActions}
+                  pagination={{
+                    page: currentPage,
+                    pageSize: PER_PAGE,
+                    total: alertsQuery.data?.total ?? 0,
+                    onPageChange: setCurrentPage,
+                  }}
+                  searchable
+                  searchValue={searchQuery}
+                  onSearch={setSearchQuery}
+                  searchPlaceholder={i18n.t('pages.monitoring_alert_page.k20')}
+                  filters={alertFilters}
+                  filtersValue={{ level: filterLevel, status: filterStatus }}
+                  onFilterChange={handleAlertFilterChange}
+                  emptyMessage={i18n.t('pages.monitoring_alert_page.k21')}
+                />
               )}
 
               {activeTab === 'rules' && (
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k40')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k41')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k42')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k43')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k44')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k45')}</TableCell>
-                        <TableCell>{i18n.t('pages.monitoring_alert_page.k46')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={7}>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                              <Typography
-                                variant='body1'
-                                color='textSecondary'
-                              >
-                                {i18n.t('pages.monitoring_alert_page.k25')}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ) : rules.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7}>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                              <Typography
-                                variant='body1'
-                                color='textSecondary'
-                              >
-                                {i18n.t('pages.monitoring_alert_page.k26')}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        rules.map((rule) => (
-                          <TableRow key={rule.id}>
-                            <TableCell>
-                              <Typography sx={{ fontWeight: 'medium' }}>{rule.name}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={getLevelLabel(rule.level)}
-                                size='small'
-                                color={getLevelColor(rule.level)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant='body2'>{rule.condition}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', gap: 1 }}>
-                                {rule.notification_channels?.includes('email') && (
-                                  <Chip
-                                    label={i18n.t('pages.monitoring_alert_page.k47')}
-                                    size='small'
-                                  />
-                                )}
-                                {rule.notification_channels?.includes('sms') && (
-                                  <Chip
-                                    label={i18n.t('pages.monitoring_alert_page.k48')}
-                                    size='small'
-                                  />
-                                )}
-                                {rule.notification_channels?.includes('internal') && (
-                                  <Chip
-                                    label={i18n.t('pages.monitoring_alert_page.k49')}
-                                    size='small'
-                                  />
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Switch
-                                  checked={rule.enabled}
-                                  onChange={() => handleToggleRule(rule.id, !rule.enabled)}
-                                  color={rule.enabled ? 'primary' : 'default'}
-                                />
-                                <Typography>
-                                  {rule.enabled
-                                    ? i18n.t('pages.monitoring_alert_page.k51')
-                                    : i18n.t('pages.monitoring_alert_page.k50')}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant='body2'>
-                                {new Date(rule.created_at).toLocaleString('zh-CN')}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button
-                                  size='small'
-                                  onClick={() => {
-                                    setEditingRule(rule);
-                                    setRuleDialogOpen(true);
-                                  }}
-                                  variant='outlined'
-                                >
-                                  {i18n.t('pages.monitoring_alert_page.k27')}
-                                </Button>
-                                <Button
-                                  size='small'
-                                  onClick={() => deleteRuleMutation.mutate(rule.id)}
-                                  variant='outlined'
-                                  color='error'
-                                >
-                                  {i18n.t('pages.monitoring_alert_page.k28')}
-                                </Button>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <ListPageTemplate<AlertRule>
+                  breadcrumbs={[]}
+                  columns={ruleColumns}
+                  data={rules}
+                  loading={rulesQuery.isLoading}
+                  actions={ruleActions}
+                  renderRowActions={renderRuleRowActions}
+                  emptyMessage={i18n.t('pages.monitoring_alert_page.k26')}
+                />
               )}
 
               {activeTab === 'health' && systemHealth && (

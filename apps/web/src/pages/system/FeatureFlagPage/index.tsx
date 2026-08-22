@@ -1,39 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { RefreshCw, Power, AlertCircle } from 'lucide-react';
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Switch,
-  Chip,
-  CircularProgress,
-  Typography,
-  IconButton,
-  Tooltip,
-  Alert,
-  Paper,
-} from '@mui/material';
-import { PageContainer } from '@/components/common';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { RefreshCw, Power } from 'lucide-react';
+import { Box, Typography, Switch, Chip, Alert } from '@mui/material';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useFeatureFlagStore } from '@/store/featureFlagStore';
 import { useTranslation } from 'react-i18next';
-import { featureFlagApi } from '@/api/system';
+import type { FeatureFlag } from '@/api/system';
+
+type FeatureFlagRow = FeatureFlag & { id: string };
 
 const FeatureFlagPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['system', 'featureFlag'],
-    queryFn: async () => {
-      try {
-        return await featureFlagApi.list();
-      } catch {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('system');
   const { flags, loading, error, fetchFlags, updateFlag, refreshFlag } = useFeatureFlagStore();
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
@@ -42,176 +18,152 @@ const FeatureFlagPage: React.FC = () => {
     fetchFlags();
   }, [fetchFlags]);
 
-  const handleToggle = async (key: string, currentState: string) => {
-    setTogglingKey(key);
-    const enabled = currentState !== 'Enabled';
-    await updateFlag(key, enabled);
-    setTogglingKey(null);
-  };
+  const handleToggle = useCallback(
+    async (key: string, currentState: string) => {
+      setTogglingKey(key);
+      const enabled = currentState !== 'Enabled';
+      await updateFlag(key, enabled);
+      setTogglingKey(null);
+    },
+    [updateFlag]
+  );
 
-  const handleRefresh = async (key: string) => {
-    await refreshFlag(key);
-  };
+  const handleRefresh = useCallback(
+    async (key: string) => {
+      await refreshFlag(key);
+    },
+    [refreshFlag]
+  );
 
-  const handleRefreshAll = () => {
+  const handleRefreshAll = useCallback(() => {
     fetchFlags(true);
-  };
+  }, [fetchFlags]);
 
-  const getStateChip = (state: string) => {
-    switch (state) {
-      case 'Enabled':
-        return (
-          <Chip
-            label={t('system.index.k0')}
-            color='success'
-            size='small'
-          />
-        );
-      case 'Disabled':
-        return (
-          <Chip
-            label={t('system.index.k1')}
-            color='default'
-            size='small'
-          />
-        );
-      case 'Conditional':
-        return (
-          <Chip
-            label={t('system.index.k2')}
-            color='warning'
-            size='small'
-          />
-        );
-      default:
-        return (
-          <Chip
-            label={state}
-            size='small'
-          />
-        );
-    }
-  };
+  const getStateChip = useCallback(
+    (state: string) => {
+      switch (state) {
+        case 'Enabled':
+          return (
+            <Chip
+              label={t('system.index.k0')}
+              color='success'
+              size='small'
+            />
+          );
+        case 'Disabled':
+          return (
+            <Chip
+              label={t('system.index.k1')}
+              color='default'
+              size='small'
+            />
+          );
+        case 'Conditional':
+          return (
+            <Chip
+              label={t('system.index.k2')}
+              color='warning'
+              size='small'
+            />
+          );
+        default:
+          return (
+            <Chip
+              label={state}
+              size='small'
+            />
+          );
+      }
+    },
+    [t]
+  );
 
-  return (
-    <PageContainer
-      title={t('system.index.k3')}
-      subtitle={t('system.index.k4')}
-      maxWidth='lg'
-      headerProps={{
-        actions: [
-          {
-            label: t('system.index.k5'),
-            icon: <RefreshCw size={16} />,
-            onClick: handleRefreshAll,
-            variant: 'outlined',
-          },
-        ],
-      }}
-    >
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 2 }}
-          icon={<AlertCircle />}
-        >
-          {error}
-        </Alert>
-      )}
+  const columns: ColumnDef<FeatureFlagRow>[] = useMemo(
+    () => [
+      {
+        id: 'key',
+        label: 'Key',
+        render: (row) => (
+          <Typography
+            variant='body2'
+            sx={{
+              fontFamily: 'monospace',
+              bgcolor: 'action.hover',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              display: 'inline-block',
+            }}
+          >
+            {row.key}
+          </Typography>
+        ),
+      },
+      {
+        id: 'name',
+        label: t('system.index.k6'),
+        render: (row) => <Typography>{row.name}</Typography>,
+      },
+      {
+        id: 'state',
+        label: t('system.index.k7'),
+        render: (row) => getStateChip(row.state),
+      },
+      {
+        id: 'description',
+        label: t('system.index.k8'),
+        render: (row) =>
+          row.description ? (
+            <Typography>{row.description}</Typography>
+          ) : (
+            <Typography color='text.secondary'>-</Typography>
+          ),
+      },
+      {
+        id: 'toggle',
+        label: t('system.index.k9'),
+        render: (row) => (
+          <Switch
+            size='small'
+            checked={row.state === 'Enabled'}
+            disabled={togglingKey === row.key || loading}
+            onChange={() => handleToggle(row.key, row.state)}
+          />
+        ),
+      },
+    ],
+    [t, getStateChip, togglingKey, loading, handleToggle]
+  );
 
-      {loading && flags.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress size={48} />
-        </Box>
-      ) : (
-        <TableContainer
-          component={Paper}
-          variant='outlined'
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, width: '25%' }}>Key</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '20%' }}>{t('system.index.k6')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '15%' }}>{t('system.index.k7')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('system.index.k8')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '120px' }}>
-                  {t('system.index.k9')}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {flags.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align='center'
-                    sx={{ py: 6 }}
-                  >
-                    <Typography color='text.secondary'>
-                      {t('system.feature_flag_page_index.e1')}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                flags.map((flag) => (
-                  <TableRow
-                    key={flag.key}
-                    hover
-                  >
-                    <TableCell>
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          fontFamily: 'monospace',
-                          bgcolor: 'action.hover',
-                          px: 1,
-                          py: 0.5,
-                          borderRadius: 1,
-                        }}
-                      >
-                        {flag.key}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{flag.name}</TableCell>
-                    <TableCell>{getStateChip(flag.state)}</TableCell>
-                    <TableCell>
-                      {flag.description || (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          -
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Switch
-                          size='small'
-                          checked={flag.state === 'Enabled'}
-                          disabled={togglingKey === flag.key}
-                          onChange={() => handleToggle(flag.key, flag.state)}
-                        />
-                        <Tooltip title={t('system.index.k10')}>
-                          <IconButton
-                            size='small'
-                            onClick={() => handleRefresh(flag.key)}
-                            disabled={loading}
-                          >
-                            <RefreshCw size={16} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+  const rowActions: RowAction<FeatureFlagRow>[] = useMemo(
+    () => [
+      {
+        key: 'refresh',
+        label: t('system.index.k10'),
+        icon: <RefreshCw size={16} />,
+        onClick: (row) => handleRefresh(row.key),
+        color: 'info',
+        disabled: () => loading,
+      },
+    ],
+    [t, loading, handleRefresh]
+  );
 
+  const actions = useMemo(
+    () => [
+      {
+        label: t('system.index.k5'),
+        icon: <RefreshCw size={16} />,
+        onClick: handleRefreshAll,
+        variant: 'outlined' as const,
+        disabled: loading,
+      },
+    ],
+    [t, loading, handleRefreshAll]
+  );
+
+  const footerContent = useMemo(
+    () => (
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Power size={14} />
         <Typography
@@ -221,7 +173,32 @@ const FeatureFlagPage: React.FC = () => {
           {t('system.feature_flag_page_index.r1', { v1: flags.length })}
         </Typography>
       </Box>
-    </PageContainer>
+    ),
+    [flags.length, t]
+  );
+
+  return (
+    <>
+      {error && (
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+        >
+          {error}
+        </Alert>
+      )}
+      <ListPageTemplate<FeatureFlagRow>
+        title={t('system.index.k3')}
+        subtitle={t('system.index.k4')}
+        columns={columns}
+        data={flags.map((f) => ({ ...f, id: f.key }))}
+        loading={loading && flags.length === 0}
+        actions={actions}
+        rowActions={rowActions}
+        footerContent={footerContent}
+        emptyMessage={t('system.feature_flag_page_index.e1')}
+      />
+    </>
   );
 };
 

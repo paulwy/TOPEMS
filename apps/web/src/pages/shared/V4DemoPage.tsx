@@ -3,8 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  Tabs,
-  Tab,
   Chip,
   Card,
   CardContent,
@@ -13,7 +11,7 @@ import {
   ListItemText,
   Alert,
 } from '@mui/material';
-import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 import {
   Shield,
   LayoutDashboard,
@@ -36,14 +34,13 @@ import {
   ArrowRight,
   Network,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard, TabItem } from '@/components/templates/StatsPageTemplate';
 import SidebarNavGroup from '@/lib/navigation/components/SidebarNavGroup';
 import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { NAV_GROUPS } from '@/lib/navigation/types';
-import type { NavItem, NavGroup } from '@/lib/navigation/types';
+import type { NavGroup } from '@/lib/navigation/types';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   Shield: <Shield size={20} />,
@@ -67,7 +64,8 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const V4DemoPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const { t } = useTranslation();
+  const [tabValue, setTabValue] = useState('overview');
   const [selectedPath, setSelectedPath] = useState('/iam/dashboard');
 
   const sidebarGrouped = useMemo(() => {
@@ -84,59 +82,83 @@ const V4DemoPage: React.FC = () => {
 
   const moduleInfo = navigationRegistryV2.getModule('iam');
 
-  const stats = [
-    { label: i18n.t('pages.v4_demo_page.k0'), value: allNavItems.length, color: 'primary' },
-    {
-      label: i18n.t('pages.v4_demo_page.k1'),
-      value: allNavItems.filter((i) => i.showInSidebar).length,
-      color: 'success',
-    },
-    {
-      label: i18n.t('pages.v4_demo_page.tab_0'),
-      value: allNavItems.filter((i) => i.showInTabs).length,
-      color: 'info',
-    },
-    {
-      label: i18n.t('pages.v4_demo_page.k2'),
-      value: Object.keys(sidebarGrouped).length,
-      color: 'warning',
-    },
-  ];
+  const statCards: StatCard[] = useMemo(
+    () => [
+      {
+        id: 'total-nav',
+        title: t('pages.v4_demo_page.k0'),
+        value: allNavItems.length,
+        icon: <LayoutDashboard size={20} />,
+        color: 'primary',
+      },
+      {
+        id: 'sidebar-nav',
+        title: t('pages.v4_demo_page.k1'),
+        value: allNavItems.filter((i) => i.showInSidebar).length,
+        icon: <Users size={20} />,
+        color: 'success',
+      },
+      {
+        id: 'tab-nav',
+        title: t('pages.v4_demo_page.tab_0'),
+        value: allNavItems.filter((i) => i.showInTabs).length,
+        icon: <CreditCard size={20} />,
+        color: 'info',
+      },
+      {
+        id: 'nav-groups',
+        title: t('pages.v4_demo_page.k2'),
+        value: Object.keys(sidebarGrouped).length,
+        icon: <FolderTree size={20} />,
+        color: 'warning',
+      },
+    ],
+    [allNavItems, sidebarGrouped, t]
+  );
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      { label: t('pages.v4_demo_page.k3'), value: 'overview' },
+      { label: t('pages.v4_demo_page.k4'), value: 'hierarchy' },
+      { label: t('pages.v4_demo_page.k5'), value: 'schema' },
+      { label: t('pages.v4_demo_page.k6'), value: 'templates' },
+    ],
+    [t]
+  );
 
   const renderIcon = (iconName?: string) => {
     if (!iconName) return null;
     return iconMap[iconName] || <FolderTree size={20} />;
   };
 
-  return (
-    <PageContainer
-      title={i18n.t('pages.v4_demo_page.v40_1')}
-      subtitle={i18n.t('pages.v4_demo_page.iam_2')}
-      headerProps={{
-        pageIcon: <Shield size={20} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
-      }}
+  const alertToolbar = (
+    <Alert
+      severity='info'
+      sx={{ mb: 3 }}
     >
-      <Alert
-        severity='info'
-        sx={{ mb: 3 }}
-      >
-        {i18n.t('pages.v4_demo_page.v40_3')}
-        {i18n.t('pages.v4_demo_page.k4')}
-      </Alert>
+      {t('pages.v4_demo_page.v40_3')}
+      {t('pages.v4_demo_page.k4')}
+    </Alert>
+  );
 
-      <Tabs
-        value={activeTab}
-        onChange={(_, v) => setActiveTab(v)}
-        sx={{ mb: 3 }}
-      >
-        <Tab label={i18n.t('pages.v4_demo_page.k3')} />
-        <Tab label={i18n.t('pages.v4_demo_page.k4')} />
-        <Tab label={i18n.t('pages.v4_demo_page.k5')} />
-        <Tab label={i18n.t('pages.v4_demo_page.k6')} />
-      </Tabs>
-
-      {activeTab === 0 && (
+  return (
+    <StatsPageTemplate
+      title={t('pages.v4_demo_page.v40_1')}
+      subtitle={t('pages.v4_demo_page.iam_2')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      tabs={tabs}
+      tabValue={tabValue}
+      onTabChange={setTabValue}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+      customToolbar={alertToolbar}
+    >
+      {tabValue === 'overview' && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>
             <Paper
@@ -148,13 +170,13 @@ const V4DemoPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600 }}
                 >
-                  {i18n.t('pages.v4_demo_page.iam_5')}
+                  {t('pages.v4_demo_page.iam_5')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  {i18n.t('pages.v4_demo_page.5_6')}
+                  {t('pages.v4_demo_page.5_6')}
                 </Typography>
               </Box>
               <Box sx={{ maxHeight: 500, overflowY: 'auto' }}>
@@ -164,33 +186,6 @@ const V4DemoPage: React.FC = () => {
           </Box>
 
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              {stats.map((stat, i) => (
-                <Box
-                  key={i}
-                  sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}
-                >
-                  <Paper
-                    elevation={0}
-                    sx={{ p: 2, borderRadius: 3, border: 1, borderColor: 'divider' }}
-                  >
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {stat.value}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {stat.label}
-                    </Typography>
-                  </Paper>
-                </Box>
-              ))}
-            </Box>
-
             <Paper
               elevation={0}
               sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
@@ -199,7 +194,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.k7')}
+                {t('pages.v4_demo_page.k7')}
               </Typography>
               <List>
                 {allNavItems.slice(0, 8).map((item) => (
@@ -229,13 +224,19 @@ const V4DemoPage: React.FC = () => {
                           {item.label}
                         </Typography>
                       }
-                      secondary={<Typography sx={{ fontSize: '0.75rem' }}>{item.path}</Typography>}
+                      secondary={
+                        <Typography
+                          sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                        >
+                          {item.path}
+                        </Typography>
+                      }
                     />
                     <Chip
                       label={item.group || 'other'}
                       size='small'
                       variant='outlined'
-                      sx={{ fontSize: '0.7rem' }}
+                      sx={{ fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   </ListItem>
                 ))}
@@ -245,7 +246,7 @@ const V4DemoPage: React.FC = () => {
         </Box>
       )}
 
-      {activeTab === 1 && (
+      {tabValue === 'hierarchy' && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           <Box sx={{ width: '100%' }}>
             <Paper
@@ -256,7 +257,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.k8')}
+                {t('pages.v4_demo_page.k8')}
               </Typography>
               <Box
                 sx={{
@@ -290,7 +291,7 @@ const V4DemoPage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                [i18n.t('pages.v4_demo_page.k9')]: <code>{selectedPath}</code>
+                {t('pages.v4_demo_page.k9')}: <code>{selectedPath}</code>
               </Typography>
             </Paper>
           </Box>
@@ -304,7 +305,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.k10')}
+                {t('pages.v4_demo_page.k10')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box
@@ -317,7 +318,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {i18n.t('pages.v4_demo_page.k11')}
+                    {t('pages.v4_demo_page.k11')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -336,7 +337,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {i18n.t('pages.v4_demo_page.k12')}
+                    {t('pages.v4_demo_page.k12')}
                   </Typography>
                   <Typography variant='body2'>{moduleInfo?.name}</Typography>
                 </Box>
@@ -350,7 +351,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {i18n.t('pages.v4_demo_page.k13')}
+                    {t('pages.v4_demo_page.k13')}
                   </Typography>
                   <Chip
                     label={moduleInfo?.source}
@@ -368,7 +369,7 @@ const V4DemoPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {i18n.t('pages.v4_demo_page.k14')}
+                    {t('pages.v4_demo_page.k14')}
                   </Typography>
                   <Typography
                     variant='body2'
@@ -383,7 +384,7 @@ const V4DemoPage: React.FC = () => {
         </Box>
       )}
 
-      {activeTab === 2 && (
+      {tabValue === 'schema' && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
             <Paper
@@ -394,7 +395,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.k15')}
+                {t('pages.v4_demo_page.k15')}
               </Typography>
               <Box
                 component='pre'
@@ -402,7 +403,7 @@ const V4DemoPage: React.FC = () => {
                   bgcolor: 'grey.50',
                   p: 2,
                   borderRadius: 1,
-                  fontSize: '0.75rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                   overflowX: 'auto',
                 }}
               >
@@ -434,7 +435,7 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.5_16')}
+                {t('pages.v4_demo_page.5_16')}
               </Typography>
               <List>
                 {(Object.entries(NAV_GROUPS) as [NavGroup, (typeof NAV_GROUPS)[NavGroup]][]).map(
@@ -449,7 +450,7 @@ const V4DemoPage: React.FC = () => {
                         secondary={`order: ${group.order} | key: ${key}`}
                       />
                       <Chip
-                        label={`${(sidebarGrouped[key] || []).length} ${i18n.t('pages.v4_demo_page.k17')}`}
+                        label={`${(sidebarGrouped[key] || []).length} ${t('pages.v4_demo_page.k17')}`}
                         size='small'
                         color='primary'
                         variant='outlined'
@@ -463,7 +464,7 @@ const V4DemoPage: React.FC = () => {
         </Box>
       )}
 
-      {activeTab === 3 && (
+      {tabValue === 'templates' && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           <Box sx={{ width: '100%' }}>
             <Paper
@@ -474,55 +475,55 @@ const V4DemoPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.v4_demo_page.8_18')}
+                {t('pages.v4_demo_page.8_18')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {[
                   {
                     name: 'DashboardTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k8'),
+                    desc: t('pages.v4_demo_page.k8'),
                     icon: 'LayoutDashboard',
                     color: 'primary',
                   },
                   {
                     name: 'ListPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.crud_9'),
+                    desc: t('pages.v4_demo_page.crud_9'),
                     icon: 'List',
                     color: 'success',
                   },
                   {
                     name: 'DetailPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k10'),
+                    desc: t('pages.v4_demo_page.k10'),
                     icon: 'FileText',
                     color: 'info',
                   },
                   {
                     name: 'FormPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k11'),
+                    desc: t('pages.v4_demo_page.k11'),
                     icon: 'FormInput',
                     color: 'warning',
                   },
                   {
                     name: 'TreePageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k12'),
+                    desc: t('pages.v4_demo_page.k12'),
                     icon: 'FolderTree',
                     color: 'secondary',
                   },
                   {
                     name: 'StatsPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k13'),
+                    desc: t('pages.v4_demo_page.k13'),
                     icon: 'BarChart3',
                     color: 'error',
                   },
                   {
                     name: 'SettingsPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k14'),
+                    desc: t('pages.v4_demo_page.k14'),
                     icon: 'Settings',
                     color: 'default',
                   },
                   {
                     name: 'KanbanPageTemplate',
-                    desc: i18n.t('pages.v4_demo_page.k15'),
+                    desc: t('pages.v4_demo_page.k15'),
                     icon: 'LayoutGrid',
                     color: 'info',
                   },
@@ -559,7 +560,7 @@ const V4DemoPage: React.FC = () => {
           </Box>
         </Box>
       )}
-    </PageContainer>
+    </StatsPageTemplate>
   );
 };
 

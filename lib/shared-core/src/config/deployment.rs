@@ -168,6 +168,7 @@ impl DeploymentConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_default_config() {
@@ -197,10 +198,6 @@ mod tests {
     }
 
     // ===== 以下为补充测试 =====
-    use std::sync::Mutex;
-
-    /// env var 测试全局锁，避免并行 set_var/remove_var 竞态
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn clear_deployment_env_vars() {
         for k in [
@@ -468,7 +465,6 @@ mod tests {
 
     #[test]
     fn from_env_defaults_when_no_env_vars() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         let c = DeploymentConfig::from_env();
         assert_eq!(c.mode, DeploymentMode::OnPremise);
@@ -484,8 +480,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_saas_mode_and_all_flags_true() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         std::env::set_var("DEPLOYMENT_MODE", "SaaS");
         std::env::set_var("MULTI_TENANT_ENABLED", "true");
@@ -509,8 +505,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_custom_tenant_id() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         std::env::set_var("DEFAULT_TENANT_ID", "12345678-1234-1234-1234-1234567890ab");
         let c = DeploymentConfig::from_env();
@@ -522,8 +518,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_invalid_tenant_id_falls_back() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         std::env::set_var("DEFAULT_TENANT_ID", "not-a-uuid");
         let c = DeploymentConfig::from_env();
@@ -535,8 +531,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_non_true_values_treated_as_false() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         std::env::set_var("MULTI_TENANT_ENABLED", "yes");
         std::env::set_var("QUOTA_ENABLED", "1");
@@ -547,8 +543,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn from_env_uppercase_saas_normalizes_to_saas_mode() {
-        let _guard = ENV_LOCK.lock().unwrap();
         clear_deployment_env_vars();
         std::env::set_var("DEPLOYMENT_MODE", "SAAS");
         let c = DeploymentConfig::from_env();

@@ -534,7 +534,7 @@ const MapView: React.FC<MapViewProps> = ({
             backgroundColor: 'common.white',
             borderRadius: 2,
             boxShadow: designTokens.shadows.md,
-            padding: `${designTokens.spacing.sm} 16px`,
+            padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           }}
         >
           <Typography
@@ -555,7 +555,7 @@ const MapView: React.FC<MapViewProps> = ({
             backgroundColor: ct.warning[100],
             border: `1px solid ${ct.warning[200]}`,
             borderRadius: 2,
-            padding: `${designTokens.spacing.sm} 16px`,
+            padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           }}
         >
           <Typography

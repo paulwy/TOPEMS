@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -211,7 +212,7 @@ const ModuleCard: React.FC<{
             label={mod.version}
             size='small'
             variant='outlined'
-            sx={{ mt: 0.5, fontSize: '0.75rem' }}
+            sx={{ mt: 0.5, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
           />
         </Box>
         {mod.installed && (
@@ -596,7 +597,7 @@ const ModuleDetailDialog: React.FC<{
                   sx={{ mb: 2, pb: 2, borderBottom: 1, borderColor: 'divider' }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
+                    <Avatar sx={{ width: 32, height: 32, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                       {review.user_name[0]}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>

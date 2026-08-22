@@ -291,7 +291,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
               style={{
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: ct.grey[800],
                 margin: 0,
               }}
@@ -315,7 +315,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
               style={{
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: ct.grey[800],
                 margin: 0,
               }}
@@ -601,7 +601,7 @@ const AuditLogPage: React.FC = () => {
             {(row.error_message as string) && (
               <Typography
                 variant='body2'
-                sx={{ fontSize: '0.75rem', color: 'error.main' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'error.main' }}
               >
                 {row.error_message as string}
               </Typography>
@@ -610,7 +610,7 @@ const AuditLogPage: React.FC = () => {
               <Typography
                 variant='body2'
                 sx={{
-                  fontSize: '0.75rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PmProjectDetailPage gantt Tab
  * @done V79 Phase 2 split
@@ -29,7 +30,7 @@ const PmProjectGantt: React.FC<PmProjectGanttProps> = ({
         title={
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pm.projectdetail.project_gantt')}
           </Typography>

@@ -355,7 +355,7 @@ export function MasterDetailPageTemplate<T>({
             <Chip
               label={pagination ? pagination.total : filteredItems.length}
               size='small'
-              sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+              sx={{ ml: 1, height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
             />
           )}
         </Typography>

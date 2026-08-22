@@ -6,18 +6,11 @@ import {
   CardContent,
   Chip,
   MenuItem,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Calculator, Trophy, TrendingUp, Activity, Play } from 'lucide-react';
+import { Calculator, Trophy, Activity, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { forecastApi } from '@/api/crm';
@@ -30,9 +23,10 @@ import type {
 } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 
 const METHOD_COLORS: Record<ForecastMethod, string> = {
   moving_average: designTokens.colors.primary.dark,
@@ -45,7 +39,6 @@ const CrmForecastAlgorithmPage: React.FC = () => {
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
 
-  // 表单状态
   const [method, setMethod] = useState<ForecastMethod>('moving_average');
   const [historyInput, setHistoryInput] = useState(
     '120,135,128,142,138,155,148,162,158,175,168,182'
@@ -54,12 +47,9 @@ const CrmForecastAlgorithmPage: React.FC = () => {
   const [windowSize, setWindowSize] = useState(3);
   const [forecastPeriods, setForecastPeriods] = useState(3);
 
-  // 预测结果
   const [predictResult, setPredictResult] = useState<ForecastResult | null>(null);
-  // 评估结果
   const [evalResult, setEvalResult] = useState<ForecastEvaluation | null>(null);
 
-  // 获取支持的预测方法
   const methodsQuery = useQuery({
     queryKey: [...QUERY_KEYS.CRM.FORECAST_ALGORITHM, 'methods'],
     queryFn: async () => {
@@ -70,7 +60,6 @@ const CrmForecastAlgorithmPage: React.FC = () => {
 
   const methods: ForecastMethodInfo[] = methodsQuery.data || [];
 
-  // 解析历史数据
   const parseHistory = (): number[] => {
     return historyInput
       .split(/[,\s\n]+/)
@@ -94,7 +83,6 @@ const CrmForecastAlgorithmPage: React.FC = () => {
     };
   };
 
-  // 执行预测
   const predictMutation = useMutation({
     mutationFn: async (config: ForecastConfig) => forecastApi.predict(config),
     onSuccess: (res) => {
@@ -117,7 +105,6 @@ const CrmForecastAlgorithmPage: React.FC = () => {
     },
   });
 
-  // 评估所有方法
   const evaluateMutation = useMutation({
     mutationFn: async (config: ForecastConfig) => forecastApi.evaluate(config),
     onSuccess: (res) => {
@@ -168,452 +155,357 @@ const CrmForecastAlgorithmPage: React.FC = () => {
 
   const loading = predictMutation.isPending || evaluateMutation.isPending;
 
-  const historyData = useMemo(() => {
-    return historyInput
-      .split(/[,\s\n]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0)
-      .map((s) => Number(s))
-      .filter((n) => !Number.isNaN(n));
-  }, [historyInput]);
+  const historyData = parseHistory();
 
   const fieldSx = useMemo(() => ({ minWidth: { xs: '100%', sm: 200 } }), []);
 
+  const statCards: StatCard[] = useMemo(() => {
+    if (!predictResult) return [];
+    return [
+      {
+        id: 'mape',
+        title: t('crm.forecastAlgorithm.metric_mape'),
+        value: `${(predictResult.mape * 100).toFixed(2)}%`,
+        color: 'error',
+      },
+      {
+        id: 'rmse',
+        title: t('crm.forecastAlgorithm.metric_rmse'),
+        value: predictResult.rmse.toFixed(2),
+        color: 'primary',
+      },
+      {
+        id: 'r_squared',
+        title: t('crm.forecastAlgorithm.metric_r_squared'),
+        value: predictResult.r_squared.toFixed(4),
+        color: 'success',
+      },
+      {
+        id: 'forecast_count',
+        title: t('crm.forecastAlgorithm.metric_forecast_count'),
+        value: predictResult.forecasts.length,
+        color: 'info',
+      },
+    ];
+  }, [predictResult, t]);
+
+  const predictColumns: TableColumn[] = useMemo(
+    () => [
+      { id: 'period', label: t('crm.forecastAlgorithm.label_period'), align: 'center' },
+      {
+        id: 'value',
+        label: t('crm.forecastAlgorithm.col_forecast_value'),
+        align: 'right',
+        render: (_value, row) => (
+          <Typography sx={{ fontWeight: 600 }}>{Number(row.value).toFixed(2)}</Typography>
+        ),
+      },
+    ],
+    [t]
+  );
+
+  const evaluateColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'method',
+        label: t('crm.forecastAlgorithm.col_method'),
+        render: (_value, row) => {
+          const isBest = row.method === evalResult?.best_method;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Activity
+                size={14}
+                color={
+                  METHOD_COLORS[row.method as ForecastMethod] ?? designTokens.colors.primary.dark
+                }
+              />
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: isBest ? 700 : 400 }}
+              >
+                {String(row.method)}
+              </Typography>
+            </Box>
+          );
+        },
+      },
+      {
+        id: 'mape',
+        label: t('crm.forecastAlgorithm.metric_mape'),
+        align: 'right',
+        render: (_value, row) => (
+          <Typography sx={{ color: 'error.main' }}>
+            {(Number(row.mape) * 100).toFixed(2)}%
+          </Typography>
+        ),
+      },
+      {
+        id: 'rmse',
+        label: t('crm.forecastAlgorithm.metric_rmse'),
+        align: 'right',
+        render: (_value, row) => <Typography>{Number(row.rmse).toFixed(2)}</Typography>,
+      },
+      {
+        id: 'r_squared',
+        label: t('crm.forecastAlgorithm.metric_r_squared'),
+        align: 'right',
+        render: (_value, row) => (
+          <Typography sx={{ color: 'success.main' }}>{Number(row.r_squared).toFixed(4)}</Typography>
+        ),
+      },
+      {
+        id: 'forecast_count',
+        label: t('crm.forecastAlgorithm.col_forecast_count'),
+        align: 'center',
+        render: (_value, row) => <Typography>{Number(row.forecastsLength)}</Typography>,
+      },
+      {
+        id: 'best',
+        label: t('crm.forecastAlgorithm.col_best'),
+        align: 'center',
+        render: (_value, row) =>
+          row.method === evalResult?.best_method ? (
+            <Chip
+              label={t('crm.forecastAlgorithm.label_best')}
+              size='small'
+              color='warning'
+              icon={<Trophy size={12} />}
+              sx={{ fontWeight: 600 }}
+            />
+          ) : null,
+      },
+    ],
+    [evalResult?.best_method, t]
+  );
+
+  const tables: DataTable[] = useMemo(() => {
+    const list: DataTable[] = [];
+    if (predictResult) {
+      list.push({
+        id: 'predict-result',
+        title: t('crm.forecastAlgorithm.section_predict_result'),
+        columns: predictColumns,
+        data: predictResult.forecasts.map((value, index) => ({
+          period: `${t('crm.forecastAlgorithm.label_period')} ${index + 1}`,
+          value,
+        })) as Record<string, unknown>[],
+      });
+    }
+    if (evalResult) {
+      list.push({
+        id: 'evaluate-result',
+        title: t('crm.forecastAlgorithm.section_evaluate_result'),
+        columns: evaluateColumns,
+        data: evalResult.results.map((r) => ({
+          ...r,
+          forecastsLength: r.forecasts.length,
+        })) as Record<string, unknown>[],
+      });
+    }
+    return list;
+  }, [predictResult, evalResult, predictColumns, evaluateColumns, t]);
+
+  const customToolbar = (
+    <Card variant='outlined'>
+      <CardContent>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
+          {t('crm.forecastAlgorithm.section_config')}
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          <TextField
+            select
+            size='small'
+            label={t('crm.forecastAlgorithm.field_method')}
+            value={method}
+            onChange={(e) => setMethod(e.target.value as ForecastMethod)}
+            sx={fieldSx}
+            helperText={methods.find((m) => m.method === method)?.description}
+          >
+            {methods.length === 0 && [
+              <MenuItem
+                key='moving_average'
+                value='moving_average'
+              >
+                {t('crm.forecastAlgorithm.method_moving_average')}
+              </MenuItem>,
+              <MenuItem
+                key='weighted_moving_average'
+                value='weighted_moving_average'
+              >
+                {t('crm.forecastAlgorithm.method_weighted_moving_average')}
+              </MenuItem>,
+              <MenuItem
+                key='exponential_smoothing'
+                value='exponential_smoothing'
+              >
+                {t('crm.forecastAlgorithm.method_exponential_smoothing')}
+              </MenuItem>,
+              <MenuItem
+                key='linear_regression'
+                value='linear_regression'
+              >
+                {t('crm.forecastAlgorithm.method_linear_regression')}
+              </MenuItem>,
+            ]}
+            {methods.map((m) => (
+              <MenuItem
+                key={m.method}
+                value={m.method}
+              >
+                {m.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            size='small'
+            type='number'
+            label={t('crm.forecastAlgorithm.field_forecast_periods')}
+            value={forecastPeriods}
+            onChange={(e) => setForecastPeriods(Math.max(1, Number(e.target.value)))}
+            sx={fieldSx}
+            slotProps={{ htmlInput: { min: 1, max: 24 } }}
+          />
+          {(method === 'moving_average' || method === 'weighted_moving_average') && (
+            <TextField
+              size='small'
+              type='number'
+              label={t('crm.forecastAlgorithm.field_window_size')}
+              value={windowSize}
+              onChange={(e) => setWindowSize(Math.max(2, Number(e.target.value)))}
+              sx={fieldSx}
+              slotProps={{ htmlInput: { min: 2, max: 12 } }}
+            />
+          )}
+          {method === 'exponential_smoothing' && (
+            <TextField
+              size='small'
+              type='number'
+              label={t('crm.forecastAlgorithm.field_alpha')}
+              value={alpha}
+              onChange={(e) => setAlpha(Math.min(1, Math.max(0, Number(e.target.value))))}
+              sx={fieldSx}
+              helperText='0-1'
+              slotProps={{ htmlInput: { min: 0, max: 1, step: 0.05 } }}
+            />
+          )}
+          <TextField
+            size='small'
+            multiline
+            minRows={1}
+            maxRows={3}
+            label={t('crm.forecastAlgorithm.field_history_data')}
+            value={historyInput}
+            onChange={(e) => setHistoryInput(e.target.value)}
+            sx={{ minWidth: { xs: '100%', sm: '100%', md: 400 } }}
+            placeholder={t('crm.forecastAlgorithm.placeholder_history')}
+          />
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 2, flexWrap: 'wrap' }}>
+          <Tooltip title={t('crm.forecastAlgorithm.btn_predict_tooltip')}>
+            <Button
+              variant='contained'
+              startIcon={<Play size={16} />}
+              onClick={handlePredict}
+              disabled={loading}
+            >
+              {t('crm.forecastAlgorithm.btn_predict')}
+            </Button>
+          </Tooltip>
+          <Tooltip title={t('crm.forecastAlgorithm.btn_evaluate_tooltip')}>
+            <Button
+              variant='outlined'
+              startIcon={<Calculator size={16} />}
+              onClick={handleEvaluate}
+              disabled={loading}
+            >
+              {t('crm.forecastAlgorithm.btn_evaluate')}
+            </Button>
+          </Tooltip>
+          <Chip
+            label={`${t('crm.forecastAlgorithm.chip_data_points')}: ${historyData.length}`}
+            size='small'
+            color='primary'
+            variant='outlined'
+            sx={{ alignSelf: 'center' }}
+          />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <PageContainer
-      maxWidth='xl'
+    <StatsPageTemplate
       title={t('crm.forecastAlgorithm.title')}
       subtitle={t('crm.forecastAlgorithm.subtitle')}
-      autoTitle
-      autoBreadcrumbs
+      loading={loading}
+      customToolbar={customToolbar}
+      statCards={statCards}
+      tables={tables}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showStatCards={statCards.length > 0}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        {/* 配置面板 */}
+      {!predictResult && !evalResult && (
         <Card variant='outlined'>
           <CardContent>
             <Typography
               variant='subtitle2'
-              sx={{ fontWeight: 600, mb: 2 }}
+              sx={{ fontWeight: 600, mb: 1.5 }}
             >
-              {t('crm.forecastAlgorithm.section_config')}
+              {t('crm.forecastAlgorithm.section_supported_methods')}
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <TextField
-                select
-                size='small'
-                label={t('crm.forecastAlgorithm.field_method')}
-                value={method}
-                onChange={(e) => setMethod(e.target.value as ForecastMethod)}
-                sx={fieldSx}
-                helperText={methods.find((m) => m.method === method)?.description}
-              >
-                {methods.length === 0 && [
-                  <MenuItem
-                    key='moving_average'
-                    value='moving_average'
-                  >
-                    {t('crm.forecastAlgorithm.method_moving_average')}
-                  </MenuItem>,
-                  <MenuItem
-                    key='weighted_moving_average'
-                    value='weighted_moving_average'
-                  >
-                    {t('crm.forecastAlgorithm.method_weighted_moving_average')}
-                  </MenuItem>,
-                  <MenuItem
-                    key='exponential_smoothing'
-                    value='exponential_smoothing'
-                  >
-                    {t('crm.forecastAlgorithm.method_exponential_smoothing')}
-                  </MenuItem>,
-                  <MenuItem
-                    key='linear_regression'
-                    value='linear_regression'
-                  >
-                    {t('crm.forecastAlgorithm.method_linear_regression')}
-                  </MenuItem>,
-                ]}
-                {methods.map((m) => (
-                  <MenuItem
-                    key={m.method}
-                    value={m.method}
-                  >
-                    {m.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                size='small'
-                type='number'
-                label={t('crm.forecastAlgorithm.field_forecast_periods')}
-                value={forecastPeriods}
-                onChange={(e) => setForecastPeriods(Math.max(1, Number(e.target.value)))}
-                sx={fieldSx}
-                slotProps={{ htmlInput: { min: 1, max: 24 } }}
-              />
-              {(method === 'moving_average' || method === 'weighted_moving_average') && (
-                <TextField
-                  size='small'
-                  type='number'
-                  label={t('crm.forecastAlgorithm.field_window_size')}
-                  value={windowSize}
-                  onChange={(e) => setWindowSize(Math.max(2, Number(e.target.value)))}
-                  sx={fieldSx}
-                  slotProps={{ htmlInput: { min: 2, max: 12 } }}
-                />
-              )}
-              {method === 'exponential_smoothing' && (
-                <TextField
-                  size='small'
-                  type='number'
-                  label={t('crm.forecastAlgorithm.field_alpha')}
-                  value={alpha}
-                  onChange={(e) => setAlpha(Math.min(1, Math.max(0, Number(e.target.value))))}
-                  sx={fieldSx}
-                  helperText='0-1'
-                  slotProps={{ htmlInput: { min: 0, max: 1, step: 0.05 } }}
-                />
-              )}
-              <TextField
-                size='small'
-                multiline
-                minRows={1}
-                maxRows={3}
-                label={t('crm.forecastAlgorithm.field_history_data')}
-                value={historyInput}
-                onChange={(e) => setHistoryInput(e.target.value)}
-                sx={{ minWidth: { xs: '100%', sm: '100%', md: 400 } }}
-                placeholder={t('crm.forecastAlgorithm.placeholder_history')}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1.5, mt: 2, flexWrap: 'wrap' }}>
-              <Tooltip title={t('crm.forecastAlgorithm.btn_predict_tooltip')}>
-                <Button
-                  variant='contained'
-                  startIcon={<Play size={16} />}
-                  onClick={handlePredict}
-                  disabled={loading}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {methods.length === 0 && (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
                 >
-                  {t('crm.forecastAlgorithm.btn_predict')}
-                </Button>
-              </Tooltip>
-              <Tooltip title={t('crm.forecastAlgorithm.btn_evaluate_tooltip')}>
-                <Button
-                  variant='outlined'
-                  startIcon={<Calculator size={16} />}
-                  onClick={handleEvaluate}
-                  disabled={loading}
+                  {t('crm.forecastAlgorithm.msg_loading_methods')}
+                </Typography>
+              )}
+              {methods.map((m) => (
+                <Box
+                  key={m.method}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: 'grey.50',
+                  }}
                 >
-                  {t('crm.forecastAlgorithm.btn_evaluate')}
-                </Button>
-              </Tooltip>
-              <Chip
-                label={`${t('crm.forecastAlgorithm.chip_data_points')}: ${historyData.length}`}
-                size='small'
-                color='primary'
-                variant='outlined'
-                sx={{ alignSelf: 'center' }}
-              />
+                  <Activity
+                    size={16}
+                    color={METHOD_COLORS[m.method] ?? designTokens.colors.primary.dark}
+                  />
+                  <Box>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {m.label}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {m.description}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
             </Box>
           </CardContent>
         </Card>
-
-        {/* 预测结果 */}
-        {predictResult && (
-          <Card variant='outlined'>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <TrendingUp
-                  size={20}
-                  color={METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark}
-                />
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600 }}
-                >
-                  {t('crm.forecastAlgorithm.section_predict_result')}
-                </Typography>
-                <Chip
-                  label={predictResult.method}
-                  size='small'
-                  sx={{
-                    bgcolor: `${METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark}20`,
-                    color: METHOD_COLORS[predictResult.method] ?? designTokens.colors.primary.dark,
-                    fontWeight: 600,
-                  }}
-                />
-              </Box>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-                  gap: 2,
-                  mb: 2,
-                }}
-              >
-                <Paper
-                  variant='outlined'
-                  sx={{ p: 1.5, textAlign: 'center' }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {t('crm.forecastAlgorithm.metric_mape')}
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700, color: 'error.main' }}
-                  >
-                    {(predictResult.mape * 100).toFixed(2)}%
-                  </Typography>
-                </Paper>
-                <Paper
-                  variant='outlined'
-                  sx={{ p: 1.5, textAlign: 'center' }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {t('crm.forecastAlgorithm.metric_rmse')}
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700 }}
-                  >
-                    {predictResult.rmse.toFixed(2)}
-                  </Typography>
-                </Paper>
-                <Paper
-                  variant='outlined'
-                  sx={{ p: 1.5, textAlign: 'center' }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {t('crm.forecastAlgorithm.metric_r_squared')}
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700, color: 'success.main' }}
-                  >
-                    {predictResult.r_squared.toFixed(4)}
-                  </Typography>
-                </Paper>
-                <Paper
-                  variant='outlined'
-                  sx={{ p: 1.5, textAlign: 'center' }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {t('crm.forecastAlgorithm.metric_forecast_count')}
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700 }}
-                  >
-                    {predictResult.forecasts.length}
-                  </Typography>
-                </Paper>
-              </Box>
-              <TableContainer
-                component={Paper}
-                variant='outlined'
-              >
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align='center'>#</TableCell>
-                      <TableCell align='right'>
-                        {t('crm.forecastAlgorithm.col_forecast_value')}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {predictResult.forecasts.map((v, i) => (
-                      <TableRow
-                        key={i}
-                        hover
-                      >
-                        <TableCell align='center'>
-                          {t('crm.forecastAlgorithm.label_period')} {i + 1}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {v.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 评估结果 */}
-        {evalResult && (
-          <Card variant='outlined'>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Trophy
-                  size={20}
-                  color='colors.orange.700'
-                />
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600 }}
-                >
-                  {t('crm.forecastAlgorithm.section_evaluate_result')}
-                </Typography>
-                <Chip
-                  icon={<Trophy size={14} />}
-                  label={`${t('crm.forecastAlgorithm.chip_best_method')}: ${evalResult.best_method}`}
-                  size='small'
-                  color='warning'
-                  sx={{ fontWeight: 600 }}
-                />
-              </Box>
-              <TableContainer
-                component={Paper}
-                variant='outlined'
-              >
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('crm.forecastAlgorithm.col_method')}</TableCell>
-                      <TableCell align='right'>{t('crm.forecastAlgorithm.metric_mape')}</TableCell>
-                      <TableCell align='right'>{t('crm.forecastAlgorithm.metric_rmse')}</TableCell>
-                      <TableCell align='right'>
-                        {t('crm.forecastAlgorithm.metric_r_squared')}
-                      </TableCell>
-                      <TableCell align='center'>
-                        {t('crm.forecastAlgorithm.col_forecast_count')}
-                      </TableCell>
-                      <TableCell align='center'>{t('crm.forecastAlgorithm.col_best')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {evalResult.results.map((r) => {
-                      const isBest = r.method === evalResult.best_method;
-                      return (
-                        <TableRow
-                          key={r.method}
-                          hover
-                          sx={isBest ? { bgcolor: 'warning.50' } : {}}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Activity
-                                size={14}
-                                color={METHOD_COLORS[r.method] ?? designTokens.colors.primary.dark}
-                              />
-                              <Typography
-                                variant='body2'
-                                sx={{ fontWeight: isBest ? 700 : 400 }}
-                              >
-                                {r.method}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell
-                            align='right'
-                            sx={{ color: 'error.main' }}
-                          >
-                            {(r.mape * 100).toFixed(2)}%
-                          </TableCell>
-                          <TableCell align='right'>{r.rmse.toFixed(2)}</TableCell>
-                          <TableCell
-                            align='right'
-                            sx={{ color: 'success.main' }}
-                          >
-                            {r.r_squared.toFixed(4)}
-                          </TableCell>
-                          <TableCell align='center'>{r.forecasts.length}</TableCell>
-                          <TableCell align='center'>
-                            {isBest && (
-                              <Chip
-                                label={t('crm.forecastAlgorithm.label_best')}
-                                size='small'
-                                color='warning'
-                                icon={<Trophy size={12} />}
-                                sx={{ fontWeight: 600 }}
-                              />
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 支持的方法列表 */}
-        {!predictResult && !evalResult && (
-          <Card variant='outlined'>
-            <CardContent>
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 1.5 }}
-              >
-                {t('crm.forecastAlgorithm.section_supported_methods')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {methods.length === 0 && (
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {t('crm.forecastAlgorithm.msg_loading_methods')}
-                  </Typography>
-                )}
-                {methods.map((m) => (
-                  <Box
-                    key={m.method}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      p: 1,
-                      borderRadius: 1,
-                      bgcolor: 'grey.50',
-                    }}
-                  >
-                    <Activity
-                      size={16}
-                      color={METHOD_COLORS[m.method] ?? designTokens.colors.primary.dark}
-                    />
-                    <Box>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {m.label}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {m.description}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-      </Box>
-    </PageContainer>
+      )}
+    </StatsPageTemplate>
   );
 };
 

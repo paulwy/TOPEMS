@@ -1,6 +1,4 @@
 import {
-  Card,
-  CardContent,
   Typography,
   Box,
   Stack,
@@ -13,34 +11,22 @@ import {
   Tooltip,
   IconButton,
   Button,
-  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  GitBranch,
-  Plus,
-  User,
-  CheckCircle,
-  RotateCcw,
-  Trash2,
-  Loader2,
-  Calendar,
-} from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { GitBranch, Plus, User, RotateCcw, Trash2, Loader2, Calendar, Play } from 'lucide-react';
 import type { Workflow, WorkflowVersion } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const FlowVersionHistoryPage: React.FC = () => {
-  const theme = useTheme();
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -111,7 +97,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     addNotification,
   ]);
 
-  const invalidateVersionQueries = () => {
+  const invalidateVersionQueries = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSIONS_BASE, id],
       exact: false,
@@ -122,7 +108,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       exact: false,
       refetchType: 'active',
     });
-  };
+  }, [id, queryClient]);
 
   const createVersionMutation = useMutation({
     mutationFn: async (data: { version: string; change_description: string }) => {
@@ -252,7 +238,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     rollbackMutation.isPending ||
     deleteVersionMutation.isPending;
 
-  const handleCreateVersion = () => {
+  const handleCreateVersion = useCallback(() => {
     if (!id || !createForm.version.trim()) {
       addNotification({
         title: i18n.t('pages.workflow_version_history_page.k20'),
@@ -266,265 +252,261 @@ const FlowVersionHistoryPage: React.FC = () => {
       version: createForm.version,
       change_description: createForm.change_description,
     });
-  };
+  }, [id, createForm, createVersionMutation, addNotification]);
 
-  const handleActivateVersion = (version: WorkflowVersion) => {
-    if (!id) return;
-    activateVersionMutation.mutate(version.id);
-  };
+  const handleActivateVersion = useCallback(
+    (version: WorkflowVersion) => {
+      if (!id) return;
+      activateVersionMutation.mutate(version.id);
+    },
+    [id, activateVersionMutation]
+  );
 
-  const handleRollback = () => {
+  const handleRollback = useCallback(() => {
     if (!id || !selectedVersion) return;
     rollbackMutation.mutate({
       to_version: selectedVersion.version,
       reason: rollbackForm.reason,
     });
-  };
+  }, [id, selectedVersion, rollbackForm, rollbackMutation]);
 
-  const handleDeleteVersion = (version: WorkflowVersion) => {
-    if (!id || version.isactive) {
-      addNotification({
-        title: i18n.t('pages.workflow_version_history_page.k21'),
-        message: i18n.t('pages.workflow_version_history_page.k22'),
-        type: 'info',
-      });
-      return;
-    }
+  const handleDeleteVersion = useCallback(
+    (version: WorkflowVersion) => {
+      if (!id || version.isactive) {
+        addNotification({
+          title: i18n.t('pages.workflow_version_history_page.k21'),
+          message: i18n.t('pages.workflow_version_history_page.k22'),
+          type: 'info',
+        });
+        return;
+      }
 
-    if (!confirm(i18n.t('pages.workflow_version_history_page.k23'))) return;
+      if (!confirm(i18n.t('pages.workflow_version_history_page.k23'))) return;
 
-    deleteVersionMutation.mutate(version.id);
-  };
+      deleteVersionMutation.mutate(version.id);
+    },
+    [id, deleteVersionMutation, addNotification]
+  );
 
-  const handleCompare = (_version1: string, _version2: string) => {
-    navigate(WORKFLOW_PATHS.definitions);
-  };
+  const openRollbackModal = useCallback((version: WorkflowVersion) => {
+    setSelectedVersion(version);
+    setShowRollbackModal(true);
+  }, []);
 
-  const headerActions = useMemo(
+  const columns: ColumnDef<WorkflowVersion>[] = useMemo(
+    () => [
+      {
+        id: 'version',
+        label: i18n.t('pages.workflow_version_history_page.k8'),
+        render: (row) => (
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ alignItems: 'center' }}
+          >
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 600 }}
+            >
+              v{row.version}
+            </Typography>
+            {row.isactive && (
+              <Chip
+                label={i18n.t('pages.workflow_version_history_page.k27')}
+                size='small'
+                sx={{
+                  bgcolor: 'secondary.main',
+                  color: 'common.white',
+                }}
+              />
+            )}
+          </Stack>
+        ),
+      },
+      {
+        id: 'change_description',
+        label: i18n.t('pages.workflow_version_history_page.k36'),
+        render: (row) =>
+          row.change_description ? (
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {row.change_description}
+            </Typography>
+          ) : (
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              -
+            </Typography>
+          ),
+      },
+      {
+        id: 'created_by',
+        label: i18n.t('pages.workflow_version_history_page.k28'),
+        render: (row) => (
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <User size={14} />
+            <Typography variant='body2'>
+              {row.created_by || i18n.t('pages.workflow_version_history_page.k28')}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('pages.workflow_version_history_page.k29'),
+        render: (row) => (
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Calendar size={14} />
+            <Typography variant='body2'>{new Date(row.created_at).toLocaleString()}</Typography>
+          </Stack>
+        ),
+      },
+    ],
+    []
+  );
+
+  const renderRowActions = useCallback(
+    (row: WorkflowVersion) => (
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Tooltip
+          title={
+            row.isactive
+              ? i18n.t('pages.workflow_version_history_page.k34')
+              : i18n.t('pages.workflow_version_history_page.k33')
+          }
+        >
+          <span>
+            <IconButton
+              size='small'
+              color='secondary'
+              onClick={() => handleActivateVersion(row)}
+              disabled={row.isactive || activateVersionMutation.isPending}
+              aria-label={
+                row.isactive
+                  ? i18n.t('pages.workflow_version_history_page.k34')
+                  : i18n.t('pages.workflow_version_history_page.k33')
+              }
+            >
+              {activateVersionMutation.isPending ? (
+                <Loader2
+                  size={18}
+                  className='animate-spin'
+                />
+              ) : (
+                <Play size={18} />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+        {!row.isactive && (
+          <>
+            <Tooltip title={i18n.t('pages.workflow_version_history_page.k29')}>
+              <span>
+                <IconButton
+                  size='small'
+                  color='warning'
+                  onClick={() => openRollbackModal(row)}
+                  disabled={rollbackMutation.isPending}
+                  aria-label={i18n.t('pages.workflow_version_history_page.k30')}
+                >
+                  {rollbackMutation.isPending ? (
+                    <Loader2
+                      size={18}
+                      className='animate-spin'
+                    />
+                  ) : (
+                    <RotateCcw size={18} />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title={i18n.t('pages.workflow_version_history_page.k31')}>
+              <span>
+                <IconButton
+                  size='small'
+                  color='error'
+                  onClick={() => handleDeleteVersion(row)}
+                  disabled={deleteVersionMutation.isPending}
+                  aria-label={i18n.t('pages.workflow_version_history_page.k32')}
+                >
+                  {deleteVersionMutation.isPending ? (
+                    <Loader2
+                      size={18}
+                      className='animate-spin'
+                    />
+                  ) : (
+                    <Trash2 size={18} />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          </>
+        )}
+      </Box>
+    ),
+    [
+      handleActivateVersion,
+      openRollbackModal,
+      handleDeleteVersion,
+      activateVersionMutation.isPending,
+      rollbackMutation.isPending,
+      deleteVersionMutation.isPending,
+    ]
+  );
+
+  const actions = useMemo(
     () => [
       {
         label: i18n.t('pages.workflow_version_history_page.k24'),
         icon: <Plus size={18} />,
         onClick: () => setShowCreateModal(true),
         variant: 'contained' as const,
-        color: 'secondary' as const,
       },
     ],
     []
   );
 
-  return (
-    <PageContainer
-      title={i18n.t('pages.workflow_version_history_page.k25')}
-      subtitle={workflow?.name}
-      loading={loading}
-      headerProps={{
-        pageIcon: <GitBranch size={24} />,
-        pageColor: 'secondary.main',
-        backButton: {
-          href: '/flow/definitions',
-        },
-        actions: headerActions,
-      }}
-    >
-      {/* Version Timeline */}
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 2 }}
-          >
-            {i18n.t('pages.workflow_version_history_page.k5')}
-          </Typography>
+  const footerContent = useMemo(
+    () => (
+      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <GitBranch size={14} />
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {i18n.t('pages.workflow_version_history_page.k5')}: {versions.length}
+        </Typography>
+      </Box>
+    ),
+    [versions.length]
+  );
 
-          {versions.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <GitBranch
-                size={64}
-                style={{
-                  color: theme.palette.grey[300],
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-                  marginBottom: 16,
-                }}
-              />
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pages.workflow_version_history_page.k26')}
-              </Typography>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                variant='contained'
-                sx={{ mt: 2, bgcolor: 'secondary.main' }}
-              >
-                {i18n.t('pages.workflow_version_history_page.k6')}
-              </Button>
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {versions.map((version, index) => (
-                <Box
-                  key={version.id}
-                  sx={{
-                    border: 1,
-                    borderColor: version.isactive ? 'secondary.main' : 'divider',
-                    borderRadius: 1,
-                    p: 2,
-                    bgcolor: version.isactive ? 'secondary.50' : 'transparent',
-                  }}
-                >
-                  <Stack
-                    direction='row'
-                    sx={{
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Stack
-                      direction='row'
-                      spacing={2}
-                      sx={{ alignItems: 'flex-start' }}
-                    >
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          bgcolor: version.isactive ? 'secondary.main' : 'grey.100',
-                          color: version.isactive
-                            ? 'var(--color-primary-foreground)'
-                            : 'grey.600',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        {version.isactive ? (
-                          <CheckCircle size={20} />
-                        ) : (
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 700 }}
-                          >
-                            {index + 1}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Box>
-                        <Stack
-                          direction='row'
-                          spacing={1}
-                          sx={{ alignItems: 'center', mb: 0.5 }}
-                        >
-                          <Typography
-                            variant='h6'
-                            sx={{ fontWeight: 600 }}
-                          >
-                            v{version.version}
-                          </Typography>
-                          {version.isactive && (
-                            <Chip
-                              label={i18n.t('pages.workflow_version_history_page.k27')}
-                              size='small'
-                              sx={{
-                                bgcolor: 'secondary.main',
-                                color: 'common.white',
-                              }}
-                            />
-                          )}
-                        </Stack>
-                        {version.change_description && (
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{ mb: 1 }}
-                          >
-                            {version.change_description}
-                          </Typography>
-                        )}
-                        <Stack
-                          direction='row'
-                          spacing={2}
-                        >
-                          <Stack
-                            direction='row'
-                            spacing={0.5}
-                            sx={{ alignItems: 'center' }}
-                          >
-                            <User size={14} />
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {version.created_by ||
-                                i18n.t('pages.workflow_version_history_page.k28')}
-                            </Typography>
-                          </Stack>
-                          <Stack
-                            direction='row'
-                            spacing={0.5}
-                            sx={{ alignItems: 'center' }}
-                          >
-                            <Calendar size={14} />
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {new Date(version.created_at).toLocaleString()}
-                            </Typography>
-                          </Stack>
-                        </Stack>
-                      </Box>
-                    </Stack>
-                    <Stack
-                      direction='row'
-                      spacing={1}
-                    >
-                      {!version.isactive && (
-                        <>
-                          <Tooltip title={i18n.t('pages.workflow_version_history_page.k29')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => {
-                                setSelectedVersion(version);
-                                setShowRollbackModal(true);
-                              }}
-                              sx={{ color: 'warning.main' }}
-                              aria-label={i18n.t('pages.workflow_version_history_page.k30')}
-                            >
-                              <RotateCcw size={20} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={i18n.t('pages.workflow_version_history_page.k31')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleDeleteVersion(version)}
-                              sx={{ color: 'error.main' }}
-                              aria-label={i18n.t('pages.workflow_version_history_page.k32')}
-                            >
-                              <Trash2 size={20} />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                      <Button
-                        size='small'
-                        onClick={() => handleActivateVersion(version)}
-                        disabled={version.isactive}
-                        variant={version.isactive ? 'outlined' : 'contained'}
-                        sx={version.isactive ? {} : { bgcolor: 'secondary.main' }}
-                      >
-                        {version.isactive
-                          ? i18n.t('pages.workflow_version_history_page.k34')
-                          : i18n.t('pages.workflow_version_history_page.k33')}
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Box>
-              ))}
-            </Stack>
-          )}
-        </CardContent>
-      </Card>
+  return (
+    <>
+      <ListPageTemplate<WorkflowVersion>
+        title={i18n.t('pages.workflow_version_history_page.k25')}
+        subtitle={workflow?.name}
+        backButton={{ href: '/flow/definitions' }}
+        columns={columns}
+        data={versions}
+        loading={loading}
+        actions={actions}
+        renderRowActions={renderRowActions}
+        footerContent={footerContent}
+        emptyMessage={i18n.t('pages.workflow_version_history_page.k26')}
+      />
 
       {/* Create Version Modal */}
       <Dialog
@@ -657,7 +639,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
 import { Grid, PageContainer } from '@/components/common';
@@ -378,7 +379,7 @@ const MobileWorkbenchPage: React.FC = () => {
                     width: 48,
                     height: 48,
                     bgcolor: 'action.disabledBackground',
-                    fontSize: '1rem',
+                    fontSize: designTokens.typography.fontSize.scale['1rem'],
                   }}
                 >
                   {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
@@ -549,7 +550,7 @@ const MobileWorkbenchPage: React.FC = () => {
                           </Badge>
                           <Typography
                             variant='caption'
-                            sx={{ fontSize: '0.75rem' }}
+                            sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                           >
                             {action.label}
                           </Typography>
@@ -628,7 +629,7 @@ const MobileWorkbenchPage: React.FC = () => {
                                     typeof Chip
                                   >['color']
                                 }
-                                sx={{ height: 20, fontSize: '0.7rem' }}
+                                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                               />
                             ) : undefined
                           }

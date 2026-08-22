@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Box,
@@ -164,7 +165,7 @@ const DatabaseManagementTableList: React.FC<DatabaseManagementTableListProps> = 
                               fontWeight: 500,
                               color: 'primary.main',
                               fontFamily: 'monospace',
-                              fontSize: '0.875rem',
+                              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             }}
                           >
                             {table.table_name}

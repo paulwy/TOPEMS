@@ -122,7 +122,12 @@ export const getAccountSchema = (): EntitySchema => ({
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontFamily: 'monospace', fontSize: '0.875rem' } },
+          {
+            style: {
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            },
+          },
           String(row.code || '')
         ),
       validation: [{ type: 'maxLength', value: 50 }],

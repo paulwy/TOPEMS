@@ -165,7 +165,7 @@ const PersonalInfoCard: React.FC = () => {
             background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
             color: 'common.white',
             fontWeight: 600,
-            fontSize: '1.1rem',
+            fontSize: designTokens.typography.fontSize.scale['1.1rem'],
             flexShrink: 0,
           }}
         >
@@ -397,7 +397,7 @@ const RecentActivities: React.FC = () => {
               background: gradientMap[item.gradient] || gradientMap.primary,
               color: 'common.white',
               fontWeight: 600,
-              fontSize: '0.8rem',
+              fontSize: designTokens.typography.fontSize.scale['0.8rem'],
               flexShrink: 0,
             }}
           >
@@ -465,7 +465,7 @@ const FrequentContacts: React.FC = () => {
               bgcolor: `${item.color}.15`,
               color: `${item.color}.main`,
               fontWeight: 600,
-              fontSize: '0.9rem',
+              fontSize: designTokens.typography.fontSize.scale['0.9rem'],
               flexShrink: 0,
             }}
           >

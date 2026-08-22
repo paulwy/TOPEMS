@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { PageContainer } from '@/components';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
@@ -681,7 +682,7 @@ const DocumentsPage: React.FC = () => {
                     border: 'none',
                     borderRadius: 8,
                     padding: '6px 12px',
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   }}
                 >
                   <option value='all'>{i18n.t('pages.index.k30')}</option>

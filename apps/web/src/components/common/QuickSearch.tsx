@@ -119,7 +119,7 @@ const SuggestionItem = styled(ListItem, {
     color: theme.palette.text.secondary,
   },
   '& .MuiListItemText-primary': {
-    fontSize: '0.875rem',
+    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
   },
 }));
 
@@ -363,7 +363,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
               color: 'inherit',
               '& .MuiInputBase-input': {
                 padding: 0,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               },
             }}
           />
@@ -390,7 +390,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 p: `${designTokens.spacing.xs} 6px`,
                 bgcolor: 'grey.200',
                 borderRadius: 4,
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 color: 'text.secondary',
               }}
             >
@@ -465,7 +465,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 <Typography
                   sx={{
                     p: `${designTokens.spacing.sm} 12px`,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -506,7 +506,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 <Typography
                   sx={{
                     p: `${designTokens.spacing.sm} 12px`,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',

@@ -1,6 +1,8 @@
+import { designTokens } from '@topems/tokens';
 import { Box, Typography, Select, MenuItem, FormControl, Button } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import i18next from 'i18next';
 
 export interface PaginationConfig {
   page: number;
@@ -55,8 +57,13 @@ export default function PaginationComponent({
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, ...sx, opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' as const : 'auto' as const }}>
       {showTotal && totalItems && (
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-          显示 {startItem}-{endItem} / 共 {totalItems} 条
+        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+          {i18next.t('components.pagination.total', {
+            start: startItem,
+            end: endItem,
+            total: totalItems,
+            defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
+          })}
         </Typography>
       )}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -74,7 +81,7 @@ export default function PaginationComponent({
               cursor: 'not-allowed',
             },
           }}
-          title='第一页'
+          title={i18next.t('components.pagination.first_page', { defaultValue: 'First page' })}
         >
           <ChevronsLeft style={{ width: 16, height: 16 }} />
         </Button>
@@ -92,7 +99,7 @@ export default function PaginationComponent({
               cursor: 'not-allowed',
             },
           }}
-          title='上一页'
+          title={i18next.t('components.pagination.prev_page', { defaultValue: 'Previous page' })}
         >
           <ChevronLeft style={{ width: 16, height: 16 }} />
         </Button>
@@ -114,7 +121,7 @@ export default function PaginationComponent({
                 height: 32,
                 px: 3,
                 borderRadius: 2,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 fontWeight: 500,
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 backgroundColor: page === pageNum ? 'primary.main' : 'transparent',
@@ -142,7 +149,7 @@ export default function PaginationComponent({
               cursor: 'not-allowed',
             },
           }}
-          title='下一页'
+          title={i18next.t('components.pagination.next_page', { defaultValue: 'Next page' })}
         >
           <ChevronRight style={{ width: 16, height: 16 }} />
         </Button>
@@ -160,14 +167,16 @@ export default function PaginationComponent({
               cursor: 'not-allowed',
             },
           }}
-          title='最后一页'
+          title={i18next.t('components.pagination.last_page', { defaultValue: 'Last page' })}
         >
           <ChevronsRight style={{ width: 16, height: 16 }} />
         </Button>
       </Box>
       {showPageSize && onPageSizeChange && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>每页</Typography>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+            {i18next.t('components.pagination.per_page', { defaultValue: 'per page' })}
+          </Typography>
           <FormControl size='small'>
             <Select
               value={pageSize}
@@ -175,7 +184,7 @@ export default function PaginationComponent({
               disabled={disabled}
               sx={{
                 height: 32,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
               {pageSizeOptions.map((size) => (

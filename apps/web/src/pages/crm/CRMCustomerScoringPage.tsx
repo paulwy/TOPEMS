@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, LinearProgress, Paper, Typography, Button } from '@mui/material';
 import { Star, TrendingUp, TrendingDown, Minus, Calculator } from 'lucide-react';
@@ -34,7 +35,7 @@ const getGradeBadge = (scoreLevel: string) => {
         bgcolor: config.color,
         color: 'common.white',
         fontWeight: 'bold',
-        fontSize: '1.125rem',
+        fontSize: designTokens.typography.fontSize.scale['1.125rem'],
         px: 1.5,
       }}
       label={config.label}
@@ -84,7 +85,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
           sx={{
             color,
             fontWeight: 500,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           }}
         >
           {label}

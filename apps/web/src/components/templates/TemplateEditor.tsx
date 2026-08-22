@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Dialog,
   DialogContent,
@@ -357,7 +358,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Box>
                       <FormLabel
                         component='legend'
-                        sx={{ fontSize: '0.75rem' }}
+                        sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                       >
                         {i18n.t('components.template_editor.k1')}
                       </FormLabel>
@@ -372,7 +373,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Box>
                       <FormLabel
                         component='legend'
-                        sx={{ fontSize: '0.75rem' }}
+                        sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                       >
                         {i18n.t('components.template_editor.k2')}
                       </FormLabel>
@@ -387,7 +388,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     <Box>
                       <FormLabel
                         component='legend'
-                        sx={{ fontSize: '0.75rem' }}
+                        sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                       >
                         {i18n.t('components.template_editor.k3')}
                       </FormLabel>
@@ -417,7 +418,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             handleVariableChange(index, 'required', e.target.checked)
                           }
                         />
-                        <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                           {i18n.t('components.template_editor.k4')}
                         </Typography>
                       </Box>
@@ -484,7 +485,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   mt: 1,
                   '& .MuiInputBase-input': {
                     fontFamily: 'monospace',
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   },
                 }}
               />

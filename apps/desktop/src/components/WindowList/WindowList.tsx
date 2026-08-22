@@ -40,7 +40,7 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
   };
 
   const handleOpenNewWindow = async (route: typeof routes[0]) => {
-    await windowApi.create(route.name, route.path);
+    await windowApi.create(route.label, route.path);
     onClose();
   };
 
@@ -61,20 +61,20 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
     >
       <Box sx={{ px: 2, py: 1, borderBottom: '1px solid #e0e0e0' }}>
         <ListItemText
-          primary="打开新窗口"
+          primary="Open new window"
           sx={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}
         />
       </Box>
       {routes.map((route) => (
         <MenuItem
-          key={route.id}
+          key={route.code}
           onClick={() => handleOpenNewWindow(route)}
           sx={{ py: 1 }}
         >
           <ListItemIcon sx={{ minWidth: 28 }}>
             <Plus size={16} />
           </ListItemIcon>
-          <ListItemText primary={route.name} />
+          <ListItemText primary={route.label} />
         </MenuItem>
       ))}
 
@@ -82,7 +82,7 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
         <>
           <Box sx={{ px: 2, py: 1, borderBottom: '1px solid #e0e0e0', mt: 1 }}>
             <ListItemText
-              primary={`当前窗口 (${windows.length})`}
+              primary={`Current windows (${windows.length})`}
               sx={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}
             />
           </Box>
@@ -102,7 +102,7 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
                 </ListItemIcon>
                 <ListItemText
                   primary={window.title}
-                  secondary={isMainWindow(window.label) ? '主窗口' : ''}
+                  secondary={isMainWindow(window.label) ? 'Main window' : ''}
                 />
               </Box>
               <IconButton

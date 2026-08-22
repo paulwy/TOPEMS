@@ -87,7 +87,7 @@ const Sidebar = () => {
           const IconComponent = iconMap[route.icon || 'LayoutDashboard'];
           const isActive = location.pathname === route.path;
           return (
-            <ListItem key={route.id} disablePadding>
+            <ListItem key={route.code} disablePadding>
               <ListItemButton
                 onClick={() => navigate(route.path)}
                 selected={isActive}
@@ -95,7 +95,7 @@ const Sidebar = () => {
                 <ListItemIcon>
                   <IconComponent size={20} />
                 </ListItemIcon>
-                {open && <ListItemText primary={route.name} />}
+                {open && <ListItemText primary={route.label} />}
               </ListItemButton>
             </ListItem>
           );
@@ -106,13 +106,13 @@ const Sidebar = () => {
         <ListItem disablePadding>
           <ListItemButton onClick={toggleTheme}>
             <ListItemIcon>{mode === 'light' ? <Moon size={20} /> : <Sun size={20} />}</ListItemIcon>
-            {open && <ListItemText primary={mode === 'light' ? '深色模式' : '浅色模式'} />}
+            {open && <ListItemText primary={mode === 'light' ? 'Dark mode' : 'Light mode'} />}
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
           <ListItemButton onClick={handleLogout}>
             <ListItemIcon><LogOut size={20} /></ListItemIcon>
-            {open && <ListItemText primary="退出登录" />}
+            {open && <ListItemText primary="Logout" />}
           </ListItemButton>
         </ListItem>
       </List>

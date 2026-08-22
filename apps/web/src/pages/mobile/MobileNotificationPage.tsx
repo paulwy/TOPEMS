@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
@@ -368,7 +369,7 @@ export const MobileNotificationPage: React.FC = () => {
                     size='small'
                     label={unreadCount}
                     color='primary'
-                    sx={{ height: 18, fontSize: '0.7rem' }}
+                    sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                   />
                 )}
               </Box>

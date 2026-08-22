@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Typography, Button, Tooltip, IconButton, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -57,7 +58,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 fontWeight: 600,
                 color: 'text.primary',
                 whiteSpace: 'nowrap',
@@ -69,7 +70,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
             </Typography>
             <Typography
               sx={{
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 color: 'text.secondary',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -135,7 +136,7 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
             gap: 1,
             color: 'text.secondary',
             textTransform: 'none',
-            fontSize: '0.8125rem',
+            fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
             '&:hover': {
               bgcolor: 'action.hover',
             },

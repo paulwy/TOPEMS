@@ -75,7 +75,7 @@ export const userSchema: EntitySchema = {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 fontWeight: 500,
                 flexShrink: 0,
               },
@@ -88,14 +88,14 @@ export const userSchema: EntitySchema = {
             React.createElement(
               'div',
               {
-                style: { fontWeight: 500, fontSize: '0.875rem' },
+                style: { fontWeight: 500, fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
               },
               fullName || username
             ),
             React.createElement(
               'div',
               {
-                style: { fontSize: '0.75rem', color: 'text.secondary' },
+                style: { fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' },
               },
               email
             )
@@ -191,7 +191,7 @@ export const userSchema: EntitySchema = {
           }),
           React.createElement(
             'span',
-            { style: { fontSize: '0.875rem' } },
+            { style: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
             isActive ? i18n.t('shared.user.k10') : i18n.t('shared.user.k9')
           )
         );

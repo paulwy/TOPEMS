@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -52,7 +53,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
           {message && (
             <p
               style={{
-                marginTop: '16px',
+                marginTop: `${designTokens.spacing.md}px`,
                 color: 'var(--mui-palette-text-secondary)',
               }}
             >

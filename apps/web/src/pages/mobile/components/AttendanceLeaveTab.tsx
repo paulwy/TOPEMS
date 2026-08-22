@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * AttendanceLeaveTab - Leave applications list
  * @refactor-split Extracted from MobileAttendancePage.tsx
@@ -113,7 +114,7 @@ const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenL
                       label={getLeaveTypeLabel(leave.leave_type)}
                       size='small'
                       color='primary'
-                      sx={{ height: 22, fontSize: '0.75rem' }}
+                      sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                     />
                     <Chip
                       label={getLeaveStatusLabel(leave.status)}
@@ -123,7 +124,7 @@ const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenL
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 22, fontSize: '0.75rem' }}
+                      sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                     />
                   </Box>
                   <Typography
@@ -143,7 +144,7 @@ const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenL
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  sx={{ fontSize: '0.85rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'] }}
                 >
                   {leave.reason}
                 </Typography>

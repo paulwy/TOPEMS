@@ -157,7 +157,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              padding: '0 8px',
+              padding: `0 ${designTokens.spacing.sm}px`,
               borderRadius: 9999,
               fontSize: 12,
               fontWeight: 500,

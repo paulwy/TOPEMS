@@ -99,7 +99,7 @@ export const FormDrawer = React.memo(function FormDrawer({
         onClick={onClose}
         disabled={loading}
         style={{
-          padding: `${designTokens.spacing.sm} 16px`,
+          padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           borderRadius: 4,
           border: `1px solid ${designTokens.colors.grey[300]}`,
           backgroundColor: 'common.white',
@@ -115,7 +115,7 @@ export const FormDrawer = React.memo(function FormDrawer({
         onClick={onSubmit}
         disabled={loading || disableSubmit}
         style={{
-          padding: `${designTokens.spacing.sm} 16px`,
+          padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           borderRadius: 4,
           border: 'none',
           backgroundColor:

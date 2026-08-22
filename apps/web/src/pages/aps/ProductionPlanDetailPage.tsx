@@ -6,12 +6,15 @@
  */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Grid, Typography, Alert, Button } from '@mui/material';
 import { productionPlanApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
 import { FSMActionButtons } from '@/components/aps/FSMActionButtons';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { DetailPageTemplate } from '@/components/templates';
+import { type SectionConfig } from '@/components/templates/DetailPageTemplate';
 
 export default function ProductionPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,93 +50,139 @@ export default function ProductionPlanDetailPage() {
     }
   };
 
-  if (loading) {
+  if (!plan && !loading) {
     return (
-      <div className='p-4 text-gray-600'>{i18n.t('pages.production_plan_detail_page.k0')}</div>
+      <Box sx={{ p: 3 }}>
+        <Alert
+          severity='info'
+          action={
+            <Button
+              color='inherit'
+              size='small'
+              onClick={() => navigate('/aps/production-plans')}
+            >
+              {i18n.t('pages.production_plan_detail_page.k1')}
+            </Button>
+          }
+        >
+          {t('aps.production_plan_detail_page.k0')}
+        </Alert>
+      </Box>
     );
   }
 
-  if (!plan) {
-    return (
-      <div className='p-4'>
-        <p className='text-gray-600'>{t('aps.production_plan_detail_page.k0')}</p>
-        <button
-          onClick={() => navigate('/aps/production-plans')}
-          className='mt-2 text-blue-600 underline'
-        >
-          {i18n.t('pages.production_plan_detail_page.k0')}
-        </button>
-      </div>
-    );
-  }
+  const sections: SectionConfig[] = plan
+    ? [
+        {
+          id: 'basic',
+          title: t('aps.production_plan_detail_page.k2'),
+          content: (
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k3')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.plan_no}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k4')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.plan_name}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k5')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.plan_type ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k6')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.product_name ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k7')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {plan.target_quantity?.toLocaleString() ?? '-'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k8')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.start_date ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k9')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.end_date ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.production_plan_detail_page.k10')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{plan.notes ?? '-'}</Typography>
+              </Grid>
+            </Grid>
+          ),
+        },
+      ]
+    : [];
 
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <button
-            onClick={() => navigate('/aps/production-plans')}
-            className='mb-2 text-sm text-blue-600 hover:underline'
-          >
-            {i18n.t('pages.production_plan_detail_page.k1')}
-          </button>
-          <h1 className='text-2xl font-bold'>{plan.plan_no}</h1>
-          <p className='mt-1 text-sm text-gray-500'>{plan.plan_name}</p>
-        </div>
-        <StatusBadge
-          fsm='production_plan'
-          status={plan.status ?? 'draft'}
-        />
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {t('aps.production_plan_detail_page.k1')}
-        </p>
-        <FSMActionButtons
-          fsm='production_plan'
-          currentStatus={plan.status ?? 'draft'}
-          onAction={handleAction}
-        />
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>{t('aps.production_plan_detail_page.k2')}</h3>
-        <dl className='grid grid-cols-2 gap-4 text-sm'>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k3')}</dt>
-            <dd className='font-medium'>{plan.plan_no}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k4')}</dt>
-            <dd className='font-medium'>{plan.plan_name}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k5')}</dt>
-            <dd className='font-medium'>{plan.plan_type ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k6')}</dt>
-            <dd className='font-medium'>{plan.product_name ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k7')}</dt>
-            <dd className='font-medium'>{plan.target_quantity?.toLocaleString() ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k8')}</dt>
-            <dd className='font-medium'>{plan.start_date ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k9')}</dt>
-            <dd className='font-medium'>{plan.end_date ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.production_plan_detail_page.k10')}</dt>
-            <dd className='font-medium'>{plan.notes ?? '-'}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
+    <DetailPageTemplate
+      title={plan?.plan_no ?? '-'}
+      subtitle={plan?.plan_name ?? '-'}
+      backHref='/aps/production-plans'
+      loading={loading}
+      headerContent={
+        plan && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <StatusBadge
+              fsm='production_plan'
+              status={plan.status ?? 'draft'}
+            />
+            <FSMActionButtons
+              fsm='production_plan'
+              currentStatus={plan.status ?? 'draft'}
+              onAction={handleAction}
+            />
+          </Box>
+        )
+      }
+      sections={sections}
+    />
   );
 }

@@ -1,10 +1,8 @@
 file,module,line,column,type,label,value,context
-apps/web/src/pages/admin/MonitorPage.tsx,admin,353,49,px_spacing,px 间距/尺寸,1px,style={{ borderBottom: '1px solid' }}
-apps/web/src/pages/admin/MonitorPage.tsx,admin,513,49,px_spacing,px 间距/尺寸,1px,style={{ borderBottom: '1px solid' }}
 apps/web/src/pages/ai/AiChatPage.tsx,ai,355,57,px_spacing,px 间距/尺寸,140px,"<Box sx={{ display: 'flex', height: 'calc(100vh - 140px)', bgcolor: 'background.default' }}>"
 apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,669,56,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
 apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,722,54,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
-apps/web/src/pages/ai/AiPromptLibraryPage.tsx,ai,652,48,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
+apps/web/src/pages/ai/AiPromptLibraryPage.tsx,ai,407,38,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
 apps/web/src/pages/bi/BIVisualizationPage.tsx,bi,359,67,px_spacing,px 间距/尺寸,280px,"<Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>"
 apps/web/src/pages/bi/BiPermissionPage.tsx,bi,433,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}"
 apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,279,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
@@ -22,6 +20,7 @@ apps/web/src/pages/crm/CRMBillingPage.tsx,crm,172,42,px_spacing,px 间距/尺寸
 apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,359,41,px_spacing,px 间距/尺寸,1px,<tr style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}>
 apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,406,41,px_spacing,px 间距/尺寸,1px,style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
 apps/web/src/pages/erp/DictManagementPage.tsx,erp,290,68,px_spacing,px 间距/尺寸,200px,"<Box sx={{ display: 'flex', gap: 2, minHeight: 'calc(100vh - 200px)' }}>"
+apps/web/src/pages/finance/OpeningBalancePage.tsx,finance,212,67,rem_font_size,rem 字号（疑似硬编码）,0.875rem,"<Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>"
 apps/web/src/pages/finance/PaymentPrintTemplate.tsx,finance,53,40,px_spacing,px 间距/尺寸,800px,"sx={{ padding: 2.5, maxWidth: '800px', margin: '0 auto' }}"
 apps/web/src/pages/finance/PaymentPrintTemplate.tsx,finance,71,33,px_spacing,px 间距/尺寸,280px,"<Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>"
 apps/web/src/pages/finance/PaymentPrintTemplate.tsx,finance,71,52,px_spacing,px 间距/尺寸,280px,"<Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>"
@@ -85,8 +84,6 @@ apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,325,8
 apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,368,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
 apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,411,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
 apps/web/src/pages/performance/PerformanceTestPage.tsx,performance,487,32,px_spacing,px 间距/尺寸,1200px,"<div style={{ maxWidth: '1200px', margin: '0 auto' }}>"
-apps/web/src/pages/plugin/PluginMarketplacePage.tsx,plugin,882,33,px_spacing,px 间距/尺寸,1200px,"<Box sx={{ maxWidth: '1200px', mx: 'auto' }}>"
-apps/web/src/pages/plugin/PluginMarketplacePage.tsx,plugin,901,31,px_spacing,px 间距/尺寸,1200px,"<Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 8 }}>"
 apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,170,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
 apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,201,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
 apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,235,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
@@ -96,19 +93,10 @@ apps/web/src/pages/scm/MrpPlanPage.tsx,scm,165,43,px_spacing,px 间距/尺寸,1p
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,173,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,181,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
 apps/web/src/pages/shared/LoginPage.tsx,shared,523,50,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,141,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,166,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,171,73,px_spacing,px 间距/尺寸,8px,"sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,388,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,428,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/shared/V4DemoPage.tsx,shared,532,87,px_spacing,px 间距/尺寸,8px,"sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}"
-apps/web/src/pages/system/BackupPage.tsx,system,569,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,578,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,587,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,596,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,605,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,614,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,625,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/BackupPage.tsx,system,639,65,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/system/FeatureFlagPage/index.tsx,system,138,59,px_spacing,px 间距/尺寸,120px,"<TableCell sx={{ fontWeight: 600, width: '120px' }}>"
+apps/web/src/pages/shared/V4DemoPage.tsx,shared,163,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>"
+apps/web/src/pages/shared/V4DemoPage.tsx,shared,188,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>"
+apps/web/src/pages/shared/V4DemoPage.tsx,shared,389,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/shared/V4DemoPage.tsx,shared,429,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/shared/V4DemoPage.tsx,shared,533,87,px_spacing,px 间距/尺寸,8px,"sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}"
+apps/web/src/pages/system/BackupPage.tsx,system,647,51,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
 apps/web/src/pages/ticket/TicketCenterPage.tsx,ticket,462,30,px_spacing,px 间距/尺寸,160px,"sx={{ flex: '1 1 160px', minWidth: 140, p: 1.5, borderRadius: 2 }}"

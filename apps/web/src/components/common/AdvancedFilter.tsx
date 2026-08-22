@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   TextField,
   Box,
@@ -161,7 +162,7 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                 </Box>
                 <Box
                   component='p'
-                  sx={{ fontSize: '0.875rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('components.advanced_filter.k3')}
                 </Box>

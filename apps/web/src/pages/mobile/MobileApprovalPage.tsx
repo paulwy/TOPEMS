@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -423,7 +424,7 @@ const MobileApprovalPage: React.FC = () => {
                       label={selectedApproval.id}
                       size='small'
                       variant='outlined'
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                     <Chip
                       label={getPriorityLabel(selectedApproval.priority)}
@@ -433,7 +434,7 @@ const MobileApprovalPage: React.FC = () => {
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   </Box>
                 </Box>
@@ -629,7 +630,7 @@ const MobileApprovalPage: React.FC = () => {
                           label={i18n.t('mobile.mobile_approval_page.k23')}
                           size='small'
                           color='primary'
-                          sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                          sx={{ mt: 0.5, height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                         />
                       )}
                     </Box>
@@ -759,7 +760,7 @@ const MobileApprovalPage: React.FC = () => {
             mb: 1,
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -774,7 +775,7 @@ const MobileApprovalPage: React.FC = () => {
                       label={approvals.length}
                       size='small'
                       color='error'
-                      sx={{ height: 18, fontSize: '0.65rem', minWidth: 18 }}
+                      sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'], minWidth: 18 }}
                     />
                   </Box>
                 ) : (
@@ -909,14 +910,14 @@ const MobileApprovalPage: React.FC = () => {
                                       typeof Chip
                                     >['color']
                                   }
-                                  sx={{ height: 20, fontSize: '0.7rem' }}
+                                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                                 />
                                 {approval.amount && (
                                   <Chip
                                     label={approval.amount}
                                     size='small'
                                     variant='outlined'
-                                    sx={{ height: 20, fontSize: '0.7rem' }}
+                                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                                   />
                                 )}
                               </Box>

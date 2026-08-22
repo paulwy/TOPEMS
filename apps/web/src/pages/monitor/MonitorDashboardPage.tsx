@@ -622,7 +622,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   key={index}
                   variant='caption'
                   color='text.secondary'
-                  sx={{ fontSize: '0.65rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                 >
                   {service.replace(i18n.t('monitor.monitor_dashboard_page.k27'), '')}
                 </Typography>

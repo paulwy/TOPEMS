@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Box,
@@ -173,7 +174,7 @@ const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps> = ({
                           sx={{
                             fontWeight: 500,
                             fontFamily: 'monospace',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           }}
                         >
                           {backup.backup_name}

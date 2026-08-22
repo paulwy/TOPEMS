@@ -56,7 +56,7 @@ export const pluginSchema: EntitySchema = {
                 'span',
                 {
                   style: {
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
                     maxWidth: 300,
                     overflow: 'hidden',
@@ -202,7 +202,7 @@ export const pluginSchema: EntitySchema = {
           {
             style: {
               fontFamily: 'monospace',
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
             },
           },

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 // modules/MapModule/ToolPanel.tsx
 import React from 'react';
 import {
@@ -419,7 +420,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                   bgcolor: heatmapMode === 'density' ? 'error.lighter' : 'grey.100',
                 },
                 textTransform: 'none',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               }}
             >
               {i18n.t('components.tool_panel.k1')}
@@ -437,7 +438,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                   bgcolor: heatmapMode === 'status' ? 'error.lighter' : 'grey.100',
                 },
                 textTransform: 'none',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 mt: 1,
               }}
             >

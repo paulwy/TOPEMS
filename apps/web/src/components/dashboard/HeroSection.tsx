@@ -68,7 +68,7 @@ export const HeroSection: React.FC = () => {
             </Box>
             <Typography
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: 'primary.light',
                 fontWeight: 600,
                 letterSpacing: '0.1em',
@@ -107,7 +107,7 @@ export const HeroSection: React.FC = () => {
 
           <Typography
             sx={{
-              fontSize: '1.125rem',
+              fontSize: designTokens.typography.fontSize.scale['1.125rem'],
               color: 'grey.400',
               mb: 6,
               maxWidth: '600px',

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { Database, Play, Settings } from 'lucide-react';
-import { Paper, Tabs, Tab, Snackbar, Alert } from '@mui/material';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import { Database, Play, Settings, Eye, RefreshCw, Edit, Trash2 } from 'lucide-react';
+import { Paper, Tabs, Tab, Snackbar, Alert, Chip, Box, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import type { FilterConfig } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { logger } from '@/utils/logger';
+import { formatDateTime } from '@/utils/date';
 import type {
   InstrumentData,
   CollectionTask,
@@ -24,18 +26,19 @@ import type {
 import i18n from '@/i18n';
 import { instrumentDataApi, collectionTaskApi, parseRuleApi } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import StatisticsCards from './components/StatisticsCards';
 import Toolbar from './components/Toolbar';
-import InstrumentDataTable from './components/InstrumentDataTable';
-import CollectionTaskTable from './components/CollectionTaskTable';
-import ParseRuleTable from './components/ParseRuleTable';
 import DataDetailDialog from './components/DataDetailDialog';
 import DataFormDialog from './components/DataFormDialog';
 import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
+import { getStatusColor, getStatusLabel, type ChipColor } from './utils';
 
 const ct = designTokens.colors;
+
 const LimsInstrumentDataPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
@@ -95,12 +98,14 @@ const LimsInstrumentDataPage: React.FC = () => {
     openConfirm: openConfirmDialog,
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
+
   const showNotification = (
     message: string,
     severity: 'success' | 'error' | 'info' | 'warning'
   ) => {
     setNotification({ open: true, message, severity });
   };
+
   const invalidateAll = () => {
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA,
@@ -123,6 +128,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       refetchType: 'active',
     });
   };
+
   const { data: statisticsData } = useQuery({
     queryKey: QUERY_KEYS.LIMS.STATISTICS,
     queryFn: async () => {
@@ -132,9 +138,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       }
       return null;
     },
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const statistics: InstrumentDataStatistics = statisticsData || {
     total_data_count: 0,
     today_count: 0,
@@ -145,6 +151,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     running_tasks: 0,
     total_rules: 0,
   };
+
   const instrumentDataQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.INSTRUMENT_DATA,
@@ -166,9 +173,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 0,
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const collectionTasksQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.COLLECTION_TASKS,
@@ -190,9 +197,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 1,
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const parseRulesQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.PARSE_RULES,
@@ -214,18 +221,13 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 2,
-
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+
   const instrumentDataList: InstrumentData[] = instrumentDataQuery.data || [];
   const collectionTasks: CollectionTask[] = collectionTasksQuery.data || [];
   const parseRules: ParseRule[] = parseRulesQuery.data || [];
-  const loading =
-    activeTab === 0
-      ? instrumentDataQuery.isLoading
-      : activeTab === 1
-        ? collectionTasksQuery.isLoading
-        : parseRulesQuery.isLoading;
+
   const parseDataMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await instrumentDataApi.parseInstrumentData(id);
@@ -246,6 +248,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k1'), error);
     },
   });
+
   const createDataMutation = useMutation({
     mutationFn: async (data: CreateInstrumentDataRequest) => {
       const response = await instrumentDataApi.createInstrumentData(data);
@@ -267,6 +270,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k3'), error);
     },
   });
+
   const updateDataMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateInstrumentDataRequest }) => {
       const response = await instrumentDataApi.updateInstrumentData(id, data);
@@ -288,6 +292,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k5'), error);
     },
   });
+
   const deleteDataMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await instrumentDataApi.deleteInstrumentData(id);
@@ -308,6 +313,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k7'), error);
     },
   });
+
   const createTaskMutation = useMutation({
     mutationFn: async (data: CreateCollectionTaskRequest) => {
       const response = await collectionTaskApi.createCollectionTask(data);
@@ -329,6 +335,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k9'), error);
     },
   });
+
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateCollectionTaskRequest }) => {
       const response = await collectionTaskApi.updateCollectionTask(id, data);
@@ -350,6 +357,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k11'), error);
     },
   });
+
   const triggerTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await collectionTaskApi.triggerCollection(id);
@@ -370,6 +378,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k13'), error);
     },
   });
+
   const deleteTaskMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await collectionTaskApi.deleteCollectionTask(id);
@@ -390,6 +399,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k15'), error);
     },
   });
+
   const createRuleMutation = useMutation({
     mutationFn: async (data: CreateParseRuleRequest) => {
       const response = await parseRuleApi.createParseRule(data);
@@ -411,6 +421,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k17'), error);
     },
   });
+
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateParseRuleRequest }) => {
       const response = await parseRuleApi.updateParseRule(id, data);
@@ -432,6 +443,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k19'), error);
     },
   });
+
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await parseRuleApi.deleteParseRule(id);
@@ -452,6 +464,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k21'), error);
     },
   });
+
   const testParseMutation = useMutation({
     mutationFn: async (data: ParseDataRequest) => {
       const response = await instrumentDataApi.testParseData(data);
@@ -474,6 +487,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       logger.error(i18n.t('lims.index.k23'), error);
     },
   });
+
   const submitting =
     parseDataMutation.isPending ||
     createDataMutation.isPending ||
@@ -487,18 +501,25 @@ const LimsInstrumentDataPage: React.FC = () => {
     updateRuleMutation.isPending ||
     deleteRuleMutation.isPending ||
     testParseMutation.isPending;
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
     setSearchKeyword('');
     setStatusFilter('');
+    setDataPage(0);
+    setTaskPage(0);
+    setRulePage(0);
   };
+
   const handleViewDataDetail = (data: InstrumentData) => {
     setSelectedData(data);
     setShowDataDetail(true);
   };
+
   const handleParseData = async (id: string) => {
     await parseDataMutation.mutateAsync(id);
   };
+
   const handleCreateData = () => {
     setIsEditingData(false);
     setDataFormData({
@@ -509,6 +530,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowDataForm(true);
   };
+
   const handleEditData = (data: InstrumentData) => {
     setIsEditingData(true);
     setSelectedData(data);
@@ -520,6 +542,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowDataForm(true);
   };
+
   const handleSaveData = async () => {
     if (isEditingData && selectedData) {
       const updateData: UpdateInstrumentDataRequest = {};
@@ -528,6 +551,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createDataMutation.mutateAsync(dataFormData);
     }
   };
+
   const handleDeleteData = (id: string) => {
     openConfirmDialog({
       title: i18n.t('lims.index.k24'),
@@ -538,6 +562,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       },
     });
   };
+
   const handleCreateTask = () => {
     setIsEditingTask(false);
     setTaskFormData({
@@ -551,6 +576,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowTaskForm(true);
   };
+
   const handleEditTask = (task: CollectionTask) => {
     setIsEditingTask(true);
     setSelectedData(task as unknown as InstrumentData);
@@ -565,6 +591,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowTaskForm(true);
   };
+
   const handleSaveTask = async () => {
     if (isEditingTask) {
       const updateData: UpdateCollectionTaskRequest = {
@@ -580,9 +607,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createTaskMutation.mutateAsync(taskFormData);
     }
   };
+
   const handleTriggerTask = async (id: string) => {
     await triggerTaskMutation.mutateAsync(id);
   };
+
   const handleDeleteTask = (id: string) => {
     openConfirmDialog({
       title: i18n.t('lims.index.k26'),
@@ -593,6 +622,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       },
     });
   };
+
   const handleCreateRule = () => {
     setIsEditingRule(false);
     setRuleFormData({
@@ -605,6 +635,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowRuleForm(true);
   };
+
   const handleEditRule = (rule: ParseRule) => {
     setIsEditingRule(true);
     setSelectedData(rule as unknown as InstrumentData);
@@ -618,6 +649,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     });
     setShowRuleForm(true);
   };
+
   const handleSaveRule = async () => {
     if (isEditingRule) {
       const updateData: UpdateParseRuleRequest = {
@@ -633,6 +665,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       await createRuleMutation.mutateAsync(ruleFormData);
     }
   };
+
   const handleDeleteRule = (id: string) => {
     openConfirmDialog({
       title: i18n.t('lims.index.k28'),
@@ -643,9 +676,264 @@ const LimsInstrumentDataPage: React.FC = () => {
       },
     });
   };
+
   const handleTestParse = async () => {
     await testParseMutation.mutateAsync(parseTestData);
   };
+
+  const statusFilterConfig: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: i18n.t('pages.toolbar.k1'),
+        type: 'select',
+        value: statusFilter,
+        options: [
+          { label: i18n.t('pages.toolbar.k2'), value: '' },
+          { label: getStatusLabel('pending'), value: 'pending' },
+          { label: getStatusLabel('success'), value: 'success' },
+          { label: getStatusLabel('failed'), value: 'failed' },
+          { label: getStatusLabel('running'), value: 'running' },
+          { label: getStatusLabel('stopped'), value: 'stopped' },
+          { label: getStatusLabel('active'), value: 'active' },
+          { label: getStatusLabel('inactive'), value: 'inactive' },
+        ],
+      },
+    ],
+    [statusFilter]
+  );
+
+  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
+    setStatusFilter(String(filters.status || ''));
+  }, []);
+
+  const instrumentDataColumns: ColumnDef<InstrumentData>[] = useMemo(
+    () => [
+      {
+        id: 'data_no',
+        label: i18n.t('lims.instrument_data_table.k0'),
+      },
+      {
+        id: 'instrument_id',
+        label: i18n.t('lims.instrument_data_table.k1'),
+        render: (row) => (
+          <Typography noWrap title={row.instrument_id || row.instrument_name}>
+            {row.instrument_name || row.instrument_id || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'batch_no',
+        label: i18n.t('lims.instrument_data_table.k2'),
+      },
+      {
+        id: 'protocol',
+        label: i18n.t('lims.instrument_data_table.k3'),
+        render: (row) => (
+          <Chip label={row.protocol} size='small' variant='outlined' />
+        ),
+      },
+      {
+        id: 'status',
+        label: i18n.t('lims.instrument_data_table.k4'),
+        render: (row) => (
+          <Chip
+            label={getStatusLabel(row.status)}
+            size='small'
+            color={getStatusColor(row.status) as ChipColor}
+          />
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('lims.parse_rule_table.k6'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography>{row.created_at ? formatDateTime(row.created_at) : '-'}</Typography>
+          </Box>
+        ),
+      },
+    ],
+    []
+  );
+
+  const instrumentDataRowActions: RowAction<InstrumentData>[] = useMemo(
+    () => [
+      {
+        key: 'view',
+        label: i18n.t('lims.instrument_data_table.k9'),
+        icon: <Eye size={16} />,
+        onClick: (row) => handleViewDataDetail(row),
+        color: 'info',
+      },
+      {
+        key: 'parse',
+        label: i18n.t('lims.instrument_data_table.k10'),
+        icon: <RefreshCw size={16} />,
+        onClick: (row) => handleParseData(row.id),
+        color: 'primary',
+        show: (row) => row.status === 'pending' || row.status === 'failed',
+      },
+      {
+        key: 'edit',
+        label: i18n.t('lims.parse_rule_table.k8'),
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEditData(row),
+        color: 'warning',
+      },
+      {
+        key: 'delete',
+        label: i18n.t('lims.instrument_data_table.k13'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteData(row.id),
+        color: 'error',
+      },
+    ],
+    [handleViewDataDetail, handleParseData, handleEditData, handleDeleteData]
+  );
+
+  const collectionTaskColumns: ColumnDef<CollectionTask>[] = useMemo(
+    () => [
+      {
+        id: 'task_name',
+        label: i18n.t('lims.collection_task_table.k1'),
+      },
+      {
+        id: 'instrument_id',
+        label: i18n.t('lims.collection_task_table.k2'),
+        render: (row) => (
+          <Typography noWrap title={row.instrument_id || row.instrument_name}>
+            {row.instrument_name || row.instrument_id || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'protocol',
+        label: i18n.t('lims.collection_task_table.k3'),
+        render: (row) => (
+          <Chip label={row.protocol} size='small' variant='outlined' />
+        ),
+      },
+      {
+        id: 'collection_mode',
+        label: i18n.t('lims.collection_task_table.k4'),
+        render: (row) => getStatusLabel(row.collection_mode),
+      },
+      {
+        id: 'status',
+        label: i18n.t('lims.collection_task_table.k5'),
+        render: (row) => (
+          <Chip
+            label={getStatusLabel(row.status)}
+            size='small'
+            color={getStatusColor(row.status) as ChipColor}
+          />
+        ),
+      },
+      {
+        id: 'schedule',
+        label: i18n.t('lims.task_form_dialog.k8'),
+        render: (row) => (
+          <Typography noWrap>
+            {row.cron_expression ||
+              (row.interval_minutes
+                ? `${row.interval_minutes}${i18n.t('lims.task_form_dialog.k10')?.replace(/\D/g, '') || ''}`
+                : '-')}
+          </Typography>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('lims.parse_rule_table.k6'),
+        render: (row) => (row.created_at ? formatDateTime(row.created_at) : '-'),
+      },
+    ],
+    []
+  );
+
+  const collectionTaskRowActions: RowAction<CollectionTask>[] = useMemo(
+    () => [
+      {
+        key: 'trigger',
+        label: i18n.t('lims.collection_task_table.k8'),
+        icon: <Play size={16} />,
+        onClick: (row) => handleTriggerTask(row.id),
+        color: 'primary',
+      },
+      {
+        key: 'edit',
+        label: i18n.t('lims.collection_task_table.k10'),
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEditTask(row),
+        color: 'warning',
+      },
+      {
+        key: 'delete',
+        label: i18n.t('lims.collection_task_table.k12'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteTask(row.id),
+        color: 'error',
+      },
+    ],
+    [handleTriggerTask, handleEditTask, handleDeleteTask]
+  );
+
+  const parseRuleColumns: ColumnDef<ParseRule>[] = useMemo(
+    () => [
+      {
+        id: 'rule_name',
+        label: i18n.t('lims.parse_rule_table.k1'),
+      },
+      {
+        id: 'protocol',
+        label: i18n.t('lims.parse_rule_table.k2'),
+        render: (row) => (
+          <Chip label={row.protocol} size='small' variant='outlined' />
+        ),
+      },
+      {
+        id: 'instrument_type',
+        label: i18n.t('lims.parse_rule_table.k3'),
+        render: (row) => row.instrument_type || '-',
+      },
+      {
+        id: 'description',
+        label: i18n.t('lims.rule_form_dialog.k6'),
+        render: (row) => (
+          <Typography noWrap title={row.description}>
+            {row.description || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('lims.parse_rule_table.k6'),
+        render: (row) => (row.created_at ? formatDateTime(row.created_at) : '-'),
+      },
+    ],
+    []
+  );
+
+  const parseRuleRowActions: RowAction<ParseRule>[] = useMemo(
+    () => [
+      {
+        key: 'edit',
+        label: i18n.t('lims.parse_rule_table.k8'),
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEditRule(row),
+        color: 'warning',
+      },
+      {
+        key: 'delete',
+        label: i18n.t('lims.parse_rule_table.k10'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteRule(row.id),
+        color: 'error',
+      },
+    ],
+    [handleEditRule, handleDeleteRule]
+  );
+
   return (
     <PageContainer
       maxWidth='xl'
@@ -656,10 +944,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     >
       <StatisticsCards statistics={statistics} />
       <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-        >
+        <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab
             icon={<Database size={18} />}
             iconPosition='start'
@@ -692,53 +977,79 @@ const LimsInstrumentDataPage: React.FC = () => {
         onShowParseTest={() => setShowParseTest(true)}
       />
       {activeTab === 0 && (
-        <InstrumentDataTable
-          loading={loading}
-          dataList={instrumentDataList}
-          totalCount={statistics.total_data_count}
-          page={dataPage}
-          rowsPerPage={dataRowsPerPage}
-          onPageChange={setDataPage}
-          onRowsPerPageChange={(rows) => {
-            setDataRowsPerPage(rows);
-            setDataPage(0);
+        <ListPageTemplate<InstrumentData>
+          columns={instrumentDataColumns}
+          data={instrumentDataList}
+          loading={instrumentDataQuery.isLoading}
+          pagination={{
+            page: dataPage,
+            pageSize: dataRowsPerPage,
+            total: statistics.total_data_count,
+            onPageChange: setDataPage,
+            onPageSizeChange: (size) => {
+              setDataRowsPerPage(size);
+              setDataPage(0);
+            },
           }}
-          onViewDetail={handleViewDataDetail}
-          onParse={handleParseData}
-          onDelete={handleDeleteData}
+          searchable
+          searchValue={searchKeyword}
+          onSearch={setSearchKeyword}
+          filters={statusFilterConfig}
+          filtersValue={{ status: statusFilter }}
+          onFilterChange={handleFilterChange}
+          rowActions={instrumentDataRowActions}
+          onRowClick={handleViewDataDetail}
+          emptyMessage={i18n.t('pages.instrument_data_table.k0')}
         />
       )}
       {activeTab === 1 && (
-        <CollectionTaskTable
-          loading={loading}
-          tasks={collectionTasks}
-          totalCount={statistics.total_tasks}
-          page={taskPage}
-          rowsPerPage={taskRowsPerPage}
-          onPageChange={setTaskPage}
-          onRowsPerPageChange={(rows) => {
-            setTaskRowsPerPage(rows);
-            setTaskPage(0);
+        <ListPageTemplate<CollectionTask>
+          columns={collectionTaskColumns}
+          data={collectionTasks}
+          loading={collectionTasksQuery.isLoading}
+          pagination={{
+            page: taskPage,
+            pageSize: taskRowsPerPage,
+            total: statistics.total_tasks,
+            onPageChange: setTaskPage,
+            onPageSizeChange: (size) => {
+              setTaskRowsPerPage(size);
+              setTaskPage(0);
+            },
           }}
-          onTrigger={handleTriggerTask}
-          onEdit={handleEditTask}
-          onDelete={handleDeleteTask}
+          searchable
+          searchValue={searchKeyword}
+          onSearch={setSearchKeyword}
+          filters={statusFilterConfig}
+          filtersValue={{ status: statusFilter }}
+          onFilterChange={handleFilterChange}
+          rowActions={collectionTaskRowActions}
+          emptyMessage={i18n.t('pages.collection_task_table.k0')}
         />
       )}
       {activeTab === 2 && (
-        <ParseRuleTable
-          loading={loading}
-          rules={parseRules}
-          totalCount={statistics.total_rules}
-          page={rulePage}
-          rowsPerPage={ruleRowsPerPage}
-          onPageChange={setRulePage}
-          onRowsPerPageChange={(rows) => {
-            setRuleRowsPerPage(rows);
-            setRulePage(0);
+        <ListPageTemplate<ParseRule>
+          columns={parseRuleColumns}
+          data={parseRules}
+          loading={parseRulesQuery.isLoading}
+          pagination={{
+            page: rulePage,
+            pageSize: ruleRowsPerPage,
+            total: statistics.total_rules,
+            onPageChange: setRulePage,
+            onPageSizeChange: (size) => {
+              setRuleRowsPerPage(size);
+              setRulePage(0);
+            },
           }}
-          onEdit={handleEditRule}
-          onDelete={handleDeleteRule}
+          searchable
+          searchValue={searchKeyword}
+          onSearch={setSearchKeyword}
+          filters={statusFilterConfig}
+          filtersValue={{ status: statusFilter }}
+          onFilterChange={handleFilterChange}
+          rowActions={parseRuleRowActions}
+          emptyMessage={i18n.t('pages.parse_rule_table.k0')}
         />
       )}
       <DataDetailDialog
@@ -809,4 +1120,5 @@ const LimsInstrumentDataPage: React.FC = () => {
     </PageContainer>
   );
 };
+
 export default LimsInstrumentDataPage;

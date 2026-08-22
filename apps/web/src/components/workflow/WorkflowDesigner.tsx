@@ -185,7 +185,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
       >
         <Typography
           sx={{
-            fontSize: '1.125rem',
+            fontSize: designTokens.typography.fontSize.scale['1.125rem'],
             fontWeight: 'bold',
             color: 'grey.800',
             marginRight: 2,
@@ -234,7 +234,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           >
             <ZoomOut sx={{ width: 16, height: 16 }} />
           </Button>
-          <Typography sx={{ fontSize: '0.75rem', width: 48, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], width: 48, textAlign: 'center' }}>
             {Math.round(zoom * 100)}%
           </Typography>
           <Button
@@ -482,7 +482,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     sx={{
                       marginTop: 1,
                       fontSize: 14,
-                      padding: `${designTokens.spacing.xs} 8px`,
+                      padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                       borderRadius: 1,
                       backgroundColor: 'grey.100',
                     }}
@@ -535,11 +535,11 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   sx={{
                     width: 40,
                     height: 40,
-                    margin: '0 auto 8px',
+                    margin: `0 auto ${designTokens.spacing.sm}px`,
                     opacity: 0.5,
                   }}
                 />
-                <Typography sx={{ fontSize: '0.875rem' }}>
+                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {i18n.t('components.workflow_designer.k16')}
                 </Typography>
               </Box>

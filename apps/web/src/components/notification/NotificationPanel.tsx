@@ -242,7 +242,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           onClick={() => setActiveTab('all')}
           style={{
             flex: 1,
-            padding: '10px 16px',
+            padding: `10px ${designTokens.spacing.md}px`,
             fontSize: 14,
             fontWeight: 500,
             transition: 'all 0.15s',
@@ -259,7 +259,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           onClick={() => setActiveTab('unread')}
           style={{
             flex: 1,
-            padding: '10px 16px',
+            padding: `10px ${designTokens.spacing.md}px`,
             fontSize: 14,
             fontWeight: 500,
             transition: 'all 0.15s',
@@ -294,7 +294,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
       {totalUnread > 0 && !showSettings && (
         <div
           style={{
-            padding: `${designTokens.spacing.sm} 16px`,
+            padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
             backgroundColor: theme.palette.primary.light,
             borderBottom: '1px solid primary.100',
           }}

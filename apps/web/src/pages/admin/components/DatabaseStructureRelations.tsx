@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * @done V79 Phase 2 split
  * Database structure management - add field dialog component
@@ -216,7 +217,7 @@ const DatabaseStructureRelations: React.FC<DatabaseStructureRelationsProps> = ({
                 component='pre'
                 sx={{
                   m: 0,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'success.400',
                   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                   whiteSpace: 'pre-wrap',

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Card, CardContent, Box, Typography, Button, Tooltip, Chip } from '@mui/material';
 import { FileText, Star, MoreVertical, Download, Eye, Share2, CheckCircle } from 'lucide-react';
@@ -144,13 +145,13 @@ const FileCard: React.FC<FileCardProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             color: 'grey.500',
             mb: 1.5,
           }}
         >
           {file.size && <span>{file.size}</span>}
-          {file.size && <span style={{ margin: '0 8px' }}>•</span>}
+          {file.size && <span style={{ margin: `0 ${designTokens.spacing.sm}px` }}>•</span>}
           <span>{file.updatedAt}</span>
         </Box>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

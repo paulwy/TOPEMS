@@ -374,7 +374,7 @@ const PmProjectDetailPage: React.FC = () => {
         >
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pages.pm_project_detail_page.k3')}
           </Typography>
@@ -467,12 +467,12 @@ const PmProjectDetailPage: React.FC = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                         <Box>
                           <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
                           <Typography
                             variant='body2'
-                            sx={{ color: 'grey.400', fontSize: '0.75rem' }}
+                            sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                           >
                             {i18n.t('pages.pm_project_detail_page.k0')} {formatDate(phase.end_date)}
                           </Typography>
@@ -512,7 +512,7 @@ const PmProjectDetailPage: React.FC = () => {
         >
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {t('pm.project_detail.milestone_list')}
           </Typography>
@@ -570,7 +570,7 @@ const PmProjectDetailPage: React.FC = () => {
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                         {formatDate(milestone.date)}
                       </TableCell>
                       <TableCell>
@@ -592,7 +592,7 @@ const PmProjectDetailPage: React.FC = () => {
                           }
                         />
                       </TableCell>
-                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                         {milestone.phase_id
                           ? phases.find((p: ProjectPhase) => p.id === milestone.phase_id)?.name ||
                             '-'
@@ -633,7 +633,7 @@ const PmProjectDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {t('pm.project_detail.budget_execution_overview')}
             </Typography>
@@ -751,7 +751,7 @@ const PmProjectDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {t('pm.project_detail.revenue_and_profit')}
             </Typography>
@@ -857,7 +857,7 @@ const PmProjectDetailPage: React.FC = () => {
           >
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {t('pm.project_detail.cost_composition_analysis')}
             </Typography>
@@ -953,7 +953,7 @@ const PmProjectDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {t('pm.project_detail.cost_center_info')}
             </Typography>
@@ -1035,7 +1035,7 @@ const PmProjectDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {t('pm.project_detail.quick_actions')}
             </Typography>
@@ -1089,7 +1089,7 @@ const PmProjectDetailPage: React.FC = () => {
                 <CardHeader sx={{ pb: 2 }}>
                   <Typography
                     variant='h6'
-                    sx={{ fontSize: '1.125rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
                   >
                     {section.title}
                   </Typography>
@@ -1108,7 +1108,7 @@ const PmProjectDetailPage: React.FC = () => {
             <CardHeader sx={{ pb: 2 }}>
               <Typography
                 variant='h6'
-                sx={{ fontSize: '1.125rem' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
               >
                 {t('pm.project_detail.project_gantt_chart')}
               </Typography>

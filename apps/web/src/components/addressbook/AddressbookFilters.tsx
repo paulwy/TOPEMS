@@ -20,7 +20,7 @@ const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
       style={{
         backgroundColor: 'common.white',
         borderBottom: '1px solid border.default',
-        padding: `${designTokens.spacing.md} 16px`,
+        padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

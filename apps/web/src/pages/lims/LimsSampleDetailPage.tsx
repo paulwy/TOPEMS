@@ -411,7 +411,7 @@ const LimsSampleDetailPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: 'text.secondary',
                   }}
                 >
@@ -501,7 +501,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'grey.900' }}>
                 {stats.total}
               </Typography>
               <Typography
@@ -519,7 +519,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'success.dark' }}>
                 {stats.passed}
               </Typography>
               <Typography
@@ -537,7 +537,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'error.dark' }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'error.dark' }}>
                 {stats.failed}
               </Typography>
               <Typography
@@ -555,7 +555,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: ct.yellow[600] }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: ct.yellow[600] }}>
                 {stats.pending}
               </Typography>
               <Typography
@@ -611,7 +611,7 @@ const LimsSampleDetailPage: React.FC = () => {
               borderTop: `4px solid ${ct.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px auto',
+              margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           ></div>
           <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k14')}</p>
@@ -637,7 +637,7 @@ const LimsSampleDetailPage: React.FC = () => {
               width: 64,
               height: 64,
               color: 'error.main',
-              margin: '0 auto 16px auto',
+              margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           />
           <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k48')}</p>

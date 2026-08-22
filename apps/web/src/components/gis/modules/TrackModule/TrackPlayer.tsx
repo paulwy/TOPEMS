@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 // modules/TrackModule/TrackPlayer.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, SkipBack, SkipForward } from 'lucide-react';
@@ -89,7 +90,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           borderRadius: 2,
         }}
       >
-        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
           {i18n.t('components.track_player.k0')}
         </Typography>
       </Box>
@@ -211,7 +212,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
               sx={{
                 px: 2,
                 py: 1,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 borderRadius: 1,
                 bgcolor: playbackSpeed === speed ? 'primary.dark' : 'grey.100',
                 color:
@@ -288,7 +289,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           <Typography
             sx={{
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: 'grey.700',
             }}
           >

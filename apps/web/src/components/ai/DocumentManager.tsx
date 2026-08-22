@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Card,
   CardContent,
@@ -527,7 +528,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                         width: 48,
                         height: 48,
                         color: 'action.disabled',
-                        margin: '0 auto 16px',
+                        margin: `0 auto ${designTokens.spacing.md}px`,
                       }}
                     />
                     <Typography
@@ -643,7 +644,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                     width: 48,
                     height: 48,
                     color: 'action.disabled',
-                    margin: '0 auto 16px',
+                    margin: `0 auto ${designTokens.spacing.md}px`,
                   }}
                 />
                 <Typography
@@ -662,7 +663,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                     width: 48,
                     height: 48,
                     color: 'action.disabled',
-                    margin: '0 auto 16px',
+                    margin: `0 auto ${designTokens.spacing.md}px`,
                   }}
                 />
                 <Typography

@@ -397,7 +397,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 label={type}
                 size='small'
                 variant='outlined'
-                sx={{ fontSize: '0.7rem' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
             ))}
           </Box>

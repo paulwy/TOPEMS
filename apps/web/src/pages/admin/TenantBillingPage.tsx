@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -479,7 +480,7 @@ const TenantBillingPage: React.FC = () => {
                             primary={feature.name}
                             sx={{
                               '& .MuiListItemText-primary': {
-                                fontSize: '0.8rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.8rem'],
                                 color: feature.included ? 'text.primary' : 'text.disabled',
                               },
                             }}

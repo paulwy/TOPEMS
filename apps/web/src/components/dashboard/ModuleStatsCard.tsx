@@ -93,7 +93,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
           <Box>
             <Typography
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: 'grey.400',
                 fontWeight: 500,
                 mb: 1,
@@ -103,7 +103,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             </Typography>
             <Typography
               sx={{
-                fontSize: '1.875rem',
+                fontSize: designTokens.typography.fontSize.scale['1.875rem'],
                 fontWeight: 700,
                 color: 'common.white',
               }}
@@ -131,7 +131,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
           />
           <Typography
             sx={{
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               fontWeight: 600,
               color: 'success.400',
             }}
@@ -162,7 +162,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         </Box>
         <Typography
           sx={{
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             color: 'grey.600',
             mt: 1.5,
           }}

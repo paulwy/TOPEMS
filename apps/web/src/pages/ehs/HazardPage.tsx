@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -122,7 +123,7 @@ const HazardStats: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {stat.label}
               </Typography>

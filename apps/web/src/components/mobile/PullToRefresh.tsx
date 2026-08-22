@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useRef, useCallback } from 'react';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { RefreshCw } from 'lucide-react';
@@ -134,7 +135,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
               variant='caption'
               sx={{
                 color: canRefresh ? 'primary.main' : 'text.secondary',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               }}
             >
               {isRefreshing

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -474,7 +475,7 @@ export const DifyChatPage: React.FC = () => {
               <Box sx={{ textAlign: 'center', py: 6, px: 2 }}>
                 <MessageSquare
                   size={32}
-                  style={{ margin: '0 auto 8px', opacity: 0.4 }}
+                  style={{ margin: `0 auto ${designTokens.spacing.sm}px`, opacity: 0.4 }}
                 />
                 <Typography
                   variant='caption'
@@ -746,7 +747,7 @@ export const DifyChatPage: React.FC = () => {
               <Box sx={{ textAlign: 'center', py: 12 }}>
                 <Bot
                   size={48}
-                  style={{ margin: '0 auto 16px', color: theme.palette.text.disabled }}
+                  style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: theme.palette.text.disabled }}
                 />
                 <Typography
                   variant='h6'

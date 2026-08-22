@@ -365,7 +365,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 fontWeight: 500,
                 marginBottom: 0.5,
                 letterSpacing: '0.05em',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 textTransform: 'uppercase',
               }}
             >
@@ -377,7 +377,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 sx={{
                   fontWeight: 800,
                   color: 'text.primary',
-                  fontSize: '2rem',
+                  fontSize: designTokens.typography.fontSize.scale['2rem'],
                   lineHeight: 1.2,
                 }}
               >
@@ -386,7 +386,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {unit && (
                 <Typography
                   variant='body1'
-                  sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '1rem' }}
+                  sx={{ color: 'text.secondary', fontWeight: 600, fontSize: designTokens.typography.fontSize.scale['1rem'] }}
                 >
                   {unit}
                 </Typography>
@@ -394,7 +394,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {suffix && (
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.400', fontSize: '0.875rem' }}
+                  sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {suffix}
                 </Typography>
@@ -479,7 +479,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 sx={{
                   fontWeight: 700,
                   color: getTrendColor(),
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
                 {change !== undefined ? `${change > 0 ? '+' : ''}${change}%` : '——'}
@@ -488,7 +488,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               change !== undefined ? (
                 <Typography
                   variant='caption'
-                  sx={{ color: 'grey.400', fontSize: '0.7rem' }}
+                  sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 >
                   vs last period
                 </Typography>

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Chip, Box, Typography, Avatar } from '@mui/material';
 import { PlaySquare, GitBranch, Clock } from 'lucide-react';
@@ -122,7 +123,7 @@ export const workflowInstanceSchema: EntitySchema = {
             sx: {
               width: 24,
               height: 24,
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               bgcolor: 'primary.light',
               color: 'primary.main',
             },

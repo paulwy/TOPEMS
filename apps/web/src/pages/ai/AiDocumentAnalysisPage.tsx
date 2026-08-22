@@ -295,7 +295,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 />
                 <Upload
                   size={32}
-                  style={{ margin: '0 auto 8px', color: ct.grey[400] }}
+                  style={{ margin: `0 auto ${designTokens.spacing.sm}px`, color: ct.grey[400] }}
                 />
                 <Typography variant='body2'>
                   {i18n.t('ai.document_analysis.label.click_upload')}
@@ -485,7 +485,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 <Box sx={{ p: 8, textAlign: 'center' }}>
                   <Zap
                     size={64}
-                    style={{ margin: '0 auto 16px', color: ct.text.disabled }}
+                    style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: ct.text.disabled }}
                   />
                   <Typography
                     variant='h6'

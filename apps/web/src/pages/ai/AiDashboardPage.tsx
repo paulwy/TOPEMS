@@ -25,26 +25,15 @@ import { useNavigate } from 'react-router-dom';
 
 import { useTranslation } from 'react-i18next';
 
-import { PageContainer } from '@/components/common';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import { AICopilotRecommendations } from '@/components/ai/copilot';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import { useAIContext } from '@/hooks';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import type { AIRecommendation } from '@/lib/ai/recommendations';
-import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
-
-interface StatCardProps {
-  id: string;
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  change: number;
-  changeLabel: string;
-  color: 'primary' | 'info' | 'success' | 'warning' | 'secondary';
-  onClick?: () => void;
-}
 
 interface QuickActionProps {
   id: string;
@@ -73,87 +62,6 @@ interface FeatureCardProps {
   stats?: { label: string; value: string }[];
   action?: { label: string; onClick: () => void };
 }
-
-const StatCard: React.FC<StatCardProps> = ({
-  title,
-  value,
-  icon,
-  change,
-  changeLabel,
-  color,
-  onClick,
-}) => {
-  const isPositive = change >= 0;
-
-  const colorMap = {
-    primary: { bg: 'primary.light', text: 'primary.main', border: 'primary.main' },
-    info: { bg: 'info.light', text: 'info.main', border: 'info.main' },
-    success: { bg: 'success.light', text: 'success.main', border: 'success.main' },
-    warning: { bg: 'warning.light', text: 'warning.main', border: 'warning.main' },
-    secondary: { bg: 'secondary.light', text: 'secondary.main', border: 'secondary.main' },
-  };
-
-  const colors = colorMap[color];
-
-  return (
-    <Paper
-      sx={{
-        p: 3,
-        borderRadius: 2,
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s',
-        '&:hover': onClick ? { boxShadow: 2, borderColor: colors.border } : {},
-        border: 1,
-        borderColor: 'divider',
-      }}
-      onClick={onClick}
-    >
-      <Box
-        sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}
-      >
-        <Box
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: 1.5,
-            bgcolor: colors.bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: colors.text,
-          }}
-        >
-          {icon}
-        </Box>
-        <Chip
-          label={`${isPositive ? '+' : ''}${change}%`}
-          size='small'
-          color={isPositive ? 'success' : 'error'}
-          sx={{ fontSize: 11 }}
-        />
-      </Box>
-      <Typography
-        variant='h4'
-        sx={{ fontWeight: 700, mb: 0.5 }}
-      >
-        {value}
-      </Typography>
-      <Typography
-        variant='body2'
-        color='text.secondary'
-      >
-        {title}
-      </Typography>
-      <Typography
-        variant='caption'
-        color='text.disabled'
-        sx={{ mt: 0.5, display: 'block' }}
-      >
-        {changeLabel}
-      </Typography>
-    </Paper>
-  );
-};
 
 const QuickAction: React.FC<QuickActionProps> = ({ label, icon, color, onClick, description }) => {
   const theme = useTheme();
@@ -443,7 +351,7 @@ const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, color })
 };
 
 export const AiDashboardPage: React.FC = () => {
-  const { data: backendData } = useQuery({
+  useQuery({
     queryKey: ['ai', 'dashboard'],
     queryFn: async () => {
       try {
@@ -461,64 +369,59 @@ export const AiDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const { topRecommendations } = useAIContext();
 
-  const stats: StatCardProps[] = useMemo(
+  const statCards: StatCard[] = useMemo(
     () => [
       {
         id: 'chat-count',
         title: t('ai.dashboard.stat.chat_count'),
         value: '1,256',
         icon: <MessageSquare size={22} />,
-        change: 23,
-        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'primary',
         onClick: () => navigate(AI_PATHS.chat),
+        trend: { value: 23, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
         id: 'doc-analysis',
         title: t('ai.dashboard.stat.doc_analysis'),
         value: '89',
         icon: <FileText size={22} />,
-        change: 15,
-        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'info',
         onClick: () => navigate(AI_PATHS.document),
+        trend: { value: 15, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
         id: 'code-gen',
         title: t('ai.dashboard.stat.code_gen'),
         value: '456',
         icon: <Code size={22} />,
-        change: 45,
-        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'success',
         onClick: () => navigate(AI_PATHS.code),
+        trend: { value: 45, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
         id: 'token-usage',
         title: t('ai.dashboard.stat.token_usage'),
         value: '12.5M',
         icon: <Zap size={22} />,
-        change: 8,
-        changeLabel: t('ai.dashboard.stat.vs_last_month'),
         color: 'warning',
+        trend: { value: 8, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
         id: 'avg-response',
         title: t('ai.dashboard.stat.avg_response'),
         value: '1.2s',
         icon: <Clock size={22} />,
-        change: -0.3,
-        changeLabel: t('ai.dashboard.stat.seconds_down'),
         color: 'secondary',
+        trend: { value: -0.3, direction: 'down', label: t('ai.dashboard.stat.seconds_down') },
       },
       {
         id: 'satisfaction',
         title: t('ai.dashboard.stat.satisfaction'),
         value: '96.5%',
         icon: <Sparkles size={22} />,
-        change: 2.1,
-        changeLabel: t('ai.dashboard.stat.percent_improvement'),
         color: 'success',
+        onClick: () => navigate(AI_PATHS.chat),
+        trend: { value: 2.1, direction: 'up', label: t('ai.dashboard.stat.percent_improvement') },
       },
     ],
     [navigate, t]
@@ -689,24 +592,37 @@ export const AiDashboardPage: React.FC = () => {
 
   const usageData = [120, 150, 130, 180, 160, 200, 190];
 
+  const refreshToolbar = (
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      <Button
+        size='small'
+        variant='outlined'
+        startIcon={<RefreshCw size={16} />}
+        onClick={handleRefresh}
+        disabled={loading}
+      >
+        {loading ? t('ai.dashboard.refreshing') : t('ai.dashboard.refresh')}
+      </Button>
+    </Box>
+  );
+
   return (
-    <PageContainer
+    <StatsPageTemplate
       title={t('ai.dashboard.title')}
       subtitle={t('ai.dashboard.subtitle')}
-      padding={false}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      statColumns={3}
+      loading={loading}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+      customToolbar={refreshToolbar}
     >
-      <Box sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button
-            size='small'
-            variant='outlined'
-            startIcon={<RefreshCw size={16} />}
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? t('ai.dashboard.refreshing') : t('ai.dashboard.refresh')}
-          </Button>
-        </Box>
+      <Box>
         {/* 欢迎区域 */}
         <Box
           sx={{
@@ -767,13 +683,13 @@ export const AiDashboardPage: React.FC = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                {i18n.t('pages.ai_dashboard_page.aitopn_0')}
+                {t('pages.ai_dashboard_page.aitopn_0')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('pages.ai_dashboard_page.k1')}
+                {t('pages.ai_dashboard_page.k1')}
               </Typography>
             </Box>
             <Chip
@@ -794,30 +710,6 @@ export const AiDashboardPage: React.FC = () => {
               recommendations={topRecommendations}
               onSelect={handleRecommendationSelect}
             />
-          </Box>
-        </Box>
-
-        {/* 统计卡片 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 3 }}
-          >
-            {t('ai.dashboard.section.usage_stats')}
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-              gap: 2,
-            }}
-          >
-            {stats.map((stat) => (
-              <StatCard
-                key={stat.id}
-                {...stat}
-              />
-            ))}
           </Box>
         </Box>
 
@@ -946,7 +838,7 @@ export const AiDashboardPage: React.FC = () => {
           </Box>
         </Box>
       </Box>
-    </PageContainer>
+    </StatsPageTemplate>
   );
 };
 

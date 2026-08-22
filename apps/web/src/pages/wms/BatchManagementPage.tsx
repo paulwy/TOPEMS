@@ -58,7 +58,7 @@ const BatchManagementPage: React.FC = () => {
                 size='small'
                 label={t('wms.batch_management_page.status_expired')}
                 color='error'
-                sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
+                sx={{ ml: 1, fontSize: designTokens.typography.fontSize.scale['0.625rem'], height: 16 }}
               />
             )}
             {isExpiringSoon(batch) && !isExpired(batch) && (
@@ -66,7 +66,7 @@ const BatchManagementPage: React.FC = () => {
                 size='small'
                 label={t('wms.batch_management_page.text_2cae05')}
                 color='warning'
-                sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
+                sx={{ ml: 1, fontSize: designTokens.typography.fontSize.scale['0.625rem'], height: 16 }}
               />
             )}
           </Box>
@@ -82,9 +82,9 @@ const BatchManagementPage: React.FC = () => {
         return (
           <Box>
             <Box sx={{ fontWeight: 500 }}>{batch.material_name}</Box>
-            <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>SKU: {batch.sku}</Box>
+            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>SKU: {batch.sku}</Box>
             {batch.specification && (
-              <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{batch.specification}</Box>
+              <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>{batch.specification}</Box>
             )}
           </Box>
         );
@@ -102,7 +102,7 @@ const BatchManagementPage: React.FC = () => {
             <Box sx={{ fontWeight: 500 }}>
               {batch.quantity.toLocaleString()} {batch.unit}
             </Box>
-            <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
               [i18n.t('pages.batch_management_page.k0')]:{' '}
               {batch.available_quantity.toLocaleString()}
             </Box>
@@ -157,7 +157,7 @@ const BatchManagementPage: React.FC = () => {
           >
             {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('zh-CN') : '-'}
             {batch.remaining_days !== undefined && batch.remaining_days >= 0 && (
-              <Box sx={{ fontSize: '0.75rem' }}>{i18n.t('pages.batch_management_page.k0')}</Box>
+              <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>{i18n.t('pages.batch_management_page.k0')}</Box>
             )}
           </Box>
         );

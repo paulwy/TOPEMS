@@ -75,7 +75,7 @@ export const bankAccountSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontFamily: 'monospace', fontSize: '0.875rem' } },
+          { style: { fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
           String(row.account_number || '')
         ),
       validation: [{ type: 'maxLength', value: 50 }],
@@ -204,7 +204,7 @@ export const bankAccountSchema: EntitySchema = {
           {
             style: {
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               textAlign: 'right',
               display: 'inline-block',
               width: '100%',

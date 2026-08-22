@@ -337,9 +337,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   <tr>
                     <th
                       style={{
-                        padding: `${designTokens.spacing.md} 24px`,
+                        padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                         textAlign: 'left',
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
                         color: theme.palette.grey[500],
                         textTransform: 'uppercase',
@@ -350,9 +350,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     </th>
                     <th
                       style={{
-                        padding: `${designTokens.spacing.md} 24px`,
+                        padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                         textAlign: 'left',
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
                         color: theme.palette.grey[500],
                         textTransform: 'uppercase',
@@ -363,9 +363,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     </th>
                     <th
                       style={{
-                        padding: `${designTokens.spacing.md} 24px`,
+                        padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                         textAlign: 'left',
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
                         color: theme.palette.grey[500],
                         textTransform: 'uppercase',
@@ -376,9 +376,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                     </th>
                     <th
                       style={{
-                        padding: `${designTokens.spacing.md} 24px`,
+                        padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                         textAlign: 'left',
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
                         color: theme.palette.grey[500],
                         textTransform: 'uppercase',
@@ -406,7 +406,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       >
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                           }}
                         >
@@ -434,9 +434,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             color: theme.palette.grey[500],
                           }}
                         >
@@ -444,9 +444,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             color: theme.palette.grey[500],
                           }}
                         >
@@ -454,9 +454,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             fontWeight: 500,
                           }}
                         >
@@ -488,7 +488,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       >
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                           }}
                         >
@@ -526,9 +526,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             color: theme.palette.grey[500],
                           }}
                         >
@@ -536,9 +536,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             color: theme.palette.grey[500],
                           }}
                         >
@@ -546,9 +546,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         </td>
                         <td
                           style={{
-                            padding: `${designTokens.spacing.md} 24px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             fontWeight: 500,
                           }}
                         >

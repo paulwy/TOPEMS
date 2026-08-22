@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import type { UseMutationResult } from '@tanstack/react-query';
 import {
@@ -97,7 +98,7 @@ const CreateFolderModal: React.FC<{
             {error && (
               <Typography
                 variant='body2'
-                sx={{ color: 'error.main', fontSize: '0.875rem', mt: 2 }}
+                sx={{ color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mt: 2 }}
               >
                 {error}
               </Typography>

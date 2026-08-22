@@ -460,7 +460,7 @@ const AuditLogPage: React.FC = () => {
         id: 'ip_address',
         label: i18n.t('erp.auditLog.k0'),
         render: (row) => (
-          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
             {row.ip_address || '-'}
           </Typography>
         ),

@@ -275,7 +275,7 @@ const ForgotPasswordPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 16px',
+              margin: `0 auto ${designTokens.spacing.md}px`,
             }}
           >
             {emailSent || resetSuccess ? (
@@ -557,7 +557,7 @@ const ForgotPasswordPage: React.FC = () => {
               sx={{
                 color: ct.secondary[400],
                 '&:hover': { color: ct.secondary[600] },
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 background: 'transparent',
                 fontWeight: 500,
               }}

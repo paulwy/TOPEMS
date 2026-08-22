@@ -7,9 +7,7 @@
  * 管理母子公司关系、持股比例、控制类型等，用于合并报表
  */
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Search,
   Building2,
@@ -39,13 +37,13 @@ import {
   useCompanyTree,
   useDeleteCompanyRelation,
 } from '@/hooks/useConsolidation';
-import { DataTable } from '@/components/common/DataTable';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import type { CompanyRelation, CompanyTreeNode, CompanyRelationType } from '@/types/consolidation';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { iamApi } from '@/api/iam';
 
 type RelationTypeConfig = {
   label: string;
@@ -160,17 +158,6 @@ const TreeNodeComponent: React.FC<{
 };
 
 export default function CompanyStructurePage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['iam-company-structure'],
-    queryFn: async () => {
-      try {
-        // TODO: iamApi.getCompanyStructure 不存在，等待后端接口对接
-        return {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('iam');
   const relationTypeConfig = getRelationTypeConfig();
   const statusConfig = getStatusConfig();
@@ -178,7 +165,6 @@ export default function CompanyStructurePage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [, setSelectedRelation] = useState<CompanyRelation | null>(null);
 
   const {
     confirmOpen: confirmDialogOpen,
@@ -194,10 +180,6 @@ export default function CompanyStructurePage() {
 
   // 查询公司架构树
   const { data: treeData, isLoading: treeLoading } = useCompanyTree();
-
-  // 创建公司关系
-
-  // 更新公司关系
 
   // 删除公司关系
   const deleteRelation = useDeleteCompanyRelation();
@@ -215,139 +197,126 @@ export default function CompanyStructurePage() {
     });
   };
 
-  // 处理选择关系
-  const handleSelectRelation = (relation: CompanyRelation) => {
-    setSelectedRelation(relation);
-  };
-
   // 处理删除关系
-  const handleDeleteRelation = (relationId: string) => {
-    openConfirmDialog({
-      title: t('iam.company_structure_page.k8'),
-      message: t('iam.company_structure_page.k9'),
-      danger: true,
-      onConfirm: () => {
-        deleteRelation.mutate(relationId);
-      },
-    });
-  };
+  const handleDeleteRelation = useCallback(
+    (relationId: string) => {
+      openConfirmDialog({
+        title: t('iam.company_structure_page.k8'),
+        message: t('iam.company_structure_page.k9'),
+        danger: true,
+        onConfirm: () => {
+          deleteRelation.mutate(relationId);
+        },
+      });
+    },
+    [openConfirmDialog, t, deleteRelation]
+  );
 
   // 关系列表列定义
-  const relationColumns: ColumnDef<CompanyRelation>[] = [
-    {
-      id: 'parent_company',
-      header: t('iam.company_structure_page.k10'),
-      accessorKey: 'parent_company_name',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
-          <Typography sx={{ fontWeight: 'medium' }}>{row.original.parent_company_name}</Typography>
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            ({row.original.parent_company_code})
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'relation_type',
-      header: t('iam.company_structure_page.k11'),
-      accessorKey: 'relation_type',
-      cell: ({ row }) => {
-        const relationType = row.getValue<string>('relation_type');
-        const config = relationTypeConfig[relationType as keyof typeof relationTypeConfig] || {
-          label: relationType,
-          color: 'default' as const,
-        };
-        return (
-          <Chip
-            label={config.label}
-            color={config.color}
-            size='small'
-          />
-        );
+  const relationColumns: ColumnDef<CompanyRelation>[] = useMemo(
+    () => [
+      {
+        id: 'parent_company',
+        label: t('iam.company_structure_page.k10'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
+            <Typography sx={{ fontWeight: 'medium' }}>{row.parent_company_name}</Typography>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              ({row.parent_company_code})
+            </Typography>
+          </Box>
+        ),
       },
-    },
-    {
-      id: 'child_company',
-      header: t('iam.company_structure_page.k12'),
-      accessorKey: 'child_company_name',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Building2 sx={{ width: 16, height: 16, color: 'success.main' }} />
-          <Typography sx={{ fontWeight: 'medium' }}>{row.original.child_company_name}</Typography>
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            ({row.original.child_company_code})
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'ownership_percentage',
-      header: t('iam.company_structure_page.k13'),
-      accessorKey: 'ownership_percentage',
-      cell: ({ row }) => (
-        <Typography sx={{ fontFamily: 'monospace' }}>
-          {row.getValue('ownership_percentage')}%
-        </Typography>
-      ),
-    },
-    {
-      id: 'control_percentage',
-      header: t('iam.company_structure_page.k14'),
-      accessorKey: 'control_percentage',
-      cell: ({ row }) => (
-        <Typography sx={{ fontFamily: 'monospace' }}>
-          {row.getValue('control_percentage')}%
-        </Typography>
-      ),
-    },
-    {
-      id: 'effective_date',
-      header: t('iam.company_structure_page.k15'),
-      accessorKey: 'effective_date',
-      cell: ({ row }) => <Typography variant='body2'>{row.getValue('effective_date')}</Typography>,
-    },
-    {
-      id: 'status',
-      header: t('iam.company_structure_page.k16'),
-      accessorKey: 'status',
-      cell: ({ row }) => {
-        const status = row.getValue<string>('status');
-        const config = statusConfig[status as keyof typeof statusConfig] || {
-          label: status,
-          color: 'default' as const,
-        };
-        return (
-          <Chip
-            label={config.label}
-            color={config.color}
-            size='small'
-          />
-        );
+      {
+        id: 'relation_type',
+        label: t('iam.company_structure_page.k11'),
+        render: (row) => {
+          const config = relationTypeConfig[row.relation_type] || {
+            label: row.relation_type,
+            color: 'default' as const,
+          };
+          return (
+            <Chip
+              label={config.label}
+              color={config.color}
+              size='small'
+            />
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: t('iam.company_structure_page.k17'),
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            size='small'
-            color='error'
-            onClick={() => handleDeleteRelation(row.original.id)}
-          >
-            <Trash2 sx={{ width: 16, height: 16 }} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+      {
+        id: 'child_company',
+        label: t('iam.company_structure_page.k12'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Building2 sx={{ width: 16, height: 16, color: 'success.main' }} />
+            <Typography sx={{ fontWeight: 'medium' }}>{row.child_company_name}</Typography>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              ({row.child_company_code})
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'ownership_percentage',
+        label: t('iam.company_structure_page.k13'),
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace' }}>{row.ownership_percentage}%</Typography>
+        ),
+      },
+      {
+        id: 'control_percentage',
+        label: t('iam.company_structure_page.k14'),
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace' }}>{row.control_percentage}%</Typography>
+        ),
+      },
+      {
+        id: 'effective_date',
+        label: t('iam.company_structure_page.k15'),
+        render: (row) => <Typography variant='body2'>{row.effective_date}</Typography>,
+      },
+      {
+        id: 'status',
+        label: t('iam.company_structure_page.k16'),
+        render: (row) => {
+          const config = statusConfig[row.status] || {
+            label: row.status,
+            color: 'default' as const,
+          };
+          return (
+            <Chip
+              label={config.label}
+              color={config.color}
+              size='small'
+            />
+          );
+        },
+      },
+    ],
+    [t, relationTypeConfig, statusConfig]
+  );
+
+  const rowActions: RowAction<CompanyRelation>[] = useMemo(
+    () => [
+      {
+        key: 'delete',
+        label: t('iam.company_structure_page.k8'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteRelation(row.id),
+        color: 'error',
+        disabled: () => deleteRelation.isPending,
+      },
+    ],
+    [t, handleDeleteRelation, deleteRelation.isPending]
+  );
 
   return (
     <PageContainer
@@ -436,9 +405,12 @@ export default function CompanyStructurePage() {
           {/* 关系列表视图 */}
           {activeTab === 1 && (
             <Box sx={{ mt: 2 }}>
-              <DataTable
+              <ListPageTemplate<CompanyRelation>
                 columns={relationColumns}
                 data={relationsData?.data || []}
+                loading={relationsLoading}
+                rowActions={rowActions}
+                emptyMessage={i18n.t('pages.company_structure_page.k2')}
               />
             </Box>
           )}

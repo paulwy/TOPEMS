@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * 系统日志页面
  *
@@ -340,7 +341,7 @@ const MonitorLogsPage: React.FC = () => {
                         <Typography
                           variant='body2'
                           color='text.secondary'
-                          sx={{ fontSize: '0.875rem' }}
+                          sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                         >
                           {stat.title}
                         </Typography>

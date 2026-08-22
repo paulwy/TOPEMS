@@ -68,7 +68,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
         'span',
         {
           style: {
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
           },
         },
@@ -79,7 +79,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
         {
           style: {
             fontWeight: 700,
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             color:
               rate > 80
                 ? `var(--color-error-main, ${designTokens.colors.error['800']})`

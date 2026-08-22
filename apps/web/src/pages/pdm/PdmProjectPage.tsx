@@ -411,7 +411,7 @@ const PdmProjectPage: React.FC = () => {
                   }
                 >
                   <ListItemAvatar>
-                    <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
+                    <Avatar sx={{ width: 32, height: 32, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                       {member.user_name?.charAt(0) || 'U'}
                     </Avatar>
                   </ListItemAvatar>

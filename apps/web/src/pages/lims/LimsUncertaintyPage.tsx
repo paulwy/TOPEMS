@@ -107,7 +107,7 @@ const StatCard: React.FC<{
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+            sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {label}
           </Typography>

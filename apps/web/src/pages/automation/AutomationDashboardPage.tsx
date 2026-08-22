@@ -1,57 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  CircularProgress,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-} from '@mui/material';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Box, Alert, CircularProgress, Chip } from '@mui/material';
 import { Zap, CheckCircle2, XCircle, Activity, Clock, TrendingUp } from 'lucide-react';
 import { automationApi } from '@/api/automation';
 import type { AutomationDashboardStats, AutomationRunStatus } from '@/api/automation';
-import { PageContainer } from '@/components/common';
+import {
+  StatsPageTemplate,
+  type StatCard,
+  type DataTable,
+} from '@/components/templates/StatsPageTemplate';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color }) => (
-  <Paper
-    sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2 }}
-    elevation={0}
-    variant='outlined'
-  >
-    <Box sx={{ color, display: 'flex' }}>{icon}</Box>
-    <Box>
-      <Typography
-        variant='h5'
-        component='div'
-        sx={{ fontWeight: 600 }}
-      >
-        {value}
-      </Typography>
-      <Typography
-        variant='body2'
-        color='text.secondary'
-      >
-        {label}
-      </Typography>
-    </Box>
-  </Paper>
-);
 
 const RUN_STATUS_COLOR: Record<
   AutomationRunStatus,
@@ -82,31 +40,30 @@ export const AutomationDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
       setLoading(true);
       setError(null);
       try {
         const res = await automationApi.getDashboardStats();
-        if (!cancelled && res.data) {
-          setStats(res.data);
-        }
+        if (signal?.aborted) return;
+        setStats(res.data ?? null);
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : t('automation.automation_dashboard_page.k6')
-          );
-        }
+        if (signal?.aborted) return;
+        setError(err instanceof Error ? err.message : t('automation.automation_dashboard_page.k6'));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (signal?.aborted) return;
+        setLoading(false);
       }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    },
+    [t]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   if (loading) {
     return (
@@ -116,196 +73,177 @@ export const AutomationDashboardPage: React.FC = () => {
     );
   }
 
+  const statCards: StatCard[] = [
+    {
+      id: 'total-rules',
+      title: t('automation.automation_dashboard_page.k8'),
+      value: stats?.total_rules ?? 0,
+      icon: <Zap size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'enabled-rules',
+      title: t('automation.automation_dashboard_page.k9'),
+      value: stats?.enabled_rules ?? 0,
+      icon: <Zap size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'runs-last-24h',
+      title: t('automation.automation_dashboard_page.m1'),
+      value: stats?.runs_last_24h ?? 0,
+      icon: <Activity size={24} />,
+      color: 'info',
+    },
+    {
+      id: 'success-rate-24h',
+      title: t('automation.automation_dashboard_page.m2'),
+      value: stats?.success_rate_24h ?? 0,
+      suffix: '%',
+      icon: <TrendingUp size={24} />,
+      color: Number(stats?.success_rate_24h ?? 0) >= 90 ? 'success' : 'warning',
+    },
+    {
+      id: 'success-last-24h',
+      title: t('automation.automation_dashboard_page.m3'),
+      value: stats?.success_last_24h ?? 0,
+      icon: <CheckCircle2 size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'failed-last-24h',
+      title: t('automation.automation_dashboard_page.m4'),
+      value: stats?.failed_last_24h ?? 0,
+      icon: <XCircle size={24} />,
+      color: 'error',
+    },
+    {
+      id: 'avg-duration',
+      title: t('automation.automation_dashboard_page.k10'),
+      value: stats?.avg_duration_ms ?? 0,
+      suffix: 'ms',
+      icon: <Clock size={24} />,
+      color: 'info',
+    },
+    {
+      id: 'disabled-rules',
+      title: t('automation.automation_dashboard_page.k11'),
+      value: stats?.disabled_rules ?? 0,
+      icon: <Zap size={24} />,
+      color: 'secondary',
+    },
+  ];
+
+  const tables: DataTable[] = [
+    {
+      id: 'daily-stats',
+      title: t('automation.automation_dashboard_page.e2'),
+      columns: [
+        { id: 'date', label: t('automation.automation_dashboard_page.k12'), field: 'date' },
+        {
+          id: 'total',
+          label: t('automation.automation_dashboard_page.k13'),
+          field: 'total',
+          align: 'right',
+        },
+        {
+          id: 'success',
+          label: t('automation.automation_dashboard_page.k14'),
+          field: 'success',
+          align: 'right',
+          render: (value) => (
+            <Box
+              component='span'
+              sx={{ color: 'success.main' }}
+            >
+              {String(value ?? '')}
+            </Box>
+          ),
+        },
+        {
+          id: 'failed',
+          label: t('automation.automation_dashboard_page.k15'),
+          field: 'failed',
+          align: 'right',
+          render: (value) => (
+            <Box
+              component='span'
+              sx={{ color: 'error.main' }}
+            >
+              {String(value ?? '')}
+            </Box>
+          ),
+        },
+      ],
+      data: (stats?.daily_stats ?? []) as unknown as Record<string, unknown>[],
+    },
+    {
+      id: 'recent-runs',
+      title: t('automation.automation_dashboard_page.e3'),
+      columns: [
+        {
+          id: 'rule',
+          label: t('automation.automation_dashboard_page.k16'),
+          field: 'rule_name',
+          render: (value, row) =>
+            (value ??
+              (row as { rule_code?: string; rule_id?: string }).rule_code ??
+              (row as { rule_id?: string }).rule_id) as string,
+        },
+        {
+          id: 'trigger',
+          label: t('automation.automation_dashboard_page.k17'),
+          field: 'trigger_type',
+        },
+        {
+          id: 'status',
+          label: t('automation.automation_dashboard_page.k18'),
+          field: 'status',
+          render: (value) => (
+            <Chip
+              size='small'
+              color={RUN_STATUS_COLOR[value as AutomationRunStatus]}
+              label={getRunStatusLabel()[value as AutomationRunStatus]}
+            />
+          ),
+        },
+        {
+          id: 'started',
+          label: t('automation.automation_dashboard_page.k19'),
+          field: 'started_at',
+        },
+        {
+          id: 'duration',
+          label: t('automation.automation_dashboard_page.k20'),
+          field: 'duration_ms',
+          align: 'right',
+          render: (value) => (value ? `${value}ms` : '-'),
+        },
+      ],
+      data: (stats?.recent_runs ?? []) as unknown as Record<string, unknown>[],
+    },
+  ];
+
   return (
-    <PageContainer title={t('automation.automation_dashboard_page.k7')}>
-      <Box sx={{ p: 3 }}>
-        <Typography
-          variant='h5'
-          sx={{ mb: 3 }}
-        >
-          {t('automation.automation_dashboard_page.e1')}
-        </Typography>
-        {error && (
-          <Alert
-            severity='warning'
-            sx={{ mb: 2 }}
-          >
+    <StatsPageTemplate
+      title={t('automation.automation_dashboard_page.k7')}
+      subtitle={t('automation.automation_dashboard_page.e1')}
+      statCards={statCards}
+      tables={tables}
+      showRefresh={true}
+      onRefresh={() => load()}
+      showTimeRange={false}
+      showSearch={false}
+      showExport={false}
+      showCharts={false}
+      customToolbar={
+        error ? (
+          <Alert severity='warning'>
             {t('automation.automation_dashboard_page.l1', { v1: error })}
           </Alert>
-        )}
-
-        <Grid
-          container
-          spacing={2}
-          sx={{ mb: 3 }}
-        >
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.k8')}
-              value={stats?.total_rules ?? 0}
-              icon={<Zap size={22} />}
-              color='primary.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.k9')}
-              value={stats?.enabled_rules ?? 0}
-              icon={<Zap size={22} />}
-              color='success.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.m1')}
-              value={stats?.runs_last_24h ?? 0}
-              icon={<Activity size={22} />}
-              color='info.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.m2')}
-              value={`${stats?.success_rate_24h ?? 0}%`}
-              icon={<TrendingUp size={22} />}
-              color={Number(stats?.success_rate_24h ?? 0) >= 90 ? 'success.main' : 'warning.main'}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.m3')}
-              value={stats?.success_last_24h ?? 0}
-              icon={<CheckCircle2 size={22} />}
-              color='success.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.m4')}
-              value={stats?.failed_last_24h ?? 0}
-              icon={<XCircle size={22} />}
-              color='error.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.k10')}
-              value={`${stats?.avg_duration_ms ?? 0}ms`}
-              icon={<Clock size={22} />}
-              color='info.main'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <StatCard
-              label={t('automation.automation_dashboard_page.k11')}
-              value={stats?.disabled_rules ?? 0}
-              icon={<Zap size={22} />}
-              color='text.disabled'
-            />
-          </Grid>
-        </Grid>
-
-        {stats?.daily_stats && stats.daily_stats.length > 0 && (
-          <Paper
-            variant='outlined'
-            sx={{ p: 2, mb: 3 }}
-          >
-            <Typography
-              variant='subtitle1'
-              sx={{ mb: 1 }}
-            >
-              {t('automation.automation_dashboard_page.e2')}
-            </Typography>
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{t('automation.automation_dashboard_page.k12')}</TableCell>
-                    <TableCell align='right'>
-                      {t('automation.automation_dashboard_page.k13')}
-                    </TableCell>
-                    <TableCell align='right'>
-                      {t('automation.automation_dashboard_page.k14')}
-                    </TableCell>
-                    <TableCell align='right'>
-                      {t('automation.automation_dashboard_page.k15')}
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {stats.daily_stats.map((d) => (
-                    <TableRow key={d.date}>
-                      <TableCell>{d.date}</TableCell>
-                      <TableCell align='right'>{d.total}</TableCell>
-                      <TableCell
-                        align='right'
-                        sx={{ color: 'success.main' }}
-                      >
-                        {d.success}
-                      </TableCell>
-                      <TableCell
-                        align='right'
-                        sx={{ color: 'error.main' }}
-                      >
-                        {d.failed}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        )}
-
-        {stats?.recent_runs && stats.recent_runs.length > 0 && (
-          <Paper
-            variant='outlined'
-            sx={{ p: 2 }}
-          >
-            <Typography
-              variant='subtitle1'
-              sx={{ mb: 1 }}
-            >
-              {t('automation.automation_dashboard_page.e3')}
-            </Typography>
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{t('automation.automation_dashboard_page.k16')}</TableCell>
-                    <TableCell>{t('automation.automation_dashboard_page.k17')}</TableCell>
-                    <TableCell>{t('automation.automation_dashboard_page.k18')}</TableCell>
-                    <TableCell>{t('automation.automation_dashboard_page.k19')}</TableCell>
-                    <TableCell align='right'>
-                      {t('automation.automation_dashboard_page.k20')}
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {stats.recent_runs.map((run) => (
-                    <TableRow key={run.id}>
-                      <TableCell>{run.rule_name ?? run.rule_code ?? run.rule_id}</TableCell>
-                      <TableCell>{run.trigger_type}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size='small'
-                          color={RUN_STATUS_COLOR[run.status]}
-                          label={getRunStatusLabel()[run.status]}
-                        />
-                      </TableCell>
-                      <TableCell>{run.started_at}</TableCell>
-                      <TableCell align='right'>
-                        {run.duration_ms ? `${run.duration_ms}ms` : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        )}
-      </Box>
-    </PageContainer>
+        ) : undefined
+      }
+    />
   );
 };
 

@@ -1,5 +1,6 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 /**
  * 路线效率分析页
  *
@@ -11,6 +12,8 @@ import i18n from '@/i18n';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tmsApi } from '@/api/tms';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
   ResponsiveContainer,
   BarChart,
@@ -24,6 +27,8 @@ import {
   Scatter,
   ZAxis,
 } from 'recharts';
+import { Box, Paper, Typography } from '@mui/material';
+import { Clock, DollarSign, Navigation, MapPin } from 'lucide-react';
 
 function getMockData() {
   return [
@@ -87,7 +92,9 @@ function getMockData() {
 }
 
 export default function RouteEfficiencyPage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['tms', 'RouteEfficiencyPage'],
     queryFn: async () => {
       try {
@@ -117,6 +124,7 @@ export default function RouteEfficiencyPage() {
       }
     },
   });
+
   const data = useMemo(() => getMockData(), []);
 
   const avgHours =
@@ -130,116 +138,149 @@ export default function RouteEfficiencyPage() {
   const totalTrips = data.reduce((s, d) => s + d.totalTrips, 0);
   const totalDistance = data.reduce((s, d) => s + d.distance, 0);
 
+  const statCards: StatCard[] = [
+    {
+      id: 'avgHours',
+      title: t('pages.route_efficiency_page.k10'),
+      value: avgHours,
+      suffix: 'h',
+      icon: <Clock size={24} />,
+      color: 'info',
+    },
+    {
+      id: 'avgCostPerKm',
+      title: t('pages.route_efficiency_page.k11'),
+      value: avgCostPerKm,
+      prefix: '¥',
+      suffix: '/km',
+      icon: <DollarSign size={24} />,
+      color: 'warning',
+    },
+    {
+      id: 'totalTrips',
+      title: t('pages.route_efficiency_page.k12'),
+      value: totalTrips,
+      icon: <Navigation size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'totalDistance',
+      title: t('pages.route_efficiency_page.k13'),
+      value: totalDistance,
+      suffix: 'km',
+      icon: <MapPin size={24} />,
+      color: 'primary',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div>
-        <h1 className='text-2xl font-bold'>{i18n.t('pages.route_efficiency_page.k8')}</h1>
-        <p className='mt-1 text-sm text-gray-500'>{i18n.t('pages.route_efficiency_page.k9')}</p>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.route_efficiency_page.k10')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{avgHours}h</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.route_efficiency_page.k11')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>¥{avgCostPerKm}/km</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.route_efficiency_page.k12')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{totalTrips}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.route_efficiency_page.k13')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>{totalDistance}km</p>
-        </div>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('pages.route_efficiency_page.k14')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={340}
-        >
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+    <StatsPageTemplate
+      title={t('pages.route_efficiency_page.k8')}
+      subtitle={t('pages.route_efficiency_page.k9')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='route'
-              fontSize={11}
-            />
-            <YAxis
-              yAxisId='left'
-              fontSize={11}
-              unit='h'
-            />
-            <YAxis
-              yAxisId='right'
-              orientation='right'
-              fontSize={11}
-              unit='/km'
-            />
-            <Tooltip />
-            <Legend />
-            <Bar
-              yAxisId='left'
-              dataKey='avgHours'
-              name={i18n.t('pages.route_efficiency_page.h_15')}
-              fill={designTokens.colors.primary.main}
-              barSize={20}
-            />
-            <Bar
-              yAxisId='right'
-              dataKey='costPerKm'
-              name={i18n.t('pages.route_efficiency_page.km_0')}
-              fill={designTokens.colors.warning.main}
-              barSize={20}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('pages.route_efficiency_page.k16')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={300}
-        >
-          <ScatterChart margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              type='number'
-              dataKey='distance'
-              name={i18n.t('pages.route_efficiency_page.k17')}
-              unit='km'
-              fontSize={11}
-            />
-            <YAxis
-              type='number'
-              dataKey='totalTrips'
-              name={i18n.t('pages.route_efficiency_page.k18')}
-              fontSize={11}
-            />
-            <ZAxis
-              type='number'
-              dataKey='avgHours'
-              name={i18n.t('pages.route_efficiency_page.k19')}
-              unit='h'
-              range={[60, 400]}
-            />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-            <Legend />
-            <Scatter
-              name={i18n.t('pages.route_efficiency_page.k20')}
+            {t('pages.route_efficiency_page.k14')}
+          </Typography>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
+          >
+            <BarChart
               data={data}
-              fill={designTokens.colors.secondary.dark}
-            />
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='route'
+                fontSize={11}
+              />
+              <YAxis
+                yAxisId='left'
+                fontSize={11}
+                unit='h'
+              />
+              <YAxis
+                yAxisId='right'
+                orientation='right'
+                fontSize={11}
+                unit='/km'
+              />
+              <Tooltip />
+              <Legend />
+              <Bar
+                yAxisId='left'
+                dataKey='avgHours'
+                name={t('pages.route_efficiency_page.h_15')}
+                fill={designTokens.colors.primary.main}
+                barSize={20}
+              />
+              <Bar
+                yAxisId='right'
+                dataKey='costPerKm'
+                name={t('pages.route_efficiency_page.km_0')}
+                fill={designTokens.colors.warning.main}
+                barSize={20}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            {t('pages.route_efficiency_page.k16')}
+          </Typography>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
+            <ScatterChart margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                type='number'
+                dataKey='distance'
+                name={t('pages.route_efficiency_page.k17')}
+                unit='km'
+                fontSize={11}
+              />
+              <YAxis
+                type='number'
+                dataKey='totalTrips'
+                name={t('pages.route_efficiency_page.k18')}
+                fontSize={11}
+              />
+              <ZAxis
+                type='number'
+                dataKey='avgHours'
+                name={t('pages.route_efficiency_page.k19')}
+                unit='h'
+                range={[60, 400]}
+              />
+              <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+              <Legend />
+              <Scatter
+                name={t('pages.route_efficiency_page.k20')}
+                data={data}
+                fill={designTokens.colors.secondary.dark}
+              />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Box>
+    </StatsPageTemplate>
   );
 }

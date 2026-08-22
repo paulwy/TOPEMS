@@ -112,7 +112,12 @@ const AccountManagementPage: React.FC = () => {
         sortable: true,
         width: 140,
         render: (row) => (
-          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+          <Typography
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
+          >
             {String(row.code || '')}
           </Typography>
         ),
@@ -165,7 +170,7 @@ const AccountManagementPage: React.FC = () => {
             <span
               style={{
                 display: 'inline-block',
-                padding: `${designTokens.spacing.xs} 8px`,
+                padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -202,7 +207,7 @@ const AccountManagementPage: React.FC = () => {
             <span
               style={{
                 display: 'inline-block',
-                padding: `${designTokens.spacing.xs} 8px`,
+                padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -225,7 +230,7 @@ const AccountManagementPage: React.FC = () => {
             <span
               style={{
                 display: 'inline-block',
-                padding: `${designTokens.spacing.xs} 8px`,
+                padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -263,7 +268,7 @@ const AccountManagementPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                padding: `${designTokens.spacing.xs} 8px`,
+                padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
@@ -299,7 +304,7 @@ const AccountManagementPage: React.FC = () => {
             <Typography
               sx={{
                 fontFamily: 'monospace',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: amount >= 0 ? 'green' : 'red',
               }}
             >

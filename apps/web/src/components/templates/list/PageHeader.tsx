@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Breadcrumbs, Button, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import { ChevronRight, Download, RefreshCw } from 'lucide-react';
@@ -99,7 +100,7 @@ export function PageHeader<T = any>({
                 to={crumb.href}
                 color='inherit'
                 underline='hover'
-                sx={{ fontSize: '0.875rem' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {crumb.label}
               </Link>
@@ -107,7 +108,7 @@ export function PageHeader<T = any>({
               <Typography
                 key={index}
                 color='text.primary'
-                sx={{ fontSize: '0.875rem' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {crumb.label}
               </Typography>

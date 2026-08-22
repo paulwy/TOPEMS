@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * MobileQuality task list component
  * @refactor-split Extracted from MobileQualityPage.tsx
@@ -68,13 +69,13 @@ const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
                   label={getTypeLabel(task.type)}
                   size='small'
                   color='primary'
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 />
                 <Chip
                   label={getStatusLabel(task.status)}
                   size='small'
                   color={getStatusColor(task.status) as React.ComponentProps<typeof Chip>['color']}
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 />
               </Box>
               <Typography

@@ -158,10 +158,10 @@ export const PdmProductConfigPage: React.FC = () => {
         minWidth: 180,
         render: (row) => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <span style={{ fontSize: '0.875rem' }}>
+            <span style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {String(row.color || '-')} / {String(row.size || '-')}
             </span>
-            <span style={{ fontSize: '0.75rem', color: ct.text.muted }}>
+            <span style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: ct.text.muted }}>
               {String(row.material || '-')} / {String(row.grade || '-')}
             </span>
           </Box>
@@ -257,9 +257,9 @@ export const PdmProductConfigPage: React.FC = () => {
                 }}
               >
                 {stat.icon}
-                <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{stat.label}</Box>
+                <Box sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>{stat.label}</Box>
               </Box>
-              <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{stat.value}</Box>
+              <Box sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'] }}>{stat.value}</Box>
             </Box>
           </Grid>
         ))}

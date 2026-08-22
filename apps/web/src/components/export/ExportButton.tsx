@@ -127,7 +127,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       onClick={handleExport}
       disabled={disabled || exporting}
       style={{
-        padding: `${designTokens.spacing.sm} 16px`,
+        padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
         borderRadius: 'md',
         fontWeight: 500,
         transition: 'all 0.2s',

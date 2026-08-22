@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { Clock } from 'lucide-react';
@@ -39,7 +40,7 @@ function renderCasNoCell(row: Record<string, unknown>, _index: number) {
   const v = row.cas_no as string | null | undefined;
   if (!v) return '-';
   return React.createElement(Typography, {
-    sx: { fontFamily: 'monospace', fontSize: '0.8rem' },
+    sx: { fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.8rem'] },
     children: v,
   });
 }
@@ -57,7 +58,7 @@ function renderMaterialCodeCell(row: Record<string, unknown>, _index: number) {
   const v = row.material_code as string | null | undefined;
   if (!v) return '-';
   return React.createElement(Typography, {
-    sx: { fontFamily: 'monospace', fontSize: '0.875rem' },
+    sx: { fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
     children: v,
   });
 }
@@ -97,7 +98,7 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
       key: 'icon',
       style: { width: 14, height: 14 },
     }),
-    React.createElement(Typography, { key: 'date', sx: { fontSize: '0.875rem' } }, dateText),
+    React.createElement(Typography, { key: 'date', sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } }, dateText),
   ];
 
   if (status) {
@@ -107,7 +108,7 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
         label: status.text,
         size: 'small',
         color: status.color,
-        sx: { height: 20, fontSize: '0.7rem', fontWeight: 500 },
+        sx: { height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'], fontWeight: 500 },
       })
     );
   }

@@ -5,25 +5,55 @@
  * 使用 StatusBadge + FSMActionButtons 组件。
  * 数据来自 useQmsMock。
  */
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  InputLabel,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
+import {
+  DetailPageTemplate,
+  type TabConfig,
+  type DetailField,
+} from '@/components/templates/DetailPageTemplate';
 import i18n from '@/i18n';
-function getTabs() {
-  return [
-    { id: 'info', label: i18n.t('qms.qms_audit_plan_detail_page.k0') },
-    { id: 'tasks', label: i18n.t('qms.qms_audit_plan_detail_page.k1') },
-    { id: 'findings', label: i18n.t('qms.qms_audit_plan_detail_page.k2') },
-  ] as const;
+
+function formatDate(date?: string) {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('zh-CN');
 }
+
+function DetailFieldItem({ label, value }: DetailField) {
+  return (
+    <Paper
+      variant='outlined'
+      sx={{ p: 2, height: '100%' }}
+    >
+      <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{label}</InputLabel>
+      <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{value}</Typography>
+    </Paper>
+  );
+}
+
 export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<ReturnType<typeof getTabs>[number]['id']>('info');
   const plan = useMemo(() => {
     const list = data.auditPlans ?? [];
     return list.find((p) => p.id === id) ?? list[0];
@@ -37,190 +67,204 @@ export default function QmsAuditPlanDetailPage() {
     const taskIds = new Set(tasks.map((t) => t.id));
     return (data.auditFindings ?? []).filter((f) => taskIds.has(f.task_id));
   }, [data.auditFindings, tasks, plan]);
-  if (!plan) {
-    return (
-      <div className='p-4'>
-        <p className='text-gray-600'>{i18n.t('qms.qms_audit_plan_detail_page.k3')}</p>
-        <button
-          onClick={() => navigate(QMS_PATHS.auditManagement)}
-          className='mt-2 text-blue-600 underline'
-        >
-          {i18n.t('pages.qms_audit_plan_detail_page.k0')}
-        </button>
-      </div>
-    );
-  }
+
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <button
-            onClick={() => navigate(QMS_PATHS.auditManagement)}
-            className='mb-2 text-sm text-blue-600 hover:underline'
+
+  const handleBack = () => {
+    navigate(QMS_PATHS.auditManagement);
+  };
+
+  const tabs = useMemo<TabConfig[]>(() => {
+    if (!plan) return [];
+    const basicInfoFields: DetailField[] = [
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k5'), value: plan.plan_no },
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k6'), value: plan.audit_type },
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k7'), value: plan.auditor },
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k8'), value: plan.scope ?? '-' },
+      {
+        label: i18n.t('qms.qms_audit_plan_detail_page.k9'),
+        value: plan.departments.join('、') || '-',
+      },
+      {
+        label: i18n.t('qms.qms_audit_plan_detail_page.k10'),
+        value: plan.auditors.join('、') || '-',
+      },
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k11'), value: formatDate(plan.start_date) },
+      { label: i18n.t('qms.qms_audit_plan_detail_page.k12'), value: formatDate(plan.end_date) },
+    ];
+
+    return [
+      {
+        id: 'info',
+        label: i18n.t('qms.qms_audit_plan_detail_page.k0'),
+        content: (
+          <Grid
+            container
+            spacing={2}
           >
-            {i18n.t('pages.qms_audit_plan_detail_page.k1')}
-          </button>
-          <h1 className='text-2xl font-bold'>{plan.plan_no}</h1>
-          <p className='mt-1 text-sm text-gray-500'>{plan.title}</p>
-        </div>
-        <StatusBadge
-          fsm='audit_plan'
-          status={plan.status}
-        />
-      </div>
-      <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {i18n.t('qms.qms_audit_plan_detail_page.k4')}
-        </p>
-        <FSMActionButtons
-          fsm='audit_plan'
-          currentStatus={plan.status}
-          onAction={handleAction}
-        />
-      </div>
-      <div className='flex gap-2 border-b'>
-        {getTabs().map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === t.id
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {t.label}
-            {t.id === 'tasks' && tasks.length > 0 && (
-              <span className='ml-1 rounded bg-gray-100 px-1.5 text-xs'>{tasks.length}</span>
+            {basicInfoFields.map((field) => (
+              <Grid
+                size={{ xs: 12, md: 6 }}
+                key={field.label}
+              >
+                <DetailFieldItem
+                  label={field.label}
+                  value={field.value}
+                />
+              </Grid>
+            ))}
+            <Grid size={{ xs: 12 }}>
+              <Paper
+                variant='outlined'
+                sx={{ p: 3 }}
+              >
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('qms.qms_audit_plan_detail_page.k13')}
+                </InputLabel>
+                <Typography sx={{ mt: 1, lineHeight: 1.6 }}>{plan.description ?? '-'}</Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        ),
+      },
+      {
+        id: 'tasks',
+        label: i18n.t('qms.qms_audit_plan_detail_page.k1'),
+        badge: tasks.length,
+        content: (
+          <Box>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('qms.qms_audit_plan_detail_page.k14')}
+            </Typography>
+            {tasks.length === 0 ? (
+              <Typography color='text.secondary'>
+                {i18n.t('qms.qms_audit_plan_detail_page.k15')}
+              </Typography>
+            ) : (
+              <TableContainer component={Paper}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k16')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k17')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k18')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k19')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k20')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k21')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tasks.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{t.task_no}</TableCell>
+                        <TableCell>{t.title}</TableCell>
+                        <TableCell>{t.assignee}</TableCell>
+                        <TableCell>{t.priority}</TableCell>
+                        <TableCell>{t.findings_count}</TableCell>
+                        <TableCell>{t.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
-            {t.id === 'findings' && findings.length > 0 && (
-              <span className='ml-1 rounded bg-gray-100 px-1.5 text-xs'>{findings.length}</span>
+          </Box>
+        ),
+      },
+      {
+        id: 'findings',
+        label: i18n.t('qms.qms_audit_plan_detail_page.k2'),
+        badge: findings.length,
+        content: (
+          <Box>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('qms.qms_audit_plan_detail_page.k22')}
+            </Typography>
+            {findings.length === 0 ? (
+              <Typography color='text.secondary'>
+                {i18n.t('qms.qms_audit_plan_detail_page.k23')}
+              </Typography>
+            ) : (
+              <TableContainer component={Paper}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k24')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k25')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k26')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k27')}</TableCell>
+                      <TableCell>{i18n.t('qms.qms_audit_plan_detail_page.k28')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {findings.map((f) => (
+                      <TableRow key={f.id}>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{f.finding_no}</TableCell>
+                        <TableCell>{f.title}</TableCell>
+                        <TableCell>{f.severity}</TableCell>
+                        <TableCell>{f.category}</TableCell>
+                        <TableCell>{f.status}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
-          </button>
-        ))}
-      </div>
-      {activeTab === 'info' && (
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k5')}
-            value={plan.plan_no}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k6')}
-            value={plan.audit_type}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k7')}
-            value={plan.auditor}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k8')}
-            value={plan.scope ?? '-'}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k9')}
-            value={plan.departments.join('、') || '-'}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k10')}
-            value={plan.auditors.join('、') || '-'}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k11')}
-            value={plan.start_date ? new Date(plan.start_date).toLocaleDateString('zh-CN') : '-'}
-          />
-          <Field
-            label={i18n.t('qms.qms_audit_plan_detail_page.k12')}
-            value={plan.end_date ? new Date(plan.end_date).toLocaleDateString('zh-CN') : '-'}
-          />
-          <div className='rounded-lg border p-3 md:col-span-2'>
-            <p className='text-xs text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k13')}</p>
-            <p className='mt-1 text-sm leading-relaxed'>{plan.description ?? '-'}</p>
-          </div>
-        </div>
-      )}
-      {activeTab === 'tasks' && (
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_audit_plan_detail_page.k14')}</h3>
-          {tasks.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k15')}</p>
-          ) : (
-            <table className='w-full text-sm'>
-              <thead>
-                <tr className='border-b text-left text-gray-600'>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k16')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k17')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k18')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k19')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k20')}</th>
-                  <th className='py-2'>{i18n.t('qms.qms_audit_plan_detail_page.k21')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tasks.map((t) => (
-                  <tr
-                    key={t.id}
-                    className='border-b'
-                  >
-                    <td className='py-2 pr-4 font-medium'>{t.task_no}</td>
-                    <td className='py-2 pr-4'>{t.title}</td>
-                    <td className='py-2 pr-4'>{t.assignee}</td>
-                    <td className='py-2 pr-4'>{t.priority}</td>
-                    <td className='py-2 pr-4'>{t.findings_count}</td>
-                    <td className='py-2'>{t.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-      {activeTab === 'findings' && (
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_audit_plan_detail_page.k22')}</h3>
-          {findings.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_audit_plan_detail_page.k23')}</p>
-          ) : (
-            <table className='w-full text-sm'>
-              <thead>
-                <tr className='border-b text-left text-gray-600'>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k24')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k25')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k26')}</th>
-                  <th className='py-2 pr-4'>{i18n.t('qms.qms_audit_plan_detail_page.k27')}</th>
-                  <th className='py-2'>{i18n.t('qms.qms_audit_plan_detail_page.k28')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {findings.map((f) => (
-                  <tr
-                    key={f.id}
-                    className='border-b'
-                  >
-                    <td className='py-2 pr-4 font-medium'>{f.finding_no}</td>
-                    <td className='py-2 pr-4'>{f.title}</td>
-                    <td className='py-2 pr-4'>{f.severity}</td>
-                    <td className='py-2 pr-4'>{f.category}</td>
-                    <td className='py-2'>{f.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-function Field({ label, value }: { label: string; value: string }) {
+          </Box>
+        ),
+      },
+    ];
+  }, [findings, plan, tasks]);
+
+  if (!plan) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert
+          severity='warning'
+          action={
+            <Button
+              color='inherit'
+              size='small'
+              onClick={handleBack}
+            >
+              {i18n.t('pages.qms_audit_plan_detail_page.k0')}
+            </Button>
+          }
+        >
+          {i18n.t('qms.qms_audit_plan_detail_page.k3')}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
-    <div className='rounded-lg border p-3'>
-      <p className='text-xs text-gray-500'>{label}</p>
-      <p className='mt-1 font-medium'>{value}</p>
-    </div>
+    <DetailPageTemplate
+      title={plan.plan_no}
+      subtitle={plan.title}
+      onBack={handleBack}
+      tabs={tabs}
+      headerContent={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <StatusBadge
+            fsm='audit_plan'
+            status={plan.status}
+          />
+          <FSMActionButtons
+            fsm='audit_plan'
+            currentStatus={plan.status}
+            onAction={handleAction}
+          />
+        </Box>
+      }
+    />
   );
 }

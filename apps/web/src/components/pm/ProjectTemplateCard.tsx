@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { Card, CardContent, CardHeader, Typography, Chip, Button } from '@mui/material';
 import React from 'react';
 
@@ -51,18 +52,18 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           <div>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {template.name}
             </Typography>
-            <p style={{ fontSize: '0.875rem', color: 'text.secondary' }}>{template.project_type}</p>
+            <p style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>{template.project_type}</p>
           </div>
         </div>
       </CardHeader>
       <CardContent sx={{ pt: 1 }}>
         <p
           style={{
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             color: 'grey.700',
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -78,7 +79,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             display: 'flex',
             alignItems: 'center',
             gap: 16,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             color: 'text.secondary',
             marginTop: 8,
           }}
@@ -114,7 +115,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
               sx={{
                 backgroundColor: 'primary.light',
                 color: 'primary.dark',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 height: 24,
               }}
             />

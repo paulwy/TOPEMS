@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -206,7 +207,7 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                   }
                   multiline
                   minRows={3}
-                  sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                  sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 />
               </Box>
             </Box>

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * @done V79 Phase 2 split
  * Database change history component - displays field change records
@@ -67,7 +68,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                 <TableCell
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                   }}
@@ -77,7 +78,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                 <TableCell
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                   }}
@@ -87,7 +88,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                 <TableCell
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                   }}
@@ -97,7 +98,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                 <TableCell
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                   }}
@@ -107,7 +108,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                 <TableCell
                   sx={{
                     fontWeight: 600,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                   }}
@@ -128,7 +129,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                   >
                     <TableCell
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'text.secondary',
                       }}
                     >
@@ -142,7 +143,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                           bgcolor: style.bgcolor,
                           color: style.color,
                           fontWeight: 500,
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         }}
                       />
                     </TableCell>
@@ -150,7 +151,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                       sx={{
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                       }}
                     >
@@ -158,7 +159,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'text.secondary',
                       }}
                     >
@@ -166,7 +167,7 @@ const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> = ({ dbC
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'text.secondary',
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',

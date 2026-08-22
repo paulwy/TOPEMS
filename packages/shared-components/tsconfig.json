@@ -16,8 +16,12 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "paths": {
+      "@topems/tokens": ["../tokens/src"],
+      "@topems/tokens/*": ["../tokens/src/*"],
       "@topems/shared-types": ["../shared-types/src"],
+      "@topems/shared-types/*": ["../shared-types/src/*"],
       "@topems/shared-utils": ["../shared-utils/src"],
+      "@topems/shared-utils/*": ["../shared-utils/src/*"],
       "*": ["./*"]
     }
   },

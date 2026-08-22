@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -37,7 +38,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         accessorKey: 'coordinates',
         header: t('gis.index.col_coordinates'),
         cell: ({ row }) => (
-          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             {row.original.latitude?.toFixed(4)}, {row.original.longitude?.toFixed(4)}
           </span>
         ),
@@ -67,7 +68,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         accessorKey: 'start_point',
         header: t('gis.index.col_start_point'),
         cell: ({ row }) => (
-          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             {row.original.start_point
               ? `${row.original.start_point[0].toFixed(4)}, ${row.original.start_point[1].toFixed(4)}`
               : ''}
@@ -78,7 +79,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         accessorKey: 'end_point',
         header: t('gis.index.col_end_point'),
         cell: ({ row }) => (
-          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             {row.original.end_point
               ? `${row.original.end_point[0].toFixed(4)}, ${row.original.end_point[1].toFixed(4)}`
               : ''}
@@ -115,7 +116,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
         accessorKey: 'coordinates',
         header: t('gis.index.col_coordinates'),
         cell: ({ row }) => (
-          <span style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             {row.original.latitude?.toFixed(4)}, {row.original.longitude?.toFixed(4)}
           </span>
         ),

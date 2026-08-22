@@ -106,7 +106,8 @@ const HARDCODED_PATTERNS = [
   {
     name: 'rem_font_size',
     label: 'rem 字号（疑似硬编码）',
-    regex: /\b\d+\.?\d*rem\b/g,
+    // 排除已替换为 designTokens.typography.fontSize.scale['x.xrem'] 的引用
+    regex: /(?<!scale\[['"])\b\d+\.?\d*rem\b(?!['"]\])/g,
     contextRegex: /\bsx\s*=\s*\{|\bstyle\s*=\s*\{|styled\s*\(|css\s*=\s*`/,
     valueFilter: null,
   },

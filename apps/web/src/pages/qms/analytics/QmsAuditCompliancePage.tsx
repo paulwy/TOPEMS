@@ -7,6 +7,7 @@
  * 数据来自 useQmsMock 的 auditPlans / auditTasks / auditFindings。
  */
 import { useMemo } from 'react';
+import { Grid, Paper, Typography } from '@mui/material';
 import {
   ResponsiveContainer,
   BarChart,
@@ -20,16 +21,18 @@ import {
   RadialBar,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
 
 export default function QmsAuditCompliancePage() {
   const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
-  const plans = data.auditPlans ?? [];
-  const tasks = data.auditTasks ?? [];
-  const findings = data.auditFindings ?? [];
+  const plans = useMemo(() => data.auditPlans ?? [], [data.auditPlans]);
+  const tasks = useMemo(() => data.auditTasks ?? [], [data.auditTasks]);
+  const findings = useMemo(() => data.auditFindings ?? [], [data.auditFindings]);
+
   const overall = useMemo(() => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter((t) => t.status === 'completed').length;
@@ -57,6 +60,7 @@ export default function QmsAuditCompliancePage() {
       planCompletionRate,
     };
   }, [plans, tasks, findings]);
+
   const byDepartment = useMemo(() => {
     const map = new Map<
       string,
@@ -99,6 +103,7 @@ export default function QmsAuditCompliancePage() {
       findingCloseRate: v.findings > 0 ? Math.round((v.closed / v.findings) * 1000) / 10 : 0,
     }));
   }, [plans, tasks, findings]);
+
   const byAuditType = useMemo(() => {
     const map = new Map<
       string,
@@ -119,6 +124,37 @@ export default function QmsAuditCompliancePage() {
       complianceRate: v.total > 0 ? Math.round((v.completed / v.total) * 1000) / 10 : 0,
     }));
   }, [plans]);
+
+  const statCards = useMemo<StatCard[]>(
+    () => [
+      {
+        id: 'planCompletionRate',
+        title: t('qms.qms_audit_compliance_page.k4'),
+        value: overall.planCompletionRate,
+        suffix: '%',
+        color: 'secondary',
+        description: `${overall.completedPlans} / ${overall.totalPlans}`,
+      },
+      {
+        id: 'taskCompletionRate',
+        title: t('qms.qms_audit_compliance_page.k5'),
+        value: overall.taskCompletionRate,
+        suffix: '%',
+        color: 'success',
+        description: `${overall.completedTasks} / ${overall.totalTasks}`,
+      },
+      {
+        id: 'findingCloseRate',
+        title: t('qms.qms_audit_compliance_page.k6'),
+        value: overall.findingCloseRate,
+        suffix: '%',
+        color: 'warning',
+        description: `${overall.closedFindings} / ${overall.totalFindings}`,
+      },
+    ],
+    [overall, t]
+  );
+
   const radialData = [
     {
       name: t('qms.qms_audit_compliance_page.k0'),
@@ -136,142 +172,145 @@ export default function QmsAuditCompliancePage() {
       fill: designTokens.colors.warning.main,
     },
   ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{t('qms.qms_audit_compliance_page.k3')}</h1>
-        <span className='text-sm text-gray-500'>
-          {i18n.t('qms.analytics.auditCompliance.k0')}
-          {overall.totalPlans} {i18n.t('qms.analytics.auditCompliance.k1')}
-          {overall.totalTasks} {i18n.t('qms.analytics.auditCompliance.k2')}
-          {overall.totalFindings}
-        </span>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-indigo-600'>{overall.planCompletionRate}%</p>
-          <p className='mt-1 text-xs text-gray-500'>
-            {overall.completedPlans} / {overall.totalPlans}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k5')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{overall.taskCompletionRate}%</p>
-          <p className='mt-1 text-xs text-gray-500'>
-            {overall.completedTasks} / {overall.totalTasks}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_audit_compliance_page.k6')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{overall.findingCloseRate}%</p>
-          <p className='mt-1 text-xs text-gray-500'>
-            {overall.closedFindings} / {overall.totalFindings}
-          </p>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4 md:col-span-1'>
-          <h3 className='mb-2 font-semibold'>{t('qms.qms_audit_compliance_page.k7')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={240}
-          >
-            <RadialBarChart
-              innerRadius='30%'
-              outerRadius='100%'
-              data={radialData}
-              startAngle={90}
-              endAngle={-270}
+    <StatsPageTemplate
+      title={t('qms.qms_audit_compliance_page.k3')}
+      subtitle={`${i18n.t('qms.analytics.auditCompliance.k0')}${overall.totalPlans} ${i18n.t(
+        'qms.analytics.auditCompliance.k1'
+      )}${overall.totalTasks} ${i18n.t('qms.analytics.auditCompliance.k2')}${overall.totalFindings}`}
+      statCards={statCards}
+      showTimeRange={false}
+      showSearch={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+    >
+      <Grid
+        container
+        spacing={3}
+      >
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              <RadialBar
-                background
-                dataKey='value'
-                cornerRadius={6}
-              />
-              <Legend
-                iconSize={10}
-                layout='vertical'
-                verticalAlign='middle'
-                align='right'
-              />
-              <Tooltip />
-            </RadialBarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className='rounded-lg border p-4 md:col-span-2'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('qms.analytics.auditCompliance.k3')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={240}
-          >
-            <BarChart
-              data={byDepartment}
-              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              {t('qms.qms_audit_compliance_page.k7')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={240}
             >
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='department'
-                fontSize={11}
-              />
-              <YAxis
-                domain={[0, 100]}
-                unit='%'
-                fontSize={11}
-              />
-              <Tooltip />
-              <Legend />
-              <Bar
-                dataKey='completionRate'
-                name={t('qms.qms_audit_compliance_page.k8')}
-                fill={designTokens.colors.success.dark}
-                barSize={20}
-              />
-              <Bar
-                dataKey='findingCloseRate'
-                name={t('qms.qms_audit_compliance_page.k9')}
-                fill={designTokens.colors.warning.main}
-                barSize={20}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+              <RadialBarChart
+                innerRadius='30%'
+                outerRadius='100%'
+                data={radialData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <RadialBar
+                  background
+                  dataKey='value'
+                  cornerRadius={6}
+                />
+                <Legend
+                  iconSize={10}
+                  layout='vertical'
+                  verticalAlign='middle'
+                  align='right'
+                />
+                <Tooltip />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
 
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{t('qms.qms_audit_compliance_page.k10')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={260}
-        >
-          <BarChart
-            data={byAuditType}
-            margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-          >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='auditType'
-              fontSize={11}
-            />
-            <YAxis
-              domain={[0, 100]}
-              unit='%'
-              fontSize={11}
-            />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey='complianceRate'
-              name={t('qms.qms_audit_compliance_page.k11')}
-              fill={designTokens.colors.secondary.dark}
-              barSize={32}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('qms.analytics.auditCompliance.k3')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={240}
+            >
+              <BarChart
+                data={byDepartment}
+                margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='department'
+                  fontSize={11}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  unit='%'
+                  fontSize={11}
+                />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey='completionRate'
+                  name={t('qms.qms_audit_compliance_page.k8')}
+                  fill={designTokens.colors.success.dark}
+                  barSize={20}
+                />
+                <Bar
+                  dataKey='findingCloseRate'
+                  name={t('qms.qms_audit_compliance_page.k9')}
+                  fill={designTokens.colors.warning.main}
+                  barSize={20}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {t('qms.qms_audit_compliance_page.k10')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={260}
+            >
+              <BarChart
+                data={byAuditType}
+                margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='auditType'
+                  fontSize={11}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  unit='%'
+                  fontSize={11}
+                />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey='complianceRate'
+                  name={t('qms.qms_audit_compliance_page.k11')}
+                  fill={designTokens.colors.secondary.dark}
+                  barSize={32}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+      </Grid>
+    </StatsPageTemplate>
   );
 }

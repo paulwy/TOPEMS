@@ -7,11 +7,15 @@
  */
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Paper, Grid, Typography, Button, Chip, Alert } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
+import { DetailPageTemplate } from '@/components/templates';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
+
 function getSteps() {
   return [
     {
@@ -64,6 +68,7 @@ function getSteps() {
     },
   ] as const;
 }
+
 function getSeverityLabels(): Record<string, string> {
   return {
     critical: i18n.t('qms.qms_eight_d_detail_page.k0'),
@@ -71,6 +76,7 @@ function getSeverityLabels(): Record<string, string> {
     minor: i18n.t('qms.qms_eight_d_detail_page.k2'),
   };
 }
+
 export default function QmsEightDDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -79,169 +85,285 @@ export default function QmsEightDDetailPage() {
     const list = data.eightDReports ?? [];
     return list.find((r) => r.id === id) ?? list[0];
   }, [data.eightDReports, id]);
-  if (!report) {
-    return (
-      <div className='p-4'>
-        <p className='text-gray-600'>{i18n.t('qms.qms_eight_d_detail_page.8d_3')}</p>
-        <button
-          onClick={() => navigate(QMS_PATHS.eightd)}
-          className='mt-2 text-blue-600 underline'
-        >
-          {i18n.t('pages.qms_eight_d_detail_page.8d_0')}
-        </button>
-      </div>
-    );
-  }
+
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <button
-            onClick={() => navigate(QMS_PATHS.eightd)}
-            className='mb-2 text-sm text-blue-600 hover:underline'
-          >
-            {i18n.t('pages.qms_eight_d_detail_page.8d_1')}
-          </button>
-          <h1 className='text-2xl font-bold'>{report.reportNo}</h1>
-          <p className='mt-1 text-sm text-gray-500'>{report.title}</p>
-        </div>
-        <StatusBadge
-          fsm='eight_d'
-          status={report.status}
-        />
-      </div>
-      <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {i18n.t('qms.qms_eight_d_detail_page.k4')}
-        </p>
-        <FSMActionButtons
-          fsm='eight_d'
-          currentStatus={report.status}
-          onAction={handleAction}
-        />
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k5')}
-          value={`D${report.currentStage}`}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k6')}
-          value={getSeverityLabels()[report.severity] ?? report.severity}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k7')}
-          value={report.teamLeader ?? '-'}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k8')}
-          value={report.customer ?? '-'}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k9')}
-          value={report.productName ?? '-'}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k10')}
-          value={report.source ?? '-'}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k11')}
-          value={report.dueDate ? new Date(report.dueDate).toLocaleDateString('zh-CN') : '-'}
-        />
-        <Field
-          label={i18n.t('qms.qms_eight_d_detail_page.k12')}
-          value={report.closedAt ? new Date(report.closedAt).toLocaleString('zh-CN') : '-'}
-        />
-      </div>
-      <div className='rounded-lg border p-4'>
-        <p className='text-xs text-gray-500'>{i18n.t('qms.qms_eight_d_detail_page.k13')}</p>
-        <p className='mt-1 text-sm leading-relaxed'>{report.problemDescription}</p>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-4 font-semibold'>{i18n.t('qms:qms_eight_d_detail_page.8d_2')}</h3>
-        <ol className='relative space-y-4 border-l-2 border-blue-200 pl-6'>
+
+  if (!report) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert
+          severity='info'
+          action={
+            <Button
+              color='inherit'
+              size='small'
+              onClick={() => navigate(QMS_PATHS.eightd)}
+            >
+              {i18n.t('pages.qms_eight_d_detail_page.8d_0')}
+            </Button>
+          }
+        >
+          {i18n.t('qms.qms_eight_d_detail_page.8d_3')}
+        </Alert>
+      </Box>
+    );
+  }
+
+  const infoFields = [
+    { label: i18n.t('qms.qms_eight_d_detail_page.k5'), value: `D${report.currentStage}` },
+    {
+      label: i18n.t('qms.qms_eight_d_detail_page.k6'),
+      value: getSeverityLabels()[report.severity] ?? report.severity,
+    },
+    { label: i18n.t('qms.qms_eight_d_detail_page.k7'), value: report.teamLeader ?? '-' },
+    { label: i18n.t('qms.qms_eight_d_detail_page.k8'), value: report.customer ?? '-' },
+    { label: i18n.t('qms.qms_eight_d_detail_page.k9'), value: report.productName ?? '-' },
+    { label: i18n.t('qms.qms_eight_d_detail_page.k10'), value: report.source ?? '-' },
+    {
+      label: i18n.t('qms.qms_eight_d_detail_page.k11'),
+      value: report.dueDate ? new Date(report.dueDate).toLocaleDateString('zh-CN') : '-',
+    },
+    {
+      label: i18n.t('qms.qms_eight_d_detail_page.k12'),
+      value: report.closedAt ? new Date(report.closedAt).toLocaleString('zh-CN') : '-',
+    },
+  ];
+
+  const sections = [
+    {
+      id: 'summary',
+      content: (
+        <Grid
+          container
+          spacing={2}
+        >
+          {infoFields.map((field) => (
+            <Grid
+              size={{ xs: 12, md: 6, lg: 3 }}
+              key={field.label}
+            >
+              <Paper
+                variant='outlined'
+                sx={{ p: 2, borderRadius: 2 }}
+              >
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{ display: 'block' }}
+                >
+                  {field.label}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ mt: 0.5, fontWeight: 500 }}
+                >
+                  {field.value}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      ),
+    },
+    {
+      id: 'description',
+      title: i18n.t('qms.qms_eight_d_detail_page.k13'),
+      content: (
+        <Typography
+          variant='body2'
+          sx={{ lineHeight: 1.75 }}
+        >
+          {report.problemDescription}
+        </Typography>
+      ),
+    },
+    {
+      id: 'steps',
+      title: i18n.t('qms:qms_eight_d_detail_page.8d_2'),
+      content: (
+        <Box
+          component='ol'
+          sx={{
+            position: 'relative',
+            listStyle: 'none',
+            p: 0,
+            m: 0,
+            pl: 4,
+            borderLeft: 2,
+            borderColor: designTokens.colors.primary[200],
+          }}
+        >
           {getSteps().map((step, idx) => {
             const isDone = report[step.done as keyof typeof report] as boolean;
             const content = report[step.field as keyof typeof report] as string | undefined;
             const isCurrent = report.currentStage === idx + 1;
+            const stepColor = isDone
+              ? designTokens.colors.success.main
+              : isCurrent
+                ? designTokens.colors.primary.main
+                : designTokens.colors.grey[300];
             return (
-              <li
+              <Box
+                component='li'
                 key={step.id}
-                className='relative'
+                sx={{ position: 'relative', mb: 3, '&:last-child': { mb: 0 } }}
               >
-                <span
-                  className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
-                    isDone ? 'bg-green-500' : isCurrent ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: -39,
+                    top: 0,
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: stepColor,
+                    color: designTokens.colors.common.white,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                    fontWeight: 700,
+                  }}
                 >
                   {idx + 1}
-                </span>
-                <div
-                  className={`rounded-lg border p-3 ${isCurrent ? 'border-blue-400 bg-blue-50' : ''}`}
+                </Box>
+                <Paper
+                  variant='outlined'
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    borderColor: isCurrent ? designTokens.colors.primary.main : undefined,
+                    bgcolor: isCurrent ? designTokens.colors.primary[50] : undefined,
+                  }}
                 >
-                  <div className='flex items-center justify-between'>
-                    <p className='text-sm font-semibold'>{step.label}</p>
-                    <span
-                      className={`rounded px-2 py-0.5 text-xs ${
-                        isDone
-                          ? 'bg-green-100 text-green-700'
-                          : isCurrent
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-500'
-                      }`}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: content ? 1 : 0,
+                    }}
+                  >
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 600 }}
                     >
-                      {isDone
-                        ? i18n.t('qms.qms_eight_d_detail_page.k16')
-                        : isCurrent
-                          ? i18n.t('qms.qms_eight_d_detail_page.k15')
-                          : i18n.t('qms.qms_eight_d_detail_page.k14')}
-                    </span>
-                  </div>
-                  {content && <p className='mt-2 text-sm text-gray-700'>{content}</p>}
-                </div>
-              </li>
+                      {step.label}
+                    </Typography>
+                    <Chip
+                      size='small'
+                      label={
+                        isDone
+                          ? i18n.t('qms.qms_eight_d_detail_page.k16')
+                          : isCurrent
+                            ? i18n.t('qms.qms_eight_d_detail_page.k15')
+                            : i18n.t('qms.qms_eight_d_detail_page.k14')
+                      }
+                      sx={{
+                        bgcolor: isDone
+                          ? designTokens.colors.success[100]
+                          : isCurrent
+                            ? designTokens.colors.primary[100]
+                            : designTokens.colors.grey[100],
+                        color: isDone
+                          ? designTokens.colors.success[700]
+                          : isCurrent
+                            ? designTokens.colors.primary[700]
+                            : designTokens.colors.grey[500],
+                      }}
+                    />
+                  </Box>
+                  {content && (
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {content}
+                    </Typography>
+                  )}
+                </Paper>
+              </Box>
             );
           })}
-        </ol>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_eight_d_detail_page.k17')}</h3>
-        <ul className='space-y-2 text-sm'>
-          <li className='flex gap-3'>
-            <span className='text-gray-500'>
+        </Box>
+      ),
+    },
+    {
+      id: 'audit',
+      title: i18n.t('qms.qms_eight_d_detail_page.k17'),
+      content: (
+        <Box
+          component='ul'
+          sx={{ listStyle: 'none', p: 0, m: 0 }}
+        >
+          <Box
+            component='li'
+            sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}
+          >
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               [{report.createdAt ? new Date(report.createdAt).toLocaleString('zh-CN') : '-'}]
-            </span>
-            <span>{i18n.t('qms.qms_eight_d_detail_page.8dd1_18')}</span>
-          </li>
+            </Typography>
+            <Typography variant='body2'>{i18n.t('qms.qms_eight_d_detail_page.8dd1_18')}</Typography>
+          </Box>
           {report.currentStage >= 4 && (
-            <li className='flex gap-3'>
-              <span className='text-gray-500'>{i18n.t('qms:qms_eight_d_detail_page.k1')}</span>
-              <span>{i18n.t('qms.qms_eight_d_detail_page.d4_19')}</span>
-            </li>
+            <Box
+              component='li'
+              sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}
+            >
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {i18n.t('qms:qms_eight_d_detail_page.k1')}
+              </Typography>
+              <Typography variant='body2'>{i18n.t('qms.qms_eight_d_detail_page.d4_19')}</Typography>
+            </Box>
           )}
           {report.closedAt && (
-            <li className='flex gap-3'>
-              <span className='text-gray-500'>
+            <Box
+              component='li'
+              sx={{ display: 'flex', gap: 1.5 }}
+            >
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 [{new Date(report.closedAt).toLocaleString('zh-CN')}]
-              </span>
-              <span>{i18n.t('qms:qms_eight_d_detail_page.8d_0')}</span>
-            </li>
+              </Typography>
+              <Typography variant='body2'>{i18n.t('qms:qms_eight_d_detail_page.8d_0')}</Typography>
+            </Box>
           )}
-        </ul>
-      </div>
-    </div>
-  );
-}
-function Field({ label, value }: { label: string; value: string }) {
+        </Box>
+      ),
+    },
+  ];
+
   return (
-    <div className='rounded-lg border p-3'>
-      <p className='text-xs text-gray-500'>{label}</p>
-      <p className='mt-1 font-medium'>{value}</p>
-    </div>
+    <DetailPageTemplate
+      title={report.reportNo}
+      subtitle={report.title}
+      detailItemName={report.reportNo}
+      onBack={() => navigate(QMS_PATHS.eightd)}
+      headerContent={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <StatusBadge
+            fsm='eight_d'
+            status={report.status}
+          />
+          <FSMActionButtons
+            fsm='eight_d'
+            currentStatus={report.status}
+            onAction={handleAction}
+          />
+        </Box>
+      }
+      sections={sections}
+    />
   );
 }

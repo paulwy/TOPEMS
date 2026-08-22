@@ -401,7 +401,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 16px',
+                margin: `0 auto ${designTokens.spacing.md}px`,
               }}
             >
               {getLevelIcon(level)}

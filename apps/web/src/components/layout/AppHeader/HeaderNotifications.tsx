@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -124,7 +125,7 @@ export const HeaderNotifications: React.FC = () => {
             max={99}
             sx={{
               '& .MuiBadge-badge': {
-                fontSize: '0.625rem',
+                fontSize: designTokens.typography.fontSize.scale['0.625rem'],
                 height: 18,
                 minWidth: 18,
                 top: 2,
@@ -161,12 +162,12 @@ export const HeaderNotifications: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+          <Typography sx={{ fontWeight: 600, fontSize: designTokens.typography.fontSize.scale['0.9375rem'] }}>
             {i18n.t('components.header_notifications.k0')}
             {unreadCount > 0 && (
               <Typography
                 component='span'
-                sx={{ ml: 1, color: 'error.main', fontSize: '0.75rem' }}
+                sx={{ ml: 1, color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
               >
                 ({unreadCount}
                 {i18n.t('components.header_notifications.k0')}
@@ -212,7 +213,7 @@ export const HeaderNotifications: React.FC = () => {
                 p: 6,
                 textAlign: 'center',
                 color: 'text.secondary',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
               {i18n.t('components.header_notifications.k1')}
@@ -249,7 +250,7 @@ export const HeaderNotifications: React.FC = () => {
                       height: 32,
                       flexShrink: 0,
                       bgcolor: avatar.color,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     }}
                   >
                     {avatar.icon}
@@ -257,7 +258,7 @@ export const HeaderNotifications: React.FC = () => {
                   <Box sx={{ flex: 1, minWidth: 0, pr: 4 }}>
                     <Typography
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: read ? 400 : 600,
                         color: 'text.primary',
                       }}
@@ -266,7 +267,7 @@ export const HeaderNotifications: React.FC = () => {
                     </Typography>
                     <Typography
                       sx={{
-                        fontSize: '0.8125rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
                         color: 'text.secondary',
                         mt: 0.25,
                         display: 'block',
@@ -276,7 +277,7 @@ export const HeaderNotifications: React.FC = () => {
                     </Typography>
                     <Typography
                       sx={{
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         color: 'text.disabled',
                         mt: 0.5,
                         display: 'block',
@@ -311,7 +312,7 @@ export const HeaderNotifications: React.FC = () => {
         </Box>
         <Divider />
         <MenuItem
-          sx={{ justifyContent: 'center', py: 1.5, fontSize: '0.8125rem' }}
+          sx={{ justifyContent: 'center', py: 1.5, fontSize: designTokens.typography.fontSize.scale['0.8125rem'] }}
           onClick={() => {
             navigate(NOTIFICATION_PATHS.list);
             handleNotificationClose();

@@ -205,6 +205,7 @@ pub async fn n_plus_one_middleware(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_query_counter_record() {
@@ -266,6 +267,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_from_env_threshold() {
         // 注意：env var 测试在并行执行下可能存在竞争，这里仅验证读取逻辑
         std::env::set_var("NPLUSONE_THRESHOLD", "50");
@@ -275,6 +277,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_from_env_enabled_flag() {
         std::env::set_var("NPLUSONE_ENABLED", "false");
         let cfg = NPlusOneConfig::from_env();
@@ -293,6 +296,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_config_from_env_invalid_threshold_falls_back() {
         std::env::set_var("NPLUSONE_THRESHOLD", "not-a-number");
         let cfg = NPlusOneConfig::from_env();

@@ -84,7 +84,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
       <div
         style={{
           backgroundColor: 'common.white',
-          padding: `${designTokens.spacing.md} 16px`,
+          padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
           borderRadius: 'md',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',

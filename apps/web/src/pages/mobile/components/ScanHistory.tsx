@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Box,
@@ -133,7 +134,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
                       label={item.format}
                       size='small'
                       variant='outlined'
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   </Box>
                 }

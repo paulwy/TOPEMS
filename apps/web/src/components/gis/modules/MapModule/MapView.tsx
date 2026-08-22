@@ -118,7 +118,7 @@ const MeasureTooltip: React.FC<{
       position: 'absolute',
       backgroundColor: 'var(--mui-palette-grey-800)',
       color: 'var(--mui-palette-common-var(--color-primary-foreground))',
-      fontSize: '0.75rem',
+      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
       padding: '0.25rem 0.5rem',
       borderRadius: '0.25rem',
       boxShadow: `0 10px 15px -3px ${designTokens.colors.action.selected}, 0 4px 6px -2px ${designTokens.colors.action.hover}`,
@@ -221,7 +221,7 @@ const DetailsPanel: React.FC<{
         <div style={{ marginBottom: '1rem' }}>
           <div
             style={{
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: theme.palette.text.secondary,
               marginBottom: '0.25rem',
             }}
@@ -236,7 +236,7 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
@@ -252,7 +252,7 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
@@ -268,7 +268,7 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
@@ -279,7 +279,7 @@ const DetailsPanel: React.FC<{
               style={{
                 padding: '0.25rem 0.5rem',
                 borderRadius: '9999px',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 fontWeight: 500,
                 ...getStatusStyles(selectedItem.status),
               }}
@@ -292,7 +292,7 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
@@ -308,7 +308,7 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
@@ -324,14 +324,14 @@ const DetailsPanel: React.FC<{
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
               {i18n.t('components.map_view.k6')}
             </div>
-            <div style={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
+            <div style={{ color: theme.palette.text.secondary, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {selectedItem.description}
             </div>
           </div>
@@ -344,7 +344,7 @@ const DetailsPanel: React.FC<{
         >
           <div
             style={{
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: theme.palette.text.secondary,
               marginBottom: '0.25rem',
             }}
@@ -354,7 +354,7 @@ const DetailsPanel: React.FC<{
           <div
             style={{
               color: 'var(--mui-palette-text-secondary)',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               fontFamily: 'monospace',
             }}
           >
@@ -694,7 +694,7 @@ const MapView: React.FC<MapViewProps> = ({
                       <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
                         {pipeline.name}
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                      <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -739,7 +739,7 @@ const MapView: React.FC<MapViewProps> = ({
                         {point.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                    <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
                       <div>
                         {i18n.t('gis.mapView.k0')} {point.device_type}
                       </div>
@@ -762,7 +762,7 @@ const MapView: React.FC<MapViewProps> = ({
                     {point.description && (
                       <div
                         style={{
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: theme.palette.text.secondary,
                           borderTop: '1px solid grey.200',
                           paddingTop: '0.5rem',
@@ -778,7 +778,7 @@ const MapView: React.FC<MapViewProps> = ({
                         width: '100%',
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'cyan.600',
                         backgroundColor: 'cyan.50',
                         borderRadius: '0.25rem',
@@ -836,7 +836,7 @@ const MapView: React.FC<MapViewProps> = ({
                         {location.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+                    <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
                       <div>
                         {i18n.t('gis.mapView.k0')} {location.location_type}
                       </div>
@@ -868,7 +868,7 @@ const MapView: React.FC<MapViewProps> = ({
                         width: '100%',
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'cyan.600',
                         backgroundColor: 'cyan.50',
                         borderRadius: '0.25rem',
@@ -1053,7 +1053,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <span
             style={{
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               fontWeight: 500,
               color: 'var(--mui-palette-text-secondary)',
             }}
@@ -1076,7 +1076,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: '0.75rem', color: 'yellow.700' }}>
+          <span style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'yellow.700' }}>
             {i18n.t('components.map_view.k11')}
           </span>
         </div>

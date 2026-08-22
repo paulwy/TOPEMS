@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useMemo } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -382,11 +383,11 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               style={
                 {
                   width: '100%',
-                  padding: '8px 12px 8px 40px',
+                  padding: `${designTokens.spacing.sm}px 12px ${designTokens.spacing.sm}px 40px`,
                   borderRadius: 8,
                   border: '1px solid',
                   borderColor: theme.palette.divider,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   outline: 'none',
                 } as React.CSSProperties
               }
@@ -475,7 +476,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               label={getPriorityLabel(card.priority)}
               size='small'
               color={getPriorityColor(card.priority) as React.ComponentProps<typeof Chip>['color']}
-              sx={{ height: 20, fontSize: '0.6rem' }}
+              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.6rem'] }}
             />
           )}
           {card.tags?.map((tag, index) => (
@@ -485,7 +486,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               size='small'
               sx={{
                 height: 20,
-                fontSize: '0.6rem',
+                fontSize: designTokens.typography.fontSize.scale['0.6rem'],
                 bgcolor:
                   tag.color || (theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.100'),
                 color: tag.color || (theme.palette.mode === 'dark' ? 'grey.400' : 'grey.700'),
@@ -580,7 +581,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             {card.assignee && (
               <Avatar
                 src={card.assignee.avatar}
-                sx={{ width: 24, height: 24, fontSize: '0.7rem' }}
+                sx={{ width: 24, height: 24, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               >
                 {card.assignee.name.charAt(0)}
               </Avatar>
@@ -650,7 +651,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               <Chip
                 label={column.cards.length}
                 size='small'
-                sx={{ height: 20, fontSize: '0.65rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
               />
               {column.limit && (
                 <Typography

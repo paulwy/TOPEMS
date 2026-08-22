@@ -122,7 +122,7 @@ const getLogFields = (): SchemaField[] => [
           <Typography
             variant='body2'
             color='text.secondary'
-            sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+            sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
           >
             {formatTimeWithMs(ts)}
           </Typography>
@@ -206,7 +206,7 @@ const getLogFields = (): SchemaField[] => [
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
-          sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}
+          sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}
         >
           {row.trace_id as string}
         </Typography>
@@ -468,7 +468,7 @@ export const getLogSchema = (): EntitySchema => {
                   </Typography>
                   <Typography
                     variant='body2'
-                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                   >
                     {row.trace_id as string}
                   </Typography>

@@ -37,19 +37,19 @@ interface TreeNodeItemProps {
 const densityStyles = {
   compact: {
     padding: `${designTokens.spacing.xs} 8px`,
-    fontSize: '0.875rem',
+    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
     iconSize: 16,
     indent: 16,
   },
   normal: {
     padding: `${designTokens.spacing.sm} 12px`,
-    fontSize: '1rem',
+    fontSize: designTokens.typography.fontSize.scale['1rem'],
     iconSize: 20,
     indent: 24,
   },
   comfortable: {
     padding: `${designTokens.spacing.md} 16px`,
-    fontSize: '1.125rem',
+    fontSize: designTokens.typography.fontSize.scale['1.125rem'],
     iconSize: 24,
     indent: 32,
   },
@@ -181,7 +181,7 @@ function TreeNodeItem({
               color='primary'
               sx={{
                 '& .MuiBadge-badge': {
-                  fontSize: '0.75rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                   height: designTokens.spacing.lg,
                   minWidth: '20px',
                 },

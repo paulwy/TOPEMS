@@ -162,11 +162,11 @@
 | 指标 | 当前值 | 目标值 |
 |------|--------|--------|
 | 页面总数 | 537 | 控制增长 |
-| 模板覆盖率 | 78.4% | ≥ 80%（阶段 3）/ ≥ 90%（长期） |
-| DataTable 使用率 | 45.4% | ≥ 80% |
+| 模板覆盖率 | 82.1% | ≥ 80%（阶段 3）/ ≥ 90%（长期） |
+| DataTable 使用率 | 45.3% | ≥ 80% |
 | PageContainer 使用率 | 57.7% | ≥ 90% |
-| 公共/共享组件使用率 | 59.8% | ≥ 85% |
-| 硬编码样式问题 | 106 处 / 28 文件 | 新增 0，存量 ≤ 50 |
+| 公共/共享组件使用率 | 57.9% | ≥ 85% |
+| 硬编码样式问题 | 103 处 / 28 文件 | 新增 0，存量 ≤ 50 |
 | Token 合规率 | 待精确统计 | 新增 100%，存量 ≥ 90% |
 
 ---
@@ -204,3 +204,9 @@ CSV 字段：阶段、编号、任务、负责人、优先级、计划周期、�
 | V1.7 | 2026-08-22 | 设计系统样式硬编码清理收尾：完成剩余 6 处 rem 字号/间距硬编码替换（`PerformanceTestPage` 4 处、`DashboardPage` 2 处）；设计系统审计扫描回归通过；硬编码样式问题由 162 处降至 113 处；tsc/eslint 通过 |
 | V1.8 | 2026-08-22 | 阶段 1.2 system 模块：将 `system/AuditLogPage` 迁移到 `ListPageTemplate`，保留统计卡片、筛选、分页、行操作、详情弹窗；移除 `AuditLogFilters` 与 `AuditLogTable` 自定义组件；tsc/eslint 通过；模板覆盖率由 77.7% 提升至 77.8% |
 | V1.9 | 2026-08-22 | 阶段 1.2 下一批 List 页迁移：将 `system/BackupPage` 重构为 `ListPageTemplate`（保留创建/恢复/详情弹窗、行操作），`oa/AnnouncementPage`、`lims/InspectionResultPage` 接入 `ListPageTemplate` 并预留列结构；tsc/eslint 通过；模板覆盖率由 77.8% 提升至 78.4%，硬编码样式问题由 113 处降至 106 处 |
+| V1.10 | 2026-08-22 | 阶段 1.2 report 模块：将 `report/ReportSchedulePage` 迁移到 `ListPageTemplate`，保留创建/编辑/删除/执行/历史查看功能；tsc/eslint 通过；模板覆盖率由 78.4% 提升至 78.8%，硬编码样式问题由 106 处降至 105 处 |
+| V1.11 | 2026-08-22 | 阶段 1.2 第一批批量迁移：将 `automation/AutomationRulesPage`、`automation/AutomationRunsPage`、`automation/AutomationVariablesPage`、`workflow/WorkflowVersionHistoryPage` 迁移到 `ListPageTemplate`，保留全部行操作、弹窗与 API 行为；修复 `AutomationVariable` 以 `key` 为主键导致的类型不匹配；tsc/eslint 通过；模板覆盖率由 78.8% 提升至 79.5%，未标准化页面由 114 降至 110 |
+| V1.12 | 2026-08-22 | 阶段 1.2 第二批批量迁移：将 `lowcode/DataSourcePage`、`shared/AttachmentsPage`、`workflow/WorkflowNotificationCenterPage`、`report/TemplateManagementPage` 迁移到 `ListPageTemplate`，保留搜索/筛选/视图切换/行操作/弹窗；`shared/CommentsPage` 因嵌套回复 UI 不适合列表模板，顺延至后续专项；tsc/eslint 通过；模板覆盖率由 79.5% 提升至 80.3%，达成阶段 3 ≥80% 目标，未标准化页面由 110 降至 106 |
+| V1.13 | 2026-08-22 | 阶段 1.2 第三批批量迁移：将 `erp/DatabaseManagementPage`、`admin/MonitoringAlertPage`、`admin/PermissionAuditPage` 迁移到 `ListPageTemplate`，处理多标签页场景（tables/backups、alerts/rules/health、permissionChanges/accessControl），保留全部筛选/搜索/导出/弹窗/行操作；修复 `DatabaseManagementPage` 中 `TableInfo` 无主键导致的类型不匹配；tsc/eslint 通过；模板覆盖率由 80.3% 提升至 80.8%，未标准化页面由 106 降至 103 |
+| V1.14 | 2026-08-22 | 阶段 1.2 第四批批量迁移：将 `pm/PmTemplatePage`、`help/GuidePage`、`plugin/PluginMarketplacePage`、`shared/FavoritesPage` 迁移到 `ListPageTemplate`，覆盖卡片视图、网格/列表切换、多标签列表场景，保留搜索/筛选/排序/弹窗/行操作；修复 `FavoritesPage` 中 `RecentSearch` 列 render 参数类型推断问题；tsc/eslint 通过；模板覆盖率由 80.8% 提升至 81.6%，未标准化页面由 103 降至 99，硬编码样式问题由 105 降至 103 |
+| V1.15 | 2026-08-22 | 阶段 1.2 第五批批量迁移：将 `lowcode/WorkflowConfigPage`、`desktop/AuditLogPage` 迁移到 `ListPageTemplate`，将 `automation/AutomationDashboardPage` 迁移到 `StatsPageTemplate`；`mobile/PushNotificationPage` 因 `ListPageTemplate` 的 `renderRowActions` 在移动端卡片视图未生效、强制表格视图会改变移动端体验，暂不强制迁移；修复 `AutomationDashboardPage` 表格 render 值类型与 `AuditLogPage` actions variant 类型；tsc/eslint 通过；模板覆盖率由 81.6% 提升至 82.1%，未标准化页面由 99 降至 96 |

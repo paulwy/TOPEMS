@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -3419,7 +3420,7 @@ export function ListPageTemplate<
                     to={crumb.href}
                     color='inherit'
                     underline='hover'
-                    sx={{ fontSize: '0.875rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                   >
                     {crumb.label}
                   </Link>
@@ -3427,7 +3428,7 @@ export function ListPageTemplate<
                   <Typography
                     key={index}
                     color='text.primary'
-                    sx={{ fontSize: '0.875rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                   >
                     {crumb.label}
                   </Typography>

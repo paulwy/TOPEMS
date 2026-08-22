@@ -353,7 +353,7 @@ export function ChartAnnotations({
             backgroundColor: 'common.white',
             backdropFilter: 'blur(8px)',
             borderRadius: 8,
-            padding: '4px 8px',
+            padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
           }}
         >
           <Chip

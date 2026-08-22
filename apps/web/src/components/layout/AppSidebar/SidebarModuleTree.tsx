@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useRef, useState, useMemo } from 'react';
 import { Box, Typography, Tooltip, Chip, Badge as MuiBadge, Popover } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -146,12 +147,12 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {collapsedModule?.icon && renderIcon(collapsedModule.icon, 18)}
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: 'text.primary' }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.9375rem'], fontWeight: 700, color: 'text.primary' }}>
                 {collapsedModule?.nameKey
                   ? i18n.t(collapsedModule.nameKey)
                   : collapsedModule?.name || collapsedModuleCode}
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                 {i18n.t('components.sidebar_module_tree.k0')}
               </Typography>
             </Box>
@@ -178,7 +179,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                   sx={{
                     px: 1,
                     py: 0.75,
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     fontWeight: 700,
                     color: 'text.secondary',
                     letterSpacing: '0.04em',
@@ -232,7 +233,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                       <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography
                           sx={{
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             fontWeight: itemActive ? 700 : 500,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -244,7 +245,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                         {navItem.path && (
                           <Typography
                             sx={{
-                              fontSize: '0.6875rem',
+                              fontSize: designTokens.typography.fontSize.scale['0.6875rem'],
                               color: 'text.secondary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -408,7 +409,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                                   label={item.badge}
                                   sx={{
                                     height: 16,
-                                    fontSize: '0.625rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.625rem'],
                                     fontWeight: 600,
                                     bgcolor: 'error.main',
                                     color: 'common.white',
@@ -435,7 +436,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
                                 top: 4,
                                 right: 4,
                                 '& .MuiBadge-badge': {
-                                  fontSize: '0.625rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.625rem'],
                                   height: 14,
                                   minWidth: 14,
                                 },

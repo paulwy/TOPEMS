@@ -2,17 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardWebSocket } from '@/hooks/useDashboardWebSocket';
 import { MES_PATHS } from '@/modules/mes/config';
-import {
-  Box,
-  Divider,
-  FormControlLabel,
-  Switch,
-  Button,
-  Stack,
-  Tooltip,
-  Typography,
-  Paper,
-} from '@mui/material';
+import { Box, Divider, FormControlLabel, Switch, Stack, Typography, Paper } from '@mui/material';
 import i18n from '@/i18n';
 import {
   Activity,
@@ -20,7 +10,6 @@ import {
   Factory,
   Gauge,
   Package,
-  RefreshCw,
   Settings2,
   TrendingUp,
   Wifi,
@@ -43,7 +32,7 @@ import {
   type WorkStation,
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate, type StatCardConfig } from '@/components/templates/DashboardTemplate';
 import type {
   RealtimeAlarm,
   WorkStationUtilization,
@@ -52,7 +41,6 @@ import type {
 } from './types';
 import { ct, REFRESH_INTERVAL_MS, TREND_HOURS, EQUIPMENT_STATUS_META } from './constants';
 import { safeNumber, formatTime, formatPercent, buildHourlyTrend, buildDailyTarget } from './utils';
-import StatCard from './components/StatCard';
 import AlarmList from './components/AlarmList';
 import WorkStationUtilizationCard from './components/WorkStationUtilizationCard';
 import EquipmentStatusPanel from './components/EquipmentStatusPanel';
@@ -76,8 +64,8 @@ export const ProductionDashboardPage: React.FC = () => {
     isConnected: wsConnected,
     connectionStatus: wsStatus,
     reconnectCount: wsReconnectCount,
-    connect: connectWs,
-    disconnect: disconnectWs,
+    connect: _connectWs,
+    disconnect: _disconnectWs,
   } = useDashboardWebSocket({
     module: 'mes',
     reconnectAttempts: 10,
@@ -216,7 +204,7 @@ export const ProductionDashboardPage: React.FC = () => {
       ).length,
     [orders]
   );
-  const completedOrderCount = useMemo(
+  const _completedOrderCount = useMemo(
     () => orders.filter((o) => o.status === 'completed').length,
     [orders]
   );
@@ -310,7 +298,7 @@ export const ProductionDashboardPage: React.FC = () => {
       }
     };
   }, [autoRefresh, loadAll]);
-  const runningEquipmentCount = equipmentBuckets
+  const _runningEquipmentCount = equipmentBuckets
     .filter((b) => b.status === 'running' || b.status === 'in_use' || b.status === 'normal')
     .reduce((sum, b) => sum + b.count, 0);
   const trendData = useMemo(
@@ -321,84 +309,61 @@ export const ProductionDashboardPage: React.FC = () => {
       })),
     [hourlyOutputTrend, targetTrend]
   );
+
+  const handleRefresh = useCallback(() => {
+    setLoading(true);
+    void loadAll();
+  }, [loadAll]);
+
+  const statCards = useMemo<StatCardConfig[]>(
+    () => [
+      {
+        title: i18n.t('mes.index.k26'),
+        value: todayOutput.toLocaleString(),
+        icon: <Package size={22} />,
+        color: 'primary',
+        trend: { value: 8.2 },
+        loading,
+      },
+      {
+        title: i18n.t('mes.index.k29'),
+        value: todayDefects.toLocaleString(),
+        icon: <XCircle size={22} />,
+        color: 'error',
+        trend: { value: -3.1 },
+        loading,
+      },
+      {
+        title: i18n.t('mes.index.k32'),
+        value: activeOrderCount,
+        icon: <Factory size={22} />,
+        color: 'warning',
+        trend: { value: 2.4 },
+        loading,
+      },
+      {
+        title: i18n.t('mes.index.k34'),
+        value: formatPercent(overallUtilization),
+        icon: <Gauge size={22} />,
+        color: 'success',
+        trend: { value: overallUtilization > 0.6 ? 1.8 : -0.6 },
+        loading,
+      },
+    ],
+    [todayOutput, todayDefects, activeOrderCount, overallUtilization, loading]
+  );
+
   return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
-      autoTitle
-      autoBreadcrumbs
-      headerProps={{
-        pageIcon: <Factory style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
-        breadcrumbs: [
-          { label: i18n.t('mes.index.k14'), href: '/dashboard' },
-          { label: i18n.t('mes.index.k15'), href: MES_PATHS.root },
-          { label: i18n.t('mes.index.k16') },
-        ],
-        customToolbar: (
-          <Stack
-            direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Tooltip
-              title={
-                wsConnected
-                  ? i18n.t('pages.index.websocket_6')
-                  : wsSupported
-                    ? i18n.t('pages.index.websocket_7')
-                    : i18n.t('mes.index.websocket_17')
-              }
-            >
-              <Stack
-                direction='row'
-                spacing={0.5}
-                sx={{ alignItems: 'center' }}
-              >
-                {wsConnected ? (
-                  <Wifi
-                    size={16}
-                    color='success.main'
-                  />
-                ) : (
-                  <WifiOff
-                    size={16}
-                    color='grey.400'
-                  />
-                )}
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'text.secondary' }}
-                >
-                  {wsConnected ? i18n.t('mes.index.k19') : i18n.t('mes.index.k18')}
-                </Typography>
-              </Stack>
-            </Tooltip>
-            <FormControlLabel
-              control={
-                <Switch
-                  size='small'
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                />
-              }
-              label={<Typography variant='caption'>{i18n.t('mes.index.k20')}</Typography>}
-            />
-            <Button
-              size='small'
-              variant='outlined'
-              startIcon={<RefreshCw size={14} />}
-              onClick={() => {
-                setLoading(true);
-                void loadAll();
-              }}
-              disabled={refreshStatus === 'loading'}
-            >
-              {i18n.t('pages.index.k0')}
-            </Button>
-          </Stack>
-        ),
-      }}
+    <DashboardTemplate
+      title={i18n.t('mes.index.k16')}
+      breadcrumbs={[
+        { label: i18n.t('mes.index.k14'), path: '/dashboard' },
+        { label: i18n.t('mes.index.k15'), path: MES_PATHS.root },
+        { label: i18n.t('mes.index.k16') },
+      ]}
+      statCards={statCards}
+      onRefresh={handleRefresh}
+      loading={loading}
     >
       <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
         <Stack
@@ -514,6 +479,45 @@ export const ProductionDashboardPage: React.FC = () => {
             </Typography>
           </Stack>
           <Box sx={{ flex: 1 }} />
+          <Stack
+            direction='row'
+            spacing={1.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
+              {wsConnected ? (
+                <Wifi
+                  size={16}
+                  color='success.main'
+                />
+              ) : (
+                <WifiOff
+                  size={16}
+                  color='grey.400'
+                />
+              )}
+              <Typography
+                variant='caption'
+                sx={{ color: 'text.secondary' }}
+              >
+                {wsConnected ? i18n.t('mes.index.k19') : i18n.t('mes.index.k18')}
+              </Typography>
+            </Stack>
+            <FormControlLabel
+              control={
+                <Switch
+                  size='small'
+                  checked={autoRefresh}
+                  onChange={(e) => setAutoRefresh(e.target.checked)}
+                />
+              }
+              label={<Typography variant='caption'>{i18n.t('mes.index.k20')}</Typography>}
+            />
+          </Stack>
           <Typography
             variant='caption'
             sx={{ color: 'text.disabled' }}
@@ -521,58 +525,6 @@ export const ProductionDashboardPage: React.FC = () => {
             {i18n.t('pages.index.k0')} {REFRESH_INTERVAL_MS / 1000}s
           </Typography>
         </Stack>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(4, 1fr)',
-            },
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <StatCard
-            title={i18n.t('mes.index.k26')}
-            value={todayOutput.toLocaleString()}
-            unit={i18n.t('mes.index.k27')}
-            icon={<Package size={22} />}
-            color='primary.main'
-            delta={8.2}
-            hint={i18n.t('mes.index.k28')}
-            loading={loading}
-          />
-          <StatCard
-            title={i18n.t('mes.index.k29')}
-            value={todayDefects.toLocaleString()}
-            unit={i18n.t('mes.index.k30')}
-            icon={<XCircle size={22} />}
-            color='error.main'
-            delta={-3.1}
-            hint={i18n.t('mes.index.k31')}
-            loading={loading}
-          />
-          <StatCard
-            title={i18n.t('mes.index.k32')}
-            value={activeOrderCount}
-            unit={i18n.t('mes.index.k33')}
-            icon={<Factory size={22} />}
-            color='warning.main'
-            delta={2.4}
-            hint={`${i18n.t('pages.index.k12')}${completedOrderCount}${i18n.t('pages.index.k13')}`}
-            loading={loading}
-          />
-          <StatCard
-            title={i18n.t('mes.index.k34')}
-            value={formatPercent(overallUtilization)}
-            icon={<Gauge size={22} />}
-            color='success.main'
-            delta={overallUtilization > 0.6 ? 1.8 : -0.6}
-            hint={`${i18n.t('pages.index.k14')}${runningEquipmentCount}${i18n.t('pages.index.k15')}${equipment.length}${i18n.t('pages.index.k16')}`}
-            loading={loading}
-          />
-        </Box>
         <Box
           sx={{
             display: 'grid',
@@ -780,7 +732,7 @@ export const ProductionDashboardPage: React.FC = () => {
           </Stack>
         </Box>
       </Box>
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
 export default ProductionDashboardPage;

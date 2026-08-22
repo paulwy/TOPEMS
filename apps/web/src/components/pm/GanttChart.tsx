@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Paper, IconButton } from '@mui/material';
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from 'lucide-react';
@@ -156,7 +157,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </IconButton>
-          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{zoom}%</Typography>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>{zoom}%</Typography>
           <IconButton
             onClick={() => handleZoom(10)}
             sx={{
@@ -185,7 +186,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               alignItems: 'center',
             }}
           >
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
+            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'text.secondary' }}>
               {i18n.t('components.gantt_chart.k0')}
             </Typography>
           </Box>
@@ -207,7 +208,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   <Typography
                     sx={{
                       fontWeight: 500,
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'text.primary',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -216,7 +217,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     {phase.name}
                   </Typography>
                   {phase.progress > 0 && (
-                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                       {phase.progress}
                       {i18n.t('components.gantt_chart.k0')}
                     </Typography>
@@ -251,7 +252,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                       backgroundColor: 'grey.50',
                       px: 2,
                       py: 1,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       fontWeight: 500,
                       color: 'text.secondary',
                       left: `${48 + label.offset * (zoom / 100) * 20}px`,
@@ -272,7 +273,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     sx={{
                       flexShrink: 0,
                       textAlign: 'center',
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.disabled',
                       width: `${(zoom / 100) * 140}px`,
                     }}
@@ -317,7 +318,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   >
                     <Typography
                       sx={{
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         color: 'common.white',
                         fontWeight: 500,
                         overflow: 'hidden',
@@ -386,7 +387,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'primary.main',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.gantt_chart.k6')}
           </Typography>
         </Box>
@@ -399,7 +400,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'success.dark',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.gantt_chart.k7')}
           </Typography>
         </Box>
@@ -413,7 +414,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'warning.light',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.gantt_chart.k8')}
           </Typography>
         </Box>
@@ -426,7 +427,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'text.disabled',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.gantt_chart.k9')}
           </Typography>
         </Box>

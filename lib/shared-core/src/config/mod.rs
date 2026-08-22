@@ -1053,6 +1053,7 @@ fn default_cache_write_through() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn cache_config_default_values() {
@@ -1284,10 +1285,6 @@ mod tests {
     }
 
     // ===== 以下为补充测试 =====
-    use std::sync::Mutex;
-
-    /// env var 测试全局锁，避免并行 set_var/remove_var 竞态
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn build_database_config() -> DatabaseConfig {
         DatabaseConfig {
@@ -1930,9 +1927,9 @@ mod tests {
 
     // ---------- Config (async) ----------
     #[tokio::test]
+    #[serial]
     async fn config_load_default_is_development() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load dev ok");
@@ -1943,9 +1940,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_load_test_env() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::set_var("APP_ENV", "test");
         }
         let cfg = Config::load().await.expect("load test ok");
@@ -1954,15 +1951,14 @@ mod tests {
         assert!(!cfg.is_development());
         assert!(!cfg.is_production());
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_reload_dev_ok() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -1972,9 +1968,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_returns_appconfig() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -1983,9 +1979,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_database_auth_server_redis_invariants() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -2010,9 +2006,9 @@ mod tests {
 
     // ---------- Config (async) 补充 ----------
     #[tokio::test]
+    #[serial]
     async fn config_load_unknown_env_falls_back_to_devenv() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::set_var("APP_ENV", "staging");
         }
         let cfg = Config::load().await.expect("load fallback ok");
@@ -2028,9 +2024,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_returns_independent_clone() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -2042,9 +2038,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_redis_returns_configured() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -2057,9 +2053,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_auth_secret_fields() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");
@@ -2075,9 +2071,9 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn config_get_server_returns_configured() {
         {
-            let _g = ENV_LOCK.lock().unwrap();
             std::env::remove_var("APP_ENV");
         }
         let cfg = Config::load().await.expect("load ok");

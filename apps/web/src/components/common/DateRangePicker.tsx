@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import { Box, Menu, Paper, TextField, Typography, Button } from '@mui/material';
 import { Calendar, ChevronDown } from 'lucide-react';
@@ -145,7 +146,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     variant='text'
                     size='small'
                     onClick={() => handlePresetClick(preset.id)}
-                    sx={{ justifyContent: 'flex-start', fontSize: '0.75rem' }}
+                    sx={{ justifyContent: 'flex-start', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                   >
                     {preset.label}
                   </Button>

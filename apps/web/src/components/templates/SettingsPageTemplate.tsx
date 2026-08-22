@@ -71,7 +71,10 @@ export interface SettingSection {
   description?: string;
   icon?: React.ReactNode;
   color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
-  fields: SettingField[];
+  /** 标准字段模式；与 content 互斥，至少填一项 */
+  fields?: SettingField[];
+  /** 自定义内容模式；填写后将直接渲染，不参与模板内置校验与保存 */
+  content?: React.ReactNode;
   collapsible?: boolean;
   defaultExpanded?: boolean;
 }
@@ -163,7 +166,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
   useEffect(() => {
     const initialValues: Record<string, SettingValueType> = {};
     allSections.forEach((section) => {
-      section.fields.forEach((field) => {
+      section.fields?.forEach((field) => {
         initialValues[field.id] = field.value;
       });
     });
@@ -177,7 +180,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       setValues((prev) => ({ ...prev, [fieldId]: value }));
       setHasChanges(true);
 
-      const field = allSections.flatMap((s) => s.fields).find((f) => f.id === fieldId);
+      const field = allSections.flatMap((s) => s.fields ?? []).find((f) => f.id === fieldId);
 
       if (field?.validation) {
         const validationResult = field.validation(value);
@@ -200,7 +203,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     const newErrors: Record<string, string> = {};
 
     allSections.forEach((section) => {
-      section.fields.forEach((field) => {
+      section.fields?.forEach((field) => {
         if (field.validation) {
           const validationResult = field.validation(values[field.id]);
           if (typeof validationResult === 'string') {
@@ -234,7 +237,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
   const handleReset = useCallback(() => {
     const initialValues: Record<string, SettingValueType> = {};
     allSections.forEach((section) => {
-      section.fields.forEach((field) => {
+      section.fields?.forEach((field) => {
         initialValues[field.id] = field.defaultValue ?? field.value;
       });
     });
@@ -515,15 +518,17 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 sx={{ borderRadius: 1.5, mb: 2 }}
               />
             ))
+          ) : section.content ? (
+            section.content
           ) : isExpanded || !section.collapsible ? (
-            section.fields.map(renderField)
+            section.fields?.map(renderField)
           ) : (
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                {i18n.t('components.settings_page_template.k0')} {section.fields.length}{' '}
+                {i18n.t('components.settings_page_template.k0')} {section.fields?.length ?? 0}{' '}
                 {i18n.t('components.settings_page_template.k1')}
               </Typography>
             </Box>

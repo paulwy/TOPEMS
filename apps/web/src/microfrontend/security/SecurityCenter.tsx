@@ -258,7 +258,7 @@ const IssueItem: React.FC<{
                 bgcolor: `${severityColors[issue.severity]}15`,
                 color: severityColors[issue.severity],
                 fontWeight: 600,
-                fontSize: '0.7rem',
+                fontSize: designTokens.typography.fontSize.scale['0.7rem'],
               }}
             />
             {issue.fixed && (
@@ -274,7 +274,7 @@ const IssueItem: React.FC<{
           <Typography
             variant='body2'
             color='text.secondary'
-            sx={{ fontSize: '0.85rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'] }}
           >
             {issue.description}
           </Typography>

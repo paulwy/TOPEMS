@@ -304,7 +304,7 @@ const NotificationCenter: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
-                padding: '12px 16px 12px 48px',
+                padding: `12px ${designTokens.spacing.md}px 12px ${designTokens.spacing['2xl']}px`,
                 borderRadius: 'lg',
                 border: '1px solid',
                 borderColor: 'action.hover',
@@ -342,7 +342,7 @@ const NotificationCenter: React.FC = () => {
                 setPage(1);
               }}
               style={{
-                padding: '8px 16px',
+                padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                 borderRadius: '2xl',
                 border: 'none',
                 backgroundColor: activeFilter === filter ? ct.primary.main : 'colors.action.hover',
@@ -411,7 +411,7 @@ const NotificationCenter: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      padding: '8px 16px',
+                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                       border: 'none',
                       backgroundColor: 'transparent',
                       cursor: 'pointer',
@@ -429,7 +429,7 @@ const NotificationCenter: React.FC = () => {
                     onClick={handleBulkMarkAsRead}
                     disabled={bulkMarkAsReadMutation.isPending}
                     style={{
-                      padding: '8px 16px',
+                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                       borderRadius: 'md',
                       border: '1px solid',
                       borderColor: ct.primary.main,
@@ -443,7 +443,7 @@ const NotificationCenter: React.FC = () => {
                     onClick={handleBulkDelete}
                     disabled={bulkDeleteMutation.isPending}
                     style={{
-                      padding: '8px 16px',
+                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                       borderRadius: 'md',
                       backgroundColor: ct.error.main,
                       color: 'common.white',
@@ -504,7 +504,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={page === 1}
               style={{
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm}px 12px`,
                 borderRadius: 'md',
                 border: '1px solid',
                 borderColor: 'divider',
@@ -517,7 +517,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={page === totalPages}
               style={{
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm}px 12px`,
                 borderRadius: 'md',
                 border: '1px solid',
                 borderColor: 'divider',

@@ -309,7 +309,7 @@ const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQuery }) =
                   key={header}
                   style={{
                     borderBottom: '2px solid var(--color-grey-200, var(--color-grey-200))',
-                    padding: '8px 12px',
+                    padding: `${designTokens.spacing.sm}px 12px`,
                     textAlign: 'left',
                     fontWeight: 600,
                     color: 'grey.600',
@@ -331,7 +331,7 @@ const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQuery }) =
                 {headers.map((header) => (
                   <td
                     key={header}
-                    style={{ padding: '8px 12px', color: 'grey.700' }}
+                    style={{ padding: `${designTokens.spacing.sm}px 12px`, color: 'grey.700' }}
                   >
                     {row[header] as React.ReactNode}
                   </td>

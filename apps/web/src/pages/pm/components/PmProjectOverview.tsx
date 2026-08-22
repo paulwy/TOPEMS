@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PmProjectDetailPage overview Tab (basic info + key indicators)
  * @done V79 Phase 2 split
@@ -40,7 +41,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.project_detail.basic_info')}
             </Typography>
@@ -164,7 +165,7 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.project_detail.key_indicators')}
             </Typography>

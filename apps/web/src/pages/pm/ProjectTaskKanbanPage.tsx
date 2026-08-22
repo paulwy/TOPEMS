@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  KanbanPageTemplate,
-  type KanbanColumn,
-} from '../../components/templates/KanbanPageTemplate';
+import { KanbanPageTemplate, type KanbanColumn } from '@/components/templates/KanbanPageTemplate';
 import i18n from '@/i18n';
 import { Plus } from 'lucide-react';
 import { pmApi } from '@/api/pm';
@@ -98,37 +95,133 @@ const initialColumns: KanbanColumn[] = [
     ],
   },
 ];
-export const ProjectTaskKanbanPage: React.FC = () => {
+
+const ProjectTaskKanbanPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
     queryKey: ['pm-task-kanban'],
     queryFn: async () => {
       try {
         return await pmApi.projects.getKanbanBoard();
       } catch {
-        return {};
+        return null;
       }
     },
   });
+
   const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
-  const handleCardMove = (cardId: string, sourceColumn: string, targetColumn: string) => {
-    const sourceCol = columns.find((col) => col.id === sourceColumn);
-    const targetCol = columns.find((col) => col.id === targetColumn);
-    if (!sourceCol || !targetCol) return;
-    const cardIndex = sourceCol.cards.findIndex((card) => card.id === cardId);
-    if (cardIndex === -1) return;
-    const [card] = sourceCol.cards.splice(cardIndex, 1);
-    targetCol.cards.push(card);
-    setColumns([...columns]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
+
+  const boardColumns = useMemo<KanbanColumn[]>(() => {
+    const data = backendData as unknown as { columns?: KanbanColumn[] } | null;
+    if (data && Array.isArray(data.columns)) {
+      return data.columns;
+    }
+    return columns;
+  }, [backendData, columns]);
+
+  const allCards = useMemo(
+    () => boardColumns.flatMap((col) => col.cards.map((card) => ({ ...card, columnId: col.id }))),
+    [boardColumns]
+  );
+
+  const filterConfig = useMemo(() => {
+    const priorities = Array.from(
+      new Set(allCards.map((c) => c.priority).filter((p) => p !== undefined))
+    ) as string[];
+    const assignees = Array.from(
+      new Map(
+        allCards
+          .filter((c) => c.assignee)
+          .map((c) => [c.assignee!.id, { id: c.assignee!.id, name: c.assignee!.name }])
+      ).values()
+    );
+    const tags = Array.from(new Set(allCards.flatMap((c) => c.tags?.map((t) => t.label) ?? [])));
+    return { priorities, assignees, tags };
+  }, [allCards]);
+
+  const filteredColumns = useMemo<KanbanColumn[]>(() => {
+    const term = searchTerm.toLowerCase();
+    const priorityFilter = filters.priority as string | undefined;
+    const assigneeFilter = filters.assignee as string | undefined;
+    const tagFilter = filters.tag as string | undefined;
+
+    return boardColumns.map((col) => ({
+      ...col,
+      cards: col.cards.filter((card) => {
+        if (term) {
+          const text = [card.title, card.description].filter(Boolean).join(' ').toLowerCase();
+          if (!text.includes(term)) return false;
+        }
+        if (priorityFilter && card.priority !== priorityFilter) return false;
+        if (assigneeFilter && card.assignee?.id !== assigneeFilter) return false;
+        if (tagFilter && !card.tags?.some((t) => t.label === tagFilter)) return false;
+        return true;
+      }),
+    }));
+  }, [boardColumns, searchTerm, filters]);
+
+  const handleCardMove = (
+    cardId: string,
+    sourceColumn: string,
+    targetColumn: string,
+    _targetIndex: number
+  ) => {
+    setColumns((prev) => {
+      const sourceCol = prev.find((col) => col.id === sourceColumn);
+      if (!sourceCol || !prev.some((col) => col.id === targetColumn)) return prev;
+      const cardIndex = sourceCol.cards.findIndex((card) => card.id === cardId);
+      if (cardIndex === -1) return prev;
+      const card = sourceCol.cards[cardIndex];
+      return prev.map((col) => {
+        if (col.id === sourceColumn) {
+          return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
+        }
+        if (col.id === targetColumn) {
+          return { ...col, cards: [...col.cards, card] };
+        }
+        return col;
+      });
+    });
   };
+
+  const handleCardDelete = (cardId: string) => {
+    setColumns((prev) =>
+      prev.map((col) => ({ ...col, cards: col.cards.filter((c) => c.id !== cardId) }))
+    );
+  };
+
+  const handleCardEdit = (_cardId: string) => {
+    // Placeholder for edit navigation or dialog
+  };
+
+  const handleCardArchive = (cardId: string) => {
+    handleCardDelete(cardId);
+  };
+
   return (
     <KanbanPageTemplate
       title={i18n.t('pm.project_task_kanban_page.k25')}
       subtitle={i18n.t('pm.project_task_kanban_page.k26')}
-      columns={columns}
+      breadcrumbs={[
+        { label: i18n.t('common.home'), href: '/' },
+        { label: i18n.t('pm.project_task_kanban_page.k25') },
+      ]}
+      columns={filteredColumns}
+      loading={isBackendLoading}
       onCardMove={handleCardMove}
+      onCardDelete={handleCardDelete}
+      onCardEdit={handleCardEdit}
+      onCardArchive={handleCardArchive}
+      searchValue={searchTerm}
+      onSearch={setSearchTerm}
+      filterConfig={filterConfig}
+      filters={filters}
+      onFilterChange={setFilters}
       showStats
       showSearch
       showFilter
+      showAddColumn
       actions={[
         {
           label: i18n.t('pm.project_task_kanban_page.k27'),
@@ -139,4 +232,5 @@ export const ProjectTaskKanbanPage: React.FC = () => {
     />
   );
 };
+
 export default ProjectTaskKanbanPage;

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Dialog,
@@ -45,7 +46,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
               display: 'flex',
               gap: 3,
               color: 'text.secondary',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             }}
           >
             <Typography variant='body2'>
@@ -79,7 +80,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
             sx={{
               whiteSpace: 'pre-wrap',
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: 'text.secondary',
             }}
           >
@@ -114,10 +115,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
                   <Chip
                     label={variable.type}
                     size='small'
-                    sx={{ fontSize: '0.75rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                   />
                   {variable.required && (
-                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                    <Typography sx={{ color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
                       {t('report.template_management_page.required')}
                     </Typography>
                   )}

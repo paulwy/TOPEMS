@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * ApprovalFilter - Search box and tab switching component
  * @refactor-split Extracted from MobileApprovalPage.tsx
@@ -59,7 +60,7 @@ const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
           mb: 1,
           '& .MuiTab-root': {
             minHeight: 44,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           },
         }}
       >
@@ -74,7 +75,7 @@ const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
                     label={pendingCount}
                     size='small'
                     color='error'
-                    sx={{ height: 18, fontSize: '0.65rem', minWidth: 18 }}
+                    sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'], minWidth: 18 }}
                   />
                 </Box>
               ) : (

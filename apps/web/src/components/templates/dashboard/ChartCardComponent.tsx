@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import {
   Box,
@@ -67,7 +68,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
               <Chip
                 label={type}
                 size='small'
-                sx={{ height: 20, fontSize: '0.65rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
               />
             )}
           </Box>

@@ -289,13 +289,12 @@ pub struct PaginatedResponse<T> {
 
 /// 纯函数：统一分页总页数算法。
 /// - `total <= 0` → 0
-/// - `page_size <= 0` → 当作 1（避免除 0 / 负偏移），与 `page_size_or_default().clamp(1, 100)` 语义一致
+/// - `page_size <= 0` → 0（无有效页大小则无页）
 pub fn total_pages_of(total: i64, page_size: i64) -> i64 {
-    if total <= 0 {
+    if total <= 0 || page_size <= 0 {
         return 0;
     }
-    let s = page_size.max(1);
-    (total - 1) / s + 1
+    (total - 1) / page_size + 1
 }
 
 impl<T> PaginatedResponse<T> {

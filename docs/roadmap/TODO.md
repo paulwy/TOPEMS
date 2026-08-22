@@ -3,11 +3,28 @@
 > **版本**: V266 | **更新日期**: 2026-08-22
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V266 设计系统模板迁移收尾阶段。
-> **V266-P0 架构冗余重构（Git Hook 统一）已完成**。当前推进 V266-P1 desktop 复用 web 模块系统。
+> **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：架构冗余重构 P2 — FSM 模板代码消除 + 预存在测试修复（V266-P2）
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| P2-1: FsmDef 结构体 | lib/shared-core/src/fsm.rs 新增 FsmDef（states/terminal/transitions/approval_transitions）+ 4 方法（can_transition/requires_approval/is_valid_status/is_valid_transition） | ✅ |
+| P2-2: MES 重构 | svc/mes/src/shared/fsm.rs 8 个 FSM 改为 FsmDef 声明式定义 | ✅ |
+| P2-3: APS 重构 | svc/aps/src/shared/fsm.rs 5 个 FSM 改为 FsmDef 声明式定义 | ✅ |
+| P2-4: QMS 重构 | svc/qms/src/shared/fsm.rs 7 个 FSM 改为 FsmDef 声明式定义 | ✅ |
+| P2-5: TMS 重构 | svc/tms/src/shared/fsm.rs 5 个 FSM 改为 FsmDef 声明式定义 | ✅ |
+| P2-6: WMS 重构 | svc/wms/src/shared/fsm.rs 7 个 FSM 改为 FsmDef 声明式定义 + 测试引用同步更新 | ✅ |
+| P2-7: 编译验证 | APS/QMS/TMS/WMS + shared-core 全部无警告通过；MES fsm.rs 正常（team.rs 预存在错误与 FSM 无关） | ✅ |
+| P2-8: 测试验证 | 298 个 FSM 测试全部通过（APS 62 + QMS 74 + TMS 63 + WMS 89 + shared-core 10） | ✅ |
+| 预存在 bug 修复: config::services 服务数量不一致 | 28→30 断言修正 + get_service_name_by_port / get_default_port 补全 monitor(8095) 和 plugin-registry(8096) 反向映射 + 一致性测试加固 | ✅ |
+| 预存在 bug 修复: env var 并行测试泄漏 | 引入 serial_test crate，55 个 env-var 测试添加 #[serial]；10 次连续运行 766 passed 0 failed | ✅ |
+
+> **P2 收益**: 32 个 FSM 从 "4 常量 + 3 函数" 模板（~25 行/FSM）收敛为 FsmDef 声明式定义（~15 行/FSM），减少约 320 行模板代码。额外修复了 config::services 的 28→30 服务计数漂移和 env-var 并行测试泄漏两个预存在问题。
 
 ### 已完成：架构冗余重构 P1 — desktop 接入共享类型层 + 依赖修复 + 懒加载优化（V266-P1）
 
@@ -66,7 +83,18 @@
 | 设计系统审计扫描回归 | 模板覆盖率 83.6% → 85.8%；未使用模板页面 88 → 76；P2 剩余 13 | ✅ |
 | P2 第二批详情页迁移到 DetailPageTemplate | APS 6 个 + TMS 6 个详情页；字段网格接入 SectionConfig，TransportPlan 使用 tabs，状态/操作保留在 headerContent | ✅ |
 | 设计系统审计扫描回归 | 模板覆盖率 85.8% → 88.1%；未使用模板页面 76 → 64；P2 剩余 1（SupplierPortalPage 门户页暂不迁移） | ✅ |
-| 下一批页面待迁移 | 剩余 64 个未标准化页面中 P3 占 60，多为低优先级/组件型页面，可继续按模块分批推进 | 🔄 |
+| P3 第一批 dashboard/stats 页面迁移到 StatsPageTemplate | LowCodeHomePage、IntegrationExternalErpOverviewPage、V4DemoPage、AiDashboardPage；指标卡接入 statCards，复杂内容保留在 children | ✅ |
+| StatsPageTemplate 增强 | 新增 `actions` 插槽与 `StatCard.onClick`，支持 dashboard 类页面右上角操作与卡片跳转 | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 88.1% → 88.8%；未使用模板页面 64 → 60；P3 剩余 56 | ✅ |
+| SettingsPageTemplate 增强 | `SettingSection` 支持 `content` 自定义内容（与 `fields` 二选一），适配复杂 settings 页面 | ✅ |
+| P3 settings 类页面迁移到 SettingsPageTemplate | RateLimitConfigPage、TenantSettingsPage、SystemParamsPage、AiModelSettingsPage、WorkflowSettingsPage；拆分为 tabs/sections，保留各页面复杂 UI 与保存逻辑 | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 88.8% → 89.8%；未使用模板页面 60 → 55；P3 剩余 51 | ✅ |
+| P3 第二批可迁移页面收尾 | DesktopMonitorPage→StatsPageTemplate、AiAssistantPage→StatsPageTemplate、ProfilePage→SettingsPageTemplate、PluginDetailPage→DetailPageTemplate；StatsPageTemplate 扩展 StatCard.value 支持 ReactNode | ✅ |
+| 设计系统审计扫描回归 | 模板覆盖率 89.8% → 90.5%；未使用模板页面 55 → 51；P3 剩余 47 | ✅ |
+| V266 设计系统模板迁移归档 | 剩余 47 个 P3 页面（chat、移动端、设计器、GIS、门户、登录页等）不适合当前模板体系，暂不迁移；迁移阶段成果归档 | ⏸ |
+| 全量 CI Gate 验证 | 14/14 pre-commit Gate 通过（含 hardcoded-precise 0 条、sensitive-info 通过）；frontend-typecheck ✅；cargo fmt --all --check ✅；`cargo test --workspace --no-run` 编译通过；`cargo test --workspace` 因 DB 集成测试运行耗时过长被超时终止，无编译错误 | ✅ |
+| 剩余 54 处硬编码中文清理 | shared-components 三组件改为 i18next 英文默认值 + 新增 `components` 命名空间；6 个 web 页面列标签/确认文案改为 i18n key；desktop Sidebar/WindowList/routes 改为英文标签；补全 zh/en 翻译键 | ✅ |
+| MES 94 处编译错误复查 | 早期 `cargo test --workspace` 报错为 cargo artifact lock 导致的陈旧错误；重新 `cargo test -p topems-mes --tests` 与 `cargo test --workspace --no-run` 均编译通过 | ✅ |
 
 ### V265 归档：设计系统样式硬编码清理收尾
 

@@ -244,7 +244,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 16px',
+              margin: `0 auto ${designTokens.spacing.md}px`,
             }}
           >
             <Fingerprint sx={{ width: 36, height: 36, color: 'common.white' }} />
@@ -464,7 +464,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     sx={{
                       color: ct.secondary[400],
                       '&:hover': { color: ct.secondary[600] },
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       background: 'transparent',
                       fontWeight: 500,
                       padding: 0,
@@ -510,7 +510,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               sx={{
                 color: ct.secondary[400],
                 '&:hover': { color: ct.secondary[600] },
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 background: 'transparent',
                 fontWeight: 500,
               }}

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -856,7 +857,7 @@ ${content
                       h1: ({ children }) => (
                         <h1
                           style={{
-                            fontSize: '2rem',
+                            fontSize: designTokens.typography.fontSize.scale['2rem'],
                             fontWeight: 700,
                             margin: '1.5rem 0 1rem',
                             borderBottom: '2px solid var(--mui-palette-divider)',
@@ -869,7 +870,7 @@ ${content
                       h2: ({ children }) => (
                         <h2
                           style={{
-                            fontSize: '1.5rem',
+                            fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                             fontWeight: 600,
                             margin: '1.25rem 0 0.75rem',
                             borderBottom: '1px solid var(--mui-palette-divider)',
@@ -881,7 +882,7 @@ ${content
                       ),
                       h3: ({ children }) => (
                         <h3
-                          style={{ fontSize: '1.25rem', fontWeight: 600, margin: '1rem 0 0.5rem' }}
+                          style={{ fontSize: designTokens.typography.fontSize.scale['1.25rem'], fontWeight: 600, margin: '1rem 0 0.5rem' }}
                         >
                           {children}
                         </h3>

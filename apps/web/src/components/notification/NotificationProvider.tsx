@@ -110,7 +110,7 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
         display: 'flex',
         alignItems: 'flex-start',
         gap: 1.5,
-        padding: `${designTokens.spacing.md} 16px`,
+        padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
         borderRadius: 'md',
         border: '1px solid',
         boxShadow: designTokens.shadows.lg,
@@ -175,8 +175,8 @@ function Toaster() {
     <Box
       sx={{
         position: 'fixed',
-        top: '16px',
-        right: '16px',
+        top: `${designTokens.spacing.md}px`,
+        right: `${designTokens.spacing.md}px`,
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',

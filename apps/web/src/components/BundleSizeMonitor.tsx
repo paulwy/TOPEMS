@@ -179,7 +179,7 @@ const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           style={{
             position: 'fixed',
             bottom: '88px',
-            right: '16px',
+            right: `${designTokens.spacing.md}px`,
             zIndex: 50,
             width: '384px',
             backgroundColor: 'common.white',
@@ -462,7 +462,7 @@ const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
         style={{
           position: 'fixed',
           bottom: '88px',
-          right: '16px',
+          right: `${designTokens.spacing.md}px`,
           zIndex: 40,
           width: '56px',
           height: '56px',

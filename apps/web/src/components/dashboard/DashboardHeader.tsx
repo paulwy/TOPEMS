@@ -102,7 +102,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '1.25rem',
+                    fontSize: designTokens.typography.fontSize.scale['1.25rem'],
                     fontWeight: 700,
                     background: `linear-gradient(90deg, ${designTokens.colors.primary['400']} 0%, secondary.light 100%)`,
                     backgroundClip: 'text',
@@ -114,7 +114,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'grey.400',
                     display: { xs: 'none', md: 'inline' },
                   }}
@@ -143,7 +143,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               />
               <Typography
                 component='span'
-                sx={{ fontSize: '0.875rem', color: 'text.secondary', fontWeight: 500 }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary', fontWeight: 500 }}
               >
                 {currentTime.toLocaleTimeString('zh-CN', {
                   hour: '2-digit',
@@ -176,7 +176,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'common.white',
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   fontWeight: 600,
                   boxShadow: `0 2px 8px ${designTokens.colors.action.selected}`,
                 }}
@@ -186,7 +186,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' }, minWidth: 0 }}>
                 <Typography
                   sx={{
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 600,
                     color: 'text.primary',
                     whiteSpace: 'nowrap',
@@ -198,7 +198,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',

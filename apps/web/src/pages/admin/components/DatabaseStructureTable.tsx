@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * @done V79 Phase 2 split
  * Database table structure detail table component - displays field list
@@ -117,7 +118,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -127,7 +128,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -137,7 +138,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -147,7 +148,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -157,7 +158,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -168,7 +169,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                     align='right'
                     sx={{
                       fontWeight: 600,
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'text.secondary',
                       textTransform: 'uppercase',
                     }}
@@ -188,7 +189,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                     <TableCell
                       sx={{
                         color: 'text.secondary',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       }}
                     >
                       {col.ordinal_position}
@@ -197,7 +198,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       sx={{
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                       }}
                     >
@@ -205,7 +206,7 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'text.secondary',
                       }}
                     >
@@ -219,13 +220,13 @@ const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                           bgcolor: col.is_nullable === 'YES' ? 'warning.light' : 'success.lighter',
                           color: col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                           fontWeight: 500,
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         }}
                       />
                     </TableCell>
                     <TableCell
                       sx={{
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         color: 'text.secondary',
                         fontFamily:
                           'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',

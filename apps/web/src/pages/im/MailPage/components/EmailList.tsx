@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -256,7 +257,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 1.5,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                         width: 48,
@@ -285,7 +286,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -298,7 +299,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -311,7 +312,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -324,7 +325,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -337,7 +338,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -350,7 +351,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -363,7 +364,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         textAlign: 'right',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -426,7 +427,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                         }}
                       >
@@ -439,7 +440,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                         }}
                       >
@@ -462,7 +463,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                         }}
                       >

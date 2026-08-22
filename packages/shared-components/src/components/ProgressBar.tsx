@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { Box, Typography, LinearProgress, keyframes, useTheme } from '@mui/material';
 
 // 渐变颜色配置
@@ -12,19 +13,19 @@ const GRADIENT_COLORS = {
 // 尺寸配置
 const SIZE_CONFIG = {
   small: {
-    linear: { height: 6, fontSize: '0.75rem' },
-    circular: { size: 40, fontSize: '0.75rem' },
-    segmented: { height: 8, fontSize: '0.75rem' },
+    linear: { height: 6, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+    circular: { size: 40, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+    segmented: { height: 8, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
   },
   medium: {
-    linear: { height: 10, fontSize: '0.875rem' },
-    circular: { size: 60, fontSize: '0.875rem' },
-    segmented: { height: 12, fontSize: '0.875rem' },
+    linear: { height: 10, fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
+    circular: { size: 60, fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
+    segmented: { height: 12, fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
   },
   large: {
-    linear: { height: 14, fontSize: '1rem' },
-    circular: { size: 80, fontSize: '1rem' },
-    segmented: { height: 16, fontSize: '1rem' },
+    linear: { height: 14, fontSize: designTokens.typography.fontSize.scale['1rem'] },
+    circular: { size: 80, fontSize: designTokens.typography.fontSize.scale['1rem'] },
+    segmented: { height: 16, fontSize: designTokens.typography.fontSize.scale['1rem'] },
   },
 };
 

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -174,7 +175,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -187,7 +188,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -200,7 +201,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -213,7 +214,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -226,7 +227,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -239,7 +240,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'left',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -252,7 +253,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         textAlign: 'right',
                         px: 3,
                         py: 1.5,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                         color: 'grey.500',
                       }}
@@ -290,7 +291,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                           fontFamily: 'monospace',
                         }}
@@ -312,7 +313,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -341,7 +342,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         sx={{
                           px: 3,
                           py: 2,
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: 'grey.600',
                         }}
                       >

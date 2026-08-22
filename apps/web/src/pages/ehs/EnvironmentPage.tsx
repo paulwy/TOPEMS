@@ -88,7 +88,7 @@ const EnvironmentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {t('ehs.environment_page.list') || i18n.t('pages.environment_page.k0')}
                 </Typography>
@@ -121,7 +121,7 @@ const EnvironmentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {t('ehs.environment_page.normal') || i18n.t('pages.environment_page.k1')}
                 </Typography>
@@ -154,7 +154,7 @@ const EnvironmentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {t('ehs.environment_page.maintenance') || i18n.t('pages.environment_page.k2')}
                 </Typography>

@@ -1,52 +1,58 @@
+import { designTokens } from '@topems/tokens';
 /**
  * Consolidation Scope Page
  * @refactored V79 Phase 2 - Split into modular components
  * @target-size <= 600 lines
  */
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { consolidationContractApi } from '@/api/consolidation-contract';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
   CardHeader,
   Typography,
-  TextField,
   Box,
   Tabs,
   Tab,
   Button,
+  Chip,
 } from '@mui/material';
-import { Plus, Search, Users, Edit2, Network } from 'lucide-react';
+import { Plus, Users, Edit2, Network, Settings, Trash2 } from 'lucide-react';
 import { FolderOpen, PlayCircle, People, Business } from '@mui/icons-material';
 import { PageContainer } from '@/components/common';
 import { StatCardGroup } from '@/components';
 import { useConsolidationScope } from './hooks/useConsolidationScope';
-import {
-  ConsolidationScopeTable,
-  ConsolidationCompanyTable,
-} from './components/ConsolidationScopeTable';
+import { ConsolidationCompanyTable } from './components/ConsolidationScopeTable';
 import {
   ScopeFormDialog,
   AddCompanyDialog,
   RuleConfigDialog,
 } from './components/ConsolidationScopeFormDialog';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
+import type { ConsolidationScope } from '@/types/consolidation';
+
+const METHOD_CONFIG: Record<
+  string,
+  { labelKey: string; color: React.ComponentProps<typeof Chip>['color'] }
+> = {
+  full: { labelKey: 'finance.consolidation_scope_page.text_a8d219', color: 'primary' },
+  equity: { labelKey: 'finance.consolidation_scope_page.text_08dfd4', color: 'secondary' },
+  proportional: { labelKey: 'finance.consolidation_scope_page.text_ad6e8a', color: 'info' },
+};
+
+const STATUS_CONFIG: Record<
+  string,
+  { labelKey: string; color: React.ComponentProps<typeof Chip>['color'] }
+> = {
+  active: { labelKey: 'finance.consolidation_scope_page.active', color: 'success' },
+  inactive: { labelKey: 'finance.consolidation_scope_page.inactive', color: 'default' },
+  draft: { labelKey: 'finance.consolidation_scope_page.text_22b433', color: 'warning' },
+};
 
 export default function ConsolidationScopePage() {
-  const { data: backendData } = useQuery({
-    queryKey: ['finance-consolidation-scope-page'],
-    queryFn: async () => {
-      try {
-        return await consolidationContractApi.scopes.list();
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation();
 
-  // Use custom hook for all state and API logic
   const {
     searchKeyword,
     setSearchKeyword,
@@ -79,11 +85,10 @@ export default function ConsolidationScopePage() {
     handleOpenAddCompanyModal,
     handleAddCompany,
     handleSelectScope,
-    handleDeleteScope,
+    deleteScope,
     stats,
   } = useConsolidationScope();
 
-  // Convert icon names to components
   const statsWithIcons = stats.map((stat) => {
     const iconMap: Record<string, React.ReactNode> = {
       FolderOpen: <FolderOpen sx={{ width: 20, height: 20 }} />,
@@ -93,6 +98,96 @@ export default function ConsolidationScopePage() {
     };
     return { ...stat, icon: iconMap[stat.icon] };
   });
+
+  const scopeColumns: ColumnDef<ConsolidationScope>[] = React.useMemo(
+    () => [
+      {
+        id: 'code',
+        label: t('finance.consolidation_scope_page.code'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Network
+              size={16}
+              color={designTokens.colors.primary.dark}
+            />
+            <Typography sx={{ fontFamily: 'monospace', fontSize: 14 }}>{row.code}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'name',
+        label: t('finance.consolidation_scope_page.name'),
+        render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.name}</Typography>,
+      },
+      {
+        id: 'consolidation_method',
+        label: t('finance.consolidation_scope_page.text_e15d05'),
+        render: (row) => {
+          const config = METHOD_CONFIG[row.consolidation_method] || {
+            labelKey: row.consolidation_method,
+            color: 'default',
+          };
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              variant='outlined'
+              label={config.labelKey.startsWith('finance.') ? t(config.labelKey) : config.labelKey}
+            />
+          );
+        },
+      },
+      {
+        id: 'description',
+        label: t('finance.consolidation_scope_page.description'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {row.description || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('finance.consolidation_scope_page.status'),
+        render: (row) => {
+          const config = STATUS_CONFIG[row.status] || { labelKey: row.status, color: 'default' };
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              variant='outlined'
+              label={config.labelKey.startsWith('finance.') ? t(config.labelKey) : config.labelKey}
+            />
+          );
+        },
+      },
+    ],
+    [t]
+  );
+
+  const scopeRowActions: RowAction<ConsolidationScope>[] = React.useMemo(
+    () => [
+      {
+        key: 'rule-config',
+        label: t('finance.consolidation_scope_page.action_rule'),
+        icon: <Settings size={16} />,
+        onClick: () => setShowRuleConfigModal(true),
+      },
+      {
+        key: 'delete',
+        label: t('finance.consolidation_scope_page.action_delete'),
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        confirm: true,
+        confirmMessage: t('finance.consolidation_scope_page.confirm'),
+        onClick: (row) => deleteScope.mutate(row.id),
+      },
+    ],
+    [t, setShowRuleConfigModal, deleteScope]
+  );
 
   return (
     <PageContainer
@@ -110,38 +205,6 @@ export default function ConsolidationScopePage() {
         ],
       }}
     >
-      {/* Search section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ pt: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ position: 'relative', flex: 1, maxWidth: 400 }}>
-              <Search
-                sx={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 16,
-                  height: 16,
-                  color: 'text.disabled',
-                }}
-              />
-              <TextField
-                placeholder={t('finance.consolidation_scope_page.search')}
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                size='small'
-                sx={{ pl: 5, width: '100%' }}
-              />
-            </Box>
-            <Button variant='outlined'>
-              {t('finance.consolidation_scope_page.advanced_search')}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Statistics section */}
       <Box sx={{ mb: 3 }}>
         <StatCardGroup
           stats={statsWithIcons}
@@ -149,7 +212,6 @@ export default function ConsolidationScopePage() {
         />
       </Box>
 
-      {/* Main content section */}
       <Box
         sx={{
           display: 'grid',
@@ -157,37 +219,18 @@ export default function ConsolidationScopePage() {
           gap: 3,
         }}
       >
-        {/* Scope list section */}
-        <Box>
-          <Card>
-            <CardHeader>
-              <Typography
-                variant='h6'
-                sx={{
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <Network sx={{ width: 20, height: 20, color: 'primary.dark' }} />
-                {t('finance.consolidation_scope_page.scope_list')}
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <ConsolidationScopeTable
-                scopes={scopesData?.items}
-                loading={scopesLoading}
-                onSelectScope={handleSelectScope}
-                onDeleteScope={handleDeleteScope}
-                onRuleConfig={() => setShowRuleConfigModal(true)}
-              />
-            </CardContent>
-          </Card>
-        </Box>
+        <ListPageTemplate<ConsolidationScope>
+          columns={scopeColumns}
+          data={scopesData?.items ?? []}
+          loading={scopesLoading}
+          searchable
+          searchValue={searchKeyword}
+          onSearch={setSearchKeyword}
+          onRowClick={handleSelectScope}
+          rowActions={scopeRowActions}
+          emptyMessage={t('finance.consolidation_scope_page.no_scopes')}
+        />
 
-        {/* Scope detail section */}
         <Box>
           {selectedScope ? (
             <Card>
@@ -203,7 +246,7 @@ export default function ConsolidationScopePage() {
                     variant='h6'
                     sx={{
                       fontWeight: 600,
-                      fontSize: '1rem',
+                      fontSize: designTokens.typography.fontSize.scale['1rem'],
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
@@ -320,7 +363,6 @@ export default function ConsolidationScopePage() {
         </Box>
       </Box>
 
-      {/* Dialogs */}
       <ScopeFormDialog
         open={showCreateScopeModal || showEditScopeModal}
         editMode={showEditScopeModal}

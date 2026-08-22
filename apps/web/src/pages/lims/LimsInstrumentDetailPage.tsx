@@ -241,7 +241,7 @@ function SidebarTasks({
                       mb: 1,
                     }}
                   >
-                    <Typography sx={{ fontWeight: 500, color: 'grey.900', fontSize: '0.875rem' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'grey.900', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                       {task.task_no || task.id}
                     </Typography>
                     <Chip
@@ -255,7 +255,7 @@ function SidebarTasks({
                       display: 'flex',
                       alignItems: 'center',
                       gap: 2,
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'text.secondary',
                     }}
                   >

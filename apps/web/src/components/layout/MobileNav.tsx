@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -155,7 +156,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
               sx={{
                 fontWeight: isActive ? 600 : 500,
                 color: isActive ? 'primary.main' : 'text.primary',
-                fontSize: '0.95rem',
+                fontSize: designTokens.typography.fontSize.scale['0.95rem'],
                 flex: 1,
               }}
             >
@@ -289,7 +290,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 flex: 1,
                 border: 'none',
                 background: 'transparent',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 outline: 'none',
                 color: 'inherit',
               }}
@@ -362,7 +363,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                       location.pathname === DASHBOARD_PATHS.dashboard
                         ? 'primary.main'
                         : 'text.primary',
-                    fontSize: '0.95rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.95rem'],
                     flex: 1,
                   }}
                 >

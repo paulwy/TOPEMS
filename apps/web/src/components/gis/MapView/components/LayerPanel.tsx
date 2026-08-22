@@ -41,7 +41,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
         fullWidth
         onClick={() => setShowLayerPanel(!showLayerPanel)}
         sx={{
-          padding: `${designTokens.spacing.sm} 16px`,
+          padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

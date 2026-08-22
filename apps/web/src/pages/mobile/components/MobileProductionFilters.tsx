@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * MobileProduction filter bar component
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
@@ -35,7 +36,7 @@ export const MobileProductionFilters: React.FC<MobileProductionFiltersProps> = (
         sx={{
           '& .MuiTab-root': {
             minHeight: 44,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           },
         }}
       >

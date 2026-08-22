@@ -257,7 +257,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                         display: 'flex',
                         alignItems: 'center',
                         color: 'primary.main',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
                       }}
                     >

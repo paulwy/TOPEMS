@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { alpha } from '@mui/material/styles';
@@ -504,7 +505,7 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
           <Chip
             label={type}
             size='small'
-            sx={{ height: 20, fontSize: '0.7rem' }}
+            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
         </Box>
         <Box sx={{ flex: 1, minHeight: height - 40, position: 'relative' }}>

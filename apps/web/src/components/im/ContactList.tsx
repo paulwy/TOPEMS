@@ -253,7 +253,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {activeTab !== 'groups' && pendingRequests.length > 0 && (
           <div style={{ padding: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>
+            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px` }}>
               {i18n.t('components.contact_list.k1')}
             </div>
             {pendingRequests.map((friend) => (
@@ -265,7 +265,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                   justifyContent: 'space-between',
                   padding: 8,
                   borderRadius: 8,
-                  margin: '0 4px',
+                  margin: `0 ${designTokens.spacing.xs}px`,
                 }}
               >
                 <div
@@ -345,7 +345,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
 
         {activeTab !== 'groups' && filteredFriends.length > 0 && (
           <div style={{ padding: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>
+            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px` }}>
               {i18n.t('components.contact_list.k3')}
             </div>
             {filteredFriends
@@ -359,7 +359,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     justifyContent: 'space-between',
                     padding: 8,
                     borderRadius: 8,
-                    margin: '0 4px',
+                    margin: `0 ${designTokens.spacing.xs}px`,
                     cursor: 'pointer',
                     position: 'relative',
                   }}
@@ -464,7 +464,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         onClick={() => handleRemoveFriend(friend.friend_id)}
                         style={{
                           width: '100%',
-                          padding: '8px 16px',
+                          padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                           textAlign: 'left',
                           fontSize: 14,
                           color: theme.palette.error.dark,
@@ -522,7 +522,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     justifyContent: 'space-between',
                     padding: 12,
                     borderRadius: 8,
-                    margin: '0 4px',
+                    margin: `0 ${designTokens.spacing.xs}px`,
                     cursor: 'pointer',
                   }}
                 >
@@ -636,7 +636,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               padding: 16,
               width: '100%',
               maxWidth: 320,
-              margin: '0 16px',
+              margin: `0 ${designTokens.spacing.md}px`,
             }}
           >
             <h3 style={{ fontWeight: 500, color: theme.palette.text.primary, marginBottom: 16 }}>
@@ -649,7 +649,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               onChange={(e) => setNewGroupName(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px 12px',
+                padding: `${designTokens.spacing.sm}px 12px`,
                 border: '1px solid grey.300',
                 borderRadius: 4,
                 fontSize: 14,

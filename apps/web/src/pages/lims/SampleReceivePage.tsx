@@ -174,7 +174,7 @@ const SampleReceivePage: React.FC = () => {
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  sx={{ fontSize: '0.875rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.sample_receive_page.k7')}
                 </Typography>
@@ -208,7 +208,7 @@ const SampleReceivePage: React.FC = () => {
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  sx={{ fontSize: '0.875rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.sample_receive_page.k8')}
                 </Typography>
@@ -242,7 +242,7 @@ const SampleReceivePage: React.FC = () => {
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  sx={{ fontSize: '0.875rem' }}
+                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.sample_receive_page.k9')}
                 </Typography>
@@ -293,7 +293,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k11')}
             </Box>
@@ -302,7 +302,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k12')}
             </Box>
@@ -311,7 +311,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k13')}
             </Box>
@@ -320,7 +320,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k14')}
             </Box>
@@ -338,7 +338,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k15')}
             </Box>
@@ -351,7 +351,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k16')}
             </Box>
@@ -360,7 +360,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k17')}
             </Box>
@@ -369,7 +369,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k18')}
             </Box>
@@ -380,7 +380,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k19')}
             </Box>
@@ -389,7 +389,7 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {i18n.t('pages.sample_receive_page.k20')}
             </Box>

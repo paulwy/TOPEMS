@@ -261,7 +261,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             <Button
               onClick={() => setTimeRange({ start: '', end: '' })}
               sx={{
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 color: 'primary.dark',
                 textTransform: 'none',
               }}
@@ -538,7 +538,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       ml: 2,
                       color: 'grey.700',
                       fontFamily: 'monospace',
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     }}
                   >
                     {currentPoint.latitude.toFixed(6)}, {currentPoint.longitude.toFixed(6)}
@@ -681,7 +681,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   }
                 >
                   <Popup>
-                    <Box sx={{ fontSize: '0.875rem' }}>
+                    <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                       <Typography sx={{ fontWeight: 500 }}>
                         {i18n.t('gis.device_track_panel.k15')}
                       </Typography>

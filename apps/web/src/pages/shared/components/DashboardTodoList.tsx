@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -59,7 +60,7 @@ const DashboardTodoList: React.FC<DashboardTodoListProps> = ({
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ListTodo size={16} />
-                <Typography sx={{ fontSize: '0.875rem' }}>
+                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {t('shared.dashboard.tab_pending')}
                 </Typography>
                 <Badge
@@ -75,7 +76,7 @@ const DashboardTodoList: React.FC<DashboardTodoListProps> = ({
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CheckCircle size={16} />
-                <Typography sx={{ fontSize: '0.875rem' }}>
+                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {t('shared.dashboard.tab_completed')}
                 </Typography>
                 <Badge
@@ -137,7 +138,7 @@ const DashboardTodoList: React.FC<DashboardTodoListProps> = ({
                 primary={todo.title}
                 sx={{
                   '& .MuiListItemText-primary': {
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: todo.done ? 'grey.500' : 'grey.900',
                     textDecoration: todo.done ? 'line-through' : 'none',
                   },

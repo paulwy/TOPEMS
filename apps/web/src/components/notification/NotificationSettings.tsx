@@ -272,7 +272,7 @@ const NotificationSettings: React.FC = () => {
                 onChange={(e) => updateQuietHours('start', e.target.value)}
                 style={{
                   flex: 1,
-                  padding: `${designTokens.spacing.xs} 8px`,
+                  padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   fontSize: 12,
                   border: '1px solid grey.300',
                   borderRadius: 4,
@@ -288,7 +288,7 @@ const NotificationSettings: React.FC = () => {
                 onChange={(e) => updateQuietHours('end', e.target.value)}
                 style={{
                   flex: 1,
-                  padding: `${designTokens.spacing.xs} 8px`,
+                  padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   fontSize: 12,
                   border: '1px solid grey.300',
                   borderRadius: 4,

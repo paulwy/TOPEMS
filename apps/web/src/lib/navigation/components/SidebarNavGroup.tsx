@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useState, useCallback, useMemo, type ComponentType, type ReactNode } from 'react';
 import {
   Box,
@@ -157,7 +158,7 @@ function NavItemComponent({
         <Typography
           variant='body2'
           sx={{
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             fontWeight: active ? 600 : 400,
             color: active ? 'primary.main' : 'text.primary',
           }}
@@ -262,7 +263,7 @@ export default function SidebarNavGroup({ grouped, collapsed }: SidebarNavGroupP
                 <Typography
                   variant='caption'
                   sx={{
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     fontWeight: 600,
                     color: 'text.secondary',
                     textTransform: 'uppercase',

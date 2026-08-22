@@ -215,14 +215,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
             <Box>
               <Typography
                 sx={{
-                  fontSize: '1.25rem',
+                  fontSize: designTokens.typography.fontSize.scale['1.25rem'],
                   fontWeight: 'semibold',
                   color: 'grey.900',
                 }}
               >
                 {i18n.t('components.export_modal.k0')}
               </Typography>
-              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 0.5 }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600', marginTop: 0.5 }}>
                 {report.config.title}
               </Typography>
             </Box>
@@ -246,7 +246,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 'medium',
                     color: 'grey.700',
                     marginBottom: 2,
@@ -297,7 +297,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                         </Box>
                         <Typography
                           sx={{
-                            fontSize: '0.875rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                             fontWeight: 'medium',
                             color: 'grey.900',
                             textAlign: 'center',
@@ -307,7 +307,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: '0.75rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             color: 'grey.600',
                             textAlign: 'center',
                             marginTop: 0.5,
@@ -325,7 +325,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       fontWeight: 'medium',
                       color: 'grey.700',
                       marginBottom: 1,
@@ -346,7 +346,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   />
                   <Typography
                     sx={{
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: 'grey.600',
                       marginTop: 0.5,
                     }}
@@ -365,7 +365,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                         '&.Mui-checked': { color: 'primary.dark' },
                       }}
                     />
-                    <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
+                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.700' }}>
                       {i18n.t('components.export_modal.k4')}
                     </Typography>
                   </Box>
@@ -390,7 +390,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   <Columns sx={{ width: 16, height: 16, color: 'grey.600' }} />
                   <Typography
                     sx={{
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       fontWeight: 'medium',
                       color: 'grey.700',
                     }}
@@ -399,23 +399,23 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                     • {i18n.t('components.export_modal.k0')}
                     {report.config.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                     • {i18n.t('components.export_modal.k1')}
                     {report.row_count} {i18n.t('components.export_modal.k2')}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                     • {i18n.t('components.export_modal.k3')}
                     {report.config.columns.length} {i18n.t('components.export_modal.k4')}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                     • {i18n.t('components.export_modal.k5')}
                     {format.toUpperCase()}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                     • {i18n.t('components.export_modal.k6')}
                     {generateFilename()}.{format === 'excel' ? 'csv' : format}
                   </Typography>
@@ -431,13 +431,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   width: 64,
                   height: 64,
                   color: 'primary.dark',
-                  margin: '0 auto 16px',
+                  margin: `0 auto ${designTokens.spacing.md}px`,
                   animation: 'spin 1s linear infinite',
                 }}
               />
               <Typography
                 sx={{
-                  fontSize: '1.125rem',
+                  fontSize: designTokens.typography.fontSize.scale['1.125rem'],
                   fontWeight: 'medium',
                   color: 'grey.900',
                 }}
@@ -459,7 +459,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   }}
                 />
               </Box>
-              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 1 }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600', marginTop: 1 }}>
                 {exportProgress}%
               </Typography>
             </Box>
@@ -476,21 +476,21 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 16px',
+                  margin: `0 auto ${designTokens.spacing.md}px`,
                 }}
               >
                 <CheckCircle sx={{ width: 32, height: 32, color: 'success.dark' }} />
               </Box>
               <Typography
                 sx={{
-                  fontSize: '1.125rem',
+                  fontSize: designTokens.typography.fontSize.scale['1.125rem'],
                   fontWeight: 'medium',
                   color: 'grey.900',
                 }}
               >
                 {i18n.t('components.export_modal.k7')}
               </Typography>
-              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 1 }}>
+              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600', marginTop: 1 }}>
                 {i18n.t('components.export_modal.k8')}
               </Typography>
             </Box>
@@ -507,14 +507,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 16px',
+                  margin: `0 auto ${designTokens.spacing.md}px`,
                 }}
               >
                 <X sx={{ width: 32, height: 32, color: 'error.dark' }} />
               </Box>
               <Typography
                 sx={{
-                  fontSize: '1.125rem',
+                  fontSize: designTokens.typography.fontSize.scale['1.125rem'],
                   fontWeight: 'medium',
                   color: 'error.dark',
                 }}

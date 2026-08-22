@@ -1,5 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
-import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 /**
  * 车辆利用率分析页
  *
@@ -8,8 +7,11 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { tmsApi } from '@/api/tms';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
   ResponsiveContainer,
   BarChart,
@@ -21,6 +23,8 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import { Box, Paper, Typography } from '@mui/material';
+import { Gauge, Truck, TrendingUp, TrendingDown } from 'lucide-react';
 
 const MOCK_DATA = [
   { vehicleNo: 'V-001', utilization: 85, trips: 42 },
@@ -35,7 +39,9 @@ const MOCK_DATA = [
   { vehicleNo: 'V-010', utilization: 70, trips: 32 },
 ];
 export default function VehicleUtilizationPage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['tms', 'VehicleUtilizationPage'],
     queryFn: async () => {
       try {
@@ -58,6 +64,7 @@ export default function VehicleUtilizationPage() {
       }
     },
   });
+
   const data = useMemo(() => MOCK_DATA, []);
   const avgUtilization =
     data.length > 0
@@ -66,94 +73,130 @@ export default function VehicleUtilizationPage() {
   const totalTrips = data.reduce((s, d) => s + d.trips, 0);
   const maxUtil = Math.max(...data.map((d) => d.utilization));
   const minUtil = Math.min(...data.map((d) => d.utilization));
+
+  const statCards: StatCard[] = [
+    {
+      id: 'avgUtilization',
+      title: t('tms.vehicle_utilization_page.k2'),
+      value: avgUtilization,
+      suffix: '%',
+      icon: <Gauge size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'totalTrips',
+      title: t('tms.vehicle_utilization_page.k3'),
+      value: totalTrips,
+      icon: <Truck size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'maxUtil',
+      title: t('tms.vehicle_utilization_page.k4'),
+      value: maxUtil,
+      suffix: '%',
+      icon: <TrendingUp size={24} />,
+      color: 'warning',
+    },
+    {
+      id: 'minUtil',
+      title: t('tms.vehicle_utilization_page.k5'),
+      value: minUtil,
+      suffix: '%',
+      icon: <TrendingDown size={24} />,
+      color: 'error',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div>
-        <h1 className='text-2xl font-bold'>{i18n.t('tms.vehicle_utilization_page.k0')}</h1>
-        <p className='mt-1 text-sm text-gray-500'>{i18n.t('tms.vehicle_utilization_page.k1')}</p>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.vehicle_utilization_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{avgUtilization}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.vehicle_utilization_page.k3')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{totalTrips}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.vehicle_utilization_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{maxUtil}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.vehicle_utilization_page.k5')}</p>
-          <p className='mt-1 text-3xl font-bold text-red-600'>{minUtil}%</p>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('tms.vehicle_utilization_page.k6')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={340}
-        >
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+    <StatsPageTemplate
+      title={t('tms.vehicle_utilization_page.k0')}
+      subtitle={t('tms.vehicle_utilization_page.k1')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='vehicleNo'
-              fontSize={11}
-            />
-            <YAxis
-              domain={[0, 100]}
-              unit='%'
-              fontSize={11}
-            />
-            <Tooltip formatter={(value: unknown) => `${value}%`} />
-            <Legend />
-            <ReferenceLine
-              y={80}
-              stroke={designTokens.colors.success.dark}
-              strokeDasharray='4 4'
-              label={i18n.t('tms.vehicle_utilization_page.80_7')}
-            />
-            <Bar
-              dataKey='utilization'
-              name={i18n.t('tms.vehicle_utilization_page.k8')}
-              fill={designTokens.colors.primary.main}
-              barSize={28}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('tms.vehicle_utilization_page.k9')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={240}
-        >
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            {t('tms.vehicle_utilization_page.k6')}
+          </Typography>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='vehicleNo'
-              fontSize={11}
-            />
-            <YAxis fontSize={11} />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey='trips'
-              name={i18n.t('tms.vehicle_utilization_page.k10')}
-              fill={designTokens.colors.secondary.dark}
-              barSize={28}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='vehicleNo'
+                fontSize={11}
+              />
+              <YAxis
+                domain={[0, 100]}
+                unit='%'
+                fontSize={11}
+              />
+              <Tooltip formatter={(value: unknown) => `${value}%`} />
+              <Legend />
+              <ReferenceLine
+                y={80}
+                stroke={designTokens.colors.success.dark}
+                strokeDasharray='4 4'
+                label={t('tms.vehicle_utilization_page.80_7')}
+              />
+              <Bar
+                dataKey='utilization'
+                name={t('tms.vehicle_utilization_page.k8')}
+                fill={designTokens.colors.primary.main}
+                barSize={28}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            {t('tms.vehicle_utilization_page.k9')}
+          </Typography>
+          <ResponsiveContainer
+            width='100%'
+            height={240}
+          >
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='vehicleNo'
+                fontSize={11}
+              />
+              <YAxis fontSize={11} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey='trips'
+                name={t('tms.vehicle_utilization_page.k10')}
+                fill={designTokens.colors.secondary.dark}
+                barSize={28}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Box>
+    </StatsPageTemplate>
   );
 }

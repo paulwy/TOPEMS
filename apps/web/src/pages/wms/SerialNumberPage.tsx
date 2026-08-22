@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip } from '@mui/material';
 import { History, ArrowRightLeft } from 'lucide-react';
@@ -46,7 +47,7 @@ const customColumns: ColumnDef[] = [
             size='small'
             label={i18n.t('pages.serial_number_page.k5')}
             color='warning'
-            sx={{ ml: 1, fontSize: '0.625rem', height: 16 }}
+            sx={{ ml: 1, fontSize: designTokens.typography.fontSize.scale['0.625rem'], height: 16 }}
           />
         )}
       </Box>
@@ -59,7 +60,7 @@ const customColumns: ColumnDef[] = [
     render: (row: Record<string, unknown>) => (
       <Box>
         <Box sx={{ fontWeight: 500 }}>{row.material_name as string}</Box>
-        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>SKU: {row.sku as string}</Box>
+        <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>SKU: {row.sku as string}</Box>
       </Box>
     ),
   },
@@ -85,7 +86,7 @@ const customColumns: ColumnDef[] = [
     label: i18n.t('pages.serial_number_page.k8'),
     width: 140,
     render: (row: Record<string, unknown>) => (
-      <Box sx={{ fontSize: '0.8rem' }}>
+      <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.8rem'] }}>
         {row.warranty_start_date && row.warranty_end_date ? (
           <>
             <Box>{new Date(row.warranty_start_date as string).toLocaleDateString('zh-CN')} ~</Box>

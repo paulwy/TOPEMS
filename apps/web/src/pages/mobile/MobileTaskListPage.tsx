@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
@@ -347,7 +348,7 @@ const MobileTaskListPage: React.FC = () => {
             mb: 1,
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -458,7 +459,7 @@ const MobileTaskListPage: React.FC = () => {
                                   variant='outlined'
                                   sx={{
                                     height: 20,
-                                    fontSize: '0.7rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                                     '& .MuiChip-label': { px: 1 },
                                   }}
                                 />
@@ -469,7 +470,7 @@ const MobileTaskListPage: React.FC = () => {
                                   color={statusConfig.color}
                                   sx={{
                                     height: 20,
-                                    fontSize: '0.7rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                                     '& .MuiChip-label': { pl: 0.5, pr: 1 },
                                     '& .MuiChip-icon': { ml: 0.5, mr: 0 },
                                   }}
@@ -481,7 +482,7 @@ const MobileTaskListPage: React.FC = () => {
                                   variant='outlined'
                                   sx={{
                                     height: 20,
-                                    fontSize: '0.7rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                                     '& .MuiChip-label': { px: 1 },
                                   }}
                                 />

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * AttendanceRecordsTab - Attendance records list
  * @refactor-split Extracted from MobileAttendancePage.tsx
@@ -61,7 +62,7 @@ const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ records }) 
                   color={
                     getStatusColor(record.status) as React.ComponentProps<typeof Chip>['color']
                   }
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 />
                 <Typography
                   variant='caption'

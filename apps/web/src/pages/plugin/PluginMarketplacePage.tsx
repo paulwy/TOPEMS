@@ -1,16 +1,14 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Package,
   Star,
   Download,
   Clock,
-  Search,
   Grid3X3,
   List,
   ChevronRight,
   CheckCircle,
-  Sparkles,
   TrendingUp,
   X,
   ShoppingCart,
@@ -37,8 +35,8 @@ import {
   InputLabel,
   Avatar,
   Divider,
-  CircularProgress,
 } from '@mui/material';
+import type { FilterConfig } from '@topems/shared-components';
 import type { Plugin, PluginReview, PluginVersion } from '@/api/plugin';
 import {
   SUITES,
@@ -49,7 +47,8 @@ import {
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -735,6 +734,95 @@ const PluginDetailModal: React.FC<{
   );
 };
 
+const PluginActionsCell: React.FC<{ plugin: Plugin; onViewDetails: () => void }> = ({
+  plugin,
+  onViewDetails,
+}) => {
+  const { t } = useTranslation();
+  const { installPlugin, isPluginInstalled } = usePluginStore();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const installed = isPluginInstalled(plugin.code);
+
+  const handleInstall = async () => {
+    setIsInstalling(true);
+    try {
+      const success = await installPlugin(plugin.code);
+      if (success) {
+        addNotification({
+          title: t('plugin.message.install_success'),
+          message: t('plugin.marketplace_page.install_success_message', { name: plugin.name }),
+          type: 'success',
+        });
+      } else {
+        addNotification({
+          title: t('plugin.message.install_failed'),
+          message: t('plugin.message.install_failed_message'),
+          type: 'error',
+        });
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      addNotification({
+        title: t('plugin.message.install_failed'),
+        message: err.message || t('plugin.message.install_failed_short'),
+        type: 'error',
+      });
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
+  return (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      <Button
+        variant='outlined'
+        size='small'
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewDetails();
+        }}
+        startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
+      >
+        {t('plugin.common.details')}
+      </Button>
+      {installed ? (
+        <Button
+          variant='contained'
+          size='small'
+          disabled
+          startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
+        >
+          {t('plugin.common.installed')}
+        </Button>
+      ) : (
+        <Button
+          variant='contained'
+          size='small'
+          onClick={(e) => {
+            e.stopPropagation();
+            handleInstall();
+          }}
+          disabled={isInstalling}
+          startIcon={
+            isInstalling ? (
+              <Loader2 sx={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
+            ) : (
+              <ShoppingCart sx={{ width: 16, height: 16 }} />
+            )
+          }
+        >
+          {isInstalling
+            ? t('plugin.common.installing')
+            : plugin.is_free
+              ? t('plugin.common.free_install')
+              : t('plugin.common.purchase')}
+        </Button>
+      )}
+    </Box>
+  );
+};
+
 const PluginMarketplacePage: React.FC = () => {
   const { t } = useTranslation();
 
@@ -811,14 +899,14 @@ const PluginMarketplacePage: React.FC = () => {
   const plugins = pluginsQuery.data || [];
   const suites = useMemo(() => SUITES(), [t]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);
     addNotification({
       title: t('plugin.message.refresh_success'),
       message: t('plugin.message.plugin_list_updated'),
       type: 'success',
     });
-  };
+  }, [pluginsQuery, healthQuery, fetchInstalledPlugins, addNotification, t]);
 
   const filteredPlugins = useMemo(() => {
     let result = [...plugins];
@@ -857,227 +945,298 @@ const PluginMarketplacePage: React.FC = () => {
     return result;
   }, [plugins, searchQuery, selectedSuite, sortBy]);
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+    },
+    [setSearchQuery]
+  );
 
-  return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
-    >
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Box
-          sx={{
-            background: 'linear-gradient(90deg, primary.main 0%, primary.main 100%)',
-            color: 'common.white',
-            py: 8,
-            px: 6,
-          }}
-        >
-          <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
-              <Sparkles sx={{ width: 32, height: 32 }} />
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'suite',
+        label: t('plugin.marketplace_page.filter.suite_label'),
+        type: 'select',
+        value: selectedSuite,
+        options: [
+          { label: t('plugin.marketplace_page.filter.all_suites'), value: 'all' },
+          ...suites.map((suite) => ({ label: suite.name, value: suite.code })),
+        ],
+        onChange: (value) => setSelectedSuite(String(value)),
+      },
+    ],
+    [selectedSuite, suites, t]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: t('plugin.action.refresh'),
+        icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
+        onClick: handleRefresh,
+        variant: 'outlined' as const,
+      },
+    ],
+    [handleRefresh, t]
+  );
+
+  const columns: ColumnDef<Plugin>[] = useMemo(
+    () => [
+      {
+        id: 'plugin',
+        label: t('plugin.field.plugin_name'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Package sx={{ width: 20, height: 20, color: 'common.white' }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 'bold' }}>{row.name}</Typography>
               <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
+                variant='body2'
+                color='textSecondary'
               >
-                {t('plugin.marketplace_page.title')}
+                v{row.version}
               </Typography>
             </Box>
-            <Typography
-              variant='body1'
-              sx={{ opacity: 0.6 }}
-            >
-              {t('plugin.marketplace_page.subtitle')}
-            </Typography>
           </Box>
-        </Box>
-
-        <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 8 }}>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 6, mb: 8 }}>
-            <Box sx={{ flexGrow: 1, position: 'relative' }}>
-              <Search
-                sx={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 20,
-                  height: 20,
-                  color: 'grey.400',
-                }}
-              />
-              <TextField
-                placeholder={t('plugin.marketplace_page.search_placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                fullWidth
-                sx={{ pl: 10 }}
-              />
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <FormControl
-                size='small'
-                sx={{ minWidth: 160 }}
-              >
-                <InputLabel>{t('plugin.marketplace_page.filter.suite_label')}</InputLabel>
-                <Select
-                  value={selectedSuite}
-                  label={t('plugin.marketplace_page.filter.suite_label')}
-                  onChange={(e) => setSelectedSuite(e.target.value)}
-                >
-                  <MenuItem value='all'>{t('plugin.marketplace_page.filter.all_suites')}</MenuItem>
-                  {suites.map((suite) => (
-                    <MenuItem
-                      key={suite.code}
-                      value={suite.code}
-                    >
-                      {suite.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl
-                size='small'
-                sx={{ minWidth: 140 }}
-              >
-                <InputLabel>{t('plugin.marketplace_page.filter.sort_label')}</InputLabel>
-                <Select
-                  value={sortBy}
-                  label={t('plugin.marketplace_page.filter.sort_label')}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                >
-                  <MenuItem value='popular'>
-                    <TrendingUp sx={{ width: 16, height: 16, mr: 2 }} />
-                    {t('plugin.marketplace_page.sort.popular')}
-                  </MenuItem>
-                  <MenuItem value='rating'>
-                    <Star sx={{ width: 16, height: 16, mr: 2 }} />
-                    {t('plugin.marketplace_page.sort.rating')}
-                  </MenuItem>
-                  <MenuItem value='newest'>
-                    <Clock sx={{ width: 16, height: 16, mr: 2 }} />
-                    {t('plugin.marketplace_page.sort.newest')}
-                  </MenuItem>
-                  <MenuItem value='price'>
-                    <ShoppingCart sx={{ width: 16, height: 16, mr: 2 }} />
-                    {t('plugin.marketplace_page.sort.price')}
-                  </MenuItem>
-                </Select>
-              </FormControl>
-
-              <Button
-                variant='outlined'
-                size='small'
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              >
-                {viewMode === 'grid' ? (
-                  <List sx={{ width: 20, height: 20 }} />
-                ) : (
-                  <Grid3X3 sx={{ width: 20, height: 20 }} />
-                )}
-              </Button>
-
-              <Button
-                variant='outlined'
-                size='small'
-                onClick={handleRefresh}
-                startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
-              >
-                {t('plugin.action.refresh')}
-              </Button>
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: 'repeat(2, 1fr)',
-                lg: 'repeat(3, 1fr)',
-                xl: 'repeat(4, 1fr)',
-              },
-              gap: 6,
-              mb: 8,
-            }}
+        ),
+      },
+      {
+        id: 'description',
+        label: t('plugin.field.description'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='textSecondary'
+            noWrap
+            sx={{ maxWidth: 300 }}
           >
-            {suites.map((suite) => (
-              <Card
-                key={suite.id}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': { boxShadow: 4 },
-                  transition: 'box-shadow 0.3s ease',
-                }}
-                onClick={() => setSelectedSuite(suite.code)}
-              >
-                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 3,
-                      background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Package sx={{ width: 28, height: 28, color: 'primary.dark' }} />
-                  </Box>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {suite.name}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='textSecondary'
-                    >
-                      {suite.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                      <Chip
-                        label={t('plugin.marketplace_page.suite_plugin_count', {
-                          count: suite.plugins.length,
-                        })}
-                        size='small'
-                        variant='outlined'
-                      />
-                      {suite.is_free ? (
-                        <Chip
-                          label={t('plugin.common.free')}
-                          size='small'
-                          color='success'
-                        />
-                      ) : (
-                        <Chip
-                          label={`¥${(suite.price_cents || 0) / 100}`}
-                          size='small'
-                          color='primary'
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                  <ChevronRight sx={{ width: 20, height: 20, color: 'grey.400' }} />
-                </CardContent>
-              </Card>
+            {row.description || t('plugin.common.no_description')}
+          </Typography>
+        ),
+      },
+      {
+        id: 'tags',
+        label: t('plugin.field.tags'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {row.tags?.slice(0, 3).map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                size='small'
+                variant='outlined'
+                sx={{ fontSize: 10 }}
+              />
             ))}
           </Box>
+        ),
+      },
+      {
+        id: 'rating',
+        label: t('plugin.field.rating'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Star sx={{ width: 16, height: 16, color: 'warning.main', fill: 'warning.main' }} />
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 'medium' }}
+            >
+              {row.rating || 0}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='textSecondary'
+            >
+              ({row.rating_count || 0})
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'downloads',
+        label: t('plugin.field.downloads'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Download sx={{ width: 16, height: 16, color: 'grey.400' }} />
+            <Typography
+              variant='body2'
+              color='textSecondary'
+            >
+              {row.install_count?.toLocaleString() || 0}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'price',
+        label: t('plugin.field.price'),
+        render: (row) => (
+          <Chip
+            label={row.is_free ? t('plugin.common.free') : `¥${(row.price_cents || 0) / 100}`}
+            size='small'
+            color={row.is_free ? 'success' : 'primary'}
+          />
+        ),
+      },
+      {
+        id: 'status',
+        label: t('plugin.field.status'),
+        render: (row) =>
+          healthStatus[row.code]?.healthy !== undefined ? (
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: healthStatus[row.code]?.healthy ? 'success.main' : 'error.main',
+              }}
+            />
+          ) : null,
+      },
+      {
+        id: 'actions',
+        label: t('plugin.action.install'),
+        render: (row) => (
+          <PluginActionsCell
+            plugin={row}
+            onViewDetails={() => setSelectedPlugin(row)}
+          />
+        ),
+      },
+    ],
+    [healthStatus, t]
+  );
 
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 6 }}
-          >
+  const renderCardView = useCallback(
+    (data: Plugin[]) => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
+          },
+          gap: 6,
+        }}
+      >
+        {data.map((plugin) => (
+          <PluginCard
+            key={plugin.id}
+            plugin={plugin}
+            healthStatus={healthStatus[plugin.code]?.healthy}
+            onViewDetails={() => setSelectedPlugin(plugin)}
+          />
+        ))}
+      </Box>
+    ),
+    [healthStatus]
+  );
+
+  const headerContent = useMemo(
+    () => (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6, mb: 6 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+              xl: 'repeat(4, 1fr)',
+            },
+            gap: 6,
+          }}
+        >
+          {suites.map((suite) => (
+            <Card
+              key={suite.id}
+              sx={{
+                cursor: 'pointer',
+                '&:hover': { boxShadow: 4 },
+                transition: 'box-shadow 0.3s ease',
+              }}
+              onClick={() => setSelectedSuite(suite.code)}
+            >
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Package sx={{ width: 28, height: 28, color: 'primary.dark' }} />
+                </Box>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold' }}
+                  >
+                    {suite.name}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='textSecondary'
+                  >
+                    {suite.description}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                    <Chip
+                      label={t('plugin.marketplace_page.suite_plugin_count', {
+                        count: suite.plugins.length,
+                      })}
+                      size='small'
+                      variant='outlined'
+                    />
+                    {suite.is_free ? (
+                      <Chip
+                        label={t('plugin.common.free')}
+                        size='small'
+                        color='success'
+                      />
+                    ) : (
+                      <Chip
+                        label={`¥${(suite.price_cents || 0) / 100}`}
+                        size='small'
+                        color='primary'
+                      />
+                    )}
+                  </Box>
+                </Box>
+                <ChevronRight sx={{ width: 20, height: 20, color: 'grey.400' }} />
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 3,
+          }}
+        >
+          <Box>
             <Typography
               variant='h5'
               sx={{ fontWeight: 'bold' }}
@@ -1094,53 +1253,83 @@ const PluginMarketplacePage: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 6,
-              gridTemplateColumns:
-                viewMode === 'grid'
-                  ? { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }
-                  : '1fr',
-            }}
-          >
-            {filteredPlugins.map((plugin) => (
-              <PluginCard
-                key={plugin.id}
-                plugin={plugin}
-                healthStatus={healthStatus[plugin.code]?.healthy}
-                onViewDetails={() => setSelectedPlugin(plugin)}
-              />
-            ))}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 140 }}
+            >
+              <InputLabel>{t('plugin.marketplace_page.filter.sort_label')}</InputLabel>
+              <Select
+                value={sortBy}
+                label={t('plugin.marketplace_page.filter.sort_label')}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+              >
+                <MenuItem value='popular'>
+                  <TrendingUp sx={{ width: 16, height: 16, mr: 2 }} />
+                  {t('plugin.marketplace_page.sort.popular')}
+                </MenuItem>
+                <MenuItem value='rating'>
+                  <Star sx={{ width: 16, height: 16, mr: 2 }} />
+                  {t('plugin.marketplace_page.sort.rating')}
+                </MenuItem>
+                <MenuItem value='newest'>
+                  <Clock sx={{ width: 16, height: 16, mr: 2 }} />
+                  {t('plugin.marketplace_page.sort.newest')}
+                </MenuItem>
+                <MenuItem value='price'>
+                  <ShoppingCart sx={{ width: 16, height: 16, mr: 2 }} />
+                  {t('plugin.marketplace_page.sort.price')}
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              variant='outlined'
+              size='small'
+              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+            >
+              {viewMode === 'grid' ? (
+                <List sx={{ width: 20, height: 20 }} />
+              ) : (
+                <Grid3X3 sx={{ width: 20, height: 20 }} />
+              )}
+            </Button>
           </Box>
-
-          {filteredPlugins.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 16 }}>
-              <Package sx={{ width: 64, height: 64, color: 'grey.300', mx: 'auto', mb: 4 }} />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 'medium' }}
-              >
-                {t('plugin.marketplace_page.empty_title')}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='textSecondary'
-              >
-                {t('plugin.marketplace_page.empty_hint')}
-              </Typography>
-            </Box>
-          )}
         </Box>
-
-        {selectedPlugin && (
-          <PluginDetailModal
-            plugin={selectedPlugin}
-            onClose={() => setSelectedPlugin(null)}
-          />
-        )}
       </Box>
-    </PageContainer>
+    ),
+    [suites, selectedSuite, sortBy, viewMode, filteredPlugins.length, t]
+  );
+
+  return (
+    <>
+      <ListPageTemplate<Plugin>
+        title={t('plugin.marketplace_page.title')}
+        subtitle={t('plugin.marketplace_page.subtitle')}
+        columns={columns}
+        data={filteredPlugins}
+        loading={loading}
+        searchable
+        searchValue={searchQuery}
+        searchPlaceholder={t('plugin.marketplace_page.search_placeholder')}
+        onSearch={handleSearch}
+        filters={filters}
+        actions={actions}
+        viewMode={viewMode === 'grid' ? 'card' : 'table'}
+        viewModes={['table']}
+        renderCardView={renderCardView}
+        onRowClick={(row) => setSelectedPlugin(row)}
+        emptyMessage={t('plugin.marketplace_page.empty_title')}
+        emptyIcon={<Package sx={{ width: 48, height: 48, color: 'grey.400' }} />}
+        headerContent={headerContent}
+      />
+      {selectedPlugin && (
+        <PluginDetailModal
+          plugin={selectedPlugin}
+          onClose={() => setSelectedPlugin(null)}
+        />
+      )}
+    </>
   );
 };
 

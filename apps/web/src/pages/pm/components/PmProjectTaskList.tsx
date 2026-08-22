@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PmProjectDetailPage phase (task) list Tab
  * @done V79 Phase 2 split
@@ -39,7 +40,7 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
         title={
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pm.project_detail.phase_list')}
           </Typography>
@@ -135,12 +136,12 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                    <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                       <Box>
                         <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
                         <Typography
                           variant='body2'
-                          sx={{ color: 'grey.400', fontSize: '0.75rem' }}
+                          sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                         >
                           {i18n.t('pm.project_detail.to')} {formatDate(phase.end_date)}
                         </Typography>

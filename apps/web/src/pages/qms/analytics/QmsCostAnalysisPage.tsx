@@ -8,6 +8,7 @@
  * 数据来自 useQmsMock 的 qualityCosts。
  */
 import { useMemo } from 'react';
+import { Grid, Paper, Typography } from '@mui/material';
 import {
   ResponsiveContainer,
   PieChart,
@@ -24,9 +25,10 @@ import {
   Legend,
 } from 'recharts';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
 
 const COST_TYPE_COLORS: Record<string, string> = {
   prevention: designTokens.colors.success.dark,
@@ -48,6 +50,8 @@ export default function QmsCostAnalysisPage() {
   const { data } = useQmsMock<QmsMockShape>();
   const { t } = useTranslation('qms');
 
+  const qualityCosts = useMemo(() => data.qualityCosts ?? [], [data.qualityCosts]);
+
   const costByType = useMemo(() => {
     const map: Record<string, number> = {
       prevention: 0,
@@ -55,7 +59,7 @@ export default function QmsCostAnalysisPage() {
       internal_failure: 0,
       external_failure: 0,
     };
-    (data.qualityCosts ?? []).forEach((c) => {
+    qualityCosts.forEach((c) => {
       const key = c.costType;
       if (map[key] !== undefined) map[key] += c.amount;
     });
@@ -64,23 +68,23 @@ export default function QmsCostAnalysisPage() {
       label: getCostTypeLabels()[type] ?? type,
       amount,
     }));
-  }, [data.qualityCosts]);
+  }, [qualityCosts]);
 
   const costByDepartment = useMemo(() => {
     const map = new Map<string, number>();
-    (data.qualityCosts ?? []).forEach((c) => {
+    qualityCosts.forEach((c) => {
       const dept = c.department || t('qms.qms_cost_analysis_page.k4');
       map.set(dept, (map.get(dept) ?? 0) + c.amount);
     });
     return Array.from(map.entries()).map(([department, amount]) => ({ department, amount }));
-  }, [data.qualityCosts]);
+  }, [qualityCosts, t]);
 
   const trend = useMemo(() => {
     const map = new Map<
       string,
       { prevention: number; appraisal: number; internal_failure: number; external_failure: number }
     >();
-    (data.qualityCosts ?? []).forEach((c) => {
+    qualityCosts.forEach((c) => {
       const month = (c.occurrenceDate || '').slice(0, 7);
       if (!month) return;
       if (!map.has(month)) {
@@ -94,158 +98,196 @@ export default function QmsCostAnalysisPage() {
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, v]) => ({ month, ...v }));
-  }, [data.qualityCosts]);
+  }, [qualityCosts]);
 
   const totalCost = costByType.reduce((s, c) => s + c.amount, 0);
   const failureCost =
     (costByType.find((c) => c.type === 'internal_failure')?.amount ?? 0) +
     (costByType.find((c) => c.type === 'external_failure')?.amount ?? 0);
   const preventionCost = costByType.find((c) => c.type === 'prevention')?.amount ?? 0;
-  const ratio = preventionCost > 0 ? Math.round((failureCost / preventionCost) * 100) / 100 : 0;
+
+  const statCards = useMemo<StatCard[]>(
+    () => [
+      {
+        id: 'totalCost',
+        title: t('qms.qms_cost_analysis_page.k6'),
+        value: totalCost.toLocaleString(),
+        prefix: '¥',
+        color: 'primary',
+      },
+      {
+        id: 'preventionCost',
+        title: t('qms.qms_cost_analysis_page.k7'),
+        value: preventionCost.toLocaleString(),
+        prefix: '¥',
+        color: 'success',
+      },
+      {
+        id: 'failureCost',
+        title: t('qms.qms_cost_analysis_page.k8'),
+        value: failureCost.toLocaleString(),
+        prefix: '¥',
+        color: 'error',
+      },
+      {
+        id: 'costCount',
+        title: t('qms.qms_cost_analysis_page.k9'),
+        value: qualityCosts.length,
+        color: 'info',
+      },
+    ],
+    [totalCost, preventionCost, failureCost, qualityCosts.length, t]
+  );
 
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{t('qms.qms_cost_analysis_page.paf_5')}</h1>
-        <span className='text-sm text-gray-500'>{i18n.t('pages.qms_cost_analysis_page.k0')}</span>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k6')}</p>
-          <p className='mt-1 text-2xl font-bold text-blue-600'>¥{totalCost.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k7')}</p>
-          <p className='mt-1 text-2xl font-bold text-green-600'>
-            ¥{preventionCost.toLocaleString()}
-          </p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k8')}</p>
-          <p className='mt-1 text-2xl font-bold text-red-600'>¥{failureCost.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{t('qms.qms_cost_analysis_page.k9')}</p>
-          <p className='mt-1 text-2xl font-bold text-orange-600'>
-            {data.qualityCosts?.length ?? 0}
-          </p>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('pages.qms_cost_analysis_page.pf_1')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            <PieChart>
-              <Pie
-                data={costByType}
-                dataKey='amount'
-                nameKey='label'
-                label={(entry: unknown) => {
-                  const e = entry as { label?: string; amount?: number };
-                  return `${e.label}: ¥${(e.amount ?? 0).toLocaleString()}`;
-                }}
-                outerRadius={100}
-              >
-                {costByType.map((entry) => (
-                  <Cell
-                    key={entry.type}
-                    fill={COST_TYPE_COLORS[entry.type] ?? 'colors.grey.400'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{t('qms.qms_cost_analysis_page.k10')}</h3>
-          <ResponsiveContainer
-            width='100%'
-            height={300}
-          >
-            <BarChart
-              data={costByDepartment}
-              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+    <StatsPageTemplate
+      title={t('qms.qms_cost_analysis_page.paf_5')}
+      subtitle={i18n.t('pages.qms_cost_analysis_page.k0')}
+      statCards={statCards}
+      showTimeRange={false}
+      showSearch={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+    >
+      <Grid
+        container
+        spacing={3}
+      >
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis
-                dataKey='department'
-                fontSize={11}
-              />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-              <Legend />
-              <Bar
-                dataKey='amount'
-                name={t('qms.qms_cost_analysis_page.k11')}
-                fill={designTokens.colors.secondary.dark}
-                barSize={28}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+              {i18n.t('pages.qms_cost_analysis_page.pf_1')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={300}
+            >
+              <PieChart>
+                <Pie
+                  data={costByType}
+                  dataKey='amount'
+                  nameKey='label'
+                  label={(entry: unknown) => {
+                    const e = entry as { label?: string; amount?: number };
+                    return `${e.label}: ¥${(e.amount ?? 0).toLocaleString()}`;
+                  }}
+                  outerRadius={100}
+                >
+                  {costByType.map((entry) => (
+                    <Cell
+                      key={entry.type}
+                      fill={COST_TYPE_COLORS[entry.type] ?? designTokens.colors.grey[400]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
 
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{t('qms.qms_cost_analysis_page.k12')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={300}
-        >
-          <LineChart
-            data={trend}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
-          >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='month'
-              fontSize={11}
-            />
-            <YAxis fontSize={11} />
-            <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-            <Legend />
-            <Line
-              type='monotone'
-              dataKey='prevention'
-              name={t('qms.qms_cost_analysis_page.k13')}
-              stroke={COST_TYPE_COLORS.prevention}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='appraisal'
-              name={t('qms.qms_cost_analysis_page.k14')}
-              stroke={COST_TYPE_COLORS.appraisal}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='internal_failure'
-              name={t('qms.qms_cost_analysis_page.k15')}
-              stroke={COST_TYPE_COLORS.internal_failure}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='external_failure'
-              name={t('qms.qms_cost_analysis_page.k16')}
-              stroke={COST_TYPE_COLORS.external_failure}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {t('qms.qms_cost_analysis_page.k10')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={300}
+            >
+              <BarChart
+                data={costByDepartment}
+                margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='department'
+                  fontSize={11}
+                />
+                <YAxis fontSize={11} />
+                <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
+                <Legend />
+                <Bar
+                  dataKey='amount'
+                  name={t('qms.qms_cost_analysis_page.k11')}
+                  fill={designTokens.colors.secondary.dark}
+                  barSize={28}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {t('qms.qms_cost_analysis_page.k12')}
+            </Typography>
+            <ResponsiveContainer
+              width='100%'
+              height={300}
+            >
+              <LineChart
+                data={trend}
+                margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='month'
+                  fontSize={11}
+                />
+                <YAxis fontSize={11} />
+                <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
+                <Legend />
+                <Line
+                  type='monotone'
+                  dataKey='prevention'
+                  name={t('qms.qms_cost_analysis_page.k13')}
+                  stroke={COST_TYPE_COLORS.prevention}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='appraisal'
+                  name={t('qms.qms_cost_analysis_page.k14')}
+                  stroke={COST_TYPE_COLORS.appraisal}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='internal_failure'
+                  name={t('qms.qms_cost_analysis_page.k15')}
+                  stroke={COST_TYPE_COLORS.internal_failure}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='external_failure'
+                  name={t('qms.qms_cost_analysis_page.k16')}
+                  stroke={COST_TYPE_COLORS.external_failure}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+      </Grid>
+    </StatsPageTemplate>
   );
 }

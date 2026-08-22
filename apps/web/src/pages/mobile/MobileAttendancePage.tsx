@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback } from 'react';
 import {
   Box,
@@ -411,7 +412,7 @@ const MobileAttendancePage: React.FC = () => {
           sx={{
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -489,7 +490,7 @@ const MobileAttendancePage: React.FC = () => {
                       }}
                     >
                       <Box sx={{ textAlign: 'center' }}>
-                        <CalendarCheck style={{ width: 40, height: 40, margin: '0 auto 4px' }} />
+                        <CalendarCheck style={{ width: 40, height: 40, margin: `0 auto ${designTokens.spacing.xs}px` }} />
                         <Typography
                           variant='h6'
                           sx={{ fontWeight: 600 }}
@@ -565,7 +566,7 @@ const MobileAttendancePage: React.FC = () => {
                       label={i18n.t('mobile.mobile_attendance_page.k44')}
                       size='small'
                       color='success'
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   </Paper>
                   <Paper
@@ -678,7 +679,7 @@ const MobileAttendancePage: React.FC = () => {
                                   typeof Chip
                                 >['color']
                               }
-                              sx={{ height: 20, fontSize: '0.7rem' }}
+                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                             />
                             <Typography
                               variant='caption'
@@ -775,7 +776,7 @@ const MobileAttendancePage: React.FC = () => {
                                   label={getLeaveTypeLabel(leave.leave_type)}
                                   size='small'
                                   color='primary'
-                                  sx={{ height: 22, fontSize: '0.75rem' }}
+                                  sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                                 />
                                 <Chip
                                   label={getLeaveStatusLabel(leave.status)}
@@ -785,7 +786,7 @@ const MobileAttendancePage: React.FC = () => {
                                       typeof Chip
                                     >['color']
                                   }
-                                  sx={{ height: 22, fontSize: '0.75rem' }}
+                                  sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                                 />
                               </Box>
                               <Typography
@@ -806,7 +807,7 @@ const MobileAttendancePage: React.FC = () => {
                             <Typography
                               variant='body2'
                               color='text.secondary'
-                              sx={{ fontSize: '0.85rem' }}
+                              sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'] }}
                             >
                               {leave.reason}
                             </Typography>

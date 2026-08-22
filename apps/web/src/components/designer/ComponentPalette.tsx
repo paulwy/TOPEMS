@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * ComponentPalette — 组件面板
  *
@@ -136,13 +137,13 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
                       )}
                       <ListItemText
                         primary={comp.label}
-                        slotProps={{ primary: { sx: { fontSize: '0.8rem' } } }}
+                        slotProps={{ primary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.8rem'] } } }}
                       />
                       {comp.isContainer && (
                         <Chip
                           size='small'
                           label={i18n.t('components.component_palette.k6')}
-                          sx={{ fontSize: '0.6rem', height: 18 }}
+                          sx={{ fontSize: designTokens.typography.fontSize.scale['0.6rem'], height: 18 }}
                         />
                       )}
                     </ListItemButton>

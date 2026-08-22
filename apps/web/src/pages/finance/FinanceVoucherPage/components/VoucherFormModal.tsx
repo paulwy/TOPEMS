@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { Plus, X } from 'lucide-react';
@@ -212,7 +213,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                     width: 24,
                     textAlign: 'center',
                     color: 'text.secondary',
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   }}
                 >
                   {item.line_number}

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { Grid } from '@/components';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
@@ -538,7 +539,7 @@ const DatabaseStructurePage: React.FC = () => {
                               <TableCell
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -548,7 +549,7 @@ const DatabaseStructurePage: React.FC = () => {
                               <TableCell
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -558,7 +559,7 @@ const DatabaseStructurePage: React.FC = () => {
                               <TableCell
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -568,7 +569,7 @@ const DatabaseStructurePage: React.FC = () => {
                               <TableCell
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -578,7 +579,7 @@ const DatabaseStructurePage: React.FC = () => {
                               <TableCell
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -589,7 +590,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 align='right'
                                 sx={{
                                   fontWeight: 600,
-                                  fontSize: '0.75rem',
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                   color: 'text.secondary',
                                   textTransform: 'uppercase',
                                 }}
@@ -609,7 +610,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 <TableCell
                                   sx={{
                                     color: 'text.secondary',
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                   }}
                                 >
                                   {col.ordinal_position}
@@ -618,7 +619,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   sx={{
                                     fontFamily:
                                       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     fontWeight: 500,
                                   }}
                                 >
@@ -626,7 +627,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 </TableCell>
                                 <TableCell
                                   sx={{
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     color: 'text.secondary',
                                   }}
                                 >
@@ -644,13 +645,13 @@ const DatabaseStructurePage: React.FC = () => {
                                       color:
                                         col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                                       fontWeight: 500,
-                                      fontSize: '0.75rem',
+                                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                     }}
                                   />
                                 </TableCell>
                                 <TableCell
                                   sx={{
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     color: 'text.secondary',
                                     fontFamily:
                                       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -713,7 +714,7 @@ const DatabaseStructurePage: React.FC = () => {
                             <TableCell
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.75rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                               }}
@@ -723,7 +724,7 @@ const DatabaseStructurePage: React.FC = () => {
                             <TableCell
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.75rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                               }}
@@ -733,7 +734,7 @@ const DatabaseStructurePage: React.FC = () => {
                             <TableCell
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.75rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                               }}
@@ -743,7 +744,7 @@ const DatabaseStructurePage: React.FC = () => {
                             <TableCell
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.75rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                               }}
@@ -753,7 +754,7 @@ const DatabaseStructurePage: React.FC = () => {
                             <TableCell
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.75rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                               }}
@@ -774,7 +775,7 @@ const DatabaseStructurePage: React.FC = () => {
                               >
                                 <TableCell
                                   sx={{
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     color: 'text.secondary',
                                   }}
                                 >
@@ -790,7 +791,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       bgcolor: style.bgcolor,
                                       color: style.color,
                                       fontWeight: 500,
-                                      fontSize: '0.75rem',
+                                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                     }}
                                   />
                                 </TableCell>
@@ -798,7 +799,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   sx={{
                                     fontFamily:
                                       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     fontWeight: 500,
                                   }}
                                 >
@@ -806,7 +807,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 </TableCell>
                                 <TableCell
                                   sx={{
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     color: 'text.secondary',
                                   }}
                                 >
@@ -814,7 +815,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 </TableCell>
                                 <TableCell
                                   sx={{
-                                    fontSize: '0.875rem',
+                                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                                     color: 'text.secondary',
                                     fontFamily:
                                       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
@@ -1033,7 +1034,7 @@ const DatabaseStructurePage: React.FC = () => {
                 component='pre'
                 sx={{
                   m: 0,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'success.400',
                   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                   whiteSpace: 'pre-wrap',

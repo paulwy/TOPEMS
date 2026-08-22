@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -73,7 +74,7 @@ const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
                 <Box
                   component='pre'
                   sx={{
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     whiteSpace: 'pre-wrap',
                     maxHeight: 320,
                     overflow: 'auto',

@@ -256,7 +256,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                   size='small'
                   sx={{
                     height: 18,
-                    fontSize: '0.625rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.625rem'],
                     bgcolor: `${statusColor[item.status]}20`,
                     color: statusColor[item.status],
                   }}

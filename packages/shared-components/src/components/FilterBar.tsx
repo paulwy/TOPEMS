@@ -1,4 +1,6 @@
+import { designTokens } from '@topems/tokens';
 import React, { useCallback } from 'react';
+import i18next from 'i18next';
 import {
   Box,
   Paper,
@@ -103,7 +105,9 @@ const FilterControl: React.FC<{
             label={filter.label}
             onChange={handleChange}
           >
-            <MenuItem value=''>全部</MenuItem>
+            <MenuItem value=''>
+              {i18next.t('components.filter_bar.all', { defaultValue: 'All' })}
+            </MenuItem>
             {filter.options?.map((option) => (
               <MenuItem
                 key={option.value}
@@ -133,7 +137,7 @@ const FilterControl: React.FC<{
               (selected as any[])
                 .map((v) => filter.options?.find((o) => o.value === v)?.label)
                 .filter(Boolean)
-                .join(', ') || '全部'
+                .join(', ') || i18next.t('components.filter_bar.all', { defaultValue: 'All' })
             }
           >
             {filter.options?.map((option) => (
@@ -166,16 +170,18 @@ const FilterControl: React.FC<{
           <TextField
             {...textFieldProps}
             type='date'
-            label='开始日期'
+            label={i18next.t('components.filter_bar.start_date', { defaultValue: 'Start date' })}
             value={filter.value?.start ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, start: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
-          <Typography color='text.secondary'>至</Typography>
+          <Typography color='text.secondary'>
+            {i18next.t('components.filter_bar.separator', { defaultValue: 'to' })}
+          </Typography>
           <TextField
             {...textFieldProps}
             type='date'
-            label='结束日期'
+            label={i18next.t('components.filter_bar.end_date', { defaultValue: 'End date' })}
             value={filter.value?.end ?? ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, end: e.target.value })}
             sx={{ width: filter.width || 140 }}
@@ -305,14 +311,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
           >
-            筛选条件
+            {i18next.t('components.filter_bar.title', { defaultValue: 'Filters' })}
           </Typography>
           {activeCount > 0 && (
             <Chip
               label={activeCount}
               size='small'
               color='primary'
-              sx={{ height: 20, fontSize: '0.75rem' }}
+              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
               aria-live='polite'
             />
           )}
@@ -326,16 +332,16 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={onSearch}
               disabled={disabled || !hasActiveFilters}
             >
-              搜索
+              {i18next.t('components.filter_bar.search', { defaultValue: 'Search' })}
             </Button>
           )}
           {onReset && (
-            <Tooltip title='重置筛选'>
+            <Tooltip title={i18next.t('components.filter_bar.reset', { defaultValue: 'Reset filters' })}>
               <IconButton
                 size='small'
                 onClick={handleReset}
                 disabled={disabled}
-                aria-label='重置筛选'
+                aria-label={i18next.t('components.filter_bar.reset', { defaultValue: 'Reset filters' })}
               >
                 <RotateCcw style={{ width: 16, height: 16 }} />
               </IconButton>
@@ -346,7 +352,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               size='small'
               onClick={() => setExpanded(!expanded)}
               disabled={disabled}
-              aria-label={expanded ? '收起筛选' : '展开筛选'}
+              aria-label={
+                expanded
+                  ? i18next.t('components.filter_bar.collapse', { defaultValue: 'Collapse filters' })
+                  : i18next.t('components.filter_bar.expand', { defaultValue: 'Expand filters' })
+              }
               aria-expanded={expanded}
             >
               {expanded ? (
@@ -389,7 +399,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            已应用 {activeCount} 个筛选条件
+            {i18next.t('components.filter_bar.applied_filters', {
+              count: activeCount,
+              defaultValue: '{{count}} filters applied',
+            })}
           </Typography>
         </Box>
       )}

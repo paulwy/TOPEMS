@@ -129,7 +129,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                   backgroundColor: theme.palette.error.main,
                   color: 'common.white',
                   fontSize: 12,
-                  padding: `${designTokens.spacing.xs} 8px`,
+                  padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   borderRadius: 9999,
                 }}
               >

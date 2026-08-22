@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -271,7 +272,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                         sx={{
                           bgcolor: 'action.disabledBackground',
                           color: 'common.white',
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         }}
                       />
                     ))}
@@ -338,7 +339,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                       label={tab.badge}
                       size='small'
                       color='primary'
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   )}
                 </Box>

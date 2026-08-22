@@ -448,7 +448,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   <Typography
                     sx={{
                       mt: 1,
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       lineHeight: 1.6,
                     }}
                   >
@@ -480,7 +480,7 @@ const QmsStandardDetailPage: React.FC = () => {
                         style={{
                           width: 64,
                           height: 64,
-                          margin: '0 auto 16px auto',
+                          margin: `0 auto ${designTokens.spacing.md}px auto`,
                           opacity: 0.5,
                         }}
                       />
@@ -527,7 +527,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   sx={{
                     display: 'block',
                     mb: 0.5,
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: 'text.secondary',
                   }}
                 >
@@ -547,7 +547,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   sx={{
                     display: 'block',
                     mb: 0.5,
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: 'text.secondary',
                   }}
                 >
@@ -573,7 +573,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 sx={{
                   display: 'block',
                   mb: 0.5,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'text.secondary',
                 }}
               >
@@ -594,7 +594,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   sx={{
                     display: 'block',
                     mb: 0.5,
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: 'text.secondary',
                   }}
                 >
@@ -619,7 +619,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   sx={{
                     display: 'block',
                     mb: 0.5,
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     color: 'text.secondary',
                   }}
                 >
@@ -648,7 +648,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 sx={{
                   display: 'block',
                   mb: 0.5,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'text.secondary',
                 }}
               >
@@ -673,7 +673,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 sx={{
                   display: 'block',
                   mb: 0.5,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'text.secondary',
                 }}
               >
@@ -752,7 +752,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 sx={{
                   display: 'block',
                   mb: 0.5,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'text.secondary',
                 }}
               >

@@ -609,6 +609,7 @@ pub fn get_default_port(service_name: &str) -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_database_config_default() {
@@ -642,10 +643,6 @@ mod tests {
     }
 
     // ===== 以下为补充测试 =====
-    use std::sync::Mutex;
-
-    /// env var 测试全局锁，避免并行 set_var/remove_var 竞态
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn clear_enhanced_env_vars() {
         for k in [
@@ -807,14 +804,13 @@ mod tests {
 
     #[test]
     fn database_config_from_env_missing_url_errors() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         assert!(DatabaseConfig::from_env().is_err());
     }
 
     #[test]
+    #[serial]
     fn database_config_from_env_with_url_and_overrides() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("DATABASE_URL", "postgres://custom/db");
         std::env::set_var("DB_MAX_CONNECTIONS", "20");
@@ -921,7 +917,6 @@ mod tests {
 
     #[test]
     fn service_config_from_env_defaults() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         let c = ServiceConfig::from_env("my-svc", 8800).expect("ok");
         assert_eq!(c.name, "my-svc");
@@ -933,8 +928,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn service_config_from_env_server_port_overrides() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("SERVER_PORT", "7777");
         std::env::set_var("SERVICE_VERSION", "9.9.9");
@@ -947,8 +942,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn service_config_from_env_port_var_fallback() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("PORT", "6666");
         let c = ServiceConfig::from_env("svc", 8800).expect("ok");
@@ -981,14 +976,13 @@ mod tests {
 
     #[test]
     fn redis_config_from_env_missing_url_errors() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         assert!(RedisConfig::from_env().is_err());
     }
 
     #[test]
+    #[serial]
     fn redis_config_from_env_with_url() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("REDIS_URL", "redis://custom:6380");
         std::env::set_var("REDIS_MAX_CONNECTIONS", "42");
@@ -1055,14 +1049,13 @@ mod tests {
 
     #[test]
     fn jwt_config_from_env_missing_secret_errors() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         assert!(JwtConfig::from_env().is_err());
     }
 
     #[test]
+    #[serial]
     fn jwt_config_from_env_with_secret() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("JWT_SECRET", "my-super-secret-key-1234567890");
         std::env::set_var("JWT_EXPIRATION", "7200");
@@ -1111,7 +1104,6 @@ mod tests {
 
     #[test]
     fn ai_config_from_env_defaults() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         let c = AIConfig::from_env().expect("ok");
         assert!(c.use_ollama);
@@ -1149,7 +1141,6 @@ mod tests {
 
     #[test]
     fn cache_config_from_env_defaults() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         let c = CacheConfig::from_env().expect("ok");
         assert_eq!(c.cache_type, "memory");
@@ -1160,8 +1151,8 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cache_config_from_env_with_overrides() {
-        let _g = ENV_LOCK.lock().unwrap();
         clear_enhanced_env_vars();
         std::env::set_var("CACHE_TYPE", "redis");
         std::env::set_var("CACHE_MAX_SIZE", "2000");

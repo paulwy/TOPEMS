@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect } from 'react';
 import { Box, Typography, Paper, Switch, Chip, Divider, useTheme } from '@mui/material';
 import { Bell } from 'lucide-react';
@@ -272,7 +273,7 @@ const PushNotificationPage: React.FC = () => {
                         label={getStatusLabel(template.status)}
                         size='small'
                         color={template.status === 'active' ? 'success' : 'default'}
-                        sx={{ height: 18, fontSize: '0.65rem' }}
+                        sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                       />
                     </Box>
                     <Switch

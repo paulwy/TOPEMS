@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * TreePageTemplate - 树形结构+详情面板布局模板
  * 适用于部门管理、分类管理等场景
@@ -435,7 +436,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 label={node.children?.length}
                 sx={{
                   height: 20,
-                  fontSize: '0.75rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                   bgcolor: isSelected ? nodeAccentColor || 'primary.main' : 'grey.200',
                   color: isSelected ? 'var(--color-primary-foreground)' : 'text.secondary',
                 }}

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { CheckCircle2, Circle, Clock, AlertCircle, AlertTriangle, ArrowRight } from 'lucide-react';
@@ -208,7 +209,7 @@ const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     sx={{
                       bgcolor: config.bgColor,
                       color: config.color,
-                      fontSize: '0.7rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                     }}
                   />
                 )}

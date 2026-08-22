@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * 对话历史记录组件
  *
@@ -338,7 +339,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <MessageSquare
                 size={32}
-                style={{ margin: '0 auto 8px', color: theme.palette.text.disabled }}
+                style={{ margin: `0 auto ${designTokens.spacing.sm}px`, color: theme.palette.text.disabled }}
               />
               <Typography
                 variant='body2'

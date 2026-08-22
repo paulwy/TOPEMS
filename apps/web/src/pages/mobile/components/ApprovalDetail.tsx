@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * ApprovalDetail - Approval detail page component
  * @refactor-split Extracted from MobileApprovalPage.tsx
@@ -72,7 +73,7 @@ const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                 label={approval.id}
                 size='small'
                 variant='outlined'
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
               <Chip
                 label={getPriorityLabel(approval.priority, i18n.t)}
@@ -80,7 +81,7 @@ const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                 color={
                   getPriorityColor(approval.priority) as React.ComponentProps<typeof Chip>['color']
                 }
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
             </Box>
           </Box>
@@ -275,7 +276,7 @@ const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                     label={i18n.t('mobile.approval.tab.pending')}
                     size='small'
                     color='primary'
-                    sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                    sx={{ mt: 0.5, height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                   />
                 )}
               </Box>

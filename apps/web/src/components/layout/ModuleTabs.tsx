@@ -124,7 +124,7 @@ const SimpleTabBar: React.FC<{
               borderBottom: isActive ? '2px solid' : '2px solid transparent',
               borderColor: isActive ? 'primary.main' : 'transparent',
               textTransform: 'none',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               cursor: 'pointer',
               transition: 'all 150ms ease',
               whiteSpace: 'nowrap',
@@ -343,7 +343,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
           backgroundColor: isActive ? 'background.paper' : 'transparent',
           color: isActive ? 'primary.main' : 'text.secondary',
           fontWeight: isActive ? 600 : 400,
-          fontSize: '0.875rem',
+          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           position: 'relative',
           transition: 'all 0.2s ease',
           // 顶部激活指示条

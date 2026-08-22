@@ -100,7 +100,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'select' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k0')}
         >
@@ -134,7 +134,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'measure-distance' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k1')}
         >
@@ -159,7 +159,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'measure-area' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k2')}
         >
@@ -185,7 +185,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'draw-point' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k3')}
         >
@@ -210,7 +210,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'draw-line' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k4')}
         >
@@ -235,7 +235,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: toolMode === 'draw-polygon' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k5')}
         >
@@ -258,7 +258,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               '&:hover': {
                 backgroundColor: 'grey.200',
               },
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             }}
             title={i18n.t('components.toolbar.k6')}
           >
@@ -281,7 +281,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               '&:hover': {
                 backgroundColor: 'error.light',
               },
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             }}
             title={i18n.t('components.toolbar.k7')}
           >
@@ -304,7 +304,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               '&:hover': {
                 backgroundColor: 'success.light',
               },
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             }}
             title={i18n.t('components.toolbar.enter_8')}
           >
@@ -331,7 +331,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: showTrackPanel ? 'secondary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k9')}
         >
@@ -353,7 +353,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: 'primary.light',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.geojson_10')}
         >
@@ -374,7 +374,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: 'secondary.main',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k11')}
         >
@@ -397,7 +397,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: mapType === 'amap' ? 'primary.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k12')}
         >
@@ -423,7 +423,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: showHeatmap ? 'error.dark' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.k15')}
         >
@@ -433,7 +433,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {showHeatmap && (
           <MuiBox
             sx={{
-              padding: '4px 8px',
+              padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
               display: 'flex',
               flexDirection: 'column',
               gap: 0.5,
@@ -451,7 +451,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 '&:hover': {
                   backgroundColor: heatmapMode === 'density' ? 'error.light' : 'grey.100',
                 },
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               }}
             >
               {i18n.t('components.toolbar.k14')}
@@ -468,7 +468,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 '&:hover': {
                   backgroundColor: heatmapMode === 'status' ? 'error.light' : 'grey.100',
                 },
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               }}
             >
               {i18n.t('components.toolbar.k15')}
@@ -494,7 +494,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             '&:hover': {
               backgroundColor: show3DView ? 'secondary.700' : 'grey.50',
             },
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
           title={i18n.t('components.toolbar.3d_16')}
         >

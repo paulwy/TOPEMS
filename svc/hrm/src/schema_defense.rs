@@ -455,6 +455,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "payroll_items",
         &[
+            ("organization_id", "UUID"),
+            ("tenant_id", "UUID"),
             ("payroll_run_id", "UUID NOT NULL"),
             ("employee_id", "UUID NOT NULL"),
             ("gross_amount", "NUMERIC(15, 2) NOT NULL DEFAULT 0"),
@@ -466,17 +468,21 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("paid_at", "TIMESTAMPTZ"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
         "payroll_details",
         &[
+            ("organization_id", "UUID"),
+            ("tenant_id", "UUID"),
             ("payroll_item_id", "UUID NOT NULL"),
             ("item_type", "VARCHAR(50) NOT NULL"),
             ("category", "VARCHAR(50) NOT NULL"),
             ("description", "TEXT NOT NULL DEFAULT ''"),
             ("amount", "NUMERIC(15, 2) NOT NULL DEFAULT 0"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (

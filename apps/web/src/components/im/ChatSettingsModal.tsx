@@ -46,7 +46,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
           boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: 384,
-          margin: '0 16px',
+          margin: `0 ${designTokens.spacing.md}px`,
           overflow: 'hidden',
         }}
       >
@@ -55,7 +55,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: `${designTokens.spacing.md} 16px`,
+            padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
             borderBottom: '1px solid grey.200',
           }}
         >

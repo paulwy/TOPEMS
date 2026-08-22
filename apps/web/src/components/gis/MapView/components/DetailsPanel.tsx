@@ -36,7 +36,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: `${designTokens.spacing.md} 16px`,
+          padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
           background: `linear-gradient(to right, ${ct.info[400]}, ${ct.primary.main})`,
         }}
       >

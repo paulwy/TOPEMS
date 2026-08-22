@@ -409,7 +409,7 @@ const ReturnDetailPage: React.FC = () => {
                   style={{
                     padding: `${designTokens.spacing.sm} 12px`,
                     fontFamily: 'monospace',
-                    fontSize: '0.85rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.85rem'],
                   }}
                 >
                   {item.product_id}

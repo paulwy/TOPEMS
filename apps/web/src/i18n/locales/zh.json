@@ -215,6 +215,37 @@
     "file_upload_preview": "预览",
     "file_upload_download": "下载"
   },
+  "components": {
+    "command_palette": {
+      "placeholder": "搜索命令、页面或操作...",
+      "other": "其他",
+      "no_results": "未找到匹配结果",
+      "result_count": "{{count}} 个结果",
+      "navigate": "导航",
+      "select": "选择",
+      "close": "关闭"
+    },
+    "filter_bar": {
+      "all": "全部",
+      "title": "筛选条件",
+      "search": "搜索",
+      "reset": "重置筛选",
+      "collapse": "收起筛选",
+      "expand": "展开筛选",
+      "applied_filters": "已应用 {{count}} 个筛选条件",
+      "start_date": "开始日期",
+      "end_date": "结束日期",
+      "separator": "至"
+    },
+    "pagination": {
+      "total": "显示 {{start}}-{{end}} / 共 {{total}} 条",
+      "first_page": "第一页",
+      "prev_page": "上一页",
+      "next_page": "下一页",
+      "last_page": "最后一页",
+      "per_page": "每页"
+    }
+  },
   "auth": {
     "login": "登录",
     "logout": "退出登录",
@@ -6791,6 +6822,48 @@
       "month_format": "{year}年{month}月",
       "cancel": "取消",
       "confirm": "确定"
+    },
+    "attachments_page": {
+      "columns": {
+        "file": "文件",
+        "type": "类型",
+        "upload_time": "上传时间"
+      }
+    },
+    "favorites_page": {
+      "columns": {
+        "created_at": "创建时间",
+        "search_query": "搜索词",
+        "searched_at": "搜索时间",
+        "title": "标题",
+        "type": "类型",
+        "source": "来源"
+      }
+    }
+  },
+  "ai": {
+    "ai_prompt_library_page": {
+      "columns": {
+        "name": "名称",
+        "category": "分类",
+        "usage_count": "使用次数",
+        "created_by": "创建人"
+      }
+    }
+  },
+  "automation": {
+    "automation_rules_page": {
+      "delete_confirm_message": "确定要删除该规则吗？删除后不可恢复。"
+    }
+  },
+  "help": {
+    "guide_page": {
+      "sequence_tip": "建议按照初级→进阶→高级的顺序学习"
+    }
+  },
+  "lowcode": {
+    "data_source_page": {
+      "delete_confirm_message": "确定要删除该数据源吗？删除后不可恢复。"
     }
   }
 }

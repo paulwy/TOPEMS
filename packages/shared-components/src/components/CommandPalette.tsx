@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * Shared CommandPalette component
  * Extracted from apps/web with dependency decoupling.
@@ -7,6 +8,7 @@
  * - react-router-dom (useNavigate) -> replaced with onNavigate callback prop
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import i18next from 'i18next';
 import {
   Box,
   Dialog,
@@ -75,11 +77,11 @@ const defaultIcons: Record<string, React.ReactNode> = {
 function getIcon(item: CommandItem): React.ReactNode {
   if (item.icon) return item.icon;
   const group = item.group?.toLowerCase() || '';
-  if (group.includes('page') || group.includes('页面')) return defaultIcons.page;
-  if (group.includes('setting') || group.includes('设置')) return defaultIcons.settings;
-  if (group.includes('home') || group.includes('首页')) return defaultIcons.home;
-  if (group.includes('user') || group.includes('用户')) return defaultIcons.users;
-  if (group.includes('dashboard') || group.includes('仪表盘')) return defaultIcons.dashboard;
+  if (group.includes('page')) return defaultIcons.page;
+  if (group.includes('setting')) return defaultIcons.settings;
+  if (group.includes('home')) return defaultIcons.home;
+  if (group.includes('user')) return defaultIcons.users;
+  if (group.includes('dashboard')) return defaultIcons.dashboard;
   return defaultIcons.page;
 }
 
@@ -88,7 +90,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onClose,
   commands = [],
   groups = [],
-  placeholder = '搜索命令、页面或操作...',
+  placeholder = i18next.t('components.command_palette.placeholder', {
+    defaultValue: 'Search commands, pages or actions...',
+  }),
   hotkey = 'Ctrl+K',
   onNavigate,
 }) => {
@@ -167,7 +171,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const groupedItems = useMemo(() => {
     const map = new Map<string, CommandItem[]>();
     filteredItems.forEach((item) => {
-      const group = item.group || '其他';
+      const group = item.group || i18next.t('components.command_palette.other', { defaultValue: 'Other' });
       if (!map.has(group)) map.set(group, []);
       map.get(group)!.push(item);
     });
@@ -216,13 +220,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          sx={{ flex: 1, fontSize: '1rem' }}
+          sx={{ flex: 1, fontSize: designTokens.typography.fontSize.scale['1rem'] }}
           endAdornment={
             <InputAdornment position='end'>
               <Chip
                 label={hotkey}
                 size='small'
-                sx={{ height: 24, fontSize: '0.7rem' }}
+                sx={{ height: 24, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
             </InputAdornment>
           }
@@ -233,7 +237,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       <Box sx={{ overflowY: 'auto', maxHeight: 'calc(60vh - 60px)' }}>
         {groupedItems.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
-            <Typography color='text.secondary'>未找到匹配结果</Typography>
+            <Typography color='text.secondary'>
+              {i18next.t('components.command_palette.no_results', { defaultValue: 'No matching results' })}
+            </Typography>
           </Box>
         ) : (
           groupedItems.map(([group, items], groupIndex) => (
@@ -281,7 +287,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <Chip
                           label={item.shortcut}
                           size='small'
-                          sx={{ height: 20, fontSize: '0.65rem', ml: 1 }}
+                          sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.65rem'], ml: 1 }}
                         />
                       )}
                       {item.href && (
@@ -315,7 +321,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           variant='caption'
           color='text.disabled'
         >
-          {filteredItems.length} 个结果
+          {i18next.t('components.command_palette.result_count', {
+            count: filteredItems.length,
+            defaultValue: '{{count}} results',
+          })}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Typography
@@ -324,15 +333,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           >
             <kbd
               style={{
-                padding: '0 4px',
+                padding: `0 ${designTokens.spacing.xs}px`,
                 border: '1px solid',
                 borderRadius: 4,
-                fontSize: '0.65rem',
+                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
               }}
             >
               ↑↓
             </kbd>{' '}
-            导航
+            {i18next.t('components.command_palette.navigate', { defaultValue: 'Navigate' })}
           </Typography>
           <Typography
             variant='caption'
@@ -340,15 +349,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           >
             <kbd
               style={{
-                padding: '0 4px',
+                padding: `0 ${designTokens.spacing.xs}px`,
                 border: '1px solid',
                 borderRadius: 4,
-                fontSize: '0.65rem',
+                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
               }}
             >
               ↵
             </kbd>{' '}
-            选择
+            {i18next.t('components.command_palette.select', { defaultValue: 'Select' })}
           </Typography>
           <Typography
             variant='caption'
@@ -356,15 +365,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           >
             <kbd
               style={{
-                padding: '0 4px',
+                padding: `0 ${designTokens.spacing.xs}px`,
                 border: '1px solid',
                 borderRadius: 4,
-                fontSize: '0.65rem',
+                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
               }}
             >
               Esc
             </kbd>{' '}
-            关闭
+            {i18next.t('components.command_palette.close', { defaultValue: 'Close' })}
           </Typography>
         </Box>
       </Box>
