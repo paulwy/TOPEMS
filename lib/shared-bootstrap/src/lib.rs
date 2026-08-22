@@ -1926,10 +1926,18 @@ mod tests {
             .expect("lazy pool build should not fail")
     }
 
+    fn make_test_auth_state() -> topems_shared_auth::auth::AuthState {
+        topems_shared_auth::auth::AuthState::new(
+            "test-jwt-secret-key-must-be-at-least-32-characters-long".to_string(),
+            "test-refresh-secret-key-must-be-32-characters".to_string(),
+            24,
+        )
+    }
+
     #[tokio::test]
     async fn test_app_state_new_constructs_with_lazy_pool() {
         let db = make_test_pg_pool();
-        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let auth_state = make_test_auth_state();
         let metrics = Arc::new(SystemMetrics::new());
         let start_time = Instant::now();
         let config = BootstrapConfig::default();
@@ -1947,7 +1955,7 @@ mod tests {
     #[tokio::test]
     async fn test_app_state_clone_smoke() {
         let db = make_test_pg_pool();
-        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let auth_state = make_test_auth_state();
         let metrics = Arc::new(SystemMetrics::new());
         let start_time = Instant::now();
         let config = BootstrapConfig::default();
@@ -1966,7 +1974,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_standard_health_routes_compiles_and_returns_router() {
         let db = make_test_pg_pool();
-        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let auth_state = make_test_auth_state();
         let metrics = Arc::new(SystemMetrics::new());
         let start_time = Instant::now();
         let config = BootstrapConfig::default();
@@ -1983,7 +1991,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_health_state_pure_construction() {
         let db = make_test_pg_pool();
-        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let auth_state = make_test_auth_state();
         let metrics = Arc::new(SystemMetrics::new());
         let start_time = Instant::now();
         let ctx = ServiceContext {
@@ -2008,7 +2016,7 @@ mod tests {
     #[tokio::test]
     async fn test_service_context_manual_construction_with_event_publisher_none() {
         let db = make_test_pg_pool();
-        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let auth_state = make_test_auth_state();
         let metrics = Arc::new(SystemMetrics::new());
         let start_time = Instant::now();
         let ctx = ServiceContext {
