@@ -1,5 +1,3 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 /**
  * 产能利用率分析页
  *
@@ -9,8 +7,14 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Box, Paper, Typography } from '@mui/material';
+import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { apsApi } from '@/api/aps';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
+import { designTokens } from '@topems/tokens';
 import {
   ResponsiveContainer,
   LineChart,
@@ -37,8 +41,11 @@ const mockData = [
   { date: 'W11', wcA: 87, wcB: 83, wcC: 88 },
   { date: 'W12', wcA: 93, wcB: 89, wcC: 95 },
 ];
+
 export default function CapacityUtilizationPage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['aps', 'CapacityUtilizationPage'],
     queryFn: async () => {
       try {
@@ -58,6 +65,7 @@ export default function CapacityUtilizationPage() {
       }
     },
   });
+
   const data = mockData;
   const avgUtilization = useMemo(() => {
     const allValues = data.flatMap((d) => [d.wcA, d.wcB, d.wcC]);
@@ -69,87 +77,113 @@ export default function CapacityUtilizationPage() {
   const minUtilization = useMemo(() => {
     return Math.min(...data.flatMap((d) => [d.wcA, d.wcB, d.wcC]));
   }, [data]);
+
+  const statCards: StatCard[] = [
+    {
+      id: 'avgUtilization',
+      title: t('aps.capacity_utilization_page.k2'),
+      value: avgUtilization,
+      suffix: '%',
+      icon: <Activity size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'maxUtilization',
+      title: t('aps.capacity_utilization_page.k3'),
+      value: maxUtilization,
+      suffix: '%',
+      icon: <TrendingUp size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'minUtilization',
+      title: t('aps.capacity_utilization_page.k4'),
+      value: minUtilization,
+      suffix: '%',
+      icon: <TrendingDown size={24} />,
+      color: 'warning',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('aps.capacity_utilization_page.k0')}</h1>
-        <span className='text-sm text-gray-500'>{i18n.t('aps.capacity_utilization_page.k1')}</span>
-      </div>
-      <p className='text-sm text-gray-600'>{i18n.t('pages.capacity_utilization_page.k0')}</p>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{avgUtilization}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k3')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{maxUtilization}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{minUtilization}%</p>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('aps.capacity_utilization_page.k5')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={340}
+    <StatsPageTemplate
+      title={t('aps.capacity_utilization_page.k0')}
+      subtitle={t('pages.capacity_utilization_page.k0')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
         >
-          <LineChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          {t('aps.capacity_utilization_page.k5')}
+        </Typography>
+        <Box sx={{ width: '100%', height: 340 }}>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='date'
-              fontSize={11}
-            />
-            <YAxis
-              domain={[50, 100]}
-              unit='%'
-              fontSize={11}
-              label={{
-                value: i18n.t('aps.capacity_utilization_page.k6'),
-                angle: -90,
-                position: 'insideLeft',
-              }}
-            />
-            <Tooltip />
-            <Legend />
-            <ReferenceLine
-              y={85}
-              stroke={designTokens.colors.success.dark}
-              strokeDasharray='4 4'
-              label={i18n.t('aps.capacity_utilization_page.85_7')}
-            />
-            <Line
-              type='monotone'
-              dataKey='wcA'
-              name={i18n.t('aps.capacity_utilization_page.a_8')}
-              stroke={designTokens.colors.secondary.dark}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='wcB'
-              name={i18n.t('aps.capacity_utilization_page.b_9')}
-              stroke={designTokens.colors.warning.main}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              type='monotone'
-              dataKey='wcC'
-              name={i18n.t('aps.capacity_utilization_page.c_10')}
-              stroke={designTokens.colors.success.dark}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+            <LineChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='date'
+                fontSize={11}
+              />
+              <YAxis
+                domain={[50, 100]}
+                unit='%'
+                fontSize={11}
+                label={{
+                  value: t('aps.capacity_utilization_page.k6'),
+                  angle: -90,
+                  position: 'insideLeft',
+                }}
+              />
+              <Tooltip />
+              <Legend />
+              <ReferenceLine
+                y={85}
+                stroke={designTokens.colors.success.dark}
+                strokeDasharray='4 4'
+                label={t('aps.capacity_utilization_page.85_7')}
+              />
+              <Line
+                type='monotone'
+                dataKey='wcA'
+                name={t('aps.capacity_utilization_page.a_8')}
+                stroke={designTokens.colors.secondary.dark}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+              <Line
+                type='monotone'
+                dataKey='wcB'
+                name={t('aps.capacity_utilization_page.b_9')}
+                stroke={designTokens.colors.warning.main}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+              <Line
+                type='monotone'
+                dataKey='wcC'
+                name={t('aps.capacity_utilization_page.c_10')}
+                stroke={designTokens.colors.success.dark}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+    </StatsPageTemplate>
   );
 }

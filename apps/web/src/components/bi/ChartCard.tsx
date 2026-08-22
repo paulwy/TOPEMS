@@ -158,7 +158,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     >
       <CardHeader
         sx={{
-          padding: `${designTokens.spacing.md} 24px`,
+          padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
           borderBottom: bordered ? `1px solid ${designTokens.colors.action.hover}` : 'none',
         }}
         action={

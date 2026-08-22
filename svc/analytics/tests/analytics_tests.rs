@@ -129,7 +129,7 @@ async fn test_get_module_analytics_invalid_module() {
     .await;
 
     let json = result.0;
-    assert_eq!(json["code"], -1);
+    assert_eq!(json["code"], 400);
     assert!(!json["success"].as_bool().unwrap_or(true));
     assert!(json["data"].is_null());
 }

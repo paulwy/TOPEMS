@@ -1,30 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  TextField,
-  Button,
-  Divider,
-  CircularProgress,
-  Alert,
-  Chip,
   Stack,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
-  Paperclip,
   Upload,
   Download,
   Trash2,
@@ -33,7 +23,10 @@ import {
   File as FileIcon,
   FileArchive,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { attachmentApi, type Attachment } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -61,6 +54,12 @@ const AttachmentsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
   const [entityType, setEntityType] = useState<string>('document');
   const [entityId, setEntityId] = useState<string>('demo-1');
@@ -170,219 +169,250 @@ const AttachmentsPage: React.FC = () => {
   });
 
   // 获取单个附件详情（用于覆盖率：使用 get 方法）
-  const getAttachmentDetail = async (id: string) => {
-    try {
-      const response = await attachmentApi.get(id);
-      if (response.success && response.data) {
-        addNotification({
-          type: 'info',
-          title: i18n.t('pages.attachments_page.k10'),
-          message: `${response.data.file_name} (${formatFileSize(response.data.file_size)})`,
-        });
+  const getAttachmentDetail = useCallback(
+    async (id: string) => {
+      try {
+        const response = await attachmentApi.get(id);
+        if (response.success && response.data) {
+          addNotification({
+            type: 'info',
+            title: i18n.t('pages.attachments_page.k10'),
+            message: `${response.data.file_name} (${formatFileSize(response.data.file_size)})`,
+          });
+        }
+      } catch (error) {
+        apiLogger.error(i18n.t('pages.attachments_page.k3'), error);
       }
-    } catch (error) {
-      apiLogger.error(i18n.t('pages.attachments_page.k3'), error);
-    }
-  };
+    },
+    [addNotification]
+  );
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 50 * 1024 * 1024) {
-      addNotification({
-        type: 'error',
-        title: i18n.t('pages.attachments_page.k11'),
-        message: i18n.t('pages.attachments_page.50mb_12'),
-      });
-      return;
-    }
-    setSelectedFile(file);
-  };
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 50 * 1024 * 1024) {
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.attachments_page.k11'),
+          message: i18n.t('pages.attachments_page.50mb_12'),
+        });
+        return;
+      }
+      setSelectedFile(file);
+    },
+    [addNotification]
+  );
 
-  const handleUpload = () => {
+  const handleUpload = useCallback(() => {
     if (!selectedFile) return;
     uploadMutation.mutate(selectedFile);
-  };
+  }, [selectedFile, uploadMutation]);
 
-  return (
-    <PageContainer
-      title={i18n.t('pages.attachments_page.k13')}
-      autoBreadcrumbs
-      headerProps={{
-        pageIcon: <Paperclip style={{ width: 20, height: 20 }} />,
-      }}
-    >
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+  const handleSelectFileClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleDownload = useCallback(
+    (attachment: Attachment) => {
+      downloadMutation.mutate(attachment);
+    },
+    [downloadMutation]
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: i18n.t('pages.attachments_page.k20'),
+        message: i18n.t('pages.attachments_page.k21'),
+        danger: true,
+        onConfirm: () => deleteMutation.mutate(id),
+      });
+    },
+    [openConfirmDialog, deleteMutation]
+  );
+
+  const columns: ColumnDef<Attachment>[] = useMemo(
+    () => [
+      {
+        id: 'file',
+        label: i18n.t('shared.attachments_page.columns.file'),
+        render: (row) => (
           <Stack
             direction='row'
-            spacing={2}
-            sx={{ mb: 2 }}
-          >
-            <FormControl
-              size='small'
-              sx={{ minWidth: 140 }}
-            >
-              <InputLabel>{i18n.t('pages.attachments_page.k14')}</InputLabel>
-              <Select
-                value={entityType}
-                label={i18n.t('pages.attachments_page.k15')}
-                onChange={(e) => setEntityType(e.target.value)}
-              >
-                {ENTITY_TYPES.map((t) => (
-                  <MenuItem
-                    key={t}
-                    value={t}
-                  >
-                    {t}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              size='small'
-              label={i18n.t('pages.attachments_page.id_16')}
-              value={entityId}
-              onChange={(e) => setEntityId(e.target.value)}
-              sx={{ minWidth: 200 }}
-            />
-          </Stack>
-        </CardContent>
-      </Card>
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography
-            variant='h6'
-            sx={{ mb: 2 }}
-          >
-            {i18n.t('pages.attachments_page.k0')}
-          </Typography>
-          <Stack
-            direction='row'
-            spacing={2}
+            spacing={1}
             sx={{ alignItems: 'center' }}
           >
-            <Button
+            {getFileIcon(row.file_type)}
+            <Typography variant='body2'>{row.file_name}</Typography>
+            <Chip
+              size='small'
+              label={formatFileSize(row.file_size)}
               variant='outlined'
-              component='label'
-              startIcon={<Upload size={16} />}
-            >
-              {i18n.t('pages.attachments_page.k1')}
-              <input
-                ref={fileInputRef}
-                type='file'
-                hidden
-                onChange={handleFileSelect}
-              />
-            </Button>
-            {selectedFile && (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {selectedFile.name} ({formatFileSize(selectedFile.size)})
-              </Typography>
-            )}
-            <Button
-              variant='contained'
-              startIcon={<Upload size={16} />}
-              onClick={handleUpload}
-              disabled={!selectedFile || uploadMutation.isPending}
-            >
-              {i18n.t('pages.attachments_page.k2')}
-            </Button>
-            {uploadMutation.isPending && <CircularProgress size={20} />}
+            />
           </Stack>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
+        ),
+      },
+      {
+        id: 'file_type',
+        label: i18n.t('shared.attachments_page.columns.type'),
+        render: (row) => <Typography variant='body2'>{row.file_type}</Typography>,
+      },
+      {
+        id: 'uploaded_at',
+        label: i18n.t('shared.attachments_page.columns.upload_time'),
+        render: (row) => (
           <Typography
-            variant='h6'
-            sx={{ mb: 2 }}
+            variant='caption'
+            color='text.secondary'
           >
-            {i18n.t('pages.attachments_page.k3')}
+            {i18n.t('pages.attachments_page.k0')}{' '}
+            {new Date(row.uploaded_at).toLocaleString('zh-CN')}
+            {row.entity_type && ` · ${row.entity_type}`}
           </Typography>
-          {isPending ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : !attachments || attachments.length === 0 ? (
-            <Alert severity='info'>{i18n.t('pages.attachments_page.k17')}</Alert>
-          ) : (
-            <List>
-              {attachments.map((attachment: Attachment, idx: number) => (
-                <React.Fragment key={attachment.id}>
-                  <ListItem
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => getAttachmentDetail(attachment.id)}
-                  >
-                    <ListItemIcon>{getFileIcon(attachment.file_type)}</ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Stack
-                          direction='row'
-                          spacing={1}
-                          sx={{ alignItems: 'center' }}
-                        >
-                          <Typography variant='subtitle2'>{attachment.file_name}</Typography>
-                          <Chip
-                            size='small'
-                            label={formatFileSize(attachment.file_size)}
-                            variant='outlined'
-                          />
-                        </Stack>
-                      }
-                      secondary={
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {i18n.t('pages.attachments_page.k0')}{' '}
-                          {new Date(attachment.uploaded_at).toLocaleString('zh-CN')}
-                          {attachment.entity_type && ` · ${attachment.entity_type}`}
-                        </Typography>
-                      }
-                    />
-                    <Stack
-                      direction='row'
-                      spacing={1}
-                    >
-                      <IconButton
-                        size='small'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadMutation.mutate(attachment);
-                        }}
-                        aria-label={i18n.t('pages.attachments_page.k18')}
-                        title={i18n.t('pages.attachments_page.k19')}
-                      >
-                        <Download size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        color='error'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteMutation.mutate(attachment.id);
-                        }}
-                        aria-label={i18n.t('pages.attachments_page.k20')}
-                        title={i18n.t('pages.attachments_page.k21')}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </Stack>
-                  </ListItem>
-                  {idx < attachments.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          )}
-        </CardContent>
-      </Card>
-    </PageContainer>
+        ),
+      },
+    ],
+    []
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.attachments_page.k1'),
+        icon: <Upload size={16} />,
+        onClick: handleSelectFileClick,
+        variant: 'outlined' as const,
+      },
+      {
+        label: i18n.t('pages.attachments_page.k2'),
+        icon: <Upload size={16} />,
+        onClick: handleUpload,
+        variant: 'contained' as const,
+        disabled: !selectedFile || uploadMutation.isPending,
+      },
+    ],
+    [handleSelectFileClick, handleUpload, selectedFile, uploadMutation.isPending]
+  );
+
+  const filterContent = useMemo(
+    () => (
+      <Stack
+        direction='row'
+        spacing={2}
+      >
+        <FormControl
+          size='small'
+          sx={{ minWidth: 140 }}
+        >
+          <InputLabel>{i18n.t('pages.attachments_page.k14')}</InputLabel>
+          <Select
+            value={entityType}
+            label={i18n.t('pages.attachments_page.k15')}
+            onChange={(e) => setEntityType(e.target.value)}
+          >
+            {ENTITY_TYPES.map((t) => (
+              <MenuItem
+                key={t}
+                value={t}
+              >
+                {t}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          size='small'
+          label={i18n.t('pages.attachments_page.id_16')}
+          value={entityId}
+          onChange={(e) => setEntityId(e.target.value)}
+          sx={{ minWidth: 200 }}
+        />
+      </Stack>
+    ),
+    [entityType, entityId]
+  );
+
+  const headerContent = useMemo(
+    () =>
+      selectedFile ? (
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {selectedFile.name} ({formatFileSize(selectedFile.size)})
+        </Typography>
+      ) : null,
+    [selectedFile]
+  );
+
+  const renderRowActions = useCallback(
+    (row: Attachment) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Tooltip title={i18n.t('pages.attachments_page.k19')}>
+          <span>
+            <IconButton
+              size='small'
+              onClick={() => handleDownload(row)}
+              disabled={downloadMutation.isPending}
+              aria-label={i18n.t('pages.attachments_page.k18')}
+            >
+              <Download size={16} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.attachments_page.k21')}>
+          <span>
+            <IconButton
+              size='small'
+              color='error'
+              onClick={() => handleDelete(row.id)}
+              disabled={deleteMutation.isPending}
+              aria-label={i18n.t('pages.attachments_page.k20')}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    ),
+    [handleDownload, handleDelete, downloadMutation.isPending, deleteMutation.isPending]
+  );
+
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type='file'
+        hidden
+        onChange={handleFileSelect}
+      />
+      <ListPageTemplate<Attachment>
+        title={i18n.t('pages.attachments_page.k13')}
+        autoBreadcrumbs
+        columns={columns}
+        data={attachments || []}
+        loading={isPending}
+        actions={actions}
+        renderRowActions={renderRowActions}
+        filterContent={filterContent}
+        headerContent={headerContent}
+        emptyMessage={i18n.t('pages.attachments_page.k17')}
+        onRowClick={(row) => getAttachmentDetail(row.id)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
+    </>
   );
 };
 

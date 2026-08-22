@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useState } from 'react';
 import { Bell, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, Typography, Badge, Button, useTheme } from '@mui/material';
@@ -144,7 +145,7 @@ const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
                   sx={{
                     width: 48,
                     height: 48,
-                    margin: '0 auto 8px',
+                    margin: `0 auto ${designTokens.spacing.sm}px`,
                     opacity: 0.5,
                   }}
                 />

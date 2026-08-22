@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { Search, Download } from 'lucide-react';
 import i18n from '@/i18n';
 
@@ -80,7 +81,7 @@ const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '8px 16px',
+              padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
               border: '1px solid var(--color-text-disabled, var(--color-text-disabled))',
               borderRadius: 8,
               color: 'grey.700',

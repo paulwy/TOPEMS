@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * ApprovalCard - Approval list item card component
  * @refactor-split Extracted from MobileApprovalPage.tsx
@@ -116,14 +117,14 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
                       typeof Chip
                     >['color']
                   }
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 />
                 {approval.amount && (
                   <Chip
                     label={approval.amount}
                     size='small'
                     variant='outlined'
-                    sx={{ height: 20, fontSize: '0.7rem' }}
+                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                   />
                 )}
               </Box>

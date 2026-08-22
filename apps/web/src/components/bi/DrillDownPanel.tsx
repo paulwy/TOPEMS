@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useState } from 'react';
 import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
 import {
@@ -198,7 +199,7 @@ export function DrillDownPanel({
                       key={column.key}
                       onClick={() => handleSort(column.key)}
                       style={{
-                        padding: '12px 16px',
+                        padding: `12px ${designTokens.spacing.md}px`,
                         textAlign: 'left',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -240,7 +241,7 @@ export function DrillDownPanel({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        style={{ padding: '12px 16px', color: 'grey.700' }}
+                        style={{ padding: `12px ${designTokens.spacing.md}px`, color: 'grey.700' }}
                       >
                         {column.format
                           ? column.format(row[column.key])

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Keyboard } from 'lucide-react';
 import {
@@ -92,7 +93,7 @@ const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps) => {
                           .split(' + ')
                           .map((part, i) => (
                             <React.Fragment key={i}>
-                              {i > 0 && <span style={{ margin: '0 4px' }}>+</span>}
+                              {i > 0 && <span style={{ margin: `0 ${designTokens.spacing.xs}px` }}>+</span>}
                               <Chip
                                 size='small'
                                 label={part}

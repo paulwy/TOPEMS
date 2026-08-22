@@ -84,7 +84,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
             minHeight: 56,
           },
           '& .MuiBottomNavigationAction-label': {
-            fontSize: '0.7rem',
+            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
             mt: 0.5,
           },
         }}
@@ -101,10 +101,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                   color='error'
                   sx={{
                     '& .MuiBadge-badge': {
-                      fontSize: '0.6rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.6rem'],
                       height: 16,
                       minWidth: 16,
-                      padding: '0 4px',
+                      padding: `0 ${designTokens.spacing.xs}px`,
                     },
                   }}
                 >

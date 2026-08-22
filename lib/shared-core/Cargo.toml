@@ -77,5 +77,8 @@ service-client-bridge = []
 # 启用后激活 tonic/prost/rand/async-trait 依赖与 grpc 模块
 grpc = ["dep:tonic", "dep:prost", "dep:rand", "dep:async-trait"]
 
+[dev-dependencies]
+serial_test = "3"
+
 [lints]
 workspace = true

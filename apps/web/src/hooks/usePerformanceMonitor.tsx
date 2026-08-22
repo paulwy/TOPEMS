@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Typography, Paper, Chip } from '@mui/material';
 import { logger } from '@/utils/logger';
@@ -519,7 +520,7 @@ function PerformanceWarnings() {
             {slowCalls.slice(0, 3).map((call, idx) => (
               <Typography
                 key={idx}
-                sx={{ fontSize: '0.75rem', color: 'warning.600' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'warning.600' }}
               >
                 {call.endpoint}: {(call.duration / 1000).toFixed(2)}s
               </Typography>
@@ -537,7 +538,7 @@ function PerformanceWarnings() {
             {slowComponents.slice(0, 3).map((comp, idx) => (
               <Typography
                 key={idx}
-                sx={{ fontSize: '0.75rem', color: 'warning.600' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'warning.600' }}
               >
                 {i18n.t('hooks:use_performance_monitor.k0', {
                   v0: comp.componentName,

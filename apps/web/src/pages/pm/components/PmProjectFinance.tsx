@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PmProjectDetailPage finance Tab
  * @done V79 Phase 2 split
@@ -29,7 +30,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.projectdetail.budget_execution')}
             </Typography>
@@ -149,7 +150,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.projectdetail.revenue_and_profit')}
             </Typography>
@@ -255,7 +256,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.projectdetail.cost_composition')}
             </Typography>
@@ -355,7 +356,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.projectdetail.cost_center_info')}
             </Typography>
@@ -439,7 +440,7 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
           title={
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pm.projectdetail.quick_actions')}
             </Typography>

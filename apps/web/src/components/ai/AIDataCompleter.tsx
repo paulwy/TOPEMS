@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { Card, CardContent, Box, Typography, Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { Sparkles, Check } from 'lucide-react';
@@ -246,7 +247,7 @@ export function AIDataCompleter({
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            fontSize: '0.75rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             color: 'grey.500',
                           }}
                         >

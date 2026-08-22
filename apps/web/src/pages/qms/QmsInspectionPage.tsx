@@ -388,7 +388,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k1')}
                 </Typography>
@@ -421,7 +421,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k2')}
                 </Typography>
@@ -454,7 +454,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k3')}
                 </Typography>
@@ -487,7 +487,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k4')}
                 </Typography>
@@ -520,7 +520,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k5')}
                 </Typography>
@@ -553,7 +553,7 @@ const QmsInspectionPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {i18n.t('pages.qms_inspection_page.k6')}
                 </Typography>

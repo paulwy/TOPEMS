@@ -1,5 +1,6 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 /**
  * 运费成本分析页
  *
@@ -10,6 +11,8 @@ import i18n from '@/i18n';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tmsApi } from '@/api/tms';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
 import {
   ResponsiveContainer,
   PieChart,
@@ -23,6 +26,8 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { Box, Paper, Typography } from '@mui/material';
+import { DollarSign, TrendingUp, Flame, Layers } from 'lucide-react';
 
 const COST_COLORS: Record<string, string> = {
   fuel: designTokens.colors.primary.main,
@@ -59,7 +64,9 @@ const MOCK_MONTHLY = [
   { month: '2025-12', fuel: 30000, toll: 15125, labor: 26000, other: 27000 },
 ];
 export default function FreightCostPage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['tms', 'FreightCostPage'],
     queryFn: async () => {
       try {
@@ -87,6 +94,7 @@ export default function FreightCostPage() {
       }
     },
   });
+
   const costData = useMemo(
     () =>
       MOCK_COST_DATA.map((c) => ({
@@ -102,33 +110,67 @@ export default function FreightCostPage() {
     totalCost > 0
       ? Math.round(((costData.find((c) => c.type === 'fuel')?.amount ?? 0) / totalCost) * 1000) / 10
       : 0;
+
+  const statCards: StatCard[] = [
+    {
+      id: 'totalCost',
+      title: t('tms.freight_cost_page.k8'),
+      value: totalCost.toLocaleString(),
+      prefix: '¥',
+      icon: <DollarSign size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'largestCost',
+      title: t('tms.freight_cost_page.k9'),
+      value: largestCost?.label ?? '-',
+      icon: <TrendingUp size={24} />,
+      color: 'warning',
+    },
+    {
+      id: 'fuelRatio',
+      title: t('tms.freight_cost_page.k10'),
+      value: fuelRatio,
+      suffix: '%',
+      icon: <Flame size={24} />,
+      color: 'error',
+    },
+    {
+      id: 'costTypes',
+      title: t('tms.freight_cost_page.k11'),
+      value: costData.length,
+      icon: <Layers size={24} />,
+      color: 'info',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div>
-        <h1 className='text-2xl font-bold'>{i18n.t('tms.freight_cost_page.k6')}</h1>
-        <p className='mt-1 text-sm text-gray-500'>{i18n.t('tms.freight_cost_page.k7')}</p>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k8')}</p>
-          <p className='mt-1 text-2xl font-bold text-blue-600'>¥{totalCost.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k9')}</p>
-          <p className='mt-1 text-2xl font-bold text-orange-600'>{largestCost?.label ?? '-'}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k10')}</p>
-          <p className='mt-1 text-2xl font-bold text-red-600'>{fuelRatio}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.freight_cost_page.k11')}</p>
-          <p className='mt-1 text-2xl font-bold text-green-600'>{costData.length}</p>
-        </div>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k12')}</h3>
+    <StatsPageTemplate
+      title={t('tms.freight_cost_page.k6')}
+      subtitle={t('tms.freight_cost_page.k7')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+          gap: 3,
+          mb: 3,
+        }}
+      >
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            {t('tms.freight_cost_page.k12')}
+          </Typography>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -155,9 +197,15 @@ export default function FreightCostPage() {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k13')}</h3>
+        </Paper>
+
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            {t('tms.freight_cost_page.k13')}
+          </Typography>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -176,7 +224,7 @@ export default function FreightCostPage() {
               <Legend />
               <Bar
                 dataKey='amount'
-                name={i18n.t('tms.freight_cost_page.k14')}
+                name={t('tms.freight_cost_page.k14')}
                 fill={designTokens.colors.secondary.dark}
                 barSize={28}
               >
@@ -189,10 +237,16 @@ export default function FreightCostPage() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k15')}</h3>
+        </Paper>
+      </Box>
+
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
+          {t('tms.freight_cost_page.k15')}
+        </Typography>
         <ResponsiveContainer
           width='100%'
           height={280}
@@ -211,31 +265,31 @@ export default function FreightCostPage() {
             <Legend />
             <Bar
               dataKey='fuel'
-              name={i18n.t('tms.freight_cost_page.k16')}
+              name={t('tms.freight_cost_page.k16')}
               fill={COST_COLORS.fuel}
               stackId='a'
             />
             <Bar
               dataKey='toll'
-              name={i18n.t('tms.freight_cost_page.k17')}
+              name={t('tms.freight_cost_page.k17')}
               fill={COST_COLORS.toll}
               stackId='a'
             />
             <Bar
               dataKey='labor'
-              name={i18n.t('tms.freight_cost_page.k18')}
+              name={t('tms.freight_cost_page.k18')}
               fill={COST_COLORS.labor}
               stackId='a'
             />
             <Bar
               dataKey='other'
-              name={i18n.t('tms.freight_cost_page.k19')}
+              name={t('tms.freight_cost_page.k19')}
               fill={COST_COLORS.other}
               stackId='a'
             />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </Paper>
+    </StatsPageTemplate>
   );
 }

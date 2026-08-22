@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import { Box, IconButton, Typography, Chip } from '@mui/material';
 import { Building2, Users, ChevronDown, ChevronRight } from 'lucide-react';
@@ -74,7 +75,7 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
             <Chip
               label={node.children.length}
               size='small'
-              sx={{ height: 20, fontSize: '0.75rem' }}
+              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
             />
           )}
         </Box>

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -197,7 +198,7 @@ export default function ServiceMonitor({
                       label={config.label}
                       sx={{
                         height: 20,
-                        fontSize: '0.7rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                         bgcolor: `${config.color}20`,
                         color: config.color,
                         fontWeight: 500,

@@ -482,6 +482,7 @@ impl Default for ServiceConfigRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn new_registry_has_expected_service_count() {
@@ -643,7 +644,11 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn get_service_url_local_env_default() {
+        // 防御性清理：即使其他测试泄漏了 env var 也能恢复默认行为
+        std::env::remove_var("CORE_PORT");
+        std::env::remove_var("DOCKER_ENV");
         let reg = ServiceConfigRegistry::new();
         let url = reg.get_service_url("unified-core").expect("应返回 URL");
         assert_eq!(url, "http://localhost:8000");
@@ -656,6 +661,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn get_service_url_respects_env_override() {
         std::env::set_var("CORE_PORT", "9999");
         let reg = ServiceConfigRegistry::new();
@@ -665,6 +671,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn get_service_url_docker_env_uses_service_name_as_host() {
         std::env::set_var("DOCKER_ENV", "1");
         let reg = ServiceConfigRegistry::new();

@@ -82,7 +82,7 @@ function DeviceMarker({
           }}
         >
           <div style={{ fontWeight: 500 }}>{name}</div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.75 }}>{status}</div>
+          <div style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}>{status}</div>
         </Html>
       )}
     </group>
@@ -134,7 +134,7 @@ function StorageMarker({
           }}
         >
           <div style={{ fontWeight: 500 }}>{name}</div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.75 }}>{i18n.t('gis.map3_d_view.k0')}</div>
+          <div style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}>{i18n.t('gis.map3_d_view.k0')}</div>
         </Html>
       )}
     </group>
@@ -393,7 +393,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             color: 'common.white',
           }}
         >
-          <MuiBox sx={{ fontSize: '0.75rem' }}>
+          <MuiBox sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             <Typography sx={{ fontWeight: 500, mb: 2 }}>
               {i18n.t('gis:map3_d_view.3d_6')}
             </Typography>
@@ -451,7 +451,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             color: 'common.white',
           }}
         >
-          <MuiBox sx={{ fontSize: '0.75rem' }}>
+          <MuiBox sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
             <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('gis.map3_d_view.k10')}</Typography>
             <Typography variant='caption'>
               {i18n.t('gis:map3_d_view.v0_2', { v0: devicePoints.length })}

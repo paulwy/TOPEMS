@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, CircularProgress, Divider, Paper, Typography, Stack } from '@mui/material';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -47,7 +48,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
             label={`${alarms.length}`}
             color={alarms.length > 0 ? 'error' : 'default'}
             variant='outlined'
-            sx={{ height: 20, fontSize: '0.7rem' }}
+            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
         </Stack>
         <Typography
@@ -118,7 +119,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
                         label={meta.label}
                         sx={{
                           height: 18,
-                          fontSize: '0.65rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.65rem'],
                           backgroundColor: meta.bg,
                           color: meta.color,
                           fontWeight: 600,

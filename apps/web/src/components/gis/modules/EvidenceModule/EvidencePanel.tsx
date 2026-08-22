@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 // modules/EvidenceModule/EvidencePanel.tsx
 import React, { useState, useCallback } from 'react';
 import { Camera, Mic, Video, List, Grid, Search, X, Tag } from 'lucide-react';
@@ -183,7 +184,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           borderColor: 'grey.200',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
+        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600, color: 'text.primary' }}>
           {i18n.t('components.evidence_panel.k3')}
         </Typography>
         <IconButton
@@ -207,7 +208,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           bgcolor: 'grey.50',
         }}
       >
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 12 }}>
+        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary', mb: 12 }}>
           {i18n.t('components.evidence_panel.k4')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 12 }}>
@@ -234,7 +235,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 sx={{ color: 'primary.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
+            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
               {i18n.t('components.evidence_panel.k5')}
             </Typography>
           </Button>
@@ -261,7 +262,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 style={{ color: theme.palette.success.dark }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
+            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
               {i18n.t('components.evidence_panel.k6')}
             </Typography>
           </Button>
@@ -288,7 +289,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 sx={{ color: 'secondary.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
+            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
               {i18n.t('components.evidence_panel.k7')}
             </Typography>
           </Button>
@@ -318,7 +319,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               width: '100%',
               '& .MuiOutlinedInput-root': {
                 pl: 36,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 '& fieldset': { borderColor: 'grey.200' },
                 '&:hover fieldset': { borderColor: 'grey.300' },
                 '&.Mui-focused fieldset': { borderColor: 'primary.main' },
@@ -341,7 +342,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               }
               onClick={() => setFilterType(type)}
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 bgcolor: filterType === type ? 'primary.main' : 'grey.100',
                 color:
                   filterType === type
@@ -426,7 +427,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               size={48}
               sx={{ color: 'action.disabled', mb: 1.5 }}
             />
-            <Typography sx={{ fontSize: '0.875rem' }}>
+            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('components.evidence_panel.k7')}
             </Typography>
           </Box>
@@ -491,7 +492,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   <Box sx={{ p: 8 }}>
                     <Typography
                       sx={{
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
                         color: 'text.primary',
                         overflow: 'hidden',
@@ -501,7 +502,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     >
                       {record.title}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                       {record.evidence_type === 'photo'
                         ? i18n.t('components.evidence_panel.k8')
                         : record.evidence_type === 'audio'
@@ -587,22 +588,22 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   >
                     {record.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                     {new Date(record.recorded_at).toLocaleString()}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
                     textAlign: 'right',
-                    fontSize: '0.75rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                     color: 'text.secondary',
                   }}
                 >
-                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                     {formatFileSize(record.filesize)}
                   </Typography>
                   {record.duration && (
-                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
                       {formatDuration(record.duration)}
                     </Typography>
                   )}

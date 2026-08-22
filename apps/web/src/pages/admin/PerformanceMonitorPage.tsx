@@ -191,30 +191,30 @@ const PerformanceMonitorPage: React.FC = () => {
           boxShadow: designTokens.shadows.sm,
         }}
       >
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>
+        <h3 style={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600, marginBottom: 16 }}>
           {i18n.t('admin.performance_monitor_page.section_page_metrics')}
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('admin.performance_monitor_page.first_paint')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('admin.performance_monitor_page.first_contentful_paint')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('admin.performance_monitor_page.dom_content_loaded')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('admin.performance_monitor_page.page_fully_loaded')}
             </span>
             <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
@@ -232,11 +232,11 @@ const PerformanceMonitorPage: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>
+          <h3 style={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600, margin: 0 }}>
             {i18n.t('admin.performance_monitor_page.section_slow_api')}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('admin.performance_monitor_page.threshold')}
             </span>
             <input
@@ -246,12 +246,12 @@ const PerformanceMonitorPage: React.FC = () => {
               style={{
                 width: 80,
                 padding: 4,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 borderRadius: 4,
                 border: `1px solid ${ct.grey[300]}`,
               }}
             />
-            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>ms</span>
+            <span style={{ color: ct.grey[500], fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>ms</span>
           </div>
         </div>
         {slowCalls.length === 0 ? (
@@ -290,7 +290,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
                   <p
                     style={{
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       color: ct.grey[500],
                       margin: `${designTokens.spacing.xs} 0 0`,
                     }}
@@ -304,7 +304,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   </p>
                   <p
                     style={{
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       margin: `${designTokens.spacing.xs} 0 0`,
                       color: call.status === 'success' ? 'success.main' : 'error.main',
                     }}
@@ -344,7 +344,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: 'grey.500',
               }}
             >

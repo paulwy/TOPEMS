@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Typography, Button, useTheme } from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
@@ -69,7 +70,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
       >
         <Typography
           sx={{
-            fontSize: '1.125rem',
+            fontSize: designTokens.typography.fontSize.scale['1.125rem'],
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
@@ -79,7 +80,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
           <Building2 style={{ width: 20, height: 20, color: theme.palette.success.main }} />
           {i18n.t('components.department_selector.k0')}
         </Typography>
-        <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
           {departments.length} {i18n.t('components.department_selector.k0')}
         </Typography>
       </Box>
@@ -123,7 +124,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
         display: 'flex',
         alignItems: 'center',
         gap: 2,
-        fontSize: '0.875rem',
+        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
       }}
     >
       {items.map((item, index) => (
@@ -137,7 +138,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
                 width: 16,
                 height: 16,
                 color: 'grey.400',
-                margin: '0 4px',
+                margin: `0 ${designTokens.spacing.xs}px`,
               }}
             />
           )}
@@ -145,7 +146,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
             <Button
               onClick={item.onClick}
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: 'grey.600',
                 transition: 'color',
                 '&:hover': { color: 'grey.700' },

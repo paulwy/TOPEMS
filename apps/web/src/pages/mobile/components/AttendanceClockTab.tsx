@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * AttendanceClockTab - Clock in/out UI section
  * @refactor-split Extracted from MobileAttendancePage.tsx
@@ -83,7 +84,7 @@ const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
           onClick={handleClockClick}
         >
           <Box sx={{ textAlign: 'center' }}>
-            <CalendarCheck style={{ width: 40, height: 40, margin: '0 auto 4px' }} />
+            <CalendarCheck style={{ width: 40, height: 40, margin: `0 auto ${designTokens.spacing.xs}px` }} />
             <Typography
               variant='h6'
               sx={{ fontWeight: 600 }}
@@ -159,7 +160,7 @@ const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
           label={i18n.t('mobile.attendance.status.in_range')}
           size='small'
           color='success'
-          sx={{ height: 20, fontSize: '0.7rem' }}
+          sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
         />
       </Paper>
       <Paper

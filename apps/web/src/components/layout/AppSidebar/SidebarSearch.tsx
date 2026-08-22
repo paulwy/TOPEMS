@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo } from 'react';
 import {
   TextField,
@@ -53,7 +54,7 @@ export const SidebarSearch: React.FC<SidebarSearchProps> = ({ collapsed }) => {
           flex: 1,
           '& .MuiOutlinedInput-root': {
             borderRadius: 1.5,
-            fontSize: '0.8125rem',
+            fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
             bgcolor: 'background.default',
           },
         }}
@@ -115,8 +116,8 @@ export const SidebarSearch: React.FC<SidebarSearchProps> = ({ collapsed }) => {
                 primary={item.label}
                 secondary={item.path}
                 slotProps={{
-                  primary: { sx: { fontSize: '0.875rem' } },
-                  secondary: { sx: { fontSize: '0.75rem' } },
+                  primary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+                  secondary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] } },
                 }}
               />
             </ListItemButton>

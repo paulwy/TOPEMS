@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * StatsPageTemplate - 统计图表页面模板
  * 适用于数据统计、仪表盘、分析报表等场景
@@ -31,7 +32,7 @@ import { EmptyState } from '@topems/shared-components';
 export interface StatCard {
   id: string;
   title: string;
-  value: string | number;
+  value: React.ReactNode;
   icon?: React.ReactNode;
   color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
   suffix?: string;
@@ -43,6 +44,8 @@ export interface StatCard {
     label?: string;
   };
   gradient?: [string, string];
+  /** 点击回调 */
+  onClick?: () => void;
 }
 
 /**
@@ -189,6 +192,8 @@ export interface StatsPageTemplateProps {
   showRefresh?: boolean;
   /** 自定义工具栏 */
   customToolbar?: React.ReactNode;
+  /** 右上角自定义操作区 */
+  actions?: React.ReactNode;
   /** 图表区域标题 */
   chartSectionTitle?: string;
   /** 表格区域标题 */
@@ -236,6 +241,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   showExport = true,
   showRefresh = true,
   customToolbar,
+  actions,
   chartSectionTitle,
   tableSectionTitle,
   showCharts = true,
@@ -281,6 +287,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
         {statCards.map((stat) => (
           <Paper
             key={stat.id}
+            onClick={stat.onClick}
             sx={{
               flex: statCardDirection === 'row' ? 1 : undefined,
               minWidth: statCardDirection === 'row' ? 200 : '100%',
@@ -294,6 +301,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               position: 'relative',
               overflow: 'hidden',
               transition: 'all 0.2s ease',
+              cursor: stat.onClick ? 'pointer' : 'default',
               '&:hover': {
                 transform: 'translateY(-2px)',
                 boxShadow: 4,
@@ -335,9 +343,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       variant='h4'
                       sx={{
                         fontWeight: 700,
-                        color: stat.gradient
-                          ? 'var(--color-primary-foreground)'
-                          : 'text.primary',
+                        color: stat.gradient ? 'var(--color-primary-foreground)' : 'text.primary',
                       }}
                     >
                       {stat.prefix}
@@ -347,9 +353,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     variant='h3'
                     sx={{
                       fontWeight: 700,
-                      color: stat.gradient
-                        ? 'var(--color-primary-foreground)'
-                        : 'text.primary',
+                      color: stat.gradient ? 'var(--color-primary-foreground)' : 'text.primary',
                     }}
                   >
                     {stat.value}
@@ -537,10 +541,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     fontWeight: 600,
                     bgcolor: 'grey.50',
                     color: 'text.secondary',
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   },
                   '& td': {
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   },
                 }}
               >
@@ -612,7 +616,13 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   const hasCustomContent = Boolean(children);
 
   // 渲染加载状态
-  if (loading && statCards.length === 0 && charts.length === 0 && tables.length === 0 && !hasCustomContent) {
+  if (
+    loading &&
+    statCards.length === 0 &&
+    charts.length === 0 &&
+    tables.length === 0 &&
+    !hasCustomContent
+  ) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         {/* 页面标题栏 */}
@@ -672,7 +682,13 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   }
 
   // 空状态（有自定义内容时不应进入空状态）
-  if (!loading && statCards.length === 0 && charts.length === 0 && tables.length === 0 && !hasCustomContent) {
+  if (
+    !loading &&
+    statCards.length === 0 &&
+    charts.length === 0 &&
+    tables.length === 0 &&
+    !hasCustomContent
+  ) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <EmptyState
@@ -685,6 +701,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       </Box>
     );
   }
+
+  const showFilterToolbar =
+    (showSearch && search) || (showTimeRange && timeRangeOptions.length > 0);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -725,6 +744,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             flexWrap: 'wrap',
           }}
         >
+          {actions}
+
           {showRefresh && onRefresh && (
             <Tooltip title={i18n.t('templates.stats_page_template.k3')}>
               <IconButton
@@ -790,82 +811,84 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       )}
 
       {/* 筛选工具栏 */}
-      <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          {/* 搜索框 */}
-          {showSearch && search && (
-            <TextField
-              size='small'
-              placeholder={search.placeholder || i18n.t('components.stats_page_template.k1')}
-              value={search.value}
-              onChange={(e) => search.onChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
-              sx={{ minWidth: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search sx={{ width: 18, height: 18, color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          )}
+      {showFilterToolbar && (
+        <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            {/* 搜索框 */}
+            {showSearch && search && (
+              <TextField
+                size='small'
+                placeholder={search.placeholder || i18n.t('components.stats_page_template.k1')}
+                value={search.value}
+                onChange={(e) => search.onChange(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
+                sx={{ minWidth: 250 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position='start'>
+                        <Search sx={{ width: 18, height: 18, color: 'text.secondary' }} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            )}
 
-          {/* 时间范围选择 */}
-          {showTimeRange && timeRangeOptions.length > 0 && (
-            <FormControl
-              size='small'
-              sx={{ minWidth: 150 }}
-            >
-              <Select
-                value={timeRange || timeRangeOptions[0]?.value}
-                onChange={(e) => onTimeRangeChange?.(e.target.value)}
-                startAdornment={
-                  <InputAdornment position='start'>
-                    <Calendar
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        color: 'text.secondary',
-                        mr: 0.5,
-                      }}
-                    />
-                  </InputAdornment>
-                }
+            {/* 时间范围选择 */}
+            {showTimeRange && timeRangeOptions.length > 0 && (
+              <FormControl
+                size='small'
+                sx={{ minWidth: 150 }}
               >
-                {timeRangeOptions.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    value={option.value}
-                  >
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+                <Select
+                  value={timeRange || timeRangeOptions[0]?.value}
+                  onChange={(e) => onTimeRangeChange?.(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position='start'>
+                      <Calendar
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          color: 'text.secondary',
+                          mr: 0.5,
+                        }}
+                      />
+                    </InputAdornment>
+                  }
+                >
+                  {timeRangeOptions.map((option) => (
+                    <MenuItem
+                      key={option.value}
+                      value={option.value}
+                    >
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
 
-          {/* 搜索按钮 */}
-          {showSearch && onSearch && (
-            <Button
-              variant='contained'
-              size='small'
-              onClick={onSearch}
-            >
-              {i18n.t('components.stats_page_template.k2')}
-            </Button>
-          )}
-        </Box>
-      </Paper>
+            {/* 搜索按钮 */}
+            {showSearch && onSearch && (
+              <Button
+                variant='contained'
+                size='small'
+                onClick={onSearch}
+              >
+                {i18n.t('components.stats_page_template.k2')}
+              </Button>
+            )}
+          </Box>
+        </Paper>
+      )}
 
       {/* 统计卡片 */}
       {renderStatCards()}

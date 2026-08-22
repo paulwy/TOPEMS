@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -435,7 +436,7 @@ const MobileQualityPage: React.FC = () => {
           sx={{
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -509,7 +510,7 @@ const MobileQualityPage: React.FC = () => {
                               label={getTypeLabel(task.type)}
                               size='small'
                               color='primary'
-                              sx={{ height: 20, fontSize: '0.7rem' }}
+                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                             />
                             <Chip
                               label={getStatusLabel(task.status)}
@@ -519,7 +520,7 @@ const MobileQualityPage: React.FC = () => {
                                   typeof Chip
                                 >['color']
                               }
-                              sx={{ height: 20, fontSize: '0.7rem' }}
+                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                             />
                           </Box>
                           <Typography
@@ -689,7 +690,7 @@ const MobileQualityPage: React.FC = () => {
                                 typeof Chip
                               >['color']
                             }
-                            sx={{ height: 20, fontSize: '0.7rem' }}
+                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                           />
                         </Box>
                         <Typography
@@ -715,7 +716,7 @@ const MobileQualityPage: React.FC = () => {
                         <Typography
                           variant='body2'
                           color='text.secondary'
-                          sx={{ fontSize: '0.85rem', mb: 1.5 }}
+                          sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'], mb: 1.5 }}
                         >
                           {defect.description}
                         </Typography>
@@ -744,7 +745,7 @@ const MobileQualityPage: React.FC = () => {
                                 typeof Chip
                               >['color']
                             }
-                            sx={{ height: 20, fontSize: '0.7rem' }}
+                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                           />
                         </Box>
                       </Paper>

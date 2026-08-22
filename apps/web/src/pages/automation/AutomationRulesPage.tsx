@@ -1,24 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
   MenuItem,
-  Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -28,6 +22,9 @@ import {
   Play as PlayIcon,
   Power as PowerIcon,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks';
 import { automationRulesApi } from '@/api/automation';
 import type {
   AutomationRule,
@@ -35,7 +32,8 @@ import type {
   AutomationTriggerType,
   AutomationActionType,
 } from '@/api/automation';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
@@ -88,31 +86,35 @@ const INITIAL_FORM: CreateForm = {
   action_target: '',
 };
 
+const QUERY_KEY = ['automation', 'rules'];
+
 export const AutomationRulesPage: React.FC = () => {
   const { t } = useTranslation('automation');
-  const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(INITIAL_FORM);
-  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await automationRulesApi.list({ page: 1, pageSize: 50 });
-      setRules(res.data?.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k3'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    confirmOpen: confirmDialogOpen,
+    confirmConfig: confirmDialogConfig,
+    openConfirm: openConfirmDialog,
+    closeConfirm: setConfirmDialogClosed,
+  } = useConfirmDialog();
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const rulesQuery = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: async () => {
+      try {
+        const res = await automationRulesApi.list({ page: 1, pageSize: 50 });
+        return res.data?.items ?? [];
+      } catch (err) {
+        throw new Error(
+          err instanceof Error ? err.message : t('automation.automation_rules_page.k3')
+        );
+      }
+    },
+  });
 
   const parseJson = (text: string): Record<string, unknown> => {
     try {
@@ -122,315 +124,377 @@ export const AutomationRulesPage: React.FC = () => {
     }
   };
 
-  const handleCreate = async () => {
-    if (!createForm.name || !createForm.code) return;
-    setCreating(true);
-    try {
+  const createMutation = useMutation({
+    mutationFn: async (form: CreateForm) => {
       await automationRulesApi.create({
-        name: createForm.name,
-        code: createForm.code,
-        description: createForm.description || undefined,
+        name: form.name,
+        code: form.code,
+        description: form.description || undefined,
         trigger: {
-          type: createForm.trigger_type,
-          payload: parseJson(createForm.trigger_payload),
+          type: form.trigger_type,
+          payload: parseJson(form.trigger_payload),
         },
         action: {
-          type: createForm.action_type,
-          target: createForm.action_target,
+          type: form.action_type,
+          target: form.action_target,
         },
         status: 'draft',
       });
+    },
+    onSuccess: () => {
       setCreateOpen(false);
       setCreateForm(INITIAL_FORM);
-      await load();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+    onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k4'));
-    } finally {
-      setCreating(false);
-    }
-  };
+    },
+  });
 
-  const handleDelete = async (id: string) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
       await automationRulesApi.remove(id);
-      await load();
-    } catch (err) {
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k5'));
-    }
-  };
+    },
+  });
 
-  const handleDuplicate = async (id: string) => {
-    try {
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
       await automationRulesApi.duplicate(id);
-      await load();
-    } catch (err) {
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k6'));
-    }
-  };
+    },
+  });
 
-  const handleToggle = async (rule: AutomationRule) => {
-    try {
+  const toggleMutation = useMutation({
+    mutationFn: async (rule: AutomationRule) => {
       if (rule.status === 'enabled') {
         await automationRulesApi.disable(rule.id);
       } else {
         await automationRulesApi.enable(rule.id);
       }
-      await load();
-    } catch (err) {
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k7'));
-    }
-  };
+    },
+  });
 
-  const handleTrigger = async (id: string) => {
-    try {
+  const triggerMutation = useMutation({
+    mutationFn: async (id: string) => {
       await automationRulesApi.trigger(id);
-      await load();
-    } catch (err) {
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k8'));
-    }
-  };
+    },
+  });
+
+  const isMutating =
+    createMutation.isPending ||
+    deleteMutation.isPending ||
+    duplicateMutation.isPending ||
+    toggleMutation.isPending ||
+    triggerMutation.isPending;
+
+  const handleCreate = useCallback(() => {
+    if (!createForm.name || !createForm.code) return;
+    createMutation.mutate(createForm);
+  }, [createForm, createMutation]);
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: t('automation.automation_rules_page.k26'),
+        message: t('automation_rules_page.delete_confirm_message'),
+        danger: true,
+        onConfirm: () => deleteMutation.mutate(id),
+      });
+    },
+    [openConfirmDialog, deleteMutation, t]
+  );
+
+  const columns: ColumnDef<AutomationRule>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: t('automation.automation_rules_page.k11'),
+        render: (row) => <Typography>{row.name}</Typography>,
+      },
+      {
+        id: 'code',
+        label: t('automation.automation_rules_page.k12'),
+        render: (row) => <Typography>{row.code}</Typography>,
+      },
+      {
+        id: 'trigger_type',
+        label: t('automation.automation_rules_page.k13'),
+        render: (row) => <Typography>{row.trigger.type}</Typography>,
+      },
+      {
+        id: 'action_type',
+        label: t('automation.automation_rules_page.k14'),
+        render: (row) => <Typography>{row.action.type}</Typography>,
+      },
+      {
+        id: 'status',
+        label: t('automation.automation_rules_page.k15'),
+        render: (row) => (
+          <Chip
+            size='small'
+            color={RULE_STATUS_COLOR[row.status]}
+            label={getRuleStatusLabel()[row.status]}
+          />
+        ),
+      },
+      {
+        id: 'run_stats',
+        label: t('automation.automation_rules_page.r1'),
+        render: (row) => (
+          <Typography>
+            {row.run_count} / {row.success_count} / {row.failed_count}
+          </Typography>
+        ),
+      },
+      {
+        id: 'last_run_at',
+        label: t('automation.automation_rules_page.k16'),
+        render: (row) => <Typography>{row.last_run_at ?? '-'}</Typography>,
+      },
+    ],
+    [t]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: t('automation.automation_rules_page.e1'),
+        icon: <AddIcon size={18} />,
+        onClick: () => setCreateOpen(true),
+        variant: 'contained' as const,
+      },
+    ],
+    [t]
+  );
+
+  const renderRowActions = useCallback(
+    (row: AutomationRule) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Tooltip title={t('automation.automation_rules_page.k19')}>
+          <span>
+            <IconButton
+              size='small'
+              onClick={() => triggerMutation.mutate(row.id)}
+              disabled={isMutating}
+              aria-label={t('automation.automation_rules_page.k18')}
+            >
+              <PlayIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip
+          title={
+            row.status === 'enabled'
+              ? t('automation.automation_rules_page.k23')
+              : t('automation.automation_rules_page.k22')
+          }
+        >
+          <span>
+            <IconButton
+              size='small'
+              onClick={() => toggleMutation.mutate(row)}
+              disabled={isMutating}
+              aria-label={
+                row.status === 'enabled'
+                  ? t('automation.automation_rules_page.k21')
+                  : t('automation.automation_rules_page.k20')
+              }
+            >
+              <PowerIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={t('automation.automation_rules_page.k25')}>
+          <span>
+            <IconButton
+              size='small'
+              onClick={() => duplicateMutation.mutate(row.id)}
+              disabled={isMutating}
+              aria-label={t('automation.automation_rules_page.k24')}
+            >
+              <ContentCopyIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={t('automation.automation_rules_page.k27')}>
+          <span>
+            <IconButton
+              size='small'
+              color='error'
+              onClick={() => handleDelete(row.id)}
+              disabled={isMutating}
+              aria-label={t('automation.automation_rules_page.k26')}
+            >
+              <DeleteOutlineIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    ),
+    [t, handleDelete, triggerMutation, toggleMutation, duplicateMutation, isMutating]
+  );
+
+  const displayError = error || (rulesQuery.error as Error | null)?.message || null;
 
   return (
-    <PageContainer title={t('automation.automation_rules_page.k9')}>
-      <Box sx={{ p: 3 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+    <>
+      {displayError && (
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
         >
-          <Typography variant='h5'>{t('automation.automation_rules_page.k10')}</Typography>
-          <Button
-            variant='contained'
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
+          {displayError}
+        </Alert>
+      )}
+      <ListPageTemplate<AutomationRule>
+        title={t('automation.automation_rules_page.k9')}
+        subtitle={t('automation.automation_rules_page.k10')}
+        columns={columns}
+        data={rulesQuery.data ?? []}
+        loading={rulesQuery.isLoading}
+        actions={actions}
+        renderRowActions={renderRowActions}
+        emptyMessage={t('automation.automation_rules_page.e2')}
+      />
+
+      <Dialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>{t('automation.automation_rules_page.k28')}</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
           >
-            {t('automation.automation_rules_page.e1')}
+            <TextField
+              label={t('automation.automation_rules_page.k29')}
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              fullWidth
+              required
+            />
+            <TextField
+              label={t('automation.automation_rules_page.k30')}
+              value={createForm.code}
+              onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
+              fullWidth
+              required
+              helperText={t('automation.automation_rules_page.k31')}
+            />
+            <TextField
+              label={t('automation.automation_rules_page.k32')}
+              value={createForm.description}
+              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <TextField
+              select
+              label={t('automation.automation_rules_page.k33')}
+              value={createForm.trigger_type}
+              onChange={(e) =>
+                setCreateForm({
+                  ...createForm,
+                  trigger_type: e.target.value as AutomationTriggerType,
+                })
+              }
+              fullWidth
+            >
+              {TRIGGER_TYPES.map((type) => (
+                <MenuItem
+                  key={type}
+                  value={type}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label={t('automation.automation_rules_page.json_34')}
+              value={createForm.trigger_payload}
+              onChange={(e) => setCreateForm({ ...createForm, trigger_payload: e.target.value })}
+              fullWidth
+              multiline
+              rows={3}
+              helperText='cron: {expression, timezone}; event: {event_name, source}; webhook: {path, secret}; form_submit: {form_id, app_id}'
+            />
+            <TextField
+              select
+              label={t('automation.automation_rules_page.k35')}
+              value={createForm.action_type}
+              onChange={(e) =>
+                setCreateForm({
+                  ...createForm,
+                  action_type: e.target.value as AutomationActionType,
+                })
+              }
+              fullWidth
+            >
+              {ACTION_TYPES.map((type) => (
+                <MenuItem
+                  key={type}
+                  value={type}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label={t('automation.automation_rules_page.id_36')}
+              value={createForm.action_target}
+              onChange={(e) => setCreateForm({ ...createForm, action_target: e.target.value })}
+              fullWidth
+              helperText='workflow_id / integration_endpoint_id / API URL / page_id / channel_id'
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateOpen(false)}>
+            {t('automation.automation_rules_page.k37')}
           </Button>
-        </Stack>
-
-        {error && (
-          <Typography
-            color='error'
-            variant='body2'
-            sx={{ mb: 1 }}
+          <Button
+            onClick={handleCreate}
+            variant='contained'
+            disabled={createMutation.isPending || !createForm.name || !createForm.code}
           >
-            {error}
-          </Typography>
-        )}
+            {createMutation.isPending
+              ? t('automation.automation_rules_page.r2')
+              : t('automation.automation_rules_page.k38')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            variant='outlined'
-          >
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('automation.automation_rules_page.k11')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.k12')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.k13')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.k14')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.k15')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.r1')}</TableCell>
-                  <TableCell>{t('automation.automation_rules_page.k16')}</TableCell>
-                  <TableCell align='right'>{t('automation.automation_rules_page.k17')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rules.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      align='center'
-                    >
-                      {t('automation.automation_rules_page.e2')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rules.map((rule) => (
-                    <TableRow key={rule.id}>
-                      <TableCell>{rule.name}</TableCell>
-                      <TableCell>{rule.code}</TableCell>
-                      <TableCell>{rule.trigger.type}</TableCell>
-                      <TableCell>{rule.action.type}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size='small'
-                          color={RULE_STATUS_COLOR[rule.status]}
-                          label={getRuleStatusLabel()[rule.status]}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {rule.run_count} / {rule.success_count} / {rule.failed_count}
-                      </TableCell>
-                      <TableCell>{rule.last_run_at ?? '-'}</TableCell>
-                      <TableCell align='right'>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleTrigger(rule.id)}
-                          aria-label={t('automation.automation_rules_page.k18')}
-                          title={t('automation.automation_rules_page.k19')}
-                        >
-                          <PlayIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleToggle(rule)}
-                          aria-label={
-                            rule.status === 'enabled'
-                              ? t('automation.automation_rules_page.k21')
-                              : t('automation.automation_rules_page.k20')
-                          }
-                          title={
-                            rule.status === 'enabled'
-                              ? t('automation.automation_rules_page.k23')
-                              : t('automation.automation_rules_page.k22')
-                          }
-                        >
-                          <PowerIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleDuplicate(rule.id)}
-                          aria-label={t('automation.automation_rules_page.k24')}
-                          title={t('automation.automation_rules_page.k25')}
-                        >
-                          <ContentCopyIcon size={18} />
-                        </IconButton>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={() => handleDelete(rule.id)}
-                          aria-label={t('automation.automation_rules_page.k26')}
-                          title={t('automation.automation_rules_page.k27')}
-                        >
-                          <DeleteOutlineIcon size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        <Dialog
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          maxWidth='sm'
-          fullWidth
-        >
-          <DialogTitle>{t('automation.automation_rules_page.k28')}</DialogTitle>
-          <DialogContent>
-            <Stack
-              spacing={2}
-              sx={{ mt: 1 }}
-            >
-              <TextField
-                label={t('automation.automation_rules_page.k29')}
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label={t('automation.automation_rules_page.k30')}
-                value={createForm.code}
-                onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
-                fullWidth
-                required
-                helperText={t('automation.automation_rules_page.k31')}
-              />
-              <TextField
-                label={t('automation.automation_rules_page.k32')}
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                fullWidth
-                multiline
-                rows={2}
-              />
-              <TextField
-                select
-                label={t('automation.automation_rules_page.k33')}
-                value={createForm.trigger_type}
-                onChange={(e) =>
-                  setCreateForm({
-                    ...createForm,
-                    trigger_type: e.target.value as AutomationTriggerType,
-                  })
-                }
-                fullWidth
-              >
-                {TRIGGER_TYPES.map((t) => (
-                  <MenuItem
-                    key={t}
-                    value={t}
-                  >
-                    {t}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label={t('automation.automation_rules_page.json_34')}
-                value={createForm.trigger_payload}
-                onChange={(e) => setCreateForm({ ...createForm, trigger_payload: e.target.value })}
-                fullWidth
-                multiline
-                rows={3}
-                helperText='cron: {expression, timezone}; event: {event_name, source}; webhook: {path, secret}; form_submit: {form_id, app_id}'
-              />
-              <TextField
-                select
-                label={t('automation.automation_rules_page.k35')}
-                value={createForm.action_type}
-                onChange={(e) =>
-                  setCreateForm({
-                    ...createForm,
-                    action_type: e.target.value as AutomationActionType,
-                  })
-                }
-                fullWidth
-              >
-                {ACTION_TYPES.map((t) => (
-                  <MenuItem
-                    key={t}
-                    value={t}
-                  >
-                    {t}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label={t('automation.automation_rules_page.id_36')}
-                value={createForm.action_target}
-                onChange={(e) => setCreateForm({ ...createForm, action_target: e.target.value })}
-                fullWidth
-                helperText='workflow_id / integration_endpoint_id / API URL / page_id / channel_id'
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>
-              {t('automation.automation_rules_page.k37')}
-            </Button>
-            <Button
-              onClick={handleCreate}
-              variant='contained'
-              disabled={creating || !createForm.name || !createForm.code}
-            >
-              {creating
-                ? t('automation.automation_rules_page.r2')
-                : t('automation.automation_rules_page.k38')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </PageContainer>
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={setConfirmDialogClosed}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogClosed();
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
+    </>
   );
 };
 

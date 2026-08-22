@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Avatar as MuiAvatar,
@@ -138,7 +139,13 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
       <Badge
         badgeContent={badge}
         color={badgeColor}
-        sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem', minWidth: 16, height: 16 } }}
+        sx={{
+          '& .MuiBadge-badge': {
+            fontSize: designTokens.typography.fontSize.scale['0.625rem'],
+            minWidth: 16,
+            height: 16,
+          },
+        }}
       >
         {withStatus}
       </Badge>

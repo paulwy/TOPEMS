@@ -1,10 +1,9 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
 import {
   Database,
   Table,
-  Search,
   RefreshCw,
   Download,
   Upload,
@@ -17,9 +16,16 @@ import {
   Settings,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { PageContainer, StatusBadge, ConfirmDialog } from '@/components/common';
-import DataTable from '@/components/common/DataTable';
-import { Pagination } from '@topems/shared-components';
+import { StatusBadge, ConfirmDialog } from '@/components/common';
+import { useNotificationStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
+import { useNavigate } from 'react-router-dom';
+import { ERP_PATHS } from '@/modules/erp/config';
+import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
+import { extractErrorMessage } from '@/utils/errors';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import {
   Box,
   Typography,
@@ -48,16 +54,7 @@ import {
   Tabs,
   Tab,
   LinearProgress,
-  InputAdornment,
 } from '@mui/material';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
-import { useNavigate } from 'react-router-dom';
-import { ERP_PATHS } from '@/modules/erp/config';
-import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
-import { extractErrorMessage } from '@/utils/errors';
-
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export interface BackupRecord {
   id: string;
@@ -69,6 +66,8 @@ export interface BackupRecord {
   created_by: string;
   remark?: string;
 }
+
+type TableInfoRow = TableInfo & { id: string };
 
 const mockBackups: BackupRecord[] = [
   {
@@ -158,7 +157,10 @@ const DatabaseManagementPage: React.FC = () => {
     enabled: activeTab === 'tables',
     staleTime: 5 * 60 * 1000,
   });
-  const tables = useMemo(() => tablesQuery.data ?? [], [tablesQuery.data]);
+  const tableRows: TableInfoRow[] = useMemo(
+    () => (tablesQuery.data ?? []).map((t) => ({ ...t, id: t.table_name })),
+    [tablesQuery.data]
+  );
   const loading = tablesQuery.isLoading;
 
   const tableDetailQuery = useQuery<TableDetail | null>({
@@ -203,12 +205,12 @@ const DatabaseManagementPage: React.FC = () => {
   }, [tableDetailQuery.isError, tableDetailQuery.error, addNotification]);
 
   const filteredTables = useMemo(() => {
-    return tables.filter((table) => {
+    return tableRows.filter((table) => {
       const matchesSearch =
         !searchQuery || table.table_name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
-  }, [tables, searchQuery]);
+  }, [tableRows, searchQuery]);
 
   const paginatedTables = useMemo(
     () => filteredTables.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
@@ -220,17 +222,14 @@ const DatabaseManagementPage: React.FC = () => {
     [backups, page, rowsPerPage]
   );
 
-  const tableTotalPages = Math.ceil(filteredTables.length / rowsPerPage);
-  const backupTotalPages = Math.ceil(backups.length / rowsPerPage);
-
   const handleViewStructure = useCallback((table: TableInfo) => {
     setCurrentTable(table);
     setShowStructureModal(true);
   }, []);
 
-  const handleBackup = () => {
+  const handleBackup = useCallback(() => {
     setShowBackupModal(true);
-  };
+  }, []);
 
   const startBackup = async () => {
     setBackingUp(true);
@@ -339,238 +338,41 @@ const DatabaseManagementPage: React.FC = () => {
 
   const stats = useMemo(() => {
     return {
-      tableCount: tables.length,
+      tableCount: tableRows.length,
       backupCount: backups.filter((b) => b.status === 'success').length,
     };
-  }, [tables, backups]);
+  }, [tableRows, backups]);
 
-  const tableListColumns = useMemo<ColumnDef<TableInfo>[]>(
-    () => [
-      {
-        accessorKey: 'table_name',
-        header: i18n.t('pages.database_management_page.k36'),
-        cell: ({ getValue }) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Table
-              size={16}
-              style={{ opacity: 0.5 }}
-            />
-            <Typography
-              sx={{
-                fontWeight: 500,
-                color: 'primary.main',
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-              }}
-            >
-              {String(getValue())}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'table_type',
-        header: i18n.t('pages.database_management_page.k37'),
-        cell: ({ getValue }) => (
-          <Chip
-            label={String(getValue())}
-            size='small'
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        id: 'actions',
-        header: i18n.t('pages.database_management_page.k4'),
-        cell: ({ row }) => (
-          <Box sx={{ textAlign: 'center' }}>
-            <Tooltip title={i18n.t('pages.database_management_page.k38')}>
-              <IconButton
-                size='small'
-                onClick={() => handleViewStructure(row.original)}
-                aria-label={i18n.t('pages.database_management_page.k39')}
-              >
-                <Eye size={16} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
-    ],
-    [handleViewStructure]
+  const tabs = useMemo(
+    () => (
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => setActiveTab(newValue)}
+        sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Tab
+          value='tables'
+          label={i18n.t('pages.database_management_page.k29')}
+          icon={<Table size={16} />}
+          iconPosition='start'
+        />
+        <Tab
+          value='backup'
+          label={i18n.t('pages.database_management_page.k30')}
+          icon={<Download size={16} />}
+          iconPosition='start'
+        />
+      </Tabs>
+    ),
+    [activeTab]
   );
 
-  const backupListColumns = useMemo<ColumnDef<BackupRecord>[]>(
-    () => [
-      {
-        accessorKey: 'backup_name',
-        header: i18n.t('pages.database_management_page.k41'),
-        cell: ({ getValue }) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Database
-              size={16}
-              style={{ opacity: 0.5 }}
-            />
-            <Typography
-              sx={{
-                fontWeight: 500,
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-              }}
-            >
-              {String(getValue())}
-            </Typography>
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'backup_type',
-        header: i18n.t('pages.database_management_page.k42'),
-        cell: ({ row }) => (
-          <Chip
-            label={
-              row.original.backup_type === 'full'
-                ? i18n.t('pages.database_management_page.k49')
-                : i18n.t('pages.database_management_page.k48')
-            }
-            size='small'
-            color={row.original.backup_type === 'full' ? 'primary' : 'default'}
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        accessorKey: 'filesize',
-        header: i18n.t('pages.database_management_page.k43'),
-      },
-      {
-        accessorKey: 'status',
-        header: i18n.t('pages.database_management_page.k44'),
-        cell: ({ row }) => getBackupStatusBadge(row.original.status),
-      },
-      {
-        accessorKey: 'created_by',
-        header: i18n.t('pages.database_management_page.k45'),
-      },
-      {
-        accessorKey: 'created_at',
-        header: i18n.t('pages.database_management_page.k46'),
-        cell: ({ getValue }) => (
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary' }}
-          >
-            {String(getValue())}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'remark',
-        header: i18n.t('pages.database_management_page.k47'),
-        cell: ({ getValue }) => (
-          <Typography
-            sx={{
-              maxWidth: 200,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              color: 'text.secondary',
-            }}
-          >
-            {(getValue() as string) || '-'}
-          </Typography>
-        ),
-      },
-      {
-        id: 'actions',
-        header: i18n.t('pages.database_management_page.k8'),
-        cell: ({ row }) => (
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-            <Tooltip title={i18n.t('pages.database_management_page.k50')}>
-              <IconButton
-                size='small'
-                color='primary'
-                aria-label={i18n.t('pages.database_management_page.k51')}
-              >
-                <Download size={16} />
-              </IconButton>
-            </Tooltip>
-            {row.original.status === 'success' && (
-              <Tooltip title={i18n.t('pages.database_management_page.k52')}>
-                <IconButton
-                  size='small'
-                  color='warning'
-                  onClick={() => handleRestore(row.original.id)}
-                  aria-label={i18n.t('pages.database_management_page.k53')}
-                >
-                  <Upload size={16} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title={i18n.t('pages.database_management_page.k54')}>
-              <IconButton
-                size='small'
-                color='error'
-                onClick={() => handleDeleteBackup(row.original.id)}
-                aria-label={i18n.t('pages.database_management_page.k55')}
-              >
-                <Trash2 size={16} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
-    ],
-    [getBackupStatusBadge, handleRestore, handleDeleteBackup]
-  );
-
-  return (
-    <PageContainer
-      title={i18n.t('pages.database_management_page.k23')}
-      subtitle={i18n.t('pages.database_management_page.k24')}
-      maxWidth='xl'
-      headerProps={{
-        backButton: {
-          onClick: () => navigate(ERP_PATHS.dashboard),
-        },
-        actions: [
-          {
-            label: i18n.t('pages.database_management_page.k25'),
-            icon: <RefreshCw size={16} />,
-            onClick: () => tablesQuery.refetch(),
-            variant: 'outlined',
-          },
-          {
-            label: i18n.t('pages.database_management_page.k26'),
-            icon: <Download size={16} />,
-            onClick: handleBackup,
-            variant: 'contained',
-          },
-        ],
-      }}
-    >
-      {backingUp && (
-        <Alert
-          severity='info'
-          sx={{ mb: 2 }}
-        >
-          <Box sx={{ width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant='body2'>{i18n.t('pages.database_management_page.k2')}</Typography>
-              <Typography variant='body2'>{backupProgress}%</Typography>
-            </Box>
-            <LinearProgress
-              variant='determinate'
-              value={backupProgress}
-            />
-          </Box>
-        </Alert>
-      )}
-
+  const statsCards = useMemo(
+    () => (
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 2, md: 4 },
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
           gap: 2,
           mb: 3,
         }}
@@ -630,183 +432,289 @@ const DatabaseManagementPage: React.FC = () => {
           </Box>
         ))}
       </Box>
+    ),
+    [stats]
+  );
 
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 1,
-          overflow: 'hidden',
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
+  const headerContent = useMemo(
+    () => (
+      <>
+        {statsCards}
+        {tabs}
+      </>
+    ),
+    [statsCards, tabs]
+  );
+
+  const tablesColumns: ColumnDef<TableInfoRow>[] = useMemo(
+    () => [
+      {
+        id: 'table_name',
+        label: i18n.t('pages.database_management_page.k36'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Table
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography
+              sx={{
+                fontWeight: 500,
+                color: 'primary.main',
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
+              {row.table_name}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'table_type',
+        label: i18n.t('pages.database_management_page.k37'),
+        render: (row) => (
+          <Chip
+            label={row.table_type}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  const tablesRowActions: RowAction<TableInfoRow>[] = useMemo(
+    () => [
+      {
+        key: 'view-structure',
+        label: i18n.t('pages.database_management_page.k38'),
+        icon: <Eye size={16} />,
+        onClick: (row) => handleViewStructure(row),
+      },
+    ],
+    [handleViewStructure]
+  );
+
+  const tablesActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.database_management_page.k25'),
+        icon: <RefreshCw size={16} />,
+        onClick: () => tablesQuery.refetch(),
+        variant: 'outlined' as const,
+      },
+    ],
+    [tablesQuery]
+  );
+
+  const backupColumns: ColumnDef<BackupRecord>[] = useMemo(
+    () => [
+      {
+        id: 'backup_name',
+        label: i18n.t('pages.database_management_page.k41'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Database
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography
+              sx={{
+                fontWeight: 500,
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
+              {row.backup_name}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'backup_type',
+        label: i18n.t('pages.database_management_page.k42'),
+        render: (row) => (
+          <Chip
+            label={
+              row.backup_type === 'full'
+                ? i18n.t('pages.database_management_page.k49')
+                : i18n.t('pages.database_management_page.k48')
+            }
+            size='small'
+            color={row.backup_type === 'full' ? 'primary' : 'default'}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'filesize',
+        label: i18n.t('pages.database_management_page.k43'),
+        render: (row) => <Typography>{row.filesize}</Typography>,
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.database_management_page.k44'),
+        render: (row) => getBackupStatusBadge(row.status),
+      },
+      {
+        id: 'created_by',
+        label: i18n.t('pages.database_management_page.k45'),
+        render: (row) => <Typography>{row.created_by}</Typography>,
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('pages.database_management_page.k46'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            {row.created_at}
+          </Typography>
+        ),
+      },
+      {
+        id: 'remark',
+        label: i18n.t('pages.database_management_page.k47'),
+        render: (row) => (
+          <Typography
+            sx={{
+              maxWidth: 200,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: 'text.secondary',
+            }}
+          >
+            {row.remark || '-'}
+          </Typography>
+        ),
+      },
+    ],
+    [getBackupStatusBadge]
+  );
+
+  const backupRowActions: RowAction<BackupRecord>[] = useMemo(
+    () => [
+      {
+        key: 'download',
+        label: i18n.t('pages.database_management_page.k50'),
+        icon: <Download size={16} />,
+      },
+      {
+        key: 'restore',
+        label: i18n.t('pages.database_management_page.k52'),
+        icon: <Upload size={16} />,
+        onClick: (row) => handleRestore(row.id),
+        show: (row) => row.status === 'success',
+      },
+      {
+        key: 'delete',
+        label: i18n.t('pages.database_management_page.k54'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteBackup(row.id),
+        color: 'error',
+      },
+    ],
+    [handleRestore, handleDeleteBackup]
+  );
+
+  const backupActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.database_management_page.k26'),
+        icon: <Download size={16} />,
+        onClick: handleBackup,
+        variant: 'contained' as const,
+      },
+      {
+        label: i18n.t('pages.database_management_page.k6'),
+        icon: <Upload size={16} />,
+        onClick: () => setShowRestoreModal(true),
+        variant: 'outlined' as const,
+      },
+    ],
+    [handleBackup]
+  );
+
+  return (
+    <>
+      {backingUp && (
+        <Alert
+          severity='info'
+          sx={{ mb: 2 }}
         >
-          <Tab
-            value='tables'
-            label={i18n.t('pages.database_management_page.k29')}
-            icon={<Table size={16} />}
-            iconPosition='start'
-          />
-          <Tab
-            value='backup'
-            label={i18n.t('pages.database_management_page.k30')}
-            icon={<Download size={16} />}
-            iconPosition='start'
-          />
-        </Tabs>
-
-        {activeTab === 'tables' && (
-          <>
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 2,
-                alignItems: 'center',
-                borderBottom: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <TextField
-                size='small'
-                placeholder={i18n.t('pages.database_management_page.k3')}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(0);
-                }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <Search
-                          size={16}
-                          style={{ opacity: 0.5 }}
-                        />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{ minWidth: 280 }}
-              />
-              <Box sx={{ flexGrow: 1 }} />
-              <FormControl
-                size='small'
-                sx={{ minWidth: 140 }}
-              >
-                <InputLabel>{i18n.t('pages.database_management_page.k31')}</InputLabel>
-                <Select
-                  value=''
-                  label={i18n.t('pages.database_management_page.k32')}
-                >
-                  <MenuItem value=''>{i18n.t('pages.database_management_page.k33')}</MenuItem>
-                  <MenuItem value='name'>{i18n.t('pages.database_management_page.k34')}</MenuItem>
-                  <MenuItem value='time'>{i18n.t('pages.database_management_page.k35')}</MenuItem>
-                </Select>
-              </FormControl>
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant='body2'>{i18n.t('pages.database_management_page.k2')}</Typography>
+              <Typography variant='body2'>{backupProgress}%</Typography>
             </Box>
-
-            <DataTable<TableInfo, unknown>
-              data={paginatedTables}
-              columns={tableListColumns}
-              getRowKey={(row) => row.table_name}
-              loading={loading}
-              enablePagination={false}
-              showSearch={false}
-              showFilters={false}
-              showExport={false}
-              showCreate={false}
-              showRefresh={false}
-              showSelection={false}
-              emptyMessage={i18n.t('pages.database_management_page.k5')}
+            <LinearProgress
+              variant='determinate'
+              value={backupProgress}
             />
+          </Box>
+        </Alert>
+      )}
 
-            {filteredTables.length > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, py: 1 }}>
-                <Pagination
-                  page={page + 1}
-                  total={tableTotalPages}
-                  pageSize={rowsPerPage}
-                  totalItems={filteredTables.length}
-                  onChange={(newPage) => setPage(newPage - 1)}
-                  onPageSizeChange={(newPageSize) => {
-                    setRowsPerPage(newPageSize);
-                    setPage(0);
-                  }}
-                />
-              </Box>
-            )}
-          </>
-        )}
+      {activeTab === 'tables' && (
+        <ListPageTemplate<TableInfoRow>
+          title={i18n.t('pages.database_management_page.k23')}
+          subtitle={i18n.t('pages.database_management_page.k24')}
+          backButton={{ onClick: () => navigate(ERP_PATHS.dashboard) }}
+          columns={tablesColumns}
+          data={paginatedTables}
+          loading={loading}
+          actions={tablesActions}
+          rowActions={tablesRowActions}
+          searchable
+          searchPlaceholder={i18n.t('pages.database_management_page.k3')}
+          searchValue={searchQuery}
+          onSearch={(value) => {
+            setSearchQuery(value);
+            setPage(0);
+          }}
+          pagination={{
+            page: page + 1,
+            pageSize: rowsPerPage,
+            total: filteredTables.length,
+            onPageChange: (newPage) => setPage(newPage - 1),
+            onPageSizeChange: (newPageSize) => {
+              setRowsPerPage(newPageSize);
+              setPage(0);
+            },
+          }}
+          headerContent={headerContent}
+          emptyMessage={i18n.t('pages.database_management_page.k5')}
+        />
+      )}
 
-        {activeTab === 'backup' && (
-          <>
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 2,
-                alignItems: 'center',
-                borderBottom: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Box sx={{ flexGrow: 1 }} />
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<Upload size={16} />}
-                onClick={() => setShowRestoreModal(true)}
-              >
-                {i18n.t('pages.database_management_page.k6')}
-              </Button>
-              <Button
-                variant='contained'
-                size='small'
-                startIcon={<Play size={16} />}
-                onClick={handleBackup}
-              >
-                {i18n.t('pages.database_management_page.k7')}
-              </Button>
-            </Box>
-
-            <DataTable<BackupRecord, unknown>
-              data={paginatedBackups}
-              columns={backupListColumns}
-              loading={false}
-              enablePagination={false}
-              showSearch={false}
-              showFilters={false}
-              showExport={false}
-              showCreate={false}
-              showRefresh={false}
-              showSelection={false}
-              emptyMessage={i18n.t('pages.database_management_page.k9')}
-            />
-
-            {backups.length > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 2, py: 1 }}>
-                <Pagination
-                  page={page + 1}
-                  total={backupTotalPages}
-                  pageSize={rowsPerPage}
-                  totalItems={backups.length}
-                  onChange={(newPage) => setPage(newPage - 1)}
-                  onPageSizeChange={(newPageSize) => {
-                    setRowsPerPage(newPageSize);
-                    setPage(0);
-                  }}
-                />
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
+      {activeTab === 'backup' && (
+        <ListPageTemplate<BackupRecord>
+          title={i18n.t('pages.database_management_page.k23')}
+          subtitle={i18n.t('pages.database_management_page.k24')}
+          backButton={{ onClick: () => navigate(ERP_PATHS.dashboard) }}
+          columns={backupColumns}
+          data={paginatedBackups}
+          loading={false}
+          actions={backupActions}
+          rowActions={backupRowActions}
+          pagination={{
+            page: page + 1,
+            pageSize: rowsPerPage,
+            total: backups.length,
+            onPageChange: (newPage) => setPage(newPage - 1),
+            onPageSizeChange: (newPageSize) => {
+              setRowsPerPage(newPageSize);
+              setPage(0);
+            },
+          }}
+          headerContent={headerContent}
+          emptyMessage={i18n.t('pages.database_management_page.k9')}
+        />
+      )}
 
       <Dialog
         open={showStructureModal}
@@ -1073,7 +981,7 @@ const DatabaseManagementPage: React.FC = () => {
         message={i18n.t('pages.database_management_page.k73')}
         danger
       />
-    </PageContainer>
+    </>
   );
 };
 

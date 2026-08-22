@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Dialog,
   DialogTitle,
@@ -15,19 +13,11 @@ import {
   FormControl,
   InputLabel,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Tooltip,
   Alert,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import {
@@ -36,11 +26,12 @@ import {
   Delete as DeleteIcon,
   Play as PlayIcon,
   History as HistoryIcon,
-  Check as CheckIcon,
   X as XIcon,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 
 import {
   reportApi,
@@ -61,7 +52,7 @@ const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string }[] = [
 const SCHEDULE_STATUS_OPTIONS: {
   value: ScheduleStatus;
   label: string;
-  color: string;
+  color: React.ComponentProps<typeof Chip>['color'];
 }[] = [
   { value: 'active', label: i18n.t('pages.report_schedule_page.k2'), color: 'success' },
   { value: 'paused', label: i18n.t('pages.report_schedule_page.k3'), color: 'warning' },
@@ -69,20 +60,24 @@ const SCHEDULE_STATUS_OPTIONS: {
   { value: 'failed', label: i18n.t('pages.report_schedule_page.k5'), color: 'error' },
 ];
 
+const defaultFormData: CreateScheduleRequest = {
+  name: '',
+  template_id: '',
+  schedule_type: 'cron',
+  schedule_expression: '',
+  recipients: [],
+};
+
 const ReportSchedulePage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentSchedule, setCurrentSchedule] = useState<ReportSchedule | null>(null);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [error, setError] = useState<string>('');
+  const [formData, setFormData] = useState<CreateScheduleRequest | UpdateScheduleRequest>(
+    defaultFormData
+  );
 
-  const [formData, setFormData] = useState<CreateScheduleRequest | UpdateScheduleRequest>({
-    name: '',
-    template_id: '',
-    schedule_type: 'cron',
-    schedule_expression: '',
-    recipients: [],
-  });
   const {
     confirmOpen: confirmDialogOpen,
     confirmConfig: confirmDialogConfig,
@@ -212,28 +207,21 @@ const ReportSchedulePage: React.FC = () => {
 
   const schedules = schedulesQuery.data || [];
   const templates = templatesQuery.data || [];
-  const loading =
-    schedulesQuery.isLoading ||
+  const mutating =
     createMutation.isPending ||
     updateMutation.isPending ||
     deleteMutation.isPending ||
     executeMutation.isPending;
 
-  const handleOpenCreateDialog = () => {
+  const handleOpenCreateDialog = useCallback(() => {
     setEditMode(false);
     setCurrentSchedule(null);
     setError('');
-    setFormData({
-      name: '',
-      template_id: '',
-      schedule_type: 'cron',
-      schedule_expression: '',
-      recipients: [],
-    });
+    setFormData(defaultFormData);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenEditDialog = (schedule: ReportSchedule) => {
+  const handleOpenEditDialog = useCallback((schedule: ReportSchedule) => {
     setEditMode(true);
     setCurrentSchedule(schedule);
     setError('');
@@ -245,43 +233,41 @@ const ReportSchedulePage: React.FC = () => {
       recipients: schedule.recipients,
     });
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setDialogOpen(false);
     setError('');
-    setFormData({
-      name: '',
-      template_id: '',
-      schedule_type: 'cron',
-      schedule_expression: '',
-      recipients: [],
-    });
-  };
+    setFormData(defaultFormData);
+  }, []);
 
-  const handleFormChange = (field: string, value: unknown) => {
+  const handleFormChange = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleRecipientChange = (index: number, value: string) => {
-    const newRecipients = [...(formData.recipients || [])];
-    newRecipients[index] = value;
-    setFormData((prev) => ({ ...prev, recipients: newRecipients }));
-  };
+  const handleRecipientChange = useCallback((index: number, value: string) => {
+    setFormData((prev) => {
+      const newRecipients = [...(prev.recipients || [])];
+      newRecipients[index] = value;
+      return { ...prev, recipients: newRecipients };
+    });
+  }, []);
 
-  const handleAddRecipient = () => {
+  const handleAddRecipient = useCallback(() => {
     setFormData((prev) => ({
       ...prev,
       recipients: [...(prev.recipients || []), ''],
     }));
-  };
+  }, []);
 
-  const handleRemoveRecipient = (index: number) => {
-    const newRecipients = (formData.recipients || []).filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, recipients: newRecipients }));
-  };
+  const handleRemoveRecipient = useCallback((index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      recipients: (prev.recipients || []).filter((_, i) => i !== index),
+    }));
+  }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     setError('');
     try {
       if (editMode && currentSchedule) {
@@ -293,197 +279,213 @@ const ReportSchedulePage: React.FC = () => {
         await createMutation.mutateAsync(formData as CreateScheduleRequest);
       }
       setDialogOpen(false);
-    } catch (err) {
+      setFormData(defaultFormData);
+    } catch {
       // Error handled by mutation onError
     }
-  };
+  }, [editMode, currentSchedule, formData, updateMutation, createMutation]);
 
-  const handleDelete = (id: string) => {
-    openConfirmDialog({
-      title: i18n.t('pages.report_schedule_page.k17'),
-      message: i18n.t('pages.report_schedule_page.k18'),
-      danger: true,
-      onConfirm: () => {
-        deleteMutation.mutate(id);
-      },
-    });
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      openConfirmDialog({
+        title: i18n.t('pages.report_schedule_page.k17'),
+        message: i18n.t('pages.report_schedule_page.k18'),
+        danger: true,
+        onConfirm: () => {
+          deleteMutation.mutate(id);
+        },
+      });
+    },
+    [openConfirmDialog, deleteMutation]
+  );
 
-  const handleExecute = async (id: string) => {
-    setError('');
-    try {
-      await executeMutation.mutateAsync(id);
-    } catch (err) {
-      // Error handled by mutation onError
-    }
-  };
+  const handleExecute = useCallback(
+    async (id: string) => {
+      setError('');
+      try {
+        await executeMutation.mutateAsync(id);
+      } catch {
+        // Error handled by mutation onError
+      }
+    },
+    [executeMutation]
+  );
 
-  const handleViewHistory = async (schedule: ReportSchedule) => {
+  const handleViewHistory = useCallback((schedule: ReportSchedule) => {
     setCurrentSchedule(schedule);
     setError('');
     setHistoryDialogOpen(true);
-  };
+  }, []);
 
-  const getStatusChip = (status: ScheduleStatus) => {
+  const getStatusChip = useCallback((status: ScheduleStatus) => {
     const statusInfo = SCHEDULE_STATUS_OPTIONS.find((s) => s.value === status);
     return (
       <Chip
         label={statusInfo?.label || status}
-        color={statusInfo?.color as React.ComponentProps<typeof Chip>['color']}
+        color={statusInfo?.color}
         size='small'
       />
     );
-  };
+  }, []);
 
-  const getScheduleTypeLabel = (type: ScheduleType) => {
-    return SCHEDULE_TYPE_OPTIONS.find((t) => t.value === type)?.label || type;
-  };
+  const getScheduleTypeLabel = useCallback(
+    (type: ScheduleType) => SCHEDULE_TYPE_OPTIONS.find((t) => t.value === type)?.label || type,
+    []
+  );
+
+  const columns: ColumnDef<ReportSchedule>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: i18n.t('pages.report_schedule_page.k22'),
+        render: (row) => <Typography>{row.name}</Typography>,
+      },
+      {
+        id: 'template',
+        label: i18n.t('pages.report_schedule_page.k23'),
+        render: (row) => <Typography>{row.template_name || row.template_id}</Typography>,
+      },
+      {
+        id: 'schedule_type',
+        label: i18n.t('pages.report_schedule_page.k24'),
+        render: (row) => <Typography>{getScheduleTypeLabel(row.schedule_type)}</Typography>,
+      },
+      {
+        id: 'schedule_expression',
+        label: i18n.t('pages.report_schedule_page.k25'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            noWrap
+          >
+            {row.schedule_expression}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: i18n.t('pages.report_schedule_page.k26'),
+        render: (row) => getStatusChip(row.status),
+      },
+      {
+        id: 'run_count',
+        label: i18n.t('pages.report_schedule_page.k27'),
+        render: (row) => <Typography>{row.run_count}</Typography>,
+      },
+      {
+        id: 'last_run_at',
+        label: i18n.t('pages.report_schedule_page.k28'),
+        render: (row) =>
+          row.last_run_at ? (
+            <Typography variant='body2'>{new Date(row.last_run_at).toLocaleString()}</Typography>
+          ) : (
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {i18n.t('pages.report_schedule_page.k0')}
+            </Typography>
+          ),
+      },
+    ],
+    [getStatusChip, getScheduleTypeLabel]
+  );
+
+  const renderRowActions = useCallback(
+    (row: ReportSchedule) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Tooltip title={i18n.t('pages.report_schedule_page.k31')}>
+          <span>
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => handleExecute(row.id)}
+              disabled={executeMutation.isPending}
+              aria-label={i18n.t('pages.report_schedule_page.k32')}
+            >
+              <PlayIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.report_schedule_page.k33')}>
+          <IconButton
+            size='small'
+            color='info'
+            onClick={() => handleViewHistory(row)}
+            aria-label={i18n.t('pages.report_schedule_page.k34')}
+          >
+            <HistoryIcon size={18} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.report_schedule_page.k35')}>
+          <IconButton
+            size='small'
+            color='warning'
+            onClick={() => handleOpenEditDialog(row)}
+            aria-label={i18n.t('pages.report_schedule_page.k36')}
+          >
+            <EditIcon size={18} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.report_schedule_page.k37')}>
+          <span>
+            <IconButton
+              size='small'
+              color='error'
+              onClick={() => handleDelete(row.id)}
+              disabled={deleteMutation.isPending}
+              aria-label={i18n.t('pages.report_schedule_page.k38')}
+            >
+              <DeleteIcon size={18} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    ),
+    [
+      handleExecute,
+      handleViewHistory,
+      handleOpenEditDialog,
+      handleDelete,
+      executeMutation.isPending,
+      deleteMutation.isPending,
+    ]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.report_schedule_page.k21'),
+        icon: <PlusIcon size={18} />,
+        onClick: handleOpenCreateDialog,
+        variant: 'contained' as const,
+      },
+    ],
+    [handleOpenCreateDialog]
+  );
+
+  const displayError = error || (schedulesQuery.error as Error)?.message;
 
   return (
-    <PageContainer
-      title={i18n.t('pages.report_schedule_page.k19')}
-      subtitle={i18n.t('pages.report_schedule_page.k20')}
-      headerProps={{
-        actions: [
-          {
-            label: i18n.t('pages.report_schedule_page.k21'),
-            icon: <PlusIcon />,
-            onClick: handleOpenCreateDialog,
-            variant: 'contained',
-          },
-        ],
-      }}
-    >
-      {(error || schedulesQuery.error) && (
+    <>
+      {displayError && (
         <Alert
           severity='error'
-          sx={{ mb: 3 }}
+          sx={{ mb: 2 }}
         >
-          {error || (schedulesQuery.error as Error)?.message}
+          {displayError}
         </Alert>
       )}
-
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k22')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k23')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k24')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k25')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k26')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k27')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k28')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k29')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      align='center'
-                    >
-                      <Typography variant='body1'>
-                        {i18n.t('pages.report_schedule_page.k1')}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : schedules.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      align='center'
-                    >
-                      <Typography variant='body1'>
-                        {i18n.t('pages.report_schedule_page.k30')}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  schedules.map((schedule) => (
-                    <TableRow key={schedule.id}>
-                      <TableCell>{schedule.name}</TableCell>
-                      <TableCell>{schedule.template_name || schedule.template_id}</TableCell>
-                      <TableCell>{getScheduleTypeLabel(schedule.schedule_type)}</TableCell>
-                      <TableCell>
-                        <Typography
-                          variant='body2'
-                          noWrap
-                        >
-                          {schedule.schedule_expression}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{getStatusChip(schedule.status)}</TableCell>
-                      <TableCell>{schedule.run_count}</TableCell>
-                      <TableCell>
-                        {schedule.last_run_at ? (
-                          <Typography variant='body2'>
-                            {new Date(schedule.last_run_at).toLocaleString()}
-                          </Typography>
-                        ) : (
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.report_schedule_page.k0')}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title={i18n.t('pages.report_schedule_page.k31')}>
-                            <IconButton
-                              size='small'
-                              color='primary'
-                              onClick={() => handleExecute(schedule.id)}
-                              aria-label={i18n.t('pages.report_schedule_page.k32')}
-                            >
-                              <PlayIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={i18n.t('pages.report_schedule_page.k33')}>
-                            <IconButton
-                              size='small'
-                              color='info'
-                              onClick={() => handleViewHistory(schedule)}
-                              aria-label={i18n.t('pages.report_schedule_page.k34')}
-                            >
-                              <HistoryIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={i18n.t('pages.report_schedule_page.k35')}>
-                            <IconButton
-                              size='small'
-                              color='warning'
-                              onClick={() => handleOpenEditDialog(schedule)}
-                              aria-label={i18n.t('pages.report_schedule_page.k36')}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={i18n.t('pages.report_schedule_page.k37')}>
-                            <IconButton
-                              size='small'
-                              color='error'
-                              onClick={() => handleDelete(schedule.id)}
-                              aria-label={i18n.t('pages.report_schedule_page.k38')}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      <ListPageTemplate<ReportSchedule>
+        title={i18n.t('pages.report_schedule_page.k19')}
+        subtitle={i18n.t('pages.report_schedule_page.k20')}
+        columns={columns}
+        data={schedules}
+        loading={schedulesQuery.isLoading}
+        actions={actions}
+        renderRowActions={renderRowActions}
+        emptyMessage={i18n.t('pages.report_schedule_page.k30')}
+      />
 
       <Dialog
         open={dialogOpen}
@@ -604,6 +606,7 @@ const ReportSchedulePage: React.FC = () => {
           <Button
             onClick={handleSubmit}
             variant='contained'
+            disabled={mutating}
           >
             {editMode
               ? i18n.t('pages.report_schedule_page.k50')
@@ -620,87 +623,75 @@ const ReportSchedulePage: React.FC = () => {
       >
         <DialogTitle>{i18n.t('pages.report_schedule_page.k51')}</DialogTitle>
         <DialogContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k52')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k53')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k54')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k55')}</TableCell>
-                  <TableCell>{i18n.t('pages.report_schedule_page.k56')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {historyQuery.isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align='center'
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box sx={{ minWidth: 640 }}>
+              {historyQuery.isLoading ? (
+                <Typography
+                  variant='body1'
+                  align='center'
+                  sx={{ py: 4 }}
+                >
+                  {i18n.t('pages.report_schedule_page.k6')}
+                </Typography>
+              ) : (historyQuery.data || []).length === 0 ? (
+                <Typography
+                  variant='body1'
+                  align='center'
+                  sx={{ py: 4 }}
+                >
+                  {i18n.t('pages.report_schedule_page.k57')}
+                </Typography>
+              ) : (
+                (historyQuery.data || []).map((record: ScheduleExecutionRecord) => (
+                  <Box
+                    key={record.id}
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: '1.5fr 1fr 1.5fr 2fr 1.5fr',
+                      gap: 2,
+                      py: 1.5,
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography variant='body2'>
+                      {new Date(record.started_at).toLocaleString()}
+                    </Typography>
+                    <Chip
+                      label={record.status}
+                      color={record.status === 'completed' ? 'success' : 'error'}
+                      size='small'
+                    />
+                    <Typography
+                      variant='body2'
+                      noWrap
                     >
-                      <Typography variant='body1'>
-                        {i18n.t('pages.report_schedule_page.k6')}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (historyQuery.data || []).length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align='center'
+                      {record.output_path || '-'}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='error'
                     >
-                      <Typography variant='body1'>
-                        {i18n.t('pages.report_schedule_page.k57')}
+                      {record.error_message || '-'}
+                    </Typography>
+                    {record.completed_at ? (
+                      <Typography variant='body2'>
+                        {new Date(record.completed_at).toLocaleString()}
                       </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  (historyQuery.data || []).map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>{new Date(record.started_at).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={record.status}
-                          color={record.status === 'completed' ? 'success' : 'error'}
-                          size='small'
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant='body2'
-                          noWrap
-                        >
-                          {record.output_path || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant='body2'
-                          color='error'
-                        >
-                          {record.error_message || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {record.completed_at ? (
-                          <Typography variant='body2'>
-                            {new Date(record.completed_at).toLocaleString()}
-                          </Typography>
-                        ) : (
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.report_schedule_page.k3')}
-                          </Typography>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    ) : (
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('pages.report_schedule_page.k3')}
+                      </Typography>
+                    )}
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setHistoryDialogOpen(false)}>
@@ -720,7 +711,7 @@ const ReportSchedulePage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </PageContainer>
+    </>
   );
 };
 

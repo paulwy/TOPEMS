@@ -241,7 +241,7 @@ const LimsTaskDetailPage: React.FC = () => {
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
               <span style={{ color: ct.grey[600] }}>
@@ -271,7 +271,7 @@ const LimsTaskDetailPage: React.FC = () => {
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 sx={{
-                  fontSize: '1.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['1.875rem'],
                   fontWeight: 700,
                   color: 'secondary.main',
                 }}
@@ -310,7 +310,7 @@ const LimsTaskDetailPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           fontWeight: 500,
                           bgcolor: isCompleted ? 'success.dark' : 'grey.400',
                           color: isCompleted
@@ -323,7 +323,7 @@ const LimsTaskDetailPage: React.FC = () => {
                       <Typography
                         sx={{
                           color: isCompleted ? 'success.700' : 'grey.600',
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         }}
                       >
                         {step.name}
@@ -364,7 +364,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 sx={{
                   width: 64,
                   height: 64,
-                  margin: '0 auto 16px auto',
+                  margin: `0 auto ${designTokens.spacing.md}px auto`,
                   opacity: 0.5,
                 }}
               />
@@ -396,7 +396,7 @@ const LimsTaskDetailPage: React.FC = () => {
               borderTop: `4px solid ${ct.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px auto',
+              margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           ></div>
           <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k3')}</p>
@@ -422,7 +422,7 @@ const LimsTaskDetailPage: React.FC = () => {
               width: 64,
               height: 64,
               color: 'error.main',
-              margin: '0 auto 16px auto',
+              margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           />
           <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k15')}</p>
@@ -667,7 +667,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 }}
               >
                 <AlertCircle sx={{ width: 20, height: 20 }} />
-                <span style={{ fontSize: '0.875rem' }}>
+                <span style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {i18n.t('pages.lims_task_detail_page.k0')}
                 </span>
               </Box>

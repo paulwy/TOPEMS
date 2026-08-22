@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * Chat header - title, model selector, mobile sidebar toggle and tabs.
  */
@@ -110,7 +111,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           scrollButtons='auto'
           sx={{
             minHeight: 36,
-            '& .MuiTab-root': { minHeight: 36, fontSize: '0.75rem' },
+            '& .MuiTab-root': { minHeight: 36, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
           }}
         >
           <Tab

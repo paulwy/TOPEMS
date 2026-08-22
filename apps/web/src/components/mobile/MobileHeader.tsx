@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Box, Badge, useTheme } from '@mui/material';
 import { Menu, ArrowLeft, Bell, Search, MoreVertical } from 'lucide-react';
@@ -99,7 +100,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             flex: 1,
             textAlign: 'center',
             fontWeight: 600,
-            fontSize: '1rem',
+            fontSize: designTokens.typography.fontSize.scale['1rem'],
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -140,7 +141,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 color='error'
                 sx={{
                   '& .MuiBadge-badge': {
-                    fontSize: '0.65rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.65rem'],
                     height: 18,
                     minWidth: 18,
                     padding: '0 5px',

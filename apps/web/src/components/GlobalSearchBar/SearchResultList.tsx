@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useRef, useEffect, useMemo } from 'react';
 import {
   Box,
@@ -53,7 +54,7 @@ const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
       strokeWidth='2'
       strokeLinecap='round'
       strokeLinejoin='round'
-      style={{ opacity: 0.3, margin: '0 auto 8px', display: 'block' }}
+      style={{ opacity: 0.3, margin: `0 auto ${designTokens.spacing.sm}px`, display: 'block' }}
     >
       <circle
         cx='11'

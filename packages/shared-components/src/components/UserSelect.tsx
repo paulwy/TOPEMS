@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Autocomplete, TextField, CircularProgress } from '@mui/material';
 import i18n from 'i18next';
@@ -32,7 +33,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         <li {...props} key={user.id}>
           <div>
             <div>{user.realName}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--mui-palette-text-secondary)' }}>{user.email}</div>
+            <div style={{ fontSize: designTokens.typography.fontSize.scale['0.8rem'], color: 'var(--mui-palette-text-secondary)' }}>{user.email}</div>
           </div>
         </li>
       )}

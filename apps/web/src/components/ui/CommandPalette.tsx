@@ -314,7 +314,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                       icon={<Command style={{ width: 12, height: 12 }} />}
                       label='K'
                       size='small'
-                      sx={{ height: 20, fontSize: '0.7rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                     />
                   </Box>
                 </InputAdornment>
@@ -338,7 +338,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
       >
         {filteredCommands.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
               {i18n.t('components.command_palette.k1')}
             </Typography>
           </Box>
@@ -349,7 +349,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                 <Box sx={{ px: 2, pt: 2, pb: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.75rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       fontWeight: 600,
                       color: 'text.secondary',
                       textTransform: 'uppercase',
@@ -399,8 +399,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                         primary={cmd.label}
                         secondary={cmd.description}
                         slotProps={{
-                          primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } },
-                          secondary: { sx: { fontSize: '0.75rem' } },
+                          primary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500 } },
+                          secondary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] } },
                         }}
                       />
                       <ArrowRight
@@ -436,9 +436,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           <Chip
             label='↑↓'
             size='small'
-            sx={{ height: 20, fontSize: '0.7rem' }}
+            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.command_palette.k12')}
           </Typography>
         </Box>
@@ -446,9 +446,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           <Chip
             label='⏎'
             size='small'
-            sx={{ height: 20, fontSize: '0.7rem' }}
+            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.command_palette.k13')}
           </Typography>
         </Box>
@@ -456,9 +456,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           <Chip
             label='ESC'
             size='small'
-            sx={{ height: 20, fontSize: '0.7rem' }}
+            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
             {i18n.t('components.command_palette.k14')}
           </Typography>
         </Box>

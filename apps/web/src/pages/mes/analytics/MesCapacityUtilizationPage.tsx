@@ -144,7 +144,7 @@ export default function MesCapacityUtilizationPage() {
                   px: 1,
                   py: 0.5,
                   borderRadius: 1,
-                  fontSize: '0.75rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                   bgcolor: isBottleneck
                     ? designTokens.colors.error[100]
                     : designTokens.colors.success[100],

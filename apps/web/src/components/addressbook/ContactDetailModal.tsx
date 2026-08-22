@@ -215,7 +215,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact, onClos
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      padding: '0 8px',
+                      padding: `0 ${designTokens.spacing.sm}px`,
                       borderRadius: 9999,
                       fontSize: 12,
                       fontWeight: 500,
@@ -376,7 +376,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact, onClos
             <button
               onClick={onClose}
               style={{
-                padding: `${designTokens.spacing.sm} 16px`,
+                padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
                 backgroundColor: 'grey.100',
                 color: 'grey.700',
                 borderRadius: 8,

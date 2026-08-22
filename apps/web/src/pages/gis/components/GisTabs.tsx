@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import type { TabType } from '../hooks/useGisPage';
@@ -34,7 +35,7 @@ const GisTabs: React.FC<GisTabsProps> = ({ tabs, activeTab, onChange }) => {
             gap: 2,
             px: 2.5,
             py: 1.5,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             fontWeight: 500,
             whiteSpace: 'nowrap',
             color: activeTab === tab.id ? 'cyan.dark' : 'text.secondary',

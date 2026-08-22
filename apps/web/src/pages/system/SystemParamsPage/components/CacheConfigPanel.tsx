@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Database, Save, Trash2 } from 'lucide-react';
 import {
@@ -168,7 +169,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                       {cacheStats.memory_used_mb.toFixed(2)}
                       <span
                         style={{
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                           fontWeight: 400,
                           marginLeft: 4,
                         }}
@@ -203,7 +204,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                       {((cacheStats.hit_rate || 0) * 100).toFixed(1)}
                       <span
                         style={{
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                           fontWeight: 400,
                           marginLeft: 4,
                         }}

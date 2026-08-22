@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * AI 对话页面 - V4.0 标准化改造
  *
@@ -583,7 +584,7 @@ export const AiChatPage: React.FC = () => {
               scrollButtons='auto'
               sx={{
                 minHeight: 36,
-                '& .MuiTab-root': { minHeight: 36, fontSize: '0.75rem' },
+                '& .MuiTab-root': { minHeight: 36, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
               }}
             >
               <Tab
@@ -661,7 +662,7 @@ export const AiChatPage: React.FC = () => {
                     }}
                   >
                     {msg.content.includes('```') ? (
-                      <Box sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                      <Box sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                         {msg.content.split('```').map((part, i) =>
                           i % 2 === 1 ? (
                             <Box
@@ -726,7 +727,7 @@ export const AiChatPage: React.FC = () => {
               <Box sx={{ textAlign: 'center', py: 12 }}>
                 <Sparkles
                   size={48}
-                  style={{ margin: '0 auto 16px', color: 'text.disabled' }}
+                  style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'text.disabled' }}
                 />
                 <Typography
                   variant='h6'

@@ -5,12 +5,27 @@
  * 由于暂无独立的运输计划 API，使用 mock 数据展示。
  * 包含 StatusBadge + FSMActionButtons 组件。
  */
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import {
+  Box,
+  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { StatusBadge } from '@/components/tms/StatusBadge';
 import { FSMActionButtons } from '@/components/tms/FSMActionButtons';
+import { DetailPageTemplate } from '@/components/templates';
+import type { SectionConfig, TabConfig } from '@/components/templates/DetailPageTemplate';
 import { TMS_PATHS } from '@/modules/tms/config';
+import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 interface TransportPlanItem {
   shipment_no: string;
   origin: string;
@@ -21,6 +36,7 @@ interface TransportPlanItem {
   status: string;
   freight: number;
 }
+
 function getMockPlan() {
   return {
     plan_no: 'TP-2025-0812',
@@ -84,144 +100,171 @@ function getMockPlan() {
     ] as TransportPlanItem[],
   };
 }
+
 export default function TransportPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'info' | 'items'>('info');
+  const { t } = useTranslation(['tms', 'common']);
   const plan = getMockPlan();
+
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
     void requiresApproval;
   };
-  return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <button
-            onClick={() => navigate(TMS_PATHS.dashboard)}
-            className='mb-2 text-sm text-blue-600 hover:underline'
-          >
-            {i18n.t('pages.transport_plan_detail_page.k0')}
-          </button>
-          <h1 className='text-2xl font-bold'>{plan.name}</h1>
-          <p className='mt-1 text-sm text-gray-500'>
-            {plan.plan_no} {id && `| ID: ${id}`}
-          </p>
-        </div>
-        <StatusBadge
-          fsm='route'
-          status={plan.status}
-        />
-      </div>
-      <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {i18n.t('tms.transport_plan_detail_page.k20')}
-        </p>
-        <FSMActionButtons
-          fsm='route'
-          currentStatus={plan.status}
-          onAction={handleAction}
-        />
-      </div>
-      <div className='flex gap-2 border-b'>
-        {[
-          { id: 'info' as const, label: i18n.t('tms.transport_plan_detail_page.k21') },
-          { id: 'items' as const, label: i18n.t('tms.transport_plan_detail_page.k22') },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === t.id
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      {activeTab === 'info' && (
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k23')}
+
+  const basicInfoSection: SectionConfig = {
+    id: 'basic-info',
+    title: t('common.basic_info'),
+    content: (
+      <Grid
+        container
+        spacing={2}
+      >
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k23')}
             value={plan.plan_no}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k24')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k24')}
             value={plan.name}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k25')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k25')}
             value={plan.status}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k26')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k26')}
             value={String(plan.totalShipments)}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k27')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k27')}
             value={`¥${plan.totalFreight.toLocaleString()}`}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k28')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k28')}
             value={plan.startDate}
           />
-          <Field
-            label={i18n.t('tms.transport_plan_detail_page.k29')}
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <InfoField
+            label={t('tms.transport_plan_detail_page.k29')}
             value={plan.endDate}
           />
-        </div>
-      )}
-      {activeTab === 'items' && (
-        <div className='rounded-lg border p-4'>
-          <h3 className='mb-3 font-semibold'>{i18n.t('tms.transport_plan_detail_page.k30')}</h3>
-          <table className='w-full text-sm'>
-            <thead>
-              <tr className='border-b text-left text-gray-600'>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k31')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k32')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k33')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k34')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k35')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k36')}</th>
-                <th className='py-2 pr-4'>{i18n.t('tms.transport_plan_detail_page.k37')}</th>
-                <th className='py-2'>{i18n.t('tms.transport_plan_detail_page.k38')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plan.items.map((item) => (
-                <tr
-                  key={item.shipment_no}
-                  className='border-b'
-                >
-                  <td className='py-2 pr-4'>{item.shipment_no}</td>
-                  <td className='py-2 pr-4'>{item.origin}</td>
-                  <td className='py-2 pr-4'>{item.destination}</td>
-                  <td className='py-2 pr-4'>{item.vehicle_no}</td>
-                  <td className='py-2 pr-4'>{item.driver_name}</td>
-                  <td className='py-2 pr-4'>{item.route_name}</td>
-                  <td className='py-2 pr-4'>
-                    <StatusBadge
-                      fsm='shipment'
-                      status={item.status}
-                    />
-                  </td>
-                  <td className='py-2'>¥{item.freight.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+        </Grid>
+      </Grid>
+    ),
+  };
+
+  const itemsTabContent = (
+    <TableContainer
+      component={Paper}
+      variant='outlined'
+      sx={{ borderRadius: 2 }}
+    >
+      <Table size='small'>
+        <TableHead>
+          <TableRow>
+            <TableCell>{t('tms.transport_plan_detail_page.k31')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k32')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k33')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k34')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k35')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k36')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k37')}</TableCell>
+            <TableCell>{t('tms.transport_plan_detail_page.k38')}</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {plan.items.map((item) => (
+            <TableRow key={item.shipment_no}>
+              <TableCell>{item.shipment_no}</TableCell>
+              <TableCell>{item.origin}</TableCell>
+              <TableCell>{item.destination}</TableCell>
+              <TableCell>{item.vehicle_no}</TableCell>
+              <TableCell>{item.driver_name}</TableCell>
+              <TableCell>{item.route_name}</TableCell>
+              <TableCell>
+                <StatusBadge
+                  fsm='shipment'
+                  status={item.status}
+                />
+              </TableCell>
+              <TableCell>¥{item.freight.toLocaleString()}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
+  const tabs: TabConfig[] = [
+    {
+      id: 'info',
+      label: t('tms.transport_plan_detail_page.k21'),
+      content: basicInfoSection.content,
+    },
+    {
+      id: 'items',
+      label: t('tms.transport_plan_detail_page.k22'),
+      content: itemsTabContent,
+    },
+  ];
+
+  const headerContent = (
+    <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}>
+      <StatusBadge
+        fsm='route'
+        status={plan.status}
+      />
+      <FSMActionButtons
+        fsm='route'
+        currentStatus={plan.status}
+        onAction={handleAction}
+      />
+    </Box>
+  );
+
+  return (
+    <DetailPageTemplate
+      title={plan.name}
+      subtitle={`${plan.plan_no}${id ? ` | ID: ${id}` : ''}`}
+      backHref={TMS_PATHS.dashboard}
+      headerContent={headerContent}
+      tabs={tabs}
+      defaultTab='info'
+    />
   );
 }
-function Field({ label, value }: { label: string; value: string }) {
+
+function InfoField({ label, value }: { label: string; value: string }) {
   return (
-    <div className='rounded-lg border p-3'>
-      <p className='text-xs text-gray-500'>{label}</p>
-      <p className='mt-1 font-medium'>{value}</p>
-    </div>
+    <Paper
+      sx={{ p: 2, borderRadius: 2 }}
+      elevation={0}
+      variant='outlined'
+    >
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant='body1'
+        sx={{ mt: 0.5, fontWeight: 500 }}
+      >
+        {value}
+      </Typography>
+    </Paper>
   );
 }

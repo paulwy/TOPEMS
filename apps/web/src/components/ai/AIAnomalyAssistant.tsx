@@ -144,7 +144,7 @@ const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialMetric }
                   variant='caption'
                   sx={{
                     mt: 0.5,
-                    fontSize: '0.65rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.65rem'],
                     transform: 'rotate(-45deg)',
                     transformOrigin: 'top left',
                   }}

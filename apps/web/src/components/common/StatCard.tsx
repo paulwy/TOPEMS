@@ -542,7 +542,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
               sx={{
                 color: 'text.secondary',
                 fontWeight: 500,
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 mb: 0.5,
@@ -556,7 +556,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
                 sx={{
                   fontWeight: 800,
                   color: 'text.primary',
-                  fontSize: '2rem',
+                  fontSize: designTokens.typography.fontSize.scale['2rem'],
                   lineHeight: 1.2,
                 }}
               >
@@ -568,7 +568,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
                   sx={{
                     color: 'text.secondary',
                     fontWeight: 600,
-                    fontSize: '1rem',
+                    fontSize: designTokens.typography.fontSize.scale['1rem'],
                   }}
                 >
                   {unit}
@@ -577,7 +577,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
               {suffix && (
                 <Typography
                   variant='body2'
-                  sx={{ color: 'text.disabled', fontSize: '0.875rem' }}
+                  sx={{ color: 'text.disabled', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                 >
                   {suffix}
                 </Typography>
@@ -639,7 +639,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
                 sx={{
                   fontWeight: 700,
                   color: getTrendColor(),
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
                 {change > 0 ? '+' : ''}
@@ -647,7 +647,7 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'text.disabled', fontSize: '0.7rem' }}
+                sx={{ color: 'text.disabled', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               >
                 {i18n.t('components.stat_card.vs_0')}
               </Typography>

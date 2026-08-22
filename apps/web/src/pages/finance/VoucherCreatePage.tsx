@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Card,
@@ -468,7 +469,7 @@ const VoucherCreatePage: React.FC = () => {
                               sx={{
                                 color: 'error.main',
                                 mr: 0.5,
-                                fontSize: '0.875rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                               }}
                             >
                               ¥
@@ -501,7 +502,7 @@ const VoucherCreatePage: React.FC = () => {
                               sx={{
                                 color: 'success.main',
                                 mr: 0.5,
-                                fontSize: '0.875rem',
+                                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                               }}
                             >
                               ¥

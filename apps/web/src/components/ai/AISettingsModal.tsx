@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -246,7 +247,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   onChange={(e) => setConfig((prev) => ({ ...prev, model: e.target.value }))}
                   style={{
                     width: '100%',
-                    padding: '8px 16px',
+                    padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                     border: '1px solid grey.200',
                     borderRadius: 'md',
                     fontSize: '14px',
@@ -294,7 +295,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   }
                   style={{
                     width: '100%',
-                    padding: '8px 16px',
+                    padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                     border: '1px solid grey.200',
                     borderRadius: 'md',
                     fontSize: '14px',
@@ -443,7 +444,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   }
                   style={{
                     width: '100%',
-                    padding: '8px 16px',
+                    padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                     border: errors.maxTokens ? '1px solid error.dark' : '1px solid grey.200',
                     borderRadius: 'md',
                     fontSize: '14px',
@@ -513,7 +514,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 rows={4}
                 style={{
                   width: '100%',
-                  padding: '8px 16px',
+                  padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                   border: errors.systemPrompt ? '1px solid error.dark' : '1px solid grey.200',
                   borderRadius: 'md',
                   fontSize: '14px',
@@ -742,7 +743,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       }
                       style={{
                         width: '100%',
-                        padding: '8px 16px',
+                        padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                         border: '1px solid grey.200',
                         borderRadius: 'md',
                         fontSize: '14px',
@@ -769,7 +770,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
         <div
           style={{
             backgroundColor: theme.palette.grey[50],
-            padding: '16px 24px',
+            padding: `${designTokens.spacing.md}px ${designTokens.spacing.lg}px`,
             borderTop: '1px solid grey.200',
           }}
         >
@@ -821,7 +822,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '8px 16px',
+                padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                 color: theme.palette.text.secondary,
                 cursor: 'pointer',
                 border: 'none',
@@ -836,7 +837,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               <button
                 onClick={onClose}
                 style={{
-                  padding: '8px 24px',
+                  padding: `${designTokens.spacing.sm}px ${designTokens.spacing.lg}px`,
                   border: '1px solid grey.300',
                   color: theme.palette.grey[700],
                   borderRadius: 'md',
@@ -852,7 +853,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '8px 24px',
+                  padding: `${designTokens.spacing.sm}px ${designTokens.spacing.lg}px`,
                   backgroundColor: theme.palette.secondary.dark,
                   color: 'common.white',
                   borderRadius: 'md',

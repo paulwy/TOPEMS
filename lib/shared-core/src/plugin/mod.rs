@@ -466,6 +466,7 @@ macro_rules! register_plugin_info {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     // ========== default_auth_required ==========
 
@@ -739,6 +740,7 @@ version: "1.0"
     // ========== is_production_env ==========
 
     #[test]
+    #[serial]
     fn is_production_env_default_false() {
         // 清除所有可能影响的环境变量
         std::env::remove_var("PROFILE");
@@ -749,6 +751,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_profile_prod() {
         std::env::set_var("PROFILE", "prod");
         assert!(is_production_env());
@@ -756,6 +759,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_profile_production() {
         std::env::set_var("PROFILE", "production");
         assert!(is_production_env());
@@ -763,6 +767,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_rust_env_production() {
         std::env::set_var("RUST_ENV", "production");
         assert!(is_production_env());
@@ -770,6 +775,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_env_production() {
         std::env::set_var("ENV", "production");
         assert!(is_production_env());
@@ -777,6 +783,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_prod_true() {
         std::env::set_var("PROD", "true");
         assert!(is_production_env());
@@ -784,6 +791,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_prod_one() {
         std::env::set_var("PROD", "1");
         assert!(is_production_env());
@@ -791,6 +799,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn is_production_env_profile_other_is_false() {
         std::env::set_var("PROFILE", "dev");
         assert!(!is_production_env());
@@ -800,12 +809,14 @@ version: "1.0"
     // ========== check_plugin_auth_bypass ==========
 
     #[test]
+    #[serial]
     fn check_plugin_auth_bypass_default_false() {
         std::env::remove_var("TOPEMS_PLUGIN_AUTH_BYPASS");
         assert!(!check_plugin_auth_bypass());
     }
 
     #[test]
+    #[serial]
     fn check_plugin_auth_bypass_explicit_false() {
         std::env::set_var("TOPEMS_PLUGIN_AUTH_BYPASS", "false");
         assert!(!check_plugin_auth_bypass());
@@ -813,6 +824,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn check_plugin_auth_bypass_zero_is_false() {
         std::env::set_var("TOPEMS_PLUGIN_AUTH_BYPASS", "0");
         assert!(!check_plugin_auth_bypass());
@@ -872,6 +884,7 @@ version: "1.0"
     // ========== get_runtime_url / get_core_url ==========
 
     #[test]
+    #[serial]
     fn get_runtime_url_default() {
         std::env::remove_var("RUNTIME_URL");
         let url = get_runtime_url("8080");
@@ -879,6 +892,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn get_runtime_url_env_override() {
         std::env::set_var("RUNTIME_URL", "http://example.com:9000");
         let url = get_runtime_url("8080");
@@ -887,6 +901,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn get_core_url_default() {
         std::env::remove_var("CORE_URL");
         let url = get_core_url();
@@ -894,6 +909,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn get_core_url_env_override() {
         std::env::set_var("CORE_URL", "http://core.example.com:8000");
         let url = get_core_url();
@@ -904,6 +920,7 @@ version: "1.0"
     // ========== init_plugin_registration_secret ==========
 
     #[test]
+    #[serial]
     fn init_plugin_registration_secret_returns_set_secret() {
         std::env::set_var(
             "PLUGIN_REGISTRATION_SECRET",
@@ -915,6 +932,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn init_plugin_registration_secret_generates_when_empty() {
         std::env::remove_var("PLUGIN_REGISTRATION_SECRET");
         std::env::remove_var("PROFILE");
@@ -928,6 +946,7 @@ version: "1.0"
     }
 
     #[test]
+    #[serial]
     fn init_plugin_registration_secret_generates_when_too_short() {
         std::env::set_var("PLUGIN_REGISTRATION_SECRET", "short");
         std::env::remove_var("PROFILE");
@@ -942,6 +961,7 @@ version: "1.0"
     // ========== auto_register_to_core (error path - unreachable URL) ==========
 
     #[tokio::test]
+    #[serial]
     async fn auto_register_to_core_unreachable_url_does_not_panic() {
         // 指向不可达的 URL，函数应捕获错误而不 panic
         std::env::remove_var("PLUGIN_REGISTRATION_JWT");
@@ -966,6 +986,7 @@ version: "1.0"
     }
 
     #[tokio::test]
+    #[serial]
     async fn auto_register_to_core_with_env_jwt_does_not_panic() {
         std::env::set_var("PLUGIN_REGISTRATION_JWT", "fake.jwt.token");
         std::env::set_var("CORE_URL", "http://127.0.0.1:1");

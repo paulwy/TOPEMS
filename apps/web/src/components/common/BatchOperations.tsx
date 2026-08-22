@@ -105,7 +105,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 bgcolor: 'primary.light',
                 color: 'primary.dark',
                 borderRadius: 'full',
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 fontWeight: 500,
               }}
             >

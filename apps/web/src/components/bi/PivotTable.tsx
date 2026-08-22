@@ -269,7 +269,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               style={{
-                padding: '6px 12px 6px 32px',
+                padding: `6px 12px 6px ${designTokens.spacing.xl}px`,
                 borderRadius: 6,
                 border: '1px solid border.default',
                 fontSize: 14,
@@ -465,7 +465,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               <th
                 style={{
                   backgroundColor: theme.palette.grey[50],
-                  padding: '12px 16px',
+                  padding: `12px ${designTokens.spacing.md}px`,
                   textAlign: 'left',
                   fontWeight: 600,
                   color: 'grey.700',
@@ -480,7 +480,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   key={String(col)}
                   style={{
                     backgroundColor: theme.palette.grey[50],
-                    padding: '12px 16px',
+                    padding: `12px ${designTokens.spacing.md}px`,
                     textAlign: 'right',
                     fontWeight: 600,
                     color: 'grey.700',
@@ -497,7 +497,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               <th
                 style={{
                   backgroundColor: theme.palette.grey[100],
-                  padding: '12px 16px',
+                  padding: `12px ${designTokens.spacing.md}px`,
                   textAlign: 'right',
                   fontWeight: 600,
                   color: 'text.primary',
@@ -515,7 +515,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   <td
                     style={{
                       cursor: 'pointer',
-                      padding: '12px 16px',
+                      padding: `12px ${designTokens.spacing.md}px`,
                       fontWeight: 500,
                       color: 'text.primary',
                       borderRight: '1px solid border.default',
@@ -553,7 +553,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     <td
                       key={String(col)}
                       style={{
-                        padding: '12px 16px',
+                        padding: `12px ${designTokens.spacing.md}px`,
                         textAlign: 'right',
                         color: 'grey.600',
                         borderRight:
@@ -571,7 +571,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   ))}
                   <td
                     style={{
-                      padding: '12px 16px',
+                      padding: `12px ${designTokens.spacing.md}px`,
                       textAlign: 'right',
                       fontWeight: 600,
                       color: 'text.primary',
@@ -590,7 +590,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             <tr style={{ backgroundColor: 'var(--mui-palette-grey-100)' }}>
               <td
                 style={{
-                  padding: '12px 16px',
+                  padding: `12px ${designTokens.spacing.md}px`,
                   fontWeight: 600,
                   color: 'text.primary',
                   borderRight: '1px solid border.default',
@@ -602,7 +602,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 <td
                   key={String(col)}
                   style={{
-                    padding: '12px 16px',
+                    padding: `12px ${designTokens.spacing.md}px`,
                     textAlign: 'right',
                     fontWeight: 600,
                     color: 'text.primary',
@@ -621,7 +621,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               ))}
               <td
                 style={{
-                  padding: '12px 16px',
+                  padding: `12px ${designTokens.spacing.md}px`,
                   textAlign: 'right',
                   fontWeight: 700,
                   color: theme.palette.primary.light,

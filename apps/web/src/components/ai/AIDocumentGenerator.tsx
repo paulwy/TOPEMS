@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   TextField,
   Select,
@@ -146,7 +147,7 @@ export function AIDocumentGenerator({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box
               sx={{
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 color: 'text.secondary',
                 bgcolor: 'grey.50',
                 p: 2,
@@ -164,7 +165,7 @@ export function AIDocumentGenerator({
                 >
                   <InputLabel
                     shrink
-                    sx={{ fontSize: '0.875rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                   >
                     {field.label}
                     {field.required && (
@@ -275,7 +276,7 @@ export function AIDocumentGenerator({
                       sx={{
                         color: 'grey.700',
                         whiteSpace: 'pre-wrap',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         m: 0,
                         fontFamily: 'inherit',
                       }}

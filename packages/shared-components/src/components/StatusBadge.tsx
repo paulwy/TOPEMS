@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * 统一的StatusBadge组件
  * 整合了common、dashboard、hrm三个版本的StatusBadge组件
@@ -599,17 +600,17 @@ const SIZE_CONFIG: Record<StatusSize, 'small' | 'medium'> = {
 const SIZE_STYLES: Record<StatusSize, any> = {
   sm: {
     height: 24,
-    fontSize: '0.75rem',
+    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
     fontWeight: 500,
   },
   md: {
     height: 32,
-    fontSize: '0.875rem',
+    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
     fontWeight: 500,
   },
   lg: {
     height: 40,
-    fontSize: '1rem',
+    fontSize: designTokens.typography.fontSize.scale['1rem'],
     fontWeight: 600,
   },
 };

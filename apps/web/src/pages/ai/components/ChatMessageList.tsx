@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * Chat message list - renders messages, typing indicator, and empty state.
  */
@@ -79,7 +80,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
               }}
             >
               {msg.content.includes('```') ? (
-                <Box sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                <Box sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {msg.content.split('```').map((part, i) =>
                     i % 2 === 1 ? (
                       <Box
@@ -144,7 +145,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         <Box sx={{ textAlign: 'center', py: 12 }}>
           <Sparkles
             size={48}
-            style={{ margin: '0 auto 16px', color: 'text.disabled' }}
+            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'text.disabled' }}
           />
           <Typography
             variant='h6'

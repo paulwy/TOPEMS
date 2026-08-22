@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, CircularProgress, Paper, Typography, Stack } from '@mui/material';
 import { ArrowUp, ArrowDown } from 'lucide-react';
@@ -99,7 +100,7 @@ const StatCard: React.FC<{
             label={`${Math.abs(delta as number).toFixed(1)}%`}
             color={(delta as number) >= 0 ? 'success' : 'error'}
             variant='outlined'
-            sx={{ height: 22, fontSize: '0.7rem' }}
+            sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
           />
           <Typography
             variant='caption'

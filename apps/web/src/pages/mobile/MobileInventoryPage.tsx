@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -433,7 +434,7 @@ const MobileInventoryPage: React.FC = () => {
           sx={{
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -508,7 +509,7 @@ const MobileInventoryPage: React.FC = () => {
                                     typeof Chip
                                   >['color']
                                 }
-                                sx={{ height: 18, fontSize: '0.65rem' }}
+                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                               />
                               <Typography
                                 variant='caption'
@@ -597,7 +598,7 @@ const MobileInventoryPage: React.FC = () => {
                                 typeof Chip
                               >['color']
                             }
-                            sx={{ height: 20, fontSize: '0.7rem' }}
+                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                           />
                         </Box>
                         <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
@@ -728,7 +729,7 @@ const MobileInventoryPage: React.FC = () => {
                                 label={getTypeLabel(order.type)}
                                 size='small'
                                 variant='outlined'
-                                sx={{ height: 18, fontSize: '0.65rem' }}
+                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                               />
                               <Chip
                                 label={getStatusLabel(order.status)}
@@ -738,7 +739,7 @@ const MobileInventoryPage: React.FC = () => {
                                     typeof Chip
                                   >['color']
                                 }
-                                sx={{ height: 18, fontSize: '0.65rem' }}
+                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                               />
                             </Box>
                           </Box>
@@ -804,7 +805,7 @@ const MobileInventoryPage: React.FC = () => {
                                 label={getTypeLabel(order.type)}
                                 size='small'
                                 variant='outlined'
-                                sx={{ height: 18, fontSize: '0.65rem' }}
+                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                               />
                               <Chip
                                 label={getStatusLabel(order.status)}
@@ -814,7 +815,7 @@ const MobileInventoryPage: React.FC = () => {
                                     typeof Chip
                                   >['color']
                                 }
-                                sx={{ height: 18, fontSize: '0.65rem' }}
+                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                               />
                             </Box>
                           </Box>

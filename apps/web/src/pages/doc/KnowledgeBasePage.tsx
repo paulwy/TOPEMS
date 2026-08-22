@@ -360,7 +360,7 @@ const DocumentKnowledgeBasePage: React.FC = () => {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <BookOpen
               size={48}
-              style={{ color: theme.palette.text.disabled, margin: '0 auto 16px' }}
+              style={{ color: theme.palette.text.disabled, margin: `0 auto ${designTokens.spacing.md}px` }}
             />
             <Typography color='text.secondary'>
               {i18n.t('pages.knowledge_base_page.k37')}

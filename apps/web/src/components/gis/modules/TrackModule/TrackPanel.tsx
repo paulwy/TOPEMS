@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 // modules/TrackModule/TrackPanel.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
@@ -264,7 +265,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   py: 8,
                   textAlign: 'center',
                   color: 'text.secondary',
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
                 {i18n.t('components.track_panel.k2')}
@@ -303,7 +304,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                     borderRadius: 2,
                   }}
                 >
-                  <table style={{ width: '100%', fontSize: '0.875rem' }}>
+                  <table style={{ width: '100%', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                     <thead
                       style={{
                         backgroundColor: theme.palette.grey[50],
@@ -314,7 +315,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                       <tr>
                         <th
                           style={{
-                            padding: '8px 12px',
+                            padding: `${designTokens.spacing.sm}px 12px`,
                             textAlign: 'left',
                             color: theme.palette.text.secondary,
                             fontWeight: 500,
@@ -324,7 +325,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         </th>
                         <th
                           style={{
-                            padding: '8px 12px',
+                            padding: `${designTokens.spacing.sm}px 12px`,
                             textAlign: 'left',
                             color: theme.palette.text.secondary,
                             fontWeight: 500,
@@ -334,7 +335,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         </th>
                         <th
                           style={{
-                            padding: '8px 12px',
+                            padding: `${designTokens.spacing.sm}px 12px`,
                             textAlign: 'left',
                             color: theme.palette.text.secondary,
                             fontWeight: 500,
@@ -344,7 +345,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         </th>
                         <th
                           style={{
-                            padding: '8px 12px',
+                            padding: `${designTokens.spacing.sm}px 12px`,
                             textAlign: 'left',
                             color: theme.palette.text.secondary,
                             fontWeight: 500,
@@ -360,12 +361,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           key={index}
                           style={{ borderBottom: '1px solid var(--mui-palette-grey-100)' }}
                         >
-                          <td style={{ padding: '8px 12px', color: theme.palette.text.secondary }}>
+                          <td style={{ padding: `${designTokens.spacing.sm}px 12px`, color: theme.palette.text.secondary }}>
                             {index + 1}
                           </td>
                           <td
                             style={{
-                              padding: '8px 12px',
+                              padding: `${designTokens.spacing.sm}px 12px`,
                               color: 'var(--mui-palette-text-secondary)',
                             }}
                           >
@@ -373,9 +374,9 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           </td>
                           <td
                             style={{
-                              padding: '8px 12px',
+                              padding: `${designTokens.spacing.sm}px 12px`,
                               fontFamily: 'monospace',
-                              fontSize: '0.75rem',
+                              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                               color: theme.palette.text.secondary,
                             }}
                           >
@@ -383,7 +384,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           </td>
                           <td
                             style={{
-                              padding: '8px 12px',
+                              padding: `${designTokens.spacing.sm}px 12px`,
                               color: 'var(--mui-palette-text-secondary)',
                             }}
                           >
@@ -399,7 +400,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         px: 3,
                         py: 2,
                         textAlign: 'center',
-                        fontSize: '0.75rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         color: 'text.secondary',
                         bgcolor: 'grey.50',
                       }}
@@ -425,7 +426,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   size={48}
                   sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
                 />
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
                   {i18n.t('components.track_panel.k7')}
                 </Typography>
               </Box>

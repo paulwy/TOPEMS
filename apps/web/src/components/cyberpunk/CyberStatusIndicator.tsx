@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Tooltip, useTheme, type SxProps, type Theme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -109,7 +110,7 @@ export const CyberStatusIndicator: React.FC<CyberStatusIndicatorProps> = ({
         <Box
           component='span'
           sx={{
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             fontWeight: 500,
             color: config.color,
             textShadow: `0 0 6px ${config.glow(theme)}`,

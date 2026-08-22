@@ -282,7 +282,7 @@ const EquipmentDetailPage: React.FC = () => {
               {i18n.t('mes.equipment_detail_page.field_equipment_id')}
             </Typography>
             <Typography
-              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
+              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {equipment.id.substring(0, 8)}...
             </Typography>

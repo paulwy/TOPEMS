@@ -23,11 +23,12 @@ impl ServiceRegistry {
         }
     }
 
-    /// 当前服务清单（28 个独立部署服务（含 unified-core））
-    /// 虚拟服务（iam/doc/flow/file/monitor）由 unified-core 内部模块提供，
+    /// 当前服务清单（30 个独立部署服务（含 unified-core））
+    /// 虚拟服务（iam/doc/flow/file）由 unified-core 内部模块提供，
     /// 共用端口 8000，通过 URL 路径区分，不再作为独立条目列出。
     ///
     /// V66.1 新增：6 个扩展服务（search/communication/billing/ticket/feedback/lowcode）
+    /// V68.1 新增：2 个拆分服务（monitor/plugin-registry，从 unified-core 外迁为独立进程）
     pub fn default_services() -> Vec<ServiceConfig> {
         vec![
             // === 核心平台 (8000) ===
@@ -400,8 +401,9 @@ pub fn get_default_port(service_name: &str) -> u16 {
         // 虚拟服务（统一归 core）
         "iam" | "workflow" | "flow" | "file" | "doc" | "tenant" | "plugin" | "automation"
         | "migration" | "master" => 8000,
-        // V68.1 独立服务
+        // V68.1 独立服务（从 unified-core 拆分）
         "monitor" | "topems-monitor" => 8095,
+        "plugin-registry" | "topems-plugin-registry" => 8096,
         // 兼容旧名
         "notification" | "mail" | "im" => 8084, // 外迁到 communication
         _ => 8080,
@@ -448,6 +450,9 @@ pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
         8072 => Some("topems-integration"),
         // 主数据
         8090 => Some("topems-master-data"),
+        // V68.1 独立服务（从 unified-core 拆分）
+        8095 => Some("topems-monitor"),
+        8096 => Some("topems-plugin-registry"),
         _ => None,
     }
 }
@@ -457,9 +462,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn registry_new_returns_28_default_services() {
+    fn registry_new_returns_30_default_services() {
         let r = ServiceRegistry::new();
-        assert_eq!(r.services.len(), 28);
+        assert_eq!(r.services.len(), 30);
     }
 
     #[test]
@@ -546,7 +551,7 @@ mod tests {
     fn to_map_returns_correct_hashmap() {
         let r = ServiceRegistry::new();
         let m = r.to_map();
-        assert_eq!(m.len(), 28);
+        assert_eq!(m.len(), 30);
         assert!(m.contains_key("unified-core"));
         assert_eq!(m.get("topems-erp").unwrap().port, 8010);
     }
@@ -555,7 +560,7 @@ mod tests {
     fn get_all_ports_count_and_values() {
         let r = ServiceRegistry::new();
         let ports = r.get_all_ports();
-        assert_eq!(ports.len(), 28);
+        assert_eq!(ports.len(), 30);
         assert!(ports.contains(&8000));
         assert!(ports.contains(&8090));
         for p in ports {
@@ -647,9 +652,11 @@ mod tests {
     }
 
     #[test]
-    fn get_default_port_monitor_is_independent_8095() {
+    fn get_default_port_v681_independent_services() {
         assert_eq!(get_default_port("monitor"), 8095);
         assert_eq!(get_default_port("topems-monitor"), 8095);
+        assert_eq!(get_default_port("plugin-registry"), 8096);
+        assert_eq!(get_default_port("topems-plugin-registry"), 8096);
     }
 
     #[test]
@@ -695,6 +702,11 @@ mod tests {
         assert_eq!(get_service_name_by_port(8071), Some("topems-gis"));
         assert_eq!(get_service_name_by_port(8072), Some("topems-integration"));
         assert_eq!(get_service_name_by_port(8090), Some("topems-master-data"));
+        assert_eq!(get_service_name_by_port(8095), Some("topems-monitor"));
+        assert_eq!(
+            get_service_name_by_port(8096),
+            Some("topems-plugin-registry")
+        );
     }
 
     #[test]
@@ -727,7 +739,7 @@ mod tests {
         let r = ServiceRegistry::new();
         let json = serde_json::to_string(&r).expect("serialize");
         let back: ServiceRegistry = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(back.services.len(), 28);
+        assert_eq!(back.services.len(), 30);
     }
 
     #[test]
@@ -738,11 +750,14 @@ mod tests {
             let found = r.get_service(&s.name).expect("self lookup");
             assert_eq!(found.port, s.port);
             assert_eq!(found.api_prefix, s.api_prefix);
-            // 反向：port -> name 也应该一致（get_service_name_by_port）
-            let name_by_port = get_service_name_by_port(s.port);
-            if let Some(np) = name_by_port {
-                assert_eq!(np, s.name);
-            }
+            // 反向：port -> name 也必须存在且一致（所有注册服务都应有反向映射）
+            let name_by_port = get_service_name_by_port(s.port).unwrap_or_else(|| {
+                panic!(
+                    "port {} ({}) missing from get_service_name_by_port",
+                    s.port, s.name
+                )
+            });
+            assert_eq!(name_by_port, s.name);
         }
     }
 }

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * SubTableBuilder — 表单内嵌子表组件
  *
@@ -509,7 +510,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
             <Chip
               size='small'
               label={`${value.length}${i18n.t('components.sub_table_builder.k13')}`}
-              sx={{ ml: 1, height: 20, fontSize: '0.75rem' }}
+              sx={{ ml: 1, height: 20, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
             />
           </Typography>
           {!readOnly && allowAdd && (
@@ -537,7 +538,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
               py: 1,
               bgcolor: 'error.lighter',
               color: 'error.dark',
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               borderBottom: 1,
               borderColor: 'error.main',
             }}
@@ -615,7 +616,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                       width: col.width,
                       minWidth: col.minWidth,
                       color: 'text.primary',
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     }}
                   >
                     {col.render ? (

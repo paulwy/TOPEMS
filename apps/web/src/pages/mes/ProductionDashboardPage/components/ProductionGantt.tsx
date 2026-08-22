@@ -168,7 +168,7 @@ const ProductionGantt: React.FC<{
               >
                 <Typography
                   variant='caption'
-                  sx={{ color: 'text.secondary', fontSize: '0.7rem' }}
+                  sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                 >
                   {h.label}
                 </Typography>
@@ -303,7 +303,7 @@ const ProductionGantt: React.FC<{
                         <Typography
                           variant='caption'
                           sx={{
-                            fontSize: '0.7rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
@@ -89,7 +90,7 @@ const MobileSettingsPage: React.FC = () => {
               label='2.3 GB'
               size='small'
               variant='outlined'
-              sx={{ height: 20, fontSize: '0.7rem' }}
+              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
             />
           ),
         },
@@ -265,7 +266,7 @@ const MobileSettingsPage: React.FC = () => {
               sx={{
                 width: 64,
                 height: 64,
-                fontSize: '1.5rem',
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                 bgcolor: 'primary.main',
               }}
             >
@@ -290,7 +291,7 @@ const MobileSettingsPage: React.FC = () => {
                 size='small'
                 color='primary'
                 variant='outlined'
-                sx={{ height: 22, fontSize: '0.75rem' }}
+                sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
               />
             </Box>
             <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />

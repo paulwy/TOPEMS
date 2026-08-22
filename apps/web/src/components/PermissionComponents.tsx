@@ -251,7 +251,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         <button
           onClick={() => window.history.back()}
           style={{
-            padding: '10px 24px',
+            padding: `10px ${designTokens.spacing.lg}px`,
             backgroundColor: 'primary.main',
             color: 'common.white',
             borderRadius: 'md',

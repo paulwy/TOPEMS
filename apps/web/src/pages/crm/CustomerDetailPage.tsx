@@ -609,7 +609,7 @@ const CustomerDetailPage: React.FC = () => {
                 fontWeight: 'medium',
                 mt: 0.5,
                 fontFamily: 'monospace',
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
               {customer.id.substring(0, 8)}...

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
@@ -104,7 +105,7 @@ const JsonFormatter: React.FC = () => {
       {error && (
         <Alert
           severity='error'
-          sx={{ mb: 1.5, fontSize: '0.75rem' }}
+          sx={{ mb: 1.5, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
         >
           {error}
         </Alert>
@@ -747,7 +748,7 @@ export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose
             minHeight: 40,
             '& .MuiTab-root': {
               minHeight: 40,
-              fontSize: '0.75rem',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             },
           }}
         >

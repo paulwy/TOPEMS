@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Bell, CheckCircle, XCircle, Check, Play, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Chip, IconButton, Tooltip } from '@mui/material';
 import type { Notification, ListParams } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import { Box, Typography, Tabs, Tab } from '@mui/material';
-import { LoadingSpinner } from '@topems/shared-components';
-import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
+import type { FilterConfig } from '@topems/shared-components';
 import i18n from '@/i18n';
 
 const FlowNotificationCenter: React.FC = () => {
@@ -19,6 +20,7 @@ const FlowNotificationCenter: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
   const notificationsQuery = useQuery<Notification[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE, filter],
     queryFn: async (): Promise<Notification[]> => {
@@ -35,12 +37,13 @@ const FlowNotificationCenter: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
+
   const notifications = notificationsQuery.data ?? [];
-  const loading = notificationsQuery.isLoading;
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.is_read).length,
     [notifications]
   );
+
   useEffect(() => {
     if (notificationsQuery.isError) {
       apiLogger.error(
@@ -54,6 +57,7 @@ const FlowNotificationCenter: React.FC = () => {
       });
     }
   }, [notificationsQuery.isError, notificationsQuery.error, addNotification]);
+
   const markAsReadMutation = useMutation({
     mutationFn: (userId: string) => workflowApi.markNotificationsAsRead(userId),
     onSuccess: () => {
@@ -77,24 +81,24 @@ const FlowNotificationCenter: React.FC = () => {
       apiLogger.error(i18n.t('pages.workflow_notification_center_page.k1'), err);
     },
   });
-  const handleMarkAsRead = () => {
+
+  const handleMarkAsRead = useCallback(() => {
     const userId = user?.id || 'current-user-id';
     markAsReadMutation.mutate(userId);
-  };
-  const handleNotificationClick = (notification: Notification) => {
-    // Mark as read if unread
-    if (!notification.is_read) {
-      // In a real app, we'd mark this single notification as read
-      // For now, we'll just navigate
-    }
-    // Navigate based on notification type
-    if (notification.workflow_instance_id) {
-      navigate(WORKFLOW_PATHS.instances);
-    } else if (notification.approval_id) {
-      navigate(WORKFLOW_PATHS.approvals);
-    }
-  };
-  const getNotificationIcon = (type: string) => {
+  }, [user?.id, markAsReadMutation]);
+
+  const handleNotificationClick = useCallback(
+    (notification: Notification) => {
+      if (notification.workflow_instance_id) {
+        navigate(WORKFLOW_PATHS.instances);
+      } else if (notification.approval_id) {
+        navigate(WORKFLOW_PATHS.approvals);
+      }
+    },
+    [navigate]
+  );
+
+  const getNotificationIcon = useCallback((type: string) => {
     switch (type) {
       case 'approval_created':
         return <CheckCircle sx={{ width: 20, height: 20, color: 'blue.600' }} />;
@@ -109,8 +113,9 @@ const FlowNotificationCenter: React.FC = () => {
       default:
         return <Bell sx={{ width: 20, height: 20, color: 'grey.600' }} />;
     }
-  };
-  const getNotificationText = (type: string) => {
+  }, []);
+
+  const getNotificationText = useCallback((type: string) => {
     const typeMap: Record<string, string> = {
       approval_created: i18n.t('workflow.workflow_notification_center_page.k6'),
       approval_completed: i18n.t('workflow.workflow_notification_center_page.k7'),
@@ -119,276 +124,176 @@ const FlowNotificationCenter: React.FC = () => {
       workflow_rejected: i18n.t('workflow.workflow_notification_center_page.k10'),
     };
     return typeMap[type] || type;
-  };
-  const filteredNotifications =
-    filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
-  const headerActions = useMemo(() => {
-    if (unreadCount <= 0) return [];
-    return [
+  }, []);
+
+  const filteredNotifications = useMemo(
+    () => (filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications),
+    [filter, notifications]
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'readStatus',
+        label: i18n.t('shared.notification.k28'),
+        type: 'select',
+        options: [
+          {
+            value: 'all',
+            label: `${i18n.t('pages.workflow_notification_center_page.k3')}${notifications.length})`,
+          },
+          {
+            value: 'unread',
+            label: `${i18n.t('pages.workflow_notification_center_page.k4')}${unreadCount})`,
+          },
+        ],
+      },
+    ],
+    [notifications.length, unreadCount]
+  );
+
+  const filtersValue = useMemo(() => ({ readStatus: filter }), [filter]);
+
+  const handleFilterChange = useCallback((newFilters: Record<string, unknown>) => {
+    const newValue = newFilters.readStatus as 'all' | 'unread' | undefined;
+    if (newValue === 'all' || newValue === 'unread') {
+      setFilter(newValue);
+    }
+  }, []);
+
+  const columns: ColumnDef<Notification>[] = useMemo(
+    () => [
+      {
+        id: 'notification_type',
+        label: i18n.t('shared.notification.k22'),
+        width: 160,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {getNotificationIcon(row.notification_type)}
+            <Typography variant='body2'>{getNotificationText(row.notification_type)}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'message',
+        label: i18n.t('shared.notification.k27'),
+        render: (row) => (
+          <Box>
+            <Typography sx={{ fontWeight: row.is_read ? 400 : 600 }}>{row.title}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {row.content}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('shared.notification.k19'),
+        width: 180,
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleString()}
+          </Typography>
+        ),
+      },
+      {
+        id: 'is_read',
+        label: i18n.t('shared.notification.k28'),
+        width: 120,
+        render: (row) =>
+          row.is_read ? (
+            <Chip
+              label={i18n.t('shared.notification.k20')}
+              size='small'
+              color='default'
+              variant='outlined'
+            />
+          ) : (
+            <Chip
+              label={i18n.t('shared.notification.k21')}
+              size='small'
+              color='primary'
+              variant='outlined'
+            />
+          ),
+      },
+    ],
+    [getNotificationIcon, getNotificationText]
+  );
+
+  const actions = useMemo(
+    () => [
       {
         label: i18n.t('workflow.workflow_notification_center_page.k11'),
         icon: <Check size={18} />,
         onClick: handleMarkAsRead,
         variant: 'contained' as const,
-        color: 'primary' as const,
+        disabled: markAsReadMutation.isPending || unreadCount === 0,
       },
-    ];
-  }, [unreadCount]);
+    ],
+    [handleMarkAsRead, markAsReadMutation.isPending, unreadCount]
+  );
+
+  const renderRowActions = useCallback(
+    (row: Notification) => (
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {!row.is_read && (
+          <Tooltip title={i18n.t('workflow.workflow_notification_center_page.k11')}>
+            <span>
+              <IconButton
+                size='small'
+                color='primary'
+                onClick={() => handleMarkAsRead()}
+                disabled={markAsReadMutation.isPending}
+                aria-label={i18n.t('workflow.workflow_notification_center_page.k11')}
+              >
+                <Check size={18} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
+      </Box>
+    ),
+    [handleMarkAsRead, markAsReadMutation.isPending]
+  );
+
   const subtitleText = useMemo(() => {
     if (unreadCount > 0) {
       return `${unreadCount}${i18n.t('pages.workflow_notification_center_page.k2')}`;
     }
     return i18n.t('workflow.workflow_notification_center_page.k12');
   }, [unreadCount]);
+
+  const emptyMessage = useMemo(() => {
+    if (filter === 'unread') {
+      return i18n.t('workflow.workflow_notification_center_page.k15');
+    }
+    return i18n.t('workflow.workflow_notification_center_page.k14');
+  }, [filter]);
+
   return (
-    <PageContainer
+    <ListPageTemplate<Notification>
       title={i18n.t('workflow.workflow_notification_center_page.k13')}
       subtitle={subtitleText}
-      headerProps={{
-        pageIcon: <Bell size={24} />,
-        pageColor: 'warning.main',
-        actions: headerActions,
-      }}
-    >
-      {/* Tabs */}
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, mb: 3 }}>
-        <Tabs
-          value={filter}
-          onChange={(_, newValue) => setFilter(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab
-            label={`${i18n.t('pages.workflow_notification_center_page.k3')}${notifications.length})`}
-            value='all'
-            sx={{
-              textTransform: 'none',
-              fontWeight: filter === 'all' ? 600 : 400,
-              color: filter === 'all' ? 'primary.main' : 'text.secondary',
-              borderBottom: filter === 'all' ? 2 : 0,
-              borderColor: 'primary.main',
-            }}
-          />
-          <Tab
-            label={`${i18n.t('pages.workflow_notification_center_page.k4')}${unreadCount})`}
-            value='unread'
-            sx={{
-              textTransform: 'none',
-              fontWeight: filter === 'unread' ? 600 : 400,
-              color: filter === 'unread' ? 'primary.main' : 'text.secondary',
-              borderBottom: filter === 'unread' ? 2 : 0,
-              borderColor: 'primary.main',
-            }}
-          />
-        </Tabs>
-      </Box>
-      {/* Notification List */}
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3 }}>
-        {loading ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              py: 6,
-            }}
-          >
-            <LoadingSpinner size='lg' />
-          </Box>
-        ) : filteredNotifications.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Bell sx={{ width: 64, height: 64, color: 'grey.300', mb: 2 }} />
-            <Typography color='text.secondary'>
-              {filter === 'unread'
-                ? i18n.t('workflow.workflow_notification_center_page.k15')
-                : i18n.t('workflow.workflow_notification_center_page.k14')}
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {filteredNotifications.map((notification) => (
-              <Box
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification)}
-                sx={{
-                  border: 1,
-                  borderColor: notification.is_read ? 'grey.200' : 'primary.200',
-                  bgcolor: notification.is_read ? 'background.paper' : 'primary.50',
-                  borderRadius: 1,
-                  p: 2,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    boxShadow: 2,
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 1.5,
-                      flex: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: notification.is_read ? 'grey.100' : 'primary.100',
-                      }}
-                    >
-                      {getNotificationIcon(notification.notification_type)}
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.5,
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontWeight: notification.is_read ? 400 : 500,
-                            color: notification.is_read ? 'grey.700' : 'grey.900',
-                          }}
-                        >
-                          {notification.title}
-                        </Typography>
-                        {!notification.is_read && (
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              bgcolor: 'primary.600',
-                              borderRadius: '50%',
-                            }}
-                          />
-                        )}
-                      </Box>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                        sx={{ mb: 1 }}
-                      >
-                        {notification.content}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          color: 'text.disabled',
-                          fontSize: '0.75rem',
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.25,
-                          }}
-                        >
-                          {getNotificationIcon(notification.notification_type)}
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {getNotificationText(notification.notification_type)}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.25,
-                          }}
-                        >
-                          <Clock sx={{ width: 12, height: 12 }} />
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {new Date(notification.created_at).toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {notification.workflow_instance_id && (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '0.75rem',
-                          color: 'grey.400',
-                        }}
-                      >
-                        <Typography
-                          variant='caption'
-                          color='text.disabled'
-                        >
-                          {i18n.t('pages.workflow_notification_center_page.k0')}
-                        </Typography>
-                      </Box>
-                    )}
-                    {notification.approval_id && (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '0.75rem',
-                          color: 'grey.400',
-                        }}
-                      >
-                        <Typography
-                          variant='caption'
-                          color='text.disabled'
-                        >
-                          {i18n.t('pages.workflow_notification_center_page.k1')}
-                        </Typography>
-                      </Box>
-                    )}
-                    {!notification.is_read && (
-                      <Box
-                        sx={{
-                          px: 1,
-                          py: 0.5,
-                          bgcolor: 'primary.100',
-                          color: 'primary.700',
-                          borderRadius: 1,
-                          fontSize: '0.75rem',
-                        }}
-                      >
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'primary.700' }}
-                        >
-                          {i18n.t('pages.workflow_notification_center_page.k2')}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </Box>
-    </PageContainer>
+      columns={columns}
+      data={filteredNotifications}
+      loading={notificationsQuery.isLoading}
+      actions={actions}
+      renderRowActions={renderRowActions}
+      onRowClick={handleNotificationClick}
+      filters={filters}
+      filtersValue={filtersValue}
+      onFilterChange={handleFilterChange}
+      emptyMessage={emptyMessage}
+      emptyIcon={<Bell size={64} />}
+    />
   );
 };
+
 export default FlowNotificationCenter;

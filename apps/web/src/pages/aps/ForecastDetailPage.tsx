@@ -6,12 +6,15 @@
  */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Grid, Typography, Alert, Button } from '@mui/material';
 import { forecastApi } from '@/api/aps';
 import type { DemandForecast } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
 import { FSMActionButtons } from '@/components/aps/FSMActionButtons';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { DetailPageTemplate } from '@/components/templates';
+import { type SectionConfig } from '@/components/templates/DetailPageTemplate';
 
 export default function ForecastDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,103 +48,163 @@ export default function ForecastDetailPage() {
     // which are not yet defined for forecast in the backend
   };
 
-  if (loading) {
-    return <div className='p-4 text-gray-600'>{i18n.t('pages.forecast_detail_page.k0')}</div>;
-  }
-
-  if (!forecast) {
+  if (!forecast && !loading) {
     return (
-      <div className='p-4'>
-        <p className='text-gray-600'>{t('aps.forecast_detail_page.k0')}</p>
-        <button
-          onClick={() => navigate('/aps/forecasts')}
-          className='mt-2 text-blue-600 underline'
+      <Box sx={{ p: 3 }}>
+        <Alert
+          severity='info'
+          action={
+            <Button
+              color='inherit'
+              size='small'
+              onClick={() => navigate('/aps/forecasts')}
+            >
+              {i18n.t('pages.forecast_detail_page.k1')}
+            </Button>
+          }
         >
-          {i18n.t('pages.forecast_detail_page.k0')}
-        </button>
-      </div>
+          {t('aps.forecast_detail_page.k0')}
+        </Alert>
+      </Box>
     );
   }
 
+  const sections: SectionConfig[] = forecast
+    ? [
+        {
+          id: 'basic',
+          title: t('aps.forecast_detail_page.k2'),
+          content: (
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k3')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.forecast_no}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k4')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.product_name ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k5')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.forecast_period ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k6')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.forecast_date ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k7')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {forecast.forecast_quantity?.toLocaleString() ?? '-'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k8')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {forecast.actual_quantity?.toLocaleString() ?? '-'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k9')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {forecast.accuracy_rate != null ? `${forecast.accuracy_rate}%` : '-'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k10')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.method ?? '-'}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k11')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {forecast.confidence_level != null ? `${forecast.confidence_level}%` : '-'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {t('aps.forecast_detail_page.k12')}
+                </Typography>
+                <Typography sx={{ fontWeight: 500 }}>{forecast.notes ?? '-'}</Typography>
+              </Grid>
+            </Grid>
+          ),
+        },
+      ]
+    : [];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <button
-            onClick={() => navigate('/aps/forecasts')}
-            className='mb-2 text-sm text-blue-600 hover:underline'
-          >
-            {i18n.t('pages.forecast_detail_page.k1')}
-          </button>
-          <h1 className='text-2xl font-bold'>{forecast.forecast_no}</h1>
-          <p className='mt-1 text-sm text-gray-500'>{forecast.product_name ?? '-'}</p>
-        </div>
-        <StatusBadge
-          fsm='forecast'
-          status={forecast.status ?? 'draft'}
-        />
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {t('aps.forecast_detail_page.k1')}
-        </p>
-        <FSMActionButtons
-          fsm='forecast'
-          currentStatus={forecast.status ?? 'draft'}
-          onAction={handleAction}
-        />
-      </div>
-
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-3 font-semibold'>{t('aps.forecast_detail_page.k2')}</h3>
-        <dl className='grid grid-cols-2 gap-4 text-sm'>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k3')}</dt>
-            <dd className='font-medium'>{forecast.forecast_no}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k4')}</dt>
-            <dd className='font-medium'>{forecast.product_name ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k5')}</dt>
-            <dd className='font-medium'>{forecast.forecast_period ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k6')}</dt>
-            <dd className='font-medium'>{forecast.forecast_date ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k7')}</dt>
-            <dd className='font-medium'>{forecast.forecast_quantity?.toLocaleString() ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k8')}</dt>
-            <dd className='font-medium'>{forecast.actual_quantity?.toLocaleString() ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k9')}</dt>
-            <dd className='font-medium'>
-              {forecast.accuracy_rate != null ? `${forecast.accuracy_rate}%` : '-'}
-            </dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k10')}</dt>
-            <dd className='font-medium'>{forecast.method ?? '-'}</dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k11')}</dt>
-            <dd className='font-medium'>
-              {forecast.confidence_level != null ? `${forecast.confidence_level}%` : '-'}
-            </dd>
-          </div>
-          <div>
-            <dt className='text-gray-500'>{t('aps.forecast_detail_page.k12')}</dt>
-            <dd className='font-medium'>{forecast.notes ?? '-'}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
+    <DetailPageTemplate
+      title={forecast?.forecast_no ?? '-'}
+      subtitle={forecast?.product_name ?? '-'}
+      backHref='/aps/forecasts'
+      loading={loading}
+      headerContent={
+        forecast && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <StatusBadge
+              fsm='forecast'
+              status={forecast.status ?? 'draft'}
+            />
+            <FSMActionButtons
+              fsm='forecast'
+              currentStatus={forecast.status ?? 'draft'}
+              onAction={handleAction}
+            />
+          </Box>
+        )
+      }
+      sections={sections}
+    />
   );
 }

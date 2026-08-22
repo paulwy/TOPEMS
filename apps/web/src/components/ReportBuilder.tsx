@@ -546,7 +546,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       placeholder={i18n.t('components.report_builder.k79')}
                       style={{
                         width: '100%',
-                        padding: '8px 12px',
+                        padding: `${designTokens.spacing.sm}px 12px`,
                         border: '1px solid border.default',
                         borderRadius: 8,
                         fontSize: 14,
@@ -576,7 +576,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       rows={3}
                       style={{
                         width: '100%',
-                        padding: '8px 12px',
+                        padding: `${designTokens.spacing.sm}px 12px`,
                         border: '1px solid border.default',
                         borderRadius: 8,
                         fontSize: 14,
@@ -613,7 +613,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         onChange={(e) => setStartDate(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '8px 12px',
+                          padding: `${designTokens.spacing.sm}px 12px`,
                           border: '1px solid border.default',
                           borderRadius: 8,
                           fontSize: 14,
@@ -641,7 +641,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         onChange={(e) => setEndDate(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '8px 12px',
+                          padding: `${designTokens.spacing.sm}px 12px`,
                           border: '1px solid border.default',
                           borderRadius: 8,
                           fontSize: 14,
@@ -803,7 +803,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       <span
                         key={col}
                         style={{
-                          padding: '4px 8px',
+                          padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
                           backgroundColor: 'primary.100',
                           color: theme.palette.primary.dark,
                           borderRadius: 4,
@@ -841,7 +841,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
           <button
             onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
             style={{
-              padding: '8px 16px',
+              padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
               color: theme.palette.grey[700],
               backgroundColor: theme.palette.grey[100],
               borderRadius: 8,
@@ -857,7 +857,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             onClick={step === 3 ? handleCreate : () => setStep(step + 1)}
             disabled={creating || (step === 2 && selectedColumns.length === 0)}
             style={{
-              padding: '8px 24px',
+              padding: `${designTokens.spacing.sm}px ${designTokens.spacing.lg}px`,
               backgroundColor: theme.palette.primary.dark,
               color: 'common.white',
               borderRadius: 8,

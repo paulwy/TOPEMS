@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Gate O · Sensitive Information Scan — migrated from husky #2
-# Scans staged files for potential secrets (passwords, API keys, private keys, etc.)
+# Scans staged diff (added/modified lines only) for potential secrets.
+# Using diff-only scanning avoids false positives from pre-existing code.
 set -euo pipefail
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || echo "")
@@ -25,7 +26,7 @@ FOUND=""
 for f in $STAGED; do
   [ -f "$f" ] || continue
 
-  # Skip lockfiles, database, and documentation (contains example patterns)
+  # Skip lockfiles, database, and documentation
   case "$f" in
     pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/*|*.md) continue ;;
   esac
@@ -42,8 +43,13 @@ for f in $STAGED; do
   SIZE=$(wc -c < "$f" 2>/dev/null || echo 0)
   [ "$SIZE" -gt "$MAX_SIZE" ] && continue
 
+  # Extract only added/modified lines from the staged diff
+  # (lines starting with '+' but not '+++')
+  DIFF_LINES=$(git diff --cached -- "$f" 2>/dev/null | grep '^+' | grep -v '^+++' || true)
+  [ -z "$DIFF_LINES" ] && continue
+
   for p in "${PATTERNS[@]}"; do
-    if grep -qiE "$p" "$f" 2>/dev/null; then
+    if echo "$DIFF_LINES" | grep -qiE "$p" 2>/dev/null; then
       FOUND="${FOUND}  - $f (matched: $p)\n"
       break
     fi

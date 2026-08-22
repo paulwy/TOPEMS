@@ -1531,7 +1531,7 @@ const LifecycleTab: React.FC = () => {
                   }}
                 />
                 {idx < stateFlow.length - 1 && (
-                  <span style={{ color: 'text.disabled', margin: '0 4px' }}>|</span>
+                  <span style={{ color: 'text.disabled', margin: `0 ${designTokens.spacing.xs}px` }}>|</span>
                 )}
               </React.Fragment>
             ))}

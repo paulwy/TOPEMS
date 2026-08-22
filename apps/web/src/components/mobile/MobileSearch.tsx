@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useState, useRef, useEffect } from 'react';
 import {
   Box,
@@ -70,7 +71,7 @@ export function MobileSearch({
           onFocus={() => setFocused(true)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder={placeholder}
-          sx={{ flex: 1, fontSize: '0.9375rem' }}
+          sx={{ flex: 1, fontSize: designTokens.typography.fontSize.scale['0.9375rem'] }}
         />
         {query && (
           <IconButton

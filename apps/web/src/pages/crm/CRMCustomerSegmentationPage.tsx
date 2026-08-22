@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useCallback, useMemo } from 'react';
 import { Box, Typography, Chip, Paper } from '@mui/material';
 import { Users, Tag, TrendingUp } from 'lucide-react';
@@ -193,7 +194,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 p: 1.5,
                 bgcolor: 'grey.100',
                 borderRadius: 1,
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 overflow: 'auto',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',

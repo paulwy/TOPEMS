@@ -5,8 +5,6 @@ import {
   Typography,
   Button,
   Paper,
-  Tabs,
-  Tab,
   Card,
   CardContent,
   Avatar,
@@ -46,16 +44,16 @@ import {
   Server,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PageContainer, Grid } from '@/components/common';
+import { Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
+import { SettingsPageTemplate } from '@/components/templates';
+import type { SettingTab, SettingSection } from '@/components/templates/SettingsPageTemplate';
 
 const ct = designTokens.colors;
-
-type SettingsTab = 'models' | 'config' | 'usage' | 'api';
 
 interface AIModel {
   id: string;
@@ -191,7 +189,7 @@ const modelUsageData = [
   { name: i18n.t('ai.ai_model_settings_page.k28'), value: 4 },
 ];
 
-const getStatusConfig = (status: AIModel['status'], t: (key: string) => string) => {
+const getStatusConfig = (status: AIModel['status']) => {
   const configs = {
     active: {
       label: i18n.t('ai.model_settings.status.active'),
@@ -225,12 +223,11 @@ export const AiModelSettingsPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('models');
   const [selectedModel, setSelectedModel] = useState<AIModel>(mockModels[0]);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [topP, setTopP] = useState(1);
-  const [systemPrompt, setSystemPrompt] = useState(i18n.t('ai.ai_model_settings_page.k29'));
+  const [systemPrompt, setSystemPrompt] = useState(t('ai.ai_model_settings_page.k29'));
   const [saving, setSaving] = useState(false);
 
   const handleSaveConfig = () => {
@@ -238,8 +235,8 @@ export const AiModelSettingsPage: React.FC = () => {
     setTimeout(() => {
       setSaving(false);
       addNotification({
-        title: i18n.t('ai.model_settings.message.save_success_title'),
-        message: i18n.t('ai.model_settings.message.save_success_body'),
+        title: t('ai.model_settings.message.save_success_title'),
+        message: t('ai.model_settings.message.save_success_body'),
         type: 'success',
       });
     }, 1000);
@@ -251,222 +248,493 @@ export const AiModelSettingsPage: React.FC = () => {
     requests: usageData.reduce((sum, d) => sum + d.requests, 0),
   };
 
-  const tabConfig = [
+  const tabs: SettingTab[] = [
     {
-      id: 'models' as SettingsTab,
-      label: i18n.t('ai.model_settings.tab.models'),
+      id: 'models',
+      label: t('ai.model_settings.tab.models'),
       icon: <Cpu size={18} />,
-    },
-    {
-      id: 'config' as SettingsTab,
-      label: i18n.t('ai.model_settings.tab.config'),
-      icon: <Settings size={18} />,
-    },
-    {
-      id: 'usage' as SettingsTab,
-      label: i18n.t('ai.model_settings.tab.usage'),
-      icon: <BarChart3 size={18} />,
-    },
-    {
-      id: 'api' as SettingsTab,
-      label: i18n.t('ai.model_settings.tab.api'),
-      icon: <Database size={18} />,
-    },
-  ];
-
-  return (
-    <PageContainer
-      title={i18n.t('ai.model_settings.title')}
-      subtitle={i18n.t('ai.model_settings.subtitle')}
-      padding={false}
-      maxWidth={false}
-      headerProps={{
-        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[100]} 100%)`,
-      }}
-    >
-      <Box sx={{ p: 3 }}>
-        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          {/* 标签页 */}
-          <Box
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              px: 2,
-            }}
-          >
-            <Tabs
-              value={activeTab}
-              onChange={(_, v) => setActiveTab(v)}
-              sx={{ minHeight: 48 }}
-            >
-              {tabConfig.map((tab) => (
-                <Tab
-                  key={tab.id}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {tab.icon}
-                      {tab.label}
-                    </Box>
-                  }
-                  value={tab.id}
-                  sx={{ minHeight: 48, textTransform: 'none' }}
-                />
-              ))}
-            </Tabs>
-          </Box>
-
-          <Box sx={{ p: 3 }}>
-            {/* 模型列表 */}
-            {activeTab === 'models' && (
-              <Box>
-                <Grid
-                  container
-                  spacing={2}
-                >
-                  {mockModels.map((model) => (
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      lg={4}
-                      key={model.id}
+      sections: [
+        {
+          id: 'models-section',
+          title: t('ai.model_settings.tab.models'),
+          content: (
+            <Box>
+              <Grid
+                container
+                spacing={2}
+              >
+                {mockModels.map((model) => (
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                    lg={4}
+                    key={model.id}
+                  >
+                    <Card
+                      variant='outlined'
+                      sx={{
+                        borderRadius: 3,
+                        borderColor: selectedModel.id === model.id ? 'primary.main' : 'divider',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: 2,
+                        },
+                      }}
+                      onClick={() => setSelectedModel(model)}
                     >
-                      <Card
-                        variant='outlined'
-                        sx={{
-                          borderRadius: 3,
-                          borderColor: selectedModel.id === model.id ? 'primary.main' : 'divider',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            boxShadow: 2,
-                          },
-                        }}
-                        onClick={() => setSelectedModel(model)}
-                      >
-                        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                          <Box
+                      <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 2,
+                          }}
+                        >
+                          <Avatar
                             sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'flex-start',
-                              mb: 2,
+                              width: 48,
+                              height: 48,
+                              bgcolor: model.type === 'chat' ? 'primary.50' : 'success.50',
+                              color: model.type === 'chat' ? 'primary.main' : 'success.main',
                             }}
                           >
-                            <Avatar
-                              sx={{
-                                width: 48,
-                                height: 48,
-                                bgcolor: model.type === 'chat' ? 'primary.50' : 'success.50',
-                                color: model.type === 'chat' ? 'primary.main' : 'success.main',
-                              }}
-                            >
-                              {model.type === 'chat' ? <Cpu size={24} /> : <Layers size={24} />}
-                            </Avatar>
-                            <Chip
-                              icon={getStatusConfig(model.status, t).icon}
-                              label={getStatusConfig(model.status, t).label}
-                              size='small'
-                              color={getStatusConfig(model.status, t).color}
-                              sx={{ height: 24 }}
-                            />
-                          </Box>
+                            {model.type === 'chat' ? <Cpu size={24} /> : <Layers size={24} />}
+                          </Avatar>
+                          <Chip
+                            icon={getStatusConfig(model.status).icon}
+                            label={getStatusConfig(model.status).label}
+                            size='small'
+                            color={getStatusConfig(model.status).color}
+                            sx={{ height: 24 }}
+                          />
+                        </Box>
 
-                          <Box sx={{ mb: 1 }}>
-                            <Typography
-                              variant='subtitle1'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {model.name}
-                              {model.is_default && (
-                                <Chip
-                                  label={i18n.t('ai.model_settings.label.default')}
-                                  size='small'
-                                  color='primary'
-                                  sx={{ ml: 1, height: 20 }}
-                                />
-                              )}
-                            </Typography>
+                        <Box sx={{ mb: 1 }}>
+                          <Typography
+                            variant='subtitle1'
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {model.name}
+                            {model.is_default && (
+                              <Chip
+                                label={t('ai.model_settings.label.default')}
+                                size='small'
+                                color='primary'
+                                sx={{ ml: 1, height: 20 }}
+                              />
+                            )}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {model.provider}
+                          </Typography>
+                        </Box>
+
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{ mb: 2, minHeight: 40 }}
+                        >
+                          {model.description}
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                          {model.capabilities.map((cap) => (
+                            <Chip
+                              key={cap}
+                              label={cap}
+                              size='small'
+                              variant='outlined'
+                              sx={{ fontSize: 11 }}
+                            />
+                          ))}
+                        </Box>
+
+                        <Divider sx={{ mb: 1.5 }} />
+
+                        <Grid
+                          container
+                          spacing={1}
+                        >
+                          <Grid
+                            item
+                            xs={6}
+                          >
                             <Typography
                               variant='caption'
                               color='text.secondary'
                             >
-                              {model.provider}
+                              {t('ai.model_settings.label.max_token')}
                             </Typography>
-                          </Box>
-
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{ mb: 2, minHeight: 40 }}
-                          >
-                            {model.description}
-                          </Typography>
-
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                            {model.capabilities.map((cap) => (
-                              <Chip
-                                key={cap}
-                                label={cap}
-                                size='small'
-                                variant='outlined'
-                                sx={{ fontSize: 11 }}
-                              />
-                            ))}
-                          </Box>
-
-                          <Divider sx={{ mb: 1.5 }} />
-
-                          <Grid
-                            container
-                            spacing={1}
-                          >
-                            <Grid
-                              item
-                              xs={6}
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
                             >
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {i18n.t('ai.model_settings.label.max_token')}
-                              </Typography>
-                              <Typography
-                                variant='body2'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                {model.max_tokens.toLocaleString()}
-                              </Typography>
-                            </Grid>
-                            <Grid
-                              item
-                              xs={6}
-                            >
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {i18n.t('ai.model_settings.label.input_price')}
-                              </Typography>
-                              <Typography
-                                variant='body2'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                ${model.pricing.input_per_1k}/1K
-                              </Typography>
-                            </Grid>
+                              {model.max_tokens.toLocaleString()}
+                            </Typography>
                           </Grid>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                          <Grid
+                            item
+                            xs={6}
+                          >
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {t('ai.model_settings.label.input_price')}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              ${model.pricing.input_per_1k}/1K
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          ),
+        } as SettingSection,
+      ],
+    },
+    {
+      id: 'config',
+      label: t('ai.model_settings.tab.config'),
+      icon: <Settings size={18} />,
+      sections: [
+        {
+          id: 'config-section',
+          title: t('ai.model_settings.tab.config'),
+          content: (
+            <Grid
+              container
+              spacing={3}
+            >
+              <Grid
+                item
+                xs={12}
+                md={8}
+              >
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 3, borderRadius: 3 }}
+                >
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600, mb: 2 }}
+                  >
+                    {t('ai.model_settings.label.current_model')}
+                    {selectedModel.name}
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
 
-            {/* 参数配置 */}
-            {activeTab === 'config' && (
+                  <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {t('ai.model_settings.param.temperature')}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='primary.main'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {temperature.toFixed(1)}
+                      </Typography>
+                    </Box>
+                    <Slider
+                      value={temperature}
+                      onChange={(_, v) => setTemperature(v as number)}
+                      step={0.1}
+                      min={0}
+                      max={2}
+                      valueLabelDisplay='auto'
+                    />
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {t('ai.model_settings.param.temperature_desc')}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {t('ai.model_settings.param.max_tokens')}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='primary.main'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {maxTokens}
+                      </Typography>
+                    </Box>
+                    <Slider
+                      value={maxTokens}
+                      onChange={(_, v) => setMaxTokens(v as number)}
+                      step={128}
+                      min={256}
+                      max={selectedModel.max_tokens}
+                      valueLabelDisplay='auto'
+                    />
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {t('ai.model_settings.param.max_tokens_desc')}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {t('ai.model_settings.param.top_p')}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='primary.main'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {topP.toFixed(1)}
+                      </Typography>
+                    </Box>
+                    <Slider
+                      value={topP}
+                      onChange={(_, v) => setTopP(v as number)}
+                      step={0.1}
+                      min={0}
+                      max={1}
+                      valueLabelDisplay='auto'
+                    />
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {t('ai.model_settings.param.top_p_desc')}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500, mb: 1 }}
+                    >
+                      {t('ai.model_settings.param.system_prompt')}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={4}
+                      value={systemPrompt}
+                      onChange={(e) => setSystemPrompt(e.target.value)}
+                      placeholder={t('ai.model_settings.placeholder.system_prompt')}
+                    />
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <Button
+                      variant='outlined'
+                      startIcon={<RefreshCw size={16} />}
+                    >
+                      {t('ai.model_settings.action.reset_default')}
+                    </Button>
+                    <Button
+                      variant='contained'
+                      startIcon={
+                        saving ? (
+                          <RefreshCw
+                            size={16}
+                            className='animate-spin'
+                          />
+                        ) : (
+                          <Save size={16} />
+                        )
+                      }
+                      onClick={handleSaveConfig}
+                      disabled={saving}
+                    >
+                      {saving
+                        ? t('ai.model_settings.status.saving')
+                        : t('ai.model_settings.action.save_config')}
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              <Grid
+                item
+                xs={12}
+                md={4}
+              >
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 3, borderRadius: 3 }}
+                >
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 600, mb: 2 }}
+                  >
+                    {t('ai.model_settings.label.other_settings')}
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <List disablePadding>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Server size={18} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={t('ai.model_settings.setting.stream')}
+                        secondary={t('ai.model_settings.setting.stream_desc')}
+                      />
+                      <Switch defaultChecked />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Activity size={18} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={t('ai.model_settings.setting.history')}
+                        secondary={t('ai.model_settings.setting.history_desc')}
+                      />
+                      <Switch defaultChecked />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Zap size={18} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={t('ai.model_settings.setting.retry')}
+                        secondary={t('ai.model_settings.setting.retry_desc')}
+                      />
+                      <Switch defaultChecked />
+                    </ListItem>
+                  </List>
+                </Paper>
+              </Grid>
+            </Grid>
+          ),
+        } as SettingSection,
+      ],
+    },
+    {
+      id: 'usage',
+      label: t('ai.model_settings.tab.usage'),
+      icon: <BarChart3 size={18} />,
+      sections: [
+        {
+          id: 'usage-section',
+          title: t('ai.model_settings.tab.usage'),
+          content: (
+            <Box>
+              {/* 统计卡片 */}
+              <Grid
+                container
+                spacing={2}
+                sx={{ mb: 3 }}
+              >
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                >
+                  <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main' }}>
+                        <Zap size={22} />
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          variant='h5'
+                          sx={{ fontWeight: 700 }}
+                        >
+                          {Math.round(totalUsage.tokens / 1000)}K
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.model_settings.usage.total_tokens')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                >
+                  <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ bgcolor: 'success.50', color: 'success.main' }}>
+                        <TrendingUp size={22} />
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          variant='h5'
+                          sx={{ fontWeight: 700 }}
+                        >
+                          {totalUsage.requests}
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.model_settings.usage.total_requests')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                >
+                  <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ bgcolor: 'warning.50', color: 'warning.main' }}>
+                        <DollarSign size={22} />
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          variant='h5'
+                          sx={{ fontWeight: 700 }}
+                        >
+                          ${totalUsage.cost.toFixed(2)}
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {t('ai.model_settings.usage.total_cost')}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
+
               <Grid
                 container
                 spacing={3}
@@ -481,157 +749,21 @@ export const AiModelSettingsPage: React.FC = () => {
                     sx={{ p: 3, borderRadius: 3 }}
                   >
                     <Typography
-                      variant='h6'
+                      variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {i18n.t('ai.model_settings.label.current_model')}
-                      {selectedModel.name}
+                      {t('ai.model_settings.usage.trend_7days')}
                     </Typography>
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Box sx={{ mb: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {i18n.t('ai.model_settings.param.temperature')}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='primary.main'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {temperature.toFixed(1)}
-                        </Typography>
-                      </Box>
-                      <Slider
-                        value={temperature}
-                        onChange={(_, v) => setTemperature(v as number)}
-                        step={0.1}
-                        min={0}
-                        max={2}
-                        valueLabelDisplay='auto'
+                    <Box sx={{ height: 300 }}>
+                      <LazyChart
+                        type='line'
+                        data={usageData}
+                        xKey='date'
+                        yKey='tokens'
                       />
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {i18n.t('ai.model_settings.param.temperature_desc')}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {i18n.t('ai.model_settings.param.max_tokens')}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='primary.main'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {maxTokens}
-                        </Typography>
-                      </Box>
-                      <Slider
-                        value={maxTokens}
-                        onChange={(_, v) => setMaxTokens(v as number)}
-                        step={128}
-                        min={256}
-                        max={selectedModel.max_tokens}
-                        valueLabelDisplay='auto'
-                      />
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {i18n.t('ai.model_settings.param.max_tokens_desc')}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {i18n.t('ai.model_settings.param.top_p')}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='primary.main'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {topP.toFixed(1)}
-                        </Typography>
-                      </Box>
-                      <Slider
-                        value={topP}
-                        onChange={(_, v) => setTopP(v as number)}
-                        step={0.1}
-                        min={0}
-                        max={1}
-                        valueLabelDisplay='auto'
-                      />
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {i18n.t('ai.model_settings.param.top_p_desc')}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 3 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500, mb: 1 }}
-                      >
-                        {i18n.t('ai.model_settings.param.system_prompt')}
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={systemPrompt}
-                        onChange={(e) => setSystemPrompt(e.target.value)}
-                        placeholder={i18n.t('ai.model_settings.placeholder.system_prompt')}
-                      />
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                      <Button
-                        variant='outlined'
-                        startIcon={<RefreshCw size={16} />}
-                      >
-                        {i18n.t('ai.model_settings.action.reset_default')}
-                      </Button>
-                      <Button
-                        variant='contained'
-                        startIcon={
-                          saving ? (
-                            <RefreshCw
-                              size={16}
-                              className='animate-spin'
-                            />
-                          ) : (
-                            <Save size={16} />
-                          )
-                        }
-                        onClick={handleSaveConfig}
-                        disabled={saving}
-                      >
-                        {saving
-                          ? i18n.t('ai.model_settings.status.saving')
-                          : i18n.t('ai.model_settings.action.save_config')}
-                      </Button>
                     </Box>
                   </Paper>
                 </Grid>
-
                 <Grid
                   item
                   xs={12}
@@ -645,432 +777,272 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {i18n.t('ai.model_settings.label.other_settings')}
+                      {t('ai.model_settings.usage.model_ratio')}
                     </Typography>
-                    <Divider sx={{ mb: 2 }} />
-
-                    <List disablePadding>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <Server size={18} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={i18n.t('ai.model_settings.setting.stream')}
-                          secondary={i18n.t('ai.model_settings.setting.stream_desc')}
-                        />
-                        <Switch defaultChecked />
-                      </ListItem>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <Activity size={18} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={i18n.t('ai.model_settings.setting.history')}
-                          secondary={i18n.t('ai.model_settings.setting.history_desc')}
-                        />
-                        <Switch defaultChecked />
-                      </ListItem>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <Zap size={18} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={i18n.t('ai.model_settings.setting.retry')}
-                          secondary={i18n.t('ai.model_settings.setting.retry_desc')}
-                        />
-                        <Switch defaultChecked />
-                      </ListItem>
-                    </List>
+                    <Box sx={{ height: 300 }}>
+                      <LazyChart
+                        type='pie'
+                        data={modelUsageData}
+                      />
+                    </Box>
                   </Paper>
                 </Grid>
               </Grid>
-            )}
 
-            {/* 用量统计 */}
-            {activeTab === 'usage' && (
-              <Box>
-                {/* 统计卡片 */}
-                <Grid
-                  container
-                  spacing={2}
-                  sx={{ mb: 3 }}
-                >
-                  <Grid
-                    item
-                    xs={12}
-                    sm={4}
-                  >
-                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main' }}>
-                          <Zap size={22} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            variant='h5'
-                            sx={{ fontWeight: 700 }}
-                          >
-                            {Math.round(totalUsage.tokens / 1000)}K
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {i18n.t('ai.model_settings.usage.total_tokens')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  <Grid
-                    item
-                    xs={12}
-                    sm={4}
-                  >
-                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'success.50', color: 'success.main' }}>
-                          <TrendingUp size={22} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            variant='h5'
-                            sx={{ fontWeight: 700 }}
-                          >
-                            {totalUsage.requests}
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {i18n.t('ai.model_settings.usage.total_requests')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  <Grid
-                    item
-                    xs={12}
-                    sm={4}
-                  >
-                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'warning.50', color: 'warning.main' }}>
-                          <DollarSign size={22} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            variant='h5'
-                            sx={{ fontWeight: 700 }}
-                          >
-                            ${totalUsage.cost.toFixed(2)}
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {i18n.t('ai.model_settings.usage.total_cost')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                </Grid>
-
-                <Grid
-                  container
-                  spacing={3}
-                >
-                  <Grid
-                    item
-                    xs={12}
-                    md={8}
-                  >
-                    <Paper
-                      variant='outlined'
-                      sx={{ p: 3, borderRadius: 3 }}
-                    >
-                      <Typography
-                        variant='subtitle1'
-                        sx={{ fontWeight: 600, mb: 2 }}
-                      >
-                        {i18n.t('ai.model_settings.usage.trend_7days')}
-                      </Typography>
-                      <Box sx={{ height: 300 }}>
-                        <LazyChart
-                          type='line'
-                          data={usageData}
-                          xKey='date'
-                          yKey='tokens'
-                        />
-                      </Box>
-                    </Paper>
-                  </Grid>
-                  <Grid
-                    item
-                    xs={12}
-                    md={4}
-                  >
-                    <Paper
-                      variant='outlined'
-                      sx={{ p: 3, borderRadius: 3 }}
-                    >
-                      <Typography
-                        variant='subtitle1'
-                        sx={{ fontWeight: 600, mb: 2 }}
-                      >
-                        {i18n.t('ai.model_settings.usage.model_ratio')}
-                      </Typography>
-                      <Box sx={{ height: 300 }}>
-                        <LazyChart
-                          type='pie'
-                          data={modelUsageData}
-                        />
-                      </Box>
-                    </Paper>
-                  </Grid>
-                </Grid>
-
-                <Box sx={{ mt: 3 }}>
-                  <Paper
-                    variant='outlined'
-                    sx={{ borderRadius: 3, overflow: 'hidden' }}
-                  >
-                    <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                      <Typography
-                        variant='subtitle1'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {i18n.t('ai.model_settings.usage.daily_detail')}
-                      </Typography>
-                    </Box>
-                    <TableContainer>
-                      <Table size='small'>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>{i18n.t('ai.model_settings.table.date')}</TableCell>
-                            <TableCell align='right'>
-                              {i18n.t('ai.model_settings.table.requests')}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {i18n.t('ai.model_settings.table.tokens')}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {i18n.t('ai.model_settings.table.cost')}
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {usageData.map((row) => (
-                            <TableRow key={row.date}>
-                              <TableCell>{row.date}</TableCell>
-                              <TableCell align='right'>{row.requests}</TableCell>
-                              <TableCell align='right'>{row.tokens.toLocaleString()}</TableCell>
-                              <TableCell align='right'>${row.cost.toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
-                </Box>
-              </Box>
-            )}
-
-            {/* API密钥 */}
-            {activeTab === 'api' && (
-              <Box>
+              <Box sx={{ mt: 3 }}>
                 <Paper
                   variant='outlined'
-                  sx={{ p: 3, borderRadius: 3, mb: 3 }}
+                  sx={{ borderRadius: 3, overflow: 'hidden' }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 2,
-                    }}
-                  >
+                  <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
                     <Typography
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}
                     >
-                      {i18n.t('ai.model_settings.api.key_management')}
+                      {t('ai.model_settings.usage.daily_detail')}
                     </Typography>
-                    <Button
-                      variant='contained'
-                      startIcon={<Edit3 size={16} />}
-                      size='small'
-                    >
-                      {i18n.t('ai.model_settings.api.add_key')}
-                    </Button>
                   </Box>
-                  <Divider sx={{ mb: 2 }} />
-
                   <TableContainer>
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>{i18n.t('ai.model_settings.api.table.name')}</TableCell>
-                          <TableCell>{i18n.t('ai.model_settings.api.table.key')}</TableCell>
-                          <TableCell>{i18n.t('ai.model_settings.api.table.provider')}</TableCell>
-                          <TableCell>{i18n.t('ai.model_settings.api.table.status')}</TableCell>
-                          <TableCell>{i18n.t('ai.model_settings.api.table.created')}</TableCell>
+                          <TableCell>{t('ai.model_settings.table.date')}</TableCell>
                           <TableCell align='right'>
-                            {i18n.t('ai.model_settings.api.table.actions')}
+                            {t('ai.model_settings.table.requests')}
                           </TableCell>
+                          <TableCell align='right'>{t('ai.model_settings.table.tokens')}</TableCell>
+                          <TableCell align='right'>{t('ai.model_settings.table.cost')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>
-                            {i18n.t('ai.model_settings.api.key_production')}
-                          </TableCell>
-                          <TableCell>
-                            <code>sk-****************************</code>
-                          </TableCell>
-                          <TableCell>OpenAI</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={i18n.t('ai.model_settings.api.status_enabled')}
-                              size='small'
-                              color='success'
-                              sx={{ height: 22 }}
-                            />
-                          </TableCell>
-                          <TableCell>2024-01-15</TableCell>
-                          <TableCell align='right'>
-                            <IconButton
-                              size='small'
-                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
-                            >
-                              <Edit3 size={16} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>
-                            {i18n.t('ai.model_settings.api.key_backup')}
-                          </TableCell>
-                          <TableCell>
-                            <code>sk-****************************</code>
-                          </TableCell>
-                          <TableCell>OpenAI</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={i18n.t('ai.model_settings.api.status_enabled')}
-                              size='small'
-                              color='success'
-                              sx={{ height: 22 }}
-                            />
-                          </TableCell>
-                          <TableCell>2024-03-20</TableCell>
-                          <TableCell align='right'>
-                            <IconButton
-                              size='small'
-                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
-                            >
-                              <Edit3 size={16} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 500 }}>
-                            {i18n.t('ai.model_settings.api.key_ernie')}
-                          </TableCell>
-                          <TableCell>
-                            <code>xx-****************************</code>
-                          </TableCell>
-                          <TableCell>{i18n.t('ai.model_settings.provider.baidu')}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={i18n.t('ai.model_settings.api.status_enabled')}
-                              size='small'
-                              color='success'
-                              sx={{ height: 22 }}
-                            />
-                          </TableCell>
-                          <TableCell>2024-02-10</TableCell>
-                          <TableCell align='right'>
-                            <IconButton
-                              size='small'
-                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
-                            >
-                              <Edit3 size={16} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
+                        {usageData.map((row) => (
+                          <TableRow key={row.date}>
+                            <TableCell>{row.date}</TableCell>
+                            <TableCell align='right'>{row.requests}</TableCell>
+                            <TableCell align='right'>{row.tokens.toLocaleString()}</TableCell>
+                            <TableCell align='right'>${row.cost.toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Paper>
-
-                <Paper
-                  variant='outlined'
-                  sx={{ p: 3, borderRadius: 3 }}
+              </Box>
+            </Box>
+          ),
+        } as SettingSection,
+      ],
+    },
+    {
+      id: 'api',
+      label: t('ai.model_settings.tab.api'),
+      icon: <Database size={18} />,
+      sections: [
+        {
+          id: 'api-section',
+          title: t('ai.model_settings.tab.api'),
+          content: (
+            <Box>
+              <Paper
+                variant='outlined'
+                sx={{ p: 3, borderRadius: 3, mb: 3 }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
                 >
                   <Typography
                     variant='subtitle1'
-                    sx={{ fontWeight: 600, mb: 2 }}
+                    sx={{ fontWeight: 600 }}
                   >
-                    {i18n.t('ai.model_settings.api.usage_tips')}
+                    {t('ai.model_settings.api.key_management')}
                   </Typography>
-                  <List disablePadding>
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle
-                          size={16}
-                          style={{ color: ct.warning.main }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography variant='body2'>
-                            {i18n.t('ai.model_settings.api.tip_keep_safe')}
-                          </Typography>
-                        }
+                  <Button
+                    variant='contained'
+                    startIcon={<Edit3 size={16} />}
+                    size='small'
+                  >
+                    {t('ai.model_settings.api.add_key')}
+                  </Button>
+                </Box>
+                <Divider sx={{ mb: 2 }} />
+
+                <TableContainer>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('ai.model_settings.api.table.name')}</TableCell>
+                        <TableCell>{t('ai.model_settings.api.table.key')}</TableCell>
+                        <TableCell>{t('ai.model_settings.api.table.provider')}</TableCell>
+                        <TableCell>{t('ai.model_settings.api.table.status')}</TableCell>
+                        <TableCell>{t('ai.model_settings.api.table.created')}</TableCell>
+                        <TableCell align='right'>
+                          {t('ai.model_settings.api.table.actions')}
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {t('ai.model_settings.api.key_production')}
+                        </TableCell>
+                        <TableCell>
+                          <code>sk-****************************</code>
+                        </TableCell>
+                        <TableCell>OpenAI</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={t('ai.model_settings.api.status_enabled')}
+                            size='small'
+                            color='success'
+                            sx={{ height: 22 }}
+                          />
+                        </TableCell>
+                        <TableCell>2024-01-15</TableCell>
+                        <TableCell align='right'>
+                          <IconButton
+                            size='small'
+                            aria-label={t('ai.model_settings.api.action.edit')}
+                          >
+                            <Edit3 size={16} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {t('ai.model_settings.api.key_backup')}
+                        </TableCell>
+                        <TableCell>
+                          <code>sk-****************************</code>
+                        </TableCell>
+                        <TableCell>OpenAI</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={t('ai.model_settings.api.status_enabled')}
+                            size='small'
+                            color='success'
+                            sx={{ height: 22 }}
+                          />
+                        </TableCell>
+                        <TableCell>2024-03-20</TableCell>
+                        <TableCell align='right'>
+                          <IconButton
+                            size='small'
+                            aria-label={t('ai.model_settings.api.action.edit')}
+                          >
+                            <Edit3 size={16} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {t('ai.model_settings.api.key_ernie')}
+                        </TableCell>
+                        <TableCell>
+                          <code>xx-****************************</code>
+                        </TableCell>
+                        <TableCell>{t('ai.model_settings.provider.baidu')}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={t('ai.model_settings.api.status_enabled')}
+                            size='small'
+                            color='success'
+                            sx={{ height: 22 }}
+                          />
+                        </TableCell>
+                        <TableCell>2024-02-10</TableCell>
+                        <TableCell align='right'>
+                          <IconButton
+                            size='small'
+                            aria-label={t('ai.model_settings.api.action.edit')}
+                          >
+                            <Edit3 size={16} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+
+              <Paper
+                variant='outlined'
+                sx={{ p: 3, borderRadius: 3 }}
+              >
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600, mb: 2 }}
+                >
+                  {t('ai.model_settings.api.usage_tips')}
+                </Typography>
+                <List disablePadding>
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <AlertCircle
+                        size={16}
+                        style={{ color: ct.warning.main }}
                       />
-                    </ListItem>
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle
-                          size={16}
-                          style={{ color: ct.warning.main }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography variant='body2'>
-                            {i18n.t('ai.model_settings.api.tip_rotate_keys')}
-                          </Typography>
-                        }
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography variant='body2'>
+                          {t('ai.model_settings.api.tip_keep_safe')}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <AlertCircle
+                        size={16}
+                        style={{ color: ct.warning.main }}
                       />
-                    </ListItem>
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle
-                          size={16}
-                          style={{ color: ct.warning.main }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography variant='body2'>
-                            {i18n.t('ai.model_settings.api.tip_multi_env')}
-                          </Typography>
-                        }
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography variant='body2'>
+                          {t('ai.model_settings.api.tip_rotate_keys')}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <AlertCircle
+                        size={16}
+                        style={{ color: ct.warning.main }}
                       />
-                    </ListItem>
-                  </List>
-                </Paper>
-              </Box>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-    </PageContainer>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography variant='body2'>
+                          {t('ai.model_settings.api.tip_multi_env')}
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                </List>
+              </Paper>
+            </Box>
+          ),
+        } as SettingSection,
+      ],
+    },
+  ];
+
+  return (
+    <SettingsPageTemplate
+      title={t('ai.model_settings.title')}
+      subtitle={t('ai.model_settings.subtitle')}
+      icon={<Settings style={{ width: 20, height: 20 }} />}
+      tabs={tabs}
+      showSaveButton={false}
+      showResetButton={false}
+    />
   );
 };
 

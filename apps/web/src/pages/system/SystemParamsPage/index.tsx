@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Database, FileText, RefreshCw } from 'lucide-react';
-import { Box, Tabs, Tab, CircularProgress } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { SettingsPageTemplate } from '@/components/templates';
+import type { SettingTab, SettingSection } from '@/components/templates/SettingsPageTemplate';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { systemParamsApi } from '@/api/system';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 import type { SystemConfig, CacheConfig, LogConfig } from '@/api/system/types';
 import SystemConfigPanel from './components/SystemConfigPanel';
 import CacheConfigPanel from './components/CacheConfigPanel';
 import LogConfigPanel from './components/LogConfigPanel';
-import { useTranslation } from 'react-i18next';
 
 const SystemParamsPage: React.FC = () => {
   const { t } = useTranslation('system');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [activeTab, setActiveTab] = useState(0);
 
   const [systemConfig, setSystemConfig] = useState<{
     site_name: string;
@@ -352,81 +350,88 @@ const SystemParamsPage: React.FC = () => {
   const loading =
     systemConfigQuery.isLoading || cacheConfigQuery.isLoading || logConfigQuery.isLoading;
 
+  const systemSection: SettingSection = {
+    id: 'system-config',
+    title: t('system.index.k19'),
+    content: (
+      <SystemConfigPanel
+        systemConfig={systemConfig}
+        setSystemConfig={setSystemConfig}
+        onSave={handleSaveSystemConfig}
+        isSaving={updateSystemConfigMutation.isPending}
+      />
+    ),
+  };
+
+  const cacheSection: SettingSection = {
+    id: 'cache-config',
+    title: t('system.index.k20'),
+    content: (
+      <CacheConfigPanel
+        cacheConfig={cacheConfig}
+        setCacheConfig={setCacheConfig}
+        onSave={handleSaveCacheConfig}
+        isSaving={updateCacheConfigMutation.isPending}
+        cacheStats={cacheStatsQuery.data}
+        isLoadingStats={cacheStatsQuery.isLoading}
+        onClearCache={handleClearCache}
+        isClearingCache={clearCacheMutation.isPending}
+      />
+    ),
+  };
+
+  const logSection: SettingSection = {
+    id: 'log-config',
+    title: t('system.index.k21'),
+    content: (
+      <LogConfigPanel
+        logConfig={logConfig}
+        setLogConfig={setLogConfig}
+        onSave={handleSaveLogConfig}
+        isSaving={updateLogConfigMutation.isPending}
+      />
+    ),
+  };
+
+  const tabs: SettingTab[] = [
+    {
+      id: 'system',
+      label: t('system.index.k19'),
+      icon: <Settings size={18} />,
+      sections: [systemSection],
+    },
+    {
+      id: 'cache',
+      label: t('system.index.k20'),
+      icon: <Database size={18} />,
+      sections: [cacheSection],
+    },
+    {
+      id: 'log',
+      label: t('system.index.k21'),
+      icon: <FileText size={18} />,
+      sections: [logSection],
+    },
+  ];
+
   return (
-    <PageContainer
+    <SettingsPageTemplate
       title={t('system.index.k16')}
       subtitle={t('system.index.k17')}
-      maxWidth='xl'
-      headerProps={{
-        actions: [
-          {
-            label: t('system.index.k18'),
-            icon: <RefreshCw size={16} />,
-            onClick: handleRefresh,
-            variant: 'outlined',
-          },
-        ],
-      }}
-    >
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress size={48} />
-        </Box>
-      ) : (
-        <>
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{ mb: 3 }}
-            variant='fullWidth'
-          >
-            <Tab
-              icon={<Settings size={18} />}
-              label={t('system.index.k19')}
-            />
-            <Tab
-              icon={<Database size={18} />}
-              label={t('system.index.k20')}
-            />
-            <Tab
-              icon={<FileText size={18} />}
-              label={t('system.index.k21')}
-            />
-          </Tabs>
-
-          {activeTab === 0 && (
-            <SystemConfigPanel
-              systemConfig={systemConfig}
-              setSystemConfig={setSystemConfig}
-              onSave={handleSaveSystemConfig}
-              isSaving={updateSystemConfigMutation.isPending}
-            />
-          )}
-
-          {activeTab === 1 && (
-            <CacheConfigPanel
-              cacheConfig={cacheConfig}
-              setCacheConfig={setCacheConfig}
-              onSave={handleSaveCacheConfig}
-              isSaving={updateCacheConfigMutation.isPending}
-              cacheStats={cacheStatsQuery.data}
-              isLoadingStats={cacheStatsQuery.isLoading}
-              onClearCache={handleClearCache}
-              isClearingCache={clearCacheMutation.isPending}
-            />
-          )}
-
-          {activeTab === 2 && (
-            <LogConfigPanel
-              logConfig={logConfig}
-              setLogConfig={setLogConfig}
-              onSave={handleSaveLogConfig}
-              isSaving={updateLogConfigMutation.isPending}
-            />
-          )}
-        </>
-      )}
-    </PageContainer>
+      icon={<Settings size={20} />}
+      tabs={tabs}
+      loading={loading}
+      actions={[
+        {
+          label: t('system.index.k18'),
+          icon: <RefreshCw size={16} />,
+          onClick: handleRefresh,
+          variant: 'outlined',
+        },
+      ]}
+      showSaveButton={false}
+      showResetButton={false}
+    />
   );
 };
 

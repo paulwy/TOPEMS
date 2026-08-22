@@ -254,7 +254,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 <Typography
                   sx={{
                     color: 'common.white',
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 500,
                   }}
                 >

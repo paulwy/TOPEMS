@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { designTokens } from '@topems/tokens';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   FileText,
   Plus,
@@ -9,7 +10,6 @@ import {
   Search,
   Grid,
   List,
-  Loader2,
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
@@ -40,8 +40,11 @@ import {
   DialogActions,
   Chip,
   Button,
+  InputAdornment,
+  Tooltip,
 } from '@mui/material';
-import { PageContainer } from '@/components';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { useCrudMutations } from '@/hooks';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -183,75 +186,458 @@ const TemplateManagementPage: React.FC = () => {
     },
   });
 
-  const handleCreateTemplate = async (data: CreateTemplateRequest) => {
-    await createMutation.mutateAsync(data);
-  };
-
-  const handleUpdateTemplate = async (id: string, data: Partial<CreateTemplateRequest>) => {
-    await updateMutation.mutateAsync({ id, data });
-  };
-
-  const handleDeleteTemplate = async (id: string) => {
-    if (!confirm(i18n.t('pages.template_management_page.k16'))) return;
-    await deleteMutation.mutateAsync(id);
-  };
-
-  const handleDuplicateTemplate = async (id: string) => {
-    await duplicateMutation.mutateAsync(id);
-  };
-
-  const handleToggleStatus = async (id: string) => {
-    await toggleStatusMutation.mutateAsync(id);
-  };
-
-  const filteredTemplates = templates.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const isMutating = useMemo(
+    () =>
+      createMutation.isPending ||
+      updateMutation.isPending ||
+      deleteMutation.isPending ||
+      duplicateMutation.isPending ||
+      toggleStatusMutation.isPending,
+    [
+      createMutation.isPending,
+      updateMutation.isPending,
+      deleteMutation.isPending,
+      duplicateMutation.isPending,
+      toggleStatusMutation.isPending,
+    ]
   );
 
-  return (
-    <PageContainer
-      title={i18n.t('pages.template_management_page.k17')}
-      subtitle={i18n.t('pages.template_management_page.k18')}
-      headerProps={{
-        pageIcon: <FileText sx={{ width: 24, height: 24 }} />,
-        pageColor: 'primary.main',
-        actions: [
-          {
-            label: i18n.t('pages.template_management_page.k19'),
-            onClick: () => setShowCreateModal(true),
-            icon: <Plus sx={{ width: 16, height: 16 }} />,
-            variant: 'contained',
-          },
-        ],
-      }}
-      maxWidth='xl'
-    >
-      {/* Filters */}
-      <Card sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ position: 'relative', flex: 1 }}>
-            <Search
+  const handleCreateTemplate = useCallback(
+    async (data: CreateTemplateRequest) => {
+      await createMutation.mutateAsync(data);
+    },
+    [createMutation]
+  );
+
+  const handleUpdateTemplate = useCallback(
+    async (id: string, data: Partial<CreateTemplateRequest>) => {
+      await updateMutation.mutateAsync({ id, data });
+    },
+    [updateMutation]
+  );
+
+  const handleDeleteTemplate = useCallback(
+    async (id: string) => {
+      if (!confirm(i18n.t('pages.template_management_page.k16'))) return;
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation]
+  );
+
+  const handleDuplicateTemplate = useCallback(
+    async (id: string) => {
+      await duplicateMutation.mutateAsync(id);
+    },
+    [duplicateMutation]
+  );
+
+  const handleToggleStatus = useCallback(
+    async (id: string) => {
+      await toggleStatusMutation.mutateAsync(id);
+    },
+    [toggleStatusMutation]
+  );
+
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter(
+        (t) =>
+          t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [templates, searchQuery]
+  );
+
+  const getCategoryName = useCallback(
+    (template: Template) =>
+      categories.find((c) => c.id === template.category_id)?.name ||
+      template.category_name ||
+      i18n.t('pages.template_management_page.k39'),
+    [categories]
+  );
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+  }, [queryClient]);
+
+  const columns: ColumnDef<Template>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: i18n.t('pages.template_management_page.k6'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ fontWeight: 500 }}>{row.name}</Typography>
+            <Chip
+              label={
+                row.isactive
+                  ? i18n.t('pages.template_management_page.k38')
+                  : i18n.t('pages.template_management_page.k37')
+              }
+              size='small'
               sx={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 20,
-                height: 20,
-                color: 'grey.400',
+                bgcolor: row.isactive ? 'success.100' : 'grey.100',
+                color: row.isactive ? 'success.700' : 'grey.700',
               }}
             />
-            <TextField
-              placeholder={i18n.t('pages.template_management_page.k2')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ pl: 5, width: '100%' }}
-              size='small'
-            />
           </Box>
+        ),
+      },
+      {
+        id: 'code',
+        label: i18n.t('pages.template_management_page.k7'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {row.code}
+          </Typography>
+        ),
+      },
+      {
+        id: 'category',
+        label: i18n.t('pages.template_management_page.k8'),
+        render: (row) => (
+          <Chip
+            label={getCategoryName(row)}
+            size='small'
+            sx={{ bgcolor: 'primary.50', color: 'primary.700' }}
+          />
+        ),
+      },
+      {
+        id: 'module',
+        label: i18n.t('pages.template_management_page.k9'),
+        render: (row) => <Typography variant='body2'>{row.module}</Typography>,
+      },
+      {
+        id: 'variables',
+        label: i18n.t('pages.template_management_page.k1'),
+        render: (row) => <Typography variant='body2'>{row.variables?.length || 0}</Typography>,
+      },
+    ],
+    [getCategoryName]
+  );
+
+  const renderRowActions = useCallback(
+    (row: Template) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Tooltip
+          title={
+            row.isactive
+              ? i18n.t('pages.template_management_page.k27')
+              : i18n.t('pages.template_management_page.k26')
+          }
+        >
+          <span>
+            <IconButton
+              onClick={() => handleToggleStatus(row.id)}
+              disabled={isMutating}
+              sx={{
+                color: row.isactive ? 'success.main' : 'grey.400',
+              }}
+              aria-label={
+                row.isactive
+                  ? i18n.t('pages.template_management_page.k25')
+                  : i18n.t('pages.template_management_page.k24')
+              }
+            >
+              {row.isactive ? (
+                <ToggleRight sx={{ width: 20, height: 20 }} />
+              ) : (
+                <ToggleLeft sx={{ width: 20, height: 20 }} />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.template_management_page.k30')}>
+          <IconButton
+            onClick={() => {
+              setSelectedTemplate(row);
+              setShowPreviewModal(true);
+            }}
+            disabled={isMutating}
+            sx={{ color: 'primary.main' }}
+            aria-label={i18n.t('pages.template_management_page.k29')}
+          >
+            <Eye sx={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.template_management_page.k32')}>
+          <span>
+            <IconButton
+              onClick={() => handleDuplicateTemplate(row.id)}
+              disabled={isMutating}
+              sx={{ color: 'success.main' }}
+              aria-label={i18n.t('pages.template_management_page.k31')}
+            >
+              <Copy sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.template_management_page.k34')}>
+          <IconButton
+            onClick={() => {
+              setSelectedTemplate(row);
+              setShowEditModal(true);
+            }}
+            disabled={isMutating}
+            sx={{ color: 'primary.main' }}
+            aria-label={i18n.t('pages.template_management_page.k33')}
+          >
+            <Edit sx={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={i18n.t('pages.template_management_page.k36')}>
+          <span>
+            <IconButton
+              onClick={() => handleDeleteTemplate(row.id)}
+              disabled={isMutating}
+              sx={{ color: 'error.main' }}
+              aria-label={i18n.t('pages.template_management_page.k35')}
+            >
+              <Trash2 sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    ),
+    [handleToggleStatus, handleDuplicateTemplate, handleDeleteTemplate, isMutating]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.template_management_page.k19'),
+        onClick: () => setShowCreateModal(true),
+        icon: <Plus sx={{ width: 16, height: 16 }} />,
+        variant: 'contained' as const,
+      },
+    ],
+    []
+  );
+
+  const renderCardView = useCallback(
+    (data: Template[]) => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
+          },
+          gap: 3,
+        }}
+      >
+        {data.map((template) => (
+          <Card
+            key={template.id}
+            sx={{
+              bgcolor: 'grey.50',
+              '&:hover': { boxShadow: 3 },
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  mb: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: 'primary.100',
+                    borderRadius: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <FileText sx={{ width: 24, height: 24, color: 'primary.main' }} />
+                </Box>
+                <Tooltip
+                  title={
+                    template.isactive
+                      ? i18n.t('pages.template_management_page.k27')
+                      : i18n.t('pages.template_management_page.k26')
+                  }
+                >
+                  <span>
+                    <IconButton
+                      onClick={() => handleToggleStatus(template.id)}
+                      disabled={isMutating}
+                      sx={{
+                        color: template.isactive ? 'success.main' : 'grey.400',
+                        '&:hover': {
+                          bgcolor: template.isactive ? 'success.light' : 'grey.200',
+                        },
+                      }}
+                      aria-label={
+                        template.isactive
+                          ? i18n.t('pages.template_management_page.k25')
+                          : i18n.t('pages.template_management_page.k24')
+                      }
+                    >
+                      {template.isactive ? (
+                        <ToggleRight sx={{ width: 20, height: 20 }} />
+                      ) : (
+                        <ToggleLeft sx={{ width: 20, height: 20 }} />
+                      )}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Box>
+
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
+                {template.name}
+              </Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 2 }}
+              >
+                {template.code}
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {i18n.t('pages.template_management_page.k5')}
+                  {getCategoryName(template)}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {i18n.t('pages.template_management_page.k0')}
+                  {template.module}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {i18n.t('pages.template_management_page.k1')}
+                  {template.variables?.length || 0}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 0.5,
+                  pt: 2,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Tooltip title={i18n.t('pages.template_management_page.k30')}>
+                  <IconButton
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setShowPreviewModal(true);
+                    }}
+                    disabled={isMutating}
+                    sx={{ color: 'primary.main' }}
+                    aria-label={i18n.t('pages.template_management_page.k29')}
+                  >
+                    <Eye sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={i18n.t('pages.template_management_page.k32')}>
+                  <span>
+                    <IconButton
+                      onClick={() => handleDuplicateTemplate(template.id)}
+                      disabled={isMutating}
+                      sx={{ color: 'success.main' }}
+                      aria-label={i18n.t('pages.template_management_page.k31')}
+                    >
+                      <Copy sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={i18n.t('pages.template_management_page.k34')}>
+                  <IconButton
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setShowEditModal(true);
+                    }}
+                    disabled={isMutating}
+                    sx={{ color: 'primary.main' }}
+                    aria-label={i18n.t('pages.template_management_page.k33')}
+                  >
+                    <Edit sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={i18n.t('pages.template_management_page.k36')}>
+                  <span>
+                    <IconButton
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      disabled={isMutating}
+                      sx={{ color: 'error.main' }}
+                      aria-label={i18n.t('pages.template_management_page.k35')}
+                    >
+                      <Trash2 sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Box>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
+    ),
+    [getCategoryName, handleToggleStatus, handleDuplicateTemplate, handleDeleteTemplate, isMutating]
+  );
+
+  const headerContent = useMemo(
+    () => (
+      <Card sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <TextField
+            placeholder={i18n.t('pages.template_management_page.k2')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size='small'
+            sx={{ flex: 1, minWidth: 200 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search sx={{ width: 20, height: 20, color: 'grey.400' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
 
           <FormControl
             size='small'
@@ -280,6 +666,7 @@ const TemplateManagementPage: React.FC = () => {
               variant={viewMode === 'grid' ? 'contained' : 'text'}
               onClick={() => setViewMode('grid')}
               sx={{ borderRadius: 0 }}
+              aria-label={i18n.t('pages.template_management_page.k24')}
             >
               <Grid sx={{ width: 20, height: 20 }} />
             </Button>
@@ -287,6 +674,7 @@ const TemplateManagementPage: React.FC = () => {
               variant={viewMode === 'list' ? 'contained' : 'text'}
               onClick={() => setViewMode('list')}
               sx={{ borderRadius: 0 }}
+              aria-label={i18n.t('pages.template_management_page.k25')}
             >
               <List sx={{ width: 20, height: 20 }} />
             </Button>
@@ -294,341 +682,33 @@ const TemplateManagementPage: React.FC = () => {
 
           <Button
             variant='outlined'
-            onClick={() => {
-              queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
-                exact: false,
-                refetchType: 'active',
-              });
-              queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE,
-                exact: false,
-                refetchType: 'active',
-              });
-            }}
+            onClick={handleRefresh}
           >
             {i18n.t('pages.template_management_page.k3')}
           </Button>
         </Box>
       </Card>
+    ),
+    [searchQuery, selectedCategory, categories, viewMode, handleRefresh]
+  );
 
-      {/* Content */}
-      <Card>
-        {loading ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Loader2
-              sx={{
-                width: 48,
-                height: 48,
-                color: 'primary.main',
-                animation: 'spin 1s linear infinite',
-                '@keyframes spin': {
-                  '0%': { transform: 'rotate(0deg)' },
-                  '100%': { transform: 'rotate(360deg)' },
-                },
-              }}
-            />
-            <Typography
-              color='text.secondary'
-              sx={{ mt: 2 }}
-            >
-              {i18n.t('pages.template_management_page.k4')}
-            </Typography>
-          </Box>
-        ) : filteredTemplates.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <FileText sx={{ width: 48, height: 48, color: 'grey.400', mb: 1.5 }} />
-            <Typography color='text.secondary'>
-              {i18n.t('pages.template_management_page.k23')}
-            </Typography>
-          </Box>
-        ) : viewMode === 'grid' ? (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: 'repeat(2, 1fr)',
-                lg: 'repeat(3, 1fr)',
-              },
-              gap: 3,
-              p: 3,
-            }}
-          >
-            {filteredTemplates.map((template) => (
-              <Card
-                key={template.id}
-                sx={{
-                  bgcolor: 'grey.50',
-                  '&:hover': { boxShadow: 3 },
-                }}
-              >
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        bgcolor: 'primary.100',
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <FileText sx={{ width: 24, height: 24, color: 'primary.main' }} />
-                    </Box>
-                    <IconButton
-                      onClick={() => handleToggleStatus(template.id)}
-                      sx={{
-                        color: template.isactive ? 'success.main' : 'grey.400',
-                        '&:hover': {
-                          bgcolor: template.isactive ? 'success.light' : 'grey.200',
-                        },
-                      }}
-                      aria-label={
-                        template.isactive
-                          ? i18n.t('pages.template_management_page.k25')
-                          : i18n.t('pages.template_management_page.k24')
-                      }
-                      title={
-                        template.isactive
-                          ? i18n.t('pages.template_management_page.k27')
-                          : i18n.t('pages.template_management_page.k26')
-                      }
-                    >
-                      {template.isactive ? (
-                        <ToggleRight sx={{ width: 20, height: 20 }} />
-                      ) : (
-                        <ToggleLeft sx={{ width: 20, height: 20 }} />
-                      )}
-                    </IconButton>
-                  </Box>
-
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 0.5 }}
-                  >
-                    {template.name}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mb: 2 }}
-                  >
-                    {template.code}
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 0.5,
-                      mb: 2,
-                    }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('pages.template_management_page.k5')}
-                      {categories.find((c) => c.id === template.category_id)?.name ||
-                        template.category_name ||
-                        i18n.t('pages.template_management_page.k28')}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('pages.template_management_page.k0')}
-                      {template.module}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('pages.template_management_page.k1')}
-                      {template.variables?.length || 0}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      gap: 0.5,
-                      pt: 2,
-                      borderTop: 1,
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <IconButton
-                      onClick={() => {
-                        setSelectedTemplate(template);
-                        setShowPreviewModal(true);
-                      }}
-                      sx={{ color: 'primary.main' }}
-                      aria-label={i18n.t('pages.template_management_page.k29')}
-                      title={i18n.t('pages.template_management_page.k30')}
-                    >
-                      <Eye sx={{ width: 16, height: 16 }} />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDuplicateTemplate(template.id)}
-                      sx={{ color: 'success.main' }}
-                      aria-label={i18n.t('pages.template_management_page.k31')}
-                      title={i18n.t('pages.template_management_page.k32')}
-                    >
-                      <Copy sx={{ width: 16, height: 16 }} />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => {
-                        setSelectedTemplate(template);
-                        setShowEditModal(true);
-                      }}
-                      sx={{ color: 'primary.main' }}
-                      aria-label={i18n.t('pages.template_management_page.k33')}
-                      title={i18n.t('pages.template_management_page.k34')}
-                    >
-                      <Edit sx={{ width: 16, height: 16 }} />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDeleteTemplate(template.id)}
-                      sx={{ color: 'error.main' }}
-                      aria-label={i18n.t('pages.template_management_page.k35')}
-                      title={i18n.t('pages.template_management_page.k36')}
-                    >
-                      <Trash2 sx={{ width: 16, height: 16 }} />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        ) : (
-          <Box>
-            {filteredTemplates.map((template, index) => (
-              <Box
-                key={template.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  borderBottom: index < filteredTemplates.length - 1 ? 1 : 0,
-                  borderColor: 'divider',
-                  '&:hover': { bgcolor: 'grey.50' },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    flex: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: 'primary.100',
-                      borderRadius: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <FileText sx={{ width: 20, height: 20, color: 'primary.main' }} />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
-                      <Chip
-                        label={
-                          template.isactive
-                            ? i18n.t('pages.template_management_page.k38')
-                            : i18n.t('pages.template_management_page.k37')
-                        }
-                        size='small'
-                        sx={{
-                          bgcolor: template.isactive ? 'success.100' : 'grey.100',
-                          color: template.isactive ? 'success.700' : 'grey.700',
-                        }}
-                      />
-                    </Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {template.code} ·{' '}
-                      {categories.find((c) => c.id === template.category_id)?.name ||
-                        template.category_name ||
-                        i18n.t('pages.template_management_page.k39')}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <IconButton
-                    onClick={() => handleToggleStatus(template.id)}
-                    sx={{
-                      color: template.isactive ? 'success.main' : 'grey.400',
-                    }}
-                    aria-label={i18n.t('pages.template_management_page.k40')}
-                  >
-                    {template.isactive ? (
-                      <ToggleRight sx={{ width: 20, height: 20 }} />
-                    ) : (
-                      <ToggleLeft sx={{ width: 20, height: 20 }} />
-                    )}
-                  </IconButton>
-                  <IconButton
-                    onClick={() => {
-                      setSelectedTemplate(template);
-                      setShowPreviewModal(true);
-                    }}
-                    sx={{ color: 'primary.main' }}
-                    aria-label={i18n.t('pages.template_management_page.k41')}
-                  >
-                    <Eye sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleDuplicateTemplate(template.id)}
-                    sx={{ color: 'success.main' }}
-                    aria-label={i18n.t('pages.template_management_page.k42')}
-                  >
-                    <Copy sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => {
-                      setSelectedTemplate(template);
-                      setShowEditModal(true);
-                    }}
-                    sx={{ color: 'primary.main' }}
-                    aria-label={i18n.t('pages.template_management_page.k43')}
-                  >
-                    <Edit sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleDeleteTemplate(template.id)}
-                    sx={{ color: 'error.main' }}
-                    aria-label={i18n.t('pages.template_management_page.k44')}
-                  >
-                    <Trash2 sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </Card>
+  return (
+    <>
+      <ListPageTemplate<Template>
+        title={i18n.t('pages.template_management_page.k17')}
+        subtitle={i18n.t('pages.template_management_page.k18')}
+        columns={columns}
+        data={filteredTemplates}
+        loading={loading}
+        actions={actions}
+        renderRowActions={renderRowActions}
+        viewMode={viewMode === 'grid' ? 'card' : 'table'}
+        viewModes={['table']}
+        renderCardView={renderCardView}
+        emptyMessage={i18n.t('pages.template_management_page.k23')}
+        emptyIcon={<FileText sx={{ width: 48, height: 48, color: 'grey.400' }} />}
+        headerContent={headerContent}
+      />
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
@@ -661,7 +741,7 @@ const TemplateManagementPage: React.FC = () => {
           }}
         />
       )}
-    </PageContainer>
+    </>
   );
 };
 
@@ -861,7 +941,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
               display: 'flex',
               gap: 3,
               color: 'text.secondary',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             }}
           >
             <Typography variant='body2'>
@@ -893,7 +973,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
             sx={{
               whiteSpace: 'pre-wrap',
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: 'text.secondary',
             }}
           >
@@ -933,10 +1013,15 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
                   <Chip
                     label={variable.type}
                     size='small'
-                    sx={{ fontSize: '0.75rem' }}
+                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                   />
                   {variable.required && (
-                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                    <Typography
+                      sx={{
+                        color: 'error.main',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      }}
+                    >
                       {i18n.t('pages.template_management_page.k61')}
                     </Typography>
                   )}

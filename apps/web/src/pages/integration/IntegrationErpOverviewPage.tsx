@@ -357,7 +357,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                   size='small'
                   label={task.type}
                   variant='outlined'
-                  sx={{ height: 18, fontSize: '0.65rem' }}
+                  sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                 />
               </Box>
             }

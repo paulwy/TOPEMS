@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import {
   Box,
   Button,
@@ -168,7 +169,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   p: 2,
                   bgcolor: 'grey.100',
                   borderRadius: 1,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   whiteSpace: 'pre-wrap',
                   maxHeight: 256,
                   overflow: 'auto',

@@ -1,5 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
-import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 /**
  * 计划达成率分析页
  *
@@ -9,8 +8,13 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apsApi } from '@/api/aps';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
+import { Box, Paper, Typography } from '@mui/material';
+import { Target, ClipboardList, Package } from 'lucide-react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -38,8 +42,11 @@ const mockData = [
   { period: '2025-11', plan: 2200, actual: 2080 },
   { period: '2025-12', plan: 2300, actual: 2280 },
 ];
+
 export default function PlanAdherencePage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['aps', 'PlanAdherencePage'],
     queryFn: async () => {
       try {
@@ -67,6 +74,7 @@ export default function PlanAdherencePage() {
       }
     },
   });
+
   const data = useMemo(() => {
     return mockData.map((d) => ({
       ...d,
@@ -74,104 +82,129 @@ export default function PlanAdherencePage() {
       variance: d.actual - d.plan,
     }));
   }, []);
+
   const avgAdherence = useMemo(() => {
     const sum = data.reduce((s, d) => s + d.adherenceRate, 0);
     return Number((sum / data.length).toFixed(1));
   }, [data]);
+
   const totalPlan = useMemo(() => data.reduce((s, d) => s + d.plan, 0), [data]);
   const totalActual = useMemo(() => data.reduce((s, d) => s + d.actual, 0), [data]);
+
+  const statCards: StatCard[] = [
+    {
+      id: 'avgAdherence',
+      title: t('aps.plan_adherence_page.k2'),
+      value: `${avgAdherence}%`,
+      icon: <Target size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'totalPlan',
+      title: t('aps.plan_adherence_page.k3'),
+      value: totalPlan.toLocaleString(),
+      icon: <ClipboardList size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'totalActual',
+      title: t('aps.plan_adherence_page.k4'),
+      value: totalActual.toLocaleString(),
+      icon: <Package size={24} />,
+      color: 'warning',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('aps.plan_adherence_page.k0')}</h1>
-        <span className='text-sm text-gray-500'>{i18n.t('aps.plan_adherence_page.vs_1')}</span>
-      </div>
-      <p className='text-sm text-gray-600'>{i18n.t('pages.plan_adherence_page.k0')}</p>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.plan_adherence_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{avgAdherence}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.plan_adherence_page.k3')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{totalPlan.toLocaleString()}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.plan_adherence_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{totalActual.toLocaleString()}</p>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('aps.analytics.planAdherence.k0')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={360}
+    <StatsPageTemplate
+      title={t('aps.plan_adherence_page.k0')}
+      subtitle={`${t('pages.plan_adherence_page.k0')} | ${t('aps.plan_adherence_page.vs_1')}`}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
         >
-          <ComposedChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          {t('aps.analytics.planAdherence.k0')}
+        </Typography>
+        <Box sx={{ width: '100%', height: 360 }}>
+          <ResponsiveContainer
+            width='100%'
+            height='100%'
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='period'
-              fontSize={11}
-            />
-            <YAxis
-              yAxisId='left'
-              fontSize={11}
-              label={{
-                value: i18n.t('aps.plan_adherence_page.k5'),
-                angle: -90,
-                position: 'insideLeft',
-              }}
-            />
-            <YAxis
-              yAxisId='right'
-              orientation='right'
-              domain={[80, 120]}
-              unit='%'
-              fontSize={11}
-              label={{
-                value: i18n.t('aps.plan_adherence_page.k6'),
-                angle: 90,
-                position: 'insideRight',
-              }}
-            />
-            <Tooltip />
-            <Legend />
-            <ReferenceLine
-              yAxisId='right'
-              y={100}
-              stroke={designTokens.colors.success.dark}
-              strokeDasharray='4 4'
-              label={i18n.t('aps.plan_adherence_page.100_7')}
-            />
-            <Bar
-              yAxisId='left'
-              dataKey='plan'
-              name={i18n.t('aps.plan_adherence_page.k8')}
-              fill={designTokens.colors.secondary.dark}
-              barSize={20}
-            />
-            <Bar
-              yAxisId='left'
-              dataKey='actual'
-              name={i18n.t('aps.plan_adherence_page.k9')}
-              fill={designTokens.colors.warning.main}
-              barSize={20}
-            />
-            <Line
-              yAxisId='right'
-              type='monotone'
-              dataKey='adherenceRate'
-              name={i18n.t('aps.plan_adherence_page.k10')}
-              stroke={designTokens.colors.success.dark}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+            <ComposedChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='period'
+                fontSize={11}
+              />
+              <YAxis
+                yAxisId='left'
+                fontSize={11}
+                label={{
+                  value: t('aps.plan_adherence_page.k5'),
+                  angle: -90,
+                  position: 'insideLeft',
+                }}
+              />
+              <YAxis
+                yAxisId='right'
+                orientation='right'
+                domain={[80, 120]}
+                unit='%'
+                fontSize={11}
+                label={{
+                  value: t('aps.plan_adherence_page.k6'),
+                  angle: 90,
+                  position: 'insideRight',
+                }}
+              />
+              <Tooltip />
+              <Legend />
+              <ReferenceLine
+                yAxisId='right'
+                y={100}
+                stroke={designTokens.colors.success.dark}
+                strokeDasharray='4 4'
+                label={t('aps.plan_adherence_page.100_7')}
+              />
+              <Bar
+                yAxisId='left'
+                dataKey='plan'
+                name={t('aps.plan_adherence_page.k8')}
+                fill={designTokens.colors.secondary.dark}
+                barSize={20}
+              />
+              <Bar
+                yAxisId='left'
+                dataKey='actual'
+                name={t('aps.plan_adherence_page.k9')}
+                fill={designTokens.colors.warning.main}
+                barSize={20}
+              />
+              <Line
+                yAxisId='right'
+                type='monotone'
+                dataKey='adherenceRate'
+                name={t('aps.plan_adherence_page.k10')}
+                stroke={designTokens.colors.success.dark}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+    </StatsPageTemplate>
   );
 }

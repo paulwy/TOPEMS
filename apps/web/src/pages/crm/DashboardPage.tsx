@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect } from 'react';
 import { Box, Typography, Card, CardContent, CardHeader, Grid, useTheme } from '@mui/material';
 import {
@@ -234,7 +235,7 @@ export const DashboardPage: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>
+        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], color: 'grey.600' }}>
           {t('crm.common.loading')}
         </Typography>
       </Box>
@@ -302,7 +303,7 @@ export const DashboardPage: React.FC = () => {
                       sx={{
                         width: 60,
                         textAlign: 'right',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       }}
                     >
                       {item.stage_label}
@@ -325,7 +326,7 @@ export const DashboardPage: React.FC = () => {
                             alignItems: 'center',
                             paddingLeft: 8,
                             color: 'common.white',
-                            fontSize: '0.75rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             fontWeight: 500,
                           }}
                         >
@@ -337,7 +338,7 @@ export const DashboardPage: React.FC = () => {
                       sx={{
                         width: 80,
                         textAlign: 'right',
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       }}
                     >
                       {item.avg_probability ? `${item.avg_probability.toFixed(0)}%` : '-'}

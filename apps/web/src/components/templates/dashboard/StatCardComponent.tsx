@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Card, CardContent, Skeleton, Typography, Chip, Stack } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -103,7 +104,7 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                       size='small'
                       sx={{
                         height: 20,
-                        fontSize: '0.65rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.65rem'],
                         bgcolor: tag.color || `${bgColor}20`,
                         color: tag.color || bgColor,
                       }}

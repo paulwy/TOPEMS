@@ -173,7 +173,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <tr>
                   <th
                     style={{
-                      padding: `${designTokens.spacing.md} 16px`,
+                      padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontSize: '12px',
                       fontWeight: 500,
@@ -189,7 +189,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       key={column}
                       onClick={() => handleSort(column)}
                       style={{
-                        padding: `${designTokens.spacing.md} 16px`,
+                        padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                         textAlign: 'left',
                         fontSize: '12px',
                         fontWeight: 500,
@@ -248,7 +248,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     >
                       <td
                         style={{
-                          padding: `${designTokens.spacing.md} 16px`,
+                          padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                           fontSize: '14px',
                           color: theme.palette.grey[600],
                         }}
@@ -259,7 +259,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         <td
                           key={column}
                           style={{
-                            padding: `${designTokens.spacing.md} 16px`,
+                            padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                             fontSize: '14px',
                             color: theme.palette.text.primary,
                           }}
@@ -301,7 +301,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   setCurrentPage(1);
                 }}
                 style={{
-                  padding: `${designTokens.spacing.xs} 8px`,
+                  padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   border: '1px solid border.default',
                   borderRadius: 'sm',
                   fontSize: '14px',

@@ -13,7 +13,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-use super::{big_decimal_to_f64, datetime_to_string};
+use super::{big_decimal_to_f64, datetime_to_string, opt_big_decimal_to_f64};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
@@ -207,22 +207,26 @@ pub async fn list_inspections(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
+                    .unwrap_or_default(),
             ),
             qualified_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
+                    .unwrap_or_default(),
             ),
             unqualified_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("unqualified_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
+                    .unwrap_or_default(),
             ),
             qualification_rate: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("qualification_rate")
                     .ok()
-                    .flatten(),
+                    .flatten()
+                    .unwrap_or_default(),
             ),
             inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
             inspection_time: r
@@ -302,15 +306,15 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type.unwrap_or_default(),
+                inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: big_decimal_to_f64(r.qualification_rate),
+                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -420,15 +424,15 @@ pub async fn create_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type.unwrap_or_default(),
+                inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: big_decimal_to_f64(r.qualification_rate),
+                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -528,15 +532,15 @@ pub async fn update_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code,
+                product_name: r.product_name,
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type.unwrap_or_default(),
+                inspection_type: r.inspection_type,
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: big_decimal_to_f64(r.qualification_rate),
+                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),

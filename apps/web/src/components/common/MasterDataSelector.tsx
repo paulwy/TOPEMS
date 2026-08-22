@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * V34.0 MDM AC-6: 主数据选择器组件
  *
@@ -118,14 +119,14 @@ const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
               <Chip
                 label={domainLabel[option.domain] ?? option.domain}
                 size='small'
-                sx={{ height: 18, fontSize: '0.65rem' }}
+                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
               />
               {showStatus && (
                 <Chip
                   label={option.status}
                   size='small'
                   color={option.status === 'active' ? 'success' : 'default'}
-                  sx={{ height: 18, fontSize: '0.65rem' }}
+                  sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                 />
               )}
               <Typography

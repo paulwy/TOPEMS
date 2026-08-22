@@ -75,6 +75,54 @@ pub fn is_valid_transition(
     check_pair(from, to, allowed_pairs, terminal, all_states).is_ok()
 }
 
+// ==================== FsmDef 结构体 ====================
+
+/// 有限状态机定义（声明式）。
+///
+/// 将 5 个服务（MES/APS/QMS/TMS/WMS）共 32 个 FSM 的 "4 常量 + 3 函数" 模板
+/// 收敛为一个结构体 + 3 个方法，消除 ~96 个重复的包装函数。
+///
+/// 各服务只需定义 `pub const XXX: FsmDef = FsmDef { ... };`，
+/// 调用方用 `XXX.can_transition(from, to)` 替代 `xxx_can_transition(from, to)`。
+/// 兼容函数可委托给 `FsmDef` 方法，保持 `use crate::shared::fsm::*` 调用方无需改动。
+pub struct FsmDef {
+    /// 全部合法状态
+    pub states: &'static [&'static str],
+    /// 终态（不可再迁移）
+    pub terminal: &'static [&'static str],
+    /// 允许的迁移对 (from, to)
+    pub transitions: &'static [(&'static str, &'static str)],
+    /// 需要审批的迁移对 (from, to)
+    pub approval_transitions: &'static [(&'static str, &'static str)],
+}
+
+impl FsmDef {
+    /// 校验 `from -> to` 迁移是否合法。
+    ///
+    /// 等价于 `check_pair(from, to, self.transitions, self.terminal, self.states)`。
+    pub fn can_transition(&self, from: &str, to: &str) -> Result<(), FsmError> {
+        check_pair(from, to, self.transitions, self.terminal, self.states)
+    }
+
+    /// 判断 `from -> to` 是否需要审批。
+    pub fn requires_approval(&self, from: &str, to: &str) -> bool {
+        self.approval_transitions.contains(&(from, to))
+    }
+
+    /// 判断 `status` 是否为该 FSM 的合法状态。
+    pub fn is_valid_status(&self, status: &str) -> bool {
+        self.states.contains(&status)
+    }
+
+    /// 判断 `from -> to` 是否为有效迁移（自转移拒绝，其余同 `can_transition`）。
+    pub fn is_valid_transition(&self, from: &str, to: &str) -> bool {
+        if from == to {
+            return false;
+        }
+        self.can_transition(from, to).is_ok()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * 统一的 DataTable 组件
  * 迁移自 apps/web，在 shared-components 中自包含，不再依赖 apps/web 专属模块。
@@ -717,7 +718,7 @@ function DataTableVirtualRow({ index, style, data }: ListChildComponentProps<Vir
           },
           '&:last-child td': { borderBottom: 0 },
           bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-          ...(compact && { fontSize: '0.875rem' }),
+          ...(compact && { fontSize: designTokens.typography.fontSize.scale['0.875rem'] }),
         }}
       >
         {showSelection && (
@@ -1278,7 +1279,7 @@ export function DataTable<TData, TValue>({
             },
             '&:last-child td': { borderBottom: 0 },
             bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-            ...(compact && { fontSize: '0.875rem' }),
+            ...(compact && { fontSize: designTokens.typography.fontSize.scale['0.875rem'] }),
           }}
         >
           {showSelection && (
@@ -1365,7 +1366,9 @@ export function DataTable<TData, TValue>({
                     rowKey={rowKey}
                     onEditChange={handleEditChange}
                     onSaveEdit={() => {
-                      inlineEditMode === 'cell' && handleSaveEdit(row.original, rowKey);
+                      if (inlineEditMode === 'cell') {
+                        handleSaveEdit(row.original, rowKey);
+                      }
                     }}
                     inlineEditMode={inlineEditMode}
                   />
@@ -1588,7 +1591,7 @@ export function DataTable<TData, TValue>({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 component='span'
-                sx={{ fontSize: '0.875rem', color: 'primary.dark' }}
+                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'primary.dark' }}
               >
                 {mergedLabels.selectedLabel}{' '}
                 <Chip
@@ -2005,7 +2008,7 @@ export function DataTable<TData, TValue>({
                 >
                   <Box
                     sx={{
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       fontWeight: 500,
                       color: 'text.primary',
                     }}
@@ -2026,7 +2029,7 @@ export function DataTable<TData, TValue>({
                         borderRadius: 1,
                         px: 1.5,
                         py: 1,
-                        fontSize: '0.875rem',
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         outline: 'none',
                         '&:focus': { borderColor: 'primary.main' },
                       }}

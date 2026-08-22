@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { FileText, X } from 'lucide-react';
 import {
@@ -270,7 +271,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                         sx={{
                           fontWeight: 500,
                           fontFamily: 'monospace',
-                          fontSize: '0.75rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                           maxWidth: 280,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -339,7 +340,7 @@ const OperationAuditLogDetail: React.FC<OperationAuditLogDetailProps> = ({
                     style={{
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
-                      fontSize: '0.875rem',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'grey.800',
                       margin: 0,
                       maxHeight: 320,

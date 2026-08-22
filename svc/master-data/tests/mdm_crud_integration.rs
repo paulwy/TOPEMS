@@ -32,7 +32,11 @@ fn make_test_state() -> AppState {
         .expect("Failed to create lazy pool");
     AppState {
         db: pool,
-        auth_state: AuthState::from_env(),
+        auth_state: AuthState::new(
+            "test-jwt-secret-for-integration-tests-32chars".to_string(),
+            "test-refresh-secret-for-integration-tests-32chars".to_string(),
+            24,
+        ),
         metrics: Arc::new(SystemMetrics::new()),
         start_time: Instant::now(),
     }

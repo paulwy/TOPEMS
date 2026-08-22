@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * MobileQuality defect record list component
  * @refactor-split Extracted from MobileQualityPage.tsx
@@ -73,7 +74,7 @@ const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
                 color={
                   getSeverityColor(defect.severity) as React.ComponentProps<typeof Chip>['color']
                 }
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
             </Box>
             <Typography
@@ -99,7 +100,7 @@ const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
             <Typography
               variant='body2'
               color='text.secondary'
-              sx={{ fontSize: '0.85rem', mb: 1.5 }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'], mb: 1.5 }}
             >
               {defect.description}
             </Typography>
@@ -123,7 +124,7 @@ const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
                 label={getStatusLabel(defect.status)}
                 size='small'
                 color={getStatusColor(defect.status) as React.ComponentProps<typeof Chip>['color']}
-                sx={{ height: 20, fontSize: '0.7rem' }}
+                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
               />
             </Box>
           </Paper>

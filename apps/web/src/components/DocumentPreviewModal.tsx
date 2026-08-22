@@ -306,7 +306,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <button
                 onClick={onClose}
                 style={{
-                  padding: '8px 16px',
+                  padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                   backgroundColor: theme.palette.grey[200],
                   color: theme.palette.grey[700],
                   borderRadius: 'md',
@@ -339,7 +339,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             onClick={onClose}
             style={{
               width: '100%',
-              padding: '8px 16px',
+              padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
               backgroundColor: theme.palette.grey[200],
               color: theme.palette.grey[700],
               borderRadius: 'md',

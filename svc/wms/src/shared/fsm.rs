@@ -8,19 +8,17 @@
 //! FSM-6 InventoryMovement:draft→posted→completed, draft|posted→cancelled
 //! FSM-7 SerialNumber:     pending→assigned→used→archived
 //!
+//! 使用 `FsmDef` 声明式定义，消除重复的 `check_pair` 调用模板。
 //! `FsmError` / `validate_status` / `check_pair` 已提取至 `topems_shared_core::fsm`。
 
 // 重导出公共 FSM 基础类型，保持 `use crate::shared::fsm::{...}` 调用方无需改动
-pub use topems_shared_core::fsm::{check_pair, FsmError};
+pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
-const INBOUND_ORDER_STATES: &[&str] =
-    &["created", "confirmed", "received", "completed", "cancelled"];
-const INBOUND_ORDER_TERMINAL: &[&str] = &["completed", "cancelled"];
-const INBOUND_ORDER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("received", "completed")];
-
-pub fn inbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const INBOUND_ORDER: FsmDef = FsmDef {
+    states: &["created", "confirmed", "received", "completed", "cancelled"],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("created", "confirmed"),
         ("confirmed", "created"),
         ("confirmed", "received"),
@@ -28,39 +26,35 @@ pub fn inbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError
         ("received", "completed"),
         ("created", "cancelled"),
         ("confirmed", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        INBOUND_ORDER_TERMINAL,
-        INBOUND_ORDER_STATES,
-    )
+    ],
+    approval_transitions: &[("received", "completed")],
+};
+
+pub fn inbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    INBOUND_ORDER.can_transition(from, to)
 }
 
 pub fn inbound_order_requires_approval(from: &str, to: &str) -> bool {
-    INBOUND_ORDER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    INBOUND_ORDER.requires_approval(from, to)
 }
 
 pub fn is_valid_inbound_order_status(s: &str) -> bool {
-    INBOUND_ORDER_STATES.contains(&s)
+    INBOUND_ORDER.is_valid_status(s)
 }
 
 // ==================== FSM-2: OutboundOrder ====================
-const OUTBOUND_ORDER_STATES: &[&str] = &[
-    "created",
-    "confirmed",
-    "picking",
-    "packing",
-    "shipping",
-    "completed",
-    "cancelled",
-];
-const OUTBOUND_ORDER_TERMINAL: &[&str] = &["completed", "cancelled"];
-const OUTBOUND_ORDER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("packing", "shipping")];
-
-pub fn outbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const OUTBOUND_ORDER: FsmDef = FsmDef {
+    states: &[
+        "created",
+        "confirmed",
+        "picking",
+        "packing",
+        "shipping",
+        "completed",
+        "cancelled",
+    ],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("created", "confirmed"),
         ("confirmed", "picking"),
         ("picking", "packing"),
@@ -71,67 +65,59 @@ pub fn outbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmErro
         ("confirmed", "cancelled"),
         ("picking", "cancelled"),
         ("packing", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        OUTBOUND_ORDER_TERMINAL,
-        OUTBOUND_ORDER_STATES,
-    )
+    ],
+    approval_transitions: &[("packing", "shipping")],
+};
+
+pub fn outbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    OUTBOUND_ORDER.can_transition(from, to)
 }
 
 pub fn outbound_order_requires_approval(from: &str, to: &str) -> bool {
-    OUTBOUND_ORDER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    OUTBOUND_ORDER.requires_approval(from, to)
 }
 
 pub fn is_valid_outbound_order_status(s: &str) -> bool {
-    OUTBOUND_ORDER_STATES.contains(&s)
+    OUTBOUND_ORDER.is_valid_status(s)
 }
 
 // ==================== FSM-3: StockTake ====================
-const STOCK_TAKE_STATES: &[&str] = &["planned", "in_progress", "completed", "cancelled"];
-const STOCK_TAKE_TERMINAL: &[&str] = &["completed", "cancelled"];
-const STOCK_TAKE_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("in_progress", "completed")];
-
-pub fn stock_take_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const STOCK_TAKE: FsmDef = FsmDef {
+    states: &["planned", "in_progress", "completed", "cancelled"],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("planned", "in_progress"),
         ("in_progress", "completed"),
         ("planned", "cancelled"),
         ("in_progress", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        STOCK_TAKE_TERMINAL,
-        STOCK_TAKE_STATES,
-    )
+    ],
+    approval_transitions: &[("in_progress", "completed")],
+};
+
+pub fn stock_take_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    STOCK_TAKE.can_transition(from, to)
 }
 
 pub fn stock_take_requires_approval(from: &str, to: &str) -> bool {
-    STOCK_TAKE_APPROVAL_TRANSITIONS.contains(&(from, to))
+    STOCK_TAKE.requires_approval(from, to)
 }
 
 pub fn is_valid_stock_take_status(s: &str) -> bool {
-    STOCK_TAKE_STATES.contains(&s)
+    STOCK_TAKE.is_valid_status(s)
 }
 
 // ==================== FSM-4: TransferOrder ====================
-const TRANSFER_ORDER_STATES: &[&str] = &[
-    "pending",
-    "confirmed",
-    "shipped",
-    "received",
-    "completed",
-    "cancelled",
-];
-const TRANSFER_ORDER_TERMINAL: &[&str] = &["completed", "cancelled"];
-const TRANSFER_ORDER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("confirmed", "shipped")];
-
-pub fn transfer_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const TRANSFER_ORDER: FsmDef = FsmDef {
+    states: &[
+        "pending",
+        "confirmed",
+        "shipped",
+        "received",
+        "completed",
+        "cancelled",
+    ],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("pending", "confirmed"),
         ("confirmed", "pending"),
         ("confirmed", "shipped"),
@@ -141,110 +127,96 @@ pub fn transfer_order_can_transition(from: &str, to: &str) -> Result<(), FsmErro
         ("confirmed", "cancelled"),
         ("shipped", "cancelled"),
         ("received", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        TRANSFER_ORDER_TERMINAL,
-        TRANSFER_ORDER_STATES,
-    )
+    ],
+    approval_transitions: &[("confirmed", "shipped")],
+};
+
+pub fn transfer_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    TRANSFER_ORDER.can_transition(from, to)
 }
 
 pub fn transfer_order_requires_approval(from: &str, to: &str) -> bool {
-    TRANSFER_ORDER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    TRANSFER_ORDER.requires_approval(from, to)
 }
 
 pub fn is_valid_transfer_order_status(s: &str) -> bool {
-    TRANSFER_ORDER_STATES.contains(&s)
+    TRANSFER_ORDER.is_valid_status(s)
 }
 
 // ==================== FSM-5: WavePick ====================
-const WAVE_PICK_STATES: &[&str] = &["created", "assigned", "picking", "completed", "cancelled"];
-const WAVE_PICK_TERMINAL: &[&str] = &["completed", "cancelled"];
-const WAVE_PICK_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[];
-
-pub fn wave_pick_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const WAVE_PICK: FsmDef = FsmDef {
+    states: &["created", "assigned", "picking", "completed", "cancelled"],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("created", "assigned"),
         ("assigned", "picking"),
         ("picking", "completed"),
         ("created", "cancelled"),
         ("assigned", "cancelled"),
         ("picking", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        WAVE_PICK_TERMINAL,
-        WAVE_PICK_STATES,
-    )
+    ],
+    approval_transitions: &[],
+};
+
+pub fn wave_pick_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    WAVE_PICK.can_transition(from, to)
 }
 
 pub fn wave_pick_requires_approval(from: &str, to: &str) -> bool {
-    WAVE_PICK_APPROVAL_TRANSITIONS.contains(&(from, to))
+    WAVE_PICK.requires_approval(from, to)
 }
 
 pub fn is_valid_wave_pick_status(s: &str) -> bool {
-    WAVE_PICK_STATES.contains(&s)
+    WAVE_PICK.is_valid_status(s)
 }
 
 // ==================== FSM-6: InventoryMovement ====================
-const INVENTORY_MOVEMENT_STATES: &[&str] = &["draft", "posted", "completed", "cancelled"];
-const INVENTORY_MOVEMENT_TERMINAL: &[&str] = &["completed", "cancelled"];
-const INVENTORY_MOVEMENT_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("posted", "completed")];
-
-pub fn inventory_movement_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const INVENTORY_MOVEMENT: FsmDef = FsmDef {
+    states: &["draft", "posted", "completed", "cancelled"],
+    terminal: &["completed", "cancelled"],
+    transitions: &[
         ("draft", "posted"),
         ("posted", "completed"),
         ("draft", "cancelled"),
         ("posted", "cancelled"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        INVENTORY_MOVEMENT_TERMINAL,
-        INVENTORY_MOVEMENT_STATES,
-    )
+    ],
+    approval_transitions: &[("posted", "completed")],
+};
+
+pub fn inventory_movement_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    INVENTORY_MOVEMENT.can_transition(from, to)
 }
 
 pub fn inventory_movement_requires_approval(from: &str, to: &str) -> bool {
-    INVENTORY_MOVEMENT_APPROVAL_TRANSITIONS.contains(&(from, to))
+    INVENTORY_MOVEMENT.requires_approval(from, to)
 }
 
 pub fn is_valid_inventory_movement_status(s: &str) -> bool {
-    INVENTORY_MOVEMENT_STATES.contains(&s)
+    INVENTORY_MOVEMENT.is_valid_status(s)
 }
 
 // ==================== FSM-7: SerialNumber ====================
-const SERIAL_NUMBER_STATES: &[&str] = &["pending", "assigned", "used", "archived"];
-const SERIAL_NUMBER_TERMINAL: &[&str] = &["archived"];
-const SERIAL_NUMBER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[];
-
-pub fn serial_number_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const SERIAL_NUMBER: FsmDef = FsmDef {
+    states: &["pending", "assigned", "used", "archived"],
+    terminal: &["archived"],
+    transitions: &[
         ("pending", "assigned"),
         ("assigned", "used"),
         ("used", "archived"),
-    ];
-    check_pair(
-        from,
-        to,
-        allowed_pairs,
-        SERIAL_NUMBER_TERMINAL,
-        SERIAL_NUMBER_STATES,
-    )
+    ],
+    approval_transitions: &[],
+};
+
+pub fn serial_number_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    SERIAL_NUMBER.can_transition(from, to)
 }
 
 pub fn serial_number_requires_approval(from: &str, to: &str) -> bool {
-    SERIAL_NUMBER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    SERIAL_NUMBER.requires_approval(from, to)
 }
 
 pub fn is_valid_serial_number_status(s: &str) -> bool {
-    SERIAL_NUMBER_STATES.contains(&s)
+    SERIAL_NUMBER.is_valid_status(s)
 }
 
 #[cfg(test)]
@@ -859,26 +831,26 @@ mod tests {
 
         #[test]
         fn is_valid_status_helpers_consistent_with_state_lists() {
-            // 校验 is_valid_*_status 与各 FSM STATES 常量一致
-            for s in INBOUND_ORDER_STATES {
+            // 校验 is_valid_*_status 与各 FsmDef.states 字段一致
+            for s in INBOUND_ORDER.states {
                 assert!(is_valid_inbound_order_status(s));
             }
-            for s in OUTBOUND_ORDER_STATES {
+            for s in OUTBOUND_ORDER.states {
                 assert!(is_valid_outbound_order_status(s));
             }
-            for s in STOCK_TAKE_STATES {
+            for s in STOCK_TAKE.states {
                 assert!(is_valid_stock_take_status(s));
             }
-            for s in TRANSFER_ORDER_STATES {
+            for s in TRANSFER_ORDER.states {
                 assert!(is_valid_transfer_order_status(s));
             }
-            for s in WAVE_PICK_STATES {
+            for s in WAVE_PICK.states {
                 assert!(is_valid_wave_pick_status(s));
             }
-            for s in INVENTORY_MOVEMENT_STATES {
+            for s in INVENTORY_MOVEMENT.states {
                 assert!(is_valid_inventory_movement_status(s));
             }
-            for s in SERIAL_NUMBER_STATES {
+            for s in SERIAL_NUMBER.states {
                 assert!(is_valid_serial_number_status(s));
             }
         }

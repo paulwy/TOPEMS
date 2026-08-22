@@ -182,14 +182,17 @@ pub fn generate_span_id() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_log_format_from_env_text() {
         std::env::set_var("LOG_FORMAT", "text");
         assert_eq!(LogFormat::from_env(), LogFormat::Text);
     }
 
     #[test]
+    #[serial]
     fn test_log_format_from_env_json() {
         std::env::set_var("LOG_FORMAT", "json");
         assert_eq!(LogFormat::from_env(), LogFormat::Json);
@@ -197,6 +200,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_log_format_from_env_file() {
         std::env::set_var("LOG_FORMAT", "file");
         assert_eq!(LogFormat::from_env(), LogFormat::File);
@@ -204,6 +208,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_log_format_from_env_case_insensitive() {
         std::env::set_var("LOG_FORMAT", "JSON");
         assert_eq!(LogFormat::from_env(), LogFormat::Json);
@@ -213,6 +218,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_log_format_from_env_unknown_falls_back_to_text() {
         std::env::set_var("LOG_FORMAT", "xml");
         assert_eq!(LogFormat::from_env(), LogFormat::Text);
@@ -222,6 +228,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_log_format_default() {
         std::env::remove_var("LOG_FORMAT");
         assert_eq!(LogFormat::from_env(), LogFormat::Text);

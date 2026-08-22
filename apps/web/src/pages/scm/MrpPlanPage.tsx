@@ -155,34 +155,34 @@ const MrpPlanPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
                     {t('scm.mrp_plan_page.k5')}
                   </Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 500 }}>
                     {calculationResult.totalitems}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
                     {t('scm.mrp_plan_page.k6')}
                   </Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 500 }}>
                     {calculationResult.total_suggestions}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
                     {t('scm.mrp_plan_page.k7')}
                   </Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'primary.main' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 500, color: 'primary.main' }}>
                     {calculationResult.purchase_suggestions}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
-                  <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
                     {t('scm.mrp_plan_page.k8')}
                   </Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'success.main' }}>
+                  <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 500, color: 'success.main' }}>
                     {calculationResult.production_suggestions}
                   </Box>
                 </Box>

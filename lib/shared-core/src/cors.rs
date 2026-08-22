@@ -56,6 +56,7 @@ pub fn create_cors_layer() -> CorsLayer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_cors_layer_creation() {
@@ -63,12 +64,14 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_default_origins_are_localhost() {
         std::env::remove_var("CORS_ALLOWED_ORIGINS");
         let _layer = create_cors_layer();
     }
 
     #[test]
+    #[serial]
     fn test_custom_origins() {
         std::env::set_var(
             "CORS_ALLOWED_ORIGINS",

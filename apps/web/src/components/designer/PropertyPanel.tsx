@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PropertyPanel — 属性面板
  *
@@ -164,7 +165,7 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
             rows={4}
             onChange={(e) => handleChange(config, e.target.value)}
             size='small'
-            sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+            sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
           />
         );
 

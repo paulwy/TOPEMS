@@ -43,8 +43,8 @@ const StatCard: React.FC<StatCardProps> = ({
         })}
       </Box>
       <Box>
-        <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>{label}</Box>
-        <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: valueColor }}>{value}</Box>
+        <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.500' }}>{label}</Box>
+        <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: valueColor }}>{value}</Box>
       </Box>
     </Box>
   </Box>

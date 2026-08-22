@@ -168,7 +168,7 @@ const NotificationArchivePage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 3,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               color: 'warning.800',
             }}
           >

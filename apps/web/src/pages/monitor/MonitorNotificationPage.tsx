@@ -323,7 +323,7 @@ const MonitorNotificationPage: React.FC = () => {
                 bgcolor: `${typeInfo.color}15`,
                 color: typeInfo.color,
                 border: `1px solid ${typeInfo.color}30`,
-                fontSize: '0.75rem',
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 fontWeight: 500,
               }}
             >

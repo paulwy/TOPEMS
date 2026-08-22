@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Box,
@@ -208,7 +209,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
                 {item.icon as React.ReactNode}
@@ -227,7 +228,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
-                fontSize: '0.875rem',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 textDecoration: 'none',
                 '&:hover': {
                   textDecoration: 'underline',

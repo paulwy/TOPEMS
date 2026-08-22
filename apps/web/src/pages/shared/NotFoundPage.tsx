@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { Home, Search, FileQuestion } from 'lucide-react';
@@ -195,7 +196,7 @@ const NotFoundPage: React.FC = () => {
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
                         sx={{
-                          fontSize: '0.875rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           fontWeight: 600,
                           color: 'text.primary',
                           whiteSpace: 'nowrap',
@@ -208,7 +209,7 @@ const NotFoundPage: React.FC = () => {
                       {mod.description && (
                         <Typography
                           sx={{
-                            fontSize: '0.75rem',
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             color: 'text.secondary',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',

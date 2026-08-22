@@ -601,7 +601,7 @@ export const GisTrackingPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='body1'
-                        sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '0.875rem' }}
+                        sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
                       >
                         {selectedDeviceData.latitude.toFixed(4)},{' '}
                         {selectedDeviceData.longitude.toFixed(4)}

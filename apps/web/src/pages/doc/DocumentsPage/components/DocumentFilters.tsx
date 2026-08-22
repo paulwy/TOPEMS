@@ -58,7 +58,7 @@ const DocumentFilters: React.FC<DocumentFiltersProps> = ({
             border: 'none',
             borderRadius: 8,
             padding: `${designTokens.spacing.sm} 12px`,
-            fontSize: '0.875rem',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           }}
         >
           <option value='all'>{t('doc.documents.filter_all_type')}</option>

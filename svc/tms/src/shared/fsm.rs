@@ -6,136 +6,147 @@
 //! FSM-4 Route:     planning → active → closed → deprecated/cancelled
 //! FSM-5 Shipment:  draft → pending → in_transit → delivered/cancelled
 //!
+//! 使用 `FsmDef` 声明式定义，消除重复的 `check_pair` 调用模板。
 //! `FsmError` / `validate_status` / `check_pair` 已提取至 `topems_shared_core::fsm`。
 
 // 重导出公共 FSM 基础类型，保持 `use crate::shared::fsm::{...}` 调用方无需改动
-pub use topems_shared_core::fsm::{check_pair, FsmError};
+pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: Vehicle ====================
-const VEHICLE_STATES: &[&str] = &["active", "maintenance", "inactive", "retired"];
-const VEHICLE_TERMINAL: &[&str] = &["retired"];
-const VEHICLE_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("inactive", "retired")];
-
-pub fn vehicle_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const VEHICLE: FsmDef = FsmDef {
+    states: &["active", "maintenance", "inactive", "retired"],
+    terminal: &["retired"],
+    transitions: &[
         ("active", "maintenance"),
         ("maintenance", "active"),
         ("maintenance", "inactive"),
         ("inactive", "active"),
         ("inactive", "retired"),
         ("active", "retired"),
-    ];
-    check_pair(from, to, allowed_pairs, VEHICLE_TERMINAL, VEHICLE_STATES)
+    ],
+    approval_transitions: &[("inactive", "retired")],
+};
+
+pub fn vehicle_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    VEHICLE.can_transition(from, to)
 }
 
 pub fn vehicle_requires_approval(from: &str, to: &str) -> bool {
-    VEHICLE_APPROVAL_TRANSITIONS.contains(&(from, to))
+    VEHICLE.requires_approval(from, to)
 }
 
 pub fn is_valid_vehicle_status(s: &str) -> bool {
-    VEHICLE_STATES.contains(&s)
+    VEHICLE.is_valid_status(s)
 }
 
 // ==================== FSM-2: Driver ====================
-const DRIVER_STATES: &[&str] = &["active", "on_leave", "suspended", "inactive"];
-const DRIVER_TERMINAL: &[&str] = &["inactive"];
-const DRIVER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("suspended", "inactive")];
-
-pub fn driver_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const DRIVER: FsmDef = FsmDef {
+    states: &["active", "on_leave", "suspended", "inactive"],
+    terminal: &["inactive"],
+    transitions: &[
         ("active", "on_leave"),
         ("on_leave", "active"),
         ("active", "suspended"),
         ("suspended", "active"),
         ("suspended", "inactive"),
         ("on_leave", "inactive"),
-    ];
-    check_pair(from, to, allowed_pairs, DRIVER_TERMINAL, DRIVER_STATES)
+    ],
+    approval_transitions: &[("suspended", "inactive")],
+};
+
+pub fn driver_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    DRIVER.can_transition(from, to)
 }
 
 pub fn driver_requires_approval(from: &str, to: &str) -> bool {
-    DRIVER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    DRIVER.requires_approval(from, to)
 }
 
 pub fn is_valid_driver_status(s: &str) -> bool {
-    DRIVER_STATES.contains(&s)
+    DRIVER.is_valid_status(s)
 }
 
 // ==================== FSM-3: Carrier ====================
-const CARRIER_STATES: &[&str] = &[
-    "pending_review",
-    "active",
-    "suspended",
-    "blacklisted",
-    "rejected",
-];
-const CARRIER_TERMINAL: &[&str] = &["blacklisted", "rejected"];
-const CARRIER_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("pending_review", "active")];
-
-pub fn carrier_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const CARRIER: FsmDef = FsmDef {
+    states: &[
+        "pending_review",
+        "active",
+        "suspended",
+        "blacklisted",
+        "rejected",
+    ],
+    terminal: &["blacklisted", "rejected"],
+    transitions: &[
         ("pending_review", "active"),
         ("active", "suspended"),
         ("suspended", "active"),
         ("suspended", "blacklisted"),
         ("pending_review", "rejected"),
-    ];
-    check_pair(from, to, allowed_pairs, CARRIER_TERMINAL, CARRIER_STATES)
+    ],
+    approval_transitions: &[("pending_review", "active")],
+};
+
+pub fn carrier_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    CARRIER.can_transition(from, to)
 }
 
 pub fn carrier_requires_approval(from: &str, to: &str) -> bool {
-    CARRIER_APPROVAL_TRANSITIONS.contains(&(from, to))
+    CARRIER.requires_approval(from, to)
 }
 
 pub fn is_valid_carrier_status(s: &str) -> bool {
-    CARRIER_STATES.contains(&s)
+    CARRIER.is_valid_status(s)
 }
 
 // ==================== FSM-4: Route ====================
-const ROUTE_STATES: &[&str] = &["planning", "active", "closed", "deprecated", "cancelled"];
-const ROUTE_TERMINAL: &[&str] = &["deprecated", "cancelled"];
-const ROUTE_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("planning", "active")];
-
-pub fn route_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const ROUTE: FsmDef = FsmDef {
+    states: &["planning", "active", "closed", "deprecated", "cancelled"],
+    terminal: &["deprecated", "cancelled"],
+    transitions: &[
         ("planning", "active"),
         ("active", "closed"),
         ("closed", "active"),
         ("closed", "deprecated"),
         ("planning", "cancelled"),
-    ];
-    check_pair(from, to, allowed_pairs, ROUTE_TERMINAL, ROUTE_STATES)
+    ],
+    approval_transitions: &[("planning", "active")],
+};
+
+pub fn route_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    ROUTE.can_transition(from, to)
 }
 
 pub fn route_requires_approval(from: &str, to: &str) -> bool {
-    ROUTE_APPROVAL_TRANSITIONS.contains(&(from, to))
+    ROUTE.requires_approval(from, to)
 }
 
 pub fn is_valid_route_status(s: &str) -> bool {
-    ROUTE_STATES.contains(&s)
+    ROUTE.is_valid_status(s)
 }
 
 // ==================== FSM-5: Shipment ====================
-const SHIPMENT_STATES: &[&str] = &["draft", "pending", "in_transit", "delivered", "cancelled"];
-const SHIPMENT_TERMINAL: &[&str] = &["delivered", "cancelled"];
-const SHIPMENT_APPROVAL_TRANSITIONS: &[(&str, &str)] = &[("pending", "in_transit")];
-
-pub fn shipment_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    let allowed_pairs: &[(&str, &str)] = &[
+pub const SHIPMENT: FsmDef = FsmDef {
+    states: &["draft", "pending", "in_transit", "delivered", "cancelled"],
+    terminal: &["delivered", "cancelled"],
+    transitions: &[
         ("draft", "pending"),
         ("pending", "in_transit"),
         ("in_transit", "delivered"),
         ("draft", "cancelled"),
         ("pending", "cancelled"),
         ("in_transit", "cancelled"),
-    ];
-    check_pair(from, to, allowed_pairs, SHIPMENT_TERMINAL, SHIPMENT_STATES)
+    ],
+    approval_transitions: &[("pending", "in_transit")],
+};
+
+pub fn shipment_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    SHIPMENT.can_transition(from, to)
 }
 
 pub fn shipment_requires_approval(from: &str, to: &str) -> bool {
-    SHIPMENT_APPROVAL_TRANSITIONS.contains(&(from, to))
+    SHIPMENT.requires_approval(from, to)
 }
 
 pub fn is_valid_shipment_status(s: &str) -> bool {
-    SHIPMENT_STATES.contains(&s)
+    SHIPMENT.is_valid_status(s)
 }

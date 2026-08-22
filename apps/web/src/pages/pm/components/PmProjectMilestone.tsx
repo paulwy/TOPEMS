@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * PmProjectDetailPage milestone Tab
  * @done V79 Phase 2 split
@@ -43,7 +44,7 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
         title={
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pm.project_detail.milestone_list')}
           </Typography>
@@ -106,7 +107,7 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                    <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                       {formatDate(milestone.date)}
                     </TableCell>
                     <TableCell>
@@ -128,7 +129,7 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
                         }
                       />
                     </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                    <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
                       {milestone.phase_id
                         ? phases.find((p: ProjectPhase) => p.id === milestone.phase_id)?.name || '-'
                         : '-'}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -21,15 +21,12 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  useTheme,
+  type Theme,
 } from '@mui/material';
 import {
   BookOpen,
   Star,
-  Search,
   Copy,
   PlayCircle,
   Plus,
@@ -42,16 +39,17 @@ import {
   BarChart3,
   ThumbsUp,
   X,
+  Trash2,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-import { aiApi } from '@/api/ai';
 
 const ct = designTokens.colors;
 
@@ -185,28 +183,18 @@ const getCategoryColor = (category: string) => {
   return map[category] || 'grey.500';
 };
 
+const getCategoryBg = (category: string, theme: Theme) => {
+  const palette = theme.palette as unknown as Record<string, Record<string, string>>;
+  return palette[category]?.[50] ?? theme.palette.grey[50];
+};
+
 export const AiPromptLibraryPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['ai', 'promptLibrary'],
-    queryFn: async () => {
-      try {
-        return await aiApi.listPromptTemplates();
-      } catch {
-        return {};
-      }
-    },
-  });
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const { t } = useTranslation('ai');
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const theme = useTheme();
 
-  const categories = categoryIds.map((id) => ({
-    id,
-    label: t(`ai.prompt_library.category.${id}`),
-    icon: categoryIcons[id],
-  }));
-
-  const { data: prompts = [] } = useQuery({
+  const { data: prompts = [], refetch } = useQuery<PromptTemplate[]>({
     queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE,
     queryFn: async () => {
       return mockPrompts;
@@ -220,15 +208,17 @@ export const AiPromptLibraryPage: React.FC = () => {
     },
     onMutate: async (promptId) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE });
-      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
-      queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
+      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(
+        QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE
+      );
+      queryClient.setQueryData<PromptTemplate[]>(QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE, (old) =>
         old ? old.map((p) => (p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p)) : []
       );
       return { previousPrompts };
     },
     onError: (_err, _id, context) => {
       if (context?.previousPrompts) {
-        queryClient.setQueryData(['ai-prompts'], context.previousPrompts);
+        queryClient.setQueryData(QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE, context.previousPrompts);
       }
     },
   });
@@ -239,15 +229,17 @@ export const AiPromptLibraryPage: React.FC = () => {
     },
     onMutate: async (promptId) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE });
-      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
-      queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
+      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(
+        QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE
+      );
+      queryClient.setQueryData<PromptTemplate[]>(QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE, (old) =>
         old ? old.filter((p) => p.id !== promptId) : []
       );
       return { previousPrompts };
     },
     onError: (_err, _id, context) => {
       if (context?.previousPrompts) {
-        queryClient.setQueryData(['ai-prompts'], context.previousPrompts);
+        queryClient.setQueryData(QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE, context.previousPrompts);
       }
     },
   });
@@ -262,17 +254,29 @@ export const AiPromptLibraryPage: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [viewTab, setViewTab] = useState<'all' | 'mine'>('all');
 
-  const filteredPrompts = prompts.filter((p) => {
-    const matchCategory = activeCategory === 'all' || p.category === activeCategory;
-    const matchSearch =
-      !searchQuery ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchFavorite = !showFavoritesOnly || p.is_favorite;
-    return matchCategory && matchSearch && matchFavorite;
-  });
+  const categories = useMemo(
+    () =>
+      categoryIds.map((id) => ({
+        id,
+        label: t(`prompt_library.category.${id}`),
+        icon: categoryIcons[id],
+      })),
+    [t]
+  );
 
-  const handleUsePrompt = (prompt: PromptTemplate) => {
+  const filteredPrompts = useMemo(() => {
+    return prompts.filter((p) => {
+      const matchCategory = activeCategory === 'all' || p.category === activeCategory;
+      const matchSearch =
+        !searchQuery ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchFavorite = !showFavoritesOnly || p.is_favorite;
+      return matchCategory && matchSearch && matchFavorite;
+    });
+  }, [activeCategory, prompts, searchQuery, showFavoritesOnly]);
+
+  const handleUsePrompt = useCallback((prompt: PromptTemplate) => {
     setSelectedPrompt(prompt);
     const vars: Record<string, string> = {};
     prompt.variables.forEach((v) => {
@@ -281,9 +285,9 @@ export const AiPromptLibraryPage: React.FC = () => {
     setVariables(vars);
     setGeneratedResult('');
     setUseDialogOpen(true);
-  };
+  }, []);
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
     if (!selectedPrompt) return;
 
     setGenerating(true);
@@ -296,9 +300,9 @@ export const AiPromptLibraryPage: React.FC = () => {
       setGeneratedResult(result);
       setGenerating(false);
     }, 1500);
-  };
+  }, [selectedPrompt, variables]);
 
-  const handleCopyResult = () => {
+  const handleCopyResult = useCallback(() => {
     if (generatedResult) {
       navigator.clipboard.writeText(generatedResult);
       addNotification({
@@ -307,27 +311,271 @@ export const AiPromptLibraryPage: React.FC = () => {
         type: 'success',
       });
     }
-  };
+  }, [generatedResult, addNotification]);
 
-  const handleCopyPrompt = (content: string) => {
-    navigator.clipboard.writeText(content);
-    addNotification({
-      title: i18n.t('ai.prompt_library.message.copied_title'),
-      message: i18n.t('ai.prompt_library.message.prompt_copied'),
-      type: 'success',
-    });
-  };
+  const handleCopyPrompt = useCallback(
+    (content: string) => {
+      navigator.clipboard.writeText(content);
+      addNotification({
+        title: i18n.t('ai.prompt_library.message.copied_title'),
+        message: i18n.t('ai.prompt_library.message.prompt_copied'),
+        type: 'success',
+      });
+    },
+    [addNotification]
+  );
 
-  const handleToggleFavorite = (id: string) => {
-    toggleFavoriteMutation.mutate(id, {
-      onSuccess: () => {
-        addNotification({
-          title: i18n.t('ai.prompt_library.message.favorite_title'),
-          message: i18n.t('ai.prompt_library.message.favorite_updated'),
-          type: 'success',
-        });
+  const handleToggleFavorite = useCallback(
+    (id: string) => {
+      toggleFavoriteMutation.mutate(id, {
+        onSuccess: () => {
+          addNotification({
+            title: i18n.t('ai.prompt_library.message.favorite_title'),
+            message: i18n.t('ai.prompt_library.message.favorite_updated'),
+            type: 'success',
+          });
+        },
+      });
+    },
+    [toggleFavoriteMutation, addNotification]
+  );
+
+  const columns: ColumnDef<PromptTemplate>[] = useMemo(
+    () => [
+      { id: 'name', label: t('ai.ai_prompt_library_page.columns.name') },
+      { id: 'category', label: t('ai.ai_prompt_library_page.columns.category') },
+      {
+        id: 'usage_count',
+        label: t('ai.ai_prompt_library_page.columns.usage_count'),
       },
-    });
+      { id: 'created_by', label: t('ai.ai_prompt_library_page.columns.created_by') },
+    ],
+    [t]
+  );
+
+  const rowActions: RowAction<PromptTemplate>[] = useMemo(
+    () => [
+      {
+        key: 'copy',
+        label: i18n.t('ai.ai_prompt_library_page.k18'),
+        icon: <Copy size={16} />,
+        onClick: (row) => handleCopyPrompt(row.content),
+        color: 'primary',
+      },
+      {
+        key: 'use',
+        label: i18n.t('ai.ai_prompt_library_page.k19'),
+        icon: <PlayCircle size={16} />,
+        onClick: (row) => handleUsePrompt(row),
+        color: 'success',
+      },
+      {
+        key: 'delete',
+        label: i18n.t('templates.list_page_template.k42'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => deletePromptMutation.mutate(row.id),
+        color: 'error',
+      },
+    ],
+    [handleCopyPrompt, handleUsePrompt, deletePromptMutation]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: t('prompt_library.button.new_template'),
+        icon: <Plus size={18} />,
+        onClick: () => {
+          addNotification({
+            title: t('prompt_library.button.new_template'),
+            message: t('prompt_library.message.coming_soon'),
+            type: 'info',
+          });
+        },
+        variant: 'contained' as const,
+      },
+    ],
+    [t, addNotification]
+  );
+
+  const renderPromptCards = (data: PromptTemplate[]) => {
+    if (data.length === 0) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <BookOpen
+            size={48}
+            style={{ margin: '0 auto 12px', color: ct.text.disabled }}
+          />
+          <Typography
+            variant='body1'
+            color='text.secondary'
+          >
+            {i18n.t('ai.prompt_library.message.no_results')}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Grid
+        container
+        spacing={2}
+      >
+        {data.map((prompt) => (
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            key={prompt.id}
+          >
+            <Card
+              variant='outlined'
+              sx={{
+                height: '100%',
+                borderRadius: 3,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  boxShadow: 2,
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              <Box
+                onClick={() => handleUsePrompt(prompt)}
+                sx={{
+                  height: '100%',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                  '&:active': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      mb: 1.5,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: getCategoryBg(prompt.category, theme),
+                        color: getCategoryColor(prompt.category),
+                      }}
+                    >
+                      {getCategoryIcon(prompt.category)}
+                    </Avatar>
+                    <IconButton
+                      size='small'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(prompt.id);
+                      }}
+                      aria-label={i18n.t('ai.ai_prompt_library_page.k17')}
+                    >
+                      <Star
+                        size={18}
+                        style={{
+                          fill: prompt.is_favorite ? theme.palette.warning.main : 'none',
+                          color: prompt.is_favorite
+                            ? theme.palette.warning.main
+                            : theme.palette.grey[400],
+                        }}
+                      />
+                    </IconButton>
+                  </Box>
+
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 600, mb: 0.5 }}
+                  >
+                    {prompt.name}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2, minHeight: 40 }}
+                  >
+                    {prompt.description}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                    {prompt.variables.slice(0, 3).map((v) => (
+                      <Chip
+                        key={v}
+                        label={`{${v}}`}
+                        size='small'
+                        variant='outlined'
+                        sx={{ fontSize: 11 }}
+                      />
+                    ))}
+                    {prompt.variables.length > 3 && (
+                      <Chip
+                        label={`+${prompt.variables.length - 3}`}
+                        size='small'
+                        variant='outlined'
+                        sx={{ fontSize: 11 }}
+                      />
+                    )}
+                  </Box>
+
+                  <Divider sx={{ mb: 1.5 }} />
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                    >
+                      <ThumbsUp size={12} />
+                      {i18n.t('ai.prompt_library.label.usage_count', {
+                        count: prompt.usage_count,
+                      })}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton
+                        size='small'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyPrompt(prompt.content);
+                        }}
+                        aria-label={i18n.t('ai.ai_prompt_library_page.k18')}
+                      >
+                        <Copy size={14} />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUsePrompt(prompt);
+                        }}
+                        aria-label={i18n.t('ai.ai_prompt_library_page.k19')}
+                      >
+                        <PlayCircle size={14} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Box>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
   };
 
   return (
@@ -424,243 +672,48 @@ export const AiPromptLibraryPage: React.FC = () => {
             xs={12}
             md={10}
           >
-            <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-              <Box
-                sx={{
-                  p: 2,
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
+            <ListPageTemplate<PromptTemplate>
+              columns={columns}
+              data={filteredPrompts}
+              loading={false}
+              searchable
+              searchPlaceholder={t('prompt_library.placeholder.search')}
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              onRefresh={refetch}
+              actions={actions}
+              rowActions={rowActions}
+              viewMode='card'
+              viewModes={['card']}
+              cardGridColumns={3}
+              getRowId={(row) => row.id}
+              headerContent={
                 <Tabs
                   value={viewTab}
                   onChange={(_, v) => setViewTab(v)}
                   sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
                 >
                   <Tab
-                    label={i18n.t('ai.prompt_library.view.all_templates')}
+                    label={t('prompt_library.view.all_templates')}
                     value='all'
                     sx={{ textTransform: 'none' }}
                   />
                   <Tab
-                    label={i18n.t('ai.prompt_library.view.my_templates')}
+                    label={t('prompt_library.view.my_templates')}
                     value='mine'
                     sx={{ textTransform: 'none' }}
                   />
                 </Tabs>
-
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    size='small'
-                    placeholder={i18n.t('ai.prompt_library.placeholder.search')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <Search
-                            size={16}
-                            style={{ marginRight: 8, color: ct.grey[400] }}
-                          />
-                        ),
-                      },
-                    }}
-                    sx={{ width: 250 }}
-                  />
-                  <Button
-                    variant='contained'
-                    startIcon={<Plus size={18} />}
-                    size='small'
-                    onClick={() => {
-                      addNotification({
-                        title: i18n.t('ai.prompt_library.button.new_template'),
-                        message: i18n.t('ai.prompt_library.message.coming_soon'),
-                        type: 'info',
-                      });
-                    }}
-                  >
-                    {i18n.t('ai.prompt_library.button.new_template')}
-                  </Button>
-                </Box>
-              </Box>
-
-              <Box sx={{ p: 3 }}>
-                <Grid
-                  container
-                  spacing={2}
-                >
-                  {filteredPrompts.map((prompt) => (
-                    <Grid
-                      item
-                      xs={12}
-                      sm={6}
-                      md={4}
-                      key={prompt.id}
-                    >
-                      <Card
-                        variant='outlined'
-                        sx={{
-                          height: '100%',
-                          borderRadius: 3,
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            boxShadow: 2,
-                            borderColor: 'primary.main',
-                          },
-                        }}
-                      >
-                        <Box
-                          onClick={() => handleUsePrompt(prompt)}
-                          sx={{
-                            height: '100%',
-                            cursor: 'pointer',
-                            '&:hover': {
-                              backgroundColor: 'action.hover',
-                            },
-                            '&:active': {
-                              backgroundColor: 'action.hover',
-                            },
-                          }}
-                        >
-                          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start',
-                                mb: 1.5,
-                              }}
-                            >
-                              <Avatar
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  bgcolor: `${prompt.category}.50`,
-                                  color: getCategoryColor(prompt.category),
-                                }}
-                              >
-                                {getCategoryIcon(prompt.category)}
-                              </Avatar>
-                              <IconButton
-                                size='small'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleFavorite(prompt.id);
-                                }}
-                                aria-label={i18n.t('ai.ai_prompt_library_page.k17')}
-                              >
-                                <Star
-                                  size={18}
-                                  style={{
-                                    fill: prompt.is_favorite ? 'warning.main' : 'none',
-                                    color: prompt.is_favorite ? 'warning.main' : 'grey.400',
-                                  }}
-                                />
-                              </IconButton>
-                            </Box>
-
-                            <Typography
-                              variant='subtitle1'
-                              sx={{ fontWeight: 600, mb: 0.5 }}
-                            >
-                              {prompt.name}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                              sx={{ mb: 2, minHeight: 40 }}
-                            >
-                              {prompt.description}
-                            </Typography>
-
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                              {prompt.variables.slice(0, 3).map((v) => (
-                                <Chip
-                                  key={v}
-                                  label={`{${v}}`}
-                                  size='small'
-                                  variant='outlined'
-                                  sx={{ fontSize: 11 }}
-                                />
-                              ))}
-                              {prompt.variables.length > 3 && (
-                                <Chip
-                                  label={`+${prompt.variables.length - 3}`}
-                                  size='small'
-                                  variant='outlined'
-                                  sx={{ fontSize: 11 }}
-                                />
-                              )}
-                            </Box>
-
-                            <Divider sx={{ mb: 1.5 }} />
-
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                              }}
-                            >
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                              >
-                                <ThumbsUp size={12} />
-                                {i18n.t('ai.prompt_library.label.usage_count', {
-                                  count: prompt.usage_count,
-                                })}
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                <IconButton
-                                  size='small'
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCopyPrompt(prompt.content);
-                                  }}
-                                  aria-label={i18n.t('ai.ai_prompt_library_page.k18')}
-                                >
-                                  <Copy size={14} />
-                                </IconButton>
-                                <IconButton
-                                  size='small'
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUsePrompt(prompt);
-                                  }}
-                                  aria-label={i18n.t('ai.ai_prompt_library_page.k19')}
-                                >
-                                  <PlayCircle size={14} />
-                                </IconButton>
-                              </Box>
-                            </Box>
-                          </CardContent>
-                        </Box>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-
-                {filteredPrompts.length === 0 && (
-                  <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <BookOpen
-                      size={48}
-                      style={{ margin: '0 auto 12px', color: ct.text.disabled }}
-                    />
-                    <Typography
-                      variant='body1'
-                      color='text.secondary'
-                    >
-                      {i18n.t('ai.prompt_library.message.no_results')}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
+              }
+              renderCardView={renderPromptCards}
+              emptyMessage={t('prompt_library.message.no_results')}
+              emptyIcon={
+                <BookOpen
+                  size={48}
+                  style={{ color: ct.text.disabled }}
+                />
+              }
+            />
           </Grid>
         </Grid>
       </Box>
@@ -759,7 +812,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                   <Sparkles
                     size={32}
                     className='animate-pulse'
-                    style={{ margin: '0 auto 8px', color: ct.secondary[400] }}
+                    style={{
+                      margin: `0 auto ${designTokens.spacing.sm}px`,
+                      color: ct.secondary[400],
+                    }}
                   />
                   <Typography
                     variant='body2'
@@ -785,7 +841,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                 <Box sx={{ textAlign: 'center', py: 6 }}>
                   <Sparkles
                     size={32}
-                    style={{ margin: '0 auto 8px', color: ct.text.disabled }}
+                    style={{
+                      margin: `0 auto ${designTokens.spacing.sm}px`,
+                      color: ct.text.disabled,
+                    }}
                   />
                   <Typography
                     variant='body2'

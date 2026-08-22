@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Eye, Clock, User as UserIcon } from 'lucide-react';
@@ -316,7 +317,7 @@ const useOperationAuditLog = () => {
         id: 'resource_type',
         label: i18n.t('admin.operation_audit_log.resource_type'),
         render: (row) => (
-          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
             {row.resource_type || '-'}
           </Typography>
         ),
@@ -328,7 +329,7 @@ const useOperationAuditLog = () => {
           <Typography
             sx={{
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               maxWidth: 160,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -351,7 +352,7 @@ const useOperationAuditLog = () => {
           <Typography
             sx={{
               fontFamily: 'monospace',
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               maxWidth: 160,
               overflow: 'hidden',
               textOverflow: 'ellipsis',

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import type { ReactNode, CSSProperties } from 'react';
 import React, {
   createContext,
@@ -94,7 +95,7 @@ const SkeletonText: React.FC<{ lines?: number; lastLineWidth?: string }> = memo(
           <Skeleton
             key={index}
             variant='text'
-            sx={{ fontSize: '1rem', mb: 0.5 }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1rem'], mb: 0.5 }}
             width={index === lines - 1 ? lastLineWidth : '100%'}
             animation='wave'
           />

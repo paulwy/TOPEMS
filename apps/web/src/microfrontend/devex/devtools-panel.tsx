@@ -862,7 +862,7 @@ const NetworkInspectorTab: React.FC = () => {
                       border: 'none',
                       outline: 'none',
                       flex: 1,
-                      padding: '4px 0',
+                      padding: `${designTokens.spacing.xs}px 0`,
                       fontSize: 14,
                     }}
                   />
@@ -1304,7 +1304,7 @@ const DebugSessionsTab: React.FC = () => {
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    padding: '4px 8px',
+                    padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
                     fontSize: 14,
                     outline: 'none',
                   }}

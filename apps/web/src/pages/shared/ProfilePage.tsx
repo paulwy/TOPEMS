@@ -1,30 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
-import {
-  User,
-  Mail,
-  Shield,
-  Settings,
-  Save,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle,
-  Bell,
-  Clock,
-  Star,
-  Camera,
-  Activity,
-  MessageSquare,
-  FileText,
-  GitBranch,
-  Bot,
-} from 'lucide-react';
-import i18n from '@/i18n';
+import { User, Shield, Settings, Star, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
+import { authApi, type User as UserType } from '@/api/iam';
 import {
   useNotificationStore,
   useAuthStore,
@@ -32,39 +14,16 @@ import {
   useNotificationSettingsStore,
 } from '@/store';
 import { useAuth } from '../../hooks/useAuth';
-import { PageContainer } from '@/components/common';
 
-import {
-  Box,
-  TextField,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Avatar,
-  Switch,
-  Chip,
-  Tabs,
-  Tab,
-  IconButton,
-  CircularProgress,
-  Button,
-  useTheme,
-} from '@mui/material';
-import { designTokens } from '@/theme/tokens';
-import { IM_PATHS } from '@/modules/im/config';
+import { Box, Typography, Button, CircularProgress, useTheme } from '@mui/material';
 import { AUTH_PATHS } from '@/routes/auth';
 
-import { UserCard, TabBar } from './ProfilePage/components/ProfileTabBar';
+import { SettingsPageTemplate } from '@/components/templates';
+import type { SettingTab, SettingSection } from '@/components/templates/SettingsPageTemplate';
+import { UserCard } from './ProfilePage/components/ProfileTabBar';
 import ProfileInfoPanel from './ProfilePage/components/ProfileInfoPanel';
 import ProfileSecurityPanel from './ProfilePage/components/ProfileSecurityPanel';
 import ProfileApprovalPanel from './ProfilePage/components/ProfileApprovalPanel';
-
-const ct = designTokens.colors;
 
 interface ActivityItem {
   id: string;
@@ -99,6 +58,7 @@ const ProfilePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const setUser = useAuthStore((state) => state.setUser);
   const shortcuts = useShortcutsStore((state) => state.shortcuts);
@@ -109,7 +69,6 @@ const ProfilePage: React.FC = () => {
   );
   const { logout } = useAuth();
 
-  const [activeTab, setActiveTab] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -135,7 +94,7 @@ const ProfilePage: React.FC = () => {
       if (res.success && res.data) {
         return res.data;
       }
-      throw new Error(res.message || i18n.t('pages.profile_page.k0'));
+      throw new Error(res.message || t('pages.profile_page.k0'));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -145,7 +104,7 @@ const ProfilePage: React.FC = () => {
   const error = userProfileQuery.isError
     ? userProfileQuery.error instanceof Error
       ? userProfileQuery.error.message
-      : i18n.t('pages.profile_page.k1')
+      : t('pages.profile_page.k1')
     : null;
 
   const activitiesQuery = useQuery<ActivityItem[]>({
@@ -199,10 +158,10 @@ const ProfilePage: React.FC = () => {
       const errorMsg =
         userProfileQuery.error instanceof Error
           ? userProfileQuery.error.message
-          : i18n.t('pages.profile_page.k2');
-      addNotification({ title: i18n.t('pages.profile_page.k3'), message: errorMsg, type: 'error' });
+          : t('pages.profile_page.k2');
+      addNotification({ title: t('pages.profile_page.k3'), message: errorMsg, type: 'error' });
     }
-  }, [userProfileQuery.isError, userProfileQuery.error, addNotification]);
+  }, [userProfileQuery.isError, userProfileQuery.error, addNotification, t]);
 
   useEffect(() => {
     if (preferencesQuery.data) {
@@ -230,7 +189,7 @@ const ProfilePage: React.FC = () => {
         email: data.email,
       });
       if (!res.success || !res.data) {
-        throw new Error(res.message || i18n.t('pages.profile_page.k4'));
+        throw new Error(res.message || t('pages.profile_page.k4'));
       }
       return res.data;
     },
@@ -241,16 +200,15 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: i18n.t('pages.profile_page.k5'),
-        message: i18n.t('pages.profile_page.k6'),
+        title: t('pages.profile_page.k5'),
+        message: t('pages.profile_page.k6'),
         type: 'success',
       });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg =
-        error.response?.data?.message || error.message || i18n.t('pages.profile_page.k7');
-      addNotification({ title: i18n.t('pages.profile_page.k8'), message: errorMsg, type: 'error' });
+      const errorMsg = error.response?.data?.message || error.message || t('pages.profile_page.k7');
+      addNotification({ title: t('pages.profile_page.k8'), message: errorMsg, type: 'error' });
     },
   });
 
@@ -258,7 +216,7 @@ const ProfilePage: React.FC = () => {
     mutationFn: async (data: { current_password: string; new_password: string }) => {
       const res = await authApi.changePassword(data);
       if (!res.success) {
-        throw new Error(res.message || i18n.t('pages.profile_page.k9'));
+        throw new Error(res.message || t('pages.profile_page.k9'));
       }
       return res;
     },
@@ -269,8 +227,8 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: i18n.t('pages.profile_page.k10'),
-        message: i18n.t('pages.profile_page.k11'),
+        title: t('pages.profile_page.k10'),
+        message: t('pages.profile_page.k11'),
         type: 'success',
       });
       setShowPasswordDialog(false);
@@ -283,9 +241,9 @@ const ProfilePage: React.FC = () => {
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       const errorMsg =
-        error.response?.data?.message || error.message || i18n.t('pages.profile_page.k12');
+        error.response?.data?.message || error.message || t('pages.profile_page.k12');
       addNotification({
-        title: i18n.t('pages.profile_page.k13'),
+        title: t('pages.profile_page.k13'),
         message: errorMsg,
         type: 'error',
       });
@@ -296,7 +254,7 @@ const ProfilePage: React.FC = () => {
     mutationFn: async (params: { avatar_url: string }) => {
       const res = await authApi.updateAvatar(params);
       if (!res.success || !res.data) {
-        throw new Error(i18n.t('pages.profile_page.k14'));
+        throw new Error(t('pages.profile_page.k14'));
       }
       return res.data;
     },
@@ -307,15 +265,15 @@ const ProfilePage: React.FC = () => {
         refetchType: 'active',
       });
       addNotification({
-        title: i18n.t('pages.profile_page.k15'),
-        message: i18n.t('pages.profile_page.k16'),
+        title: t('pages.profile_page.k15'),
+        message: t('pages.profile_page.k16'),
         type: 'success',
       });
     },
     onError: () => {
       addNotification({
-        title: i18n.t('pages.profile_page.k17'),
-        message: i18n.t('pages.profile_page.k18'),
+        title: t('pages.profile_page.k17'),
+        message: t('pages.profile_page.k18'),
         type: 'error',
       });
     },
@@ -326,7 +284,7 @@ const ProfilePage: React.FC = () => {
       await authApi.updatePreferences(params);
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.profile_page.k19'), err);
+      apiLogger.error(t('pages.profile_page.k19'), err);
     },
 
     onSuccess: () => {
@@ -344,8 +302,8 @@ const ProfilePage: React.FC = () => {
 
     if (!file.type.startsWith('image/')) {
       addNotification({
-        title: i18n.t('pages.profile_page.k20'),
-        message: i18n.t('pages.profile_page.k21'),
+        title: t('pages.profile_page.k20'),
+        message: t('pages.profile_page.k21'),
         type: 'error',
       });
       return;
@@ -353,8 +311,8 @@ const ProfilePage: React.FC = () => {
 
     if (file.size > 2 * 1024 * 1024) {
       addNotification({
-        title: i18n.t('pages.profile_page.k22'),
-        message: i18n.t('pages.profile_page.2mb_23'),
+        title: t('pages.profile_page.k22'),
+        message: t('pages.profile_page.2mb_23'),
         type: 'error',
       });
       return;
@@ -377,23 +335,23 @@ const ProfilePage: React.FC = () => {
   const handlePasswordChange = (data: PasswordFormData) => {
     if (data.new_password !== data.confirm_password) {
       addNotification({
-        title: i18n.t('pages.profile_page.k24'),
-        message: i18n.t('pages.profile_page.k25'),
+        title: t('pages.profile_page.k24'),
+        message: t('pages.profile_page.k25'),
         type: 'error',
       });
       passwordForm.setError('confirm_password', {
-        message: i18n.t('pages.profile_page.k26'),
+        message: t('pages.profile_page.k26'),
       });
       return;
     }
 
     if (data.new_password.length < 6) {
       addNotification({
-        title: i18n.t('pages.profile_page.k27'),
-        message: i18n.t('pages.profile_page.6_28'),
+        title: t('pages.profile_page.k27'),
+        message: t('pages.profile_page.6_28'),
         type: 'error',
       });
-      passwordForm.setError('new_password', { message: i18n.t('pages.profile_page.6_29') });
+      passwordForm.setError('new_password', { message: t('pages.profile_page.6_29') });
       return;
     }
 
@@ -414,15 +372,15 @@ const ProfilePage: React.FC = () => {
       {
         onSuccess: () => {
           addNotification({
-            title: i18n.t('pages.profile_page.k30'),
-            message: `${key}${i18n.t('pages.profile_page.k0')}`,
+            title: t('pages.profile_page.k30'),
+            message: `${key}${t('pages.profile_page.k0')}`,
             type: 'success',
           });
         },
         onError: () => {
           addNotification({
-            title: i18n.t('pages.profile_page.k31'),
-            message: i18n.t('pages.profile_page.k32'),
+            title: t('pages.profile_page.k31'),
+            message: t('pages.profile_page.k32'),
             type: 'error',
           });
         },
@@ -445,15 +403,15 @@ const ProfilePage: React.FC = () => {
     if (shortcuts.some((s) => s.id === shortcut.id)) {
       newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
       addNotification({
-        title: i18n.t('pages.profile_page.k33'),
-        message: `${shortcut.title}${i18n.t('pages.profile_page.k1')}`,
+        title: t('pages.profile_page.k33'),
+        message: `${shortcut.title}${t('pages.profile_page.k1')}`,
         type: 'info',
       });
     } else {
       newShortcuts = [...shortcuts, shortcut];
       addNotification({
-        title: i18n.t('pages.profile_page.k34'),
-        message: `${shortcut.title}${i18n.t('pages.profile_page.k2')}`,
+        title: t('pages.profile_page.k34'),
+        message: `${shortcut.title}${t('pages.profile_page.k2')}`,
         type: 'success',
       });
     }
@@ -501,93 +459,123 @@ const ProfilePage: React.FC = () => {
             size={48}
             style={{ color: theme.palette.error.main, marginBottom: 12 }}
           />
-          <Typography color='error'>{error || i18n.t('pages.profile_page.k35')}</Typography>
+          <Typography color='error'>{error || t('pages.profile_page.k35')}</Typography>
           <Button
             sx={{ mt: 2 }}
             variant='contained'
             onClick={handleRetryProfile}
           >
-            {i18n.t('pages.profile_page.k0')}
+            {t('pages.profile_page.k0')}
           </Button>
         </Box>
       </Box>
     );
   }
 
+  const approvalPanelProps = {
+    activities,
+    loadingActivities,
+    notificationSettings,
+    shortcuts,
+    onRefreshActivities: handleRefreshActivities,
+    onNotificationSettingChange: handleNotificationSettingChange,
+    onShortcutToggle: handleShortcutToggle,
+  };
+
+  const tabs: SettingTab[] = [
+    {
+      id: 'profile',
+      label: t('pages.profile_tab_bar.k2'),
+      icon: <User size={18} />,
+      sections: [
+        {
+          id: 'profile-section',
+          title: t('pages.profile_tab_bar.k2'),
+          icon: <User size={20} />,
+          content: (
+            <ProfileInfoPanel
+              user={user}
+              profileForm={profileForm}
+              onSubmit={handleProfileUpdate}
+            />
+          ),
+        } as SettingSection,
+      ],
+    },
+    {
+      id: 'security',
+      label: t('pages.profile_tab_bar.k3'),
+      icon: <Shield size={18} />,
+      sections: [
+        {
+          id: 'security-section',
+          title: t('pages.profile_tab_bar.k3'),
+          icon: <Shield size={20} />,
+          content: (
+            <ProfileSecurityPanel
+              user={user}
+              showPasswordDialog={showPasswordDialog}
+              passwordForm={passwordForm}
+              onOpenPasswordDialog={() => setShowPasswordDialog(true)}
+              onClosePasswordDialog={() => setShowPasswordDialog(false)}
+              onPasswordChangeSubmit={handlePasswordChange}
+              onLogout={logout}
+              navigate={navigate}
+            />
+          ),
+        } as SettingSection,
+      ],
+    },
+    {
+      id: 'preferences',
+      label: t('pages.profile_tab_bar.k6'),
+      icon: <Star size={18} />,
+      sections: [
+        {
+          id: 'preferences-section',
+          title: t('pages.profile_tab_bar.k6'),
+          icon: <Star size={20} />,
+          content: (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <ProfileApprovalPanel
+                activeTab={2}
+                {...approvalPanelProps}
+              />
+              <ProfileApprovalPanel
+                activeTab={3}
+                {...approvalPanelProps}
+              />
+              <ProfileApprovalPanel
+                activeTab={4}
+                {...approvalPanelProps}
+              />
+            </Box>
+          ),
+        } as SettingSection,
+      ],
+    },
+  ];
+
   return (
-    <PageContainer
-      title={i18n.t('pages.profile_page.k36')}
-      subtitle={i18n.t('pages.profile_page.k37')}
-      maxWidth='lg'
-      headerProps={{
-        backButton: { href: '/dashboard', visible: true },
-      }}
-    >
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' },
-          gap: 3,
-        }}
-      >
-        <Box>
+    <SettingsPageTemplate
+      title={t('pages.profile_page.k36')}
+      subtitle={t('pages.profile_page.k37')}
+      icon={<Settings />}
+      loading={loading}
+      error={error || undefined}
+      tabs={tabs}
+      showSaveButton={false}
+      showResetButton={false}
+      headerContent={
+        <Box sx={{ mb: 3 }}>
           <UserCard
             user={user}
             avatarUrl={avatarUrl}
             onAvatarUpload={handleAvatarUpload}
           />
         </Box>
-
-        <Box>
-          <Card>
-            <CardHeader
-              sx={{ pb: 0 }}
-              title={
-                <TabBar
-                  activeTab={activeTab}
-                  onTabChange={(t: number) => setActiveTab(t)}
-                />
-              }
-            />
-            <CardContent>
-              {activeTab === 0 && (
-                <ProfileInfoPanel
-                  user={user}
-                  profileForm={profileForm}
-                  onSubmit={handleProfileUpdate}
-                />
-              )}
-
-              {activeTab === 1 && (
-                <ProfileSecurityPanel
-                  user={user}
-                  showPasswordDialog={showPasswordDialog}
-                  passwordForm={passwordForm}
-                  onOpenPasswordDialog={() => setShowPasswordDialog(true)}
-                  onClosePasswordDialog={() => setShowPasswordDialog(false)}
-                  onPasswordChangeSubmit={handlePasswordChange}
-                  onLogout={logout}
-                  navigate={navigate}
-                />
-              )}
-
-              {(activeTab === 2 || activeTab === 3 || activeTab === 4) && (
-                <ProfileApprovalPanel
-                  activeTab={activeTab}
-                  activities={activities}
-                  loadingActivities={loadingActivities}
-                  notificationSettings={notificationSettings}
-                  shortcuts={shortcuts}
-                  onRefreshActivities={handleRefreshActivities}
-                  onNotificationSettingChange={handleNotificationSettingChange}
-                  onShortcutToggle={handleShortcutToggle}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
-    </PageContainer>
+      }
+    />
   );
 };
 

@@ -1,29 +1,17 @@
-import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   TextField,
-  Select,
   MenuItem,
   Button,
   IconButton,
-  Switch,
-  FormControlLabel,
   Chip,
-  CircularProgress,
   Stack,
-  Tooltip,
-  Pagination,
   Alert,
+  Paper,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -33,6 +21,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import { useTranslation } from 'react-i18next';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { tauriApi } from '../../services/tauriApi';
 import { tauriAuth } from '../../services/tauriAuth';
 
@@ -67,10 +57,6 @@ const INITIAL_FILTERS: Filters = {
 
 const PAGE_SIZE = 20;
 
-const row = { display: 'flex', flexDirection: 'row' as const };
-const center = { alignItems: 'center' as const };
-const gap = (n: number) => ({ gap: n * 8 });
-
 const AuditLogPage = () => {
   const { t } = useTranslation('admin');
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -81,8 +67,7 @@ const AuditLogPage = () => {
   const [appliedFilters, setAppliedFilters] = useState<Filters>(INITIAL_FILTERS);
   const [filterOpen, setFilterOpen] = useState(true);
   const [sortAsc, setSortAsc] = useState(false);
-  const [page, setPage] = useState(1);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -117,7 +102,7 @@ const AuditLogPage = () => {
 
       setLogs(data);
       setLastRefresh(new Date());
-      setPage(1);
+      setPage(0);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
@@ -165,31 +150,31 @@ const AuditLogPage = () => {
     fetchLogs(INITIAL_FILTERS);
   };
 
-  const handleExport = () => {
-    const sorted = [...logs].sort((a, b) => {
+  const handleSort = useCallback((_sortBy: string, order: 'asc' | 'desc') => {
+    setSortAsc(order === 'asc');
+  }, []);
+
+  const sortedLogs = useMemo(() => {
+    return [...logs].sort((a, b) => {
       const cmp = a.timestamp.localeCompare(b.timestamp);
       return sortAsc ? cmp : -cmp;
     });
-    const blob = new Blob([JSON.stringify(sorted, null, 2)], { type: 'application/json' });
+  }, [logs, sortAsc]);
+
+  const paginatedLogs = useMemo(() => {
+    return sortedLogs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  }, [sortedLogs, page]);
+
+  const handleExport = useCallback(() => {
+    if (sortedLogs.length === 0) return;
+    const blob = new Blob([JSON.stringify(sortedLogs, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `audit-logs-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleSortToggle = () => {
-    setSortAsc((prev) => !prev);
-  };
-
-  const sortedLogs = [...logs].sort((a, b) => {
-    const cmp = a.timestamp.localeCompare(b.timestamp);
-    return sortAsc ? cmp : -cmp;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(sortedLogs.length / PAGE_SIZE));
-  const paginatedLogs = sortedLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [sortedLogs]);
 
   const actionColor = (action: string) => {
     switch (action) {
@@ -212,86 +197,97 @@ const AuditLogPage = () => {
     }
   };
 
-  if (!isDesktop) {
-    return (
-      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
-        <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center' }}>
-          <BugReportIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography
-            variant='h5'
-            gutterBottom
-          >
-            {t('admin.audit_log.title')}
+  const columns: ColumnDef<AuditLog>[] = useMemo(
+    () => [
+      {
+        id: 'timestamp',
+        label: t('admin.audit_log.timestamp'),
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontSize: 12 }}>
+            {new Date(row.timestamp).toLocaleString()}
           </Typography>
-          <Typography color='text.secondary'>{t('admin.audit_log.not_desktop')}</Typography>
-        </Paper>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ ...row, ...center, justifyContent: 'space-between', mb: 3 }}>
-        <Box sx={{ ...row, ...center, ...gap(2) }}>
-          <BugReportIcon color='primary' />
-          <Typography variant='h5'>{t('admin.audit_log.title')}</Typography>
-          {lastRefresh && (
-            <Chip
-              label={t('admin.audit_log.updated_at', { time: lastRefresh.toLocaleTimeString() })}
-              size='small'
-              variant='outlined'
-            />
-          )}
-        </Box>
-        <Stack
-          direction='row'
-          spacing={1}
-          sx={{ alignItems: 'center' }}
-        >
-          <FormControlLabel
-            control={
-              <Switch
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                size='small'
-              />
-            }
-            label={<Typography variant='body2'>{t('admin.audit_log.auto_refresh')}</Typography>}
-          />
-          <Tooltip title={t('admin.audit_log.export_json')}>
-            <IconButton
-              onClick={handleExport}
-              disabled={logs.length === 0}
-            >
-              <FileDownloadIcon />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant='outlined'
-            startIcon={loading ? <CircularProgress size={18} /> : <RefreshIcon />}
-            onClick={() => fetchLogs(appliedFilters)}
-            disabled={loading}
+        ),
+      },
+      {
+        id: 'action',
+        label: t('admin.audit_log.action'),
+        sortable: false,
+        render: (row) => (
+          <Chip
+            label={row.action}
             size='small'
-          >
-            {t('admin.audit_log.refresh')}
-          </Button>
-        </Stack>
-      </Box>
+            color={actionColor(row.action)}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'target_type',
+        label: t('admin.audit_log.target_type'),
+        sortable: false,
+        render: (row) => <Typography>{row.target_type}</Typography>,
+      },
+      {
+        id: 'target_id',
+        label: t('admin.audit_log.target_id'),
+        sortable: false,
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>{row.target_id}</Typography>
+        ),
+      },
+      {
+        id: 'user_id',
+        label: t('admin.audit_log.user_id'),
+        sortable: false,
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>{row.user_id}</Typography>
+        ),
+      },
+    ],
+    [t]
+  );
 
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 3 }}
-          onClose={() => setError(null)}
-        >
-          {error}
-        </Alert>
-      )}
+  const actions = useMemo(
+    () => [
+      {
+        label: t('admin.audit_log.refresh'),
+        icon: <RefreshIcon />,
+        onClick: () => {
+          if (!loading) {
+            fetchLogs(appliedFilters);
+          }
+        },
+        variant: 'outlined' as const,
+      },
+      {
+        label: t('admin.audit_log.export_json'),
+        icon: <FileDownloadIcon />,
+        onClick: handleExport,
+        variant: 'outlined' as const,
+      },
+      {
+        label: t('admin.audit_log.auto_refresh'),
+        onClick: () => setAutoRefresh((prev) => !prev),
+        variant: autoRefresh ? ('contained' as const) : ('outlined' as const),
+      },
+    ],
+    [t, loading, appliedFilters, fetchLogs, handleExport, autoRefresh]
+  );
 
+  const filterContent = useMemo(
+    () => (
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ pb: filterOpen ? 2 : 0 }}>
-          <Box sx={{ ...row, ...center, justifyContent: 'space-between', mb: filterOpen ? 2 : 0 }}>
-            <Box sx={{ ...row, ...center, ...gap(1) }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: filterOpen ? 2 : 0,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <FilterListIcon
                 fontSize='small'
                 color='action'
@@ -382,7 +378,7 @@ const AuditLogPage = () => {
           )}
 
           {filterOpen && (
-            <Box sx={{ ...row, justifyContent: 'flex-end', ...gap(1) }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
               <Button
                 variant='outlined'
                 size='small'
@@ -402,145 +398,98 @@ const AuditLogPage = () => {
           )}
         </CardContent>
       </Card>
+    ),
+    [filterOpen, filters, t]
+  );
 
-      <Card>
-        <CardContent>
-          {loading && logs.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : logs.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <BugReportIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-              <Typography color='text.secondary'>{t('admin.audit_log.no_records')}</Typography>
+  const headerContent = useMemo(
+    () =>
+      lastRefresh ? (
+        <Chip
+          label={t('admin.audit_log.updated_at', { time: lastRefresh.toLocaleTimeString() })}
+          size='small'
+          variant='outlined'
+          sx={{ mb: 2 }}
+        />
+      ) : null,
+    [lastRefresh, t]
+  );
+
+  if (!isDesktop) {
+    return (
+      <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
+        <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center' }}>
+          <BugReportIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography
+            variant='h5'
+            gutterBottom
+          >
+            {t('admin.audit_log.title')}
+          </Typography>
+          <Typography color='text.secondary'>{t('admin.audit_log.not_desktop')}</Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      {error && (
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+      <ListPageTemplate<AuditLog>
+        title={t('admin.audit_log.title')}
+        columns={columns}
+        data={paginatedLogs}
+        loading={loading && logs.length === 0}
+        actions={actions}
+        filterContent={filterContent}
+        headerContent={headerContent}
+        sortable
+        defaultSortBy='timestamp'
+        defaultSortOrder='desc'
+        onSort={handleSort}
+        pagination={{
+          page,
+          pageSize: PAGE_SIZE,
+          total: sortedLogs.length,
+          onPageChange: setPage,
+        }}
+        expandable={(row) =>
+          row.details ? (
+            <Box
+              sx={{
+                bgcolor: 'grey.50',
+                p: 2,
+                borderRadius: 1,
+                m: 1,
+              }}
+            >
+              <Typography
+                component='pre'
+                sx={{ fontSize: 12, m: 0, overflow: 'auto' }}
+              >
+                {JSON.stringify(row.details, null, 2)}
+              </Typography>
             </Box>
           ) : (
-            <>
-              <TableContainer>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell
-                        sx={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}
-                        onClick={handleSortToggle}
-                      >
-                        <Box sx={{ ...row, ...center, ...gap(0.5) }}>
-                          {t('admin.audit_log.timestamp')}
-                          {sortAsc ? (
-                            <ExpandMoreIcon fontSize='small' />
-                          ) : (
-                            <ExpandLessIcon fontSize='small' />
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.action')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        {t('admin.audit_log.target_type')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        {t('admin.audit_log.target_id')}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.user_id')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{t('admin.audit_log.details')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {paginatedLogs.map((log) => (
-                      <Fragment key={log.id}>
-                        <TableRow
-                          hover
-                          onClick={() => setExpandedId((prev) => (prev === log.id ? null : log.id))}
-                          sx={{ cursor: 'pointer' }}
-                        >
-                          <TableCell
-                            sx={{ whiteSpace: 'nowrap', color: 'text.secondary', fontSize: 12 }}
-                          >
-                            {new Date(log.timestamp).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={log.action}
-                              size='small'
-                              color={actionColor(log.action)}
-                              variant='outlined'
-                            />
-                          </TableCell>
-                          <TableCell>{log.target_type}</TableCell>
-                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
-                            {log.target_id}
-                          </TableCell>
-                          <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
-                            {log.user_id}
-                          </TableCell>
-                          <TableCell>
-                            <Typography
-                              variant='body2'
-                              sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                maxWidth: 300,
-                                color: 'text.secondary',
-                              }}
-                            >
-                              {log.details ? JSON.stringify(log.details) : '—'}
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                        {expandedId === log.id && log.details && (
-                          <TableRow key={`${log.id}-expanded`}>
-                            <TableCell
-                              colSpan={6}
-                              sx={{ py: 0 }}
-                            >
-                              <Box
-                                sx={{
-                                  bgcolor: 'grey.50',
-                                  p: 2,
-                                  borderRadius: 1,
-                                  m: 1,
-                                }}
-                              >
-                                <Typography
-                                  component='pre'
-                                  sx={{ fontSize: 12, m: 0, overflow: 'auto' }}
-                                >
-                                  {JSON.stringify(log.details, null, 2)}
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              <Box sx={{ ...row, justifyContent: 'space-between', mt: 2, ...center }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {t('admin.audit_log.pagination_info', {
-                    count: logs.length,
-                    current: page,
-                    total: totalPages,
-                  })}
-                </Typography>
-                <Pagination
-                  count={totalPages}
-                  page={page}
-                  onChange={(_, p) => setPage(p)}
-                  size='small'
-                  disabled={loading}
-                />
-              </Box>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </Box>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              —
+            </Typography>
+          )
+        }
+        emptyMessage={t('admin.audit_log.no_records')}
+      />
+    </>
   );
 };
 

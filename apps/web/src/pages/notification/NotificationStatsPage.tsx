@@ -249,7 +249,7 @@ const NotificationStatsPage: React.FC = () => {
                 />
                 <span
                   style={{
-                    fontSize: '0.875rem',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 500,
                     color: ct.grey[800],
                   }}
@@ -265,7 +265,7 @@ const NotificationStatsPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 24,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   color: 'grey.500',
                 }}
               >

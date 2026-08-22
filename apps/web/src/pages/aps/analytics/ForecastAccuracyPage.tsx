@@ -1,5 +1,3 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 /**
  * 预测准确率分析页
  *
@@ -9,8 +7,14 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Box, Paper, Typography } from '@mui/material';
+import { Target, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apsApi } from '@/api/aps';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
+import { designTokens } from '@topems/tokens';
 import {
   ResponsiveContainer,
   LineChart,
@@ -37,8 +41,11 @@ const mockData = [
   { period: '2025-11', forecast: 2000, actual: 2050 },
   { period: '2025-12', forecast: 2100, actual: 2080 },
 ];
+
 export default function ForecastAccuracyPage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['aps', 'ForecastAccuracyPage'],
     queryFn: async () => {
       try {
@@ -62,6 +69,7 @@ export default function ForecastAccuracyPage() {
       }
     },
   });
+
   const data = useMemo(() => {
     return mockData.map((d) => ({
       ...d,
@@ -74,102 +82,128 @@ export default function ForecastAccuracyPage() {
   }, [data]);
   const bestAccuracy = useMemo(() => Math.max(...data.map((d) => d.accuracy)), [data]);
   const worstAccuracy = useMemo(() => Math.min(...data.map((d) => d.accuracy)), [data]);
+
+  const statCards: StatCard[] = [
+    {
+      id: 'avgAccuracy',
+      title: t('aps.forecast_accuracy_page.k2'),
+      value: avgAccuracy,
+      suffix: '%',
+      icon: <Target size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'bestAccuracy',
+      title: t('aps.forecast_accuracy_page.k3'),
+      value: bestAccuracy,
+      suffix: '%',
+      icon: <CheckCircle size={24} />,
+      color: 'info',
+    },
+    {
+      id: 'worstAccuracy',
+      title: t('aps.forecast_accuracy_page.k4'),
+      value: worstAccuracy,
+      suffix: '%',
+      icon: <AlertTriangle size={24} />,
+      color: 'warning',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>{i18n.t('aps.forecast_accuracy_page.k0')}</h1>
-        <span className='text-sm text-gray-500'>{i18n.t('aps.forecast_accuracy_page.vs_1')}</span>
-      </div>
-      <p className='text-sm text-gray-600'>{i18n.t('pages.forecast_accuracy_page.k0')}</p>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{avgAccuracy}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k3')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{bestAccuracy}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k4')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{worstAccuracy}%</p>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('aps.forecast_accuracy_page.vs_5')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={340}
+    <StatsPageTemplate
+      title={t('aps.forecast_accuracy_page.k0')}
+      subtitle={t('pages.forecast_accuracy_page.k0')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
         >
-          <LineChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          {t('aps.forecast_accuracy_page.vs_5')}
+        </Typography>
+        <Box sx={{ width: '100%', height: 340 }}>
+          <ResponsiveContainer
+            width='100%'
+            height={340}
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='period'
-              fontSize={11}
-            />
-            <YAxis
-              yAxisId='left'
-              fontSize={11}
-              label={{
-                value: i18n.t('aps.forecast_accuracy_page.k6'),
-                angle: -90,
-                position: 'insideLeft',
-              }}
-            />
-            <YAxis
-              yAxisId='right'
-              orientation='right'
-              domain={[80, 100]}
-              unit='%'
-              fontSize={11}
-              label={{
-                value: i18n.t('aps.forecast_accuracy_page.k7'),
-                angle: 90,
-                position: 'insideRight',
-              }}
-            />
-            <Tooltip />
-            <Legend />
-            <ReferenceLine
-              yAxisId='right'
-              y={95}
-              stroke={designTokens.colors.success.dark}
-              strokeDasharray='4 4'
-              label={i18n.t('aps.forecast_accuracy_page.95_8')}
-            />
-            <Line
-              yAxisId='left'
-              type='monotone'
-              dataKey='forecast'
-              name={i18n.t('aps.forecast_accuracy_page.k9')}
-              stroke={designTokens.colors.secondary.dark}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              yAxisId='left'
-              type='monotone'
-              dataKey='actual'
-              name={i18n.t('aps.forecast_accuracy_page.k10')}
-              stroke={designTokens.colors.warning.main}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-            <Line
-              yAxisId='right'
-              type='monotone'
-              dataKey='accuracy'
-              name={i18n.t('aps.forecast_accuracy_page.k11')}
-              stroke={designTokens.colors.success.dark}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+            <LineChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='period'
+                fontSize={11}
+              />
+              <YAxis
+                yAxisId='left'
+                fontSize={11}
+                label={{
+                  value: t('aps.forecast_accuracy_page.k6'),
+                  angle: -90,
+                  position: 'insideLeft',
+                }}
+              />
+              <YAxis
+                yAxisId='right'
+                orientation='right'
+                domain={[80, 100]}
+                unit='%'
+                fontSize={11}
+                label={{
+                  value: t('aps.forecast_accuracy_page.k7'),
+                  angle: 90,
+                  position: 'insideRight',
+                }}
+              />
+              <Tooltip />
+              <Legend />
+              <ReferenceLine
+                yAxisId='right'
+                y={95}
+                stroke={designTokens.colors.success.dark}
+                strokeDasharray='4 4'
+                label={t('aps.forecast_accuracy_page.95_8')}
+              />
+              <Line
+                yAxisId='left'
+                type='monotone'
+                dataKey='forecast'
+                name={t('aps.forecast_accuracy_page.k9')}
+                stroke={designTokens.colors.secondary.dark}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+              <Line
+                yAxisId='left'
+                type='monotone'
+                dataKey='actual'
+                name={t('aps.forecast_accuracy_page.k10')}
+                stroke={designTokens.colors.warning.main}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+              <Line
+                yAxisId='right'
+                type='monotone'
+                dataKey='accuracy'
+                name={t('aps.forecast_accuracy_page.k11')}
+                stroke={designTokens.colors.success.dark}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+    </StatsPageTemplate>
   );
 }

@@ -317,7 +317,7 @@ const MobileScanPage: React.FC = () => {
           sx={{
             '& .MuiTab-root': {
               minHeight: 44,
-              fontSize: '0.875rem',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
         >
@@ -738,7 +738,7 @@ const MobileScanPage: React.FC = () => {
                             label={item.format}
                             size='small'
                             variant='outlined'
-                            sx={{ height: 20, fontSize: '0.7rem' }}
+                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                           />
                         </Box>
                       }

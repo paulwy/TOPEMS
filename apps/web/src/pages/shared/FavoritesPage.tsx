@@ -1,24 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Chip,
-  IconButton,
-  Tabs,
-  Tab,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   Button,
   TextField,
   InputAdornment,
-  Divider,
   CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,10 +17,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Star, Trash2, Search, Clock, FileText, Users, Package, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { favoriteApi, searchApi, type Favorite, type SearchResult } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -40,6 +33,12 @@ import { sanitizeHtml } from '@/lib/security';
 import { useNavigate } from 'react-router-dom';
 
 const ENTITY_TYPES = ['customer', 'product', 'document', 'order', 'project', 'task'] as const;
+
+type RecentSearch = {
+  id: string;
+  query: string;
+  searched_at?: string;
+};
 
 const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -195,7 +194,7 @@ const FavoritesPage: React.FC = () => {
   };
 
   // 获取搜索建议
-  const fetchSuggestions = async (query: string) => {
+  const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
       setSuggestions([]);
       return;
@@ -208,9 +207,9 @@ const FavoritesPage: React.FC = () => {
     } catch (error) {
       apiLogger.error(i18n.t('pages.favorites_page.k3'), error);
     }
-  };
+  }, []);
 
-  const getEntityIcon = (entityType: string) => {
+  const getEntityIcon = useCallback((entityType: string) => {
     const iconMap: Record<string, React.ReactNode> = {
       customer: <Users size={18} />,
       product: <Package size={18} />,
@@ -218,20 +217,250 @@ const FavoritesPage: React.FC = () => {
       order: <FileText size={18} />,
     };
     return iconMap[entityType] || <Star size={18} />;
-  };
+  }, []);
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    fetchSuggestions(value);
-  };
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      fetchSuggestions(value);
+    },
+    [fetchSuggestions]
+  );
 
-  const handleResultClick = (result: SearchResult) => {
-    navigate(result.url);
-  };
+  const handleResultClick = useCallback(
+    (result: SearchResult) => {
+      navigate(result.url);
+    },
+    [navigate]
+  );
+
+  const handleRecentSearchClick = useCallback((row: RecentSearch) => {
+    setSearchQuery(row.query);
+    setActiveTab(2);
+  }, []);
 
   const favorites = favoritesData ?? [];
   const recentSearches = recentSearchesData ?? [];
   const results = searchResults ?? [];
+
+  const recentSearchRows: RecentSearch[] = useMemo(
+    () => recentSearches.map((query, index) => ({ id: `${index}-${query}`, query })),
+    [recentSearches]
+  );
+
+  const favoriteColumns: ColumnDef<Favorite>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: i18n.t('pages.favorites_page.k25'),
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {getEntityIcon(row.entity_type)}
+            <Typography>{row.entity_name}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'entity_type',
+        label: i18n.t('pages.favorites_page.k22'),
+        render: (row) => (
+          <Chip
+            size='small'
+            label={row.entity_type}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'created_at',
+        label: i18n.t('shared.favorites_page.columns.created_at'),
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleString('zh-CN')}
+          </Typography>
+        ),
+      },
+    ],
+    [getEntityIcon]
+  );
+
+  const favoriteRowActions: RowAction<Favorite>[] = useMemo(
+    () => [
+      {
+        key: 'check',
+        label: i18n.t('pages.favorites_page.k10'),
+        icon: <Star size={16} />,
+        onClick: (row) => checkFavorite(row.entity_type, row.entity_id),
+        color: 'primary',
+      },
+      {
+        key: 'remove',
+        label: i18n.t('pages.favorites_page.k17'),
+        icon: <Trash2 size={16} />,
+        onClick: (row) => removeMutation.mutate(row.id),
+        color: 'error',
+      },
+    ],
+    [removeMutation]
+  );
+
+  const favoriteActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.favorites_page.k6'),
+        icon: <Plus size={16} />,
+        onClick: () => setAddDialogOpen(true),
+        variant: 'outlined' as const,
+      },
+    ],
+    []
+  );
+
+  const recentSearchColumns: ColumnDef<RecentSearch>[] = useMemo(
+    () => [
+      {
+        id: 'query',
+        label: i18n.t('shared.favorites_page.columns.search_query'),
+        render: (row: RecentSearch) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Clock size={16} />
+            <Typography>{row.query}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'searched_at',
+        label: i18n.t('shared.favorites_page.columns.searched_at'),
+        render: () => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            -
+          </Typography>
+        ),
+      },
+    ],
+    []
+  );
+
+  const recentSearchActions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.favorites_page.k7'),
+        icon: <Trash2 size={16} />,
+        onClick: () => clearHistoryMutation.mutate(),
+        variant: 'outlined' as const,
+        disabled: recentSearches.length === 0 || clearHistoryMutation.isPending,
+      },
+    ],
+    [clearHistoryMutation, recentSearches.length]
+  );
+
+  const searchResultColumns: ColumnDef<SearchResult>[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: i18n.t('shared.favorites_page.columns.title'),
+        render: (row) => <Typography sx={{ fontWeight: 'medium' }}>{row.title}</Typography>,
+      },
+      {
+        id: 'type',
+        label: i18n.t('shared.favorites_page.columns.type'),
+        render: (row) => (
+          <Chip
+            size='small'
+            label={row.type}
+          />
+        ),
+      },
+      {
+        id: 'source',
+        label: i18n.t('shared.favorites_page.columns.source'),
+        render: (row) => (
+          <Box>
+            {row.description && (
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {row.description}
+              </Typography>
+            )}
+            {row.highlights && (
+              <Typography
+                variant='caption'
+                color='primary'
+                sx={{ display: 'block', mt: 0.5 }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(row.highlights) }}
+              />
+            )}
+          </Box>
+        ),
+      },
+    ],
+    []
+  );
+
+  const searchResultsHeaderContent = useMemo(
+    () => (
+      <Box>
+        <TextField
+          fullWidth
+          size='small'
+          placeholder={i18n.t('pages.favorites_page.k8')}
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          sx={{ mb: 2 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search size={18} />
+                </InputAdornment>
+              ),
+              endAdornment: searching ? (
+                <InputAdornment position='end'>
+                  <CircularProgress size={16} />
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+        />
+        {suggestions.length > 0 && searchQuery.trim().length >= 2 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 0.5, display: 'block' }}
+            >
+              {i18n.t('pages.favorites_page.k9')}
+            </Typography>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ flexWrap: 'wrap', gap: 1 }}
+            >
+              {suggestions.map((s) => (
+                <Chip
+                  key={s}
+                  size='small'
+                  label={s}
+                  variant='outlined'
+                  onClick={() => handleSearch(s)}
+                  sx={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </Box>
+    ),
+    [searchQuery, searching, suggestions, handleSearch]
+  );
 
   return (
     <PageContainer
@@ -260,236 +489,41 @@ const FavoritesPage: React.FC = () => {
         />
       </Tabs>
 
-      {/* Tab 1: 收藏列表 */}
       {activeTab === 0 && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<Plus size={16} />}
-                onClick={() => setAddDialogOpen(true)}
-              >
-                {i18n.t('pages.favorites_page.k6')}
-              </Button>
-            </Box>
-            {favoritesLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                <CircularProgress />
-              </Box>
-            ) : favorites.length === 0 ? (
-              <Alert severity='info'>{i18n.t('pages.favorites_page.k14')}</Alert>
-            ) : (
-              <List>
-                {favorites.map((fav: Favorite) => (
-                  <ListItem
-                    key={fav.id}
-                    divider
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
-                      {getEntityIcon(fav.entity_type)}
-                    </Box>
-                    <ListItemText
-                      primary={fav.entity_name}
-                      secondary={
-                        <Box
-                          component='span'
-                          sx={{ display: 'flex', gap: 1, mt: 0.5 }}
-                        >
-                          <Chip
-                            size='small'
-                            label={fav.entity_type}
-                            variant='outlined'
-                          />
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {new Date(fav.created_at).toLocaleString('zh-CN')}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge='end'
-                        color='primary'
-                        onClick={() => checkFavorite(fav.entity_type, fav.entity_id)}
-                        aria-label={i18n.t('pages.favorites_page.k15')}
-                        title={i18n.t('pages.favorites_page.k16')}
-                      >
-                        <Star size={18} />
-                      </IconButton>
-                      <IconButton
-                        edge='end'
-                        color='error'
-                        onClick={() => removeMutation.mutate(fav.id)}
-                        aria-label={i18n.t('pages.favorites_page.k17')}
-                      >
-                        <Trash2 size={18} />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </CardContent>
-        </Card>
+        <ListPageTemplate<Favorite>
+          breadcrumbs={[]}
+          columns={favoriteColumns}
+          data={favorites}
+          loading={favoritesLoading}
+          actions={favoriteActions}
+          rowActions={favoriteRowActions}
+          emptyMessage={i18n.t('pages.favorites_page.k14')}
+        />
       )}
 
-      {/* Tab 2: 搜索历史 */}
       {activeTab === 1 && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant='h6'>{i18n.t('pages.favorites_page.k18')}</Typography>
-              {recentSearches.length > 0 && (
-                <Button
-                  size='small'
-                  color='error'
-                  startIcon={<Trash2 size={16} />}
-                  onClick={() => clearHistoryMutation.mutate()}
-                >
-                  {i18n.t('pages.favorites_page.k7')}
-                </Button>
-              )}
-            </Box>
-            {searchesLoading ? (
-              <CircularProgress />
-            ) : recentSearches.length === 0 ? (
-              <Alert severity='info'>{i18n.t('pages.favorites_page.k19')}</Alert>
-            ) : (
-              <List>
-                {recentSearches.map((term: string, idx: number) => (
-                  <ListItem
-                    key={idx}
-                    divider
-                    onClick={() => {
-                      setSearchQuery(term);
-                      setActiveTab(2);
-                    }}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <Clock size={16} />
-                    <ListItemText
-                      primary={term}
-                      sx={{ ml: 2 }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </CardContent>
-        </Card>
+        <ListPageTemplate<RecentSearch>
+          breadcrumbs={[]}
+          columns={recentSearchColumns}
+          data={recentSearchRows}
+          loading={searchesLoading}
+          actions={recentSearchActions}
+          onRowClick={handleRecentSearchClick}
+          getRowId={(row) => row.id}
+          emptyMessage={i18n.t('pages.favorites_page.k19')}
+        />
       )}
 
-      {/* Tab 3: 全局搜索 */}
       {activeTab === 2 && (
-        <Card>
-          <CardContent>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder={i18n.t('pages.favorites_page.k8')}
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              sx={{ mb: 2 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                  endAdornment: searching ? (
-                    <InputAdornment position='end'>
-                      <CircularProgress size={16} />
-                    </InputAdornment>
-                  ) : null,
-                },
-              }}
-            />
-            <Divider sx={{ mb: 2 }} />
-            {suggestions.length > 0 && searchQuery.trim().length >= 2 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 0.5, display: 'block' }}
-                >
-                  {i18n.t('pages.favorites_page.k9')}
-                </Typography>
-                <Stack
-                  direction='row'
-                  spacing={1}
-                  sx={{ flexWrap: 'wrap', gap: 1 }}
-                >
-                  {suggestions.map((s) => (
-                    <Chip
-                      key={s}
-                      size='small'
-                      label={s}
-                      variant='outlined'
-                      onClick={() => handleSearch(s)}
-                      sx={{ cursor: 'pointer' }}
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            )}
-            {searchQuery.trim() && results.length === 0 && !searching && (
-              <Alert severity='info'>{i18n.t('pages.favorites_page.k20')}</Alert>
-            )}
-            {results.length > 0 && (
-              <List>
-                {results.map((result: SearchResult) => (
-                  <ListItem
-                    key={result.id}
-                    divider
-                    onClick={() => handleResultClick(result)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <ListItemText
-                      primary={
-                        <Box
-                          component='span'
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Chip
-                            size='small'
-                            label={result.type}
-                          />
-                          {result.title}
-                        </Box>
-                      }
-                      secondary={
-                        <Box component='span'>
-                          {result.description && (
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                            >
-                              {result.description}
-                            </Typography>
-                          )}
-                          {result.highlights && (
-                            <Typography
-                              variant='caption'
-                              color='primary'
-                              sx={{ display: 'block', mt: 0.5 }}
-                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(result.highlights) }}
-                            />
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-          </CardContent>
-        </Card>
+        <ListPageTemplate<SearchResult>
+          breadcrumbs={[]}
+          columns={searchResultColumns}
+          data={results}
+          loading={searching}
+          onRowClick={handleResultClick}
+          headerContent={searchResultsHeaderContent}
+          emptyMessage={i18n.t('pages.favorites_page.k20')}
+        />
       )}
 
       {/* 添加收藏对话框 */}

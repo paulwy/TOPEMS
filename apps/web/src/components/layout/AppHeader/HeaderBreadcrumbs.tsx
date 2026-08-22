@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
 import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
 import { Home, ChevronRight } from 'lucide-react';
@@ -51,7 +52,7 @@ export const HeaderBreadcrumbs: React.FC = () => {
             alignItems: 'center',
             gap: 0.5,
             cursor: 'pointer',
-            fontSize: '0.8125rem',
+            fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
             color: 'text.secondary',
             '&:hover': {
               color: 'primary.main',
@@ -68,7 +69,7 @@ export const HeaderBreadcrumbs: React.FC = () => {
             <Typography
               key={item.code || item.path || index}
               sx={{
-                fontSize: '0.8125rem',
+                fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
                 color: 'text.primary',
                 fontWeight: 500,
                 display: 'flex',
@@ -88,7 +89,7 @@ export const HeaderBreadcrumbs: React.FC = () => {
                 alignItems: 'center',
                 gap: 0.5,
                 cursor: 'pointer',
-                fontSize: '0.8125rem',
+                fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
                 color: 'text.secondary',
                 '&:hover': {
                   color: 'primary.main',

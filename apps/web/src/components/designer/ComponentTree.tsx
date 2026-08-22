@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * ComponentTree — 组件树
  *
@@ -59,7 +60,7 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
         )}
         <Typography
           variant='body2'
-          sx={{ fontSize: '0.8rem' }}
+          sx={{ fontSize: designTokens.typography.fontSize.scale['0.8rem'] }}
         >
           {node.label}
         </Typography>

@@ -49,7 +49,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
       {label && (
         <Typography
           sx={{
-            fontSize: '0.75rem',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             fontWeight: 500,
             color: labelColor,
             mb: 2,
@@ -88,13 +88,13 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                     backgroundColor: entry.color,
                   }}
                 />
-                <Typography sx={{ fontSize: '0.875rem', color: nameColor }}>
+                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: nameColor }}>
                   {displayName}
                 </Typography>
               </Box>
               <Typography
                 sx={{
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   fontWeight: 600,
                   color: valueColor,
                 }}

@@ -15,7 +15,7 @@ const LayerToggle: React.FC<{
       alignItems: 'center',
       gap: 1,
       cursor: 'pointer',
-      padding: `${designTokens.spacing.xs} 8px`,
+      padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
       borderRadius: 1,
       '&:hover': {
         backgroundColor: 'grey.50',
@@ -33,7 +33,7 @@ const LayerToggle: React.FC<{
     />
     <Typography
       variant='body2'
-      sx={{ color: 'grey.700', fontSize: '0.875rem' }}
+      sx={{ color: 'grey.700', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
     >
       {label}
     </Typography>

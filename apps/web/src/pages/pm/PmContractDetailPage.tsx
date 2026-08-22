@@ -130,7 +130,7 @@ const PmContractDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pages.pm_contract_detail_page.k0')}
             </Typography>
@@ -225,7 +225,7 @@ const PmContractDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pages.pm_contract_detail_page.k1')}
             </Typography>
@@ -299,7 +299,7 @@ const PmContractDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 2 }}>
             <Typography
               variant='h6'
-              sx={{ fontSize: '1.125rem' }}
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
             >
               {i18n.t('pages.pm_contract_detail_page.k2')}
             </Typography>
@@ -317,7 +317,7 @@ const PmContractDetailPage: React.FC = () => {
         <CardHeader sx={{ pb: 2 }}>
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pages.pm_contract_detail_page.k3')}
           </Typography>
@@ -400,7 +400,7 @@ const PmContractDetailPage: React.FC = () => {
         <CardHeader sx={{ pb: 2 }}>
           <Typography
             variant='h6'
-            sx={{ fontSize: '1.125rem' }}
+            sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'] }}
           >
             {i18n.t('pages.pm_contract_detail_page.k6')}
           </Typography>

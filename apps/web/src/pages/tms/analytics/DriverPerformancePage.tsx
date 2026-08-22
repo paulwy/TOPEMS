@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 /**
  * 司机绩效分析页
@@ -8,8 +8,13 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { tmsApi } from '@/api/tms';
+import { StatsPageTemplate } from '@/components/templates';
+import type { StatCard } from '@/components/templates/StatsPageTemplate';
+import { Box, Paper, Typography } from '@mui/material';
+import { TrendingUp, Truck, User, Award } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -21,6 +26,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+
 function getMockData() {
   return [
     {
@@ -87,7 +93,9 @@ function getMockData() {
 }
 
 export default function DriverPerformancePage() {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  const { t } = useTranslation();
+
+  useQuery({
     queryKey: ['tms', 'DriverPerformancePage'],
     queryFn: async () => {
       try {
@@ -112,109 +120,143 @@ export default function DriverPerformancePage() {
       }
     },
   });
+
   const data = useMemo(() => getMockData(), []);
+
   const avgOnTimeRate =
     data.length > 0
       ? Math.round((data.reduce((s, d) => s + d.onTimeRate, 0) / data.length) * 10) / 10
       : 0;
   const totalDeliveries = data.reduce((s, d) => s + d.totalDeliveries, 0);
   const topPerformer = [...data].sort((a, b) => b.onTimeRate - a.onTimeRate)[0];
+
+  const statCards: StatCard[] = [
+    {
+      id: 'avgOnTimeRate',
+      title: t('tms.driver_performance_page.k12'),
+      value: `${avgOnTimeRate}%`,
+      icon: <TrendingUp size={24} />,
+      color: 'success',
+    },
+    {
+      id: 'totalDeliveries',
+      title: t('tms.driver_performance_page.k13'),
+      value: totalDeliveries,
+      icon: <Truck size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'topPerformer',
+      title: t('tms.driver_performance_page.k14'),
+      value: topPerformer?.driver ?? '-',
+      icon: <User size={24} />,
+      color: 'warning',
+    },
+    {
+      id: 'topPerformerRate',
+      title: t('tms.driver_performance_page.k15'),
+      value: `${topPerformer?.onTimeRate ?? 0}%`,
+      icon: <Award size={24} />,
+      color: 'info',
+    },
+  ];
+
   return (
-    <div className='space-y-4 p-4'>
-      <div>
-        <h1 className='text-2xl font-bold'>{i18n.t('tms.driver_performance_page.k10')}</h1>
-        <p className='mt-1 text-sm text-gray-500'>{i18n.t('tms.driver_performance_page.k11')}</p>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.driver_performance_page.k12')}</p>
-          <p className='mt-1 text-3xl font-bold text-green-600'>{avgOnTimeRate}%</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.driver_performance_page.k13')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{totalDeliveries}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.driver_performance_page.k14')}</p>
-          <p className='mt-1 text-3xl font-bold text-orange-600'>{topPerformer?.driver ?? '-'}</p>
-        </div>
-        <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('tms.driver_performance_page.k15')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>
-            {topPerformer?.onTimeRate ?? 0}%
-          </p>
-        </div>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('tms.driver_performance_page.k16')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={340}
+    <StatsPageTemplate
+      title={t('tms.driver_performance_page.k10')}
+      subtitle={t('tms.driver_performance_page.k11')}
+      statCards={statCards}
+      showStatCards={statCards.length > 0}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+    >
+      <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
         >
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          {t('tms.driver_performance_page.k16')}
+        </Typography>
+        <Box sx={{ width: '100%', height: 340 }}>
+          <ResponsiveContainer
+            width='100%'
+            height='100%'
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='driver'
-              fontSize={11}
-            />
-            <YAxis
-              domain={[60, 100]}
-              unit='%'
-              fontSize={11}
-            />
-            <Tooltip formatter={(value: unknown) => `${value}%`} />
-            <Legend />
-            <ReferenceLine
-              y={90}
-              stroke={designTokens.colors.success.dark}
-              strokeDasharray='4 4'
-              label={i18n.t('tms.driver_performance_page.90_17')}
-            />
-            <Bar
-              dataKey='onTimeRate'
-              name={i18n.t('tms.driver_performance_page.k18')}
-              fill={designTokens.colors.primary.main}
-              barSize={28}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t('tms.driver_performance_page.k19')}</h3>
-        <ResponsiveContainer
-          width='100%'
-          height={240}
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='driver'
+                fontSize={11}
+              />
+              <YAxis
+                domain={[60, 100]}
+                unit='%'
+                fontSize={11}
+              />
+              <Tooltip formatter={(value: unknown) => `${value}%`} />
+              <Legend />
+              <ReferenceLine
+                y={90}
+                stroke={designTokens.colors.success.dark}
+                strokeDasharray='4 4'
+                label={t('tms.driver_performance_page.90_17')}
+              />
+              <Bar
+                dataKey='onTimeRate'
+                name={t('tms.driver_performance_page.k18')}
+                fill={designTokens.colors.primary.main}
+                barSize={28}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600, mb: 2 }}
         >
-          <BarChart
-            data={data}
-            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          {t('tms.driver_performance_page.k19')}
+        </Typography>
+        <Box sx={{ width: '100%', height: 240 }}>
+          <ResponsiveContainer
+            width='100%'
+            height='100%'
           >
-            <CartesianGrid strokeDasharray='3 3' />
-            <XAxis
-              dataKey='driver'
-              fontSize={11}
-            />
-            <YAxis fontSize={11} />
-            <Tooltip />
-            <Legend />
-            <Bar
-              dataKey='totalDeliveries'
-              name={i18n.t('tms.driver_performance_page.k20')}
-              fill={designTokens.colors.secondary.dark}
-              barSize={20}
-            />
-            <Bar
-              dataKey='avgDelayMin'
-              name={i18n.t('tms.driver_performance_page.k21')}
-              fill={designTokens.colors.warning.main}
-              barSize={20}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+            <BarChart
+              data={data}
+              margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='driver'
+                fontSize={11}
+              />
+              <YAxis fontSize={11} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey='totalDeliveries'
+                name={t('tms.driver_performance_page.k20')}
+                fill={designTokens.colors.secondary.dark}
+                barSize={20}
+              />
+              <Bar
+                dataKey='avgDelayMin'
+                name={t('tms.driver_performance_page.k21')}
+                fill={designTokens.colors.warning.main}
+                barSize={20}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+    </StatsPageTemplate>
   );
 }

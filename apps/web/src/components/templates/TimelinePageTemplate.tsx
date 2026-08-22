@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useCallback } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -264,11 +265,11 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               style={
                 {
                   width: '100%',
-                  padding: '8px 12px 8px 40px',
+                  padding: `${designTokens.spacing.sm}px 12px ${designTokens.spacing.sm}px 40px`,
                   borderRadius: 8,
                   border: '1px solid',
                   borderColor: theme.palette.divider,
-                  fontSize: '0.875rem',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   outline: 'none',
                 } as React.CSSProperties
               }
@@ -386,7 +387,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                       color={
                         getStatusColor(node.status) as React.ComponentProps<typeof Chip>['color']
                       }
-                      sx={{ height: 20, fontSize: '0.6rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.6rem'] }}
                     />
                   )}
                   {node.priority && (
@@ -398,7 +399,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 20, fontSize: '0.6rem' }}
+                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.6rem'] }}
                     />
                   )}
                 </Box>
@@ -459,7 +460,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                         size='small'
                         sx={{
                           height: 18,
-                          fontSize: '0.6rem',
+                          fontSize: designTokens.typography.fontSize.scale['0.6rem'],
                           bgcolor: tag.color || 'grey.100',
                           color: tag.color || 'grey.700',
                         }}
@@ -474,7 +475,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                       <Avatar
                         key={participant.id}
                         src={participant.avatar}
-                        sx={{ width: 24, height: 24, fontSize: '0.7rem' }}
+                        sx={{ width: 24, height: 24, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
                       >
                         {participant.name.charAt(0)}
                       </Avatar>
@@ -652,7 +653,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                   width: 48,
                   height: 48,
                   color: theme.palette.text.secondary,
-                  margin: '0 auto 16px',
+                  margin: `0 auto ${designTokens.spacing.md}px`,
                 }}
               />
               <Typography

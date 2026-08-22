@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { useMutation } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, TextField, InputAdornment, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 import type { ProjectTemplate } from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateCard from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
 import { pmApi } from '@/api/pm';
 import type { CreateProjectRequest } from '@/api/pm';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef } from '@/components/templates/list/types';
 import { PM_PATHS } from '@/modules/pm/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
@@ -138,94 +139,110 @@ const PmTemplatePage: React.FC = () => {
     },
   ];
 
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.project_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter(
+        (template) =>
+          template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          template.project_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          template.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      ),
+    [templates, searchTerm]
   );
 
-  const handleSelectTemplate = (template: ProjectTemplate) => {
+  const handleSelectTemplate = useCallback((template: ProjectTemplate) => {
     setSelectedTemplate(template);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleCreateProject = (data: CreateProjectRequest) => {
-    createProjectMutation.mutate(data);
-  };
+  const handleCreateProject = useCallback(
+    (data: CreateProjectRequest) => {
+      createProjectMutation.mutate(data);
+    },
+    [createProjectMutation]
+  );
+
+  const actions = useMemo(
+    () => [
+      {
+        label: i18n.t('pages.pm_template_page.k32'),
+        icon: <Plus sx={{ width: 16, height: 16 }} />,
+        onClick: () => navigate(PM_PATHS.projectCreate),
+        variant: 'contained' as const,
+      },
+    ],
+    [navigate]
+  );
+
+  const columns: ColumnDef<ProjectTemplate>[] = useMemo(
+    () => [
+      { id: 'name', label: 'Name' },
+      { id: 'description', label: 'Description' },
+      { id: 'project_type', label: 'Project Type' },
+    ],
+    []
+  );
+
+  const renderCardView = useCallback(
+    (data: ProjectTemplate[]) => {
+      if (data.length === 0) {
+        return (
+          <Card>
+            <CardContent sx={{ p: 6, textAlign: 'center' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
+                {i18n.t('pages.pm_template_page.k33')}
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      }
+
+      return (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+            },
+            gap: 3,
+          }}
+        >
+          {data.map((template) => (
+            <ProjectTemplateCard
+              key={template.id}
+              template={template}
+              onSelect={handleSelectTemplate}
+            />
+          ))}
+        </Box>
+      );
+    },
+    [handleSelectTemplate]
+  );
 
   return (
-    <PageContainer
-      maxWidth='xl'
-      headerProps={{
-        actions: [
-          {
-            label: i18n.t('pages.pm_template_page.k32'),
-            icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate(PM_PATHS.projectCreate),
-            variant: 'contained',
-          },
-        ],
-      }}
+    <ListPageTemplate<ProjectTemplate>
+      columns={columns}
+      data={filteredTemplates}
+      actions={actions}
+      searchable
+      searchValue={searchTerm}
+      onSearch={setSearchTerm}
+      searchPlaceholder={i18n.t('pages.pm_template_page.k0')}
+      viewMode='card'
+      viewModes={['card']}
+      renderCardView={renderCardView}
+      emptyMessage={i18n.t('pages.pm_template_page.k33')}
     >
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <TextField
-            type='text'
-            placeholder={i18n.t('pages.pm_template_page.k0')}
-            value={searchTerm}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-            sx={{ width: 400 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: 'repeat(2, 1fr)',
-            lg: 'repeat(3, 1fr)',
-          },
-          gap: 3,
-        }}
-      >
-        {filteredTemplates.map((template) => (
-          <ProjectTemplateCard
-            key={template.id}
-            template={template}
-            onSelect={handleSelectTemplate}
-          />
-        ))}
-      </Box>
-
-      {filteredTemplates.length === 0 && (
-        <Card>
-          <CardContent sx={{ p: 6, textAlign: 'center' }}>
-            <Typography sx={{ color: 'text.secondary' }}>
-              {i18n.t('pages.pm_template_page.k33')}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
-
       <ProjectTemplateModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         template={selectedTemplate}
         onConfirm={handleCreateProject}
       />
-    </PageContainer>
+    </ListPageTemplate>
   );
 };
 

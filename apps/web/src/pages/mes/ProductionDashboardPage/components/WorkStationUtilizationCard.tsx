@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import {
   Box,
@@ -104,7 +105,7 @@ const WorkStationUtilizationCard: React.FC<{
                         size='small'
                         label={item.workStation.code || item.workStation.status}
                         variant='outlined'
-                        sx={{ height: 18, fontSize: '0.65rem' }}
+                        sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
                       />
                     </Stack>
                     <Typography

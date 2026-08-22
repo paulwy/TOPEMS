@@ -273,7 +273,7 @@ export const DocumentPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {t('pdm.document_page.e1')}
               </Typography>
@@ -306,7 +306,7 @@ export const DocumentPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {t('pdm.document_page.e2')}
               </Typography>
@@ -339,7 +339,7 @@ export const DocumentPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
               >
                 {t('pdm.document_page.e3')}
               </Typography>
@@ -377,7 +377,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e4')}
           </Box>
@@ -386,7 +386,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e5')}
           </Box>
@@ -395,7 +395,7 @@ export const DocumentPage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e6')}
           </Box>
@@ -404,7 +404,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e7')}
           </Box>
@@ -413,7 +413,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e8')}
           </Box>
@@ -422,7 +422,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e9')}
           </Box>
@@ -431,7 +431,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.bom_page.e6')}
           </Box>
@@ -450,7 +450,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.document_page.e11')}
           </Box>
@@ -459,7 +459,7 @@ export const DocumentPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
           >
             {t('pdm.bom_page.e8')}
           </Box>
@@ -469,7 +469,7 @@ export const DocumentPage: React.FC = () => {
           <Box sx={{ gridColumn: '1 / -1' }}>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
             >
               {t('pdm.bom_page.e9')}
             </Box>
@@ -562,7 +562,7 @@ export const DocumentPage: React.FC = () => {
                               backgroundColor: 'success.lighter',
                               color: 'success.dark',
                               fontWeight: 500,
-                              fontSize: '0.75rem',
+                              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             }}
                           />
                         )}
@@ -644,7 +644,7 @@ export const DocumentPage: React.FC = () => {
           >
             <Upload
               size={32}
-              style={{ margin: '0 auto 8px', opacity: 0.5 }}
+              style={{ margin: `0 auto ${designTokens.spacing.sm}px`, opacity: 0.5 }}
             />
             <Typography
               variant='body2'

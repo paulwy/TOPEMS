@@ -7,7 +7,7 @@
  * @path /ai/assistant
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -26,8 +26,6 @@ import {
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   TextField,
   Button,
   Paper,
@@ -43,20 +41,11 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import {
-  BarChart3,
-  Workflow,
-  BookOpen,
-  Send,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-} from 'lucide-react';
+import { BarChart3, Workflow, BookOpen, Send, Sparkles } from 'lucide-react';
 
 import { useTranslation } from 'react-i18next';
 
-import { PageContainer } from '@/components/common';
+import { StatsPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { assistantApi } from '@/api/ai';
 import type {
@@ -66,15 +55,9 @@ import type {
   KnowledgeAskResponse,
 } from '@/api/ai';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabValue = 'report' | 'flow' | 'knowledge';
-
-const TAB_CONFIG: { value: TabValue; label: string; icon: React.ReactNode }[] = [
-  { value: 'report', label: 'assistant.tab.report', icon: <BarChart3 size={18} /> },
-  { value: 'flow', label: 'assistant.tab.flow', icon: <Workflow size={18} /> },
-  { value: 'knowledge', label: 'assistant.tab.knowledge', icon: <BookOpen size={18} /> },
-];
 
 const DEFAULT_PIE_COLORS = [
   ...BIChartColors.series,
@@ -96,60 +79,6 @@ const getSeverityColor = (severity: string) => {
 };
 
 const getSeverityLabel = (severity: string) => severity;
-
-const MetricCard: React.FC<{
-  label: string;
-  value: number;
-  unit?: string;
-  trend?: 'up' | 'down' | 'stable';
-}> = ({ label, value, unit, trend }) => {
-  const trendIcon =
-    trend === 'up' ? (
-      <TrendingUp
-        size={16}
-        color='green'
-      />
-    ) : trend === 'down' ? (
-      <TrendingDown
-        size={16}
-        color='red'
-      />
-    ) : (
-      <Minus size={16} />
-    );
-
-  return (
-    <Paper sx={{ p: 2, textAlign: 'center' }}>
-      <Typography
-        variant='caption'
-        color='text.secondary'
-      >
-        {label}
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 0.5 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 700 }}
-        >
-          {value}
-        </Typography>
-        {unit && (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {unit}
-          </Typography>
-        )}
-      </Box>
-      {trend && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
-          {trendIcon}
-        </Box>
-      )}
-    </Paper>
-  );
-};
 
 const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result }) => {
   const xKey = result.x_axis || 'name';
@@ -261,11 +190,37 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
                 size={{ xs: 12, sm: 6, md: 4 }}
                 key={`${metric.label}-${index}`}
               >
-                <MetricCard
-                  label={metric.label}
-                  value={metric.value}
-                  unit={metric.unit}
-                />
+                <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {metric.label}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {metric.value}
+                    </Typography>
+                    {metric.unit && (
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {metric.unit}
+                      </Typography>
+                    )}
+                  </Box>
+                </Paper>
               </Grid>
             ))}
           </Grid>
@@ -444,10 +399,29 @@ const AnomalyResult: React.FC<{ result: AnomalyPredictResponse }> = ({ result })
         sx={{ mb: 2 }}
       >
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MetricCard
-            label={t('ai.assistant.anomaly.count')}
-            value={result.anomaly_count}
-          />
+          <Paper sx={{ p: 2, textAlign: 'center' }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {t('ai.assistant.anomaly.count')}
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'center',
+                gap: 0.5,
+              }}
+            >
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 700 }}
+              >
+                {result.anomaly_count}
+              </Typography>
+            </Box>
+          </Paper>
         </Grid>
       </Grid>
       {result.anomalies.length > 0 && (
@@ -593,6 +567,15 @@ export const AiAssistantPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tabs = useMemo(
+    () => [
+      { value: 'report', label: t('ai.assistant.tab.report'), icon: <BarChart3 size={18} /> },
+      { value: 'flow', label: t('ai.assistant.tab.flow'), icon: <Workflow size={18} /> },
+      { value: 'knowledge', label: t('ai.assistant.tab.knowledge'), icon: <BookOpen size={18} /> },
+    ],
+    [t]
+  );
+
   // report form
   const [reportQuery, setReportQuery] = useState('');
   const [reportDataSource, setReportDataSource] = useState('');
@@ -613,11 +596,6 @@ export const AiAssistantPage: React.FC = () => {
   const [knowledgeQuestion, setKnowledgeQuestion] = useState('');
   const [knowledgeBase, setKnowledgeBase] = useState('');
   const [knowledgeResult, setKnowledgeResult] = useState<KnowledgeAskResponse | null>(null);
-
-  const handleTabChange = (_: React.SyntheticEvent, value: TabValue) => {
-    setActiveTab(value);
-    setError(null);
-  };
 
   const handleReportSubmit = async () => {
     if (!reportQuery.trim()) {
@@ -725,32 +703,23 @@ export const AiAssistantPage: React.FC = () => {
   };
 
   return (
-    <PageContainer
+    <StatsPageTemplate
       title={t('ai.assistant.title')}
       subtitle={t('ai.assistant.subtitle')}
+      tabs={tabs}
+      tabValue={activeTab}
+      onTabChange={(value) => {
+        setActiveTab(value as TabValue);
+        setError(null);
+      }}
+      loading={loading}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
     >
-      <Paper sx={{ mb: 2 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='scrollable'
-          scrollButtons='auto'
-        >
-          {TAB_CONFIG.map((tab) => (
-            <Tab
-              key={tab.value}
-              value={tab.value}
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {tab.icon}
-                  {t(`ai.${tab.label}`)}
-                </Box>
-              }
-            />
-          ))}
-        </Tabs>
-      </Paper>
-
       {error && (
         <Alert
           severity='error'
@@ -982,7 +951,7 @@ export const AiAssistantPage: React.FC = () => {
           {knowledgeResult && <KnowledgeResult result={knowledgeResult} />}
         </Box>
       )}
-    </PageContainer>
+    </StatsPageTemplate>
   );
 };
 
