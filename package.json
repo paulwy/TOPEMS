@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky && node scripts/patch-react-transition-group.js",
+    "prepare": "lefthook install && node scripts/patch-react-transition-group.js",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
     "dev:core": "pnpm --filter topems-core dev",
@@ -59,7 +59,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
-    "husky": "^9.1.7",
+    "lefthook": "^2.1.0",
     "lint-staged": "^17.1.1",
     "prettier": "^3.9.1",
     "typescript": "^6.0.3",
