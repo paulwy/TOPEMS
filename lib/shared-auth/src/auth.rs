@@ -65,12 +65,19 @@ impl Claims {
     }
 
     pub fn encode(&self, secret: &str) -> Result<String, TopemsError> {
-        encode(
-            &Header::new(Algorithm::HS256),
-            self,
-            &EncodingKey::from_secret(secret.as_ref()),
-        )
-        .map_err(|e| TopemsError::Auth(format!("Failed to encode token: {}", e)))
+        if secret.contains("-----BEGIN") {
+            let encoding_key = EncodingKey::from_rsa_pem(secret.as_bytes())
+                .map_err(|e| TopemsError::Auth(format!("RSA 私钥解析失败: {}", e)))?;
+            encode(&Header::new(Algorithm::RS256), self, &encoding_key)
+                .map_err(|e| TopemsError::Auth(format!("Failed to encode token: {}", e)))
+        } else {
+            encode(
+                &Header::new(Algorithm::HS256),
+                self,
+                &EncodingKey::from_secret(secret.as_ref()),
+            )
+            .map_err(|e| TopemsError::Auth(format!("Failed to encode token: {}", e)))
+        }
     }
 }
 
