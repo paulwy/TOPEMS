@@ -253,7 +253,6 @@ apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,crud,CrudPage,CrudPage,none,no,y
 apps/web/src/pages/mes/ProcessFlowPage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/ProcessRoutePage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/ProductionCostPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
-apps/web/src/pages/mes/ProductionDashboardPage/constants.tsx,mes,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/mes/ProductionDashboardPage/index.tsx,mes,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,none,no,no,no,no,yes,0
 apps/web/src/pages/mes/ProductionKanbanPage.tsx,mes,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,LoadingSpinner,no,no,no,no,yes,1
 apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1

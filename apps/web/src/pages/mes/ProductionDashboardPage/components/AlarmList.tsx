@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Chip, CircularProgress, Divider, Paper, Typography, Stack } from '@mui/material';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { RealtimeAlarm } from '../types';
-import { ALARM_LEVEL_META } from '../constants';
+import { ALARM_LEVEL_META } from '@/components/mes/ProductionDashboardConstants';
 import { formatRelativeTime } from '../utils';
 import i18n from '@/i18n';
 

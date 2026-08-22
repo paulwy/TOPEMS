@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import { LayoutTemplate, Plus, Play, Edit, Trash2 } from 'lucide-react';
 import type { ReportTemplate, ReportTypeInfo } from '@/api/report';
-import { getReportTypeName } from '../utils';
+import { getReportTypeName } from '@/components/report/ReportPageUtils';
 import i18n from '@/i18n';
 
 interface TemplateListProps {

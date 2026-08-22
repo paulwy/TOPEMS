@@ -10,12 +10,11 @@ import {
   TEMPLATE_CATEGORIES,
 } from '@/api/mail';
 import { useNotificationStore } from '@/store';
-import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { useCrudMutations } from '@/hooks';
-import { validateEmailList, validateJson } from './utils';
-import { STATUS_MAP, PRIORITY_MAP, PREVIEW_SAMPLE_DATA } from './constants';
-import type { SendForm, TemplateForm, PreviewContent } from './types';
-import { useTranslation } from 'react-i18next';
+import { validateEmailList, validateJson } from '@/pages/im/MailPage/utils';
+import { STATUS_MAP, PRIORITY_MAP, PREVIEW_SAMPLE_DATA } from '@/pages/im/MailPage/constants';
+import type { SendForm, TemplateForm, PreviewContent } from '@/pages/im/MailPage/types';
 import i18n from '@/i18n';
 
 const INITIAL_SEND_FORM: SendForm = {

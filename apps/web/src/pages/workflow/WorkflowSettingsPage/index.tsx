@@ -23,7 +23,7 @@ import { SettingsPageTemplate } from '@/components/templates';
 import type { SettingTab, SettingSection } from '@/components/templates/SettingsPageTemplate';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
-import { SETTING_GROUPS } from './constants';
+import { SETTING_GROUPS } from '@/components/workflow/WorkflowSettingGroups';
 import type {
   GeneralSettings as GeneralSettingsType,
   ApprovalSettings as ApprovalSettingsType,

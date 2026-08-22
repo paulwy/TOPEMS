@@ -1,6 +1,6 @@
 import type { ProductionRecord } from '@/api/mes';
 import type { TrendPoint } from './types';
-import { TREND_HOURS } from './constants';
+import { TREND_HOURS } from '@/components/mes/ProductionDashboardConstants';
 import i18n from '@/i18n';
 
 export const safeNumber = (value: unknown, fallback = 0): number => {

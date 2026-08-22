@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { FileText } from 'lucide-react';
 import type { ReportData, ReportTypeInfo } from '@/api/report';
-import { getModuleFromReportType } from '../utils';
+import { getModuleFromReportType } from '@/components/report/ReportPageUtils';
 import i18n from '@/i18n';
 
 interface ReportStatsProps {

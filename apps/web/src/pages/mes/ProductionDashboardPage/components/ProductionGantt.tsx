@@ -3,7 +3,7 @@ import { Box, CircularProgress, Divider, Paper, Tooltip, Typography, Stack } fro
 import { alpha } from '@mui/material/styles';
 import { Calendar } from 'lucide-react';
 import type { ProductionSchedule } from '@/api/mes';
-import { ct, SCHEDULE_STATUS_META } from '../constants';
+import { ct, SCHEDULE_STATUS_META } from '@/components/mes/ProductionDashboardConstants';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
@@ -168,7 +168,10 @@ const ProductionGantt: React.FC<{
               >
                 <Typography
                   variant='caption'
-                  sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                  }}
                 >
                   {h.label}
                 </Typography>
