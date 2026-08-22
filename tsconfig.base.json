@@ -28,6 +28,8 @@
       "@topems/shared-hooks/*": ["./packages/shared-hooks/src/*"],
       "@topems/shared-components": ["./packages/shared-components/src/index.ts"],
       "@topems/shared-components/*": ["./packages/shared-components/src/*"],
+      "@topems/app-shell": ["packages/app-shell/src"],
+      "@topems/app-shell/*": ["packages/app-shell/src/*"],
       "lucide-react": ["./apps/web/src/components/icons"],
       "react": ["./apps/mobile/node_modules/@types/react"],
       "*": ["./*"]

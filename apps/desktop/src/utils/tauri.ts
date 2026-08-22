@@ -1,10 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
-const currentWindow = getCurrentWindow();
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+const currentWindow = isTauri ? getCurrentWindow() : null;
 
 export const windowApi = {
   async minimize(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.minimize();
     } catch (error) {
@@ -13,6 +16,7 @@ export const windowApi = {
   },
 
   async maximize(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.maximize();
     } catch (error) {
@@ -21,6 +25,7 @@ export const windowApi = {
   },
 
   async unmaximize(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.unmaximize();
     } catch (error) {
@@ -29,6 +34,7 @@ export const windowApi = {
   },
 
   async close(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.close();
     } catch (error) {
@@ -37,6 +43,7 @@ export const windowApi = {
   },
 
   async show(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.show();
     } catch (error) {
@@ -45,6 +52,7 @@ export const windowApi = {
   },
 
   async hide(): Promise<void> {
+    if (!currentWindow) return;
     try {
       await currentWindow.hide();
     } catch (error) {
@@ -53,6 +61,7 @@ export const windowApi = {
   },
 
   async toggleMaximize(): Promise<void> {
+    if (!currentWindow) return;
     try {
       const isMaximized = await invoke('is_window_maximized');
       if (isMaximized) {

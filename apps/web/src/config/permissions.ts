@@ -1,3 +1,6 @@
+import { MODULES, PERMISSIONS, ModuleCode, PermissionAction, getModulePermissions } from '@topems/app-shell';
+export { MODULES, PERMISSIONS, getModulePermissions };
+export type { ModuleCode, PermissionAction };
 import i18n from '@/i18n';
 
 interface ModulePermission {
@@ -15,38 +18,6 @@ interface PermissionGroup {
   description: string;
   modules: ModuleCode[];
 }
-
-export type PermissionAction = 'read' | 'write' | 'delete' | 'approve' | 'admin';
-
-export const MODULES = {
-  // 核心模块
-  IAM: 'iam',
-  // 业务模块
-  HRM: 'hrm',
-  ERP: 'erp',
-  PM: 'pm',
-  RS: 'rs',
-  SCM: 'scm',
-  CRM: 'crm',
-  AI: 'ai',
-  GIS: 'gis',
-  QMS: 'qms', // 质量管理
-  EHS: 'ehs', // 环境健康安全
-  MES: 'mes', // 制造执行
-  WMS: 'wms', // 仓储管理
-  // 特殊模块
-  WORKFLOW: 'workflow',
-  // 基础设施模块
-  DOC: 'doc',
-  FILE: 'file',
-  NOTIFICATION: 'notification',
-  IM: 'im',
-  INTEGRATION: 'integration',
-  // 系统模块
-  SYSTEM: 'system',
-} as const;
-
-export type ModuleCode = (typeof MODULES)[keyof typeof MODULES];
 
 export const ACTIONS: { action: PermissionAction; name: string; level: number }[] = [
   { action: 'read', name: i18n.t('shared.permissions.k0'), level: 1 },
@@ -86,154 +57,6 @@ const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
     name: i18n.t('shared.permissions.k13'),
     description: i18n.t('shared.permissions.k14'),
     modules: ['system', 'workflow'],
-  },
-};
-
-export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> = {
-  [MODULES.IAM]: {
-    read: 'iam:dashboard:read',
-    write: 'iam:dashboard:write',
-    delete: 'iam:dashboard:delete',
-    approve: 'iam:dashboard:approve',
-    admin: 'iam:dashboard:admin',
-  },
-  [MODULES.HRM]: {
-    read: 'hrm:read',
-    write: 'hrm:write',
-    delete: 'hrm:delete',
-    approve: 'hrm:approve',
-    admin: 'hrm:admin',
-  },
-  [MODULES.ERP]: {
-    read: 'erp:dashboard:read',
-    write: 'erp:dashboard:write',
-    delete: 'erp:dashboard:delete',
-    approve: 'erp:dashboard:approve',
-    admin: 'erp:dashboard:admin',
-  },
-  [MODULES.PM]: {
-    read: 'pm:dashboard:read',
-    write: 'pm:dashboard:write',
-    delete: 'pm:dashboard:delete',
-    approve: 'pm:dashboard:approve',
-    admin: 'pm:dashboard:admin',
-  },
-  [MODULES.RS]: {
-    read: 'rs:read',
-    write: 'rs:write',
-    delete: 'rs:delete',
-    approve: 'rs:approve',
-    admin: 'rs:admin',
-  },
-  [MODULES.SCM]: {
-    read: 'scm:read',
-    write: 'scm:write',
-    delete: 'scm:delete',
-    approve: 'scm:approve',
-    admin: 'scm:admin',
-  },
-  [MODULES.CRM]: {
-    read: 'crm:dashboard:read',
-    write: 'crm:dashboard:write',
-    delete: 'crm:dashboard:delete',
-    approve: 'crm:dashboard:approve',
-    admin: 'crm:dashboard:admin',
-  },
-  [MODULES.AI]: {
-    read: 'ai:dashboard:read',
-    write: 'ai:dashboard:write',
-    delete: 'ai:dashboard:delete',
-    approve: 'ai:dashboard:approve',
-    admin: 'ai:dashboard:admin',
-  },
-  [MODULES.GIS]: {
-    read: 'gis:dashboard:read',
-    write: 'gis:dashboard:write',
-    delete: 'gis:dashboard:delete',
-    approve: 'gis:dashboard:approve',
-    admin: 'gis:dashboard:admin',
-  },
-  // QMS 质量管理
-  [MODULES.QMS]: {
-    read: 'qms:dashboard:read',
-    write: 'qms:dashboard:write',
-    delete: 'qms:dashboard:delete',
-    approve: 'qms:dashboard:approve',
-    admin: 'qms:dashboard:admin',
-  },
-  // EHS 环境健康安全
-  [MODULES.EHS]: {
-    read: 'ehs:dashboard:read',
-    write: 'ehs:dashboard:write',
-    delete: 'ehs:dashboard:delete',
-    approve: 'ehs:dashboard:approve',
-    admin: 'ehs:dashboard:admin',
-  },
-  // MES 制造执行
-  [MODULES.MES]: {
-    read: 'mes:read',
-    write: 'mes:write',
-    delete: 'mes:delete',
-    approve: 'mes:approve',
-    admin: 'mes:admin',
-  },
-  // WMS 仓储管理
-  [MODULES.WMS]: {
-    read: 'wms:read',
-    write: 'wms:write',
-    delete: 'wms:delete',
-    approve: 'wms:approve',
-    admin: 'wms:admin',
-  },
-  [MODULES.WORKFLOW]: {
-    read: 'workflow:dashboard:read',
-    write: 'workflow:dashboard:write',
-    delete: 'workflow:dashboard:delete',
-    approve: 'workflow:dashboard:approve',
-    admin: 'workflow:dashboard:admin',
-  },
-  [MODULES.DOC]: {
-    read: 'doc:dashboard:read',
-    write: 'doc:dashboard:write',
-    delete: 'doc:dashboard:delete',
-    approve: 'doc:dashboard:approve',
-    admin: 'doc:dashboard:admin',
-  },
-  [MODULES.FILE]: {
-    read: 'file:dashboard:read',
-    write: 'file:dashboard:write',
-    delete: 'file:dashboard:delete',
-    approve: 'file:dashboard:approve',
-    admin: 'file:dashboard:admin',
-  },
-  [MODULES.NOTIFICATION]: {
-    read: 'notification:dashboard:read',
-    write: 'notification:dashboard:write',
-    delete: 'notification:dashboard:delete',
-    approve: 'notification:dashboard:approve',
-    admin: 'notification:dashboard:admin',
-  },
-  [MODULES.IM]: {
-    read: 'im:read',
-    write: 'im:write',
-    delete: 'im:delete',
-    approve: 'im:approve',
-    admin: 'im:admin',
-  },
-  [MODULES.INTEGRATION]: {
-    read: 'integration:dashboard:read',
-    write: 'integration:dashboard:write',
-    delete: 'integration:dashboard:delete',
-    approve: 'integration:dashboard:approve',
-    admin: 'integration:dashboard:admin',
-  },
-  // SYSTEM 系统设置
-  [MODULES.SYSTEM]: {
-    read: 'system:dashboard:read',
-    write: 'system:dashboard:write',
-    delete: 'system:dashboard:delete',
-    approve: 'system:dashboard:approve',
-    admin: 'system:dashboard:admin',
   },
 };
 
@@ -375,10 +198,6 @@ export const ROLES = {
     NAME: i18n.t('shared.permissions.k60'),
     DESCRIPTION: i18n.t('shared.permissions.k61'),
   },
-};
-
-export const getModulePermissions = (module: ModuleCode): string[] => {
-  return Object.values(PERMISSIONS[module] || {});
 };
 
 const getModuleActions = (

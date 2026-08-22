@@ -9,55 +9,12 @@
 // Core Modules (Remote modules loaded via Module Federation)
 // ============================================================================
 
+import type { ModuleConfig, ModuleRoute } from '@topems/app-shell';
+export type { ModuleConfig, ModuleRoute };
+
 import { getCoreModules } from './core-modules';
 
 import { VITEDeploymentMode } from '@/config/env';
-
-export interface ModuleConfig {
-  /** Unique module identifier */
-  id: string;
-  /** Display name */
-  name: string;
-  /** Module description */
-  description?: string;
-  /** Module category */
-  category: 'core' | 'business' | 'plugin';
-  /** Version */
-  version: string;
-  /** Entry point for the module */
-  entry: string;
-  /** Remote URL for dynamic loading (optional) */
-  remoteEntry?: string;
-  /** Routes provided by this module */
-  routes: ModuleRoute[];
-  /** Permissions required */
-  permissions?: string[];
-  /** Dependencies on other modules */
-  dependencies?: string[];
-  /** Whether this module is enabled by default */
-  isDefault?: boolean;
-  /** Icon for the module */
-  icon?: string;
-}
-
-interface ModuleRoute {
-  /** Route path */
-  path: string;
-  /** Route name */
-  name: string;
-  /** Component to load (local modules) */
-  component: () => Promise<any>;
-  /** Component name (remote modules) */
-  componentName?: string;
-  /** Component path (remote modules, e.g., './pages/UserManagement') */
-  componentPath?: string;
-  /** Icon for the route */
-  icon?: string;
-  /** Required permissions */
-  permissions?: string[];
-  /** Child routes */
-  children?: ModuleRoute[];
-}
 
 const isStaticMode = VITEDeploymentMode() === 'static';
 
