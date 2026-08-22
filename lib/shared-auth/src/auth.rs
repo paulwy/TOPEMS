@@ -214,16 +214,26 @@ pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> S
 }
 
 pub fn verify_jwt_token(token: &str, secret: &str) -> Result<Claims, TopemsError> {
-    let mut validation = Validation::new(Algorithm::HS256);
-    validation.leeway = 60;
-
-    let token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(secret.as_ref()),
-        &validation,
-    )
-    .map_err(|e| TopemsError::Auth(format!("JWT 验证失败: {}", e)))?;
-    Ok(token_data.claims)
+    // Detect RSA PEM keys and use RS256, otherwise use HS256
+    if secret.contains("-----BEGIN") {
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.leeway = 60;
+        let decoding_key = DecodingKey::from_rsa_pem(secret.as_bytes())
+            .map_err(|e| TopemsError::Auth(format!("RSA 公钥解析失败: {}", e)))?;
+        let token_data = decode::<Claims>(token, &decoding_key, &validation)
+            .map_err(|e| TopemsError::Auth(format!("JWT 验证失败: {}", e)))?;
+        Ok(token_data.claims)
+    } else {
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.leeway = 60;
+        let token_data = decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(secret.as_ref()),
+            &validation,
+        )
+        .map_err(|e| TopemsError::Auth(format!("JWT 验证失败: {}", e)))?;
+        Ok(token_data.claims)
+    }
 }
 
 pub fn generate_refresh_token() -> String {
