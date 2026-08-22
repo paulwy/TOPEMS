@@ -1,5 +1,4 @@
 file,module,templateType,templateComponents,templateImports,commonComponents,usesPageContainer,usesDataTable,usesDataTableDirect,usesCrudPage,hasTemplate,commonComponentCount
-apps/web/src/pages/_shared/UserManagementApiAdapter.shared.tsx,_shared,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/admin/AccountManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/AuditLogPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/BankAccountManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
@@ -159,7 +158,6 @@ apps/web/src/pages/finance/FinanceReportsPage.tsx,finance,stats,StatsPageTemplat
 apps/web/src/pages/finance/FinanceTaxPage.tsx,finance,crud,CrudPage,none,DataExport,no,yes,no,yes,yes,1
 apps/web/src/pages/finance/FinanceVoucherPage/index.tsx,finance,crud,CrudPage,none,PageContainer; StatCardGroup; ActionButton; StatusBadge,yes,yes,no,yes,yes,4
 apps/web/src/pages/finance/OpeningBalancePage.tsx,finance,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/finance/PaymentPrintTemplate.tsx,finance,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/finance/VoucherCreatePage.tsx,finance,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/finance/VoucherDetailPage.tsx,finance,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/gis/DashboardPage.tsx,gis,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
@@ -170,7 +168,6 @@ apps/web/src/pages/help/FaqPage.tsx,help,list,ListPageTemplate,ListPageTemplate,
 apps/web/src/pages/help/GuidePage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/help/HelpCenterPage.tsx,help,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/hrm/DashboardPage.tsx,hrm,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/EmployeeFinanceTab.tsx,hrm,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/hrm/HrmAttendancePage.tsx,hrm,crud,CrudPage,CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/hrm/HrmCompanyPage.tsx,hrm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/hrm/HrmContractDetailPage.tsx,hrm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
@@ -200,7 +197,6 @@ apps/web/src/pages/iam/PermissionManagementPage.tsx,iam,crud,CrudPage,none,none,
 apps/web/src/pages/iam/RoleManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/iam/UserManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/im/DashboardPage.tsx,im,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/im/MailPage/hooks.tsx,im,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/im/MailPage/index.tsx,im,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/integration/IntegrationConnectionsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/integration/IntegrationDashboardPage.tsx,integration,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
@@ -411,7 +407,6 @@ apps/web/src/pages/report/ReportBuilderPage.tsx,report,unknown / custom,,none,Pa
 apps/web/src/pages/report/ReportDesignPage.tsx,report,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/report/ReportListPage.tsx,report,crud,CrudPage,CrudPage; CrudApiAdapter,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/report/ReportPage/index.tsx,report,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
-apps/web/src/pages/report/ReportPage/utils.tsx,report,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/report/ReportPage.tsx,report,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/report/ReportSchedulePage.tsx,report,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/report/ReportSubscriptionPage.tsx,report,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
@@ -531,7 +526,6 @@ apps/web/src/pages/workflow/WorkflowInstanceDetailPage.tsx,workflow,detail,Detai
 apps/web/src/pages/workflow/WorkflowInstancesPage.tsx,workflow,crud,CrudPage,none,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/workflow/WorkflowMonitorPage.tsx,workflow,crud,CrudPage,StatCardComponent,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/workflow/WorkflowNotificationCenterPage.tsx,workflow,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/workflow/WorkflowSettingsPage/constants.tsx,workflow,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/workflow/WorkflowSettingsPage/index.tsx,workflow,settings,SettingsPageTemplate,SettingsPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowStatisticsPage.tsx,workflow,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowTemplatePage.tsx,workflow,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
