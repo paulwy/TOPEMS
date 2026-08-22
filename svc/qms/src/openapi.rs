@@ -13,6 +13,11 @@ use crate::models::quality_inspection::{
 use crate::models::quality_issue::{
     CreateIssueRequest, QualityIssue, QualityIssueWithWorkflow, UpdateIssueRequest,
 };
+use crate::models::quality_cost::{
+    CostCategorySummary, CostDepartmentSummary, CostTrendItem, CreateQualityCostRequest,
+    ListQualityCostsResponse, QualityCost, QualityCostQuery, QualityCostStatistics,
+    UpdateQualityCostRequest,
+};
 use crate::models::quality_standard::{
     CreateStandardRequest, ListStandardsResponse, QualityStandard, StandardRevision,
     UpdateStandardRequest,
@@ -43,6 +48,16 @@ use crate::models::quality_standard::{
             QualityIssueWithWorkflow,
             CreateIssueRequest,
             UpdateIssueRequest,
+            // quality_cost
+            QualityCost,
+            QualityCostQuery,
+            ListQualityCostsResponse,
+            CreateQualityCostRequest,
+            UpdateQualityCostRequest,
+            CostCategorySummary,
+            CostDepartmentSummary,
+            CostTrendItem,
+            QualityCostStatistics,
         ),
     ),
     paths(
@@ -58,6 +73,14 @@ use crate::models::quality_standard::{
         crate::modules::quality_inspection::delete_inspection,
         crate::modules::quality_issue::list_issues,
         crate::modules::quality_issue::create_issue,
+        // quality_cost
+        crate::modules::quality_cost::list_quality_costs,
+        crate::modules::quality_cost::create_quality_cost,
+        crate::modules::quality_cost::get_quality_cost,
+        crate::modules::quality_cost::update_quality_cost,
+        crate::modules::quality_cost::delete_quality_cost,
+        crate::modules::quality_cost::get_cost_statistics,
+        crate::modules::quality_cost::get_cost_trend,
     ),
     tags(
         (name = "quality_standard", description = "质量标准 API"),

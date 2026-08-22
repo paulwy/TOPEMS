@@ -12,6 +12,24 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/qms/quality-costs",
+    tag = "quality_cost",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("cost_category" = Option<String>, Query, description = "成本分类过滤 (prevention/appraisal/internal_failure/external_failure)"),
+        ("department" = Option<String>, Query, description = "部门过滤"),
+        ("start_date" = Option<String>, Query, description = "起始日期 (YYYY-MM-DD)"),
+        ("end_date" = Option<String>, Query, description = "结束日期 (YYYY-MM-DD)"),
+    ),
+    responses(
+        (status = 200, description = "质量成本列表", body = ApiResponse<ListQualityCostsResponse>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_quality_costs(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -97,6 +115,17 @@ pub async fn list_quality_costs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:write"])),
+    path = "/api/qms/quality-costs",
+    tag = "quality_cost",
+    request_body = CreateQualityCostRequest,
+    responses(
+        (status = 200, description = "质量成本记录创建成功", body = ApiResponse<QualityCost>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn create_quality_cost(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -130,6 +159,20 @@ pub async fn create_quality_cost(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/qms/quality-costs/{id}",
+    tag = "quality_cost",
+    params(
+        ("id" = String, Path, description = "成本记录 ID (UUID)"),
+    ),
+    responses(
+        (status = 200, description = "质量成本记录详情", body = ApiResponse<QualityCost>),
+        (status = 400, description = "无效的成本记录ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_quality_cost(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -155,6 +198,21 @@ pub async fn get_quality_cost(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:write"])),
+    path = "/api/qms/quality-costs/{id}",
+    tag = "quality_cost",
+    params(
+        ("id" = String, Path, description = "成本记录 ID (UUID)"),
+    ),
+    request_body = UpdateQualityCostRequest,
+    responses(
+        (status = 200, description = "质量成本记录更新成功", body = ApiResponse<QualityCost>),
+        (status = 400, description = "无效的成本记录ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn update_quality_cost(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -189,6 +247,20 @@ pub async fn update_quality_cost(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:write"])),
+    path = "/api/qms/quality-costs/{id}",
+    tag = "quality_cost",
+    params(
+        ("id" = String, Path, description = "成本记录 ID (UUID)"),
+    ),
+    responses(
+        (status = 200, description = "质量成本记录删除成功", body = ApiResponse<bool>),
+        (status = 400, description = "无效的成本记录ID"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_quality_cost(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -218,6 +290,22 @@ pub async fn delete_quality_cost(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/qms/quality-costs/statistics",
+    tag = "quality_cost",
+    params(
+        ("cost_category" = Option<String>, Query, description = "成本分类过滤"),
+        ("department" = Option<String>, Query, description = "部门过滤"),
+        ("start_date" = Option<String>, Query, description = "起始日期 (YYYY-MM-DD)"),
+        ("end_date" = Option<String>, Query, description = "结束日期 (YYYY-MM-DD)"),
+    ),
+    responses(
+        (status = 200, description = "质量成本统计", body = ApiResponse<QualityCostStatistics>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_cost_statistics(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -351,6 +439,22 @@ pub async fn get_cost_statistics(
     Json(ApiResponse::success(stats, "获取质量成本统计成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/qms/quality-costs/trend",
+    tag = "quality_cost",
+    params(
+        ("cost_category" = Option<String>, Query, description = "成本分类过滤"),
+        ("department" = Option<String>, Query, description = "部门过滤"),
+        ("start_date" = Option<String>, Query, description = "起始日期 (YYYY-MM-DD)"),
+        ("end_date" = Option<String>, Query, description = "结束日期 (YYYY-MM-DD)"),
+    ),
+    responses(
+        (status = 200, description = "质量成本趋势", body = ApiResponse<Vec<CostTrendItem>>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_cost_trend(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
