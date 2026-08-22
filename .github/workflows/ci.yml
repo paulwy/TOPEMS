@@ -562,6 +562,41 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| cargo audit | ✅ No known vulnerabilities |" >> $GITHUB_STEP_SUMMARY
 
+  cargo-deny:
+    name: Cargo Deny (License + Security + Bans)
+    needs: [changes, rust-test]
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "cargo-deny-nightly-2026-07-01"
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+
+      - name: Run cargo deny check
+        run: |
+          echo "## Cargo Deny (License + Security + Bans + Sources)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Running 4 checks: advisories, bans, licenses, sources..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cargo deny check advisories bans licenses sources 2>&1 | tee /tmp/deny-output.txt
+          DENY_EXIT=${PIPESTATUS[0]}
+          if [ $DENY_EXIT -ne 0 ]; then
+            echo "❌ cargo-deny found issues — see output above" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "| cargo-deny | ✅ All 4 checks passed |" >> $GITHUB_STEP_SUMMARY
+
   frontend-lint:
     name: Frontend Lint
     needs: changes
@@ -1509,6 +1544,72 @@ jobs:
           path: apps/web/dist/
           retention-days: 3
 
+  lighthouse:
+    name: Lighthouse Performance Audit
+    needs: [changes, frontend-build]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: frontend-build
+          path: apps/web/dist
+
+      - name: Start preview server
+        run: |
+          cd apps/web
+          npx serve dist -l 3000 --single &
+          echo $! > /tmp/serve.pid
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)
+          echo "Server responded with HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Preview server not responding"
+            exit 1
+          fi
+
+      - name: Run Lighthouse CI
+        run: |
+          cd apps/web
+          npx @lhci/cli autorun --config lighthouserc.cjs || true
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Lighthouse Performance Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Lighthouse CI completed. Reports uploaded as artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "All assertions are 'warn' level — non-blocking for now." >> $GITHUB_STEP_SUMMARY
+
+      - name: Stop preview server
+        if: always()
+        run: kill $(cat /tmp/serve.pid) 2>/dev/null || true
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: apps/web/reports/lighthouse/
+          retention-days: 7
+
   security-scan:
     name: Security Scan
     needs: changes
@@ -1712,11 +1813,13 @@ jobs:
       - clippy-check
       - rust-test
       - rust-audit
+      - cargo-deny
       - frontend-lint
       - frontend-typecheck
       - frontend-test
       - frontend-coverage
       - frontend-build
+      - lighthouse
       - design-system-check
       - frontend-audit
       - i18n-quality-gate
@@ -1741,12 +1844,14 @@ jobs:
           echo "| Gate K · cargo clippy workspace | ${{ needs.clippy-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cargo Deny (License + Security + Bans) | ${{ needs.cargo-deny.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate（26 services · strict） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Tests (9 shards) | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Coverage | ${{ needs.frontend-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Build & Bundle | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lighthouse Performance Audit | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| i18n Quality Gate (R12 · 7-in-1: fake-en / key-align / mixed-structure / glossary / hardcoded / EN-missing / styleguide) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -1775,7 +1880,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
 
           FAILED=false
           for result in $RESULTS; do
