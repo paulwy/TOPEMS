@@ -29,7 +29,7 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PageContainer, Grid } from '@/components/common';
+import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
@@ -211,27 +211,19 @@ export const AiKnowledgeBasePage: React.FC = () => {
   };
 
   return (
-    <PageContainer
+    <AiToolPageTemplate
       title={i18n.t('ai.knowledge_base.title')}
-      subtitle={i18n.t('ai.knowledge_base.subtitle')}
-      padding={false}
-      maxWidth={false}
-      headerProps={{
-        pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.blue[400]} 0%, ${ct.purple[500]} 100%)`,
+      description={i18n.t('ai.knowledge_base.subtitle')}
+      leftPanelWidth={3}
+      leftPanelBreakpoint="lg"
+      pageContainerProps={{
+        headerProps: {
+          pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
+          pageGradient: `linear-gradient(135deg, ${ct.blue[400]} 0%, ${ct.purple[500]} 100%)`,
+        },
       }}
-    >
-      <Box sx={{ p: 3 }}>
-        <Grid
-          container
-          spacing={3}
-        >
-          <Grid
-            item
-            xs={12}
-            lg={3}
-          >
-            <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
+      leftPanel={
+        <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
               <Typography
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
@@ -316,14 +308,9 @@ export const AiKnowledgeBasePage: React.FC = () => {
                 </Box>
               )}
             </Paper>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            lg={9}
-          >
-            <Paper sx={{ borderRadius: 3, p: 3, height: '100%', minHeight: 600 }}>
+      }
+      rightPanel={
+        <Box sx={{ p: 3, height: '100%', minHeight: 600 }}>
               <Box
                 sx={{
                   display: 'flex',
@@ -538,11 +525,9 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   </Box>
                 </Box>
               )}
-            </Paper>
-          </Grid>
-        </Grid>
-      </Box>
-    </PageContainer>
+        </Box>
+      }
+    />
   );
 };
 

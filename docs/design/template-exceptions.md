@@ -17,10 +17,12 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 **V269**：新增 `DesignerTemplate` + 4 个设计器页（FormDesignPage、PageDesignPage、WorkflowDesignerPage、AutomationDesignerPage）迁移，覆盖率进一步提升至 **95.8%**（508/530），剩余 22 个例外项。
 
-剩余 22 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V273**：新增 `AiToolPageTemplate` + 3 个 AI 工具页（AiCodeAssistantPage、AiDocumentAnalysisPage、AiKnowledgeBasePage）迁移，覆盖率提升至 **96.4%**（511/530），剩余 19 个例外项。
+
+剩余 19 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表"永不治理"，而是明确：
-- 当前 20 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate` 已新增并落地）；
+- 当前 21 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate` 已新增并落地）；
 - 后续如需统一，应优先创建新的专用模板，而不是硬塞进现有模板。
 
 ---
@@ -29,7 +31,7 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 | 类别 | 数量 | 代表页面 | 核心原因 |
 |------|------|----------|----------|
-| AI 对话类 | 3 | `AiCodeAssistantPage`、`AiKnowledgeBasePage` 等 | 代码助手、文档分析、知识库问答等非纯聊天布局 |
+| AI 对话类 | 0 | — | 3 个 AI 工具页已全部迁至 `AiToolPageTemplate` |
 | 移动端页面 | 0 | — | 11 个移动端页面已全部迁至 `MobilePageTemplate` |
 | 设计器/画布类 | 0 | — | 4 个页面已全部迁至 `DesignerTemplate` |
 | 报表类 | 6 | `ReportBuilder`、`ReportViewer`、`ReportPage` 等 | 报表设计/查看/渲染，已有 `ReportDesignerTemplate` 但业务耦合深 |
@@ -40,23 +42,23 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 工具/系统类 | 3 | `PerformanceTestPage`、`SystemManagementPage`、`PluginUploadPage` | 高定制工具页 |
 | 列表/结构类 | 4 | `DatabaseStructurePage`、`HelpCenterPage`、`CommentsPage`、`AppManagementPage` | 适合模板但优先级低，可待模块重构时处理 |
 
-合计：**22 个页面**。
+合计：**19 个页面**。
 
 ---
 
 ## 3. 详细清单
 
-### 3.1 AI 对话类（3）
+### 3.1 AI 对话类（0，已迁移 3 项）
 
-V268-B 新增 `ChatPageTemplate`（`apps/web/src/components/templates/ChatPageTemplate.tsx`，左侧会话列表 + 右侧聊天区（标题栏 + 消息流 + 输入框）的标准布局，支持 `sidebar`、`header`、`messages`、`input` 四插槽，以及 `children` 透传模式）。`AiChatPage`、`DifyChatPage` 已完成迁移，剩余 3 个因非纯聊天布局（代码助手、文档分析、知识库问答混合）暂不迁移。
+V268-B 新增 `ChatPageTemplate`（`apps/web/src/components/templates/ChatPageTemplate.tsx`，左侧会话列表 + 右侧聊天区（标题栏 + 消息流 + 输入框）的标准布局，支持 `sidebar`、`header`、`messages`、`input` 四插槽，以及 `children` 透传模式）。`AiChatPage`、`DifyChatPage`、`IMPage` 已完成迁移。V273 新增 `AiToolPageTemplate`（`apps/web/src/components/templates/AiToolPageTemplate.tsx`，左侧配置/列表 + 右侧内容区（可选 Tabs）的双栏布局，支持 `leftPanel` / `rightPanel` / `tabs` 结构化插槽与 `children` 透传模式，统一 `loading` / `error` 状态），剩余 3 个 AI 工具页（代码助手、文档分析、知识库问答）已全部迁移至该模板，该类别例外清零。
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/ai/AiChatPage.tsx` | `ChatPageTemplate` | ✅ 已迁移 |
-| `apps/web/src/pages/ai/AiCodeAssistantPage.tsx` | `ChatPageTemplate` | 代码助手，非纯聊天布局 |
-| `apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx` | `ChatPageTemplate` | 文档分析对话，非纯聊天布局 |
-| `apps/web/src/pages/ai/AiKnowledgeBasePage.tsx` | `CardListTemplate` / `ChatPageTemplate` | 知识库 + 问答混合 |
-| `apps/web/src/pages/ai/DifyChatPage.tsx` | `ChatPageTemplate` | ✅ 已迁移 |
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/ai/AiChatPage.tsx` | `ChatPageTemplate` | ✅ 已迁移 | AI 多模式对话 |
+| `apps/web/src/pages/ai/AiCodeAssistantPage.tsx` | `AiToolPageTemplate` (children 模式) | ✅ 已迁移 | 代码助手（Paper[Tabs+Grid] 结构透传） |
+| `apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx` | `AiToolPageTemplate` (结构化模式) | ✅ 已迁移 | 文档分析（leftPanel + rightPanel + tabs） |
+| `apps/web/src/pages/ai/AiKnowledgeBasePage.tsx` | `AiToolPageTemplate` (结构化模式) | ✅ 已迁移 | 知识库问答（leftPanel + rightPanel，无 tabs） |
+| `apps/web/src/pages/ai/DifyChatPage.tsx` | `ChatPageTemplate` | ✅ 已迁移 | Dify 集成对话 |
 
 ### 3.2 移动端页面（0，已迁移 11 项）
 
@@ -166,8 +168,8 @@ V268-A 新增 `AuthPageTemplate`（`apps/web/src/components/templates/AuthPageTe
 | 指标 | 数值 |
 |------|------|
 | 当前全站页面总数 | 530 |
-| 已使用标准模板 | 508 (95.8%) |
-| 例外项（本文档） | 22 (4.2%) |
+| 已使用标准模板 | 511 (96.4%) |
+| 例外项（本文档） | 19 (3.6%) |
 | 目标覆盖率（不含例外） | 100% |
 
-> 注：覆盖率计算以 `apps/web/src/pages/**/*.tsx` 为分母。非页面支持文件（constants.tsx、_shared/*.shared.tsx）已移出 `pages/` 或改为 `.ts`，不再计入。V267-B 迁移 10 个移动端页面至 `MobilePageTemplate` 后，覆盖率自 91.5%（486/531）提升至 93.4%（496/531）。V268-C 迁移 `MobileHomePage` 后，覆盖率提升至 93.6%（497/531）。V268-B 迁移 3 个聊天页面至 `ChatPageTemplate` 后，覆盖率提升至 94.2%（500/531）。V268-A 迁移 4 个认证/错误页至 `AuthPageTemplate` 后，覆盖率提升至 94.9%（504/531）。V269 迁移 4 个设计器页至 `DesignerTemplate` 后，覆盖率进一步提升至 95.7%（508/531）。V270 校准审计脚本（新增 mobile/auth/chat/designer 四类模板检测）并清理已移出 pages/ 的非页面文件后，数据修正为 95.8%（508/530），例外项 22 个。
+> 注：覆盖率计算以 `apps/web/src/pages/**/*.tsx` 为分母。非页面支持文件（constants.tsx、_shared/*.shared.tsx）已移出 `pages/` 或改为 `.ts`，不再计入。V267-B 迁移 10 个移动端页面至 `MobilePageTemplate` 后，覆盖率自 91.5%（486/531）提升至 93.4%（496/531）。V268-C 迁移 `MobileHomePage` 后，覆盖率提升至 93.6%（497/531）。V268-B 迁移 3 个聊天页面至 `ChatPageTemplate` 后，覆盖率提升至 94.2%（500/531）。V268-A 迁移 4 个认证/错误页至 `AuthPageTemplate` 后，覆盖率提升至 94.9%（504/531）。V269 迁移 4 个设计器页至 `DesignerTemplate` 后，覆盖率进一步提升至 95.7%（508/531）。V270 校准审计脚本（新增 mobile/auth/chat/designer 四类模板检测）并清理已移出 pages/ 的非页面文件后，数据修正为 95.8%（508/530），例外项 22 个。V273 迁移 3 个 AI 工具页至 `AiToolPageTemplate` 后，覆盖率提升至 96.4%（511/530），例外项 19 个。

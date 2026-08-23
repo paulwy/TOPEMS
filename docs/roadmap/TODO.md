@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V272 | **更新日期**: 2026-08-23
+> **版本**: V273 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -10,10 +10,93 @@
 > **V270 审计脚本校准 + 例外清单数据修正已完成**（覆盖率 91.7%→95.8% 校准，例外项 23→22）。
 > **V271 架构冗余深度治理（P0→P1→P2）已完成**（审计统一 / 配置单一信源 / 门面修正 / 跨端类型共享 / DB 初始化去重）。
 > **V272 SQL 迁移冗余清理（方案 A）已完成**（删除 134 个 migrations/ 死代码 + 删除 MigrationSDK + schema_defense 注释清理）。
+> **V273 四轨并行推进已完成**（MES 审批流三件套 12 stubs 收敛 + AiToolPageTemplate 3 页迁移 + .sqlx 缓存新鲜度 CI check）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V273 四轨并行推进（MES 审批流 + AiToolPageTemplate + sqlx-cache CI check）
+
+> 日期：2026-08-23 | 代码改动 16 files（Rust A 6 + 前端 B 0 + 前端 C 7 + CI/脚本 D 3）| 验收：cargo check --workspace exit 0 · typecheck exit 0 · sqlx-cache PASS 275 files · 例外项 22→19 · 覆盖率 95.8%→96.4%
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A轨: MES 审批流三件套 | [approval_common.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/approval_common.rs) 新增 3 个共享方法（create_approval_and_log / execute_transition_and_log / reject_and_log）；4 个 MES 模块 12 处 TODO stub 全部替换为调用共享方法 | ✅ |
+| B轨: shared-types react-query devDep | 复核发现 devDep 已在 commit 865c0bef5 补全（`^5.101.0`），tsc 0 errors，无需改动 | ✅ |
+| C轨: AiToolPageTemplate + 3 页迁移 | 新建 [AiToolPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/AiToolPageTemplate.tsx)（结构化 + children 透传双模式）；AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 全部迁移；例外项 22→19，覆盖率 95.8%→96.4% | ✅ |
+| D轨: .sqlx 缓存新鲜度 CI check | 新建 [check-sqlx-cache-freshness.cjs](file:///Users/air/TOPEMS/scripts/ci/check-sqlx-cache-freshness.cjs)（4 项静态检查 C1-C4）；[ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) quality-gate job +30 行；[lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) pre-commit +12 行 | ✅ |
+
+### A轨详情：MES 审批流三件套
+
+**背景**：MES 4 个模块（production_order / anomaly_detection / work_report / quality_management/inspection）各有 3 处 TODO stub，共 12 处，重复实现"校验 status + 创建 approval + 写 audit log"模式。
+
+**变更（6 files）**：
+- [svc/mes/src/modules/approval_common.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/approval_common.rs) — 新增 3 个共享方法，通过 `topems_shared_db::AuditLogService::log_operation` 写入 `public.audit_logs`
+- [svc/mes/src/modules/mod.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/mod.rs) — 补全 `pub mod approval_common;` 声明
+- [svc/mes/src/modules/production_order.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/production_order.rs) — 3 处 stub 替换（pending→released）
+- [svc/mes/src/modules/anomaly_detection.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/anomaly_detection.rs) — 3 处 stub 替换（acknowledged→handling，table=None 虚拟实体）
+- [svc/mes/src/modules/work_report.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/work_report.rs) — 3 处 stub 替换（rejected→reworking）
+- [svc/mes/src/modules/quality_management/inspection.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/quality_management/inspection.rs) — 3 处 stub 替换（failed→concession_received）
+
+**验收**：`SQLX_OFFLINE=true cargo check -p topems-mes` exit 0，无 error 无 warning
+
+### C轨详情：AiToolPageTemplate + 3 页迁移
+
+**背景**：3 个 AI 工具页（AiCodeAssistant / AiDocumentAnalysis / AiKnowledgeBase）均为 Tabs 双栏布局，重复代码多。
+
+**变更（7 files）**：
+- [AiToolPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/AiToolPageTemplate.tsx) — 新建模板（leftPanel/rightPanel/tabs 三插槽 + children 透传模式 + loading/error 状态 + designTokens 无硬编码）
+- [extensions/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/templates/extensions/index.ts) — 导出 AiToolPageTemplate
+- [AiCodeAssistantPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/ai/AiCodeAssistantPage.tsx) — children 透传模式（Tabs 联动左右两栏保留）
+- [AiDocumentAnalysisPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx) — 结构化模式（leftPanel 文档上传 + tabs 5 分析模式 + rightPanel 3 状态内容）
+- [AiKnowledgeBasePage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/ai/AiKnowledgeBasePage.tsx) — 结构化模式（leftPanelBreakpoint="lg" 保留原响应式）
+- [template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) — AI 对话类例外 3→0，总例外 22→19
+- [scan.mjs](file:///Users/air/TOPEMS/scripts/design-system-audit/scan.mjs) — 新增 ai-tool 模板类型检测
+
+**验收**：`pnpm --filter topems-portal run typecheck` exit 0，0 errors
+
+### D轨详情：.sqlx 缓存新鲜度 CI check
+
+**根因 callout**：V272 commit 删除了 migration.rs 但未更新 lib.rs 的 `pub mod migration;`，且 .sqlx 缓存过期导致 cargo check 报 18 errors。这类"缓存与代码不同步"问题在本项目中首次出现，根因是：sqlx 离线缓存（.sqlx/*.json）在 SQL 查询修改后需要 `cargo sqlx prepare` 重建，但 CI 无自动检测机制。本轨新增静态启发式检查（文件存在性/数量/git dirty），不运行 cargo sqlx prepare（太重），仅作 advisory 告警。
+
+**变更（3 files）**：
+- [scripts/ci/check-sqlx-cache-freshness.cjs](file:///Users/air/TOPEMS/scripts/ci/check-sqlx-cache-freshness.cjs) — 新建脚本，4 项检查：C1 目录存在 / C2 文件数≥50 / C3 git dirty / C4 git tracked；默认 DRY-RUN 不 exit 1
+- [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — quality-gate job +30 行，advisory 模式（continue-on-error: true）
+- [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — pre-commit hook +12 行，触发条件 .rs/.sql/.sqlx 改动
+
+**验收**：`node scripts/ci/check-sqlx-cache-freshness.cjs --dry-run` → `SQLX_CACHE_STATUS: PASS · files: 275 · stale: false`
+
+### 变更文件清单（共 16 files）
+
+**Rust（6 files）**：
+- svc/mes/src/modules/approval_common.rs · anomaly_detection.rs · mod.rs · production_order.rs · quality_management/inspection.rs · work_report.rs
+
+**前端（7 files）**：
+- apps/web/src/components/templates/AiToolPageTemplate.tsx（新增）
+- apps/web/src/components/templates/extensions/index.ts
+- apps/web/src/pages/ai/AiCodeAssistantPage.tsx · AiDocumentAnalysisPage.tsx · AiKnowledgeBasePage.tsx
+- docs/design/template-exceptions.md
+- scripts/design-system-audit/scan.mjs
+
+**CI/脚本（3 files）**：
+- scripts/ci/check-sqlx-cache-freshness.cjs（新增）
+- .github/workflows/ci.yml
+- lefthook.yml
+
+### 最终验收矩阵
+- [x] `SQLX_OFFLINE=true cargo check --workspace` — exit 0（27.21s）
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `node scripts/ci/check-sqlx-cache-freshness.cjs --dry-run` — PASS · 275 files · stale: false
+- [x] 12 处 MES TODO stub 全部替换（grep `TODO.*审批` 结果为 0）
+- [x] 例外项 22→19（-3），覆盖率 95.8%→96.4%（508→511/530）
+- [x] Axum R1/R2/R3=0 STRONG_PASS · Perm R1-R6=0 · i18n 0 hardcoded
+
+### V273 后续扩展（留给 V274+）
+- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性（V270 后续扩展遗留，连续 3 版本未做，优先级提升）
+- [ ] **sqlx-cache 语义级检查**：当前 D 轨仅做静态启发式（存在性/数量/git dirty），未检测 SQL 语义过期；评估 `cargo sqlx prepare --check` 在 CI 中运行的可行性（重，可能需 nightly job）
+- [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
+- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
 
 ### 已完成：V272 SQL 迁移冗余清理（方案 A: 统一 schema_defense）
 

@@ -13,6 +13,10 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 
+use crate::modules::approval_common::{
+    build_approve_response, build_reject_response, build_start_response, create_approval_and_log,
+    execute_transition_and_log, reject_and_log,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -1064,10 +1068,30 @@ pub async fn start_rework_approval(
     {
         return e;
     }
-    // TODO: 校验当前 status=rejected，创建 approval 记录并写入 audit log
-    let approval_id = Uuid::new_v4();
+    // 校验当前 status=rejected，创建 approval 记录并写入 audit log
+    let approver_id = match claims.user_id() {
+        Ok(uid) => uid,
+        Err(_) => return Json(ApiResponse::error(401, "无效的用户身份")),
+    };
+    let record_id = Uuid::parse_str(&id).unwrap_or_default();
+    let approval_id = match create_approval_and_log(
+        &state.pool,
+        "work_report",
+        record_id,
+        "rejected",
+        "reworking",
+        approver_id,
+    )
+    .await
+    {
+        Ok(aid) => aid,
+        Err(e) => {
+            tracing::error!("发起返工审批失败: {}", e);
+            return Json(ApiResponse::error(500, "发起审批失败"));
+        }
+    };
     Json(ApiResponse::success(
-        serde_json::json!({ "approval_id": approval_id, "status": "pending_approval" }),
+        build_start_response(approval_id),
         "返工审批已发起",
     ))
 }
@@ -1098,9 +1122,24 @@ pub async fn approve_rework(
     {
         return e;
     }
-    // TODO: 校验 approval_id 与版本，执行 rejected→reworking 转换并写入 audit log
+    // 校验 approval_id 与版本，执行 rejected→reworking 转换并写入 audit log
+    let record_id = Uuid::parse_str(&id).unwrap_or_default();
+    if let Err(e) = execute_transition_and_log(
+        &state.pool,
+        Some("work_reports"),
+        "work_report",
+        record_id,
+        req.approval_id,
+        "rejected",
+        "reworking",
+    )
+    .await
+    {
+        tracing::error!("返工审批通过失败: {}", e);
+        return Json(ApiResponse::error(500, "审批通过失败"));
+    }
     Json(ApiResponse::success(
-        serde_json::json!({ "approval_id": req.approval_id, "status": "approved" }),
+        build_approve_response(req.approval_id),
         "返工审批通过成功",
     ))
 }
@@ -1131,9 +1170,22 @@ pub async fn reject_rework(
     {
         return e;
     }
-    // TODO: 校验 approval_id 与版本，记录驳回并写入 audit log
+    // 校验 approval_id 与版本，记录驳回并写入 audit log
+    let record_id = Uuid::parse_str(&id).unwrap_or_default();
+    if let Err(e) = reject_and_log(
+        &state.pool,
+        "work_report",
+        record_id,
+        req.approval_id,
+        &req.comment,
+    )
+    .await
+    {
+        tracing::error!("返工审批驳回失败: {}", e);
+        return Json(ApiResponse::error(500, "审批驳回失败"));
+    }
     Json(ApiResponse::success(
-        serde_json::json!({ "approval_id": req.approval_id, "status": "rejected" }),
+        build_reject_response(req.approval_id),
         "返工审批驳回成功",
     ))
 }

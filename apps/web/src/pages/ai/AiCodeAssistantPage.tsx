@@ -36,7 +36,8 @@ import {
   FileCode,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PageContainer, Grid } from '@/components/common';
+import { Grid } from '@/components/common';
+import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { aiApi } from '@/api/ai';
@@ -371,18 +372,17 @@ export const AiCodeAssistantPage: React.FC = () => {
   };
 
   return (
-    <PageContainer
+    <AiToolPageTemplate
       title={t('ai.code_assistant.title')}
-      subtitle={t('ai.code_assistant.subtitle')}
-      padding={false}
-      maxWidth={false}
-      headerProps={{
-        pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[500]} 100%)`,
+      description={t('ai.code_assistant.subtitle')}
+      pageContainerProps={{
+        headerProps: {
+          pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
+          pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[500]} 100%)`,
+        },
       }}
     >
-      <Box sx={{ p: 3 }}>
-        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           {/* 标签页 */}
           <Box
             sx={{
@@ -788,8 +788,7 @@ export const AiCodeAssistantPage: React.FC = () => {
             </Grid>
           </Box>
         </Paper>
-      </Box>
-    </PageContainer>
+    </AiToolPageTemplate>
   );
 };
 

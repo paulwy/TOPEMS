@@ -80,6 +80,18 @@ pre-commit:
           node scripts/ci/check-axum-layer-order.cjs
         fi
 
+    # [Gate S] SQLx offline cache freshness (dry-run · WARN only, never blocks commit)
+    # Triggers on .rs / .sql changes or any .sqlx/ cache edit so authors remember
+    # to commit regenerated .sqlx/query-*.json alongside SQL/migration changes.
+    sqlx-cache-freshness:
+      tags: rust sqlx cache
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|sql)$|^\.sqlx/' || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-sqlx-cache-freshness.cjs" ]; then
+          node scripts/ci/check-sqlx-cache-freshness.cjs
+        fi
+
     # [Gate H] CRM contract consistency
     crm-contract:
       tags: crm contract
