@@ -91,3 +91,40 @@ pub async fn check_pool_health(pool: &PgPool) -> HealthCheckResult {
 
     result
 }
+
+/// P2-M1: 确保消费端 master_data_refs 表存在（统一 schema，消除 4 服务重复 SQL）
+///
+/// 各业务服务（scm/erp/pdm/crm）在 init_db 中调用此函数，表名按服务前缀生成：
+///   `{service_prefix}_master_data_refs`
+///
+/// Schema 与 V32.0 AC-5 本地主数据引用契约一致。
+pub async fn ensure_master_data_refs_table(
+    pool: &PgPool,
+    service_prefix: &str,
+) -> Result<()> {
+    let table_name = format!("{}_master_data_refs", service_prefix);
+    let sql = format!(
+        r#"
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            master_data_id    VARCHAR(128) PRIMARY KEY,
+            tenant_id         UUID NOT NULL,
+            domain            VARCHAR(32) NOT NULL,
+            code              VARCHAR(128) NOT NULL,
+            name              VARCHAR(256),
+            status            VARCHAR(32) DEFAULT 'active',
+            source_service    VARCHAR(64) NOT NULL,
+            local_entity_type VARCHAR(64),
+            local_entity_id   UUID,
+            payload_snapshot  JSONB,
+            last_synced_at    TIMESTAMPTZ DEFAULT NOW(),
+            created_at        TIMESTAMPTZ DEFAULT NOW(),
+            updated_at        TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    );
+    sqlx::query(&sql).execute(pool).await.map_err(|e| {
+        TopemsError::Database(format!("Failed to create {table_name}: {e}"))
+    })?;
+    info!("[{}] {} 表已就绪（AC-5 本地主数据引用）", service_prefix, table_name);
+    Ok(())
+}

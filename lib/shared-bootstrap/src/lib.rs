@@ -1216,6 +1216,59 @@ pub async fn standard_get_metrics(
     axum::Json(ApiResponse::success(metrics, "服务指标"))
 }
 
+// =============================================================================
+// P1-R1 治理：默认 home/health/detailed_health 处理函数
+// 各 svc main.rs 中这三个函数几乎完全相同，仅字符串不同，统一在此提供默认实现。
+// =============================================================================
+
+/// 生成默认 home 文本（P1-R1 治理）
+///
+/// 各 svc main.rs 中 `home()` 函数仅返回一段静态字符串，统一在此构造，
+/// 避免每个 svc 复制粘贴相同的 `async fn home() -> &'static str` 样板。
+///
+/// 返回的字符串已 `Box::leak` 为 `&'static str`，可直接用于 `get(handler)`。
+///
+/// # 用法
+/// ```ignore
+/// // svc main.rs
+/// static HOME_TEXT: &str = default_home_text("TOPEMS PDM", "Product Data Management");
+/// async fn home() -> &'static str { HOME_TEXT }
+/// ```
+pub fn default_home_text(service_title: &str, service_desc: &str) -> &'static str {
+    Box::leak(
+        format!(
+            "{} Service API\n\n{}\n\n- /health - Health check",
+            service_title, service_desc
+        )
+        .into_boxed_str(),
+    )
+}
+
+/// 生成默认 detailed_health 处理函数
+///
+/// # 参数
+/// - `pool`: 数据库连接池（从 AppState 取）
+/// - `service_tag`: 服务标签，如 "pdm-service"
+/// - `modules_json`: 模块状态 JSON，如 `json!({"pdm": "active"})`
+/// - `version`: 服务版本
+pub async fn default_detailed_health_handler(
+    pool: sqlx::PgPool,
+    service_tag: &'static str,
+    modules_json: serde_json::Value,
+    version: &'static str,
+) -> axum::Json<topems_shared_core::response::ApiResponse<serde_json::Value>> {
+    use topems_shared_core::response::ApiResponse;
+    let resp = build_detailed_health_response(
+        &pool,
+        service_tag,
+        modules_json,
+        version,
+        serde_json::json!({}),
+    )
+    .await;
+    axum::Json(ApiResponse::success(resp, "Detailed health check"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

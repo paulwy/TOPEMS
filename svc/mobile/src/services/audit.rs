@@ -1,5 +1,17 @@
-use topems_shared_db::audit::{AuditLogQuery, AuditLogService, CreateAuditLogRequest};
+// Mobile 服务审计日志（P0-R2 治理：用 log_operation() 替代重复 builder 链）
+use topems_shared_db::audit::{AuditLog, AuditLogQuery, AuditLogService};
 use uuid::Uuid;
+
+/// Mobile 审计资源类型常量
+pub mod resources {
+    pub const PATROL: &str = "patrol";
+    pub const SCAN: &str = "scan";
+    pub const TASK: &str = "task";
+    pub const DEVICE: &str = "device";
+
+    /// Mobile 服务可查询的全部资源类型
+    pub const ALL: &[&str] = &[PATROL, SCAN, TASK, DEVICE];
+}
 
 pub struct MobileAuditService {
     audit_service: AuditLogService,
@@ -12,6 +24,11 @@ impl MobileAuditService {
         }
     }
 
+    /// 底层共享审计服务（供需要直接访问的场景）
+    pub fn shared(&self) -> &AuditLogService {
+        &self.audit_service
+    }
+
     pub async fn log_patrol_operation(
         &self,
         action: &str,
@@ -21,31 +38,18 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let mut req = CreateAuditLogRequest::new(
-            action.to_string(),
-            "patrol".to_string(),
-            status.to_string(),
-        );
-        if let Some(eid) = entity_id {
-            req = req.with_entity_id(eid);
-        }
-        if let Some(uid) = user_id {
-            req = req.with_user(uid.to_string(), String::new());
-        }
-        if let Some(details) = request_details {
-            req = req.with_request_details(details);
-        }
-        if let Some(err) = error_message {
-            req = req.with_error(err.to_string());
-        }
-
-        match self.audit_service.create_audit_log(&req).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                tracing::error!("[MobileAudit] Failed to log patrol operation: {}", e);
-                Err(e)
-            }
-        }
+        self.audit_service
+            .log_operation(
+                action,
+                resources::PATROL,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_scan_operation(
@@ -57,28 +61,18 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let mut req =
-            CreateAuditLogRequest::new(action.to_string(), "scan".to_string(), status.to_string());
-        if let Some(eid) = entity_id {
-            req = req.with_entity_id(eid);
-        }
-        if let Some(uid) = user_id {
-            req = req.with_user(uid.to_string(), String::new());
-        }
-        if let Some(details) = request_details {
-            req = req.with_request_details(details);
-        }
-        if let Some(err) = error_message {
-            req = req.with_error(err.to_string());
-        }
-
-        match self.audit_service.create_audit_log(&req).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                tracing::error!("[MobileAudit] Failed to log scan operation: {}", e);
-                Err(e)
-            }
-        }
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SCAN,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_task_operation(
@@ -90,28 +84,18 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let mut req =
-            CreateAuditLogRequest::new(action.to_string(), "task".to_string(), status.to_string());
-        if let Some(eid) = entity_id {
-            req = req.with_entity_id(eid);
-        }
-        if let Some(uid) = user_id {
-            req = req.with_user(uid.to_string(), String::new());
-        }
-        if let Some(details) = request_details {
-            req = req.with_request_details(details);
-        }
-        if let Some(err) = error_message {
-            req = req.with_error(err.to_string());
-        }
-
-        match self.audit_service.create_audit_log(&req).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                tracing::error!("[MobileAudit] Failed to log task operation: {}", e);
-                Err(e)
-            }
-        }
+        self.audit_service
+            .log_operation(
+                action,
+                resources::TASK,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_device_operation(
@@ -124,31 +108,18 @@ impl MobileAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
-        let mut req = CreateAuditLogRequest::new(
-            action.to_string(),
-            "device".to_string(),
-            status.to_string(),
-        );
-        if let Some(eid) = entity_uuid {
-            req = req.with_entity_id(eid);
-        }
-        if let Some(uid) = user_id {
-            req = req.with_user(uid.to_string(), String::new());
-        }
-        if let Some(details) = request_details {
-            req = req.with_request_details(details);
-        }
-        if let Some(err) = error_message {
-            req = req.with_error(err.to_string());
-        }
-
-        match self.audit_service.create_audit_log(&req).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                tracing::error!("[MobileAudit] Failed to log device operation: {}", e);
-                Err(e)
-            }
-        }
+        self.audit_service
+            .log_operation(
+                action,
+                resources::DEVICE,
+                entity_uuid,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn query_audit_logs(
@@ -160,7 +131,7 @@ impl MobileAuditService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<MobileAuditLogEntry>, sqlx::Error> {
-        let page = offset / limit + 1;
+        let page = if limit > 0 { offset / limit + 1 } else { 1 };
         let query = AuditLogQuery {
             action: action.map(|s| s.to_string()),
             entity_type: resource.map(|s| s.to_string()),
@@ -172,28 +143,12 @@ impl MobileAuditService {
             page_size: Some(limit),
         };
 
-        let resources = &["patrol", "scan", "task", "device"];
         let logs = self
             .audit_service
-            .query_audit_logs(&query, Some(resources))
+            .query_audit_logs(&query, Some(resources::ALL))
             .await?;
 
-        Ok(logs
-            .into_iter()
-            .map(|log| MobileAuditLogEntry {
-                id: log.id,
-                action: log.action,
-                entity_type: log.entity_type,
-                entity_id: log.entity_id,
-                user_id: log.user_id,
-                request_details: log.request_details,
-                status: log.status,
-                error_message: log.error_message,
-                ip_address: log.ip_address,
-                user_agent: log.user_agent,
-                created_at: log.created_at,
-            })
-            .collect())
+        Ok(logs.into_iter().map(MobileAuditLogEntry::from).collect())
     }
 }
 
@@ -210,4 +165,22 @@ pub struct MobileAuditLogEntry {
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<AuditLog> for MobileAuditLogEntry {
+    fn from(log: AuditLog) -> Self {
+        Self {
+            id: log.id,
+            action: log.action,
+            entity_type: log.entity_type,
+            entity_id: log.entity_id,
+            user_id: log.user_id,
+            request_details: log.request_details,
+            status: log.status,
+            error_message: log.error_message,
+            ip_address: log.ip_address,
+            user_agent: log.user_agent,
+            created_at: log.created_at,
+        }
+    }
 }
