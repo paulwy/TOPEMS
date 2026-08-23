@@ -6,6 +6,9 @@ use axum::{
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::approval::{
+    create_approval_and_log, execute_transition_and_log, reject_and_log,
+};
 use topems_shared_service_client::service_client::api::workflow_api::{
     CreateInstanceRequest, WorkflowApi,
 };
@@ -178,6 +181,17 @@ async fn submit_approval(
         Ok(approval) => {
             // 业务逻辑：更新项目状态为待审批
             let _ = update_project_status(&state.pool, project_id, "pending_approval").await;
+            // 审计日志：记录审批发起（V282 集成 shared-db approval）
+            let approver_uuid = Uuid::parse_str(&req.approver_id).unwrap_or_else(|_| Uuid::nil());
+            let _ = create_approval_and_log(
+                &state.pool,
+                "project",
+                project_id,
+                "pending",
+                "approved",
+                approver_uuid,
+            )
+            .await;
             Json(ApiResponse::success(approval, "提交审批成功"))
         }
         Err(e) => {
@@ -314,7 +328,7 @@ async fn handle_approval_action(
             "cancelled"
         })
         .bind(&approvals)
-        .bind(req.comment)
+        .bind(req.comment.as_deref())
         .bind(now)
         .bind(approval.id)
         .fetch_one(&state.pool)
@@ -329,6 +343,15 @@ async fn handle_approval_action(
                     "draft"
                 };
                 let _ = update_project_status(&state.pool, project_id, status).await;
+                // 审计日志：记录审批驳回/取消（V282 集成 shared-db approval）
+                let _ = reject_and_log(
+                    &state.pool,
+                    "project",
+                    project_id,
+                    approval.id,
+                    req.comment.as_deref().unwrap_or(""),
+                )
+                .await;
                 Json(ApiResponse::success(
                     updated,
                     if action == "reject" {
@@ -409,6 +432,17 @@ async fn handle_approval_action(
                 if is_final_step {
                     // 业务逻辑：审批通过，更新项目状态
                     let _ = update_project_status(&state.pool, project_id, "approved").await;
+                    // 审计日志：记录审批通过（V282 集成 shared-db approval）
+                    let _ = execute_transition_and_log(
+                        &state.pool,
+                        None,
+                        "project",
+                        project_id,
+                        approval.id,
+                        "pending_approval",
+                        "approved",
+                    )
+                    .await;
                     Json(ApiResponse::success(updated, "审批已通过"))
                 } else {
                     Json(ApiResponse::success(updated, "审批步骤已通过，等待下一步"))

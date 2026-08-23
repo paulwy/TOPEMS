@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V281 | **更新日期**: 2026-08-23
+> **版本**: V282 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -19,10 +19,34 @@
 > **V279 工具/系统类模板化已完成**（3 页接入已有模板，覆盖率 98.7%→99.2%，例外项 7→4）。
 > **V280 最后 4 例外清零**（4 页接入已有模板，覆盖率 99.2%→**100.0%**，例外项 4→0）。设计系统模板治理全流程收闭 🎯
 > **V281 后续任务推进**（ApprovalTransition 提升到 shared-db / AiToolPageTemplate 评估结论 / 文档归档）。
+> **V282 后续任务推进**（PM 审批逻辑集成 shared-db approval 审计日志 / SupplierPortalPage 声明式评估结论）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V282 后续任务（PM 审批集成 + SupplierPortalPage 评估）
+
+> 日期：2026-08-23 | 代码改动 2 files（PM project_approval.rs + TODO）| 验收：cargo check 0 errors
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| PM 审批逻辑集成 shared-db approval | [project_approval.rs](file:///Users/air/TOPEMS/svc/pm/src/modules/project_approval.rs) 3 个审批操作（发起/通过/驳回）集成 `create_approval_and_log` / `execute_transition_and_log` / `reject_and_log`，PM 审批操作现写入统一 `public.audit_logs` 表 | ✅ |
+| SupplierPortalPage 声明式 statCards 评估 | statCards 有 `bgColor`+`format` 字段不被 `StatCard` 接口支持，需先扩展接口 → **延后到 V283** | ✅ |
+
+#### PM 审批集成详情
+- `submit_approval`：审批发起后调用 `create_approval_and_log`（entity_type="project"）
+- `handle_approval_action` approve：审批通过后调用 `execute_transition_and_log`
+- `handle_approval_action` reject/cancel：审批驳回后调用 `reject_and_log`
+- 所有审计日志通过 `topems_shared_db::approval` → `AuditLogService::log_operation` 写入 `public.audit_logs`
+
+#### 最终验收矩阵
+- [x] `cargo check -p topems-pm` — exit 0，0 errors
+
+### V282 后续扩展（留给 V283+）
+- [ ] **Finance 审批增强**：finance 的 `submit_approval`/`approve_approval`/`reject_approval` 目前是占位逻辑（仅 debug 日志），可集成 shared-db approval 做真实审计
+- [ ] **SupplierPortalPage 声明式 statCards**：需先扩展 `StatCard` 接口支持 `bgColor` + `format` 字段
+- [ ] **模板扩展**：4 个 children 透传页面评估是否抽象为专用声明式模板
 
 ### 已完成：V281 后续任务（ApprovalTransition 提升 + AiToolPageTemplate 评估）
 
