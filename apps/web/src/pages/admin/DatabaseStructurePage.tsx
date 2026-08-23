@@ -1,14 +1,12 @@
 import { designTokens } from '@topems/tokens';
-import { Grid } from '@/components';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PageContainer } from '@/components/common';
+import { MasterDetailPageTemplate, type MasterColumn } from '@/components/templates';
 import { useNavigate } from 'react-router-dom';
 import {
   Database,
-  Search,
   Table,
   Plus,
   Trash2,
@@ -35,7 +33,6 @@ import {
   Snackbar,
   Alert,
   MenuItem,
-  InputAdornment,
   Stack,
   Tooltip,
   Table as MuiTable,
@@ -265,9 +262,28 @@ const DatabaseStructurePage: React.FC = () => {
       columnName,
     });
   };
-  const filteredTables = tables.filter((table) =>
-    table.table_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const masterColumns: MasterColumn<TableInfo>[] = [
+    {
+      id: 'table_name',
+      label: i18n.t('admin.database_structure_page.col_table_name'),
+      field: 'table_name',
+      render: (_value, row) => (
+        <Stack
+          direction='row'
+          spacing={1}
+          sx={{ alignItems: 'center' }}
+        >
+          <Table size={16} />
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500, wordBreak: 'break-all' }}
+          >
+            {row.table_name}
+          </Typography>
+        </Stack>
+      ),
+    },
+  ];
   const getDataTypeDisplay = (col: ColumnInfo) => {
     let type = col.data_type.toUpperCase();
     if (col.character_maximum_length) {
@@ -295,148 +311,46 @@ const DatabaseStructurePage: React.FC = () => {
     }
   };
   return (
-    <PageContainer
-      title={i18n.t('admin.database_structure_page.manage')}
-      subtitle={i18n.t('admin.database_structure_page.manage_modify_delete')}
-      maxWidth='xl'
-      headerProps={{
-        backButton: {
-          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
-        },
-      }}
-    >
-      <Grid
-        container
-        spacing={3}
-      >
-        {/* 左侧表列表 */}
-        <Grid
-          item
-          xs={12}
-          md={3}
-          lg={2.4}
-        >
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: 'divider',
-              position: { md: 'sticky' },
-              top: { md: 16 },
-            }}
-          >
-            <TextField
-              fullWidth
-              size='small'
-              placeholder={i18n.t('admin.database_structure_page.search')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ mb: 2 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search
-                        size={16}
-                        color='grey.400'
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress size={24} />
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  maxHeight: 600,
-                  overflowY: 'auto',
-                  '&::-webkit-scrollbar': {
-                    width: 6,
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    bgcolor: 'grey.400',
-                    borderRadius: 3,
-                  },
-                }}
-              >
-                <Stack spacing={0.5}>
-                  {filteredTables.map((table) => {
-                    const isSelected = selectedTable?.table_name === table.table_name;
-                    return (
-                      <Box
-                        key={table.table_name}
-                        onClick={() => {
-                          setActiveTab('structure');
-                          setSelectedTable({
-                            table_name: table.table_name,
-                            schema_name: 'public',
-                            columns: [],
-                          });
-                        }}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 1.5,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                          border: '1px solid',
-                          borderColor: isSelected ? 'primary.dark' : 'transparent',
-                          bgcolor: isSelected ? 'primary.light' : 'transparent',
-                          '&:hover': {
-                            bgcolor: isSelected ? 'primary.light' : 'grey.100',
-                          },
-                        }}
-                      >
-                        <Stack
-                          direction='row'
-                          spacing={1}
-                          sx={{ alignItems: 'center' }}
-                        >
-                          <Table
-                            size={16}
-                            color={isSelected ? 'primary.dark' : 'grey.400'}
-                          />
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              fontWeight: isSelected ? 600 : 500,
-                              color: isSelected ? 'primary.dark' : 'text.primary',
-                              wordBreak: 'break-all',
-                            }}
-                          >
-                            {table.table_name}
-                          </Typography>
-                        </Stack>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-        {/* 右侧详情区 */}
-        <Grid
-          item
-          xs={12}
-          md={9}
-          lg={9.6}
-        >
-          {selectedTable ? (
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                overflow: 'hidden',
-              }}
-            >
+    <>
+      <MasterDetailPageTemplate<TableInfo>
+        title={i18n.t('admin.database_structure_page.manage')}
+        subtitle={i18n.t('admin.database_structure_page.manage_modify_delete')}
+        items={tables}
+        columns={masterColumns}
+        getRowId={(table) => table.table_name}
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={i18n.t('admin.database_structure_page.search')}
+        loading={loading}
+        selectedId={selectedTable?.table_name}
+        onSelectionChange={(item) => {
+          if (item) {
+            setActiveTab('structure');
+            setSelectedTable({
+              table_name: item.table_name,
+              schema_name: 'public',
+              columns: [],
+            });
+          } else {
+            setSelectedTable(null);
+          }
+        }}
+        collapsible={false}
+        masterWidth={300}
+        emptyIcon={<Database size={48} color='grey.400' />}
+        emptyMessage={i18n.t('admin.database_structure_page.select_table_hint')}
+        detailEmptyTitle={i18n.t('admin.database_structure_page.select_table')}
+        detailEmptyDescription={i18n.t('admin.database_structure_page.select_table_hint')}
+        actions={[
+          {
+            label: i18n.t('shared.back_button.k0'),
+            onClick: () => navigate(DASHBOARD_PATHS.dashboard),
+          },
+        ]}
+        renderDetail={() => {
+          if (!selectedTable) return null;
+          return (
+            <Box>
               {/* Tab 导航 */}
               <Box
                 sx={{
@@ -836,36 +750,10 @@ const DatabaseStructurePage: React.FC = () => {
                   )}
                 </Box>
               )}
-            </Paper>
-          ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                p: 8,
-                textAlign: 'center',
-              }}
-            >
-              <Database
-                size={64}
-                color='grey.400'
-                style={{ marginBottom: 16 }}
-              />
-              <Typography
-                variant='h6'
-                sx={{ ...{ mb: 1 }, fontWeight: 500 }}
-              >
-                {i18n.t('admin.database_structure_page.select_table')}
-              </Typography>
-              <Typography color='text.secondary'>
-                {i18n.t('admin.database_structure_page.select_table_hint')}
-              </Typography>
-            </Paper>
-          )}
-        </Grid>
-      </Grid>
+            </Box>
+          );
+        }}
+      />
       {/* 添加字段对话框 */}
       <Dialog
         open={showAddColumnModal}
@@ -1096,7 +984,7 @@ const DatabaseStructurePage: React.FC = () => {
           {notification?.message}
         </Alert>
       </Snackbar>
-    </PageContainer>
+    </>
   );
 };
 export default DatabaseStructurePage;
