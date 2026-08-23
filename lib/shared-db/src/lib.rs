@@ -192,6 +192,7 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
+pub mod approval;
 pub mod audit;
 pub mod audit_soft_delete;
 pub mod backup;
