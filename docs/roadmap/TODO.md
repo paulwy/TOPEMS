@@ -12,10 +12,35 @@
 > **V272 SQL 迁移冗余清理（方案 A）已完成**（删除 134 个 migrations/ 死代码 + 删除 MigrationSDK + schema_defense 注释清理）。
 > **V273 四轨并行推进已完成**（MES 审批流三件套 12 stubs 收敛 + AiToolPageTemplate 3 页迁移 + .sqlx 缓存新鲜度 CI check）。
 > **V274 sqlx-cache 语义级检查已完成**（sqlx-prepare.sh --semantic mode + schema-defense-gate advisory step）。
+> **V275 报表类模板化已完成**（ReportViewerTemplate 新增 + DesignerTemplate 复用，6 报表页全部迁移，覆盖率 96.4%→97.5%，例外项 19→13）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V275 报表类模板化（ReportViewerTemplate + DesignerTemplate 复用）
+
+> 日期：2026-08-23 | 代码改动 15 files（模板 2 + 页面 6 + 审计脚本 1 + 例外清单 1 + 审计报告 4）| 验收：tsc 0 errors · 审计覆盖率 97.5% · 例外项 19→13
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| ReportViewerTemplate 创建 | 新建 [ReportViewerTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/ReportViewerTemplate.tsx)（center/viewer 双模式 + statsHeader/filterBar/tabs/content/pagination/toolbar 结构化插槽 + children 透传 + loading/error 统一状态 + pageContainerProps 透传） | ✅ |
+| DesignerTemplate 增强 | [DesignerTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/DesignerTemplate.tsx) title 改为可选 + 新增 pageContainerProps prop（fullscreen 模式 sx/contentSx 合并逻辑） | ✅ |
+| 报表查看页迁移（3 页） | [ReportViewer.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportViewer.tsx)→viewer 模式 + [ReportPage/index.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportPage/index.tsx)→center 模式 + [ReportPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportPage.tsx) 别名 import 标记 | ✅ |
+| 报表设计页迁移（3 页） | [ReportDesignPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportDesignPage.tsx)→DesignerTemplate standard + [ReportBuilderPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportBuilderPage.tsx)→standard + [ReportBuilder.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/report/ReportBuilder.tsx)→standard（isModal 双分支） | ✅ |
+| 审计脚本 + 例外清单 | [scan.mjs](file:///Users/air/TOPEMS/scripts/design-system-audit/scan.mjs) 新增 report-viewer 规则 + report-designer 扩展接受 DesignerTemplate；[template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) 报表类 6→0，总例外 19→13，覆盖率 96.4%→97.5% | ✅ |
+
+#### 最终验收矩阵
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `node scripts/design-system-audit/scan.mjs` — 517/530 = 97.5%（+6 标准模板使用）
+- [x] 例外项 19→13（-6），标准模板数 21→22（+1 ReportViewerTemplate）
+- [x] 报表类例外清零（6→0）
+
+### V275 后续扩展（留给 V276+）
+- [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
+- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
+- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
+- [ ] **GIS/地图类模板化**：GisMapTemplate 已建未接入，GisPage / gis/index 2 页评估接入
 
 ### 已完成：V273 四轨并行推进（MES 审批流 + AiToolPageTemplate + sqlx-cache CI check）
 
@@ -94,7 +119,7 @@
 - [x] Axum R1/R2/R3=0 STRONG_PASS · Perm R1-R6=0 · i18n 0 hardcoded
 
 ### V274 后续扩展（留给 V275+）
-- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性（V270 后续扩展遗留，连续 3 版本未做，优先级提升）
+- [x] **报表类模板化**：V275 已完成 — 新建 ReportViewerTemplate（center/viewer 双模式）+ 复用 DesignerTemplate（standard），6 个报表页全部迁移（ReportDesignPage/ReportBuilder/ReportBuilderPage→DesignerTemplate，ReportViewer/ReportPage/index→ReportViewerTemplate），覆盖率 96.4%→97.5%，例外项 19→13
 - [x] **sqlx-cache 语义级检查**：V274 已实现 — sqlx-prepare.sh --semantic mode + schema-defense-gate advisory step（连接 DB + PREPARE 验证 + hash 比较）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
@@ -159,9 +184,9 @@
 - [x] 文档与审计结果完全一致
 
 ### V270 后续扩展（留给 V271+）
-- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order/quality_management 共 12 处 TODO stub 评估收敛为 shared-core ApprovalTransition::apply() 的投入产出比
-- [ ] **AI 工具页模板化**：AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 三个 Tabs 双栏布局页面评估是否可统一为 AiToolPageTemplate
-- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性
+- [x] **MES 审批流三件套**：V273 已完成 — 12 处 TODO stub 收敛为 shared-core approval_common.rs 三件套（已核验 `cargo check -p topems-mes` exit 0）
+- [x] **AI 工具页模板化**：V273 已完成 — AiToolPageTemplate 新建，3 页迁移完毕
+- [x] **报表类模板化**：V275 已完成 — ReportViewerTemplate + DesignerTemplate 双轨，6 页全部迁移
 
 ### 已完成：V269 DesignerTemplate + 4 设计器页迁移
 
@@ -196,9 +221,9 @@
 - [x] `npx lefthook validate` — All good
 
 ### V269 后续扩展（留给 V270+）
-- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
-- [ ] **AI 工具页模板化**：AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 三个 Tabs 双栏布局页面评估是否可统一为 AiToolPageTemplate
-- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性
+- [x] **MES 审批流三件套**：V273 已完成 — 12 处 TODO stub 收敛为 shared-core approval_common.rs 三件套
+- [x] **AI 工具页模板化**：V273 已完成 — AiToolPageTemplate 新建，3 页迁移完毕
+- [x] **报表类模板化**：V275 已完成 — ReportViewerTemplate + DesignerTemplate 双轨，6 页全部迁移
 
 ### 已完成：V268 三轨并行推进（AuthPageTemplate + ChatPageTemplate + MobileHomePage）
 
