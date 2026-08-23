@@ -197,9 +197,17 @@ pub async fn log_audit_event(
         INSERT INTO hrm.audit_logs (
             action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
-            status, error_message, ip_address, user_agent,
-            organization_id, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, '00000000-0000-0000-0000-000000000000'::uuid, '00000000-0000-0000-0000-000000000000'::uuid)
+            status, error_message, ip_address, user_agent
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        -- NOTE (P1-3 Task B): removed organization_id and tenant_id columns
+        -- from this INSERT. Both columns were previously hard-coded to UUID
+        -- zeros ('0000...') in every call site (log_audit_event signature has
+        -- no way to pass real values). Callers never reference them in
+        -- SELECT either (the public 15-col AuditLog struct omits both
+        -- fields entirely). The columns will be dropped via migration
+        -- V101_hrm_rd_audit_cluster_a.sql, after which hrm.audit_logs is
+        -- byte-for-byte identical to the Cluster-A 15-col standard (same
+        -- as crm/wms/erp/mes/scm public.audit_logs signatures).
         "#,
     )
     .bind(action)
