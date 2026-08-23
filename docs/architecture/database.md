@@ -264,22 +264,30 @@ CREATE TABLE public.employees (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 审计日志表
+-- 审计日志表（Cluster-A 12 列标准签名 = shared-db AuditLog struct 1:1）
+-- 详见 database/init/01_rebuild_database.sql L211-L251 注释（Task A 修复：列名/类型对齐）
 CREATE TABLE public.audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL,
-    user_id UUID,
     action VARCHAR(255) NOT NULL,
-    resource_type VARCHAR(50),
-    resource_id VARCHAR(100),
-    ip_address INET,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+    entity_ids JSONB,
+    user_id UUID,
+    user_name TEXT,
+    request_details JSONB,
+    response_details JSONB,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    ip_address VARCHAR(45),
     user_agent TEXT,
-    status SMALLINT,
-    duration_ms BIGINT,
-    request_body JSONB,
-    response_body JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action      ON public.audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON public.audit_logs(entity_type);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id     ON public.audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at  ON public.audit_logs(created_at DESC);
 ```
 
 ### 2. unified_core schema（核心平台）

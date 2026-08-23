@@ -124,27 +124,50 @@ impl AuditLogService {
         &self,
         request: &CreateAuditLogRequest,
     ) -> Result<AuditLog, sqlx::Error> {
-        let details_str = request
-            .request_details
-            .as_ref()
-            .and_then(|d| serde_json::to_string(d).ok());
+        // request_details/response_details: JSONB 直接写（不再手动 serde_json::to_string）
+        // user_id: 字符串 → UUID（解析失败写 NULL，兼容未知格式）
         let user_uuid = request
             .user_id
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok());
 
+        // status: VARCHAR(20) 直接写字符串（"success"/"failed" 等）
+        // ip_address: VARCHAR(45) 直接写 TEXT，不再强制 INET cast
         let record = sqlx::query_as::<_, AuditLogRecord>(
             r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message, ip_address, user_agent)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, action, resource as entity_type, resource_id as entity_id, user_id::text, details as request_details, status, error_message, ip_address, user_agent, created_at
+            INSERT INTO public.audit_logs (
+                action, entity_type, entity_id, entity_ids,
+                user_id, user_name, request_details, response_details,
+                status, error_message, ip_address, user_agent
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+            )
+            RETURNING
+                id,
+                tenant_id,
+                action,
+                entity_type,
+                entity_id,
+                entity_ids,
+                user_id::TEXT,
+                user_name,
+                request_details,
+                response_details,
+                status,
+                error_message,
+                ip_address,
+                user_agent,
+                created_at
             "#,
         )
         .bind(&request.action)
         .bind(&request.entity_type)
         .bind(request.entity_id)
+        .bind(request.entity_ids.as_ref())
         .bind(user_uuid)
-        .bind(details_str)
+        .bind(request.user_name.as_deref())
+        .bind(request.request_details.as_ref())
+        .bind(request.response_details.as_ref())
         .bind(&request.status)
         .bind(request.error_message.as_deref())
         .bind(request.ip_address.as_deref())
@@ -262,11 +285,15 @@ impl AuditLogService {
 #[derive(Debug, Clone, FromRow)]
 struct AuditLogRecord {
     pub id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub action: String,
     pub entity_type: String,
     pub entity_id: Option<Uuid>,
+    pub entity_ids: Option<serde_json::Value>,
     pub user_id: Option<String>,
+    pub user_name: Option<String>,
     pub request_details: Option<serde_json::Value>,
+    pub response_details: Option<serde_json::Value>,
     pub status: String,
     pub error_message: Option<String>,
     pub ip_address: Option<String>,
@@ -278,15 +305,15 @@ impl AuditLogRecord {
     fn into_audit_log(self) -> AuditLog {
         AuditLog {
             id: self.id,
-            tenant_id: None,
+            tenant_id: self.tenant_id,
             action: self.action,
             entity_type: self.entity_type,
             entity_id: self.entity_id,
-            entity_ids: None,
+            entity_ids: self.entity_ids,
             user_id: self.user_id,
-            user_name: None,
+            user_name: self.user_name,
             request_details: self.request_details,
-            response_details: None,
+            response_details: self.response_details,
             status: self.status,
             error_message: self.error_message,
             ip_address: self.ip_address,
@@ -519,5 +546,82 @@ mod tests {
         assert_eq!(deserialized.error_message, req.error_message);
         assert_eq!(deserialized.ip_address, req.ip_address);
         assert_eq!(deserialized.user_agent, req.user_agent);
+    }
+
+    // --- Task A Bug Fix: AuditLogRecord 15 字段直通（验证不再写死 None 4 字段）---
+
+    #[test]
+    fn test_audit_log_record_into_audit_log_preserves_all_fields() {
+        use chrono::Utc;
+        let id = Uuid::new_v4();
+        let tenant_id = Some(Uuid::new_v4());
+        let entity_ids = Some(json!(["a", "b", "c"]));
+        let request_details = Some(json!({"q": "hello"}));
+        let response_details = Some(json!({"answer": 42}));
+        let created_at = Utc::now();
+
+        let record = AuditLogRecord {
+            id,
+            tenant_id,
+            action: "update".to_string(),
+            entity_type: "document".to_string(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: entity_ids.clone(),
+            user_id: Some("u-789".to_string()),
+            user_name: Some("Charlie".to_string()),
+            request_details: request_details.clone(),
+            response_details: response_details.clone(),
+            status: "success".to_string(),
+            error_message: None,
+            ip_address: Some("10.0.0.2".to_string()),
+            user_agent: Some("curl/8.0".to_string()),
+            created_at,
+        };
+
+        let log = record.into_audit_log();
+
+        assert_eq!(log.id, id);
+        assert_eq!(log.tenant_id, tenant_id);
+        assert_eq!(log.action, "update");
+        assert_eq!(log.entity_type, "document");
+        assert!(log.entity_id.is_some());
+        assert_eq!(log.entity_ids, entity_ids);
+        assert_eq!(log.user_id.as_deref(), Some("u-789"));
+        assert_eq!(log.user_name.as_deref(), Some("Charlie"));
+        assert_eq!(log.request_details, request_details);
+        assert_eq!(log.response_details, response_details);
+        assert_eq!(log.status, "success");
+        assert!(log.error_message.is_none());
+        assert_eq!(log.ip_address.as_deref(), Some("10.0.0.2"));
+        assert_eq!(log.user_agent.as_deref(), Some("curl/8.0"));
+        assert_eq!(log.created_at, created_at);
+    }
+
+    #[test]
+    fn test_create_audit_log_request_builder_all_12_columns_present() {
+        // 验证 12 列 INSERT 签名对应的 CreateAuditLogRequest 12 列全都能非空构造
+        // （这是 A-4 Bug Fix 的核心：4 列之前虽在 struct 里但 INSERT 没写）
+        let req = CreateAuditLogRequest::new("upsert".into(), "factory".into(), "success".into())
+            .with_entity_ids(json!(["f1", "f2", "f3"]))
+            .with_user("uid-1".into(), "FactoryAdmin".into())
+            .with_request_details(json!({"temp": 25.5}))
+            .with_response_details(json!({"affected": 3}))
+            .with_request_info(Some("192.168.1.10".into()), Some("bot/1.0".into()));
+
+        // 12 列: action, entity_type, entity_id(NULL ok), entity_ids, user_id,
+        //       user_name, request_details, response_details, status,
+        //       error_message(NULL ok), ip_address, user_agent
+        assert!(req.entity_id.is_none()); // 允许为空
+        assert!(req.entity_ids.is_some());
+        assert!(req.user_id.is_some());
+        assert!(req.user_name.is_some());
+        assert!(req.request_details.is_some());
+        assert!(req.response_details.is_some());
+        assert!(req.error_message.is_none()); // 允许为空
+        assert!(req.ip_address.is_some());
+        assert!(req.user_agent.is_some());
+        assert_eq!(req.action, "upsert");
+        assert_eq!(req.entity_type, "factory");
+        assert_eq!(req.status, "success");
     }
 }
