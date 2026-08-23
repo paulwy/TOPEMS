@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V277 列表/结构类模板化  
+> 关联 TODO：`docs/roadmap/TODO.md` V278 工具/系统类模板化  
 > 更新日期：2026-08-23
 
 ---
@@ -27,7 +27,9 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 **V277**：将 4 个列表/结构类例外页接入已有模板（MasterDetailPageTemplate / CardListTemplate / ListPageTemplate / DetailPageTemplate），覆盖率提升至 **98.7%**（523/530），剩余 **7** 个例外项。列表/结构类例外清零。
 
-剩余 7 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V278**：将 3 个工具/系统类例外页接入已有模板（FormPageTemplate / DashboardTemplate / WizardPageTemplate），覆盖率提升至 **99.2%**（526/530），剩余 **4** 个例外项。工具/系统类例外清零。
+
+剩余 4 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表"永不治理"，而是明确：
 - 当前 22 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate`、`ReportViewerTemplate` 已新增并落地）；
@@ -47,10 +49,10 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 门户/协作类 | 2 | `SupplierPortalPage`、`NotificationCenter` | 多角色门户、消息中心，布局特殊 |
 | GIS/地图类 | 0 | — | 2 个 GIS 页面已全部接入 `GisMapTemplate`（devicePoints→markers / pipelines→fences / storageLocations→markers） |
 | 文档/邮件类 | 2 | `DocumentsPage`、`MailPage` | 富文本/邮件客户端，类似桌面应用 |
-| 工具/系统类 | 3 | `PerformanceTestPage`、`SystemManagementPage`、`PluginUploadPage` | 高定制工具页 |
+| 工具/系统类 | 0 | — | 3 个工具/系统页已全部接入已有模板（FormPage/Dashboard/Wizard） |
 | 列表/结构类 | 0 | — | 4 个列表/结构页已全部接入已有模板（MasterDetail/CardList/List/Detail） |
 
-合计：**7 个页面**。
+合计：**4 个页面**。
 
 ---
 
@@ -152,13 +154,15 @@ V276 将 2 个 GIS 例外页面接入已有的 `GisMapTemplate`（V269 创建但
 | `apps/web/src/pages/doc/DocumentsPage/index.tsx` | `DocumentTemplate` | 文档中心 |
 | `apps/web/src/pages/im/MailPage/index.tsx` | `MailClientTemplate` | 邮件客户端 |
 
-### 3.9 工具/系统类（3）
+### 3.9 工具/系统类（0，已迁移 3 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/performance/PerformanceTestPage.tsx` | `FormPageTemplate` / 保持定制 | 压测工具页 |
-| `apps/web/src/pages/admin/SystemManagementPage.tsx` | `DashboardTemplate` / 保持定制 | 系统管理入口 |
-| `apps/web/src/pages/plugin/PluginUploadPage.tsx` | `WizardPageTemplate` / 保持定制 | 插件上传向导（Stepper 分步表单） |
+V278 将 3 个工具/系统类例外页接入已有模板，实现该类别例外清零（3→0）。其中 `WizardPageTemplate` 新增 `children` 透传 + `maxWidth`（字符串断点）增强以支持 PluginUpload 的灵活步长内容场景。
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/performance/PerformanceTestPage.tsx` | `FormPageTemplate` | ✅ 已迁移 | children 透传，保留原生渐变色 + 动画 + 指标卡网格 |
+| `apps/web/src/pages/admin/SystemManagementPage.tsx` | `DashboardTemplate` | ✅ 已迁移 | children 透传，保留自定义 sticky header + 7 功能卡片网格 |
+| `apps/web/src/pages/plugin/PluginUploadPage.tsx` | `WizardPageTemplate` | ✅ 已迁移 | children + steps 双模式，保留 4 步内容表单 + 底部自定义导航按钮区 |
 
 ### 3.10 列表/结构类（0，已迁移 4 项）
 

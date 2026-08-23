@@ -5,7 +5,7 @@ import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } f
 import { MobileHeader } from '@/components/mobile';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
@@ -88,10 +88,9 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
     },
   ];
   return (
-    <PageContainer
-      padding={false}
-      sx={{ minHeight: '100vh' }}
-      bgcolor='transparent'
+    <DashboardTemplate
+      title={i18n.t('pages.system_management_page.k0')}
+      subtitle={i18n.t('pages.system_management_page.k1')}
     >
       <Box
         sx={{
@@ -270,7 +269,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
           </Box>
         </Box>
       </Box>
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
 export default SystemManagementPage;

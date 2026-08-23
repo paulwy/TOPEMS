@@ -22,15 +22,12 @@ import {
   CardContent,
   Chip,
   Alert,
-  Stepper,
-  Step,
-  StepLabel,
   Switch,
   FormControlLabel,
   Grid,
   InputAdornment,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { WizardPageTemplate, type WizardStep } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { pluginApi } from '@/api/plugin';
@@ -160,35 +157,32 @@ const PluginUploadPage: React.FC = () => {
     { value: 'project', label: t('plugin.category.project') },
   ];
 
-  return (
-    <PageContainer maxWidth='lg'>
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 'bold', mb: 1 }}
-        >
-          {t('plugin.upload_page.title')}
-        </Typography>
-        <Typography
-          variant='body1'
-          color='textSecondary'
-        >
-          {t('plugin.upload_page.subtitle')}
-        </Typography>
-      </Box>
+  const wizardSteps: WizardStep[] = [
+    { id: 'basic', label: steps[0], component: null },
+    { id: 'config', label: steps[1], component: null },
+    { id: 'upload', label: steps[2], component: null },
+    { id: 'submit', label: steps[3], component: null },
+  ];
 
+  const handleStepChange = (stepIndex: number) => {
+    if (stepIndex <= activeStep) {
+      setActiveStep(stepIndex);
+    }
+  };
+
+  return (
+    <WizardPageTemplate
+      title={t('plugin.upload_page.title')}
+      subtitle={t('plugin.upload_page.subtitle')}
+      steps={wizardSteps}
+      currentStep={activeStep}
+      onStepChange={handleStepChange}
+      showNavigation={false}
+      maxWidth='lg'
+      loading={isSubmitting}
+    >
       <Card>
         <CardContent sx={{ p: 4 }}>
-          <Stepper
-            activeStep={activeStep}
-            sx={{ mb: 6 }}
-          >
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
 
           {activeStep === 0 && (
             <Box>
@@ -692,7 +686,7 @@ const PluginUploadPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
-    </PageContainer>
+    </WizardPageTemplate>
   );
 };
 

@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V278 | **更新日期**: 2026-08-23
+> **版本**: V279 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -16,10 +16,33 @@
 > **V276 GIS 模板接入已完成**（GisMapTemplate 落地 2 个 GIS 例外页，覆盖率 97.5%→97.9%，例外项 13→11）。
 > **V277 列表/结构类模板化已完成**（4 页接入已有模板，覆盖率 97.9%→98.7%，例外项 11→7）。
 > **V278 架构冗余治理已完成**（openapi 测试提取共享 utility / init_db 统一 / ErrorBoundary 去重 / CI composite action + TODO 归档）。
+> **V279 工具/系统类模板化已完成**（3 页接入已有模板，覆盖率 98.7%→99.2%，例外项 7→4）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V279 工具/系统类模板化（3 页接入已有模板）
+
+> 日期：2026-08-23 | 代码改动 6 files（页面 3 + WizardPageTemplate 增强 1 + 例外清单 1 + TODO 1）| 验收：tsc 0 errors · 审计覆盖率 99.2% · 例外项 7→4
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| PerformanceTestPage → FormPageTemplate | children 透传模式（sections=[] / onSubmit=no-op），保留原生渐变+动画+16 张指标卡 | ✅ |
+| SystemManagementPage → DashboardTemplate | children 透传模式，保留自定义 sticky header + 7 功能卡片网格 | ✅ |
+| PluginUploadPage → WizardPageTemplate | [WizardPageTemplate](file:///Users/air/TOPEMS/apps/web/src/components/templates/WizardPageTemplate.tsx) 新增 `children` 透传 + `maxWidth` 支持字符串断点；PluginUpload 保留 4 步内容表单 + 底部自定义导航按钮区 | ✅ |
+| 例外清单更新 | [template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) 工具/系统类 3→0，总例外 7→4，覆盖率 98.7%→99.2% | ✅ |
+
+#### 最终验收矩阵
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `node scripts/design-system-audit/scan.mjs` — 526/530 = 99.2%（+3 标准模板使用）
+- [x] 例外项 7→4（-3），工具/系统类例外清零（3→0）
+
+### V279 后续扩展（留给 V280+）
+- [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
+- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
+- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
+- [ ] **文档/邮件类模板化**：DocumentsPage / MailPage 2 页评估专用模板可行性
 
 ### 已完成：V278 架构冗余治理（4 轨并行 · 架构冗余分析 P0→P1 治理）
 
