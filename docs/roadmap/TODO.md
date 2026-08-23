@@ -29,6 +29,67 @@
 
 ## 📊 当前状态
 
+### 已完成：V285 后续任务（tms/aps 端口对齐 + openapi.d.ts 重新生成 TS 清零 + 评估类收尾）
+
+> 日期：2026-08-23 | 代码改动 9 files（tms/aps 端口 6 文件 + openapi.d.ts/index.ts 重新生成 + TODO）| 验收：cargo test service_port 12/12 pass · typecheck 0 errors · openapi.d.ts 568 schemas（+126）
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A轨: tms/aps 端口三端对齐 | services.yaml 8073/8074 → plugin.yaml + main.rs + ports.env + service_port.rs 同步对齐；解除 srm 8042 冲突；GROUP2_SERVICES 29→31 + 断言更新 | ✅ |
+| B轨: openapi.d.ts 重新生成 | mes 42 schemas + qms 27 schemas extract → aggregate.py（412→471）→ gen-types.mjs（442→568，+126 schemas）；typecheck 9→0 errors 清零 | ✅ |
+| C轨: 评估类收尾 | ERP 审计日志本地化 ✅ 已实现（call_finance_core_approval 内部 AuditLogService::log_operation）/ unified-core INSERT 下沉 ✅ 已实现（ReconciliationLogService.insert_from_master_data_refs）/ DocumentsPage ✅ V284 已评估维持 children | ✅ |
+| D轨: TODO 更新 + 提交推送 | V285 章节归档 + V284 后续扩展 8 项勾选（5 已完成 / 3 留 V286+）| ✅ |
+
+#### A轨详情：tms/aps 端口三端对齐
+
+**问题**：V284 在 services.yaml 补全 tms=8073/aps=8074（因 srm 已占 8042），但 plugin.yaml/main.rs 仍是 8042/8043，三端不一致。
+
+**修复**（6 文件）：
+- [svc/tms/plugin.yaml:11](file:///Users/air/TOPEMS/svc/tms/plugin.yaml#L11) `port: 8042` → `8073`
+- [svc/aps/plugin.yaml:11](file:///Users/air/TOPEMS/svc/aps/plugin.yaml#L11) `port: 8043` → `8074`
+- [svc/tms/src/main.rs:27](file:///Users/air/TOPEMS/svc/tms/src/main.rs#L27) `port: 8042` → `8073`
+- [svc/aps/src/main.rs:27](file:///Users/air/TOPEMS/svc/aps/src/main.rs#L27) `port: 8043` → `8074`
+- [config/ports.env](file:///Users/air/TOPEMS/config/ports.env#L30-L32) 新增 Logistics 分组 `TMS_PORT=8073` / `APS_PORT=8074`
+- [lib/shared-core/src/service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs#L45-L46) 新增 `TMS_PORT=8073` / `APS_PORT=8074` 常量 + GROUP2_SERVICES 添加 `("tms", TMS_PORT)` / `("aps", APS_PORT)` + 长度断言 29→31
+
+**验收**：`cargo test -p topems-shared-core --lib service_port` 12/12 passed（含 t10 长度保护断言 31）
+
+#### B轨详情：openapi.d.ts 重新生成 TS 清零
+
+**问题**：V284 让 mes equipment + qms quality_cost schema 注册到后端 openapi.rs，但前端 openapi.d.ts 未重新生成，导致 9 个 TS 错误（api-types.ts 引用不存在的 schema）。
+
+**修复流程**：
+1. `cargo test -p topems-mes --bin topems-mes extract_openapi_spec` — 重新提取 mes spec（42 schemas，含 equipment 4 schema）
+2. `cargo test -p topems-qms --bin topems-qms extract_openapi_spec` — 重新提取 qms spec（27 schemas，含 quality_cost 2 schema）
+3. `python3 scripts/openapi/aggregate.py --input-dir /tmp` — 聚合 9 服务到 openapi-aggregated.json（412→471 schemas）
+4. `node scripts/openapi/gen-types.mjs --aggregated` — 生成 openapi.d.ts（442→568 schemas，+126）
+
+**验收**：`pnpm run typecheck` exit 0，9→0 errors 清零
+
+#### C轨详情：评估类收尾
+
+| 评估项 | 结论 | 依据 |
+|--------|------|------|
+| ERP 审批审计日志本地化 | ✅ 已实现，无需改动 | [call_finance_core_approval](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L11-L56) 内部已调用 `AuditLogService::log_operation`，ERP 依赖 topems-shared-db 直接写本地 audit_logs |
+| unified-core INSERT 下沉 | ✅ 已实现，无需改动 | [ReconciliationLogService](file:///Users/air/TOPEMS/lib/shared-db/src/reconciliation_log.rs#L51-L70) 已创建，`insert_from_master_data_refs` 封装 INSERT...SELECT，handlers.rs 已调用 `recon_service.insert_from_master_data_refs` |
+| DocumentsPage 模板评估 | ✅ V284 已评估维持 children | 800+ 行复杂双栏（文件夹树 + 文件列表 + 预览 + 上传），强行声明式会降级 |
+| Finance utoipa::path 补全 | 留 V286+ | settlement_center 4 个非 handler 文件未覆盖，handlers.rs 已 18 注解，评估优先级低 |
+
+#### 最终验收矩阵
+- [x] `cargo test -p topems-shared-core --lib service_port` — 12/12 passed（含 t10 断言 31）
+- [x] `pnpm run typecheck` — exit 0，0 errors（9→0 清零）
+- [x] `python3 scripts/openapi/aggregate.py` — 1079 paths, 471 schemas（412→471）
+- [x] `node scripts/openapi/gen-types.mjs` — 830 paths, 568 schemas（442→568，+126）
+- [x] A轨 tms/aps 端口 6 文件三端对齐（8073/8074）
+- [x] B轨 mes 42 + qms 27 schemas extract + 聚合 + 生成
+- [x] C轨 3 评估项均已完成（ERP 审计 ✅ / unified-core INSERT ✅ / DocumentsPage ✅）
+
+### V285 后续扩展（留给 V286+）
+- [ ] **mes integration_tests sqlx 缓存补全**：12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存
+- [ ] **Finance utoipa::path 补全**：settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（handlers.rs 已 18 注解）
+- [ ] **CI gate 脚本合并**：check-i18n + check-i18n-quality → `check-i18n --mode={hardcode|quality|all}`；check-api-audit + check-api-coverage + compare-api-modules → `check-api --mode={audit|coverage|align}`
+- [ ] **DocumentsPage 模板深度评估**：若未来简化为纯文件列表，可评估抽 DocumentTemplate 声明式模板
+
 ### 已完成：V284 后续任务（ERP 审批间接集成评估 + 3 模板页声明式评估 + 预存在 clippy/doctest 修复 + 测试增强）
 
 > 日期：2026-08-23 | 代码改动 9 files（shared-bootstrap +239 行测试 / shared-core +306 行测试 + 3 doctest 修复 / shared-db rustfmt / 4 svc import 排序 / TODO）| 验收：cargo clippy --lib --bins 0 errors · typecheck 0 errors · doctest 3/3 pass
@@ -103,12 +164,12 @@
 
 ### V284 后续扩展（留给 V285+）
 - [ ] **mes integration_tests sqlx 缓存补全**：`svc/mes/tests/integration_tests.rs` 有 12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存
-- [ ] **模板扩展深度评估**：DocumentsPage 若未来简化为纯文件列表，可评估抽 DocumentTemplate 声明式模板
-- [ ] **ERP 审批审计日志本地化**：ERP 当前依赖 finance 端点写 audit_logs，评估是否在 ERP 本地也记录一份审批操作日志（双写）
-- [ ] **tms/aps 端口三端对齐**：services.yaml 中 tms=8073/aps=8074 与 plugin.yaml/main.rs 中 8042/8043 不一致（srm 已占 8042）；需统一同步修改 plugin.yaml + svc/tms|aps/src/main.rs + config/ports.env 至 8073/8074 或选定其他空闲端口
-- [ ] **unified-core/master/handlers.rs INSERT...SELECT 下沉**：record_reconciliation_issues 的 INSERT INTO core_mdm_reconciliation_log（跨表写入，目标表非 master_data_refs），不适合当前 MasterDataRefService 下沉，需评估是否新建 ReconciliationLogService 或保留内联
+- [x] **模板扩展深度评估**：V284/V285 已评估 — DocumentsPage 800+ 行复杂双栏维持 children 透传最合理
+- [x] **ERP 审批审计日志本地化**：V285 已评估 — call_finance_core_approval 内部已调用 AuditLogService::log_operation 写本地 audit_logs，无需改动
+- [x] **tms/aps 端口三端对齐**：V285 已修复 — plugin.yaml + main.rs + ports.env + service_port.rs 全部对齐至 8073/8074，解除 srm 8042 冲突
+- [x] **unified-core/master/handlers.rs INSERT...SELECT 下沉**：V285 已评估 — ReconciliationLogService 已创建，insert_from_master_data_refs 封装 INSERT...SELECT，handlers.rs 已调用
 - [ ] **Finance utoipa::path 补全评估**：Finance 已有 494 个注解覆盖 24 文件，仅 settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（实际 handlers.rs 已 18 注解），可评估是否需要补 settlement_center 路径
-- [ ] **前端 Finance/Hrm TS 26 错误清零**：D 轨已让 openapi.d.ts schemas 393→442，但 api-types.ts 的 FinanceTypes/HrmTypes 26 个历史 TS 错误需重新跑 `pnpm typecheck` 验证是否自动清零
+- [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已清零 — openapi.d.ts 568 schemas（+126），typecheck 9→0 errors
 - [ ] **CI gate 脚本合并**：check-i18n.cjs + check-i18n-quality.cjs 合并为 `check-i18n --mode={hardcode|quality|all}`；check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs 合并为 `check-api --mode={audit|coverage|align}`
 
 ---
@@ -381,19 +442,22 @@
   - 保留全部老参数：--report-json / --dry-run / --fail-fast / --threshold-override / --strict / --module / --ns / --json
   - JSON 新结构：`{mode, generatedAt, hardcode, quality}`（双脚本输出合并不冲突）
   - 退出码统一在 main(L768)：--dry-run → exitCode 0；--fail-fast 任一 FAIL → exit(1)；否则聚合判断
-- [scripts/ci/check-i18n-quality.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n-quality.cjs) — 6 行 thin wrapper 向后兼容：
+- [scripts/ci/check-i18n-quality.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n-quality.cjs) — **11 行 thin wrapper 向后兼容（使用 `path.join(__dirname, 'check-i18n.cjs')` 绝对 require，避免从 $CWD 运行时 relative path 解析错误）**：
   ```js
-  // V285 C 轨 Gate：已合并为 check-i18n.cjs 单一入口
-  // 等价于 `node check-i18n.cjs --mode=quality`
-  // 仅为向后兼容（CI/老脚本引用此路径）
+  // 注意：必须用 __dirname 拼接绝对路径，避免从项目根（或其他 cwd）运行
+  // 时 require('./check-i18n.cjs') 解析为 $CWD/check-i18n.cjs（不存在）
+  const path = require('path');
   process.argv.push('--mode=quality');
-  require('./check-i18n.cjs');
+  require(path.join(__dirname, 'check-i18n.cjs'));
   ```
+
+> **Bug 修复说明（V285 提交后 Step 4 全局复现发现）**：
+> 原 wrapper 用 `require('./check-i18n.cjs')` 依赖 CWD=scripts/ci/，但 CI 实际从仓库根 `node scripts/ci/check-i18n-quality.cjs` 调用时 CWD=/TOPEMS → 解析为 `/TOPEMS/check-i18n.cjs`（不存在）导致 MODULE_NOT_FOUND。改用 `path.join(__dirname, ...)` 后，从任何目录调用 wrapper 都能正确解析绝对路径。
 
 **验收**：
 - `node scripts/ci/check-i18n.cjs --mode=hardcode --dry-run` → 扫描 764 文件，0 硬编码 ✅
 - `node scripts/ci/check-i18n.cjs --mode=quality --dry-run` → R12 7-in-1 全部 ✅ ✅ ✅
-- `node scripts/ci/check-i18n-quality.cjs --dry-run` — wrapper exit 0 ✅
+- `node scripts/ci/check-i18n-quality.cjs --dry-run` **（从仓库根执行，CWD ≠ scripts/ci/）** — wrapper exit 0，R12 7-in-1 Gate Result: ✅ PASS (0 failures) ✅
 - `--report-json /tmp/i18n-v285.json` → `head -1` = `{ "mode": "all", "generatedAt": "...", "hardcode": { filesScanned: 764, ... }, "quality": { ... }}` ✅
 - `node -c check-i18n.cjs` → SYNTAX_OK；`node -c check-i18n-quality.cjs` → WRAPPER_SYNTAX_OK ✅
 - 未改 ci.yml（保持兼容）
