@@ -24,8 +24,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { MessageSquare, Edit2, Trash2, Send, Reply, User } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { Edit2, Trash2, Send, Reply, User } from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
 import { commentApi, type Comment } from '@/api/shared';
 import { useNotificationStore } from '@/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -310,100 +310,103 @@ const CommentsPage: React.FC = () => {
   );
 
   return (
-    <PageContainer
+    <ListPageTemplate
       title={i18n.t('pages.comments_page.k15')}
       autoBreadcrumbs
-      headerProps={{
-        pageIcon: <MessageSquare style={{ width: 20, height: 20 }} />,
-      }}
-    >
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Stack
-            direction='row'
-            spacing={2}
-            sx={{ mb: 2 }}
-          >
-            <FormControl
-              size='small'
-              sx={{ minWidth: 140 }}
+      columns={[]}
+      data={[]}
+      headerContent={
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Stack
+              direction='row'
+              spacing={2}
+              sx={{ mb: 2 }}
             >
-              <InputLabel>{i18n.t('pages.comments_page.k16')}</InputLabel>
-              <Select
-                value={entityType}
-                label={i18n.t('pages.comments_page.k17')}
-                onChange={(e) => setEntityType(e.target.value)}
+              <FormControl
+                size='small'
+                sx={{ minWidth: 140 }}
               >
-                {ENTITY_TYPES.map((t) => (
-                  <MenuItem
-                    key={t}
-                    value={t}
-                  >
-                    {t}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              size='small'
-              label={i18n.t('pages.comments_page.id_18')}
-              value={entityId}
-              onChange={(e) => setEntityId(e.target.value)}
-              sx={{ minWidth: 200 }}
-            />
-          </Stack>
-        </CardContent>
-      </Card>
+                <InputLabel>{i18n.t('pages.comments_page.k16')}</InputLabel>
+                <Select
+                  value={entityType}
+                  label={i18n.t('pages.comments_page.k17')}
+                  onChange={(e) => setEntityType(e.target.value)}
+                >
+                  {ENTITY_TYPES.map((t) => (
+                    <MenuItem
+                      key={t}
+                      value={t}
+                    >
+                      {t}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                size='small'
+                label={i18n.t('pages.comments_page.id_18')}
+                value={entityId}
+                onChange={(e) => setEntityId(e.target.value)}
+                sx={{ minWidth: 200 }}
+              />
+            </Stack>
+          </CardContent>
+        </Card>
+      }
+      footerContent={
+        <>
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography
+                variant='h6'
+                sx={{ mb: 2 }}
+              >
+                {i18n.t('pages.comments_page.k7')}
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                placeholder={i18n.t('pages.comments_page.k8')}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+              />
+              <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  variant='contained'
+                  startIcon={<Send size={16} />}
+                  onClick={handleSubmit}
+                  disabled={!newComment.trim() || createMutation.isPending}
+                >
+                  {i18n.t('pages.comments_page.k9')}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography
-            variant='h6'
-            sx={{ mb: 2 }}
-          >
-            {i18n.t('pages.comments_page.k7')}
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder={i18n.t('pages.comments_page.k8')}
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant='contained'
-              startIcon={<Send size={16} />}
-              onClick={handleSubmit}
-              disabled={!newComment.trim() || createMutation.isPending}
-            >
-              {i18n.t('pages.comments_page.k9')}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Typography
-            variant='h6'
-            sx={{ mb: 2 }}
-          >
-            {i18n.t('pages.comments_page.k10')}
-          </Typography>
-          {isPending ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : !comments || comments.length === 0 ? (
-            <Alert severity='info'>{i18n.t('pages.comments_page.k19')}</Alert>
-          ) : (
-            <List>{comments.map((comment) => renderComment(comment))}</List>
-          )}
-        </CardContent>
-      </Card>
-    </PageContainer>
+          <Card>
+            <CardContent>
+              <Typography
+                variant='h6'
+                sx={{ mb: 2 }}
+              >
+                {i18n.t('pages.comments_page.k10')}
+              </Typography>
+              {isPending ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : !comments || comments.length === 0 ? (
+                <Alert severity='info'>{i18n.t('pages.comments_page.k19')}</Alert>
+              ) : (
+                <List>{comments.map((comment) => renderComment(comment))}</List>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      }
+    />
   );
 };
 

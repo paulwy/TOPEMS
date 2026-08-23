@@ -1,22 +1,22 @@
 TOPEMS 设计系统审计扫描摘要
 ================================
-扫描时间: 2026-08-23T07:54:48.577Z
+扫描时间: 2026-08-23T08:30:00.618Z
 扫描页面: 530 个
 
 模板覆盖:
-  使用标准模板的页面: 519 (97.9%)
-  未使用标准模板的页面: 11
+  使用标准模板的页面: 523 (98.7%)
+  未使用标准模板的页面: 7
 
 模板类型分布:
     crud: 226 个页面
     dashboard: 55 个页面
     stats: 55 个页面
-    detail: 54 个页面
-    list: 46 个页面
+    detail: 55 个页面
+    list: 47 个页面
     settings: 32 个页面
     form: 12 个页面
-    unknown / custom: 11 个页面
     mobile: 11 个页面
+    unknown / custom: 7 个页面
     report-designer: 7 个页面
     designer: 7 个页面
     gis-map: 4 个页面
@@ -24,19 +24,19 @@ TOPEMS 设计系统审计扫描摘要
     chat: 3 个页面
     ai-tool: 3 个页面
     report-viewer: 3 个页面
+    master-detail: 2 个页面
     wizard: 2 个页面
-    card-list: 1 个页面
+    card-list: 2 个页面
     tree: 1 个页面
-    master-detail: 1 个页面
     kanban: 1 个页面
     timeline: 1 个页面
 
 核心组件使用:
-  使用 PageContainer: 252 (47.5%)
+  使用 PageContainer: 248 (46.8%)
   使用 DataTable（含 CrudPage 间接使用）: 242 (45.7%)
   直接使用 DataTable: 16 (3.0%)
   使用 CrudPage: 226 (42.6%)
-  使用任意公共/共享组件: 277 (52.3%)
+  使用任意公共/共享组件: 273 (51.5%)
 
 硬编码样式:
   问题总数: 61
@@ -46,7 +46,7 @@ TOPEMS 设计系统审计扫描摘要
     rem 字号（疑似硬编码）: 1
 
 共享组件使用 TOP10:
-  PageContainer: 250 次 (250 个文件)
+  PageContainer: 246 次 (246 个文件)
   ConfirmDialog: 31 次 (31 个文件)
   Grid: 7 次 (7 个文件)
   LoadingSpinner: 6 次 (6 个文件)

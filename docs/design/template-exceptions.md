@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V276 GIS 模板接入  
+> 关联 TODO：`docs/roadmap/TODO.md` V277 列表/结构类模板化  
 > 更新日期：2026-08-23
 
 ---
@@ -25,7 +25,9 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 **V276**：将 2 个 GIS 例外页接入已有的 `GisMapTemplate`（V269 创建但未落地），覆盖率提升至 **97.9%**（519/530），剩余 **11** 个例外项。数据转换：DevicePoint/StorageLocation → MapMarker、Pipeline → GeoFence rectangle。
 
-剩余 11 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V277**：将 4 个列表/结构类例外页接入已有模板（MasterDetailPageTemplate / CardListTemplate / ListPageTemplate / DetailPageTemplate），覆盖率提升至 **98.7%**（523/530），剩余 **7** 个例外项。列表/结构类例外清零。
+
+剩余 7 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表"永不治理"，而是明确：
 - 当前 22 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate`、`ReportViewerTemplate` 已新增并落地）；
@@ -46,9 +48,9 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | GIS/地图类 | 0 | — | 2 个 GIS 页面已全部接入 `GisMapTemplate`（devicePoints→markers / pipelines→fences / storageLocations→markers） |
 | 文档/邮件类 | 2 | `DocumentsPage`、`MailPage` | 富文本/邮件客户端，类似桌面应用 |
 | 工具/系统类 | 3 | `PerformanceTestPage`、`SystemManagementPage`、`PluginUploadPage` | 高定制工具页 |
-| 列表/结构类 | 4 | `DatabaseStructurePage`、`HelpCenterPage`、`CommentsPage`、`AppManagementPage` | 适合模板但优先级低，可待模块重构时处理 |
+| 列表/结构类 | 0 | — | 4 个列表/结构页已全部接入已有模板（MasterDetail/CardList/List/Detail） |
 
-合计：**11 个页面**。
+合计：**7 个页面**。
 
 ---
 
@@ -158,14 +160,16 @@ V276 将 2 个 GIS 例外页面接入已有的 `GisMapTemplate`（V269 创建但
 | `apps/web/src/pages/admin/SystemManagementPage.tsx` | `DashboardTemplate` / 保持定制 | 系统管理入口 |
 | `apps/web/src/pages/plugin/PluginUploadPage.tsx` | `WizardPageTemplate` / 保持定制 | 插件上传向导（Stepper 分步表单） |
 
-### 3.10 列表/结构类（4）
+### 3.10 列表/结构类（0，已迁移 4 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/admin/DatabaseStructurePage.tsx` | `TreePageTemplate` | 数据库结构树 |
-| `apps/web/src/pages/help/HelpCenterPage.tsx` | `CardListTemplate` | 帮助中心 |
-| `apps/web/src/pages/shared/CommentsPage.tsx` | `ListPageTemplate` | 评论列表 |
-| `apps/web/src/pages/lowcode/AppManagementPage.tsx` | `ListPageTemplate` | 应用管理 |
+V277 将 4 个列表/结构类例外页接入已有模板，实现该类别例外清零（4→0）。每个页面根据布局特征匹配最合适的已有模板：
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/admin/DatabaseStructurePage.tsx` | `MasterDetailPageTemplate` | ✅ 已迁移 | 左侧表列表 + 右侧详情（structure/changes tabs），masterColumns 定义 + renderDetail 闭包 |
+| `apps/web/src/pages/help/HelpCenterPage.tsx` | `CardListTemplate` | ✅ 已迁移 | 帮助分类卡片网格，HELP_CATEGORIES→data + cardConfig，搜索移入 customToolbar |
+| `apps/web/src/pages/shared/CommentsPage.tsx` | `ListPageTemplate` | ✅ 已迁移 | 筛选表单→headerContent，评论表单+列表→footerContent，columns/data 空数组 |
+| `apps/web/src/pages/lowcode/AppManagementPage.tsx` | `DetailPageTemplate` | ✅ 已迁移 | 表单字段+操作按钮，loading/error 透传，app code→subtitle |
 
 ---
 

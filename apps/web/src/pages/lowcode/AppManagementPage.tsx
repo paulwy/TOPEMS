@@ -4,7 +4,7 @@ import { CloudUpload as CloudUploadIcon, CloudOff as CloudOffIcon } from 'lucide
 import { useSearchParams } from 'react-router-dom';
 import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
-import { PageContainer } from '@/components/common';
+import { DetailPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
@@ -88,33 +88,35 @@ export const AppManagementPage: React.FC = () => {
 
   if (!appId) {
     return (
-      <PageContainer title={t('lowcode.app_management_page.k4')}>
+      <DetailPageTemplate title={t('lowcode.app_management_page.k4')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>{t('lowcode.app_management_page.e1')}</Typography>
         </Box>
-      </PageContainer>
+      </DetailPageTemplate>
     );
   }
 
   if (loading) {
     return (
-      <PageContainer title={t('lowcode.app_management_page.k5')}>
+      <DetailPageTemplate
+        title={t('lowcode.app_management_page.k5')}
+        loading
+      >
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      </PageContainer>
+      </DetailPageTemplate>
     );
   }
 
   return (
-    <PageContainer title={t('lowcode.app_management_page.k6')}>
+    <DetailPageTemplate
+      title={t('lowcode.app_management_page.k6')}
+      subtitle={app ? `· ${app.code}` : undefined}
+      loading={loading}
+      error={error || undefined}
+    >
       <Box sx={{ p: 3, maxWidth: 720 }}>
-        <Typography
-          variant='h5'
-          sx={{ mb: 2 }}
-        >
-          {t('lowcode.app_management_page.k4')} {app ? `· ${app.code}` : ''}
-        </Typography>
         {error && (
           <Typography
             color='error'
@@ -197,7 +199,7 @@ export const AppManagementPage: React.FC = () => {
           </Stack>
         )}
       </Box>
-    </PageContainer>
+    </DetailPageTemplate>
   );
 };
 

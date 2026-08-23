@@ -5,7 +5,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Button,
   Chip,
   Stack,
@@ -14,7 +13,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  HelpCircle,
   FileText,
   MessageCircle,
   Search,
@@ -27,7 +25,7 @@ import {
   Rocket,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer } from '@/components/common';
+import { CardListTemplate, type CardRenderConfig } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { helpApi } from '@/api';
@@ -215,365 +213,312 @@ export const HelpCenterPage: React.FC = () => {
     return typeMap[type] || typeMap.update;
   };
 
-  return (
-    <PageContainer
-      title={t('help_center.title')}
-      subtitle={t('help_center.subtitle')}
-      headerProps={{ pageIcon: <HelpCircle size={20} /> }}
-    >
-      <Box sx={{ mb: 6 }}>
-        <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-          <Search
-            sx={{
-              position: 'absolute',
-              left: 16,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: theme.palette.text.disabled,
-            }}
-          />
-          <TextField
-            fullWidth
-            placeholder={t('help_center.search_placeholder')}
-            value={searchQuery}
-            onChange={handleSearch}
-            sx={{ pl: 10 }}
-          />
-        </Box>
-      </Box>
+  // 将 HELP_CATEGORIES 卡片网格数据转换为 CardListTemplate 的 data 格式
+  const categoriesData = HELP_CATEGORIES.map((category) => ({
+    id: category.id,
+    title: category.title,
+    description: category.description,
+    icon: category.icon,
+    color: category.color,
+    count: category.count,
+    item_0: category.items[0],
+    item_1: category.items[1],
+    item_2: category.items[2],
+  }));
 
-      <Box sx={{ mb: 8 }}>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 600, mb: 4 }}
-        >
-          {t('help_center.categories')}
-        </Typography>
+  const cardConfig: CardRenderConfig = {
+    title: (item: unknown) => (item as { title: string }).title,
+    description: (item: unknown) => (item as { description: string }).description,
+    icon: (item: Record<string, unknown>) => {
+      const Icon = item.icon as unknown as React.ComponentType<{ sx?: object }>;
+      const colors = getCategoryColor(item.color as string);
+      return <Icon sx={{ width: 24, height: 24, color: colors.icon }} />;
+    },
+    iconBgColor: (item: Record<string, unknown>) => getCategoryColor(item.color as string).bg,
+    meta: [
+      { field: 'item_0', icon: <ChevronRight size={14} /> },
+      { field: 'item_1', icon: <ChevronRight size={14} /> },
+      { field: 'item_2', icon: <ChevronRight size={14} /> },
+      {
+        field: 'count',
+        format: (value: unknown) =>
+          `${i18n.t('pages.help_center_page.k0')} ${value} ${i18n.t('pages.help_center_page.k1')}`,
+      },
+    ],
+  };
+
+  const cardActions = [
+    {
+      label: i18n.t('pages.help_center_page.k2'),
+      icon: <ChevronRight size={16} />,
+      onClick: () => {},
+      color: 'primary' as const,
+      variant: 'text' as const,
+    },
+  ];
+
+  return (
+    <>
+      <CardListTemplate
+        title={t('help_center.title')}
+        subtitle={t('help_center.subtitle')}
+        customToolbar={
+          <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
+            <Search
+              sx={{
+                position: 'absolute',
+                left: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: theme.palette.text.disabled,
+              }}
+            />
+            <TextField
+              fullWidth
+              placeholder={t('help_center.search_placeholder')}
+              value={searchQuery}
+              onChange={handleSearch}
+              sx={{ pl: 10 }}
+            />
+          </Box>
+        }
+        data={categoriesData as unknown as Record<string, unknown>[]}
+        cardConfig={cardConfig}
+        cardActions={cardActions}
+        gridColumns={{ xs: 1, sm: 2, lg: 3 }}
+        showStatsOverview={false}
+      />
+
+      <Box sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
         <Grid
           container
-          spacing={3}
+          spacing={6}
         >
-          {HELP_CATEGORIES.map((category) => {
-            const colors = getCategoryColor(category.color);
-            const Icon = category.icon;
-            return (
-              <Grid
-                size={{ xs: 12, sm: 6, lg: 4 }}
-                key={category.id}
-              >
-                <Card
-                  sx={{
-                    height: '100%',
-                    borderRadius: 2,
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': { transform: 'translateY(-4px)', boxShadow: theme.shadows[4] },
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 1,
-                          bgcolor: colors.bg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Icon sx={{ width: 24, height: 24, color: colors.icon }} />
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {category.title}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {category.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Stack spacing={1.5}>
-                      {category.items.slice(0, 3).map((item, index) => (
-                        <Typography
-                          key={index}
-                          variant='body2'
-                          sx={{
-                            color: 'text.secondary',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <ChevronRight size={14} />
-                          {item}
-                        </Typography>
-                      ))}
-                      {category.items.length > 3 && (
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            color: theme.palette.primary.main,
-                            cursor: 'pointer',
-                            '&:hover': { textDecoration: 'underline' },
-                          }}
-                        >
-                          {i18n.t('pages.help_center_page.k0')} {category.count}{' '}
-                          {i18n.t('pages.help_center_page.k1')}
-                        </Typography>
-                      )}
-                    </Stack>
-                  </CardContent>
-                  <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      size='small'
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {i18n.t('pages.help_center_page.k2')} {category.title}
-                      <ChevronRight size={16} />
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Box>
-
-      <Grid
-        container
-        spacing={6}
-      >
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600, mb: 4 }}
-          >
-            {t('help_center.faq')}
-          </Typography>
-          {loading ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              <Stack spacing={2}>
-                {faqs.map((faq) => (
-                  <Card
-                    key={faq.id}
-                    sx={{
-                      borderRadius: 1,
-                      cursor: 'pointer',
-                      transition: 'box-shadow 0.2s',
-                      '&:hover': { boxShadow: theme.shadows[2] },
-                    }}
-                  >
-                    <CardContent
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 600, mb: 4 }}
+            >
+              {t('help_center.faq')}
+            </Typography>
+            {loading ? (
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <>
+                <Stack spacing={2}>
+                  {faqs.map((faq) => (
+                    <Card
+                      key={faq.id}
                       sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        transition: 'box-shadow 0.2s',
+                        '&:hover': { boxShadow: theme.shadows[2] },
                       }}
                     >
-                      <Typography variant='body1'>{faq.question}</Typography>
-                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {i18n.t('pages.help_center_page.k3')} {faq.views.toLocaleString()}
-                        </Typography>
-                        <ChevronRight
-                          size={16}
-                          sx={{ color: theme.palette.text.disabled }}
-                        />
-                      </Box>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Stack>
-              <Box sx={{ mt: 4, textAlign: 'right' }}>
+                      <CardContent
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography variant='body1'>{faq.question}</Typography>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            {i18n.t('pages.help_center_page.k3')} {faq.views.toLocaleString()}
+                          </Typography>
+                          <ChevronRight
+                            size={16}
+                            sx={{ color: theme.palette.text.disabled }}
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+                <Box sx={{ mt: 4, textAlign: 'right' }}>
+                  <Button
+                    size='small'
+                    sx={{ textTransform: 'none' }}
+                    onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}
+                  >
+                    {i18n.t('pages.help_center_page.faq_0')}
+                    <ChevronRight size={16} />
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 600, mb: 4 }}
+            >
+              {t('help_center.latest_updates')}
+            </Typography>
+            <Stack spacing={3}>
+              {LATEST_UPDATES.map((update) => (
+                <Box key={update.id}>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
+                    <Chip
+                      size='small'
+                      label={getTypeChip(update.type).label}
+                      color={
+                        getTypeChip(update.type).color as React.ComponentProps<typeof Chip>['color']
+                      }
+                      sx={{ fontWeight: 500 }}
+                    />
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {update.date}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {update.title}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+
+            <Card sx={{ mt: 6, borderRadius: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      bgcolor: 'primary.50',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <MessageCircle sx={{ width: 24, height: 24, color: 'primary.main' }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {i18n.t('pages.help_center_page.k1')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.help_center_page.k2')}
+                    </Typography>
+                  </Box>
+                </Box>
                 <Button
-                  size='small'
-                  sx={{ textTransform: 'none' }}
-                  onClick={() => navigate(DASHBOARD_PATHS.helpFaq)}
+                  fullWidth
+                  variant='contained'
+                  sx={{ textTransform: 'none', borderRadius: 1 }}
                 >
-                  {i18n.t('pages.help_center_page.faq_0')}
-                  <ChevronRight size={16} />
+                  {i18n.t('pages.help_center_page.k3')}
                 </Button>
-              </Box>
-            </>
-          )}
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ mt: 2, textAlign: 'center' }}
+                >
+                  {i18n.t('pages.help_center_page.k4')}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600, mb: 4 }}
-          >
-            {t('help_center.latest_updates')}
-          </Typography>
-          <Stack spacing={3}>
-            {LATEST_UPDATES.map((update) => (
-              <Box key={update.id}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
-                  <Chip
-                    size='small'
-                    label={getTypeChip(update.type).label}
-                    color={
-                      getTypeChip(update.type).color as React.ComponentProps<typeof Chip>['color']
-                    }
-                    sx={{ fontWeight: 500 }}
-                  />
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {update.date}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {update.title}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
-
-          <Card sx={{ mt: 6, borderRadius: 2 }}>
+        <Box sx={{ mt: 8 }}>
+          <Card sx={{ borderRadius: 2 }}>
             <CardContent>
-              <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1,
-                    bgcolor: 'primary.50',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+              <Grid
+                container
+                spacing={4}
+              >
+                <Grid
+                  size={{ xs: 12, sm: 4 }}
+                  onClick={() => navigate(DASHBOARD_PATHS.helpGuide)}
+                  sx={{ cursor: 'pointer' }}
                 >
-                  <MessageCircle sx={{ width: 24, height: 24, color: 'primary.main' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {i18n.t('pages.help_center_page.k1')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.help_center_page.k2')}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                fullWidth
-                variant='contained'
-                sx={{ textTransform: 'none', borderRadius: 1 }}
-              >
-                {i18n.t('pages.help_center_page.k3')}
-              </Button>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mt: 2, textAlign: 'center' }}
-              >
-                {i18n.t('pages.help_center_page.k4')}
-              </Typography>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <BookOpen
+                      size={32}
+                      sx={{ color: theme.palette.primary.main, mb: 2 }}
+                    />
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      {i18n.t('pages.help_center_page.k5')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.help_center_page.k6')}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Video
+                      size={32}
+                      sx={{ color: theme.palette.success.main, mb: 2 }}
+                    />
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      {i18n.t('pages.help_center_page.k7')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.help_center_page.k8')}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <MessageCircle
+                      size={32}
+                      sx={{ color: theme.palette.info.main, mb: 2 }}
+                    />
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      {i18n.t('pages.help_center_page.k9')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.help_center_page.k10')}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ mt: 8 }}>
-        <Card sx={{ borderRadius: 2 }}>
-          <CardContent>
-            <Grid
-              container
-              spacing={4}
-            >
-              <Grid
-                size={{ xs: 12, sm: 4 }}
-                onClick={() => navigate(DASHBOARD_PATHS.helpGuide)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <Box sx={{ textAlign: 'center' }}>
-                  <BookOpen
-                    size={32}
-                    sx={{ color: theme.palette.primary.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    {i18n.t('pages.help_center_page.k5')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.help_center_page.k6')}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Video
-                    size={32}
-                    sx={{ color: theme.palette.success.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    {i18n.t('pages.help_center_page.k7')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.help_center_page.k8')}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <MessageCircle
-                    size={32}
-                    sx={{ color: theme.palette.info.main, mb: 2 }}
-                  />
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, mb: 1 }}
-                  >
-                    {i18n.t('pages.help_center_page.k9')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.help_center_page.k10')}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+        </Box>
       </Box>
-    </PageContainer>
+    </>
   );
 };
 

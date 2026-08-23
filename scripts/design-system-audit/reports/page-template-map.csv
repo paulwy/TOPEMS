@@ -4,7 +4,7 @@ apps/web/src/pages/admin/AuditLogPage.tsx,admin,crud,CrudPage,none,none,no,yes,n
 apps/web/src/pages/admin/BankAccountManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/ConfigDebugPage.tsx,admin,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/DashboardPage.tsx,admin,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/admin/DatabaseStructurePage.tsx,admin,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/admin/DatabaseStructurePage.tsx,admin,master-detail,MasterDetailPageTemplate,MasterDetailPageTemplate; MasterColumn,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/DictionaryManagementPage.tsx,admin,crud,CrudPage,none,BackButton; PageContainer; ConfirmDialog,yes,yes,no,yes,yes,3
 apps/web/src/pages/admin/MigrationAdminPage.tsx,admin,crud,CrudPage,CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/admin/MonitorPage.tsx,admin,list,ListPageTemplate,ListPageTemplate,none,yes,no,no,no,yes,0
@@ -166,7 +166,7 @@ apps/web/src/pages/gis/GisTrackingPage.tsx,gis,gis-map,GisMapTemplate,GisMapTemp
 apps/web/src/pages/gis/index.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/help/FaqPage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/help/GuidePage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/help/HelpCenterPage.tsx,help,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/help/HelpCenterPage.tsx,help,card-list,CardListTemplate,CardListTemplate; CardRenderConfig,none,no,no,no,no,yes,0
 apps/web/src/pages/hrm/DashboardPage.tsx,hrm,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/hrm/HrmAttendancePage.tsx,hrm,crud,CrudPage,CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/hrm/HrmCompanyPage.tsx,hrm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -227,7 +227,7 @@ apps/web/src/pages/lims/LimsUncertaintyPage.tsx,lims,crud,CrudPage,CrudPage,Page
 apps/web/src/pages/lims/ReagentPage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/SampleReceivePage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/lowcode/AppListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/AppManagementPage.tsx,lowcode,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/lowcode/AppManagementPage.tsx,lowcode,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/lowcode/DashboardPage.tsx,lowcode,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/lowcode/DataModelListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/lowcode/DataSourcePage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
@@ -431,7 +431,7 @@ apps/web/src/pages/scm/setting/QuotaTemplatePage.tsx,scm,settings,SettingsPageTe
 apps/web/src/pages/scm/setting/SourcingStrategyPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/scm/setting/SupplierTierPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/shared/AttachmentsPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
-apps/web/src/pages/shared/CommentsPage.tsx,shared,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/shared/CommentsPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/shared/DashboardPage.tsx,shared,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,EmptyState,no,no,no,no,yes,1
 apps/web/src/pages/shared/ErrorPage.tsx,shared,auth,AuthPageTemplate,AuthPageTemplate,BackButton,no,no,no,no,yes,1
 apps/web/src/pages/shared/FavoritesPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,PageContainer,yes,no,no,no,yes,1
