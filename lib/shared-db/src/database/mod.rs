@@ -98,10 +98,7 @@ pub async fn check_pool_health(pool: &PgPool) -> HealthCheckResult {
 ///   `{service_prefix}_master_data_refs`
 ///
 /// Schema 与 V32.0 AC-5 本地主数据引用契约一致。
-pub async fn ensure_master_data_refs_table(
-    pool: &PgPool,
-    service_prefix: &str,
-) -> Result<()> {
+pub async fn ensure_master_data_refs_table(pool: &PgPool, service_prefix: &str) -> Result<()> {
     let table_name = format!("{}_master_data_refs", service_prefix);
     let sql = format!(
         r#"
@@ -122,9 +119,13 @@ pub async fn ensure_master_data_refs_table(
         )
         "#,
     );
-    sqlx::query(&sql).execute(pool).await.map_err(|e| {
-        TopemsError::Database(format!("Failed to create {table_name}: {e}"))
-    })?;
-    info!("[{}] {} 表已就绪（AC-5 本地主数据引用）", service_prefix, table_name);
+    sqlx::query(&sql)
+        .execute(pool)
+        .await
+        .map_err(|e| TopemsError::Database(format!("Failed to create {table_name}: {e}")))?;
+    info!(
+        "[{}] {} 表已就绪（AC-5 本地主数据引用）",
+        service_prefix, table_name
+    );
     Ok(())
 }
