@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Button, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm, UpdateLowcodeFormRequest } from '@/api/lowcode';
-import { PageContainer } from '@/components/common';
+import { DesignerTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
@@ -70,31 +70,22 @@ export const FormDesignPage: React.FC = () => {
 
   if (!formId) {
     return (
-      <PageContainer title={t('lowcode.form_design_page.k2')}>
-        <Box sx={{ p: 3 }}>
-          <Typography color='text.secondary'>{t('lowcode.form_design_page.e1')}</Typography>
-        </Box>
-      </PageContainer>
-    );
-  }
-
-  if (loading) {
-    return (
-      <PageContainer title={t('lowcode.form_design_page.k3')}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      </PageContainer>
+      <DesignerTemplate title={t('lowcode.form_design_page.k2')}>
+        <Typography color='text.secondary'>{t('lowcode.form_design_page.e1')}</Typography>
+      </DesignerTemplate>
     );
   }
 
   return (
-    <PageContainer title={t('lowcode.form_design_page.k4')}>
-      <Box sx={{ p: 3 }}>
+    <DesignerTemplate
+      title={t('lowcode.form_design_page.k4')}
+      loading={loading}
+      error={error}
+      toolbar={
         <Stack
           direction='row'
           spacing={2}
-          sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
+          sx={{ justifyContent: 'space-between', alignItems: 'center' }}
         >
           <Typography variant='h5'>
             {t('lowcode.form_design_page.m1', { v1: form ? `· ${form.name}` : '' })}
@@ -107,63 +98,53 @@ export const FormDesignPage: React.FC = () => {
             {saving ? t('lowcode.app_management_page.r1') : t('lowcode.form_design_page.k5')}
           </Button>
         </Stack>
+      }
+    >
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 1 }}
+      >
+        {t('lowcode.form_design_page.e2')}
+        {form &&
+          i18n.t('lowcode.form_design_page.e2', {
+            v1: form.data_model_id ?? t('lowcode.form_design_page.k6'),
+          })}
+      </Typography>
 
-        {error && (
-          <Typography
-            color='error'
-            variant='body2'
-            sx={{ mb: 1 }}
-          >
-            {error}
-          </Typography>
-        )}
-
-        <Typography
-          variant='body2'
-          color='text.secondary'
-          sx={{ mb: 1 }}
-        >
-          {t('lowcode.form_design_page.e2')}
-          {form &&
-            i18n.t('lowcode.form_design_page.e2', {
-              v1: form.data_model_id ?? t('lowcode.form_design_page.k6'),
-            })}
-        </Typography>
-
-        <Paper
-          component='textarea'
-          value={draft}
-          onChange={(e) => setDraft((e.target as HTMLTextAreaElement).value)}
-          sx={{
-            width: '100%',
-            minHeight: 480,
-            p: 2,
-            fontFamily: 'monospace',
-            fontSize: 13,
-            border: '1px solid',
-            borderColor: 'divider',
-            resize: 'vertical',
-            outline: 'none',
+      <Paper
+        component='textarea'
+        value={draft}
+        onChange={(e) => setDraft((e.target as HTMLTextAreaElement).value)}
+        sx={{
+          width: '100%',
+          minHeight: 480,
+          p: 2,
+          fontFamily: 'monospace',
+          fontSize: 13,
+          border: '1px solid',
+          borderColor: 'divider',
+          resize: 'vertical',
+          outline: 'none',
+        }}
+        spellCheck={false}
+      />
+      <Typography
+        variant='caption'
+        color='text.secondary'
+      >
+        {t('lowcode.form_design_page.r2', { v1: ' ' })}
+        <Button
+          size='small'
+          onClick={() => {
+            searchParams.delete('form_id');
+            setSearchParams(searchParams);
           }}
-          spellCheck={false}
-        />
-        <Typography
-          variant='caption'
-          color='text.secondary'
         >
-          {t('lowcode.form_design_page.r2', { v1: ' ' })}
-          <Button
-            size='small'
-            onClick={() => {
-              searchParams.delete('form_id');
-              setSearchParams(searchParams);
-            }}
-          >
-            {t('lowcode.form_design_page.e3')}
-          </Button>
-        </Typography>
-      </Box>
-    </PageContainer>
+          {t('lowcode.form_design_page.e3')}
+        </Button>
+      </Typography>
+    </DesignerTemplate>
   );
 };
 

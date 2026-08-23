@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Grid } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { Grid } from '@mui/material';
+import { DesignerTemplate } from '@/components/templates';
 import { DesignerToolbar } from './components/DesignerToolbar';
 import { NodeLibrary } from './components/NodeLibrary';
 import { DesignerCanvas } from './components/DesignerCanvas';
@@ -29,35 +29,40 @@ export const AutomationDesignerPage: React.FC = () => {
   const showCanvasLayout = s.selectedRuleId && !s.loading && s.mode === 'canvas';
 
   return (
-    <PageContainer title={t('automation.index.k0')}>
-      <Box sx={{ p: 3 }}>
-        <DesignerToolbar
-          mode={s.mode}
-          setMode={s.setMode}
-          loading={s.loading}
-          saving={s.saving}
-          validating={s.validating}
-          error={s.error}
-          rules={s.rules}
-          selectedRuleId={s.selectedRuleId}
-          setSelectedRuleId={s.setSelectedRuleId}
-          validationErrors={s.validationErrors}
-          nodes={s.nodes}
-          availableNodeTypes={s.availableNodeTypes}
-          setEditNode={s.setEditNode}
-          onLoadCanvas={() => s.selectedRuleId && s.loadCanvasById(s.selectedRuleId)}
-          onValidate={s.handleValidate}
-          onClear={s.handleClear}
-          onSave={s.handleSave}
-          onSyncToRule={s.handleSyncToRule}
-          onAddNode={s.handleAddNode}
-          onDeleteNode={s.handleDeleteNode}
-        />
-
+    <>
+      <DesignerTemplate
+        mode='fullscreen'
+        title={t('automation.index.k0')}
+        toolbar={
+          <DesignerToolbar
+            mode={s.mode}
+            setMode={s.setMode}
+            loading={s.loading}
+            saving={s.saving}
+            validating={s.validating}
+            error={s.error}
+            rules={s.rules}
+            selectedRuleId={s.selectedRuleId}
+            setSelectedRuleId={s.setSelectedRuleId}
+            validationErrors={s.validationErrors}
+            nodes={s.nodes}
+            availableNodeTypes={s.availableNodeTypes}
+            setEditNode={s.setEditNode}
+            onLoadCanvas={() => s.selectedRuleId && s.loadCanvasById(s.selectedRuleId)}
+            onValidate={s.handleValidate}
+            onClear={s.handleClear}
+            onSave={s.handleSave}
+            onSyncToRule={s.handleSyncToRule}
+            onAddNode={s.handleAddNode}
+            onDeleteNode={s.handleDeleteNode}
+          />
+        }
+      >
         {showCanvasLayout && (
           <Grid
             container
             spacing={2}
+            sx={{ flex: 1, minHeight: 0 }}
           >
             <Grid size={{ xs: 12, md: 2 }}>
               <NodeLibrary
@@ -104,14 +109,14 @@ export const AutomationDesignerPage: React.FC = () => {
             </Grid>
           </Grid>
         )}
+      </DesignerTemplate>
 
-        <NodeEditDialog
-          node={s.editNode}
-          onClose={() => s.setEditNode(null)}
-          onSave={s.handleSaveNode}
-        />
-      </Box>
-    </PageContainer>
+      <NodeEditDialog
+        node={s.editNode}
+        onClose={() => s.setEditNode(null)}
+        onSave={s.handleSaveNode}
+      />
+    </>
   );
 };
 

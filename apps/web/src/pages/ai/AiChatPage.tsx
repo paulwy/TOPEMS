@@ -1,6 +1,6 @@
 import { designTokens } from '@topems/tokens';
 /**
- * AI 对话页面 - V4.0 标准化改造
+ * AI 对话页面 - V4.0 标准化改造 + ChatPageTemplate 迁移
  *
  * @module pages/ai
  * @path /ai/chat
@@ -44,11 +44,12 @@ import {
   DialogContent,
   DialogActions,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
 
-import { PageContainer } from '@/components/common';
+import { ChatPageTemplate } from '@/components/templates';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
@@ -173,6 +174,8 @@ export const AiChatPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4');
@@ -345,481 +348,484 @@ export const AiChatPage: React.FC = () => {
 
   const selectedSession = sessions.find((s) => s.id === selectedSessionId);
 
-  return (
-    <PageContainer
-      headerProps={{
-        pageIcon: <MessageSquare size={20} />,
-        backButton: { href: AI_PATHS.dashboard },
+  // 桌面端始终显示侧边栏；移动端由 showSidebar 控制
+  const isSidebarVisible = isDesktop || showSidebar;
+
+  const sidebarContent = (
+    <>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Button
+          fullWidth
+          variant='contained'
+          startIcon={<Plus size={16} />}
+          onClick={handleNewChat}
+        >
+          {i18n.t('ai.chat.action.new_chat')}
+        </Button>
+      </Box>
+
+      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{ mb: 1, display: 'block' }}
+        >
+          {i18n.t('ai.chat.sidebar.mode')}
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {[
+            { id: 'qa', label: i18n.t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
+            {
+              id: 'summary',
+              label: i18n.t('ai.chat.mode.summary'),
+              icon: <FileText size={14} />,
+            },
+            { id: 'code', label: i18n.t('ai.chat.mode.code'), icon: <Code size={14} /> },
+            {
+              id: 'general',
+              label: i18n.t('ai.chat.mode.general'),
+              icon: <MessageSquare size={14} />,
+            },
+          ].map((tab) => (
+            <Chip
+              key={tab.id}
+              icon={tab.icon}
+              label={tab.label}
+              size='small'
+              variant={activeTab === tab.id ? 'filled' : 'outlined'}
+              color={activeTab === tab.id ? 'primary' : 'default'}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              sx={{ fontSize: 11 }}
+            />
+          ))}
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        {sessions.map((session) => (
+          <Paper
+            key={session.id}
+            sx={{
+              p: 1.5,
+              m: 1,
+              cursor: 'pointer',
+              borderRadius: 1,
+              border: 1,
+              borderColor: selectedSessionId === session.id ? 'primary.main' : 'transparent',
+              bgcolor: selectedSessionId === session.id ? 'primary.50' : 'transparent',
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+            onClick={() => handleSelectSession(session.id)}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 0.5,
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'primary.main',
+                }}
+              >
+                {getTypeIcon(session.type)}
+              </Box>
+              <Typography
+                variant='body2'
+                sx={{
+                  flex: 1,
+                  fontWeight: 500,
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {session.title}
+              </Typography>
+              <IconButton
+                size='small'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteSession(session.id);
+                }}
+                sx={{ p: 0.5 }}
+                aria-label={i18n.t('ai.ai_chat_page.k5')}
+              >
+                <X size={14} />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                label={t(`ai.chat.type.${getTypeLabel(session.type)}`)}
+                size='small'
+                sx={{ fontSize: 10 }}
+              />
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {formatTime(session.timestamp)}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
+
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{ mb: 1, display: 'block' }}
+        >
+          {i18n.t('ai.chat.sidebar.quick_prompts')}
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {quickPrompts.map((prompt) => (
+            <Chip
+              key={prompt.id}
+              icon={prompt.icon}
+              label={t(`ai.chat.${prompt.label}`)}
+              size='small'
+              variant='outlined'
+              onClick={() => handleQuickPrompt(prompt)}
+              sx={{ fontSize: 11 }}
+            />
+          ))}
+        </Box>
+      </Box>
+    </>
+  );
+
+  const headerContent = (
+    <Box
+      sx={{
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}
     >
-      <Box sx={{ display: 'flex', height: 'calc(100vh - 140px)', bgcolor: 'background.default' }}>
-        {/* 左侧会话列表 */}
-        {showSidebar && (
-          <Box
-            sx={{
-              width: 280,
-              borderRight: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              display: { xs: 'none', md: 'block' },
-              flexDirection: 'column',
-            }}
-          >
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <Button
-                fullWidth
-                variant='contained'
-                startIcon={<Plus size={16} />}
-                onClick={handleNewChat}
-              >
-                {i18n.t('ai.chat.action.new_chat')}
-              </Button>
-            </Box>
-
-            <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                {i18n.t('ai.chat.sidebar.mode')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {[
-                  { id: 'qa', label: i18n.t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
-                  {
-                    id: 'summary',
-                    label: i18n.t('ai.chat.mode.summary'),
-                    icon: <FileText size={14} />,
-                  },
-                  { id: 'code', label: i18n.t('ai.chat.mode.code'), icon: <Code size={14} /> },
-                  {
-                    id: 'general',
-                    label: i18n.t('ai.chat.mode.general'),
-                    icon: <MessageSquare size={14} />,
-                  },
-                ].map((tab) => (
-                  <Chip
-                    key={tab.id}
-                    icon={tab.icon}
-                    label={tab.label}
-                    size='small'
-                    variant={activeTab === tab.id ? 'filled' : 'outlined'}
-                    color={activeTab === tab.id ? 'primary' : 'default'}
-                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                    sx={{ fontSize: 11 }}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
-              {sessions.map((session) => (
-                <Paper
-                  key={session.id}
-                  sx={{
-                    p: 1.5,
-                    m: 1,
-                    cursor: 'pointer',
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: selectedSessionId === session.id ? 'primary.main' : 'transparent',
-                    bgcolor: selectedSessionId === session.id ? 'primary.50' : 'transparent',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                  onClick={() => handleSelectSession(session.id)}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Box
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 0.5,
-                        bgcolor: 'primary.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'primary.main',
-                      }}
-                    >
-                      {getTypeIcon(session.type)}
-                    </Box>
-                    <Typography
-                      variant='body2'
-                      sx={{
-                        flex: 1,
-                        fontWeight: 500,
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {session.title}
-                    </Typography>
-                    <IconButton
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteSession(session.id);
-                      }}
-                      sx={{ p: 0.5 }}
-                      aria-label={i18n.t('ai.ai_chat_page.k5')}
-                    >
-                      <X size={14} />
-                    </IconButton>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip
-                      label={t(`ai.chat.type.${getTypeLabel(session.type)}`)}
-                      size='small'
-                      sx={{ fontSize: 10 }}
-                    />
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {formatTime(session.timestamp)}
-                    </Typography>
-                  </Box>
-                </Paper>
-              ))}
-            </Box>
-
-            <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                {i18n.t('ai.chat.sidebar.quick_prompts')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {quickPrompts.map((prompt) => (
-                  <Chip
-                    key={prompt.id}
-                    icon={prompt.icon}
-                    label={t(`ai.chat.${prompt.label}`)}
-                    size='small'
-                    variant='outlined'
-                    onClick={() => handleQuickPrompt(prompt)}
-                    sx={{ fontSize: 11 }}
-                  />
-                ))}
-              </Box>
-            </Box>
-          </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <IconButton
+          size='small'
+          onClick={() => setShowSidebar(!showSidebar)}
+          sx={{ display: { md: 'none' } }}
+          aria-label={i18n.t('ai.ai_chat_page.k6')}
+        >
+          <ChevronRight size={20} />
+        </IconButton>
+        <Sparkles
+          size={20}
+          color='primary.main'
+        />
+        <Typography variant='h6'>
+          {selectedSession?.title || i18n.t('ai.chat.title.default')}
+        </Typography>
+        {selectedSession && (
+          <Chip
+            label={t(`ai.chat.type.${getTypeLabel(selectedSession.type)}`)}
+            size='small'
+            color='primary'
+          />
         )}
-
-        {/* 右侧聊天区域 */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* 顶部 */}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 150 }}
+        >
+          <InputLabel>{i18n.t('ai.chat.field.model')}</InputLabel>
+          <Select
+            value={selectedModel}
+            label={i18n.t('ai.chat.field.model')}
+            onChange={(e) => setSelectedModel(e.target.value)}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                size='small'
-                onClick={() => setShowSidebar(!showSidebar)}
-                sx={{ display: { md: 'none' } }}
-                aria-label={i18n.t('ai.ai_chat_page.k6')}
+            <MenuItem value='gpt-4'>GPT-4</MenuItem>
+            <MenuItem value='gpt-3.5'>GPT-3.5</MenuItem>
+            <MenuItem value='claude'>Claude</MenuItem>
+            <MenuItem value='ERNIE'>{i18n.t('ai.chat.model.ernie')}</MenuItem>
+          </Select>
+        </FormControl>
+        <IconButton
+          onClick={handleNewChat}
+          aria-label={i18n.t('ai.chat.action.new_chat')}
+        >
+          <RefreshCw size={20} />
+        </IconButton>
+      </Box>
+    </Box>
+  );
+
+  const modeTabsContent = (
+    <Box
+      sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', display: { md: 'none' } }}
+    >
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
+        variant='scrollable'
+        scrollButtons='auto'
+        sx={{
+          minHeight: 36,
+          '& .MuiTab-root': { minHeight: 36, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+        }}
+      >
+        <Tab
+          label={i18n.t('ai.chat.mode.qa')}
+          value='qa'
+        />
+        <Tab
+          label={i18n.t('ai.chat.mode.summary')}
+          value='summary'
+        />
+        <Tab
+          label={i18n.t('ai.chat.mode.code')}
+          value='code'
+        />
+        <Tab
+          label={i18n.t('ai.chat.mode.general')}
+          value='general'
+        />
+      </Tabs>
+    </Box>
+  );
+
+  const messagesContent = (
+    <>
+      {messages.map((msg) => (
+        <Box
+          key={msg.id}
+          sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}
+        >
+          <Avatar sx={{ bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main' }}>
+            {msg.role === 'user' ? <User size={20} /> : <Sparkles size={20} />}
+          </Avatar>
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
               >
-                <ChevronRight size={20} />
-              </IconButton>
-              <Sparkles
-                size={20}
-                color='primary.main'
-              />
-              <Typography variant='h6'>
-                {selectedSession?.title || i18n.t('ai.chat.title.default')}
+                {msg.role === 'user'
+                  ? i18n.t('ai.chat.role.user')
+                  : i18n.t('ai.chat.role.assistant')}
               </Typography>
-              {selectedSession && (
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {msg.timestamp.toLocaleTimeString()}
+              </Typography>
+              {msg.type && (
                 <Chip
-                  label={t(`ai.chat.type.${getTypeLabel(selectedSession.type)}`)}
+                  label={t(`ai.chat.type.${getTypeLabel(msg.type)}`)}
                   size='small'
-                  color='primary'
+                  variant='outlined'
+                  sx={{ fontSize: 10 }}
                 />
               )}
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FormControl
-                size='small'
-                sx={{ minWidth: 150 }}
-              >
-                <InputLabel>{i18n.t('ai.chat.field.model')}</InputLabel>
-                <Select
-                  value={selectedModel}
-                  label={i18n.t('ai.chat.field.model')}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                >
-                  <MenuItem value='gpt-4'>GPT-4</MenuItem>
-                  <MenuItem value='gpt-3.5'>GPT-3.5</MenuItem>
-                  <MenuItem value='claude'>Claude</MenuItem>
-                  <MenuItem value='ERNIE'>{i18n.t('ai.chat.model.ernie')}</MenuItem>
-                </Select>
-              </FormControl>
               <IconButton
-                onClick={handleNewChat}
-                aria-label={i18n.t('ai.chat.action.new_chat')}
+                size='small'
+                onClick={() => handleCopy(msg.content, msg.id)}
+                aria-label={i18n.t('ai.chat.action.copy_message')}
               >
-                <RefreshCw size={20} />
+                {copiedId === msg.id ? (
+                  <Check
+                    size={14}
+                    color='success'
+                  />
+                ) : (
+                  <Copy size={14} />
+                )}
               </IconButton>
             </Box>
-          </Box>
-
-          {/* 功能模式标签 */}
-          <Box
-            sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', display: { md: 'none' } }}
-          >
-            <Tabs
-              value={activeTab}
-              onChange={(_, v) => setActiveTab(v)}
-              variant='scrollable'
-              scrollButtons='auto'
+            <Paper
               sx={{
-                minHeight: 36,
-                '& .MuiTab-root': { minHeight: 36, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+                p: 2,
+                bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
               }}
             >
-              <Tab
-                label={i18n.t('ai.chat.mode.qa')}
-                value='qa'
-              />
-              <Tab
-                label={i18n.t('ai.chat.mode.summary')}
-                value='summary'
-              />
-              <Tab
-                label={i18n.t('ai.chat.mode.code')}
-                value='code'
-              />
-              <Tab
-                label={i18n.t('ai.chat.mode.general')}
-                value='general'
-              />
-            </Tabs>
-          </Box>
-
-          {/* 消息区域 */}
-          <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
-            {messages.map((msg) => (
-              <Box
-                key={msg.id}
-                sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}
-              >
-                <Avatar sx={{ bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main' }}>
-                  {msg.role === 'user' ? <User size={20} /> : <Sparkles size={20} />}
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {msg.role === 'user'
-                        ? i18n.t('ai.chat.role.user')
-                        : i18n.t('ai.chat.role.assistant')}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {msg.timestamp.toLocaleTimeString()}
-                    </Typography>
-                    {msg.type && (
-                      <Chip
-                        label={t(`ai.chat.type.${getTypeLabel(msg.type)}`)}
-                        size='small'
-                        variant='outlined'
-                        sx={{ fontSize: 10 }}
-                      />
-                    )}
-                    <IconButton
-                      size='small'
-                      onClick={() => handleCopy(msg.content, msg.id)}
-                      aria-label={i18n.t('ai.chat.action.copy_message')}
-                    >
-                      {copiedId === msg.id ? (
-                        <Check
-                          size={14}
-                          color='success'
-                        />
-                      ) : (
-                        <Copy size={14} />
-                      )}
-                    </IconButton>
-                  </Box>
-                  <Paper
-                    sx={{
-                      p: 2,
-                      bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
-                    }}
-                  >
-                    {msg.content.includes('```') ? (
-                      <Box sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
-                        {msg.content.split('```').map((part, i) =>
-                          i % 2 === 1 ? (
-                            <Box
-                              key={i}
-                              sx={{
-                                bg: 'grey.900',
-                                color: 'common.white',
-                                p: 2,
-                                borderRadius: 1,
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              <pre
-                                style={{
-                                  margin: 0,
-                                  whiteSpace: 'pre-wrap',
-                                  wordBreak: 'break-word',
-                                }}
-                              >
-                                {part}
-                              </pre>
-                            </Box>
-                          ) : (
-                            <Typography
-                              key={i}
-                              variant='body2'
-                              sx={{ whiteSpace: 'pre-wrap' }}
-                            >
-                              {part}
-                            </Typography>
-                          )
-                        )}
+              {msg.content.includes('```') ? (
+                <Box sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  {msg.content.split('```').map((part, i) =>
+                    i % 2 === 1 ? (
+                      <Box
+                        key={i}
+                        sx={{
+                          bg: 'grey.900',
+                          color: 'common.white',
+                          p: 2,
+                          borderRadius: 1,
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        <pre
+                          style={{
+                            margin: 0,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                          }}
+                        >
+                          {part}
+                        </pre>
                       </Box>
                     ) : (
                       <Typography
+                        key={i}
                         variant='body2'
                         sx={{ whiteSpace: 'pre-wrap' }}
                       >
-                        {msg.content}
+                        {part}
                       </Typography>
-                    )}
-                  </Paper>
+                    )
+                  )}
                 </Box>
-              </Box>
-            ))}
-            {isTyping && (
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                  <Sparkles size={20} />
-                </Avatar>
-                <Paper sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('ai.chat.status.typing')}
-                  </Typography>
-                </Paper>
-              </Box>
-            )}
-            {messages.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 12 }}>
-                <Sparkles
-                  size={48}
-                  style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'text.disabled' }}
-                />
-                <Typography
-                  variant='h6'
-                  sx={{ mb: 2 }}
-                >
-                  {i18n.t('ai.chat.empty.start_title')}
-                </Typography>
+              ) : (
                 <Typography
                   variant='body2'
-                  color='text.secondary'
+                  sx={{ whiteSpace: 'pre-wrap' }}
                 >
-                  {i18n.t('ai.chat.empty.start_subtitle')}
+                  {msg.content}
                 </Typography>
-              </Box>
-            )}
-            <div ref={messagesEndRef} />
-          </Box>
-
-          {/* 输入区域 */}
-          <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-            {activeTab === 'code' && (
-              <Box sx={{ mb: 2 }}>
-                <FormControl
-                  size='small'
-                  sx={{ width: 200 }}
-                >
-                  <InputLabel>{i18n.t('ai.chat.field.code_language')}</InputLabel>
-                  <Select
-                    value={codeLanguage}
-                    label={i18n.t('ai.chat.field.code_language')}
-                    onChange={(e) => setCodeLanguage(e.target.value)}
-                  >
-                    <MenuItem value='typescript'>TypeScript</MenuItem>
-                    <MenuItem value='javascript'>JavaScript</MenuItem>
-                    <MenuItem value='python'>Python</MenuItem>
-                    <MenuItem value='java'>Java</MenuItem>
-                    <MenuItem value='sql'>SQL</MenuItem>
-                    <MenuItem value='go'>Go</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            )}
-
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {activeTab === 'summary' && (
-                  <Button
-                    size='small'
-                    variant='outlined'
-                    startIcon={<FileText size={16} />}
-                    onClick={() => setDocUploadDialog(true)}
-                  >
-                    {i18n.t('ai.chat.action.upload_document')}
-                  </Button>
-                )}
-              </Box>
-              <TextField
-                fullWidth
-                multiline
-                maxRows={4}
-                placeholder={
-                  activeTab === 'qa'
-                    ? i18n.t('ai.chat.placeholder.qa')
-                    : activeTab === 'summary'
-                      ? i18n.t('ai.chat.placeholder.summary')
-                      : activeTab === 'code'
-                        ? i18n.t('ai.chat.placeholder.code')
-                        : i18n.t('ai.chat.placeholder.general')
-                }
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
-                size='small'
-              />
-              <Button
-                variant='contained'
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isTyping}
-              >
-                <Send size={20} />
-              </Button>
-            </Box>
-            <Typography
-              variant='caption'
-              color='text.secondary'
-              sx={{ mt: 1, display: 'block' }}
-            >
-              {i18n.t('ai.chat.disclaimer_bottom')}
-            </Typography>
+              )}
+            </Paper>
           </Box>
         </Box>
+      ))}
+      {isTyping && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <Avatar sx={{ bgcolor: 'secondary.main' }}>
+            <Sparkles size={20} />
+          </Avatar>
+          <Paper sx={{ p: 2 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {i18n.t('ai.chat.status.typing')}
+            </Typography>
+          </Paper>
+        </Box>
+      )}
+      {messages.length === 0 && (
+        <Box sx={{ textAlign: 'center', py: 12 }}>
+          <Sparkles
+            size={48}
+            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'text.disabled' }}
+          />
+          <Typography
+            variant='h6'
+            sx={{ mb: 2 }}
+          >
+            {i18n.t('ai.chat.empty.start_title')}
+          </Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {i18n.t('ai.chat.empty.start_subtitle')}
+          </Typography>
+        </Box>
+      )}
+      <div ref={messagesEndRef} />
+    </>
+  );
+
+  const inputContent = (
+    <>
+      {activeTab === 'code' && (
+        <Box sx={{ mb: 2 }}>
+          <FormControl
+            size='small'
+            sx={{ width: 200 }}
+          >
+            <InputLabel>{i18n.t('ai.chat.field.code_language')}</InputLabel>
+            <Select
+              value={codeLanguage}
+              label={i18n.t('ai.chat.field.code_language')}
+              onChange={(e) => setCodeLanguage(e.target.value)}
+            >
+              <MenuItem value='typescript'>TypeScript</MenuItem>
+              <MenuItem value='javascript'>JavaScript</MenuItem>
+              <MenuItem value='python'>Python</MenuItem>
+              <MenuItem value='java'>Java</MenuItem>
+              <MenuItem value='sql'>SQL</MenuItem>
+              <MenuItem value='go'>Go</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {activeTab === 'summary' && (
+            <Button
+              size='small'
+              variant='outlined'
+              startIcon={<FileText size={16} />}
+              onClick={() => setDocUploadDialog(true)}
+            >
+              {i18n.t('ai.chat.action.upload_document')}
+            </Button>
+          )}
+        </Box>
+        <TextField
+          fullWidth
+          multiline
+          maxRows={4}
+          placeholder={
+            activeTab === 'qa'
+              ? i18n.t('ai.chat.placeholder.qa')
+              : activeTab === 'summary'
+                ? i18n.t('ai.chat.placeholder.summary')
+                : activeTab === 'code'
+                  ? i18n.t('ai.chat.placeholder.code')
+                  : i18n.t('ai.chat.placeholder.general')
+          }
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyPress}
+          size='small'
+        />
+        <Button
+          variant='contained'
+          onClick={handleSend}
+          disabled={!inputValue.trim() || isTyping}
+        >
+          <Send size={20} />
+        </Button>
       </Box>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ mt: 1, display: 'block' }}
+      >
+        {i18n.t('ai.chat.disclaimer_bottom')}
+      </Typography>
+    </>
+  );
+
+  return (
+    <>
+      <ChatPageTemplate
+        pageContainerProps={{
+          headerProps: {
+            pageIcon: <MessageSquare size={20} />,
+            backButton: { href: AI_PATHS.dashboard },
+          },
+        }}
+        sidebar={isSidebarVisible ? sidebarContent : null}
+        header={
+          <>
+            {headerContent}
+            {modeTabsContent}
+          </>
+        }
+        messages={messagesContent}
+        input={inputContent}
+      />
 
       {/* 文档上传对话框 */}
       <Dialog
@@ -874,7 +880,7 @@ export const AiChatPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 

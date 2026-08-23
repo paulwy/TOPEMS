@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Sparkles,
   User,
-  ChevronRight,
   X,
   Check,
   ThumbsUp,
@@ -28,11 +27,12 @@ import {
   CircularProgress,
   Tooltip,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
 
-import { PageContainer } from '@/components/common';
+import { ChatPageTemplate } from '@/components/templates';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
@@ -60,6 +60,7 @@ export const DifyChatPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [appInfo, setAppInfo] = useState<DifyInfoResponse | null>(null);
@@ -400,413 +401,406 @@ export const DifyChatPage: React.FC = () => {
     return i18n.t('ai.dify.conversation.untitled');
   };
 
-  return (
-    <PageContainer
-      title={appInfo?.name || t('ai.dify.page.title')}
-      headerProps={{
-        pageIcon: <Bot size={20} />,
-        backButton: { href: AI_PATHS.dashboard },
-      }}
-    >
+  const sidebarContent = (
+    <>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Button
+          fullWidth
+          variant='contained'
+          startIcon={<Plus size={16} />}
+          onClick={handleNewChat}
+        >
+          {i18n.t('ai.chat.action.new_chat')}
+        </Button>
+      </Box>
+
       <Box
         sx={{
+          p: 1.5,
+          borderBottom: 1,
+          borderColor: 'divider',
           display: 'flex',
-          height: 'calc(100vh - 140px)',
-          bgcolor: 'background.default',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <Box
-          sx={{
-            width: 280,
-            borderRight: 1,
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: { xs: 'none', md: 'flex' },
-            flexDirection: 'column',
-          }}
+        <Typography
+          variant='caption'
+          color='text.secondary'
         >
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Button
-              fullWidth
-              variant='contained'
-              startIcon={<Plus size={16} />}
-              onClick={handleNewChat}
-            >
-              {i18n.t('ai.chat.action.new_chat')}
-            </Button>
-          </Box>
+          {i18n.t('ai.dify.sidebar.conversations')}
+        </Typography>
+        <IconButton
+          size='small'
+          onClick={handleRefreshConversations}
+          disabled={isLoadingConversations}
+          aria-label={i18n.t('ai.dify.action.refresh')}
+        >
+          <RefreshCw
+            size={14}
+            className={isLoadingConversations ? 'animate-spin' : ''}
+          />
+        </IconButton>
+      </Box>
 
-          <Box
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        {isLoadingConversations && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
+        {!isLoadingConversations && conversations.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 6, px: 2 }}>
+            <MessageSquare
+              size={32}
+              style={{ margin: `0 auto ${designTokens.spacing.sm}px`, opacity: 0.4 }}
+            />
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {i18n.t('ai.dify.sidebar.empty')}
+            </Typography>
+          </Box>
+        )}
+        {conversations.map((conv) => (
+          <Paper
+            key={conv.id}
             sx={{
               p: 1.5,
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              m: 1,
+              cursor: 'pointer',
+              borderRadius: 1,
+              border: 1,
+              borderColor: selectedConversationId === conv.id ? 'primary.main' : 'transparent',
+              bgcolor: selectedConversationId === conv.id ? 'primary.50' : 'transparent',
+              '&:hover': { bgcolor: 'action.hover' },
             }}
+            onClick={() => handleSelectConversation(conv.id)}
           >
-            <Typography
-              variant='caption'
-              color='text.secondary'
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mb: 0.5,
+              }}
             >
-              {i18n.t('ai.dify.sidebar.conversations')}
-            </Typography>
-            <IconButton
-              size='small'
-              onClick={handleRefreshConversations}
-              disabled={isLoadingConversations}
-              aria-label={i18n.t('ai.dify.action.refresh')}
-            >
-              <RefreshCw
-                size={14}
-                className={isLoadingConversations ? 'animate-spin' : ''}
-              />
-            </IconButton>
-          </Box>
-
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
-            {isLoadingConversations && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress size={24} />
-              </Box>
-            )}
-            {!isLoadingConversations && conversations.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 6, px: 2 }}>
-                <MessageSquare
-                  size={32}
-                  style={{ margin: `0 auto ${designTokens.spacing.sm}px`, opacity: 0.4 }}
-                />
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {i18n.t('ai.dify.sidebar.empty')}
-                </Typography>
-              </Box>
-            )}
-            {conversations.map((conv) => (
-              <Paper
-                key={conv.id}
+              <Box
                 sx={{
-                  p: 1.5,
-                  m: 1,
-                  cursor: 'pointer',
-                  borderRadius: 1,
-                  border: 1,
-                  borderColor: selectedConversationId === conv.id ? 'primary.main' : 'transparent',
-                  bgcolor: selectedConversationId === conv.id ? 'primary.50' : 'transparent',
-                  '&:hover': { bgcolor: 'action.hover' },
+                  width: 24,
+                  height: 24,
+                  borderRadius: 0.5,
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'primary.main',
+                  flexShrink: 0,
                 }}
-                onClick={() => handleSelectConversation(conv.id)}
               >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: 0.5,
-                  }}
+                <MessageSquare size={14} />
+              </Box>
+              <Typography
+                variant='body2'
+                sx={{
+                  flex: 1,
+                  fontWeight: 500,
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {conversationName(conv)}
+              </Typography>
+              <Tooltip
+                title={i18n.t('ai.chat.action.delete')}
+                placement='top'
+              >
+                <IconButton
+                  size='small'
+                  onClick={(e) => handleDeleteConversation(conv.id, e)}
+                  sx={{ p: 0.5 }}
                 >
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 0.5,
-                      bgcolor: 'primary.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'primary.main',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <MessageSquare size={14} />
-                  </Box>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      flex: 1,
-                      fontWeight: 500,
-                      textOverflow: 'ellipsis',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {conversationName(conv)}
-                  </Typography>
-                  <Tooltip
-                    title={i18n.t('ai.chat.action.delete')}
-                    placement='top'
-                  >
-                    <IconButton
-                      size='small'
-                      onClick={(e) => handleDeleteConversation(conv.id, e)}
-                      sx={{ p: 0.5 }}
-                    >
-                      <Trash2 size={14} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {formatTime(new Date(conv.created_at))}
-                  </Typography>
-                </Box>
-              </Paper>
-            ))}
-          </Box>
-        </Box>
+                  <Trash2 size={14} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {formatTime(new Date(conv.created_at))}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
+      </Box>
+    </>
+  );
 
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
+  const headerContent = (
+    <Box
+      sx={{
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Bot
+          size={20}
+          color={theme.palette.primary.main}
+        />
+        <Typography variant='h6'>{appInfo?.name || t('ai.dify.page.title')}</Typography>
+        {appInfo?.description && (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ ml: 1 }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Bot
-                size={20}
-                color={theme.palette.primary.main}
-              />
-              <Typography variant='h6'>{appInfo?.name || t('ai.dify.page.title')}</Typography>
-              {appInfo?.description && (
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ ml: 1 }}
-                >
-                  {appInfo.description}
-                </Typography>
-              )}
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                onClick={handleNewChat}
-                aria-label={i18n.t('ai.chat.action.new_chat')}
-              >
-                <RefreshCw size={20} />
-              </IconButton>
-            </Box>
-          </Box>
+            {appInfo.description}
+          </Typography>
+        )}
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <IconButton
+          onClick={handleNewChat}
+          aria-label={i18n.t('ai.chat.action.new_chat')}
+        >
+          <RefreshCw size={20} />
+        </IconButton>
+      </Box>
+    </Box>
+  );
 
-          <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
-            {isLoadingMessages && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-                <CircularProgress />
-              </Box>
-            )}
-            {!isLoadingMessages &&
-              messages.map((msg) => (
-                <Box
-                  key={msg.id}
-                  sx={{
-                    display: 'flex',
-                    gap: 2,
-                    mb: 3,
-                    alignItems: 'flex-start',
-                  }}
-                  onMouseEnter={() => setHoveredMessageId(msg.id)}
-                  onMouseLeave={() => setHoveredMessageId(null)}
-                >
-                  <Avatar
-                    sx={{
-                      bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main',
-                    }}
-                  >
-                    {msg.role === 'user' ? <User size={20} /> : <Sparkles size={20} />}
-                  </Avatar>
-                  <Box sx={{ flex: 1, maxWidth: '100%' }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        mb: 0.5,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {msg.role === 'user'
-                          ? i18n.t('ai.chat.role.user')
-                          : i18n.t('ai.dify.role.assistant')}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {msg.timestamp.toLocaleTimeString()}
-                      </Typography>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleCopy(msg.content, msg.id)}
-                        aria-label={i18n.t('ai.chat.action.copy_message')}
-                      >
-                        {copiedId === msg.id ? (
-                          <Check
-                            size={14}
-                            color='success'
-                          />
-                        ) : (
-                          <Copy size={14} />
-                        )}
-                      </IconButton>
-                      {msg.role === 'assistant' &&
-                        msg.message_id &&
-                        (hoveredMessageId === msg.id || msg.feedback) && (
-                          <>
-                            <Tooltip
-                              title={i18n.t('ai.dify.action.like')}
-                              placement='top'
-                            >
-                              <IconButton
-                                size='small'
-                                onClick={() => handleFeedback(msg.message_id!, 'like')}
-                                disabled={msg.feedback === 'like'}
-                                color={msg.feedback === 'like' ? 'primary' : 'default'}
-                              >
-                                <ThumbsUp size={14} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip
-                              title={i18n.t('ai.dify.action.dislike')}
-                              placement='top'
-                            >
-                              <IconButton
-                                size='small'
-                                onClick={() => handleFeedback(msg.message_id!, 'dislike')}
-                                disabled={msg.feedback === 'dislike'}
-                                color={msg.feedback === 'dislike' ? 'error' : 'default'}
-                              >
-                                <ThumbsDown size={14} />
-                              </IconButton>
-                            </Tooltip>
-                          </>
-                        )}
-                    </Box>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
-                        position: 'relative',
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {msg.content}
-                        {msg.isStreaming && (
-                          <Box
-                            component='span'
-                            sx={{
-                              display: 'inline-block',
-                              width: 2,
-                              height: '1em',
-                              bgcolor: 'text.primary',
-                              ml: 0.5,
-                              animation: 'pulse 1s infinite',
-                              verticalAlign: 'text-bottom',
-                            }}
-                          />
-                        )}
-                      </Typography>
-                    </Paper>
-                  </Box>
-                </Box>
-              ))}
-            {isTyping && messages.length > 0 && !messages[messages.length - 1].isStreaming && (
-              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                  <Sparkles size={20} />
-                </Avatar>
-                <Paper sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('ai.chat.status.typing')}
-                  </Typography>
-                </Paper>
-              </Box>
-            )}
-            {!isLoadingMessages && messages.length === 0 && (
-              <Box sx={{ textAlign: 'center', py: 12 }}>
-                <Bot
-                  size={48}
-                  style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: theme.palette.text.disabled }}
-                />
-                <Typography
-                  variant='h6'
-                  sx={{ mb: 2 }}
-                >
-                  {i18n.t('ai.dify.empty.start_title')}
-                </Typography>
+  const messagesContent = (
+    <>
+      {isLoadingMessages && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      {!isLoadingMessages &&
+        messages.map((msg) => (
+          <Box
+            key={msg.id}
+            sx={{
+              display: 'flex',
+              gap: 2,
+              mb: 3,
+              alignItems: 'flex-start',
+            }}
+            onMouseEnter={() => setHoveredMessageId(msg.id)}
+            onMouseLeave={() => setHoveredMessageId(null)}
+          >
+            <Avatar
+              sx={{
+                bgcolor: msg.role === 'user' ? 'primary.main' : 'secondary.main',
+              }}
+            >
+              {msg.role === 'user' ? <User size={20} /> : <Sparkles size={20} />}
+            </Avatar>
+            <Box sx={{ flex: 1, maxWidth: '100%' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 0.5,
+                }}
+              >
                 <Typography
                   variant='body2'
-                  color='text.secondary'
-                  sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}
+                  sx={{ fontWeight: 500 }}
                 >
-                  {appInfo?.description || i18n.t('ai.dify.empty.start_subtitle')}
+                  {msg.role === 'user'
+                    ? i18n.t('ai.chat.role.user')
+                    : i18n.t('ai.dify.role.assistant')}
                 </Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  {msg.timestamp.toLocaleTimeString()}
+                </Typography>
+                <IconButton
+                  size='small'
+                  onClick={() => handleCopy(msg.content, msg.id)}
+                  aria-label={i18n.t('ai.chat.action.copy_message')}
+                >
+                  {copiedId === msg.id ? (
+                    <Check
+                      size={14}
+                      color='success'
+                    />
+                  ) : (
+                    <Copy size={14} />
+                  )}
+                </IconButton>
+                {msg.role === 'assistant' &&
+                  msg.message_id &&
+                  (hoveredMessageId === msg.id || msg.feedback) && (
+                    <>
+                      <Tooltip
+                        title={i18n.t('ai.dify.action.like')}
+                        placement='top'
+                      >
+                        <IconButton
+                          size='small'
+                          onClick={() => handleFeedback(msg.message_id!, 'like')}
+                          disabled={msg.feedback === 'like'}
+                          color={msg.feedback === 'like' ? 'primary' : 'default'}
+                        >
+                          <ThumbsUp size={14} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip
+                        title={i18n.t('ai.dify.action.dislike')}
+                        placement='top'
+                      >
+                        <IconButton
+                          size='small'
+                          onClick={() => handleFeedback(msg.message_id!, 'dislike')}
+                          disabled={msg.feedback === 'dislike'}
+                          color={msg.feedback === 'dislike' ? 'error' : 'default'}
+                        >
+                          <ThumbsDown size={14} />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  )}
               </Box>
-            )}
-            <div ref={messagesEndRef} />
-          </Box>
-
-          <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-              <TextField
-                fullWidth
-                multiline
-                maxRows={4}
-                placeholder={t('ai.dify.placeholder.input')}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                size='small'
-                disabled={isTyping}
-              />
-              <Button
-                variant='contained'
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isTyping}
-                sx={{ alignSelf: 'stretch', minWidth: 48 }}
+              <Paper
+                sx={{
+                  p: 2,
+                  bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
+                  position: 'relative',
+                }}
               >
-                {isTyping ? (
-                  <CircularProgress
-                    size={20}
-                    color='inherit'
-                  />
-                ) : (
-                  <Send size={20} />
-                )}
-              </Button>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {msg.content}
+                  {msg.isStreaming && (
+                    <Box
+                      component='span'
+                      sx={{
+                        display: 'inline-block',
+                        width: 2,
+                        height: '1em',
+                        bgcolor: 'text.primary',
+                        ml: 0.5,
+                        animation: 'pulse 1s infinite',
+                        verticalAlign: 'text-bottom',
+                      }}
+                    />
+                  )}
+                </Typography>
+              </Paper>
             </Box>
-            <Typography
-              variant='caption'
-              color='text.secondary'
-              sx={{ mt: 1, display: 'block' }}
-            >
-              {i18n.t('ai.dify.disclaimer_bottom')}
-            </Typography>
           </Box>
+        ))}
+      {isTyping && messages.length > 0 && !messages[messages.length - 1].isStreaming && (
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <Avatar sx={{ bgcolor: 'secondary.main' }}>
+            <Sparkles size={20} />
+          </Avatar>
+          <Paper sx={{ p: 2 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {i18n.t('ai.chat.status.typing')}
+            </Typography>
+          </Paper>
         </Box>
+      )}
+      {!isLoadingMessages && messages.length === 0 && (
+        <Box sx={{ textAlign: 'center', py: 12 }}>
+          <Bot
+            size={48}
+            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: theme.palette.text.disabled }}
+          />
+          <Typography
+            variant='h6'
+            sx={{ mb: 2 }}
+          >
+            {i18n.t('ai.dify.empty.start_title')}
+          </Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}
+          >
+            {appInfo?.description || i18n.t('ai.dify.empty.start_subtitle')}
+          </Typography>
+        </Box>
+      )}
+      <div ref={messagesEndRef} />
+    </>
+  );
+
+  const inputContent = (
+    <>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+        <TextField
+          fullWidth
+          multiline
+          maxRows={4}
+          placeholder={t('ai.dify.placeholder.input')}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          size='small'
+          disabled={isTyping}
+        />
+        <Button
+          variant='contained'
+          onClick={handleSend}
+          disabled={!inputValue.trim() || isTyping}
+          sx={{ alignSelf: 'stretch', minWidth: 48 }}
+        >
+          {isTyping ? (
+            <CircularProgress
+              size={20}
+              color='inherit'
+            />
+          ) : (
+            <Send size={20} />
+          )}
+        </Button>
       </Box>
-    </PageContainer>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ mt: 1, display: 'block' }}
+      >
+        {i18n.t('ai.dify.disclaimer_bottom')}
+      </Typography>
+    </>
+  );
+
+  return (
+    <ChatPageTemplate
+      pageContainerProps={{
+        title: appInfo?.name || t('ai.dify.page.title'),
+        headerProps: {
+          pageIcon: <Bot size={20} />,
+          backButton: { href: AI_PATHS.dashboard },
+        },
+      }}
+      sidebar={isDesktop ? sidebarContent : null}
+      header={headerContent}
+      messages={messagesContent}
+      input={inputContent}
+    />
   );
 };
 

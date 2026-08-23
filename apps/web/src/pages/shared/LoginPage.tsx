@@ -25,6 +25,7 @@ import i18n from '@/i18n';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
+import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -134,25 +135,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <Box
-      className='login-page'
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+    <AuthPageTemplate
+      backgroundGradient={`linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`}
+      maxWidth='100%'
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`,
-        }}
-      />
-
       <Box
         sx={{
           position: 'absolute',
@@ -545,7 +531,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           }
         }
       `}</style>
-    </Box>
+    </AuthPageTemplate>
   );
 };
 

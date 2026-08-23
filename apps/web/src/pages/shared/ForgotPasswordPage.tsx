@@ -23,6 +23,7 @@ import i18n from '@/i18n';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
 import { AUTH_PATHS } from '@/routes/auth';
+import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -160,24 +161,10 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+    <AuthPageTemplate
+      backgroundGradient={`linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`}
+      maxWidth='100%'
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`,
-        }}
-      />
-
       <Box
         sx={{
           position: 'absolute',
@@ -580,7 +567,7 @@ const ForgotPasswordPage: React.FC = () => {
           }
         }
       `}</style>
-    </Box>
+    </AuthPageTemplate>
   );
 };
 

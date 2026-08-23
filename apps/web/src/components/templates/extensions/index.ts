@@ -92,3 +92,12 @@ export type {
 
 export { MobilePageTemplate } from '../MobilePageTemplate';
 export type { MobilePageTemplateProps } from '../MobilePageTemplate';
+
+export { AuthPageTemplate } from '../AuthPageTemplate';
+export type { AuthPageTemplateProps } from '../AuthPageTemplate';
+
+export { ChatPageTemplate } from '../ChatPageTemplate';
+export type { ChatPageTemplateProps } from '../ChatPageTemplate';
+
+export { DesignerTemplate } from '../DesignerTemplate';
+export type { DesignerTemplateProps, DesignerMode } from '../DesignerTemplate';

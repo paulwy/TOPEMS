@@ -1,6 +1,5 @@
 import {
   Box,
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogActions,
@@ -20,7 +19,7 @@ import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/a
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { Save } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { DesignerTemplate } from '@/components/templates';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -207,44 +206,28 @@ const WorkflowDesignerPage: React.FC = () => {
       createWorkflowMutation.mutate(createData);
     }
   };
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const title = workflow
+    ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}`
+    : i18n.t('workflow.workflow_designer_page.k12');
+
   return (
-    <PageContainer
-      title={
-        workflow
-          ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}`
-          : i18n.t('workflow.workflow_designer_page.k12')
-      }
-      subtitle={i18n.t('workflow.workflow_designer_page.k13')}
-      headerProps={{
-        showDivider: true,
-      }}
-      maxWidth={false}
-      padding={false}
-      sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-      contentSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-    >
-      {/* Designer */}
-      <Box sx={{ flex: 1 }}>
-        <WorkflowDesigner
-          initialNodes={nodes}
-          initialEdges={edges}
-          onSave={handleSave}
-        />
-      </Box>
+    <>
+      <DesignerTemplate
+        mode='fullscreen'
+        title={title}
+        subtitle={i18n.t('workflow.workflow_designer_page.k13')}
+        loading={loading}
+      >
+        {/* Designer */}
+        <Box sx={{ flex: 1 }}>
+          <WorkflowDesigner
+            initialNodes={nodes}
+            initialEdges={edges}
+            onSave={handleSave}
+          />
+        </Box>
+      </DesignerTemplate>
+
       {/* Save Dialog */}
       <Dialog
         open={showSaveDialog}
@@ -317,7 +300,7 @@ const WorkflowDesignerPage: React.FC = () => {
           </DialogActions>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </>
   );
 };
 export default WorkflowDesignerPage;
