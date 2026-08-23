@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GisProvider, useGis } from '../../context/GisContext';
-import MapView from '../../components/gis/MapView';
+import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import {
   MapPin,
@@ -1016,10 +1016,36 @@ const GisContent: React.FC = () => {
                     overflow: 'hidden',
                   }}
                 >
-                  <MapView
-                    devicePoints={devicePoints}
-                    pipelines={pipelines}
-                    storageLocations={storageLocations}
+                  <GisMapTemplate
+                    initialCenter={[31.2304, 121.4737]}
+                    initialZoom={13}
+                    searchable
+                    zoomControl
+                    fullscreenControl
+                    markers={[
+                      ...devicePoints.map((dp): MapMarker => ({
+                        id: dp.id,
+                        name: dp.name,
+                        position: [dp.latitude, dp.longitude],
+                        type: 'device',
+                        color: dp.status?.toLowerCase().includes('active') ? 'green' : 'orange',
+                      })),
+                      ...storageLocations.map((sl): MapMarker => ({
+                        id: sl.id,
+                        name: sl.name,
+                        position: [sl.latitude, sl.longitude],
+                        type: 'storage',
+                        color: 'blue',
+                      })),
+                    ]}
+                    fences={pipelines.map((p): GeoFence => ({
+                      id: p.id,
+                      name: p.name,
+                      type: 'rectangle',
+                      position: p.start_point,
+                      coordinates: [p.start_point, p.end_point],
+                      color: p.status?.toLowerCase().includes('active') ? 'green' : 'grey',
+                    }))}
                   />
                 </Box>
               ) : (

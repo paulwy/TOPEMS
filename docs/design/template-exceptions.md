@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V274 报表类模板化迁移  
+> 关联 TODO：`docs/roadmap/TODO.md` V276 GIS 模板接入  
 > 更新日期：2026-08-23
 
 ---
@@ -23,7 +23,9 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 - `DesignerTemplate` (standard) 复用 V269 设计器布局壳，覆盖报表设计/构建 3 页面；scan.mjs `report-designer` 规则扩展为同时接受 `ReportDesignerTemplate` 和 `DesignerTemplate`
 - `ReportViewerTemplate` 新建 center/viewer 双模式 + children 透传 + loading/error 统一状态；scan.mjs 新增 `report-viewer` 规则，覆盖报表中心/查看器 3 页面
 
-剩余 13 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V276**：将 2 个 GIS 例外页接入已有的 `GisMapTemplate`（V269 创建但未落地），覆盖率提升至 **97.9%**（519/530），剩余 **11** 个例外项。数据转换：DevicePoint/StorageLocation → MapMarker、Pipeline → GeoFence rectangle。
+
+剩余 11 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表"永不治理"，而是明确：
 - 当前 22 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate`、`ReportViewerTemplate` 已新增并落地）；
@@ -41,12 +43,12 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 报表类 | 0 | — | 6 个报表页面已完成模板化迁移（3 设计器→DesignerTemplate / 3 查看→ReportViewerTemplate） |
 | 认证/错误页 | 0 | — | 4 个页面已全部迁至 `AuthPageTemplate` |
 | 门户/协作类 | 2 | `SupplierPortalPage`、`NotificationCenter` | 多角色门户、消息中心，布局特殊 |
-| GIS/地图类 | 2 | `GisPage`、`gis/index` | 地图画布 + 图层控制，现有 `GisMapTemplate` 尚未接入 |
+| GIS/地图类 | 0 | — | 2 个 GIS 页面已全部接入 `GisMapTemplate`（devicePoints→markers / pipelines→fences / storageLocations→markers） |
 | 文档/邮件类 | 2 | `DocumentsPage`、`MailPage` | 富文本/邮件客户端，类似桌面应用 |
 | 工具/系统类 | 3 | `PerformanceTestPage`、`SystemManagementPage`、`PluginUploadPage` | 高定制工具页 |
 | 列表/结构类 | 4 | `DatabaseStructurePage`、`HelpCenterPage`、`CommentsPage`、`AppManagementPage` | 适合模板但优先级低，可待模块重构时处理 |
 
-合计：**13 个页面**。
+合计：**11 个页面**。
 
 ---
 
@@ -129,12 +131,17 @@ V268-A 新增 `AuthPageTemplate`（`apps/web/src/components/templates/AuthPageTe
 | `apps/web/src/pages/notification/NotificationCenter.tsx` | `NotificationTemplate` | 消息中心 |
 | `apps/web/src/pages/shared/IMPage.tsx` | `ChatPageTemplate` | ✅ 已迁移（children 模式） |
 
-### 3.7 GIS/地图类（2）
+### 3.7 GIS/地图类（0，已迁移 2 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/bi/GisPage/index.tsx` | `GisMapTemplate` | BI 地图 |
-| `apps/web/src/pages/gis/index.tsx` | `GisMapTemplate` | GIS 模块 |
+V276 将 2 个 GIS 例外页面接入已有的 `GisMapTemplate`（V269 创建但未落地），实现 GIS 类例外清零（2→0）。数据转换策略：
+- `DevicePoint[]` → `MapMarker[]`（position: [latitude, longitude]，type: 'device'，color 按 status 着色）
+- `StorageLocation[]` → `MapMarker[]`（type: 'storage'，color: blue）
+- `Pipeline[]` → `GeoFence[]`（type: 'rectangle'，coordinates: [start_point, end_point]）
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/bi/GisPage/index.tsx` | `GisMapTemplate` | ✅ 已迁移 | BI 地图 Tab，inline 渲染替代 MapSection 组件，onMarkerClick 回查原数据 |
+| `apps/web/src/pages/gis/index.tsx` | `GisMapTemplate` | ✅ 已迁移 | GIS 模块入口，map Tab 内嵌 GisMapTemplate，markers + fences 数据转换 |
 
 ### 3.8 文档/邮件类（2）
 
