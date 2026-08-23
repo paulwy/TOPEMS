@@ -292,13 +292,42 @@ jobs:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # V251: 已连续 3 版守绿，切换为 blocking
+    # V278+: shared-bootstrap default_init_db 单元测试需要真实 PostgreSQL 连接
+    # （ensure_master_data_refs_table CREATE TABLE / information_schema EXISTS 查询）
+    env:
+      POSTGRES_VERSION: '16'
+      DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}-alpine
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U topems_test -d topems_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-rust
         with:
           enable-sccache: 'false'
+      - name: Wait for PostgreSQL
+        # 双保险：service health check 通过后，再显式等待 user/db 就绪
+        # 避免 cargo test 启动时 DB 进程在但 user/db 未初始化完成的 race
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_test; do
+            sleep 1
+          done
       - name: Run tests
+        # V278: topems-shared-core testing 模块写 tmp/openapi/*.json 到 workspace 根
+        # topems-shared-bootstrap default_init_db 依赖 DATABASE_URL 真实验收
         run: cargo test --workspace 2>&1 | tee /tmp/cargo-test-output.log
       - name: Test summary
         if: always()
@@ -322,7 +351,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U topems_test -d topems_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -1640,7 +1669,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U topems_test -d topems_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -1663,6 +1692,14 @@ jobs:
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL
+        # V278: 双保险 — service health check 通过后，再显式等待 user/db 就绪
+        # 避免 psql "DROP SCHEMA" 在 DB user/db 未初始化时执行
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_test; do
+            sleep 1
+          done
 
       - name: Run migration up-down-up tests
         run: |
@@ -1756,6 +1793,7 @@ jobs:
       - axum-layer-gate
       - security-scan
       - schema-defense-gate
+      - slow-db-startup-test
       - code-quality
       - migration-test
       - desktop-build
@@ -1803,6 +1841,7 @@ jobs:
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Cargo Deny (License + Security + Bans) | ${{ needs.cargo-deny.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate（26 services · strict） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Slow DB Startup Test (regression · V278) | ${{ needs.slow-db-startup-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Tests (9 shards) | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -1839,7 +1878,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
 
           FAILED=false
           for result in $RESULTS; do
@@ -1916,9 +1955,43 @@ jobs:
         with:
           cache-prefix: "rust-schema-defense-nightly-2026-07-01"
 
+      - name: Wait for PostgreSQL
+        # V278: 双保险 — service health check 通过后，再显式等待 user/db 就绪
+        # 避免 psql "CREATE EXTENSION" 在 DB user/db 未初始化时执行
+        # 注意本 job 用 topems_defense db（与其他 job 的 topems_test 不同）
+        #
+        # V278 慢启动测试结论（scripts/dev/test-slow-db-startup.sh 验证）：
+        #   1. pg_isready 只验证服务器监听端口，不检查 DB 存在性（PostgreSQL 官方文档）
+        #   2. 慢启动场景（注入 sleep）下，wait 循环正确等待，未发生误判
+        #   3. wait 通过后 psql + information_schema 查询均成功，无 race condition
+        #
+        # 因此分两阶段验证：
+        #   阶段 1: pg_isready 等待服务器进程就绪
+        #   阶段 2: psql 验证 topems_defense db 确实存在（捕获 db 名配置错误）
+        run: |
+          # 阶段 1: 等待 postgres 服务器就绪（端口监听）
+          until pg_isready -h localhost -p 5432 -U topems_test -d topems_defense; do
+            sleep 1
+          done
+          # 阶段 2: 真实连接验证 topems_defense db 存在
+          # pg_isready 不检查 DB 存在性，需 psql 双重确认
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+          export PGPASSWORD=topems_test_secret
+          for i in $(seq 1 30); do
+            if psql -h localhost -p 5432 -U topems_test -d topems_defense -c "SELECT 1;" >/dev/null 2>&1; then
+              echo "✓ topems_defense db 可用"
+              break
+            fi
+            echo "  等待 topems_defense db 初始化完成... ($i/30)"
+            sleep 1
+            if [ "$i" -eq 30 ]; then
+              echo "✗ topems_defense db 30s 内未就绪" >&2
+              exit 1
+            fi
+          done
+
       - name: Install pg extensions + create schemas（4 批 19 schema + public 默认）
         run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
           export PGPASSWORD=topems_test_secret
           for ext in uuid-ossp pg_trgm vector; do
             psql -h localhost -U topems_test -d topems_defense \
@@ -2085,3 +2158,39 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
           exit 0
+
+  # ==========================================================================
+  # Slow DB Startup Test（V278 回归测试）
+  #
+  # 作用：验证 schema-defense-gate job 的 Wait for PostgreSQL 策略在 DB 慢启动
+  #       （user/db 未初始化完成）场景下不会误判通过。
+  #
+  # 实现方式：本地 scripts/dev/test-slow-db-startup.sh 的 CI 化版本——
+  #   1. 通过自定义 entrypoint 注入 sleep 延迟启动 postgres:16-alpine 容器
+  #   2. 运行与 ci.yml schema-defense-gate job 完全相同的 wait 循环
+  #   3. 断言：wait 时间 >= 注入延迟；wait 通过后 psql SELECT 1 必成功
+  #
+  # 触发条件：
+  #   - schema-defense-gate 改动（ci/scripts 路径过滤）
+  #   - 定时调度
+  #
+  # 依赖：Docker（runner 自带）+ postgresql-client（pg_isready + psql，apt 安装）
+  # 本地复现：./scripts/dev/test-slow-db-startup.sh 10
+  # ==========================================================================
+  slow-db-startup-test:
+    name: Slow DB Startup Test (regression)
+    needs: [changes, schema-defense-gate]
+    if: always() && needs.changes.result == 'success' && (needs.changes.outputs.ci == 'true' || github.event_name == 'schedule') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install postgresql-client (pg_isready + psql)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+
+      - name: Run slow DB startup regression test
+        # 参数 10 = 注入 10s 延迟（本地验证通过的最小回归用例）
+        # 退出码非 0 表示 wait 策略失效（误判通过或 race condition）
+        run: ./scripts/dev/test-slow-db-startup.sh 10
