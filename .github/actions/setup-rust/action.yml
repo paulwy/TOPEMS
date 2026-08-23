@@ -1,0 +1,51 @@
+name: Setup Rust Toolchain
+description: |
+  Install Rust toolchain + sccache + cache Rust dependencies.
+  Extracted from .github/workflows/ci.yml to reduce duplication across 12+ jobs.
+
+  sccache env vars (RUSTC_WRAPPER / SCCACHE_DIR / SCCACHE_CACHE_SIZE) are declared
+  at the workflow `env:` level in ci.yml and apply to every job automatically —
+  this composite action only needs to install the sccache binary when desired.
+
+inputs:
+  toolchain:
+    description: 'Rust toolchain version (e.g. nightly-2026-07-01)'
+    required: false
+    default: 'nightly-2026-07-01'
+  components:
+    description: 'Comma-separated Rust components (e.g. "rustfmt, clippy"). Empty = default toolchain only.'
+    required: false
+    default: ''
+  cache-prefix:
+    description: |
+      prefix-key for Swatinem/rust-cache (e.g. "rust-lint-nightly-2026-07-01").
+      Empty string = no prefix (uses rust-cache default key).
+    required: false
+    default: ''
+  enable-sccache:
+    description: 'Install sccache binary ("true" / "false"). Disable for jobs that do not use the wrapper.'
+    required: false
+    default: 'true'
+  enable-cache:
+    description: 'Enable Swatinem/rust-cache ("true" / "false"). Disable for jobs that only need the toolchain.'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+
+    - name: Install sccache
+      if: ${{ inputs.enable-sccache == 'true' }}
+      uses: mozilla-actions/sccache-action@v0.0.9
+
+    - name: Cache Rust dependencies
+      if: ${{ inputs.enable-cache == 'true' }}
+      uses: Swatinem/rust-cache@v2
+      with:
+        prefix-key: ${{ inputs.cache-prefix }}

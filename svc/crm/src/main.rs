@@ -6,8 +6,8 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
+    default_init_db, run, ServiceConfig,
 };
 use topems_shared_service_client::service_client::{
     ErpApi, TypedServiceClient, WmsApi, WorkflowApi,
@@ -41,7 +41,14 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "crm",
+        true,
+        schema_defense::run_schema_migration_and_verify,
+    )
+    .await
+    {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
@@ -132,60 +139,4 @@ async fn main() -> Result<()> {
     });
 
     run(app).await
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    // V32.0 AC-5: 本地主数据引用表（P2-M1: 统一 schema 到 shared-db）
-    topems_shared::ensure_master_data_refs_table(pool, "crm").await?;
-
-    // RFM 客户分群：订单数据表
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS crm.customer_orders (
-            id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id    UUID NOT NULL,
-            customer_id  UUID,
-            order_no     VARCHAR(100),
-            order_date   DATE NOT NULL DEFAULT CURRENT_DATE,
-            order_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
-            status       VARCHAR(20) NOT NULL DEFAULT 'completed',
-            created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    tracing::info!("[crm] customer_orders 表已就绪（RFM 订单数据源）");
-
-    // RFM 客户分群：分析结果缓存表
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS crm.rfm_results (
-            id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id    UUID NOT NULL,
-            customer_id  UUID,
-            recency_days INTEGER NOT NULL DEFAULT 0,
-            frequency    INTEGER NOT NULL DEFAULT 0,
-            monetary     DECIMAL(15,2) NOT NULL DEFAULT 0,
-            r_score      INTEGER NOT NULL DEFAULT 0,
-            f_score      INTEGER NOT NULL DEFAULT 0,
-            m_score      INTEGER NOT NULL DEFAULT 0,
-            rfm_score    DECIMAL(10,2) NOT NULL DEFAULT 0,
-            segment      VARCHAR(32) NOT NULL DEFAULT 'hibernating',
-            analyzed_at  TIMESTAMPTZ DEFAULT NOW(),
-            created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    tracing::info!("[crm] rfm_results 表已就绪（RFM 分析结果缓存）");
-
-    // Schema 防御：增量迁移 + 一致性自检
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[crm] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
 }

@@ -222,6 +222,7 @@ pub mod response;
 pub mod service_config;
 pub mod service_port;
 pub mod supplier;
+pub mod testing;
 pub mod validation;
 
 // === gRPC 微服务基础（V24.0 模块 C）===

@@ -827,6 +827,52 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
     })
 }
 
+/// 默认的 init_db 实现：可选 master_data refs 表 + 服务特定 schema defense
+///
+/// 消除各服务 main.rs 中重复的 `async fn init_db(pool: &sqlx::PgPool) -> Result<()>`
+/// 包装函数。调用者传入服务特定的 `schema_defense::run_schema_migration_and_verify`
+/// 即可获得统一行为：
+///   1. 可选 master_data_refs 表创建（模式 B：crm/erp/scm/pdm 为 true）
+///   2. schema_defense 调用 + 失败仅日志记录（不阻塞启动）
+///
+/// # 参数
+/// - `pool`: 数据库连接池
+/// - `service_name`: 服务名（如 "wms"、"crm"），用于 master_data_refs 表名前缀和日志
+/// - `with_master_data_refs`: 是否创建 `{service}_master_data_refs` 表（模式 B 为 true）
+/// - `schema_defense_fn`: 服务特定的 schema_defense 函数（如
+///   `schema_defense::run_schema_migration_and_verify`），返回 `Result<(), sqlx::Error>`
+///
+/// # 调用示例
+/// ```ignore
+/// // 模式 A（wms/tms/srm/aps/hrm）：纯 schema_defense
+/// topems_shared_bootstrap::default_init_db(
+///     &pool, "wms", false, schema_defense::run_schema_migration_and_verify,
+/// ).await?;
+/// // 模式 B（crm/erp/scm）：master_data_refs + schema_defense
+/// topems_shared_bootstrap::default_init_db(
+///     &pool, "erp", true, schema_defense::run_schema_migration_and_verify,
+/// ).await?;
+/// ```
+pub async fn default_init_db<'a, F, Fut, E>(
+    pool: &'a sqlx::PgPool,
+    service_name: &str,
+    with_master_data_refs: bool,
+    schema_defense_fn: F,
+) -> Result<()>
+where
+    F: FnOnce(&'a sqlx::PgPool) -> Fut + Send,
+    Fut: std::future::Future<Output = Result<(), E>> + Send + 'a,
+    E: std::fmt::Debug + Send + 'a,
+{
+    if with_master_data_refs {
+        topems_shared_db::database::ensure_master_data_refs_table(pool, service_name).await?;
+    }
+    if let Err(e) = schema_defense_fn(pool).await {
+        tracing::error!("[{}] Schema 防御检查失败: {:?}", service_name, e);
+    }
+    Ok(())
+}
+
 /// 组装最终的应用路由：rate_limit + auth + rls 中间件、CORS、Prometheus、telemetry 层
 pub fn build_application(
     ctx: &ServiceContext,

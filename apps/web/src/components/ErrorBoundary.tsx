@@ -37,6 +37,7 @@ interface ErrorBoundaryOptions {
   fallback?: ReactNode;
   onError?: (report: ErrorReport) => void;
   onReport?: (report: ErrorReport) => Promise<void>;
+  onRetry?: () => void;
   showDetails?: boolean;
   enableRetry?: boolean;
   reportToServer?: boolean;
@@ -274,6 +275,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   handleRetry = () => {
     this.resetError();
+    // 如果提供了自定义重试回调，调用它并跳过默认 reload/forceUpdate 行为
+    if (this.props.onRetry) {
+      this.props.onRetry();
+      return;
+    }
     // 如果是组件级别，只重置该组件
     if (this.props.level === 'component') {
       this.forceUpdate();

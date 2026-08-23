@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V277 | **更新日期**: 2026-08-23
+> **版本**: V278 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -15,10 +15,76 @@
 > **V275 报表类模板化已完成**（ReportViewerTemplate 新增 + DesignerTemplate 复用，6 报表页全部迁移，覆盖率 96.4%→97.5%，例外项 19→13）。
 > **V276 GIS 模板接入已完成**（GisMapTemplate 落地 2 个 GIS 例外页，覆盖率 97.5%→97.9%，例外项 13→11）。
 > **V277 列表/结构类模板化已完成**（4 页接入已有模板，覆盖率 97.9%→98.7%，例外项 11→7）。
+> **V278 架构冗余治理已完成**（openapi 测试提取共享 utility / init_db 统一 / ErrorBoundary 去重 / CI composite action + TODO 归档）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V278 架构冗余治理（4 轨并行 · 架构冗余分析 P0→P1 治理）
+
+> 日期：2026-08-23 | 代码改动 49 files（Rust 33 + 前端 3 + CI 2 + 文档 3 + 归档 1 + 测试 7）| 验收：cargo check 0 errors · tsc 0 errors · openapi 测试 30 文件 1400→360 行 · init_db 11→2 · ErrorBoundary 2→1 · CI 12 job 提取 composite · TODO 524→211 行
+
+### A. Rust 测试冗余：extract_openapi_spec 提取为共享 utility
+- 背景：30 个 svc/*/tests/openapi_extract.rs 包含几乎相同的 48 行测试函数，唯一差异是 `use` 路径
+- 变更（32 files）：
+  - 新建 [lib/shared-core/src/testing.rs](file:///Users/air/TOPEMS/lib/shared-core/src/testing.rs) — 泛型函数 `extract_openapi_spec_to_file<T: utoipa::OpenApi>()`，复现原测试全部断言
+  - [lib/shared-core/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-core/src/lib.rs) — `pub mod testing;`
+  - 30 个 [svc/*/tests/openapi_extract.rs](file:///Users/air/TOPEMS/svc/wms/tests/openapi_extract.rs) — 48 行精简为 12 行
+  - [svc/lowcode/Cargo.toml](file:///Users/air/TOPEMS/svc/lowcode/Cargo.toml) — 补 dev-dep `topems-shared-core`
+- 验收：`cargo check --workspace --tests` exit 0 · 30 文件全部调用新函数 · 总行数 1400→360（-1040）
+
+### B. Rust 后端冗余：init_db 提取到 shared-bootstrap
+- 背景：11 个 svc/*/src/main.rs 有几乎相同的 `async fn init_db` 函数（模式 A 纯 schema_defense / 模式 B master_data + schema_defense）
+- 变更（10 files）：
+  - [lib/shared-bootstrap/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs) — 新增 `default_init_db(pool, service_name, with_master_data_refs, schema_defense_fn)` 闭包函数（因各服务 TABLE_DEFS 不同，用闭包传入服务特定 schema_defense 函数）
+  - 9 个 [svc/*/src/main.rs](file:///Users/air/TOPEMS/svc/wms/src/main.rs)（wms/tms/srm/aps/hrm/erp/scm/crm/pdm）— 删除 init_db，替换为 `default_init_db(...)` 调用
+  - rd/pm 保留（有额外逻辑）
+  - crm 额外清理：内联 CREATE TABLE customer_orders/rfm_results 已冗余（TABLE_DEFS 已覆盖），已删除
+- 验收：`cargo check --workspace` exit 0 · `async fn init_db` 从 11→2（rd/pm）· `default_init_db` 18 处引用
+
+### C. 前端冗余：ErrorBoundary 去重
+- 背景：apps/web/src/components/ 有两个 ErrorBoundary — ErrorBoundary.tsx（887 行，功能丰富版）和 common/ErrorBoundary.tsx（94 行，精简版）
+- 变更（4 files）：
+  - [ErrorBoundary.tsx](file:///Users/air/TOPEMS/apps/web/src/components/ErrorBoundary.tsx) — 新增可选 `onRetry` prop（合并小版本 API），handleRetry 优先调用 onRetry
+  - [tests/error-boundary.spec.tsx](file:///Users/air/TOPEMS/apps/web/tests/error-boundary.spec.tsx) — import 路径从 common/ 改为主版本
+  - [components/README.md](file:///Users/air/TOPEMS/apps/web/src/components/README.md) — 路径更新
+  - 删除 common/ErrorBoundary.tsx（94 行）
+- 验收：`pnpm --filter topems-portal run typecheck` exit 0 · `grep common/ErrorBoundary` = 0 · 文件已删除
+
+### D. CI composite action + TODO.md 归档
+- 背景：ci.yml 12 个 job 重复声明 Install Rust/sccache/Cache steps；TODO.md 524 行含 V265-V272 过时章节
+- 变更（4 files）：
+  - 新建 [.github/actions/setup-rust/action.yml](file:///Users/air/TOPEMS/.github/actions/setup-rust/action.yml) — composite action（toolchain + sccache + rust-cache），参数化 components/cache-prefix/enable-sccache/enable-cache
+  - [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — 12 个 job 全部替换为 `uses: ./.github/actions/setup-rust`
+  - 新建 [docs/roadmap/archive/TODO-archived-V265-V272.md](file:///Users/air/TOPEMS/docs/roadmap/archive/TODO-archived-V265-V272.md) — 346 行，11 个历史章节
+  - [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 524→211 行，保留 V273-V277 + 归档链接
+- 验收：YAML 语法 OK（ci.yml + action.yml）· TODO.md 211 行 · 归档文件存在
+
+### 变更文件清单（共 49 files）
+- Rust（33）：lib/shared-core/src/testing.rs（新增）+ lib/shared-core/src/lib.rs + lib/shared-bootstrap/src/lib.rs + 9 svc/main.rs + 30 svc/tests/openapi_extract.rs + svc/lowcode/Cargo.toml
+- 前端（3）：apps/web/src/components/ErrorBoundary.tsx + apps/web/tests/error-boundary.spec.tsx + apps/web/src/components/README.md（+ 删除 common/ErrorBoundary.tsx）
+- CI（2）：.github/actions/setup-rust/action.yml（新增）+ .github/workflows/ci.yml
+- 文档（4）：docs/roadmap/TODO.md + docs/roadmap/archive/TODO-archived-V265-V272.md（新增）+ docs/design/template-exceptions.md + apps/web/src/pages/gis/index.tsx（遗留 gis 改动一并提交）
+
+### 最终验收矩阵
+- [x] `cargo check --workspace --tests` — exit 0（Finished dev profile in 13m 35s）
+- [x] `cargo check --workspace` — exit 0（36.88s，4 轨交叉无冲突）
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] openapi 测试 30 文件全部调用 `extract_openapi_spec_to_file` · 总行数 1400→360
+- [x] `async fn init_db` 11→2 · `default_init_db` 18 处引用
+- [x] `grep common/ErrorBoundary apps/web/src/` = 0 · common/ErrorBoundary.tsx 已删除
+- [x] ci.yml + action.yml YAML 语法 OK · 12 job 全部替换为 composite action
+- [x] TODO.md 524→211 行 · 归档文件 346 行 V265-V272
+
+### V278 后续扩展（留给 V279+）
+- [ ] **前端 API client 三端共享**：web/desktop/mobile 各有独立 axios client（token 注入/响应拦截/离线缓存），评估提取 packages/api-client
+- [ ] **lib 门面 re-export 清理**：lib/src/lib.rs ~30 条 `pub use`，逐项验证是否有从未被 svc 使用的 re-export
+- [ ] **剩余 init_db 统一**：rd/pm 的 init_db 有额外逻辑（非标准模式 A/B），评估可否接入 default_init_db + 扩展参数
+- [ ] **CI composite action 增强**：评估将 PostgreSQL/Redis services 也参数化到 composite action
+- [ ] **ApprovalTransition 推广**：MES 审批流方法评估推广到 finance/erp/pm
+
+---
 
 ### 已完成：V277 列表/结构类模板化（4 页接入已有模板）
 

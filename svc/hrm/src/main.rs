@@ -15,8 +15,8 @@ use modules::ApiState;
 use topems_shared::{config::CacheConfig, LocalInMemoryCache as InMemoryCache};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
+    default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_event::redis::{CacheService, RedisCacheService, RedisPool as RedisPoolTrait};
@@ -38,7 +38,14 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "hrm",
+        false,
+        schema_defense::run_schema_migration_and_verify,
+    )
+    .await
+    {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
@@ -114,11 +121,4 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
             Arc::new(topems_shared_event::cache::InMemoryCache::new(cache_config))
         }
     }
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[hrm] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
 }

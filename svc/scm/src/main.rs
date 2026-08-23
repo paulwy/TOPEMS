@@ -14,8 +14,8 @@ use utoipa::OpenApi;
 use prometheus::{default_registry, Gauge};
 use topems_scm::shared::cache::InMemoryCache;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    Application, ServiceConfig,
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
+    default_init_db, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
@@ -63,7 +63,14 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "scm",
+        true,
+        schema_defense::run_schema_migration_and_verify,
+    )
+    .await
+    {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
@@ -157,16 +164,4 @@ async fn main() -> Result<()> {
         name: app.name,
     })
     .await
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    // V32.0 AC-5: 本地主数据引用表（P2-M1: 统一 schema 到 shared-db）
-    topems_shared::ensure_master_data_refs_table(pool, "scm").await?;
-
-    // Schema 防御：增量迁移 + 一致性自检
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[scm] Schema 防御检查失败: {:?}", e);
-    }
-
-    Ok(())
 }
