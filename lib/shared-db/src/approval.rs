@@ -296,9 +296,7 @@ mod tests {
     fn validate_start_approval_already_in_progress() {
         let fsm = test_fsm();
         let approval_id = Uuid::new_v4();
-        assert!(
-            validate_start_approval(&fsm, "rejected", "reworking", Some(approval_id)).is_err()
-        );
+        assert!(validate_start_approval(&fsm, "rejected", "reworking", Some(approval_id)).is_err());
     }
 
     #[test]
@@ -311,34 +309,30 @@ mod tests {
     fn validate_approval_decision_ok() {
         let fsm = test_fsm();
         let approval_id = Uuid::new_v4();
-        assert!(
-            validate_approval_decision(
-                &fsm,
-                "rejected",
-                "rejected",
-                "reworking",
-                Some(approval_id),
-                approval_id,
-            )
-            .is_ok()
-        );
+        assert!(validate_approval_decision(
+            &fsm,
+            "rejected",
+            "rejected",
+            "reworking",
+            Some(approval_id),
+            approval_id,
+        )
+        .is_ok());
     }
 
     #[test]
     fn validate_approval_decision_wrong_current_status() {
         let fsm = test_fsm();
         let approval_id = Uuid::new_v4();
-        assert!(
-            validate_approval_decision(
-                &fsm,
-                "approved",
-                "rejected",
-                "reworking",
-                Some(approval_id),
-                approval_id,
-            )
-            .is_err()
-        );
+        assert!(validate_approval_decision(
+            &fsm,
+            "approved",
+            "rejected",
+            "reworking",
+            Some(approval_id),
+            approval_id,
+        )
+        .is_err());
     }
 
     #[test]
@@ -346,34 +340,30 @@ mod tests {
         let fsm = test_fsm();
         let stored_id = Uuid::new_v4();
         let request_id = Uuid::new_v4();
-        assert!(
-            validate_approval_decision(
-                &fsm,
-                "rejected",
-                "rejected",
-                "reworking",
-                Some(stored_id),
-                request_id,
-            )
-            .is_err()
-        );
+        assert!(validate_approval_decision(
+            &fsm,
+            "rejected",
+            "rejected",
+            "reworking",
+            Some(stored_id),
+            request_id,
+        )
+        .is_err());
     }
 
     #[test]
     fn validate_approval_decision_no_approval_in_progress() {
         let fsm = test_fsm();
         let request_id = Uuid::new_v4();
-        assert!(
-            validate_approval_decision(
-                &fsm,
-                "rejected",
-                "rejected",
-                "reworking",
-                None,
-                request_id,
-            )
-            .is_err()
-        );
+        assert!(validate_approval_decision(
+            &fsm,
+            "rejected",
+            "rejected",
+            "reworking",
+            None,
+            request_id,
+        )
+        .is_err());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V283 | **更新日期**: 2026-08-23
+> **版本**: V284 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -21,10 +21,286 @@
 > **V281 后续任务推进**（ApprovalTransition 提升到 shared-db / AiToolPageTemplate 评估结论 / 文档归档）。
 > **V282 后续任务推进**（PM 审批逻辑集成 shared-db approval 审计日志 / SupplierPortalPage 声明式评估结论）。
 > **V283 后续任务推进**（Finance 审批增强 / StatCard 接口扩展 + SupplierPortalPage 声明式 statCards 迁移）。
+> **V284 后续任务推进**（ERP 审批间接集成评估 / 3 模板页声明式评估 / 预存在 clippy + doctest 修复 + 测试增强）。
+> **V284 架构冗余深度治理 4 轨并行**（tms/aps 配置单一信源补齐 / MasterDataRefService 下沉 + AuditLogService 注入 / Finance·Hrm utoipa::path 补全 schemas 393→442）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V284 后续任务（ERP 审批间接集成评估 + 3 模板页声明式评估 + 预存在 clippy/doctest 修复 + 测试增强）
+
+> 日期：2026-08-23 | 代码改动 9 files（shared-bootstrap +239 行测试 / shared-core +306 行测试 + 3 doctest 修复 / shared-db rustfmt / 4 svc import 排序 / TODO）| 验收：cargo clippy --lib --bins 0 errors · typecheck 0 errors · doctest 3/3 pass
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A轨: ERP 审批间接集成评估 | ERP 已通过 [call_finance_core_approval](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L10-L52) 调用 finance submit/approve/reject/cancel 端点；V283 让 finance 端点集成 shared-db approval 审计日志后，ERP 间接受益已成立 — **评估结论：无需新代码改动** | ✅ |
+| B轨: 3 模板页声明式评估 | NotificationCenter 用 ListPageTemplate headerContent/footerContent 插槽（已声明式）/ MailPage 用 MasterDetailPageTemplate renderDetail 回调（已声明式）/ DocumentsPage 用 CardListTemplate children 透传（800+ 行复杂双栏逻辑，维持 children 最合理）— **评估结论：3 页均维持现状** | ✅ |
+| C轨: 预存在 clippy + doctest 修复 | [shared-bootstrap lib.rs:2488](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs#L2488) needless_borrows_for_generic_args 修复（`.bind(&format!(...))` → `.bind(format!(...))`）；[service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs#L8-L13) 3 个 doctest 修复（模块级 `topems_lib` → `topems_shared_core` + 2 处缺 `use` 导入） | ✅ |
+| D轨: 测试增强 + 格式化收尾 | shared-bootstrap +239 行 default_init_db 单测（分支 A/A'/B/B' + DB skip 守卫）/ shared-core +306 行 extract_openapi_spec_to_file 单测（MinApiDoc/FullApiDoc + 幂等性）/ shared-db approval rustfmt / 4 svc import 排序（master-data/pdm/qms） | ✅ |
+
+#### A轨详情：ERP 审批间接集成评估
+
+**背景**：V283 后续扩展提到 "ERP 通过 FinanceApi 调用 finance 审批端点，间接受益于 finance 的审计日志增强"。需验证 ERP 是否已接入 finance 审批端点。
+
+**盘点结果**：ERP 已有完整集成 — [svc/erp/src/modules/consolidation/common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L10-L52) 定义 `call_finance_core_approval(finance_client, doc_type, doc_id, doc_no, action, ...)`，通过 `TypedServiceClient<FinanceApi>` 调用 finance 的 `submit_approval` / `approve_approval` / `reject_approval` / `cancel_approval` 4 个端点。[reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs#L347-L387) 在合并报表提交/审批通过/驳回流程中实际调用该函数。
+
+**结论**：V283 让 finance 端点集成 `topems_shared_db::approval` 审计日志后，ERP 通过 HTTP 调 finance 端点 → finance 写 audit_logs → ERP 间接受益已成立。**无需新代码改动**，TODO 项直接勾选 ✅。
+
+#### B轨详情：3 模板页声明式评估
+
+**盘点结果**：3 页其实都已接入模板，非 "未模板化" 状态：
+
+| 页面 | 当前模板 | 当前模式 | 评估结论 |
+|------|---------|---------|---------|
+| NotificationCenter | ListPageTemplate | headerContent/footerContent 插槽声明式 | ✅ 维持现状（已是声明式插槽） |
+| MailPage | MasterDetailPageTemplate | renderDetail 回调声明式 | ✅ 维持现状（已是声明式回调） |
+| DocumentsPage | CardListTemplate | children 透传（仅 title+loading） | ✅ 维持现状（800+ 行复杂双栏：左文件夹树 + 右文件列表 + 预览 + 上传 + Tabs，强行声明式会降级） |
+
+**结论**：3 页均维持现状，**无需新代码改动**。
+
+#### C轨详情：预存在 clippy + doctest 修复
+
+**问题 1：shared-bootstrap lib.rs:2488 needless_borrows_for_generic_args**
+- 根因：新增 default_init_db 单测中 `.bind(&format!("{}_master_data_refs", prefix))` — `format!` 返回 `String` 已实现 sqlx Encode trait，`&` 借用是多余的
+- 修复：`.bind(format!("{}_master_data_refs", prefix))`（去掉 `&`）
+
+**问题 2：shared-core service_port.rs 3 个 doctest 失败**
+- 根因：doctest 在独立 crate 上下文，函数名无法直接解析
+  - line 8 模块级 doctest：`use topems_lib::service_port::{...}` — `topems_lib` crate 不存在，应为 `topems_shared_core`
+  - line 121 `get_service_port` doctest：直接调用 `get_service_port(...)` 无 `use` 导入
+  - line 144 `local_service_url` doctest：直接调用 `local_service_url(...)` 无 `use` 导入
+- 修复：模块级改为 `use topems_shared_core::{get_service_port, is_group2_service, HRM_PORT};`；另 2 处在 doctest 开头加 `use topems_shared_core::get_service_port;` / `use topems_shared_core::local_service_url;`
+
+**问题 3：testing.rs:346 borrowed expression**
+- 盘点：clippy --workspace --lib --bins 全清，testing.rs 新增 306 行测试代码无 clippy 警告 — **此问题已在 V283 测试增强时自然解决**
+
+#### D轨详情：测试增强 + 格式化收尾
+
+**shared-bootstrap +239 行 default_init_db 单测**：
+- 覆盖率目标：分支 A（with_master_data_refs=true）→ ensure_master_data_refs_table 被调用 / 分支 A'（false）→ 跳过 / 分支 B（闭包 Ok）→ return Ok(()) / 分支 B'（闭包 Err）→ tracing::error 触发但仍 return Ok(()) / 错误类型 C（sqlx::Error）/ D（anyhow::Error）
+- DATABASE_URL 缺失时自动 skip（不在无 DB 环境阻塞 dev）
+
+**shared-core +306 行 extract_openapi_spec_to_file 单测**：
+- MinApiDoc（最小 info）/ FullApiDoc（含 paths 3 endpoint + schemas User/HealthResponse）双 fixture
+- 覆盖：openapi:3.x 前缀 / JSON parse / 字节数阈值 / 重复提取幂等性
+
+**shared-db approval rustfmt + 4 svc import 排序**：
+- shared-db/src/approval.rs：rustfmt 格式化（assert! 宏多行 → 单行）
+- master-data/knowledge_v53.rs：`use utoipa::ToSchema` 位置调整
+- master-data/openapi.rs + qms/openapi.rs：import 字母序排列
+- pdm/main.rs：import 换行格式
+
+#### 最终验收矩阵
+- [x] `SQLX_OFFLINE=true cargo clippy --workspace --lib --bins -- -D warnings` — exit 0（5m 47s）
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `cargo test --doc -p topems-shared-core` — 3/3 passed（service_port doctest 全过）
+- [x] `SQLX_OFFLINE=true cargo check --workspace` — exit 0（1m 07s）
+- [x] A轨 ERP `call_finance_core_approval` 已调用 finance 4 端点（submit/approve/reject/cancel）
+- [x] B轨 3 页均维持现状（NotificationCenter 插槽 / MailPage 回调 / DocumentsPage children）
+- [x] C轨 clippy needless_borrows 修复 + 3 doctest 路径修复
+
+### V284 后续扩展（留给 V285+）
+- [ ] **mes integration_tests sqlx 缓存补全**：`svc/mes/tests/integration_tests.rs` 有 12 处 sqlx::query 缺 .sqlx 缓存（--all-targets 才暴露），需 DB 环境跑 `cargo sqlx prepare --workspace` 重建缓存
+- [ ] **模板扩展深度评估**：DocumentsPage 若未来简化为纯文件列表，可评估抽 DocumentTemplate 声明式模板
+- [ ] **ERP 审批审计日志本地化**：ERP 当前依赖 finance 端点写 audit_logs，评估是否在 ERP 本地也记录一份审批操作日志（双写）
+- [ ] **tms/aps 端口三端对齐**：services.yaml 中 tms=8073/aps=8074 与 plugin.yaml/main.rs 中 8042/8043 不一致（srm 已占 8042）；需统一同步修改 plugin.yaml + svc/tms|aps/src/main.rs + config/ports.env 至 8073/8074 或选定其他空闲端口
+- [ ] **unified-core/master/handlers.rs INSERT...SELECT 下沉**：record_reconciliation_issues 的 INSERT INTO core_mdm_reconciliation_log（跨表写入，目标表非 master_data_refs），不适合当前 MasterDataRefService 下沉，需评估是否新建 ReconciliationLogService 或保留内联
+- [ ] **Finance utoipa::path 补全评估**：Finance 已有 494 个注解覆盖 24 文件，仅 settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件未覆盖（实际 handlers.rs 已 18 注解），可评估是否需要补 settlement_center 路径
+- [ ] **前端 Finance/Hrm TS 26 错误清零**：D 轨已让 openapi.d.ts schemas 393→442，但 api-types.ts 的 FinanceTypes/HrmTypes 26 个历史 TS 错误需重新跑 `pnpm typecheck` 验证是否自动清零
+- [ ] **CI gate 脚本合并**：check-i18n.cjs + check-i18n-quality.cjs 合并为 `check-i18n --mode={hardcode|quality|all}`；check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs 合并为 `check-api --mode={audit|coverage|align}`
+
+---
+
+## 🎯 V284 第 2 部分：架构冗余深度治理（4 轨并行 · ✅ 完成）
+
+> 日期：2026-08-23 | 代码改动 ~25 files（services.yaml + service-names.ts + shared-db 新增 master_data_refs.rs + unified-core/crm/scm 接入 + hrm 32 注解补全 + openapi 重新生成 + TODO）
+> 验收：cargo check -p topems-{shared-db,unified-core,crm,scm,finance,hrm} 0 errors · shared-db master_data_refs 8/8 tests · validate-plugin-config.py exit 0 · openapi.d.ts schemas 393→442
+> 关联：基于架构冗余分析报告（V283 收尾后盘点），治理 P1-1 配置单一信源 + P1-2 master_data_refs SQL 下沉 + P1-3 AuditLogService 注入 + P2-1 utoipa::path 补全
+
+### 总览
+
+| 轨 | 任务 | 交付结果 | 状态 |
+|---|---|---|---|
+| A | tms/aps 配置单一信源补齐 | services.yaml 新增 logistics 分组（tms:8073, aps:8074）+ service-names.ts 补 INDEPENDENT_SERVICES；validate-plugin-config.py exit 0 | ✅ |
+| B+C | MasterDataRefService 下沉 + AuditLogService 注入 | shared-db 新增 master_data_refs.rs（20 方法 + 6 struct + 8 测试）；unified-core 28/32 SQL 替换；crm/scm 各 1 处 INSERT 替换；AuditLogService 注入 3 个写入路径 | ✅ |
+| D | Finance/Hrm utoipa::path 补全 | hrm 新增 32 个 #[utoipa::path] + 19 个 ToSchema derive；openapi.rs paths 15→47 / schemas 15→35；openapi.d.ts schemas 393→**442** | ✅ |
+
+### A 轨详情：tms/aps 配置单一信源补齐
+
+**背景**：架构冗余分析报告 P1-1 项。Cargo.toml 已有 svc/tms + svc/aps，plugin.yaml 已存在，但 services.yaml 与 service-names.ts 完全缺失，导致前端无法识别、validate-plugin-config.py 校验失败、topems.sh module_groups.all 覆盖不全。
+
+**盘点基线**：
+- `grep -E "^\s*-\s*name:\s+(tms|aps)$" config/services.yaml` → 0 行（缺失）
+- `grep -E "(tms|aps)" packages/shared-types/src/service-names.ts` → 0 行（缺失）
+
+**变更（2 files）**：
+- [config/services.yaml](file:///Users/air/TOPEMS/config/services.yaml) — 新增 `service_groups.logistics` 分组（tms port 8073, aps port 8074，bootstrap_mode B）；新增 `module_groups.logistics: [tms, aps]`；`module_groups.all` 末尾追加 - tms / - aps
+- [packages/shared-types/src/service-names.ts](file:///Users/air/TOPEMS/packages/shared-types/src/service-names.ts) — INDEPENDENT_SERVICES 数组按字母序插入 'tms' / 'aps'；SERVICE_NAMES 与 ServiceName 通过 `[...INDEPENDENT_SERVICES, ...VIRTUAL_SERVICES] as const` + `typeof SERVICE_NAMES[number]` 自动派生
+
+**Fallback 关键差异**：
+1. **端口冲突**：plugin.yaml 中 tms.deployment.port=8042 / aps=8043，但 services.yaml 现有 srm port=8042 已占用，故 services.yaml 给 tms/aps 分配 8070-8079 段空闲端口 8073/8074；这导致 services.yaml 与 plugin.yaml/main.rs 端口不一致（校验报告 2 处 PORT diff，但脚本默认 exit 0）。本任务范围禁止改 svc/*/main.rs 与 plugin.yaml，端口三端对齐降级为 V285 后续扩展
+2. **dependencies**：plugin.yaml 中 tms/aps 的 dependencies: []，与任务建议的 [unified-core, scm]/[unified-core, mes] 不同，按 EDGE CASE 第1条以 plugin.yaml 为准
+3. **aps 分组归属**：plugin.yaml 中 aps.category=Manufacturing，但任务要求新建 logistics 分组同时容纳 tms/aps，故按任务要求统一放入 logistics
+
+**验收**：
+- `python3 scripts/validate-plugin-config.py` → exit 0（校验 30 个 plugin.yaml，发现 6 处既有不一致，其中 tms/aps 仅 2 处 PORT diff，DEPS 全过）
+- `grep -nE "^\s*-\s*name:\s+(tms|aps)$" config/services.yaml` → 命中 2 行（行 314/323）
+- `grep -nE "'(tms|aps)'" packages/shared-types/src/service-names.ts` → 命中 2 行（行 57/58）
+
+### B+C 轨详情：MasterDataRefService 下沉 + AuditLogService 注入
+
+**背景**：架构冗余分析报告 P1-2 + P1-3 项。M1 治理（V271）只下沉了 ensure_master_data_refs_table 建表 SQL 到 shared-db/src/database/mod.rs:95-130，但业务 SQL 操作仍内联在三处：unified-core/master/handlers.rs（32 处 INSERT/UPDATE/SELECT/COUNT/MAX）、crm/event_handlers/mod.rs:380（1 处 INSERT）、scm/event_handlers/mod.rs:303（1 处 INSERT）。同时 R2 治理遗漏 unified-core/master（srm 已接入 AuditLogService 但 unified-core/master/handlers.rs 1588 行 grep "AuditLogService" 返回空）。
+
+**盘点基线**：
+- `wc -l svc/unified-core/src/modules/master/handlers.rs` = 1588 行
+- `grep -c "core_master_data_refs" svc/unified-core/src/modules/master/handlers.rs` = 32 处
+- `grep "AuditLogService" svc/unified-core/src/modules/master/handlers.rs` = 0 行
+- shared-db/src/audit.rs 已提供 AuditLogService::create_audit_log/log_operation/query_audit_logs（参考模式）
+
+**变更（5 files）**：
+- [lib/shared-db/src/master_data_refs.rs](file:///Users/air/TOPEMS/lib/shared-db/src/master_data_refs.rs) — **新建**：MasterDataRefService（20 async 方法 + 6 struct + 8 单元测试）；参考 audit.rs 代码风格；表名按服务前缀生成 `{prefix}_master_data_refs`；关键方法：insert/update/get_by_id/get_by_domain_and_code/count_by_tenant/list_by_tenant/get_max_updated_at/get_last_synced_at/count_by_status/list_codes_by_domain/count_duplicate_groups/list_duplicates/upsert_local_master_data_ref
+- [lib/shared-db/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-db/src/lib.rs) — 注册 `pub mod master_data_refs;` + re-export MasterDataRefService/MasterDataRef/CreateMasterDataRefRequest/UpdateMasterDataRefRequest
+- [svc/unified-core/src/modules/master/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/master/handlers.rs) — 28 处 SQL 替换为 MasterDataRefService 方法调用；MasterDataService struct 注入 audit_service: AuditLogService 字段；新增 audit_write() 便捷方法；3 个写入路径（create_ref/update_ref/delete_ref）追加 AuditLogService::log_operation("master_data_ref", ...) 调用；保留 1 处 INSERT...SELECT（record_reconciliation_issues，跨表写入 core_mdm_reconciliation_log）+ 3 处 DDL（init_mdm_tables 中 CREATE TABLE + 2× CREATE INDEX）
+- [svc/crm/src/event_handlers/mod.rs](file:///Users/air/TOPEMS/svc/crm/src/event_handlers/mod.rs) — `upsert_local_master_data_ref` 的 INSERT INTO crm_master_data_refs 替换为 `MasterDataRefService::with_table(db, "crm_master_data_refs").upsert_local_master_data_ref()`，保留 graceful fallback 日志逻辑
+- [svc/scm/src/event_handlers/mod.rs](file:///Users/air/TOPEMS/svc/scm/src/event_handlers/mod.rs) — 同上，表名 scm_master_data_refs
+
+**SQL 替换明细（unified-core/master/handlers.rs 32 → 4 处保留）**：
+| 类别 | 替换前 | 替换后 | 数量 |
+|---|---|---|---|
+| INSERT | create_ref | MasterDataRefService::insert_master_data_ref | 1 |
+| UPDATE RETURNING | update_ref | update_master_data_ref | 1 |
+| UPDATE（软删除） | delete_ref | update_master_data_ref（status='deleted'） | 1 |
+| SELECT * WHERE | get_ref/get_ref_by_code | get_by_id/get_by_domain_and_code | 2 |
+| SELECT COUNT(*)+分页 | list_refs | count_by_tenant + list_by_tenant | 2 |
+| SELECT COUNT/MAX | get_overall_stats | count_by_tenant + count_by_domain + get_max_updated_at | 4 |
+| SELECT MAX+COUNT | get_sync_status | get_last_synced_at + count_by_status('pending_sync') | 2 |
+| SELECT COUNT/MAX/GROUP BY | get_quality_report | count_by_domain + count_by_status + get_max_updated_at + count_duplicate_groups_by_domain | 10 |
+| SELECT GROUP BY+array_agg | list_duplicates | list_duplicates | 2 |
+| SELECT EXTRACT | list_stale | list_stale（封装） | 1 |
+| SELECT COUNT×3 | run_reconciliation | count_by_status×3 | 3 |
+| INSERT...SELECT（跨表） | record_reconciliation_issues | **保留 TODO V285**（目标表 core_mdm_reconciliation_log 非本服务） | 1 保留 |
+| DDL（CREATE TABLE+INDEX） | init_mdm_tables | **保留**（schema_defense 建表建索引，非业务 SQL） | 3 保留 |
+
+**Schema 差异处理**：
+- core schema（含 version 列）用 `insert/update/get_by_id` 等方法
+- local schema（crm/scm，含 local_entity_type/payload_snapshot，无 version）用独立的 `upsert_local_master_data_ref` 方法，两套 SQL 互不干扰
+
+**AuditLogService 注入位置**：
+- MasterDataService struct 新增 `audit_service: AuditLogService` 字段（从 pool 构造，参考 svc/srm 模式）
+- 新增 `audit_write()` 便捷方法，封装 `log_operation("master_data_ref", ...)`
+- 3 个写入路径追加审计：create_ref（"create"）/ update_ref（"update"）/ delete_ref（"delete"）
+- grep "AuditLogService" = 4 行（import + doc + field + constructor）
+
+**验收**：
+- `cargo check -p topems-shared-db` → Finished，exit 0
+- `cargo check -p topems-unified-core` → Finished，exit 0，0 warnings
+- `cargo check -p topems-crm` → Finished，exit 0
+- `cargo check -p topems-scm` → Finished，exit 0
+- `grep -c "core_master_data_refs" svc/unified-core/src/modules/master/handlers.rs` = 4（≤5 ✓，仅 INSERT...SELECT(1) + DDL(3)）
+- `grep "AuditLogService" svc/unified-core/src/modules/master/handlers.rs` = 4 行（≥1 ✓）
+- `cargo test -p topems-shared-db master_data_refs` = 8 passed（≥5 ✓）
+
+### D 轨详情：Finance/Hrm utoipa::path 补全
+
+**背景**：架构冗余分析报告 P2-1 项。全项目 254 个 .rs 文件已注册 #[utoipa::path]，但 Hrm 模块约 30 个 handler 缺失注解，导致 openapi.d.ts schemas 仅 393（目标 ~450），前端 FinanceTypes/HrmTypes 26 个 TS 历史错误通过 SafeSchema 兜底为 Record<string, unknown>，类型失真。
+
+**盘点基线**：
+- `grep -rln "#\[utoipa::path" svc/finance/src svc/hrm/src --include="*.rs"` = 27 文件
+- `grep -rln "#\[utoipa::path" svc/ --include="*.rs"` = 254 文件（全项目）
+- packages/shared-types/src/generated/openapi.d.ts schemas = 393
+
+**盘点结论**：Finance 已有 494 个 #[utoipa::path] 注解覆盖 24 文件，唯一缺注解的是 settlement_center/{mod,models,routes,service}.rs 4 个非 handler 文件（实际 handlers.rs 已有 18 注解），Finance **不存在缺失补全需求**；本次全部新增集中在 Hrm 模块。
+
+**变更（13 files）**：
+- 模型层新增 ToSchema derive（4 files，19 个 struct）：
+  - [svc/hrm/src/models/salary_adjustment.rs](file:///Users/air/TOPEMS/svc/hrm/src/models/salary_adjustment.rs) — 4 个 struct 加 ToSchema（SalaryAdjustment + 3 DTO）
+  - [svc/hrm/src/models/training.rs](file:///Users/air/TOPEMS/svc/hrm/src/models/training.rs) — 9 个 struct 加 ToSchema（TrainingPlan/Course/Record + DTOs + PaginationParams）
+  - [svc/hrm/src/modules/leave.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/leave.rs) — 3 个 struct 加 ToSchema（LeaveRequest + Create/Update DTO）+ QueryParams
+  - [svc/hrm/src/modules/position.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/position.rs) — 3 个 struct 加 ToSchema（Position + Create/Update DTO）+ QueryParams
+- Handler 层新增 #[utoipa::path]（9 files，32 个注解）：
+  - [svc/hrm/src/modules/attendance.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/attendance.rs) — 5 个（list/create/get/update/delete_attendance）
+  - [svc/hrm/src/modules/audit.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/audit.rs) — 2 个（list_audit_logs/get_audit_log）
+  - [svc/hrm/src/modules/contract.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/contract.rs) — 5 个（CRUD）
+  - [svc/hrm/src/modules/leave.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/leave.rs) — 5 个（CRUD）
+  - [svc/hrm/src/modules/position.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/position.rs) — 5 个（CRUD）
+  - [svc/hrm/src/modules/salary_adjustment.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/salary_adjustment.rs) — 4 个（list/get/create/update）
+  - [svc/hrm/src/modules/training.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/training.rs) — 3 个（list_plans/list_courses/list_records）
+  - [svc/hrm/src/modules/recruitment.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/recruitment.rs) — 1 个（list_job_openings）
+  - [svc/hrm/src/modules/performance.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/performance.rs) — 1 个（list_reviews）
+  - [svc/hrm/src/modules/payroll.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/payroll.rs) — 1 个（list_payroll_runs）
+- OpenAPI 注册（1 file）：
+  - [svc/hrm/src/modules/openapi.rs](file:///Users/air/TOPEMS/svc/hrm/src/modules/openapi.rs) — paths() 15→47 条；schemas() 15→35 条（新增 20 个 DTO schema）
+- 前端类型重新生成（4 files，自动产出）：
+  - [docs/api/openapi-aggregated.json](file:///Users/air/TOPEMS/docs/api/openapi-aggregated.json) — schemas 377→412，paths 70→525
+  - [docs/api/openapi-aggregated.yaml](file:///Users/air/TOPEMS/docs/api/openapi-aggregated.yaml) — 同上 yaml 格式
+  - [packages/shared-types/src/generated/openapi.d.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/openapi.d.ts) — schemas 393→**442**（856.4 KB）
+  - [packages/shared-types/src/generated/index.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/index.ts) — 同步重生成
+
+**Fallback 关键差异**：
+1. 跳过 health.rs（仅 health_check，属内部健康检查）
+2. 跳过 audit.rs::log_audit_event（非 HTTP handler，内部辅助函数）
+3. 跳过 hrm_plugin.rs 内部模块
+4. Finance 模块未做改动：扫描显示已有 494 个 #[utoipa::path] 注解覆盖 24 文件，仅 settlement_center 4 个非 handler 文件未覆盖（实际 handlers.rs 已 18 注解），无补全需求
+5. 路径参数使用 axum v0.8.x 的 `{param}` 格式（与 employee.rs 一致）
+6. `PaginatedResult<Position>` 因泛型未在 shared-core derive ToSchema，position list 响应 body 改用 `[Position]` 简化（不影响 schema 注册正确性）
+7. `serde_json::Value` 作为 list 接口的 body 类型（与 employee.rs 模式一致）
+
+**验收**：
+- `cargo check -p topems-finance` → Finished，exit 0
+- `cargo check -p topems-hrm` → Finished，exit 0
+- `grep -rln "#\[utoipa::path" svc/finance/src svc/hrm/src --include="*.rs" | wc -l` = 36（≥30 ✓，基线 27→36）
+- `grep -c "paths(" svc/finance/src/openapi.rs svc/hrm/src/modules/openapi.rs` 均显示 1（已注册）
+- openapi.d.ts schemas = **442**（≥410 目标 ✓，基线 393→442）
+
+### 变更文件清单（共 ~25 files）
+
+**Rust 新建（1 file）**：
+- [lib/shared-db/src/master_data_refs.rs](file:///Users/air/TOPEMS/lib/shared-db/src/master_data_refs.rs) — MasterDataRefService 完整实现
+
+**Rust 修改（5 files）**：
+- [lib/shared-db/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-db/src/lib.rs) — 注册 pub mod master_data_refs
+- [svc/unified-core/src/modules/master/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/master/handlers.rs) — 28 SQL 替换 + AuditLogService 注入
+- [svc/crm/src/event_handlers/mod.rs](file:///Users/air/TOPEMS/svc/crm/src/event_handlers/mod.rs) — 1 INSERT 替换
+- [svc/scm/src/event_handlers/mod.rs](file:///Users/air/TOPEMS/svc/scm/src/event_handlers/mod.rs) — 1 INSERT 替换
+- 9 个 Hrm handler 文件 + 4 个 Hrm 模型文件 + 1 个 Hrm openapi.rs（共 14 个 utoipa 补全相关文件，参见 D 轨详情）
+
+**配置/类型（2 files）**：
+- [config/services.yaml](file:///Users/air/TOPEMS/config/services.yaml) — 新增 logistics 分组
+- [packages/shared-types/src/service-names.ts](file:///Users/air/TOPEMS/packages/shared-types/src/service-names.ts) — 补 tms/aps 至 INDEPENDENT_SERVICES
+
+**前端类型自动重生成（4 files）**：
+- [docs/api/openapi-aggregated.json](file:///Users/air/TOPEMS/docs/api/openapi-aggregated.json)
+- [docs/api/openapi-aggregated.yaml](file:///Users/air/TOPEMS/docs/api/openapi-aggregated.yaml)
+- [packages/shared-types/src/generated/openapi.d.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/openapi.d.ts)
+- [packages/shared-types/src/generated/index.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/index.ts)
+
+**文档（1 file）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — V284 第 2 部分 4 轨章节追加 + V284 后续扩展补 7 条
+
+### 最终验收矩阵
+
+- [x] `python3 scripts/validate-plugin-config.py` — exit 0（tms/aps DEPS 全过，2 处 PORT diff 已记入 V285 后续扩展）
+- [x] `grep -nE "^\s*-\s*name:\s+(tms|aps)$" config/services.yaml` — 命中 2 行
+- [x] `grep -nE "'(tms|aps)'" packages/shared-types/src/service-names.ts` — 命中 2 行
+- [x] `cargo check -p topems-shared-db` — exit 0
+- [x] `cargo check -p topems-unified-core` — exit 0，0 warnings
+- [x] `cargo check -p topems-crm` — exit 0
+- [x] `cargo check -p topems-scm` — exit 0
+- [x] `cargo test -p topems-shared-db master_data_refs` — 8/8 passed
+- [x] `grep -c "core_master_data_refs" svc/unified-core/src/modules/master/handlers.rs` = 4（≤5，从 32 降至 4）
+- [x] `grep "AuditLogService" svc/unified-core/src/modules/master/handlers.rs` — 4 行（≥1，注入完成）
+- [x] `cargo check -p topems-finance` — exit 0
+- [x] `cargo check -p topems-hrm` — exit 0
+- [x] `grep -rln "#\[utoipa::path" svc/finance/src svc/hrm/src --include="*.rs" | wc -l` = 36（≥30，从 27 升至 36）
+- [x] `openapi.d.ts schemas` = 442（≥410 目标，从 393 升至 442）
+
+### V284 第 2 部分后续扩展（留给 V285+）
+
+- [ ] **tms/aps 端口三端对齐**：services.yaml 8073/8074 与 plugin.yaml/main.rs 8042/8043 不一致，需统一同步至 8073/8074 或选定其他空闲端口
+- [ ] **unified-core/master INSERT...SELECT 下沉**：record_reconciliation_issues 跨表写入 core_mdm_reconciliation_log，需评估新建 ReconciliationLogService 或保留内联
+- [ ] **前端 Finance/Hrm TS 26 错误清零**：D 轨 schemas 393→442 后需重新跑 `pnpm typecheck` 验证错误数下降情况
+- [ ] **CI gate 脚本合并**：i18n 三合一 + API 三合一为 V285+ P2 治理项
 
 ### 已完成：V283 后续任务（Finance 审批增强 + SupplierPortalPage 声明式迁移）
 
@@ -53,9 +329,9 @@
 - [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
 
 ### V283 后续扩展（留给 V284+）
-- [ ] **ERP 审批增强**：ERP 通过 FinanceApi 调用 finance 审批端点，间接受益于 finance 的审计日志增强
-- [ ] **模板扩展**：NotificationCenter/DocumentsPage/MailPage 3 个 children 透传页面评估声明式迁移
-- [ ] **预存在 clippy 修复**：shared-core/src/service_port.rs doctest + testing.rs:346 borrowed expression
+- [x] **ERP 审批增强**：V284 已评估 — ERP 已通过 `call_finance_core_approval` 调用 finance 4 端点，V283 finance 集成 shared-db approval 审计日志后 ERP 间接受益已成立，无需新代码
+- [x] **模板扩展**：V284 已评估 — NotificationCenter/ListPageTemplate 插槽 + MailPage/MasterDetailPageTemplate renderDetail 已声明式，DocumentsPage/CardListTemplate children 维持现状（800+ 行复杂双栏）
+- [x] **预存在 clippy 修复**：V284 已修复 — shared-bootstrap lib.rs:2488 needless_borrows + shared-core service_port.rs 3 doctest 路径修复
 
 ### 已完成：V282 后续任务（PM 审批集成 + SupplierPortalPage 评估）
 

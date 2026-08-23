@@ -83,7 +83,7 @@ pub struct UpdatePerformanceGoalRequest {
     pub due_date: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -117,6 +117,23 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/employees/{id}/performance-goals", get(get_employee_goals))
 }
 
+#[utoipa::path(
+    get,
+    path = "/performance-reviews",
+    tag = "performance",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("review_period" = Option<String>, Query, description = "评核周期"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取绩效评核列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_reviews(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,

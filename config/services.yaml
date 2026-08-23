@@ -308,6 +308,27 @@ service_groups:
       dependencies: [unified-core]
       service_dir: plugin-registry
 
+  # 物流服务 (8073-8074，V284 补全至单一信源)
+  # 注：plugin.yaml 中 tms/aps 原 port 为 8042/8043，与 srm 8042 冲突，改用 8070-8079 段空闲端口
+  logistics:
+    - name: tms
+      port: 8073
+      env_var: TMS_PORT
+      description: 运输管理
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（车辆/运单 state）
+      dependencies: []
+      service_dir: tms
+
+    - name: aps
+      port: 8074
+      env_var: APS_PORT
+      description: 高级计划与排程
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（计划/排程 state）
+      dependencies: []
+      service_dir: aps
+
 # 虚拟服务（由 unified-core 内部模块提供，不独立启动）
 # 注意：iam 已作为独立服务条目存在于 service_groups.core（service_dir: unified-core）
 # 注意：mail/im/notification 已外迁到 communication 独立服务（端口 8084），unified-core 内保留模块兼容
@@ -439,7 +460,12 @@ module_groups:
     - feedback
     - lowcode
 
-  # 全量启动清单（22 + 6 extension = 28 项；iam 代表 unified-core:8000）
+  # 物流服务（V284 补全 tms/aps 至单一信源）
+  logistics:
+    - tms
+    - aps
+
+  # 全量启动清单（22 + 6 extension + 2 logistics = 30 项；iam 代表 unified-core:8000）
   all:
     - iam
     # 扩展服务（V66 外迁，端口 8082/8084-8088）
@@ -478,3 +504,6 @@ module_groups:
     - integration
     # 主数据（8090）
     - master-data
+    # 物流服务（8073-8074，V284 补全）
+    - tms
+    - aps

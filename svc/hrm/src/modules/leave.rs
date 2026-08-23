@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -14,7 +15,7 @@ use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct LeaveRequest {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -31,7 +32,7 @@ pub struct LeaveRequest {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateLeaveRequest {
     pub employee_id: Uuid,
     pub leave_type: String,
@@ -41,7 +42,7 @@ pub struct CreateLeaveRequest {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateLeaveRequest {
     pub leave_type: Option<String>,
     pub start_date: Option<chrono::DateTime<chrono::Utc>>,
@@ -81,6 +82,22 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/leaves/{id}/reject", put(reject_leave))
 }
 
+#[utoipa::path(
+    get,
+    path = "/leaves",
+    tag = "leave",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取请假记录列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_leaves(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
@@ -146,6 +163,20 @@ async fn list_leaves(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/leaves",
+    tag = "leave",
+    request_body = CreateLeaveRequest,
+    responses(
+        (status = 200, description = "请假记录创建成功", body = LeaveRequest),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 403, description = "权限不足"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn create_leave(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -231,6 +262,20 @@ async fn create_leave(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/leaves/{id}",
+    tag = "leave",
+    params(
+        ("id" = Uuid, Path, description = "请假记录ID")
+    ),
+    responses(
+        (status = 200, description = "获取请假记录成功", body = LeaveRequest),
+        (status = 404, description = "请假记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -252,6 +297,22 @@ async fn get_leave(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/leaves/{id}",
+    tag = "leave",
+    params(
+        ("id" = Uuid, Path, description = "请假记录ID")
+    ),
+    request_body = UpdateLeaveRequest,
+    responses(
+        (status = 200, description = "请假记录更新成功", body = LeaveRequest),
+        (status = 400, description = "请求参数错误"),
+        (status = 404, description = "请假记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn update_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -296,6 +357,20 @@ async fn update_leave(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/leaves/{id}",
+    tag = "leave",
+    params(
+        ("id" = Uuid, Path, description = "请假记录ID")
+    ),
+    responses(
+        (status = 200, description = "请假记录删除成功", body = String),
+        (status = 404, description = "请假记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn delete_leave(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

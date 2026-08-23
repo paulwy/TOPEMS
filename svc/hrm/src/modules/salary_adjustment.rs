@@ -13,7 +13,7 @@ use crate::models::{
 };
 use topems_shared_core::response::{api_error, ApiResponse};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SalaryAdjustmentPaginationParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -42,6 +42,22 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/salary-adjustments",
+    tag = "salary_adjustment",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取薪资调整列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_salary_adjustments(
     State(state): State<ApiState>,
     Query(params): Query<SalaryAdjustmentPaginationParams>,
@@ -121,6 +137,20 @@ async fn list_salary_adjustments(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/salary-adjustments/{id}",
+    tag = "salary_adjustment",
+    params(
+        ("id" = Uuid, Path, description = "薪资调整ID")
+    ),
+    responses(
+        (status = 200, description = "获取薪资调整成功", body = SalaryAdjustment),
+        (status = 404, description = "薪资调整不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -164,6 +194,18 @@ async fn get_salary_adjustment(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/salary-adjustments",
+    tag = "salary_adjustment",
+    request_body = CreateSalaryAdjustmentRequest,
+    responses(
+        (status = 200, description = "薪资调整创建成功", body = SalaryAdjustment),
+        (status = 400, description = "请求参数错误"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn create_salary_adjustment(
     State(state): State<ApiState>,
     Json(req): Json<CreateSalaryAdjustmentRequest>,
@@ -213,6 +255,22 @@ async fn create_salary_adjustment(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/salary-adjustments/{id}",
+    tag = "salary_adjustment",
+    params(
+        ("id" = Uuid, Path, description = "薪资调整ID")
+    ),
+    request_body = UpdateSalaryAdjustmentRequest,
+    responses(
+        (status = 200, description = "薪资调整更新成功", body = SalaryAdjustment),
+        (status = 400, description = "请求参数错误"),
+        (status = 404, description = "薪资调整不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn update_salary_adjustment(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

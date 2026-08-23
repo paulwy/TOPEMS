@@ -40,6 +40,24 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/training-plans",
+    tag = "training",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
+        ("course_id" = Option<Uuid>, Query, description = "课程ID"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取培训计划列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_plans(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
@@ -261,6 +279,24 @@ async fn delete_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/training-courses",
+    tag = "training",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
+        ("course_id" = Option<Uuid>, Query, description = "课程ID"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取培训课程列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_courses(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,
@@ -483,6 +519,24 @@ async fn delete_course(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/training-records",
+    tag = "training",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
+        ("course_id" = Option<Uuid>, Query, description = "课程ID"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取培训记录列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_records(
     State(state): State<ApiState>,
     Query(params): Query<TrainingPaginationParams>,

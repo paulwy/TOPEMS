@@ -155,7 +155,7 @@ async fn get_today_status(
     ))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AttendancePaginationParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -164,6 +164,24 @@ pub struct AttendancePaginationParams {
     pub date: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/attendance",
+    tag = "attendance",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("date" = Option<String>, Query, description = "日期"),
+    ),
+    responses(
+        (status = 200, description = "获取考勤记录列表成功", body = serde_json::Value),
+        (status = 401, description = "未授权"),
+        (status = 403, description = "权限不足"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -237,6 +255,20 @@ async fn list_attendance(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/attendance",
+    tag = "attendance",
+    request_body = CreateAttendanceRequest,
+    responses(
+        (status = 200, description = "考勤记录创建成功", body = AttendanceRecord),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 403, description = "权限不足"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn create_attendance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -322,6 +354,20 @@ async fn create_attendance(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/attendance/{id}",
+    tag = "attendance",
+    params(
+        ("id" = Uuid, Path, description = "考勤记录ID")
+    ),
+    responses(
+        (status = 200, description = "获取考勤记录成功", body = AttendanceRecord),
+        (status = 404, description = "考勤记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -354,6 +400,22 @@ async fn get_attendance(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/attendance/{id}",
+    tag = "attendance",
+    params(
+        ("id" = Uuid, Path, description = "考勤记录ID")
+    ),
+    request_body = UpdateAttendanceRequest,
+    responses(
+        (status = 200, description = "考勤记录更新成功", body = AttendanceRecord),
+        (status = 400, description = "请求参数错误"),
+        (status = 404, description = "考勤记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn update_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -427,6 +489,20 @@ async fn update_attendance(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/attendance/{id}",
+    tag = "attendance",
+    params(
+        ("id" = Uuid, Path, description = "考勤记录ID")
+    ),
+    responses(
+        (status = 200, description = "考勤记录删除成功", body = String),
+        (status = 404, description = "考勤记录不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn delete_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

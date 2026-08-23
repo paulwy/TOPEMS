@@ -6,7 +6,7 @@
 //!
 //! 用法示例：
 //! ```rust
-//! use topems_lib::service_port::{get_service_port, is_group2_service, HRM_PORT};
+//! use topems_shared_core::{get_service_port, is_group2_service, HRM_PORT};
 //!
 //! assert_eq!(get_service_port("hrm"), Some(HRM_PORT));
 //! assert!(is_group2_service("crm"));
@@ -119,6 +119,7 @@ pub const GROUP2_SERVICES: &[(&str, u16)] = &[
 /// 按服务短名查询端口。
 ///
 /// ```
+/// use topems_shared_core::get_service_port;
 /// assert_eq!(get_service_port("hrm"), Some(8020));
 /// assert_eq!(get_service_port("unknown"), None);
 /// ```
@@ -142,6 +143,7 @@ pub fn is_group2_service(svc: &str) -> bool {
 /// 返回本地独立服务的完整 base URL，方便 `reqwest` 反向代理或集成测试使用。
 ///
 /// ```
+/// use topems_shared_core::local_service_url;
 /// assert_eq!(local_service_url("hrm"), Some("http://localhost:8020".to_string()));
 /// assert_eq!(local_service_url("unknown"), None);
 /// ```

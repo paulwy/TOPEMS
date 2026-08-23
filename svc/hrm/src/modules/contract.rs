@@ -38,6 +38,22 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/contract-renewals/{id}/execute", put(execute_renewal))
 }
 
+#[utoipa::path(
+    get,
+    path = "/contracts",
+    tag = "contracts",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("status" = Option<String>, Query, description = "状态"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID")
+    ),
+    responses(
+        (status = 200, description = "获取合同列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_contracts(
     State(state): State<ApiState>,
     Query(params): Query<ContractPaginationParams>,
@@ -188,6 +204,20 @@ pub struct ExpiringParams {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/contracts",
+    tag = "contracts",
+    request_body = CreateContractRequest,
+    responses(
+        (status = 200, description = "合同创建成功", body = Contract),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 403, description = "权限不足"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +323,20 @@ async fn create_contract(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/contracts/{id}",
+    tag = "contracts",
+    params(
+        ("id" = Uuid, Path, description = "合同ID")
+    ),
+    responses(
+        (status = 200, description = "获取合同成功", body = serde_json::Value),
+        (status = 404, description = "合同不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -343,6 +387,22 @@ async fn get_contract(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/contracts/{id}",
+    tag = "contracts",
+    params(
+        ("id" = Uuid, Path, description = "合同ID")
+    ),
+    request_body = UpdateContractRequest,
+    responses(
+        (status = 200, description = "合同更新成功", body = Contract),
+        (status = 400, description = "请求参数错误"),
+        (status = 404, description = "合同不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn update_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -456,6 +516,20 @@ async fn update_contract(
     response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/contracts/{id}",
+    tag = "contracts",
+    params(
+        ("id" = Uuid, Path, description = "合同ID")
+    ),
+    responses(
+        (status = 200, description = "合同删除成功", body = String),
+        (status = 404, description = "合同不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn delete_contract(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

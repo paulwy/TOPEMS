@@ -1,9 +1,10 @@
 use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct SalaryAdjustment {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -24,7 +25,7 @@ pub struct SalaryAdjustment {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateSalaryAdjustmentRequest {
     pub employee_id: Uuid,
     pub adjustment_type: String,
@@ -34,7 +35,7 @@ pub struct CreateSalaryAdjustmentRequest {
     pub effective_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateSalaryAdjustmentRequest {
     pub adjustment_type: Option<String>,
     pub old_salary: Option<BigDecimal>,

@@ -89,7 +89,7 @@ pub struct PayrollVoucherResponse {
     pub employee_count: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -126,6 +126,25 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/payroll-slips", get(list_payroll_slips))
 }
 
+#[utoipa::path(
+    get,
+    path = "/payroll-runs",
+    tag = "payroll",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("pay_period" = Option<String>, Query, description = "薪资周期"),
+        ("status" = Option<String>, Query, description = "状态"),
+        ("payroll_run_id" = Option<Uuid>, Query, description = "薪资发放ID"),
+        ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
+        ("payroll_item_id" = Option<Uuid>, Query, description = "薪资项ID")
+    ),
+    responses(
+        (status = 200, description = "获取薪资发放列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_payroll_runs(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
