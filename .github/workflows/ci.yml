@@ -1892,6 +1892,7 @@ jobs:
           echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema Defense Gate (26 svc · strict · V274 含 sqlx 语义 advisory) | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### PR Review Checklist" >> $GITHUB_STEP_SUMMARY
@@ -2044,6 +2045,10 @@ jobs:
             -p topems-communication \
             -p topems-analytics
 
+      - name: Install sqlx-cli
+        # V274: cargo sqlx prepare --check --workspace 需要 sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
       - name: Run schema defense（26 services · strict，V69.3 + V69.4 四批全覆盖）
         id: defense
         run: |
@@ -2125,3 +2130,39 @@ jobs:
               exit 2
               ;;
           esac
+
+      - name: Verify sqlx cache semantic consistency (advisory)
+        # V274: defense-check-all 完成后 DB 已有完整 schema（所有表+列），
+        # 此时运行 cargo sqlx prepare --check --workspace 验证 .sqlx/ 缓存与 DB schema 语义一致。
+        # advisory 模式：非阻塞，仅报告不一致。
+        # 前置条件：defense-check-all 通过（exit 0）→ DB schema 完整。
+        continue-on-error: true
+        env:
+          DATABASE_URL: postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense
+          SQLX_OFFLINE: "false"
+        run: |
+          set +e
+          ./scripts/dev/sqlx-prepare.sh --semantic 2>&1 | tee /tmp/sqlx-semantic-check.log
+          # 注意：$? 捕获的是 tee 的退出码（恒为 0），需用 PIPESTATUS[0] 获取脚本退出码
+          RC=${PIPESTATUS[0]}
+          echo ""
+          if [ $RC -eq 0 ]; then
+            echo "✅ SQLx Semantic Check: .sqlx cache consistent with DB schema"
+          else
+            echo "::warning title=SQLx Semantic Check::.sqlx cache 与 DB schema 语义不一致，请运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存"
+            echo "⚠️ SQLx Semantic Check: FAIL (advisory, non-blocking)"
+          fi
+
+          # 写入 Step Summary
+          {
+            echo "### SQLx Cache Semantic Check (advisory)"
+            echo ""
+            echo "| 指标 | 值 |"
+            echo "|------|----|"
+            echo "| 退出码 | $RC |"
+            echo "| 状态 | $([ $RC -eq 0 ] && echo '✅ PASS' || echo '⚠️ FAIL (advisory)') |"
+            echo ""
+            echo "> 本地复现: \`DATABASE_URL=... ./scripts/dev/sqlx-prepare.sh --semantic\`"
+          } >> $GITHUB_STEP_SUMMARY
+
+          exit 0

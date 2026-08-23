@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V273 | **更新日期**: 2026-08-23
+> **版本**: V274 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -11,6 +11,7 @@
 > **V271 架构冗余深度治理（P0→P1→P2）已完成**（审计统一 / 配置单一信源 / 门面修正 / 跨端类型共享 / DB 初始化去重）。
 > **V272 SQL 迁移冗余清理（方案 A）已完成**（删除 134 个 migrations/ 死代码 + 删除 MigrationSDK + schema_defense 注释清理）。
 > **V273 四轨并行推进已完成**（MES 审批流三件套 12 stubs 收敛 + AiToolPageTemplate 3 页迁移 + .sqlx 缓存新鲜度 CI check）。
+> **V274 sqlx-cache 语义级检查已完成**（sqlx-prepare.sh --semantic mode + schema-defense-gate advisory step）。
 
 ---
 
@@ -92,9 +93,9 @@
 - [x] 例外项 22→19（-3），覆盖率 95.8%→96.4%（508→511/530）
 - [x] Axum R1/R2/R3=0 STRONG_PASS · Perm R1-R6=0 · i18n 0 hardcoded
 
-### V273 后续扩展（留给 V274+）
+### V274 后续扩展（留给 V275+）
 - [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性（V270 后续扩展遗留，连续 3 版本未做，优先级提升）
-- [ ] **sqlx-cache 语义级检查**：当前 D 轨仅做静态启发式（存在性/数量/git dirty），未检测 SQL 语义过期；评估 `cargo sqlx prepare --check` 在 CI 中运行的可行性（重，可能需 nightly job）
+- [x] **sqlx-cache 语义级检查**：V274 已实现 — sqlx-prepare.sh --semantic mode + schema-defense-gate advisory step（连接 DB + PREPARE 验证 + hash 比较）
 - [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
 - [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
 

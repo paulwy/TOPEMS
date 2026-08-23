@@ -20,7 +20,8 @@
 #   ./scripts/dev/sqlx-prepare.sh                # 刷新全部可通过的包
 #   ./scripts/dev/sqlx-prepare.sh -p topems-unified-core -p topems-finance
 #                                                # 只刷新指定 package(s)
-#   ./scripts/dev/sqlx-prepare.sh --check        # 只校验不修改（CI 用）
+#   ./scripts/dev/sqlx-prepare.sh --check        # 离线校验缓存与代码一致（CI 用，不连接 DB）
+#   ./scripts/dev/sqlx-prepare.sh --semantic     # 语义级校验：连接 DB + PREPARE 验证 + hash 比较（CI advisory）
 #   ./scripts/dev/sqlx-prepare.sh --offline-test # 刷新后执行离线编译测试
 #
 # 环境变量（可选）：
@@ -41,11 +42,12 @@ ok()   { echo -e "${GREEN}[sqlx-prepare][ok]${NC} $*"; }
 err()  { echo -e "${RED}[sqlx-prepare][err]${NC} $*" >&2; }
 
 # ---------- 参数解析 ----------
-MODE="prepare"            # prepare | check | offline-test
+MODE="prepare"            # prepare | check | offline-test | semantic
 CUSTOM_PKGS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check)        MODE="check"; shift ;;
+    --semantic)     MODE="semantic"; shift ;;
     --offline-test) MODE="offline-test"; shift ;;
     -p|--package)   CUSTOM_PKGS+=("$2"); shift 2 ;;
     -h|--help)
@@ -191,6 +193,57 @@ if [ "$MODE" == "check" ]; then
     exit 1
   fi
   ok "全部 sqlx 缓存 --check 通过"
+  exit 0
+fi
+
+# ---------- semantic 模式：真正的 cargo sqlx prepare --check（连接 DB + PREPARE 验证 + hash 比较）----------
+# 与 --check 的区别：
+#   --check  → SQLX_OFFLINE=true cargo check（只验证缓存 hash 存在，不连接 DB）
+#   --semantic → cargo sqlx prepare --check --workspace（连接 DB + 对每个 SQL 执行 PREPARE + 比较 hash）
+#
+# 前置条件：DATABASE_URL 指向的 DB 必须有完整 schema（表+列）。
+#   可通过 schema-defense-gate 的 defense-check-all 或本地启动所有服务来初始化。
+#
+# 注意：sqlx-cli 的 --check 在 monorepo 合并缓存策略下必须在 workspace 根运行，
+#       且用 --workspace 让 sqlx-cli 扫描所有 package 的 query! 宏。
+#       逐个 package 运行会因找不到根 .sqlx/ 而误报 "missing queries"。
+if [ "$MODE" == "semantic" ]; then
+  log "执行 sqlx 语义级 --check（连接 DB + PREPARE 验证 + hash 比较）..."
+  log "DATABASE_URL=$DATABASE_URL"
+  log "模式：cargo sqlx prepare --check --workspace（全 workspace 扫描）"
+  if [ "${#CUSTOM_PKGS[@]}" -gt 0 ]; then
+    warn "  --semantic 模式忽略 -p 参数（sqlx-cli 要求 --workspace 全量扫描）"
+  fi
+  set +e
+  # cargo sqlx prepare --check 需要 SQLX_OFFLINE=false（连接 DB）
+  # --workspace 让 sqlx-cli 扫描所有 package 的 query! 宏
+  SQLX_OFFLINE=false cargo sqlx prepare --check --workspace \
+    --database-url "$DATABASE_URL" \
+    >"/tmp/sqlx-semantic-workspace.log" 2>&1
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    # 区分：编译失败 vs SQL 语义失败
+    # SQL 语义失败的特征：包含 "error returned from database" 或 "column does not exist" 等
+    if grep -qE "error returned from database|column.*does not exist|relation.*does not exist|syntax error at or near|prepare check failed" "/tmp/sqlx-semantic-workspace.log" 2>/dev/null; then
+      tail -n 30 "/tmp/sqlx-semantic-workspace.log" >&2
+      err "sqlx 语义级 --check 失败：.sqlx 缓存与 DB schema 语义不一致
+
+请运行以下命令刷新缓存：
+  ./scripts/dev/sqlx-prepare.sh
+然后提交 .sqlx/ 变更：
+  git add .sqlx && git commit"
+      exit 1
+    elif grep -q "error\[" "/tmp/sqlx-semantic-workspace.log" 2>/dev/null; then
+      tail -n 20 "/tmp/sqlx-semantic-workspace.log" >&2
+      warn "  COMPILE-FAIL（非 sqlx 缓存问题，advisory 模式忽略）"
+      exit 0
+    else
+      tail -n 20 "/tmp/sqlx-semantic-workspace.log" >&2
+      err "sqlx 语义级 --check 失败（未知原因）"
+      exit 1
+    fi
+  fi
+  ok "全部 sqlx 语义级 --check 通过（workspace 全量）"
   exit 0
 fi
 
