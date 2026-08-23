@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V278 工具/系统类模板化  
+> 关联 TODO：`docs/roadmap/TODO.md` V280 最后 4 例外清零，模板覆盖率 100%  
 > 更新日期：2026-08-23
 
 ---
@@ -27,9 +27,11 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 **V277**：将 4 个列表/结构类例外页接入已有模板（MasterDetailPageTemplate / CardListTemplate / ListPageTemplate / DetailPageTemplate），覆盖率提升至 **98.7%**（523/530），剩余 **7** 个例外项。列表/结构类例外清零。
 
-**V278**：将 3 个工具/系统类例外页接入已有模板（FormPageTemplate / DashboardTemplate / WizardPageTemplate），覆盖率提升至 **99.2%**（526/530），剩余 **4** 个例外项。工具/系统类例外清零。
+**V279**：将 3 个工具/系统类例外页接入已有模板（FormPageTemplate / DashboardTemplate / WizardPageTemplate），覆盖率提升至 **99.2%**（526/530），剩余 **4** 个例外项。工具/系统类例外清零。
 
-剩余 4 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V280**：将最后 4 个例外页全部接入已有模板（StatsPageTemplate / ListPageTemplate / CardListTemplate / MasterDetailPageTemplate），覆盖率提升至 **100.0%**（530/530），剩余 **0** 个例外项。设计系统模板治理全流程收闭。4 个页面均采用 children 透传模式保留自定义复杂布局（SupplierPortal 的统计+Tab 门户、Notification 的筛选+列表、Documents 的文件夹树+文件视图、Mail 的邮件客户端），并配套增强了 CardListTemplate（data/cardConfig 变为可选 + children 分支优先渲染）。
+
+至此，530 个页面模板覆盖率从 V272 的 **96.4%** → V280 的 **100%**，所有例外类别（报表/GIS/列表结构/工具系统/门户协作/文档邮件）全部清零。
 
 例外项不代表"永不治理"，而是明确：
 - 当前 22 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate`、`ReportViewerTemplate` 已新增并落地）；
@@ -46,13 +48,13 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 设计器/画布类 | 0 | — | 4 个页面已全部迁至 `DesignerTemplate` |
 | 报表类 | 0 | — | 6 个报表页面已完成模板化迁移（3 设计器→DesignerTemplate / 3 查看→ReportViewerTemplate） |
 | 认证/错误页 | 0 | — | 4 个页面已全部迁至 `AuthPageTemplate` |
-| 门户/协作类 | 2 | `SupplierPortalPage`、`NotificationCenter` | 多角色门户、消息中心，布局特殊 |
+| 门户/协作类 | 0 | — | 2 个门户/协作页已全部接入已有模板（StatsPage/ListPage） |
 | GIS/地图类 | 0 | — | 2 个 GIS 页面已全部接入 `GisMapTemplate`（devicePoints→markers / pipelines→fences / storageLocations→markers） |
-| 文档/邮件类 | 2 | `DocumentsPage`、`MailPage` | 富文本/邮件客户端，类似桌面应用 |
+| 文档/邮件类 | 0 | — | 2 个文档/邮件页已全部接入已有模板（CardList/MasterDetail） |
 | 工具/系统类 | 0 | — | 3 个工具/系统页已全部接入已有模板（FormPage/Dashboard/Wizard） |
 | 列表/结构类 | 0 | — | 4 个列表/结构页已全部接入已有模板（MasterDetail/CardList/List/Detail） |
 
-合计：**4 个页面**。
+合计：**0 个页面** — 设计系统模板治理收闭，530 个页面覆盖率 100%。
 
 ---
 
@@ -125,15 +127,15 @@ V268-A 新增 `AuthPageTemplate`（`apps/web/src/components/templates/AuthPageTe
 | `apps/web/src/pages/shared/NotFoundPage.tsx` | `AuthPageTemplate` | ✅ 已迁移 | 404（浅灰背景 + 推荐模块入口） |
 | `apps/web/src/pages/shared/ErrorPage.tsx` | `AuthPageTemplate` | ✅ 已迁移 | 错误页（浅灰背景 + 居中卡片） |
 
-### 3.6 门户/协作类（2）
+### 3.6 门户/协作类（0，已迁移 3 项）
 
-`IMPage` 已于 V268-B 迁移至 `ChatPageTemplate`（children 透传模式，内部 `ChatInterface` 组件保持完整聊天布局）。
+`IMPage` 已于 V268-B 迁移至 `ChatPageTemplate`（children 透传模式，内部 `ChatInterface` 组件保持完整聊天布局）。V280 完成剩余 2 页迁移，实现门户/协作类例外清零（2→0）。
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/srm/SupplierPortalPage.tsx` | `PortalPageTemplate` | 供应商门户 |
-| `apps/web/src/pages/notification/NotificationCenter.tsx` | `NotificationTemplate` | 消息中心 |
-| `apps/web/src/pages/shared/IMPage.tsx` | `ChatPageTemplate` | ✅ 已迁移（children 模式） |
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/srm/SupplierPortalPage.tsx` | `StatsPageTemplate` | ✅ 已迁移 | 4 分支（loading/error/empty/normal）+ statCards Grid + Tabs + 订单/公告/评分 |
+| `apps/web/src/pages/notification/NotificationCenter.tsx` | `ListPageTemplate` | ✅ 已迁移 | 筛选+搜索→headerContent，通知列表+分页→footerContent |
+| `apps/web/src/pages/shared/IMPage.tsx` | `ChatPageTemplate` | ✅ 已迁移（children 模式，V268-B） | 聊天页面 |
 
 ### 3.7 GIS/地图类（0，已迁移 2 项）
 
@@ -147,12 +149,14 @@ V276 将 2 个 GIS 例外页面接入已有的 `GisMapTemplate`（V269 创建但
 | `apps/web/src/pages/bi/GisPage/index.tsx` | `GisMapTemplate` | ✅ 已迁移 | BI 地图 Tab，inline 渲染替代 MapSection 组件，onMarkerClick 回查原数据 |
 | `apps/web/src/pages/gis/index.tsx` | `GisMapTemplate` | ✅ 已迁移 | GIS 模块入口，map Tab 内嵌 GisMapTemplate，markers + fences 数据转换 |
 
-### 3.8 文档/邮件类（2）
+### 3.8 文档/邮件类（0，已迁移 2 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/doc/DocumentsPage/index.tsx` | `DocumentTemplate` | 文档中心 |
-| `apps/web/src/pages/im/MailPage/index.tsx` | `MailClientTemplate` | 邮件客户端 |
+V280 将 2 个文档/邮件类例外页接入已有模板，实现文档/邮件类例外清零（2→0）。配套 `CardListTemplate` 增强 children 透传模式。
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/doc/DocumentsPage/index.tsx` | `CardListTemplate` | ✅ 已迁移 | children 透传，保留左 DocumentTree + 右 DocumentList + 上传/预览/删除/拖拽 |
+| `apps/web/src/pages/im/MailPage/index.tsx` | `MasterDetailPageTemplate` | ✅ 已迁移 | children 透传，保留邮件 Tabs + EmailList + EmailDetail + Dialogs |
 
 ### 3.9 工具/系统类（0，已迁移 3 项）
 

@@ -2,7 +2,7 @@ import { Box, Button, Tabs, Tab, Typography } from '@mui/material';
 import React from 'react';
 import { Mail, Send, Plus, ChevronLeft, MessageSquare, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer } from '@/components/common';
+import { MasterDetailPageTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useMailPage } from '@/components/im/MailPageHooks';
@@ -25,14 +25,14 @@ const MailPage: React.FC = () => {
   const m = useMailPage();
 
   return (
-    <PageContainer
+    <MasterDetailPageTemplate
       title={t('im.index.k0')}
-      padding={false}
-      maxWidth={false}
-      headerProps={{
-        pageIcon: <MessageSquare style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
-      }}
+      subtitle={t('im.mail_page_index.e2')}
+      loading={m.loading}
+      items={[]}
+      columns={[]}
+      getRowId={() => ''}
+      renderDetail={() => null}
     >
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
         <Box
@@ -263,7 +263,7 @@ const MailPage: React.FC = () => {
           selectedEmails={m.selectedEmails}
         />
       </Box>
-    </PageContainer>
+    </MasterDetailPageTemplate>
   );
 };
 

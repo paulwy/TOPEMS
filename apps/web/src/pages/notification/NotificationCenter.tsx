@@ -17,7 +17,7 @@ import NotificationItem from '@/components/notification/NotificationItem';
 import NotificationSettings from '@/components/notification/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components';
+import { ListPageTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
@@ -268,321 +268,328 @@ const NotificationCenter: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <PageContainer
-      maxWidth={false}
-      padding={false}
+    <ListPageTemplate<Notification>
       title={i18n.t('pages.notification_center.k19')}
       subtitle={`${i18n.t('pages.notification_center.k0')} ${total} ${i18n.t('pages.notification_center.k1')}${unreadCount} ${i18n.t('pages.notification_center.k2')}`}
-      headerProps={{
-        pageIcon: <Bell size={20} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          bgcolor: 'background.default',
-        }}
-      >
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-            <Search
-              sx={{
-                position: 'absolute',
-                left: 16,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'text.disabled',
-              }}
-            />
-            <input
-              type='text'
-              placeholder={i18n.t('pages.notification_center.k3')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: `12px ${designTokens.spacing.md}px 12px ${designTokens.spacing['2xl']}px`,
-                borderRadius: 'lg',
-                border: '1px solid',
-                borderColor: 'action.hover',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
-          </Box>
-        </Box>
-
+      columns={[]}
+      data={[]}
+      headerContent={
         <Box
           sx={{
             display: 'flex',
-            gap: 2,
-            p: 3,
-            borderBottom: 1,
-            borderColor: 'divider',
-            overflowX: 'auto',
+            flexDirection: 'column',
           }}
         >
-          {(
-            [
-              'all',
-              'system',
-              'workflow',
-              'reminder',
-              'alert',
-              'message',
-            ] as NotificationFilterType[]
-          ).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => {
-                setActiveFilter(filter);
-                setPage(1);
-              }}
-              style={{
-                padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
-                borderRadius: '2xl',
-                border: 'none',
-                backgroundColor: activeFilter === filter ? ct.primary.main : 'colors.action.hover',
-                color: activeFilter === filter ? designTokens.colors.background.paper : 'inherit',
-                fontSize: '13px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {getFilterLabel(filter)}
-            </button>
-          ))}
-        </Box>
-
-        <Box sx={{ flex: 1, overflowY: 'auto' }}>
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '200px',
-              }}
-            >
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-            </Box>
-          ) : filteredNotifications.length === 0 ? (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: 12,
-                color: 'text.disabled',
-              }}
-            >
-              <Bell
-                size={48}
-                strokeWidth={1}
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
+              <Search
+                sx={{
+                  position: 'absolute',
+                  left: 16,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'text.disabled',
+                }}
               />
-              <Typography
-                variant='h6'
-                sx={{ mt: 2 }}
-              >
-                {i18n.t('pages.notification_center.k4')}
-              </Typography>
-              <Typography variant='body2'>{i18n.t('pages.notification_center.k20')}</Typography>
+              <input
+                type='text'
+                placeholder={i18n.t('pages.notification_center.k3')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: `12px ${designTokens.spacing.md}px 12px ${designTokens.spacing['2xl']}px`,
+                  borderRadius: 'lg',
+                  border: '1px solid',
+                  borderColor: 'action.hover',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
             </Box>
-          ) : (
-            <div>
-              {selectedNotifications.size > 0 && (
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              p: 3,
+              borderBottom: 1,
+              borderColor: 'divider',
+              overflowX: 'auto',
+            }}
+          >
+            {(
+              [
+                'all',
+                'system',
+                'workflow',
+                'reminder',
+                'alert',
+                'message',
+              ] as NotificationFilterType[]
+            ).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => {
+                  setActiveFilter(filter);
+                  setPage(1);
+                }}
+                style={{
+                  padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
+                  borderRadius: '2xl',
+                  border: 'none',
+                  backgroundColor: activeFilter === filter ? ct.primary.main : 'colors.action.hover',
+                  color: activeFilter === filter ? designTokens.colors.background.paper : 'inherit',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {getFilterLabel(filter)}
+              </button>
+            ))}
+          </Box>
+        </Box>
+      }
+      footerContent={
+        <>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              bgcolor: 'background.default',
+            }}
+          >
+            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+              {loading ? (
                 <Box
                   sx={{
-                    p: 2,
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
                     display: 'flex',
-                    gap: 2,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '200px',
                   }}
                 >
-                  <button
-                    onClick={toggleSelectAll}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <input
-                      type='checkbox'
-                      checked={selectedNotifications.size === filteredNotifications.length}
-                      onChange={() => toggleSelectAll()}
-                    />
-                    <span>{i18n.t('pages.notification_center.k21')}</span>
-                  </button>
-                  <div style={{ flex: 1 }}></div>
-                  <button
-                    onClick={handleBulkMarkAsRead}
-                    disabled={bulkMarkAsReadMutation.isPending}
-                    style={{
-                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
-                      borderRadius: 'md',
-                      border: '1px solid',
-                      borderColor: ct.primary.main,
-                      color: ct.primary.main,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {i18n.t('pages.notification_center.k5')}
-                  </button>
-                  <button
-                    onClick={handleBulkDelete}
-                    disabled={bulkDeleteMutation.isPending}
-                    style={{
-                      padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
-                      borderRadius: 'md',
-                      backgroundColor: ct.error.main,
-                      color: 'common.white',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {i18n.t('pages.notification_center.k6')}
-                  </button>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
                 </Box>
-              )}
-
-              {filteredNotifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  role='button'
-                  tabIndex={0}
-                  onClick={() => toggleSelect(notification.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleSelect(notification.id);
-                    }
+              ) : filteredNotifications.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 12,
+                    color: 'text.disabled',
                   }}
-                  style={{ cursor: 'pointer', borderBottom: 1, borderColor: 'divider' }}
                 >
-                  <NotificationItem
-                    notification={notification}
-                    onUpdate={() => handleMarkAsRead(notification)}
-                    onDelete={() => handleDelete(notification.id)}
+                  <Bell
+                    size={48}
+                    strokeWidth={1}
                   />
-                </div>
-              ))}
-            </div>
-          )}
-        </Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ mt: 2 }}
+                  >
+                    {i18n.t('pages.notification_center.k4')}
+                  </Typography>
+                  <Typography variant='body2'>{i18n.t('pages.notification_center.k20')}</Typography>
+                </Box>
+              ) : (
+                <div>
+                  {selectedNotifications.size > 0 && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                        display: 'flex',
+                        gap: 2,
+                      }}
+                    >
+                      <button
+                        onClick={toggleSelectAll}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
+                          border: 'none',
+                          backgroundColor: 'transparent',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <input
+                          type='checkbox'
+                          checked={selectedNotifications.size === filteredNotifications.length}
+                          onChange={() => toggleSelectAll()}
+                        />
+                        <span>{i18n.t('pages.notification_center.k21')}</span>
+                      </button>
+                      <div style={{ flex: 1 }}></div>
+                      <button
+                        onClick={handleBulkMarkAsRead}
+                        disabled={bulkMarkAsReadMutation.isPending}
+                        style={{
+                          padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
+                          borderRadius: 'md',
+                          border: '1px solid',
+                          borderColor: ct.primary.main,
+                          color: ct.primary.main,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {i18n.t('pages.notification_center.k5')}
+                      </button>
+                      <button
+                        onClick={handleBulkDelete}
+                        disabled={bulkDeleteMutation.isPending}
+                        style={{
+                          padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
+                          borderRadius: 'md',
+                          backgroundColor: ct.error.main,
+                          color: 'common.white',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {i18n.t('pages.notification_center.k6')}
+                      </button>
+                    </Box>
+                  )}
 
-        <Box
-          sx={{
-            p: 3,
-            borderTop: 1,
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant='body2'
-            color='text.disabled'
-          >
-            {i18n.t('pages.notification_center.k0')} {page} / {totalPages}{' '}
-            {i18n.t('pages.notification_center.k1')}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <button
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              disabled={page === 1}
-              style={{
-                padding: `${designTokens.spacing.sm}px 12px`,
-                borderRadius: 'md',
-                border: '1px solid',
+                  {filteredNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      role='button'
+                      tabIndex={0}
+                      onClick={() => toggleSelect(notification.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleSelect(notification.id);
+                        }
+                      }}
+                      style={{ cursor: 'pointer', borderBottom: 1, borderColor: 'divider' }}
+                    >
+                      <NotificationItem
+                        notification={notification}
+                        onUpdate={() => handleMarkAsRead(notification)}
+                        onDelete={() => handleDelete(notification.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Box>
+
+            <Box
+              sx={{
+                p: 3,
+                borderTop: 1,
                 borderColor: 'divider',
-                cursor: page === 1 ? 'not-allowed' : 'pointer',
+                bgcolor: 'background.paper',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              <ChevronLeft size={16} />
+              <Typography
+                variant='body2'
+                color='text.disabled'
+              >
+                {i18n.t('pages.notification_center.k0')} {page} / {totalPages}{' '}
+                {i18n.t('pages.notification_center.k1')}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <button
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                  style={{
+                    padding: `${designTokens.spacing.sm}px 12px`,
+                    borderRadius: 'md',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    cursor: page === 1 ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page === totalPages}
+                  style={{
+                    padding: `${designTokens.spacing.sm}px 12px`,
+                    borderRadius: 'md',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </Box>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <button
+              onClick={handleMarkAllAsRead}
+              disabled={markAllAsReadMutation.isPending}
+              style={{
+                padding: 3,
+                borderRadius: '50%',
+                backgroundColor: ct.primary.main,
+                color: 'common.white',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
+              }}
+            >
+              <Check size={20} />
             </button>
             <button
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={page === totalPages}
+              onClick={() => setShowSettings(true)}
               style={{
-                padding: `${designTokens.spacing.sm}px 12px`,
-                borderRadius: 'md',
-                border: '1px solid',
-                borderColor: 'divider',
-                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+                padding: 3,
+                borderRadius: '50%',
+                backgroundColor: 'background.paper',
+                color: 'inherit',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
               }}
             >
-              <ChevronRight size={16} />
+              <Settings size={20} />
             </button>
           </Box>
-        </Box>
-      </Box>
 
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <button
-          onClick={handleMarkAllAsRead}
-          disabled={markAllAsReadMutation.isPending}
-          style={{
-            padding: 3,
-            borderRadius: '50%',
-            backgroundColor: ct.primary.main,
-            color: 'common.white',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
-          }}
-        >
-          <Check size={20} />
-        </button>
-        <button
-          onClick={() => setShowSettings(true)}
-          style={{
-            padding: 3,
-            borderRadius: '50%',
-            backgroundColor: 'background.paper',
-            color: 'inherit',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
-          }}
-        >
-          <Settings size={20} />
-        </button>
-      </Box>
-
-      <Dialog
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{i18n.t('pages.notification_center.k22')}</DialogTitle>
-        <DialogContent>
-          <NotificationSettings />
-        </DialogContent>
-      </Dialog>
-    </PageContainer>
+          <Dialog
+            open={showSettings}
+            onClose={() => setShowSettings(false)}
+            maxWidth='sm'
+            fullWidth
+          >
+            <DialogTitle>{i18n.t('pages.notification_center.k22')}</DialogTitle>
+            <DialogContent>
+              <NotificationSettings />
+            </DialogContent>
+          </Dialog>
+        </>
+      }
+    />
   );
 };
 

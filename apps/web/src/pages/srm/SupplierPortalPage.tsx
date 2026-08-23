@@ -15,6 +15,7 @@ import {
   Divider,
   Avatar,
   LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -34,7 +35,7 @@ import { srmApi } from '@/api/srm';
 import type { SupplierPortalStats, Supplier } from '@/api/srm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { StatsPageTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
 
@@ -265,8 +266,91 @@ const SupplierPortalPage: React.FC = () => {
     },
   ];
 
+  if (portalQuery.isLoading) {
+    return (
+      <StatsPageTemplate
+        title={i18n.t('pages.supplier_portal_page.k19')}
+        loading
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+        showCharts={false}
+        showTables={false}
+        showStatCards={false}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: 300,
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </StatsPageTemplate>
+    );
+  }
+
+  if (portalQuery.isError) {
+    return (
+      <StatsPageTemplate
+        title={i18n.t('pages.supplier_portal_page.k19')}
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+        showCharts={false}
+        showTables={false}
+        showStatCards={false}
+      >
+        <Typography
+          color='error'
+          variant='h6'
+          sx={{ textAlign: 'center', py: 4 }}
+        >
+          {i18n.t('pages.supplier_portal_page.k3')}
+        </Typography>
+      </StatsPageTemplate>
+    );
+  }
+
+  if (!supplier) {
+    return (
+      <StatsPageTemplate
+        title={i18n.t('pages.supplier_portal_page.k19')}
+        showSearch={false}
+        showTimeRange={false}
+        showExport={false}
+        showRefresh={false}
+        showCharts={false}
+        showTables={false}
+        showStatCards={false}
+      >
+        <Typography
+          color='text.secondary'
+          variant='h6'
+          sx={{ textAlign: 'center', py: 4 }}
+        >
+          {i18n.t('pages.supplier_portal_page.k0')}
+        </Typography>
+      </StatsPageTemplate>
+    );
+  }
+
   return (
-    <PageContainer>
+    <StatsPageTemplate
+      title={supplier?.name || i18n.t('pages.supplier_portal_page.k19')}
+      subtitle={`${i18n.t('pages.supplier_portal_page.k0')}: ${supplier?.supplier_no || 'SUP-001'}`}
+      showSearch={false}
+      showTimeRange={false}
+      showExport={false}
+      showRefresh={false}
+      showCharts={false}
+      showTables={false}
+      showStatCards={false}
+    >
       <Box sx={{ mb: 4 }}>
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <CardContent sx={{ p: 3 }}>
@@ -282,18 +366,6 @@ const SupplierPortalPage: React.FC = () => {
                 {supplier?.name?.charAt(0) || 'S'}
               </Avatar>
               <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 600 }}
-                >
-                  {supplier?.name || i18n.t('pages.supplier_portal_page.k19')}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  [i18n.t('pages.supplier_portal_page.k0')]: {supplier?.supplier_no || 'SUP-001'}
-                </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Chip
                     size='small'
@@ -676,7 +748,7 @@ const SupplierPortalPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-    </PageContainer>
+    </StatsPageTemplate>
   );
 };
 
