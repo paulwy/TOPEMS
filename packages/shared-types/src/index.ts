@@ -1,3 +1,7 @@
+// P2-R5: 跨端共享的微服务名称常量（单一信源，与后端 config/services.yaml 对齐）
+export { SERVICE_NAMES, isValidServiceName } from './service-names';
+export type { ServiceName } from './service-names';
+
 export type {
   AxiosInstance,
   ApiResponse,

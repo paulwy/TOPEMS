@@ -1,20 +1,26 @@
 // =============================================================================
-// topems_shared 门面 Crate — A4.3 闭环完成
+// topems_shared 门面 Crate
 // =============================================================================
 //
-// V70-2 里程碑：所有 29 服务已完成去门面化迁移，直接依赖子 crate。
-// 本文件仅保留 KEEP 区（≤30 条）高频、跨服务通用的 re-export。
-// - AI Form Assistant 内部模块通过 pub mod 暴露，非子 crate re-export。
-// - 扩展 trait（AuditContextExt）继续在此处提供兼容。
+// P1-R3 治理（2026-08-23）：
+// 经审计，32 个 svc 全部依赖本门面，140 个源文件使用 `use topems_shared::`。
+// 原先 V70-2 注释声称"已完成去门面化迁移"与事实不符，已修正。
+// 本门面作为统一入口长期保留，提供高频、跨服务通用的 re-export。
 //
-// 子 crate 清单（服务直接依赖，不经本门面）：
+// 设计原则：
+// - KEEP 区仅保留高频、跨服务通用项（≤30 条 re-export）
+// - svc 可同时依赖本门面与子 crate（子 crate 用于深度定制场景）
+// - AI Form Assistant 内部模块通过 pub mod 暴露，非子 crate re-export
+// - 扩展 trait（AuditContextExt）继续在此处提供兼容
+//
+// 子 crate 清单（供 svc 深度定制时直接依赖）：
 //   topems-shared-auth, topems-shared-bootstrap, topems-shared-core,
 //   topems-shared-db, topems-shared-event, topems-shared-observability,
 //   topems-shared-service-client
 // =============================================================================
 
 // =============================================================================
-// KEEP — 核心保留项（高频、跨服务通用）
+// 核心保留项（高频、跨服务通用）
 // =============================================================================
 
 // --- 认证 / 租户 / 权限 ---
@@ -86,8 +92,8 @@ pub use topems_shared_db::audit::{
     AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest,
 };
 pub use topems_shared_db::database::{
-    check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
-    ReadWriteConfig, ReadWritePool,
+    check_pool_health, create_database_pool, ensure_master_data_refs_table,
+    test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
 // --- AI Form Assistant（门面 crate 内部模块，非子 crate re-export）---
 pub mod form_assistant;

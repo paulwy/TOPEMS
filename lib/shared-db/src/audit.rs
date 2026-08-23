@@ -155,6 +155,49 @@ impl AuditLogService {
         Ok(record.into_audit_log())
     }
 
+    /// 通用审计操作便捷方法（P0-R2 治理）
+    ///
+    /// 封装常见的 audit 写入模式，避免各 svc 复制粘贴相同 SQL。
+    /// 内部构造 `CreateAuditLogRequest` 后调用 `create_audit_log`。
+    ///
+    /// # 参数
+    /// - `action`: 动作（"create" / "update" / "delete" / ...）
+    /// - `entity_type`: 资源类型（"supplier" / "factory_map" / "patrol" / ...）
+    /// - `entity_id`: 资源 UUID（可选）
+    /// - `user_id`: 用户 ID 字符串（可选，内部尝试解析为 Uuid）
+    /// - `request_details`: 请求详情 JSON（可选）
+    /// - `status`: 状态（"success" / "failed" / ...）
+    /// - `error_message`: 错误信息（可选）
+    pub async fn log_operation(
+        &self,
+        action: &str,
+        entity_type: &str,
+        entity_id: Option<Uuid>,
+        user_id: Option<&str>,
+        request_details: Option<serde_json::Value>,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> Result<AuditLog, sqlx::Error> {
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            entity_type.to_string(),
+            status.to_string(),
+        );
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), String::new());
+        }
+        if let Some(details) = request_details {
+            req = req.with_request_details(details);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
+        self.create_audit_log(&req).await
+    }
+
     pub async fn query_audit_logs(
         &self,
         query: &AuditLogQuery,

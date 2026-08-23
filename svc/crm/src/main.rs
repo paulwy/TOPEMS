@@ -135,30 +135,8 @@ async fn main() -> Result<()> {
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
-    // 消费端通过 master_data_id 查找本地业务记录，而非依赖业务编码
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS crm_master_data_refs (
-            master_data_id   VARCHAR(128) PRIMARY KEY,
-            tenant_id        UUID NOT NULL,
-            domain           VARCHAR(32) NOT NULL,
-            code             VARCHAR(128) NOT NULL,
-            name             VARCHAR(256),
-            status           VARCHAR(32) DEFAULT 'active',
-            source_service   VARCHAR(64) NOT NULL,
-            local_entity_type VARCHAR(64),
-            local_entity_id  UUID,
-            payload_snapshot JSONB,
-            last_synced_at   TIMESTAMPTZ DEFAULT NOW(),
-            created_at       TIMESTAMPTZ DEFAULT NOW(),
-            updated_at       TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    tracing::info!("[crm] crm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
+    // V32.0 AC-5: 本地主数据引用表（P2-M1: 统一 schema 到 shared-db）
+    topems_shared::ensure_master_data_refs_table(pool, "crm").await?;
 
     // RFM 客户分群：订单数据表
     sqlx::query(

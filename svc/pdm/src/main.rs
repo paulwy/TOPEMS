@@ -97,11 +97,15 @@ async fn main() -> anyhow::Result<()> {
 
 // ==================== 公共处理函数 ====================
 
+static HOME_TEXT: &str =
+    "TOPEMS PDM Service API\n\nProduct Data Management\n\n- /health - Health check";
+
 async fn home() -> &'static str {
-    "TOPEMS PDM Service API\n\n\
-     Product Data Management\n\n\
-     - /health - Health check"
+    HOME_TEXT
 }
+
+// 注：P1-R1 治理 — 未来可改用 topems_shared_bootstrap::default_home_text("TOPEMS PDM", "Product Data Management")
+// 当前保留 async fn home() 以兼容 axum Handler trait 约束。
 
 async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
@@ -121,29 +125,8 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     Json(ApiResponse::success(resp, "Detailed health check"))
 }
 
-async fn init_db(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-    // V32.0 AC-5: 本地主数据引用表，用于跨服务 master_data_id 关联
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS pdm_master_data_refs (
-            master_data_id   VARCHAR(128) PRIMARY KEY,
-            tenant_id        UUID NOT NULL,
-            domain           VARCHAR(32) NOT NULL,
-            code             VARCHAR(128) NOT NULL,
-            name             VARCHAR(256),
-            status           VARCHAR(32) DEFAULT 'active',
-            source_service   VARCHAR(64) NOT NULL,
-            local_entity_type VARCHAR(64),
-            local_entity_id  UUID,
-            payload_snapshot JSONB,
-            last_synced_at   TIMESTAMPTZ DEFAULT NOW(),
-            created_at       TIMESTAMPTZ DEFAULT NOW(),
-            updated_at       TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    tracing::info!("[pdm] pdm_master_data_refs 表已就绪（AC-5 本地主数据引用）");
+async fn init_db(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    // V32.0 AC-5: 本地主数据引用表（P2-M1: 统一 schema 到 shared-db）
+    topems_shared::ensure_master_data_refs_table(pool, "pdm").await?;
     Ok(())
 }

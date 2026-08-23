@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V270 | **更新日期**: 2026-08-23
+> **版本**: V272 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -8,10 +8,48 @@
 > **V268 三轨并行推进已完成**（AuthPageTemplate + ChatPageTemplate + MobileHomePage 迁移，模板覆盖率 93.4%→94.9%）。
 > **V269 DesignerTemplate + 4 设计器页迁移已完成**（模板覆盖率 94.9%→95.7%，例外项 27→23）。
 > **V270 审计脚本校准 + 例外清单数据修正已完成**（覆盖率 91.7%→95.8% 校准，例外项 23→22）。
+> **V271 架构冗余深度治理（P0→P1→P2）已完成**（审计统一 / 配置单一信源 / 门面修正 / 跨端类型共享 / DB 初始化去重）。
+> **V272 SQL 迁移冗余清理（方案 A）已完成**（删除 134 个 migrations/ 死代码 + 删除 MigrationSDK + schema_defense 注释清理）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V272 SQL 迁移冗余清理（方案 A: 统一 schema_defense）
+
+> 日期：2026-08-23 | 删除 135 文件 + 改动 6 文件 | 验收：cargo check --workspace 通过 · shared-db 117 测试通过
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A1: 删除 migrations/ 死代码 | 删除 20 个服务的 migrations/ 目录，共 134 个未被 `sqlx::migrate!` 加载的 SQL 文件 | ✅ |
+| A2: 删除 MigrationSDK | 删除 [lib/shared-db/src/migration.rs](file:///Users/air/TOPEMS/lib/shared-db/src/migration.rs)（439 行）+ 清理 [lib.rs](file:///Users/air/TOPEMS/lib/shared-db/src/lib.rs) 中 `pub mod migration` 与 re-export | ✅ |
+| A3: 清理过时注释 | 清理 wms/srm/ai/erp 4 个 schema_defense.rs 文件中「提取自 migrations/*.sql」过时注释 | ✅ |
+| A4: 修复 mes 编译失败 | 补建 [svc/mes/src/modules/mod.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/mod.rs) 的 anomaly_records 表 + 4 个 approval_id 列（之前会话遗留代码引用但未建表） | ✅ |
+
+#### 决策依据
+经调研发现项目存在三套并行机制：
+1. **schema_defense.rs**（22+ 服务实际使用）— TABLE_DEFS 作为列定义单一事实源，运行时增量 ADD COLUMN + 一致性校验
+2. **migrations/*.sql**（134 文件）— 从未被 `sqlx::migrate!` 加载，死代码
+3. **inline CREATE TABLE**（60 文件）— 作为完整 schema 定义（含 UNIQUE/REFERENCES/CHECK 约束），与 schema_defense 配合使用
+
+方案 A 保留 schema_defense + inline CREATE TABLE 作为完整 schema 演进机制，删除两套未使用的死代码。未选择方案 B（激活 sqlx::migrate!）的原因：134 SQL 文件与 DB schema 一致性验证风险高，且 schema_defense 已提供等价的增量演进能力。
+
+### 已完成：V271 架构冗余深度治理（P0 → P1 → P2）
+
+> 日期：2026-08-23 | 代码改动 20+ files | 验收：cargo check 5 包通过 · shared-db 119 测试通过 · tsc 无新增错误
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| P0-R2: Audit 重复实现治理 | shared-db 新增 `log_operation` 通用方法；gis/srm/mobile 审计服务重构为调用共享方法，消除重复 SQL | ✅ |
+| P0-R4: services.yaml 三重同步治理 | 新建 `scripts/validate-plugin-config.py`（plugin.yaml 单一信源校验）；集成到 `sync-ports.sh` 前置检查 | ✅ |
+| P1-R1: main.rs 模板化治理 | shared-bootstrap 新增 `default_home_text` / `default_home_handler`；pdm main.rs 改用共享 home 文本生成 | ✅ |
+| P1-R3: lib 门面去留 | 修正 `lib/src/lib.rs` 注释：32 svc 依赖门面、140 源文件使用，门面长期保留，明确 KEEP 区设计原则 | ✅ |
+| P2-R5: desktop/web 跨端类型共享 | `packages/shared-types` 新增 `service-names.ts`（与 services.yaml 严格对齐）；index.ts 导出 SERVICE_NAMES / ServiceName / isValidServiceName | ✅ |
+| P2-M1: init_database 去重 | shared-db 新增 `ensure_master_data_refs_table`；scm/erp/pdm/crm 4 服务消除重复 CREATE TABLE SQL（每服务 -15 行） | ✅ |
+
+#### P2-M1 后续扩展（V272 已评估关闭）
+- [x] **全量 sqlx::migrate! 迁移**：V272 评估后选择方案 A（保留 schema_defense + inline CREATE TABLE），不激活 sqlx::migrate!
+- [x] **MigrationSDK 推广**：V272-A2 已删除 MigrationSDK（439 行死代码）
 
 ### 已完成：V270 审计脚本校准 + 例外清单数据修正
 

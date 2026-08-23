@@ -1,14 +1,40 @@
-// SRM 服务审计日志
+// SRM 服务审计日志（P0-R2 治理：复用 shared-db AuditLogService）
 use sqlx::PgPool;
+use topems_shared_db::audit::{AuditLog, AuditLogQuery, AuditLogService};
 use uuid::Uuid;
 
+/// SRM 审计资源类型常量
+pub mod resources {
+    pub const SUPPLIER: &str = "supplier";
+    pub const SUPPLIER_CATEGORY: &str = "supplier_category";
+    pub const SUPPLIER_EVALUATION: &str = "supplier_evaluation";
+    pub const SUPPLIER_CONTRACT: &str = "supplier_contract";
+    pub const SUPPLIER_PRODUCT: &str = "supplier_product";
+
+    /// SRM 服务可查询的全部资源类型
+    pub const ALL: &[&str] = &[
+        SUPPLIER,
+        SUPPLIER_CATEGORY,
+        SUPPLIER_EVALUATION,
+        SUPPLIER_CONTRACT,
+        SUPPLIER_PRODUCT,
+    ];
+}
+
 pub struct SrmAuditService {
-    pool: PgPool,
+    audit_service: AuditLogService,
 }
 
 impl SrmAuditService {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            audit_service: AuditLogService::new(pool),
+        }
+    }
+
+    /// 底层共享审计服务（供需要直接访问的场景）
+    pub fn shared(&self) -> &AuditLogService {
+        &self.audit_service
     }
 
     pub async fn log_supplier_operation(
@@ -20,28 +46,18 @@ impl SrmAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("supplier")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SUPPLIER,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_category_operation(
@@ -53,28 +69,18 @@ impl SrmAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("supplier_category")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SUPPLIER_CATEGORY,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_evaluation_operation(
@@ -86,28 +92,18 @@ impl SrmAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("supplier_evaluation")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SUPPLIER_EVALUATION,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_contract_operation(
@@ -119,28 +115,18 @@ impl SrmAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("supplier_contract")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SUPPLIER_CONTRACT,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn log_product_operation(
@@ -152,28 +138,18 @@ impl SrmAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details
-            .map(|d| serde_json::to_string(&d).ok())
-            .flatten();
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("supplier_product")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.audit_service
+            .log_operation(
+                action,
+                resources::SUPPLIER_PRODUCT,
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
+            .await
+            .map(|_| ())
     }
 
     pub async fn query_audit_logs(
@@ -185,32 +161,24 @@ impl SrmAuditService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<SrmAuditLogEntry>, sqlx::Error> {
-        let logs = sqlx::query_as::<_, SrmAuditLogEntry>(
-            r#"
-            SELECT
-                id, action, resource as entity_type, resource_id as entity_id,
-                user_id::text, details as request_details, status, error_message,
-                ip_address, user_agent, created_at
-            FROM public.audit_logs
-            WHERE ($1::text IS NULL OR action = $1)
-              AND ($2::text IS NULL OR resource = $2)
-              AND ($3::text IS NULL OR user_id::text = $3)
-              AND ($4::text IS NULL OR status = $4)
-              AND resource IN ('supplier', 'supplier_category', 'supplier_evaluation', 'supplier_contract', 'supplier_product')
-            ORDER BY created_at DESC
-            LIMIT $5 OFFSET $6
-            "#,
-        )
-        .bind(action)
-        .bind(resource)
-        .bind(user_id)
-        .bind(status)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+        let page = if limit > 0 { offset / limit + 1 } else { 1 };
+        let query = AuditLogQuery {
+            action: action.map(|s| s.to_string()),
+            entity_type: resource.map(|s| s.to_string()),
+            user_id: user_id.map(|s| s.to_string()),
+            status: status.map(|s| s.to_string()),
+            start_date: None,
+            end_date: None,
+            page: Some(page),
+            page_size: Some(limit),
+        };
 
-        Ok(logs)
+        let logs = self
+            .audit_service
+            .query_audit_logs(&query, Some(resources::ALL))
+            .await?;
+
+        Ok(logs.into_iter().map(SrmAuditLogEntry::from).collect())
     }
 }
 
@@ -227,6 +195,24 @@ pub struct SrmAuditLogEntry {
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<AuditLog> for SrmAuditLogEntry {
+    fn from(log: AuditLog) -> Self {
+        Self {
+            id: log.id,
+            action: log.action,
+            entity_type: log.entity_type,
+            entity_id: log.entity_id,
+            user_id: log.user_id,
+            request_details: log.request_details,
+            status: log.status,
+            error_message: log.error_message,
+            ip_address: log.ip_address,
+            user_agent: log.user_agent,
+            created_at: log.created_at,
+        }
+    }
 }
 
 #[cfg(test)]

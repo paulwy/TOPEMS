@@ -223,6 +223,17 @@ main() {
   echo "TOPEMS 端口同步 (source: config/ports.env)"
   echo ""
 
+  # P0-R4 治理：先校验 plugin.yaml 与 services.yaml/ports.env/main.rs 一致性
+  echo "校验 plugin.yaml 单一信源一致性:"
+  if python3 "$SCRIPT_DIR/validate-plugin-config.py" --check >/dev/null 2>&1; then
+    echo "  ✓ plugin.yaml 与下游配置一致"
+  else
+    echo "  ✗ plugin.yaml 与下游配置不一致，请先运行: python3 scripts/validate-plugin-config.py" >&2
+    python3 "$SCRIPT_DIR/validate-plugin-config.py" --check >&2 2>&1 || true
+    exit 1
+  fi
+  echo ""
+
   local services_conf_content docker_env_content
   services_conf_content=$(generate_services_conf)
   docker_env_content=$(generate_docker_env)
