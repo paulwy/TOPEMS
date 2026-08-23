@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V270 审计脚本校准 + 例外清单数据修正  
+> 关联 TODO：`docs/roadmap/TODO.md` V274 报表类模板化迁移  
 > 更新日期：2026-08-23
 
 ---
@@ -19,10 +19,14 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 
 **V273**：新增 `AiToolPageTemplate` + 3 个 AI 工具页（AiCodeAssistantPage、AiDocumentAnalysisPage、AiKnowledgeBasePage）迁移，覆盖率提升至 **96.4%**（511/530），剩余 19 个例外项。
 
-剩余 19 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
+**V274**：新增 `ReportViewerTemplate` + 复用 `DesignerTemplate` 双轨并行，完成 6 个报表类页面模板化，覆盖率提升至 **97.5%**（517/530），剩余 **13** 个例外项。实现策略：
+- `DesignerTemplate` (standard) 复用 V269 设计器布局壳，覆盖报表设计/构建 3 页面；scan.mjs `report-designer` 规则扩展为同时接受 `ReportDesignerTemplate` 和 `DesignerTemplate`
+- `ReportViewerTemplate` 新建 center/viewer 双模式 + children 透传 + loading/error 统一状态；scan.mjs 新增 `report-viewer` 规则，覆盖报表中心/查看器 3 页面
+
+剩余 13 个页面因交互形态特殊、或强行套用现有模板会显著增加维护成本，经评估后登记为例外项，不再纳入当前模板迁移范围。
 
 例外项不代表"永不治理"，而是明确：
-- 当前 21 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate` 已新增并落地）；
+- 当前 22 种标准页面模板不覆盖这些场景（`MobilePageTemplate`、`AuthPageTemplate`、`ChatPageTemplate`、`DesignerTemplate`、`AiToolPageTemplate`、`ReportViewerTemplate` 已新增并落地）；
 - 后续如需统一，应优先创建新的专用模板，而不是硬塞进现有模板。
 
 ---
@@ -34,7 +38,7 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | AI 对话类 | 0 | — | 3 个 AI 工具页已全部迁至 `AiToolPageTemplate` |
 | 移动端页面 | 0 | — | 11 个移动端页面已全部迁至 `MobilePageTemplate` |
 | 设计器/画布类 | 0 | — | 4 个页面已全部迁至 `DesignerTemplate` |
-| 报表类 | 6 | `ReportBuilder`、`ReportViewer`、`ReportPage` 等 | 报表设计/查看/渲染，已有 `ReportDesignerTemplate` 但业务耦合深 |
+| 报表类 | 0 | — | 6 个报表页面已完成模板化迁移（3 设计器→DesignerTemplate / 3 查看→ReportViewerTemplate） |
 | 认证/错误页 | 0 | — | 4 个页面已全部迁至 `AuthPageTemplate` |
 | 门户/协作类 | 2 | `SupplierPortalPage`、`NotificationCenter` | 多角色门户、消息中心，布局特殊 |
 | GIS/地图类 | 2 | `GisPage`、`gis/index` | 地图画布 + 图层控制，现有 `GisMapTemplate` 尚未接入 |
@@ -42,7 +46,7 @@ V266 模板迁移阶段结束后，全站模板覆盖率达到 **91.5%**（486/5
 | 工具/系统类 | 3 | `PerformanceTestPage`、`SystemManagementPage`、`PluginUploadPage` | 高定制工具页 |
 | 列表/结构类 | 4 | `DatabaseStructurePage`、`HelpCenterPage`、`CommentsPage`、`AppManagementPage` | 适合模板但优先级低，可待模块重构时处理 |
 
-合计：**19 个页面**。
+合计：**13 个页面**。
 
 ---
 
@@ -89,16 +93,20 @@ V269 新增 `DesignerTemplate`（`apps/web/src/components/templates/DesignerTemp
 | `apps/web/src/pages/workflow/WorkflowDesignerPage.tsx` | `DesignerTemplate` (fullscreen) | ✅ 已迁移 | 流程画布设计器 |
 | `apps/web/src/pages/automation/AutomationDesignerPage/index.tsx` | `DesignerTemplate` (fullscreen) | ✅ 已迁移 | 自动化规则三栏设计器 |
 
-### 3.4 报表类（6）
+### 3.4 报表类（0，已迁移 6 项）
 
-| 页面路径 | 建议后续模板 | 备注 |
-|----------|--------------|------|
-| `apps/web/src/pages/report/ReportBuilder.tsx` | `ReportDesignerTemplate` | 报表构建器 |
-| `apps/web/src/pages/report/ReportBuilderPage.tsx` | `ReportDesignerTemplate` | 报表构建页 |
-| `apps/web/src/pages/report/ReportDesignPage.tsx` | `ReportDesignerTemplate` | 报表设计 |
-| `apps/web/src/pages/report/ReportPage.tsx` | `StatsPageTemplate` / `ReportViewerTemplate` | 报表中心 |
-| `apps/web/src/pages/report/ReportPage/index.tsx` | `StatsPageTemplate` / `ReportViewerTemplate` | 报表中心（新版） |
-| `apps/web/src/pages/report/ReportViewer.tsx` | `ReportViewerTemplate` | 报表查看器 |
+V274 分两类模板接入报表体系，实现报表类例外清零（6→0，标准模板数 18→19，例外总数 19→13）：
+- **`DesignerTemplate`（标准模式）**：复用 V269 设计器布局模板（统一 `loading` / `error` / `title` / `subtitle` / `pageContainerProps`），scan.mjs 已将 `DesignerTemplate` 加入 `report-designer` 识别规则，覆盖报表设计/构建场景。
+- **`ReportViewerTemplate`（新增）**：`apps/web/src/components/templates/ReportViewerTemplate.tsx`，支持 `center` / `viewer` 两种模式及 `children` 透传，统一 `statsHeader` / `filterBar` / `tabs` / `content` / `pagination` / `toolbar` / `loading` / `error` 结构化插槽，scan.mjs 新增 `report-viewer` 识别规则。
+
+| 页面路径 | 使用模板 | 状态 | 备注 |
+|----------|----------|------|------|
+| `apps/web/src/pages/report/ReportDesignPage.tsx` | `DesignerTemplate` (standard) | ✅ 已迁移 | landing 空状态入口 + 3 操作按钮（表格/图表/自定义） |
+| `apps/web/src/pages/report/ReportBuilderPage.tsx` | `DesignerTemplate` (standard) | ✅ 已迁移 | 构建器页面包装，loading 透传给 react-query |
+| `apps/web/src/pages/report/ReportBuilder.tsx` | `DesignerTemplate` (standard) | ✅ 已迁移 | 双分支：`isModal=true` 弹窗壳 / `isModal=false` 独立路由壳 |
+| `apps/web/src/pages/report/ReportPage.tsx` | `ReportViewerTemplate`（别名 re-export） | ✅ 已迁移 | 报表中心入口别名，显式 re-export 模板保证审计识别 |
+| `apps/web/src/pages/report/ReportPage/index.tsx` | `ReportViewerTemplate` (center) | ✅ 已迁移 | 报表中心仪表盘：`loading`/服务下线 error → `filterBar`/`tabs` → 内容 + 弹窗层 |
+| `apps/web/src/pages/report/ReportViewer.tsx` | `ReportViewerTemplate` (viewer) | ✅ 已迁移 | 报表查看器：`loading`/`error` 统一处理 → 全屏 modal children 透传 |
 
 ### 3.5 认证/错误页（0，已迁移 4 项）
 

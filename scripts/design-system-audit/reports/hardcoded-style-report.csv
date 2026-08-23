@@ -1,7 +1,6 @@
 file,module,line,column,type,label,value,context
-apps/web/src/pages/ai/AiChatPage.tsx,ai,355,57,px_spacing,px 间距/尺寸,140px,"<Box sx={{ display: 'flex', height: 'calc(100vh - 140px)', bgcolor: 'background.default' }}>"
-apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,669,56,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
-apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,722,54,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
+apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,648,56,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
+apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,701,54,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
 apps/web/src/pages/ai/AiPromptLibraryPage.tsx,ai,407,38,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
 apps/web/src/pages/bi/BIVisualizationPage.tsx,bi,359,67,px_spacing,px 间距/尺寸,280px,"<Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>"
 apps/web/src/pages/bi/BiPermissionPage.tsx,bi,433,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}"
@@ -53,7 +52,7 @@ apps/web/src/pages/scm/MrpPlanPage.tsx,scm,157,43,px_spacing,px 间距/尺寸,1p
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,165,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,173,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,181,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
-apps/web/src/pages/shared/LoginPage.tsx,shared,523,50,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>"
+apps/web/src/pages/shared/LoginPage.tsx,shared,509,50,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,163,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,188,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,389,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
