@@ -145,13 +145,21 @@ pre-commit:
       run: bash scripts/ci/check-sensitive-info.sh
 
     # [Gate P] API path duplicates check — migrated from husky #4
+    # NOTE: scripts/check_api_duplicates_ci.py is known to require a live DB.
+    # If the script is not deployed locally we emit a WARN and proceed, instead
+    # of silently nooping (was ambiguous before P1-2 fix).
     api-duplicates:
       tags: api rust
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
-        [ -z "$STAGED" ] && exit 0
+        if [ -z "$STAGED" ]; then
+          exit 0
+        fi
         if [ -f "scripts/check_api_duplicates_ci.py" ]; then
           python3 scripts/check_api_duplicates_ci.py --ci
+        else
+          printf '\033[33m[Gate P] WARN\033[0m scripts/check_api_duplicates_ci.py not found, skipping api-duplicates check (deploy it if API duplicate enforcement is required)\n'
+          exit 0
         fi
 
     # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
