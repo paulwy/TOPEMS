@@ -8,6 +8,7 @@ import type { ModuleCardConfig } from '@/lib/navigation/types';
 import { lucideIcons } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
+import { AuthPageTemplate } from '@/components/templates';
 
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,23 +23,15 @@ const NotFoundPage: React.FC = () => {
   }, []);
 
   return (
-    <Box
-      className='not-found-page'
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'grey.100',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 4,
-      }}
+    <AuthPageTemplate
+      backgroundGradient={designTokens.colors.grey[100]}
+      maxWidth={640}
     >
       <Box
         sx={{
-          maxWidth: 640,
           width: '100%',
           textAlign: 'center',
+          px: 4,
         }}
       >
         {/* 404 数字展示 */}
@@ -227,7 +220,7 @@ const NotFoundPage: React.FC = () => {
           </Box>
         )}
       </Box>
-    </Box>
+    </AuthPageTemplate>
   );
 };
 

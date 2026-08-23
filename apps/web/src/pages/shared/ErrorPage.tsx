@@ -3,20 +3,14 @@ import { AlertCircle } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { BackButton } from '@topems/shared-components';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
+import { AuthPageTemplate } from '@/components/templates';
 
 const ErrorPage: React.FC = () => {
   return (
-    <Box
-      className='error-page'
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'grey.100',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 4,
-      }}
+    <AuthPageTemplate
+      backgroundGradient={designTokens.colors.grey[100]}
+      maxWidth={448}
     >
       <Box
         sx={{
@@ -24,7 +18,6 @@ const ErrorPage: React.FC = () => {
           borderRadius: 3,
           boxShadow: 6,
           p: 8,
-          maxWidth: 448,
           width: '100%',
           textAlign: 'center',
         }}
@@ -62,7 +55,7 @@ const ErrorPage: React.FC = () => {
           label={i18n.t('pages.error_page.k0')}
         />
       </Box>
-    </Box>
+    </AuthPageTemplate>
   );
 };
 

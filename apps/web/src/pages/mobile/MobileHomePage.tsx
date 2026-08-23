@@ -8,7 +8,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
 import {
-  Home,
   Clock,
   CheckSquare,
   Scan,
@@ -22,7 +21,7 @@ import {
 import i18n from '@/i18n';
 import { Box, Typography, Avatar, Paper, Badge, Chip, Divider } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer } from '@/components/common';
+import { MobilePageTemplate } from '@/components/templates';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -146,11 +145,8 @@ export const MobileHomePage: React.FC = () => {
     day: 'numeric',
   });
   return (
-    <PageContainer
-      title={i18n.t('mobile.mobile_home_page.k15')}
-      headerProps={{ pageIcon: <Home size={20} /> }}
-    >
-      <Box sx={{ p: 2, bgcolor: 'background.default', minHeight: '100vh' }}>
+    <MobilePageTemplate title={i18n.t('mobile.mobile_home_page.k15')}>
+      <Box sx={{ p: 2, pb: 3, bgcolor: 'background.default' }}>
         {/* 用户信息卡片 */}
         <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Badge
@@ -394,7 +390,7 @@ export const MobileHomePage: React.FC = () => {
           ))}
         </Paper>
       </Box>
-    </PageContainer>
+    </MobilePageTemplate>
   );
 };
 export default MobileHomePage;
