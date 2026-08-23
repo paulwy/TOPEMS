@@ -44,6 +44,10 @@ export interface StatCard {
     label?: string;
   };
   gradient?: [string, string];
+  /** 卡片背景色（MUI palette 路径，如 'primary.50'） */
+  bgColor?: string;
+  /** 是否对数值进行千分位格式化 */
+  format?: boolean;
   /** 点击回调 */
   onClick?: () => void;
 }
@@ -296,7 +300,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
-              bgcolor: stat.gradient ? undefined : 'background.paper',
+              bgcolor: stat.gradient ? undefined : (stat.bgColor || 'background.paper'),
               color: stat.gradient ? 'var(--color-primary-foreground)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',
@@ -356,7 +360,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       color: stat.gradient ? 'var(--color-primary-foreground)' : 'text.primary',
                     }}
                   >
-                    {stat.value}
+                    {stat.format && typeof stat.value === 'number'
+                      ? Number(stat.value).toLocaleString()
+                      : stat.value}
                   </Typography>
                   {stat.suffix && (
                     <Typography

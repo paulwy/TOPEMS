@@ -29,6 +29,7 @@ topems-shared-event = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
+topems-shared-db = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
