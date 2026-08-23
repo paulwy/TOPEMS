@@ -200,6 +200,7 @@ pub mod data_governance;
 pub mod database;
 pub mod master_data_refs;
 pub mod query_optimizer;
+pub mod reconciliation_log;
 pub mod repository;
 pub mod rls;
 pub mod schema;
@@ -209,6 +210,9 @@ pub use audit::{AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest}
 pub use master_data_refs::{
     CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService,
     StaleRecord, UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,
+};
+pub use reconciliation_log::{
+    CreateReconciliationLogRequest, ReconciliationLog, ReconciliationLogService,
 };
 pub use backup::{
     BackupConfig, BackupError, BackupManager, BackupMetadata, BackupRequest, BackupSchedule,

@@ -3,6 +3,8 @@ use axum::{
     http::HeaderMap,
     Json,
 };
+use sqlx::PgPool;
+use topems_shared_db::AuditLogService;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
@@ -12,8 +14,26 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 use super::common::{call_finance_core_approval, ConsolidationListParams};
 use super::ApiState;
 
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
+async fn log_audit(
+    pool: &PgPool,
+    action: &str,
+    entity_type: &str,
+    entity_id: Option<Uuid>,
+    headers: &HeaderMap,
+) {
+    let username = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let svc = AuditLogService::new(pool.clone());
+    let _ = svc
+        .log_operation(
+            action,
+            entity_type,
+            entity_id,
+            username,
+            None,
+            "success",
+            None,
+        )
+        .await;
 }
 
 #[utoipa::path(
@@ -129,7 +149,7 @@ pub async fn get_report(
 )]
 pub async fn generate_report(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<GenerateConsolidationReportRequest>,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let id = Uuid::new_v4();
@@ -210,13 +230,14 @@ pub async fn generate_report(
 
     match updated_report {
         Ok(report) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "generate",
                 "consolidation_report",
                 Some(id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(report, "生成合并报表成功"))
         }
         Err(e) => {
@@ -346,6 +367,7 @@ pub async fn submit_report(
 
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
+        &state.db,
         "consolidation_report",
         report_id,
         &report.report_no,
@@ -373,13 +395,14 @@ pub async fn submit_report(
 
     match result {
         Ok(report) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "submit",
                 "consolidation_report",
                 Some(report_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(report, "提交审批成功"))
         }
         Err(e) => {
@@ -424,6 +447,7 @@ pub async fn approve_report(
 
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
+        &state.db,
         "consolidation_report",
         report_id,
         &report.report_no,
@@ -451,13 +475,14 @@ pub async fn approve_report(
 
     match result {
         Ok(report) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "approve",
                 "consolidation_report",
                 Some(report_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(report, "审批合并报表成功"))
         }
         Err(e) => {
@@ -478,7 +503,7 @@ pub async fn approve_report(
 pub async fn publish_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
@@ -494,13 +519,14 @@ pub async fn publish_report(
 
     match result {
         Ok(report) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "publish",
                 "consolidation_report",
                 Some(report_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(report, "发布合并报表成功"))
         }
         Err(e) => {
@@ -521,7 +547,7 @@ pub async fn publish_report(
 pub async fn delete_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(
         "UPDATE plugin_erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1",
@@ -534,13 +560,14 @@ pub async fn delete_report(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并报表不存在"))
             } else {
-                log_audit!(
+                log_audit(
                     &state.db,
                     "delete",
                     "consolidation_report",
                     Some(report_id),
-                    &headers
-                );
+                    &headers,
+                )
+                .await;
                 Json(ApiResponse::success((), "删除合并报表成功"))
             }
         }

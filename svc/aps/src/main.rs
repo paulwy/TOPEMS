@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
 
     let config = ServiceConfig {
         name: "topems-aps",
-        port: 8043,
+        port: 8074,
         port_env_var: Some("APS_PORT"),
         max_db_connections: 10,
         enable_events: true,
