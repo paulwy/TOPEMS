@@ -1,4 +1,0 @@
-ALTER TABLE teams ADD COLUMN IF NOT EXISTS leader_id UUID;
-ALTER TABLE teams ADD COLUMN IF NOT EXISTS leader_name VARCHAR(128);
-
-ALTER TABLE quality_standard_values ADD COLUMN IF NOT EXISTS standard_id UUID REFERENCES quality_standards(id) ON DELETE CASCADE;

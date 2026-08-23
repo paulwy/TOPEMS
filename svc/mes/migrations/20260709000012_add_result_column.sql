@@ -1,1 +1,0 @@
-ALTER TABLE quality_patrols ADD COLUMN IF NOT EXISTS result VARCHAR(64);
