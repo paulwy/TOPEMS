@@ -9,12 +9,8 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::ConsolidationListParams;
+use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
-
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
-}
 
 #[utoipa::path(
     get,
@@ -111,7 +107,7 @@ pub async fn get_internal_transaction(
 )]
 pub async fn execute_elimination(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<ExecuteEliminationRequest>,
 ) -> Json<ApiResponse<EliminationResult>> {
     let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
@@ -183,13 +179,14 @@ pub async fn execute_elimination(
         });
     }
 
-    log_audit!(
+    log_audit(
         &state.db,
         "execute_elimination",
         "internal_transaction",
         Some(req.scope_id),
-        &headers
-    );
+        &headers,
+    )
+    .await;
 
     Json(ApiResponse::success(
         EliminationResult {

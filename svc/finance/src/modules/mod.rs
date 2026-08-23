@@ -48,7 +48,7 @@ pub struct AccountQueryParams {
     parent_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct VoucherQueryParams {
     status: Option<String>,
     period: Option<String>,
@@ -1748,7 +1748,7 @@ pub async fn get_dashboard_handler(
 
 // ========== V40.0 Phase 8: 凭证模板 ==========
 
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct VoucherTemplateQueryParams {
     pub voucher_type: Option<String>,
     pub status: Option<String>,

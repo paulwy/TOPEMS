@@ -46,7 +46,7 @@ pub struct Payable {
 }
 
 // 收款记录实体
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CollectionRecord {
     pub id: String,
     pub collection_no: String,
@@ -59,7 +59,7 @@ pub struct CollectionRecord {
 }
 
 // 付款记录实体
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct PaymentRecord {
     pub id: String,
     pub payment_no: String,

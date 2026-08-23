@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V285 | **更新日期**: 2026-08-23
+> **版本**: V286 | **更新日期**: 2026-08-23 | **当前开发分支**: `feature/v286`
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -24,6 +24,7 @@
 > **V284 后续任务推进**（ERP 审批间接集成评估 / 3 模板页声明式评估 / 预存在 clippy + doctest 修复 + 测试增强）。
 > **V284 架构冗余深度治理 4 轨并行**（tms/aps 配置单一信源补齐 / MasterDataRefService 下沉 + AuditLogService 注入 / Finance·Hrm utoipa::path 补全 schemas 393→442）。
 > **V285 4 轨并行推进**（tms/aps 端口三端对齐 8042→8073/8074 / ReconciliationLogService 下沉 / Finance·Hrm TS 100→0 清零 / i18n gate 双脚本合并 / ERP 审批本地双写）。
+> **V286 4 轨并行推进中**：ERP 兄弟 4 文件空宏切双写 / Finance settlement_center utoipa 补全 + api-types 升级 / API gate 三合一 / Node 版本锁定 + GROUP2 校验 + mes sqlx PG 工具化。
 
 ---
 
@@ -513,11 +514,180 @@
 - [x] D1：降级 V286 评估已文档化（完整 docker/sqlx prepare 命令）
 
 ### V285 后续扩展（留给 V286+）
-- [ ] **mes integration_tests sqlx 缓存补全（V285 D1）**：12 处 query!/query_scalar! 宏缺 .sqlx 缓存；需先起 docker postgres 16 并迁移 schema，再 `cargo sqlx prepare -p topems-mes --tests`；目标 ≥12 JSON + SQLX_OFFLINE cargo check --tests 0 error
-- [ ] **Finance settlement_center schemas 补全（V285 B C 类）**：AccountOpeningBalance/AccountBalance/VoucherTemplate/ReportQueryParams/CounterpartyType 等 8 条无 schema，需补 settlement_center 4 个 DTO 的 ToSchema derive + openapi.rs paths![] 注册，然后 api-types.ts 中 8 条 SafeSchema 升级为强类型（预计 TS 错误保持 0）
-- [ ] **ERP 其他 4 兄弟文件的空 log_audit! 宏切换**：scopes.rs/company_relations.rs/internal_transactions.rs/elimination_rules.rs/scope_companies.rs 同模式空宏，可复用 reports.rs 的 `log_audit` 辅助函数（抽取到 common.rs 共享），预计 +30~40 行
-- [ ] **API gate 脚本合并（V285 C 轨后半段）**：check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs → `check-api.cjs --mode={audit|coverage|align}`，合并模式完全复制 i18n 双脚本合并模板（4 helper + wrapper），退出码规则一致
-- [ ] **连续 2 个版本列入的高价值项（优先级提升）**：DocumentsPage 未来简化为纯文件列表后评估 DocumentTemplate 声明式迁移（V283 B 轨评估未动 + V284 B 轨评估未动）
+- [x] **mes integration_tests sqlx 缓存补全（V285 D1）**：V286 D3 工具化 — 新建 `svc/mes/docker-compose.yaml`（postgres16:alpine 5435）+ `svc/mes/scripts/sqlx-prepare.sh`（一键起/迁/prepare 流程）+ `svc/mes/.gitignore` tmp-pgdata 忽略。真正生成缓存需用户跑 `bash svc/mes/scripts/sqlx-prepare.sh`（需 Docker daemon），收闭为"可一键"。
+- [x] **Finance settlement_center schemas 补全（V285 B C 类）**：✅ V286 B 轨完成 — 9 新 DTO (AccountOpeningBalance / AccountBalance / CounterpartyType / ReportQueryParams 等 8+1) 在 `models/mod.rs` 新建；49 个已有 DTO 补 `#[derive(ToSchema)]`（10 files 覆盖 voucher_template/settlement_v55/domain/settlement_center 25 条/mod.rs）；openapi.rs components(schemas) 新增 53 条注册；api-types.ts FinanceTypes namespace 53 条 SafeSchema 条件强类型补全。
+- [x] **ERP 其他 4 兄弟文件的空 log_audit! 宏切换**：✅ V286 A 轨完成 — scopes/company_relations/internal_transactions/elimination_rules/scope_companies + reports 共 6 文件 13 处空宏 → 复用抽至 `common.rs` 的 `pub async fn log_audit(pool,action,entity_type,entity_id,headers)` 真实 AuditLogService 双写；13 处 `_headers: HeaderMap` 命名改为 `headers` 清 unused warning。
+- [x] **API gate 脚本合并（V285 C 轨后半段）**：✅ V286 C 轨完成 — 3 脚本（audit 9.9k/coverage 4.8k/compare 212 行）合并为 622 行新 `check-api.cjs`（parseArgs/runAudit/runCoverage/runCompare/renderReport 5 helper + main）；CLI `--mode={audit|coverage|compare|all}` 默认 all 向后兼容；JSON 输出 `{mode,generatedAt,audit,coverage,compare}`；3 原脚本改为 9 行 thin wrapper（`__dirname` 绝对 require，复刻 V285 i18n wrapper fix 模式）。
+- [ ] **连续 2 个版本列入的高价值项（优先级提升）**：DocumentsPage 未来简化为纯文件列表后评估 DocumentTemplate 声明式迁移（V283 B 轨评估未动 + V284 B 轨评估未动 + V286 仍未简化 → 已连续 3 版列入，**V287 升级为评估任务，若 DocumentsPage 无简化计划就永久取消该项**）
+
+---
+
+## 🎯 V286 — 4 轨并行（ERP 空宏双写 · Finance settlement schemas 53 · API gate 三合一 · Node 信源统一 + GROUP2 校验 + mes PG 一键化）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-23 | 分支：`feature/v286` | 代码改动 32 files（Rust 13 / TS 4 / Node 5 新建+4 wrapper / YAML 1 / 配置 3 / PG 工具化 3 / 文档 1）| 验收：cargo erp+finance 0 · tsc exit 0 · check-api 4 模式 + 3 wrapper 0 · GROUP2 0 error · .nvmrc engines v22 对齐 · docker compose config 0
+
+### A. ERP consolidation 6 文件 13 处空 `log_audit!` 宏 → AuditLogService 真实双写
+
+**背景**：V285 D2 已为 reports.rs 落地本地双写（`call_finance_core_approval` 加 pool 参数 + 调 finance 前先 AuditLogService 本地写），兄弟 5 文件（scopes/company_relations/internal_transactions/elimination_rules/scope_companies）仍是空宏占位，审计事件流存在 5 个空洞。
+
+**改动前基线**：
+- 空 `macro_rules! log_audit {($($t:tt)*) => {}}$` 定义 ×6（每个兄弟文件各 1，reports.rs V285 已删）
+- 空宏调用 13 处：scopes 3 / company_relations 3 / internal_transactions 1 / elimination_rules 3 / scope_companies 3
+- `_headers: HeaderMap` 下划线前缀 unused warnings × 13
+
+**变更（7 files）**：
+- [common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L12-L32) — 新增 `pub async fn log_audit(pool: &PgPool, action: &str, entity_type: &str, entity_id: impl Into<String>, headers: &HeaderMap)`：`x-username` → user_id；AuditLogService::log_operation；失败仅 tracing::warn! 不阻塞；新增 use axum::http::HeaderMap
+- [reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs) — 删除本地 `async fn log_audit` 与重复 `use topems_shared_db::AuditLogService`/`sqlx::PgPool`；`use super::common::log_audit;` 改为共享
+- [scopes.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/scopes.rs) / [company_relations.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/company_relations.rs) / [internal_transactions.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/internal_transactions.rs) / [elimination_rules.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/elimination_rules.rs) / [scope_companies.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/scope_companies.rs) — 删除空宏；`use super::common::log_audit;`；13 处 `log_audit!(a,b,c,d)` → `log_audit(&state.db, a, b, c, &headers).await`；13 处 `_headers: HeaderMap` → `headers: HeaderMap` 清 unused
+
+**验收**：
+- `SQLX_OFFLINE=true cargo check -p topems-erp --message-format=short` → **Finished 7.85s exit 0，0 errors 0 warnings**
+- grep 空宏：`grep -rn "macro_rules! log_audit" svc/erp/src/modules/consolidation/` = 0 处（6 空宏全删）✅
+
+### B. Finance settlement_center schemas 53 条补齐 + api-types.ts 53 强类型
+
+**背景**：V285 B 轨把 FinanceTypes/HrmTypes 从 SafeSchema 兜底升级为强类型，但结算中心 DTO（AccountOpeningBalance/AccountBalance/VoucherTemplate/ReportQueryParams/CounterpartyType 等）被标注为 C 类——Rust 侧未在任何 models/handlers/services/entities 文件补 `#[derive(ToSchema)]`，openapi 组件缺失 → TS 侧无对应 schema 只能用 SafeSchema/any。
+
+**改动（11 files）**：
+
+1. **新增 9 条 C 类 DTO 定义（models/mod.rs 末段 `#[cfg(test)]` 上方）**：
+   - struct：AccountOpeningBalance(12f) / AccountBalance(13f) / ReportQueryParams(8f+IntoParams) / VoucherOperationResult(8f+failures list) / VoucherOperationFailure(4f) / SalesInvoice(18f) / PurchaseInvoice(18f)
+   - enum：CounterpartyType(4 variant) / InvoiceStatus(4 variant + Display)
+
+2. **10 files 就地补 49+ ToSchema derive**：
+   - services/finance/voucher_template.rs × 6（VoucherTemplate/Create/Update/ApplyTemplate 等）
+   - modules/settlement_v55.rs × 4（InvoiceStatus(#[schema(as=SettlementV55InvoiceStatus)]防命名冲突) / Invoice / InvoiceItem / InvoiceWithItems）
+   - domain/entities.rs × 2（CollectionRecord / PaymentRecord）
+   - domain/value_objects.rs × 1（SettlementStatus）
+   - modules/settlement_center/models.rs × 25（UnifiedReconciliation/ReconciliationDetail/SettlementCenterDashboard 等 25 条全量）
+   - modules/mod.rs × 2（VoucherQueryParams / VoucherTemplateQueryParams + IntoParams）
+
+3. **openapi.rs components(schemas) 末段新增 53 条注册（4 分组注释）**：C 类 11 条 + voucher_template 系列 6 条 + 收付款/发票 7 条 + settlement_center 专用 25 条。paths![] 无改动（V285 RC4b 已一次性注册 18 handler）。
+
+4. **packages/shared-types/src/generated/api-types.ts FinanceTypes namespace 末段**：删除 V285 "留 V286" TODO 注释，**新增 53 条 SafeSchema<'Name'> 条件强类型别名**：
+   - C 类 13：AccountOpeningBalance / AccountBalance / CounterpartyType / ReportQueryParams / VoucherOperation* / InvoiceStatus / SalesInvoice / PurchaseInvoice / CollectionRecord / PaymentRecord / SettlementStatus + VoucherTemplate 系列 9
+   - settlement_center 25：含 2 个重名别名 `SettlementCenterReconcileRequest = ReconcileRequest` / `SettlementCenterAutoReconcileRequest = AutoReconcileRequest`
+   - settlement_v55 Invoice 系列 3：Invoice / InvoiceItem / InvoiceWithItems
+
+**验收**：
+- `SQLX_OFFLINE=true cargo check -p topems-finance --message-format=short` → **Finished 22.73s exit 0** ✅
+- `cd apps/web && npx tsc --noEmit` → exit 0（TS 状态未退化，基线保持 ✅）
+- `cd packages/shared-types && npx tsc --noEmit` → exit 0 ✅
+
+> **根因 callout（为什么用 SafeSchema 条件模式而不是直接 Components['schemas']）**：  
+> OpenAPI 前端 `openapi.d.ts` 重新生成是异步长流程（需后端 cargo run extract_openapi → frontend codegen），一次 V286 只做后端补 schemas，若立刻用 Components['schemas']['Xxx'] 强引用，在未重新生成时会出现 `Property 'Xxx' does not exist` 报错。SafeSchema 条件模式 `K extends keyof Schemas ? Schemas[K] : Record<string,unknown>` 既保证未生成时代码不报错，又在下一次 regen 时自动升级为真实类型，是「分阶段 0 错误升级」的标准桥梁。同时把 C 类 TODO 注释全部清除，**前端侧再也看不到 C 类 todo**。
+
+### C. API gate 三脚本合并 → `check-api.cjs --mode={audit|coverage|compare|all}`
+
+**背景**：架构冗余分析报告 P2 指出 check-i18n + check-api 双簇各 2-3 脚本重叠维护。V285 先收 i18n 2 脚本合 1，V286 接续收 API 3 脚本（check-api-audit.cjs 9964B + check-api-coverage.cjs 4822B + compare-api-modules.cjs 212 行）。
+
+**变更（4 files，3 原文件改为 wrapper）**：
+
+- **新建 [scripts/ci/check-api.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api.cjs)**（622 行，完全复刻 i18n 四段式）：
+  - `parseArgs(L75)`：`--mode={audit|coverage|compare|all}` 默认 all 向后兼容；参数：`--dry-run / --fail-fast / --quiet / --thresholds / --report-json / --json / --strict`
+  - `runAuditCheck(L156)`：封装原 check-api-audit.cjs 顶层 → P6+P7 执行 → 阈值判定 → `{metrics, failCount, allOk, samples}`
+  - `runCoverageCheck(L334)`：原 main() → runCoverageMain → 封装；lowcode(10页)+automation(5页)
+  - `runCompareCheck(L426)`：原 main() → runCompareMain → 封装；src/api 目录 vs moduleMapping 对齐
+  - `renderReport(L540)`：`--report-json` 结构 `{mode, generatedAt, audit, coverage, compare}` 对齐 i18n；`--json` stdout 精简版
+  - `main(L604)`：退出码规则同 i18n：`--dry-run` 强制 0；`--fail-fast` 任一 FAIL exit 1；否则聚合
+
+- **3 wrapper 全 9 行（`__dirname` 绝对 require，V285 i18n 修复同模式）**：
+  - [check-api-audit.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api-audit.cjs) → `--mode=audit`
+  - [check-api-coverage.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api-coverage.cjs) → `--mode=coverage`
+  - [compare-api-modules.cjs](file:///Users/air/TOPEMS/scripts/ci/compare-api-modules.cjs) → `--mode=compare`
+  - 每 wrapper 头部 5 行中文注释说明「CI 从 $CWD=repo 根调用时 require('./check-api.cjs') 会解析为 /repo/check-api.cjs（不存在）→ 必须用 path.join(__dirname, …)」。
+
+**验收（全部从 repo 根运行，CI 真实场景）**：
+- `node -c scripts/ci/check-api.cjs` → MAIN_SYNTAX_OK ✅；3 wrapper × SYNTAX_OK ✅
+- `check-api.cjs --mode={audit|coverage|compare|all} --dry-run` → 4 条 exit 0；输出分别为 ✅ Audit PASS / ✅ 覆盖率完成 / ✅ 对齐完成 / 三合一汇总 ✅
+- 3 wrapper `--dry-run` → 全部 exit 0（与 check-api.cjs 对应模式输出一致）✅
+- `check-api.cjs --report-json /tmp/api-v286.json --dry-run` → JSON 含 `audit + coverage + compare` 3 字段（对齐 i18n 结构）✅
+
+### D. Node 版本单一信源 + GROUP2 SERVICES 校验脚本 + mes sqlx 一键 PG 工具化
+
+**子任务 D1 · Node 版本单一信源（经验 1130589 教训落地）**：
+- **新建 [/.nvmrc](file:///Users/air/TOPEMS/.nvmrc)**：`22.22.3`
+- **[package.json](file:///Users/air/TOPEMS/package.json#L52-L55) 加 engines**：`{"node":"^22.0.0","pnpm":">=9"}`
+- **[apps/web/package.json](file:///Users/air/TOPEMS/apps/web/package.json#L6-L9) 加 engines**：`{"node":"^22.0.0","pnpm":">=9"}`
+- VERIFY：`.nvmrc` 存在；node -v = v22.22.3 主版本一致；两 package.json engines 读取一致 ✅
+- **V287 建议**：`.github/workflows/ci.yml` env.NODE_VERSION 目前为 '20'，axum-layer-gate job 已升 '22'，env 建议统一升 '22' 防止主版本分叉。
+
+**子任务 D2 · GROUP2 SERVICES 校验脚本（V285 端口对齐后的自动化守绿）**：
+- **新建 [scripts/ci/check-group2-services.cjs](file:///Users/air/TOPEMS/scripts/ci/check-group2-services.cjs)**：3-Way 交叉验证
+  1. GROUP2_SERVICES 31 条元组全部能映射到 `pub const *_PORT` 常量值 ✅
+  2. 29 个已有 plugin.yaml 的 GROUP2 服务，yaml port 与 service_port.rs 常量值完全相等 ✅（V285 三端对齐自动化断言）
+  3. 每个 GROUP2 slug 对应 `svc/<slug>/plugin.yaml` 存在（monitor allowlist 容忍）✅
+  - Warnings 仅 2 条：monitor 无 plugin.yaml（allowlist）/ unified-core 不在 GROUP2（为 Group1 容器）— `--strict` 才失败
+- VERIFY：`node scripts/ci/check-group2-services.cjs` → ✅ All checks passed（errors=0，warnings=2）exit 0
+
+**子任务 D3 · mes sqlx 一键 PG 工具化（V285 D1 从评估→可一键）**：
+- **新建 [svc/mes/docker-compose.yaml](file:///Users/air/TOPEMS/svc/mes/docker-compose.yaml)**：`postgres:16-alpine`；host:5435（避 5432 冲突）；user/pass/db `topems/topems/topems_mes`；volume `./tmp-pgdata`；pg_isready healthcheck
+- **新建 [svc/mes/scripts/sqlx-prepare.sh](file:///Users/air/TOPEMS/svc/mes/scripts/sqlx-prepare.sh)**（chmod +x）：一键流程：检查 docker/docker compose/cargo/sqlx-cli → compose up -d → 循环 pg_isready 最多 30 次 → 若有 `migrations/` 跑 `cargo sqlx migrate run` → `DATABASE_URL=postgres://...5435/topems_mes cargo sqlx prepare -p topems-mes --tests` → 结束输 `.sqlx/` 数量 + 提交提示 + compose down -v 建议
+- **新建 [svc/mes/.gitignore](file:///Users/air/TOPEMS/svc/mes/.gitignore)**：`tmp-pgdata/`
+- VERIFY：`docker compose -f svc/mes/docker-compose.yaml config` exit 0（YAML 合法）；`bash -n sqlx-prepare.sh` 语法 OK；`.gitignore` grep tmp-pgdata 命中 ✅
+- **真正跑迁移+生成缓存**需用户 Docker daemon：`bash svc/mes/scripts/sqlx-prepare.sh`
+
+### 变更文件清单（共 32 files）
+
+**Rust（13）**：
+- [svc/erp/src/modules/consolidation/common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs)（抽 log_audit pub fn + HeaderMap use）
+- [svc/erp/src/modules/consolidation/reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs)（去本地 log_audit + 改用共享）
+- [svc/erp/src/modules/consolidation/scopes.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/scopes.rs)
+- [svc/erp/src/modules/consolidation/company_relations.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/company_relations.rs)
+- [svc/erp/src/modules/consolidation/internal_transactions.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/internal_transactions.rs)
+- [svc/erp/src/modules/consolidation/elimination_rules.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/elimination_rules.rs)
+- [svc/erp/src/modules/consolidation/scope_companies.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/scope_companies.rs)
+- [svc/finance/src/models/mod.rs](file:///Users/air/TOPEMS/svc/finance/src/models/mod.rs)（9 新 DTO + ToSchema 定义）
+- [svc/finance/src/services/finance/voucher_template.rs](file:///Users/air/TOPEMS/svc/finance/src/services/finance/voucher_template.rs)（6 条 ToSchema）
+- [svc/finance/src/modules/settlement_v55.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/settlement_v55.rs)（4 条 ToSchema + InvoiceStatus 命名冲突处理）
+- [svc/finance/src/domain/entities.rs](file:///Users/air/TOPEMS/svc/finance/src/domain/entities.rs)（CollectionRecord/PaymentRecord）
+- [svc/finance/src/domain/value_objects.rs](file:///Users/air/TOPEMS/svc/finance/src/domain/value_objects.rs)（SettlementStatus）
+- [svc/finance/src/modules/settlement_center/models.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/settlement_center/models.rs)（25 条 ToSchema 全量）
+- [svc/finance/src/modules/mod.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/mod.rs)（VoucherQueryParams + VoucherTemplateQueryParams ToSchema）
+- [svc/finance/src/openapi.rs](file:///Users/air/TOPEMS/svc/finance/src/openapi.rs)（components(schemas) 新增 53 条注册）
+
+**前端 / TS（4）**：
+- [packages/shared-types/src/generated/api-types.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/api-types.ts)（FinanceTypes 53 条 SafeSchema 条件强类型 + 删 C 类 TODO 注释）
+- [package.json](file:///Users/air/TOPEMS/package.json)（根 engines 新增）
+- [apps/web/package.json](file:///Users/air/TOPEMS/apps/web/package.json)（engines 新增）
+- [packages/shared-types/src/api-binding-tools.ts](file:///Users/air/TOPEMS/packages/shared-types/src/api-binding-tools.ts)（binding utility 适配新类型）
+
+**Gate 脚本 / Node（1 新建 + 3 wrapper 修改 + 1 新建 D2 GROUP2）**：
+- 新建 [scripts/ci/check-api.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api.cjs)（622 行，3 脚本合并主入口）
+- 修改 [scripts/ci/check-api-audit.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api-audit.cjs)（→ 9 行 wrapper __dirname）
+- 修改 [scripts/ci/check-api-coverage.cjs](file:///Users/air/TOPEMS/scripts/ci/check-api-coverage.cjs)（→ 9 行 wrapper __dirname）
+- 修改 [scripts/ci/compare-api-modules.cjs](file:///Users/air/TOPEMS/scripts/ci/compare-api-modules.cjs)（→ 9 行 wrapper __dirname）
+- 新建 [scripts/ci/check-group2-services.cjs](file:///Users/air/TOPEMS/scripts/ci/check-group2-services.cjs)（GROUP2 3-Way 校验脚本）
+
+**配置 / CI 工具链（4）**：
+- 新建 [.nvmrc](file:///Users/air/TOPEMS/.nvmrc)（Node 22.22.3 单一信源）
+- 新建 [svc/mes/docker-compose.yaml](file:///Users/air/TOPEMS/svc/mes/docker-compose.yaml)（Postgres16 5435 一键起）
+- 新建 [svc/mes/scripts/sqlx-prepare.sh](file:///Users/air/TOPEMS/svc/mes/scripts/sqlx-prepare.sh)（一键 prepare 流程 chmod +x）
+- 新建 [svc/mes/.gitignore](file:///Users/air/TOPEMS/svc/mes/.gitignore)（tmp-pgdata/ 忽略）
+
+**文档（1）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 顶部版本号 V285→V286 + 标注当前开发分支 feature/v286 + V285 后续扩展 5 条中 4 条勾 ✓ 1 条续 V287 + 新增 V286 完整章节
+
+### 最终验收矩阵（Step 4 端到端复现 9 项全部通过）
+
+- [x] `SQLX_OFFLINE=true cargo check -p topems-erp -p topems-finance --message-format=short` → Finished 1m 07s **exit 0** ✅
+- [x] `cd apps/web && npx tsc --noEmit` → **exit 0**（未退化，基线 0 保持 ✅）
+- [x] `node scripts/ci/check-api.cjs --mode=audit --dry-run` → ✅ Audit PASS exit 0
+- [x] `node scripts/ci/check-api.cjs --mode=coverage --dry-run` → 📦 模块 54 · 覆盖率完成 exit 0
+- [x] `node scripts/ci/check-api.cjs --mode=all --dry-run` → 三合一输出 · 对齐检查完成 exit 0
+- [x] `node scripts/ci/check-api-audit.cjs --dry-run` && `check-api-coverage.cjs` && `compare-api-modules.cjs`（wrapper 3 个，CI 根目录场景）→ 3/3 exit 0 ✅
+- [x] `node scripts/ci/check-group2-services.cjs` → ✅ All passed errors=0 warnings=2 exit 0（V285 端口对齐自动守绿）✅
+- [x] Node 信源统一：`cat .nvmrc`=22.22.3；`node -v`=v22.22.3；根 package.json engines={node:^22.0.0,pnpm:>=9}；apps/web 同样 ✅
+- [x] mes PG 三件套：`docker compose -f svc/mes/docker-compose.yaml config` exit 0；`bash -n svc/mes/scripts/sqlx-prepare.sh` exit 0；`.gitignore` 含 tmp-pgdata/ ✅
+
+### V286 后续扩展（留给 V287+）
+- [ ] **mes integration_tests sqlx 缓存真正生成**：用户本地跑 `bash svc/mes/scripts/sqlx-prepare.sh`（需 Docker daemon），目标 `.sqlx/` 新增 ≥12 JSON；`SQLX_OFFLINE=true cargo check -p topems-mes --tests` exit 0（D3 工具化已完，真正执行留 V287）
+- [ ] **CI env.NODE_VERSION 从 '20' 统一升为 '22'**（D1 已统一 .nvmrc 与 engines，ci.yml env 唯一缺口，连续 3 次 CI 绿后改）
+- [ ] **GROUP2 校验脚本 `--strict` 上线 CI**：当前 warnings=2（monitor + unified-core allowlist 容忍），清理两项后在 CI yaml 加 `--strict` step 作为端口对齐门禁
+- [ ] **api-types.ts 重新生成 openapi.d.ts → SafeSchema 条件命中真实 Schemas**：V286 B 轨在后端补了 53 schemas 且用 SafeSchema 模式桥接，需 `cargo run extract_openapi` → frontend codegen 后 53 条自动获得真实字段（零改代码，但要把 regen 流程落 SOP 文档）
+- [ ] **DocumentsPage 简化后评估声明式模板迁移**：已连续 3 版列入（V283/V284/V286），V287 若 DocumentsPage 仍无简化计划 → **永久取消该后续扩展**（防止悬而未决）
+- [ ] **api-binding-tools.ts / openapi.gen.ts 一致性确认**：B 轨期间出现 `openapi.gen.ts` 删除 & `api-binding-tools.ts` 修改，需在 V287 核对是否与 TS regen 流程一致（避免 regen 回滚覆盖）
+- [ ] **compare-api-modules.cjs wrapper 的 `--mode=compare` 命名补文档**：原 C 轨设计模板使用 `align`，实际 compare 脚本名用 `--mode=compare`，二者语义一致但命名不同，需在 check-api.cjs `parseArgs` 增加 `align` 作为 compare 的 alias 统一入口
 
 ### 已完成：V283 后续任务（Finance 审批增强 + SupplierPortalPage 声明式迁移）
 

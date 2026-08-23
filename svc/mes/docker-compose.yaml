@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: topems-mes-pg
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: topems
+      POSTGRES_PASSWORD: topems
+      POSTGRES_DB: topems_mes
+    volumes:
+      - ./tmp-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems -d topems_mes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
