@@ -3,6 +3,10 @@
   "version": "5.15.0",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": "^22.0.0",
+    "pnpm": ">=9"
+  },
   "sideEffects": [
     "*.css",
     "*.scss",

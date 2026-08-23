@@ -60,24 +60,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("tenant_id", "UUID"),
         ],
     ),
-    (
-        "crm_master_data_refs",
-        &[
-            ("master_data_id", "VARCHAR(128) NOT NULL"),
-            ("tenant_id", "UUID NOT NULL"),
-            ("domain", "VARCHAR(32) NOT NULL"),
-            ("code", "VARCHAR(128) NOT NULL"),
-            ("name", "VARCHAR(256)"),
-            ("status", "VARCHAR(32) DEFAULT 'active'"),
-            ("source_service", "VARCHAR(64) NOT NULL"),
-            ("local_entity_type", "VARCHAR(64)"),
-            ("local_entity_id", "UUID"),
-            ("payload_snapshot", "JSONB"),
-            ("last_synced_at", "TIMESTAMPTZ DEFAULT NOW()"),
-            ("created_at", "TIMESTAMPTZ DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
-        ],
-    ),
+    // NOTE: crm_master_data_refs table is created by shared-db ensure_master_data_refs_table()
+    // via default_init_db(&pool, "crm", true, ...) in main.rs — not duplicated here.
     (
         "customer_orders",
         &[
@@ -355,7 +339,8 @@ mod tests {
         assert!(names.contains(&"customer_tags"));
         assert!(names.contains(&"dashboard_metrics"));
         assert!(names.contains(&"customer_orders"));
-        assert!(names.contains(&"crm_master_data_refs"));
+        // NOTE: crm_master_data_refs is created by shared-db ensure_master_data_refs_table()
+        // in default_init_db path — intentionally excluded from TABLE_DEFS.
     }
 
     #[test]

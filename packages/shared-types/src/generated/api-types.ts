@@ -91,11 +91,65 @@ export namespace FinanceTypes {
   export type CreatePaymentRequest = ApiComponents['schemas']['CreatePaymentRequest'];
   export type PaymentItemRequest = ApiComponents['schemas']['PaymentItemRequest'];
 
-  // TODO: 以下类型待后端补充 ToSchema 后生成（C 类：finance settlement_center 留 V286）
-  // - AccountOpeningBalance, AccountBalance, VoucherTemplate*, VoucherQueryParams
-  // - VoucherOperationResult, CounterpartyType
-  // - InvoiceStatus, SalesInvoice, PurchaseInvoice, CollectionRecord, PaymentRecord
-  // - ReportQueryParams
+  // V286 B轨 Finance C 类升级：后端 settlement_center / voucher_template / invoice 已补 ToSchema
+  // 以下统一使用 SafeSchema 做条件强类型：openapi regen 后若 Components.schemas 已存在该名，
+  // 自动解析为真实类型；否则回退 Record<string, unknown> 不阻塞 TS。共 13 条原 C 类 +
+  // VoucherTemplate 系列 DTO + 收付款记录 + 发票系列 + settlement_center 25 条。
+  export type AccountOpeningBalance = SafeSchema<'AccountOpeningBalance'>;
+  export type AccountBalance = SafeSchema<'AccountBalance'>;
+  export type CounterpartyType = SafeSchema<'CounterpartyType'>;
+  export type ReportQueryParams = SafeSchema<'ReportQueryParams'>;
+  export type VoucherOperationResult = SafeSchema<'VoucherOperationResult'>;
+  export type VoucherOperationFailure = SafeSchema<'VoucherOperationFailure'>;
+  export type InvoiceStatus = SafeSchema<'InvoiceStatus'>;
+  export type SalesInvoice = SafeSchema<'SalesInvoice'>;
+  export type PurchaseInvoice = SafeSchema<'PurchaseInvoice'>;
+  export type CollectionRecord = SafeSchema<'CollectionRecord'>;
+  export type PaymentRecord = SafeSchema<'PaymentRecord'>;
+  export type SettlementStatus = SafeSchema<'SettlementStatus'>;
+
+  // VoucherTemplate 系列（V286 B轨 补齐）
+  export type VoucherTemplate = SafeSchema<'VoucherTemplate'>;
+  export type VoucherTemplateResponse = SafeSchema<'VoucherTemplateResponse'>;
+  export type VoucherTemplateLine = SafeSchema<'VoucherTemplateLine'>;
+  export type CreateVoucherTemplateRequest = SafeSchema<'CreateVoucherTemplateRequest'>;
+  export type CreateVoucherTemplateLineRequest = SafeSchema<'CreateVoucherTemplateLineRequest'>;
+  export type UpdateVoucherTemplateRequest = SafeSchema<'UpdateVoucherTemplateRequest'>;
+  export type ApplyTemplateRequest = SafeSchema<'ApplyTemplateRequest'>;
+  export type VoucherQueryParams = SafeSchema<'VoucherQueryParams'>;
+  export type VoucherTemplateQueryParams = SafeSchema<'VoucherTemplateQueryParams'>;
+
+  // settlement_v55 发票（V286 B轨 补齐，与 models InvoiceStatus 语义解耦）
+  export type Invoice = SafeSchema<'Invoice'>;
+  export type InvoiceItem = SafeSchema<'InvoiceItem'>;
+  export type InvoiceWithItems = SafeSchema<'InvoiceWithItems'>;
+
+  // ================ settlement_center 统一结算对账中心（V286 B轨 25 schema） ================
+  export type UnifiedReconciliation = SafeSchema<'UnifiedReconciliation'>;
+  export type ReconciliationDetail = SafeSchema<'ReconciliationDetail'>;
+  export type LinkedSettlementSummary = SafeSchema<'LinkedSettlementSummary'>;
+  export type CreateReconciliationRequest = SafeSchema<'CreateReconciliationRequest'>;
+  export type SettlementCenterReconcileRequest = SafeSchema<'ReconcileRequest'>;
+  export type SettlementCenterAutoReconcileRequest = SafeSchema<'AutoReconcileRequest'>;
+  export type ReconciliationListQuery = SafeSchema<'ReconciliationListQuery'>;
+  export type UnifiedSettlement = SafeSchema<'UnifiedSettlement'>;
+  export type SettlementDetail = SafeSchema<'SettlementDetail'>;
+  export type LinkedReconciliationSummary = SafeSchema<'LinkedReconciliationSummary'>;
+  export type CreateSettlementRequest = SafeSchema<'CreateSettlementRequest'>;
+  export type SettlementListQuery = SafeSchema<'SettlementListQuery'>;
+  export type ReconciliationSettlementLink = SafeSchema<'ReconciliationSettlementLink'>;
+  export type CreateLinkRequest = SafeSchema<'CreateLinkRequest'>;
+  export type LinkListQuery = SafeSchema<'LinkListQuery'>;
+  export type DifferenceAdjustment = SafeSchema<'DifferenceAdjustment'>;
+  export type CreateDifferenceRequest = SafeSchema<'CreateDifferenceRequest'>;
+  export type DifferenceListQuery = SafeSchema<'DifferenceListQuery'>;
+  export type SettlementCenterDashboard = SafeSchema<'SettlementCenterDashboard'>;
+  export type CenterStatistics = SafeSchema<'CenterStatistics'>;
+  export type ReconciliationStatistics = SafeSchema<'ReconciliationStatistics'>;
+  export type SettlementStatistics = SafeSchema<'SettlementStatistics'>;
+  export type DifferenceStatistics = SafeSchema<'DifferenceStatistics'>;
+  export type LinkStatistics = SafeSchema<'LinkStatistics'>;
+  export type DashboardSummary = SafeSchema<'DashboardSummary'>;
 }
 
 // ============================================================================

@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ============================================================
@@ -14,7 +15,7 @@ use uuid::Uuid;
 // ============================================================
 
 /// 统一对账视图（聚合自 erp.fin_reconciliations）
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct UnifiedReconciliation {
     pub id: Uuid,
     pub recon_code: Option<String>,
@@ -38,7 +39,7 @@ pub struct UnifiedReconciliation {
 }
 
 /// 对账详情（含关联结算列表）
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ReconciliationDetail {
     #[serde(flatten)]
     pub reconciliation: UnifiedReconciliation,
@@ -46,7 +47,7 @@ pub struct ReconciliationDetail {
 }
 
 /// 关联结算摘要
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct LinkedSettlementSummary {
     pub link_id: Uuid,
     pub link_type: String,
@@ -60,7 +61,7 @@ pub struct LinkedSettlementSummary {
     pub settlement_amount: Option<Decimal>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateReconciliationRequest {
     pub recon_code: Option<String>,
     pub recon_name: String,
@@ -72,20 +73,20 @@ pub struct CreateReconciliationRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ReconcileRequest {
     pub record_ids: Vec<Uuid>,
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AutoReconcileRequest {
     pub entity_id: Option<Uuid>,
     pub period: String,
     pub recon_type: Option<String>,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct ReconciliationListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -100,7 +101,7 @@ pub struct ReconciliationListQuery {
 // ============================================================
 
 /// 统一结算视图（聚合自 pm.settlements）
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct UnifiedSettlement {
     pub id: Uuid,
     pub project_id: Uuid,
@@ -123,7 +124,7 @@ pub struct UnifiedSettlement {
 }
 
 /// 结算详情（含关联对账列表）
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SettlementDetail {
     #[serde(flatten)]
     pub settlement: UnifiedSettlement,
@@ -131,7 +132,7 @@ pub struct SettlementDetail {
 }
 
 /// 关联对账摘要
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct LinkedReconciliationSummary {
     pub link_id: Uuid,
     pub link_type: String,
@@ -145,7 +146,7 @@ pub struct LinkedReconciliationSummary {
     pub recon_difference: Option<Decimal>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSettlementRequest {
     pub project_id: Uuid,
     pub settlement_code: Option<String>,
@@ -157,7 +158,7 @@ pub struct CreateSettlementRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct SettlementListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -171,7 +172,7 @@ pub struct SettlementListQuery {
 // 对账-结算关联模型
 // ============================================================
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ReconciliationSettlementLink {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -186,7 +187,7 @@ pub struct ReconciliationSettlementLink {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateLinkRequest {
     pub reconciliation_id: Uuid,
     pub settlement_id: Uuid,
@@ -195,7 +196,7 @@ pub struct CreateLinkRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct LinkListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -209,7 +210,7 @@ pub struct LinkListQuery {
 // 差异调整模型
 // ============================================================
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct DifferenceAdjustment {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -229,7 +230,7 @@ pub struct DifferenceAdjustment {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDifferenceRequest {
     pub source_type: String,
     pub source_id: Uuid,
@@ -241,7 +242,7 @@ pub struct CreateDifferenceRequest {
     pub remark: Option<String>,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct DifferenceListQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -255,7 +256,7 @@ pub struct DifferenceListQuery {
 // 仪表盘与统计模型
 // ============================================================
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct SettlementCenterDashboard {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -267,7 +268,7 @@ pub struct SettlementCenterDashboard {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CenterStatistics {
     pub reconciliation: ReconciliationStatistics,
     pub settlement: SettlementStatistics,
@@ -275,7 +276,7 @@ pub struct CenterStatistics {
     pub link: LinkStatistics,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, ToSchema)]
 pub struct ReconciliationStatistics {
     pub total_count: i64,
     pub pending_count: i64,
@@ -287,7 +288,7 @@ pub struct ReconciliationStatistics {
     pub unmatched_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, ToSchema)]
 pub struct SettlementStatistics {
     pub total_count: i64,
     pub draft_count: i64,
@@ -298,7 +299,7 @@ pub struct SettlementStatistics {
     pub total_variance: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, ToSchema)]
 pub struct DifferenceStatistics {
     pub total_count: i64,
     pub pending_count: i64,
@@ -308,7 +309,7 @@ pub struct DifferenceStatistics {
     pub total_adjustment_amount: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, ToSchema)]
 pub struct LinkStatistics {
     pub total_count: i64,
     pub active_count: i64,
@@ -316,7 +317,7 @@ pub struct LinkStatistics {
     pub total_amount: Decimal,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DashboardSummary {
     pub statistics: CenterStatistics,
     pub recent_reconciliations: Vec<UnifiedReconciliation>,

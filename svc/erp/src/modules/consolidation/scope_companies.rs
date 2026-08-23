@@ -9,11 +9,8 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 
+use super::common::log_audit;
 use super::ApiState;
-
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
-}
 
 #[utoipa::path(
     get,
@@ -55,7 +52,7 @@ pub async fn list_scope_companies(
 )]
 pub async fn add_scope_company(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<AddScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let id = Uuid::new_v4();
@@ -81,13 +78,14 @@ pub async fn add_scope_company(
 
     match result {
         Ok(company) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "add_company",
                 "consolidation_scope",
                 Some(req.scope_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(company, "添加公司到合并范围成功"))
         }
         Err(e) => {
@@ -108,7 +106,7 @@ pub async fn add_scope_company(
 pub async fn update_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
@@ -134,13 +132,14 @@ pub async fn update_scope_company(
 
     match result {
         Ok(company) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "update",
                 "consolidation_scope_company",
                 Some(company_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(company, "更新合并范围公司成功"))
         }
         Err(e) => {
@@ -161,7 +160,7 @@ pub async fn update_scope_company(
 pub async fn remove_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(
         "UPDATE plugin_erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
@@ -174,13 +173,14 @@ pub async fn remove_scope_company(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并范围公司不存在"))
             } else {
-                log_audit!(
+                log_audit(
                     &state.db,
                     "remove_company",
                     "consolidation_scope",
                     Some(company_id),
-                    &headers
-                );
+                    &headers,
+                )
+                .await;
                 Json(ApiResponse::success((), "从合并范围移除公司成功"))
             }
         }

@@ -27,7 +27,7 @@ pub enum VoucherStatus {
 }
 
 // 收付款状态
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, utoipa::ToSchema)]
 pub enum SettlementStatus {
     Unsettled,        // 未核销
     PartiallySettled, // 部分核销

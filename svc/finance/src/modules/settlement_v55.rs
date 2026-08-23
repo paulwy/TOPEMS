@@ -484,8 +484,9 @@ impl SystemRecordType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
+#[schema(as = SettlementV55InvoiceStatus)]
 pub enum InvoiceStatus {
     Pending,
     Recognized,
@@ -639,7 +640,7 @@ pub struct SystemRecord {
 
 // --- 发票识别 ---
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct Invoice {
     pub id: Uuid,
     pub number: String,
@@ -678,7 +679,7 @@ impl Invoice {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct InvoiceItem {
     pub id: Uuid,
     pub invoice_id: Uuid,
@@ -689,7 +690,7 @@ pub struct InvoiceItem {
     pub tax_rate: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct InvoiceWithItems {
     #[serde(flatten)]
     pub invoice: Invoice,

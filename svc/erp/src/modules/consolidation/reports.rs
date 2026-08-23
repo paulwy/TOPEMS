@@ -3,38 +3,14 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use sqlx::PgPool;
-use topems_shared_db::AuditLogService;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::{call_finance_core_approval, ConsolidationListParams};
+use super::common::{call_finance_core_approval, log_audit, ConsolidationListParams};
 use super::ApiState;
-
-async fn log_audit(
-    pool: &PgPool,
-    action: &str,
-    entity_type: &str,
-    entity_id: Option<Uuid>,
-    headers: &HeaderMap,
-) {
-    let username = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let svc = AuditLogService::new(pool.clone());
-    let _ = svc
-        .log_operation(
-            action,
-            entity_type,
-            entity_id,
-            username,
-            None,
-            "success",
-            None,
-        )
-        .await;
-}
 
 #[utoipa::path(
     get,

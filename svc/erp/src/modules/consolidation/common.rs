@@ -1,3 +1,4 @@
+use axum::http::HeaderMap;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
@@ -7,6 +8,28 @@ use uuid::Uuid;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, TypedServiceClient,
 };
+
+pub async fn log_audit(
+    pool: &PgPool,
+    action: &str,
+    entity_type: &str,
+    entity_id: Option<Uuid>,
+    headers: &HeaderMap,
+) {
+    let username = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let svc = AuditLogService::new(pool.clone());
+    let _ = svc
+        .log_operation(
+            action,
+            entity_type,
+            entity_id,
+            username,
+            None,
+            "success",
+            None,
+        )
+        .await;
+}
 
 pub async fn call_finance_core_approval(
     finance_client: &TypedServiceClient<FinanceApi>,

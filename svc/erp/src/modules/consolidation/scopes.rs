@@ -11,12 +11,8 @@ use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::ConsolidationListParams;
+use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
-
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
-}
 
 #[utoipa::path(
     get,
@@ -118,7 +114,7 @@ pub async fn get_scope(
 )]
 pub async fn create_scope(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<CreateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let id = Uuid::new_v4();
@@ -139,13 +135,14 @@ pub async fn create_scope(
 
     match result {
         Ok(scope) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "create",
                 "consolidation_scope",
                 Some(id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(scope, "创建合并范围成功"))
         }
         Err(e) => {
@@ -166,7 +163,7 @@ pub async fn create_scope(
 pub async fn update_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let result = sqlx::query_as::<_, ConsolidationScope>(
@@ -191,13 +188,14 @@ pub async fn update_scope(
 
     match result {
         Ok(scope) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "update",
                 "consolidation_scope",
                 Some(scope_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(scope, "更新合并范围成功"))
         }
         Err(e) => {
@@ -218,7 +216,7 @@ pub async fn update_scope(
 pub async fn delete_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query("UPDATE plugin_erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1")
         .bind(scope_id)
@@ -229,13 +227,14 @@ pub async fn delete_scope(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "合并范围不存在"))
             } else {
-                log_audit!(
+                log_audit(
                     &state.db,
                     "delete",
                     "consolidation_scope",
                     Some(scope_id),
-                    &headers
-                );
+                    &headers,
+                )
+                .await;
                 Json(ApiResponse::success((), "删除合并范围成功"))
             }
         }

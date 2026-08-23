@@ -6,7 +6,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
@@ -1385,6 +1385,171 @@ pub struct DiffReasonCount {
 pub struct DiffStatusCount {
     pub status: String,
     pub count: i32,
+}
+
+// ============================================================
+// V286 B轨: settlement_center & 报表 & 交易对手 C 类补全
+// 对应 api-types.ts C 类 8 条：AccountOpeningBalance / AccountBalance
+// / CounterpartyType / ReportQueryParams / VoucherOperationResult
+// / SalesInvoice / PurchaseInvoice
+// ============================================================
+
+/// 科目期初余额
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AccountOpeningBalance {
+    pub id: Option<Uuid>,
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: Option<String>,
+    pub period: String,
+    pub currency: String,
+    pub opening_debit: Decimal,
+    pub opening_credit: Decimal,
+    pub opening_balance: Decimal,
+    pub is_carry_forward: bool,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+/// 科目余额（某期间）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct AccountBalance {
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: Option<String>,
+    pub period: String,
+    pub opening_debit: Decimal,
+    pub opening_credit: Decimal,
+    pub current_debit: Decimal,
+    pub current_credit: Decimal,
+    pub closing_debit: Decimal,
+    pub closing_credit: Decimal,
+    pub closing_balance: Decimal,
+    pub balance_direction: String,
+    pub quantity_balance: Option<Decimal>,
+}
+
+/// 交易对手类型（客户/供应商/员工/其他）
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CounterpartyType {
+    Customer,
+    Supplier,
+    Employee,
+    Other,
+}
+
+impl fmt::Display for CounterpartyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CounterpartyType::Customer => write!(f, "customer"),
+            CounterpartyType::Supplier => write!(f, "supplier"),
+            CounterpartyType::Employee => write!(f, "employee"),
+            CounterpartyType::Other => write!(f, "other"),
+        }
+    }
+}
+
+/// 报表通用查询参数
+#[derive(Debug, Clone, Deserialize, IntoParams, ToSchema)]
+pub struct ReportQueryParams {
+    pub period: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
+    pub company_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub export_format: Option<String>,
+    pub compare_with: Option<String>,
+}
+
+/// 凭证操作结果（创建/审批/过账/红冲等批量或单条返回）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VoucherOperationResult {
+    pub operation: String,
+    pub total_count: i64,
+    pub success_count: i64,
+    pub failed_count: i64,
+    pub success_ids: Vec<Uuid>,
+    pub failed_items: Vec<VoucherOperationFailure>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub finished_at: Option<DateTime<Utc>>,
+}
+
+/// 单条凭证操作失败明细
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct VoucherOperationFailure {
+    pub voucher_id: Option<Uuid>,
+    pub voucher_no: Option<String>,
+    pub error_code: String,
+    pub error_message: String,
+}
+
+/// 销售发票（与 Invoice 结构对齐，属语义别名型 DTO）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct SalesInvoice {
+    pub id: Uuid,
+    pub invoice_no: String,
+    pub customer_id: Option<Uuid>,
+    pub customer_name: Option<String>,
+    pub invoice_date: DateTime<Utc>,
+    pub due_date: Option<DateTime<Utc>>,
+    pub currency: String,
+    pub subtotal: Decimal,
+    pub tax_amount: Decimal,
+    pub total_amount: Decimal,
+    pub paid_amount: Decimal,
+    pub status: InvoiceStatus,
+    pub remark: Option<String>,
+    pub created_by: Option<String>,
+    pub approved_by: Option<String>,
+    pub posted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 采购发票（与 Invoice 结构对齐，属语义别名型 DTO）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PurchaseInvoice {
+    pub id: Uuid,
+    pub invoice_no: String,
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub invoice_date: DateTime<Utc>,
+    pub due_date: Option<DateTime<Utc>>,
+    pub currency: String,
+    pub subtotal: Decimal,
+    pub tax_amount: Decimal,
+    pub total_amount: Decimal,
+    pub paid_amount: Decimal,
+    pub status: InvoiceStatus,
+    pub remark: Option<String>,
+    pub created_by: Option<String>,
+    pub approved_by: Option<String>,
+    pub posted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 发票状态枚举（与 settlement_v55::InvoiceStatus 语义一致，在 models 层提供统一引用）
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum InvoiceStatus {
+    Pending,
+    Recognized,
+    Verified,
+    Posted,
+}
+
+impl fmt::Display for InvoiceStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InvoiceStatus::Pending => write!(f, "pending"),
+            InvoiceStatus::Recognized => write!(f, "recognized"),
+            InvoiceStatus::Verified => write!(f, "verified"),
+            InvoiceStatus::Posted => write!(f, "posted"),
+        }
+    }
 }
 
 #[cfg(test)]

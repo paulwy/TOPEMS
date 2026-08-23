@@ -7,7 +7,7 @@ use uuid::Uuid;
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, sqlx::FromRow, utoipa::ToSchema)]
 pub struct VoucherTemplate {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -35,7 +35,7 @@ pub struct VoucherTemplateLine {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, utoipa::ToSchema)]
 pub struct CreateVoucherTemplateRequest {
     pub name: String,
     pub description: Option<String>,
@@ -45,7 +45,7 @@ pub struct CreateVoucherTemplateRequest {
     pub lines: Vec<CreateVoucherTemplateLineRequest>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, utoipa::ToSchema)]
 pub struct CreateVoucherTemplateLineRequest {
     pub description: Option<String>,
     pub account_code: String,
@@ -54,7 +54,7 @@ pub struct CreateVoucherTemplateLineRequest {
     pub sort_order: Option<i32>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, utoipa::ToSchema)]
 pub struct UpdateVoucherTemplateRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -66,7 +66,7 @@ pub struct UpdateVoucherTemplateRequest {
     pub lines: Option<Vec<CreateVoucherTemplateLineRequest>>,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, utoipa::ToSchema)]
 pub struct VoucherTemplateResponse {
     pub id: Uuid,
     pub name: String,
@@ -81,7 +81,7 @@ pub struct VoucherTemplateResponse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, utoipa::ToSchema)]
 pub struct ApplyTemplateRequest {
     pub template_id: Uuid,
     pub voucher_date: Option<chrono::NaiveDate>,

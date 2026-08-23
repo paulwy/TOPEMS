@@ -9,12 +9,8 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
-use super::common::ConsolidationListParams;
+use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
-
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
-}
 
 #[utoipa::path(
     get,
@@ -120,7 +116,7 @@ pub async fn get_elimination_rule(
 )]
 pub async fn create_elimination_rule(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<CreateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
     let id = Uuid::new_v4();
@@ -157,7 +153,7 @@ pub async fn create_elimination_rule(
 
     match result {
         Ok(rule) => {
-            log_audit!(&state.db, "create", "elimination_rule", Some(id), &headers);
+            log_audit(&state.db, "create", "elimination_rule", Some(id), &headers).await;
             Json(ApiResponse::success(rule, "创建抵消规则成功"))
         }
         Err(e) => {
@@ -178,7 +174,7 @@ pub async fn create_elimination_rule(
 pub async fn update_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
     let debit_codes = req
@@ -220,13 +216,14 @@ pub async fn update_elimination_rule(
 
     match result {
         Ok(rule) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "update",
                 "elimination_rule",
                 Some(rule_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
         }
         Err(e) => {
@@ -247,7 +244,7 @@ pub async fn update_elimination_rule(
 pub async fn delete_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query("UPDATE plugin_erp.elimination_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(rule_id)
@@ -258,13 +255,14 @@ pub async fn delete_elimination_rule(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "抵消规则不存在"))
             } else {
-                log_audit!(
+                log_audit(
                     &state.db,
                     "delete",
                     "elimination_rule",
                     Some(rule_id),
-                    &headers
-                );
+                    &headers,
+                )
+                .await;
                 Json(ApiResponse::success((), "删除抵消规则成功"))
             }
         }

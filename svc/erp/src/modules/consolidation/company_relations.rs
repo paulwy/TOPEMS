@@ -9,12 +9,8 @@ use crate::models::consolidation::*;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
 
-use super::common::ConsolidationListParams;
+use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
-
-macro_rules! log_audit {
-    ($($args:expr),*) => {};
-}
 
 #[utoipa::path(
     get,
@@ -103,7 +99,7 @@ pub async fn get_company_tree(
 )]
 pub async fn create_company_relation(
     State(state): State<ApiState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<CreateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
     let id = Uuid::new_v4();
@@ -131,7 +127,7 @@ pub async fn create_company_relation(
 
     match result {
         Ok(relation) => {
-            log_audit!(&state.db, "create", "company_relation", Some(id), &headers);
+            log_audit(&state.db, "create", "company_relation", Some(id), &headers).await;
             Json(ApiResponse::success(relation, "创建公司关系成功"))
         }
         Err(e) => {
@@ -152,7 +148,7 @@ pub async fn create_company_relation(
 pub async fn update_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
@@ -181,13 +177,14 @@ pub async fn update_company_relation(
 
     match result {
         Ok(relation) => {
-            log_audit!(
+            log_audit(
                 &state.db,
                 "update",
                 "company_relation",
                 Some(relation_id),
-                &headers
-            );
+                &headers,
+            )
+            .await;
             Json(ApiResponse::success(relation, "更新公司关系成功"))
         }
         Err(e) => {
@@ -208,7 +205,7 @@ pub async fn update_company_relation(
 pub async fn delete_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query("UPDATE plugin_erp.company_relations SET deleted_at = NOW() WHERE id = $1")
         .bind(relation_id)
@@ -219,13 +216,14 @@ pub async fn delete_company_relation(
             if result.rows_affected() == 0 {
                 Json(api_error(404, "公司关系不存在"))
             } else {
-                log_audit!(
+                log_audit(
                     &state.db,
                     "delete",
                     "company_relation",
                     Some(relation_id),
-                    &headers
-                );
+                    &headers,
+                )
+                .await;
                 Json(ApiResponse::success((), "删除公司关系成功"))
             }
         }
