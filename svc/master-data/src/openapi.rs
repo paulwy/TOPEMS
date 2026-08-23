@@ -13,12 +13,12 @@ use crate::modules::knowledge_v53::{
     SimilarQuery, SubgraphQuery, TrendingQuery, UpdateAssetRequest,
 };
 use crate::modules::lineage_v52::{
-    AffectedNode, AffectedScopeQuery, AffectedService, AddPropagationRuleRequest,
-    AnalyzeImpactRequest, ChainReaction, ChangeEvent, ChangeType, DeleteLineageRequest,
-    EdgeType, ExportQuery, ImpactAnalysisRequest, ImpactAnalysisResult, ImpactSimulation,
-    LineageEdge, LineageGraph, LineageNode, LineageQuery, PropagateChangeRequest,
-    PropagationAction, PropagationLog, PropagationLogQuery, PropagationRule,
-    RegisterLineageRequest, RiskLevel, RollbackPropagationRequest, SimulateChangeRequest,
+    AddPropagationRuleRequest, AffectedNode, AffectedScopeQuery, AffectedService,
+    AnalyzeImpactRequest, ChainReaction, ChangeEvent, ChangeType, DeleteLineageRequest, EdgeType,
+    ExportQuery, ImpactAnalysisRequest, ImpactAnalysisResult, ImpactSimulation, LineageEdge,
+    LineageGraph, LineageNode, LineageQuery, PropagateChangeRequest, PropagationAction,
+    PropagationLog, PropagationLogQuery, PropagationRule, RegisterLineageRequest, RiskLevel,
+    RollbackPropagationRequest, SimulateChangeRequest,
 };
 use crate::modules::quality_v51::{
     AutoFixAction, AutoFixRequest, CreateQualityRuleRequest, GenerateSuggestionsRequest,
@@ -33,9 +33,9 @@ use crate::modules::versioning_v54::{
     AuditLogQuery, BranchType, CheckPermissionQuery, CherryPickRequest, ComplianceAuditQuery,
     CreateBranchRequest, CreateRoleRequest, CreateSnapshotRequest, DataPermission,
     EntityHistoryQuery, ExportAuditLogRequest, GrantPermissionRequest, MergeBranchRequest,
-    PermissionAction, PermissionRole, RevokePermissionRequest, RevokeRoleRequest,
-    ResourcePermissionsQuery, RestoreVersionRequest, UserActivityQuery, UserRoleAssignment,
-    UserPermissionsQuery, VersionBranch, VersionDiff, VersionDiffQuery, VersionHistoryQuery,
+    PermissionAction, PermissionRole, ResourcePermissionsQuery, RestoreVersionRequest,
+    RevokePermissionRequest, RevokeRoleRequest, UserActivityQuery, UserPermissionsQuery,
+    UserRoleAssignment, VersionBranch, VersionDiff, VersionDiffQuery, VersionHistoryQuery,
     VersionQuery, VersionSnapshot,
 };
 

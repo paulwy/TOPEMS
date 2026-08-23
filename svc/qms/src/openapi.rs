@@ -5,6 +5,11 @@
 // 后续可逐步在各模块中添加 #[derive(ToSchema)] 并在此注册 schemas。
 use utoipa::OpenApi;
 
+use crate::models::quality_cost::{
+    CostCategorySummary, CostDepartmentSummary, CostTrendItem, CreateQualityCostRequest,
+    ListQualityCostsResponse, QualityCost, QualityCostQuery, QualityCostStatistics,
+    UpdateQualityCostRequest,
+};
 use crate::models::quality_inspection::{
     AssignInspectionRequest, AuditInspectionRequest, CreateInspectionRequest, Inspection,
     InspectionAudit, InspectionResultItem, ListInspectionsResponse, SubmitInspectionResultRequest,
@@ -12,11 +17,6 @@ use crate::models::quality_inspection::{
 };
 use crate::models::quality_issue::{
     CreateIssueRequest, QualityIssue, QualityIssueWithWorkflow, UpdateIssueRequest,
-};
-use crate::models::quality_cost::{
-    CostCategorySummary, CostDepartmentSummary, CostTrendItem, CreateQualityCostRequest,
-    ListQualityCostsResponse, QualityCost, QualityCostQuery, QualityCostStatistics,
-    UpdateQualityCostRequest,
 };
 use crate::models::quality_standard::{
     CreateStandardRequest, ListStandardsResponse, QualityStandard, StandardRevision,

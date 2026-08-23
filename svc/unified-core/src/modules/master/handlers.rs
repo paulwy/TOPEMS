@@ -9,7 +9,7 @@ use axum::{
     extract::{Path, Query, State},
     Extension, Json,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use serde::Deserialize;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -27,15 +27,87 @@ use super::models::{
     UpdateMasterDataRefRequest,
 };
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_db::audit::AuditLogService;
+use topems_shared_db::master_data_refs::MasterDataRefService;
+
+/// V284: shared-db MasterDataRef → unified-core MasterDataRef 转换
+impl From<topems_shared_db::master_data_refs::MasterDataRef> for MasterDataRef {
+    fn from(m: topems_shared_db::master_data_refs::MasterDataRef) -> Self {
+        Self {
+            master_data_id: m.master_data_id,
+            tenant_id: m.tenant_id,
+            domain: m.domain,
+            code: m.code,
+            name: m.name,
+            status: m.status,
+            version: m.version,
+            source_service: m.source_service,
+            last_synced_at: m.last_synced_at,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
+        }
+    }
+}
+
+impl From<topems_shared_db::master_data_refs::DuplicateRecord> for DuplicateRecord {
+    fn from(d: topems_shared_db::master_data_refs::DuplicateRecord) -> Self {
+        Self {
+            domain: d.domain,
+            code: d.code,
+            count: d.count,
+            master_data_ids: d.master_data_ids,
+        }
+    }
+}
+
+impl From<topems_shared_db::master_data_refs::StaleRecord> for StaleRecord {
+    fn from(s: topems_shared_db::master_data_refs::StaleRecord) -> Self {
+        Self {
+            master_data_id: s.master_data_id,
+            domain: s.domain,
+            code: s.code,
+            name: s.name,
+            source_service: s.source_service,
+            last_synced_at: s.last_synced_at,
+            hours_since_sync: s.hours_since_sync,
+        }
+    }
+}
 
 /// MDM 服务
+///
+/// V284: 注入 MasterDataRefService（下沉 32 处 core 主数据引用表内联 SQL） +
+/// AuditLogService（关键写入路径审计，参考 svc/srm/services/audit.rs 模式）。
 pub struct MasterDataService {
     pool: PgPool,
+    ref_service: MasterDataRefService,
+    audit_service: AuditLogService,
 }
 
 impl MasterDataService {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            ref_service: MasterDataRefService::new(pool.clone()),
+            audit_service: AuditLogService::new(pool.clone()),
+            pool,
+        }
+    }
+
+    /// V284: 关键写入路径审计（create/update/delete）
+    async fn audit_write(
+        &self,
+        action: &str,
+        entity_id: Option<Uuid>,
+        operator: Option<&str>,
+        details: Option<serde_json::Value>,
+        status: &str,
+        error: Option<&str>,
+    ) {
+        let _ = self
+            .audit_service
+            .log_operation(action, "master_data_ref", entity_id, operator, details, status, error)
+            .await
+            .map_err(|e| tracing::warn!("[mdm-audit] 审计写入失败: {}", e));
     }
 
     /// 创建主数据引用
@@ -51,22 +123,28 @@ impl MasterDataService {
         let master_data_id = generate_master_data_id(domain);
         let ref_data = MasterDataRef::from_request(tenant_id, &req, master_data_id.clone());
 
-        sqlx::query(
-            r#"
-            INSERT INTO core_master_data_refs
-                (master_data_id, tenant_id, domain, code, name, status, version, source_service, last_synced_at, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, 1, $7, NOW(), NOW(), NOW())
-            "#,
+        self.ref_service
+            .insert_master_data_ref(
+                &ref_data.master_data_id,
+                ref_data.tenant_id,
+                &ref_data.domain,
+                &ref_data.code,
+                &ref_data.name,
+                &ref_data.status,
+                &ref_data.source_service,
+            )
+            .await?;
+
+        // V284: 关键写入路径审计
+        self.audit_write(
+            "create",
+            None,
+            operator.as_deref(),
+            req.attributes.clone(),
+            "success",
+            None,
         )
-        .bind(&ref_data.master_data_id)
-        .bind(ref_data.tenant_id)
-        .bind(&ref_data.domain)
-        .bind(&ref_data.code)
-        .bind(&ref_data.name)
-        .bind(&ref_data.status)
-        .bind(&ref_data.source_service)
-        .execute(&self.pool)
-        .await?;
+        .await;
 
         // 记录变更日志
         self.log_change(
@@ -119,20 +197,22 @@ impl MasterDataService {
             }
         }
 
-        let updated = sqlx::query_as::<_, MasterDataRef>(
-            r#"
-            UPDATE core_master_data_refs
-            SET name = $1, status = $2, version = version + 1, updated_at = NOW(), last_synced_at = NOW()
-            WHERE master_data_id = $3 AND tenant_id = $4
-            RETURNING *
-            "#,
+        let updated: MasterDataRef = self
+            .ref_service
+            .update_master_data_ref(master_data_id, tenant_id, &new_name, &new_status)
+            .await?
+            .into();
+
+        // V284: 关键写入路径审计
+        self.audit_write(
+            "update",
+            None,
+            operator.as_deref(),
+            req.attributes.clone(),
+            "success",
+            None,
         )
-        .bind(&new_name)
-        .bind(&new_status)
-        .bind(master_data_id)
-        .bind(tenant_id)
-        .fetch_one(&self.pool)
-        .await?;
+        .await;
 
         let action = if changed_fields.contains(&"status".to_string()) {
             if new_status == "active" {
@@ -163,17 +243,20 @@ impl MasterDataService {
             .await?
             .ok_or_else(|| sqlx::Error::RowNotFound)?;
 
-        sqlx::query(
-            r#"
-            UPDATE core_master_data_refs
-            SET status = 'deleted', updated_at = NOW()
-            WHERE master_data_id = $1 AND tenant_id = $2
-            "#,
+        self.ref_service
+            .soft_delete_master_data_ref(master_data_id, tenant_id)
+            .await?;
+
+        // V284: 关键写入路径审计
+        self.audit_write(
+            "delete",
+            None,
+            operator.as_deref(),
+            None,
+            "success",
+            None,
         )
-        .bind(master_data_id)
-        .bind(tenant_id)
-        .execute(&self.pool)
-        .await?;
+        .await;
 
         let op_clone = operator.clone();
         self.log_change(&existing, MasterDataAction::Deleted, operator, None)
@@ -190,13 +273,11 @@ impl MasterDataService {
         tenant_id: Uuid,
         master_data_id: &str,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
-        let result = sqlx::query_as::<_, MasterDataRef>(
-            "SELECT * FROM core_master_data_refs WHERE master_data_id = $1 AND tenant_id = $2",
-        )
-        .bind(master_data_id)
-        .bind(tenant_id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let result = self
+            .ref_service
+            .get_by_id(master_data_id, tenant_id)
+            .await?
+            .map(MasterDataRef::from);
         Ok(result)
     }
 
@@ -207,14 +288,11 @@ impl MasterDataService {
         domain: &str,
         code: &str,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
-        let result = sqlx::query_as::<_, MasterDataRef>(
-            "SELECT * FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND code = $3",
-        )
-        .bind(tenant_id)
-        .bind(domain)
-        .bind(code)
-        .fetch_optional(&self.pool)
-        .await?;
+        let result = self
+            .ref_service
+            .get_by_domain_and_code(tenant_id, domain, code)
+            .await?
+            .map(MasterDataRef::from);
         Ok(result)
     }
 
@@ -228,58 +306,19 @@ impl MasterDataService {
         let page_size = query.page_size.unwrap_or(20).min(100);
         let offset = (page - 1) * page_size;
 
-        let mut where_clause = String::from("tenant_id = $1");
-        let mut bind_count = 1;
-
-        if query.domain.is_some() {
-            bind_count += 1;
-            where_clause.push_str(&format!(" AND domain = ${}", bind_count));
-        }
-        if query.code.is_some() {
-            bind_count += 1;
-            where_clause.push_str(&format!(" AND code ILIKE '%' || ${} || '%'", bind_count));
-        }
-        if query.name.is_some() {
-            bind_count += 1;
-            where_clause.push_str(&format!(" AND name ILIKE '%' || ${} || '%'", bind_count));
-        }
-        if query.status.is_some() {
-            bind_count += 1;
-            where_clause.push_str(&format!(" AND status = ${}", bind_count));
-        }
-
-        let count_sql = format!(
-            "SELECT COUNT(*) FROM core_master_data_refs WHERE {}",
-            where_clause
-        );
-        let list_sql = format!(
-            "SELECT * FROM core_master_data_refs WHERE {} ORDER BY updated_at DESC LIMIT {} OFFSET {}",
-            where_clause, page_size, offset
-        );
-
-        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql).bind(tenant_id);
-        let mut list_query = sqlx::query_as::<_, MasterDataRef>(&list_sql).bind(tenant_id);
-
-        if let Some(d) = &query.domain {
-            count_query = count_query.bind(d);
-            list_query = list_query.bind(d);
-        }
-        if let Some(c) = &query.code {
-            count_query = count_query.bind(c);
-            list_query = list_query.bind(c);
-        }
-        if let Some(n) = &query.name {
-            count_query = count_query.bind(n);
-            list_query = list_query.bind(n);
-        }
-        if let Some(s) = &query.status {
-            count_query = count_query.bind(s);
-            list_query = list_query.bind(s);
-        }
-
-        let total: i64 = count_query.fetch_one(&self.pool).await?;
-        let items = list_query.fetch_all(&self.pool).await?;
-
+        let (items, total) = self
+            .ref_service
+            .list_by_tenant(
+                tenant_id,
+                offset,
+                page_size,
+                query.domain.as_deref(),
+                query.code.as_deref(),
+                query.name.as_deref(),
+                query.status.as_deref(),
+            )
+            .await?;
+        let items = items.into_iter().map(MasterDataRef::from).collect();
         Ok((items, total))
     }
 
@@ -309,11 +348,7 @@ impl MasterDataService {
 
     /// 整体统计
     pub async fn get_overall_stats(&self, tenant_id: Uuid) -> Result<MdmOverallStats, sqlx::Error> {
-        let total: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1")
-                .bind(tenant_id)
-                .fetch_one(&self.pool)
-                .await?;
+        let total: i64 = self.ref_service.count_by_tenant(tenant_id).await?;
 
         let since = Utc::now() - Duration::hours(24);
         let recent: i64 = sqlx::query_scalar(
@@ -333,30 +368,14 @@ impl MasterDataService {
             "employee",
             "account_subject",
         ] {
-            let count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let count: i64 = self.ref_service.count_by_domain(tenant_id, domain_str).await?;
 
-            let active: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'active'",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let active: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain_str, "active")
+                .await?;
 
-            let last_updated: Option<DateTime<Utc>> = sqlx::query_scalar(
-                "SELECT MAX(updated_at) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_optional(&self.pool)
-            .await?
-            .flatten();
+            let last_updated = self.ref_service.get_max_updated_at(tenant_id, domain_str).await?;
 
             by_domain.push(DomainStats {
                 domain: domain_str.to_string(),
@@ -385,23 +404,16 @@ impl MasterDataService {
             ("employee", "hrm"),
             ("account_subject", "finance"),
         ] {
-            let last_sync: Option<DateTime<Utc>> = sqlx::query_scalar(
-                "SELECT MAX(last_synced_at) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2",
-            )
-            .bind(tenant_id)
-            .bind(domain)
-            .fetch_optional(&self.pool)
-            .await?
-            .flatten();
+            let last_sync = self
+                .ref_service
+                .get_max_last_synced_at(tenant_id, domain)
+                .await?;
 
-            let pending: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'pending_sync'",
-            )
-            .bind(tenant_id)
-            .bind(domain)
-            .fetch_one(&self.pool)
-            .await
-            .unwrap_or(0);
+            let pending: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain, "pending_sync")
+                .await
+                .unwrap_or(0);
 
             let status = if pending > 0 {
                 "degraded"
@@ -458,46 +470,20 @@ impl MasterDataService {
         tenant_id: Uuid,
         stale_threshold_hours: i64,
     ) -> Result<QualityReport, sqlx::Error> {
-        let total: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1")
-                .bind(tenant_id)
-                .fetch_one(&self.pool)
-                .await?;
+        let total: i64 = self.ref_service.count_by_tenant(tenant_id).await?;
 
-        let duplicate_count: i64 = sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*) FROM (
-                SELECT code, domain FROM core_master_data_refs
-                WHERE tenant_id = $1 AND status != 'deleted'
-                GROUP BY code, domain HAVING COUNT(*) > 1
-            ) t
-            "#,
-        )
-        .bind(tenant_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let duplicate_count: i64 = self.ref_service.count_duplicate_groups(tenant_id).await?;
 
         let stale_threshold = Utc::now() - Duration::hours(stale_threshold_hours);
-        let stale_count: i64 = sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*) FROM core_master_data_refs
-            WHERE tenant_id = $1 AND status = 'active' AND last_synced_at < $2
-            "#,
-        )
-        .bind(tenant_id)
-        .bind(stale_threshold)
-        .fetch_one(&self.pool)
-        .await?;
+        let stale_count: i64 = self
+            .ref_service
+            .count_stale_total(tenant_id, stale_threshold)
+            .await?;
 
-        let inconsistency_count: i64 = sqlx::query_scalar(
-            r#"
-            SELECT COUNT(*) FROM core_master_data_refs
-            WHERE tenant_id = $1 AND status = 'pending_sync'
-            "#,
-        )
-        .bind(tenant_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let inconsistency_count: i64 = self
+            .ref_service
+            .count_by_tenant_status(tenant_id, "pending_sync")
+            .await?;
 
         let mut by_domain = Vec::new();
         for domain_str in [
@@ -508,64 +494,35 @@ impl MasterDataService {
             "employee",
             "account_subject",
         ] {
-            let d_total: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status != 'deleted'",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let d_total: i64 = self
+                .ref_service
+                .count_by_domain_status_not(tenant_id, domain_str, "deleted")
+                .await?;
 
-            let d_active: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'active'",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let d_active: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain_str, "active")
+                .await?;
 
-            let d_dup: i64 = sqlx::query_scalar(
-                r#"
-                SELECT COUNT(*) FROM (
-                    SELECT code FROM core_master_data_refs
-                    WHERE tenant_id = $1 AND domain = $2 AND status != 'deleted'
-                    GROUP BY code HAVING COUNT(*) > 1
-                ) t
-                "#,
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let d_dup: i64 = self
+                .ref_service
+                .count_duplicate_groups_by_domain(tenant_id, domain_str)
+                .await?;
 
-            let d_stale: i64 = sqlx::query_scalar(
-                r#"
-                SELECT COUNT(*) FROM core_master_data_refs
-                WHERE tenant_id = $1 AND domain = $2 AND status = 'active' AND last_synced_at < $3
-                "#,
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .bind(stale_threshold)
-            .fetch_one(&self.pool)
-            .await?;
+            let d_stale: i64 = self
+                .ref_service
+                .count_stale_by_domain(tenant_id, domain_str, stale_threshold)
+                .await?;
 
-            let d_inconsist: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'pending_sync'",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_one(&self.pool)
-            .await?;
+            let d_inconsist: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain_str, "pending_sync")
+                .await?;
 
-            let last_synced: Option<DateTime<Utc>> = sqlx::query_scalar(
-                "SELECT MAX(last_synced_at) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2",
-            )
-            .bind(tenant_id)
-            .bind(domain_str)
-            .fetch_optional(&self.pool)
-            .await?
-            .flatten();
+            let last_synced = self
+                .ref_service
+                .get_max_last_synced_at(tenant_id, domain_str)
+                .await?;
 
             let score = if d_total > 0 {
                 let penalty = (d_dup + d_stale + d_inconsist) as f64;
@@ -625,20 +582,8 @@ impl MasterDataService {
         &self,
         tenant_id: Uuid,
     ) -> Result<Vec<DuplicateRecord>, sqlx::Error> {
-        let rows = sqlx::query_as::<_, DuplicateRecord>(
-            r#"
-            SELECT domain, code, COUNT(*) as count,
-                   array_agg(master_data_id) as master_data_ids
-            FROM core_master_data_refs
-            WHERE tenant_id = $1 AND status != 'deleted'
-            GROUP BY domain, code HAVING COUNT(*) > 1
-            ORDER BY count DESC
-            "#,
-        )
-        .bind(tenant_id)
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(rows)
+        let rows = self.ref_service.list_duplicates(tenant_id).await?;
+        Ok(rows.into_iter().map(DuplicateRecord::from).collect())
     }
 
     /// 查询过期数据
@@ -648,20 +593,8 @@ impl MasterDataService {
         threshold_hours: i64,
     ) -> Result<Vec<StaleRecord>, sqlx::Error> {
         let threshold = Utc::now() - Duration::hours(threshold_hours);
-        let rows = sqlx::query_as::<_, StaleRecord>(
-            r#"
-            SELECT master_data_id, domain, code, name, source_service, last_synced_at,
-                   EXTRACT(EPOCH FROM (NOW() - last_synced_at)) / 3600.0 as hours_since_sync
-            FROM core_master_data_refs
-            WHERE tenant_id = $1 AND status = 'active' AND last_synced_at < $2
-            ORDER BY last_synced_at ASC
-            "#,
-        )
-        .bind(tenant_id)
-        .bind(threshold)
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(rows)
+        let rows = self.ref_service.list_stale(tenant_id, threshold).await?;
+        Ok(rows.into_iter().map(StaleRecord::from).collect())
     }
 
     // ==================== V31.0 数据对账 ====================
@@ -695,30 +628,21 @@ impl MasterDataService {
                 _ => "unknown",
             };
 
-            let mdm_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status != 'deleted'",
-            )
-            .bind(tenant_id)
-            .bind(domain)
-            .fetch_one(&self.pool)
-            .await?;
+            let mdm_count: i64 = self
+                .ref_service
+                .count_by_domain_status_not(tenant_id, domain, "deleted")
+                .await?;
 
-            let active_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'active'",
-            )
-            .bind(tenant_id)
-            .bind(domain)
-            .fetch_one(&self.pool)
-            .await?;
+            let active_count: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain, "active")
+                .await?;
 
-            let pending_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM core_master_data_refs WHERE tenant_id = $1 AND domain = $2 AND status = 'pending_sync'",
-            )
-            .bind(tenant_id)
-            .bind(domain)
-            .fetch_one(&self.pool)
-            .await
-            .unwrap_or(0);
+            let pending_count: i64 = self
+                .ref_service
+                .count_by_domain_status(tenant_id, domain, "pending_sync")
+                .await
+                .unwrap_or(0);
 
             total_checked += mdm_count;
             consistent += active_count;
@@ -762,6 +686,9 @@ impl MasterDataService {
     }
 
     /// 记录对账问题
+    ///
+    // TODO V285: INSERT...SELECT 跨表写入（core_mdm_reconciliation_log ← core 主数据引用表）
+    // 不适合下沉到 MasterDataRefService（目标表非 master_data_refs），保留原 SQL。
     async fn record_reconciliation_issues(
         &self,
         tenant_id: Uuid,

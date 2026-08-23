@@ -1,9 +1,18 @@
 use crate::models::{
     AttendanceRecord, Company, Contract, ContractRenewal, CreateAttendanceRequest,
     CreateCompanyRequest, CreateContractRequest, CreateDepartmentRequest, CreateEmployeeRequest,
-    Department, Employee, UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest,
-    UpdateDepartmentRequest, UpdateEmployeeRequest,
+    CreateSalaryAdjustmentRequest, CreateTrainingCourseRequest, CreateTrainingPlanRequest,
+    CreateTrainingRecordRequest, Department, Employee, SalaryAdjustment,
+    TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
+    UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest,
+    UpdateDepartmentRequest, UpdateEmployeeRequest, UpdateSalaryAdjustmentRequest,
+    UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
+use crate::modules::audit::ListAuditLogsQuery;
+use crate::modules::leave::{CreateLeaveRequest, LeaveRequest, UpdateLeaveRequest};
+use crate::modules::position::{CreatePositionRequest, Position, UpdatePositionRequest};
+use crate::modules::recruitment::JobOpeningQueryParams;
+use crate::modules::salary_adjustment::SalaryAdjustmentPaginationParams;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -24,6 +33,39 @@ use utoipa::OpenApi;
         crate::modules::company::get_company,
         crate::modules::company::update_company,
         crate::modules::company::delete_company,
+        // === V284: HRM utoipa::path 补全 ===
+        crate::modules::attendance::list_attendance,
+        crate::modules::attendance::create_attendance,
+        crate::modules::attendance::get_attendance,
+        crate::modules::attendance::update_attendance,
+        crate::modules::attendance::delete_attendance,
+        crate::modules::audit::list_audit_logs,
+        crate::modules::audit::get_audit_log,
+        crate::modules::contract::list_contracts,
+        crate::modules::contract::create_contract,
+        crate::modules::contract::get_contract,
+        crate::modules::contract::update_contract,
+        crate::modules::contract::delete_contract,
+        crate::modules::leave::list_leaves,
+        crate::modules::leave::create_leave,
+        crate::modules::leave::get_leave,
+        crate::modules::leave::update_leave,
+        crate::modules::leave::delete_leave,
+        crate::modules::position::list_positions,
+        crate::modules::position::create_position,
+        crate::modules::position::get_position,
+        crate::modules::position::update_position,
+        crate::modules::position::delete_position,
+        crate::modules::salary_adjustment::list_salary_adjustments,
+        crate::modules::salary_adjustment::get_salary_adjustment,
+        crate::modules::salary_adjustment::create_salary_adjustment,
+        crate::modules::salary_adjustment::update_salary_adjustment,
+        crate::modules::training::list_plans,
+        crate::modules::training::list_courses,
+        crate::modules::training::list_records,
+        crate::modules::recruitment::list_job_openings,
+        crate::modules::performance::list_reviews,
+        crate::modules::payroll::list_payroll_runs,
     ),
     components(
         schemas(
@@ -43,6 +85,29 @@ use utoipa::OpenApi;
             CreateContractRequest,
             UpdateContractRequest,
             ContractRenewal,
+            // === V284: 新增 schema ===
+            LeaveRequest,
+            CreateLeaveRequest,
+            UpdateLeaveRequest,
+            Position,
+            CreatePositionRequest,
+            UpdatePositionRequest,
+            SalaryAdjustment,
+            CreateSalaryAdjustmentRequest,
+            UpdateSalaryAdjustmentRequest,
+            SalaryAdjustmentPaginationParams,
+            TrainingPlan,
+            CreateTrainingPlanRequest,
+            UpdateTrainingPlanRequest,
+            TrainingCourse,
+            CreateTrainingCourseRequest,
+            UpdateTrainingCourseRequest,
+            TrainingRecord,
+            CreateTrainingRecordRequest,
+            UpdateTrainingRecordRequest,
+            TrainingPaginationParams,
+            ListAuditLogsQuery,
+            JobOpeningQueryParams,
         )
     ),
     tags(

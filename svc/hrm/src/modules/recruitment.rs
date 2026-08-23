@@ -138,7 +138,7 @@ pub struct UpdateInterviewRequest {
     pub score: Option<BigDecimal>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct JobOpeningQueryParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -180,6 +180,24 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/interviews/{id}/complete", put(complete_interview))
 }
 
+#[utoipa::path(
+    get,
+    path = "/job-openings",
+    tag = "recruitment",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("search" = Option<String>, Query, description = "搜索关键字"),
+        ("department_id" = Option<Uuid>, Query, description = "部门ID"),
+        ("status" = Option<String>, Query, description = "状态"),
+        ("employment_type" = Option<String>, Query, description = "用工类型")
+    ),
+    responses(
+        (status = 200, description = "获取招聘职位列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_job_openings(
     State(state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,

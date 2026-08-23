@@ -198,6 +198,7 @@ pub mod audit_soft_delete;
 pub mod backup;
 pub mod data_governance;
 pub mod database;
+pub mod master_data_refs;
 pub mod query_optimizer;
 pub mod repository;
 pub mod rls;
@@ -205,6 +206,10 @@ pub mod schema;
 pub mod storage;
 
 pub use audit::{AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest};
+pub use master_data_refs::{
+    CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService,
+    StaleRecord, UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,
+};
 pub use backup::{
     BackupConfig, BackupError, BackupManager, BackupMetadata, BackupRequest, BackupSchedule,
     BackupStatistics, BackupStatus, BackupType, CompressionType, RestoreRequest,

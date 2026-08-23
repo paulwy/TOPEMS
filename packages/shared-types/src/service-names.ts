@@ -53,6 +53,9 @@ const INDEPENDENT_SERVICES = [
   // 监控与插件 (8095-8096)
   'monitor',
   'plugin-registry',
+  // 物流服务 (8073-8074，V284 补全至单一信源)
+  'tms',
+  'aps',
 ] as const;
 
 // unified-core 虚拟服务（virtual_services，由 unified-core:8000 承载）

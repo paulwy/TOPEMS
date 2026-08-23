@@ -17,7 +17,7 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/audit-logs/{id}", get(get_audit_log))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct ListAuditLogsQuery {
     pub action: Option<String>,
     pub entity_type: Option<String>,
@@ -30,6 +30,26 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-logs",
+    tag = "audit",
+    params(
+        ("action" = Option<String>, Query, description = "操作类型"),
+        ("entity_type" = Option<String>, Query, description = "实体类型"),
+        ("user_id" = Option<String>, Query, description = "用户ID"),
+        ("status" = Option<String>, Query, description = "状态"),
+        ("start_date" = Option<String>, Query, description = "开始日期"),
+        ("end_date" = Option<String>, Query, description = "结束日期"),
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小")
+    ),
+    responses(
+        (status = 200, description = "获取审计日志列表成功", body = serde_json::Value),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_audit_logs(
     State(state): State<super::ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
@@ -106,6 +126,20 @@ async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-logs/{id}",
+    tag = "audit",
+    params(
+        ("id" = Uuid, Path, description = "审计日志ID")
+    ),
+    responses(
+        (status = 200, description = "获取审计日志成功", body = AuditLog),
+        (status = 404, description = "审计日志不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_audit_log(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,

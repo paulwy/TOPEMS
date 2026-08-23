@@ -8,6 +8,7 @@
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
 use sqlx::PgPool;
+use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
     EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
@@ -376,32 +377,21 @@ impl CrmEventHandlers {
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
-        let result = sqlx::query(
-            r#"INSERT INTO crm_master_data_refs
-               (master_data_id, tenant_id, domain, code, name, status, source_service,
-                local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())
-               ON CONFLICT (master_data_id) DO UPDATE
-               SET name = EXCLUDED.name,
-                   status = EXCLUDED.status,
-                   code = EXCLUDED.code,
-                   payload_snapshot = EXCLUDED.payload_snapshot,
-                   last_synced_at = NOW(),
-                   updated_at = NOW()"#,
-        )
-        .bind(&event.master_data_id)
-        .bind(event.tenant_id)
-        .bind(&domain_str)
-        .bind(&event.code)
-        .bind(name)
-        .bind(status)
-        .bind(&event.source_service)
-        .bind(local_entity_type)
-        .bind(&event.payload)
-        .execute(&self.db)
-        .await;
+        // V284: 复用 shared-db MasterDataRefService（消除 crm_master_data_refs 内联 SQL）
+        let svc = MasterDataRefService::with_table(self.db.clone(), "crm_master_data_refs");
+        let req = UpsertLocalMasterDataRefRequest {
+            master_data_id: event.master_data_id.clone(),
+            tenant_id: event.tenant_id,
+            domain: domain_str.clone(),
+            code: event.code.clone(),
+            name: name.to_string(),
+            status: status.to_string(),
+            source_service: event.source_service.clone(),
+            local_entity_type: local_entity_type.to_string(),
+            payload_snapshot: event.payload.clone(),
+        };
 
-        match result {
+        match svc.upsert_local_master_data_ref(&req).await {
             Ok(_) => {
                 tracing::info!(
                     "[crm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",

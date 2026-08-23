@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -15,7 +16,7 @@ use topems_shared::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
 use topems_shared_core::response::{api_error, ApiResponse};
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct Position {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -33,7 +34,7 @@ pub struct Position {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreatePositionRequest {
     pub tenant_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
@@ -47,7 +48,7 @@ pub struct CreatePositionRequest {
     pub requirements: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdatePositionRequest {
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
@@ -61,7 +62,7 @@ pub struct UpdatePositionRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
@@ -83,6 +84,24 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    path = "/positions",
+    tag = "positions",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("search" = Option<String>, Query, description = "搜索关键字"),
+        ("department_id" = Option<Uuid>, Query, description = "部门ID"),
+        ("org_id" = Option<Uuid>, Query, description = "组织ID"),
+        ("status" = Option<String>, Query, description = "状态")
+    ),
+    responses(
+        (status = 200, description = "获取职位列表成功", body = [Position]),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn list_positions(
     State(state): State<ApiState>,
     Query(params): Query<QueryParams>,
@@ -155,6 +174,20 @@ async fn list_positions(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/positions",
+    tag = "positions",
+    request_body = CreatePositionRequest,
+    responses(
+        (status = 200, description = "职位创建成功", body = Position),
+        (status = 400, description = "请求参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 403, description = "权限不足"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn create_position(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -242,6 +275,20 @@ async fn create_position(
     response
 }
 
+#[utoipa::path(
+    get,
+    path = "/positions/{id}",
+    tag = "positions",
+    params(
+        ("id" = Uuid, Path, description = "职位ID")
+    ),
+    responses(
+        (status = 200, description = "获取职位成功", body = Position),
+        (status = 404, description = "职位不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn get_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -263,6 +310,22 @@ async fn get_position(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/positions/{id}",
+    tag = "positions",
+    params(
+        ("id" = Uuid, Path, description = "职位ID")
+    ),
+    request_body = UpdatePositionRequest,
+    responses(
+        (status = 200, description = "职位更新成功", body = Position),
+        (status = 400, description = "请求参数错误"),
+        (status = 404, description = "职位不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn update_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -314,6 +377,20 @@ async fn update_position(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/positions/{id}",
+    tag = "positions",
+    params(
+        ("id" = Uuid, Path, description = "职位ID")
+    ),
+    responses(
+        (status = 200, description = "职位删除成功", body = String),
+        (status = 404, description = "职位不存在"),
+        (status = 500, description = "服务器错误")
+    ),
+    security(("bearerAuth" = []))
+)]
 async fn delete_position(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

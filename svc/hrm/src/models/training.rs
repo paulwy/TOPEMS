@@ -1,10 +1,11 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct TrainingPlan {
     pub id: Uuid,
     #[sqlx(default)]
@@ -20,7 +21,7 @@ pub struct TrainingPlan {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateTrainingPlanRequest {
     pub name: String,
     pub code: Option<String>,
@@ -30,7 +31,7 @@ pub struct CreateTrainingPlanRequest {
     pub budget: Option<Decimal>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateTrainingPlanRequest {
     pub name: Option<String>,
     pub code: Option<String>,
@@ -41,7 +42,7 @@ pub struct UpdateTrainingPlanRequest {
     pub budget: Option<Decimal>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct TrainingCourse {
     pub id: Uuid,
     #[sqlx(default)]
@@ -62,7 +63,7 @@ pub struct TrainingCourse {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateTrainingCourseRequest {
     pub plan_id: Uuid,
     pub name: String,
@@ -77,7 +78,7 @@ pub struct CreateTrainingCourseRequest {
     pub max_participants: Option<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateTrainingCourseRequest {
     pub name: Option<String>,
     pub code: Option<String>,
@@ -92,7 +93,7 @@ pub struct UpdateTrainingCourseRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct TrainingRecord {
     pub id: Uuid,
     #[sqlx(default)]
@@ -110,14 +111,14 @@ pub struct TrainingRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateTrainingRecordRequest {
     pub course_id: Uuid,
     pub employee_id: Uuid,
     pub enrollment_date: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateTrainingRecordRequest {
     pub attendance_status: Option<String>,
     pub completion_status: Option<String>,
@@ -127,7 +128,7 @@ pub struct UpdateTrainingRecordRequest {
     pub feedback: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct TrainingPaginationParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]
