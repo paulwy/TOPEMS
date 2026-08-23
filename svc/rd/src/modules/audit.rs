@@ -184,7 +184,6 @@ pub async fn log_audit_event(
     error_message: Option<String>,
     headers: &HeaderMap,
 ) {
-    let id = Uuid::new_v4();
     let ip_address = headers
         .get("x-forwarded-for")
         .and_then(|h| h.to_str().ok())
@@ -199,13 +198,20 @@ pub async fn log_audit_event(
     let result = sqlx::query(
         r#"
         INSERT INTO rs.audit_logs (
-            id, action, entity_type, entity_id, entity_ids,
+            action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        -- NOTE (P1-3 Task B): removed application-generated pre-UUID `id` from
+        -- this INSERT. log_audit_event returns () so the caller never used
+        -- the id, and rs.audit_logs already declares id UUID DEFAULT
+        -- uuid_generate_v4() (same as Cluster-A standard). Migration
+        -- V101_hrm_rd_audit_cluster_a.sql just ensures the default is set
+        -- and there are no lingering NOT NULL constraints with no default,
+        -- but the change is purely a code cleanup (same byte-on-disk
+        -- outcome, one fewer application-side UUID rng call per audit).
         "#,
     )
-    .bind(id)
     .bind(action)
     .bind(entity_type)
     .bind(entity_id)
