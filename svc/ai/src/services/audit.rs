@@ -1,20 +1,26 @@
-// AI 服务审计日志
+// AI 服务审计日志（P0-4 迁移：内联 SQL → shared-db AuditLogService）
 //
 // 本模块为 AI 服务的公共 API，当前已实现完整审计日志读写逻辑，
 // 后续将接入 AI 路由的中间件层，自动记录向量/文档/QA/分析/连接器操作。
+//
+// 说明：所有 INSERT / SELECT SQL 已下沉到 `topems_shared_db::audit::AuditLogService`，
+// 这里只保留 AI 专属语义（资源类型固定值 + 返回结构）。
 #![allow(dead_code)]
 
 use sqlx::PgPool;
+use topems_shared_db::audit::{AuditLog, AuditLogQuery, AuditLogService};
 use uuid::Uuid;
 
 /// AI 服务审计日志操作
 pub struct AiAuditService {
-    pool: PgPool,
+    inner: AuditLogService,
 }
 
 impl AiAuditService {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            inner: AuditLogService::new(pool),
+        }
     }
 
     /// 记录向量操作审计日志
@@ -27,26 +33,10 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("vector")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.inner
+            .log_operation(action, "vector", entity_id, user_id, request_details, status, error_message)
+            .await
+            .map(|_| ())
     }
 
     /// 记录文档操作审计日志
@@ -59,26 +49,10 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("document")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.inner
+            .log_operation(action, "document", entity_id, user_id, request_details, status, error_message)
+            .await
+            .map(|_| ())
     }
 
     /// 记录 QA 操作审计日志
@@ -91,26 +65,10 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("qa")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.inner
+            .log_operation(action, "qa", entity_id, user_id, request_details, status, error_message)
+            .await
+            .map(|_| ())
     }
 
     /// 记录分析操作审计日志
@@ -123,26 +81,10 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("analysis")
-        .bind(entity_id)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.inner
+            .log_operation(action, "analysis", entity_id, user_id, request_details, status, error_message)
+            .await
+            .map(|_| ())
     }
 
     /// 记录连接器操作审计日志
@@ -155,27 +97,11 @@ impl AiAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.and_then(|d| serde_json::to_string(&d).ok());
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
-        let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
-
-        sqlx::query(
-            r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(action)
-        .bind("connector")
-        .bind(entity_uuid)
-        .bind(user_uuid)
-        .bind(details_str)
-        .bind(status)
-        .bind(error_message)
-        .execute(&self.pool)
-        .await?;
-
-        Ok(())
+        self.inner
+            .log_operation(action, "connector", entity_uuid, user_id, request_details, status, error_message)
+            .await
+            .map(|_| ())
     }
 
     /// 查询审计日志
@@ -188,36 +114,32 @@ impl AiAuditService {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<AiAuditLogEntry>, sqlx::Error> {
-        let logs = sqlx::query_as::<_, AiAuditLogEntry>(
-            r#"
-            SELECT 
-                id, action, resource as entity_type, resource_id as entity_id, 
-                user_id::text, details as request_details, status, error_message, 
-                ip_address, user_agent, created_at
-            FROM public.audit_logs
-            WHERE ($1::text IS NULL OR action = $1)
-              AND ($2::text IS NULL OR resource = $2)
-              AND ($3::text IS NULL OR user_id::text = $3)
-              AND ($4::text IS NULL OR status = $4)
-              AND resource IN ('vector', 'document', 'qa', 'analysis', 'connector')
-            ORDER BY created_at DESC
-            LIMIT $5 OFFSET $6
-            "#,
-        )
-        .bind(action)
-        .bind(resource)
-        .bind(user_id)
-        .bind(status)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+        // shared-db 使用 page/page_size：page = offset/limit + 1，page_size = limit
+        let page = if limit <= 0 { 1 } else { offset / limit + 1 };
+        let page_size = if limit <= 0 { 20 } else { limit };
 
-        Ok(logs)
+        let query = AuditLogQuery {
+            action: action.map(|s| s.to_string()),
+            entity_type: resource.map(|s| s.to_string()),
+            user_id: user_id.map(|s| s.to_string()),
+            status: status.map(|s| s.to_string()),
+            start_date: None,
+            end_date: None,
+            page: Some(page),
+            page_size: Some(page_size),
+        };
+
+        let resources = ["vector", "document", "qa", "analysis", "connector"];
+        let logs: Vec<AuditLog> = self
+            .inner
+            .query_audit_logs(&query, Some(&resources))
+            .await?;
+
+        Ok(logs.into_iter().map(AiAuditLogEntry::from_audit_log).collect())
     }
 }
 
-/// 审计日志条目
+/// 审计日志条目（与 shared-db AuditLog 保持字段对齐，兼容 FromRow 反序列化）
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct AiAuditLogEntry {
     pub id: Uuid,
@@ -231,4 +153,22 @@ pub struct AiAuditLogEntry {
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl AiAuditLogEntry {
+    fn from_audit_log(log: AuditLog) -> Self {
+        Self {
+            id: log.id,
+            action: log.action,
+            entity_type: log.entity_type,
+            entity_id: log.entity_id,
+            user_id: log.user_id,
+            request_details: log.request_details,
+            status: log.status,
+            error_message: log.error_message,
+            ip_address: log.ip_address,
+            user_agent: log.user_agent,
+            created_at: log.created_at,
+        }
+    }
 }
