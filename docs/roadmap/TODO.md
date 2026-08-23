@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V280 | **更新日期**: 2026-08-23
+> **版本**: V281 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -18,10 +18,34 @@
 > **V278 架构冗余治理已完成**（openapi 测试提取共享 utility / init_db 统一 / ErrorBoundary 去重 / CI composite action + TODO 归档）。
 > **V279 工具/系统类模板化已完成**（3 页接入已有模板，覆盖率 98.7%→99.2%，例外项 7→4）。
 > **V280 最后 4 例外清零**（4 页接入已有模板，覆盖率 99.2%→**100.0%**，例外项 4→0）。设计系统模板治理全流程收闭 🎯
+> **V281 后续任务推进**（ApprovalTransition 提升到 shared-db / AiToolPageTemplate 评估结论 / 文档归档）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V281 后续任务（ApprovalTransition 提升 + AiToolPageTemplate 评估）
+
+> 日期：2026-08-23 | 代码改动 3 files（shared-db approval.rs 新建 + MES re-export + TODO）| 验收：cargo check 0 errors · 10/10 tests pass
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| ApprovalTransition 提升到 shared-db | [approval.rs](file:///Users/air/TOPEMS/lib/shared-db/src/approval.rs) 新建：3 三件套 + 2 验证 + 3 响应构造 + 10 测试；MES [approval_common.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/approval_common.rs) 改为 re-export 层（4 下游模块零改动） | ✅ |
+| AiToolPageTemplate 推广评估 | 3 个 AI 页面（AiPromptLibrary→ListPage / AiModelSettings→SettingsPage / AiDashboard→StatsPage）已使用更匹配的模板，强行改用 AiToolPageTemplate 是降级 → **评估结论：维持现状** | ✅ |
+
+#### 提升后的架构
+- `topems_shared_db::approval` 模块导出 9 个公共方法：`create_approval_and_log` / `execute_transition_and_log` / `reject_and_log` / `validate_start_approval` / `validate_approval_decision` / `build_start_response` / `build_approve_response` / `build_reject_response` / `ApprovalResult`
+- MES 的 4 个模块（production_order / anomaly_detection / work_report / quality_management/inspection）通过 `approval_common.rs` re-export 无缝使用，零改动
+- MES 专有的 `write_approval_audit`（依赖 `audit::log_approval_event`）保留在 MES
+- finance / erp / pm 等服务现可直接 `use topems_shared_db::approval::...` 复用
+
+#### 最终验收矩阵
+- [x] `cargo check -p topems-shared-db -p topems-mes` — exit 0，0 errors
+- [x] `cargo test -p topems-shared-db approval` — 10/10 pass
+
+### V281 后续扩展（留给 V282+）
+- [ ] **ApprovalTransition 实际推广**：finance/erp/pm 中有审批流的模块实际导入 `topems_shared_db::approval` 替换各自的重复逻辑
+- [ ] **模板扩展**：SupplierPortal/NotificationCenter/DocumentsPage/MailPage 目前均为 children 透传，可评估是否抽象为专用声明式模板
 
 ### 已完成：V280 设计系统模板治理收闭（最后 4 例外清零 · 530/530 = 100%）
 
