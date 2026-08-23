@@ -211,25 +211,44 @@ COMMENT ON TABLE public.employees IS '员工信息表（共享实体）';
 -- -------------------------------------------------------------------------------
 -- 5.3 审计日志（统一）
 -- -------------------------------------------------------------------------------
+--
+-- [NOTE Task A-1 (P1-3 Bug Fix): 列签名 = Cluster A 12 列公共标准，与
+-- lib/shared-db/src/audit.rs AuditLog struct 1:1 对齐。
+-- 修复前的 3 个隐藏 Bug：
+--   - 列名 resource_type/resource_id/request_body/response_body → 已统一重命名为
+--     entity_type/entity_id/request_details/response_details（与 Rust struct 保持一致）
+--   - status: SMALLINT → VARCHAR(20)，因为所有调用方都写 "success"/"failed" 字符串
+--   - ip_address: INET → VARCHAR(45)，因为调用方传入 TEXT（含 IPv4/IPv6/forwarded 原始字符串）
+-- 如已部署生产环境，请执行 database/migrations/V100_audit_logs_clusterA.sql 的
+-- 幂等 ALTER 迁移脚本；部署前务必 psql 执行：\d public.audit_logs 核对实际列结构。
+-- 删除的遗留列：duration_ms / request_body / response_body（均已被上述重命名替代，
+-- 实际无代码引用）。
 
--- 审计日志表
+-- 审计日志表（Cluster-A 标准 15 列：= AuditLog struct 1:1）
 CREATE TABLE public.audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE SET NULL,
-    user_id UUID,
     action VARCHAR(255) NOT NULL,
-    resource_type VARCHAR(50),
-    resource_id VARCHAR(100),
-    ip_address INET,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID,
+    entity_ids JSONB,
+    user_id UUID,
+    user_name TEXT,
+    request_details JSONB,
+    response_details JSONB,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    ip_address VARCHAR(45),
     user_agent TEXT,
-    status SMALLINT,
-    duration_ms BIGINT,
-    request_body JSONB,
-    response_body JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.audit_logs IS '统一审计日志表';
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action      ON public.audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON public.audit_logs(entity_type);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id     ON public.audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at  ON public.audit_logs(created_at DESC);
+
+COMMENT ON TABLE public.audit_logs IS '统一审计日志表（Cluster-A 12 列标准签名 = shared-db AuditLogService 1:1）';
 
 -- ================================================================================
 -- 第六部分：创建 unified_core schema 表（核心平台）
