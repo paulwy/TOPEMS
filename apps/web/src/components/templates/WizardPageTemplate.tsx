@@ -52,10 +52,13 @@ export interface WizardAction {
   position?: 'left' | 'right';
 }
 
-export interface WizardPageTemplateProps extends BoxProps {
+export interface WizardPageTemplateProps extends Omit<BoxProps, 'title' | 'maxWidth'> {
   title: string;
   subtitle?: string;
   breadcrumbs?: BreadcrumbItem[];
+  children?: React.ReactNode;
+  /** 最大宽度（支持 MUI 断点字符串如 'sm'/'md'/'lg'/'xl'） */
+  maxWidth?: string | number | false;
 
   steps: WizardStep[];
 
@@ -94,6 +97,8 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
   title,
   subtitle,
   breadcrumbs,
+  children,
+  maxWidth,
   steps,
   initialStep = 0,
   currentStep: externalCurrentStep,
@@ -437,7 +442,15 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
   };
 
   return (
-    <Box {...props}>
+    <Box
+      {...props}
+      sx={{
+        ...props.sx,
+        ...(maxWidth !== undefined && maxWidth !== false
+          ? { maxWidth: typeof maxWidth === 'string' && maxWidth.length === 2 && ['xs','sm','md','lg','xl'].includes(maxWidth) ? (theme => theme.breakpoints.values[maxWidth as 'xs'|'sm'|'md'|'lg'|'xl']) : maxWidth, mx: 'auto' }
+          : {}),
+      }}
+    >
       <PageHeader
         title={title}
         subtitle={subtitle}
@@ -490,9 +503,14 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
 
       {renderStepper()}
 
-      {renderContent()}
-
-      {renderFooter()}
+      {children ? (
+        <Box sx={{ mt: 3 }}>{children}</Box>
+      ) : (
+        <>
+          {renderContent()}
+          {renderFooter()}
+        </>
+      )}
 
       {footerContent}
     </Box>

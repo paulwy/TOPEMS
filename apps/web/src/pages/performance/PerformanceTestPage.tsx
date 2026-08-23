@@ -3,6 +3,7 @@ import { logger } from '@/utils/logger';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { FormPageTemplate } from '@/components/templates';
 
 interface LayoutShift {
   value: number;
@@ -461,15 +462,24 @@ const PerformanceTestPage: React.FC = () => {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
-        padding: '2rem',
-        animation: 'fadeIn 0.5s ease-out',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
+    <FormPageTemplate
+      title={i18n.t('pages.performance_test_page.topems_0')}
+      subtitle={
+        i18n.t('pages.performance_test_page.k1') +
+        i18n.t('pages.performance_test_page.k2')
+      }
+      sections={[]}
+      onSubmit={async () => {}}
     >
+      <div
+        style={{
+          minHeight: '100vh',
+          background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
+          padding: '2rem',
+          animation: 'fadeIn 0.5s ease-out',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -784,7 +794,8 @@ const PerformanceTestPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </FormPageTemplate>
   );
 };
 

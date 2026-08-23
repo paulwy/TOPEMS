@@ -13,7 +13,7 @@ apps/web/src/pages/admin/PerformanceMonitorPage.tsx,admin,stats,StatsPageTemplat
 apps/web/src/pages/admin/PermissionAuditPage.tsx,admin,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/PluginManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/RateLimitConfigPage.tsx,admin,settings,SettingsPageTemplate,SettingsPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/admin/SystemManagementPage.tsx,admin,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/admin/SystemManagementPage.tsx,admin,dashboard,DashboardTemplate,DashboardTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/SystemSettingsPage.tsx,admin,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/admin/TenantBillingPage.tsx,admin,crud,CrudPage,CrudPage,PageContainer; Grid,yes,yes,no,yes,yes,2
 apps/web/src/pages/admin/TenantDetailPage.tsx,admin,crud; detail,CrudPage; DetailPageTemplate,DetailPageTemplate; CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
@@ -335,11 +335,11 @@ apps/web/src/pages/pdm/setting/BomTemplatePage.tsx,pdm,settings,SettingsPageTemp
 apps/web/src/pages/pdm/setting/CategoryRulePage.tsx,pdm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pdm/setting/ChangeTemplatePage.tsx,pdm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pdm/setting/DocApprovalFlowPage.tsx,pdm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/performance/PerformanceTestPage.tsx,performance,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/performance/PerformanceTestPage.tsx,performance,form,FormPageTemplate,FormPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/plugin/DashboardPage.tsx,plugin,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/plugin/PluginDetailPage.tsx,plugin,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/plugin/PluginMarketplacePage.tsx,plugin,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/plugin/PluginUploadPage.tsx,plugin,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/plugin/PluginUploadPage.tsx,plugin,wizard,WizardPageTemplate,WizardPageTemplate; WizardStep,none,no,no,no,no,yes,0
 apps/web/src/pages/pm/DashboardPage.tsx,pm,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pm/PmContractCreatePage.tsx,pm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pm/PmContractDetailPage.tsx,pm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
