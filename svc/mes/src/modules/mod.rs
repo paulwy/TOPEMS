@@ -1,4 +1,5 @@
 pub mod anomaly_detection;
+pub mod approval_common;
 pub mod aps_scheduling;
 pub mod audit;
 pub mod dashboard_ws;

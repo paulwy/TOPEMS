@@ -1833,6 +1833,35 @@ jobs:
       - desktop-build
     if: always()
     steps:
+      # ────────────────────────────────────────────────────────────────────
+      # [V273 D-track] SQLx offline cache freshness — advisory, NON-blocking.
+      # Goal: surface a missing / untracked / stale .sqlx cache before the
+      # SQLX_OFFLINE=true cargo check breaks (V272 lost 18 errors to this).
+      # Runs in DRY-RUN (default); continue-on-error:true keeps pipeline green.
+      # ────────────────────────────────────────────────────────────────────
+      - name: Checkout (for SQLx cache freshness check)
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js (for SQLx cache freshness check)
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: "Run SQLx Cache Freshness Checker (D-track · warn mode · non-blocking)"
+        id: sqlx-cache
+        continue-on-error: true
+        run: |
+          node scripts/ci/check-sqlx-cache-freshness.cjs \
+            --dry-run --report-json=/tmp/sqlx-cache-report.json 2>&1 | tee /tmp/sqlx-cache-output.log
+          STATUS=$(grep -oE 'SQLX_CACHE_STATUS: [A-Z]+' /tmp/sqlx-cache-output.log | head -1 | awk '{print $2}')
+          echo "status=${STATUS:-UNKNOWN}" >> $GITHUB_OUTPUT
+          echo "## SQLx Cache Freshness (D-track · WARN mode · non-blocking)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/sqlx-cache-output.log ]; then
+            awk '/=====/{p=1} p{print}' /tmp/sqlx-cache-output.log >> $GITHUB_STEP_SUMMARY || true
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
       - name: Check all jobs passed or skipped
         run: |
           echo "## Quality Gate Results" >> $GITHUB_STEP_SUMMARY
@@ -1862,6 +1891,7 @@ jobs:
           echo "| Code Quality (API paths · naming · console.log · allow_baseline) | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### PR Review Checklist" >> $GITHUB_STEP_SUMMARY

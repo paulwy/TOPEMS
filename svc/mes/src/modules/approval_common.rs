@@ -10,6 +10,7 @@ use serde_json::json;
 use sqlx::postgres::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::fsm::{FsmDef, FsmError};
+use topems_shared_db::AuditLogService;
 use uuid::Uuid;
 
 use crate::modules::audit::log_approval_event;
@@ -180,6 +181,124 @@ pub async fn write_approval_audit(
             e
         );
     }
+}
+
+// ============================================================================
+// ApprovalTransition: 共享审批转换三件套（V273）
+// ============================================================================
+
+/// 创建审批记录并写入审计日志（审批发起）
+///
+/// 生成 approval_id，通过 shared-db `AuditLogService::log_operation` 记录
+/// 审批发起事件到 `public.audit_logs`。
+///
+/// # 参数
+/// - `entity_type`: 实体类型（如 "production_order"、"anomaly_alert"）
+/// - `record_id`: 实体记录 ID
+/// - `from_status`: 审批前状态（如 "pending"）
+/// - `to_status`: 审批通过后目标状态（如 "released"）
+/// - `approver_id`: 审批人 ID
+pub async fn create_approval_and_log(
+    pool: &PgPool,
+    entity_type: &str,
+    record_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+    approver_id: Uuid,
+) -> Result<Uuid, sqlx::Error> {
+    let approval_id = Uuid::new_v4();
+    let approver_str = approver_id.to_string();
+    let svc = AuditLogService::new(pool.clone());
+    svc.log_operation(
+        "approval_start",
+        entity_type,
+        Some(record_id),
+        Some(&approver_str),
+        Some(json!({
+            "approval_id": approval_id,
+            "from_status": from_status,
+            "to_status": to_status,
+        })),
+        "success",
+        None,
+    )
+    .await?;
+    Ok(approval_id)
+}
+
+/// 执行状态转换并写入审计日志（审批通过）
+///
+/// 当 `table` 为 `Some(table_name)` 时，执行
+/// `UPDATE {table} SET status = to_status WHERE id = record_id AND status = from_status`。
+/// 然后记录审批通过事件。对于无持久化表的虚拟实体（如 anomaly_alert）传入 `None` 跳过 UPDATE。
+pub async fn execute_transition_and_log(
+    pool: &PgPool,
+    table: Option<&str>,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    from_status: &str,
+    to_status: &str,
+) -> Result<(), sqlx::Error> {
+    // 执行状态转换（仅对有持久化表的实体）
+    if let Some(table) = table {
+        let sql = format!(
+            "UPDATE {} SET status = $1, updated_at = NOW() \
+             WHERE id = $2 AND status = $3 AND deleted_at IS NULL",
+            table
+        );
+        sqlx::query(&sql)
+            .bind(to_status)
+            .bind(record_id)
+            .bind(from_status)
+            .execute(pool)
+            .await?;
+    }
+
+    // 写入审计日志
+    let svc = AuditLogService::new(pool.clone());
+    svc.log_operation(
+        "approval_approve",
+        entity_type,
+        Some(record_id),
+        None,
+        Some(json!({
+            "approval_id": approval_id,
+            "from_status": from_status,
+            "to_status": to_status,
+        })),
+        "success",
+        None,
+    )
+    .await?;
+    Ok(())
+}
+
+/// 记录驳回并写入审计日志（审批驳回）
+///
+/// 通过 shared-db `AuditLogService::log_operation` 记录审批驳回事件。
+pub async fn reject_and_log(
+    pool: &PgPool,
+    entity_type: &str,
+    record_id: Uuid,
+    approval_id: Uuid,
+    reason: &str,
+) -> Result<(), sqlx::Error> {
+    let svc = AuditLogService::new(pool.clone());
+    svc.log_operation(
+        "approval_reject",
+        entity_type,
+        Some(record_id),
+        None,
+        Some(json!({
+            "approval_id": approval_id,
+            "reason": reason,
+        })),
+        "success",
+        None,
+    )
+    .await?;
+    Ok(())
 }
 
 #[cfg(test)]

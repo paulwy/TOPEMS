@@ -41,7 +41,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { PageContainer, Grid } from '@/components/common';
+import { Grid } from '@/components/common';
+import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
@@ -236,27 +237,18 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
+    <AiToolPageTemplate
       title={i18n.t('ai.document_analysis.title')}
-      subtitle={i18n.t('ai.document_analysis.subtitle')}
-      padding={false}
-      maxWidth={false}
-      headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.cyan[600]} 0%, ${ct.cyan[300]} 100%)`,
+      description={i18n.t('ai.document_analysis.subtitle')}
+      leftPanelWidth={3}
+      pageContainerProps={{
+        headerProps: {
+          pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+          pageGradient: `linear-gradient(135deg, ${ct.cyan[600]} 0%, ${ct.cyan[300]} 100%)`,
+        },
       }}
-    >
-      <Box sx={{ p: 3 }}>
-        <Grid
-          container
-          spacing={3}
-        >
-          {/* 左侧：文档选择和最近文档 */}
-          <Grid
-            item
-            xs={12}
-            md={3}
-          >
+      leftPanel={
+        <>
             <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
               <Typography
                 variant='subtitle1'
@@ -413,24 +405,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 ))}
               </List>
             </Paper>
-          </Grid>
-
-          {/* 右侧：分析结果区域 */}
-          <Grid
-            item
-            xs={12}
-            md={9}
-          >
-            <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-              {/* 标签页 */}
-              <Box
-                sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  px: 2,
-                }}
-              >
-                <Tabs
+        </>
+      }
+      tabs={
+        <Tabs
                   value={activeTab}
                   onChange={(_, v) => setActiveTab(v)}
                   sx={{ minHeight: 48 }}
@@ -449,10 +427,11 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     />
                   ))}
                 </Tabs>
-              </Box>
-
-              {/* 分析进度 */}
-              {analyzing && (
+      }
+      rightPanel={
+        <>
+          {/* 分析进度 */}
+          {analyzing && (
                 <Box sx={{ p: 4 }}>
                   <Stepper
                     activeStep={analysisStep}
@@ -884,11 +863,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   )}
                 </Box>
               )}
-            </Paper>
-          </Grid>
-        </Grid>
-      </Box>
-    </PageContainer>
+        </>
+      }
+    />
   );
 };
 

@@ -1,5 +1,5 @@
 /**
- * 扩展模板插件（10个，按需引入）
+ * 扩展模板插件（11个，按需引入）
  *
  * 这些模板通过核心模板 + 配置组合可实现，或使用场景较低频。
  * 推荐使用动态导入（lazy import）以减少 bundle 体积。
@@ -98,6 +98,9 @@ export type { AuthPageTemplateProps } from '../AuthPageTemplate';
 
 export { ChatPageTemplate } from '../ChatPageTemplate';
 export type { ChatPageTemplateProps } from '../ChatPageTemplate';
+
+export { AiToolPageTemplate } from '../AiToolPageTemplate';
+export type { AiToolPageTemplateProps } from '../AiToolPageTemplate';
 
 export { DesignerTemplate } from '../DesignerTemplate';
 export type { DesignerTemplateProps, DesignerMode } from '../DesignerTemplate';

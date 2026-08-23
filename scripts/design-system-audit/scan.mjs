@@ -63,6 +63,7 @@ const TEMPLATE_TYPE_TO_COMPONENTS = {
   auth: ['AuthPageTemplate'],
   chat: ['ChatPageTemplate'],
   designer: ['DesignerTemplate'],
+  'ai-tool': ['AiToolPageTemplate'],
 };
 
 const ALL_TEMPLATE_COMPONENTS = Object.values(TEMPLATE_TYPE_TO_COMPONENTS).flat();
