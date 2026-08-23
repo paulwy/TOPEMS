@@ -2,7 +2,7 @@
  * @done V80 Tier2 coverage
  *
  * ErrorBoundary 组件单测
- * @see @/components/common/ErrorBoundary
+ * @see @/components/ErrorBoundary
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -22,8 +22,8 @@ vi.mock('react-i18next', () => {
       i18nMap[k] = v as string;
     }
   }
-  i18nMap['components.error_boundary.k0'] = '操作出现错误';
-  i18nMap['components.error_boundary.k1'] = '重试操作';
+  i18nMap['components.error_boundary.k4'] = '操作出现错误';
+  i18nMap['components.error_boundary.k8'] = '重试操作';
   const t = (key: string) => i18nMap[key] ?? key;
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
@@ -47,8 +47,8 @@ vi.mock('@/i18n', () => {
       i18nMap[k] = v as string;
     }
   }
-  i18nMap['components.error_boundary.k0'] = '操作出现错误';
-  i18nMap['components.error_boundary.k1'] = '重试操作';
+  i18nMap['components.error_boundary.k4'] = '操作出现错误';
+  i18nMap['components.error_boundary.k8'] = '重试操作';
   const t = (key: string) => i18nMap[key] ?? key;
   return {
     default: {
@@ -61,7 +61,7 @@ vi.mock('@/i18n', () => {
   };
 });
 
-import ErrorBoundary from '@/components/common/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 vi.mock('@/utils/logger', () => ({
   logger: {
@@ -120,7 +120,7 @@ describe('ErrorBoundary', () => {
           <ProblemChild msg='网络异常' />
         </ErrorBoundary>
       );
-      expect(screen.getByText('操作出现错误')).toBeInTheDocument();
+      expect(screen.getAllByText('操作出现错误').length).toBeGreaterThan(0);
       expect(screen.getByText('网络异常')).toBeInTheDocument();
       expect(screen.getByText('重试操作')).toBeInTheDocument();
     });
@@ -157,7 +157,7 @@ describe('ErrorBoundary', () => {
           <ProblemChild />
         </ErrorBoundary>
       );
-      expect(screen.getByText('操作出现错误')).toBeInTheDocument();
+      expect(screen.getAllByText('操作出现错误').length).toBeGreaterThan(0);
 
       const retryBtn = screen.getByText('重试操作');
       fireEvent.click(retryBtn);

@@ -334,7 +334,7 @@ export type { StatusBadgeProps } from './StatusBadge';
 | **LoadingSpinner** | `common/LoadingSpinner.tsx` | 加载状态 | ✅ 推荐 |
 | **SkeletonScreen** | `common/SkeletonScreen.tsx` | 骨架屏 | ✅ 推荐 |
 | **ConfirmDialog** | `common/ConfirmDialog.tsx` | 确认对话框 | ✅ 推荐 |
-| **ErrorBoundary** | `common/ErrorBoundary.tsx` | 错误边界 | ✅ 推荐 |
+| **ErrorBoundary** | `ErrorBoundary.tsx` | 错误边界 | ✅ 推荐 |
 | **StatusBadge** | `common/StatusBadge.tsx` | 状态徽章 | ✅ 推荐 |
 | AlertCard | `common/AlertCard.tsx` | 警告卡片 | ✅ 推荐 |
 | AlertPanel | `common/AlertPanel.tsx` | 警告面板 | ✅ 推荐 |

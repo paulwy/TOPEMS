@@ -190,18 +190,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "rust-smoke-nightly-2026-07-01"
+          cache-prefix: "rust-smoke-nightly-2026-07-01"
 
       - name: Run 5-service smoke tests
         env:
@@ -223,19 +214,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
           components: rustfmt, clippy
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "rust-lint-nightly-2026-07-01"
+          cache-prefix: "rust-lint-nightly-2026-07-01"
 
       - name: Check code format
         run: cargo fmt --check --all
@@ -254,19 +236,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
           components: rustfmt
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "fmt-check-nightly-2026-07-01"
+          cache-prefix: "fmt-check-nightly-2026-07-01"
 
       - name: Check code format (workspace)
         run: cargo fmt --all --check
@@ -282,19 +255,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
           components: clippy
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "clippy-check-nightly-2026-07-01"
+          cache-prefix: "clippy-check-nightly-2026-07-01"
 
       - name: Run Clippy (workspace, all targets)
         run: cargo clippy --workspace --all-targets -- -D warnings
@@ -310,18 +274,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "cargo-check-nightly-2026-07-01"
+          cache-prefix: "cargo-check-nightly-2026-07-01"
 
       - name: Run cargo check (workspace, all tests)
         run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short
@@ -340,12 +295,9 @@ jobs:
     # V251: 已连续 3 版守绿，切换为 blocking
     steps:
       - uses: actions/checkout@v5
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+          enable-sccache: 'false'
       - name: Run tests
         run: cargo test --workspace 2>&1 | tee /tmp/cargo-test-output.log
       - name: Test summary
@@ -388,23 +340,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+          cache-prefix: "rust-test-nightly-2026-07-01"
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
         with:
           tool: nextest
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "rust-test-nightly-2026-07-01"
 
       - name: Cache nextest
         uses: actions/cache@v5
@@ -537,15 +480,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "rust-audit-nightly-2026-07-01"
+          enable-sccache: 'false'
+          cache-prefix: "rust-audit-nightly-2026-07-01"
 
       - name: Install cargo-audit
         run: cargo install cargo-audit
@@ -570,15 +508,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "cargo-deny-nightly-2026-07-01"
+          enable-sccache: 'false'
+          cache-prefix: "cargo-deny-nightly-2026-07-01"
 
       - name: Install cargo-deny
         run: cargo install cargo-deny
@@ -1720,15 +1653,10 @@ jobs:
       - name: Static check — migration integrity
         run: node scripts/check-migrations.mjs
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "migration-test-nightly-2026-07-01"
+          enable-sccache: 'false'
+          cache-prefix: "migration-test-nightly-2026-07-01"
 
       - name: Install sqlx-cli
         run: cargo install sqlx-cli --no-default-features --features postgres,rustls
@@ -1784,10 +1712,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
+          enable-sccache: 'false'
+          enable-cache: 'false'
 
       - name: Install dependencies
         run: pnpm install
@@ -1984,18 +1912,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: nightly-2026-07-01
-
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Cache Rust deps
-        uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: "rust-schema-defense-nightly-2026-07-01"
+          cache-prefix: "rust-schema-defense-nightly-2026-07-01"
 
       - name: Install pg extensions + create schemas（4 批 19 schema + public 默认）
         run: |

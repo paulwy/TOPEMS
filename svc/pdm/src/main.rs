@@ -13,7 +13,7 @@ use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service, build_application, default_init_db, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
 pub use shared::AppState;
@@ -43,7 +43,16 @@ async fn main() -> anyhow::Result<()> {
     if let Err(e) = models::init_database(&ctx.db).await {
         tracing::warn!("PDM database init warning: {}", e);
     }
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "pdm",
+        true,
+        // pdm 的 schema 初始化已由上方的 models::init_database 完成，
+        // 此处仅负责 master_data_refs 表，schema_defense 步骤留空。
+        |_| async { Ok::<(), sqlx::Error>(()) },
+    )
+    .await
+    {
         tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
     }
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
@@ -123,10 +132,4 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     )
     .await;
     Json(ApiResponse::success(resp, "Detailed health check"))
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    // V32.0 AC-5: 本地主数据引用表（P2-M1: 统一 schema 到 shared-db）
-    topems_shared::ensure_master_data_refs_table(pool, "pdm").await?;
-    Ok(())
 }

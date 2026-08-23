@@ -12,8 +12,8 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
+    default_init_db, run, ServiceConfig,
 };
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -39,7 +39,14 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "wms",
+        false,
+        schema_defense::run_schema_migration_and_verify,
+    )
+    .await
+    {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
@@ -90,13 +97,6 @@ async fn main() -> Result<()> {
     });
 
     run(app).await
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[wms] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
 }
 
 #[cfg(test)]

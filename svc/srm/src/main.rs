@@ -17,8 +17,8 @@ use utoipa::OpenApi;
 use prometheus::{default_registry, Gauge};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
+    default_init_db, run, ServiceConfig,
 };
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -69,7 +69,14 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = init_db(&ctx.db).await {
+    if let Err(e) = default_init_db(
+        &ctx.db,
+        "srm",
+        false,
+        schema_defense::run_schema_migration_and_verify,
+    )
+    .await
+    {
         tracing::warn!("数据库初始化警告: {}", e);
     }
 
@@ -150,11 +157,4 @@ async fn main() -> Result<()> {
     tracing::info!("🔒 认证保护已启用");
 
     run(app).await
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[srm] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
 }
