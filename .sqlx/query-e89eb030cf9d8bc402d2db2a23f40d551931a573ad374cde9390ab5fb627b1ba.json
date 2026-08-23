@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Timestamp"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 9,
@@ -73,7 +73,7 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Timestamp",
+        "Varchar",
         "Text"
       ]
     },
@@ -83,7 +83,7 @@
       false,
       true,
       true,
-      true,
+      false,
       true,
       true,
       true,

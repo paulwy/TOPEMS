@@ -36,7 +36,7 @@
       {
         "ordinal": 6,
         "name": "patrol_time",
-        "type_info": "Timestamp"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 7,
@@ -75,7 +75,7 @@
         "Uuid",
         "Varchar",
         "Varchar",
-        "Timestamp",
+        "Varchar",
         "Varchar",
         "Varchar",
         "Text",
@@ -89,7 +89,7 @@
       true,
       true,
       true,
-      true,
+      false,
       true,
       true,
       true,
