@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V274 | **更新日期**: 2026-08-23
+> **版本**: V276 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -13,10 +13,32 @@
 > **V273 四轨并行推进已完成**（MES 审批流三件套 12 stubs 收敛 + AiToolPageTemplate 3 页迁移 + .sqlx 缓存新鲜度 CI check）。
 > **V274 sqlx-cache 语义级检查已完成**（sqlx-prepare.sh --semantic mode + schema-defense-gate advisory step）。
 > **V275 报表类模板化已完成**（ReportViewerTemplate 新增 + DesignerTemplate 复用，6 报表页全部迁移，覆盖率 96.4%→97.5%，例外项 19→13）。
+> **V276 GIS 模板接入已完成**（GisMapTemplate 落地 2 个 GIS 例外页，覆盖率 97.5%→97.9%，例外项 13→11）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V276 GIS 模板接入（GisMapTemplate 落地）
+
+> 日期：2026-08-23 | 代码改动 4 files（页面 2 + 例外清单 1 + TODO 1）| 验收：tsc 0 errors · 审计覆盖率 97.9% · 例外项 13→11
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| gis/index.tsx 迁移 | 替换 MapView → [GisMapTemplate](file:///Users/air/TOPEMS/apps/web/src/pages/gis/index.tsx)，devicePoints/storageLocations→markers、pipelines→GeoFence rectangles | ✅ |
+| bi/GisPage/index.tsx 迁移 | [bi/GisPage/index.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/bi/GisPage/index.tsx) inline GisMapTemplate 替代 MapSection 子组件，onMarkerClick 回查原数据 | ✅ |
+| 例外清单更新 | [template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) GIS 类 2→0，总例外 13→11，覆盖率 97.5%→97.9% | ✅ |
+
+#### 最终验收矩阵
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `node scripts/design-system-audit/scan.mjs` — 519/530 = 97.9%（+2 标准模板使用）
+- [x] 例外项 13→11（-2），GIS 类例外清零（2→0）
+
+### V276 后续扩展（留给 V277+）
+- [ ] **ApprovalTransition 推广**：A 轨 3 个方法仅在 MES 使用，评估推广到 finance/erp/pm 等其他有审批流的模块
+- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入模板
+- [ ] **门户/协作类模板化**：SupplierPortalPage / NotificationCenter 2 页评估专用模板可行性
+- [ ] **文档/邮件类模板化**：DocumentsPage / MailPage 2 页评估专用模板可行性
 
 ### 已完成：V275 报表类模板化（ReportViewerTemplate + DesignerTemplate 复用）
 

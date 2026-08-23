@@ -44,11 +44,11 @@ import {
   useTheme,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import type { TabType, ModalType, FormErrors, GisEntity } from './types';
 import { PageHeader } from './components/PageHeader';
 import { StatsSection } from './components/StatsSection';
-import { MapSection } from './components/MapSection';
 import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
@@ -783,13 +783,69 @@ const GisContent: React.FC = () => {
             </Tabs>
           </Paper>
           {activeTab === 'map' ? (
-            <MapSection
-              loading={loading}
-              devicePoints={devicePoints}
-              pipelines={pipelines}
-              storageLocations={storageLocations}
-              onMarkerClick={(item) => setSelectedItem(item)}
-            />
+            loading ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 500,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                }}
+              >
+                <CircularProgress sx={{ color: 'info.main' }} />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  height: 500,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1.5,
+                  overflow: 'hidden',
+                }}
+              >
+                <GisMapTemplate
+                  initialCenter={[31.2304, 121.4737]}
+                  initialZoom={13}
+                  searchable
+                  zoomControl
+                  fullscreenControl
+                  markers={[
+                    ...devicePoints.map((dp): MapMarker => ({
+                      id: dp.id,
+                      name: dp.name,
+                      position: [dp.latitude, dp.longitude],
+                      type: 'device',
+                      color: dp.status?.toLowerCase().includes('active') ? 'green' : 'orange',
+                    })),
+                    ...storageLocations.map((sl): MapMarker => ({
+                      id: sl.id,
+                      name: sl.name,
+                      position: [sl.latitude, sl.longitude],
+                      type: 'storage',
+                      color: 'blue',
+                    })),
+                  ]}
+                  fences={pipelines.map((p): GeoFence => ({
+                    id: p.id,
+                    name: p.name,
+                    type: 'rectangle',
+                    position: p.start_point,
+                    coordinates: [p.start_point, p.end_point],
+                    color: p.status?.toLowerCase().includes('active') ? 'green' : 'grey',
+                  }))}
+                  onMarkerClick={(marker) => {
+                    const item =
+                      devicePoints.find((dp) => dp.id === marker.id) ??
+                      storageLocations.find((sl) => sl.id === marker.id);
+                    if (item) setSelectedItem(item);
+                  }}
+                />
+              </Box>
+            )
           ) : (
             <DataTableSection
               activeTab={activeTab}

@@ -68,7 +68,7 @@ apps/web/src/pages/bi/BiIndexPage.tsx,bi,dashboard,DashboardTemplate,DashboardTe
 apps/web/src/pages/bi/BiPermissionPage.tsx,bi,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/bi/DatasetPage.tsx,bi,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/bi/GisPage/index.tsx,bi,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/bi/GisPage/index.tsx,bi,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/bi/ReportBuilderPage.tsx,bi,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/CRMBillingPage.tsx,crm,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/crm/CRMCustomerScoringPage.tsx,crm,crud,CrudPage,none,none,no,yes,no,yes,yes,0
@@ -163,7 +163,7 @@ apps/web/src/pages/finance/VoucherDetailPage.tsx,finance,detail,DetailPageTempla
 apps/web/src/pages/gis/DashboardPage.tsx,gis,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/gis/GisFencePage.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/gis/GisTrackingPage.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; TrackPoint,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/gis/index.tsx,gis,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/gis/index.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/help/FaqPage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/help/GuidePage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/help/HelpCenterPage.tsx,help,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
