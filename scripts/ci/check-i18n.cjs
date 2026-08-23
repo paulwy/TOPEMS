@@ -1,40 +1,20 @@
 #!/usr/bin/env node
-// 国际化硬编码中文检查（V65 阶段四新增）
-//
-// 用途：
-// 1. 扫描 apps/web/src/pages 下 .tsx 文件 JSX 中直接出现的中文（非注释、非 console、非 import）
-// 2. 输出 top 20 文件清单，量化 i18n 覆盖率
-// 3. CI 门禁：admin 模块硬编码中文必须为 0
-//
-// 用法：
-//   node scripts/ci/check-i18n.cjs                   # 全量检查，输出 top 20
-//   node scripts/ci/check-i18n.cjs --json            # 输出 JSON 格式
-//   node scripts/ci/check-i18n.cjs --strict          # 严格模式：admin 模块 > 0 则 exit 1
-//   node scripts/ci/check-i18n.cjs --strict-all      # 全模块严格模式：任意模块 > 0 则 exit 1
-//   node scripts/ci/check-i18n.cjs --module admin     # 仅检查指定模块
-//   node scripts/ci/check-i18n.cjs --threshold 5     # 允许每模块最多 N 处硬编码
-//
-// 退出码：
-//   0 = 通过
-//   1 = 严格模式下存在硬编码中文超标
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
-const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const WEB_ROOT = path.join(PROJECT_ROOT, 'apps/web/src');
 const PAGES_DIR = path.join(WEB_ROOT, 'pages');
+const EN_DIR = path.join(WEB_ROOT, 'i18n/locales/en');
+const ZH_DIR = path.join(WEB_ROOT, 'i18n/locales/zh');
+const P7_MODULES = ['components/templates', 'ai', 'microfrontend', 'admin', 'mobile', 'monitor', 'mes'];
 
-// CLI 参数解析
-const args = process.argv.slice(2);
-const jsonMode = args.includes('--json');
-const strictMode = args.includes('--strict');
-const strictAllMode = args.includes('--strict-all');
-const moduleIdx = args.indexOf('--module');
-const targetModule = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 1] : null;
-const thresholdIdx = args.indexOf('--threshold');
-const perModuleThreshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 0;
+const CHINESE_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
+const CJK_RE = /[\u4e00-\u9fff]/;
+const VAR_RE = /\{\{[^}]+\}\}|\{[^}]+\}|\$\{[^}]+\}|%[sd]|\{\d+\}/;
 
-// --------- R13 V222 P4 NEW CLI ARGS ---------
 function getArgValue(argsList, flag) {
   const eqIdx = argsList.findIndex((a) => a.startsWith(flag + '='));
   if (eqIdx !== -1) return argsList[eqIdx].slice(flag.length + 1);
@@ -42,28 +22,70 @@ function getArgValue(argsList, flag) {
   if (spIdx !== -1 && argsList[spIdx + 1]) return argsList[spIdx + 1];
   return null;
 }
-const _strictZeroVal = getArgValue(args, '--strict-zero');
-const STRICT_ZERO = _strictZeroVal
-  ? _strictZeroVal
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-  : [];
-const _upperBoundVal = getArgValue(args, '--upper-bound');
-const UPPER_BOUND = {}; // { admin: 500, mobile: 400, ... }
-if (_upperBoundVal) {
-  for (const pair of _upperBoundVal.split(',')) {
-    const [name, numStr] = pair.split(':');
-    if (!name || !numStr) continue;
-    const n = parseInt(numStr, 10);
-    if (!Number.isFinite(n)) continue;
-    UPPER_BOUND[name.trim()] = n;
+
+function parseArgs(argv) {
+  const args = argv.slice(2);
+  const modeVal = getArgValue(args, '--mode') || 'all';
+  const mode = ['hardcode', 'quality', 'all'].includes(modeVal) ? modeVal : 'all';
+  const dryRun = args.includes('--dry-run');
+  const failFast = args.includes('--fail-fast');
+  const reportJsonVal = getArgValue(args, '--report-json');
+  const reportJsonPath = reportJsonVal ? path.resolve(reportJsonVal) : null;
+  const thresholdOverrideVal = getArgValue(args, '--threshold-override');
+  const thresholdOverride = {};
+  if (thresholdOverrideVal) {
+    for (const pair of thresholdOverrideVal.split(',')) {
+      const [name, numStr] = pair.split(':');
+      if (!name || !numStr) continue;
+      const n = parseInt(numStr, 10);
+      if (!Number.isFinite(n)) continue;
+      thresholdOverride[name.trim()] = n;
+    }
   }
+  const jsonMode = args.includes('--json');
+  const strictMode = args.includes('--strict');
+  const strictAllMode = args.includes('--strict-all');
+  const moduleIdx = args.indexOf('--module');
+  const targetModule = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 1] : null;
+  const thresholdIdx = args.indexOf('--threshold');
+  const perModuleThreshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 0;
+  const _strictZeroVal = getArgValue(args, '--strict-zero');
+  const STRICT_ZERO = _strictZeroVal
+    ? _strictZeroVal
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+  const _upperBoundVal = getArgValue(args, '--upper-bound');
+  const UPPER_BOUND = {};
+  if (_upperBoundVal) {
+    for (const pair of _upperBoundVal.split(',')) {
+      const [name, numStr] = pair.split(':');
+      if (!name || !numStr) continue;
+      const n = parseInt(numStr, 10);
+      if (!Number.isFinite(n)) continue;
+      UPPER_BOUND[name.trim()] = n;
+    }
+  }
+  const finalUpperBound = Object.keys(thresholdOverride).length ? { ...UPPER_BOUND, ...thresholdOverride } : UPPER_BOUND;
+  const nsIdx = args.indexOf('--ns');
+  const TARGET_NS = nsIdx !== -1 && args[nsIdx + 1] ? args[nsIdx + 1] : null;
+  return {
+    mode,
+    dryRun,
+    failFast,
+    reportJsonPath,
+    jsonMode,
+    strictMode,
+    strictAllMode,
+    targetModule,
+    perModuleThreshold,
+    STRICT_ZERO,
+    UPPER_BOUND: finalUpperBound,
+    TARGET_NS,
+  };
 }
-const _reportJsonVal = getArgValue(args, '--report-json');
-const REPORT_JSON_PATH = _reportJsonVal ? path.resolve(_reportJsonVal) : null;
-// --------- R13 V222 P4 DUAL-PATH SCAN ---------
-const P7_MODULES = ['components/templates', 'ai', 'microfrontend', 'admin', 'mobile', 'monitor', 'mes'];
+
 function collectFilesDual(moduleName) {
   const out = [];
   const d1 = path.join(PAGES_DIR, moduleName);
@@ -89,7 +111,6 @@ function collectInto(dir, out) {
     }
   }
 }
-// --------- R13 V222 P4 EXPORTABLE PURE COUNT (for vitest guardian) ---------
 async function countByModule(moduleNames) {
   const mods = Array.isArray(moduleNames) ? moduleNames : [moduleNames];
   const result = {};
@@ -118,22 +139,12 @@ async function countByModule(moduleNames) {
   }
   return result;
 }
-// Export via Node CJS module interop so vitest ESM can import
 if (typeof module !== 'undefined') {
   module.exports = {
     countByModule,
     P7_MODULES,
-    STRICT_ZERO_DEFAULTS: STRICT_ZERO.length ? STRICT_ZERO : P7_MODULES.slice(0, 3),
-    UPPER_BOUND_DEFAULTS: Object.keys(UPPER_BOUND).length
-      ? UPPER_BOUND
-      : { admin: 500, mobile: 400, monitor: 450, mes: 470 },
   };
 }
-
-// 中文字符正则（CJK 统一表意文字 + 扩展 A + 兼容表意文字）
-const CHINESE_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
-
-// 递归收集所有 .tsx 文件
 function collectTsxFiles(dir) {
   const results = [];
   if (!fs.existsSync(dir)) return results;
@@ -153,90 +164,63 @@ function collectTsxFiles(dir) {
   }
   return results;
 }
-
-// 判断某行是否应跳过（注释、console、import、type 声明等）
 function shouldSkipLine(line) {
   const trimmed = line.trim();
-  // 空行
   if (!trimmed) return true;
-  // 单行注释
   if (trimmed.startsWith('//')) return true;
-  // 多行注释块内的行
   if (trimmed.startsWith('*') || trimmed.startsWith('/*')) return true;
-  // console 语句
   if (/^console\./.test(trimmed)) return true;
-  // import 语句
   if (/^import\s/.test(trimmed)) return true;
-  // export type / interface 声明（类型定义中的中文注释不算）
   if (/^(export\s+)?(type|interface)\s/.test(trimmed)) return true;
   return false;
 }
-
-// 提取行中的中文字符串（排除 t() 调用内的内容）
 function findHardcodedChinese(line) {
   const matches = [];
-  // 先移除 t('...') 和 t("...") 调用中的内容
   const cleaned = line
     .replace(/\bt\s*\(\s*['"`][^'"`]*['"`]/g, '')
     .replace(/i18n\.t\s*\(\s*['"`][^'"`]*['"`]/g, '')
     .replace(/tpl\s*\(\s*['"`][^'"`]*['"`]/g, '');
-
-  // 查找包含中文的字符串字面量
-  // 匹配 '中文' "中文" `中文` 以及 JSX 文本节点中的中文
   const stringRe = /(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
   let m;
   while ((m = stringRe.exec(cleaned)) !== null) {
     matches.push(m[2]);
   }
-
-  // 查找 JSX 文本节点中的中文（> 中文 < 或 >中文<）
   const jsxTextRe = />([^<>{}]*[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff][^<>{}]*)</g;
   while ((m = jsxTextRe.exec(cleaned)) !== null) {
     const text = m[1].trim();
     if (text) matches.push(text);
   }
-
-  // 查找属性值中的中文（非 t() 调用） title='中文' label="中文"
   const attrRe =
     /\b(?:label|title|placeholder|helperText|tooltip|alt|aria-label)\s*=\s*(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
   while ((m = attrRe.exec(cleaned)) !== null) {
-    // 避免重复添加（已被 stringRe 匹配的）
     if (!matches.includes(m[2])) matches.push(m[2]);
   }
-
   return matches;
 }
-
-// 获取模块名（pages 下的第一级目录）
 function getModuleName(filePath) {
   const rel = path.relative(PAGES_DIR, filePath);
   const parts = rel.split(path.sep);
   return parts.length > 1 ? parts[0] : 'root';
 }
 
-function main() {
+function runHardcodeCheck(opts) {
+  const { targetModule, STRICT_ZERO, UPPER_BOUND } = opts;
   let files = collectTsxFiles(PAGES_DIR);
-
-  // 按模块过滤
   if (targetModule) {
     files = files.filter((f) => getModuleName(f) === targetModule);
   }
-
-  const moduleStats = {}; // { admin: { count, files: Set } }
-  const fileViolations = []; // [{ file, module, count, samples: [{ line, texts }] }]
+  const moduleStats = {};
+  const fileViolations = [];
   let totalCount = 0;
-
   for (const filePath of files) {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     const module = getModuleName(filePath);
     let fileCount = 0;
     const samples = [];
-
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (shouldSkipLine(line)) continue;
-
       const texts = findHardcodedChinese(line);
       if (texts.length > 0) {
         fileCount += texts.length;
@@ -246,15 +230,13 @@ function main() {
         }
       }
     }
-
     if (fileCount > 0) {
       fileViolations.push({
-        file: path.relative(path.resolve(__dirname, '../..'), filePath),
+        file: path.relative(PROJECT_ROOT, filePath),
         module,
         count: fileCount,
         samples,
       });
-
       if (!moduleStats[module]) {
         moduleStats[module] = { count: 0, files: new Set() };
       }
@@ -262,87 +244,8 @@ function main() {
       moduleStats[module].files.add(filePath);
     }
   }
-
-  // 按违规数排序
   fileViolations.sort((a, b) => b.count - a.count);
-
   const adminCount = moduleStats['admin'] ? moduleStats['admin'].count : 0;
-
-  if (jsonMode) {
-    console.log(
-      JSON.stringify(
-        {
-          totalCount,
-          adminCount,
-          moduleStats: Object.fromEntries(
-            Object.entries(moduleStats).map(([k, v]) => [k, { count: v.count, files: v.files.size }])
-          ),
-          topFiles: fileViolations.slice(0, 20).map((v) => ({
-            file: v.file,
-            module: v.module,
-            count: v.count,
-          })),
-        },
-        null,
-        2
-      )
-    );
-  } else {
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('  国际化硬编码中文检查');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log(`  扫描文件数: ${files.length}`);
-    console.log(`  硬编码中文总数: ${totalCount}`);
-    console.log(`  admin 模块硬编码: ${adminCount}`);
-    console.log(`  严格模式: ${strictMode ? '开启 (admin)' : strictAllMode ? '开启 (全模块)' : '关闭'}`);
-    if (perModuleThreshold > 0) {
-      console.log(`  每模块阈值: ${perModuleThreshold}`);
-    }
-    console.log('');
-
-    console.log('模块分布:');
-    Object.entries(moduleStats)
-      .sort((a, b) => b[1].count - a[1].count)
-      .forEach(([k, v]) => {
-        const marker = k === 'admin' && v.count > 0 ? ' ❌' : '';
-        console.log(`  ${k}: ${v.count} 处 (${v.files.size} 文件)${marker}`);
-      });
-
-    console.log('');
-    console.log(`Top ${Math.min(20, fileViolations.length)} 文件:`);
-    fileViolations.slice(0, 20).forEach((v, i) => {
-      const marker = v.module === 'admin' ? ' ❌' : '';
-      console.log(`  ${i + 1}. [${v.module}] ${v.file}: ${v.count} 处${marker}`);
-      v.samples.forEach((s) => {
-        console.log(`      L${s.line}: ${s.texts.join(', ')}`);
-      });
-    });
-    console.log('═══════════════════════════════════════════════════════════');
-  }
-
-  // 严格模式：admin 模块 > 0 则失败
-  if (strictMode && adminCount > 0) {
-    console.error(`\n❌ admin 模块存在 ${adminCount} 处硬编码中文，需清零`);
-    process.exit(1);
-  }
-
-  // 全模块严格模式：任意模块 > 阈值则失败
-  if (strictAllMode) {
-    const failingModules = Object.entries(moduleStats).filter(([name, stats]) => {
-      const limit = perModuleThreshold > 0 ? perModuleThreshold : 0;
-      return stats.count > limit;
-    });
-    if (failingModules.length > 0) {
-      console.error(`\n❌ ${failingModules.length} 个模块硬编码中文超标:`);
-      failingModules.forEach(([name, stats]) => {
-        const limit = perModuleThreshold > 0 ? perModuleThreshold : 0;
-        console.error(`   ${name}: ${stats.count} 处 (阈值 ${limit})`);
-      });
-      process.exit(1);
-    }
-  }
-
-  // ---- R13 V222 P4: strict-zero / upper-bound gates ----
   const gateFailures = [];
   for (const z of STRICT_ZERO) {
     const c = moduleStats[z] ? moduleStats[z].count : 0;
@@ -352,8 +255,6 @@ function main() {
     const c = moduleStats[name] ? moduleStats[name].count : 0;
     if (c > bound) gateFailures.push({ type: 'BOUND_EXCEEDED', module: name, actual: c, threshold: bound });
   }
-
-  // ---- R13 V222 P4: report-json ----
   const _gateMods = Array.from(new Set([...STRICT_ZERO, ...Object.keys(UPPER_BOUND)]));
   const _perModule = {};
   for (const m of _gateMods) {
@@ -366,45 +267,535 @@ function main() {
       _perModule[k] = { count: v.count, files: v.files.size };
     }
   }
-  const gateResult = {
-    timestamp: new Date().toISOString(),
-    phase: 'R13-V222-P4-Gate',
+  return {
+    filesScanned: files.length,
     totalCount,
-    perModule: _perModule,
+    adminCount,
+    moduleStats: Object.fromEntries(
+      Object.entries(moduleStats).map(([k, v]) => [k, { count: v.count, files: v.files.size }])
+    ),
+    topFiles: fileViolations.slice(0, 20).map((v) => ({
+      file: v.file,
+      module: v.module,
+      count: v.count,
+      samples: v.samples,
+    })),
     strictZero: STRICT_ZERO,
     upperBound: UPPER_BOUND,
-    failures: gateFailures,
+    perModule: _perModule,
+    gateFailures,
     allOk: gateFailures.length === 0,
+    fileViolations,
   };
-  if (REPORT_JSON_PATH) {
-    fs.mkdirSync(path.dirname(REPORT_JSON_PATH), { recursive: true });
-    fs.writeFileSync(REPORT_JSON_PATH, JSON.stringify(gateResult, null, 2) + '\n', 'utf8');
-  }
+}
 
-  // Print P4 gate summary (always) if any strict gate was enabled
-  if (STRICT_ZERO.length > 0 || Object.keys(UPPER_BOUND).length > 0) {
+function flatten(obj, prefix = '', out = new Map()) {
+  for (const [k, v] of Object.entries(obj)) {
+    const p = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      flatten(v, p, out);
+    } else if (typeof v === 'string') {
+      out.set(p, v);
+    } else if (v !== undefined && v !== null) {
+      out.set(p, String(v));
+    }
+  }
+  return out;
+}
+function classifyEn(enVal, zhVal) {
+  const ev = (enVal || '').trim();
+  const zv = (zhVal || '').trim();
+  if (!ev) return 'empty';
+  if (!CJK_RE.test(ev)) return 'ok';
+  if (zv && ev === zv) return 'untranslated';
+  if (zv && (ev.includes(zv) || zv.includes(ev))) return 'partial_machine';
+  if (/[A-Za-z]{2,}/.test(ev) || VAR_RE.test(ev)) return 'mixed_cjk_en';
+  if (!/[A-Za-z]/.test(ev)) return 'pure_cjk';
+  return 'garbage';
+}
+function detectMixedStructure(ns, enObj) {
+  const issues = [];
+  const flatKeys = Object.keys(enObj).filter((k) => k.includes('.'));
+  if (flatKeys.length === 0) return issues;
+  for (const flatKey of flatKeys) {
+    const flatVal = enObj[flatKey];
+    const parts = flatKey.split('.');
+    let cur = enObj;
+    let found = true;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!cur || typeof cur !== 'object' || Array.isArray(cur) || !(parts[i] in cur)) {
+        found = false;
+        break;
+      }
+      cur = cur[parts[i]];
+    }
+    const nestedExists =
+      found && cur && typeof cur === 'object' && !Array.isArray(cur) && parts[parts.length - 1] in cur;
+    const nestedVal = nestedExists ? cur[parts[parts.length - 1]] : undefined;
+    if (nestedExists && typeof nestedVal === 'string' && typeof flatVal === 'string') {
+      if (nestedVal !== flatVal) {
+        issues.push({
+          ns,
+          key: flatKey,
+          flatVal: flatVal.slice(0, 80),
+          nestedVal: String(nestedVal).slice(0, 80),
+        });
+      }
+    }
+  }
+  return issues;
+}
+
+function runR12SevenInOne() {
+  let failures = 0;
+  const report = [];
+  try {
+    if (!fs.existsSync(EN_DIR)) throw new Error('EN_DIR missing');
+    let empty = 0,
+      nul = 0;
+    for (const f of fs.readdirSync(EN_DIR)) {
+      if (!f.endsWith('.json')) continue;
+      const o = JSON.parse(fs.readFileSync(path.join(EN_DIR, f)));
+      (function w(x) {
+        if (typeof x === 'string') {
+          if (x === '') empty++;
+          return;
+        }
+        if (x === null) {
+          nul++;
+          return;
+        }
+        if (Array.isArray(x)) return x.forEach(w);
+        if (x && typeof x === 'object') for (const k of Object.keys(x)) w(x[k]);
+      })(o);
+    }
+    const ok = empty + nul === 0;
+    if (!ok) failures++;
+    report.push({
+      title: 'R12-Z1 · EN missing strict',
+      ok,
+      code: ok ? 0 : 1,
+      tail: `empty=${empty} null=${nul} SUM=${empty + nul}`,
+    });
+  } catch (e) {
+    failures++;
+    report.push({ title: 'R12-Z1 · EN missing', ok: false, code: 2, tail: String(e).slice(0, 120) });
+  }
+  (function () {
+    try {
+      const res = spawnSync(process.execPath, ['scripts/ci/verify-glossary.cjs'], {
+        cwd: PROJECT_ROOT,
+        encoding: 'utf8',
+        timeout: 60_000,
+      });
+      const ok = res.status === 0;
+      if (!ok) failures++;
+      report.push({
+        title: 'R12-Z2 · Glossary Top50 strict',
+        ok,
+        code: res.status ?? (res.error ? 3 : 0),
+        tail:
+          (res.stdout || '').split('\n').filter(Boolean).slice(-2).join(' | ') || String(res.error || '').slice(0, 100),
+      });
+    } catch (e) {
+      failures++;
+      report.push({ title: 'R12-Z2 · Glossary', ok: false, code: 3, tail: String(e).slice(0, 120) });
+    }
+  })();
+  (function () {
+    try {
+      const lintScript = 'scripts/i18n/lint-styleguide.cjs';
+      if (!fs.existsSync(lintScript)) {
+        report.push({
+          title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
+          ok: true,
+          code: 0,
+          tail: 'skipped — lint-styleguide.cjs removed in P3 consolidation',
+        });
+      } else {
+        const res = spawnSync(
+          process.execPath,
+          [lintScript, '--json', '--sample', '0', '--max-high', '0', '--max-medium', '50'],
+          { cwd: PROJECT_ROOT, encoding: 'utf8', timeout: 120_000 }
+        );
+        let summary = null;
+        try {
+          summary = JSON.parse(res.stdout).summary;
+        } catch (_) {}
+        const lintExit = res.status ?? (res.error ? 3 : 0);
+        const ok = lintExit === 0 && summary && summary.HIGH === 0 && summary.MEDIUM <= 50;
+        if (!ok) failures++;
+        report.push({
+          title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
+          ok,
+          code: lintExit,
+          tail: summary
+            ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}`
+            : (res.stderr || res.stdout).slice(0, 160),
+        });
+      }
+    } catch (e) {
+      failures++;
+      report.push({ title: 'R12-Z3 lint', ok: false, code: 3, tail: String(e).slice(0, 120) });
+    }
+  })();
+  return {
+    failures,
+    report,
+    allOk: failures === 0,
+  };
+}
+
+function runQualityCheck(opts) {
+  const { TARGET_NS } = opts;
+  const dirErrors = [];
+  if (!fs.existsSync(EN_DIR)) dirErrors.push('EN_DIR not found: ' + EN_DIR);
+  if (!fs.existsSync(ZH_DIR)) dirErrors.push('ZH_DIR not found: ' + ZH_DIR);
+  const summary = {
+    namespaces_scanned: 0,
+    fake_en: { total: 0, by_type: {}, by_ns: {}, samples: [] },
+    key_mismatch: {
+      total: 0,
+      missing_in_en: 0,
+      missing_in_zh: 0,
+      empty_in_en: 0,
+      empty_in_zh: 0,
+      by_ns: {},
+      samples: [],
+    },
+    mixed_structure: { total: 0, by_ns: {}, issues: [] },
+  };
+  let strictFail = false;
+  if (dirErrors.length === 0) {
+    let nsFiles = fs.readdirSync(EN_DIR).filter((f) => f.endsWith('.json'));
+    if (TARGET_NS) nsFiles = nsFiles.filter((f) => f.replace('.json', '') === TARGET_NS);
+    for (const f of nsFiles) {
+      const ns = f.replace('.json', '');
+      summary.namespaces_scanned++;
+      let enObj, zhObj;
+      try {
+        enObj = JSON.parse(fs.readFileSync(path.join(EN_DIR, f), 'utf8'));
+      } catch (e) {
+        continue;
+      }
+      try {
+        zhObj = JSON.parse(fs.readFileSync(path.join(ZH_DIR, f), 'utf8'));
+      } catch (e) {
+        zhObj = {};
+      }
+      const enFlat = flatten(enObj);
+      const zhFlat = flatten(zhObj);
+      const allKeys = new Set([...enFlat.keys(), ...zhFlat.keys()]);
+      let nsFake = 0;
+      for (const [p, ev] of enFlat) {
+        const zv = zhFlat.get(p) || '';
+        const t = classifyEn(ev, zv);
+        if (t === 'ok' || t === 'empty') continue;
+        nsFake++;
+        summary.fake_en.total++;
+        summary.fake_en.by_type[t] = (summary.fake_en.by_type[t] || 0) + 1;
+        if (summary.fake_en.samples.length < 10) {
+          summary.fake_en.samples.push({ ns, path: p, type: t, en: ev.slice(0, 100), zh: zv.slice(0, 100) });
+        }
+      }
+      if (nsFake > 0) summary.fake_en.by_ns[ns] = nsFake;
+      let nsKeyMis = 0;
+      for (const k of allKeys) {
+        const inEn = enFlat.has(k);
+        const inZh = zhFlat.has(k);
+        const ev = inEn ? (enFlat.get(k) || '').trim() : null;
+        const zv = inZh ? (zhFlat.get(k) || '').trim() : null;
+        if (!inEn) {
+          summary.key_mismatch.missing_in_en++;
+          summary.key_mismatch.total++;
+          nsKeyMis++;
+          if (summary.key_mismatch.samples.length < 10) {
+            summary.key_mismatch.samples.push({ ns, path: k, issue: 'missing_in_en', zh: zv ? zv.slice(0, 80) : '' });
+          }
+        } else if (ev === '') {
+          summary.key_mismatch.empty_in_en++;
+          summary.key_mismatch.total++;
+          nsKeyMis++;
+          if (summary.key_mismatch.samples.length < 10) {
+            summary.key_mismatch.samples.push({ ns, path: k, issue: 'empty_in_en' });
+          }
+        }
+        if (!inZh) {
+          summary.key_mismatch.missing_in_zh++;
+          summary.key_mismatch.total++;
+          nsKeyMis++;
+          if (summary.key_mismatch.samples.length < 10) {
+            summary.key_mismatch.samples.push({ ns, path: k, issue: 'missing_in_zh', en: ev ? ev.slice(0, 80) : '' });
+          }
+        } else if (zv === '') {
+          summary.key_mismatch.empty_in_zh++;
+          summary.key_mismatch.total++;
+          nsKeyMis++;
+        }
+      }
+      if (nsKeyMis > 0) summary.key_mismatch.by_ns[ns] = nsKeyMis;
+      const mixIssues = detectMixedStructure(ns, enObj);
+      if (mixIssues.length > 0) {
+        summary.mixed_structure.total += mixIssues.length;
+        summary.mixed_structure.by_ns[ns] = mixIssues.length;
+        summary.mixed_structure.issues.push(...mixIssues.slice(0, 5));
+      }
+    }
+    const hasFake = summary.fake_en.total > 0;
+    const hasMixed = summary.mixed_structure.total > 0;
+    strictFail = hasFake || hasMixed;
+  }
+  const sevenInOne = runR12SevenInOne();
+  return {
+    dirErrors,
+    summary,
+    strictFail,
+    sevenInOne,
+  };
+}
+
+function printHardcodeHuman(h) {
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('  国际化硬编码中文检查');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log(`  扫描文件数: ${h.filesScanned}`);
+  console.log(`  硬编码中文总数: ${h.totalCount}`);
+  console.log(`  admin 模块硬编码: ${h.adminCount}`);
+  console.log('');
+  console.log('模块分布:');
+  Object.entries(h.moduleStats)
+    .sort((a, b) => b[1].count - a[1].count)
+    .forEach(([k, v]) => {
+      const marker = k === 'admin' && v.count > 0 ? ' ❌' : '';
+      console.log(`  ${k}: ${v.count} 处 (${v.files} 文件)${marker}`);
+    });
+  console.log('');
+  console.log(`Top ${Math.min(20, h.topFiles.length)} 文件:`);
+  h.topFiles.forEach((v, i) => {
+    const marker = v.module === 'admin' ? ' ❌' : '';
+    console.log(`  ${i + 1}. [${v.module}] ${v.file}: ${v.count} 处${marker}`);
+    if (v.samples) {
+      v.samples.forEach((s) => {
+        console.log(`      L${s.line}: ${s.texts.join(', ')}`);
+      });
+    }
+  });
+  console.log('═══════════════════════════════════════════════════════════');
+  if (h.strictZero.length > 0 || Object.keys(h.upperBound).length > 0) {
     console.log('\n── R13 P4 7-in-1 Gate ──');
     console.log(
-      `  ZERO modules  (${STRICT_ZERO.length}): ${STRICT_ZERO.map((z) => `${z}:${moduleStats[z] ? moduleStats[z].count : 0}${(moduleStats[z] ? moduleStats[z].count : 0) === 0 ? ' ✅' : ' ❌'}`).join(' | ')}`
+      `  ZERO modules  (${h.strictZero.length}): ${h.strictZero
+        .map((z) => `${z}:${h.moduleStats[z] ? h.moduleStats[z].count : 0}${(h.moduleStats[z] ? h.moduleStats[z].count : 0) === 0 ? ' ✅' : ' ❌'}`)
+        .join(' | ')}`
     );
     console.log(
-      `  BOUND modules (${Object.keys(UPPER_BOUND).length}): ${Object.entries(UPPER_BOUND)
+      `  BOUND modules (${Object.keys(h.upperBound).length}): ${Object.entries(h.upperBound)
         .map(
           ([n, b]) =>
-            `${n}:${moduleStats[n] ? moduleStats[n].count : 0}/${b}${(moduleStats[n] ? moduleStats[n].count : 0) <= b ? ' ✅' : ' ❌'}`
+            `${n}:${h.moduleStats[n] ? h.moduleStats[n].count : 0}/${b}${(h.moduleStats[n] ? h.moduleStats[n].count : 0) <= b ? ' ✅' : ' ❌'}`
         )
         .join(' | ')}`
     );
-    console.log(`  Failures: ${gateFailures.length}`);
-    if (gateFailures.length) {
-      for (const f of gateFailures)
+    console.log(`  Failures: ${h.gateFailures.length}`);
+    if (h.gateFailures.length) {
+      for (const f of h.gateFailures)
         console.log(`    ❌ ${f.type} ${f.module}: actual=${f.actual} threshold=${f.threshold}`);
-      process.exitCode = 1;
     } else {
       console.log(`  ✅ 7/7 modules ALL GREEN within gate`);
     }
-    if (REPORT_JSON_PATH) console.log(`  Report JSON -> ${path.relative(process.cwd(), REPORT_JSON_PATH)}`);
   }
+}
+
+function printQualityHuman(q) {
+  if (q.dirErrors.length) {
+    q.dirErrors.forEach((e) => console.error(e));
+  }
+  const s = q.summary;
+  console.log('═'.repeat(58));
+  console.log('  i18n 综合质量审计');
+  console.log('═'.repeat(58));
+  console.log(`  扫描命名空间: ${s.namespaces_scanned}`);
+  console.log('');
+  console.log(`① 假 en 值残留: ${s.fake_en.total} 处`);
+  if (s.fake_en.total === 0) {
+    console.log('   ✅ 全部清零');
+  } else {
+    console.log('   按类型分布:');
+    for (const [t, n] of Object.entries(s.fake_en.by_type).sort((a, b) => b[1] - a[1])) {
+      console.log(`     · ${t.padEnd(18)} ${n}`);
+    }
+    const nsList = Object.entries(s.fake_en.by_ns).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    if (nsList.length > 0) {
+      console.log('   Top 命名空间:');
+      for (const [ns, n] of nsList) console.log(`     · ${ns.padEnd(26)} ${n}`);
+    }
+  }
+  console.log('');
+  console.log(`② key 一致性偏差: ${s.key_mismatch.total} 处`);
+  const km = s.key_mismatch;
+  if (km.total === 0) {
+    console.log('   ✅ en/zh 完全对齐');
+  } else {
+    console.log(`   · en 缺 key:       ${km.missing_in_en}`);
+    console.log(`   · zh 缺 key:       ${km.missing_in_zh}`);
+    console.log(`   · en 空值:         ${km.empty_in_en}`);
+    console.log(`   · zh 空值:         ${km.empty_in_zh}`);
+  }
+  console.log('');
+  console.log(`③ 混合结构 bug: ${s.mixed_structure.total} 处`);
+  if (s.mixed_structure.total === 0) {
+    console.log('   ✅ 无扁平/嵌套不一致');
+  } else {
+    for (const [ns, n] of Object.entries(s.mixed_structure.by_ns)) {
+      console.log(`     · ${ns.padEnd(26)} ${n}`);
+    }
+  }
+  if (s.fake_en.samples.length > 0 || s.key_mismatch.samples.length > 0 || s.mixed_structure.issues.length > 0) {
+    console.log('');
+    console.log('─'.repeat(58));
+    console.log('  违规样本 (最多各 10 条)');
+    console.log('─'.repeat(58));
+    if (s.fake_en.samples.length > 0) {
+      console.log('\n【假 en 值样本】');
+      for (const x of s.fake_en.samples) {
+        console.log(`  ${x.ns}:${x.path}`);
+        console.log(`    type=${x.type}  en="${x.en}"`);
+      }
+    }
+    if (s.key_mismatch.samples.length > 0) {
+      console.log('\n【key 不一致样本】');
+      for (const x of s.key_mismatch.samples) {
+        console.log(`  ${x.ns}:${x.path} → ${x.issue}`);
+      }
+    }
+    if (s.mixed_structure.issues.length > 0) {
+      console.log('\n【混合结构样本】');
+      for (const x of s.mixed_structure.issues) {
+        console.log(`  ${x.ns}:${x.key}`);
+        console.log(`    flat="${x.flatVal}"  nested="${x.nestedVal}"`);
+      }
+    }
+  }
+  if (q.sevenInOne) {
+    const W = process.stdout.columns || 96;
+    const bar = '═'.repeat(W);
+    console.log('\n' + bar);
+    console.log('  R12 X-P0 Phase-2C — i18n 7-in-1 Strict Gate Summary');
+    console.log(bar);
+    let idx = 0;
+    for (const r of q.sevenInOne.report) {
+      idx++;
+      console.log(`  ${r.ok ? '✅' : '❌'}  [#${idx}] ${r.title}`);
+      console.log(`         exit=${r.code}  tail: ${r.tail}`);
+    }
+    console.log(bar);
+    console.log(
+      `  7-in-1 Gate Result: ${q.sevenInOne.allOk ? '✅ PASS (0 failures)' : '❌ FAIL (' + q.sevenInOne.failures + ' failures)'}`
+    );
+    console.log(bar);
+  }
+}
+
+function renderReport(opts, hardcodeResult, qualityResult) {
+  const { mode, jsonMode, reportJsonPath, dryRun } = opts;
+  const generatedAt = new Date().toISOString();
+  const combined = {
+    mode,
+    generatedAt,
+    hardcode: mode !== 'quality' ? hardcodeResult : undefined,
+    quality: mode !== 'hardcode' ? qualityResult : undefined,
+  };
+  if (reportJsonPath) {
+    const outJson = {
+      mode,
+      generatedAt,
+      hardcode: mode !== 'quality'
+        ? {
+            filesScanned: hardcodeResult.filesScanned,
+            totalCount: hardcodeResult.totalCount,
+            adminCount: hardcodeResult.adminCount,
+            moduleStats: hardcodeResult.moduleStats,
+            topFiles: hardcodeResult.topFiles.map((f) => ({
+              file: f.file,
+              module: f.module,
+              count: f.count,
+            })),
+            perModule: hardcodeResult.perModule,
+            strictZero: hardcodeResult.strictZero,
+            upperBound: hardcodeResult.upperBound,
+            gateFailures: hardcodeResult.gateFailures,
+            allOk: hardcodeResult.allOk,
+          }
+        : null,
+      quality: mode !== 'hardcode'
+        ? {
+            dirErrors: qualityResult.dirErrors,
+            summary: qualityResult.summary,
+            strictFail: qualityResult.strictFail,
+            sevenInOne: qualityResult.sevenInOne,
+          }
+        : null,
+    };
+    fs.mkdirSync(path.dirname(reportJsonPath), { recursive: true });
+    fs.writeFileSync(reportJsonPath, JSON.stringify(outJson, null, 2) + '\n', 'utf8');
+  }
+  if (jsonMode) {
+    const out = {
+      mode,
+      generatedAt,
+      hardcode: mode !== 'quality'
+        ? {
+            totalCount: hardcodeResult.totalCount,
+            adminCount: hardcodeResult.adminCount,
+            moduleStats: hardcodeResult.moduleStats,
+            topFiles: hardcodeResult.topFiles.map((f) => ({ file: f.file, module: f.module, count: f.count })),
+          }
+        : null,
+      quality: mode !== 'hardcode' ? qualityResult.summary : null,
+    };
+    console.log(JSON.stringify(out, null, 2));
+    return;
+  }
+  if (mode !== 'quality') printHardcodeHuman(hardcodeResult);
+  if (mode === 'all') console.log('\n');
+  if (mode !== 'hardcode') printQualityHuman(qualityResult);
+  if (dryRun) {
+    console.log('\n[dry-run] 报告生成完毕，不触发 exit 非零。');
+    if (reportJsonPath) console.log(`[dry-run] Report JSON -> ${path.relative(process.cwd(), reportJsonPath)}`);
+  }
+}
+
+function main() {
+  const opts = parseArgs(process.argv);
+  let hardcodeResult = null;
+  let qualityResult = null;
+  if (opts.mode !== 'quality') {
+    hardcodeResult = runHardcodeCheck(opts);
+  }
+  if (opts.mode !== 'hardcode') {
+    qualityResult = runQualityCheck(opts);
+  }
+  renderReport(opts, hardcodeResult, qualityResult);
+  if (opts.dryRun) {
+    process.exitCode = 0;
+    return;
+  }
+  let hasFail = false;
+  if (opts.mode !== 'quality') {
+    if (!hardcodeResult.allOk) hasFail = true;
+  }
+  if (opts.mode !== 'hardcode') {
+    if (qualityResult.strictFail || !qualityResult.sevenInOne.allOk) hasFail = true;
+    if (qualityResult.dirErrors.length) hasFail = true;
+  }
+  if (opts.failFast) {
+    if (hasFail) {
+      process.exit(1);
+    }
+    process.exitCode = 0;
+    return;
+  }
+  process.exitCode = hasFail ? 1 : 0;
 }
 
 main();

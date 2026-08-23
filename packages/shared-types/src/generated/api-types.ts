@@ -52,48 +52,48 @@ export namespace IamTypes {
 // ============================================================================
 
 export namespace FinanceTypes {
-  // 会计科目
-  export type Account = SafeSchema<'Account'>;
-  export type AccountType = SafeSchema<'AccountType'>;
-  export type CreateAccountRequest = SafeSchema<'CreateAccountRequest'>;
+  // 会计科目（A 类：openapi 已有 schema，直接引用）
+  export type Account = ApiComponents['schemas']['Account'];
+  export type AccountType = ApiComponents['schemas']['AccountType'];
+  export type CreateAccountRequest = ApiComponents['schemas']['CreateAccountRequest'];
 
-  // 凭证
-  export type Voucher = SafeSchema<'Voucher'>;
-  export type VoucherType = SafeSchema<'VoucherType'>;
-  export type VoucherStatus = SafeSchema<'VoucherStatus'>;
-  export type VoucherLine = SafeSchema<'VoucherLine'>;
-  export type VoucherResponse = SafeSchema<'VoucherResponse'>;
-  export type CreateVoucherRequest = SafeSchema<'CreateVoucherRequest'>;
-  export type VoucherLineRequest = SafeSchema<'VoucherLineRequest'>;
+  // 凭证（A 类）
+  export type Voucher = ApiComponents['schemas']['Voucher'];
+  export type VoucherType = ApiComponents['schemas']['VoucherType'];
+  export type VoucherStatus = ApiComponents['schemas']['VoucherStatus'];
+  export type VoucherLine = ApiComponents['schemas']['VoucherLine'];
+  export type VoucherResponse = ApiComponents['schemas']['VoucherResponse'];
+  export type CreateVoucherRequest = ApiComponents['schemas']['CreateVoucherRequest'];
+  export type VoucherLineRequest = ApiComponents['schemas']['VoucherLineRequest'];
 
-  // 账簿报表
-  export type LedgerEntry = SafeSchema<'LedgerEntry'>;
-  export type TrialBalance = SafeSchema<'TrialBalance'>;
-  export type BalanceSheet = SafeSchema<'BalanceSheet'>;
-  export type BalanceItem = SafeSchema<'BalanceItem'>;
-  export type IncomeStatement = SafeSchema<'IncomeStatement'>;
-  export type IncomeItem = SafeSchema<'IncomeItem'>;
-  export type CashFlowStatement = SafeSchema<'CashFlowStatement'>;
-  export type CashFlowItem = SafeSchema<'CashFlowItem'>;
+  // 账簿报表（A 类）
+  export type LedgerEntry = ApiComponents['schemas']['LedgerEntry'];
+  export type TrialBalance = ApiComponents['schemas']['TrialBalance'];
+  export type BalanceSheet = ApiComponents['schemas']['BalanceSheet'];
+  export type BalanceItem = ApiComponents['schemas']['BalanceItem'];
+  export type IncomeStatement = ApiComponents['schemas']['IncomeStatement'];
+  export type IncomeItem = ApiComponents['schemas']['IncomeItem'];
+  export type CashFlowStatement = ApiComponents['schemas']['CashFlowStatement'];
+  export type CashFlowItem = ApiComponents['schemas']['CashFlowItem'];
 
-  // 会计期间
-  export type Period = SafeSchema<'Period'>;
-  export type PeriodStatus = SafeSchema<'PeriodStatus'>;
+  // 会计期间（A 类）
+  export type Period = ApiComponents['schemas']['Period'];
+  export type PeriodStatus = ApiComponents['schemas']['PeriodStatus'];
 
-  // 辅助核算
-  export type AuxType = SafeSchema<'AuxType'>;
-  export type AuxiliaryAccount = SafeSchema<'AuxiliaryAccount'>;
+  // 辅助核算（A 类）
+  export type AuxType = ApiComponents['schemas']['AuxType'];
+  export type AuxiliaryAccount = ApiComponents['schemas']['AuxiliaryAccount'];
 
-  // 付款管理
-  export type Payment = SafeSchema<'Payment'>;
-  export type PaymentItem = SafeSchema<'PaymentItem'>;
-  export type PaymentResponse = SafeSchema<'PaymentResponse'>;
-  export type CreatePaymentRequest = SafeSchema<'CreatePaymentRequest'>;
-  export type PaymentItemRequest = SafeSchema<'PaymentItemRequest'>;
+  // 付款管理（A 类）
+  export type Payment = ApiComponents['schemas']['Payment'];
+  export type PaymentItem = ApiComponents['schemas']['PaymentItem'];
+  export type PaymentResponse = ApiComponents['schemas']['PaymentResponse'];
+  export type CreatePaymentRequest = ApiComponents['schemas']['CreatePaymentRequest'];
+  export type PaymentItemRequest = ApiComponents['schemas']['PaymentItemRequest'];
 
-  // TODO: 以下类型待后端补充 ToSchema 后生成
+  // TODO: 以下类型待后端补充 ToSchema 后生成（C 类：finance settlement_center 留 V286）
   // - AccountOpeningBalance, AccountBalance, VoucherTemplate*, VoucherQueryParams
-  // - VoucherOperationResult, CounterpartyType, BankAccount, Customer, Supplier
+  // - VoucherOperationResult, CounterpartyType
   // - InvoiceStatus, SalesInvoice, PurchaseInvoice, CollectionRecord, PaymentRecord
   // - ReportQueryParams
 }
@@ -103,24 +103,29 @@ export namespace FinanceTypes {
 // ============================================================================
 
 export namespace HrmTypes {
-  // 员工管理
+  // 主数据类型（B 类：V284 Hrm ToSchema 已补，直接引用）
   export type Employee = ApiComponents['schemas']['Employee'];
-  // 部门管理
   export type Department = ApiComponents['schemas']['Department'];
-  // 公司管理
   export type Company = ApiComponents['schemas']['Company'];
-  // 合同管理
   export type Contract = ApiComponents['schemas']['Contract'];
-  // 职位管理
   export type Position = ApiComponents['schemas']['Position'];
 
-  // TODO: 以下类型待 OpenAPI 规范补充后生成
-  // - CreateEmployeeRequest, UpdateEmployeeRequest
-  // - CreateDepartmentRequest, UpdateDepartmentRequest
-  // - CreateCompanyRequest, UpdateCompanyRequest
-  // - AttendanceRecord, CreateAttendanceRequest, UpdateAttendanceRequest
-  // - CreateContractRequest, UpdateContractRequest, ContractRenewal
-  // - LeaveRequest, PayrollRecord, PerformanceReview, RecruitmentCandidate
+  // 请求/响应类型（B 类：V284 Hrm ToSchema 已补）
+  export type CreateEmployeeRequest = ApiComponents['schemas']['CreateEmployeeRequest'];
+  export type UpdateEmployeeRequest = ApiComponents['schemas']['UpdateEmployeeRequest'];
+  export type CreateDepartmentRequest = ApiComponents['schemas']['CreateDepartmentRequest'];
+  export type UpdateDepartmentRequest = ApiComponents['schemas']['UpdateDepartmentRequest'];
+  export type CreateCompanyRequest = ApiComponents['schemas']['CreateCompanyRequest'];
+  export type UpdateCompanyRequest = ApiComponents['schemas']['UpdateCompanyRequest'];
+  export type CreateAttendanceRequest = ApiComponents['schemas']['CreateAttendanceRequest'];
+  export type UpdateAttendanceRequest = ApiComponents['schemas']['UpdateAttendanceRequest'];
+  export type CreateContractRequest = ApiComponents['schemas']['CreateContractRequest'];
+  export type UpdateContractRequest = ApiComponents['schemas']['UpdateContractRequest'];
+  export type ContractRenewal = ApiComponents['schemas']['ContractRenewal'];
+
+  // TODO: 以下类型待后端补充 ToSchema 后生成
+  // - AttendanceRecord, LeaveRequest, PayrollRecord
+  // - PerformanceReview, RecruitmentCandidate
 }
 
 // ============================================================================
@@ -143,96 +148,96 @@ export namespace MasterDataTypes {
   export type GenerateSuggestionsRequest = ApiComponents['schemas']['GenerateSuggestionsRequest'];
 
   // 数据血缘 + 影响分析（lineage_v52）
-  export type EdgeType = ApiComponents['schemas']['EdgeType'];
-  export type LineageNode = ApiComponents['schemas']['LineageNode'];
-  export type LineageEdge = ApiComponents['schemas']['LineageEdge'];
-  export type LineageGraph = ApiComponents['schemas']['LineageGraph'];
-  export type ChangeType = ApiComponents['schemas']['ChangeType'];
-  export type ImpactAnalysisRequest = ApiComponents['schemas']['ImpactAnalysisRequest'];
-  export type RiskLevel = ApiComponents['schemas']['RiskLevel'];
-  export type AffectedNode = ApiComponents['schemas']['AffectedNode'];
-  export type AffectedService = ApiComponents['schemas']['AffectedService'];
-  export type ChainReaction = ApiComponents['schemas']['ChainReaction'];
-  export type ImpactAnalysisResult = ApiComponents['schemas']['ImpactAnalysisResult'];
-  export type ImpactSimulation = ApiComponents['schemas']['ImpactSimulation'];
-  export type ChangeEvent = ApiComponents['schemas']['ChangeEvent'];
-  export type PropagationAction = ApiComponents['schemas']['PropagationAction'];
-  export type PropagationRule = ApiComponents['schemas']['PropagationRule'];
-  export type PropagationLog = ApiComponents['schemas']['PropagationLog'];
-  export type RegisterLineageRequest = ApiComponents['schemas']['RegisterLineageRequest'];
-  export type LineageQuery = ApiComponents['schemas']['LineageQuery'];
-  export type ExportQuery = ApiComponents['schemas']['ExportQuery'];
-  export type DeleteLineageRequest = ApiComponents['schemas']['DeleteLineageRequest'];
-  export type AnalyzeImpactRequest = ApiComponents['schemas']['AnalyzeImpactRequest'];
-  export type SimulateChangeRequest = ApiComponents['schemas']['SimulateChangeRequest'];
-  export type AffectedScopeQuery = ApiComponents['schemas']['AffectedScopeQuery'];
-  export type PropagateChangeRequest = ApiComponents['schemas']['PropagateChangeRequest'];
-  export type AddPropagationRuleRequest = ApiComponents['schemas']['AddPropagationRuleRequest'];
-  export type PropagationLogQuery = ApiComponents['schemas']['PropagationLogQuery'];
-  export type RollbackPropagationRequest = ApiComponents['schemas']['RollbackPropagationRequest'];
+  export type EdgeType = SafeSchema<'EdgeType'>;
+  export type LineageNode = SafeSchema<'LineageNode'>;
+  export type LineageEdge = SafeSchema<'LineageEdge'>;
+  export type LineageGraph = SafeSchema<'LineageGraph'>;
+  export type ChangeType = SafeSchema<'ChangeType'>;
+  export type ImpactAnalysisRequest = SafeSchema<'ImpactAnalysisRequest'>;
+  export type RiskLevel = SafeSchema<'RiskLevel'>;
+  export type AffectedNode = SafeSchema<'AffectedNode'>;
+  export type AffectedService = SafeSchema<'AffectedService'>;
+  export type ChainReaction = SafeSchema<'ChainReaction'>;
+  export type ImpactAnalysisResult = SafeSchema<'ImpactAnalysisResult'>;
+  export type ImpactSimulation = SafeSchema<'ImpactSimulation'>;
+  export type ChangeEvent = SafeSchema<'ChangeEvent'>;
+  export type PropagationAction = SafeSchema<'PropagationAction'>;
+  export type PropagationRule = SafeSchema<'PropagationRule'>;
+  export type PropagationLog = SafeSchema<'PropagationLog'>;
+  export type RegisterLineageRequest = SafeSchema<'RegisterLineageRequest'>;
+  export type LineageQuery = SafeSchema<'LineageQuery'>;
+  export type ExportQuery = SafeSchema<'ExportQuery'>;
+  export type DeleteLineageRequest = SafeSchema<'DeleteLineageRequest'>;
+  export type AnalyzeImpactRequest = SafeSchema<'AnalyzeImpactRequest'>;
+  export type SimulateChangeRequest = SafeSchema<'SimulateChangeRequest'>;
+  export type AffectedScopeQuery = SafeSchema<'AffectedScopeQuery'>;
+  export type PropagateChangeRequest = SafeSchema<'PropagateChangeRequest'>;
+  export type AddPropagationRuleRequest = SafeSchema<'AddPropagationRuleRequest'>;
+  export type PropagationLogQuery = SafeSchema<'PropagationLogQuery'>;
+  export type RollbackPropagationRequest = SafeSchema<'RollbackPropagationRequest'>;
 
   // 知识图谱 + 推荐系统（knowledge_v53）
-  export type KGNodeType = ApiComponents['schemas']['KGNodeType'];
-  export type KGNode = ApiComponents['schemas']['KGNode'];
-  export type KGRelationType = ApiComponents['schemas']['KGRelationType'];
-  export type KGEdge = ApiComponents['schemas']['KGEdge'];
-  export type KnowledgeGraph = ApiComponents['schemas']['KnowledgeGraph'];
-  export type RecommendationSource = ApiComponents['schemas']['RecommendationSource'];
-  export type Recommendation = ApiComponents['schemas']['Recommendation'];
-  export type InteractionRecord = ApiComponents['schemas']['InteractionRecord'];
-  export type AssetType = ApiComponents['schemas']['AssetType'];
-  export type DataAsset = ApiComponents['schemas']['DataAsset'];
-  export type AssetCategory = ApiComponents['schemas']['AssetCategory'];
-  export type AssetCatalog = ApiComponents['schemas']['AssetCatalog'];
-  export type AssetStats = ApiComponents['schemas']['AssetStats'];
-  export type AddKGNodeRequest = ApiComponents['schemas']['AddKGNodeRequest'];
-  export type AddKGEdgeRequest = ApiComponents['schemas']['AddKGEdgeRequest'];
-  export type SubgraphQuery = ApiComponents['schemas']['SubgraphQuery'];
-  export type PathQuery = ApiComponents['schemas']['PathQuery'];
-  export type SimilarQuery = ApiComponents['schemas']['SimilarQuery'];
-  export type ExportKGQuery = ApiComponents['schemas']['ExportKGQuery'];
-  export type RecommendationQuery = ApiComponents['schemas']['RecommendationQuery'];
-  export type RecordInteractionRequest = ApiComponents['schemas']['RecordInteractionRequest'];
-  export type SimilarItemsQuery = ApiComponents['schemas']['SimilarItemsQuery'];
-  export type TrendingQuery = ApiComponents['schemas']['TrendingQuery'];
-  export type RegisterAssetRequest = ApiComponents['schemas']['RegisterAssetRequest'];
-  export type SearchAssetsQuery = ApiComponents['schemas']['SearchAssetsQuery'];
+  export type KGNodeType = SafeSchema<'KGNodeType'>;
+  export type KGNode = SafeSchema<'KGNode'>;
+  export type KGRelationType = SafeSchema<'KGRelationType'>;
+  export type KGEdge = SafeSchema<'KGEdge'>;
+  export type KnowledgeGraph = SafeSchema<'KnowledgeGraph'>;
+  export type RecommendationSource = SafeSchema<'RecommendationSource'>;
+  export type Recommendation = SafeSchema<'Recommendation'>;
+  export type InteractionRecord = SafeSchema<'InteractionRecord'>;
+  export type AssetType = SafeSchema<'AssetType'>;
+  export type DataAsset = SafeSchema<'DataAsset'>;
+  export type AssetCategory = SafeSchema<'AssetCategory'>;
+  export type AssetCatalog = SafeSchema<'AssetCatalog'>;
+  export type AssetStats = SafeSchema<'AssetStats'>;
+  export type AddKGNodeRequest = SafeSchema<'AddKGNodeRequest'>;
+  export type AddKGEdgeRequest = SafeSchema<'AddKGEdgeRequest'>;
+  export type SubgraphQuery = SafeSchema<'SubgraphQuery'>;
+  export type PathQuery = SafeSchema<'PathQuery'>;
+  export type SimilarQuery = SafeSchema<'SimilarQuery'>;
+  export type ExportKGQuery = SafeSchema<'ExportKGQuery'>;
+  export type RecommendationQuery = SafeSchema<'RecommendationQuery'>;
+  export type RecordInteractionRequest = SafeSchema<'RecordInteractionRequest'>;
+  export type SimilarItemsQuery = SafeSchema<'SimilarItemsQuery'>;
+  export type TrendingQuery = SafeSchema<'TrendingQuery'>;
+  export type RegisterAssetRequest = SafeSchema<'RegisterAssetRequest'>;
+  export type SearchAssetsQuery = SafeSchema<'SearchAssetsQuery'>;
   export type UpdateAssetRequest = ApiComponents['schemas']['UpdateAssetRequest'];
 
   // 版本管理 + 审计 + 权限（versioning_v54）
-  export type VersionSnapshot = ApiComponents['schemas']['VersionSnapshot'];
-  export type VersionDiff = ApiComponents['schemas']['VersionDiff'];
-  export type BranchType = ApiComponents['schemas']['BranchType'];
-  export type VersionBranch = ApiComponents['schemas']['VersionBranch'];
-  export type AuditEventType = ApiComponents['schemas']['AuditEventType'];
-  export type AuditEventCategory = ApiComponents['schemas']['AuditEventCategory'];
-  export type AuditEvent = ApiComponents['schemas']['AuditEvent'];
-  export type AuditExportLog = ApiComponents['schemas']['AuditExportLog'];
-  export type PermissionAction = ApiComponents['schemas']['PermissionAction'];
-  export type DataPermission = ApiComponents['schemas']['DataPermission'];
-  export type PermissionRole = ApiComponents['schemas']['PermissionRole'];
-  export type UserRoleAssignment = ApiComponents['schemas']['UserRoleAssignment'];
-  export type CreateSnapshotRequest = ApiComponents['schemas']['CreateSnapshotRequest'];
-  export type VersionQuery = ApiComponents['schemas']['VersionQuery'];
-  export type VersionDiffQuery = ApiComponents['schemas']['VersionDiffQuery'];
-  export type RestoreVersionRequest = ApiComponents['schemas']['RestoreVersionRequest'];
-  export type VersionHistoryQuery = ApiComponents['schemas']['VersionHistoryQuery'];
-  export type CreateBranchRequest = ApiComponents['schemas']['CreateBranchRequest'];
-  export type MergeBranchRequest = ApiComponents['schemas']['MergeBranchRequest'];
-  export type CherryPickRequest = ApiComponents['schemas']['CherryPickRequest'];
+  export type VersionSnapshot = SafeSchema<'VersionSnapshot'>;
+  export type VersionDiff = SafeSchema<'VersionDiff'>;
+  export type BranchType = SafeSchema<'BranchType'>;
+  export type VersionBranch = SafeSchema<'VersionBranch'>;
+  export type AuditEventType = SafeSchema<'AuditEventType'>;
+  export type AuditEventCategory = SafeSchema<'AuditEventCategory'>;
+  export type AuditEvent = SafeSchema<'AuditEvent'>;
+  export type AuditExportLog = SafeSchema<'AuditExportLog'>;
+  export type PermissionAction = SafeSchema<'PermissionAction'>;
+  export type DataPermission = SafeSchema<'DataPermission'>;
+  export type PermissionRole = SafeSchema<'PermissionRole'>;
+  export type UserRoleAssignment = SafeSchema<'UserRoleAssignment'>;
+  export type CreateSnapshotRequest = SafeSchema<'CreateSnapshotRequest'>;
+  export type VersionQuery = SafeSchema<'VersionQuery'>;
+  export type VersionDiffQuery = SafeSchema<'VersionDiffQuery'>;
+  export type RestoreVersionRequest = SafeSchema<'RestoreVersionRequest'>;
+  export type VersionHistoryQuery = SafeSchema<'VersionHistoryQuery'>;
+  export type CreateBranchRequest = SafeSchema<'CreateBranchRequest'>;
+  export type MergeBranchRequest = SafeSchema<'MergeBranchRequest'>;
+  export type CherryPickRequest = SafeSchema<'CherryPickRequest'>;
   export type AuditLogQuery = ApiComponents['schemas']['AuditLogQuery'];
-  export type UserActivityQuery = ApiComponents['schemas']['UserActivityQuery'];
-  export type EntityHistoryQuery = ApiComponents['schemas']['EntityHistoryQuery'];
-  export type ExportAuditLogRequest = ApiComponents['schemas']['ExportAuditLogRequest'];
-  export type ComplianceAuditQuery = ApiComponents['schemas']['ComplianceAuditQuery'];
-  export type GrantPermissionRequest = ApiComponents['schemas']['GrantPermissionRequest'];
-  export type RevokePermissionRequest = ApiComponents['schemas']['RevokePermissionRequest'];
-  export type CheckPermissionQuery = ApiComponents['schemas']['CheckPermissionQuery'];
-  export type UserPermissionsQuery = ApiComponents['schemas']['UserPermissionsQuery'];
-  export type ResourcePermissionsQuery = ApiComponents['schemas']['ResourcePermissionsQuery'];
-  export type CreateRoleRequest = ApiComponents['schemas']['CreateRoleRequest'];
-  export type AssignRoleRequest = ApiComponents['schemas']['AssignRoleRequest'];
-  export type RevokeRoleRequest = ApiComponents['schemas']['RevokeRoleRequest'];
+  export type UserActivityQuery = SafeSchema<'UserActivityQuery'>;
+  export type EntityHistoryQuery = SafeSchema<'EntityHistoryQuery'>;
+  export type ExportAuditLogRequest = SafeSchema<'ExportAuditLogRequest'>;
+  export type ComplianceAuditQuery = SafeSchema<'ComplianceAuditQuery'>;
+  export type GrantPermissionRequest = SafeSchema<'GrantPermissionRequest'>;
+  export type RevokePermissionRequest = SafeSchema<'RevokePermissionRequest'>;
+  export type CheckPermissionQuery = SafeSchema<'CheckPermissionQuery'>;
+  export type UserPermissionsQuery = SafeSchema<'UserPermissionsQuery'>;
+  export type ResourcePermissionsQuery = SafeSchema<'ResourcePermissionsQuery'>;
+  export type CreateRoleRequest = SafeSchema<'CreateRoleRequest'>;
+  export type AssignRoleRequest = SafeSchema<'AssignRoleRequest'>;
+  export type RevokeRoleRequest = SafeSchema<'RevokeRoleRequest'>;
 
   // TODO: 待补充模块（V55-V60）：commercial, disaster, semantic, governance,
   // ai_governance, metadata
@@ -268,15 +273,15 @@ export namespace QmsTypes {
   export type UpdateIssueRequest = ApiComponents['schemas']['UpdateIssueRequest'];
 
   // 质量成本（quality_cost）
-  export type QualityCost = ApiComponents['schemas']['QualityCost'];
-  export type QualityCostQuery = ApiComponents['schemas']['QualityCostQuery'];
-  export type ListQualityCostsResponse = ApiComponents['schemas']['ListQualityCostsResponse'];
-  export type CreateQualityCostRequest = ApiComponents['schemas']['CreateQualityCostRequest'];
-  export type UpdateQualityCostRequest = ApiComponents['schemas']['UpdateQualityCostRequest'];
-  export type CostCategorySummary = ApiComponents['schemas']['CostCategorySummary'];
-  export type CostDepartmentSummary = ApiComponents['schemas']['CostDepartmentSummary'];
-  export type CostTrendItem = ApiComponents['schemas']['CostTrendItem'];
-  export type QualityCostStatistics = ApiComponents['schemas']['QualityCostStatistics'];
+  export type QualityCost = SafeSchema<'QualityCost'>;
+  export type QualityCostQuery = SafeSchema<'QualityCostQuery'>;
+  export type ListQualityCostsResponse = SafeSchema<'ListQualityCostsResponse'>;
+  export type CreateQualityCostRequest = SafeSchema<'CreateQualityCostRequest'>;
+  export type UpdateQualityCostRequest = SafeSchema<'UpdateQualityCostRequest'>;
+  export type CostCategorySummary = SafeSchema<'CostCategorySummary'>;
+  export type CostDepartmentSummary = SafeSchema<'CostDepartmentSummary'>;
+  export type CostTrendItem = SafeSchema<'CostTrendItem'>;
+  export type QualityCostStatistics = SafeSchema<'QualityCostStatistics'>;
 
   // TODO: 待补充模块：apqp, fmea, eight_d, corrective_action, spc, dashboard
   // @差异 手写类型区分 Backend/Frontend 两套命名（snake_case/camelCase）
@@ -305,13 +310,13 @@ export namespace MesTypes {
   export type ProductionOrderResponse = ApiComponents['schemas']['ProductionOrderResponse'];
 
   // 设备管理（equipment）
-  export type EquipmentResponse = ApiComponents['schemas']['EquipmentResponse'];
-  export type ListEquipmentResponse = ApiComponents['schemas']['ListEquipmentResponse'];
-  export type CreateEquipmentRequest = ApiComponents['schemas']['CreateEquipmentRequest'];
-  export type UpdateEquipmentRequest = ApiComponents['schemas']['UpdateEquipmentRequest'];
-  export type MaintenanceRecord = ApiComponents['schemas']['MaintenanceRecord'];
-  export type CreateMaintenanceRecord = ApiComponents['schemas']['CreateMaintenanceRecord'];
-  export type UpdateMaintenanceStatus = ApiComponents['schemas']['UpdateMaintenanceStatus'];
+  export type EquipmentResponse = SafeSchema<'EquipmentResponse'>;
+  export type ListEquipmentResponse = SafeSchema<'ListEquipmentResponse'>;
+  export type CreateEquipmentRequest = SafeSchema<'CreateEquipmentRequest'>;
+  export type UpdateEquipmentRequest = SafeSchema<'UpdateEquipmentRequest'>;
+  export type MaintenanceRecord = SafeSchema<'MaintenanceRecord'>;
+  export type CreateMaintenanceRecord = SafeSchema<'CreateMaintenanceRecord'>;
+  export type UpdateMaintenanceStatus = SafeSchema<'UpdateMaintenanceStatus'>;
 
   // TODO: 待补充模块：process_flow, process_route, material_bom,
   // material_requirement, production_kanban, production_process, production_record,

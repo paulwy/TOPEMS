@@ -29,6 +29,7 @@ use super::models::{
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_db::audit::AuditLogService;
 use topems_shared_db::master_data_refs::MasterDataRefService;
+use topems_shared_db::reconciliation_log::ReconciliationLogService;
 
 /// V284: shared-db MasterDataRef → unified-core MasterDataRef 转换
 impl From<topems_shared_db::master_data_refs::MasterDataRef> for MasterDataRef {
@@ -74,14 +75,32 @@ impl From<topems_shared_db::master_data_refs::StaleRecord> for StaleRecord {
     }
 }
 
+impl From<topems_shared_db::reconciliation_log::ReconciliationLog> for ReconciliationLog {
+    fn from(r: topems_shared_db::reconciliation_log::ReconciliationLog) -> Self {
+        Self {
+            id: r.id,
+            tenant_id: r.tenant_id,
+            domain: r.domain,
+            master_data_id: r.master_data_id,
+            issue_type: r.issue_type,
+            description: r.description,
+            detected_at: r.detected_at,
+            resolved: r.resolved,
+            resolved_at: r.resolved_at,
+        }
+    }
+}
+
 /// MDM 服务
 ///
 /// V284: 注入 MasterDataRefService（下沉 32 处 core 主数据引用表内联 SQL） +
 /// AuditLogService（关键写入路径审计，参考 svc/srm/services/audit.rs 模式）。
+/// V285: 注入 ReconciliationLogService（下沉 INSERT...SELECT 跨表写入 + 查询 + 标记解决 SQL）。
 pub struct MasterDataService {
     pool: PgPool,
     ref_service: MasterDataRefService,
     audit_service: AuditLogService,
+    recon_service: ReconciliationLogService,
 }
 
 impl MasterDataService {
@@ -89,6 +108,7 @@ impl MasterDataService {
         Self {
             ref_service: MasterDataRefService::new(pool.clone()),
             audit_service: AuditLogService::new(pool.clone()),
+            recon_service: ReconciliationLogService::new(pool.clone()),
             pool,
         }
     }
@@ -687,82 +707,54 @@ impl MasterDataService {
 
     /// 记录对账问题
     ///
-    // TODO V285: INSERT...SELECT 跨表写入（core_mdm_reconciliation_log ← core 主数据引用表）
-    // 不适合下沉到 MasterDataRefService（目标表非 master_data_refs），保留原 SQL。
+    /// V285: INSERT...SELECT 跨表写下沉到 ReconciliationLogService::insert_from_master_data_refs。
     async fn record_reconciliation_issues(
         &self,
         tenant_id: Uuid,
         domain: &str,
         count: i64,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            INSERT INTO core_mdm_reconciliation_log (tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved)
-            SELECT $1, $2, master_data_id, 'pending_sync',
-                   format('主数据 %s 在域 %s 中处于待同步状态', master_data_id, $2),
-                   NOW(), false
-            FROM core_master_data_refs
-            WHERE tenant_id = $1 AND domain = $2 AND status = 'pending_sync'
-            ON CONFLICT DO NOTHING
-            "#,
-        )
-        .bind(tenant_id)
-        .bind(domain)
-        .execute(&self.pool)
-        .await?;
+        let affected = self
+            .recon_service
+            .insert_from_master_data_refs(tenant_id, domain)
+            .await?;
 
-        tracing::warn!("[MDM] 对账发现 {} 条 {} 域待同步记录", count, domain);
+        tracing::warn!(
+            "[MDM] 对账发现 {} 条 {} 域待同步记录（写入 {} 条）",
+            count,
+            domain,
+            affected
+        );
         Ok(())
     }
 
     /// 查询对账日志
+    ///
+    /// V285: SELECT SQL 下沉到 ReconciliationLogService::query_reconciliation_logs。
     pub async fn list_reconciliation_logs(
         &self,
         tenant_id: Uuid,
         unresolved_only: bool,
         limit: i64,
     ) -> Result<Vec<ReconciliationLog>, sqlx::Error> {
-        let sql = if unresolved_only {
-            r#"
-            SELECT id, tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved, resolved_at
-            FROM core_mdm_reconciliation_log
-            WHERE tenant_id = $1 AND resolved = false
-            ORDER BY detected_at DESC LIMIT $2
-            "#
-        } else {
-            r#"
-            SELECT id, tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved, resolved_at
-            FROM core_mdm_reconciliation_log
-            WHERE tenant_id = $1
-            ORDER BY detected_at DESC LIMIT $2
-            "#
-        };
-        let rows = sqlx::query_as::<_, ReconciliationLog>(sql)
-            .bind(tenant_id)
-            .bind(limit)
-            .fetch_all(&self.pool)
+        let rows = self
+            .recon_service
+            .query_reconciliation_logs(tenant_id, unresolved_only, limit)
             .await?;
-        Ok(rows)
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     /// 解决对账问题
+    ///
+    /// V285: UPDATE SQL 下沉到 ReconciliationLogService::resolve_reconciliation_issue。
     pub async fn resolve_reconciliation_issue(
         &self,
         tenant_id: Uuid,
         issue_id: Uuid,
     ) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query(
-            r#"
-            UPDATE core_mdm_reconciliation_log
-            SET resolved = true, resolved_at = NOW()
-            WHERE id = $1 AND tenant_id = $2 AND resolved = false
-            "#,
-        )
-        .bind(issue_id)
-        .bind(tenant_id)
-        .execute(&self.pool)
-        .await?;
-        Ok(result.rows_affected() > 0)
+        self.recon_service
+            .resolve_reconciliation_issue(tenant_id, issue_id)
+            .await
     }
 
     // ==================== V31.0 变更审批 ====================

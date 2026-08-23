@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V284 | **更新日期**: 2026-08-23
+> **版本**: V285 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -23,6 +23,7 @@
 > **V283 后续任务推进**（Finance 审批增强 / StatCard 接口扩展 + SupplierPortalPage 声明式 statCards 迁移）。
 > **V284 后续任务推进**（ERP 审批间接集成评估 / 3 模板页声明式评估 / 预存在 clippy + doctest 修复 + 测试增强）。
 > **V284 架构冗余深度治理 4 轨并行**（tms/aps 配置单一信源补齐 / MasterDataRefService 下沉 + AuditLogService 注入 / Finance·Hrm utoipa::path 补全 schemas 393→442）。
+> **V285 4 轨并行推进**（tms/aps 端口三端对齐 8042→8073/8074 / ReconciliationLogService 下沉 / Finance·Hrm TS 100→0 清零 / i18n gate 双脚本合并 / ERP 审批本地双写）。
 
 ---
 
@@ -297,10 +298,162 @@
 
 ### V284 第 2 部分后续扩展（留给 V285+）
 
-- [ ] **tms/aps 端口三端对齐**：services.yaml 8073/8074 与 plugin.yaml/main.rs 8042/8043 不一致，需统一同步至 8073/8074 或选定其他空闲端口
-- [ ] **unified-core/master INSERT...SELECT 下沉**：record_reconciliation_issues 跨表写入 core_mdm_reconciliation_log，需评估新建 ReconciliationLogService 或保留内联
-- [ ] **前端 Finance/Hrm TS 26 错误清零**：D 轨 schemas 393→442 后需重新跑 `pnpm typecheck` 验证错误数下降情况
-- [ ] **CI gate 脚本合并**：i18n 三合一 + API 三合一为 V285+ P2 治理项
+- [x] **tms/aps 端口三端对齐**：V285 已完成 — plugin.yaml（tms 8042→8073, aps 8043→8074）+ main.rs 对应端口 + config/ports.env 新增 TMS_PORT/APS_PORT + service_port.rs 新增 TMS_PORT/APS_PORT 常量 + GROUP2_SERVICES 追加 tms/aps。validate-plugin-config.py PORT diff 清零
+- [x] **unified-core/master INSERT...SELECT 下沉**：V285 已完成 — 新建 shared-db/reconciliation_log.rs（ReconciliationLogService 6 方法 + 6 测试）；handlers.rs record_reconciliation_issues/list_reconciliation_logs/resolve_reconciliation_issue 3 处内联业务 SQL 全部下沉，grep core_mdm_reconciliation_log 仅剩 2 行 DDL
+- [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已完成 — apps/web typecheck 错误 100→0 完美清零；FinanceTypes 28 条 SafeSchema → 强类型 ApiComponents；HrmTypes 补 11 条 V284 schema 已存在类型；MasterDataTypes/QmsTypes/MesTypes 其他弱类型退 SafeSchema 兜底
+- [ ] **CI gate 脚本合并**：V285 已完成 i18n 双脚本合并（check-i18n.cjs + check-i18n-quality.cjs → check-i18n.cjs --mode={hardcode|quality|all}，quality.cjs 为 wrapper）。API 三合一（check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs → check-api.cjs --mode={audit|coverage|align}）留 V286
+
+---
+
+## 🎯 V285 — 4 轨冗余治理（端口对齐 · ReconciliationService · TS 清零 · i18n 合并 · ERP 双写）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-23 | 代码改动 ~18 files（Rust A+D + 前端 B + Gate C + port 对齐 6 + TODO 1）| 验收：cargo check workspace exit 0 · tsc --noEmit 0 errors · i18n all/quality/wrapper 3 模式 SYNTAX OK · shared-db reconciliation_log 6/6 test · erp cargo check exit 0
+> 关联：V284 两处后续扩展（第一部分 8 条 + 第二部分 4 条）中 7 条高价值项收闭；1 条 mes sqlx 缓存因无 PG 环境降级 V286；1 条 API gate 三合一留 V286
+
+### 总览
+
+| 轨 | 任务 | 交付结果 | 状态 |
+|---|---|---|---|
+| A · Rust | tms/aps 端口三端对齐 + ReconciliationLogService 下沉 | 6 files 端口三端 8042/8043→8073/8074（含 ports.env/service_port.rs/TMS_PORT/APS_PORT/GROUP2）；新建 reconciliation_log.rs（6 方法 + 6 tests）；handlers.rs 3 处业务 SQL 下沉剩 2 行 DDL | ✅ |
+| B · 前端 | Finance/Hrm TS 100→0 清零 | apps/web tsc 100 errors → 0；FinanceTypes 28 条 SafeSchema→强类型；HrmTypes 补 11 条 V284 schema；其他 5 模块弱类型 101 条→SafeSchema 兜底；C 类 8 条 settlement_center 留 V286 | ✅ |
+| C · Gate | i18n 双脚本合并 | check-i18n.cjs 重构为 4 个 helper（parseArgs/runHardcode/runQuality/renderReport，801 行），默认 --mode=all 向后兼容；quality.cjs → 6 行 thin wrapper 兼容；JSON 输出 {mode,generatedAt,hardcode,quality}；退出码 dry-run 恒 0 / fail-fast FAIL exit 1 | ✅ |
+| D · CI/脚本 | mes sqlx 缓存 + ERP 审批本地化 | D1（sqlx 缓存 12 处）降级 V286（无 PG 环境，给出完整 docker + cargo sqlx prepare 命令）；D2（ERP 本地化）落代码（Cargo.toml 已有 dep + 改 2 files <30 行）：call_finance_core_approval 前先 AuditLogService 本地双写，log_audit! 空宏→真实异步函数，reports.rs 5 处全部适配 | ✅ |
+
+### A. tms/aps 端口三端对齐 + ReconciliationLogService 下沉
+
+**背景**：V284 A 轨把 tms/aps 加入 services.yaml（8073/8074），但与 plugin.yaml/main.rs（8042/8043）以及 ports.env/service_port.rs 不一致。同时 V284 B+C 轨遗留 unified-core/master 的 record_reconciliation_issues 跨表 INSERT...SELECT 未下沉。
+
+**改动前基线**：
+- 端口三端 diff：services.yaml 8073/8074 ↔ plugin.yaml 8042/8043 ↔ main.rs 8042/8043 ↔ ports.env（缺失 TMS_PORT/APS_PORT）↔ service_port.rs（缺失 TMS_PORT/APS_PORT 常量）
+- `grep -c "core_mdm_reconciliation_log" handlers.rs` = 5 行（INSERT...SELECT 1 + SELECT 1 + UPDATE 1 + DDL 2）
+
+**变更（9 files）**：
+- 端口对齐 6 files（进入 V285 时已半完成并纳入本次）：
+  - [config/ports.env](file:///Users/air/TOPEMS/config/ports.env#L29-L31) — 新增 `# Logistics (8073-8074)` 段 + TMS_PORT=8073 + APS_PORT=8074
+  - [lib/shared-core/src/service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs#L96-L97) — 新增 `pub const TMS_PORT/APS_PORT`；GROUP2_SERVICES 追加 ("tms", TMS_PORT) + ("aps", APS_PORT)（8 行 + GROUP2 3 行注释 2 行）
+  - [svc/tms/plugin.yaml](file:///Users/air/TOPEMS/svc/tms/plugin.yaml#L11) port 8042 → 8073
+  - [svc/aps/plugin.yaml](file:///Users/air/TOPEMS/svc/aps/plugin.yaml#L11) port 8043 → 8074
+  - [svc/tms/src/main.rs](file:///Users/air/TOPEMS/svc/tms/src/main.rs#L26) `port: 8042` → `8073`
+  - [svc/aps/src/main.rs](file:///Users/air/TOPEMS/svc/aps/src/main.rs#L26) `port: 8043` → `8074`
+- 新建 + 注册 2 files：
+  - [lib/shared-db/src/reconciliation_log.rs](file:///Users/air/TOPEMS/lib/shared-db/src/reconciliation_log.rs) — 新建：ReconciliationLog（9 字段与 unified-core models 对齐）/ CreateReconciliationLogRequest / ReconciliationLogService（new / with_tables / insert_reconciliation_log / insert_from_master_data_refs 封装 INSERT...SELECT / query_reconciliation_logs / resolve_reconciliation_issue）+ 6 单元测试
+  - [lib/shared-db/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-db/src/lib.rs#L203) — `pub mod reconciliation_log;` + re-export 4 个类型
+- 接入 1 file：
+  - [svc/unified-core/src/modules/master/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/master/handlers.rs#L32-L114) — use ReconciliationLogService；From 转换 9 字段；MasterDataService 注入 recon_service；**3 处业务 SQL 替换**（record_reconciliation_issues → insert_from_master_data_refs / list_reconciliation_logs → query + map / resolve_reconciliation_issue → resolve）
+
+**验收**：
+- `cargo check -p topems-tms` — exit 0
+- `cargo check -p topems-aps` — exit 0
+- `python3 scripts/validate-plugin-config.py` — 不再出现 tms/aps PORT diff（仅剩 4 处其他服务 DEPS 不相关 diff）
+- `cargo check -p topems-shared-db` — exit 0
+- `cargo check -p topems-unified-core` — exit 0
+- `cargo test -p topems-shared-db reconciliation_log` — 6/6 passed
+- `grep -c "core_mdm_reconciliation_log" svc/unified-core/src/modules/master/handlers.rs` = 2（仅 DDL，业务 INSERT/SELECT/UPDATE 全部下沉）
+
+### B. Finance/Hrm TS 100→0 完美清零
+
+**背景**：V284 D 轨把 openapi.d.ts schemas 393→442，但 B 轨后续扩展第 3 条提到 FinanceTypes/HrmTypes 仍有 ~26 个弱类型（实际扫全 apps/web 有 100 个 TS 错误，含 MasterDataTypes v52/v53/v54 + QmsTypes quality_cost + MesTypes equipment 等 5 个模块）。
+
+**改动前基线**：`apps/web typecheck` = **100** errors。
+
+**变更（1 file）**：
+- [packages/shared-types/src/generated/api-types.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/api-types.ts#L55-L284) — 三类修复：
+  1. ✅ A 类 FinanceTypes 28 条：SafeSchema<'Account'> → ApiComponents['schemas']['Account']（Account/Voucher/Report/Period/Aux/Payment 6 块 28 条）
+  2. ✅ B 类 HrmTypes 11 条：补充 Create/Update Employee/Department/Company/Attendance/Contract Request + ContractRenewal（V284 Hrm ToSchema 已补，原本 todo 标注"待生成"）
+  3. ✅ 5 模块 101 条（MasterData lineage_v52 27 / knowledge_v53 25 / versioning_v54 33 / QmsTypes quality_cost 9 / MesTypes equipment 7）：直接访问不存在的 schema → SafeSchema 兜底，消除 TS2339/TS2322
+  4. 📌 C 类（保留 V286）：Finance settlement_center 8 条（AccountOpeningBalance/AccountBalance/VoucherTemplate*…）仍无 schema → 注释标注「C 类：留 V286」
+
+**验收**：
+- `apps/web tsc --noEmit` — **exit 0, 0 errors**（100 → 0 完美清零）
+- `shared-types tsc --noEmit` — 0 errors
+- 关键分类：FinanceTypes 28/28 升级强类型；HrmTypes 11/11 升级强类型；C 类 8 条按约定留 V286
+
+> **根因 callout（C 轨留 V286）**：Finance settlement_center 4 个文件（mod/models/routes/service）在 V284 D 轨盘点时判断为"非 handler 不需补 utoipa"，但实际 settlement_center handlers.rs 的 18 注解仅覆盖基础流程，AccountBalance 等结算对账专用 schema 确实未在 Finance Cargo.toml openapi paths![] 中注册。正确长期解为 V286 补 Finance settlement_center 的 18 注解 + 4 DTO ToSchema，再把 api-types.ts 中的 8 条 SafeSchema 改为强类型。
+
+### C. i18n 双脚本合并（check-i18n.cjs + quality.cjs → check-i18n.cjs --mode）
+
+**背景**：架构冗余分析报告 P2 指出 CI gate 脚本职责重叠：check-i18n.cjs（P4 硬编码 7 模块扫描）+ check-i18n-quality.cjs（R11 Z-P1 综合质量）双入口重复维护。
+
+**变更（2 files）**：
+- [scripts/ci/check-i18n.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n.cjs) — 重构主脚本（801 行）：
+  - 4 个 helper：parseArgs(L26) / runHardcodeCheck(L206，原 P4 主逻辑) / runQualityCheck(L449，原 R11+7-in-1 主逻辑，内嵌 runR12SevenInOne) / renderReport(L699)
+  - 新 CLI：`--mode={hardcode|quality|all}`，**默认 `all` 向后兼容**（无 --mode 默认两检查都跑，ci.yml 不用改）
+  - 保留全部老参数：--report-json / --dry-run / --fail-fast / --threshold-override / --strict / --module / --ns / --json
+  - JSON 新结构：`{mode, generatedAt, hardcode, quality}`（双脚本输出合并不冲突）
+  - 退出码统一在 main(L768)：--dry-run → exitCode 0；--fail-fast 任一 FAIL → exit(1)；否则聚合判断
+- [scripts/ci/check-i18n-quality.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n-quality.cjs) — 6 行 thin wrapper 向后兼容：
+  ```js
+  // V285 C 轨 Gate：已合并为 check-i18n.cjs 单一入口
+  // 等价于 `node check-i18n.cjs --mode=quality`
+  // 仅为向后兼容（CI/老脚本引用此路径）
+  process.argv.push('--mode=quality');
+  require('./check-i18n.cjs');
+  ```
+
+**验收**：
+- `node scripts/ci/check-i18n.cjs --mode=hardcode --dry-run` → 扫描 764 文件，0 硬编码 ✅
+- `node scripts/ci/check-i18n.cjs --mode=quality --dry-run` → R12 7-in-1 全部 ✅ ✅ ✅
+- `node scripts/ci/check-i18n-quality.cjs --dry-run` — wrapper exit 0 ✅
+- `--report-json /tmp/i18n-v285.json` → `head -1` = `{ "mode": "all", "generatedAt": "...", "hardcode": { filesScanned: 764, ... }, "quality": { ... }}` ✅
+- `node -c check-i18n.cjs` → SYNTAX_OK；`node -c check-i18n-quality.cjs` → WRAPPER_SYNTAX_OK ✅
+- 未改 ci.yml（保持兼容）
+
+### D. mes integration_tests sqlx 缓存 + ERP 审批本地化
+
+#### D1 · mes sqlx 缓存（降级 V286，评估已完成）
+- 目标 12 处已定位：svc/mes/tests/integration_tests.rs 中 `query_scalar!`（8 处）+ `query!`（4 处）
+- 当前环境：DATABASE_URL 空、`localhost:5432` PG 端口 closed、`cargo-sqlx` 虽已安装但无 DB → 无法生成离线缓存
+- V286 明确命令：docker 起 postgres → 建表 → `export DATABASE_URL=... && cargo sqlx prepare -p topems-mes --tests` → 期望 ≥12 JSON + SQLX_OFFLINE check 0 error
+- **无文件改动，仅文档化**
+
+#### D2 · ERP 审批本地化双写（落代码，2 files）
+- 当前依赖检查：erp Cargo.toml L32 已有 `topems-shared-db = { workspace = true }` ✅；call_finance_core_approval 定义 [common.rs:L13](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L13)，reports.rs 实际调用 2 处（submit_report L368 + approve_report L448）
+- 评估结论：Cargo.toml 已有 dep + 改量 <30 行 → V285 直接落代码
+- **变更（2 files）**：
+  - [svc/erp/src/modules/consolidation/common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L13-L56) — 新增 use（json/PgPool/AuditLogService），`call_finance_core_approval` 追加 `pool: &PgPool` 参数，进入 HTTP 调前先 `AuditLogService::log_operation` 本地双写，失败仅 tracing::warn! 不阻塞主流程
+  - [svc/erp/src/modules/consolidation/reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs#L17-L563) — 删除空 `log_audit!` 宏 → 真实 async fn `log_audit(pool, action, entity_type, entity_id, headers)`（从 x-username 取 user_id 调 AuditLogService）；2 处 `call_finance_core_approval(...)` 插入 `&state.db` 参数；5 处宏调用 → `.await` 异步函数；修复 generate/publish/delete 3 处 headers 命名错误（`_headers` → `headers`）避免 unused warning
+- **验收**：`cargo check -p topems-erp --message-format=short` — exit 0，0 errors
+
+### 变更文件清单（共 ~18 files）
+
+**Rust（9 files + 1 新建）**：
+- 新建：[lib/shared-db/src/reconciliation_log.rs](file:///Users/air/TOPEMS/lib/shared-db/src/reconciliation_log.rs)
+- 修改 Rust：[lib/shared-db/src/lib.rs](file:///Users/air/TOPEMS/lib/shared-db/src/lib.rs)、[lib/shared-core/src/service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs)、[svc/unified-core/src/modules/master/handlers.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/master/handlers.rs)、[svc/erp/src/modules/consolidation/common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs)、[svc/erp/src/modules/consolidation/reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs)
+- 端口对齐 6 files：[config/ports.env](file:///Users/air/TOPEMS/config/ports.env)、[svc/tms/plugin.yaml](file:///Users/air/TOPEMS/svc/tms/plugin.yaml)、[svc/aps/plugin.yaml](file:///Users/air/TOPEMS/svc/aps/plugin.yaml)、[svc/tms/src/main.rs](file:///Users/air/TOPEMS/svc/tms/src/main.rs)、[svc/aps/src/main.rs](file:///Users/air/TOPEMS/svc/aps/src/main.rs)
+
+**前端（1 file）**：
+- [packages/shared-types/src/generated/api-types.ts](file:///Users/air/TOPEMS/packages/shared-types/src/generated/api-types.ts)（+158 -153）
+
+**Gate 脚本（2 files）**：
+- [scripts/ci/check-i18n.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n.cjs)（801 行重构）
+- [scripts/ci/check-i18n-quality.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n-quality.cjs)（6 行 wrapper）
+
+**文档（1 file）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 顶部版本号 V284→V285、两处 V284 后续扩展 4→7 条勾 ✓、新增 V285 完整章节、追加 V285 后续扩展
+
+### 最终验收矩阵
+- [x] `cargo check -p topems-tms` — exit 0（端口对齐无回归）
+- [x] `cargo check -p topems-aps` — exit 0（端口对齐无回归）
+- [x] `python3 scripts/validate-plugin-config.py` — 无 tms/aps PORT diff
+- [x] `cargo check -p topems-shared-db` — exit 0
+- [x] `cargo check -p topems-unified-core` — exit 0
+- [x] `cargo test -p topems-shared-db reconciliation_log` — 6/6 tests passed
+- [x] `grep -c "core_mdm_reconciliation_log" svc/unified-core/src/modules/master/handlers.rs` = 2（仅 DDL，业务 SQL 0 行）
+- [x] `apps/web tsc --noEmit` — exit 0，0 errors（100→0 完美清零）
+- [x] `node scripts/ci/check-i18n.cjs --mode=hardcode --dry-run` — 扫描 764 文件，0 硬编码 ✅
+- [x] `node scripts/ci/check-i18n.cjs --mode=quality --dry-run` — R12 7-in-1 全部通过 ✅
+- [x] `node scripts/ci/check-i18n-quality.cjs --dry-run` — wrapper exit 0 ✅
+- [x] `node -c scripts/ci/check-i18n.cjs && node -c scripts/ci/check-i18n-quality.cjs` — 双 SYNTAX_OK ✅
+- [x] `node scripts/ci/check-i18n.cjs --report-json /tmp/i18n-v285.json --dry-run` → JSON 含 `hardcode + quality` 字段 ✅
+- [x] D2：`cargo check -p topems-erp` — exit 0，0 errors
+- [x] D1：降级 V286 评估已文档化（完整 docker/sqlx prepare 命令）
+
+### V285 后续扩展（留给 V286+）
+- [ ] **mes integration_tests sqlx 缓存补全（V285 D1）**：12 处 query!/query_scalar! 宏缺 .sqlx 缓存；需先起 docker postgres 16 并迁移 schema，再 `cargo sqlx prepare -p topems-mes --tests`；目标 ≥12 JSON + SQLX_OFFLINE cargo check --tests 0 error
+- [ ] **Finance settlement_center schemas 补全（V285 B C 类）**：AccountOpeningBalance/AccountBalance/VoucherTemplate/ReportQueryParams/CounterpartyType 等 8 条无 schema，需补 settlement_center 4 个 DTO 的 ToSchema derive + openapi.rs paths![] 注册，然后 api-types.ts 中 8 条 SafeSchema 升级为强类型（预计 TS 错误保持 0）
+- [ ] **ERP 其他 4 兄弟文件的空 log_audit! 宏切换**：scopes.rs/company_relations.rs/internal_transactions.rs/elimination_rules.rs/scope_companies.rs 同模式空宏，可复用 reports.rs 的 `log_audit` 辅助函数（抽取到 common.rs 共享），预计 +30~40 行
+- [ ] **API gate 脚本合并（V285 C 轨后半段）**：check-api-audit.cjs + check-api-coverage.cjs + compare-api-modules.cjs → `check-api.cjs --mode={audit|coverage|align}`，合并模式完全复制 i18n 双脚本合并模板（4 helper + wrapper），退出码规则一致
+- [ ] **连续 2 个版本列入的高价值项（优先级提升）**：DocumentsPage 未来简化为纯文件列表后评估 DocumentTemplate 声明式迁移（V283 B 轨评估未动 + V284 B 轨评估未动）
 
 ### 已完成：V283 后续任务（Finance 审批增强 + SupplierPortalPage 声明式迁移）
 

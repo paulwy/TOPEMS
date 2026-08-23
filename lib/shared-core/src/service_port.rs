@@ -42,6 +42,8 @@ pub const PORTAL_PORT: u16 = 8063;
 pub const MOBILE_PORT: u16 = 8070;
 pub const GIS_PORT: u16 = 8071;
 pub const INTEGRATION_PORT: u16 = 8072;
+pub const TMS_PORT: u16 = 8073;
+pub const APS_PORT: u16 = 8074;
 
 // ============ 扩展服务端口（8082-8088，从 unified-core 外迁）============
 
@@ -87,6 +89,9 @@ pub const GROUP2_SERVICES: &[(&str, u16)] = &[
     ("scm", SCM_PORT),
     ("wms", WMS_PORT),
     ("srm", SRM_PORT),
+    // 物流（V285: 端口对齐 8073/8074，与 srm 8042 解除冲突）
+    ("tms", TMS_PORT),
+    ("aps", APS_PORT),
     // 质量/研发
     ("qms", QMS_PORT),
     ("lims", LIMS_PORT),
@@ -204,10 +209,10 @@ mod tests {
 
     #[test]
     fn t10_group2_services_length_protection() {
-        // 20 主服务 + master-data + monitor + 6 扩展 + analytics 别名 = 29
+        // 20 主服务 + tms + aps + master-data + monitor + 6 扩展 + analytics 别名 = 31
         assert_eq!(
             GROUP2_SERVICES.len(),
-            29,
+            31,
             "GROUP2_SERVICES 条目数变化，说明新增/删除了服务。\
             请同步更新 config/services.yaml 与本单测期望值。"
         );

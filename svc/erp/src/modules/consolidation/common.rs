@@ -1,22 +1,60 @@
 use serde::Deserialize;
-use topems_shared_db::repository::ListQueryParams;
+use serde_json::json;
+use sqlx::PgPool;
+use topems_shared_db::{repository::ListQueryParams, AuditLogService};
 use uuid::Uuid;
 
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, TypedServiceClient,
 };
 
-/// 调用 Finance Core 审批接口（使用共享 TypedServiceClient<FinanceApi>）
 pub async fn call_finance_core_approval(
     finance_client: &TypedServiceClient<FinanceApi>,
+    pool: &PgPool,
     doc_type: &str,
     doc_id: Uuid,
     doc_no: &str,
     action: &str,
-    _username: &str,
+    username: &str,
     rejection_reason: Option<&str>,
     comment: Option<&str>,
 ) -> Result<(), String> {
+    let action_tag = match action {
+        "submit" => "approval_submit",
+        "approve" => "approval_approve",
+        "reject" => "approval_reject",
+        "cancel" => "approval_cancel",
+        _ => action,
+    };
+    let mut details = json!({ "doc_no": doc_no });
+    if let Some(r) = rejection_reason {
+        details["rejection_reason"] = json!(r);
+    }
+    if let Some(c) = comment {
+        details["comment"] = json!(c);
+    }
+    let svc = AuditLogService::new(pool.clone());
+    if let Err(e) = svc
+        .log_operation(
+            action_tag,
+            doc_type,
+            Some(doc_id),
+            Some(username),
+            Some(details),
+            "success",
+            None,
+        )
+        .await
+    {
+        tracing::warn!(
+            "本地审计日志双写失败: action={}, doc_type={}, doc_id={}, error={}",
+            action_tag,
+            doc_type,
+            doc_id,
+            e
+        );
+    }
+
     let body = match action {
         "submit" => serde_json::json!({
             "doc_type": doc_type,

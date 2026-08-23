@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
 
     let config = ServiceConfig {
         name: "topems-tms",
-        port: 8042,
+        port: 8073,
         port_env_var: Some("TMS_PORT"),
         max_db_connections: 10,
         enable_events: true,
