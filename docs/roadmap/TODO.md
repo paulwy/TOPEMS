@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V279 | **更新日期**: 2026-08-23
+> **版本**: V280 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -17,10 +17,44 @@
 > **V277 列表/结构类模板化已完成**（4 页接入已有模板，覆盖率 97.9%→98.7%，例外项 11→7）。
 > **V278 架构冗余治理已完成**（openapi 测试提取共享 utility / init_db 统一 / ErrorBoundary 去重 / CI composite action + TODO 归档）。
 > **V279 工具/系统类模板化已完成**（3 页接入已有模板，覆盖率 98.7%→99.2%，例外项 7→4）。
+> **V280 最后 4 例外清零**（4 页接入已有模板，覆盖率 99.2%→**100.0%**，例外项 4→0）。设计系统模板治理全流程收闭 🎯
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V280 设计系统模板治理收闭（最后 4 例外清零 · 530/530 = 100%）
+
+> 日期：2026-08-23 | 代码改动 8 files（页面 4 + CardListTemplate 增强 1 + 例外清单 1 + TODO 1 + 审计报告）| 验收：tsc 0 errors · 审计覆盖率 **100.0%** · 例外项 4→0
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| SupplierPortalPage → StatsPageTemplate | 4 分支（loading/error/empty/normal）+ statCards Grid + Tabs + 订单/公告/评分 children 透传 | ✅ |
+| NotificationCenter → ListPageTemplate | 筛选+搜索→headerContent，通知列表+分页+浮动按钮→footerContent，columns/data 空数组透传 | ✅ |
+| DocumentsPage → CardListTemplate | [CardListTemplate](file:///Users/air/TOPEMS/apps/web/src/components/templates/CardListTemplate.tsx) 增强 children 透传模式（data/cardConfig 变为可选，children 优先渲染分支）；保留左文件夹树+右文件列表双栏 | ✅ |
+| MailPage → MasterDetailPageTemplate | children 透传，保留邮件 Tabs + EmailList + EmailDetail + 所有 Dialog 组件 | ✅ |
+| 例外清单更新 | [template-exceptions.md](file:///Users/air/TOPEMS/docs/design/template-exceptions.md) 门户/协作 2→0、文档/邮件 2→0，总例外 4→0，覆盖率 99.2%→**100.0%** | ✅ |
+
+#### 最终验收矩阵
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+- [x] `node scripts/design-system-audit/scan.mjs` — **530/530 = 100.0%**（+4 标准模板使用）
+- [x] 例外项 4→0（-4），设计系统 9 大例外类别**全部清零**
+
+### 覆盖率里程碑（V272 → V280）
+
+| 版本 | 覆盖率 | 例外 | 关键动作 |
+|---|---|---|---|
+| V272 | 96.4% (511/530) | 19 | Backlog 基准 |
+| V275 | 97.5% (517/530) | 13 | 报表类 6 页：ReportViewerTemplate + DesignerTemplate |
+| V276 | 97.9% (519/530) | 11 | GIS 类 2 页：GisMapTemplate 落地 |
+| V277 | 98.7% (523/530) | 7 | 列表/结构类 4 页：MasterDetail/CardList/List/Detail |
+| V279 | 99.2% (526/530) | 4 | 工具/系统类 3 页：FormPage/Dashboard/Wizard |
+| **V280** | **100.0% (530/530)** | **0** | 门户/协作+文档/邮件 4 页：Stats/List/CardList/MasterDetail；CardListTemplate 增强 children 透传 |
+
+### V280 后续（治理完成后方向，留给 V281+）
+- [ ] **ApprovalTransition 推广**：shared-core 3 个审批流方法（MES 仅落地），评估推广到 finance/erp/pm 等模块
+- [ ] **AiToolPageTemplate 推广**：评估 AiPromptLibraryPage / AiModelSettingsPage / AiDashboardPage 是否可接入
+- [ ] **模板扩展**：SupplierPortal/NotificationCenter/DocumentsPage/MailPage 目前均为 children 透传，可评估是否抽象为专用声明式模板（PortalPageTemplate、NotificationTemplate、DocumentTemplate、MailClientTemplate）
 
 ### 已完成：V279 工具/系统类模板化（3 页接入已有模板）
 

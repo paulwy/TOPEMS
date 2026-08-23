@@ -96,7 +96,7 @@ apps/web/src/pages/desktop/DesktopMonitorPage.tsx,desktop,stats,StatsPageTemplat
 apps/web/src/pages/doc/DashboardPage.tsx,doc,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/doc/DocumentCenterPage.tsx,doc,card-list,CardListTemplate,CardListTemplate; CardRenderConfig; CardAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/doc/DocumentListPage.tsx,doc,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/doc/DocumentsPage/index.tsx,doc,unknown / custom,,none,ConfirmDialog,yes,no,no,no,no,1
+apps/web/src/pages/doc/DocumentsPage/index.tsx,doc,card-list,CardListTemplate,CardListTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/doc/FileDetailPage.tsx,doc,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,ConfirmDialog; PageContainer,yes,no,no,no,yes,2
 apps/web/src/pages/doc/KnowledgeBasePage.tsx,doc,crud; tree,CrudPage; TreePageTemplate,TreePageTemplate; TreeNode,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/CompliancePage.tsx,ehs,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -197,7 +197,7 @@ apps/web/src/pages/iam/PermissionManagementPage.tsx,iam,crud,CrudPage,none,none,
 apps/web/src/pages/iam/RoleManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/iam/UserManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/im/DashboardPage.tsx,im,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/im/MailPage/index.tsx,im,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/im/MailPage/index.tsx,im,master-detail,MasterDetailPageTemplate,MasterDetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/integration/IntegrationConnectionsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/integration/IntegrationDashboardPage.tsx,integration,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,dashboard,DashboardTemplate,DashboardTemplate; StatCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
@@ -303,7 +303,7 @@ apps/web/src/pages/monitor/MonitorNotificationPage.tsx,monitor,crud,CrudPage,non
 apps/web/src/pages/monitor/MonitorSettingsPage.tsx,monitor,settings,SettingsPageTemplate,SettingsPageTemplate; SettingTab; SettingValueType,none,no,no,no,no,yes,0
 apps/web/src/pages/monitor/SLOStatusPage.tsx,monitor,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard,PageContainer; ConfirmDialog,yes,no,no,no,yes,2
 apps/web/src/pages/notification/NotificationArchivePage.tsx,notification,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/notification/NotificationCenter.tsx,notification,unknown / custom,,none,none,yes,no,no,no,no,0
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/notification/NotificationDashboardPage.tsx,notification,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/notification/NotificationDetailPage.tsx,notification,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/notification/NotificationListPage.tsx,notification,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -458,7 +458,7 @@ apps/web/src/pages/srm/SrmScoringDimensionPage.tsx,srm,crud,CrudPage,CrudPage,no
 apps/web/src/pages/srm/SrmSupplierDetailPage.tsx,srm,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/srm/SrmSupplierPage.tsx,srm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/srm/SrmSupplierProductPage.tsx,srm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/srm/SupplierPortalPage.tsx,srm,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/srm/SupplierPortalPage.tsx,srm,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/system/AuditLogPage/index.tsx,system,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/system/BackupPage.tsx,system,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/system/FeatureFlagPage/index.tsx,system,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0

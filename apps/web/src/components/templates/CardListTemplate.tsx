@@ -109,14 +109,16 @@ export interface CardListTemplateProps {
   title: string;
   /** 页面副标题 */
   subtitle?: string;
+  /** 自定义子内容（提供时将替代默认的统计/筛选/卡片列表渲染区） */
+  children?: React.ReactNode;
   /** 统计数据（顶部MetricCard） */
   metricStats?: MetricStatCard[];
   /** 统计数据列数 */
   metricColumns?: number;
-  /** 列表数据 */
-  data: Record<string, unknown>[];
-  /** 卡片渲染配置 */
-  cardConfig: CardRenderConfig;
+  /** 列表数据（仅在未提供 children 时必填） */
+  data?: Record<string, unknown>[];
+  /** 卡片渲染配置（仅在未提供 children 时必填） */
+  cardConfig?: CardRenderConfig;
   /** 加载状态 */
   loading?: boolean;
   /** 空状态配置 */
@@ -198,10 +200,11 @@ export interface CardListTemplateProps {
 export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   title,
   subtitle,
+  children,
   metricStats = [],
   metricColumns = 6,
-  data,
-  cardConfig,
+  data: rawData,
+  cardConfig: rawCardConfig,
   loading = false,
   emptyState,
   search,
@@ -228,6 +231,13 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   fixedCardHeight,
 }) => {
   const theme = useTheme();
+
+  // 当未使用 children 透传时，data/cardConfig 必须提供（向后兼容：提供空默认）
+  const data = rawData ?? [];
+  const cardConfig = rawCardConfig ?? ({
+    title: () => '',
+    description: () => '',
+  } as unknown as CardRenderConfig);
 
   // 内部状态
   const [internalViewMode, setInternalViewMode] = useState<'grid' | 'list'>('grid');
@@ -855,100 +865,106 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       {/* 自定义工具栏 */}
       {customToolbar && <Box sx={{ mb: 2 }}>{customToolbar}</Box>}
 
-      {/* 统计概览 */}
-      {showStatsOverview && metricStats.length > 0 && (
-        <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              mb: statsOverviewExpanded ? 2 : 0,
-            }}
-            onClick={() => onStatsOverviewToggle?.(!statsOverviewExpanded)}
-          >
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {i18n.t('components.card_list_template.k3')}
-            </Typography>
-            <IconButton
-              size='small'
-              aria-label={i18n.t('templates.card_list_template.k6')}
-            >
-              {statsOverviewExpanded ? (
-                <ChevronUp sx={{ width: 18, height: 18 }} />
-              ) : (
-                <ChevronDown sx={{ width: 18, height: 18 }} />
-              )}
-            </IconButton>
-          </Box>
-          <Collapse in={statsOverviewExpanded}>{renderMetricCards()}</Collapse>
-        </Paper>
+      {children ? (
+        <>{children}</>
+      ) : (
+        <>
+          {/* 统计概览 */}
+          {showStatsOverview && metricStats.length > 0 && (
+            <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  mb: statsOverviewExpanded ? 2 : 0,
+                }}
+                onClick={() => onStatsOverviewToggle?.(!statsOverviewExpanded)}
+              >
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {i18n.t('components.card_list_template.k3')}
+                </Typography>
+                <IconButton
+                  size='small'
+                  aria-label={i18n.t('templates.card_list_template.k6')}
+                >
+                  {statsOverviewExpanded ? (
+                    <ChevronUp sx={{ width: 18, height: 18 }} />
+                  ) : (
+                    <ChevronDown sx={{ width: 18, height: 18 }} />
+                  )}
+                </IconButton>
+              </Box>
+              <Collapse in={statsOverviewExpanded}>{renderMetricCards()}</Collapse>
+            </Paper>
+          )}
+
+          {/* 筛选区 */}
+          {renderFilters()}
+
+          {/* 卡片列表 */}
+          <Paper sx={{ borderRadius: 3 }}>
+            {loading ? (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
+                    md: `repeat(${gridColumns.md || 3}, 1fr)`,
+                    lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
+                  },
+                  gap: 2,
+                  p: 2,
+                }}
+              >
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton
+                    key={i}
+                    height={200}
+                    sx={{ borderRadius: 3 }}
+                  />
+                ))}
+              </Box>
+            ) : data.length === 0 ? (
+              <Box sx={{ p: 6, textAlign: 'center' }}>
+                <EmptyState
+                  emoji={emptyState?.emoji || '📋'}
+                  title={emptyState?.title || i18n.t('templates.card_list_template.k7')}
+                  description={emptyState?.description}
+                  actionLabel={emptyState?.actionLabel}
+                  onAction={emptyState?.onAction}
+                />
+              </Box>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: '1fr',
+                      sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
+                      md: `repeat(${gridColumns.md || 3}, 1fr)`,
+                      lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
+                    },
+                    gap: 2,
+                    p: 2,
+                  }}
+                >
+                  {data.map((item, index) => renderCard(item, index))}
+                </Box>
+
+                {/* 分页 */}
+                {renderPagination()}
+              </>
+            )}
+          </Paper>
+        </>
       )}
-
-      {/* 筛选区 */}
-      {renderFilters()}
-
-      {/* 卡片列表 */}
-      <Paper sx={{ borderRadius: 3 }}>
-        {loading ? (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
-                md: `repeat(${gridColumns.md || 3}, 1fr)`,
-                lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
-              },
-              gap: 2,
-              p: 2,
-            }}
-          >
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton
-                key={i}
-                height={200}
-                sx={{ borderRadius: 3 }}
-              />
-            ))}
-          </Box>
-        ) : data.length === 0 ? (
-          <Box sx={{ p: 6, textAlign: 'center' }}>
-            <EmptyState
-              emoji={emptyState?.emoji || '📋'}
-              title={emptyState?.title || i18n.t('templates.card_list_template.k7')}
-              description={emptyState?.description}
-              actionLabel={emptyState?.actionLabel}
-              onAction={emptyState?.onAction}
-            />
-          </Box>
-        ) : (
-          <>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
-                  md: `repeat(${gridColumns.md || 3}, 1fr)`,
-                  lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
-                },
-                gap: 2,
-                p: 2,
-              }}
-            >
-              {data.map((item, index) => renderCard(item, index))}
-            </Box>
-
-            {/* 分页 */}
-            {renderPagination()}
-          </>
-        )}
-      </Paper>
     </Box>
   );
 };

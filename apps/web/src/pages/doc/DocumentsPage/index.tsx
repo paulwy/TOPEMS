@@ -1,5 +1,5 @@
 import { designTokens } from '@topems/tokens';
-import { PageContainer } from '@/components';
+import { CardListTemplate } from '@/components/templates';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   FileText,
@@ -521,15 +521,9 @@ const DocumentsPage: React.FC = () => {
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
 
   return (
-    <PageContainer
+    <CardListTemplate
       title={i18n.t('pages.index.k26')}
-      maxWidth={false}
-      padding={false}
-      bgcolor='grey.100'
-      headerProps={{
-        pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
-      }}
+      loading={filesLoading}
     >
       <Box
         component='header'
@@ -819,7 +813,7 @@ const DocumentsPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </PageContainer>
+    </CardListTemplate>
   );
 };
 
