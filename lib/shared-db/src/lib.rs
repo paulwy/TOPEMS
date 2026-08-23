@@ -197,7 +197,6 @@ pub mod audit_soft_delete;
 pub mod backup;
 pub mod data_governance;
 pub mod database;
-pub mod migration;
 pub mod query_optimizer;
 pub mod repository;
 pub mod rls;
@@ -218,10 +217,9 @@ pub use data_governance::{
     EntityAccessStats, EntityDataTags, MaskingRule, MaskingStrategy,
 };
 pub use database::{
-    check_pool_health, create_database_pool, test_database_connection, HealthCheckResult,
-    ReadWriteConfig, ReadWritePool,
+    check_pool_health, create_database_pool, ensure_master_data_refs_table,
+    test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
-pub use migration::{MigrationHistory, MigrationResult, MigrationSDK, MigrationStatus};
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
     NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,

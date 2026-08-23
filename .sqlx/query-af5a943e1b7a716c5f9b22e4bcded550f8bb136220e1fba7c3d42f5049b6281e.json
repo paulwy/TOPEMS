@@ -60,51 +60,56 @@
       },
       {
         "ordinal": 11,
-        "name": "required_date",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 12,
-        "name": "priority",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 13,
-        "name": "source_type",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 14,
-        "name": "remark",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 15,
-        "name": "created_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 16,
-        "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 17,
         "name": "available_quantity",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 18,
+        "ordinal": 12,
         "name": "shortfall_quantity",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 19,
+        "ordinal": 13,
+        "name": "required_date",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 14,
+        "name": "priority",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
         "name": "status",
         "type_info": "Varchar"
       },
       {
+        "ordinal": 16,
+        "name": "source_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 17,
+        "name": "remark",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 18,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 19,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      },
+      {
         "ordinal": 20,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 21,
         "name": "deleted_at",
         "type_info": "Timestamptz"
       }
@@ -121,7 +126,7 @@
         "Varchar",
         "Varchar",
         "Numeric",
-        "Timestamp",
+        "Varchar",
         "Varchar",
         "Varchar",
         "Text"
@@ -132,15 +137,16 @@
       false,
       true,
       true,
-      true,
-      true,
+      false,
+      false,
       false,
       false,
       true,
-      false,
+      true,
       false,
       true,
       true,
+      false,
       true,
       true,
       true,

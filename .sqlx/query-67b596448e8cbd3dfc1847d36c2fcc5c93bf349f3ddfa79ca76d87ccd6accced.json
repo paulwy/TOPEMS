@@ -86,7 +86,7 @@
       {
         "ordinal": 16,
         "name": "approved_by",
-        "type_info": "Varchar"
+        "type_info": "Uuid"
       },
       {
         "ordinal": 17,
