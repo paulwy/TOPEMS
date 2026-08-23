@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Button } from '@mui/material';
-import { PageContainer } from '@/components/common';
 import {
   PenTool as PenToolIcon,
   Table as TableIcon,
@@ -11,6 +10,7 @@ import {
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { reportApi } from '@/api/report';
+import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
 
 const ct = designTokens.colors;
 
@@ -27,9 +27,11 @@ const ReportDesignPage: React.FC = () => {
     },
   });
   return (
-    <PageContainer
+    <DesignerTemplate
+      mode='standard'
       title={i18n.t('pages.report_design_page.k0')}
       subtitle={i18n.t('pages.report_design_page.k1')}
+      loading={isBackendLoading}
     >
       <Card>
         <CardContent>
@@ -85,7 +87,7 @@ const ReportDesignPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-    </PageContainer>
+    </DesignerTemplate>
   );
 };
 

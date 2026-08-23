@@ -15,8 +15,8 @@ import { PageContainer } from '@/components/common';
 export type DesignerMode = 'standard' | 'fullscreen';
 
 export interface DesignerTemplateProps {
-  /** 页面标题 */
-  title: string;
+  /** 页面标题（可选；为空时可依赖 PageContainer 的自动导航标题） */
+  title?: string;
   /** 页面副标题 */
   subtitle?: string;
   /**
@@ -43,6 +43,8 @@ export interface DesignerTemplateProps {
   children: React.ReactNode;
   /** 整体高度（默认 auto for standard, calc(100vh - 140px) for fullscreen） */
   height?: string;
+  /** PageContainer 的额外配置（不含 children，由模板内部传入） */
+  pageContainerProps?: Partial<Omit<React.ComponentProps<typeof PageContainer>, 'children'>>;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 240;
@@ -61,6 +63,7 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   error = null,
   children,
   height,
+  pageContainerProps,
 }) => {
   const isFullscreen = mode === 'fullscreen';
   const hasLeftPanel = isFullscreen && !!leftPanel;
@@ -75,7 +78,7 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   // 加载状态
   if (loading) {
     return (
-      <PageContainer title={title} subtitle={subtitle}>
+      <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
         <Box
           sx={{
             display: 'flex',
@@ -173,18 +176,21 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   );
 
   if (isFullscreen) {
+    const { sx: userSx, contentSx: userContentSx, ...restUserProps } = pageContainerProps ?? {};
     return (
       <PageContainer
         title={title}
         subtitle={subtitle}
+        {...restUserProps}
         maxWidth={false}
         padding={false}
-        autoTitle={false}
-        autoBreadcrumbs={false}
+        autoTitle={restUserProps.autoTitle ?? false}
+        autoBreadcrumbs={restUserProps.autoBreadcrumbs ?? false}
         sx={{
           height: contentHeight,
           display: 'flex',
           flexDirection: 'column',
+          ...userSx,
         }}
         contentSx={{
           flex: 1,
@@ -192,6 +198,7 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
           flexDirection: 'column',
           p: designTokens.spacing.md,
           minHeight: 0,
+          ...userContentSx,
         }}
       >
         {content}
@@ -200,7 +207,7 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   }
 
   return (
-    <PageContainer title={title} subtitle={subtitle}>
+    <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
       <Box sx={{ p: designTokens.spacing.md }}>{content}</Box>
     </PageContainer>
   );

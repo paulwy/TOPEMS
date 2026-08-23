@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
+import { ReportViewerTemplate } from '@/components/templates/ReportViewerTemplate';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type {
   ReportData,
   ReportTypeInfo,
@@ -34,6 +37,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct = designTokens.colors;
 
 const ReportPage: React.FC = () => {
+  const navigate = useNavigate();
   const { data: _backendData, isLoading: _isBackendLoading } = useQuery({
     queryKey: ['report-dashboard'],
     queryFn: async () => {
@@ -543,121 +547,149 @@ const ReportPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  if (!isServiceUp('report')) {
-    return <ServiceDownState />;
-  }
+  const serviceDown = !isServiceUp('report');
+  const errorMsg = serviceDown ? i18n.t('pages.index.k54') : null;
 
   return (
-    <PageContainer
-      maxWidth={false}
-      padding={false}
-      sx={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+    <ReportViewerTemplate
+      mode='center'
+      title={undefined}
+      subtitle={undefined}
+      loading={loading}
+      loadingText={undefined}
+      error={errorMsg}
+      errorAction={
+        serviceDown ? (
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Button variant='contained' onClick={() => window.location.reload()}>
+              {i18n.t('pages.index.k56')}
+            </Button>
+            <Button variant='outlined' onClick={() => navigate(DASHBOARD_PATHS.root)}>
+              {i18n.t('pages.index.k58')}
+            </Button>
+          </Box>
+        ) : undefined
+      }
+      pageContainerProps={{
+        maxWidth: false,
+        padding: false,
+        sx: {
+          minHeight: '100vh',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+        },
       }}
-    >
-      <ReportHeader onShowBuilder={() => setShowBuilder(true)} />
-
-      {notification && (
-        <NotificationToast
-          type={notification.type}
-          message={notification.message}
-        />
-      )}
-
-      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
-        <SearchFilterBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          activeTab={activeTab}
-          filterModule={filterModule}
-          onFilterModuleChange={setFilterModule}
-          uniqueModules={uniqueModules}
-        />
-
-        <TabSwitcher
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          templatesCount={templates.length}
-        />
-
-        {activeTab === 'reports' ? (
-          <>
-            <ReportStats
-              reports={reports}
-              reportTypes={reportTypes}
-            />
-            <ReportList
-              reports={filteredReports}
-              reportTypes={reportTypes}
-              onShowBuilder={() => setShowBuilder(true)}
-              onView={handleView}
-              onExport={handleExport}
-              onDelete={handleDeleteReport}
-            />
-          </>
-        ) : (
-          <TemplateList
-            templates={filteredTemplates}
-            reportTypes={reportTypes}
-            onShowCreateTemplateModal={() => setShowCreateTemplateModal(true)}
-            onCreateReportFromTemplate={handleCreateReportFromTemplate}
-            onEditTemplateClick={handleEditTemplateClick}
-            onDeleteTemplate={handleDeleteTemplate}
+      filterBar={
+        !loading && !serviceDown ? (
+          <SearchFilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            activeTab={activeTab}
+            filterModule={filterModule}
+            onFilterModuleChange={setFilterModule}
+            uniqueModules={uniqueModules}
           />
-        )}
-      </Box>
+        ) : undefined
+      }
+      tabs={
+        !loading && !serviceDown ? (
+          <TabSwitcher
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            templatesCount={templates.length}
+          />
+        ) : undefined
+      }
+      content={
+        !loading && !serviceDown ? (
+          <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 0 }}>
+            {activeTab === 'reports' ? (
+              <>
+                <ReportStats
+                  reports={reports}
+                  reportTypes={reportTypes}
+                />
+                <ReportList
+                  reports={filteredReports}
+                  reportTypes={reportTypes}
+                  onShowBuilder={() => setShowBuilder(true)}
+                  onView={handleView}
+                  onExport={handleExport}
+                  onDelete={handleDeleteReport}
+                />
+              </>
+            ) : (
+              <TemplateList
+                templates={filteredTemplates}
+                reportTypes={reportTypes}
+                onShowCreateTemplateModal={() => setShowCreateTemplateModal(true)}
+                onCreateReportFromTemplate={handleCreateReportFromTemplate}
+                onEditTemplateClick={handleEditTemplateClick}
+                onDeleteTemplate={handleDeleteTemplate}
+              />
+            )}
 
-      {showBuilder && (
-        <ReportBuilder
-          onClose={() => setShowBuilder(false)}
-          reportTypes={reportTypes}
-          onSuccess={() => {
-            queryClient.invalidateQueries({
-              queryKey: QUERY_KEYS.REPORT.REPORTS,
-              exact: false,
-              refetchType: 'active',
-            });
-            setShowBuilder(false);
-            showNotification('success', i18n.t('pages.index.k64'));
-          }}
-        />
+            {showBuilder && (
+              <ReportBuilder
+                onClose={() => setShowBuilder(false)}
+                reportTypes={reportTypes}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: QUERY_KEYS.REPORT.REPORTS,
+                    exact: false,
+                    refetchType: 'active',
+                  });
+                  setShowBuilder(false);
+                  showNotification('success', i18n.t('pages.index.k64'));
+                }}
+              />
+            )}
+
+            {showViewer && selectedReport && (
+              <ReportViewer
+                report={selectedReport}
+                onClose={() => {
+                  setShowViewer(false);
+                  setSelectedReport(null);
+                }}
+              />
+            )}
+
+            {showExportModal && selectedReport && (
+              <ExportModal
+                report={selectedReport}
+                onClose={() => {
+                  setShowExportModal(false);
+                  setSelectedReport(null);
+                }}
+              />
+            )}
+
+            <TemplateFormDialog
+              open={showCreateTemplateModal || showEditTemplateModal}
+              selectedTemplate={selectedTemplate}
+              templateFormData={templateFormData}
+              mockReportTypes={mockReportTypes}
+              onClose={handleTemplateFormClose}
+              onFormDataChange={setTemplateFormData}
+              onSubmit={handleTemplateFormSubmit}
+            />
+          </Box>
+        ) : undefined
+      }
+    >
+      {!loading && !serviceDown && (
+        <>
+          <ReportHeader onShowBuilder={() => setShowBuilder(true)} />
+
+          {notification && (
+            <NotificationToast
+              type={notification.type}
+              message={notification.message}
+            />
+          )}
+        </>
       )}
-
-      {showViewer && selectedReport && (
-        <ReportViewer
-          report={selectedReport}
-          onClose={() => {
-            setShowViewer(false);
-            setSelectedReport(null);
-          }}
-        />
-      )}
-
-      {showExportModal && selectedReport && (
-        <ExportModal
-          report={selectedReport}
-          onClose={() => {
-            setShowExportModal(false);
-            setSelectedReport(null);
-          }}
-        />
-      )}
-
-      <TemplateFormDialog
-        open={showCreateTemplateModal || showEditTemplateModal}
-        selectedTemplate={selectedTemplate}
-        templateFormData={templateFormData}
-        mockReportTypes={mockReportTypes}
-        onClose={handleTemplateFormClose}
-        onFormDataChange={setTemplateFormData}
-        onSubmit={handleTemplateFormSubmit}
-      />
-    </PageContainer>
+    </ReportViewerTemplate>
   );
 };
 

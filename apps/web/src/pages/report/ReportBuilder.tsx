@@ -15,6 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Box, Typography, TextField, Checkbox, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
 import { logger } from '@/utils/logger';
 
@@ -797,18 +798,21 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
   if (isModal) {
     return (
-      <PageContainer
-        padding={false}
-        maxWidth={false}
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          bgcolor: 'action.active',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50,
-          minHeight: 'auto',
+      <DesignerTemplate
+        mode='standard'
+        pageContainerProps={{
+          padding: false,
+          maxWidth: false,
+          sx: {
+            position: 'fixed',
+            inset: 0,
+            bgcolor: 'action.active',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+            minHeight: 'auto',
+          },
         }}
       >
         <Box
@@ -827,23 +831,25 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           {renderForm()}
           {renderFooter()}
         </Box>
-      </PageContainer>
+      </DesignerTemplate>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.paper',
-      }}
-    >
-      {renderHeader()}
-      {renderForm()}
-      {renderFooter()}
-    </Box>
+    <DesignerTemplate mode='standard'>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'background.paper',
+        }}
+      >
+        {renderHeader()}
+        {renderForm()}
+        {renderFooter()}
+      </Box>
+    </DesignerTemplate>
   );
 };
 
