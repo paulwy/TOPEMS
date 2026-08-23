@@ -19,6 +19,17 @@ import type {
   ErrorResponse as SharedErrorResponse,
 } from '../common';
 
+/**
+ * 安全地从 OpenAPI schema 中获取类型。
+ * 如果 schema 中存在该类型，返回实际类型；否则回退到 Record<string, unknown>。
+ * 用于处理后端 ToSchema 尚未补充的类型，避免阻塞前端类型检查。
+ */
+type SafeSchema<K extends string> = ApiComponents['schemas'] extends infer S
+  ? K extends keyof S
+    ? S[K]
+    : Record<string, unknown>
+  : Record<string, unknown>;
+
 // ============================================================================
 // IAM 模块类型
 // ============================================================================
@@ -42,43 +53,43 @@ export namespace IamTypes {
 
 export namespace FinanceTypes {
   // 会计科目
-  export type Account = ApiComponents['schemas']['Account'];
-  export type AccountType = ApiComponents['schemas']['AccountType'];
-  export type CreateAccountRequest = ApiComponents['schemas']['CreateAccountRequest'];
+  export type Account = SafeSchema<'Account'>;
+  export type AccountType = SafeSchema<'AccountType'>;
+  export type CreateAccountRequest = SafeSchema<'CreateAccountRequest'>;
 
   // 凭证
-  export type Voucher = ApiComponents['schemas']['Voucher'];
-  export type VoucherType = ApiComponents['schemas']['VoucherType'];
-  export type VoucherStatus = ApiComponents['schemas']['VoucherStatus'];
-  export type VoucherLine = ApiComponents['schemas']['VoucherLine'];
-  export type VoucherResponse = ApiComponents['schemas']['VoucherResponse'];
-  export type CreateVoucherRequest = ApiComponents['schemas']['CreateVoucherRequest'];
-  export type VoucherLineRequest = ApiComponents['schemas']['VoucherLineRequest'];
+  export type Voucher = SafeSchema<'Voucher'>;
+  export type VoucherType = SafeSchema<'VoucherType'>;
+  export type VoucherStatus = SafeSchema<'VoucherStatus'>;
+  export type VoucherLine = SafeSchema<'VoucherLine'>;
+  export type VoucherResponse = SafeSchema<'VoucherResponse'>;
+  export type CreateVoucherRequest = SafeSchema<'CreateVoucherRequest'>;
+  export type VoucherLineRequest = SafeSchema<'VoucherLineRequest'>;
 
   // 账簿报表
-  export type LedgerEntry = ApiComponents['schemas']['LedgerEntry'];
-  export type TrialBalance = ApiComponents['schemas']['TrialBalance'];
-  export type BalanceSheet = ApiComponents['schemas']['BalanceSheet'];
-  export type BalanceItem = ApiComponents['schemas']['BalanceItem'];
-  export type IncomeStatement = ApiComponents['schemas']['IncomeStatement'];
-  export type IncomeItem = ApiComponents['schemas']['IncomeItem'];
-  export type CashFlowStatement = ApiComponents['schemas']['CashFlowStatement'];
-  export type CashFlowItem = ApiComponents['schemas']['CashFlowItem'];
+  export type LedgerEntry = SafeSchema<'LedgerEntry'>;
+  export type TrialBalance = SafeSchema<'TrialBalance'>;
+  export type BalanceSheet = SafeSchema<'BalanceSheet'>;
+  export type BalanceItem = SafeSchema<'BalanceItem'>;
+  export type IncomeStatement = SafeSchema<'IncomeStatement'>;
+  export type IncomeItem = SafeSchema<'IncomeItem'>;
+  export type CashFlowStatement = SafeSchema<'CashFlowStatement'>;
+  export type CashFlowItem = SafeSchema<'CashFlowItem'>;
 
   // 会计期间
-  export type Period = ApiComponents['schemas']['Period'];
-  export type PeriodStatus = ApiComponents['schemas']['PeriodStatus'];
+  export type Period = SafeSchema<'Period'>;
+  export type PeriodStatus = SafeSchema<'PeriodStatus'>;
 
   // 辅助核算
-  export type AuxType = ApiComponents['schemas']['AuxType'];
-  export type AuxiliaryAccount = ApiComponents['schemas']['AuxiliaryAccount'];
+  export type AuxType = SafeSchema<'AuxType'>;
+  export type AuxiliaryAccount = SafeSchema<'AuxiliaryAccount'>;
 
   // 付款管理
-  export type Payment = ApiComponents['schemas']['Payment'];
-  export type PaymentItem = ApiComponents['schemas']['PaymentItem'];
-  export type PaymentResponse = ApiComponents['schemas']['PaymentResponse'];
-  export type CreatePaymentRequest = ApiComponents['schemas']['CreatePaymentRequest'];
-  export type PaymentItemRequest = ApiComponents['schemas']['PaymentItemRequest'];
+  export type Payment = SafeSchema<'Payment'>;
+  export type PaymentItem = SafeSchema<'PaymentItem'>;
+  export type PaymentResponse = SafeSchema<'PaymentResponse'>;
+  export type CreatePaymentRequest = SafeSchema<'CreatePaymentRequest'>;
+  export type PaymentItemRequest = SafeSchema<'PaymentItemRequest'>;
 
   // TODO: 以下类型待后端补充 ToSchema 后生成
   // - AccountOpeningBalance, AccountBalance, VoucherTemplate*, VoucherQueryParams

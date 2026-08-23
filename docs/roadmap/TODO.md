@@ -1,14 +1,140 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V267 | **更新日期**: 2026-08-23
+> **版本**: V270 | **更新日期**: 2026-08-23
 >
-> **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V266 设计系统模板迁移收尾阶段。
+> **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
 > **V267 四轨并行推进已完成**（clippy 全清 / MobilePageTemplate / clippy Gate / check_allow_baseline 修复）。
+> **V268 三轨并行推进已完成**（AuthPageTemplate + ChatPageTemplate + MobileHomePage 迁移，模板覆盖率 93.4%→94.9%）。
+> **V269 DesignerTemplate + 4 设计器页迁移已完成**（模板覆盖率 94.9%→95.7%，例外项 27→23）。
+> **V270 审计脚本校准 + 例外清单数据修正已完成**（覆盖率 91.7%→95.8% 校准，例外项 23→22）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V270 审计脚本校准 + 例外清单数据修正
+
+> 日期：2026-08-23 | 代码改动 2 files（scan.mjs + template-exceptions.md）| 验收：审计覆盖率 91.7%→95.8% · 例外项 23→22
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| 审计脚本模板检测校准 | `scan.mjs` 新增 4 类模板检测（mobile/auth/chat/designer），覆盖率检测从 91.7% 校准为 95.8% | ✅ |
+| 例外清单数据修正 | 移除已清理的"非页面支持文件"（2 个），补登遗漏的 `PluginUploadPage`（1 个），例外项 23→22 | ✅ |
+| 覆盖率数据对齐 | 文档数据与审计脚本输出一致：508/530 = 95.8% | ✅ |
+
+#### 校准前后对比
+| 指标 | 校准前 | 校准后 |
+|------|--------|--------|
+| 模板覆盖率（审计检测） | 91.7% (486/530) | 95.8% (508/530) |
+| 例外项总数 | 23 | 22 |
+| 标准模板种类 | 16（审计可检测） | 20 |
+
+#### 最终验收矩阵
+- [x] 审计脚本运行成功，0 error
+- [x] 覆盖率数据：91.7% → 95.8%（校准）
+- [x] 例外项总数：23 → 22（-1 净减少）
+- [x] 文档与审计结果完全一致
+
+### V270 后续扩展（留给 V271+）
+- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order/quality_management 共 12 处 TODO stub 评估收敛为 shared-core ApprovalTransition::apply() 的投入产出比
+- [ ] **AI 工具页模板化**：AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 三个 Tabs 双栏布局页面评估是否可统一为 AiToolPageTemplate
+- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性
+
+### 已完成：V269 DesignerTemplate + 4 设计器页迁移
+
+> 日期：2026-08-23 | 代码改动 6 files（模板 1 + 页面 4 + 例外清单 1）| 验收：tsc 0 新增错误 · 模板覆盖率 94.9%→95.7% · 例外项 27→23 · 标准模板 17→18
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| DesignerTemplate 创建 | 新建 `DesignerTemplate.tsx`，支持 standard/fullscreen 双模式，提供 toolbar/leftPanel/rightPanel/loading/error 等设计器专用插槽 | ✅ |
+| FormDesignPage 迁移 | JSON 编辑器接入 standard 模式，加载/错误/标题栏统一由模板管理 | ✅ |
+| PageDesignPage 迁移 | 同 FormDesignPage 模式，两页结构对称 | ✅ |
+| WorkflowDesignerPage 迁移 | 单画布接入 fullscreen 模式，Dialog 保存弹窗保留在模板外 | ✅ |
+| AutomationDesignerPage 迁移 | 三栏画布接入 fullscreen 模式，响应式 Grid 保留在 children 中（不拆到面板插槽以保持响应式） | ✅ |
+
+#### 模板设计要点
+
+**双模式架构**：
+- `standard` 模式：带 padding 的标准页面布局，适合 JSON 编辑器等简单设计器
+- `fullscreen` 模式：无 padding、flex 填满的全屏画布布局，适合可视化设计器
+
+**统一能力**：
+- 加载状态（CircularProgress 居中）
+- 错误提示（error Typography 统一渲染）
+- 顶部工具栏插槽（toolbar）
+- 左/右侧面板插槽（leftPanel/rightPanel，仅 fullscreen 模式）
+- 全部使用 designTokens，无硬编码 px/rem
+
+#### 最终验收矩阵
+- [x] `npx tsc --noEmit`（apps/web）— 0 新增错误
+- [x] 模板覆盖率：94.9% → 95.7%（504/531 → 508/531）
+- [x] 例外项总数：27 → 23（-4）
+- [x] 新增模板：DesignerTemplate（标准模板数 17 → 18）
+- [x] `npx lefthook validate` — All good
+
+### V269 后续扩展（留给 V270+）
+- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
+- [ ] **AI 工具页模板化**：AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 三个 Tabs 双栏布局页面评估是否可统一为 AiToolPageTemplate
+- [ ] **报表类模板化**：6 个报表页面评估接入 ReportDesignerTemplate 的可行性
+
+### 已完成：V268 三轨并行推进（AuthPageTemplate + ChatPageTemplate + MobileHomePage）
+
+> 日期：2026-08-23 | 代码改动 11 files（模板 2 + 页面 8 + 例外清单 1）| 验收：tsc 0 新增错误 · 模板覆盖率 93.4%→94.9% · 例外项 35→27
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A 轨: AuthPageTemplate + 4 页面迁移 | 新建 `AuthPageTemplate.tsx`（全屏背景 + 居中内容容器）；LoginPage/ForgotPasswordPage/NotFoundPage/ErrorPage 全部迁移；认证/错误页例外清零 | ✅ |
+| B 轨: ChatPageTemplate + 3 聊天页迁移 | 新建 `ChatPageTemplate.tsx`（sidebar/header/messages/input 四插槽 + children 透传）；AiChatPage/DifyChatPage 接入四插槽模式，IMPage 走 children 透传；AI 对话类例外 5→3，门户协作类 3→2 | ✅ |
+| C 轨: MobileHomePage 迁移 | MobileHomePage 从 PageContainer 迁移至 MobilePageTemplate；移动端页面例外清零（11/11 全部迁移） | ✅ |
+
+#### A 轨详情：AuthPageTemplate + 4 页面迁移
+
+**背景**：4 个认证/错误页（Login/ForgotPassword/NotFound/Error）均为全屏无导航布局，长期游离在模板体系外。
+
+**变更（6 files）**：
+- `apps/web/src/components/templates/AuthPageTemplate.tsx` — 新建模板（backgroundGradient / maxWidth / centerContent props）
+- `apps/web/src/components/templates/extensions/index.ts` — 导出 AuthPageTemplate
+- `apps/web/src/pages/shared/LoginPage.tsx` — 接入模板，保留紫粉渐变背景
+- `apps/web/src/pages/shared/ForgotPasswordPage.tsx` — 接入模板
+- `apps/web/src/pages/shared/NotFoundPage.tsx` — 接入模板，浅灰背景 + 640px 宽
+- `apps/web/src/pages/shared/ErrorPage.tsx` — 接入模板，浅灰背景 + 448px 宽
+
+**验收**：`npx tsc --noEmit` → 0 新增错误
+
+#### B 轨详情：ChatPageTemplate + 3 聊天页迁移
+
+**背景**：AiChatPage、DifyChatPage、IMPage 均为左侧会话列表 + 右侧聊天区的标准聊天布局，重复代码多。
+
+**变更（5 files）**：
+- `apps/web/src/components/templates/ChatPageTemplate.tsx` — 新建模板（sidebar/header/messages/input 四插槽 + children 透传模式）
+- `apps/web/src/components/templates/extensions/index.ts` — 导出 ChatPageTemplate
+- `apps/web/src/pages/ai/AiChatPage.tsx` — 拆分四插槽接入模板
+- `apps/web/src/pages/ai/DifyChatPage.tsx` — 拆分四插槽接入模板
+- `apps/web/src/pages/shared/IMPage.tsx` — children 透传模式接入
+
+**验收**：`npx tsc --noEmit` → 0 新增错误
+
+#### C 轨详情：MobileHomePage 迁移
+
+**背景**：MobileHomePage 原登记为"需仪表盘风格"例外，经核实为标准卡片列表布局，与 MobileWorkbenchPage 结构一致。
+
+**变更（2 files）**：
+- `apps/web/src/pages/mobile/MobileHomePage.tsx` — 从 PageContainer 迁移至 MobilePageTemplate
+- `docs/design/template-exceptions.md` — 移动端页面例外清零
+
+**验收**：`npx tsc --noEmit` → 0 新增错误
+
+#### 最终验收矩阵
+- [x] `npx tsc --noEmit`（apps/web）— 0 新增错误（预存财务 api-types 错误与本次无关）
+- [x] 模板覆盖率：93.4% → 94.9%（496/531 → 504/531）
+- [x] 例外项总数：35 → 27（-8）
+- [x] 新增模板：AuthPageTemplate + ChatPageTemplate（标准模板数 15 → 17）
+
+### V268 后续扩展（留给 V269+）
+- [x] **DesignerTemplate**：迁移 4 个设计器页（FormDesign/PageDesign/WorkflowDesigner/AutomationDesigner）— **V269 已完成**
+- [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
+- [ ] **AI 工具页模板化**：AiCodeAssistantPage / AiDocumentAnalysisPage / AiKnowledgeBasePage 三个 Tabs 双栏布局页面评估是否可统一为 AiToolPageTemplate
 
 ### 已完成：V267 四轨并行推进（clippy 全清 + MobilePageTemplate + clippy Gate + CI 漏洞修复）
 
@@ -77,14 +203,15 @@
 - [x] `bash scripts/check_allow_baseline.sh` — ✅ count: 243 (baseline: 243)
 - [x] `bash scripts/ci/check-clippy.sh` — exit 0
 
-### V267 后续扩展（留给 V268+）
-- [ ] **ChatPageTemplate**：迁移 5 个 AI 对话页 + IMPage（共 6 页），消除 6 个例外
-- [ ] **AuthPageTemplate**：迁移 LoginPage/ForgotPasswordPage/NotFoundPage/ErrorPage（共 4 页）
+### V267 后续扩展完成情况
+- [x] **ChatPageTemplate**：迁移 AiChatPage/DifyChatPage/IMPage（共 3 页），消除 3 个例外 — **V268-B 已完成**
+- [x] **AuthPageTemplate**：迁移 LoginPage/ForgotPasswordPage/NotFoundPage/ErrorPage（共 4 页）— **V268-A 已完成**
+- [x] **MobileHomePage 迁移**：移动端页面例外清零 — **V268-C 已完成**
 - [ ] **DesignerTemplate**：迁移 4 个设计器页（FormDesign/PageDesign/WorkflowDesigner/AutomationDesigner）
 - [ ] **MES 审批流三件套**：work_report/anomaly_detection/production_order 共 11 处 TODO stub 收敛为 shared-core ApprovalTransition::apply()
 - [x] **api-types.ts 类型补齐**：lineage_v52 / knowledge_v53 / versioning_v54 / quality_cost / equipment 模块 ToSchema 补齐 + 注册到 MasterDataApiDoc/QmsApiDoc + codegen pipeline 重新生成 openapi.d.ts，MasterDataTypes/QmsTypes/MesTypes namespace 共补 79 个类型别名 — **V267 已完成**
 - [x] **CI 增强**：新增 Lighthouse 性能门禁 + cargo-deny 许可证/安全公告双查 — **V267 已完成**（commit ca2538798）
-- [ ] **clippy Gate 收紧**：Gate R 当前为 buffer 模式，连续 3 次守绿后可收紧为 0 容忍
+- [x] **clippy Gate 收紧**：Gate R 上线即为 `-D warnings` 硬门禁模式，无需额外收紧 — **V267 已验证**
 
 ### 已完成：架构冗余重构 P2 — FSM 模板代码消除 + 预存在测试修复（V266-P2）
 

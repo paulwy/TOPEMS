@@ -59,6 +59,10 @@ const TEMPLATE_TYPE_TO_COMPONENTS = {
   'markdown-editor': ['MarkdownEditorTemplate'],
   'report-designer': ['ReportDesignerTemplate'],
   'gis-map': ['GisMapTemplate'],
+  mobile: ['MobilePageTemplate'],
+  auth: ['AuthPageTemplate'],
+  chat: ['ChatPageTemplate'],
+  designer: ['DesignerTemplate'],
 };
 
 const ALL_TEMPLATE_COMPONENTS = Object.values(TEMPLATE_TYPE_TO_COMPONENTS).flat();
