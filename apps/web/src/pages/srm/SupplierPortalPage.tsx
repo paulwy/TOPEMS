@@ -209,35 +209,39 @@ const SupplierPortalPage: React.FC = () => {
 
   const statCards = [
     {
+      id: 'total-orders',
       title: i18n.t('pages.supplier_portal_page.k9'),
       value: stats?.total_orders || 0,
       icon: <Package size={24} />,
-      color: 'primary.main',
+      color: 'primary' as const,
       bgColor: 'primary.50',
       suffix: i18n.t('pages.supplier_portal_page.k10'),
     },
     {
+      id: 'pending-orders',
       title: i18n.t('pages.supplier_portal_page.k11'),
       value: stats?.pending_orders || 0,
       icon: <Clock size={24} />,
-      color: 'warning.main',
+      color: 'warning' as const,
       bgColor: 'warning.50',
       suffix: i18n.t('pages.supplier_portal_page.k12'),
     },
     {
+      id: 'total-amount',
       title: i18n.t('pages.supplier_portal_page.k13'),
       value: stats?.total_amount || 0,
       icon: <DollarSign size={24} />,
-      color: 'success.main',
+      color: 'success' as const,
       bgColor: 'success.50',
       prefix: '¥',
       format: true,
     },
     {
+      id: 'on-time-rate',
       title: i18n.t('pages.supplier_portal_page.k14'),
       value: stats?.on_time_delivery_rate || 0,
       icon: <CheckCircle size={24} />,
-      color: 'info.main',
+      color: 'info' as const,
       bgColor: 'info.50',
       suffix: '%',
     },
@@ -349,7 +353,7 @@ const SupplierPortalPage: React.FC = () => {
       showRefresh={false}
       showCharts={false}
       showTables={false}
-      showStatCards={false}
+      statCards={statCards}
     >
       <Box sx={{ mb: 4 }}>
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
@@ -399,59 +403,6 @@ const SupplierPortalPage: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
-
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        {statCards.map((stat, index) => (
-          <Grid
-            size={{ xs: 12, sm: 6, md: 3 }}
-            key={index}
-          >
-            <Card sx={{ borderRadius: 3, height: '100%' }}>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mb: 1 }}
-                    >
-                      {stat.title}
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700 }}
-                    >
-                      {stat.prefix}
-                      {stat.format ? (stat.value as number).toLocaleString() : stat.value}
-                      {stat.suffix}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 1.5,
-                      borderRadius: 3,
-                      bgcolor: stat.bgColor,
-                      color: stat.color,
-                    }}
-                  >
-                    {stat.icon}
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
 
       <Grid
         container

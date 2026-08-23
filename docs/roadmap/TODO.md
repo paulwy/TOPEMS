@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V282 | **更新日期**: 2026-08-23
+> **版本**: V283 | **更新日期**: 2026-08-23
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -20,10 +20,42 @@
 > **V280 最后 4 例外清零**（4 页接入已有模板，覆盖率 99.2%→**100.0%**，例外项 4→0）。设计系统模板治理全流程收闭 🎯
 > **V281 后续任务推进**（ApprovalTransition 提升到 shared-db / AiToolPageTemplate 评估结论 / 文档归档）。
 > **V282 后续任务推进**（PM 审批逻辑集成 shared-db approval 审计日志 / SupplierPortalPage 声明式评估结论）。
+> **V283 后续任务推进**（Finance 审批增强 / StatCard 接口扩展 + SupplierPortalPage 声明式 statCards 迁移）。
 
 ---
 
 ## 📊 当前状态
+
+### 已完成：V283 后续任务（Finance 审批增强 + SupplierPortalPage 声明式迁移）
+
+> 日期：2026-08-23 | 代码改动 4 files（finance mod.rs + Cargo.toml + StatsPageTemplate + SupplierPortalPage + TODO）| 验收：cargo check 0 errors · typecheck 0 errors
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| Finance 审批增强 | [mod.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/mod.rs) 3 个占位端点（submit/approve/reject）集成 shared-db approval 审计日志；finance Cargo.toml 添加 topems-shared-db 依赖 | ✅ |
+| StatCard 接口扩展 | [StatsPageTemplate.tsx](file:///Users/air/TOPEMS/apps/web/src/components/templates/StatsPageTemplate.tsx#L46-L50) 新增 `bgColor?: string` + `format?: boolean`；renderStatCards 支持 bgColor 背景色 + format 千分位格式化 | ✅ |
+| SupplierPortalPage 声明式 statCards | [SupplierPortalPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/srm/SupplierPortalPage.tsx#L210-L248) statCards 从 children 手动渲染 → `statCards` prop 声明式渲染（4 卡片：total-orders/pending-orders/total-amount/on-time-rate） | ✅ |
+
+#### Finance 审批集成详情
+- `submit_approval`：从 JSON 请求提取 entity_type/record_id/from_status/to_status/approver_id，调用 `create_approval_and_log`
+- `approve_approval`：提取 entity_type/record_id/approval_id/from_status/to_status，调用 `execute_transition_and_log`
+- `reject_approval`：提取 entity_type/record_id/approval_id/reason，调用 `reject_and_log`
+- 所有审计事件通过 `topems_shared_db::approval` → `AuditLogService::log_operation` 写入 `public.audit_logs`
+
+#### SupplierPortalPage 声明式迁移
+- statCards 数组从匿名对象 → `StatCard[]` 兼容格式（加 `id`，`color: 'primary.main'` → `color: 'primary'`）
+- `showStatCards={false}` → `statCards={statCards}` 声明式 prop
+- 删除 50 行手动 Grid + Card + CardContent 渲染代码
+- StatsPageTemplate 的 `renderStatCards()` 接管渲染，bgColor + format 在模板内部处理
+
+#### 最终验收矩阵
+- [x] `cargo check -p topems-finance` — exit 0，0 errors
+- [x] `pnpm --filter topems-portal run typecheck` — exit 0，0 errors
+
+### V283 后续扩展（留给 V284+）
+- [ ] **ERP 审批增强**：ERP 通过 FinanceApi 调用 finance 审批端点，间接受益于 finance 的审计日志增强
+- [ ] **模板扩展**：NotificationCenter/DocumentsPage/MailPage 3 个 children 透传页面评估声明式迁移
+- [ ] **预存在 clippy 修复**：shared-core/src/service_port.rs doctest + testing.rs:346 borrowed expression
 
 ### 已完成：V282 后续任务（PM 审批集成 + SupplierPortalPage 评估）
 
