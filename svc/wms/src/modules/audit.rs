@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::models::AuditLog;
 use crate::modules::ApiState;
+use topems_shared_db::SchemaAwareAuditLogService;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -164,6 +165,7 @@ pub async fn log_audit_event(
     error_message: Option<String>,
     headers: &HeaderMap,
 ) {
+    use topems_shared_db::CreateAuditLogRequest;
     let ip_address = headers
         .get("x-forwarded-for")
         .and_then(|h| h.to_str().ok())
@@ -175,31 +177,33 @@ pub async fn log_audit_event(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
-    let result = sqlx::query(
-        r#"
-        INSERT INTO audit_logs (
-            action, entity_type, entity_id, entity_ids,
-            user_id, user_name, request_details, response_details,
-            status, error_message, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        "#,
-    )
-    .bind(action)
-    .bind(entity_type)
-    .bind(entity_id)
-    .bind(entity_ids)
-    .bind(user_id)
-    .bind(user_name)
-    .bind(request_details)
-    .bind(response_details)
-    .bind(status)
-    .bind(error_message)
-    .bind(ip_address)
-    .bind(user_agent)
-    .execute(db)
-    .await;
+    // P1-3: Schema prefix = None for WMS because the connection
+    // search_path already sets `wms`; so we use bare table name `audit_logs`
+    // and SchemaAware omits the qualifier. Same 13-col standard INSERT.
+    let mut req = CreateAuditLogRequest::new(action, entity_type, status);
+    if let Some(eid) = entity_id {
+        req = req.with_entity_id(eid);
+    }
+    if let Some(eids) = entity_ids {
+        req = req.with_entity_ids(eids);
+    }
+    if user_id.is_some() || user_name.is_some() {
+        req = req.with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default());
+    }
+    if let Some(rd) = request_details {
+        req = req.with_request_details(rd);
+    }
+    if let Some(rd) = response_details {
+        req = req.with_response_details(rd);
+    }
+    if let Some(err) = error_message {
+        req = req.with_error(err);
+    }
+    req.ip_address = ip_address;
+    req.user_agent = user_agent;
 
-    if let Err(e) = result {
+    let service = SchemaAwareAuditLogService::new(db, None);
+    if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }
 }

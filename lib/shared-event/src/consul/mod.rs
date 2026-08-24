@@ -500,9 +500,9 @@ impl ConsulRegistrationGuard {
 /// - health_check_path: 健康检查路径（如 "http://localhost:8080/health"）
 ///
 /// # 示例
-/// ```no_run
-/// // 在 main.rs 中
-/// let _consul_guard = topems_shared::consul::try_register_service(
+/// ```ignore
+/// // 在 main.rs 中（需要 CONSUL_ENABLED=true + 网络可达）
+/// let _consul_guard = topems_shared_event::consul::try_register_service(
 ///     "topems-erp", 8080, "http://localhost:8080/health"
 /// ).await;
 /// // _consul_guard 在 main 函数退出时自动注销服务

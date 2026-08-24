@@ -17,6 +17,7 @@ use crate::models::audit_log::AuditLog;
 use crate::shared::permission::{check_permission, MesPermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_db::SchemaAwareAuditLogService;
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
 #[derive(Debug, Clone)]
@@ -169,6 +170,7 @@ async fn get_audit_log(
 }
 
 pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &HeaderMap) {
+    use topems_shared_db::CreateAuditLogRequest;
     let AuditEventParams {
         action,
         entity_type,
@@ -192,31 +194,33 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
-    let result = sqlx::query(
-        r#"
-        INSERT INTO plugin_mes.audit_logs (
-            action, entity_type, entity_id, entity_ids,
-            user_id, user_name, request_details, response_details,
-            status, error_message, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        "#,
-    )
-    .bind(action)
-    .bind(entity_type)
-    .bind(entity_id)
-    .bind(entity_ids)
-    .bind(user_id)
-    .bind(user_name)
-    .bind(request_details)
-    .bind(response_details)
-    .bind(status)
-    .bind(error_message)
-    .bind(ip_address)
-    .bind(user_agent)
-    .execute(db)
-    .await;
+    // P1-3: 13-col INSERT delegated to SchemaAwareAuditLogService with
+    // plugin_mes prefix so tenant_id / DEFAULT columns stay in sync with
+    // the Cluster-A 15-col standard. SELECT endpoints retained unchanged.
+    let mut req = CreateAuditLogRequest::new(action, entity_type, status);
+    if let Some(eid) = entity_id {
+        req = req.with_entity_id(eid);
+    }
+    if let Some(eids) = entity_ids {
+        req = req.with_entity_ids(eids);
+    }
+    if user_id.is_some() || user_name.is_some() {
+        req = req.with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default());
+    }
+    if let Some(rd) = request_details {
+        req = req.with_request_details(rd);
+    }
+    if let Some(rd) = response_details {
+        req = req.with_response_details(rd);
+    }
+    if let Some(err) = error_message {
+        req = req.with_error(err);
+    }
+    req.ip_address = ip_address;
+    req.user_agent = user_agent;
 
-    if let Err(e) = result {
+    let service = SchemaAwareAuditLogService::new(db, Some("plugin_mes"));
+    if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
@@ -225,6 +229,11 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
 ///
 /// 用于审批流程的 start/approve/reject 动作审计。
 /// action 会自动加 `approval_` 前缀，approval_id 与 comment 序列化到 request_details。
+///
+/// P1-3: 原 7 列简化 INSERT（只有 action/entity_type/entity_id/user_id/
+/// request_details/status/tenant_id）已迁移至 SchemaAwareAuditLogService
+/// 的 13 列标准签名。缺失列（entity_ids/response_details/error_message/
+/// ip_address/user_agent）统一为 NULL；user_name 留空；status 固定 "success"。
 pub async fn log_approval_event(
     pool: &PgPool,
     entity_type: &str,
@@ -235,20 +244,24 @@ pub async fn log_approval_event(
     comment: &str,
     tenant_id: Option<Uuid>,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        INSERT INTO plugin_mes.audit_logs (
-            action, entity_type, entity_id, user_id, request_details, status, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, 'success', COALESCE($6, '00000000-0000-0000-0000-000000000000'))
-        "#,
-    )
-    .bind(format!("approval_{}", action))
-    .bind(entity_type)
-    .bind(entity_id)
-    .bind(approver_id.to_string())
-    .bind(serde_json::json!({ "approval_id": approval_id, "comment": comment }))
-    .bind(tenant_id)
-    .execute(pool)
-    .await?;
+    use topems_shared_db::CreateAuditLogRequest;
+
+    let mut req = CreateAuditLogRequest::new(
+        format!("approval_{}", action),
+        entity_type.to_string(),
+        "success".to_string(),
+    );
+    req = req.with_entity_id(entity_id);
+    req = req.with_user(approver_id.to_string(), String::new());
+    req = req.with_request_details(serde_json::json!({
+        "approval_id": approval_id,
+        "comment": comment,
+    }));
+    if let Some(tid) = tenant_id {
+        req = req.with_tenant_id(tid);
+    }
+
+    let service = SchemaAwareAuditLogService::new(pool, Some("plugin_mes"));
+    service.create_audit_log(&req).await?;
     Ok(())
 }

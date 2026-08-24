@@ -24,6 +24,7 @@ pub struct AuditLog {
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateAuditLogRequest {
+    pub tenant_id: Option<Uuid>,
     pub action: String,
     pub entity_type: String,
     pub entity_id: Option<Uuid>,
@@ -53,6 +54,7 @@ pub struct AuditLogQuery {
 impl CreateAuditLogRequest {
     pub fn new(action: String, entity_type: String, status: String) -> Self {
         Self {
+            tenant_id: None,
             action,
             entity_type,
             entity_id: None,
@@ -66,6 +68,11 @@ impl CreateAuditLogRequest {
             ip_address: None,
             user_agent: None,
         }
+    }
+
+    pub fn with_tenant_id(mut self, tenant_id: Uuid) -> Self {
+        self.tenant_id = Some(tenant_id);
+        self
     }
 
     pub fn with_entity_id(mut self, entity_id: Uuid) -> Self {
@@ -136,11 +143,11 @@ impl AuditLogService {
         let record = sqlx::query_as::<_, AuditLogRecord>(
             r#"
             INSERT INTO public.audit_logs (
-                action, entity_type, entity_id, entity_ids,
+                tenant_id, action, entity_type, entity_id, entity_ids,
                 user_id, user_name, request_details, response_details,
                 status, error_message, ip_address, user_agent
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
             )
             RETURNING
                 id,
@@ -160,6 +167,7 @@ impl AuditLogService {
                 created_at
             "#,
         )
+        .bind(request.tenant_id)
         .bind(&request.action)
         .bind(&request.entity_type)
         .bind(request.entity_id)
@@ -237,7 +245,7 @@ impl AuditLogService {
                 .enumerate()
                 .map(|(i, _)| format!("${}", i + 5))
                 .collect();
-            format!("AND resource IN ({})", placeholders.join(", "))
+            format!("AND entity_type IN ({})", placeholders.join(", "))
         } else {
             String::new()
         };
@@ -246,12 +254,12 @@ impl AuditLogService {
         let sql = format!(
             r#"
             SELECT 
-                id, action, resource as entity_type, resource_id as entity_id, 
-                user_id::text, details as request_details, status, error_message, 
-                ip_address, user_agent, created_at
+                id, tenant_id, action, entity_type, entity_id, entity_ids,
+                user_id::text, user_name, request_details, response_details,
+                status, error_message, ip_address, user_agent, created_at
             FROM public.audit_logs
             WHERE ($1::text IS NULL OR action = $1)
-              AND ($2::text IS NULL OR resource = $2)
+              AND ($2::text IS NULL OR entity_type = $2)
               AND ($3::text IS NULL OR user_id::text = $3)
               AND ($4::text IS NULL OR status = $4)
               {}
@@ -320,6 +328,265 @@ impl AuditLogRecord {
             user_agent: self.user_agent,
             created_at: self.created_at,
         }
+    }
+}
+
+// =========================================================================
+// SchemaAwareAuditLogService — per-schema Cluster-A audit sink (P1-3)
+//
+// Unified 12-column INSERT + Query service for scoped audit_logs tables:
+//   - plugin_crm, plugin_mes    (plugin_ prefixed schemas)
+//   - hrm, rs, erp              (schema-qualified plain names)
+//   - wms, erp (alt)            (search_path set; no schema qualifier)
+//
+// NOT supported:
+//   - scm.audit_logs: CDC-style columnar change log (table_name /
+//     record_id / old_values / new_values / changed_at) — structurally
+//     different, not an audit event log.
+//   - plugin_srm.audit_logs: same CDC column style as scm, for suppliers.
+//   - iam.audit_logs / middleware access_log: different column signatures
+//     entirely.
+//
+// All methods are idempotent: ensure_table() uses CREATE TABLE IF NOT
+// EXISTS, and the SQL mirrors public.audit_logs (Task A, V100 15-col
+// Cluster-A standard) byte for byte so the services can share the same
+// Rust AuditLog / CreateAuditLogRequest types with the public sink.
+// =========================================================================
+
+#[derive(Debug, Clone)]
+pub struct SchemaAwareAuditLogService {
+    pool: PgPool,
+    /// Optional schema prefix. `None` means the service expects the
+    /// connection search_path to be set (used by wms / erp which write bare
+    /// `audit_logs` table names). `Some("plugin_crm")` means write
+    /// `plugin_crm.audit_logs`.
+    schema_prefix: Option<String>,
+}
+
+impl SchemaAwareAuditLogService {
+    pub fn new(pool: &PgPool, schema_prefix: Option<&str>) -> Self {
+        Self {
+            pool: pool.clone(),
+            schema_prefix: schema_prefix.map(|s| s.to_string()),
+        }
+    }
+
+    /// Render `{prefix}.audit_logs` or bare `audit_logs`.
+    fn table(&self) -> String {
+        match &self.schema_prefix {
+            Some(p) => format!("{}.audit_logs", p),
+            None => "audit_logs".to_string(),
+        }
+    }
+
+    /// Ensure the target audit_logs table exists with the full 15-column
+    /// Cluster-A standard signature. Returns the CREATE DDL so the caller
+    /// can log it for schema/init traceability. Safe to re-run.
+    pub async fn ensure_table(&self) -> Result<String, sqlx::Error> {
+        let tbl = self.table();
+        let indexes_prefix = match &self.schema_prefix {
+            Some(p) => p.replace(['.', '-'], "_"),
+            None => "bare".to_string(),
+        };
+        let ddl = format!(
+            r#"
+            CREATE TABLE IF NOT EXISTS {tbl} (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                tenant_id UUID NULL,
+                action VARCHAR(255) NOT NULL,
+                entity_type VARCHAR(50) NOT NULL,
+                entity_id UUID NULL,
+                entity_ids JSONB NULL,
+                user_id UUID NULL,
+                user_name TEXT NULL,
+                request_details JSONB NULL,
+                response_details JSONB NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'success',
+                error_message TEXT NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent TEXT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_action
+                ON {tbl}(action);
+            CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_entity_type
+                ON {tbl}(entity_type);
+            CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_user_id
+                ON {tbl}(user_id);
+            CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_created_at
+                ON {tbl}(created_at DESC);
+            "#,
+            tbl = tbl,
+            indexes_prefix = indexes_prefix,
+        );
+        // Split on semicolons and execute each non-empty statement so sqlx
+        // (single-statement executor) doesn't barf on compound strings.
+        for stmt in ddl.split(';') {
+            let trimmed = stmt.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            sqlx::query(trimmed).execute(&self.pool).await?;
+        }
+        Ok(ddl)
+    }
+
+    /// 12-column INSERT matching public.create_audit_log semantics. Returns
+    /// the full AuditLog (with DB-generated id and timestamps).
+    pub async fn create_audit_log(
+        &self,
+        request: &CreateAuditLogRequest,
+    ) -> Result<AuditLog, sqlx::Error> {
+        let tbl = self.table();
+        let user_uuid = request
+            .user_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok());
+
+        let sql = format!(
+            r#"
+            INSERT INTO {tbl} (
+                tenant_id, action, entity_type, entity_id, entity_ids,
+                user_id, user_name, request_details, response_details,
+                status, error_message, ip_address, user_agent
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            RETURNING
+                id, tenant_id, action, entity_type, entity_id, entity_ids,
+                user_id::TEXT, user_name, request_details, response_details,
+                status, error_message, ip_address, user_agent, created_at
+            "#,
+            tbl = tbl,
+        );
+        let record = sqlx::query_as::<_, AuditLogRecord>(&sql)
+            .bind(request.tenant_id)
+            .bind(&request.action)
+            .bind(&request.entity_type)
+            .bind(request.entity_id)
+            .bind(request.entity_ids.as_ref())
+            .bind(user_uuid)
+            .bind(request.user_name.as_deref())
+            .bind(request.request_details.as_ref())
+            .bind(request.response_details.as_ref())
+            .bind(&request.status)
+            .bind(request.error_message.as_deref())
+            .bind(request.ip_address.as_deref())
+            .bind(request.user_agent.as_deref())
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(record.into_audit_log())
+    }
+
+    /// Convenience wrapper matching public.AuditLogService::log_operation.
+    ///
+    /// Accepts the 13th optional `tenant_id` (for MES approval audit and
+    /// other multi-tenant-aware sinks that used to write it explicitly in
+    /// raw SQL, like the old 7-col approval INSERT).
+    pub async fn log_operation(
+        &self,
+        action: &str,
+        entity_type: &str,
+        entity_id: Option<Uuid>,
+        user_id: Option<&str>,
+        user_name: Option<&str>,
+        entity_ids: Option<serde_json::Value>,
+        request_details: Option<serde_json::Value>,
+        response_details: Option<serde_json::Value>,
+        status: &str,
+        error_message: Option<&str>,
+        ip_address: Option<&str>,
+        user_agent: Option<&str>,
+        tenant_id: Option<Uuid>,
+    ) -> Result<AuditLog, sqlx::Error> {
+        let mut req = CreateAuditLogRequest::new(
+            action.to_string(),
+            entity_type.to_string(),
+            status.to_string(),
+        );
+        if let Some(tid) = tenant_id {
+            req = req.with_tenant_id(tid);
+        }
+        if let Some(eid) = entity_id {
+            req = req.with_entity_id(eid);
+        }
+        if let Some(uid) = user_id {
+            req = req.with_user(uid.to_string(), user_name.unwrap_or("").to_string());
+        }
+        if let Some(eids) = entity_ids {
+            req = req.with_entity_ids(eids);
+        }
+        if let Some(rd) = request_details {
+            req = req.with_request_details(rd);
+        }
+        if let Some(rd) = response_details {
+            req = req.with_response_details(rd);
+        }
+        if let Some(err) = error_message {
+            req = req.with_error(err.to_string());
+        }
+        req.ip_address = ip_address.map(|s| s.to_string());
+        req.user_agent = user_agent.map(|s| s.to_string());
+        self.create_audit_log(&req).await
+    }
+
+    /// Paginated list query matching public sink. Optional resources_filter
+    /// narrows entity_type IN (…) — same semantics.
+    pub async fn query_audit_logs(
+        &self,
+        query: &AuditLogQuery,
+        resources_filter: Option<&[&str]>,
+    ) -> Result<Vec<AuditLog>, sqlx::Error> {
+        let tbl = self.table();
+        let page = query.page.unwrap_or(1);
+        let page_size = query.page_size.unwrap_or(20);
+        let limit = page_size;
+        let offset = (page - 1) * page_size;
+
+        let resource_filter_sql = if let Some(resources) = resources_filter {
+            let placeholders: Vec<String> = resources
+                .iter()
+                .enumerate()
+                .map(|(i, _)| format!("${}", i + 5))
+                .collect();
+            format!("AND entity_type IN ({})", placeholders.join(", "))
+        } else {
+            String::new()
+        };
+        let resource_filter_len = resources_filter.map(|r| r.len()).unwrap_or(0);
+        let sql = format!(
+            r#"
+            SELECT
+                id, tenant_id, action, entity_type, entity_id, entity_ids,
+                user_id::text, user_name, request_details, response_details,
+                status, error_message, ip_address, user_agent, created_at
+            FROM {tbl}
+            WHERE ($1::text IS NULL OR action = $1)
+              AND ($2::text IS NULL OR entity_type = $2)
+              AND ($3::text IS NULL OR user_id::text = $3)
+              AND ($4::text IS NULL OR status = $4)
+              {extra}
+            ORDER BY created_at DESC
+            LIMIT ${limit_placeholder} OFFSET ${offset_placeholder}
+            "#,
+            tbl = tbl,
+            extra = resource_filter_sql,
+            limit_placeholder = 5 + resource_filter_len,
+            offset_placeholder = 6 + resource_filter_len,
+        );
+
+        let mut q = sqlx::query_as::<_, AuditLogRecord>(&sql)
+            .bind(query.action.as_deref())
+            .bind(query.entity_type.as_deref())
+            .bind(query.user_id.as_deref())
+            .bind(query.status.as_deref());
+        if let Some(resources) = resources_filter {
+            for res in resources {
+                q = q.bind(*res);
+            }
+        }
+        q = q.bind(limit).bind(offset);
+        let records = q.fetch_all(&self.pool).await?;
+        Ok(records.into_iter().map(|r| r.into_audit_log()).collect())
     }
 }
 

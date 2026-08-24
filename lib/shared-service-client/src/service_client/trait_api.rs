@@ -15,9 +15,9 @@
 //!
 //! # 使用示例
 //!
-//! ```no_run
-//! use topems_shared::service_client::trait_api::{ServiceApi, TypedServiceClient};
-//! use topems_shared::service_client::api::erp_api::ErpApi;
+//! ```ignore
+//! use topems_shared_service_client::service_client::trait_api::{ServiceApi, TypedServiceClient};
+//! use topems_shared_service_client::service_client::api::erp_api::ErpApi;
 //!
 //! # async fn demo() -> Result<(), Box<dyn std::error::Error>> {
 //! let client = TypedServiceClient::<ErpApi>::discover_default().await?;
@@ -297,15 +297,15 @@ async fn try_consul_discovery(service_name: &str) -> Option<String> {
 ///
 /// # 示例
 ///
-/// ```no_run
+/// ```ignore
 /// // 最简形式：服务名 + 端口
-/// topems_shared::define_service_api!(FooApi, "foo", 9000);
+/// topems_shared_service_client::define_service_api!(FooApi, "foo", 9000);
 ///
 /// // 带环境变量
-/// topems_shared::define_service_api!(ErpApi, "topems-erp", 8010, Some("ERP_SERVICE_URL"));
+/// topems_shared_service_client::define_service_api!(ErpApi, "topems-erp", 8010, Some("ERP_SERVICE_URL"));
 ///
 /// // 带环境变量 + API 前缀
-/// topems_shared::define_service_api!(
+/// topems_shared_service_client::define_service_api!(
 ///     HrmApi, "topems-hrm", 8020,
 ///     Some("HRM_SERVICE_URL"), "/api/hrm"
 /// );

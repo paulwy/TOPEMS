@@ -206,7 +206,9 @@ pub mod rls;
 pub mod schema;
 pub mod storage;
 
-pub use audit::{AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest};
+pub use audit::{
+    AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest, SchemaAwareAuditLogService,
+};
 pub use master_data_refs::{
     CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService,
     StaleRecord, UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,
