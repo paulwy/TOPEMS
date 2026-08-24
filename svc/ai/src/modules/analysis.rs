@@ -1,4 +1,4 @@
-use axum::{extract::Extension, extract::State, Json};
+use axum::{extract::Extension, extract::State, http::HeaderMap, Json};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -13,16 +13,30 @@ impl AnalysisApi {
     pub async fn sentiment(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
         Json(req): Json<SentimentAnalysisRequest>,
     ) -> Json<ApiResponse<SentimentAnalysisResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+        let details = Some(serde_json::json!({"text_length": req.text.len()}));
         match state
             .analysis_service
             .analyze_sentiment(&req.text, tenant_id)
             .await
         {
-            Ok(response) => Json(ApiResponse::success(response, "Success")),
-            Err(e) => Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e)),
+            Ok(response) => {
+                if let Err(e) = state.audit.log_analysis_operation("sentiment_analysis", None, user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(response, "Success"))
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                if let Err(audit_err) = state.audit.log_analysis_operation("sentiment_analysis", None, user_id, details, "failed", Some(&err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
+            }
         }
     }
 
@@ -30,16 +44,30 @@ impl AnalysisApi {
     pub async fn classify(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
         Json(req): Json<ClassifyTextRequest>,
     ) -> Json<ApiResponse<ClassifyTextResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+        let details = Some(serde_json::json!({"categories": req.categories}));
         match state
             .analysis_service
             .classify_text(&req.text, req.categories.as_deref(), tenant_id)
             .await
         {
-            Ok(response) => Json(ApiResponse::success(response, "Success")),
-            Err(e) => Json(ApiResponse::<ClassifyTextResponse>::error(500, &e)),
+            Ok(response) => {
+                if let Err(e) = state.audit.log_analysis_operation("classify_text", None, user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(response, "Success"))
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                if let Err(audit_err) = state.audit.log_analysis_operation("classify_text", None, user_id, details, "failed", Some(&err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -74,10 +74,13 @@ impl QaApi {
     pub async fn ask(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
         Json(req): Json<AskRequest>,
     ) -> Json<ApiResponse<AskResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
         let top_k = req.top_k.unwrap_or(5);
+        let details = Some(serde_json::json!({"question": req.question, "top_k": top_k}));
 
         // 先进行向量搜索获取上下文
         // 注意：这里需要生成查询向量
@@ -108,16 +111,27 @@ impl QaApi {
             .ask(&req.question, context.as_deref(), top_k, tenant_id)
             .await
         {
-            Ok((answer, sources, qa_id, confidence)) => Json(ApiResponse::success(
-                AskResponse {
-                    answer,
-                    sources,
-                    qa_id,
-                    confidence,
-                },
-                "Success",
-            )),
-            Err(e) => Json(ApiResponse::<AskResponse>::error(500, &e)),
+            Ok((answer, sources, qa_id, confidence)) => {
+                if let Err(e) = state.audit.log_qa_operation("ask_question", Some(qa_id), user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(
+                    AskResponse {
+                        answer,
+                        sources,
+                        qa_id,
+                        confidence,
+                    },
+                    "Success",
+                ))
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                if let Err(audit_err) = state.audit.log_qa_operation("ask_question", None, user_id, details, "failed", Some(&err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<AskResponse>::error(500, &e))
+            }
         }
     }
 
