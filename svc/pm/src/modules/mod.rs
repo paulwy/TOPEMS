@@ -21,17 +21,20 @@ pub mod service_integration;
 pub mod settlement;
 pub mod statistics;
 
-use axum::Router;
+use axum::{extract::Extension, Router};
 use std::sync::Arc;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
+
+use crate::services::audit::PmAuditService;
 
 pub fn create_routes(
     pool: sqlx::PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     workflow_client: TypedServiceClient<WorkflowApi>,
 ) -> Router {
+    let audit_service = PmAuditService::new(pool.clone());
     Router::new()
         .merge(project::create_routes(
             pool.clone(),
@@ -59,6 +62,7 @@ pub fn create_routes(
         .merge(report::create_routes(pool.clone()))
         .merge(notification::create_routes(pool.clone()))
         .merge(statistics::create_routes(pool))
+        .layer(Extension(audit_service))
 }
 
 #[cfg(test)]

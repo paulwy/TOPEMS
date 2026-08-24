@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{Extension, Path, State},
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::models::risk::{
     CreateRiskEventRequest, CreateRiskRequest, ProjectRisk, RiskEvent, UpdateRiskRequest,
 };
+use crate::services::audit::PmAuditService;
 
 // ==================== Pure functions ====================
 
@@ -106,10 +107,14 @@ async fn get_risk(
 async fn create_risk(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<CreateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"project_id": project_id, "risk_code": req.risk_code, "risk_name": req.risk_name, "risk_level": req.risk_score}));
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
         "INSERT INTO plugin_pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
@@ -138,8 +143,16 @@ async fn create_risk(
     .await;
 
     match risk {
-        Ok(r) => Json(ApiResponse::success(r, "创建风险成功")),
+        Ok(r) => {
+            if let Err(e) = audit.log_risk_operation("create_risk", Some(r.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(r, "创建风险成功"))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_risk_operation("create_risk", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("创建风险失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -152,8 +165,12 @@ async fn create_risk(
 async fn update_risk(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<UpdateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
     let risk = sqlx::query_as::<_, ProjectRisk>(
         "UPDATE plugin_pm.project_risks SET
             risk_name = COALESCE($1, risk_name),
@@ -193,12 +210,25 @@ async fn update_risk(
     .await;
 
     match risk {
-        Ok(r) => Json(ApiResponse::success(r, "更新风险成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "风险不存在",
-        )),
+        Ok(r) => {
+            if let Err(e) = audit.log_risk_operation("update_risk", Some(r.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(r, "更新风险成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_risk_operation("update_risk", Some(id), user_id, details.clone(), "failed", Some("风险不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "风险不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_risk_operation("update_risk", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("更新风险失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),

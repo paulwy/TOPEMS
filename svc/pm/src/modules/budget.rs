@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{Extension, Path, State},
+    http::{HeaderMap, StatusCode},
     routing::{get, post, put},
     Json, Router,
 };
@@ -13,6 +13,7 @@ use crate::models::budget::{
     Budget, BudgetItem, CreateBudgetItemRequest, CreateBudgetRequest, UpdateBudgetItemRequest,
     UpdateBudgetRequest,
 };
+use crate::services::audit::PmAuditService;
 
 // ==================== Pure functions ====================
 
@@ -128,10 +129,14 @@ async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 
 async fn create_budget(
     State(pool): State<PgPool>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<CreateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"project_id": req.project_id, "budget_code": req.budget_code, "budget_name": req.budget_name, "total_amount": req.total_amount}));
 
     let budget = sqlx::query_as::<_, Budget>(
         "INSERT INTO plugin_pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at)
@@ -150,8 +155,16 @@ async fn create_budget(
     .await;
 
     match budget {
-        Ok(b) => Json(ApiResponse::success(b, "创建预算成功")),
+        Ok(b) => {
+            if let Err(e) = audit.log_budget_operation("create_budget", Some(b.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(b, "创建预算成功"))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_budget_operation("create_budget", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("创建预算失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -164,8 +177,12 @@ async fn create_budget(
 async fn update_budget(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<UpdateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"status": req.status, "total_amount": req.total_amount}));
     let budget = sqlx::query_as::<_, Budget>(
         "UPDATE plugin_pm.budgets SET
             budget_name = COALESCE($1, budget_name),
@@ -185,12 +202,25 @@ async fn update_budget(
     .await;
 
     match budget {
-        Ok(b) => Json(ApiResponse::success(b, "更新预算成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "预算不存在",
-        )),
+        Ok(b) => {
+            if let Err(e) = audit.log_budget_operation("update_budget", Some(b.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(b, "更新预算成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_budget_operation("update_budget", Some(id), user_id, details.clone(), "failed", Some("预算不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "预算不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_budget_operation("update_budget", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("更新预算失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -203,7 +233,10 @@ async fn update_budget(
 async fn submit_budget(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Budget>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(
         "UPDATE plugin_pm.budgets SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -213,12 +246,25 @@ async fn submit_budget(
     .await;
 
     match budget {
-        Ok(b) => Json(ApiResponse::success(b, "提交审批成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "预算不存在",
-        )),
+        Ok(b) => {
+            if let Err(e) = audit.log_budget_operation("submit_budget", Some(b.id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(b, "提交审批成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_budget_operation("submit_budget", Some(id), user_id, None, "failed", Some("预算不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "预算不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_budget_operation("submit_budget", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("提交审批失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -231,7 +277,10 @@ async fn submit_budget(
 async fn approve_budget(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Budget>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(
         "UPDATE plugin_pm.budgets SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -241,12 +290,25 @@ async fn approve_budget(
     .await;
 
     match budget {
-        Ok(b) => Json(ApiResponse::success(b, "批准预算成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "预算不存在",
-        )),
+        Ok(b) => {
+            if let Err(e) = audit.log_budget_operation("approve_budget", Some(b.id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(b, "批准预算成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_budget_operation("approve_budget", Some(id), user_id, None, "failed", Some("预算不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "预算不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_budget_operation("approve_budget", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("批准预算失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
