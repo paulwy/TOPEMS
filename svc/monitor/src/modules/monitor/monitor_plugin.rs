@@ -50,7 +50,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         version: "1.0.0".to_string(),
         description: "Monitor 监控系统 - 告警管理、指标采集".to_string(),
         deployment: DeploymentInfo {
-            port: 8000,
+            port: 8095,
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
@@ -115,7 +115,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "Monitor 监控系统 - 告警管理、指标采集".to_string(),
         deployment: DeploymentInfo {
-            port: 8000,
+            port: 8095,
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![

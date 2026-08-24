@@ -1,0 +1,30 @@
+author: TOPEMS
+category: Infrastructure
+code: monitor
+name: 监控告警
+description: Monitor 监控系统 - 告警管理、指标采集、业务指标、SLO 管理
+version: 1.0.0
+plugin_type: business
+dependencies: [unified-core]
+deployment:
+  type: standalone
+  port: 8095
+  base_path: /api/monitor
+runtime: {}
+permissions:
+  - code: monitor:read
+    name: 查看监控
+    resource_type: monitor
+    action: read
+  - code: monitor:admin
+    name: 管理监控
+    resource_type: monitor
+    action: admin
+  - code: monitor:business:read
+    name: 查看业务指标
+    resource_type: business_metric
+    action: read
+  - code: monitor:dashboard:read
+    name: 查看仪表盘
+    resource_type: dashboard
+    action: read
