@@ -3,7 +3,7 @@
 //! 提供细粒度的 API 权限检查功能
 //!
 //! # 使用示例
-//! ```rust
+//! ```ignore
 //! // 在路由中使用 from_fn_with_state
 //! .route("/api/core/iam/users", post(create_user))
 //! .layer(axum::middleware::from_fn_with_state(
@@ -45,7 +45,7 @@ pub fn has_role(claims: &Claims, role: &str) -> bool {
 /// 创建权限验证中间件的工厂函数
 ///
 /// # 示例
-/// ```rust
+/// ```ignore
 /// .route("/api/core/iam/users", post(create_user))
 /// .layer(axum::middleware::from_fn_with_state(
 ///     state.clone(),
@@ -274,7 +274,7 @@ pub fn require_all_permissions(
 /// 权限验证中间件工厂函数（已废弃，请使用 require_permission）
 ///
 /// # 示例
-/// ```rust
+/// ```ignore
 /// // 在路由中使用
 /// .route("/api/iam/users", post(create_user))
 /// .layer(axum::middleware::from_fn_with_state(
@@ -485,7 +485,7 @@ pub async fn all_permissions_required(
 /// - `action`: 操作类型（"read", "write", "delete", "admin"）
 ///
 /// # 示例
-/// ```rust
+/// ```ignore
 /// if !check_module_action(&claims, "iam", "write") {
 ///     return (StatusCode::FORBIDDEN, "Permission denied").into_response();
 /// }
