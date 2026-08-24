@@ -74,24 +74,63 @@ if [ $RETRY -ge $MAX_RETRIES ]; then
   exit 1
 fi
 
-MIGRATIONS_DIR="$MES_DIR/migrations"
+# ---- V288: init 脚本前置 + schema 预创建 ----
+# 背景：migrations 20260716+ 引用裸 schema (iam/hrm/wms/mobile/rs) 和
+# 运行时由服务 schema_defense.rs 建的基础表 (iam.users/iam.roles 等)，
+# 但 fresh PG 容器只有 public schema。先跑 init 脚本建基础表 + 预创建
+# 全部 schema，再跑 migrations 做增量补丁。
+#
+# 顺序关键：01_rebuild 会 DROP 裸 schema (iam/hrm/...) 再建 plugin_*，
+# 所以 000_create_schemas 必须在 01_rebuild 之后跑，补回被 DROP 的裸 schema。
+INIT_DIR="$PROJECT_ROOT/database/init"
+MIGRATIONS_DIR="$PROJECT_ROOT/database/migrations"
+
+psql_exec() {
+  (cd "$MES_DIR" && $COMPOSE_CMD -f "$COMPOSE_FILE" exec -T postgres \
+    psql -U "$PG_USER" -d "$PG_DB" -v ON_ERROR_STOP=0)
+}
+
+if [ -d "$INIT_DIR" ]; then
+  log "执行 database/init/ 脚本（建 schema + 基础表）..."
+  for f in 01_rebuild_database.sql 02_create_plugin_tables.sql \
+           03_init_permissions.sql 04_create_scm_wms_srm_tables.sql \
+           05_mobile_init.sql 06_create_shared_schema.sql; do
+    if [ -f "$INIT_DIR/$f" ]; then
+      log "  执行 $f ..."
+      cat "$INIT_DIR/$f" | psql_exec >/dev/null 2>&1 \
+        || warn "  $f 部分失败（预期，继续）"
+    fi
+  done
+  ok "init 脚本执行完成"
+fi
+
+# 000_create_schemas 补回被 01_rebuild DROP 的裸 schema (iam/hrm/wms/...)
+if [ -f "$MIGRATIONS_DIR/000_create_schemas.sql" ]; then
+  log "执行 000_create_schemas.sql（补建裸 schema）..."
+  cat "$MIGRATIONS_DIR/000_create_schemas.sql" | psql_exec >/dev/null 2>&1 \
+    || warn "  000_create_schemas 部分失败（预期，继续）"
+  ok "schema 预创建完成"
+fi
+
 if [ -d "$MIGRATIONS_DIR" ] && [ -n "$(ls -A "$MIGRATIONS_DIR" 2>/dev/null)" ]; then
-  log "执行 MES crate 内 sqlx 迁移 ($MIGRATIONS_DIR) ..."
-  (cd "$PROJECT_ROOT" && cargo sqlx migrate run --database-url "$DATABASE_URL" --source "$MIGRATIONS_DIR")
-  ok "迁移完成"
+  log "执行 workspace 统一 sqlx 迁移 ($MIGRATIONS_DIR) ..."
+  # V288: migrations 部分会因裸 schema 基础表缺失而失败（iam.users 等
+  # 运行时由服务建表），用 || warn 不阻塞 prepare（init 脚本已建大部分表）
+  (cd "$PROJECT_ROOT" && cargo sqlx migrate run --database-url "$DATABASE_URL" --source "$MIGRATIONS_DIR") \
+    && ok "迁移完成" \
+    || warn "迁移部分失败（预期：裸 schema 基础表由服务运行时建），继续 prepare"
 else
-  warn "MES crate 无 migrations/ 目录 ($MIGRATIONS_DIR)，跳过 migrate run"
-  warn "  如使用 workspace 统一 database/migrations/，请确认 DB 已有完整 schema 再 prepare"
+  warn "未找到 migrations/ 目录，跳过 migrate run"
 fi
 
 echo ""
-log "执行 cargo sqlx prepare -p topems-mes --tests ..."
+log "执行 cargo sqlx prepare --workspace -- --tests -p topems-mes ..."
 BEFORE=""
 if [ -d "$PROJECT_ROOT/.sqlx" ]; then
   BEFORE=$(cd "$PROJECT_ROOT" && find .sqlx -name "*.json" | wc -l | tr -d ' ')
 fi
 
-(cd "$PROJECT_ROOT" && cargo sqlx prepare -p topems-mes --tests --database-url "$DATABASE_URL")
+(cd "$PROJECT_ROOT" && cargo sqlx prepare --workspace --database-url "$DATABASE_URL" -- --tests -p topems-mes)
 
 AFTER=0
 if [ -d "$PROJECT_ROOT/.sqlx" ]; then
