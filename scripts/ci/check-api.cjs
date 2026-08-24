@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * check-api.cjs — API Gate 三脚本合并门禁
- *  模式：audit (P6+P7 审计) / coverage (页面 API 覆盖率) / compare (API 模块对齐) / all (默认，三项全跑)
+ *  模式：audit (P6+P7 审计) / coverage (页面 API 覆盖率) / compare (API 模块对齐, alias: align) / all (默认，三项全跑)
  *
  * 用法：
- *   node scripts/ci/check-api.cjs [--mode={audit|coverage|compare|all}]
+ *   node scripts/ci/check-api.cjs [--mode={audit|coverage|compare|align|all}]
  *                                 [--dry-run] [--fail-fast] [--quiet]
  *                                 [--thresholds='{"p6.red":0,...}']
  *                                 [--report-json=/path/to/report.json]
@@ -95,7 +95,8 @@ function getArgValue(argsList, flag) {
 function parseArgs(argv) {
   const args = argv.slice(2);
   const modeVal = getArgValue(args, '--mode') || 'all';
-  const mode = ['audit', 'coverage', 'compare', 'all'].includes(modeVal) ? modeVal : 'all';
+  let mode = ['audit', 'coverage', 'compare', 'align', 'all'].includes(modeVal) ? modeVal : 'all';
+  if (mode === 'align') mode = 'compare';
   const dryRun = args.includes('--dry-run');
   const failFast = args.includes('--fail-fast');
   const quiet = args.includes('--quiet');

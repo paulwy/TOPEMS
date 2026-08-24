@@ -1,6 +1,6 @@
 /**
  * 此文件由 scripts/openapi/gen-types.mjs 自动生成，请勿手动编辑。
- * 生成时间: 2026-08-23T15:27:12.595Z
+ * 生成时间: 2026-08-23T21:33:27.370Z
  * 输入源: /Users/air/TOPEMS/docs/api/openapi-aggregated.json
  * 路径数: 830 | Schema 数: 568
  */

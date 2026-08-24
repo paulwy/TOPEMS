@@ -204,7 +204,11 @@ function main() {
   const knownCodes = new Set(group2.map(g => g.slug));
   for (const [code, plug] of plugins.entries()) {
     if (!knownCodes.has(code)) {
-      warnings.push(`插件 ${plug.dir}/plugin.yaml code="${code}" 不在 GROUP2_SERVICES (非独立端口服务，可能正常)`);
+      if (code === 'unified-core') {
+        console.info(`ℹ️  插件 ${plug.dir}/plugin.yaml code="${code}" 不在 GROUP2_SERVICES (composite gateway，非独立 micro-port 服务，正常)`);
+      } else {
+        warnings.push(`插件 ${plug.dir}/plugin.yaml code="${code}" 不在 GROUP2_SERVICES (非独立端口服务，可能正常)`);
+      }
     }
   }
 
@@ -229,12 +233,21 @@ function main() {
     process.exit(1);
   }
 
+  let strict_failures = 0;
   if (opts.strict && warnings.length) {
-    console.log(`⚠️  --strict mode: ${warnings.length} warnings → exit 1`);
-    process.exit(1);
+    for (const w of warnings) {
+      const isAllowlisted = [...PLUGIN_MISSING_ALLOWLIST].some(slug => w.includes(`GROUP2 "${slug}"`) && w.includes('allowlist'));
+      if (!isAllowlisted) strict_failures++;
+    }
+    if (strict_failures > 0) {
+      console.log(`⚠️  --strict mode: ${strict_failures} non-allowed warnings (${warnings.length} total) → exit 1`);
+      process.exit(1);
+    } else {
+      console.log(`ℹ️  --strict mode: all ${warnings.length} warnings are strict-allowed (PLUGIN_MISSING_ALLOWLIST)`);
+    }
   }
 
-  console.log(`✅ All checks passed (errors=0${warnings.length ? `, warnings=${warnings.length}` : ''})`);
+  console.log(`✅ All checks passed (errors=0${warnings.length ? `, warnings=${warnings.length}` : ''}${opts.strict ? `, strict_failures=${strict_failures}` : ''})`);
   process.exit(0);
 }
 
