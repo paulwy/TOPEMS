@@ -46,7 +46,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PNPM_VERSION: '9'
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: ${{ github.workspace }}/.sccache
@@ -1082,6 +1082,9 @@ jobs:
           echo ""
           echo "Exit code: $EXIT_CODE"
           exit $EXIT_CODE
+
+      - name: "Run GROUP2 Services 3-Way Validation (--strict)"
+        run: node scripts/ci/check-group2-services.cjs --strict
 
   # ──────────────────────────────────────────────────────────────────────────
   # API 审计门禁（API-Audit-Gate）— P6 (Page→API) + P7 (RBAC 权限码)
