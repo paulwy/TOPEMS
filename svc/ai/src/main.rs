@@ -286,6 +286,7 @@ async fn main() -> anyhow::Result<()> {
         dify_service,
         workflow_orchestrator,
         event_publisher: ctx.event_publisher.clone(),
+        audit: crate::services::audit::AiAuditService::new(pool.clone()),
     };
 
     // 创建路由（routes::create_routes 处理所有中间件：auth、tenant、rate_limit、cors、prometheus、telemetry）

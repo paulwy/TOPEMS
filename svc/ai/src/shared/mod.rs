@@ -5,6 +5,8 @@ use std::sync::Arc;
 use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
 
+use crate::services::audit::AiAuditService;
+
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
@@ -18,6 +20,7 @@ pub struct AppState {
     pub dify_service: crate::services::DifyService,
     pub workflow_orchestrator: std::sync::Arc<crate::services::agent::WorkflowOrchestrator>,
     pub event_publisher: Option<Arc<EventPublisher>>,
+    pub audit: AiAuditService,
 }
 
 impl FromRef<AppState> for AuthState {

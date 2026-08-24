@@ -4,11 +4,14 @@ use crate::models::{
     ConnectorQuery, ConnectorStatus, ConnectorType, CreateConnectorRequest, DataConnector,
     DataQueryRequest, DataQueryResponse, UpdateConnectorRequest, CONNECTORS,
 };
-use axum::extract::Query;
-use axum::Json;
+use axum::extract::{Query, State};
+use axum::{extract::Extension, Json};
 use std::time::{SystemTime, UNIX_EPOCH};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+
+use crate::shared::AppState;
 
 #[utoipa::path(
     get,
@@ -90,8 +93,12 @@ pub async fn get_connector(
     ),
 )]
 pub async fn create_connector(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateConnectorRequest>,
 ) -> Json<ApiResponse<DataConnector>> {
+    let user_id = Some(claims.sub.as_str());
+    let details = Some(serde_json::json!({"name": req.name, "connector_type": req.connector_type, "database_type": req.database_type}));
     if let Some(connectors) = CONNECTORS.get() {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -111,26 +118,49 @@ pub async fn create_connector(
             updated_at: now,
         };
 
-        let mut connectors = match connectors.lock() {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataConnector>::error(
-                    500,
-                    "Internal server error",
-                ));
+        let lock_result = {
+            match connectors.lock() {
+                Ok(mut c) => {
+                    let connector_id = new_connector.id;
+                    c.push(new_connector.clone());
+                    Ok(connector_id)
+                }
+                Err(e) => {
+                    tracing::error!("Failed to lock connectors: {}", e);
+                    Err(())
+                }
             }
         };
-        connectors.push(new_connector.clone());
 
-        Json(ApiResponse::success(
-            new_connector,
-            "Connector created successfully",
-        ))
+        match lock_result {
+            Ok(connector_id) => {
+                if let Err(e) = state.audit.log_connector_operation("create_connector", Some(&connector_id.to_string()), user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(
+                    new_connector,
+                    "Connector created successfully",
+                ))
+            }
+            Err(()) => {
+                let err_msg = "Internal server error";
+                if let Err(audit_err) = state.audit.log_connector_operation("create_connector", None, user_id, details.clone(), "failed", Some(err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<DataConnector>::error(
+                    500,
+                    err_msg,
+                ))
+            }
+        }
     } else {
+        let err_msg = "Connectors not initialized";
+        if let Err(e) = state.audit.log_connector_operation("create_connector", None, user_id, details, "failed", Some(err_msg)).await {
+            tracing::warn!("ai audit failed: {e}");
+        }
         Json(ApiResponse::<DataConnector>::error(
             500,
-            "Connectors not initialized",
+            err_msg,
         ))
     }
 }
@@ -146,53 +176,86 @@ pub async fn create_connector(
     ),
 )]
 pub async fn update_connector(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ConnectorQuery>,
     Json(req): Json<UpdateConnectorRequest>,
 ) -> Json<ApiResponse<DataConnector>> {
+    let user_id = Some(claims.sub.as_str());
+    let details = Some(serde_json::json!({"connector_id": params.id, "is_active": req.is_active}));
+    let entity_id_str = params.id.to_string();
     if let Some(connectors) = CONNECTORS.get() {
-        let mut connectors = match connectors.lock() {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataConnector>::error(
-                    500,
-                    "Internal server error",
-                ));
+        let lock_result = {
+            match connectors.lock() {
+                Ok(mut connectors) => {
+                    if let Some(connector) = connectors.iter_mut().find(|c| c.id == params.id) {
+                        if let Some(name) = req.name {
+                            connector.name = name;
+                        }
+                        if let Some(config) = req.config {
+                            connector.config = config;
+                        }
+                        if let Some(description) = req.description {
+                            connector.description = Some(description);
+                        }
+                        if let Some(is_active) = req.is_active {
+                            connector.is_active = is_active;
+                        }
+                        connector.updated_at = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs()
+                            .to_string();
+                        Ok(Some(connector.clone()))
+                    } else {
+                        Ok(None)
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to lock connectors: {}", e);
+                    Err(())
+                }
             }
         };
-        if let Some(connector) = connectors.iter_mut().find(|c| c.id == params.id) {
-            if let Some(name) = req.name {
-                connector.name = name;
-            }
-            if let Some(config) = req.config {
-                connector.config = config;
-            }
-            if let Some(description) = req.description {
-                connector.description = Some(description);
-            }
-            if let Some(is_active) = req.is_active {
-                connector.is_active = is_active;
-            }
-            connector.updated_at = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()
-                .to_string();
 
-            Json(ApiResponse::success(
-                connector.clone(),
-                "Connector updated successfully",
-            ))
-        } else {
-            Json(ApiResponse::<DataConnector>::error(
-                404,
-                "Connector not found",
-            ))
+        match lock_result {
+            Ok(Some(connector)) => {
+                if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&connector.id.to_string()), user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(
+                    connector,
+                    "Connector updated successfully",
+                ))
+            }
+            Ok(None) => {
+                if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some("Connector not found")).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::<DataConnector>::error(
+                    404,
+                    "Connector not found",
+                ))
+            }
+            Err(()) => {
+                let err_msg = "Internal server error";
+                if let Err(audit_err) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some(err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<DataConnector>::error(
+                    500,
+                    err_msg,
+                ))
+            }
         }
     } else {
+        let err_msg = "Connectors not initialized";
+        if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details, "failed", Some(err_msg)).await {
+            tracing::warn!("ai audit failed: {e}");
+        }
         Json(ApiResponse::<DataConnector>::error(
             500,
-            "Connectors not initialized",
+            err_msg,
         ))
     }
 }
@@ -206,30 +269,65 @@ pub async fn update_connector(
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<String>> {
+pub async fn delete_connector(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ConnectorQuery>,
+) -> Json<ApiResponse<String>> {
+    let user_id = Some(claims.sub.as_str());
+    let details = Some(serde_json::json!({"connector_id": params.id}));
+    let entity_id_str = params.id.to_string();
     if let Some(connectors) = CONNECTORS.get() {
-        let mut connectors = match connectors.lock() {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<String>::error(500, "Internal server error"));
+        let lock_result = {
+            match connectors.lock() {
+                Ok(mut connectors) => {
+                    let original_len = connectors.len();
+                    connectors.retain(|c| c.id != params.id);
+                    if connectors.len() < original_len {
+                        Ok(true)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to lock connectors: {}", e);
+                    Err(())
+                }
             }
         };
-        let original_len = connectors.len();
-        connectors.retain(|c| c.id != params.id);
 
-        if connectors.len() < original_len {
-            Json(ApiResponse::success(
-                "Connector deleted successfully".to_string(),
-                "Success",
-            ))
-        } else {
-            Json(ApiResponse::<String>::error(404, "Connector not found"))
+        match lock_result {
+            Ok(true) => {
+                if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success(
+                    "Connector deleted successfully".to_string(),
+                    "Success",
+                ))
+            }
+            Ok(false) => {
+                if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some("Connector not found")).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::<String>::error(404, "Connector not found"))
+            }
+            Err(()) => {
+                let err_msg = "Internal server error";
+                if let Err(audit_err) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some(err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<String>::error(500, err_msg))
+            }
         }
     } else {
+        let err_msg = "Connectors not initialized";
+        if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details, "failed", Some(err_msg)).await {
+            tracing::warn!("ai audit failed: {e}");
+        }
         Json(ApiResponse::<String>::error(
             500,
-            "Connectors not initialized",
+            err_msg,
         ))
     }
 }

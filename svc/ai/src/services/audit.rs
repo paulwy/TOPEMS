@@ -5,13 +5,13 @@
 //
 // 说明：所有 INSERT / SELECT SQL 已下沉到 `topems_shared_db::audit::AuditLogService`，
 // 这里只保留 AI 专属语义（资源类型固定值 + 返回结构）。
-#![allow(dead_code)]
 
 use sqlx::PgPool;
 use topems_shared_db::audit::{AuditLog, AuditLogQuery, AuditLogService};
 use uuid::Uuid;
 
 /// AI 服务审计日志操作
+#[derive(Clone)]
 pub struct AiAuditService {
     inner: AuditLogService,
 }

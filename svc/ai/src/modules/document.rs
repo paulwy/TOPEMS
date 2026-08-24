@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Multipart, Path, State},
+    http::HeaderMap,
     Json,
 };
 use topems_shared_auth::auth::Claims;
@@ -17,9 +18,11 @@ impl DocumentApi {
     pub async fn upload(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
         mut multipart: Multipart,
     ) -> Json<ApiResponse<UploadDocumentResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
         // 处理 multipart 上传
         let mut title = String::new();
         let mut filename = String::new();
@@ -44,15 +47,23 @@ impl DocumentApi {
                     let docs_dir = "docs";
                     let path = std::path::Path::new(docs_dir).join(&filename);
                     if let Err(e) = std::fs::create_dir_all(docs_dir) {
+                        let err_msg = format!("创建目录失败: {}", e);
+                        if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some(&err_msg)).await {
+                            tracing::warn!("ai audit failed: {audit_err}");
+                        }
                         return Json(ApiResponse::<UploadDocumentResponse>::error(
                             500,
-                            &format!("创建目录失败: {}", e),
+                            &err_msg,
                         ));
                     }
                     if let Err(e) = std::fs::write(&path, &data) {
+                        let err_msg = format!("保存文件失败: {}", e);
+                        if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some(&err_msg)).await {
+                            tracing::warn!("ai audit failed: {audit_err}");
+                        }
                         return Json(ApiResponse::<UploadDocumentResponse>::error(
                             500,
-                            &format!("保存文件失败: {}", e),
+                            &err_msg,
                         ));
                     }
                     file_path = path.to_string_lossy().to_string();
@@ -77,11 +88,15 @@ impl DocumentApi {
         }
 
         if filename.is_empty() {
+            if let Err(e) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some("未提供文件")).await {
+                tracing::warn!("ai audit failed: {e}");
+            }
             return Json(ApiResponse::<UploadDocumentResponse>::error(
                 400,
                 "未提供文件",
             ));
         }
+        let details = Some(serde_json::json!({"filename": filename, "file_size": file_size}));
 
         // 使用 document_service 处理上传
         match state
@@ -98,6 +113,9 @@ impl DocumentApi {
         {
             Ok(doc_id) => {
                 let document_id = Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil());
+                if let Err(e) = state.audit.log_document_operation("upload_document", Some(document_id), user_id, details.clone(), "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
 
                 // 发布 AiDocumentProcessed 事件（graceful fallback）
                 if let Some(ref publisher) = state.event_publisher {
@@ -148,7 +166,13 @@ impl DocumentApi {
                     "Success",
                 ))
             }
-            Err(e) => Json(ApiResponse::<UploadDocumentResponse>::error(500, &e)),
+            Err(e) => {
+                let err_msg = e.to_string();
+                if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, details, "failed", Some(&err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<UploadDocumentResponse>::error(500, &e))
+            }
         }
     }
 
@@ -210,12 +234,30 @@ impl DocumentApi {
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
         Extension(claims): Extension<Claims>,
+        headers: HeaderMap,
     ) -> Json<ApiResponse<String>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
+        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
         match state.document_service.delete_document(id, tenant_id).await {
-            Ok(true) => Json(ApiResponse::success("文档已删除".to_string(), "Success")),
-            Ok(false) => Json(ApiResponse::<String>::error(404, "文档不存在")),
-            Err(e) => Json(ApiResponse::<String>::error(500, &e)),
+            Ok(true) => {
+                if let Err(e) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "success", None).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::success("文档已删除".to_string(), "Success"))
+            }
+            Ok(false) => {
+                if let Err(e) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "failed", Some("文档不存在")).await {
+                    tracing::warn!("ai audit failed: {e}");
+                }
+                Json(ApiResponse::<String>::error(404, "文档不存在"))
+            }
+            Err(e) => {
+                let err_msg = e.to_string();
+                if let Err(audit_err) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "failed", Some(&err_msg)).await {
+                    tracing::warn!("ai audit failed: {audit_err}");
+                }
+                Json(ApiResponse::<String>::error(500, &e))
+            }
         }
     }
 
