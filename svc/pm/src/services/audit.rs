@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use topems_shared_db::audit::{AuditLog, AuditLogQuery, AuditLogService};
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct PmAuditService {
     inner: AuditLogService,
 }

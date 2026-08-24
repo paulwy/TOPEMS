@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{Extension, Path, State},
+    http::{HeaderMap, StatusCode},
     routing::{get, post, put},
     Json, Router,
 };
@@ -14,6 +14,7 @@ use crate::models::contract::{
     CreateContractMilestoneRequest, CreateContractRequest, CreateContractTemplateRequest,
     CreatePaymentScheduleRequest, UpdateContractRequest,
 };
+use crate::services::audit::PmAuditService;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -105,10 +106,14 @@ async fn get_contract(
 
 async fn create_contract(
     State(pool): State<PgPool>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"project_id": req.project_id, "contract_no": req.contract_no, "contract_name": req.contract_name, "amount": req.amount}));
 
     let contract = sqlx::query_as::<_, Contract>(
         r#"INSERT INTO pm.contracts (
@@ -137,8 +142,16 @@ async fn create_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "创建合同成功")),
+        Ok(c) => {
+            if let Err(e) = audit.log_contract_operation("create_contract", Some(c.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(c, "创建合同成功"))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("create_contract", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("创建合同失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -151,8 +164,12 @@ async fn create_contract(
 async fn update_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"status": req.status, "amount": req.amount}));
     let contract = sqlx::query_as::<_, Contract>(
         r#"UPDATE pm.contracts SET
             contract_name = COALESCE($1, contract_name),
@@ -182,12 +199,25 @@ async fn update_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "更新合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "合同不存在",
-        )),
+        Ok(c) => {
+            if let Err(e) = audit.log_contract_operation("update_contract", Some(c.id), user_id, details.clone(), "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(c, "更新合同成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_contract_operation("update_contract", Some(id), user_id, details.clone(), "failed", Some("合同不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "合同不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("update_contract", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("更新合同失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -200,19 +230,35 @@ async fn update_contract(
 async fn delete_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let result = sqlx::query("UPDATE pm.contracts SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除合同成功")),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "合同不存在",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success((), "删除合同成功"))
+        }
+        Ok(_) => {
+            if let Err(e) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "合同不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("删除合同失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -225,7 +271,10 @@ async fn delete_contract(
 async fn submit_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Contract>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(
         "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -235,12 +284,25 @@ async fn submit_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "提交审批成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "合同不存在",
-        )),
+        Ok(c) => {
+            if let Err(e) = audit.log_contract_operation("submit_contract", Some(c.id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(c, "提交审批成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_contract_operation("submit_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "合同不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("submit_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("提交审批失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -253,7 +315,10 @@ async fn submit_contract(
 async fn approve_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Contract>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(
         "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -263,12 +328,25 @@ async fn approve_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "批准合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "合同不存在",
-        )),
+        Ok(c) => {
+            if let Err(e) = audit.log_contract_operation("approve_contract", Some(c.id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(c, "批准合同成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_contract_operation("approve_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "合同不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("approve_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("批准合同失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
@@ -281,7 +359,10 @@ async fn approve_contract(
 async fn reject_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(audit): Extension<PmAuditService>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Contract>> {
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(
         "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -291,12 +372,25 @@ async fn reject_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "拒绝合同成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
-            "合同不存在",
-        )),
+        Ok(c) => {
+            if let Err(e) = audit.log_contract_operation("reject_contract", Some(c.id), user_id, None, "success", None).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::success(c, "拒绝合同成功"))
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            if let Err(e) = audit.log_contract_operation("reject_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+                tracing::warn!("pm audit failed: {e}");
+            }
+            Json(ApiResponse::error(
+                StatusCode::NOT_FOUND.as_u16(),
+                "合同不存在",
+            ))
+        }
         Err(e) => {
+            if let Err(audit_err) = audit.log_contract_operation("reject_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+                tracing::warn!("pm audit failed: {audit_err}");
+            }
             tracing::error!("拒绝合同失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
