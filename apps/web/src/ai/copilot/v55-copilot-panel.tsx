@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Users } from 'lucide-react';
 import i18n from '@/i18n';
-import type { SymbolInfo, FileStructure, SearchResult } from './code-navigator';
-import type { DocTemplate, GenerateDocOptions, ChangelogEntry } from './doc-generator';
-import type { QAEntry, KnowledgeDocument, QAResult } from './knowledge-qa';
 
 const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

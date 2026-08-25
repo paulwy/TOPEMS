@@ -1612,8 +1612,72 @@ let failed_count = 0;
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint warnings 清零（第三批）**：剩余 2752 warnings（no-unused-vars 1916 / exhaustive-deps 403 / no-explicit-any 307），优先清理 src/ai/ panel 文件的未使用 import（第三批 ~15 items）
-- [ ] **pre-commit hook 耗时实测记录**：V295 首次无 --no-verify commit 后，记录实际耗时并确认 < 60s 目标
+- [x] **eslint warnings 清零（第三批）**：V296 清理 src/ai/ 40 个 TS6192 未使用 import + 4 个 snippet 数组 + 11 个单行未使用项，warnings 从 2752 降至 2610（减少 142）
+- [x] **pre-commit hook 耗时实测记录**：V295 首次无 --no-verify commit 实测 36.07s（14 gate 并行，瓶颈 = frontend-typecheck 36.04s），远低于 60s 目标
+
+## 🎯 V296 — 4 轨并行（eslint warnings第三批清理 · code-completion snippet清理 · 全量验证 · hook耗时记录）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 ~25 files（src/ai/ 清理 + TODO）| 验收：tsc 0 errors · eslint 0 errors(2610 warnings) · cargo check 0 errors · pre-commit hook 36.07s 记录
+>
+> **Tag**: `V296` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V296-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. eslint warnings 第三批清理（TS6192 未使用 import，40 项）
+- 背景：V295 全量扫描发现 src/ai/ 有 84 个未使用错误，其中 40 个是 TS6192（整行 import 声明完全未使用），分布在 14 个文件（13 个 panel 文件 + code-completion.ts）
+- 根因：AI agent 模块的 panel 组件（v53-v60）导入了类型定义但未使用（占位代码）
+- 修复：脚本批量解析 tsc 输出，定位 TS6192 错误行并删除（整行 import 未使用，删除安全）
+- 变更（14 files）：
+  - 13 个 panel 文件（v54-agent / v57-automation / v55-copilot / v59-devex / v53-ai / v60-ethics / v58-evolution / v57-governance / v54-native / v60-quality / v56-review / v59-security / v58-ux）— 各移除 3 个未使用 `import type` 声明
+  - code-completion.ts — 移除 1 个未使用 import（`@/lib/reactQuery`）
+- 修复过程中发现 4 个 panel 文件有多行 import 被部分删除（只删了 `import type {` 首行，留下类型名和 `} from`），导致 TS1109/TS1434 语法错误；追加脚本修复孤儿 import 内容
+
+### B. code-completion.ts snippet 数组 + 其他单行未使用项清理（15 项）
+- code-completion.ts：移除 4 个未使用 snippet 数组（REACT_SNIPPETS 128 行 / TYPESCRIPT_SNIPPETS 94 行 / CSS_SNIPPETS 50 行 / JSON_SNIPPETS 24 行），共 296 行；括号深度跟踪精确定位数组边界
+- 其他单行未使用项（11 files）：
+  - test-generator.ts — 移除未使用 `import i18n` + `const faker` 多行对象（修复脚本只删首行导致的孤儿对象内容）
+  - ui-recommender.ts / bias-detection.ts / security-hardening.ts — 移除未使用 `import i18n`
+  - ab-testing.ts / model-versioning.ts / security-hardening.ts / code-navigator.ts / knowledge-qa.ts — 移除未使用 `type Listener`
+  - doc-generator.ts — 移除未使用 `type Formatter`
+- 修复：7 个文件因删除行留下多余空行导致 prettier 错误，运行 `eslint --fix` 修复
+
+### C. 全量验证 + pre-commit hook 耗时记录
+- `tsc --noEmit`: 0 errors（修复孤儿 import 和 faker 对象后）
+- `eslint src/`: 0 errors, 2610 warnings（从 V295 的 2752 减少 142；剩余主要为 no-unused-vars / exhaustive-deps / no-explicit-any）
+- `cargo check --workspace`: 0 errors（V296 无 Rust 改动，与 V295 一致）
+- pre-commit hook 耗时记录：V295 首次无 --no-verify commit 实测 **36.07s**（14 gate 并行，瓶颈 = frontend-typecheck 36.04s），远低于 60s 目标；各 gate 耗时：axum-layer 0.03s / sqlx-cache 0.04s / api-duplicates 0.05s / crm-contract 0.16s / hardcoded-precise 0.18s / icon-page 0.28s / glossary-verify 0.32s / i18n-quality 0.57s / i18n-hardcode-admin 0.68s / perm-matrix 0.89s / large-files 1.10s / frontend-lint 1.17s / sensitive-info 9.66s / frontend-typecheck 36.04s
+
+### D. 文档化
+- V295 后续扩展中 eslint warnings 第三批和 pre-commit hook 耗时记录两项打勾 [x]
+- V296 章节写入完整四轨交付记录 + pre-commit hook 各 gate 耗时明细
+
+### 变更文件清单（~25 files）
+**src/ai/ panel 文件（13）**：
+- agent/v54-agent-panel.tsx, automation/v57-automation-panel.tsx, copilot/v55-copilot-panel.tsx, devex/v59-devex-panel.tsx, enhancement/v53-ai-panel.tsx, ethics/v60-ethics-panel.tsx, evolution/v58-evolution-panel.tsx, governance/v57-governance-panel.tsx, native/v54-native-panel.tsx, quality/v60-quality-panel.tsx, review/v56-review-panel.tsx, security/v59-security-panel.tsx, ux/v58-ux-panel.tsx
+
+**src/ai/ 其他文件（10）**：
+- enhancement/code-completion.ts（4 snippet 数组 + 1 import）, enhancement/test-generator.ts（i18n + faker）, enhancement/ui-recommender.ts（i18n）, ethics/bias-detection.ts（i18n）, evolution/ab-testing.ts（Listener）, evolution/model-versioning.ts（Listener）, evolution/security-hardening.ts（i18n + Listener）, copilot/code-navigator.ts（Listener）, copilot/doc-generator.ts（Formatter）, copilot/knowledge-qa.ts（Listener）
+
+**文档（1）**：
+- docs/roadmap/TODO.md — V296 章节 + V295 后续扩展更新
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `eslint src/` — 0 errors（2610 warnings，从 2752 减少 142）
+- [x] `cargo check --workspace` — 0 errors（无 Rust 改动）
+- [x] src/ai/ TS6192 未使用 import — 40 项全部移除（14 files）
+- [x] code-completion.ts 未使用 snippet 数组 — 4 个全部移除（296 行）
+- [x] 其他单行未使用项 — 11 项全部移除
+- [x] 孤儿 import / faker 对象修复 — 4 + 1 files 语法错误修复
+- [x] prettier 空行修复 — 7 files eslint --fix
+- [x] V295 后续扩展 2 项打勾 [x]
+- [x] pre-commit hook 耗时 36.07s 记录文档化
+
+### V296 后续扩展（留给 V297+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint warnings 清零（第四批）**：剩余 2610 warnings（no-unused-vars ~1800 / exhaustive-deps 403 / no-explicit-any 307），src/ai/ 仍有 ~44 个未使用项（governance/native/quality/review/security/ux 子目录的 DEFAULT_* 数组和类型），可继续清理
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
 
 
 

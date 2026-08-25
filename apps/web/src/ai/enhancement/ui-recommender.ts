@@ -1,4 +1,3 @@
-import i18n from '@/i18n';
 /**
  * V53.0 前端 AI 增强 — UI 组件推荐
  *

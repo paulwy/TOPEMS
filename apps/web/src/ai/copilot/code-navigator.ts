@@ -46,5 +46,3 @@ export interface IndexStats {
   languages: Record<string, number>;
   indexedAt: number;
 }
-
-type Listener = (stats: IndexStats) => void;

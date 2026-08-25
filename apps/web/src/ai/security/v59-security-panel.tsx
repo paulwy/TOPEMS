@@ -2,14 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, ShieldCheck } from 'lucide-react';
 import i18n from '@/i18n';
-import type { SecurityAudit, AuditType, AuditSeverity, AuditResult } from './ai-security-audit';
-import type {
-  AttackVector,
-  AttackType,
-  AttackSeverity,
-  RobustnessTest,
-} from './adversarial-robustness';
-import type { PrivacyConfig, PrivacyReport, NoiseStrategy } from './privacy-enhancement';
 
 export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

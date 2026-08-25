@@ -2,15 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Bot } from 'lucide-react';
 import i18n from '@/i18n';
-import type { Task, TaskStep, ExecutionContext, AgentEvent } from './autonomous-agent';
-import type {
-  Workflow as WorkflowType,
-  WorkflowStep as WorkflowStepType,
-  WorkflowTemplate,
-  WorkflowEvent,
-  StepType,
-} from './workflow-engine';
-import type { ConversationContext, MemoryEntry, Entity, Intent, Sentiment } from './context-engine';
 
 export const V54AgentPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

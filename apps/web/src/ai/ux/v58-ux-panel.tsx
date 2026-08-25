@@ -2,13 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Heart } from 'lucide-react';
 import i18n from '@/i18n';
-import type { Recommendation, UserBehavior, RecommendationStats } from './smart-recommender';
-import type {
-  InteractionProfile,
-  AdaptiveResponse,
-  AdaptationRecord,
-} from './adaptive-interaction';
-import type { EmotionState, DesignResponse, EmotionProfile } from './emotional-design';
 
 export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

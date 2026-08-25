@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, FileCheck } from 'lucide-react';
 import i18n from '@/i18n';
-import type { ReviewIssue, ReviewResult, IssueSeverity } from './code-reviewer';
-import type { SecurityFinding, ScanResult, SecuritySeverity } from './security-scanner';
-import type { PerfFinding, AuditMetrics, LighthouseScores } from './performance-auditor';
 
 const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

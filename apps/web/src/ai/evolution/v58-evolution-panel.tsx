@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, GitBranch } from 'lucide-react';
 import i18n from '@/i18n';
-import type { ModelVersion, VersionCompareResult } from './model-versioning';
-import type { Experiment, Variant, ExperimentResult } from './ab-testing';
-import type { SecurityCheckV58, ThreatModel, SecurityReport } from './security-hardening';
 
 const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

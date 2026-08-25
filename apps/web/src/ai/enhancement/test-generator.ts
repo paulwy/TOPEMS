@@ -1,4 +1,3 @@
-import i18n from '@/i18n';
 /**
  * V53.0 前端 AI 增强 — 自动化测试生成
  *
@@ -61,26 +60,3 @@ export interface AnalysisResult {
     functions: number;
   };
 }
-
-const faker = {
-  random: {
-    string: () => Math.random().toString(36).substring(2, 10),
-    number: () => Math.floor(Math.random() * 10000),
-    boolean: () => Math.random() > 0.5,
-    uuid: () =>
-      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      }),
-  },
-  internet: {
-    email: () => `user${Math.floor(Math.random() * 10000)}@example.com`,
-  },
-  phone: {
-    number: () => `+1${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
-  },
-  date: {
-    recent: () => new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
-  },
-};

@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Bot } from 'lucide-react';
 import i18n from '@/i18n';
-import type { TestScenario, TestResult, SmartTestEvent } from './smart-testing';
-import type { CIConfig, CIResult, CIStatus, CIEvent } from './ci-integration';
-import type { GateCriteria, GateResult, GateStatus, GateEvent } from './quality-gate';
 
 export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
