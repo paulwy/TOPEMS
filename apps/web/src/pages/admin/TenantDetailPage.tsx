@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -46,7 +46,6 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { DetailPageTemplate } from '@/components/templates';
 import CrudPage from '@/components/templates/CrudPage';
-import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { tenantUserSchema, tenantInvoiceSchema } from '@/schemas/admin';
 import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
@@ -55,19 +54,11 @@ import type {
   TenantUser,
   TenantStats,
   TenantRole,
-  UserStatus,
   TenantInvoice,
 } from '@/api/tenant/types';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
-const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-  active: 'success',
-  trial: 'warning',
-  suspended: 'error',
-  deleted: 'default',
-};
 
 const statusLabels: Record<string, string> = {
   active: i18n.t('pages.tenant_detail_page.k0'),
@@ -83,36 +74,14 @@ const planLabels: Record<string, string> = {
   enterprise: i18n.t('pages.tenant_detail_page.k7'),
 };
 
-const roleLabels: Record<TenantRole, string> = {
-  owner: i18n.t('pages.tenant_detail_page.k8'),
-  superadmin: i18n.t('pages.tenant_detail_page.k9'),
-  admin: i18n.t('pages.tenant_detail_page.k10'),
-  member: i18n.t('pages.tenant_detail_page.k11'),
-  guest: i18n.t('pages.tenant_detail_page.k12'),
-};
-
-const userStatusLabels: Record<UserStatus, string> = {
-  active: i18n.t('pages.tenant_detail_page.k13'),
-  invited: i18n.t('pages.tenant_detail_page.k14'),
-  suspended: i18n.t('pages.tenant_detail_page.k15'),
-};
-
-const userStatusColors: Record<UserStatus, 'success' | 'warning' | 'error' | 'default'> = {
-  active: 'success',
-  invited: 'warning',
-  suspended: 'error',
-};
-
 const TenantDetailPage: React.FC = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
-  const queryClient = useQueryClient();
 
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'member' as TenantRole });
   const {
     confirmOpen: confirmDialogOpen,
     confirmConfig,
-    openConfirm: openConfirmDialog,
     closeConfirm: setConfirmDialogClosed,
   } = useConfirmDialog();
 
@@ -219,62 +188,9 @@ const TenantDetailPage: React.FC = () => {
     },
   });
 
-  const removeMemberMutation = useMutation({
-    mutationFn: (params: { tenantId: string; userId: string }) =>
-      tenantApi.removeMember(params.tenantId, params.userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      invalidateUsers();
-      setConfirmDialogClosed();
-    },
-    onError: (error: unknown) => {
-      logger.error('Failed to remove member:', error);
-    },
-  });
-
-  const updateMemberRoleMutation = useMutation({
-    mutationFn: (params: { tenantId: string; userId: string; role: TenantRole }) =>
-      tenantApi.updateMemberRole(params.tenantId, params.userId, { role: params.role }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      invalidateUsers();
-    },
-    onError: (error: unknown) => {
-      logger.error('Failed to update member role:', error);
-    },
-  });
-
   const handleInviteMember = () => {
     if (!tenantId) return;
     inviteMemberMutation.mutate({ tenantId, data: inviteForm });
-  };
-
-  const handleRemoveMember = useCallback(
-    (user: TenantUser) => {
-      openConfirmDialog({
-        title: i18n.t('pages.tenant_detail_page.k16'),
-        message: `${i18n.t('pages.tenant_detail_page.k0')}${user.email}${i18n.t('pages.tenant_detail_page.k1')}`,
-        danger: true,
-        onConfirm: () => {
-          if (!tenantId) return;
-          removeMemberMutation.mutate({ tenantId, userId: user.id });
-        },
-      });
-    },
-    [tenantId, removeMemberMutation, openConfirmDialog]
-  );
-
-  const handleUpdateMemberRole = (userId: string, role: TenantRole) => {
-    if (!tenantId) return;
-    updateMemberRoleMutation.mutate({ tenantId, userId, role });
   };
 
   const overviewContent = useMemo(() => {

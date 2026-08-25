@@ -30,14 +30,8 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemAvatar,
-  Avatar,
   Tabs,
   Tab,
-  Rating,
-  Slider,
-  Switch,
-  FormControlLabel,
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
@@ -63,7 +57,6 @@ import {
   Zap,
   GitBranch,
   Package,
-  Cpu,
   Database,
   Sparkles,
   Layout,
@@ -91,7 +84,7 @@ import {
   type SearchResult,
   type CompatibilityCheck,
 } from './plugin-marketplace';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { alpha } from '@mui/material/styles';
 
 type ConsoleTabId = 'dashboard' | 'platform' | 'builder' | 'marketplace' | 'pipelines' | 'activity';
@@ -763,10 +756,6 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
 
   const handleCreate = () => {
     if (!newProjectName.trim()) return;
-    const project = unifiedDevPlatform.createProject({
-      name: newProjectName.trim(),
-      stackPreset: selectedStack,
-    });
     setNewProjectName('');
     setShowCreate(false);
   };

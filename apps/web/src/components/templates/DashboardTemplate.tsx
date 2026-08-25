@@ -45,11 +45,9 @@ import type { LucideIcon } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import type { PageAction } from './PageHeader';
 import type {
-  EntitySchema,
   DashboardSchema,
   StatCardSchema,
   ChartSchema,
-  DataTableSchema,
   DashboardColor,
   IconName,
 } from '@/schema';
@@ -709,12 +707,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   table,
   children,
   actions,
-  loading,
   onRefresh,
-  recentItems,
-  recentTitle = i18n.t('components.dashboard_template.k2'),
-  quickActions,
-  quickActionsTitle = i18n.t('components.dashboard_template.k3'),
 }) => {
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
@@ -905,96 +898,7 @@ export interface QuickAction {
   variant?: 'card' | 'button' | 'icon';
 }
 
-/** @deprecated 使用 {@link DashboardTemplateProps} 代替 */
-type DashboardTemplateLegacyProps = DashboardTemplateProps;
-
 // ============ Schema 派生工具 ============
-
-/**
- * 从 EntitySchema 派生 DataTableConfig
- *
- * 让统计/分析页面可以直接使用 Schema 定义生成数据表格配置，
- * 避免手写列定义和数据映射。
- *
- * @example
- * ```tsx
- * import { dataTableFromSchema } from '@/components/templates/DashboardTemplate';
- *
- * const tableConfig = dataTableFromSchema(voucherSchema, {
- *   title: '最近凭证',
- *   data: recentVouchers,
- *   searchable: true,
- * });
- *
- * <DashboardTemplate
- *   title='财务统计'
- *   statCards={statCards}
- *   mainChart={chart}
- *   table={tableConfig}
- * />
- * ```
- */
-
-interface DataTableFromSchemaOptions {
-  /** 表格标题（默认使用 Schema 的 title） */
-  title?: string;
-  /** 表格数据 */
-  data: Array<Record<string, unknown>>;
-  /** 是否可搜索 */
-  searchable?: boolean;
-  /** 仅显示指定字段（默认使用 Schema 中 showInList !== false 的字段） */
-  fields?: string[];
-  /** 列覆盖/自定义渲染 */
-  columnOverrides?: Record<
-    string,
-    Partial<{
-      label: string;
-      render: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
-    }>
-  >;
-  /** 加载状态 */
-  loading?: boolean;
-}
-
-function dataTableFromSchema(
-  schema: EntitySchema,
-  options: DataTableFromSchemaOptions
-): DataTableConfig {
-  const allColumns = getColumns(schema) as Array<{
-    id: string;
-    label: string;
-    render?: (value: unknown, row: Record<string, unknown>, index: number) => React.ReactNode;
-  }>;
-
-  let filteredColumns = allColumns;
-  if (options.fields && options.fields.length > 0) {
-    const fieldSet = new Set(options.fields);
-    filteredColumns = allColumns.filter((col) => fieldSet.has(col.id));
-  }
-
-  const columnsWithOverrides = filteredColumns.map((col) => {
-    const override = options.columnOverrides?.[col.id];
-    if (!override) return col;
-    return {
-      ...col,
-      ...(override.label !== undefined ? { label: override.label } : {}),
-      ...(override.render
-        ? {
-            render: (value: unknown, row: Record<string, unknown>, _index: number) =>
-              override.render!(value, row),
-          }
-        : {}),
-    };
-  });
-
-  return {
-    title: options.title || schema.title,
-    columns: columnsWithOverrides,
-    data: options.data,
-    loading: options.loading,
-    searchable: options.searchable ?? true,
-  };
-}
 
 // ============ DashboardPage (Schema 驱动) ============
 
