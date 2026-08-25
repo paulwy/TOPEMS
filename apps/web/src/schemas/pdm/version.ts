@@ -18,26 +18,8 @@ const getVersionTypeLabelMap = (): Record<string, string> => ({
   patch: i18n.t('pdm.version.k2'),
 });
 
-const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default' | 'info'> = {
-  published: 'success',
-  draft: 'warning',
-  review: 'info',
-  approved: 'default',
-  deprecated: 'error',
-};
-
-const getStatusLabelMap = (): Record<string, string> => ({
-  published: i18n.t('pdm.version.k3'),
-  draft: i18n.t('pdm.version.k4'),
-  review: i18n.t('pdm.version.k5'),
-  approved: i18n.t('pdm.version.k6'),
-  deprecated: i18n.t('pdm.version.k7'),
-});
-
 export const getVersionSchema = (): EntitySchema => {
   const VERSION_TYPE_LABEL_MAP = getVersionTypeLabelMap();
-  const STATUS_LABEL_MAP = getStatusLabelMap();
-
   return {
     entity: 'pdm_version',
     title: i18n.t('pdm.version.k8'),

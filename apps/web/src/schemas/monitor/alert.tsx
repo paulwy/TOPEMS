@@ -233,9 +233,6 @@ const getAlertFields = (): SchemaField[] => [
 
 export const getAlertSchema = (): EntitySchema => {
   const alertFields = getAlertFields();
-  const SEVERITY_LABELS = getSeverityLabels();
-  const STATUS_LABELS = getStatusLabels();
-
   return {
     entity: 'monitor_alert',
     title: i18n.t('shared.alert.k15'),

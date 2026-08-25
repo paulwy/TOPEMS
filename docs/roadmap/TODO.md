@@ -3525,18 +3525,150 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
-- [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field
+- [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field，V319 test-generator private method/field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
 - [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
-- [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315-V318 连续发现多级联，V318 达 4 层
+- [ ] **v6 脚本向前跳过空行误移除**：V319 mobile/notification 移除 PRIORITY_COLORS 时向前跳过空行误移除 getTypeLabels，需 git checkout 恢复后手动处理
+- [ ] **孤儿文件检测与清空**：V314 发现，V319 workflowStore.ts 移除所有 export 后变孤儿文件需删除
+- [ ] **顶层 hook 调用残留检测**：V319 notificationSettingsStore 移除函数声明后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks
+- [ ] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项级联（2 class→6 functions→2 const/type）
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
-- [ ] **多行 import 单符号移除**：V317/V318 发现需精确行内容匹配
+- [ ] **多行 import 单符号移除**：V317/V318/V319 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
-- [ ] **批量模式优化**：V316/V317/V318 连续三次成功，继续 3批/版本
-- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~336 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
+- [ ] **批量模式优化**：V316-V319 连续四次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~282 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
+
+## 🎯 V319 — 批量模式第四次：Top15文件未使用项清理（~54项）+ 三级级联 + 孤儿文件（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 16 files（14 修改 + 1 删除 + 1 引用修改）+ TODO | 验收：tsc 0 errors · eslint 0 errors(1646 warnings) · 目标 15 files 未使用清零
+>
+> **Tag**: `V319` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V319-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 批量模式第四次运行
+- 背景：V316-V318 批量模式连续三次成功，V319 继续 3批/版本节奏
+- 方法论：全量 tsc 扫描 → 按文件统计 → 选 Top 15（全部 2 项/文件 = 30 项初始）→ v6 批量脚本 → 手动修复 → 三级级联迭代 → 孤儿文件处理
+- 结果：15 files ~54 项（含孤儿文件），净删 ~554 行，eslint warnings 一次减少 28（从 1674 到 1646）
+- 里程碑：全量 tsc 扫描显示剩余文件全部 2 项/文件，没有 3 项的了，未使用项密度持续下降
+
+### B. Top 15 文件清理（~54 项）
+- 初始扫描：Top 15 文件全部 2 项/文件，共 30 项初始未使用
+- 修复：v6 批量脚本（28 项，含 dataGridTheme 重复声明迭代移除 6 次）+ 手动修复 7 项 + 级联 23 项 + 孤儿文件 1 个
+- 迭代过程：
+  - **v6 批量脚本第一轮（28 项）**：billing 1 + customer 2 + opportunity 2 + material 1 + mobile/notification 1(误移除getTypeLabels) + monitor/alert 2 + pdm/version 2 + workflow/definition 2 + notificationSettingsStore 2 + dataGridTheme 6(重复声明) + test-generator 0(private成员) + logger 1 + storage 2 + themeUtils 2 = 28 项
+  - **手动修复 7 项**：
+    1. 整行 import 删除（4）：billing React + erp/material React + mobile/notification React + workflow/definition React/Chip
+    2. import type 单符号移除（2）：erp/material SchemaField + dataGridTheme ThemeOptions
+    3. 函数参数移除（1）：logger formatMessage 的 `...args` rest 参数（函数体内未使用）
+    4. class private 成员移除（2）：test-generator toPascalCase(private method) + mockCounter(private field)
+    5. mobile/notification 恢复后手动移除（3）：git checkout 恢复 v6 误移除的 getTypeLabels，手动移除 React import + PRIORITY_COLORS + NotificationPriority
+  - **级联第一轮（13 项）**：
+    1. 整行 import 删除（7）：billing CheckCircle/Send + RowAction import type + workflow/definition React/Chip + dataGridTheme designTokens + themeUtils useTheme + erp/material SchemaField
+    2. 本地声明移除（6）：mobile/notification NotificationPriority + pdm/version getStatusLabelMap + workflow/definition categoryColorMap + workflowStore useWorkflowStore + storage LocalStorage/SessionStorage
+  - **级联第二轮（8 项）**：
+    1. 整行 import 删除（2）：workflowStore create(zustand) + storage logger
+    2. 本地声明移除（6）：workflowStore WorkflowState + storage StorageOptions/defaultSerialize/defaultDeserialize/createKey/isExpired
+  - **级联第三轮（2 项）**：storage PREFIX + StorageItem（移除 createKey/isExpired 后级联）
+  - **孤儿文件处理（1 个）**：workflowStore.ts 移除所有 export 后变空文件，store/domain/index.ts 的 `export * from '../workflowStore'` 报错，删除文件并移除引用
+  - **顶层 hook 调用残留（2 行）**：notificationSettingsStore.ts 移除 useSetNotificationSettings/useUpdateNotificationSetting 后留下 2 行顶层 hook 调用，违反 react-hooks/rules-of-hooks，手动删除
+- 变更（16 files，~54 项，净删 ~554 行）：
+  - **utils/storage.ts**：-244 行（LocalStorage/SessionStorage class + 6 functions + 2 const/type + logger import，保留 STORAGE_KEYS export）
+  - **theme/dataGridTheme.ts**：-172 行（getDataGridTheme 重复声明 6 次 + ThemeOptions/designTokens imports）
+  - **schemas/workflow/definition.ts**：-33 行（renderWorkflowCategoryBadge/renderWorkflowStatusBadge + categoryColorMap + React/Chip imports）
+  - **schemas/crm/billing.tsx**：-27 行（getBillingRowActions + React/CheckCircle/Send/RowAction imports）
+  - **schemas/pdm/version.ts**：-18 行（STATUS_COLOR_MAP/STATUS_LABEL_MAP + getStatusLabelMap）
+  - **store/workflowStore.ts**：-14 行（删除文件，useWorkflowStore/useSelectedWorkflowId/useSetSelectedWorkflowId + WorkflowState + create import）
+  - **utils/themeUtils.ts**：-13 行（useDarkAwareValue/invertColor + useTheme import）
+  - **schemas/mobile/notification.tsx**：-8 行（PRIORITY_COLORS + NotificationPriority + React import，保留 getTypeLabels）
+  - **utils/ai/test-generator.ts**：-8 行（toPascalCase private method + mockCounter private field）
+  - **utils/logger.ts**：-7 行（errorLogger + formatMessage rest 参数）
+  - **store/notificationSettingsStore.ts**：-6 行（useSetNotificationSettings/useUpdateNotificationSetting + 2 行顶层 hook 调用残留）
+  - **schemas/crm/opportunity.ts**：-3 行（OppPriority/OppStatus）
+  - **schemas/monitor/alert.tsx**：-3 行（SEVERITY_LABELS/STATUS_LABELS）
+  - **schemas/crm/customer.ts**：-2 行（CustomerRating/CustomerType）
+  - **schemas/erp/material.ts**：-2 行（React import + SchemaField import type）
+  - **store/domain/index.ts**：-1 行（移除 `export * from '../workflowStore'`）
+- 验收：`tsc --noUnusedLocals` 目标 15 files 0 errors
+
+### C. v6 脚本向前跳过空行误移除（V319 新发现）
+- **现象**：mobile/notification.tsx 移除 PRIORITY_COLORS 时，v6 脚本的 `while (startIdx > 0 && lines[startIdx-1].trim() === '')` 逻辑向前跳过空行，误包含了前面的 getTypeLabels 函数和 NotificationPriority type
+- **后果**：getTypeLabels 被误移除后，line65 的 `getTypeLabels()[row.type as NotificationType]` 报 TS2304 Cannot find name
+- **处理方式**：`git checkout src/schemas/mobile/notification.tsx` 恢复文件，然后用 Edit 精确移除 React import + PRIORITY_COLORS + NotificationPriority，保留 getTypeLabels
+- **教训**：v6 脚本的向前跳过空行逻辑有误，当目标声明前面有空行和其他声明时，可能误移除前面的声明。需要改进为只跳过紧邻的注释和空行，不跳过其他声明
+
+### D. 孤儿文件 + 顶层 hook 调用残留（V319 新发现）
+- **孤儿文件**：workflowStore.ts 移除所有 export（useWorkflowStore/useSelectedWorkflowId/useSetSelectedWorkflowId）和 WorkflowState/create import 后变空文件，store/domain/index.ts 的 `export * from '../workflowStore'` 报 TS2306 File is not a module。处理：删除文件并移除引用
+- **顶层 hook 调用残留**：notificationSettingsStore.ts 移除 useSetNotificationSettings/useUpdateNotificationSetting 函数声明后，文件末尾留下 2 行未使用的顶层 hook 调用 `useNotificationSettingsStore((state) => state.setNotificationSettings)`，违反 react-hooks/rules-of-hooks。处理：手动删除这 2 行
+- **教训**：v6 脚本只移除声明，不移除调用点。当函数被移除但调用点残留时，可能导致 eslint 错误或运行时错误。需要增加调用点残留检测
+
+### E. storage.ts 深层级联（V319 新发现）
+- **级联链**：LocalStorage/SessionStorage（2 class）→ StorageOptions/defaultSerialize/defaultDeserialize/createKey/isExpired（5 functions/interface）→ PREFIX/StorageItem（2 const/type）= 10 项级联
+- **结果**：移除后 storage.ts 只剩注释和 STORAGE_KEYS export（45 行），从 289 行降至 45 行
+- **教训**：当一个文件的主要 class 被移除后，可能触发大量级联。需要多轮迭代扫描
+
+### F. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 15 files: 0 errors（~54 项全部清除，含 23 项三级级联 + 1 孤儿文件）
+- `eslint src/`: 0 errors, 1646 warnings（从 V318 的 1674 减少 28）
+- `cargo check --workspace`: 0 errors（V319 无 Rust 改动）
+
+### G. 文档化
+- V318 后续扩展 v6 手动统计更新 + v6 向前跳过空行误移除记录 + 孤儿文件记录 + 顶层 hook 调用残留记录 + storage 深层级联记录 + class private 成员记录
+- V319 章节写入完整交付记录 + ~54 项明细 + 三级级联 23 项 + 孤儿文件 + v6 误移除教训 + storage 深层级联教训
+
+### 变更文件清单（17 files）
+- `apps/web/src/utils/storage.ts`（-244 行）
+- `apps/web/src/theme/dataGridTheme.ts`（-172 行）
+- `apps/web/src/schemas/workflow/definition.ts`（-33 行）
+- `apps/web/src/schemas/crm/billing.tsx`（-27 行）
+- `apps/web/src/schemas/pdm/version.ts`（-18 行）
+- `apps/web/src/store/workflowStore.ts`（删除，-14 行）
+- `apps/web/src/utils/themeUtils.ts`（-13 行）
+- `apps/web/src/schemas/mobile/notification.tsx`（-8 行）
+- `apps/web/src/utils/ai/test-generator.ts`（-8 行）
+- `apps/web/src/utils/logger.ts`（-7 行）
+- `apps/web/src/store/notificationSettingsStore.ts`（-6 行）
+- `apps/web/src/schemas/crm/opportunity.ts`（-3 行）
+- `apps/web/src/schemas/monitor/alert.tsx`（-3 行）
+- `apps/web/src/schemas/crm/customer.ts`（-2 行）
+- `apps/web/src/schemas/erp/material.ts`（-2 行）
+- `apps/web/src/store/domain/index.ts`（-1 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 15 files — 0 errors（~54 项全部清除）
+- [x] `eslint src/` — 0 errors（1646 warnings，从 1674 减少 28）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 15 files ~54 项 — 全部移除（净删 ~554 行）
+- [x] 23 个级联项 — 三级迭代清除（第一轮 13 + 第二轮 8 + 第三轮 2）
+- [x] 1 个孤儿文件 — workflowStore.ts 删除 + 引用移除
+- [x] 2 行顶层 hook 调用残留 — notificationSettingsStore 手动删除
+- [x] v6 误移除修复 — mobile/notification git checkout 恢复后手动处理
+- [x] 批量模式第四次运行 — 连续成功
+
+### V319 后续扩展（留给 V320+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
+- [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **v6 脚本向前跳过空行误移除修复**：V319 发现，需改进为只跳过紧邻注释和空行
+- [ ] **v6 脚本调用点残留检测**：V319 notificationSettingsStore 发现顶层 hook 调用残留
+- [ ] **孤儿文件检测与清空**：V314/V319 发现，v6 脚本可增加孤儿文件检测
+- [ ] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项
+- [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
+- [ ] **多行 import 单符号移除**：V317-V319 发现需精确行内容匹配
+- [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
+- [ ] **批量模式优化**：V316-V319 连续四次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~282 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
 
 
 

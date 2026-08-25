@@ -1,9 +1,7 @@
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
-type NotificationPriority = 'high' | 'medium' | 'low';
 
 const getTypeLabels = (): Record<NotificationType, string> => ({
   system: i18n.t('shared.notification.k0'),
@@ -11,12 +9,6 @@ const getTypeLabels = (): Record<NotificationType, string> => ({
   task: i18n.t('shared.notification.k2'),
   message: i18n.t('shared.notification.k3'),
 });
-
-const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'> = {
-  high: 'error',
-  medium: 'warning',
-  low: 'info',
-};
 
 export const getMobileNotificationSchema = (): EntitySchema => ({
   entity: 'mobile_notification',
