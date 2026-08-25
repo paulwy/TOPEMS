@@ -4,7 +4,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { extractErrorMessage } from '@/utils/errors';
-import type { Account } from '@/types/finance';
 import { accountApi } from '@/api/finance';
 import { useNotification } from './useNotification';
 
@@ -14,25 +13,6 @@ import i18n from '@/i18n';
 // ============================================
 // 一、科目管理Hook
 // ============================================
-
-/**
- * 获取科目列表
- */
-const useAccounts = (params?: {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  type?: string;
-  company_id?: string;
-  is_detail?: boolean;
-}) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNTS_BASE, params],
-    queryFn: () => accountApi.list(params),
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
 
 /**
  * 获取科目树
@@ -50,38 +30,6 @@ export const useAccountTree = (params?: {
 };
 
 /**
- * 获取科目详情
- */
-const useAccount = (id: string) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BASE, id],
-    queryFn: () => accountApi.get(id),
-    enabled: !!id,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
- * 获取科目余额
- */
-const useAccountBalances = (params: {
-  account_ids?: string[];
-  period: string;
-  company_id?: string;
-  department_id?: string;
-  project_id?: string;
-}) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE, params],
-    queryFn: () => accountApi.getBalances(params),
-    enabled: !!params.period,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
  * 获取科目期初余额
  */
 export const useOpeningBalances = (params: {
@@ -95,91 +43,6 @@ export const useOpeningBalances = (params: {
     enabled: !!params.period,
 
     staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
- * 创建科目
- */
-const useCreateAccount = () => {
-  const queryClient = useQueryClient();
-  const { success, error: notifyError } = useNotification();
-
-  return useMutation({
-    mutationFn: (data: Partial<Account>) => accountApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      success(i18n.t('shared.use_finance.k0'));
-    },
-    onError: (error) => {
-      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k1')));
-    },
-  });
-};
-
-/**
- * 更新科目
- */
-const useUpdateAccount = () => {
-  const queryClient = useQueryClient();
-  const { success, error: notifyError } = useNotification();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
-      accountApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      success(i18n.t('shared.use_finance.k2'));
-    },
-    onError: (error) => {
-      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k3')));
-    },
-  });
-};
-
-/**
- * 删除科目
- */
-const useDeleteAccount = () => {
-  const queryClient = useQueryClient();
-  const { success, error: notifyError } = useNotification();
-
-  return useMutation({
-    mutationFn: (id: string) => accountApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      success(i18n.t('shared.use_finance.k4'));
-    },
-    onError: (error) => {
-      notifyError(extractErrorMessage(error, i18n.t('shared.use_finance.k5')));
-    },
   });
 };
 
