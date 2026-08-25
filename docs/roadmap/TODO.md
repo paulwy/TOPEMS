@@ -1256,6 +1256,8 @@ let failed_count = 0;
 ## 🎯 V291 — 4 轨并行（TMS跨svc依赖清零 · clippy warnings清零 · erp deprecated标记清理 · B7/B2评估闭合）（并行推进 · ✅ 完成）
 
 > 日期：2026-08-25 | 代码改动 5 files（Rust 2 / TS 1 / TODO 1 / 删除测试 1）| 验收：cargo check 0 errors 0 warnings · cargo clippy 0 warnings · tsc 0 errors
+>
+> **Tag**: `V291` · Baseline SHA: `e68eef04d` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V291-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. TMS 跨 svc 依赖清零（B6 后续扩展闭合）
 - 背景：V290 B6 盘点发现全项目仅 TMS→WMS 1 个跨 svc path dep（dev-dependencies），用于 `tests/cross_module_integration_tests.rs`
