@@ -3313,7 +3313,7 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 15 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1717 warnings) · 目标 15 files 未使用清零
 >
-> **Tag**: `V317` · Baseline SHA: `2e0e6a3f1` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V317-2e7c3b609.tar.gz` (.gitignore 排除)
+> **Tag**: `V317` · Baseline SHA: `2e0e6a3f1` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V317-0f98ed2a5.tar.gz` (.gitignore 排除)
 
 ### A. 批量模式第二次运行
 - 背景：V316 批量模式首次成功，V317 继续 3批/版本节奏
