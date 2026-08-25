@@ -7,7 +7,7 @@ import { MobilePageTemplate } from '@/components/templates';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { mobileApi, type PushConfig, type PushTemplate, type ListResponse } from '@/api/mobile';
+import { mobileApi, type PushConfig, type PushTemplate } from '@/api/mobile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
@@ -109,20 +109,6 @@ const PushNotificationPage: React.FC = () => {
     const template = templates.find((t) => t.id === id);
     if (!template) return;
     updateTemplateMutation.mutate({ id, data: { enabled: !template.enabled } });
-  };
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'approval':
-        return 'warning';
-      case 'task':
-        return 'primary';
-      case 'system':
-        return 'info';
-      case 'reminder':
-        return 'error';
-      default:
-        return 'default';
-    }
   };
   const getStatusLabel = (status: string) => {
     switch (status) {

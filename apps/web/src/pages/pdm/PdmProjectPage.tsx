@@ -44,17 +44,6 @@ import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
-const STATUS_COLORS: Record<
-  string,
-  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
-> = {
-  planning: 'warning',
-  active: 'success',
-  on_hold: 'warning',
-  completed: 'primary',
-  cancelled: 'error',
-};
-
 const PHASE_COLORS: Record<
   string,
   'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
@@ -75,16 +64,6 @@ const MEMBER_ROLE_COLORS: Record<
   reviewer: 'warning',
   viewer: 'default',
 };
-
-function getStatusOptions() {
-  return [
-    { label: i18n.t('pdm.pdm_project_page.k0'), value: 'planning' },
-    { label: i18n.t('pdm.pdm_project_page.k1'), value: 'active' },
-    { label: i18n.t('pdm.pdm_project_page.k2'), value: 'on_hold' },
-    { label: i18n.t('pdm.pdm_project_page.k3'), value: 'completed' },
-    { label: i18n.t('pdm.pdm_project_page.k4'), value: 'cancelled' },
-  ];
-}
 
 function getPhaseOptions() {
   return [

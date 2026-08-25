@@ -6,7 +6,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
-export const getStatusLabels = (t: (key: string) => string): Record<string, string> => ({
+export const getStatusLabels = (_t: (key: string) => string): Record<string, string> => ({
   active: i18n.t('pm.project_detail.status.active'),
   completed: i18n.t('pm.project_detail.status.completed'),
   pending: i18n.t('pm.project_detail.status.pending'),
@@ -22,7 +22,7 @@ export const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> =
   cancelled: { bgcolor: 'grey.100', color: 'grey.700' },
   draft: { bgcolor: 'grey.100', color: 'text.secondary' },
 };
-export const getRiskLabels = (t: (key: string) => string): Record<string, string> => ({
+export const getRiskLabels = (_t: (key: string) => string): Record<string, string> => ({
   high: i18n.t('pm.project_detail.risk.high'),
   medium: i18n.t('pm.project_detail.risk.medium'),
   low: i18n.t('pm.project_detail.risk.low'),

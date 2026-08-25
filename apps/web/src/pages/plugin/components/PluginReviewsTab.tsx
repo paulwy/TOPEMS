@@ -30,8 +30,6 @@ interface PluginReviewsTabProps {
 
 const PluginReviewsTab: React.FC<PluginReviewsTabProps> = ({
   reviews,
-  averageRating,
-  pluginRating,
   rating,
   onRatingChange,
   reviewTitle,
