@@ -26,5 +26,3 @@ export interface VersionCompareResult {
   changed: string[];
   metricDeltas: Record<string, number>;
 }
-
-type Listener = () => void;

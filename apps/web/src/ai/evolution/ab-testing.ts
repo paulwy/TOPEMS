@@ -37,5 +37,3 @@ export interface SignificanceResult {
   winner: string | null;
   relativeLift: number;
 }
-
-type Listener = () => void;

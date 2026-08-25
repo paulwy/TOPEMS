@@ -28,5 +28,3 @@ export interface ReadmeSection {
   title: string;
   content: string;
 }
-
-type Formatter = (template: string, values: Record<string, string>) => string;

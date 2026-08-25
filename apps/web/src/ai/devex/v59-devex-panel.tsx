@@ -2,14 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Wrench } from 'lucide-react';
 import i18n from '@/i18n';
-import type { DebugSession, DebugSuggestion, StateAnalysis } from './smart-debugger';
-import type {
-  PerfSnapshot,
-  PerfIssue,
-  PerformanceBudget,
-  TrendPoint,
-} from './performance-analyzer';
-import type { RefactoringPlan, CodeIssue, ImpactEstimate } from './code-refactor';
 
 export const V59DevExPanel: React.FC<{
   onClose: () => void;

@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Scale } from 'lucide-react';
 import i18n from '@/i18n';
-import type { ComplianceRule, ComplianceReport, Severity } from './compliance-automation';
-import type { RiskAlert, RiskScore, RiskLevel } from './risk-alerting';
-import type { Policy, PolicyDecision, EnforcementMode } from './policy-enforcement';
 
 export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

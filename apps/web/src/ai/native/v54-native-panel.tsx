@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Cpu } from 'lucide-react';
 import i18n from '@/i18n';
-import type { AICapability, PlatformConfig, MiddlewareContext } from './ai-first-architecture';
-import type { RouteRecommendation, RouteIntent, RouterStats } from './intelligent-router';
-import type { UserProfile, AdaptedLayout, AdaptationStats } from './adaptive-ui';
 
 const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

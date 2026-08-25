@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Shield } from 'lucide-react';
 import i18n from '@/i18n';
-import type { BiasReport, BiasType, BiasSeverity } from './bias-detection';
-import type { FairnessResult, FairnessType, AuditStatus } from './fairness-assurance';
-import type { Explanation, ExplainabilityReport, ExplainabilityMethod } from './explainability';
 
 export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (

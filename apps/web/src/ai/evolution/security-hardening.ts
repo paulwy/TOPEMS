@@ -1,4 +1,3 @@
-import i18n from '@/i18n';
 // V58.0 平台 AI 演进 - 安全加固
 
 export type SecurityCheckType =
@@ -41,5 +40,3 @@ export interface SecurityReport {
   checks: SecurityCheckV58[];
   generatedAt: number;
 }
-
-type Listener = () => void;

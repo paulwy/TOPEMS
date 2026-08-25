@@ -25,5 +25,3 @@ export interface QAResult {
   relatedDocuments: KnowledgeDocument[];
   suggestions: string[];
 }
-
-type Listener = (entry: QAEntry) => void;

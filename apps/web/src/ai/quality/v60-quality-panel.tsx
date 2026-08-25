@@ -2,9 +2,6 @@ import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Gauge } from 'lucide-react';
 import i18n from '@/i18n';
-import type { TestCase, TestRun, TestResultDetail, SmartTestEvent } from './smart-testing-v2';
-import type { PerfBaseline, PerfRegression, PerfAlert } from './continuous-performance';
-import type { UXMetric, UXAlert, FunnelAnalysis, UXMonitorEvent } from './ux-monitor';
 
 export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
