@@ -1878,9 +1878,9 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 5 files（hooks/ 4 + 级联 useConsolidationScope）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2334 warnings) · 目标 5 files 未使用清零
 >
-> **Tag**: `V300` · Baseline SHA: `e633670dc` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V300` · Baseline SHA: `e633670dc` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-3197058e6.tar.gz` (.gitignore 排除)
 >
-> **Tag**: `V300` · Baseline SHA: `e633670dc` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V300` · Baseline SHA: `e633670dc` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-3197058e6.tar.gz` (.gitignore 排除)
 
 ### A. 第七批未使用项清理（hooks/ 目录，96 项）
 - 背景：V299 后全 src/ 仍有 1473 个 tsc --noUnusedLocals 错误，hooks/ 目录集中度高（useExternalErp.ts 29 + useVoucherTemplate.ts 19 + useErp.ts 14 + useConsolidation.ts 11 = 73 项首轮）
