@@ -6,7 +6,6 @@ import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
-import unicorn from 'eslint-plugin-unicorn';
 import checkFile from 'eslint-plugin-check-file';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import { dirname, join } from 'path';
@@ -50,7 +49,6 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       import: importPlugin,
-      unicorn,
       'check-file': checkFile,
       'jsx-a11y': jsxA11y,
       'topems-design': topemsDesignPlugin,
@@ -237,29 +235,6 @@ export default [
       'import/no-useless-path-segments': 'warn',
       'import/no-relative-packages': 'warn',
       'import/no-relative-parent-imports': 'off',
-
-      'unicorn/prefer-node-protocol': 'off',
-      'unicorn/filename-case': 'off',
-      'unicorn/no-abusive-eslint-disable': 'warn',
-      'unicorn/custom-error-definition': 'warn',
-      'unicorn/error-message': 'warn',
-      'unicorn/escape-case': 'warn',
-      'unicorn/no-array-for-each': 'off',
-      'unicorn/no-array-callback-reference': 'off',
-      'unicorn/no-for-loop': 'off',
-      'unicorn/no-lonely-if': 'warn',
-      'unicorn/no-null': 'off',
-      'unicorn/no-unreadable-array-destructuring': 'warn',
-      'unicorn/no-useless-undefined': 'warn',
-      'unicorn/prefer-array-find': 'warn',
-      'unicorn/prefer-array-flat-map': 'warn',
-      'unicorn/prefer-array-index-of': 'warn',
-      'unicorn/prefer-array-some': 'warn',
-      'unicorn/prefer-date-now': 'warn',
-      'unicorn/prefer-includes': 'warn',
-      'unicorn/prefer-string-starts-ends-with': 'warn',
-      'unicorn/prefer-ternary': 'off',
-      'unicorn/prefer-type-error': 'warn',
 
       'check-file/filename-naming-convention': [
         'warn',
