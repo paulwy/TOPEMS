@@ -25,12 +25,10 @@ import {
   Clock,
 } from 'lucide-react';
 import { scmApi } from '@/api/scm';
-import type { Supplier } from '@/api/scm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
-import { formatDate } from '@/utils/date';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Card, CardContent, Chip, Grid, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import type { InventoryMovementDto } from '@/types/wms';
@@ -210,8 +210,6 @@ export default function WmsInventoryMovementDetailPage() {
   }
 
   const matCode = move.material_code ?? 'SKU-1000';
-  const matName = move.material_name ?? '-';
-
   return (
     <PageContainer
       autoTitle

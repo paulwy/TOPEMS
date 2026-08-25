@@ -1,5 +1,4 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Button } from '@mui/material';
 import {
   PenTool as PenToolIcon,
@@ -9,29 +8,17 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
-import { reportApi } from '@/api/report';
 import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
 
 const ct = designTokens.colors;
 
 const ReportDesignPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['report-design'],
-    queryFn: async () => {
-      try {
-        // TODO: reportApi 暂无 getDesignerState 方法
-        return {};
-      } catch {
-        return {};
-      }
-    },
-  });
   return (
     <DesignerTemplate
       mode='standard'
       title={i18n.t('pages.report_design_page.k0')}
       subtitle={i18n.t('pages.report_design_page.k1')}
-      loading={isBackendLoading}
+      loading={false}
     >
       <Card>
         <CardContent>

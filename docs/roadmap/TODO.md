@@ -3655,20 +3655,151 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V319 累计手动 250+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量（DashboardPage fullLinkStats）
 - [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
 - [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
 - [ ] **v6 脚本向前跳过空行误移除修复**：V319 发现，需改进为只跳过紧邻注释和空行
 - [ ] **v6 脚本调用点残留检测**：V319 notificationSettingsStore 发现顶层 hook 调用残留
-- [ ] **孤儿文件检测与清空**：V314/V319 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315-V319 连续发现多级联，V319 storage.ts 达 10 项
+- [ ] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 ReportDesignPage 删除 useQuery 后 isBackendLoading 仍被引用，需改为 false
+- [ ] **孤儿文件检测与清空**：V314/V319/V320 发现，V320 useWorkflowApprovalDetail.ts 222 行孤儿文件
+- [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
-- [ ] **多行 import 单符号移除**：V317-V319 发现需精确行内容匹配
+- [ ] **多行 import 单符号移除**：V317-V320 发现需精确行内容匹配
 - [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
-- [ ] **批量模式优化**：V316-V319 连续四次成功，继续 3批/版本
-- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~282 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
+- [ ] **setting 页面统一模式识别**：V320 发现 5 个 scm/wms setting 页面有统一的 TS6198 + api import + useQuery 模式
+- [ ] **批量模式优化**：V316-V320 连续五次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~231 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
+
+## 🎯 V320 — 批量模式第五次：Top15文件未使用项清理（~51项）+ 两级级联 + 孤儿文件（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 15 files（14 修改 + 1 删除）+ TODO | 验收：tsc 0 errors · eslint 0 errors(1606 warnings) · 目标 14 files 未使用清零
+>
+> **Tag**: `V320` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V320-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 批量模式第五次运行
+- 背景：V316-V319 批量模式连续四次成功，V320 继续 3批/版本节奏
+- 方法论：全量 tsc 扫描 → 按文件统计 → 选 Top 15（全部 2 项/文件 = 30 项初始）→ v6 批量脚本 → 手动修复 → 两级级联迭代 → 孤儿文件处理
+- 结果：14 files ~51 项 + 1 孤儿文件（222 行），净删 362 行，eslint warnings 一次减少 40（从 1646 到 1606）
+- 里程碑：全量 tsc 扫描连续两个版本显示剩余文件全部 2 项/文件，未使用项密度持续下降
+
+### B. Top 15 文件清理（~51 项 + 1 孤儿文件）
+- 初始扫描：Top 15 文件全部 2 项/文件，共 30 项初始未使用
+- 修复：v6 批量脚本（7 项）+ 手动修复 23 项 + 级联 21 项 + 孤儿文件 1 个
+- 迭代过程：
+  - **v6 批量脚本第一轮（7 项）**：RsFormulaDetailPage 0 + DashboardPage 1 + srm 2 + wms/SupplierDetail 0 + WmsInventoryMovement 1 + workflow Header 1 + workflow hook 1 = 7 项
+  - **手动修复 23 项**：
+    1. 整行 import 删除（10）：RsFormulaDetailPage Formula/FormulaVersion + ReportDesignPage reportApi + 4 scm setting scmApi + SupplierTier useQuery/scmApi + wms/SupplierDetail Supplier/formatDate + FifoPolicy wmsApi
+    2. import 单符号移除（5）：RsExperimentCreatePage Project/Formula + srm 2 semanticTokens + WmsInventoryMovement Grid + workflow hook queryClient
+    3. useQuery 整段删除（5）：ReportDesignPage + 4 scm/wms setting 页面
+    4. 函数参数修复（1）：workflow Header getStatusText t → _t
+    5. useQuery 引用残留修复（1）：ReportDesignPage isBackendLoading → false
+    6. 解构变量 useQuery 删除（1）：DashboardPage fullLinkStats
+  - **级联第一轮（19 项）**：
+    1. useQuery import 级联（5）：ReportDesignPage + 4 setting 页面
+    2. 本地声明级联（4）：DashboardPage fullLinkStats(解构) + workflow Header React/Chip/WorkflowApprovalDetailHeaderProps
+    3. workflow hook 全文件级联（10）：移除 useWorkflowApprovalDetail 函数后，所有 import/interface 级联未使用，文件变孤儿
+  - **级联第二轮（2 项）**：DashboardPage SupplyChainFullLinkStat + workflow Header Approval import type
+  - **孤儿文件处理（1 个）**：useWorkflowApprovalDetail.ts 移除主函数后只剩 import/interface，222 行全未使用，仅测试文件引用，删除文件
+- 变更（15 files，~51 项 + 1 孤儿文件，净删 362 行）：
+  - **workflow/hooks/useWorkflowApprovalDetail.ts**：删除 222 行（孤儿文件）
+  - **workflow/components/WorkflowApprovalDetailHeader.tsx**：-21 行（主组件 + React/Chip import + interface + Approval import）
+  - **scm/DashboardPage.tsx**：-20 行（getGreeting + fullLinkStats useQuery + SupplyChainFullLinkStat import）
+  - **rd/RsFormulaDetailPage.tsx**：-16 行（getStatusColor + Formula/FormulaVersion import type）
+  - **report/ReportDesignPage.tsx**：-15 行（reportApi import + useQuery 块 + useQuery import，isBackendLoading→false）
+  - **scm/setting/PurchaseThresholdPage.tsx**：-13 行（scmApi import + useQuery 块 + useQuery import）
+  - **scm/setting/QuotaTemplatePage.tsx**：-13 行（同上模式）
+  - **scm/setting/SourcingStrategyPage.tsx**：-13 行（同上模式）
+  - **wms/setting/FifoPolicyPage.tsx**：-13 行（wmsApi import + useQuery 块 + useQuery import）
+  - **srm/SrmContractDetailPage.tsx**：-10 行（statusColors + semanticTokens import）
+  - **srm/SrmSupplierDetailPage.tsx**：-8 行（statusColors + semanticTokens import）
+  - **rd/RsExperimentCreatePage.tsx**：-2 行（Project/Formula import type）
+  - **scm/setting/SupplierTierPage.tsx**：-2 行（useQuery/scmApi imports）
+  - **wms/SupplierDetailPage.tsx**：-2 行（Supplier/formatDate imports）
+  - **wms/WmsInventoryMovementDetailPage.tsx**：-4 行（matName + Grid import）
+- 验收：`tsc --noUnusedLocals` 目标 14 files 0 errors
+
+### C. useQuery 整段删除后引用残留（V320 新发现）
+- **现象**：ReportDesignPage 删除 `const { data: backendData, isLoading: isBackendLoading } = useQuery({...})` 后，JSX 中 `loading={isBackendLoading}` 仍引用 isBackendLoading，报 TS2304 Cannot find name
+- **处理方式**：将 `loading={isBackendLoading}` 改为 `loading={false}`（因为 useQuery 只是 TODO 占位符，返回空对象）
+- **教训**：删除 useQuery 解构块后，需检查 JSX 中是否有对解构变量的引用，如有需改为默认值或删除
+
+### D. setting 页面统一模式（V320 新发现）
+- **模式**：5 个 scm/wms setting 页面（PurchaseThreshold/QuotaTemplate/SourcingStrategy/FifoPolicy + SupplierTier）有统一的未使用模式：
+  1. `import { scmApi/wmsApi } from '@/api/...'` — 整行 import 未使用
+  2. `const { data: backendData, isLoading } = useQuery({...})` — TS6198 所有解构元素未使用
+  3. `import { useQuery } from '@tanstack/react-query'` — 删除 useQuery 后级联未使用
+- **处理方式**：批量删除 api import + useQuery 块 + useQuery import
+- **教训**：setting 页面通常有统一的模板代码，未使用项模式一致，可批量处理
+
+### E. 孤儿文件（V320 新发现）
+- **现象**：useWorkflowApprovalDetail.ts 移除主函数 useWorkflowApprovalDetail 后，文件只剩 import 和 interface，所有内容未使用，变 222 行孤儿文件
+- **处理方式**：检查无其他非测试文件引用后删除文件
+- **教训**：当一个文件的主要导出被移除后，需检查是否变孤儿文件，如是则删除
+
+### F. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 14 files: 0 errors（~51 项全部清除，含 21 项两级级联 + 1 孤儿文件）
+- `eslint src/`: 0 errors, 1606 warnings（从 V319 的 1646 减少 40）
+- `cargo check --workspace`: 0 errors（V320 无 Rust 改动）
+
+### G. 文档化
+- V319 后续扩展 v6 手动统计更新 + useQuery 引用残留记录 + setting 页面统一模式记录 + 孤儿文件记录 + 解构变量记录
+- V320 章节写入完整交付记录 + ~51 项明细 + 两级级联 21 项 + 孤儿文件 + useQuery 引用残留教训 + setting 页面统一模式
+
+### 变更文件清单（16 files）
+- `apps/web/src/pages/workflow/hooks/useWorkflowApprovalDetail.ts`（删除，-222 行）
+- `apps/web/src/pages/workflow/components/WorkflowApprovalDetailHeader.tsx`（-21 行）
+- `apps/web/src/pages/scm/DashboardPage.tsx`（-20 行）
+- `apps/web/src/pages/rd/RsFormulaDetailPage.tsx`（-16 行）
+- `apps/web/src/pages/report/ReportDesignPage.tsx`（-15 行）
+- `apps/web/src/pages/scm/setting/PurchaseThresholdPage.tsx`（-13 行）
+- `apps/web/src/pages/scm/setting/QuotaTemplatePage.tsx`（-13 行）
+- `apps/web/src/pages/scm/setting/SourcingStrategyPage.tsx`（-13 行）
+- `apps/web/src/pages/wms/setting/FifoPolicyPage.tsx`（-13 行）
+- `apps/web/src/pages/srm/SrmContractDetailPage.tsx`（-10 行）
+- `apps/web/src/pages/srm/SrmSupplierDetailPage.tsx`（-8 行）
+- `apps/web/src/pages/wms/WmsInventoryMovementDetailPage.tsx`（-4 行）
+- `apps/web/src/pages/rd/RsExperimentCreatePage.tsx`（-2 行）
+- `apps/web/src/pages/scm/setting/SupplierTierPage.tsx`（-2 行）
+- `apps/web/src/pages/wms/SupplierDetailPage.tsx`（-2 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 14 files — 0 errors（~51 项全部清除）
+- [x] `eslint src/` — 0 errors（1606 warnings，从 1646 减少 40）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 14 files ~51 项 — 全部移除（净删 362 行，含孤儿文件 222 行）
+- [x] 21 个级联项 — 两级迭代清除（第一轮 19 + 第二轮 2）
+- [x] 1 个孤儿文件 — useWorkflowApprovalDetail.ts 删除
+- [x] useQuery 引用残留 — ReportDesignPage isBackendLoading→false
+- [x] 批量模式第五次运行 — 连续成功
+
+### V320 后续扩展（留给 V321+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V320 累计手动 270+ 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318/V320 手动修复解构变量
+- [ ] **v6 脚本 class field/private method 自动处理**：V311/V317/V319 手动移除
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **v6 脚本向前跳过空行误移除修复**：V319 发现
+- [ ] **v6 脚本调用点残留检测**：V319 发现
+- [ ] **v6 脚本 useQuery 整段删除后引用残留检测**：V320 发现
+- [ ] **孤儿文件检测与清空**：V314/V319/V320 发现
+- [ ] **深层级联链自动跟踪**：V315-V320 连续发现多级联
+- [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
+- [ ] **多行 import 单符号移除**：V317-V320 发现需精确行内容匹配
+- [ ] **import type 非本地声明识别**：V318 发现
+- [ ] **setting 页面统一模式识别**：V320 发现 5 个 setting 页面统一模式
+- [ ] **批量模式优化**：V316-V320 连续五次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~231 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
 
 
 

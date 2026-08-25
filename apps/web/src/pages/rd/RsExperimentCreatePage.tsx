@@ -5,7 +5,7 @@ import { FormPageTemplate, type FormSection } from '@/components/templates/FormP
 import { PageContainer } from '@/components/common';
 import { rdApi, formulaApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { Project, Formula, CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
+import type { CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
