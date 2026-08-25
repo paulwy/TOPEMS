@@ -3544,7 +3544,7 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 16 files（14 修改 + 1 删除 + 1 引用修改）+ TODO | 验收：tsc 0 errors · eslint 0 errors(1646 warnings) · 目标 15 files 未使用清零
 >
-> **Tag**: `V319` · Baseline SHA: `8adbc400e` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V319-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V319` · Baseline SHA: `8adbc400e` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V319-ecdadb281.tar.gz` (.gitignore 排除)
 
 ### A. 批量模式第四次运行
 - 背景：V316-V318 批量模式连续三次成功，V319 继续 3批/版本节奏
