@@ -203,13 +203,3 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
     reset(moduleId);
   },
 }));
-
-const useModuleState = (moduleId: string) =>
-  useModuleLoadingStore((state) => state.modules[moduleId]);
-const useTotalProgress = () => useModuleLoadingStore((state) => state.totalProgress);
-const useIsModuleLoaded = (moduleId: string) =>
-  useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'loaded');
-const useIsModuleLoading = (moduleId: string) =>
-  useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'loading');
-const useHasModuleError = (moduleId: string) =>
-  useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'error');
