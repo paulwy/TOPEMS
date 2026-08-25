@@ -1754,7 +1754,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 2 files（types/qms.ts + types/wms.ts）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2479 warnings) · tsc --noUnusedLocals types/ 0 errors
 >
-> **Tag**: `V298` · Baseline SHA: `977921f9f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V298-3e5916877.tar.gz` (.gitignore 排除)
+> **Tag**: `V298` · Baseline SHA: `977921f9f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V298-c341044c1.tar.gz` (.gitignore 排除)
 
 ### A. 第五批未使用项清理（types/ 目录，129 项）
 - 背景：V297 后全 src/ 仍有 1588 个 tsc --noUnusedLocals 错误，types/qms.ts(79) + types/wms.ts(36) 集中度最高
