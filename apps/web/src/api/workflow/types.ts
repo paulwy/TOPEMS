@@ -226,18 +226,6 @@ export interface Task {
   updated_at?: string;
 }
 
-interface TaskStats {
-  todo: number;
-  done: number;
-  sent: number;
-  cc: number;
-  myPending?: number;
-  myCompleted?: number;
-  myInvolved?: number;
-  myCreated?: number;
-  candidate?: number;
-}
-
 export interface CreateApprovalRequest {
   workflow_instance_id: string;
   node_id?: string;
@@ -314,16 +302,6 @@ export interface WorkflowTemplate {
   usage_count?: number;
   isactive?: boolean;
   created_by?: string;
-  created_at: string;
-  updated_at?: string;
-}
-
-interface WorkflowSetting {
-  id: string;
-  key: string;
-  value: string;
-  description: string;
-  category: string;
   created_at: string;
   updated_at?: string;
 }
@@ -677,44 +655,7 @@ export interface WorkflowCategory {
   created_at: string;
 }
 
-interface WorkflowDeployRequest {
-  definition?: WorkflowDefinition;
-  version?: string;
-  change_description?: string;
-}
-
-interface WorkflowDeploymentResult {
-  workflow_id: string;
-  version: string;
-  deployed_at: string;
-  deployed_by: string;
-}
-
-interface WorkflowExportResult {
-  workflow_id: string;
-  name: string;
-  data: string;
-  format: 'json' | 'xml' | 'bpmn';
-}
-
-interface WorkflowImportResult {
-  workflow_id: string;
-  name: string;
-  version: string;
-}
-
 // ==================== 流程实例扩展类型 ====================
-
-interface WorkflowInstanceQueryParams extends ListParams {
-  workflow_id?: string;
-  status?: string;
-  initiator_id?: string;
-  start_time_from?: string;
-  start_time_to?: string;
-  end_time_from?: string;
-  end_time_to?: string;
-  include_subprocess?: boolean;
-}
 
 export interface WorkflowInstanceDetail {
   instance: WorkflowInstance;
@@ -729,24 +670,6 @@ export interface WorkflowInstanceDetail {
     status: string;
     arrived_at?: string;
   };
-}
-
-interface WorkflowInstanceCancelRequest {
-  reason?: string;
-  operator_id?: string;
-  operator_name?: string;
-}
-
-interface WorkflowInstanceUrgeRequest {
-  task_id?: string;
-  message?: string;
-  urge_type?: 'normal' | 'urgent' | 'very_urgent';
-}
-
-interface WorkflowInstanceRecallRequest {
-  reason?: string;
-  operator_id?: string;
-  operator_name?: string;
 }
 
 // ==================== 委托/代理相关类型 ====================

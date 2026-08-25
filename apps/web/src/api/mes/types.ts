@@ -1,6 +1,3 @@
-import type { ApiResponse } from '../client';
-import type { MesTypes } from '@topems/shared-types';
-
 // ============================================================================
 // OpenAPI 生成类型迁移映射（推广阶段）
 // ============================================================================
@@ -32,16 +29,6 @@ import type { MesTypes } from '@topems/shared-types';
 // ============================================================================
 // OpenAPI 生成类型别名（推广阶段）
 // ============================================================================
-type GeneratedWorkOrderResponse = MesTypes.WorkOrderResponse;
-type GeneratedWorkReportResponse = MesTypes.WorkReportResponse;
-type GeneratedProductionOrderResponse = MesTypes.ProductionOrderResponse;
-type GeneratedCreateWorkOrderRequest = MesTypes.CreateWorkOrderRequest;
-type GeneratedUpdateWorkOrderRequest = MesTypes.UpdateWorkOrderRequest;
-type GeneratedCreateWorkReportRequest = MesTypes.CreateWorkReportRequest;
-type GeneratedUpdateWorkReportRequest = MesTypes.UpdateWorkReportRequest;
-type GeneratedCreateProductionOrderRequest = MesTypes.CreateProductionOrderRequest;
-type GeneratedUpdateProductionOrderRequest = MesTypes.UpdateProductionOrderRequest;
-type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
 
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
@@ -52,81 +39,9 @@ type GeneratedCreateFromErpRequest = MesTypes.CreateFromErpRequest;
 // - planned_start_time/planned_end_time（手写） ↔ planStartDate/planEndDate（生成）
 // - actual_start_time/actual_end_time（手写） ↔ actualStartDate/actualEndDate（生成）
 
-/** 生成类型 WorkOrderResponse 的字段重映射到手写 WorkOrder 命名 */
-type AdaptedWorkOrder = Omit<
-  MesTypes.WorkOrderResponse,
-  | 'order_no'
-  | 'planned_quantity'
-  | 'plan_start_date'
-  | 'plan_end_date'
-  | 'actual_start_date'
-  | 'actual_end_date'
-> & {
-  order_number?: MesTypes.WorkOrderResponse['order_no'];
-  quantity?: MesTypes.WorkOrderResponse['planned_quantity'];
-  planned_start_time?: MesTypes.WorkOrderResponse['plan_start_date'];
-  planned_end_time?: MesTypes.WorkOrderResponse['plan_end_date'];
-  actual_start_time?: MesTypes.WorkOrderResponse['actual_start_date'];
-  actual_end_time?: MesTypes.WorkOrderResponse['actual_end_date'];
-};
-
-/** 生成类型 ProductionOrderResponse 的字段重映射到手写 ProductionOrder 命名 */
-type AdaptedProductionOrder = Omit<
-  MesTypes.ProductionOrderResponse,
-  'order_no' | 'planned_start_date' | 'planned_end_date'
-> & {
-  order_number?: MesTypes.ProductionOrderResponse['order_no'];
-  scheduled_start_date?: MesTypes.ProductionOrderResponse['planned_start_date'];
-  scheduled_end_date?: MesTypes.ProductionOrderResponse['planned_end_date'];
-};
-
 // ============================================================================
 // 字段适配函数：生成类型实例 → 手写命名实例
 // ============================================================================
-
-/**
- * 将生成类型 WorkOrderResponse 转换为手写命名的 AdaptedWorkOrder。
- * 字段映射：order_no → order_number, planned_quantity → quantity,
- *           plan_start_date → planned_start_time, plan_end_date → planned_end_time,
- *           actual_start_date → actual_start_time, actual_end_date → actual_end_time
- */
-const adaptWorkOrderFromGenerated = (generated: MesTypes.WorkOrderResponse): AdaptedWorkOrder => {
-  const {
-    order_no,
-    planned_quantity,
-    plan_start_date,
-    plan_end_date,
-    actual_start_date,
-    actual_end_date,
-    ...rest
-  } = generated;
-  return {
-    ...rest,
-    order_number: order_no,
-    quantity: planned_quantity,
-    planned_start_time: plan_start_date,
-    planned_end_time: plan_end_date,
-    actual_start_time: actual_start_date,
-    actual_end_time: actual_end_date,
-  };
-};
-
-/**
- * 将生成类型 ProductionOrderResponse 转换为手写命名的 AdaptedProductionOrder。
- * 字段映射：order_no → order_number, planned_start_date → scheduled_start_date,
- *           planned_end_date → scheduled_end_date
- */
-const adaptProductionOrderFromGenerated = (
-  generated: MesTypes.ProductionOrderResponse
-): AdaptedProductionOrder => {
-  const { order_no, planned_start_date, planned_end_date, ...rest } = generated;
-  return {
-    ...rest,
-    order_number: order_no,
-    scheduled_start_date: planned_start_date,
-    scheduled_end_date: planned_end_date,
-  };
-};
 
 // ============================================================================
 // 手写类型（当前主类型）
