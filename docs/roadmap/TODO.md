@@ -2912,12 +2912,106 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **macOS EPERM 权限问题**：bash 无法写入项目目录，需用 Write/Edit 工具；待用户确认恢复权限
-- [ ] **src/ 其他目录未使用项清理（第二十批）**：全 src/ 仍有 ~615 个 tsc 未使用项，推荐 intelligent-ops/v56-ops-panel(4) + constants/pagination(4) + components/gis/Map3DView(4) + ai/review/performance-auditor(4) + ai/quality/ux-monitor(4)
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现 `const X: Array<{\n...\n}> = [...]` 多行类型注解导致脚本只移除声明行留下对象体，需恢复后手动移除
+- [x] **macOS EPERM 权限问题**：V312 发现 bash 无法写入项目目录，V313 已恢复（用户重新授权文件夹）
+- [x] **src/ 其他目录未使用项清理（第二十批）**：V313 清理 v56-ops-panel(4 import) + pagination(4) + Map3DView(2解构+2 useCallback) + performance-auditor(4 PATTERNS) + ux-monitor(4) = 20项+2级联，tsc 目标 5 files 0 errors，净删 204 行
+- [ ] **src/ 其他目录未使用项清理（第二十一批）**：全 src/ 仍有 ~593 个 tsc 未使用项，推荐 theme/presets(3) + store/authStore(3) + pages/workflow/WorkflowApprovalActions(3) + pages/wms/StockTakePage(3) + pages/wms/DashboardPage(3)
+
+## 🎯 V313 — 第二十批未使用项清理（22项）+ v6多行类型注解孤儿对象体（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1857 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V313` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V313` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第二十批未使用项清理（22 项）
+- 背景：V312 后全 src/ 仍有 ~615 个 tsc --noUnusedLocals 错误，第二十批目标 5 files 首轮 20 项 + 级联 2 项
+- 修复：v6 脚本（14 项，含 2 个 useCallback）+ 手动修复 6 项 + 恢复重做 8 项
+- 迭代过程：
+  - **v6 脚本第一轮（15 项）**：ux-monitor 4 + performance-auditor 4 + pagination 5（含1级联）+ Map3DView 2 = 15 项
+  - **v6 脚本损坏（关键问题）**：ux-monitor 的 `UX_THRESHOLDS: Record<\n UXMetricType,\n {...}\n> = {...}` 和 performance-auditor 的 4 个 `PATTERNS: Array<{\n...\n}> = [...]` 因多行类型注解，脚本只移除 `const NAME` 行留下 `> = {...}` 或 `{...}` 孤儿对象体，导致 tsc 语法错误（TS1109/TS1005/TS1128）
+  - **恢复重做**：`git checkout` 恢复 ux-monitor.ts 和 performance-auditor.ts，用 Edit 工具手动移除完整声明（含多行类型注解和对象/数组体）
+  - **手动修复 6 项**：
+    1. Map3DView: terrain + enableTerrain（解构 prop）
+    2. v56-ops-panel: Shield + ChevronDown + ChevronRight（lucide-react 多行 import）+ alpha（@mui/material/styles 单行 import）
+  - **级联 2 项**：ux-monitor 和 performance-auditor 的 `i18n` import（移除使用 i18n.t 的常量后级联未使用）
+- 变更（5 files，22 项，净删 204 行）：
+  - **ai/review/performance-auditor.ts**：-115 行（4 PATTERNS 数组 + i18n import 级联）
+  - **ai/quality/ux-monitor.ts**：-33 行（4 const/function + i18n import 级联）
+  - **constants/pagination.ts**：-27 行（3 const + 1 function）
+  - **components/gis/Map3DModule/Map3DView.tsx**：-25 行（2 useCallback + 2 解构 prop）
+  - **intelligent-ops/v56-ops-panel.tsx**：-4 行（3 lucide import + 1 alpha import）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第六代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致误判声明结束
+- **V306 孤儿闭合括号**：移除函数时留下独立 `}`
+- **V308 class 移除成功**：SmartPrecacheController class 完整移除
+- **V309 箭头函数孤儿函数体**：移除 `const useXxx = (params) => { ... }` 时留下函数体
+- **V310 多行 import + 解构变量**：多行 import block 中符号无法移除；函数参数解构变量无法处理
+- **V311 TS6192 + class field**：TS6192 整行 import 无名称；class private field 脚本不支持
+- **V313 多行类型注解孤儿对象体**（新发现）：
+  - `const X: Record<\n Type,\n { ... }\n> = { ... }` — 脚本正则匹配 `const X` 行，但类型注解的 `<...>` 跨多行，脚本括号跟踪只跟踪 `{}()[]` 不跟踪 `<>`，导致移除 `const X: Record<` 行后留下 `> = { ... }` 孤儿对象体
+  - `const X: Array<{\n pattern: RegExp;\n ...\n}> = [...]` — 同理，类型注解中 `{` 被脚本误认为对象体起始
+  - **修复方案**：恢复文件后用 Edit 工具手动移除完整声明块
+  - **脚本改进方向**：需跟踪 `<>` 泛型括号，或在移除前检查声明是否包含未闭合的 `<`
+
+### C. 级联清理
+- ux-monitor.ts：移除 METRIC_LABELS（使用 i18n.t）→ i18n import 级联
+- performance-auditor.ts：移除 4 个 PATTERNS（全部使用 i18n.t）→ i18n import 级联
+- pagination.ts：移除 PAGE_SIZES → 第二个 PAGE_SIZES 级联（脚本 round 2 自动移除）
+- 其他文件：无 cascading
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（22 项全部清除）
+- `eslint src/`: 0 errors, 1857 warnings（从 V312 的 1875 减少 18）
+- `cargo check --workspace`: 0 errors（V313 无 Rust 改动）
+
+### E. 文档化
+- V312 后续扩展「第二十批」打勾 [x]
+- 新增「第二十一批」后续扩展项（全 src/ 仍有 ~593 个未使用项）
+- 新增「v6 脚本多行类型注解孤儿对象体」问题追踪
+- 「macOS EPERM 权限问题」打勾 [x]（V313 已恢复）
+- V313 章节写入完整交付记录 + 22 项明细 + v6 脚本损坏与恢复重做说明 + 级联 2 项
+
+### 变更文件清单（6 files）
+- `apps/web/src/ai/review/performance-auditor.ts`（-115 行）
+- `apps/web/src/ai/quality/ux-monitor.ts`（-33 行）
+- `apps/web/src/constants/pagination.ts`（-27 行）
+- `apps/web/src/components/gis/modules/Map3DModule/Map3DView.tsx`（-25 行）
+- `apps/web/src/intelligent-ops/v56-ops-panel.tsx`（-4 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（22 项全部清除）
+- [x] `eslint src/` — 0 errors（1857 warnings，从 1875 减少 18）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 22 项 — 全部移除（净删 204 行）
+- [x] v6 脚本孤儿对象体 — 恢复后手动移除 8 项
+- [x] 2 个级联 i18n import — 迭代清除
+- [x] V312 后续扩展「第二十批」打勾 [x]
+
+### V313 后续扩展（留给 V314+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **src/ 其他目录未使用项清理（第二十一批）**：全 src/ 仍有 ~593 个 tsc 未使用项，推荐 theme/presets(3) + store/authStore(3) + pages/workflow/WorkflowApprovalActions(3) + pages/wms/StockTakePage(3) + pages/wms/DashboardPage(3)
 
 
 

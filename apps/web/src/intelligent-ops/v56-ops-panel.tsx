@@ -49,11 +49,8 @@ import {
   Plus,
   Bot,
   Database,
-  Shield,
   FileText,
   RefreshCw,
-  ChevronDown,
-  ChevronRight,
   Sparkles,
   Server,
   ArrowUpCircle,
@@ -78,7 +75,6 @@ import {
   type RepairType,
 } from './intelligent-repair';
 import { designTokens } from '@topems/tokens';
-import { alpha } from '@mui/material/styles';
 
 type TabId = 'scaling' | 'rca' | 'repair' | 'timeline';
 

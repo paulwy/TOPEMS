@@ -16,15 +16,6 @@ const DEFAULT_PAGE = 1 as const;
 /** Default page size (consistent with shared PAGINATION.DEFAULT_PAGE_SIZE) */
 const DEFAULT_PAGE_SIZE = 20 as const;
 
-/** Available page size options (consistent with shared PAGINATION.PAGE_SIZE_OPTIONS) */
-const PAGE_SIZES: readonly number[] = [10, 20, 50, 100] as const;
-
-/** Compact page size for detail dialogs and other tight scenarios */
-const COMPACT_PAGE_SIZE = 10 as const;
-
-/** Large page size for audit / log and other large-list scenarios */
-const LARGE_PAGE_SIZE = 50 as const;
-
 /**
  * 分页参数命名归一化（pageSize ↔ page_size ↔ pagesize 三种历史命名兼容）。
  *
@@ -92,22 +83,4 @@ export function normalizePaginationParams(
   out.page_size = pageSize;
   out.pagesize = pageSize;
   return out as PaginationParamsNormalized;
-}
-
-/**
- * 仅转换为后端 Rust 侧接受的 snake_case 格式（丢弃 pageSize / pagesize），
- * 用于发送最终请求之前的清理。
- */
-function toBackendPagination(input: PaginationParamsInput): {
-  page: number;
-  page_size: number;
-  search?: string;
-} {
-  const n = normalizePaginationParams(input);
-  const res: { page: number; page_size: number; search?: string } = {
-    page: n.page,
-    page_size: n.page_size,
-  };
-  if (n.search !== undefined) res.search = n.search;
-  return res;
 }
