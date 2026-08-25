@@ -3423,7 +3423,7 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 15 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1674 warnings) · 目标 15 files 未使用清零
 >
-> **Tag**: `V318` · Baseline SHA: `7c40752c4` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V318-d8cd5f3d3.tar.gz` (.gitignore 排除)
+> **Tag**: `V318` · Baseline SHA: `7c40752c4` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V318-8eade4837.tar.gz` (.gitignore 排除)
 
 ### A. 批量模式第三次运行
 - 背景：V316/V317 批量模式连续成功，V318 继续 3批/版本节奏
