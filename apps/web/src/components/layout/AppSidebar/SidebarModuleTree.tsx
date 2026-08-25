@@ -147,12 +147,23 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {collapsedModule?.icon && renderIcon(collapsedModule.icon, 18)}
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.9375rem'], fontWeight: 700, color: 'text.primary' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.9375rem'],
+                  fontWeight: 700,
+                  color: 'text.primary',
+                }}
+              >
                 {collapsedModule?.nameKey
                   ? i18n.t(collapsedModule.nameKey)
                   : collapsedModule?.name || collapsedModuleCode}
               </Typography>
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                  color: 'text.secondary',
+                }}
+              >
                 {i18n.t('components.sidebar_module_tree.k0')}
               </Typography>
             </Box>

@@ -882,7 +882,11 @@ ${content
                       ),
                       h3: ({ children }) => (
                         <h3
-                          style={{ fontSize: designTokens.typography.fontSize.scale['1.25rem'], fontWeight: 600, margin: '1rem 0 0.5rem' }}
+                          style={{
+                            fontSize: designTokens.typography.fontSize.scale['1.25rem'],
+                            fontWeight: 600,
+                            margin: '1rem 0 0.5rem',
+                          }}
                         >
                           {children}
                         </h3>

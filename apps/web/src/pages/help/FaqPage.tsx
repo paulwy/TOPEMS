@@ -112,9 +112,7 @@ export const FaqPage: React.FC = () => {
       {
         id: 'question',
         label: t('help_center.faq'),
-        render: (row) => (
-          <Typography sx={{ fontWeight: 600 }}>{row.question}</Typography>
-        ),
+        render: (row) => <Typography sx={{ fontWeight: 600 }}>{row.question}</Typography>,
       },
       {
         id: 'category',
@@ -130,7 +128,10 @@ export const FaqPage: React.FC = () => {
         id: 'views',
         label: i18n.t('pages.faq_page.k0'),
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {i18n.t('pages.faq_page.k0')} {row.views.toLocaleString()}
           </Typography>
         ),

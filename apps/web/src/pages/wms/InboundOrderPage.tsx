@@ -19,12 +19,17 @@ import type { EntitySchema } from '@/schema';
 
 const inboundOrderApiAdapter = createCrudPageAdapter(wmsApi.inboundOrders);
 const inboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  inboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<Record<string, unknown>>
+  inboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
+    Record<string, unknown>
+  >
 );
 
 const InboundOrderPage: React.FC = () => {
   const columns = React.useMemo(
-    () => getColumns<Record<string, unknown>>(inboundOrderSchema as unknown as EntitySchema<Record<string, unknown>>),
+    () =>
+      getColumns<Record<string, unknown>>(
+        inboundOrderSchema as unknown as EntitySchema<Record<string, unknown>>
+      ),
     []
   );
 

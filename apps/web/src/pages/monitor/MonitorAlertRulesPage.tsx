@@ -24,6 +24,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface AlertRule {
   id: string;
   name: string;

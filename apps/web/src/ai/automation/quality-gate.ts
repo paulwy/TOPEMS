@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type GateType = 'coverage' | 'bundle' | 'size' | 'performance' | 'security';
 export type GateAction = 'block' | 'warn' | 'info';
 export type GateStatus = 'passed' | 'failed' | 'warned' | 'skipped';

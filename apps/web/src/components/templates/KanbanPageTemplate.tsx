@@ -581,7 +581,11 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             {card.assignee && (
               <Avatar
                 src={card.assignee.avatar}
-                sx={{ width: 24, height: 24, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                sx={{
+                  width: 24,
+                  height: 24,
+                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                }}
               >
                 {card.assignee.name.charAt(0)}
               </Avatar>

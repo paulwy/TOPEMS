@@ -286,7 +286,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       style={{
         position: 'relative',
         padding: 16,
-        backgroundColor: !notification.is_read ? `${alpha(theme.palette.primary.main, 0.05)}` : undefined,
+        backgroundColor: !notification.is_read
+          ? `${alpha(theme.palette.primary.main, 0.05)}`
+          : undefined,
         opacity: isDeleting ? 0.5 : 1,
         cursor: 'pointer',
         transition: 'background-color 0.15s',

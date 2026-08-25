@@ -339,7 +339,8 @@ const NotificationCenter: React.FC = () => {
                   padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                   borderRadius: '2xl',
                   border: 'none',
-                  backgroundColor: activeFilter === filter ? ct.primary.main : 'colors.action.hover',
+                  backgroundColor:
+                    activeFilter === filter ? ct.primary.main : 'colors.action.hover',
                   color: activeFilter === filter ? designTokens.colors.background.paper : 'inherit',
                   fontSize: '13px',
                   cursor: 'pointer',

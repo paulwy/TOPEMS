@@ -11,10 +11,13 @@
  *   lib/apiClient.ts       -> [本文件] 统一导出层，整合上述模块
  */
 
-import { apiClient as axiosApiClient } from '@/api/client';
-import type { ApiResponse, PaginatedResponse } from '@/api/client';
-import { handleResponse } from '@/api/client';
-import type { RequestOptions as ApiRequestOptions, PaginatedRequestParams } from '@/api/client';
+import { apiClient as axiosApiClient, handleResponse } from '@/api/client';
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  RequestOptions as ApiRequestOptions,
+  PaginatedRequestParams,
+} from '@/api/client';
 
 // Re-export core types
 export type { ApiResponse, PaginatedResponse, PaginationParams } from '@/api/client';

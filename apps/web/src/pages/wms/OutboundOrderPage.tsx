@@ -16,12 +16,17 @@ import i18n from '@/i18n';
 
 const outboundOrderApiAdapter = createCrudPageAdapter(wmsApi.outboundOrders);
 const outboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  outboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<Record<string, unknown>>
+  outboundOrderApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
+    Record<string, unknown>
+  >
 );
 
 const OutboundOrderPage: React.FC = () => {
   const columns = React.useMemo(
-    () => getColumns<Record<string, unknown>>(outboundOrderSchema as unknown as EntitySchema<Record<string, unknown>>),
+    () =>
+      getColumns<Record<string, unknown>>(
+        outboundOrderSchema as unknown as EntitySchema<Record<string, unknown>>
+      ),
     []
   );
 

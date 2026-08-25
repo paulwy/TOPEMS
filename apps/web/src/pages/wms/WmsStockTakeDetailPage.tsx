@@ -46,7 +46,10 @@ function buildStockTakeItems(id: string, count: number): StockTakeItemRow[] {
 function DiffCell({ diff }: { diff: number }) {
   const color = diff === 0 ? 'success.main' : diff > 0 ? 'warning.main' : 'error.main';
   return (
-    <Typography variant='body2' sx={{ textAlign: 'right', color, fontWeight: 600 }}>
+    <Typography
+      variant='body2'
+      sx={{ textAlign: 'right', color, fontWeight: 600 }}
+    >
       {diff > 0 ? '+' : ''}
       {diff}
     </Typography>
@@ -65,7 +68,10 @@ export default function WmsStockTakeDetailPage() {
     );
   }, [id, data.stockTakeList]);
 
-  const items = useMemo<StockTakeItemRow[]>(() => (task ? buildStockTakeItems(task.id, 8) : []), [task]);
+  const items = useMemo<StockTakeItemRow[]>(
+    () => (task ? buildStockTakeItems(task.id, 8) : []),
+    [task]
+  );
 
   const diffSummary = useMemo(() => {
     const over = items.filter((i) => i.diff > 0).length;
@@ -82,7 +88,10 @@ export default function WmsStockTakeDetailPage() {
         accessorKey: 'sku',
         header: 'SKU',
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.original.sku}
           </Typography>
         ),
@@ -96,7 +105,10 @@ export default function WmsStockTakeDetailPage() {
         accessorKey: 'location',
         header: i18n.t('pages.wms_stock_take_detail_page.k9'),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.original.location}
           </Typography>
         ),
@@ -107,7 +119,10 @@ export default function WmsStockTakeDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_stock_take_detail_page.k10')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.systemQty}
           </Typography>
         ),
@@ -118,7 +133,10 @@ export default function WmsStockTakeDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_stock_take_detail_page.k11')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.actualQty}
           </Typography>
         ),
@@ -141,14 +159,20 @@ export default function WmsStockTakeDetailPage() {
 
   if (!task) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_stock_take_detail_page.k1')}</Typography>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={`${i18n.t('wms.stockTakeDetail.k0')} ${task.stock_take_number}`}
         subtitle={`${i18n.t('pages.wms_stock_take_detail_page.k2')}${
@@ -157,8 +181,15 @@ export default function WmsStockTakeDetailPage() {
         detailItemName={task.stock_take_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='stocktake' status={task.status} />
-            <WmsFSMActionButtons fsm='stocktake' currentStatus={task.status} onAction={() => {}} />
+            <WmsStatusBadge
+              fsm='stocktake'
+              status={task.status}
+            />
+            <WmsFSMActionButtons
+              fsm='stocktake'
+              currentStatus={task.status}
+              onAction={() => {}}
+            />
           </Box>
         }
         infoCard={{

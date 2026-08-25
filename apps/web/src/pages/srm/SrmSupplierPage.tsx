@@ -106,7 +106,10 @@ const SupplierStats: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {card.label}
                 </Typography>

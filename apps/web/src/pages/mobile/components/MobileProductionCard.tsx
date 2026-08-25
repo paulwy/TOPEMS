@@ -116,7 +116,10 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         color={
                           getStatusColor(order.status) as React.ComponentProps<typeof Chip>['color']
                         }
-                        sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                        sx={{
+                          height: 20,
+                          fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                        }}
                       />
                       <Typography
                         variant='caption'
@@ -245,7 +248,10 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         })}
                         size='small'
                         color='success'
-                        sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
+                        sx={{
+                          height: 18,
+                          fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                        }}
                       />
                       <Chip
                         label={i18n.t('mobile.production.label.defective_count', {
@@ -253,7 +259,10 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                         })}
                         size='small'
                         color='error'
-                        sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
+                        sx={{
+                          height: 18,
+                          fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                        }}
                       />
                     </Box>
                   </Box>
@@ -327,7 +336,10 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
+                      sx={{
+                        height: 18,
+                        fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                      }}
                     />
                   </Box>
                 }

@@ -138,7 +138,13 @@ const DocsFileDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('pages.file_detail_page.id_12')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+          <Typography
+            sx={{
+              mt: 0.5,
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
+          >
             {file.id.substring(0, 8)}...
           </Typography>
         </Box>

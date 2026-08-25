@@ -137,7 +137,10 @@ const TrainingPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('ehs.training_page.plan_2')}
               </Typography>
@@ -170,7 +173,10 @@ const TrainingPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('ehs.training_page.in_progress')}
               </Typography>
@@ -203,7 +209,10 @@ const TrainingPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('ehs.training_page.completed')}
               </Typography>
@@ -236,7 +245,10 @@ const TrainingPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('ehs.training_page.text_c6cc39f')}
               </Typography>

@@ -30,6 +30,7 @@ import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
+
 const ct = designTokens.colors;
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 type MetricCategory = 'host' | 'service' | 'database' | 'middleware';

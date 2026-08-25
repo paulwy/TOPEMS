@@ -400,4 +400,3 @@ class UXMonitorImpl {
     return { ...this.thresholds };
   }
 }
-

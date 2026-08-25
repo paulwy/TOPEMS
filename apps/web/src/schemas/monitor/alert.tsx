@@ -241,74 +241,74 @@ export const getAlertSchema = (): EntitySchema => {
     title: i18n.t('shared.alert.k15'),
     description: i18n.t('shared.alert.k16'),
 
-  api: {
-    module: 'monitor',
-    resource: 'alerts',
-  },
+    api: {
+      module: 'monitor',
+      resource: 'alerts',
+    },
 
-  fields: alertFields,
+    fields: alertFields,
 
-  list: {
-    searchFields: ['title', 'service_name', 'message'],
-    pageSize: 10,
-    selectable: true,
-    filters: [
+    list: {
+      searchFields: ['title', 'service_name', 'message'],
+      pageSize: 10,
+      selectable: true,
+      filters: [
+        {
+          id: 'severity',
+          label: i18n.t('shared.alert.k17'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.alert.k18'), value: 'all' },
+            { label: i18n.t('shared.alert.k19'), value: 'critical' },
+            { label: i18n.t('shared.alert.k20'), value: 'warning' },
+            { label: i18n.t('shared.alert.k21'), value: 'info' },
+          ],
+        },
+        {
+          id: 'status',
+          label: i18n.t('shared.alert.k22'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.alert.k23'), value: 'all' },
+            { label: i18n.t('shared.alert.k24'), value: 'active' },
+            { label: i18n.t('shared.alert.k25'), value: 'acknowledged' },
+            { label: i18n.t('shared.alert.k26'), value: 'resolved' },
+          ],
+        },
+        {
+          id: 'service',
+          label: i18n.t('shared.alert.k27'),
+          type: 'select',
+          paramName: 'service_name',
+          options: [{ label: i18n.t('shared.alert.k28'), value: 'all' }],
+        },
+      ],
+    },
+
+    actions: ['detail'],
+
+    batchActions: [
       {
-        id: 'severity',
-        label: i18n.t('shared.alert.k17'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.alert.k18'), value: 'all' },
-          { label: i18n.t('shared.alert.k19'), value: 'critical' },
-          { label: i18n.t('shared.alert.k20'), value: 'warning' },
-          { label: i18n.t('shared.alert.k21'), value: 'info' },
-        ],
+        key: 'batch-acknowledge',
+        label: i18n.t('shared.alert.k29'),
+        color: 'primary',
+        onClick: () => {},
+        confirm: true,
+        confirmMessage: i18n.t('shared.alert.k30'),
       },
       {
-        id: 'status',
-        label: i18n.t('shared.alert.k22'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.alert.k23'), value: 'all' },
-          { label: i18n.t('shared.alert.k24'), value: 'active' },
-          { label: i18n.t('shared.alert.k25'), value: 'acknowledged' },
-          { label: i18n.t('shared.alert.k26'), value: 'resolved' },
-        ],
-      },
-      {
-        id: 'service',
-        label: i18n.t('shared.alert.k27'),
-        type: 'select',
-        paramName: 'service_name',
-        options: [{ label: i18n.t('shared.alert.k28'), value: 'all' }],
+        key: 'batch-resolve',
+        label: i18n.t('shared.alert.k31'),
+        color: 'success',
+        onClick: () => {},
+        confirm: true,
+        confirmMessage: i18n.t('shared.alert.k32'),
       },
     ],
-  },
 
-  actions: ['detail'],
-
-  batchActions: [
-    {
-      key: 'batch-acknowledge',
-      label: i18n.t('shared.alert.k29'),
-      color: 'primary',
-      onClick: () => {},
-      confirm: true,
-      confirmMessage: i18n.t('shared.alert.k30'),
-    },
-    {
-      key: 'batch-resolve',
-      label: i18n.t('shared.alert.k31'),
-      color: 'success',
-      onClick: () => {},
-      confirm: true,
-      confirmMessage: i18n.t('shared.alert.k32'),
-    },
-  ],
-
-  formColCount: 2,
-  detailTitle: i18n.t('shared.alert.k33'),
-  detailMaxWidth: 'md',
+    formColCount: 2,
+    detailTitle: i18n.t('shared.alert.k33'),
+    detailMaxWidth: 'md',
   };
 };
 

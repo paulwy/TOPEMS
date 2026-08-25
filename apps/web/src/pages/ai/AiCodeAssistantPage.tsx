@@ -383,411 +383,411 @@ export const AiCodeAssistantPage: React.FC = () => {
       }}
     >
       <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          {/* 标签页 */}
-          <Box
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              px: 2,
-            }}
+        {/* 标签页 */}
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            px: 2,
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            sx={{ minHeight: 48 }}
           >
-            <Tabs
-              value={activeTab}
-              onChange={(_, v) => setActiveTab(v)}
-              sx={{ minHeight: 48 }}
-            >
-              {tabConfig.map((tab) => (
-                <Tab
-                  key={tab.id}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {tab.icon}
-                      {tab.label}
-                    </Box>
-                  }
-                  value={tab.id}
-                  sx={{ minHeight: 48, textTransform: 'none' }}
-                />
-              ))}
-            </Tabs>
-          </Box>
+            {tabConfig.map((tab) => (
+              <Tab
+                key={tab.id}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {tab.icon}
+                    {tab.label}
+                  </Box>
+                }
+                value={tab.id}
+                sx={{ minHeight: 48, textTransform: 'none' }}
+              />
+            ))}
+          </Tabs>
+        </Box>
 
-          <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 3 }}>
+          <Grid
+            container
+            spacing={3}
+          >
+            {/* 左侧：输入区域 */}
             <Grid
-              container
-              spacing={3}
+              item
+              xs={12}
+              md={6}
             >
-              {/* 左侧：输入区域 */}
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
-                {/* 代码生成 - 输入 */}
-                {activeTab === 'generate' && (
-                  <Box>
-                    <Typography
-                      variant='subtitle1'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
-                      {t('ai.code_assistant.label.describe_requirement')}
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <FormControl
-                        size='small'
-                        sx={{ flex: 1 }}
-                      >
-                        <InputLabel>{t('ai.code_assistant.field.language')}</InputLabel>
-                        <Select
-                          value={language}
-                          label={t('ai.code_assistant.field.language')}
-                          onChange={(e) => setLanguage(e.target.value)}
-                        >
-                          <MenuItem value='typescript'>TypeScript</MenuItem>
-                          <MenuItem value='javascript'>JavaScript</MenuItem>
-                          <MenuItem value='python'>Python</MenuItem>
-                          <MenuItem value='java'>Java</MenuItem>
-                          <MenuItem value='go'>Go</MenuItem>
-                          <MenuItem value='sql'>SQL</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <FormControl
-                        size='small'
-                        sx={{ flex: 1 }}
-                      >
-                        <InputLabel>{t('ai.code_assistant.field.framework')}</InputLabel>
-                        <Select
-                          value={framework}
-                          label={t('ai.code_assistant.field.framework')}
-                          onChange={(e) => setFramework(e.target.value)}
-                        >
-                          <MenuItem value='react'>React</MenuItem>
-                          <MenuItem value='vue'>Vue</MenuItem>
-                          <MenuItem value='nodejs'>Node.js</MenuItem>
-                          <MenuItem value='spring'>Spring Boot</MenuItem>
-                          <MenuItem value='none'>
-                            {t('ai.code_assistant.option.no_framework')}
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={8}
-                      placeholder={t('ai.code_assistant.placeholder.describe_code')}
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      sx={{ mb: 2 }}
-                    />
-
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mb: 1 }}
-                    >
-                      {t('ai.code_assistant.label.quick_template')}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      {codeTemplateKeys.map((tpl) => (
-                        <Chip
-                          key={tpl.id}
-                          label={t(tpl.nameKey)}
-                          size='small'
-                          variant='outlined'
-                          onClick={() => setPrompt(t(tpl.descKey))}
-                          sx={{ cursor: 'pointer' }}
-                        />
-                      ))}
-                    </Box>
-
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      startIcon={
-                        generating ? (
-                          <RefreshCw
-                            size={18}
-                            className='animate-spin'
-                          />
-                        ) : (
-                          <Sparkles size={18} />
-                        )
-                      }
-                      onClick={handleGenerate}
-                      disabled={generating || !prompt.trim()}
-                    >
-                      {generating
-                        ? t('ai.code_assistant.status.generating')
-                        : t('ai.code_assistant.action.generate_code')}
-                    </Button>
-                  </Box>
-                )}
-
-                {/* 其他功能 - 代码输入 */}
-                {['explain', 'fix', 'optimize', 'review'].includes(activeTab) && (
-                  <Box>
-                    <Typography
-                      variant='subtitle1'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
-                      {activeTab === 'explain' && t('ai.code_assistant.label.input_explain')}
-                      {activeTab === 'fix' && t('ai.code_assistant.label.input_fix')}
-                      {activeTab === 'optimize' && t('ai.code_assistant.label.input_optimize')}
-                      {activeTab === 'review' && t('ai.code_assistant.label.input_review')}
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={14}
-                      value={codeInput}
-                      onChange={(e) => setCodeInput(e.target.value)}
-                      sx={{
-                        mb: 2,
-                        '& .MuiInputBase-input': {
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                        },
-                      }}
-                    />
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      startIcon={
-                        generating ? (
-                          <RefreshCw
-                            size={18}
-                            className='animate-spin'
-                          />
-                        ) : (
-                          <PlayCircle size={18} />
-                        )
-                      }
-                      onClick={() => {
-                        if (activeTab === 'explain') handleExplain();
-                        if (activeTab === 'fix') handleFixBug();
-                        if (activeTab === 'optimize') handleOptimize();
-                        if (activeTab === 'review') handleReview();
-                      }}
-                      disabled={generating || !codeInput.trim()}
-                    >
-                      {generating
-                        ? t('ai.code_assistant.status.processing')
-                        : activeTab === 'explain'
-                          ? t('ai.code_assistant.action.explain_code')
-                          : activeTab === 'fix'
-                            ? t('ai.code_assistant.action.fix_bug')
-                            : activeTab === 'optimize'
-                              ? t('ai.code_assistant.action.optimize_code')
-                              : t('ai.code_assistant.action.start_review')}
-                    </Button>
-                  </Box>
-                )}
-              </Grid>
-
-              {/* 右侧：结果区域 */}
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                  }}
-                >
+              {/* 代码生成 - 输入 */}
+              {activeTab === 'generate' && (
+                <Box>
                   <Typography
                     variant='subtitle1'
-                    sx={{ fontWeight: 600 }}
+                    sx={{ fontWeight: 600, mb: 2 }}
                   >
-                    {activeTab === 'review'
-                      ? t('ai.code_assistant.label.review_result')
-                      : t('ai.code_assistant.label.generate_result')}
+                    {t('ai.code_assistant.label.describe_requirement')}
                   </Typography>
-                  {result && (
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleCopy(result)}
-                        aria-label={t('ai.code_assistant.action.copy')}
-                        title={t('ai.code_assistant.action.copy')}
-                      >
-                        <Copy size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        aria-label={t('ai.code_assistant.action.download')}
-                        title={t('ai.code_assistant.action.download')}
-                      >
-                        <Download size={16} />
-                      </IconButton>
-                    </Box>
-                  )}
-                </Box>
 
-                {/* 代码审查结果 */}
-                {activeTab === 'review' && reviewScore > 0 && (
-                  <Box sx={{ mb: 2 }}>
-                    <Paper
-                      variant='outlined'
-                      sx={{ p: 3, borderRadius: 3, mb: 2, textAlign: 'center' }}
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <FormControl
+                      size='small'
+                      sx={{ flex: 1 }}
                     >
-                      <Typography
-                        variant='h3'
-                        sx={{
-                          fontWeight: 700,
-                          color:
-                            reviewScore >= 80
-                              ? 'success.main'
-                              : reviewScore >= 60
-                                ? 'warning.main'
-                                : 'error.main',
-                        }}
+                      <InputLabel>{t('ai.code_assistant.field.language')}</InputLabel>
+                      <Select
+                        value={language}
+                        label={t('ai.code_assistant.field.language')}
+                        onChange={(e) => setLanguage(e.target.value)}
                       >
-                        {reviewScore}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {t('ai.code_assistant.review.quality_score')}
-                      </Typography>
-                    </Paper>
-
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600, mb: 1 }}
+                        <MenuItem value='typescript'>TypeScript</MenuItem>
+                        <MenuItem value='javascript'>JavaScript</MenuItem>
+                        <MenuItem value='python'>Python</MenuItem>
+                        <MenuItem value='java'>Java</MenuItem>
+                        <MenuItem value='go'>Go</MenuItem>
+                        <MenuItem value='sql'>SQL</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl
+                      size='small'
+                      sx={{ flex: 1 }}
                     >
-                      {t('ai.code_assistant.review.issues_found', {
-                        count: reviewIssueKeys.length,
-                      })}
-                    </Typography>
-                    <List disablePadding>
-                      {reviewIssueKeys.map((issue, index) => (
-                        <Accordion
-                          key={index}
-                          disableGutters
-                        >
-                          <AccordionSummary expandIcon={<ChevronDown size={16} />}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              {getSeverityIcon(issue.severity)}
-                              <Typography
-                                variant='body2'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                {t('ai.code_assistant.review.line_issue', { line: issue.line })}：
-                                {t(issue.descKey)}
-                              </Typography>
-                            </Box>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                            >
-                              {t('ai.code_assistant.review.suggestion_label')}：
-                              {t(issue.suggestionKey)}
-                            </Typography>
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
-                    </List>
+                      <InputLabel>{t('ai.code_assistant.field.framework')}</InputLabel>
+                      <Select
+                        value={framework}
+                        label={t('ai.code_assistant.field.framework')}
+                        onChange={(e) => setFramework(e.target.value)}
+                      >
+                        <MenuItem value='react'>React</MenuItem>
+                        <MenuItem value='vue'>Vue</MenuItem>
+                        <MenuItem value='nodejs'>Node.js</MenuItem>
+                        <MenuItem value='spring'>Spring Boot</MenuItem>
+                        <MenuItem value='none'>
+                          {t('ai.code_assistant.option.no_framework')}
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
                   </Box>
-                )}
 
-                {/* 代码/文本结果 */}
-                {result && activeTab !== 'review' && (
-                  <Paper
-                    variant='outlined'
-                    sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      maxHeight: 500,
-                      overflow: 'auto',
-                      bgcolor: 'grey.50',
-                    }}
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={8}
+                    placeholder={t('ai.code_assistant.placeholder.describe_code')}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
                   >
-                    <pre
-                      style={{
-                        margin: 0,
+                    {t('ai.code_assistant.label.quick_template')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    {codeTemplateKeys.map((tpl) => (
+                      <Chip
+                        key={tpl.id}
+                        label={t(tpl.nameKey)}
+                        size='small'
+                        variant='outlined'
+                        onClick={() => setPrompt(t(tpl.descKey))}
+                        sx={{ cursor: 'pointer' }}
+                      />
+                    ))}
+                  </Box>
+
+                  <Button
+                    fullWidth
+                    variant='contained'
+                    startIcon={
+                      generating ? (
+                        <RefreshCw
+                          size={18}
+                          className='animate-spin'
+                        />
+                      ) : (
+                        <Sparkles size={18} />
+                      )
+                    }
+                    onClick={handleGenerate}
+                    disabled={generating || !prompt.trim()}
+                  >
+                    {generating
+                      ? t('ai.code_assistant.status.generating')
+                      : t('ai.code_assistant.action.generate_code')}
+                  </Button>
+                </Box>
+              )}
+
+              {/* 其他功能 - 代码输入 */}
+              {['explain', 'fix', 'optimize', 'review'].includes(activeTab) && (
+                <Box>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 600, mb: 2 }}
+                  >
+                    {activeTab === 'explain' && t('ai.code_assistant.label.input_explain')}
+                    {activeTab === 'fix' && t('ai.code_assistant.label.input_fix')}
+                    {activeTab === 'optimize' && t('ai.code_assistant.label.input_optimize')}
+                    {activeTab === 'review' && t('ai.code_assistant.label.input_review')}
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={14}
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value)}
+                    sx={{
+                      mb: 2,
+                      '& .MuiInputBase-input': {
                         fontFamily: 'monospace',
                         fontSize: 13,
-                        lineHeight: 1.6,
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
+                      },
+                    }}
+                  />
+                  <Button
+                    fullWidth
+                    variant='contained'
+                    startIcon={
+                      generating ? (
+                        <RefreshCw
+                          size={18}
+                          className='animate-spin'
+                        />
+                      ) : (
+                        <PlayCircle size={18} />
+                      )
+                    }
+                    onClick={() => {
+                      if (activeTab === 'explain') handleExplain();
+                      if (activeTab === 'fix') handleFixBug();
+                      if (activeTab === 'optimize') handleOptimize();
+                      if (activeTab === 'review') handleReview();
+                    }}
+                    disabled={generating || !codeInput.trim()}
+                  >
+                    {generating
+                      ? t('ai.code_assistant.status.processing')
+                      : activeTab === 'explain'
+                        ? t('ai.code_assistant.action.explain_code')
+                        : activeTab === 'fix'
+                          ? t('ai.code_assistant.action.fix_bug')
+                          : activeTab === 'optimize'
+                            ? t('ai.code_assistant.action.optimize_code')
+                            : t('ai.code_assistant.action.start_review')}
+                  </Button>
+                </Box>
+              )}
+            </Grid>
+
+            {/* 右侧：结果区域 */}
+            <Grid
+              item
+              xs={12}
+              md={6}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {activeTab === 'review'
+                    ? t('ai.code_assistant.label.review_result')
+                    : t('ai.code_assistant.label.generate_result')}
+                </Typography>
+                {result && (
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton
+                      size='small'
+                      onClick={() => handleCopy(result)}
+                      aria-label={t('ai.code_assistant.action.copy')}
+                      title={t('ai.code_assistant.action.copy')}
+                    >
+                      <Copy size={16} />
+                    </IconButton>
+                    <IconButton
+                      size='small'
+                      aria-label={t('ai.code_assistant.action.download')}
+                      title={t('ai.code_assistant.action.download')}
+                    >
+                      <Download size={16} />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+
+              {/* 代码审查结果 */}
+              {activeTab === 'review' && reviewScore > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 3, borderRadius: 3, mb: 2, textAlign: 'center' }}
+                  >
+                    <Typography
+                      variant='h3'
+                      sx={{
+                        fontWeight: 700,
+                        color:
+                          reviewScore >= 80
+                            ? 'success.main'
+                            : reviewScore >= 60
+                              ? 'warning.main'
+                              : 'error.main',
                       }}
                     >
-                      {result}
-                    </pre>
+                      {reviewScore}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {t('ai.code_assistant.review.quality_score')}
+                    </Typography>
                   </Paper>
-                )}
 
-                {/* 空状态 */}
-                {!result && activeTab !== 'review' && !generating && (
-                  <Box
-                    sx={{
-                      height: 400,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px dashed',
-                      borderColor: 'divider',
-                      borderRadius: 3,
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600, mb: 1 }}
+                  >
+                    {t('ai.code_assistant.review.issues_found', {
+                      count: reviewIssueKeys.length,
+                    })}
+                  </Typography>
+                  <List disablePadding>
+                    {reviewIssueKeys.map((issue, index) => (
+                      <Accordion
+                        key={index}
+                        disableGutters
+                      >
+                        <AccordionSummary expandIcon={<ChevronDown size={16} />}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {getSeverityIcon(issue.severity)}
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {t('ai.code_assistant.review.line_issue', { line: issue.line })}：
+                              {t(issue.descKey)}
+                            </Typography>
+                          </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            {t('ai.code_assistant.review.suggestion_label')}：
+                            {t(issue.suggestionKey)}
+                          </Typography>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </List>
+                </Box>
+              )}
+
+              {/* 代码/文本结果 */}
+              {result && activeTab !== 'review' && (
+                <Paper
+                  variant='outlined'
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    maxHeight: 500,
+                    overflow: 'auto',
+                    bgcolor: 'grey.50',
+                  }}
+                >
+                  <pre
+                    style={{
+                      margin: 0,
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
                     }}
                   >
-                    <Code2
-                      size={48}
-                      style={{ color: ct.text.disabled, marginBottom: 12 }}
-                    />
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {t('ai.code_assistant.empty.result_placeholder')}
-                    </Typography>
-                  </Box>
-                )}
+                    {result}
+                  </pre>
+                </Paper>
+              )}
 
-                {/* 加载中 */}
-                {generating && (
-                  <Box
-                    sx={{
-                      height: 400,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px dashed',
-                      borderColor: 'divider',
-                      borderRadius: 3,
-                    }}
+              {/* 空状态 */}
+              {!result && activeTab !== 'review' && !generating && (
+                <Box
+                  sx={{
+                    height: 400,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 3,
+                  }}
+                >
+                  <Code2
+                    size={48}
+                    style={{ color: ct.text.disabled, marginBottom: 12 }}
+                  />
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
                   >
-                    <RefreshCw
-                      size={32}
-                      className='animate-spin'
-                      style={{ color: ct.secondary[400], marginBottom: 12 }}
-                    />
-                    <Typography variant='body1'>
-                      {t('ai.code_assistant.status.ai_processing')}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {t('ai.code_assistant.status.please_wait')}
-                    </Typography>
-                  </Box>
-                )}
-              </Grid>
+                    {t('ai.code_assistant.empty.result_placeholder')}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* 加载中 */}
+              {generating && (
+                <Box
+                  sx={{
+                    height: 400,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 3,
+                  }}
+                >
+                  <RefreshCw
+                    size={32}
+                    className='animate-spin'
+                    style={{ color: ct.secondary[400], marginBottom: 12 }}
+                  />
+                  <Typography variant='body1'>
+                    {t('ai.code_assistant.status.ai_processing')}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    {t('ai.code_assistant.status.please_wait')}
+                  </Typography>
+                </Box>
+              )}
             </Grid>
-          </Box>
-        </Paper>
+          </Grid>
+        </Box>
+      </Paper>
     </AiToolPageTemplate>
   );
 };

@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type RouteStatus = 'active' | 'inactive' | 'deprecated';
@@ -100,8 +102,6 @@ interface GatewayDashboard {
   errors_last_24h: number;
   avg_latency_ms: number;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 export interface CreateRouteRequest {

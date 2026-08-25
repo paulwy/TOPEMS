@@ -31,6 +31,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { useNotificationStore } from '../../store';
 import { getMobileNotificationSchema } from '@/schemas/mobile';
+
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
 type TabType = 'all' | 'unread' | 'system' | 'approval' | 'task';

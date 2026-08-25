@@ -11,12 +11,7 @@
  * 全部使用 designTokens，不硬编码 px/rem。
  */
 import React from 'react';
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Box, CircularProgress, Typography, Button } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import { PageContainer } from '@/components/common';
 
@@ -79,7 +74,11 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
   // 加载状态
   if (loading) {
     return (
-      <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+      <PageContainer
+        title={title}
+        subtitle={subtitle}
+        {...pageContainerProps}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -92,7 +91,10 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
         >
           <CircularProgress />
           {loadingText && (
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {loadingText}
             </Typography>
           )}
@@ -104,7 +106,11 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
   // 错误状态
   if (error) {
     return (
-      <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+      <PageContainer
+        title={title}
+        subtitle={subtitle}
+        {...pageContainerProps}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -116,11 +122,17 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
             textAlign: 'center',
           }}
         >
-          <Typography color='error' variant='body1'>
+          <Typography
+            color='error'
+            variant='body1'
+          >
             {error}
           </Typography>
           {errorAction || (
-            <Button variant='outlined' size='small'>
+            <Button
+              variant='outlined'
+              size='small'
+            >
               ←
             </Button>
           )}
@@ -132,7 +144,11 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
   // children 透传模式
   if (children) {
     return (
-      <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+      <PageContainer
+        title={title}
+        subtitle={subtitle}
+        {...pageContainerProps}
+      >
         {children}
       </PageContainer>
     );
@@ -140,7 +156,11 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
 
   // 结构化模式（center 或 viewer）
   return (
-    <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+    <PageContainer
+      title={title}
+      subtitle={subtitle}
+      {...pageContainerProps}
+    >
       <Box
         sx={{
           display: 'flex',
@@ -149,34 +169,22 @@ export const ReportViewerTemplate: React.FC<ReportViewerTemplateProps> = ({
         }}
       >
         {/* mode=viewer: 顶部操作工具栏（返回 + 标题 + 下载/打印） */}
-        {mode === 'viewer' && toolbar && (
-          <Box>{toolbar}</Box>
-        )}
+        {mode === 'viewer' && toolbar && <Box>{toolbar}</Box>}
 
         {/* mode=center: 顶部统计卡片头 */}
-        {mode === 'center' && statsHeader && (
-          <Box>{statsHeader}</Box>
-        )}
+        {mode === 'center' && statsHeader && <Box>{statsHeader}</Box>}
 
         {/* 搜索/过滤栏（center 模式通常位于 tabs 之前） */}
-        {filterBar && (
-          <Box>{filterBar}</Box>
-        )}
+        {filterBar && <Box>{filterBar}</Box>}
 
         {/* Tabs 切换（center 模式常见） */}
-        {tabs && (
-          <Box>{tabs}</Box>
-        )}
+        {tabs && <Box>{tabs}</Box>}
 
         {/* 主内容区 */}
-        {content && (
-          <Box>{content}</Box>
-        )}
+        {content && <Box>{content}</Box>}
 
         {/* 分页 / 底部状态栏（viewer 模式常见） */}
-        {mode === 'viewer' && pagination && (
-          <Box>{pagination}</Box>
-        )}
+        {mode === 'viewer' && pagination && <Box>{pagination}</Box>}
       </Box>
     </PageContainer>
   );

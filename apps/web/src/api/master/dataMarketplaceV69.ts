@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type MarketplaceAssetStatus = 'draft' | 'published' | 'deprecated' | 'archived';
@@ -109,8 +111,6 @@ interface MarketplaceDashboard {
   revenue_last_30d: number;
   top_categories: Array<{ category: AssetCategory; count: number }>;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface PublishAssetRequest {

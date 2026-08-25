@@ -47,6 +47,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+
 const getCategoryLabels = (): Record<string, string> => ({
   all: i18n.t('monitor.metrics_dashboard_page.k0'),
   sales: i18n.t('monitor.metrics_dashboard_page.k1'),

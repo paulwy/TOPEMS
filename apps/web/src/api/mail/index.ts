@@ -2,6 +2,8 @@ import apiClient from '../client';
 import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 import i18n from '@/i18n';
 
+import type { PaginatedResult } from '@/api/client';
+
 export interface Email {
   id: string;
   subject: string;
@@ -61,8 +63,6 @@ export interface PaginationParams extends BasePaginationParams {
   priority?: string;
   category?: string;
 }
-
-import type { PaginatedResult } from '@/api/client';
 export type { PaginatedResult };
 
 export interface EmailStats {

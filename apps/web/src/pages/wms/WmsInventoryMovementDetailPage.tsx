@@ -1,13 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Typography,
-} from '@mui/material';
+import { Box, Card, CardContent, Chip, Grid, Typography } from '@mui/material';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import type { InventoryMovementDto } from '@/types/wms';
@@ -44,13 +37,22 @@ function MovementRouteCard({ move }: { move: InventoryMovementDto }) {
               minWidth: 180,
             }}
           >
-            <Typography variant='caption' sx={{ color: 'warning.800' }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'warning.800' }}
+            >
               {i18n.t('pages.wms_inventory_movement_detail_page.k1')}
             </Typography>
-            <Typography variant='h6' sx={{ color: 'warning.900', fontWeight: 700, fontFamily: 'monospace', mt: 0.5 }}>
+            <Typography
+              variant='h6'
+              sx={{ color: 'warning.900', fontWeight: 700, fontFamily: 'monospace', mt: 0.5 }}
+            >
               {sourceLoc}
             </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {i18n.t('wms:wms_inventory_movement_detail_page.v0_3', { v0: warehouse })}
             </Typography>
           </Box>
@@ -72,13 +74,22 @@ function MovementRouteCard({ move }: { move: InventoryMovementDto }) {
               minWidth: 180,
             }}
           >
-            <Typography variant='caption' sx={{ color: 'info.800' }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'info.800' }}
+            >
               {i18n.t('pages.wms_inventory_movement_detail_page.k2')}
             </Typography>
-            <Typography variant='h6' sx={{ color: 'info.900', fontWeight: 700, fontFamily: 'monospace', mt: 0.5 }}>
+            <Typography
+              variant='h6'
+              sx={{ color: 'info.900', fontWeight: 700, fontFamily: 'monospace', mt: 0.5 }}
+            >
               {targetLoc}
             </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {i18n.t('wms:wms_inventory_movement_detail_page.v0_2', { v0: warehouse })}
             </Typography>
           </Box>
@@ -92,7 +103,13 @@ function SerialNumbers({ serials }: { serials: string[] }) {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
       {serials.map((sn, i) => (
-        <Chip key={i} label={sn} variant='outlined' size='small' sx={{ fontFamily: 'monospace' }} />
+        <Chip
+          key={i}
+          label={sn}
+          variant='outlined'
+          size='small'
+          sx={{ fontFamily: 'monospace' }}
+        />
       ))}
     </Box>
   );
@@ -123,7 +140,10 @@ function OperationTimeline({ move }: { move: InventoryMovementDto }) {
   return (
     <Box sx={{ position: 'relative', ml: 1.5, pl: 2, borderLeft: 1, borderColor: 'divider' }}>
       {events.map((e, i) => (
-        <Box key={i} sx={{ position: 'relative', mb: 2, pl: 3 }}>
+        <Box
+          key={i}
+          sx={{ position: 'relative', mb: 2, pl: 3 }}
+        >
           <Box
             sx={{
               position: 'absolute',
@@ -137,13 +157,22 @@ function OperationTimeline({ move }: { move: InventoryMovementDto }) {
               borderColor: 'background.paper',
             }}
           />
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             {e.t?.slice(0, 19).replace('T', ' ')}
           </Typography>
-          <Typography variant='body2' sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {e.title}
           </Typography>
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             {i18n.t('wms:wms_inventory_movement_detail_page.v0_0', { v0: e.who ?? 'system' })}
           </Typography>
         </Box>
@@ -159,7 +188,8 @@ export default function WmsInventoryMovementDetailPage() {
   const move = useMemo<InventoryMovementDto | undefined>(() => {
     if (!id) return data.movementList?.[0];
     return (
-      data.movementList?.find((m) => m.id === id || m.movement_number === id) ?? data.movementList?.[0]
+      data.movementList?.find((m) => m.id === id || m.movement_number === id) ??
+      data.movementList?.[0]
     );
   }, [id, data.movementList]);
 
@@ -170,7 +200,10 @@ export default function WmsInventoryMovementDetailPage() {
 
   if (!move) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_inventory_movement_detail_page.k0')}</Typography>
       </PageContainer>
     );
@@ -180,7 +213,10 @@ export default function WmsInventoryMovementDetailPage() {
   const matName = move.material_name ?? '-';
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: move.movement_number })}
         subtitle={i18n.t('wms:wms_inventory_movement_detail_page.k4', {
@@ -191,7 +227,10 @@ export default function WmsInventoryMovementDetailPage() {
         detailItemName={move.movement_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='movement' status={move.status} />
+            <WmsStatusBadge
+              fsm='movement'
+              status={move.status}
+            />
           </Box>
         }
         infoCard={{

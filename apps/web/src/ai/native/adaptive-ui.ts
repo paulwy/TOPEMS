@@ -1,4 +1,3 @@
-
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
 export type ThemeMode = 'light' | 'dark' | 'auto';
@@ -112,4 +111,3 @@ const BEHAVIOR_THRESHOLDS = {
   engagement_decay: 0.95,
   min_confidence: 0.5,
 };
-

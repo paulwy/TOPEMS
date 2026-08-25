@@ -3,16 +3,8 @@ import { Box, Typography, IconButton } from '@mui/material';
 import { X as XIcon, Shield } from 'lucide-react';
 import i18n from '@/i18n';
 import type { BiasReport, BiasType, BiasSeverity } from './bias-detection';
-import type {
-  FairnessResult,
-  FairnessType,
-  AuditStatus,
-} from './fairness-assurance';
-import type {
-  Explanation,
-  ExplainabilityReport,
-  ExplainabilityMethod,
-} from './explainability';
+import type { FairnessResult, FairnessType, AuditStatus } from './fairness-assurance';
+import type { Explanation, ExplainabilityReport, ExplainabilityMethod } from './explainability';
 
 export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   return (
@@ -20,13 +12,19 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Shield size={20} />
-          <Typography variant="h6">{i18n.t('ai.v60-ethics-panel.title')}</Typography>
+          <Typography variant='h6'>{i18n.t('ai.v60-ethics-panel.title')}</Typography>
         </Box>
-        <IconButton onClick={onClose} size="small">
+        <IconButton
+          onClick={onClose}
+          size='small'
+        >
           <XIcon size={18} />
         </IconButton>
       </Box>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {i18n.t('ai.v60-ethics-panel.disabled')}
       </Typography>
     </Box>

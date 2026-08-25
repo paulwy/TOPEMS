@@ -310,533 +310,536 @@ const MobileScanPage: React.FC = () => {
       }}
     >
       <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
-          sx={{
-            '& .MuiTab-root': {
-              minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            },
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab}
-            />
-          ))}
-        </Tabs>
-        {activeTab === 0 && (
-          <Box sx={{ p: 2 }}>
-            <Paper
-              elevation={0}
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab}
+          />
+        ))}
+      </Tabs>
+      {activeTab === 0 && (
+        <Box sx={{ p: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '4/3',
+              borderRadius: 2,
+              overflow: 'hidden',
+              mb: 3,
+              backgroundColor: ct.grey[900],
+            }}
+          >
+            <Box
               sx={{
-                position: 'relative',
-                width: '100%',
-                aspectRatio: '4/3',
-                borderRadius: 2,
-                overflow: 'hidden',
-                mb: 3,
-                backgroundColor: ct.grey[900],
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <Box
                 sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  position: 'relative',
+                  width: '70%',
+                  aspectRatio: 1,
                 }}
               >
                 <Box
                   sx={{
-                    position: 'relative',
-                    width: '70%',
-                    aspectRatio: 1,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: 30,
+                    height: 30,
+                    borderTop: '3px solid',
+                    borderLeft: '3px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: '4px 0 0 0',
                   }}
-                >
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: 30,
+                    height: 30,
+                    borderTop: '3px solid',
+                    borderRight: '3px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: '0 4px 0 0',
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    width: 30,
+                    height: 30,
+                    borderBottom: '3px solid',
+                    borderLeft: '3px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: '0 0 0 4px',
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 30,
+                    height: 30,
+                    borderBottom: '3px solid',
+                    borderRight: '3px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: '0 0 4px 0',
+                  }}
+                />
+                {scanning && (
                   <Box
                     sx={{
                       position: 'absolute',
-                      top: 0,
                       left: 0,
-                      width: 30,
-                      height: 30,
-                      borderTop: '3px solid',
-                      borderLeft: '3px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: '4px 0 0 0',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
                       right: 0,
-                      width: 30,
-                      height: 30,
-                      borderTop: '3px solid',
-                      borderRight: '3px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: '0 4px 0 0',
+                      height: 2,
+                      bgcolor: 'primary.main',
+                      boxShadow: `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
+                      animation: 'scanLine 2s ease-in-out infinite',
+                    }}
+                    style={{
+                      animation: 'scanLine 2s ease-in-out infinite',
                     }}
                   />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      width: 30,
-                      height: 30,
-                      borderBottom: '3px solid',
-                      borderLeft: '3px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: '0 0 0 4px',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      width: 30,
-                      height: 30,
-                      borderBottom: '3px solid',
-                      borderRight: '3px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: '0 0 4px 0',
-                    }}
-                  />
-                  {scanning && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        bgcolor: 'primary.main',
-                        boxShadow: `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
-                        animation: 'scanLine 2s ease-in-out infinite',
-                      }}
-                      style={{
-                        animation: 'scanLine 2s ease-in-out infinite',
-                      }}
-                    />
-                  )}
-                </Box>
-                <style>{`
+                )}
+              </Box>
+              <style>{`
                 @keyframes scanLine {
                   0%, 100% { top: 15%; }
                   50% { top: 85%; }
                 }
               `}</style>
-              </Box>
-              {scanResult && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    bgcolor: 'action.active',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    p: 3,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      bgcolor: 'success.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 2,
-                    }}
-                  >
-                    <CheckSquare
-                      style={{
-                        width: 32,
-                        height: 32,
-                        color: 'common.white',
-                      }}
-                    />
-                  </Box>
-                  <Typography
-                    variant='h6'
-                    sx={{
-                      color: 'common.white',
-                      mb: 1,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {i18n.t('pages.mobile_scan_page.k0')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'common.white',
-                      mb: 2,
-                      textAlign: 'center',
-                      wordBreak: 'break-all',
-                      px: 2,
-                    }}
-                  >
-                    {scanResult}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <MobileButton
-                      variant='outlined'
-                      size='small'
-                      onClick={handleRescan}
-                      sx={{
-                        color: 'common.white',
-                        borderColor: 'common.white',
-                      }}
-                    >
-                      {i18n.t('pages.mobile_scan_page.k1')}
-                    </MobileButton>
-                    <MobileButton
-                      variant='contained'
-                      size='small'
-                      onClick={handleCopyResult}
-                    >
-                      {i18n.t('pages.mobile_scan_page.k2')}
-                    </MobileButton>
-                  </Box>
-                </Box>
-              )}
-            </Paper>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <IconButton
-                  sx={{
-                    width: 52,
-                    height: 52,
-                    bgcolor: flashOn ? 'warning.main' : 'grey.100',
-                    color: flashOn ? 'var(--color-primary-foreground)' : 'text.primary',
-                    '&:hover': {
-                      bgcolor: flashOn ? 'warning.dark' : 'grey.200',
-                    },
-                  }}
-                  onClick={() => setFlashOn(!flashOn)}
-                  aria-label={i18n.t('mobile.mobile_scan_page.k28')}
-                >
-                  <Flashlight style={{ width: 24, height: 24 }} />
-                </IconButton>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {i18n.t('pages.mobile_scan_page.k3')}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <IconButton
-                  sx={{
-                    width: 52,
-                    height: 52,
-                    bgcolor: 'grey.100',
-                    color: 'text.primary',
-                    '&:hover': {
-                      bgcolor: 'grey.200',
-                    },
-                  }}
-                  aria-label={i18n.t('mobile.mobile_scan_page.k29')}
-                >
-                  <Image style={{ width: 24, height: 24 }} />
-                </IconButton>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {i18n.t('pages.mobile_scan_page.k4')}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <IconButton
-                  sx={{
-                    width: 52,
-                    height: 52,
-                    bgcolor: 'grey.100',
-                    color: 'text.primary',
-                    '&:hover': {
-                      bgcolor: 'grey.200',
-                    },
-                  }}
-                  onClick={() => setActiveTab(2)}
-                  aria-label={i18n.t('mobile.mobile_scan_page.k30')}
-                >
-                  <Barcode style={{ width: 24, height: 24 }} />
-                </IconButton>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {i18n.t('pages.mobile_scan_page.k5')}
-                </Typography>
-              </Box>
             </Box>
             {scanResult && (
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  border: 1,
-                  borderColor: 'divider',
-                }}
-              >
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600, mb: 2 }}
-                >
-                  {i18n.t('pages.mobile_scan_page.k6')}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'primary.lighter',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Package style={{ width: 24, height: 24 }} />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {i18n.t('pages.mobile_scan_page.10k_7')}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      [i18n.t('pages.mobile_scan_page.k8')]: {scanResult}
-                    </Typography>
-                  </Box>
-                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
-                    {i18n.t('mobile.mobile_scan_page.k31')}
-                  </Button>
-                </Box>
-              </Paper>
-            )}
-          </Box>
-        )}
-        {activeTab === 1 && (
-          <Box>
-            <Box sx={{ p: 2 }}>
-              <TextField
-                fullWidth
-                size='small'
-                placeholder={i18n.t('mobile.mobile_scan_page.k32')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    minHeight: 44,
-                  },
-                }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <Search style={{ width: 20, height: 20 }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment:
-                      scanHistory.length > 0 ? (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            size='small'
-                            onClick={handleClearHistory}
-                            aria-label={i18n.t('mobile.mobile_scan_page.k33')}
-                          >
-                            <Trash2 style={{ width: 18, height: 18 }} />
-                          </IconButton>
-                        </InputAdornment>
-                      ) : undefined,
-                  },
-                }}
-              />
-            </Box>
-            {filteredHistory.length === 0 ? (
               <Box
                 sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  bgcolor: 'action.active',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  py: 10,
+                  p: 3,
                 }}
               >
                 <Box
                   sx={{
-                    width: 64,
-                    height: 64,
+                    width: 60,
+                    height: 60,
                     borderRadius: '50%',
-                    bgcolor: 'grey.100',
+                    bgcolor: 'success.main',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mb: 2,
                   }}
                 >
-                  <History style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
+                  <CheckSquare
+                    style={{
+                      width: 32,
+                      height: 32,
+                      color: 'common.white',
+                    }}
+                  />
                 </Box>
                 <Typography
-                  variant='subtitle1'
-                  sx={{ mb: 1, fontWeight: 500 }}
+                  variant='h6'
+                  sx={{
+                    color: 'common.white',
+                    mb: 1,
+                    fontWeight: 600,
+                  }}
                 >
-                  {i18n.t('pages.mobile_scan_page.k9')}
+                  {i18n.t('pages.mobile_scan_page.k0')}
                 </Typography>
                 <Typography
                   variant='body2'
-                  color='text.secondary'
+                  sx={{
+                    color: 'common.white',
+                    mb: 2,
+                    textAlign: 'center',
+                    wordBreak: 'break-all',
+                    px: 2,
+                  }}
                 >
-                  {i18n.t('pages.mobile_scan_page.k10')}
+                  {scanResult}
                 </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <MobileButton
+                    variant='outlined'
+                    size='small'
+                    onClick={handleRescan}
+                    sx={{
+                      color: 'common.white',
+                      borderColor: 'common.white',
+                    }}
+                  >
+                    {i18n.t('pages.mobile_scan_page.k1')}
+                  </MobileButton>
+                  <MobileButton
+                    variant='contained'
+                    size='small'
+                    onClick={handleCopyResult}
+                  >
+                    {i18n.t('pages.mobile_scan_page.k2')}
+                  </MobileButton>
+                </Box>
               </Box>
-            ) : (
-              <List disablePadding>
-                {filteredHistory.map((item, _index) => (
-                  <React.Fragment key={item.id}>
-                    <MobileCard
-                      leftIcon={
-                        item.type === 'qrcode' ? (
-                          <QrCode style={{ width: 20, height: 20 }} />
-                        ) : (
-                          <Barcode style={{ width: 20, height: 20 }} />
-                        )
-                      }
-                      title={item.content}
-                      subtitle={
-                        item.relatedData
-                          ? `${item.relatedData.type}: ${item.relatedData.name}`
-                          : item.format
-                      }
-                      showArrow
-                      divider
-                      rightContent={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={item.format}
-                            size='small'
-                            variant='outlined'
-                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                          />
-                        </Box>
-                      }
-                      badge={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Clock
-                            style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
-                          />
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {item.time}
-                          </Typography>
-                        </Box>
-                      }
-                      onClick={() => {
-                        setScanResult(item.content);
-                        setActiveTab(0);
-                      }}
-                    />
-                  </React.Fragment>
-                ))}
-              </List>
             )}
+          </Paper>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <IconButton
+                sx={{
+                  width: 52,
+                  height: 52,
+                  bgcolor: flashOn ? 'warning.main' : 'grey.100',
+                  color: flashOn ? 'var(--color-primary-foreground)' : 'text.primary',
+                  '&:hover': {
+                    bgcolor: flashOn ? 'warning.dark' : 'grey.200',
+                  },
+                }}
+                onClick={() => setFlashOn(!flashOn)}
+                aria-label={i18n.t('mobile.mobile_scan_page.k28')}
+              >
+                <Flashlight style={{ width: 24, height: 24 }} />
+              </IconButton>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {i18n.t('pages.mobile_scan_page.k3')}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <IconButton
+                sx={{
+                  width: 52,
+                  height: 52,
+                  bgcolor: 'grey.100',
+                  color: 'text.primary',
+                  '&:hover': {
+                    bgcolor: 'grey.200',
+                  },
+                }}
+                aria-label={i18n.t('mobile.mobile_scan_page.k29')}
+              >
+                <Image style={{ width: 24, height: 24 }} />
+              </IconButton>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {i18n.t('pages.mobile_scan_page.k4')}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <IconButton
+                sx={{
+                  width: 52,
+                  height: 52,
+                  bgcolor: 'grey.100',
+                  color: 'text.primary',
+                  '&:hover': {
+                    bgcolor: 'grey.200',
+                  },
+                }}
+                onClick={() => setActiveTab(2)}
+                aria-label={i18n.t('mobile.mobile_scan_page.k30')}
+              >
+                <Barcode style={{ width: 24, height: 24 }} />
+              </IconButton>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {i18n.t('pages.mobile_scan_page.k5')}
+              </Typography>
+            </Box>
           </Box>
-        )}
-        {activeTab === 2 && (
-          <Box sx={{ p: 2 }}>
+          {scanResult && (
             <Paper
               elevation={0}
               sx={{
-                p: 3,
+                p: 2,
                 borderRadius: 2,
                 border: 1,
                 borderColor: 'divider',
               }}
             >
               <Typography
-                variant='subtitle1'
+                variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {i18n.t('pages.mobile_scan_page.k11')}
+                {i18n.t('pages.mobile_scan_page.k6')}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'primary.lighter',
+                    color: 'primary.main',
+                  }}
+                >
+                  <Package style={{ width: 24, height: 24 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {i18n.t('pages.mobile_scan_page.10k_7')}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    [i18n.t('pages.mobile_scan_page.k8')]: {scanResult}
+                  </Typography>
+                </Box>
+                <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
+                  {i18n.t('mobile.mobile_scan_page.k31')}
+                </Button>
+              </Box>
+            </Paper>
+          )}
+        </Box>
+      )}
+      {activeTab === 1 && (
+        <Box>
+          <Box sx={{ p: 2 }}>
+            <TextField
+              fullWidth
+              size='small'
+              placeholder={i18n.t('mobile.mobile_scan_page.k32')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  minHeight: 44,
+                },
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <Search style={{ width: 20, height: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment:
+                    scanHistory.length > 0 ? (
+                      <InputAdornment position='end'>
+                        <IconButton
+                          size='small'
+                          onClick={handleClearHistory}
+                          aria-label={i18n.t('mobile.mobile_scan_page.k33')}
+                        >
+                          <Trash2 style={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : undefined,
+                },
+              }}
+            />
+          </Box>
+          {filteredHistory.length === 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 10,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  bgcolor: 'grey.100',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2,
+                }}
+              >
+                <History style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
+              </Box>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 1, fontWeight: 500 }}
+              >
+                {i18n.t('pages.mobile_scan_page.k9')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                sx={{ mb: 3 }}
               >
-                {i18n.t('pages.mobile_scan_page.k12')}
+                {i18n.t('pages.mobile_scan_page.k10')}
               </Typography>
-              <TextField
-                fullWidth
-                placeholder={i18n.t('mobile.mobile_scan_page.k34')}
-                value={manualInput}
-                onChange={(e) => setManualInput(e.target.value)}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    minHeight: 48,
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleManualSubmit();
-                  }
-                }}
-              />
-              <MobileButton
-                fullWidth
-                variant='contained'
-                onClick={handleManualSubmit}
-                disabled={!manualInput.trim()}
-                startIcon={<Barcode style={{ width: 20, height: 20 }} />}
-              >
-                {i18n.t('pages.mobile_scan_page.k13')}
-              </MobileButton>
-            </Paper>
-            <Box sx={{ mt: 3 }}>
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('pages.mobile_scan_page.k14')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
-                  <Chip
-                    key={format}
-                    label={format}
-                    variant='outlined'
-                    size='small'
-                    sx={{ height: 28 }}
+            </Box>
+          ) : (
+            <List disablePadding>
+              {filteredHistory.map((item, _index) => (
+                <React.Fragment key={item.id}>
+                  <MobileCard
+                    leftIcon={
+                      item.type === 'qrcode' ? (
+                        <QrCode style={{ width: 20, height: 20 }} />
+                      ) : (
+                        <Barcode style={{ width: 20, height: 20 }} />
+                      )
+                    }
+                    title={item.content}
+                    subtitle={
+                      item.relatedData
+                        ? `${item.relatedData.type}: ${item.relatedData.name}`
+                        : item.format
+                    }
+                    showArrow
+                    divider
+                    rightContent={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={item.format}
+                          size='small'
+                          variant='outlined'
+                          sx={{
+                            height: 20,
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                          }}
+                        />
+                      </Box>
+                    }
+                    badge={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Clock
+                          style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                        />
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {item.time}
+                        </Typography>
+                      </Box>
+                    }
+                    onClick={() => {
+                      setScanResult(item.content);
+                      setActiveTab(0);
+                    }}
                   />
-                ))}
-              </Box>
+                </React.Fragment>
+              ))}
+            </List>
+          )}
+        </Box>
+      )}
+      {activeTab === 2 && (
+        <Box sx={{ p: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('pages.mobile_scan_page.k11')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 3 }}
+            >
+              {i18n.t('pages.mobile_scan_page.k12')}
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder={i18n.t('mobile.mobile_scan_page.k34')}
+              value={manualInput}
+              onChange={(e) => setManualInput(e.target.value)}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  minHeight: 48,
+                },
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleManualSubmit();
+                }
+              }}
+            />
+            <MobileButton
+              fullWidth
+              variant='contained'
+              onClick={handleManualSubmit}
+              disabled={!manualInput.trim()}
+              startIcon={<Barcode style={{ width: 20, height: 20 }} />}
+            >
+              {i18n.t('pages.mobile_scan_page.k13')}
+            </MobileButton>
+          </Paper>
+          <Box sx={{ mt: 3 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('pages.mobile_scan_page.k14')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
+                <Chip
+                  key={format}
+                  label={format}
+                  variant='outlined'
+                  size='small'
+                  sx={{ height: 28 }}
+                />
+              ))}
             </Box>
           </Box>
-        )}
+        </Box>
+      )}
     </MobilePageTemplate>
   );
 };

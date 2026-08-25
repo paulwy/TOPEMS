@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type WorkflowStatus = 'draft' | 'active' | 'paused' | 'archived';
@@ -100,8 +102,6 @@ interface DataMapping {
   created_at?: string;
   updated_at?: string;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 // ============ Request Types ============

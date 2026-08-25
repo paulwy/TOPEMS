@@ -1,4 +1,3 @@
-
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type ProficiencyLevel = 'beginner' | 'intermediate' | 'expert';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
@@ -109,4 +108,3 @@ const DEFAULT_PROFILE: InteractionProfile = {
   proficiency_level: 'intermediate',
   updatedAt: Date.now(),
 };
-

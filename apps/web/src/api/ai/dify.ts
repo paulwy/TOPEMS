@@ -89,9 +89,7 @@ export const difyApi = {
     return apiClient.ai.post<DifyChatResponse>('/dify/chat', data);
   },
 
-  chatStream: async function* (
-    payload: DifyChatRequest
-  ): AsyncGenerator<DifyStreamEvent, void, unknown> {
+  async *chatStream(payload: DifyChatRequest): AsyncGenerator<DifyStreamEvent, void, unknown> {
     const baseUrl = getAiBaseUrl();
     const url = `${baseUrl}/dify/chat/stream`;
     const token = getAuthToken();

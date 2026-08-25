@@ -211,7 +211,10 @@ export const AssetListPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('asset:assetlist.stat_total')}
               </Typography>
@@ -244,7 +247,10 @@ export const AssetListPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('asset:assetlist.stat_active')}
               </Typography>
@@ -277,7 +283,10 @@ export const AssetListPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('asset:assetlist.stat_maintenance')}
               </Typography>
@@ -310,7 +319,10 @@ export const AssetListPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('asset:assetlist.stat_total_value')}
               </Typography>

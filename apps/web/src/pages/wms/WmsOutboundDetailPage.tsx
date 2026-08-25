@@ -103,21 +103,30 @@ export default function WmsOutboundDetailPage() {
 
   if (!order) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_outbound_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
         subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
         detailItemName={order.order_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='outbound' status={order.status} />
+            <WmsStatusBadge
+              fsm='outbound'
+              status={order.status}
+            />
             <WmsFSMActionButtons
               fsm='outbound'
               currentStatus={order.status}

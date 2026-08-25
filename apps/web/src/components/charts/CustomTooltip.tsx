@@ -26,7 +26,9 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 
   if (!active || !payload || payload.length === 0) return null;
 
-  const bgColor = isDark ? alpha(theme.palette.grey[900], 0.95) : alpha(theme.palette.common.white, 0.95);
+  const bgColor = isDark
+    ? alpha(theme.palette.grey[900], 0.95)
+    : alpha(theme.palette.common.white, 0.95);
   const borderColor = isDark ? 'colors.grey.600' : designTokens.colors.border.default;
   const labelColor = isDark ? designTokens.colors.grey['400'] : 'colors.grey.500';
   const labelBorder = isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default;
@@ -88,7 +90,12 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                     backgroundColor: entry.color,
                   }}
                 />
-                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: nameColor }}>
+                <Typography
+                  sx={{
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    color: nameColor,
+                  }}
+                >
                   {displayName}
                 </Typography>
               </Box>

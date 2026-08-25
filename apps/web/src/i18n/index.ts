@@ -24,10 +24,7 @@ function flattenToNested(obj: Record<string, unknown>): Record<string, unknown> 
       const nestedValue = flattenToNested(value as Record<string, unknown>);
       // 深度合并，避免覆盖已有的同名顶层 key
       if (typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
-        result[key] = deepMerge(
-          result[key] as Record<string, unknown>,
-          nestedValue
-        );
+        result[key] = deepMerge(result[key] as Record<string, unknown>, nestedValue);
       } else {
         result[key] = nestedValue;
       }
@@ -670,30 +667,34 @@ if (typeof window !== 'undefined') {
 
   // Phase 2：另一语言骨架 + 框架层命名空间（等待 Phase 1 完成后启动）
   schedulePreload(() => {
-    ensureLanguageLoaded(otherLang).then(() =>
-      Promise.resolve()
-        .then(async () => {
-          for (const ns of FRAMEWORK_NAMESPACES) {
-            try {
-              await _ensureNsInstalled(otherLang as 'zh' | 'en', ns);
-            } catch {
-              /* skip */
+    ensureLanguageLoaded(otherLang)
+      .then(() =>
+        Promise.resolve()
+          .then(async () => {
+            for (const ns of FRAMEWORK_NAMESPACES) {
+              try {
+                await _ensureNsInstalled(otherLang as 'zh' | 'en', ns);
+              } catch {
+                /* skip */
+              }
             }
-          }
-        })
-        .catch(() => {})
-    ).catch(() => {});
+          })
+          .catch(() => {})
+      )
+      .catch(() => {});
   }, 3500);
 }
 
 // 语言切换时：确保骨架已加载 + 触发全局重渲染（i18n.t() 直接调用的组件也能拿到新语言）
 i18n.on('languageChanged', (lng: string) => {
   updateDocumentDirection(lng);
-  ensureLanguageLoaded(lng).then(() => {
-    if (forceUpdate) {
-      forceUpdate();
-    }
-  }).catch(() => {});
+  ensureLanguageLoaded(lng)
+    .then(() => {
+      if (forceUpdate) {
+        forceUpdate();
+      }
+    })
+    .catch(() => {});
 });
 
 // ─── 全局 i18n 资源变更事件 → 触发 React 重渲染 ───────

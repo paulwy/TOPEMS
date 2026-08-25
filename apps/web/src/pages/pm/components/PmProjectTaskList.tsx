@@ -136,12 +136,20 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+                    <TableCell
+                      sx={{
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                        color: 'grey.600',
+                      }}
+                    >
                       <Box>
                         <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
                         <Typography
                           variant='body2'
-                          sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                          sx={{
+                            color: 'grey.400',
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                          }}
                         >
                           {i18n.t('pm.project_detail.to')} {formatDate(phase.end_date)}
                         </Typography>

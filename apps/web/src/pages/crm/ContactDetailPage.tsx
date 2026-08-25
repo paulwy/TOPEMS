@@ -256,7 +256,12 @@ const ContactDetailPage: React.FC = () => {
               {t('crm.contactDetail.field_contact_id')}
             </Typography>
             <Typography
-              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                fontWeight: 'medium',
+                mt: 0.5,
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {contact.id.substring(0, 8)}...
             </Typography>

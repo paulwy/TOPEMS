@@ -10,11 +10,12 @@
 // ============================================================================
 
 import type { ModuleConfig, ModuleRoute } from '@topems/app-shell';
-export type { ModuleConfig, ModuleRoute };
 
 import { getCoreModules } from './core-modules';
 
 import { VITEDeploymentMode } from '@/config/env';
+
+export type { ModuleConfig, ModuleRoute };
 
 const isStaticMode = VITEDeploymentMode() === 'static';
 

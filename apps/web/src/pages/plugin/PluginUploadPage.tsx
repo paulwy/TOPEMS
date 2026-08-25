@@ -183,7 +183,6 @@ const PluginUploadPage: React.FC = () => {
     >
       <Card>
         <CardContent sx={{ p: 4 }}>
-
           {activeStep === 0 && (
             <Box>
               <Typography

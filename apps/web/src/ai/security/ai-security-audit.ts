@@ -80,4 +80,3 @@ const DEFAULT_RULES: AuditRule[] = [
     remediation: i18n.t('ai.ai-security-audit.k11'),
   },
 ];
-

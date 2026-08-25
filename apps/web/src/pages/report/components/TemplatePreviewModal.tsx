@@ -118,7 +118,12 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
                     sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
                   />
                   {variable.required && (
-                    <Typography sx={{ color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}>
+                    <Typography
+                      sx={{
+                        color: 'error.main',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      }}
+                    >
                       {t('report.template_management_page.required')}
                     </Typography>
                   )}

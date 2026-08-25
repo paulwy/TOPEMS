@@ -60,7 +60,14 @@ const customColumns: ColumnDef[] = [
     render: (row: Record<string, unknown>) => (
       <Box>
         <Box sx={{ fontWeight: 500 }}>{row.material_name as string}</Box>
-        <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>SKU: {row.sku as string}</Box>
+        <Box
+          sx={{
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            color: 'text.secondary',
+          }}
+        >
+          SKU: {row.sku as string}
+        </Box>
       </Box>
     ),
   },

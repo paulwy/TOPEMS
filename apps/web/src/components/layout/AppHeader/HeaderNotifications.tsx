@@ -162,12 +162,18 @@ export const HeaderNotifications: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          <Typography sx={{ fontWeight: 600, fontSize: designTokens.typography.fontSize.scale['0.9375rem'] }}>
+          <Typography
+            sx={{ fontWeight: 600, fontSize: designTokens.typography.fontSize.scale['0.9375rem'] }}
+          >
             {i18n.t('components.header_notifications.k0')}
             {unreadCount > 0 && (
               <Typography
                 component='span'
-                sx={{ ml: 1, color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                sx={{
+                  ml: 1,
+                  color: 'error.main',
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                }}
               >
                 ({unreadCount}
                 {i18n.t('components.header_notifications.k0')}
@@ -312,7 +318,11 @@ export const HeaderNotifications: React.FC = () => {
         </Box>
         <Divider />
         <MenuItem
-          sx={{ justifyContent: 'center', py: 1.5, fontSize: designTokens.typography.fontSize.scale['0.8125rem'] }}
+          sx={{
+            justifyContent: 'center',
+            py: 1.5,
+            fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
+          }}
           onClick={() => {
             navigate(NOTIFICATION_PATHS.list);
             handleNotificationClose();

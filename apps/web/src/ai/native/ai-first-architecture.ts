@@ -152,4 +152,3 @@ const BUILTIN_CAPABILITIES: Omit<AICapability, 'createdAt' | 'updatedAt' | 'stat
       version: '54.0',
     },
   ];
-

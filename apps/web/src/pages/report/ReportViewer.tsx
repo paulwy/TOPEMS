@@ -62,8 +62,11 @@ const ReportViewerPage: React.FC = () => {
       loadingText={undefined}
       error={error || !report ? (error ? String(error) : i18n.t('pages.report_viewer.k4')) : null}
       errorAction={
-        (error || !report) ? (
-          <Button onClick={onClose} sx={{ mt: 2 }}>
+        error || !report ? (
+          <Button
+            onClick={onClose}
+            sx={{ mt: 2 }}
+          >
             {i18n.t('pages.report_viewer.k5')}
           </Button>
         ) : undefined
@@ -71,7 +74,10 @@ const ReportViewerPage: React.FC = () => {
       pageContainerProps={{ padding: false, maxWidth: false }}
     >
       {report ? (
-        <ReportViewerContent report={report} onClose={onClose} />
+        <ReportViewerContent
+          report={report}
+          onClose={onClose}
+        />
       ) : null}
     </ReportViewerTemplate>
   );

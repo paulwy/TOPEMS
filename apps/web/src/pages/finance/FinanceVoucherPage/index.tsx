@@ -23,15 +23,8 @@ import { useNavigate } from 'react-router-dom';
 import CrudPage, { type CrudTab } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { PageContainer, StatCardGroup, ActionButton, StatusBadge } from '@/components/common';
-import {
-  voucherApi,
-  accountingSubjectApi,
-} from '@/api/erp';
-import type {
-  FinancialVoucher,
-  VoucherItem,
-  VoucherItemRequest,
-} from '@/api/finance';
+import { voucherApi, accountingSubjectApi } from '@/api/erp';
+import type { FinancialVoucher, VoucherItem, VoucherItemRequest } from '@/api/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/modules/finance/config';

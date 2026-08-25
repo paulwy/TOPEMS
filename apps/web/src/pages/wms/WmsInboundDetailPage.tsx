@@ -72,7 +72,10 @@ export default function WmsInboundDetailPage() {
     );
   }, [id, data.inboundList]);
 
-  const items = useMemo<InboundItemRow[]>(() => (order ? buildInboundItems(order.id, 4) : []), [order]);
+  const items = useMemo<InboundItemRow[]>(
+    () => (order ? buildInboundItems(order.id, 4) : []),
+    [order]
+  );
 
   const columns = useMemo<ColumnDef<InboundItemRow>[]>(
     () => [
@@ -85,7 +88,10 @@ export default function WmsInboundDetailPage() {
         accessorKey: 'material_code',
         header: i18n.t('pages.wms_inbound_detail_page.k11'),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.original.material_code}
           </Typography>
         ),
@@ -101,7 +107,10 @@ export default function WmsInboundDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k13')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.expected_quantity}
           </Typography>
         ),
@@ -112,7 +121,10 @@ export default function WmsInboundDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k14')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.received_quantity}
           </Typography>
         ),
@@ -123,7 +135,10 @@ export default function WmsInboundDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_inbound_detail_page.k15')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             ¥{row.original.unit_price.toLocaleString()}
           </Typography>
         ),
@@ -173,14 +188,20 @@ export default function WmsInboundDetailPage() {
 
   if (!order) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_inbound_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
         subtitle={i18n.t('wms:wms_inbound_detail_page.v0_2', {
@@ -189,7 +210,10 @@ export default function WmsInboundDetailPage() {
         detailItemName={order.order_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='inbound' status={order.status} />
+            <WmsStatusBadge
+              fsm='inbound'
+              status={order.status}
+            />
             <WmsFSMActionButtons
               fsm='inbound'
               currentStatus={order.status}

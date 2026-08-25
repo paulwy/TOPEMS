@@ -1,4 +1,3 @@
-
 export type FairnessType = 'Demographic' | 'Equalized' | 'Calibrated';
 
 export type AuditStatus = 'passed' | 'failed' | 'warning';
@@ -41,28 +40,3 @@ export interface FairnessBenchmark {
   percentile: number;
   ranking: string;
 }
-
-const DEFAULT_CONFIGS: Omit<FairnessConfig, 'id' | 'updatedAt'>[] = [
-  {
-    modelId: 'default-model',
-    fairnessType: 'Demographic',
-    thresholds: { demographic_parity_diff: 0.1, equalized_odds_diff: 0.1, calibration_diff: 0.05 },
-    protectedAttributes: ['gender', 'race', 'age'],
-    enabled: true,
-  },
-  {
-    modelId: 'default-model',
-    fairnessType: 'Equalized',
-    thresholds: { true_positive_rate_diff: 0.1, false_positive_rate_diff: 0.1 },
-    protectedAttributes: ['gender', 'race', 'age', 'socioeconomic'],
-    enabled: true,
-  },
-  {
-    modelId: 'default-model',
-    fairnessType: 'Calibrated',
-    thresholds: { calibration_diff: 0.05, coverage_diff: 0.1 },
-    protectedAttributes: ['gender', 'race', 'age'],
-    enabled: true,
-  },
-];
-

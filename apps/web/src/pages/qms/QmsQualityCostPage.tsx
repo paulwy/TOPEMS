@@ -50,7 +50,12 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'info.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'info.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {i18n.t('qms.qms_quality_cost_page.k0')}
               </Typography>
               <Typography
@@ -73,7 +78,12 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'success.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'success.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {i18n.t('pages.qms_quality_cost_page.k0')}
               </Typography>
               <Typography
@@ -96,7 +106,12 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'primary.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'primary.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {i18n.t('pages.qms_quality_cost_page.k1')}
               </Typography>
               <Typography
@@ -119,7 +134,12 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'warning.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'warning.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {i18n.t('pages.qms_quality_cost_page.k2')}
               </Typography>
               <Typography
@@ -142,7 +162,12 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'error.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {i18n.t('qms.qms_quality_cost_page.k1')}
               </Typography>
               <Typography

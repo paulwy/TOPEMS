@@ -199,7 +199,13 @@ export function AITextOptimizer({
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* 原始文本 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <InputLabel sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'text.secondary' }}>
+          <InputLabel
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              fontWeight: 500,
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.ai_text_optimizer.k6')}
           </InputLabel>
           <TextField
@@ -223,7 +229,13 @@ export function AITextOptimizer({
             }}
             onClick={() => setShowKeywords(!showKeywords)}
           >
-            <InputLabel sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'text.secondary' }}>
+            <InputLabel
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'text.secondary',
+              }}
+            >
               {i18n.t('components.ai_text_optimizer.k7')}
             </InputLabel>
             {showKeywords ? (
@@ -281,7 +293,13 @@ export function AITextOptimizer({
 
         {/* 优化风格选择 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <InputLabel sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'text.secondary' }}>
+          <InputLabel
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              fontWeight: 500,
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.ai_text_optimizer.k9')}
           </InputLabel>
           <Select
@@ -303,7 +321,11 @@ export function AITextOptimizer({
                   </Box>
                   <Box
                     component='span'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary', ml: 1 }}
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      color: 'text.secondary',
+                      ml: 1,
+                    }}
                   >
                     {style.description}
                   </Box>
@@ -377,7 +399,13 @@ export function AITextOptimizer({
                 justifyContent: 'space-between',
               }}
             >
-              <InputLabel sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'secondary.dark' }}>
+              <InputLabel
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  fontWeight: 500,
+                  color: 'secondary.dark',
+                }}
+              >
                 {i18n.t('components.ai_text_optimizer.k13')}
               </InputLabel>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -393,7 +421,10 @@ export function AITextOptimizer({
                     </Button>
                     <Box
                       component='span'
-                      sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}
+                      sx={{
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                        color: 'text.secondary',
+                      }}
                     >
                       {historyIndex + 1}/{history.length}
                     </Box>

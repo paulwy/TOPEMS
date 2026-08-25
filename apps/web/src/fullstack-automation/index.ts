@@ -12,7 +12,14 @@ export {
   type Environment,
 } from './ci-cd-pipeline';
 
-export { intelligentDeployer, type DeploymentRecord, type DeploymentStrategy, type DeploymentStrategyType, type DeploymentStatus, type HealthCheckStatus } from './intelligent-deployment'
+export {
+  intelligentDeployer,
+  type DeploymentRecord,
+  type DeploymentStrategy,
+  type DeploymentStrategyType,
+  type DeploymentStatus,
+  type HealthCheckStatus,
+} from './intelligent-deployment';
 
 export {
   AutoRollback,

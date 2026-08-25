@@ -114,7 +114,10 @@ const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenL
                       label={getLeaveTypeLabel(leave.leave_type)}
                       size='small'
                       color='primary'
-                      sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                      sx={{
+                        height: 22,
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      }}
                     />
                     <Chip
                       label={getLeaveStatusLabel(leave.status)}
@@ -124,7 +127,10 @@ const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenL
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                      sx={{
+                        height: 22,
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      }}
                     />
                   </Box>
                   <Typography

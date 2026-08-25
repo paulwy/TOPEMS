@@ -34,6 +34,8 @@ import type {
   CloneTemplateRequest,
 } from './assignment';
 
+import type { PaginatedResult } from '@/api/client';
+
 export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notification';
 
 type VariableType =
@@ -121,8 +123,6 @@ export interface RenderTemplateResponse {
   content: string;
   missing_variables: string[];
 }
-
-import type { PaginatedResult } from '@/api/client';
 export type { PaginatedResult };
 
 export const templateApi = {

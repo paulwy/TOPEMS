@@ -12,8 +12,7 @@ import {
   servicePut,
   serviceDelete,
 } from '../apiClient';
-import { apiClient } from '@/api/client';
-import { handleResponse } from '@/api/client';
+import { apiClient, handleResponse } from '@/api/client';
 
 // --- Mocks must be set up before importing the module under test ---
 

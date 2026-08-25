@@ -20,10 +20,7 @@ export const MAPPING_TYPE_LABELS: Record<MappingType, string> = {
   validate: i18n.t('shared.mapping.k3'),
 };
 
-const MAPPING_TYPE_COLORS: Record<
-  MappingType,
-  'primary' | 'secondary' | 'warning' | 'error'
-> = {
+const MAPPING_TYPE_COLORS: Record<MappingType, 'primary' | 'secondary' | 'warning' | 'error'> = {
   field: 'primary',
   transform: 'secondary',
   filter: 'warning',

@@ -41,7 +41,12 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'primary.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'primary.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {t('im.mail_page_components_email_stats_cards.e1')}
               </Typography>
               <Typography
@@ -89,7 +94,12 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'success.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'success.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {t('im.email_stats_cards.k0')}
               </Typography>
               <Typography
@@ -137,7 +147,12 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'warning.100', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'warning.100',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {t('im.email_stats_cards.k1')}
               </Typography>
               <Typography
@@ -185,7 +200,12 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
             }}
           >
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+              <Typography
+                sx={{
+                  color: 'error.light',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
+              >
                 {t('im.email_stats_cards.k2')}
               </Typography>
               <Typography

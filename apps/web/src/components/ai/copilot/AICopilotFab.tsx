@@ -23,9 +23,7 @@ export const AICopilotFab: React.FC<AICopilotFabProps> = ({ onClick }) => (
       }}
       onClick={onClick}
     >
-      <Sparkles
-        style={{ width: 24, height: 24, color: 'var(--color-primary-foreground)' }}
-      />
+      <Sparkles style={{ width: 24, height: 24, color: 'var(--color-primary-foreground)' }} />
     </Fab>
   </Zoom>
 );

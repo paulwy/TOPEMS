@@ -276,7 +276,11 @@ const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                     label={i18n.t('mobile.approval.tab.pending')}
                     size='small'
                     color='primary'
-                    sx={{ mt: 0.5, height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                    sx={{
+                      mt: 0.5,
+                      height: 20,
+                      fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                    }}
                   />
                 )}
               </Box>

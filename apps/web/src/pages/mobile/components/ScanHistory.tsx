@@ -134,7 +134,10 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
                       label={item.format}
                       size='small'
                       variant='outlined'
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                      sx={{
+                        height: 20,
+                        fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                      }}
                     />
                   </Box>
                 }

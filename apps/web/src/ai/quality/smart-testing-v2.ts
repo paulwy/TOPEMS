@@ -566,4 +566,3 @@ class SmartTestV2Impl {
     );
   }
 }
-

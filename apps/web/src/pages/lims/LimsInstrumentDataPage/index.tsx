@@ -717,7 +717,10 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'instrument_id',
         label: i18n.t('lims.instrument_data_table.k1'),
         render: (row) => (
-          <Typography noWrap title={row.instrument_id || row.instrument_name}>
+          <Typography
+            noWrap
+            title={row.instrument_id || row.instrument_name}
+          >
             {row.instrument_name || row.instrument_id || '-'}
           </Typography>
         ),
@@ -730,7 +733,11 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'protocol',
         label: i18n.t('lims.instrument_data_table.k3'),
         render: (row) => (
-          <Chip label={row.protocol} size='small' variant='outlined' />
+          <Chip
+            label={row.protocol}
+            size='small'
+            variant='outlined'
+          />
         ),
       },
       {
@@ -802,7 +809,10 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'instrument_id',
         label: i18n.t('lims.collection_task_table.k2'),
         render: (row) => (
-          <Typography noWrap title={row.instrument_id || row.instrument_name}>
+          <Typography
+            noWrap
+            title={row.instrument_id || row.instrument_name}
+          >
             {row.instrument_name || row.instrument_id || '-'}
           </Typography>
         ),
@@ -811,7 +821,11 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'protocol',
         label: i18n.t('lims.collection_task_table.k3'),
         render: (row) => (
-          <Chip label={row.protocol} size='small' variant='outlined' />
+          <Chip
+            label={row.protocol}
+            size='small'
+            variant='outlined'
+          />
         ),
       },
       {
@@ -888,7 +902,11 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'protocol',
         label: i18n.t('lims.parse_rule_table.k2'),
         render: (row) => (
-          <Chip label={row.protocol} size='small' variant='outlined' />
+          <Chip
+            label={row.protocol}
+            size='small'
+            variant='outlined'
+          />
         ),
       },
       {
@@ -900,7 +918,10 @@ const LimsInstrumentDataPage: React.FC = () => {
         id: 'description',
         label: i18n.t('lims.rule_form_dialog.k6'),
         render: (row) => (
-          <Typography noWrap title={row.description}>
+          <Typography
+            noWrap
+            title={row.description}
+          >
             {row.description || '-'}
           </Typography>
         ),
@@ -944,7 +965,10 @@ const LimsInstrumentDataPage: React.FC = () => {
     >
       <StatisticsCards statistics={statistics} />
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+        >
           <Tab
             icon={<Database size={18} />}
             iconPosition='start'

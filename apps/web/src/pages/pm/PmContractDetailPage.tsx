@@ -23,6 +23,7 @@ import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ct = designTokens.colors;
 const getContractStatusLabels = (): Record<string, string> => ({
   draft: i18n.t('pm.pm_contract_detail_page.k0'),

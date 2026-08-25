@@ -40,7 +40,12 @@ export const migrationSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         return React.createElement(
           'span',
-          { style: { fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+          {
+            style: {
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            },
+          },
           String(row.schema || '')
         );
       },

@@ -300,7 +300,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
-              bgcolor: stat.gradient ? undefined : (stat.bgColor || 'background.paper'),
+              bgcolor: stat.gradient ? undefined : stat.bgColor || 'background.paper',
               color: stat.gradient ? 'var(--color-primary-foreground)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',

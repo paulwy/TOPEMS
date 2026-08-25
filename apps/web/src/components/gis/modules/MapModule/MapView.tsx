@@ -14,7 +14,7 @@ import i18n from '@/i18n';
 import { MapPin, Info, Navigation, X } from 'lucide-react';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../../api/gis';
 import type { DrawFeature } from '../shared/types';
-import { EARTH } from '@topems/tokens';
+import { EARTH, designTokens, semanticTokens } from '@topems/tokens';
 import MapEvents from './MapEvents';
 import MapControls from './MapControls';
 import LayerManager from './LayerManager';
@@ -25,7 +25,6 @@ import DeviceTrackPanel from '../../DeviceTrackPanel';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import { designTokens, semanticTokens } from '@topems/tokens';
 // C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
 const Map3DView = lazy(() => import('../../Map3DView'));
 type ToolMode =
@@ -331,7 +330,12 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k6')}
             </div>
-            <div style={{ color: theme.palette.text.secondary, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+            <div
+              style={{
+                color: theme.palette.text.secondary,
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
               {selectedItem.description}
             </div>
           </div>
@@ -694,7 +698,12 @@ const MapView: React.FC<MapViewProps> = ({
                       <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
                         {pipeline.name}
                       </div>
-                      <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
+                      <div
+                        style={{
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          color: theme.palette.text.secondary,
+                        }}
+                      >
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -739,7 +748,12 @@ const MapView: React.FC<MapViewProps> = ({
                         {point.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
+                    <div
+                      style={{
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                        color: theme.palette.text.secondary,
+                      }}
+                    >
                       <div>
                         {i18n.t('gis.mapView.k0')} {point.device_type}
                       </div>
@@ -836,7 +850,12 @@ const MapView: React.FC<MapViewProps> = ({
                         {location.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: theme.palette.text.secondary }}>
+                    <div
+                      style={{
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                        color: theme.palette.text.secondary,
+                      }}
+                    >
                       <div>
                         {i18n.t('gis.mapView.k0')} {location.location_type}
                       </div>
@@ -1076,7 +1095,12 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'yellow.700' }}>
+          <span
+            style={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              color: 'yellow.700',
+            }}
+          >
             {i18n.t('components.map_view.k11')}
           </span>
         </div>

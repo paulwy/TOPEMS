@@ -117,7 +117,12 @@ export const AreaChart: React.FC<AreaChartProps> = ({
               iconType='circle'
               iconSize={8}
               formatter={(value: string) => (
-                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: chartTheme.textColor }}>
+                <Typography
+                  sx={{
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    color: chartTheme.textColor,
+                  }}
+                >
                   {value}
                 </Typography>
               )}

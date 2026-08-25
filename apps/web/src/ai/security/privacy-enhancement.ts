@@ -77,4 +77,3 @@ const PRIVACY_TEMPLATES: Record<string, Partial<PrivacyConfig>> = {
     description: i18n.t('ai.privacy-enhancement.k3'),
   },
 };
-

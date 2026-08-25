@@ -234,7 +234,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           >
             <ZoomOut sx={{ width: 16, height: 16 }} />
           </Button>
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], width: 48, textAlign: 'center' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              width: 48,
+              textAlign: 'center',
+            }}
+          >
             {Math.round(zoom * 100)}%
           </Typography>
           <Button
@@ -375,9 +381,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     rx='8'
                     opacity='0.1'
                     fill={
-                      selectedNode?.id === node.id
-                        ? 'primary.main'
-                        : 'var(--color-text-primary)'
+                      selectedNode?.id === node.id ? 'primary.main' : 'var(--color-text-primary)'
                     }
                   />
 

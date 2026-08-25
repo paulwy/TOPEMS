@@ -218,7 +218,10 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                 placeholder={t('im.mail_page_components_create_template_dialog.m5')}
                 multiline
                 minRows={3}
-                sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  fontFamily: 'monospace',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               />
             </Box>
             <Box

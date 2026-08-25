@@ -103,11 +103,7 @@ export const tauriApi = {
 
   // ─── Issue/Ticket CRUD ────────────────────────────────────────
 
-  async getIssues(
-    status?: string,
-    projectId?: string,
-    signal?: AbortSignal
-  ): Promise<Issue[]> {
+  async getIssues(status?: string, projectId?: string, signal?: AbortSignal): Promise<Issue[]> {
     const requestId = genRequestId();
     const args: Record<string, unknown> = { request_id: requestId };
     if (status) args.status = status;
@@ -242,7 +238,11 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Project>('update_project', { id, ...params, request_id: requestId });
+    const result = await invoke<Project>('update_project', {
+      id,
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -395,7 +395,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('create_user', { ...params, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('create_user', {
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -413,7 +416,11 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('update_user', { id, ...params, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('update_user', {
+      id,
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -442,7 +449,9 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('get_role_list', { request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('get_role_list', {
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -463,7 +472,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('create_role', { ...params, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('create_role', {
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -481,7 +493,11 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('update_role', { id, ...params, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('update_role', {
+      id,
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -524,7 +540,9 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('get_system_config', { request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('get_system_config', {
+      request_id: requestId,
+    });
     if (result.success && result.data) {
       return result.data;
     }
@@ -543,7 +561,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('batch_create_issues', { issues, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('batch_create_issues', {
+      issues,
+      request_id: requestId,
+    });
     if (result.success && result.data) return result.data;
     throw new Error(result.error || 'Failed to batch create issues');
   },
@@ -569,7 +590,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('batch_update_issues', { updates, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('batch_update_issues', {
+      updates,
+      request_id: requestId,
+    });
     if (result.success && result.data) return result.data;
     throw new Error(result.error || 'Failed to batch update issues');
   },
@@ -584,7 +608,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('batch_create_projects', { projects, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('batch_create_projects', {
+      projects,
+      request_id: requestId,
+    });
     if (result.success && result.data) return result.data;
     throw new Error(result.error || 'Failed to batch create projects');
   },
@@ -618,7 +645,10 @@ export const tauriApi = {
         invoke<void>('cancel_request', { request_id: requestId });
       });
     }
-    const result = await invoke<Record<string, unknown>>('get_audit_logs', { ...params, request_id: requestId });
+    const result = await invoke<Record<string, unknown>>('get_audit_logs', {
+      ...params,
+      request_id: requestId,
+    });
     if (result.success && result.data) return result.data;
     throw new Error(result.error || 'Failed to get audit logs');
   },

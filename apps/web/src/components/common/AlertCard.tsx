@@ -637,9 +637,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
                   sx={{
                     borderColor: config.borderColor,
-                    color: action.primary
-                      ? 'var(--color-primary-foreground)'
-                      : config.titleColor,
+                    color: action.primary ? 'var(--color-primary-foreground)' : config.titleColor,
                     bgcolor: action.primary ? config.color : 'transparent',
                     '&:hover': {
                       bgcolor: action.primary ? config.color : config.bgColor,

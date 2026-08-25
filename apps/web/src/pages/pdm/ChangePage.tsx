@@ -195,7 +195,10 @@ export const ChangePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('pdm.change_page.e1')}
               </Typography>
@@ -228,7 +231,10 @@ export const ChangePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('pdm.change_page.e2')}
               </Typography>
@@ -261,7 +267,10 @@ export const ChangePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('pdm.change_page.e3')}
               </Typography>
@@ -294,7 +303,10 @@ export const ChangePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {t('pdm.change_page.e4')}
               </Typography>
@@ -331,7 +343,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e5')}
           </Box>
@@ -340,7 +355,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e6')}
           </Box>
@@ -351,7 +369,10 @@ export const ChangePage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e7')}
           </Box>
@@ -360,7 +381,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e8')}
           </Box>
@@ -369,7 +393,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e9')}
           </Box>
@@ -378,7 +405,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e10')}
           </Box>
@@ -387,7 +417,10 @@ export const ChangePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.bom_page.e6')}
           </Box>
@@ -407,7 +440,10 @@ export const ChangePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {t('pdm.change_page.e12')}
             </Box>
@@ -418,7 +454,10 @@ export const ChangePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {t('pdm.change_page.e13')}
             </Box>
@@ -428,7 +467,10 @@ export const ChangePage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e14')}
           </Box>
@@ -437,7 +479,10 @@ export const ChangePage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {t('pdm.change_page.e15')}
           </Box>
@@ -447,7 +492,10 @@ export const ChangePage: React.FC = () => {
           <Box sx={{ gridColumn: '1 / -1' }}>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {t('pdm.change_page.e16')}
             </Box>
@@ -458,7 +506,10 @@ export const ChangePage: React.FC = () => {
           <Box sx={{ gridColumn: '1 / -1' }}>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {t('pdm.change_page.e17')}
             </Box>

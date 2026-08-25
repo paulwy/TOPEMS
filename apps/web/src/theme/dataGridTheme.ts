@@ -112,8 +112,12 @@ const getDataGridTheme = (): Record<string, unknown> => ({
 
         '& .MuiTablePagination-root': { minHeight: 52 },
         '& .MuiTablePagination-toolbar': { minHeight: 52, paddingRight: 16 },
-        '& .MuiTablePagination-selectLabel': { fontSize: designTokens.typography.fontSize.scale['0.8125rem'] },
-        '& .MuiTablePagination-displayedRows': { fontSize: designTokens.typography.fontSize.scale['0.8125rem'] },
+        '& .MuiTablePagination-selectLabel': {
+          fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
+        },
+        '& .MuiTablePagination-displayedRows': {
+          fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
+        },
         '& .MuiTablePagination-select': {
           fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
           borderRadius: 'var(--mui-shape-borderRadius)',

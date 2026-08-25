@@ -101,7 +101,10 @@ const EhsHazardPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_hazard_page.k0')}
               </Typography>
@@ -134,7 +137,10 @@ const EhsHazardPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_hazard_page.k1')}
               </Typography>
@@ -167,7 +173,10 @@ const EhsHazardPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_hazard_page.k2')}
               </Typography>
@@ -200,7 +209,10 @@ const EhsHazardPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_hazard_page.k3')}
               </Typography>

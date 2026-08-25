@@ -12,7 +12,7 @@ import { crmApi } from '@/api/crm';
 const ContactManagementPage: React.FC = () => {
   const { t } = useTranslation();
 
-    const contactApiAdapter = createCrudPageAdapter(crmApi.contacts);
+  const contactApiAdapter = createCrudPageAdapter(crmApi.contacts);
 
   return (
     <CrudPage

@@ -10,6 +10,7 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
+
 const ct = designTokens.colors;
 const getWorkflowSteps = () => [
   i18n.t('lims.sample_receive_page.k4'),
@@ -293,7 +294,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k11')}
             </Box>
@@ -302,7 +306,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k12')}
             </Box>
@@ -311,7 +318,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k13')}
             </Box>
@@ -320,7 +330,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k14')}
             </Box>
@@ -338,7 +351,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k15')}
             </Box>
@@ -351,7 +367,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k16')}
             </Box>
@@ -360,7 +379,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k17')}
             </Box>
@@ -369,7 +391,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k18')}
             </Box>
@@ -380,7 +405,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k19')}
             </Box>
@@ -389,7 +417,10 @@ const SampleReceivePage: React.FC = () => {
           <Box>
             <Box
               component='span'
-              sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+              sx={{
+                color: 'text.secondary',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
             >
               {i18n.t('pages.sample_receive_page.k20')}
             </Box>

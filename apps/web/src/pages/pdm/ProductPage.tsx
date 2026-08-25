@@ -106,11 +106,17 @@ export default function ProductPage() {
         >
           <Typography
             variant='body2'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mb: 1 }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              mb: 1,
+            }}
           >
             {t('pdm.product_page.e1')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'] }}>
+          <Typography
+            sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'] }}
+          >
             {t('pdm.product_page.m1', { v1: stats.total })}
           </Typography>
         </Box>
@@ -125,11 +131,21 @@ export default function ProductPage() {
         >
           <Typography
             variant='body2'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mb: 1 }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              mb: 1,
+            }}
           >
             {t('pdm.product_page.e2')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'], color: 'success.main' }}>
+          <Typography
+            sx={{
+              fontWeight: 'bold',
+              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+              color: 'success.main',
+            }}
+          >
             {t('pdm.product_page.m1', { v1: stats.active })}
           </Typography>
         </Box>
@@ -144,11 +160,21 @@ export default function ProductPage() {
         >
           <Typography
             variant='body2'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mb: 1 }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              mb: 1,
+            }}
           >
             {t('pdm.product_page.e3')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: designTokens.typography.fontSize.scale['1.5rem'], color: 'warning.main' }}>
+          <Typography
+            sx={{
+              fontWeight: 'bold',
+              fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+              color: 'warning.main',
+            }}
+          >
             {t('pdm.product_page.m1', { v1: stats.draft })}
           </Typography>
         </Box>

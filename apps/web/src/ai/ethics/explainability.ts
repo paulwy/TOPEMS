@@ -26,26 +26,3 @@ export interface ExplainabilityReport {
   limitations: string[];
   generatedAt: number;
 }
-
-const SHAP_FEATURES = [
-  'age',
-  'income',
-  'credit_score',
-  'employment_years',
-  'debt_ratio',
-  'loan_amount',
-  'loan_term',
-  'payment_history',
-  'marital_status',
-  'education_level',
-  'home_owner',
-  'num_dependents',
-];
-
-const COUNTERFACTUAL_FEATURES = [
-  'income',
-  'credit_score',
-  'employment_years',
-  'debt_ratio',
-  'loan_amount',
-];

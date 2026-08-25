@@ -17,17 +17,52 @@ export const driverSchema: EntitySchema = {
   },
 
   fields: [
-    { name: 'driver_no', label: i18n.t('tms.driver_management_page.k30'), type: 'text', required: true, readonlyOnEdit: true, sortable: true, listWidth: 140 },
-    { name: 'name', label: i18n.t('tms.driver_management_page.k31'), type: 'text', required: true, listWidth: 140 },
-    { name: 'phone', label: i18n.t('tms.driver_management_page.k32'), type: 'text', listWidth: 140 },
-    { name: 'license_no', label: i18n.t('tms.driver_management_page.k33'), type: 'text', listWidth: 140 },
-    { name: 'license_type', label: i18n.t('tms.driver_management_page.k34'), type: 'text', listWidth: 100 },
     {
-      name: 'status', label: i18n.t('tms.driver_management_page.k35'), type: 'select', defaultValue: 'active',
-      options: { type: 'static', options: [
-        { value: 'active', label: i18n.t('tms.driver_management_page.k0') },
-        { value: 'inactive', label: i18n.t('tms.driver_management_page.k1') },
-      ]},
+      name: 'driver_no',
+      label: i18n.t('tms.driver_management_page.k30'),
+      type: 'text',
+      required: true,
+      readonlyOnEdit: true,
+      sortable: true,
+      listWidth: 140,
+    },
+    {
+      name: 'name',
+      label: i18n.t('tms.driver_management_page.k31'),
+      type: 'text',
+      required: true,
+      listWidth: 140,
+    },
+    {
+      name: 'phone',
+      label: i18n.t('tms.driver_management_page.k32'),
+      type: 'text',
+      listWidth: 140,
+    },
+    {
+      name: 'license_no',
+      label: i18n.t('tms.driver_management_page.k33'),
+      type: 'text',
+      listWidth: 140,
+    },
+    {
+      name: 'license_type',
+      label: i18n.t('tms.driver_management_page.k34'),
+      type: 'text',
+      listWidth: 100,
+    },
+    {
+      name: 'status',
+      label: i18n.t('tms.driver_management_page.k35'),
+      type: 'select',
+      defaultValue: 'active',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'active', label: i18n.t('tms.driver_management_page.k0') },
+          { value: 'inactive', label: i18n.t('tms.driver_management_page.k1') },
+        ],
+      },
       listWidth: 100,
     },
   ],
@@ -39,13 +74,21 @@ export const driverSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: { active: 'success', inactive: 'default' },
-      labelMap: { active: i18n.t('tms.driver_management_page.k2'), inactive: i18n.t('tms.driver_management_page.k3') },
+      labelMap: {
+        active: i18n.t('tms.driver_management_page.k2'),
+        inactive: i18n.t('tms.driver_management_page.k3'),
+      },
     },
     filters: [
-      { id: 'status', label: i18n.t('tms.driver_management_page.k23'), type: 'select', options: [
-        { label: i18n.t('tms.driver_management_page.k0'), value: 'active' },
-        { label: i18n.t('tms.driver_management_page.k1'), value: 'inactive' },
-      ]},
+      {
+        id: 'status',
+        label: i18n.t('tms.driver_management_page.k23'),
+        type: 'select',
+        options: [
+          { label: i18n.t('tms.driver_management_page.k0'), value: 'active' },
+          { label: i18n.t('tms.driver_management_page.k1'), value: 'inactive' },
+        ],
+      },
     ],
   },
 

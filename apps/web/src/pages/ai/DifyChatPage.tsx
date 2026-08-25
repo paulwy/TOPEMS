@@ -287,11 +287,9 @@ export const DifyChatPage: React.FC = () => {
                 ? {
                     ...m,
                     isStreaming: false,
-                    content:
-                      m.content +
-                      `\n\n${i18n.t('ai.dify.error.stream_prefix')}${
-                        event.error || i18n.t('ai.dify.error.stream_body')
-                      }`,
+                    content: `${m.content}\n\n${i18n.t('ai.dify.error.stream_prefix')}${
+                      event.error || i18n.t('ai.dify.error.stream_body')
+                    }`,
                   }
                 : m
             )
@@ -331,7 +329,7 @@ export const DifyChatPage: React.FC = () => {
             ? {
                 ...m,
                 isStreaming: false,
-                content: m.content + `\n\n${i18n.t('ai.dify.error.stream_prefix')}${errorMsg}`,
+                content: `${m.content}\n\n${i18n.t('ai.dify.error.stream_prefix')}${errorMsg}`,
               }
             : m
         )
@@ -726,7 +724,10 @@ export const DifyChatPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 12 }}>
           <Bot
             size={48}
-            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: theme.palette.text.disabled }}
+            style={{
+              margin: `0 auto ${designTokens.spacing.md}px`,
+              color: theme.palette.text.disabled,
+            }}
           />
           <Typography
             variant='h6'

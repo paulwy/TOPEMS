@@ -498,7 +498,14 @@ const DocumentCenterPage: React.FC = () => {
         sx={{ px: 3, py: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}
       >
         <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
+          >
             <Box
               onClick={() => setCurrentPath([])}
               sx={{
@@ -814,7 +821,10 @@ const DocumentCenterPage: React.FC = () => {
                           label={i18n.t('pages.document_center_page.k50')}
                           size='small'
                           color='primary'
-                          sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                          sx={{
+                            height: 20,
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                          }}
                         />
                       )}
                     </Stack>

@@ -11,12 +11,17 @@ import i18n from '@/i18n';
 
 const supplierApiAdapter = createCrudPageAdapter(scmApi.suppliers);
 const supplierCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  supplierApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<Record<string, unknown>>
+  supplierApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
+    Record<string, unknown>
+  >
 );
 
 export default function SupplierManagementPage() {
   const columns = React.useMemo(
-    () => getColumns<Record<string, unknown>>(supplierSchema as unknown as EntitySchema<Record<string, unknown>>),
+    () =>
+      getColumns<Record<string, unknown>>(
+        supplierSchema as unknown as EntitySchema<Record<string, unknown>>
+      ),
     []
   );
 

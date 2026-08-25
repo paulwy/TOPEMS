@@ -117,7 +117,9 @@ export const SidebarSearch: React.FC<SidebarSearchProps> = ({ collapsed }) => {
                 secondary={item.path}
                 slotProps={{
                   primary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
-                  secondary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] } },
+                  secondary: {
+                    sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+                  },
                 }}
               />
             </ListItemButton>

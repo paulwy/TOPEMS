@@ -204,7 +204,14 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
               borderRadius: 8,
             }}
           >
-            <Typography sx={{ color: 'error.light', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>{error}</Typography>
+            <Typography
+              sx={{
+                color: 'error.light',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
+              {error}
+            </Typography>
           </Paper>
         )}
 
@@ -221,7 +228,13 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         </Typography>
 
         {/* Max Duration Hint */}
-        <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mb: 32 }}>
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            mb: 32,
+          }}
+        >
           {i18n.t('components.audio_capture.k0')} {formatTime(maxDuration)}
         </Typography>
 

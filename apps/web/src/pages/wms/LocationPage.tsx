@@ -16,12 +16,17 @@ import i18n from '@/i18n';
 
 const locationApiAdapter = createCrudPageAdapter(wmsApi.locations);
 const locationCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  locationApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<Record<string, unknown>>
+  locationApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
+    Record<string, unknown>
+  >
 );
 
 const LocationPage: React.FC = () => {
   const columns = React.useMemo(
-    () => getColumns<Record<string, unknown>>(locationSchema as unknown as EntitySchema<Record<string, unknown>>),
+    () =>
+      getColumns<Record<string, unknown>>(
+        locationSchema as unknown as EntitySchema<Record<string, unknown>>
+      ),
     []
   );
 

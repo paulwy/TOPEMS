@@ -38,11 +38,7 @@ const annotationTypes = [
     id: 'tag',
     label: i18n.t('components.chart_annotations.k2'),
     icon: Tag,
-    colors: [
-      designTokens.colors.pink.main,
-      'colors.teal.500',
-      'var(--color-fallback-ant-green)',
-    ],
+    colors: [designTokens.colors.pink.main, 'colors.teal.500', 'var(--color-fallback-ant-green)'],
   },
 ];
 
@@ -198,7 +194,10 @@ export function ChartAnnotations({
                       backgroundColor: color,
                       cursor: 'pointer',
                       transform: selectedColor === color ? 'scale(1.25)' : 'scale(1)',
-                      boxShadow: selectedColor === color ? '0 0 0 2px ${alpha(theme.palette.common.black, 0.1)}' : 'none',
+                      boxShadow:
+                        selectedColor === color
+                          ? '0 0 0 2px ${alpha(theme.palette.common.black, 0.1)}'
+                          : 'none',
                       transition: 'transform 0.2s',
                     }}
                   />

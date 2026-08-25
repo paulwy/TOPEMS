@@ -387,7 +387,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                       color={
                         getStatusColor(node.status) as React.ComponentProps<typeof Chip>['color']
                       }
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.6rem'] }}
+                      sx={{
+                        height: 20,
+                        fontSize: designTokens.typography.fontSize.scale['0.6rem'],
+                      }}
                     />
                   )}
                   {node.priority && (
@@ -399,7 +402,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                           typeof Chip
                         >['color']
                       }
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.6rem'] }}
+                      sx={{
+                        height: 20,
+                        fontSize: designTokens.typography.fontSize.scale['0.6rem'],
+                      }}
                     />
                   )}
                 </Box>
@@ -475,7 +481,11 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                       <Avatar
                         key={participant.id}
                         src={participant.avatar}
-                        sx={{ width: 24, height: 24, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                        }}
                       >
                         {participant.name.charAt(0)}
                       </Avatar>

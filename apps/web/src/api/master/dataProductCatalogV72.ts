@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type ProductStatus = 'draft' | 'review' | 'published' | 'deprecated' | 'archived';
@@ -85,8 +87,6 @@ interface ProductTag {
   description?: string;
   usage_count: number;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface CreateProductRequest {

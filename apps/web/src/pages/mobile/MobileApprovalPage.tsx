@@ -382,314 +382,318 @@ const MobileApprovalPage: React.FC = () => {
         }}
       >
         <Box sx={{ p: 2, pb: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 2,
-                mb: 2,
-                border: 1,
-                borderColor: 'divider',
-              }}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 2,
+              mb: 2,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: `${getTypeColor(selectedApproval.type)}.lighter`,
+                  color: `${getTypeColor(selectedApproval.type)}.main`,
+                }}
+              >
+                {getTypeIcon(selectedApproval.type)}
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, mb: 0.5 }}
+                >
+                  {selectedApproval.title}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip
+                    label={selectedApproval.id}
+                    size='small'
+                    variant='outlined'
+                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  />
+                  <Chip
+                    label={getPriorityLabel(selectedApproval.priority)}
+                    size='small'
+                    color={
+                      getPriorityColor(selectedApproval.priority) as React.ComponentProps<
+                        typeof Chip
+                      >['color']
+                    }
+                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+            {selectedApproval.amount && (
+              <Box
+                sx={{
+                  py: 2,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {i18n.t('pages.mobile_approval_page.k10')}
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'primary.main' }}
+                >
+                  {selectedApproval.amount}
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              mb: 2,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              {i18n.t('pages.mobile_approval_page.k11')}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ width: 44, height: 44 }}>
+                <UserIcon style={{ width: 22, height: 22 }} />
+              </Avatar>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {selectedApproval.applicant}
+                </Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  {selectedApproval.department}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Clock style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  {i18n.t('pages.mobile_approval_page.k0')}
+                  {selectedApproval.submitTime}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              mb: 2,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('pages.mobile_approval_page.k12')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {selectedApproval.description}
+            </Typography>
+          </Paper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              mb: 2,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('pages.mobile_approval_page.k13')}
+            </Typography>
+            <Box sx={{ position: 'relative', pl: 2 }}>
+              {selectedApproval.steps.map((step, index) => (
                 <Box
+                  key={index}
                   sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5,
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: `${getTypeColor(selectedApproval.type)}.lighter`,
-                    color: `${getTypeColor(selectedApproval.type)}.main`,
+                    gap: 2,
+                    pb: index < selectedApproval.steps.length - 1 ? 3 : 0,
                   }}
                 >
-                  {getTypeIcon(selectedApproval.type)}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 0.5 }}
-                  >
-                    {selectedApproval.title}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip
-                      label={selectedApproval.id}
-                      size='small'
-                      variant='outlined'
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                    />
-                    <Chip
-                      label={getPriorityLabel(selectedApproval.priority)}
-                      size='small'
-                      color={
-                        getPriorityColor(selectedApproval.priority) as React.ComponentProps<
-                          typeof Chip
-                        >['color']
-                      }
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                    />
-                  </Box>
-                </Box>
-              </Box>
-              {selectedApproval.amount && (
-                <Box
-                  sx={{
-                    py: 2,
-                    borderTop: 1,
-                    borderColor: 'divider',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.mobile_approval_page.k10')}
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'primary.main' }}
-                  >
-                    {selectedApproval.amount}
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                mb: 2,
-                border: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('pages.mobile_approval_page.k11')}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ width: 44, height: 44 }}>
-                  <UserIcon style={{ width: 22, height: 22 }} />
-                </Avatar>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedApproval.applicant}
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {selectedApproval.department}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Clock style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.mobile_approval_page.k0')}
-                    {selectedApproval.submitTime}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                mb: 2,
-                border: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('pages.mobile_approval_page.k12')}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {selectedApproval.description}
-              </Typography>
-            </Paper>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                mb: 2,
-                border: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('pages.mobile_approval_page.k13')}
-              </Typography>
-              <Box sx={{ position: 'relative', pl: 2 }}>
-                {selectedApproval.steps.map((step, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      pb: index < selectedApproval.steps.length - 1 ? 3 : 0,
-                    }}
-                  >
-                    <Box sx={{ position: 'relative' }}>
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor:
-                            step.status === 'completed'
-                              ? 'success.main'
-                              : step.status === 'current'
-                                ? 'primary.main'
-                                : 'grey.300',
-                          color: 'common.white',
-                          flexShrink: 0,
-                          zIndex: 1,
-                        }}
-                      >
-                        {step.status === 'completed' ? (
-                          <Check style={{ width: 14, height: 14 }} />
-                        ) : (
-                          <Typography
-                            variant='caption'
-                            sx={{ fontWeight: 600 }}
-                          >
-                            {index + 1}
-                          </Typography>
-                        )}
-                      </Box>
-                      {index < selectedApproval.steps.length - 1 && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 24,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: 2,
-                            height: 'calc(100% + 12px)',
-                            bgcolor: step.status === 'completed' ? 'success.main' : 'grey.200',
-                          }}
-                        />
-                      )}
-                    </Box>
-                    <Box sx={{ flex: 1, pt: 0.5 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          fontWeight: step.status === 'current' ? 600 : 500,
-                          color: step.status === 'pending' ? 'text.secondary' : 'text.primary',
-                        }}
-                      >
-                        {step.name}
-                      </Typography>
-                      {step.time && (
+                  <Box sx={{ position: 'relative' }}>
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor:
+                          step.status === 'completed'
+                            ? 'success.main'
+                            : step.status === 'current'
+                              ? 'primary.main'
+                              : 'grey.300',
+                        color: 'common.white',
+                        flexShrink: 0,
+                        zIndex: 1,
+                      }}
+                    >
+                      {step.status === 'completed' ? (
+                        <Check style={{ width: 14, height: 14 }} />
+                      ) : (
                         <Typography
                           variant='caption'
-                          color='text.secondary'
+                          sx={{ fontWeight: 600 }}
                         >
-                          {step.time}
+                          {index + 1}
                         </Typography>
                       )}
-                      {step.status === 'current' && (
-                        <Chip
-                          label={i18n.t('mobile.mobile_approval_page.k23')}
-                          size='small'
-                          color='primary'
-                          sx={{ mt: 0.5, height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                        />
-                      )}
                     </Box>
+                    {index < selectedApproval.steps.length - 1 && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 24,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: 2,
+                          height: 'calc(100% + 12px)',
+                          bgcolor: step.status === 'completed' ? 'success.main' : 'grey.200',
+                        }}
+                      />
+                    )}
                   </Box>
-                ))}
-              </Box>
-            </Paper>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                mb: 3,
-                border: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('pages.mobile_approval_page.k14')}
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                placeholder={i18n.t('mobile.mobile_approval_page.k24')}
-                value={approvalComment}
-                onChange={(e) => setApprovalComment(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-            </Paper>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <MobileButton
-                fullWidth
-                variant='outlined'
-                color='error'
-                startIcon={processing ? null : <X style={{ width: 20, height: 20 }} />}
-                onClick={() => handleReject(selectedApproval)}
-                disabled={processing}
-              >
-                {processing
-                  ? i18n.t('pages.mobile_approval_page.k6')
-                  : i18n.t('mobile.mobile_approval_page.k25')}
-              </MobileButton>
-              <MobileButton
-                fullWidth
-                variant='contained'
-                color='success'
-                startIcon={processing ? null : <Check style={{ width: 20, height: 20 }} />}
-                onClick={() => handleApprove(selectedApproval)}
-                disabled={processing}
-              >
-                {processing
-                  ? i18n.t('pages.mobile_approval_page.k7')
-                  : i18n.t('mobile.mobile_approval_page.k26')}
-              </MobileButton>
+                  <Box sx={{ flex: 1, pt: 0.5 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        fontWeight: step.status === 'current' ? 600 : 500,
+                        color: step.status === 'pending' ? 'text.secondary' : 'text.primary',
+                      }}
+                    >
+                      {step.name}
+                    </Typography>
+                    {step.time && (
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        {step.time}
+                      </Typography>
+                    )}
+                    {step.status === 'current' && (
+                      <Chip
+                        label={i18n.t('mobile.mobile_approval_page.k23')}
+                        size='small'
+                        color='primary'
+                        sx={{
+                          mt: 0.5,
+                          height: 20,
+                          fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              ))}
             </Box>
+          </Paper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              mb: 3,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {i18n.t('pages.mobile_approval_page.k14')}
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              placeholder={i18n.t('mobile.mobile_approval_page.k24')}
+              value={approvalComment}
+              onChange={(e) => setApprovalComment(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </Paper>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <MobileButton
+              fullWidth
+              variant='outlined'
+              color='error'
+              startIcon={processing ? null : <X style={{ width: 20, height: 20 }} />}
+              onClick={() => handleReject(selectedApproval)}
+              disabled={processing}
+            >
+              {processing
+                ? i18n.t('pages.mobile_approval_page.k6')
+                : i18n.t('mobile.mobile_approval_page.k25')}
+            </MobileButton>
+            <MobileButton
+              fullWidth
+              variant='contained'
+              color='success'
+              startIcon={processing ? null : <Check style={{ width: 20, height: 20 }} />}
+              onClick={() => handleApprove(selectedApproval)}
+              disabled={processing}
+            >
+              {processing
+                ? i18n.t('pages.mobile_approval_page.k7')
+                : i18n.t('mobile.mobile_approval_page.k26')}
+            </MobileButton>
           </Box>
+        </Box>
       </MobilePageTemplate>
     );
   }
@@ -720,245 +724,253 @@ const MobileApprovalPage: React.FC = () => {
       }}
     >
       <Box sx={{ px: 2, pt: 2 }}>
-          <TextField
-            fullWidth
-            size='small'
-            placeholder={i18n.t('mobile.mobile_approval_page.k29')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                minHeight: 44,
-              },
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </Box>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
+        <TextField
+          fullWidth
+          size='small'
+          placeholder={i18n.t('mobile.mobile_approval_page.k29')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
-            px: 2,
-            mb: 1,
-            '& .MuiTab-root': {
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
               minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={
-                index === 0 ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {tab}
-                    <Chip
-                      label={approvals.length}
-                      size='small'
-                      color='error'
-                      sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'], minWidth: 18 }}
-                    />
-                  </Box>
-                ) : (
-                  tab
-                )
-              }
-            />
-          ))}
-        </Tabs>
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={6}
-            />
-          ) : filteredApprovals.length === 0 ? (
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search style={{ width: 20, height: 20 }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </Box>
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          px: 2,
+          mb: 1,
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={
+              index === 0 ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {tab}
+                  <Chip
+                    label={approvals.length}
+                    size='small'
+                    color='error'
+                    sx={{
+                      height: 18,
+                      fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                      minWidth: 18,
+                    }}
+                  />
+                </Box>
+              ) : (
+                tab
+              )
+            }
+          />
+        ))}
+      </Tabs>
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
+        ) : filteredApprovals.length === 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 10,
+              px: 4,
+            }}
+          >
             <Box
               sx={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                bgcolor: 'grey.100',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                py: 10,
-                px: 4,
+                mb: 2,
               }}
             >
-              <Box
-                sx={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  bgcolor: 'grey.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mb: 2,
-                }}
-              >
-                <CheckSquare
-                  style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
-                />
-              </Box>
-              <Typography
-                variant='subtitle1'
-                sx={{ mb: 1, fontWeight: 500 }}
-              >
-                {i18n.t('pages.mobile_approval_page.k15')}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ textAlign: 'center' }}
-              >
-                {searchQuery
-                  ? i18n.t('mobile.mobile_approval_page.k31')
-                  : i18n.t('mobile.mobile_approval_page.k30')}
-              </Typography>
+              <CheckSquare style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
             </Box>
-          ) : (
-            <List disablePadding>
-              {filteredApprovals.map((approval, index) => {
-                const typeColor = getTypeColor(approval.type);
-                return (
-                  <React.Fragment key={approval.id}>
-                    <SwipeAction rightActions={rightSwipeActions}>
-                      <ListItem
-                        sx={{
-                          px: 2,
-                          py: 2,
-                          cursor: 'pointer',
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                          },
-                        }}
-                        onClick={() => setSelectedApproval(approval)}
-                      >
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              <Box
+            <Typography
+              variant='subtitle1'
+              sx={{ mb: 1, fontWeight: 500 }}
+            >
+              {i18n.t('pages.mobile_approval_page.k15')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ textAlign: 'center' }}
+            >
+              {searchQuery
+                ? i18n.t('mobile.mobile_approval_page.k31')
+                : i18n.t('mobile.mobile_approval_page.k30')}
+            </Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {filteredApprovals.map((approval, index) => {
+              const typeColor = getTypeColor(approval.type);
+              return (
+                <React.Fragment key={approval.id}>
+                  <SwipeAction rightActions={rightSwipeActions}>
+                    <ListItem
+                      sx={{
+                        px: 2,
+                        py: 2,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
+                      onClick={() => setSelectedApproval(approval)}
+                    >
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 1.5,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: `${typeColor}.lighter`,
+                                color: `${typeColor}.main`,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {getTypeIcon(approval.type)}
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant='subtitle2'
                                 sx={{
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius: 1.5,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  bgcolor: `${typeColor}.lighter`,
-                                  color: `${typeColor}.main`,
-                                  flexShrink: 0,
+                                  fontWeight: 500,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                {getTypeIcon(approval.type)}
-                              </Box>
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography
-                                  variant='subtitle2'
+                                {approval.title}
+                              </Typography>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
+                                {approval.id}
+                              </Typography>
+                            </Box>
+                            <ChevronRight
+                              style={{
+                                width: 18,
+                                height: 18,
+                                color: theme.palette.text.secondary,
+                                flexShrink: 0,
+                              }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box sx={{ ml: 0, mt: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <Chip
+                                label={getPriorityLabel(approval.priority)}
+                                size='small'
+                                color={
+                                  getPriorityColor(approval.priority) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
+                                sx={{
+                                  height: 20,
+                                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                                }}
+                              />
+                              {approval.amount && (
+                                <Chip
+                                  label={approval.amount}
+                                  size='small'
+                                  variant='outlined'
                                   sx={{
-                                    fontWeight: 500,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
+                                    height: 20,
+                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                                   }}
-                                >
-                                  {approval.title}
-                                </Typography>
+                                />
+                              )}
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <UserIcon
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
+                                />
                                 <Typography
                                   variant='caption'
                                   color='text.secondary'
                                 >
-                                  {approval.id}
+                                  {approval.applicant}
                                 </Typography>
                               </Box>
-                              <ChevronRight
-                                style={{
-                                  width: 18,
-                                  height: 18,
-                                  color: theme.palette.text.secondary,
-                                  flexShrink: 0,
-                                }}
-                              />
-                            </Box>
-                          }
-                          secondary={
-                            <Box sx={{ ml: 0, mt: 1 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <Chip
-                                  label={getPriorityLabel(approval.priority)}
-                                  size='small'
-                                  color={
-                                    getPriorityColor(approval.priority) as React.ComponentProps<
-                                      typeof Chip
-                                    >['color']
-                                  }
-                                  sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Clock
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
                                 />
-                                {approval.amount && (
-                                  <Chip
-                                    label={approval.amount}
-                                    size='small'
-                                    variant='outlined'
-                                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                                  />
-                                )}
-                              </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <UserIcon
-                                    style={{
-                                      width: 14,
-                                      height: 14,
-                                      color: theme.palette.text.secondary,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    {approval.applicant}
-                                  </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <Clock
-                                    style={{
-                                      width: 14,
-                                      height: 14,
-                                      color: theme.palette.text.secondary,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    {approval.submitTime.split(' ')[0]}
-                                  </Typography>
-                                </Box>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  {approval.submitTime.split(' ')[0]}
+                                </Typography>
                               </Box>
                             </Box>
-                          }
-                          sx={{ pr: 2 }}
-                        />
-                      </ListItem>
-                    </SwipeAction>
-                    {index < filteredApprovals.length - 1 && <Divider component='li' />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          )}
-        </PullToRefresh>
+                          </Box>
+                        }
+                        sx={{ pr: 2 }}
+                      />
+                    </ListItem>
+                  </SwipeAction>
+                  {index < filteredApprovals.length - 1 && <Divider component='li' />}
+                </React.Fragment>
+              );
+            })}
+          </List>
+        )}
+      </PullToRefresh>
     </MobilePageTemplate>
   );
 };

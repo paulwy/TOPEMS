@@ -146,7 +146,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     variant='text'
                     size='small'
                     onClick={() => handlePresetClick(preset.id)}
-                    sx={{ justifyContent: 'flex-start', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                    }}
                   >
                     {preset.label}
                   </Button>

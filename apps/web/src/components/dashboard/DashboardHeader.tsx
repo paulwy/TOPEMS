@@ -143,7 +143,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               />
               <Typography
                 component='span'
-                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary', fontWeight: 500 }}
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  color: 'text.secondary',
+                  fontWeight: 500,
+                }}
               >
                 {currentTime.toLocaleTimeString('zh-CN', {
                   hour: '2-digit',

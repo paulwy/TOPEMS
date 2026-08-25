@@ -329,7 +329,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {t('finance.finance_budget_detail_page.id_5')}
             </InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
               {budget.id.substring(0, 8)}...
             </Typography>
           </Box>

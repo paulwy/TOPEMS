@@ -120,14 +120,19 @@ export default function WmsOrderFulfillmentPage() {
                   verticalAlign='bottom'
                 />
                 <Tooltip
-                  formatter={(v: unknown) => [`${v}%`, i18n.t('pages.wms_order_fulfillment_page.k5')]}
+                  formatter={(v: unknown) => [
+                    `${v}%`,
+                    i18n.t('pages.wms_order_fulfillment_page.k5'),
+                  ]}
                 />
               </RadialBarChart>
             </ResponsiveContainer>
           </div>
 
           <div className='rounded-lg border p-4'>
-            <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_order_fulfillment_page.by_6')}</h3>
+            <h3 className='mb-2 font-semibold'>
+              {i18n.t('pages.wms_order_fulfillment_page.by_6')}
+            </h3>
             <ResponsiveContainer
               width='100%'
               height={360}

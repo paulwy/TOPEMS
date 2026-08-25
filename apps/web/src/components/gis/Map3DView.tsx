@@ -82,7 +82,11 @@ function DeviceMarker({
           }}
         >
           <div style={{ fontWeight: 500 }}>{name}</div>
-          <div style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}>{status}</div>
+          <div
+            style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}
+          >
+            {status}
+          </div>
         </Html>
       )}
     </group>
@@ -134,7 +138,11 @@ function StorageMarker({
           }}
         >
           <div style={{ fontWeight: 500 }}>{name}</div>
-          <div style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}>{i18n.t('gis.map3_d_view.k0')}</div>
+          <div
+            style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}
+          >
+            {i18n.t('gis.map3_d_view.k0')}
+          </div>
         </Html>
       )}
     </group>
@@ -366,8 +374,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
         sx={{
           flex: 1,
           position: 'relative',
-          background:
-            'linear-gradient(180deg, var(--color-card) 0%, var(--color-border) 100%)',
+          background: 'linear-gradient(180deg, var(--color-card) 0%, var(--color-border) 100%)',
         }}
       >
         <Canvas

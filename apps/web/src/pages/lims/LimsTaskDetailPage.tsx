@@ -313,9 +313,7 @@ const LimsTaskDetailPage: React.FC = () => {
                           fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           fontWeight: 500,
                           bgcolor: isCompleted ? 'success.dark' : 'grey.400',
-                          color: isCompleted
-                            ? 'var(--color-primary-foreground)'
-                            : 'grey.600',
+                          color: isCompleted ? 'var(--color-primary-foreground)' : 'grey.600',
                         }}
                       >
                         {isCompleted ? <CheckCircle sx={{ width: 16, height: 16 }} /> : index + 1}

@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type LineageDirection = 'upstream' | 'downstream' | 'bidirectional';
@@ -184,8 +186,6 @@ interface LineageDashboard {
     confidence_distribution: Record<string, number>;
   };
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface GetLineageGraphRequest {

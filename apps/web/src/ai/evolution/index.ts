@@ -1,11 +1,6 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 
-export type {
-  ModelVersion,
-  Model,
-  VersionStatus,
-  VersionCompareResult,
-} from './model-versioning';
+export type { ModelVersion, Model, VersionStatus, VersionCompareResult } from './model-versioning';
 
 export type {
   Experiment,

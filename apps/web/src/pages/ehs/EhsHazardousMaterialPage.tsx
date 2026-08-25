@@ -83,7 +83,10 @@ const StatCard: React.FC<{
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'slate.600',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {label}
           </Typography>
@@ -285,7 +288,12 @@ const EhsHazardousMaterialPage: React.FC = () => {
             <Box sx={{ pt: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
                 <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
+                  >
                     {i18n.t('pages.ehs_hazardous_material_page.k0')}
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
@@ -293,19 +301,34 @@ const EhsHazardousMaterialPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
+                  >
                     {i18n.t('pages.ehs_hazardous_material_page.k1')}
                   </Typography>
                   <Typography>{msdsData.manufacturer || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
+                  >
                     {i18n.t('pages.ehs_hazardous_material_page.k2')}
                   </Typography>
                   <Typography>{msdsData.emergency_phone || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
+                  >
                     {i18n.t('pages.ehs_hazardous_material_page.k3')}
                   </Typography>
                   <Typography>{msdsData.version || '-'}</Typography>

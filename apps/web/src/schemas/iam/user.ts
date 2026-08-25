@@ -88,14 +88,20 @@ export const userSchema: EntitySchema = {
             React.createElement(
               'div',
               {
-                style: { fontWeight: 500, fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
+                style: {
+                  fontWeight: 500,
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                },
               },
               fullName || username
             ),
             React.createElement(
               'div',
               {
-                style: { fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' },
+                style: {
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                  color: 'text.secondary',
+                },
               },
               email
             )

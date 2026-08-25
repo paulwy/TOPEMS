@@ -171,4 +171,3 @@ const DEFAULT_RULES: ComplianceRule[] = [
     enabled: true,
   },
 ];
-

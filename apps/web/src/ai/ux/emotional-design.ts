@@ -1,4 +1,3 @@
-
 export type Valence = 'positive' | 'neutral' | 'negative';
 export type Arousal = 'low' | 'medium' | 'high';
 export type EmotionType =
@@ -106,4 +105,3 @@ const EMOTION_AROUSAL_MAP: Record<EmotionType, Arousal> = {
   excitement: 'high',
   calm: 'low',
 };
-

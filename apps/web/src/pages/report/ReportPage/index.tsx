@@ -561,10 +561,16 @@ const ReportPage: React.FC = () => {
       errorAction={
         serviceDown ? (
           <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-            <Button variant='contained' onClick={() => window.location.reload()}>
+            <Button
+              variant='contained'
+              onClick={() => window.location.reload()}
+            >
               {i18n.t('pages.index.k56')}
             </Button>
-            <Button variant='outlined' onClick={() => navigate(DASHBOARD_PATHS.root)}>
+            <Button
+              variant='outlined'
+              onClick={() => navigate(DASHBOARD_PATHS.root)}
+            >
               {i18n.t('pages.index.k58')}
             </Button>
           </Box>

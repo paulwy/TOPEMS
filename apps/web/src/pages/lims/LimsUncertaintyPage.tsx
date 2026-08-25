@@ -93,7 +93,9 @@ const StatCard: React.FC<{
             background: gradient
               ? `linear-gradient(135deg, ${iconBgColor}, ${iconColor})`
               : undefined,
-            boxShadow: gradient ? ((theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`) : undefined,
+            boxShadow: gradient
+              ? (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+              : undefined,
             borderRadius: gradient ? '50%' : 3,
             display: 'flex',
             alignItems: 'center',
@@ -107,7 +109,10 @@ const StatCard: React.FC<{
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'slate.600',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {label}
           </Typography>

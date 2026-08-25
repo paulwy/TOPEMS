@@ -35,7 +35,10 @@ function isTauriAvailable(): boolean {
   return _isTauriAvailable;
 }
 
-async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<TauriInvokeResponse<T>> {
+async function invoke<T>(
+  command: string,
+  args?: Record<string, unknown>
+): Promise<TauriInvokeResponse<T>> {
   if (!isTauriAvailable()) {
     return { success: false, data: null, error: 'Not running in Tauri environment' };
   }
@@ -135,7 +138,9 @@ export const tauriAuth = {
       }
       return null;
     }
-    const result = await invoke<{ user: unknown; roles: string[]; permissions: string[] }>('get_user_info');
+    const result = await invoke<{ user: unknown; roles: string[]; permissions: string[] }>(
+      'get_user_info'
+    );
     if (result.success && result.data) {
       return result.data;
     }

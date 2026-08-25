@@ -13,14 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { monitorApi, type SystemMetrics, type ServiceHealth, type Alert } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
-import {
-  Cpu,
-  HardDrive,
-  Database,
-  AlertTriangle,
-  CheckCircle,
-  Activity,
-} from 'lucide-react';
+import { Cpu, HardDrive, Database, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
 import { PageContainer } from '@/components';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';

@@ -137,7 +137,12 @@ const dictTypeFields: SchemaField[] = [
         : '-';
       return React.createElement(
         'span',
-        { style: { color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+        {
+          style: {
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        },
         date
       );
     },
@@ -232,7 +237,12 @@ const dictItemFields: SchemaField[] = [
       const order = row.sort_order ?? 0;
       return React.createElement(
         'span',
-        { style: { color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+        {
+          style: {
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        },
         String(order)
       );
     },
@@ -279,7 +289,12 @@ const dictItemFields: SchemaField[] = [
       const value = String(row.value || '-');
       return React.createElement(
         'span',
-        { style: { color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+        {
+          style: {
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        },
         value
       );
     },

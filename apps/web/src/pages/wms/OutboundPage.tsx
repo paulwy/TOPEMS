@@ -25,9 +25,9 @@ const outboundCrudApi: CrudOperations<OutboundOrder> = {
     >,
   get: (id) => wmsApi.outboundOrders.get(id) as ReturnType<CrudOperations<OutboundOrder>['get']>,
   create: (data) =>
-    wmsApi.outboundOrders.create(data as Parameters<typeof wmsApi.outboundOrders.create>[0]) as ReturnType<
-      CrudOperations<OutboundOrder>['create']
-    >,
+    wmsApi.outboundOrders.create(
+      data as Parameters<typeof wmsApi.outboundOrders.create>[0]
+    ) as ReturnType<CrudOperations<OutboundOrder>['create']>,
   update: (id, data) =>
     wmsApi.outboundOrders.update(id, data as Partial<OutboundOrder>) as ReturnType<
       CrudOperations<OutboundOrder>['update']
@@ -69,28 +69,48 @@ const OutboundStats: React.FC = () => {
       value: stats.total,
       color: ct.warning.main,
       bgColor: 'grey.100',
-      icon: <Upload size={20} color={ct.warning.main} />,
+      icon: (
+        <Upload
+          size={20}
+          color={ct.warning.main}
+        />
+      ),
     },
     {
       label: i18n.t('pages.outbound_page.k1'),
       value: stats.pending,
       color: 'warning.dark',
       bgColor: 'warning.light',
-      icon: <Check size={20} color='warning.dark' />,
+      icon: (
+        <Check
+          size={20}
+          color='warning.dark'
+        />
+      ),
     },
     {
       label: i18n.t('pages.outbound_page.k2'),
       value: stats.picking,
       color: 'info.dark',
       bgColor: 'info.light',
-      icon: <ClipboardList size={20} color='info.dark' />,
+      icon: (
+        <ClipboardList
+          size={20}
+          color='info.dark'
+        />
+      ),
     },
     {
       label: i18n.t('pages.outbound_page.k3'),
       value: stats.completed,
       color: 'success.dark',
       bgColor: 'success.light',
-      icon: <Package size={20} color='success.dark' />,
+      icon: (
+        <Package
+          size={20}
+          color='success.dark'
+        />
+      ),
     },
   ];
 
@@ -105,7 +125,11 @@ const OutboundStats: React.FC = () => {
       {statCards.map((card) => (
         <Card key={card.label}>
           <CardContent sx={{ p: 2 }}>
-            <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
+            >
               <Box
                 sx={{
                   width: 40,
@@ -120,10 +144,16 @@ const OutboundStats: React.FC = () => {
                 {card.icon}
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   {card.label}
                 </Typography>
-                <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700 }}
+                >
                   {card.value}
                 </Typography>
               </Box>
@@ -282,7 +312,7 @@ export default function OutboundPage() {
   );
 
   const columns = useMemo(
-    () => getColumns<OutboundOrder>((outboundOrderSchema as unknown) as EntitySchema<OutboundOrder>),
+    () => getColumns<OutboundOrder>(outboundOrderSchema as unknown as EntitySchema<OutboundOrder>),
     []
   );
 
@@ -299,14 +329,14 @@ export default function OutboundPage() {
         entityName: i18n.t('pages.outbound_page.k28'),
         renderForm: ({ mode, record, onSubmit, onClose }) => {
           const fields = getFormFields<OutboundOrder>(
-            (outboundOrderSchema as unknown) as EntitySchema<OutboundOrder>,
+            outboundOrderSchema as unknown as EntitySchema<OutboundOrder>,
             mode === 'view' ? 'view' : mode
           );
           return (
             <FormBuilder
               fields={fields}
               mode={mode}
-              initialValues={((record as unknown) as Record<string, unknown>) || {}}
+              initialValues={(record as unknown as Record<string, unknown>) || {}}
               colCount={outboundOrderSchema.formColCount || 2}
               showReset={mode !== 'view'}
               submitLabel={

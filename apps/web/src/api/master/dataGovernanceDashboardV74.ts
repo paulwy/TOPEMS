@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type AssetType =
@@ -163,8 +165,6 @@ export interface GovernanceDashboard {
   top_issues_categories: Array<{ category: string; count: number }>;
   owner_coverage_stats: Array<{ owner_id: string; assets_count: number; compliance_rate: number }>;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface CreateRuleRequest {

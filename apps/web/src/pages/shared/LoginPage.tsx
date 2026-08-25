@@ -511,8 +511,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 variant='caption'
                 sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
               >
-                {i18n.t('pages.login_page.k5')}: admin / admin123 ({i18n.t('shared.permissions.k54')}) | user / user123
-                ({i18n.t('pages.login_page.k29')})
+                {i18n.t('pages.login_page.k5')}: admin / admin123 (
+                {i18n.t('shared.permissions.k54')}) | user / user123 (
+                {i18n.t('pages.login_page.k29')})
               </Typography>
             </Box>
           )}

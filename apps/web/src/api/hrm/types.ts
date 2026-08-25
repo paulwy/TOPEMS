@@ -1,5 +1,7 @@
 import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 
+import type { PaginatedResult } from '@/api/client';
+
 export interface Company {
   id: string;
   tenant_id: string;
@@ -364,8 +366,6 @@ export interface PaginationParams extends BasePaginationParams {
   employee_id?: string;
   department_id?: string;
 }
-
-import type { PaginatedResult } from '@/api/client';
 export type { PaginatedResult };
 
 export interface ListParams {
