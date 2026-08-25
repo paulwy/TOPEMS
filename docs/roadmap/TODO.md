@@ -1464,7 +1464,76 @@ let failed_count = 0;
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强（当前 Pub/Sub + DLQ 已满足基本需求）
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **pre-commit hook 恢复**：V289-V293 均使用 `--no-verify`，评估 lefthook 超时根因并恢复 fmt/clippy pre-commit 检查
+- [x] **pre-commit hook 恢复**：V294 优化 lefthook.yml — pre-commit 移除重型 gate（cargo-test/clippy-check，移至 pre-push），启用 parallel: true，目标 pre-commit < 60s；pre-push 补全 cargo-test-workspace
+
+## 🎯 V294 — 4 轨并行（lefthook pre-commit优化 · hook耗时验证 · pre-push补全 · hook分工文档化）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 2 files（lefthook.yml + TODO）| 验收：YAML 语法正确 · pre-commit 14 gate 并行 · pre-push 3 gate · 目标 pre-commit < 60s
+
+### A. lefthook.yml pre-commit 优化（解决 --no-verify 债务）
+- 背景：V289-V293 共 5 个版本均使用 `git commit --no-verify` 跳过 pre-commit hook，根因是 lefthook pre-commit 超时（8-10min+）
+- 根因分析：
+  - pre-commit `parallel: false`（17 个 gate 串行执行）
+  - 含 `cargo test --workspace`（3-5min）和 `clippy-check`（2-3min）等重型检查
+  - 其余 15 个 gate 多为快速扫描（i18n/perm/axum/large-files/sensitive-info 等，每个 < 10s）
+  - 最慢的非重型 gate 是 `frontend-typecheck`（tsc --noEmit，~50s）
+- 优化措施：
+  1. `parallel: false` → `parallel: true`（独立 gate 并行执行，总耗时 = max(gate) 而非 sum(gate)）
+  2. 移除 `cargo-test` gate（`cargo test --workspace`，3-5min）— 移至 pre-push
+  3. 移除 `clippy-check` gate（`bash scripts/ci/check-clippy.sh`，2-3min）— pre-push 已有 `cargo-clippy-workspace`
+  4. 保留 14 个快速 gate（frontend-lint/typecheck/i18n-quality/glossary/hardcoded-precise/perm-matrix/axum-layer/sqlx-cache/crm-contract/icon-page/large-files/sensitive-info/api-duplicates/i18n-hardcode-admin）
+- 预期效果：pre-commit 总耗时从 8-10min+ 降至 ~50-60s（最慢 gate = frontend-typecheck ~50s，并行执行）
+- 变更（1 file）：
+  - [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — pre-commit parallel: true + 移除 cargo-test/clippy-check + pre-push 新增 cargo-test-workspace
+
+### B. pre-commit hook 耗时验证
+- 验证方法：YAML 语法检查（ruby -ryaml）通过；gate 清单核对（pre-commit 14 个 / pre-push 3 个）
+- 耗时基线（V294 实测）：
+  - `tsc --noEmit`: 50s（pre-commit 最慢 gate）
+  - `cargo fmt --all --check`: 8s
+  - `cargo clippy --workspace --all-targets`: 8m50s（pre-push，不阻塞 commit）
+  - `cargo test --workspace`: 3-5min（pre-push，不阻塞 commit）
+- 结论：优化后 pre-commit 理论耗时 < 60s（parallel 执行，瓶颈 = tsc 50s），可恢复正常 commit 流程（不再需要 --no-verify）
+
+### C. pre-push hook 补全（重型检查不遗漏）
+- 背景：从 pre-commit 移除 cargo-test 和 clippy-check 后，需确保这些检查不在提交流程中丢失
+- 现状：pre-push 已有 `cargo-fmt-check`（Gate J）和 `cargo-clippy-workspace`（Gate K），`parallel: true`
+- 补全：新增 `cargo-test-workspace` gate（`cargo test --workspace`，staged Rust 文件时触发）
+- pre-push 3 个 gate 并行执行，总耗时 = max(clippy ~9min, test ~5min, fmt ~8s) ≈ 9min，在 push 时可接受（不阻塞日常 commit）
+- 变更：lefthook.yml pre-push 段新增 cargo-test-workspace gate
+
+### D. pre-commit / pre-push / CI 分工文档化
+- 三层检查分工：
+  - **pre-commit**（< 60s，阻塞 commit）：快速质量门 — lint-staged / tsc typecheck / i18n 扫描 / perm-matrix dry-run / axum-layer / large-files / sensitive-info / api-duplicates
+  - **pre-push`（~9min，阻塞 push）：重型 Rust 检查 — cargo fmt --check / cargo clippy --all-targets -D warnings / cargo test --workspace
+  - **CI**（~15-30min，阻塞 merge）：全量检查 — 所有 pre-commit + pre-push 检查 + 端到端测试 + 部署验证 + SQLx cache freshness
+- 关键原则：pre-commit 只做能在 1 分钟内完成的检查；重型检查放 pre-push；全量/集成测试放 CI
+- 变更：TODO.md V293 后续扩展 pre-commit hook 项打勾 [x]，V294 章节写入分工说明
+
+### 变更文件清单（共 2 files）
+**配置（1）**：
+- [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — pre-commit parallel + 移除 2 重型 gate + pre-push 新增 cargo-test-workspace
+
+**文档（1）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — V294 章节 + V293 后续扩展更新
+
+### 最终验收矩阵
+- [x] lefthook.yml YAML 语法正确（ruby -ryaml 验证通过）
+- [x] pre-commit `parallel: true`（原 `false`）
+- [x] pre-commit 移除 cargo-test gate（原 `cargo test --workspace`，3-5min）
+- [x] pre-commit 移除 clippy-check gate（原 `bash scripts/ci/check-clippy.sh`，2-3min）
+- [x] pre-commit 保留 14 个快速 gate
+- [x] pre-push 新增 cargo-test-workspace gate
+- [x] pre-push 保持 cargo-fmt-check + cargo-clippy-workspace
+- [x] pre-commit 理论耗时 < 60s（瓶颈 = tsc ~50s，并行执行）
+- [x] V293 后续扩展 pre-commit hook 恢复项打勾 [x]
+
+### V294 后续扩展（留给 V295+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **pre-commit hook 实际运行验证**：V294 优化后首次正常 commit（不用 --no-verify），实测耗时并确认无 false positive
 
 
 
