@@ -180,4 +180,3 @@ const DEFAULT_POLICIES: Policy[] = [
     ],
   },
 ];
-

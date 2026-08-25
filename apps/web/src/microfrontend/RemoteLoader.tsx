@@ -169,7 +169,6 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
       url: typeof window !== 'undefined' ? window.location.href : undefined,
     });
 
-
     return () => {
       userBehaviorAnalytics.endModuleVisit(moduleName);
       errorTracker.clearModuleErrorContext(moduleName);

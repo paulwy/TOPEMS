@@ -405,490 +405,505 @@ const MobileAttendancePage: React.FC = () => {
       }}
     >
       <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
-          sx={{
-            '& .MuiTab-root': {
-              minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            },
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab}
-            />
-          ))}
-        </Tabs>
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={6}
-            />
-          ) : (
-            <>
-              {activeTab === 0 && (
-                <Box sx={{ p: 2, pb: 3 }}>
-                  <Paper
-                    elevation={0}
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab}
+          />
+        ))}
+      </Tabs>
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
+        ) : (
+          <>
+            {activeTab === 0 && (
+              <Box sx={{ p: 2, pb: 3 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    mb: 3,
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    color: 'common.white',
+                  }}
+                >
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, mb: 1 }}
+                  >
+                    {new Date().toLocaleTimeString('zh-CN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ opacity: 0.9, mb: 3 }}
+                  >
+                    {new Date().toLocaleDateString('zh-CN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      weekday: 'long',
+                    })}
+                  </Typography>
+                  <Box
                     sx={{
-                      p: 3,
-                      borderRadius: 3,
-                      mb: 3,
-                      textAlign: 'center',
-                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                      color: 'common.white',
+                      width: 120,
+                      height: 120,
+                      margin: '0 auto 20px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'action.disabledBackground',
+                      cursor: checkingIn ? 'not-allowed' : 'pointer',
+                      transition: 'transform 0.2s',
+                      '&:active': {
+                        transform: 'scale(0.95)',
+                      },
+                    }}
+                    onClick={() => {
+                      if (todayStatus === 'not_checked_in') {
+                        handleCheckIn();
+                      } else if (todayStatus === 'checked_in') {
+                        handleCheckOut();
+                      }
                     }}
                   >
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 700, mb: 1 }}
-                    >
-                      {new Date().toLocaleTimeString('zh-CN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                      })}
-                    </Typography>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <CalendarCheck
+                        style={{
+                          width: 40,
+                          height: 40,
+                          margin: `0 auto ${designTokens.spacing.xs}px`,
+                        }}
+                      />
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {todayStatus === 'not_checked_in'
+                          ? i18n.t('mobile.mobile_attendance_page.k41')
+                          : todayStatus === 'checked_in'
+                            ? i18n.t('mobile.mobile_attendance_page.k42')
+                            : i18n.t('mobile.mobile_attendance_page.k43')}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ opacity: 0.7, mb: 0.5 }}
+                      >
+                        {i18n.t('pages.mobile_attendance_page.k0')}
+                      </Typography>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {attendanceStats?.today_check_in || '--:--'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ opacity: 0.7, mb: 0.5 }}
+                      >
+                        {i18n.t('pages.mobile_attendance_page.k1')}
+                      </Typography>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {attendanceStats?.today_check_out || '--:--'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    mb: 3,
+                    border: 1,
+                    borderColor: 'divider',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                  }}
+                >
+                  <MapPin style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
+                  <Box sx={{ flex: 1 }}>
                     <Typography
                       variant='body2'
-                      sx={{ opacity: 0.9, mb: 3 }}
+                      sx={{ fontWeight: 500 }}
                     >
-                      {new Date().toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        weekday: 'long',
-                      })}
+                      {i18n.t('pages.mobile_attendance_page.k2')}
                     </Typography>
-                    <Box
-                      sx={{
-                        width: 120,
-                        height: 120,
-                        margin: '0 auto 20px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'action.disabledBackground',
-                        cursor: checkingIn ? 'not-allowed' : 'pointer',
-                        transition: 'transform 0.2s',
-                        '&:active': {
-                          transform: 'scale(0.95)',
-                        },
-                      }}
-                      onClick={() => {
-                        if (todayStatus === 'not_checked_in') {
-                          handleCheckIn();
-                        } else if (todayStatus === 'checked_in') {
-                          handleCheckOut();
-                        }
-                      }}
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
                     >
-                      <Box sx={{ textAlign: 'center' }}>
-                        <CalendarCheck style={{ width: 40, height: 40, margin: `0 auto ${designTokens.spacing.xs}px` }} />
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {todayStatus === 'not_checked_in'
-                            ? i18n.t('mobile.mobile_attendance_page.k41')
-                            : todayStatus === 'checked_in'
-                              ? i18n.t('mobile.mobile_attendance_page.k42')
-                              : i18n.t('mobile.mobile_attendance_page.k43')}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ opacity: 0.7, mb: 0.5 }}
-                        >
-                          {i18n.t('pages.mobile_attendance_page.k0')}
-                        </Typography>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {attendanceStats?.today_check_in || '--:--'}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ opacity: 0.7, mb: 0.5 }}
-                        >
-                          {i18n.t('pages.mobile_attendance_page.k1')}
-                        </Typography>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {attendanceStats?.today_check_out || '--:--'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-                  <Paper
-                    elevation={0}
+                      {i18n.t('pages.mobile_attendance_page.k3')}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={i18n.t('mobile.mobile_attendance_page.k44')}
+                    size='small'
+                    color='success'
+                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  />
+                </Paper>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    borderRadius: 2,
+                    border: 1,
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
                     sx={{
                       p: 2,
-                      borderRadius: 2,
-                      mb: 3,
-                      border: 1,
+                      borderBottom: 1,
                       borderColor: 'divider',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 2,
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <MapPin style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k2')}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k3')}
-                      </Typography>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {i18n.t('pages.mobile_attendance_page.k4')}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      color='primary'
+                      sx={{ cursor: 'pointer' }}
+                    >
+                      {i18n.t('pages.mobile_attendance_page.k5')}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', mb: 2 }}>
+                      <Box sx={{ flex: 1, textAlign: 'center' }}>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}
+                        >
+                          {attendanceStats?.work_days_this_month || 0}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {i18n.t('pages.mobile_attendance_page.k6')}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: 1, textAlign: 'center' }}>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 700, color: 'warning.main', mb: 0.5 }}
+                        >
+                          {attendanceStats?.late_days_this_month || 0}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {i18n.t('pages.mobile_attendance_page.k7')}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ flex: 1, textAlign: 'center' }}>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 700, color: 'success.main', mb: 0.5 }}
+                        >
+                          {attendanceStats?.total_work_hours || 0}h
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {i18n.t('pages.mobile_attendance_page.k8')}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Chip
-                      label={i18n.t('mobile.mobile_attendance_page.k44')}
-                      size='small'
-                      color='success'
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  </Box>
+                </Paper>
+              </Box>
+            )}
+            {activeTab === 1 && (
+              <List disablePadding>
+                {records.map((record, index) => (
+                  <React.Fragment key={record.id}>
+                    <MobileCard
+                      leftIcon={
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: `${getStatusColor(record.status)}.lighter`,
+                            color: `${getStatusColor(record.status)}.main`,
+                          }}
+                        >
+                          <Clock style={{ width: 20, height: 20 }} />
+                        </Avatar>
+                      }
+                      title={record.date}
+                      subtitle={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                          <Chip
+                            label={getStatusLabel(record.status)}
+                            size='small'
+                            color={
+                              getStatusColor(record.status) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
+                            sx={{
+                              height: 20,
+                              fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                            }}
+                          />
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {record.check_in_time || '--:--'} - {record.check_out_time || '--:--'}
+                          </Typography>
+                        </Box>
+                      }
+                      showArrow
+                      divider={index < records.length - 1}
+                      rightContent={
+                        record.work_hours ? (
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            {record.work_hours}h
+                          </Typography>
+                        ) : undefined
+                      }
                     />
-                  </Paper>
-                  <Paper
-                    elevation={0}
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+            {activeTab === 2 && (
+              <Box sx={{ p: 2, pb: 3 }}>
+                {leaves.length === 0 ? (
+                  <Box
                     sx={{
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: 'divider',
-                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      py: 10,
                     }}
                   >
                     <Box
                       sx={{
-                        p: 2,
-                        borderBottom: 1,
-                        borderColor: 'divider',
+                        width: 64,
+                        height: 64,
+                        borderRadius: '50%',
+                        bgcolor: 'grey.100',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        justifyContent: 'center',
+                        mb: 2,
                       }}
                     >
-                      <Typography
-                        variant='subtitle2'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k4')}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='primary'
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k5')}
-                      </Typography>
+                      <FileText
+                        style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
+                      />
                     </Box>
-                    <Box sx={{ p: 2 }}>
-                      <Box sx={{ display: 'flex', mb: 2 }}>
-                        <Box sx={{ flex: 1, textAlign: 'center' }}>
-                          <Typography
-                            variant='h6'
-                            sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}
-                          >
-                            {attendanceStats?.work_days_this_month || 0}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.mobile_attendance_page.k6')}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, textAlign: 'center' }}>
-                          <Typography
-                            variant='h6'
-                            sx={{ fontWeight: 700, color: 'warning.main', mb: 0.5 }}
-                          >
-                            {attendanceStats?.late_days_this_month || 0}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.mobile_attendance_page.k7')}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, textAlign: 'center' }}>
-                          <Typography
-                            variant='h6'
-                            sx={{ fontWeight: 700, color: 'success.main', mb: 0.5 }}
-                          >
-                            {attendanceStats?.total_work_hours || 0}h
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.mobile_attendance_page.k8')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Paper>
-                </Box>
-              )}
-              {activeTab === 1 && (
-                <List disablePadding>
-                  {records.map((record, index) => (
-                    <React.Fragment key={record.id}>
-                      <MobileCard
-                        leftIcon={
-                          <Avatar
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ mb: 1, fontWeight: 500 }}
+                    >
+                      {i18n.t('pages.mobile_attendance_page.k9')}
+                    </Typography>
+                    <MobileButton
+                      variant='contained'
+                      startIcon={<Plus style={{ width: 18, height: 18 }} />}
+                      onClick={() => setLeaveDialogOpen(true)}
+                    >
+                      {i18n.t('pages.mobile_attendance_page.k10')}
+                    </MobileButton>
+                  </Box>
+                ) : (
+                  <List disablePadding>
+                    {leaves.map((leave, index) => (
+                      <React.Fragment key={leave.id}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            mx: 2,
+                            mb: 2,
+                            p: 2,
+                            borderRadius: 2,
+                            border: 1,
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Box
                             sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: `${getStatusColor(record.status)}.lighter`,
-                              color: `${getStatusColor(record.status)}.main`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              mb: 1.5,
                             }}
                           >
-                            <Clock style={{ width: 20, height: 20 }} />
-                          </Avatar>
-                        }
-                        title={record.date}
-                        subtitle={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                            <Chip
-                              label={getStatusLabel(record.status)}
-                              size='small'
-                              color={
-                                getStatusColor(record.status) as React.ComponentProps<
-                                  typeof Chip
-                                >['color']
-                              }
-                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={getLeaveTypeLabel(leave.leave_type)}
+                                size='small'
+                                color='primary'
+                                sx={{
+                                  height: 22,
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                                }}
+                              />
+                              <Chip
+                                label={getLeaveStatusLabel(leave.status)}
+                                size='small'
+                                color={
+                                  getLeaveStatusColor(leave.status) as React.ComponentProps<
+                                    typeof Chip
+                                  >['color']
+                                }
+                                sx={{
+                                  height: 22,
+                                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                                }}
+                              />
+                            </Box>
                             <Typography
                               variant='caption'
                               color='text.secondary'
                             >
-                              {record.check_in_time || '--:--'} - {record.check_out_time || '--:--'}
+                              {leave.days}
+                              {i18n.t('pages.mobile_attendance_page.k0')}
                             </Typography>
                           </Box>
-                        }
-                        showArrow
-                        divider={index < records.length - 1}
-                        rightContent={
-                          record.work_hours ? (
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                            >
-                              {record.work_hours}h
-                            </Typography>
-                          ) : undefined
-                        }
-                      />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-              {activeTab === 2 && (
-                <Box sx={{ p: 2, pb: 3 }}>
-                  {leaves.length === 0 ? (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        py: 10,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: '50%',
-                          bgcolor: 'grey.100',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mb: 2,
-                        }}
-                      >
-                        <FileText
-                          style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
-                        />
-                      </Box>
-                      <Typography
-                        variant='subtitle1'
-                        sx={{ mb: 1, fontWeight: 500 }}
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k9')}
-                      </Typography>
-                      <MobileButton
-                        variant='contained'
-                        startIcon={<Plus style={{ width: 18, height: 18 }} />}
-                        onClick={() => setLeaveDialogOpen(true)}
-                      >
-                        {i18n.t('pages.mobile_attendance_page.k10')}
-                      </MobileButton>
-                    </Box>
-                  ) : (
-                    <List disablePadding>
-                      {leaves.map((leave, index) => (
-                        <React.Fragment key={leave.id}>
-                          <Paper
-                            elevation={0}
-                            sx={{
-                              mx: 2,
-                              mb: 2,
-                              p: 2,
-                              borderRadius: 2,
-                              border: 1,
-                              borderColor: 'divider',
-                            }}
+                          <Typography
+                            variant='body2'
+                            sx={{ mb: 1, fontWeight: 500 }}
                           >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                mb: 1.5,
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Chip
-                                  label={getLeaveTypeLabel(leave.leave_type)}
-                                  size='small'
-                                  color='primary'
-                                  sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
-                                />
-                                <Chip
-                                  label={getLeaveStatusLabel(leave.status)}
-                                  size='small'
-                                  color={
-                                    getLeaveStatusColor(leave.status) as React.ComponentProps<
-                                      typeof Chip
-                                    >['color']
-                                  }
-                                  sx={{ height: 22, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
-                                />
-                              </Box>
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {leave.days}
-                                {i18n.t('pages.mobile_attendance_page.k0')}
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant='body2'
-                              sx={{ mb: 1, fontWeight: 500 }}
-                            >
-                              {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')}{' '}
-                              {leave.end_date}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                              sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'] }}
-                            >
-                              {leave.reason}
-                            </Typography>
-                          </Paper>
-                          {index < leaves.length - 1 && <Divider sx={{ mx: 2 }} />}
-                        </React.Fragment>
-                      ))}
-                    </List>
-                  )}
-                </Box>
-              )}
-            </>
-          )}
-        </PullToRefresh>
-        <Dialog
-          open={leaveDialogOpen}
-          onClose={() => setLeaveDialogOpen(false)}
-          fullWidth
-          maxWidth='sm'
-        >
-          <DialogTitle>{i18n.t('mobile.mobile_attendance_page.k45')}</DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField
-                select
-                fullWidth
-                label={i18n.t('mobile.mobile_attendance_page.k46')}
-                value={leaveForm.leave_type}
-                onChange={(e) =>
-                  setLeaveForm((prev) => ({
-                    ...prev,
-                    leave_type: e.target.value as LeaveApplication['leave_type'],
-                  }))
-                }
-              >
-                <MenuItem value='annual'>{i18n.t('mobile.mobile_attendance_page.k47')}</MenuItem>
-                <MenuItem value='sick'>{i18n.t('mobile.mobile_attendance_page.k48')}</MenuItem>
-                <MenuItem value='personal'>{i18n.t('mobile.mobile_attendance_page.k49')}</MenuItem>
-                <MenuItem value='maternity'>{i18n.t('mobile.mobile_attendance_page.k50')}</MenuItem>
-                <MenuItem value='paternity'>{i18n.t('mobile.mobile_attendance_page.k51')}</MenuItem>
-                <MenuItem value='other'>{i18n.t('mobile.mobile_attendance_page.k52')}</MenuItem>
-              </TextField>
-              <TextField
-                fullWidth
-                label={i18n.t('mobile.mobile_attendance_page.k53')}
-                type='date'
-                value={leaveForm.start_date}
-                onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-              <TextField
-                fullWidth
-                label={i18n.t('mobile.mobile_attendance_page.k54')}
-                type='date'
-                value={leaveForm.end_date}
-                onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
-                slotProps={{ inputLabel: { shrink: true } } as const}
-              />
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label={i18n.t('mobile.mobile_attendance_page.k55')}
-                value={leaveForm.reason}
-                onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
-                placeholder={i18n.t('mobile.mobile_attendance_page.k56')}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setLeaveDialogOpen(false)}>
-              {i18n.t('mobile.mobile_attendance_page.k57')}
-            </Button>
-            <MobileButton
-              variant='contained'
-              onClick={handleSubmitLeave}
-              disabled={applyLeaveMutation.isPending}
+                            {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')}{' '}
+                            {leave.end_date}
+                          </Typography>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'] }}
+                          >
+                            {leave.reason}
+                          </Typography>
+                        </Paper>
+                        {index < leaves.length - 1 && <Divider sx={{ mx: 2 }} />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
+              </Box>
+            )}
+          </>
+        )}
+      </PullToRefresh>
+      <Dialog
+        open={leaveDialogOpen}
+        onClose={() => setLeaveDialogOpen(false)}
+        fullWidth
+        maxWidth='sm'
+      >
+        <DialogTitle>{i18n.t('mobile.mobile_attendance_page.k45')}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              select
+              fullWidth
+              label={i18n.t('mobile.mobile_attendance_page.k46')}
+              value={leaveForm.leave_type}
+              onChange={(e) =>
+                setLeaveForm((prev) => ({
+                  ...prev,
+                  leave_type: e.target.value as LeaveApplication['leave_type'],
+                }))
+              }
             >
-              {i18n.t('pages.mobile_attendance_page.k11')}
-            </MobileButton>
-          </DialogActions>
-        </Dialog>
+              <MenuItem value='annual'>{i18n.t('mobile.mobile_attendance_page.k47')}</MenuItem>
+              <MenuItem value='sick'>{i18n.t('mobile.mobile_attendance_page.k48')}</MenuItem>
+              <MenuItem value='personal'>{i18n.t('mobile.mobile_attendance_page.k49')}</MenuItem>
+              <MenuItem value='maternity'>{i18n.t('mobile.mobile_attendance_page.k50')}</MenuItem>
+              <MenuItem value='paternity'>{i18n.t('mobile.mobile_attendance_page.k51')}</MenuItem>
+              <MenuItem value='other'>{i18n.t('mobile.mobile_attendance_page.k52')}</MenuItem>
+            </TextField>
+            <TextField
+              fullWidth
+              label={i18n.t('mobile.mobile_attendance_page.k53')}
+              type='date'
+              value={leaveForm.start_date}
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } } as const}
+            />
+            <TextField
+              fullWidth
+              label={i18n.t('mobile.mobile_attendance_page.k54')}
+              type='date'
+              value={leaveForm.end_date}
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } } as const}
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label={i18n.t('mobile.mobile_attendance_page.k55')}
+              value={leaveForm.reason}
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
+              placeholder={i18n.t('mobile.mobile_attendance_page.k56')}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setLeaveDialogOpen(false)}>
+            {i18n.t('mobile.mobile_attendance_page.k57')}
+          </Button>
+          <MobileButton
+            variant='contained'
+            onClick={handleSubmitLeave}
+            disabled={applyLeaveMutation.isPending}
+          >
+            {i18n.t('pages.mobile_attendance_page.k11')}
+          </MobileButton>
+        </DialogActions>
+      </Dialog>
     </MobilePageTemplate>
   );
 };

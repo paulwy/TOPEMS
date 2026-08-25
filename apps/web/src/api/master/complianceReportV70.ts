@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type ComplianceFramework = 'GDPR' | 'HIPAA' | 'SOX' | 'CCPA' | 'PCI-DSS' | 'ISO27001';
@@ -107,8 +109,6 @@ interface ComplianceDashboard {
   }>;
   last_updated: string;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 export interface GenerateReportRequest {

@@ -94,13 +94,9 @@ export const AiToolPageTemplate: React.FC<AiToolPageTemplateProps> = ({
   const hasLeftPanel = Boolean(leftPanel);
   const rightColWidth = hasLeftPanel ? 12 - leftPanelWidth : 12;
   const leftGridProps =
-    leftPanelBreakpoint === 'lg'
-      ? { xs: 12, lg: leftPanelWidth }
-      : { xs: 12, md: leftPanelWidth };
+    leftPanelBreakpoint === 'lg' ? { xs: 12, lg: leftPanelWidth } : { xs: 12, md: leftPanelWidth };
   const rightGridProps =
-    leftPanelBreakpoint === 'lg'
-      ? { xs: 12, lg: rightColWidth }
-      : { xs: 12, md: rightColWidth };
+    leftPanelBreakpoint === 'lg' ? { xs: 12, lg: rightColWidth } : { xs: 12, md: rightColWidth };
 
   return (
     <PageContainer
@@ -111,13 +107,22 @@ export const AiToolPageTemplate: React.FC<AiToolPageTemplateProps> = ({
       {...pageContainerProps}
     >
       <Box sx={{ p: designTokens.spacing.lg }}>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {hasLeftPanel && (
-            <Grid item {...leftGridProps}>
+            <Grid
+              item
+              {...leftGridProps}
+            >
               {leftPanel}
             </Grid>
           )}
-          <Grid item {...rightGridProps}>
+          <Grid
+            item
+            {...rightGridProps}
+          >
             <Paper
               sx={{
                 borderRadius: designTokens.borderRadius.lg,
@@ -147,7 +152,10 @@ export const AiToolPageTemplate: React.FC<AiToolPageTemplateProps> = ({
                 >
                   <CircularProgress sx={{ mb: designTokens.spacing.md }} />
                   {loadingText && (
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                    >
                       {loadingText}
                     </Typography>
                   )}
@@ -163,8 +171,8 @@ export const AiToolPageTemplate: React.FC<AiToolPageTemplateProps> = ({
                   }}
                 >
                   <Typography
-                    variant="body1"
-                    color="error.main"
+                    variant='body1'
+                    color='error.main'
                     sx={{ fontWeight: 500 }}
                   >
                     {error}

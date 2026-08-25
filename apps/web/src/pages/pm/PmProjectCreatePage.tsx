@@ -12,6 +12,7 @@ import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const getProjectSchema = () =>
   z.object({
     name: z.string().min(1, i18n.t('pm.pm_project_create_page.k0')),

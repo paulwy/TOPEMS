@@ -221,7 +221,13 @@ const NotificationDetailPage: React.FC = () => {
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {i18n.t('notification.notification_detail_page.id_23')}
             </InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+            >
               {notification.source_id || '-'}
             </Typography>
           </Box>
@@ -275,7 +281,13 @@ const NotificationDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('notification.notification_detail_page.id_24')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+          <Typography
+            sx={{
+              mt: 0.5,
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
+          >
             {notification.id.substring(0, 8)}...
           </Typography>
         </Box>

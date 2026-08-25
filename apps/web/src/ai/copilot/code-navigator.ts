@@ -48,4 +48,3 @@ export interface IndexStats {
 }
 
 type Listener = (stats: IndexStats) => void;
-

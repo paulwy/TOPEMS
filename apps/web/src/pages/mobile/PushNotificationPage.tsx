@@ -163,134 +163,133 @@ const PushNotificationPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 2, pb: 3 }}>
-          {/* 推送开关 */}
-          <Paper
-            elevation={0}
-            sx={{ p: 2, borderRadius: 3, mb: 3, border: 1, borderColor: 'divider' }}
+        {/* 推送开关 */}
+        <Paper
+          elevation={0}
+          sx={{ p: 2, borderRadius: 3, mb: 3, border: 1, borderColor: 'divider' }}
+        >
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
           >
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Bell style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600 }}
-                >
-                  {i18n.t('pages.push_notification_page.k0')}
-                </Typography>
-              </Box>
-              <Switch
-                checked={config.enabled}
-                onChange={() => handleToggleConfig('enabled')}
-              />
-            </Box>
-            <Divider sx={{ mb: 1.5 }} />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='body2'>
-                  {i18n.t('mobile.push_notification_page.k13')}
-                </Typography>
-                <Switch
-                  checked={config.sound_enabled}
-                  onChange={() => handleToggleConfig('sound_enabled')}
-                  size='small'
-                />
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='body2'>
-                  {i18n.t('mobile.push_notification_page.k14')}
-                </Typography>
-                <Switch
-                  checked={config.vibration_enabled}
-                  onChange={() => handleToggleConfig('vibration_enabled')}
-                  size='small'
-                />
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='body2'>
-                  {i18n.t('pages.push_notification_page.k0')} {config.quiet_hours_start} -{' '}
-                  {config.quiet_hours_end}
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
-          {/* 推送模板列表 */}
-          <Paper
-            elevation={0}
-            sx={{ borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderBottom: 1,
-                borderColor: 'divider',
-              }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Bell style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                {i18n.t('pages.push_notification_page.k1')}
+                {i18n.t('pages.push_notification_page.k0')}
               </Typography>
-              <Chip
-                label={`${templates.filter((t) => t.enabled).length}/${templates.length}`}
+            </Box>
+            <Switch
+              checked={config.enabled}
+              onChange={() => handleToggleConfig('enabled')}
+            />
+          </Box>
+          <Divider sx={{ mb: 1.5 }} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant='body2'>{i18n.t('mobile.push_notification_page.k13')}</Typography>
+              <Switch
+                checked={config.sound_enabled}
+                onChange={() => handleToggleConfig('sound_enabled')}
                 size='small'
               />
             </Box>
-            {templates.map((template, index) => (
-              <Box key={template.id}>
-                {index > 0 && <Divider />}
-                <Box sx={{ px: 2, py: 2 }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 1,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {template.name}
-                      </Typography>
-                      <Chip
-                        label={getStatusLabel(template.status)}
-                        size='small'
-                        color={template.status === 'active' ? 'success' : 'default'}
-                        sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                      />
-                    </Box>
-                    <Switch
-                      checked={template.enabled}
-                      onChange={() => handleToggleTemplate(template.id)}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant='body2'>{i18n.t('mobile.push_notification_page.k14')}</Typography>
+              <Switch
+                checked={config.vibration_enabled}
+                onChange={() => handleToggleConfig('vibration_enabled')}
+                size='small'
+              />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant='body2'>
+                {i18n.t('pages.push_notification_page.k0')} {config.quiet_hours_start} -{' '}
+                {config.quiet_hours_end}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+        {/* 推送模板列表 */}
+        <Paper
+          elevation={0}
+          sx={{ borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
+              {i18n.t('pages.push_notification_page.k1')}
+            </Typography>
+            <Chip
+              label={`${templates.filter((t) => t.enabled).length}/${templates.length}`}
+              size='small'
+            />
+          </Box>
+          {templates.map((template, index) => (
+            <Box key={template.id}>
+              {index > 0 && <Divider />}
+              <Box sx={{ px: 2, py: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {template.name}
+                    </Typography>
+                    <Chip
+                      label={getStatusLabel(template.status)}
                       size='small'
+                      color={template.status === 'active' ? 'success' : 'default'}
+                      sx={{
+                        height: 18,
+                        fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                      }}
                     />
                   </Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    [i18n.t('pages.push_notification_page.k2')]: {template.title}
-                  </Typography>
-                  <br />
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    [i18n.t('pages.push_notification_page.k3')]: {template.body}
-                  </Typography>
+                  <Switch
+                    checked={template.enabled}
+                    onChange={() => handleToggleTemplate(template.id)}
+                    size='small'
+                  />
                 </Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  [i18n.t('pages.push_notification_page.k2')]: {template.title}
+                </Typography>
+                <br />
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  [i18n.t('pages.push_notification_page.k3')]: {template.body}
+                </Typography>
               </Box>
-            ))}
-          </Paper>
-        </Box>
+            </Box>
+          ))}
+        </Paper>
+      </Box>
     </MobilePageTemplate>
   );
 };

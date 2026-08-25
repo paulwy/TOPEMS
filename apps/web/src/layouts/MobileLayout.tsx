@@ -14,7 +14,12 @@ function getNavItems() {
   return [
     { id: 'dashboard', label: i18n.t('pages.mobile_layout.k0'), icon: Home, path: '/dashboard' },
     { id: 'workflow', label: i18n.t('pages.mobile_layout.k1'), icon: FileText, path: '/workflow' },
-    { id: 'notification', label: i18n.t('pages.mobile_layout.k2'), icon: Bell, path: '/notifications' },
+    {
+      id: 'notification',
+      label: i18n.t('pages.mobile_layout.k2'),
+      icon: Bell,
+      path: '/notifications',
+    },
     { id: 'settings', label: i18n.t('pages.mobile_layout.k3'), icon: Settings, path: '/settings' },
   ];
 }
@@ -96,7 +101,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
                 </span>
               </div>
               <div>
-                <p className='font-semibold text-gray-800'>{user?.name || i18n.t('pages.mobile_layout.k4')}</p>
+                <p className='font-semibold text-gray-800'>
+                  {user?.name || i18n.t('pages.mobile_layout.k4')}
+                </p>
                 <p className='text-sm text-gray-500'>{user?.email || ''}</p>
               </div>
             </div>

@@ -12,13 +12,19 @@ const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Cpu size={20} />
-          <Typography variant="h6">{i18n.t('ai.v54-native-panel.title')}</Typography>
+          <Typography variant='h6'>{i18n.t('ai.v54-native-panel.title')}</Typography>
         </Box>
-        <IconButton onClick={onClose} size="small">
+        <IconButton
+          onClick={onClose}
+          size='small'
+        >
           <XIcon size={18} />
         </IconButton>
       </Box>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {i18n.t('ai.v54-native-panel.disabled')}
       </Typography>
     </Box>

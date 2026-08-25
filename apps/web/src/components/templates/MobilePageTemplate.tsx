@@ -41,8 +41,7 @@ export interface MobilePageTemplateProps {
  * 底部导航固定栏保留高度（BottomTabBar 内部 height: 56）。
  * 用 designTokens 组合表达，避免硬编码。
  */
-const BOTTOM_NAV_RESERVED_HEIGHT =
-  designTokens.spacing['2xl'] + designTokens.spacing.sm; // 48 + 8 = 56
+const BOTTOM_NAV_RESERVED_HEIGHT = designTokens.spacing['2xl'] + designTokens.spacing.sm; // 48 + 8 = 56
 
 export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
   title,
@@ -55,8 +54,7 @@ export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
   const hasBottomNav = !!bottomNav;
 
   // actions prop 接管 rightActions；从 headerProps 中剔除避免冲突
-  const { rightActions: _ignoredRightActions, ...restHeaderProps } =
-    headerProps ?? {};
+  const { rightActions: _ignoredRightActions, ...restHeaderProps } = headerProps ?? {};
 
   const rightActions =
     actions && actions.length > 0 ? (
@@ -86,9 +84,7 @@ export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
         maxWidth={false}
       >
         {body}
-        {hasBottomNav && (
-          <Box sx={{ height: BOTTOM_NAV_RESERVED_HEIGHT, flexShrink: 0 }} />
-        )}
+        {hasBottomNav && <Box sx={{ height: BOTTOM_NAV_RESERVED_HEIGHT, flexShrink: 0 }} />}
       </PageContainer>
       {hasBottomNav && bottomNav}
     </MobileLayout>

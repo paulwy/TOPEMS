@@ -184,7 +184,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           borderColor: 'grey.200',
         }}
       >
-        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600, color: 'text.primary' }}>
+        <Typography
+          sx={{
+            fontSize: designTokens.typography.fontSize.scale['1.125rem'],
+            fontWeight: 600,
+            color: 'text.primary',
+          }}
+        >
           {i18n.t('components.evidence_panel.k3')}
         </Typography>
         <IconButton
@@ -208,7 +214,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           bgcolor: 'grey.50',
         }}
       >
-        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary', mb: 12 }}>
+        <Typography
+          sx={{
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            color: 'text.secondary',
+            mb: 12,
+          }}
+        >
           {i18n.t('components.evidence_panel.k4')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 12 }}>
@@ -235,7 +247,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 sx={{ color: 'primary.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'grey.700',
+              }}
+            >
               {i18n.t('components.evidence_panel.k5')}
             </Typography>
           </Button>
@@ -262,7 +280,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 style={{ color: theme.palette.success.dark }}
               />
             </Box>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'grey.700',
+              }}
+            >
               {i18n.t('components.evidence_panel.k6')}
             </Typography>
           </Button>
@@ -289,7 +313,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 sx={{ color: 'secondary.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'grey.700',
+              }}
+            >
               {i18n.t('components.evidence_panel.k7')}
             </Typography>
           </Button>
@@ -344,10 +374,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 bgcolor: filterType === type ? 'primary.main' : 'grey.100',
-                color:
-                  filterType === type
-                    ? 'var(--color-primary-foreground)'
-                    : 'text.secondary',
+                color: filterType === type ? 'var(--color-primary-foreground)' : 'text.secondary',
                 '&:hover': {
                   bgcolor: filterType === type ? 'primary.main' : 'grey.200',
                 },
@@ -502,7 +529,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     >
                       {record.title}
                     </Typography>
-                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                    <Typography
+                      sx={{
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                        color: 'text.secondary',
+                      }}
+                    >
                       {record.evidence_type === 'photo'
                         ? i18n.t('components.evidence_panel.k8')
                         : record.evidence_type === 'audio'
@@ -588,7 +620,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   >
                     {record.title}
                   </Typography>
-                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                  <Typography
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      color: 'text.secondary',
+                    }}
+                  >
                     {new Date(record.recorded_at).toLocaleString()}
                   </Typography>
                 </Box>
@@ -599,11 +636,21 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     color: 'text.secondary',
                   }}
                 >
-                  <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                  <Typography
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      color: 'text.secondary',
+                    }}
+                  >
                     {formatFileSize(record.filesize)}
                   </Typography>
                   {record.duration && (
-                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                    <Typography
+                      sx={{
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                        color: 'text.secondary',
+                      }}
+                    >
                       {formatDuration(record.duration)}
                     </Typography>
                   )}

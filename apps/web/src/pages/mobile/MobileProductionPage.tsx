@@ -129,36 +129,36 @@ const MobileProductionPage: React.FC = () => {
       }}
     >
       <MobileProductionFilters
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={6}
-            />
-          ) : (
-            <MobileProductionCard
-              activeTab={activeTab}
-              filteredOrders={filteredOrders}
-              workReports={workReports}
-              equipmentList={equipmentList}
-              onOrderAction={handleOrderAction}
-              onStartReport={handleStartReport}
-            />
-          )}
-        </PullToRefresh>
-        <MobileProductionReportDialog
-          open={reportDialogOpen}
-          onClose={() => setReportDialogOpen(false)}
-          selectedOrder={selectedOrder}
-          reportForm={reportForm}
-          onReportFormChange={setReportForm}
-          onSubmit={handleSubmitReport}
-        />
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
+        ) : (
+          <MobileProductionCard
+            activeTab={activeTab}
+            filteredOrders={filteredOrders}
+            workReports={workReports}
+            equipmentList={equipmentList}
+            onOrderAction={handleOrderAction}
+            onStartReport={handleStartReport}
+          />
+        )}
+      </PullToRefresh>
+      <MobileProductionReportDialog
+        open={reportDialogOpen}
+        onClose={() => setReportDialogOpen(false)}
+        selectedOrder={selectedOrder}
+        reportForm={reportForm}
+        onReportFormChange={setReportForm}
+        onSubmit={handleSubmitReport}
+      />
     </MobilePageTemplate>
   );
 };

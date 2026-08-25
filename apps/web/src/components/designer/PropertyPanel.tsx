@@ -165,7 +165,10 @@ export function PropertyPanel({ node, onUpdateProp, onUpdateLabel }: PropertyPan
             rows={4}
             onChange={(e) => handleChange(config, e.target.value)}
             size='small'
-            sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            }}
           />
         );
 

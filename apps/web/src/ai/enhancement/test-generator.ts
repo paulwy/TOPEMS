@@ -62,45 +62,6 @@ export interface AnalysisResult {
   };
 }
 
-const COMMON_EDGE_CASES: string[] = [
-  i18n.t('ai.test-generator.null_0'),
-  i18n.t('ai.test-generator.undefined_0'),
-  i18n.t('ai.test-generator.k1'),
-  i18n.t('ai.test-generator.k2'),
-  i18n.t('ai.test-generator.k3'),
-  i18n.t('ai.test-generator.k4'),
-  i18n.t('ai.test-generator.k5'),
-  i18n.t('ai.test-generator.k6'),
-  i18n.t('ai.test-generator.unicode_1'),
-  i18n.t('ai.test-generator.html_2'),
-  i18n.t('ai.test-generator.sql_3'),
-  i18n.t('ai.test-generator.k7'),
-  i18n.t('ai.test-generator.0maxmin_4'),
-  i18n.t('ai.test-generator.k8'),
-  i18n.t('ai.test-generator.k9'),
-  i18n.t('ai.test-generator.k10'),
-  i18n.t('ai.test-generator.k11'),
-  i18n.t('ai.test-generator.k12'),
-  i18n.t('ai.test-generator.k13'),
-  i18n.t('ai.test-generator.k14'),
-  i18n.t('ai.test-generator.k15'),
-  i18n.t('ai.test-generator.dpiretina_16'),
-  i18n.t('ai.test-generator.k17'),
-  i18n.t('ai.test-generator.k18'),
-];
-
-const MOCK_DATA_GENERATORS: Record<string, () => unknown> = {
-  string: () => faker.random.string(),
-  email: () => faker.internet.email(),
-  phone: () => faker.phone.number(),
-  number: () => faker.random.number(),
-  date: () => faker.date.recent(),
-  boolean: () => faker.random.boolean(),
-  array: () => [],
-  object: () => ({}),
-  id: () => faker.random.uuid(),
-};
-
 const faker = {
   random: {
     string: () => Math.random().toString(36).substring(2, 10),
@@ -123,4 +84,3 @@ const faker = {
     recent: () => new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
   },
 };
-

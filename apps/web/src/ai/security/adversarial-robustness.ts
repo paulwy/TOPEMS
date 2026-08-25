@@ -139,4 +139,3 @@ const DEFAULT_DEFENSES: Defense[] = [
     },
   },
 ];
-

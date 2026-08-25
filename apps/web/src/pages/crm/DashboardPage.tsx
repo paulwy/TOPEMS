@@ -235,7 +235,9 @@ export const DashboardPage: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], color: 'grey.600' }}>
+        <Typography
+          sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], color: 'grey.600' }}
+        >
           {t('crm.common.loading')}
         </Typography>
       </Box>

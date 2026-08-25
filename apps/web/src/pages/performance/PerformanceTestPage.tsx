@@ -464,10 +464,7 @@ const PerformanceTestPage: React.FC = () => {
   return (
     <FormPageTemplate
       title={i18n.t('pages.performance_test_page.topems_0')}
-      subtitle={
-        i18n.t('pages.performance_test_page.k1') +
-        i18n.t('pages.performance_test_page.k2')
-      }
+      subtitle={i18n.t('pages.performance_test_page.k1') + i18n.t('pages.performance_test_page.k2')}
       sections={[]}
       onSubmit={async () => {}}
     >
@@ -480,7 +477,7 @@ const PerformanceTestPage: React.FC = () => {
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
       >
-      <style>{`
+        <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
@@ -494,306 +491,306 @@ const PerformanceTestPage: React.FC = () => {
         }
       `}</style>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: designTokens.spacing['2xl'] }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: designTokens.spacing['2xl'] }}>
+            <div
+              style={{
+                width: '80px',
+                height: '80px',
+                background: 'action.disabledBackground',
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <svg
+                width='40'
+                height='40'
+                viewBox='0 0 24 24'
+                fill='colors.warning.400'
+                stroke='colors.warning.400'
+                strokeWidth='2'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              >
+                {icons.zap}
+              </svg>
+            </div>
+            <h1
+              style={{
+                color: 'common.white',
+                fontWeight: 700,
+                fontSize: designTokens.typography.fontSize.scale['2rem'],
+                marginBottom: '0.5rem',
+              }}
+            >
+              {i18n.t('pages.performance_test_page.topems_0')}
+            </h1>
+            <p
+              style={{
+                color: 'common.white',
+                maxWidth: '600px',
+                margin: '0 auto',
+                fontSize: designTokens.typography.fontSize.scale['1rem'],
+              }}
+            >
+              {i18n.t('pages.performance_test_page.k1')}
+              {i18n.t('pages.performance_test_page.k2')}
+            </p>
+            <span
+              style={{
+                display: 'inline-block',
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                background: 'action.disabledBackground',
+                color: 'common.white',
+                borderRadius: '20px',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              }}
+              className={!renderComplete ? 'animate-pulse' : ''}
+            >
+              {renderComplete
+                ? t('performance.performance_test_page.k24')
+                : i18n.t('pages.performance_test_page.k14')}
+            </span>
+          </div>
+
           <div
             style={{
-              width: '80px',
-              height: '80px',
-              background: 'action.disabledBackground',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem',
-              backdropFilter: 'blur(10px)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1rem',
             }}
           >
-            <svg
-              width='40'
-              height='40'
-              viewBox='0 0 24 24'
-              fill='colors.warning.400'
-              stroke='colors.warning.400'
-              strokeWidth='2'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              {icons.zap}
-            </svg>
+            {metrics.map((metric, index) => (
+              <div
+                key={index}
+                style={{
+                  background: 'common.white',
+                  backdropFilter: 'blur(20px)',
+                  borderRadius: '16px',
+                  boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
+                  padding: '1.5rem',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+                  (e.currentTarget as HTMLElement).style.boxShadow =
+                    `0 15px 50px ${designTokens.colors.action.selected}`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                  (e.currentTarget as HTMLElement).style.boxShadow =
+                    `0 10px 40px ${designTokens.colors.action.selected}`;
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: designTokens.spacing['2xl'],
+                      height: designTokens.spacing['2xl'],
+                      background: metric.bgColor,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <svg
+                      width='24'
+                      height='24'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke={metric.color}
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    >
+                      {icons[iconKeys[index]]}
+                    </svg>
+                  </div>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      color: 'grey.700',
+                    }}
+                  >
+                    {metric.label}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                    marginBottom: '0.25rem',
+                    color: 'grey.900',
+                  }}
+                >
+                  {metric.value}
+                </div>
+                <div
+                  style={{
+                    fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                    color: 'grey.500',
+                  }}
+                >
+                  {metric.description}
+                </div>
+              </div>
+            ))}
           </div>
-          <h1
-            style={{
-              color: 'common.white',
-              fontWeight: 700,
-              fontSize: designTokens.typography.fontSize.scale['2rem'],
-              marginBottom: '0.5rem',
-            }}
-          >
-            {i18n.t('pages.performance_test_page.topems_0')}
-          </h1>
-          <p
-            style={{
-              color: 'common.white',
-              maxWidth: '600px',
-              margin: '0 auto',
-              fontSize: designTokens.typography.fontSize.scale['1rem'],
-            }}
-          >
-            {i18n.t('pages.performance_test_page.k1')}
-            {i18n.t('pages.performance_test_page.k2')}
-          </p>
-          <span
-            style={{
-              display: 'inline-block',
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              background: 'action.disabledBackground',
-              color: 'common.white',
-              borderRadius: '20px',
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            }}
-            className={!renderComplete ? 'animate-pulse' : ''}
-          >
-            {renderComplete
-              ? t('performance.performance_test_page.k24')
-              : i18n.t('pages.performance_test_page.k14')}
-          </span>
-        </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1rem',
-          }}
-        >
-          {metrics.map((metric, index) => (
+          <div style={{ marginTop: designTokens.spacing['2xl'], textAlign: 'center' }}>
             <div
-              key={index}
               style={{
                 background: 'common.white',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
                 boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
-                padding: '1.5rem',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLElement).style.boxShadow =
-                  `0 15px 50px ${designTokens.colors.action.selected}`;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLElement).style.boxShadow =
-                  `0 10px 40px ${designTokens.colors.action.selected}`;
+                maxWidth: '600px',
+                margin: '0 auto',
+                padding: '2rem',
+                animation: 'fadeIn 0.5s ease-out 0.5s both',
               }}
             >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  marginBottom: '0.75rem',
-                }}
-              >
-                <div
-                  style={{
-                    width: designTokens.spacing['2xl'],
-                    height: designTokens.spacing['2xl'],
-                    background: metric.bgColor,
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <svg
-                    width='24'
-                    height='24'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke={metric.color}
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  >
-                    {icons[iconKeys[index]]}
-                  </svg>
-                </div>
-                <span
-                  style={{
-                    fontWeight: 600,
-                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    color: 'grey.700',
-                  }}
-                >
-                  {metric.label}
-                </span>
-              </div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-                  marginBottom: '0.25rem',
+                  fontWeight: 600,
+                  fontSize: designTokens.typography.fontSize.scale['1.125rem'],
+                  marginBottom: '1rem',
                   color: 'grey.900',
                 }}
               >
-                {metric.value}
+                {i18n.t('pages.performance_test_page.k3')}
               </div>
               <div
                 style={{
-                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                  color: 'grey.500',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: designTokens.spacing.md,
                 }}
               >
-                {metric.description}
+                <div>
+                  <div
+                    style={{
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      color: 'grey.500',
+                    }}
+                  >
+                    {t('performance.performance_test_page.k25')}
+                  </div>
+                  <div style={{ fontWeight: 500, color: 'grey.900' }}>/performance</div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      color: 'grey.500',
+                    }}
+                  >
+                    {t('performance.performance_test_page.k26')}
+                  </div>
+                  <div style={{ fontWeight: 500, color: 'grey.900' }}>
+                    {t('performance.performance_test_page.k27')}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      color: 'grey.500',
+                    }}
+                  >
+                    {t('performance.performance_test_page.k28')}
+                  </div>
+                  <div style={{ fontWeight: 500, color: 'success.600' }}>
+                    {t('performance.performance_test_page.k29')}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      color: 'grey.500',
+                    }}
+                  >
+                    {t('performance.performance_test_page.k30')}
+                  </div>
+                  <div style={{ fontWeight: 500, color: 'success.600' }}>
+                    {t('performance.performance_test_page.k31')}
+                  </div>
+                </div>
+              </div>
+              <div
+                style={{
+                  marginTop: '1.5rem',
+                  display: 'flex',
+                  gap: '0.75rem',
+                  justifyContent: 'center',
+                }}
+              >
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 100%)`,
+                    color: 'common.white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
+                >
+                  {i18n.t('pages.performance_test_page.k4')}
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.performance && window.performance.mark) {
+                      window.performance.mark('navigationStart');
+                      alert(t('performance.performance_test_page.k32'));
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'common.white',
+                    color: 'primary.500',
+                    border: `1px solid ${designTokens.colors.primary.main}`,
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
+                >
+                  {i18n.t('pages.performance_test_page.k5')}
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div style={{ marginTop: designTokens.spacing['2xl'], textAlign: 'center' }}>
-          <div
-            style={{
-              background: 'common.white',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '16px',
-              boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
-              maxWidth: '600px',
-              margin: '0 auto',
-              padding: '2rem',
-              animation: 'fadeIn 0.5s ease-out 0.5s both',
-            }}
-          >
+          <div style={{ marginTop: designTokens.spacing['2xl'], textAlign: 'center' }}>
             <div
               style={{
-                fontWeight: 600,
-                fontSize: designTokens.typography.fontSize.scale['1.125rem'],
-                marginBottom: '1rem',
-                color: 'grey.900',
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'common.white',
               }}
             >
-              {i18n.t('pages.performance_test_page.k3')}
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: designTokens.spacing.md,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    color: 'grey.500',
-                  }}
-                >
-                  {t('performance.performance_test_page.k25')}
-                </div>
-                <div style={{ fontWeight: 500, color: 'grey.900' }}>/performance</div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    color: 'grey.500',
-                  }}
-                >
-                  {t('performance.performance_test_page.k26')}
-                </div>
-                <div style={{ fontWeight: 500, color: 'grey.900' }}>
-                  {t('performance.performance_test_page.k27')}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    color: 'grey.500',
-                  }}
-                >
-                  {t('performance.performance_test_page.k28')}
-                </div>
-                <div style={{ fontWeight: 500, color: 'success.600' }}>
-                  {t('performance.performance_test_page.k29')}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                    color: 'grey.500',
-                  }}
-                >
-                  {t('performance.performance_test_page.k30')}
-                </div>
-                <div style={{ fontWeight: 500, color: 'success.600' }}>
-                  {t('performance.performance_test_page.k31')}
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: '1.5rem',
-                display: 'flex',
-                gap: '0.75rem',
-                justifyContent: 'center',
-              }}
-            >
-              <button
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 100%)`,
-                  color: 'common.white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                }}
-              >
-                {i18n.t('pages.performance_test_page.k4')}
-              </button>
-              <button
-                onClick={() => {
-                  if (window.performance && window.performance.mark) {
-                    window.performance.mark('navigationStart');
-                    alert(t('performance.performance_test_page.k32'));
-                  }
-                }}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  background: 'common.white',
-                  color: 'primary.500',
-                  border: `1px solid ${designTokens.colors.primary.main}`,
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                }}
-              >
-                {i18n.t('pages.performance_test_page.k5')}
-              </button>
+              {i18n.t('pages.performance_test_page.k6')}
             </div>
           </div>
         </div>
-
-        <div style={{ marginTop: designTokens.spacing['2xl'], textAlign: 'center' }}>
-          <div
-            style={{
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              color: 'common.white',
-            }}
-          >
-            {i18n.t('pages.performance_test_page.k6')}
-          </div>
-        </div>
-      </div>
       </div>
     </FormPageTemplate>
   );

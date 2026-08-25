@@ -28,6 +28,3 @@ export interface VersionCompareResult {
 }
 
 type Listener = () => void;
-
-const generateId = () => `mv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-

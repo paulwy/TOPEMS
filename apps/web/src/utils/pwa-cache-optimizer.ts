@@ -117,10 +117,7 @@ function createCacheFirstWithStats(config: RouteCacheConfig, stats: CacheStatsTr
 /**
  * 创建带统计的 StaleWhileRevalidate 策略
  */
-function createStaleWhileRevalidateWithStats(
-  config: RouteCacheConfig,
-  stats: CacheStatsTracker
-) {
+function createStaleWhileRevalidateWithStats(config: RouteCacheConfig, stats: CacheStatsTracker) {
   return {
     async handle(
       request: Request,

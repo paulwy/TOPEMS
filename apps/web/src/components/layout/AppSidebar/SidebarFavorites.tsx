@@ -72,14 +72,21 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
         }}
       >
         <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 600 }}>
+          <Typography
+            sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 600 }}
+          >
             {i18n.t('components.sidebar_favorites.k0')}
             {favorites.size})
           </Typography>
         </Box>
         {favorites.size === 0 ? (
           <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.8125rem'], color: 'text.secondary' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.8125rem'],
+                color: 'text.secondary',
+              }}
+            >
               {i18n.t('components.sidebar_favorites.k0')}
             </Typography>
           </Box>
@@ -106,7 +113,11 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
                   </ListItemIcon>
                   <ListItemText
                     primary={item.label}
-                    slotProps={{ primary: { sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } } }}
+                    slotProps={{
+                      primary: {
+                        sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] },
+                      },
+                    }}
                   />
                   <IconButton
                     size='small'

@@ -16,12 +16,17 @@ import i18n from '@/i18n';
 
 const warehouseApiAdapter = createCrudPageAdapter(wmsApi.warehouses);
 const warehouseCrudApi = createListPageCrudApi<Record<string, unknown>>(
-  warehouseApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<Record<string, unknown>>
+  warehouseApiAdapter as unknown as import('@/components/templates/CrudPage').CrudApiAdapter<
+    Record<string, unknown>
+  >
 );
 
 const WarehouseManagementPage: React.FC = () => {
   const columns = React.useMemo(
-    () => getColumns<Record<string, unknown>>(warehouseSchema as unknown as EntitySchema<Record<string, unknown>>),
+    () =>
+      getColumns<Record<string, unknown>>(
+        warehouseSchema as unknown as EntitySchema<Record<string, unknown>>
+      ),
     []
   );
 

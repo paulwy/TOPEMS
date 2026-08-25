@@ -1,4 +1,3 @@
-
 export interface QAEntry {
   id: string;
   question: string;
@@ -28,4 +27,3 @@ export interface QAResult {
 }
 
 type Listener = (entry: QAEntry) => void;
-

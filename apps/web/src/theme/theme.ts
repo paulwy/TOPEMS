@@ -567,13 +567,7 @@ export const createCustomTheme = (): Theme => {
           defaultProps: {
             getItemAriaLabel: (
               type:
-                | 'page'
-                | 'first'
-                | 'last'
-                | 'next'
-                | 'previous'
-                | 'start-ellipsis'
-                | 'end-ellipsis',
+                'page' | 'first' | 'last' | 'next' | 'previous' | 'start-ellipsis' | 'end-ellipsis',
               page: number | null,
               selected: boolean
             ) => {

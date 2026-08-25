@@ -60,6 +60,7 @@ import {
 } from '@/api/system';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -337,7 +338,12 @@ const DatabaseStructurePage: React.FC = () => {
         }}
         collapsible={false}
         masterWidth={300}
-        emptyIcon={<Database size={48} color='grey.400' />}
+        emptyIcon={
+          <Database
+            size={48}
+            color='grey.400'
+          />
+        }
         emptyMessage={i18n.t('admin.database_structure_page.select_table_hint')}
         detailEmptyTitle={i18n.t('admin.database_structure_page.select_table')}
         detailEmptyDescription={i18n.t('admin.database_structure_page.select_table_hint')}

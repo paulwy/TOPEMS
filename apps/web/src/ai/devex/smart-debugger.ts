@@ -42,4 +42,3 @@ export interface StateAnalysis {
   immutable: boolean;
   issues: string[];
 }
-

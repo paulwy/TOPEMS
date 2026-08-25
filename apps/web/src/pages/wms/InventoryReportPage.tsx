@@ -48,7 +48,10 @@ function WarehouseFilter({
 }) {
   const { t } = useTranslation();
   return (
-    <FormControl size='small' sx={{ minWidth: 200 }}>
+    <FormControl
+      size='small'
+      sx={{ minWidth: 200 }}
+    >
       <InputLabel>{t('wms.inventory_report_page.filter_warehouse_label')}</InputLabel>
       <Select
         value={value}
@@ -57,7 +60,10 @@ function WarehouseFilter({
       >
         <MenuItem value=''>{t('wms.inventory_report_page.all_warehouses')}</MenuItem>
         {warehouses.map((w) => (
-          <MenuItem key={w.id} value={w.id}>
+          <MenuItem
+            key={w.id}
+            value={w.id}
+          >
             {w.name}
           </MenuItem>
         ))}
@@ -330,18 +336,33 @@ const InventoryReportPage: React.FC = () => {
         }
         showStatCards={currentTab === TAB_VALUES.statistics}
       >
-        <TabPanel value={tabIndex} index={0}>
-          <InventoryReportSummary statistics={statistics} formatNumber={formatNumber} />
+        <TabPanel
+          value={tabIndex}
+          index={0}
+        >
+          <InventoryReportSummary
+            statistics={statistics}
+            formatNumber={formatNumber}
+          />
         </TabPanel>
-        <TabPanel value={tabIndex} index={1}>
-          <InventoryReportABCOverview abcAnalysis={abcAnalysis} abcTotalSku={abcTotalSku} />
+        <TabPanel
+          value={tabIndex}
+          index={1}
+        >
+          <InventoryReportABCOverview
+            abcAnalysis={abcAnalysis}
+            abcTotalSku={abcTotalSku}
+          />
           <InventoryReportABCTable
             abcAnalysis={abcAnalysis}
             formatNumber={formatNumber}
             getABCCategoryColor={getABCCategoryColor}
           />
         </TabPanel>
-        <TabPanel value={tabIndex} index={2}>
+        <TabPanel
+          value={tabIndex}
+          index={2}
+        >
           <InventoryReportTurnoverSummary
             turnoverData={turnoverData}
             formatNumber={formatNumber}
@@ -351,7 +372,10 @@ const InventoryReportPage: React.FC = () => {
             formatNumber={formatNumber}
           />
         </TabPanel>
-        <TabPanel value={tabIndex} index={3}>
+        <TabPanel
+          value={tabIndex}
+          index={3}
+        >
           <InventoryReportValueDistribution
             valueByWarehouse={valueByWarehouse}
             totalWarehouseValue={totalWarehouseValue}

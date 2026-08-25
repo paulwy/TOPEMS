@@ -5,7 +5,9 @@ import { purchaseOrderSchema } from '@/schemas/erp/purchaseOrder';
 import { erpApi } from '@/api/erp';
 import i18n from '@/i18n';
 
-const purchaseOrderApiAdapter = createCrudPageAdapter(erpApi.purchaseOrders, { itemsField: 'orders' });
+const purchaseOrderApiAdapter = createCrudPageAdapter(erpApi.purchaseOrders, {
+  itemsField: 'orders',
+});
 const PurchaseOrderPage: React.FC = () => {
   return (
     <CrudPage

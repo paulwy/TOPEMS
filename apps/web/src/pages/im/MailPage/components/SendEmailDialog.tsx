@@ -62,7 +62,9 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <InputLabel sx={{ fontSize: designTokens.typography.fontSize.scale['1rem'], fontWeight: 500 }}>
+              <InputLabel
+                sx={{ fontSize: designTokens.typography.fontSize.scale['1rem'], fontWeight: 500 }}
+              >
                 {i18n.t('im.send_email_dialog.k0')}
               </InputLabel>
               <Button
@@ -134,7 +136,10 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                     minRows={3}
                     error={!!formErrors.templateData}
                     helperText={formErrors.templateData}
-                    sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
                   />
                 </Box>
               </Box>

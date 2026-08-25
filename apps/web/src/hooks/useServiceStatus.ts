@@ -147,9 +147,12 @@ export const useServiceStatus = (autoRefreshInterval: number = PLUGIN_TIMEOUT.DE
     return Object.values(serviceStatuses).filter(Boolean).length;
   }, [serviceStatuses]);
 
-  const isServiceOnline = useCallback((serviceKey: string): boolean => {
-    return serviceStatuses[serviceKey] || false;
-  }, [serviceStatuses]);
+  const isServiceOnline = useCallback(
+    (serviceKey: string): boolean => {
+      return serviceStatuses[serviceKey] || false;
+    },
+    [serviceStatuses]
+  );
 
   return useMemo(
     () => ({

@@ -137,7 +137,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_occupational_disease_page.k0')}
               </Typography>
@@ -170,7 +173,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_occupational_disease_page.k1')}
               </Typography>
@@ -203,7 +209,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_occupational_disease_page.k2')}
               </Typography>
@@ -236,7 +245,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.ehs_occupational_disease_page.k3')}
               </Typography>
@@ -278,7 +290,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k4')}
           </Box>
@@ -287,7 +302,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k5')}
           </Box>
@@ -296,7 +314,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k6')}
           </Box>
@@ -305,7 +326,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k7')}
           </Box>
@@ -314,7 +338,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k8')}
           </Box>
@@ -323,7 +350,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k9')}
           </Box>
@@ -337,7 +367,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k10')}
           </Box>
@@ -346,7 +379,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k11')}
           </Box>
@@ -355,7 +391,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k12')}
           </Box>
@@ -364,7 +403,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k13')}
           </Box>
@@ -383,7 +425,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k14')}
           </Box>
@@ -402,7 +447,10 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.ehs_occupational_disease_page.k15')}
           </Box>

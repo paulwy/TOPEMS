@@ -29,8 +29,7 @@ export type ProjectStatus =
   'scaffolding' | 'development' | 'building' | 'testing' | 'staging' | 'production' | 'archived';
 export type PipelineStageType =
   'install' | 'build' | 'test' | 'lint' | 'deploy' | 'migrate' | 'custom';
-type PipelineStageStatus =
-  'pending' | 'running' | 'success' | 'failed' | 'skipped' | 'cancelled';
+type PipelineStageStatus = 'pending' | 'running' | 'success' | 'failed' | 'skipped' | 'cancelled';
 export type EnvironmentName = 'development' | 'staging' | 'production' | 'preview';
 
 interface TechStack {

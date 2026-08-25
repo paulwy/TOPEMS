@@ -153,7 +153,12 @@ const MapLayers: React.FC<MapLayersProps> = ({
                     {point.name}
                   </Typography>
                 </MuiBox>
-                <MuiBox sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+                <MuiBox
+                  sx={{
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    color: 'text.secondary',
+                  }}
+                >
                   <Typography variant='body2'>{i18n.t('components.map_layers.k0')}</Typography>
                   <Typography variant='body2'>
                     [i18n.t('components.map_layers.k0')]:{' '}
@@ -236,7 +241,12 @@ const MapLayers: React.FC<MapLayersProps> = ({
                     {location.name}
                   </Typography>
                 </MuiBox>
-                <MuiBox sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+                <MuiBox
+                  sx={{
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    color: 'text.secondary',
+                  }}
+                >
                   <Typography variant='body2'>{i18n.t('components.map_layers.k1')}</Typography>
                   {location.capacity !== undefined && (
                     <Typography variant='body2'>{i18n.t('components.map_layers.k2')}</Typography>

@@ -215,7 +215,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
       title={i18n.t('ai.knowledge_base.title')}
       description={i18n.t('ai.knowledge_base.subtitle')}
       leftPanelWidth={3}
-      leftPanelBreakpoint="lg"
+      leftPanelBreakpoint='lg'
       pageContainerProps={{
         headerProps: {
           pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
@@ -224,307 +224,303 @@ export const AiKnowledgeBasePage: React.FC = () => {
       }}
       leftPanel={
         <Paper sx={{ borderRadius: 3, p: 3, height: '100%' }}>
-              <Typography
-                variant='subtitle1'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {i18n.t('ai.knowledge_base.label.document_library')}
-              </Typography>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            {i18n.t('ai.knowledge_base.label.document_library')}
+          </Typography>
 
-              <Box sx={{ mb: 2 }}>
-                <TextField
-                  fullWidth
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              size='small'
+              placeholder={i18n.t('ai.knowledge_base.label.search_document')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <Search size={16} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {['all', 'manual', 'guide', 'process'].map((type) => (
+                <Chip
+                  key={type}
+                  label={
+                    type === 'all' ? i18n.t('ai.knowledge_base.label.all') : getTypeLabel(type)
+                  }
                   size='small'
-                  placeholder={i18n.t('ai.knowledge_base.label.search_document')}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Search size={16} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                  sx={{ mb: 2 }}
+                  variant={filterType === type ? 'filled' : 'outlined'}
+                  onClick={() => setFilterType(type)}
+                  sx={{ cursor: 'pointer' }}
                 />
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {['all', 'manual', 'guide', 'process'].map((type) => (
+              ))}
+            </Box>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <List>
+            {documentList.map((doc) => (
+              <ListItemButton
+                key={doc.id}
+                onClick={() => handleSelectDocument(doc.id)}
+                sx={{
+                  borderRadius: 2,
+                  mb: 1,
+                  bgcolor: selectedDocs.includes(doc.id) ? 'primary.light' : undefined,
+                  '&:hover': { bgcolor: 'grey.100' },
+                }}
+              >
+                <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
+                <ListItemText
+                  primary={doc.title}
+                  secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+
+          {selectedDocs.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 1 }}
+              >
+                {i18n.t('ai.knowledge_base.label.selected_docs', {
+                  count: selectedDocs.length,
+                })}
+              </Typography>
+              <Button
+                fullWidth
+                size='small'
+                variant='outlined'
+                onClick={() => setSelectedDocs([])}
+              >
+                {i18n.t('ai.knowledge_base.label.clear_selection')}
+              </Button>
+            </Box>
+          )}
+        </Paper>
+      }
+      rightPanel={
+        <Box sx={{ p: 3, height: '100%', minHeight: 600 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 3,
+            }}
+          >
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Sparkles
+                  size={18}
+                  style={{ color: ct.yellow[500] }}
+                />
+                {i18n.t('ai.knowledge_base.label.smart_qa')}
+              </Box>
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Chip
+                label={i18n.t('ai.knowledge_base.label.knowledge_base')}
+                size='small'
+                color='primary'
+                variant='outlined'
+              />
+              <Chip
+                label='AI'
+                size='small'
+                color='secondary'
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: 'auto', mb: 3, maxHeight: 400 }}>
+            {chatHistory.length === 0 ? (
+              <Box
+                sx={{
+                  height: 300,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 3,
+                }}
+              >
+                <HelpCircle
+                  size={48}
+                  style={{ color: ct.text.disabled, marginBottom: 12 }}
+                />
+                <Typography
+                  variant='body1'
+                  color='text.secondary'
+                >
+                  {i18n.t('ai.knowledge_base.message.welcome')}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  {i18n.t('ai.knowledge_base.message.welcome_desc')}
+                </Typography>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                  {[
+                    i18n.t('ai.knowledge_base.mock.q_1'),
+                    i18n.t('ai.knowledge_base.example.q_2'),
+                    i18n.t('ai.knowledge_base.example.q_3'),
+                  ].map((example) => (
                     <Chip
-                      key={type}
-                      label={
-                        type === 'all' ? i18n.t('ai.knowledge_base.label.all') : getTypeLabel(type)
-                      }
+                      key={example}
+                      label={example}
                       size='small'
-                      variant={filterType === type ? 'filled' : 'outlined'}
-                      onClick={() => setFilterType(type)}
+                      variant='outlined'
+                      onClick={() => setQuery(example)}
                       sx={{ cursor: 'pointer' }}
                     />
                   ))}
                 </Box>
               </Box>
-
-              <Divider sx={{ mb: 2 }} />
-
+            ) : (
               <List>
-                {documentList.map((doc) => (
-                  <ListItemButton
-                    key={doc.id}
-                    onClick={() => handleSelectDocument(doc.id)}
-                    sx={{
-                      borderRadius: 2,
-                      mb: 1,
-                      bgcolor: selectedDocs.includes(doc.id) ? 'primary.light' : undefined,
-                      '&:hover': { bgcolor: 'grey.100' },
-                    }}
+                {chatHistory.map((msg) => (
+                  <ListItem
+                    key={msg.id}
+                    sx={{ mb: 2 }}
                   >
-                    <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
-                    <ListItemText
-                      primary={doc.title}
-                      secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
-                    />
-                  </ListItemButton>
-                ))}
-              </List>
-
-              {selectedDocs.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mb: 1 }}
-                  >
-                    {i18n.t('ai.knowledge_base.label.selected_docs', {
-                      count: selectedDocs.length,
-                    })}
-                  </Typography>
-                  <Button
-                    fullWidth
-                    size='small'
-                    variant='outlined'
-                    onClick={() => setSelectedDocs([])}
-                  >
-                    {i18n.t('ai.knowledge_base.label.clear_selection')}
-                  </Button>
-                </Box>
-              )}
-            </Paper>
-      }
-      rightPanel={
-        <Box sx={{ p: 3, height: '100%', minHeight: 600 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                }}
-              >
-                <Typography
-                  variant='subtitle1'
-                  sx={{ fontWeight: 600 }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Sparkles
-                      size={18}
-                      style={{ color: ct.yellow[500] }}
-                    />
-                    {i18n.t('ai.knowledge_base.label.smart_qa')}
-                  </Box>
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Chip
-                    label={i18n.t('ai.knowledge_base.label.knowledge_base')}
-                    size='small'
-                    color='primary'
-                    variant='outlined'
-                  />
-                  <Chip
-                    label='AI'
-                    size='small'
-                    color='secondary'
-                  />
-                </Box>
-              </Box>
-
-              <Box sx={{ flex: 1, overflow: 'auto', mb: 3, maxHeight: 400 }}>
-                {chatHistory.length === 0 ? (
-                  <Box
-                    sx={{
-                      height: 300,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px dashed',
-                      borderColor: 'divider',
-                      borderRadius: 3,
-                    }}
-                  >
-                    <HelpCircle
-                      size={48}
-                      style={{ color: ct.text.disabled, marginBottom: 12 }}
-                    />
-                    <Typography
-                      variant='body1'
-                      color='text.secondary'
+                    <Avatar
+                      sx={{
+                        mr: 2,
+                        bgcolor: msg.type === 'user' ? 'primary.main' : 'secondary.main',
+                      }}
                     >
-                      {i18n.t('ai.knowledge_base.message.welcome')}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('ai.knowledge_base.message.welcome_desc')}
-                    </Typography>
-                    <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                      {[
-                        i18n.t('ai.knowledge_base.mock.q_1'),
-                        i18n.t('ai.knowledge_base.example.q_2'),
-                        i18n.t('ai.knowledge_base.example.q_3'),
-                      ].map((example) => (
-                        <Chip
-                          key={example}
-                          label={example}
-                          size='small'
-                          variant='outlined'
-                          onClick={() => setQuery(example)}
-                          sx={{ cursor: 'pointer' }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                ) : (
-                  <List>
-                    {chatHistory.map((msg) => (
-                      <ListItem
-                        key={msg.id}
-                        sx={{ mb: 2 }}
+                      {msg.type === 'user' ? <MessageSquare size={16} /> : <Sparkles size={16} />}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: msg.type === 'user' ? 500 : 400 }}
                       >
-                        <Avatar
-                          sx={{
-                            mr: 2,
-                            bgcolor: msg.type === 'user' ? 'primary.main' : 'secondary.main',
-                          }}
-                        >
-                          {msg.type === 'user' ? (
-                            <MessageSquare size={16} />
-                          ) : (
-                            <Sparkles size={16} />
-                          )}
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant='body1'
-                            sx={{ fontWeight: msg.type === 'user' ? 500 : 400 }}
-                          >
-                            {msg.content}
-                          </Typography>
+                        {msg.content}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <Clock size={12} />
+                        {msg.timestamp.toLocaleTimeString()}
+                      </Typography>
+                      {msg.sources && msg.sources.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
                           <Typography
                             variant='body2'
                             color='text.secondary'
-                            sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}
                           >
-                            <Clock size={12} />
-                            {msg.timestamp.toLocaleTimeString()}
+                            {i18n.t('ai.knowledge_base.label.reference_source')}：
                           </Typography>
-                          {msg.sources && msg.sources.length > 0 && (
-                            <Box sx={{ mt: 2 }}>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                              >
-                                {i18n.t('ai.knowledge_base.label.reference_source')}：
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                                {msg.sources.map((source, idx) => (
-                                  <Chip
-                                    key={idx}
-                                    label={`${source.title} (${Math.round(source.similarity * 100)}%)`}
-                                    size='small'
-                                    variant='outlined'
-                                  />
-                                ))}
-                              </Box>
-                            </Box>
-                          )}
-                          {msg.confidence !== undefined && (
-                            <Box sx={{ mt: 1 }}>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                            {msg.sources.map((source, idx) => (
                               <Chip
-                                label={`${i18n.t('ai.knowledge_base.label.confidence')}: ${Math.round(msg.confidence * 100)}%`}
+                                key={idx}
+                                label={`${source.title} (${Math.round(source.similarity * 100)}%)`}
                                 size='small'
-                                color={msg.confidence >= 0.8 ? 'success' : 'warning'}
                                 variant='outlined'
                               />
-                            </Box>
-                          )}
+                            ))}
+                          </Box>
                         </Box>
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
+                      )}
+                      {msg.confidence !== undefined && (
+                        <Box sx={{ mt: 1 }}>
+                          <Chip
+                            label={`${i18n.t('ai.knowledge_base.label.confidence')}: ${Math.round(msg.confidence * 100)}%`}
+                            size='small'
+                            color={msg.confidence >= 0.8 ? 'success' : 'warning'}
+                            variant='outlined'
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                  </ListItem>
+                ))}
+              </List>
+            )}
 
-                {searching && (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                    <CircularProgress size={24} />
-                  </Box>
-                )}
+            {searching && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <CircularProgress size={24} />
               </Box>
+            )}
+          </Box>
 
-              <Divider />
+          <Divider />
 
-              <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  placeholder={i18n.t('ai.knowledge_base.label.input_question')}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
-                  disabled={searching}
-                />
-                <Button
-                  variant='contained'
-                  onClick={handleSendQuery}
-                  disabled={searching || !query.trim()}
-                  startIcon={
-                    searching ? (
-                      <RefreshCw
-                        size={18}
-                        className='animate-spin'
-                      />
-                    ) : (
-                      <Search size={18} />
-                    )
-                  }
-                >
-                  {searching
-                    ? i18n.t('ai.knowledge_base.button.searching')
-                    : i18n.t('ai.knowledge_base.button.ask')}
-                </Button>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <TextField
+              fullWidth
+              placeholder={i18n.t('ai.knowledge_base.label.input_question')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
+              disabled={searching}
+            />
+            <Button
+              variant='contained'
+              onClick={handleSendQuery}
+              disabled={searching || !query.trim()}
+              startIcon={
+                searching ? (
+                  <RefreshCw
+                    size={18}
+                    className='animate-spin'
+                  />
+                ) : (
+                  <Search size={18} />
+                )
+              }
+            >
+              {searching
+                ? i18n.t('ai.knowledge_base.button.searching')
+                : i18n.t('ai.knowledge_base.button.ask')}
+            </Button>
+          </Box>
+
+          {chatHistory.length > 0 && !searching && (
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 1 }}
+              >
+                {i18n.t('ai.knowledge_base.label.related_questions')}：
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {getSampleFollowUp().map((question) => (
+                  <Chip
+                    key={question}
+                    label={question}
+                    size='small'
+                    variant='outlined'
+                    onClick={() => setQuery(question)}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                ))}
               </Box>
-
-              {chatHistory.length > 0 && !searching && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mb: 1 }}
-                  >
-                    {i18n.t('ai.knowledge_base.label.related_questions')}：
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {getSampleFollowUp().map((question) => (
-                      <Chip
-                        key={question}
-                        label={question}
-                        size='small'
-                        variant='outlined'
-                        onClick={() => setQuery(question)}
-                        sx={{ cursor: 'pointer' }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              )}
+            </Box>
+          )}
         </Box>
       }
     />

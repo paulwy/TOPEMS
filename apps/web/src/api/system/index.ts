@@ -4,6 +4,8 @@ import { systemParamsApi } from './params';
 import { systemAuditApi } from './audit';
 import { featureFlagApi } from './featureFlag';
 
+import type { PaginatedResult } from '@/api/client';
+
 export type { SystemConfig, CacheConfig, LogConfig, SystemParams } from './types';
 export type { AuditLog, AuditLogQueryParams, PaginatedAuditLogs } from './types';
 export type {
@@ -89,8 +91,6 @@ export interface SqlPreview {
   sql: string;
   warning?: string;
 }
-
-import type { PaginatedResult } from '@/api/client';
 export type { PaginatedResult };
 
 export const dictTypeApi = {

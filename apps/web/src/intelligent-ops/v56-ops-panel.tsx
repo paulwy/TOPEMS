@@ -30,7 +30,6 @@ import {
   DialogContent,
   DialogActions,
   Card,
-  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -146,7 +145,6 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, []);
 
   const refreshData = () => {
-  const theme = useTheme();
     setPolicies(autoScaler.listPolicies());
     setScalingHistory(autoScaler.getScalingHistory());
     setIncidents(rootCauseLocator.getIncidentHistory());

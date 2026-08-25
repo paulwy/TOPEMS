@@ -128,7 +128,10 @@ const EmergencyPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.emergency_page.k0')}
               </Typography>
@@ -161,7 +164,10 @@ const EmergencyPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.emergency_page.k1')}
               </Typography>
@@ -194,7 +200,10 @@ const EmergencyPage: React.FC = () => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.emergency_page.k2')}
               </Typography>
@@ -234,7 +243,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k3')}
           </Box>
@@ -243,7 +255,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k4')}
           </Box>
@@ -252,7 +267,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k5')}
           </Box>
@@ -261,7 +279,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k6')}
           </Box>
@@ -270,7 +291,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k7')}
           </Box>
@@ -279,7 +303,10 @@ const EmergencyPage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k8')}
           </Box>
@@ -298,7 +325,10 @@ const EmergencyPage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k9')}
           </Box>
@@ -310,7 +340,10 @@ const EmergencyPage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k10')}
           </Box>
@@ -319,7 +352,10 @@ const EmergencyPage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k11')}
           </Box>
@@ -328,7 +364,10 @@ const EmergencyPage: React.FC = () => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.emergency_page.k12')}
           </Box>

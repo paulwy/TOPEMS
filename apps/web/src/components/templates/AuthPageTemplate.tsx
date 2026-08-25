@@ -63,7 +63,7 @@ export const AuthPageTemplate: React.FC<AuthPageTemplateProps> = ({
       <Box
         sx={{
           width: '100%',
-          maxWidth: maxWidth,
+          maxWidth,
           position: 'relative',
           zIndex: 1,
           display: 'flex',

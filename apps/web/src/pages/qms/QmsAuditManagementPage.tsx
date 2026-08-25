@@ -65,7 +65,10 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.qms_audit_management_page.k0')}
               </Typography>
@@ -98,7 +101,10 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.qms_audit_management_page.k1')}
               </Typography>
@@ -131,7 +137,10 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                sx={{
+                  color: 'slate.600',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                }}
               >
                 {i18n.t('pages.qms_audit_management_page.k2')}
               </Typography>

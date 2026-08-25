@@ -501,7 +501,13 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'grey.900' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                  fontWeight: 700,
+                  color: 'grey.900',
+                }}
+              >
                 {stats.total}
               </Typography>
               <Typography
@@ -519,7 +525,13 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'success.dark' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                  fontWeight: 700,
+                  color: 'success.dark',
+                }}
+              >
                 {stats.passed}
               </Typography>
               <Typography
@@ -537,7 +549,13 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'error.dark' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                  fontWeight: 700,
+                  color: 'error.dark',
+                }}
+              >
                 {stats.failed}
               </Typography>
               <Typography
@@ -555,7 +573,13 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: ct.yellow[600] }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                  fontWeight: 700,
+                  color: ct.yellow[600],
+                }}
+              >
                 {stats.pending}
               </Typography>
               <Typography

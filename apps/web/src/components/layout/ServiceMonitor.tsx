@@ -1,11 +1,12 @@
 import { designTokens } from '@topems/tokens';
-'use client';
 
 import { useEffect, useState } from 'react';
 import { Paper, Box, Typography, IconButton, Card, CardContent, Chip } from '@mui/material';
 import { Grid } from '@/components';
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
 import i18n from '@/i18n';
+
+('use client');
 
 interface ServiceStatus {
   name: string;

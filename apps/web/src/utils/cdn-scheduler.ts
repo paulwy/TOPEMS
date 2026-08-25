@@ -1,7 +1,6 @@
 import i18n from '@/i18n';
 
-type ResourceType =
-  'script' | 'style' | 'image' | 'font' | 'video' | 'audio' | 'json' | 'other';
+type ResourceType = 'script' | 'style' | 'image' | 'font' | 'video' | 'audio' | 'json' | 'other';
 
 interface CdnProvider {
   id: string;

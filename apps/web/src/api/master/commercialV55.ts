@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type ProductTier = 'free' | 'basic' | 'professional' | 'enterprise' | 'unlimited';
@@ -101,8 +103,6 @@ interface SLAIncident {
   compensation_amount: number;
   status: IncidentStatus;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface SLAStatusInfo {

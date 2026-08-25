@@ -69,7 +69,10 @@ export default function WmsWavePickDetailPage() {
         accessorKey: 'orderNumber',
         header: i18n.t('pages.wms_wave_pick_detail_page.k12'),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.original.orderNumber}
           </Typography>
         ),
@@ -85,7 +88,10 @@ export default function WmsWavePickDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_wave_pick_detail_page.k14')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.lines}
           </Typography>
         ),
@@ -96,7 +102,10 @@ export default function WmsWavePickDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_wave_pick_detail_page.k15')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.totalQty}
           </Typography>
         ),
@@ -107,7 +116,10 @@ export default function WmsWavePickDetailPage() {
           <Box sx={{ textAlign: 'right' }}>{i18n.t('pages.wms_wave_pick_detail_page.k16')}</Box>
         ),
         cell: ({ row }) => (
-          <Typography variant='body2' sx={{ textAlign: 'right' }}>
+          <Typography
+            variant='body2'
+            sx={{ textAlign: 'right' }}
+          >
             {row.original.pickedQty}
           </Typography>
         ),
@@ -122,7 +134,11 @@ export default function WmsWavePickDetailPage() {
               value={row.original.progressPct}
               sx={{ flex: 1, height: 8, borderRadius: 1 }}
             />
-            <Typography variant='caption' color='text.secondary' sx={{ minWidth: 36 }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ minWidth: 36 }}
+            >
               {row.original.progressPct}%
             </Typography>
           </Box>
@@ -134,7 +150,10 @@ export default function WmsWavePickDetailPage() {
 
   if (!wave) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_wave_pick_detail_page.k1')}</Typography>
       </PageContainer>
     );
@@ -146,7 +165,10 @@ export default function WmsWavePickDetailPage() {
     i18n.t('pages.wms_wave_pick_detail_page.k5');
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={i18n.t('wms:wms_wave_pick_detail_page.v0_0', { v0: wave.wave_pick_number })}
         subtitle={i18n.t('wms:wms_wave_pick_detail_page.v0_1', {
@@ -155,7 +177,10 @@ export default function WmsWavePickDetailPage() {
         detailItemName={wave.wave_pick_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='wavepick' status={wave.status} />
+            <WmsStatusBadge
+              fsm='wavepick'
+              status={wave.status}
+            />
           </Box>
         }
         infoCard={{
@@ -190,10 +215,16 @@ export default function WmsWavePickDetailPage() {
             content: (
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {i18n.t('pages.wms_wave_pick_detail_page.k10')}
                   </Typography>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {progress.picked} / {progress.total}（{progress.pct}%）
                   </Typography>
                 </Box>

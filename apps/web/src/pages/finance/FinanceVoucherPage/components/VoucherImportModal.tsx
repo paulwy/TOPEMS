@@ -70,7 +70,10 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
             placeholder={t(
               'finance.finance_voucher_page_components__voucher_import_modal.text_a77173'
             )}
-            sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            }}
           />
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

@@ -55,7 +55,10 @@ const HealthManagementPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.health_management_page.text_d09fb9')}
                 </Typography>
@@ -88,7 +91,10 @@ const HealthManagementPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.health_management_page.normal')}
                 </Typography>
@@ -121,7 +127,10 @@ const HealthManagementPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.health_management_page.text_8d63ef')}
                 </Typography>
@@ -178,7 +187,10 @@ const HealthManagementPage: React.FC = () => {
       <Box>
         <Box
           component='span'
-          sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+          sx={{
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          }}
         >
           {label}
         </Box>

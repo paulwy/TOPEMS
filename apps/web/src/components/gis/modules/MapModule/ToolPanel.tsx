@@ -370,8 +370,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor:
-              mapType === 'amap' ? 'primary.dark' : 'var(--color-primary-foreground)',
+            bgcolor: mapType === 'amap' ? 'primary.dark' : 'var(--color-primary-foreground)',
             color: mapType === 'amap' ? 'var(--color-primary-foreground)' : 'grey.700',
             '&:hover': { bgcolor: mapType === 'amap' ? 'primary.dark' : 'grey.50' },
             textTransform: 'none',

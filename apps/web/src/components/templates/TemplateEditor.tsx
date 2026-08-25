@@ -418,7 +418,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             handleVariableChange(index, 'required', e.target.checked)
                           }
                         />
-                        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                        <Typography
+                          sx={{
+                            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                            color: 'text.secondary',
+                          }}
+                        >
                           {i18n.t('components.template_editor.k4')}
                         </Typography>
                       </Box>

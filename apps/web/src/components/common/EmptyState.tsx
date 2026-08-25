@@ -60,7 +60,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         border: '1px dashed',
         borderColor: isDark ? 'glass.topLight' : 'colors.cyber.glass.bgLight',
         borderRadius: 2,
-        bgcolor: isDark ? designTokens.colors.cyber.glass.bgLight : alpha(theme.palette.common.black, 0.01),
+        bgcolor: isDark
+          ? designTokens.colors.cyber.glass.bgLight
+          : alpha(theme.palette.common.black, 0.01),
         px: compact ? 2 : 3,
         py: compact ? 3 : 4,
         textAlign: align === 'center' ? 'center' : 'left',

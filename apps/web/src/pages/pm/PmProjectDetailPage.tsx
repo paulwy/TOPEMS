@@ -467,12 +467,20 @@ const PmProjectDetailPage: React.FC = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+                      <TableCell
+                        sx={{
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          color: 'grey.600',
+                        }}
+                      >
                         <Box>
                           <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
                           <Typography
                             variant='body2'
-                            sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                            sx={{
+                              color: 'grey.400',
+                              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                            }}
                           >
                             {i18n.t('pages.pm_project_detail_page.k0')} {formatDate(phase.end_date)}
                           </Typography>
@@ -570,7 +578,12 @@ const PmProjectDetailPage: React.FC = () => {
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+                      <TableCell
+                        sx={{
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          color: 'grey.600',
+                        }}
+                      >
                         {formatDate(milestone.date)}
                       </TableCell>
                       <TableCell>
@@ -592,7 +605,12 @@ const PmProjectDetailPage: React.FC = () => {
                           }
                         />
                       </TableCell>
-                      <TableCell sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+                      <TableCell
+                        sx={{
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          color: 'grey.600',
+                        }}
+                      >
                         {milestone.phase_id
                           ? phases.find((p: ProjectPhase) => p.id === milestone.phase_id)?.name ||
                             '-'

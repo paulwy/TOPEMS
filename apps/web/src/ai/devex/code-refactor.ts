@@ -1,4 +1,3 @@
-
 export type RefactoringType = 'ExtractFunction' | 'ExtractVariable' | 'Rename' | 'Inline' | 'Move';
 
 export interface RefactoringPlan {
@@ -48,4 +47,3 @@ export interface ImpactEstimate {
   risk: 'low' | 'medium' | 'high';
   description: string;
 }
-

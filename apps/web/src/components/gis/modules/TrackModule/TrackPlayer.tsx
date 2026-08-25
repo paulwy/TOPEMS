@@ -90,7 +90,12 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           borderRadius: 2,
         }}
       >
-        <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          }}
+        >
           {i18n.t('components.track_player.k0')}
         </Typography>
       </Box>
@@ -216,9 +221,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
                 borderRadius: 1,
                 bgcolor: playbackSpeed === speed ? 'primary.dark' : 'grey.100',
                 color:
-                  playbackSpeed === speed
-                    ? 'var(--color-primary-foreground)'
-                    : 'text.secondary',
+                  playbackSpeed === speed ? 'var(--color-primary-foreground)' : 'text.secondary',
                 '&:hover': {
                   bgcolor: playbackSpeed === speed ? 'primary.dark' : 'grey.200',
                 },

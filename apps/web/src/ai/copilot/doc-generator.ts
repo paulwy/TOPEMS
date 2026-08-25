@@ -1,4 +1,3 @@
-
 export interface DocTemplate {
   id: string;
   name: string;
@@ -31,4 +30,3 @@ export interface ReadmeSection {
 }
 
 type Formatter = (template: string, values: Record<string, string>) => string;
-

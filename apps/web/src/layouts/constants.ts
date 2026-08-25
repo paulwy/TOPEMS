@@ -8,7 +8,13 @@ interface L1BusinessDomain {
 }
 
 export const L1_BUSINESS_DOMAINS: L1BusinessDomain[] = [
-  { key: 'workbench', title: '', titleKey: 'shared.constants.k0', order: 1, icon: 'LayoutDashboard' },
+  {
+    key: 'workbench',
+    title: '',
+    titleKey: 'shared.constants.k0',
+    order: 1,
+    icon: 'LayoutDashboard',
+  },
   { key: 'core', title: '', titleKey: 'shared.constants.k1', order: 2, icon: 'Building2' },
   { key: 'operation', title: '', titleKey: 'shared.constants.k2', order: 3, icon: 'Briefcase' },
   { key: 'manufacturing', title: '', titleKey: 'shared.constants.k3', order: 4, icon: 'Factory' },

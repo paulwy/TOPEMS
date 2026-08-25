@@ -1,7 +1,9 @@
-import { MODULES, PERMISSIONS, ModuleCode, PermissionAction, getModulePermissions } from '@topems/app-shell';
+import type { ModuleCode, PermissionAction } from '@topems/app-shell';
+import { MODULES, PERMISSIONS, getModulePermissions } from '@topems/app-shell';
+import i18n from '@/i18n';
+
 export { MODULES, PERMISSIONS, getModulePermissions };
 export type { ModuleCode, PermissionAction };
-import i18n from '@/i18n';
 
 interface ModulePermission {
   module: string;

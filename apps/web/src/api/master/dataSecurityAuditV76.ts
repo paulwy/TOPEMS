@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type AuditAction = 'read' | 'write' | 'update' | 'delete' | 'export' | 'import' | 'transfer';
@@ -185,8 +187,6 @@ interface AuditDashboard {
   anomaly_detection_active: boolean;
   anomaly_events_last_7d: number;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface QueryLogsRequest {

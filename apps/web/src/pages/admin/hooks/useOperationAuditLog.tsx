@@ -317,7 +317,12 @@ const useOperationAuditLog = () => {
         id: 'resource_type',
         label: i18n.t('admin.operation_audit_log.resource_type'),
         render: (row) => (
-          <Typography sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+          <Typography
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
+          >
             {row.resource_type || '-'}
           </Typography>
         ),

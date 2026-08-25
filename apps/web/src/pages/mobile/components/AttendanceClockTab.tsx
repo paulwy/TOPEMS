@@ -84,7 +84,9 @@ const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
           onClick={handleClockClick}
         >
           <Box sx={{ textAlign: 'center' }}>
-            <CalendarCheck style={{ width: 40, height: 40, margin: `0 auto ${designTokens.spacing.xs}px` }} />
+            <CalendarCheck
+              style={{ width: 40, height: 40, margin: `0 auto ${designTokens.spacing.xs}px` }}
+            />
             <Typography
               variant='h6'
               sx={{ fontWeight: 600 }}

@@ -69,16 +69,18 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   const hasLeftPanel = isFullscreen && !!leftPanel;
   const hasRightPanel = isFullscreen && !!rightPanel;
 
-  const defaultHeight = isFullscreen
-    ? 'calc(100vh - 140px)'
-    : 'auto';
+  const defaultHeight = isFullscreen ? 'calc(100vh - 140px)' : 'auto';
 
   const contentHeight = height ?? defaultHeight;
 
   // 加载状态
   if (loading) {
     return (
-      <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+      <PageContainer
+        title={title}
+        subtitle={subtitle}
+        {...pageContainerProps}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -107,11 +109,7 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
       )}
 
       {/* 顶部工具栏 */}
-      {toolbar && (
-        <Box sx={{ mb: isFullscreen ? 0 : designTokens.spacing.md }}>
-          {toolbar}
-        </Box>
-      )}
+      {toolbar && <Box sx={{ mb: isFullscreen ? 0 : designTokens.spacing.md }}>{toolbar}</Box>}
 
       {/* 主体内容区 */}
       {isFullscreen ? (
@@ -207,7 +205,11 @@ export const DesignerTemplate: React.FC<DesignerTemplateProps> = ({
   }
 
   return (
-    <PageContainer title={title} subtitle={subtitle} {...pageContainerProps}>
+    <PageContainer
+      title={title}
+      subtitle={subtitle}
+      {...pageContainerProps}
+    >
       <Box sx={{ p: designTokens.spacing.md }}>{content}</Box>
     </PageContainer>
   );

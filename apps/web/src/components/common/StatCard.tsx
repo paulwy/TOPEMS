@@ -577,7 +577,10 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
               {suffix && (
                 <Typography
                   variant='body2'
-                  sx={{ color: 'text.disabled', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'text.disabled',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {suffix}
                 </Typography>
@@ -647,7 +650,10 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'text.disabled', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                sx={{
+                  color: 'text.disabled',
+                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                }}
               >
                 {i18n.t('components.stat_card.vs_0')}
               </Typography>

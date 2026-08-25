@@ -429,447 +429,456 @@ const MobileQualityPage: React.FC = () => {
       }}
     >
       <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
-          sx={{
-            '& .MuiTab-root': {
-              minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            },
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab}
-            />
-          ))}
-        </Tabs>
-        {activeTab === 0 && (
-          <Box sx={{ px: 2, pt: 2 }}>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder={i18n.t('mobile.mobile_quality_page.k43')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  minHeight: 44,
-                },
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search style={{ width: 20, height: 20 }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
-        )}
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={6}
-            />
-          ) : (
-            <>
-              {activeTab === 0 && (
-                <List disablePadding>
-                  {filteredTasks.map((task, index) => (
-                    <React.Fragment key={task.id}>
-                      <Paper
-                        elevation={0}
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab}
+          />
+        ))}
+      </Tabs>
+      {activeTab === 0 && (
+        <Box sx={{ px: 2, pt: 2 }}>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder={i18n.t('mobile.mobile_quality_page.k43')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                minHeight: 44,
+              },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search style={{ width: 20, height: 20 }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
+      )}
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
+        ) : (
+          <>
+            {activeTab === 0 && (
+              <List disablePadding>
+                {filteredTasks.map((task, index) => (
+                  <React.Fragment key={task.id}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mx: 2,
+                        my: 1,
+                        p: 2,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Box
                         sx={{
-                          mx: 2,
-                          my: 1,
-                          p: 2,
-                          borderRadius: 2,
-                          border: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 1.5,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label={getTypeLabel(task.type)}
+                            size='small'
+                            color='primary'
+                            sx={{
+                              height: 20,
+                              fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                            }}
+                          />
+                          <Chip
+                            label={getStatusLabel(task.status)}
+                            size='small'
+                            color={
+                              getStatusColor(task.status) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
+                            sx={{
+                              height: 20,
+                              fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                            }}
+                          />
+                        </Box>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          {task.task_no}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ fontWeight: 600, mb: 1 }}
+                      >
+                        {task.product_name}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
+                        <Box>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {i18n.t('pages.mobile_quality_page.k1')}
+                          </Typography>
+                          <Typography variant='body2'>{task.batch_no}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {i18n.t('pages.mobile_quality_page.k2')}
+                          </Typography>
+                          <Typography variant='body2'>{task.quantity.toLocaleString()}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {i18n.t('pages.mobile_quality_page.k3')}
+                          </Typography>
+                          <Typography variant='body2'>{task.inspector}</Typography>
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          pt: 1.5,
+                          borderTop: 1,
                           borderColor: 'divider',
                         }}
                       >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: 1.5,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Chip
-                              label={getTypeLabel(task.type)}
-                              size='small'
-                              color='primary'
-                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                            />
-                            <Chip
-                              label={getStatusLabel(task.status)}
-                              size='small'
-                              color={
-                                getStatusColor(task.status) as React.ComponentProps<
-                                  typeof Chip
-                                >['color']
-                              }
-                              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                            />
-                          </Box>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {task.task_no}
-                          </Typography>
-                        </Box>
                         <Typography
-                          variant='subtitle2'
-                          sx={{ fontWeight: 600, mb: 1 }}
+                          variant='caption'
+                          color='text.secondary'
                         >
-                          {task.product_name}
+                          [i18n.t('pages.mobile_quality_page.k4')]: {task.due_date}
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          {task.status === 'pending' && (
+                            <MobileButton
+                              size='small'
+                              variant='contained'
+                              onClick={() => handleTaskAction(task, 'start')}
                             >
-                              {i18n.t('pages.mobile_quality_page.k1')}
-                            </Typography>
-                            <Typography variant='body2'>{task.batch_no}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {i18n.t('pages.mobile_quality_page.k2')}
-                            </Typography>
-                            <Typography variant='body2'>
-                              {task.quantity.toLocaleString()}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {i18n.t('pages.mobile_quality_page.k3')}
-                            </Typography>
-                            <Typography variant='body2'>{task.inspector}</Typography>
-                          </Box>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            pt: 1.5,
-                            borderTop: 1,
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            [i18n.t('pages.mobile_quality_page.k4')]: {task.due_date}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            {task.status === 'pending' && (
-                              <MobileButton
-                                size='small'
-                                variant='contained'
-                                onClick={() => handleTaskAction(task, 'start')}
-                              >
-                                {i18n.t('pages.mobile_quality_page.k5')}
-                              </MobileButton>
-                            )}
-                            {task.status === 'in_progress' && (
-                              <>
-                                <MobileButton
-                                  size='small'
-                                  variant='outlined'
-                                  color='error'
-                                  onClick={() => handleReportDefect(task)}
-                                >
-                                  {i18n.t('pages.mobile_quality_page.k6')}
-                                </MobileButton>
-                                <MobileButton
-                                  size='small'
-                                  variant='contained'
-                                  color='success'
-                                  onClick={() => handleTaskAction(task, 'pass')}
-                                >
-                                  {i18n.t('pages.mobile_quality_page.k7')}
-                                </MobileButton>
-                              </>
-                            )}
-                            {(task.status === 'passed' || task.status === 'failed') && (
+                              {i18n.t('pages.mobile_quality_page.k5')}
+                            </MobileButton>
+                          )}
+                          {task.status === 'in_progress' && (
+                            <>
                               <MobileButton
                                 size='small'
                                 variant='outlined'
-                                onClick={() =>
-                                  addNotification({
-                                    title: i18n.t('mobile.mobile_quality_page.k44'),
-                                    message: i18n.t('mobile.mobile_quality_page.k45'),
-                                    type: 'info',
-                                  })
-                                }
+                                color='error'
+                                onClick={() => handleReportDefect(task)}
                               >
-                                {i18n.t('pages.mobile_quality_page.k8')}
+                                {i18n.t('pages.mobile_quality_page.k6')}
                               </MobileButton>
-                            )}
-                          </Box>
+                              <MobileButton
+                                size='small'
+                                variant='contained'
+                                color='success'
+                                onClick={() => handleTaskAction(task, 'pass')}
+                              >
+                                {i18n.t('pages.mobile_quality_page.k7')}
+                              </MobileButton>
+                            </>
+                          )}
+                          {(task.status === 'passed' || task.status === 'failed') && (
+                            <MobileButton
+                              size='small'
+                              variant='outlined'
+                              onClick={() =>
+                                addNotification({
+                                  title: i18n.t('mobile.mobile_quality_page.k44'),
+                                  message: i18n.t('mobile.mobile_quality_page.k45'),
+                                  type: 'info',
+                                })
+                              }
+                            >
+                              {i18n.t('pages.mobile_quality_page.k8')}
+                            </MobileButton>
+                          )}
                         </Box>
-                      </Paper>
-                      {index < filteredTasks.length - 1 && <Divider sx={{ mx: 2 }} />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-              {activeTab === 1 && (
-                <List disablePadding>
-                  {defectRecords.map((defect, index) => (
-                    <React.Fragment key={defect.id}>
-                      <Paper
-                        elevation={0}
+                      </Box>
+                    </Paper>
+                    {index < filteredTasks.length - 1 && <Divider sx={{ mx: 2 }} />}
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+            {activeTab === 1 && (
+              <List disablePadding>
+                {defectRecords.map((defect, index) => (
+                  <React.Fragment key={defect.id}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mx: 2,
+                        my: 1,
+                        p: 2,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Box
                         sx={{
-                          mx: 2,
-                          my: 1,
-                          p: 2,
-                          borderRadius: 2,
-                          border: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 1.5,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AlertTriangle
+                            style={{
+                              width: 18,
+                              height: 18,
+                              color:
+                                defect.severity === 'critical'
+                                  ? theme.palette.error.main
+                                  : defect.severity === 'major'
+                                    ? theme.palette.warning.main
+                                    : theme.palette.info.main,
+                            }}
+                          />
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {defect.defect_type}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={getSeverityLabel(defect.severity)}
+                          size='small'
+                          color={
+                            getSeverityColor(defect.severity) as React.ComponentProps<
+                              typeof Chip
+                            >['color']
+                          }
+                          sx={{
+                            height: 20,
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                          }}
+                        />
+                      </Box>
+                      <Typography
+                        variant='body2'
+                        sx={{ mb: 1 }}
+                      >
+                        {defect.product_name}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          [i18n.t('pages.mobile_quality_page.k9')]: {defect.batch_no}
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          [i18n.t('pages.mobile_quality_page.k10')]: {defect.quantity}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{
+                          fontSize: designTokens.typography.fontSize.scale['0.85rem'],
+                          mb: 1.5,
+                        }}
+                      >
+                        {defect.description}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          pt: 1,
+                          borderTop: 1,
                           borderColor: 'divider',
                         }}
                       >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: 1.5,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <AlertTriangle
-                              style={{
-                                width: 18,
-                                height: 18,
-                                color:
-                                  defect.severity === 'critical'
-                                    ? theme.palette.error.main
-                                    : defect.severity === 'major'
-                                      ? theme.palette.warning.main
-                                      : theme.palette.info.main,
-                              }}
-                            />
-                            <Typography
-                              variant='subtitle2'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {defect.defect_type}
-                            </Typography>
-                          </Box>
-                          <Chip
-                            label={getSeverityLabel(defect.severity)}
-                            size='small'
-                            color={
-                              getSeverityColor(defect.severity) as React.ComponentProps<
-                                typeof Chip
-                              >['color']
-                            }
-                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                          />
-                        </Box>
                         <Typography
-                          variant='body2'
-                          sx={{ mb: 1 }}
-                        >
-                          {defect.product_name}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            [i18n.t('pages.mobile_quality_page.k9')]: {defect.batch_no}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            [i18n.t('pages.mobile_quality_page.k10')]: {defect.quantity}
-                          </Typography>
-                        </Box>
-                        <Typography
-                          variant='body2'
+                          variant='caption'
                           color='text.secondary'
-                          sx={{ fontSize: designTokens.typography.fontSize.scale['0.85rem'], mb: 1.5 }}
                         >
-                          {defect.description}
+                          {defect.reporter} ·{' '}
+                          {new Date(defect.reported_at).toLocaleDateString('zh-CN')}
                         </Typography>
-                        <Box
+                        <Chip
+                          label={getStatusLabel(defect.status)}
+                          size='small'
+                          color={
+                            getStatusColor(defect.status) as React.ComponentProps<
+                              typeof Chip
+                            >['color']
+                          }
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            pt: 1,
-                            borderTop: 1,
-                            borderColor: 'divider',
+                            height: 20,
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                           }}
-                        >
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {defect.reporter} ·{' '}
-                            {new Date(defect.reported_at).toLocaleDateString('zh-CN')}
-                          </Typography>
-                          <Chip
-                            label={getStatusLabel(defect.status)}
-                            size='small'
-                            color={
-                              getStatusColor(defect.status) as React.ComponentProps<
-                                typeof Chip
-                              >['color']
-                            }
-                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                          />
-                        </Box>
-                      </Paper>
-                      {index < defectRecords.length - 1 && <Divider sx={{ mx: 2 }} />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-            </>
-          )}
-        </PullToRefresh>
-        <Dialog
-          open={defectDialogOpen}
-          onClose={() => setDefectDialogOpen(false)}
-          fullWidth
-          maxWidth='sm'
-        >
-          <DialogTitle>{i18n.t('mobile.mobile_quality_page.k46')}</DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {selectedTask && (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: 1.5,
-                    bgcolor: 'grey.50',
-                  }}
-                >
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                    sx={{ display: 'block', mb: 0.5 }}
-                  >
-                    {i18n.t('pages.mobile_quality_page.k11')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedTask.product_name}
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {selectedTask.task_no} {i18n.t('pages.mobile_quality_page.k0')}{' '}
-                    {selectedTask.batch_no}
-                  </Typography>
-                </Paper>
-              )}
-              <TextField
-                fullWidth
-                label={i18n.t('mobile.mobile_quality_page.k47')}
-                value={defectForm.defect_type}
-                onChange={(e) =>
-                  setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))
-                }
-                placeholder={i18n.t('mobile.mobile_quality_page.k48')}
-              />
-              <TextField
-                select
-                fullWidth
-                label={i18n.t('mobile.mobile_quality_page.k49')}
-                value={defectForm.severity}
-                onChange={(e) =>
-                  setDefectForm((prev) => ({
-                    ...prev,
-                    severity: e.target.value as DefectRecord['severity'],
-                  }))
-                }
+                        />
+                      </Box>
+                    </Paper>
+                    {index < defectRecords.length - 1 && <Divider sx={{ mx: 2 }} />}
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+          </>
+        )}
+      </PullToRefresh>
+      <Dialog
+        open={defectDialogOpen}
+        onClose={() => setDefectDialogOpen(false)}
+        fullWidth
+        maxWidth='sm'
+      >
+        <DialogTitle>{i18n.t('mobile.mobile_quality_page.k46')}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {selectedTask && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 1.5,
+                  borderRadius: 1.5,
+                  bgcolor: 'grey.50',
+                }}
               >
-                <MenuItem value='minor'>{i18n.t('mobile.mobile_quality_page.k50')}</MenuItem>
-                <MenuItem value='major'>{i18n.t('mobile.mobile_quality_page.k51')}</MenuItem>
-                <MenuItem value='critical'>{i18n.t('mobile.mobile_quality_page.k52')}</MenuItem>
-              </TextField>
-              <TextField
-                fullWidth
-                type='number'
-                label={i18n.t('mobile.mobile_quality_page.k53')}
-                value={defectForm.quantity}
-                onChange={(e) =>
-                  setDefectForm((prev) => ({
-                    ...prev,
-                    quantity: parseInt(e.target.value) || 0,
-                  }))
-                }
-                slotProps={{ htmlInput: { min: 1 } }}
-              />
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label={i18n.t('mobile.mobile_quality_page.k54')}
-                value={defectForm.description}
-                onChange={(e) =>
-                  setDefectForm((prev) => ({ ...prev, description: e.target.value }))
-                }
-                placeholder={i18n.t('mobile.mobile_quality_page.k55')}
-              />
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant='outlined'
-                  startIcon={<Camera style={{ width: 18, height: 18 }} />}
-                  fullWidth
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {i18n.t('pages.mobile_quality_page.k12')}
-                </Button>
-              </Box>
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setDefectDialogOpen(false)}>
-              {i18n.t('mobile.mobile_quality_page.k56')}
-            </Button>
-            <MobileButton
-              variant='contained'
-              color='error'
-              onClick={handleSubmitDefect}
-              startIcon={<AlertTriangle style={{ width: 18, height: 18 }} />}
+                  {i18n.t('pages.mobile_quality_page.k11')}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {selectedTask.product_name}
+                </Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  {selectedTask.task_no} {i18n.t('pages.mobile_quality_page.k0')}{' '}
+                  {selectedTask.batch_no}
+                </Typography>
+              </Paper>
+            )}
+            <TextField
+              fullWidth
+              label={i18n.t('mobile.mobile_quality_page.k47')}
+              value={defectForm.defect_type}
+              onChange={(e) => setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))}
+              placeholder={i18n.t('mobile.mobile_quality_page.k48')}
+            />
+            <TextField
+              select
+              fullWidth
+              label={i18n.t('mobile.mobile_quality_page.k49')}
+              value={defectForm.severity}
+              onChange={(e) =>
+                setDefectForm((prev) => ({
+                  ...prev,
+                  severity: e.target.value as DefectRecord['severity'],
+                }))
+              }
             >
-              {i18n.t('pages.mobile_quality_page.k13')}
-            </MobileButton>
-          </DialogActions>
-        </Dialog>
+              <MenuItem value='minor'>{i18n.t('mobile.mobile_quality_page.k50')}</MenuItem>
+              <MenuItem value='major'>{i18n.t('mobile.mobile_quality_page.k51')}</MenuItem>
+              <MenuItem value='critical'>{i18n.t('mobile.mobile_quality_page.k52')}</MenuItem>
+            </TextField>
+            <TextField
+              fullWidth
+              type='number'
+              label={i18n.t('mobile.mobile_quality_page.k53')}
+              value={defectForm.quantity}
+              onChange={(e) =>
+                setDefectForm((prev) => ({
+                  ...prev,
+                  quantity: parseInt(e.target.value) || 0,
+                }))
+              }
+              slotProps={{ htmlInput: { min: 1 } }}
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label={i18n.t('mobile.mobile_quality_page.k54')}
+              value={defectForm.description}
+              onChange={(e) => setDefectForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder={i18n.t('mobile.mobile_quality_page.k55')}
+            />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant='outlined'
+                startIcon={<Camera style={{ width: 18, height: 18 }} />}
+                fullWidth
+              >
+                {i18n.t('pages.mobile_quality_page.k12')}
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDefectDialogOpen(false)}>
+            {i18n.t('mobile.mobile_quality_page.k56')}
+          </Button>
+          <MobileButton
+            variant='contained'
+            color='error'
+            onClick={handleSubmitDefect}
+            startIcon={<AlertTriangle style={{ width: 18, height: 18 }} />}
+          >
+            {i18n.t('pages.mobile_quality_page.k13')}
+          </MobileButton>
+        </DialogActions>
+      </Dialog>
     </MobilePageTemplate>
   );
 };

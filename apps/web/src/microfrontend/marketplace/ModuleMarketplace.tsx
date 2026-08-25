@@ -597,7 +597,13 @@ const ModuleDetailDialog: React.FC<{
                   sx={{ mb: 2, pb: 2, borderBottom: 1, borderColor: 'divider' }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Avatar sx={{ width: 32, height: 32, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                    <Avatar
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      }}
+                    >
                       {review.user_name[0]}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>

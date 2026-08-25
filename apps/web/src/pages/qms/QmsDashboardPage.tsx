@@ -24,11 +24,11 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { qmsApi, useQmsMock, type QmsMockShape } from '@/api/qms';
-import type { QualityOverview } from '@/api/qms';
+import { qmsApi, useQmsMock, type QualityOverview, type QmsMockShape } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
+
 const ct = designTokens.colors;
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();

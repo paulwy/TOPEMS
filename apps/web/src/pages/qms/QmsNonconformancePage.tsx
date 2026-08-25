@@ -102,7 +102,10 @@ const QmsNonconformancePage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {i18n.t('pages.qms_nonconformance_page.k0')}
                 </Typography>
@@ -135,7 +138,10 @@ const QmsNonconformancePage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {i18n.t('pages.qms_nonconformance_page.k1')}
                 </Typography>
@@ -168,7 +174,10 @@ const QmsNonconformancePage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {i18n.t('pages.qms_nonconformance_page.k2')}
                 </Typography>

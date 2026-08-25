@@ -561,7 +561,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               >
                 {i18n.t('pages.report_builder.k7')}
               </Button>
-              <Typography sx={{ color: 'grey.400', lineHeight: `${designTokens.spacing.xl}px` }}>|</Typography>
+              <Typography sx={{ color: 'grey.400', lineHeight: `${designTokens.spacing.xl}px` }}>
+                |
+              </Typography>
               <Button
                 onClick={handleDeselectAllColumns}
                 size='small'

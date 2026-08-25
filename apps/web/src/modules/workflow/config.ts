@@ -1,5 +1,10 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteConfigV2, RouteModuleConfig, ListPageProps, FormPageProps } from '@/routes/v2/types';
+import type {
+  RouteConfigV2,
+  RouteModuleConfig,
+  ListPageProps,
+  FormPageProps,
+} from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import type { TaskQueryParams } from '@/api/workflow';
 import i18n from '@/i18n';

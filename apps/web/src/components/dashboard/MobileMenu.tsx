@@ -111,7 +111,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               mb: 6,
             }}
           >
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600 }}>
+            <Typography
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.125rem'], fontWeight: 600 }}
+            >
               {i18n.t('shared.mobile_menu.k12')}
             </Typography>
             <IconButton

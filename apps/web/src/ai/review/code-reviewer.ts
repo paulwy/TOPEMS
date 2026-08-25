@@ -141,4 +141,3 @@ const DEFAULT_RULES: ReviewRule[] = [
     suggestion: i18n.t('ai.code-reviewer.k28'),
   },
 ];
-

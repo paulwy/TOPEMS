@@ -163,4 +163,3 @@ const DEFAULT_INDICATORS: RiskIndicator[] = [
     direction: 'above',
   },
 ];
-

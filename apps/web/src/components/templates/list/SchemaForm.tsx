@@ -12,13 +12,7 @@ interface SchemaFormProps<T> {
   onClose: () => void;
 }
 
-export function SchemaForm<T>({
-  schema,
-  mode,
-  record,
-  onSubmit,
-  onClose,
-}: SchemaFormProps<T>) {
+export function SchemaForm<T>({ schema, mode, record, onSubmit, onClose }: SchemaFormProps<T>) {
   const fields = useMemo(
     () => getFormFields<Record<string, unknown>>(schema, mode === 'view' ? 'view' : mode),
     [schema, mode]
@@ -28,7 +22,7 @@ export function SchemaForm<T>({
     <FormBuilder
       fields={fields}
       mode={mode}
-      initialValues={((record as unknown) as Record<string, unknown>) || {}}
+      initialValues={(record as unknown as Record<string, unknown>) || {}}
       colCount={schema.formColCount || 2}
       showReset={mode !== 'view'}
       submitLabel={

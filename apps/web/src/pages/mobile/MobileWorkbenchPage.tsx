@@ -363,302 +363,305 @@ const MobileWorkbenchPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 2, pb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: 3,
+            mb: 3,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            color: 'common.white',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'action.disabledBackground',
+                fontSize: designTokens.typography.fontSize.scale['1rem'],
+              }}
+            >
+              {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
+                {user?.fullName || user?.username || i18n.t('mobile.mobile_workbench_page.k32')}
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{ opacity: 0.8 }}
+              >
+                {user?.department || i18n.t('mobile.mobile_workbench_page.k33')}
+              </Typography>
+            </Box>
+            <Badge
+              badgeContent={unreadCount}
+              color='error'
+            >
+              <Bell style={{ width: 22, height: 22, opacity: 0.9 }} />
+            </Badge>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Clock style={{ width: 16, height: 16 }} />
+            <Typography
+              variant='body2'
+              sx={{ opacity: 0.9 }}
+            >
+              {i18n.t('pages.mobile_workbench_page.k0')}
+            </Typography>
+          </Box>
+        </Paper>
+        {loading ? (
+          <MobileSkeleton
+            type='dashboard'
+            count={4}
+          />
+        ) : (
+          <>
+            <Grid
+              container
+              spacing={2}
+              sx={{ mb: 3 }}
+            >
+              {stats.map((stat) => (
+                <Grid
+                  xs={6}
+                  key={stat.id}
+                >
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: 'divider',
+                      position: 'relative',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: `${stat.color}.lighter`,
+                          color: `${stat.color}.main`,
+                        }}
+                      >
+                        {stat.icon}
+                      </Box>
+                    </Box>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700, mb: 0.5 }}
+                    >
+                      {stat.value}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {stat.label}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
             <Paper
               elevation={0}
               sx={{
-                p: 2.5,
-                borderRadius: 3,
+                p: 2,
+                borderRadius: 2,
                 mb: 3,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                color: 'common.white',
+                border: 1,
+                borderColor: 'divider',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Avatar
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'action.disabledBackground',
-                    fontSize: designTokens.typography.fontSize.scale['1rem'],
-                  }}
-                >
-                  {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 0.5 }}
-                  >
-                    {user?.fullName || user?.username || i18n.t('mobile.mobile_workbench_page.k32')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ opacity: 0.8 }}
-                  >
-                    {user?.department || i18n.t('mobile.mobile_workbench_page.k33')}
-                  </Typography>
-                </Box>
-                <Badge
-                  badgeContent={unreadCount}
-                  color='error'
-                >
-                  <Bell style={{ width: 22, height: 22, opacity: 0.9 }} />
-                </Badge>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Clock style={{ width: 16, height: 16 }} />
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 2,
+                }}
+              >
                 <Typography
-                  variant='body2'
-                  sx={{ opacity: 0.9 }}
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
                 >
-                  {i18n.t('pages.mobile_workbench_page.k0')}
+                  {i18n.t('pages.mobile_workbench_page.k1')}
                 </Typography>
               </Box>
-            </Paper>
-            {loading ? (
-              <MobileSkeleton
-                type='dashboard'
-                count={4}
-              />
-            ) : (
-              <>
-                <Grid
-                  container
-                  spacing={2}
-                  sx={{ mb: 3 }}
-                >
-                  {stats.map((stat) => (
-                    <Grid
-                      xs={6}
-                      key={stat.id}
-                    >
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          border: 1,
-                          borderColor: 'divider',
-                          position: 'relative',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 1.5,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: `${stat.color}.lighter`,
-                              color: `${stat.color}.main`,
-                            }}
-                          >
-                            {stat.icon}
-                          </Box>
-                        </Box>
-                        <Typography
-                          variant='h5'
-                          sx={{ fontWeight: 700, mb: 0.5 }}
-                        >
-                          {stat.value}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {stat.label}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    mb: 3,
-                    border: 1,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                    }}
-                  >
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {i18n.t('pages.mobile_workbench_page.k1')}
-                    </Typography>
-                  </Box>
+              <Grid
+                container
+                spacing={2}
+              >
+                {quickActions.map((action) => (
                   <Grid
-                    container
-                    spacing={2}
+                    xs={3}
+                    key={action.id}
                   >
-                    {quickActions.map((action) => (
-                      <Grid
-                        xs={3}
-                        key={action.id}
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 1,
-                            cursor: 'pointer',
-                            transition: 'transform 0.2s',
-                            '&:active': {
-                              transform: 'scale(0.95)',
-                            },
-                            position: 'relative',
-                          }}
-                          onClick={() => handleQuickAction(action)}
-                        >
-                          <Badge
-                            badgeContent={action.badge}
-                            color='error'
-                            sx={{
-                              '& .MuiBadge-badge': {
-                                top: 2,
-                                right: 2,
-                              },
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                bgcolor: `${action.color}.lighter`,
-                                color: `${action.color}.main`,
-                              }}
-                            >
-                              {action.icon}
-                            </Box>
-                          </Badge>
-                          <Typography
-                            variant='caption'
-                            sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
-                          >
-                            {action.label}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Paper>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    borderRadius: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      borderBottom: 1,
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {i18n.t('pages.mobile_workbench_page.k2')}
-                    </Typography>
                     <Box
                       sx={{
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        color: 'primary.main',
+                        gap: 1,
                         cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        '&:active': {
+                          transform: 'scale(0.95)',
+                        },
+                        position: 'relative',
                       }}
-                      onClick={() => navigate(MOBILE_PATHS.tasks)}
+                      onClick={() => handleQuickAction(action)}
                     >
-                      <Typography variant='caption'>
-                        {i18n.t('mobile.mobile_workbench_page.k34')}
+                      <Badge
+                        badgeContent={action.badge}
+                        color='error'
+                        sx={{
+                          '& .MuiBadge-badge': {
+                            top: 2,
+                            right: 2,
+                          },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: `${action.color}.lighter`,
+                            color: `${action.color}.main`,
+                          }}
+                        >
+                          {action.icon}
+                        </Box>
+                      </Badge>
+                      <Typography
+                        variant='caption'
+                        sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                      >
+                        {action.label}
                       </Typography>
-                      <ChevronRight style={{ width: 16, height: 16 }} />
                     </Box>
-                  </Box>
-                  <List disablePadding>
-                    {workbenchItems.map((item, index) => (
-                      <React.Fragment key={item.id}>
-                        <MobileCard
-                          leftIcon={
-                            <Avatar
-                              sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: getAvatarBgColor(item.type),
-                                color: getAvatarColor(item.type),
-                              }}
-                            >
-                              {item.avatar}
-                            </Avatar>
-                          }
-                          title={item.title}
-                          subtitle={item.subtitle}
-                          showArrow
-                          divider={index < workbenchItems.length - 1}
-                          rightContent={
-                            item.status ? (
-                              <Chip
-                                label={item.status}
-                                size='small'
-                                color={
-                                  getStatusColor(item.status) as React.ComponentProps<
-                                    typeof Chip
-                                  >['color']
-                                }
-                                sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                              />
-                            ) : undefined
-                          }
-                          badge={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Clock
-                                style={{
-                                  width: 12,
-                                  height: 12,
-                                  color: theme.palette.text.secondary,
-                                }}
-                              />
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {item.time}
-                              </Typography>
-                            </Box>
-                          }
-                          onClick={() => handleItemClick(item)}
-                        />
-                      </React.Fragment>
-                    ))}
-                  </List>
-                </Paper>
-              </>
-            )}
-          </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                border: 1,
+                borderColor: 'divider',
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {i18n.t('pages.mobile_workbench_page.k2')}
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'primary.main',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => navigate(MOBILE_PATHS.tasks)}
+                >
+                  <Typography variant='caption'>
+                    {i18n.t('mobile.mobile_workbench_page.k34')}
+                  </Typography>
+                  <ChevronRight style={{ width: 16, height: 16 }} />
+                </Box>
+              </Box>
+              <List disablePadding>
+                {workbenchItems.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <MobileCard
+                      leftIcon={
+                        <Avatar
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            bgcolor: getAvatarBgColor(item.type),
+                            color: getAvatarColor(item.type),
+                          }}
+                        >
+                          {item.avatar}
+                        </Avatar>
+                      }
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      showArrow
+                      divider={index < workbenchItems.length - 1}
+                      rightContent={
+                        item.status ? (
+                          <Chip
+                            label={item.status}
+                            size='small'
+                            color={
+                              getStatusColor(item.status) as React.ComponentProps<
+                                typeof Chip
+                              >['color']
+                            }
+                            sx={{
+                              height: 20,
+                              fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                            }}
+                          />
+                        ) : undefined
+                      }
+                      badge={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Clock
+                            style={{
+                              width: 12,
+                              height: 12,
+                              color: theme.palette.text.secondary,
+                            }}
+                          />
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {item.time}
+                          </Typography>
+                        </Box>
+                      }
+                      onClick={() => handleItemClick(item)}
+                    />
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
+          </>
+        )}
+      </Box>
     </MobilePageTemplate>
   );
 };

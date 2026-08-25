@@ -56,7 +56,14 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             >
               {template.name}
             </Typography>
-            <p style={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>{template.project_type}</p>
+            <p
+              style={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'text.secondary',
+              }}
+            >
+              {template.project_type}
+            </p>
           </div>
         </div>
       </CardHeader>

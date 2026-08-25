@@ -339,7 +339,10 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                       label={tab.badge}
                       size='small'
                       color='primary'
-                      sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                      sx={{
+                        height: 20,
+                        fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                      }}
                     />
                   )}
                 </Box>

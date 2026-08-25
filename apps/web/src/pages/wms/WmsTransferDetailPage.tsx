@@ -1,12 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-} from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { Truck, ArrowLeftRight, MapPin, Package, CheckCircle2 } from 'lucide-react';
 import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import type { TransferOrderDto } from '@/types/wms';
@@ -52,16 +46,24 @@ function TransferRouteCard({ transfer }: { transfer: TransferOrderDto }) {
               <MapPin size={20} />
             </Box>
             <Box>
-              <Typography variant='caption' color='primary.main'>
+              <Typography
+                variant='caption'
+                color='primary.main'
+              >
                 {i18n.t('pages.wms_transfer_detail_page.k0')}
               </Typography>
-              <Typography variant='h6' sx={{ color: 'primary.900', fontWeight: 700 }}>
+              <Typography
+                variant='h6'
+                sx={{ color: 'primary.900', fontWeight: 700 }}
+              >
                 {transfer.from_warehouse_name ?? '-'}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.disabled', px: 2 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.disabled', px: 2 }}
+          >
             <Package size={18} />
             <ArrowLeftRight size={24} />
             <Truck size={20} />
@@ -91,10 +93,16 @@ function TransferRouteCard({ transfer }: { transfer: TransferOrderDto }) {
               <CheckCircle2 size={20} />
             </Box>
             <Box>
-              <Typography variant='caption' color='success.main'>
+              <Typography
+                variant='caption'
+                color='success.main'
+              >
                 {i18n.t('pages.wms_transfer_detail_page.k1')}
               </Typography>
-              <Typography variant='h6' sx={{ color: 'success.900', fontWeight: 700 }}>
+              <Typography
+                variant='h6'
+                sx={{ color: 'success.900', fontWeight: 700 }}
+              >
                 {transfer.to_warehouse_name ?? '-'}
               </Typography>
             </Box>
@@ -122,13 +130,20 @@ function TransferDetails({ transfer }: { transfer: TransferOrderDto }) {
   ];
 
   return (
-    <Grid container spacing={2}>
+    <Grid
+      container
+      spacing={2}
+    >
       {items.map((it) => (
         <Grid
           key={it.label}
           size={{ xs: 12, md: it.label === i18n.t('pages.wms_transfer_detail_page.k6') ? 12 : 6 }}
         >
-          <Typography variant='caption' color='text.secondary' component='div'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            component='div'
+          >
             {it.label}
           </Typography>
           <Typography variant='body2'>{it.value}</Typography>
@@ -151,14 +166,20 @@ export default function WmsTransferDetailPage() {
 
   if (!transfer) {
     return (
-      <PageContainer autoTitle autoBreadcrumbs>
+      <PageContainer
+        autoTitle
+        autoBreadcrumbs
+      >
         <Typography>{i18n.t('pages.wms_transfer_detail_page.k0')}</Typography>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer autoTitle autoBreadcrumbs>
+    <PageContainer
+      autoTitle
+      autoBreadcrumbs
+    >
       <DetailPageTemplate
         title={i18n.t('wms:wms_transfer_detail_page.v0_4', { v0: transfer.order_number })}
         subtitle={i18n.t('wms:wms_transfer_detail_page.v0_3', {
@@ -167,7 +188,10 @@ export default function WmsTransferDetailPage() {
         detailItemName={transfer.order_number}
         headerContent={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WmsStatusBadge fsm='transfer' status={transfer.status} />
+            <WmsStatusBadge
+              fsm='transfer'
+              status={transfer.status}
+            />
             <WmsFSMActionButtons
               fsm='transfer'
               currentStatus={transfer.status}

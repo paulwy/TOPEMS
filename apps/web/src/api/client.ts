@@ -22,6 +22,7 @@ import { injectTraceContext } from '@/utils/telemetry';
 import { getCurrentTraceId, getCurrentSpanId, startTrace } from '@/utils/tracing';
 
 import { handleApiError, type AppError } from '../utils/errors';
+
 const logger = createLogger('ApiClient');
 
 export type ApiResponse<T = unknown> = SharedApiResponse<T>;

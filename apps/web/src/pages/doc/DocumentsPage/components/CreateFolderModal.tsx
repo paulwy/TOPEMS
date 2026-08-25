@@ -98,7 +98,11 @@ const CreateFolderModal: React.FC<{
             {error && (
               <Typography
                 variant='body2'
-                sx={{ color: 'error.main', fontSize: designTokens.typography.fontSize.scale['0.875rem'], mt: 2 }}
+                sx={{
+                  color: 'error.main',
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  mt: 2,
+                }}
               >
                 {error}
               </Typography>

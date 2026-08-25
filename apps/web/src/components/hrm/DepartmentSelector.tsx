@@ -80,7 +80,9 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
           <Building2 style={{ width: 20, height: 20, color: theme.palette.success.main }} />
           {i18n.t('components.department_selector.k0')}
         </Typography>
-        <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+        <Typography
+          sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}
+        >
           {departments.length} {i18n.t('components.department_selector.k0')}
         </Typography>
       </Box>

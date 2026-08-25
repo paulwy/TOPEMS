@@ -99,32 +99,74 @@ const PmProjectListPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'grey.600',
+              }}
+            >
               {i18n.t('pm.pm_project_list_page.k6')}
             </Box>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700 }}>{rows.length}</Box>
+            <Box
+              sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700 }}
+            >
+              {rows.length}
+            </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'success.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'success.dark',
+              }}
+            >
               {i18n.t('pm.pm_project_list_page.k7')}
             </Box>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'success.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                fontWeight: 700,
+                color: 'success.dark',
+              }}
+            >
               {activeCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'warning.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'warning.dark',
+              }}
+            >
               {i18n.t('pm.pm_project_list_page.k8')}
             </Box>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'warning.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                fontWeight: 700,
+                color: 'warning.dark',
+              }}
+            >
               {pendingCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'primary.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'primary.dark',
+              }}
+            >
               {i18n.t('pm.pm_project_list_page.k9')}
             </Box>
-            <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 700, color: 'primary.dark' }}>
+            <Box
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                fontWeight: 700,
+                color: 'primary.dark',
+              }}
+            >
               {completedCount}
             </Box>
           </Box>

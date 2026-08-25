@@ -427,431 +427,449 @@ const MobileInventoryPage: React.FC = () => {
       }}
     >
       <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
-          sx={{
-            '& .MuiTab-root': {
-              minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            },
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab}
-            />
-          ))}
-        </Tabs>
-        {activeTab === 0 && (
-          <Box sx={{ px: 2, pt: 2 }}>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder={i18n.t('mobile.mobile_inventory_page.k47')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  minHeight: 44,
-                },
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search style={{ width: 20, height: 20 }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
-        )}
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={6}
-            />
-          ) : (
-            <>
-              {activeTab === 0 && (
-                <List disablePadding>
-                  {filteredItems.map((item, index) => (
-                    <React.Fragment key={item.id}>
-                      <MobileCard
-                        leftIcon={
-                          <Avatar
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: `${getStatusColor(item.status)}.lighter`,
-                              color: `${getStatusColor(item.status)}.main`,
-                            }}
-                          >
-                            <Package style={{ width: 20, height: 20 }} />
-                          </Avatar>
-                        }
-                        title={item.name}
-                        subtitle={
-                          <Box sx={{ mt: 0.5 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              <Chip
-                                label={getStatusLabel(item.status)}
-                                size='small'
-                                color={
-                                  getStatusColor(item.status) as React.ComponentProps<
-                                    typeof Chip
-                                  >['color']
-                                }
-                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                              />
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {item.sku}
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              [i18n.t('pages.mobile_inventory_page.k0')]: {item.location}
-                            </Typography>
-                          </Box>
-                        }
-                        showArrow
-                        divider={index < filteredItems.length - 1}
-                        rightContent={
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Typography
-                              variant='subtitle2'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {item.quantity.toLocaleString()}
-                            </Typography>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {item.unit}
-                            </Typography>
-                          </Box>
-                        }
-                        onClick={() =>
-                          addNotification({
-                            title: i18n.t('mobile.mobile_inventory_page.k48'),
-                            message: `${i18n.t('pages.mobile_inventory_page.k12')}${item.name}${i18n.t('pages.mobile_inventory_page.k13')}`,
-                            type: 'info',
-                          })
-                        }
-                      />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-              {activeTab === 1 && (
-                <List disablePadding>
-                  {stocktakeTasks.map((task, index) => (
-                    <React.Fragment key={task.id}>
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          mx: 2,
-                          my: 1,
-                          p: 2,
-                          borderRadius: 2,
-                          border: 1,
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Box
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab}
+          />
+        ))}
+      </Tabs>
+      {activeTab === 0 && (
+        <Box sx={{ px: 2, pt: 2 }}>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder={i18n.t('mobile.mobile_inventory_page.k47')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                minHeight: 44,
+              },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search style={{ width: 20, height: 20 }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
+      )}
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
+        ) : (
+          <>
+            {activeTab === 0 && (
+              <List disablePadding>
+                {filteredItems.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <MobileCard
+                      leftIcon={
+                        <Avatar
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: 1.5,
+                            width: 40,
+                            height: 40,
+                            bgcolor: `${getStatusColor(item.status)}.lighter`,
+                            color: `${getStatusColor(item.status)}.main`,
                           }}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <ClipboardList
-                              style={{ width: 18, height: 18, color: theme.palette.primary.main }}
-                            />
-                            <Typography
-                              variant='subtitle2'
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {task.title}
-                            </Typography>
-                          </Box>
-                          <Chip
-                            label={getStatusLabel(task.status)}
-                            size='small'
-                            color={
-                              getStatusColor(task.status) as React.ComponentProps<
-                                typeof Chip
-                              >['color']
-                            }
-                            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                          />
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {i18n.t('pages.mobile_inventory_page.k1')}
-                            </Typography>
-                            <Typography variant='body2'>{task.warehouse}</Typography>
-                          </Box>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {i18n.t('pages.mobile_inventory_page.k2')}
-                            </Typography>
-                            <Typography variant='body2'>{task.assignee}</Typography>
-                          </Box>
-                        </Box>
-                        <Box sx={{ mb: 1 }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              mb: 0.5,
-                            }}
-                          >
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {i18n.t('pages.mobile_inventory_page.k3')}
-                            </Typography>
-                            <Typography variant='caption'>
-                              {task.counted_items}/{task.total_items}
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              width: '100%',
-                              height: 6,
-                              bgcolor: 'grey.200',
-                              borderRadius: 3,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box
+                          <Package style={{ width: 20, height: 20 }} />
+                        </Avatar>
+                      }
+                      title={item.name}
+                      subtitle={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Chip
+                              label={getStatusLabel(item.status)}
+                              size='small'
+                              color={
+                                getStatusColor(item.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
+                              }
                               sx={{
-                                width: `${(task.counted_items / task.total_items) * 100}%`,
-                                height: '100%',
-                                bgcolor: 'primary.main',
-                                borderRadius: 3,
-                                transition: 'width 0.3s',
+                                height: 18,
+                                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
                               }}
                             />
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {item.sku}
+                            </Typography>
                           </Box>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            [i18n.t('pages.mobile_inventory_page.k0')]: {item.location}
+                          </Typography>
                         </Box>
+                      }
+                      showArrow
+                      divider={index < filteredItems.length - 1}
+                      rightContent={
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {item.quantity.toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {item.unit}
+                          </Typography>
+                        </Box>
+                      }
+                      onClick={() =>
+                        addNotification({
+                          title: i18n.t('mobile.mobile_inventory_page.k48'),
+                          message: `${i18n.t('pages.mobile_inventory_page.k12')}${item.name}${i18n.t('pages.mobile_inventory_page.k13')}`,
+                          type: 'info',
+                        })
+                      }
+                    />
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+            {activeTab === 1 && (
+              <List disablePadding>
+                {stocktakeTasks.map((task, index) => (
+                  <React.Fragment key={task.id}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mx: 2,
+                        my: 1,
+                        p: 2,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 1.5,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <ClipboardList
+                            style={{ width: 18, height: 18, color: theme.palette.primary.main }}
+                          />
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {task.title}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={getStatusLabel(task.status)}
+                          size='small'
+                          color={
+                            getStatusColor(task.status) as React.ComponentProps<
+                              typeof Chip
+                            >['color']
+                          }
+                          sx={{
+                            height: 20,
+                            fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {i18n.t('pages.mobile_inventory_page.k1')}
+                          </Typography>
+                          <Typography variant='body2'>{task.warehouse}</Typography>
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {i18n.t('pages.mobile_inventory_page.k2')}
+                          </Typography>
+                          <Typography variant='body2'>{task.assignee}</Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ mb: 1 }}>
                         <Box
                           sx={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            mb: 0.5,
                           }}
                         >
                           <Typography
                             variant='caption'
                             color='text.secondary'
                           >
-                            [i18n.t('pages.mobile_inventory_page.k4')]: {task.due_date}
+                            {i18n.t('pages.mobile_inventory_page.k3')}
                           </Typography>
-                          {task.status !== 'completed' && (
-                            <MobileButton
+                          <Typography variant='caption'>
+                            {task.counted_items}/{task.total_items}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 6,
+                            bgcolor: 'grey.200',
+                            borderRadius: 3,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: `${(task.counted_items / task.total_items) * 100}%`,
+                              height: '100%',
+                              bgcolor: 'primary.main',
+                              borderRadius: 3,
+                              transition: 'width 0.3s',
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          [i18n.t('pages.mobile_inventory_page.k4')]: {task.due_date}
+                        </Typography>
+                        {task.status !== 'completed' && (
+                          <MobileButton
+                            size='small'
+                            variant='outlined'
+                            onClick={() =>
+                              addNotification({
+                                title: i18n.t('mobile.mobile_inventory_page.k49'),
+                                message: `${i18n.t('pages.mobile_inventory_page.k14')}${task.title}`,
+                                type: 'info',
+                              })
+                            }
+                          >
+                            {task.status === 'pending'
+                              ? i18n.t('mobile.mobile_inventory_page.k51')
+                              : i18n.t('mobile.mobile_inventory_page.k50')}
+                          </MobileButton>
+                        )}
+                      </Box>
+                    </Paper>
+                    {index < stocktakeTasks.length - 1 && <Divider sx={{ mx: 2 }} />}
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+            {activeTab === 2 && (
+              <List disablePadding>
+                {inboundOrders.map((order, index) => (
+                  <React.Fragment key={order.id}>
+                    <MobileCard
+                      leftIcon={
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'success.lighter',
+                            color: 'success.main',
+                          }}
+                        >
+                          <Warehouse style={{ width: 20, height: 20 }} />
+                        </Avatar>
+                      }
+                      title={order.orderNo}
+                      subtitle={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ mb: 0.5 }}
+                          >
+                            {order.supplier}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={getTypeLabel(order.type)}
                               size='small'
                               variant='outlined'
-                              onClick={() =>
-                                addNotification({
-                                  title: i18n.t('mobile.mobile_inventory_page.k49'),
-                                  message: `${i18n.t('pages.mobile_inventory_page.k14')}${task.title}`,
-                                  type: 'info',
-                                })
+                              sx={{
+                                height: 18,
+                                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                              }}
+                            />
+                            <Chip
+                              label={getStatusLabel(order.status)}
+                              size='small'
+                              color={
+                                getStatusColor(order.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
                               }
-                            >
-                              {task.status === 'pending'
-                                ? i18n.t('mobile.mobile_inventory_page.k51')
-                                : i18n.t('mobile.mobile_inventory_page.k50')}
-                            </MobileButton>
-                          )}
+                              sx={{
+                                height: 18,
+                                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                              }}
+                            />
+                          </Box>
                         </Box>
-                      </Paper>
-                      {index < stocktakeTasks.length - 1 && <Divider sx={{ mx: 2 }} />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-              {activeTab === 2 && (
-                <List disablePadding>
-                  {inboundOrders.map((order, index) => (
-                    <React.Fragment key={order.id}>
-                      <MobileCard
-                        leftIcon={
-                          <Avatar
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: 'success.lighter',
-                              color: 'success.main',
-                            }}
+                      }
+                      showArrow
+                      divider={index < inboundOrders.length - 1}
+                      rightContent={
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
                           >
-                            <Warehouse style={{ width: 20, height: 20 }} />
-                          </Avatar>
-                        }
-                        title={order.orderNo}
-                        subtitle={
-                          <Box sx={{ mt: 0.5 }}>
-                            <Typography
-                              variant='body2'
-                              sx={{ mb: 0.5 }}
-                            >
-                              {order.supplier}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={getTypeLabel(order.type)}
-                                size='small'
-                                variant='outlined'
-                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                              />
-                              <Chip
-                                label={getStatusLabel(order.status)}
-                                size='small'
-                                color={
-                                  getStatusColor(order.status) as React.ComponentProps<
-                                    typeof Chip
-                                  >['color']
-                                }
-                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                              />
-                            </Box>
-                          </Box>
-                        }
-                        showArrow
-                        divider={index < inboundOrders.length - 1}
-                        rightContent={
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {order.total_items}
-                              {i18n.t('pages.mobile_inventory_page.k0')}
-                            </Typography>
-                            <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}
-                              {i18n.t('pages.mobile_inventory_page.k1')}
-                            </Typography>
-                          </Box>
-                        }
-                        onClick={() =>
-                          addNotification({
-                            title: i18n.t('mobile.mobile_inventory_page.k52'),
-                            message: `${i18n.t('pages.mobile_inventory_page.k15')}${order.orderNo}`,
-                            type: 'info',
-                          })
-                        }
-                      />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-              {activeTab === 3 && (
-                <List disablePadding>
-                  {outboundOrders.map((order, index) => (
-                    <React.Fragment key={order.id}>
-                      <MobileCard
-                        leftIcon={
-                          <Avatar
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              bgcolor: 'info.lighter',
-                              color: 'info.main',
-                            }}
+                            {order.total_items}
+                            {i18n.t('pages.mobile_inventory_page.k0')}
+                          </Typography>
+                          <Typography variant='body2'>
+                            {order.total_quantity.toLocaleString()}
+                            {i18n.t('pages.mobile_inventory_page.k1')}
+                          </Typography>
+                        </Box>
+                      }
+                      onClick={() =>
+                        addNotification({
+                          title: i18n.t('mobile.mobile_inventory_page.k52'),
+                          message: `${i18n.t('pages.mobile_inventory_page.k15')}${order.orderNo}`,
+                          type: 'info',
+                        })
+                      }
+                    />
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+            {activeTab === 3 && (
+              <List disablePadding>
+                {outboundOrders.map((order, index) => (
+                  <React.Fragment key={order.id}>
+                    <MobileCard
+                      leftIcon={
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: 'info.lighter',
+                            color: 'info.main',
+                          }}
+                        >
+                          <Truck style={{ width: 20, height: 20 }} />
+                        </Avatar>
+                      }
+                      title={order.orderNo}
+                      subtitle={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ mb: 0.5 }}
                           >
-                            <Truck style={{ width: 20, height: 20 }} />
-                          </Avatar>
-                        }
-                        title={order.orderNo}
-                        subtitle={
-                          <Box sx={{ mt: 0.5 }}>
-                            <Typography
-                              variant='body2'
-                              sx={{ mb: 0.5 }}
-                            >
-                              {order.customer}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={getTypeLabel(order.type)}
-                                size='small'
-                                variant='outlined'
-                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                              />
-                              <Chip
-                                label={getStatusLabel(order.status)}
-                                size='small'
-                                color={
-                                  getStatusColor(order.status) as React.ComponentProps<
-                                    typeof Chip
-                                  >['color']
-                                }
-                                sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                              />
-                            </Box>
+                            {order.customer}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={getTypeLabel(order.type)}
+                              size='small'
+                              variant='outlined'
+                              sx={{
+                                height: 18,
+                                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                              }}
+                            />
+                            <Chip
+                              label={getStatusLabel(order.status)}
+                              size='small'
+                              color={
+                                getStatusColor(order.status) as React.ComponentProps<
+                                  typeof Chip
+                                >['color']
+                              }
+                              sx={{
+                                height: 18,
+                                fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                              }}
+                            />
                           </Box>
-                        }
-                        showArrow
-                        divider={index < outboundOrders.length - 1}
-                        rightContent={
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              {order.total_items}
-                              {i18n.t('pages.mobile_inventory_page.k2')}
-                            </Typography>
-                            <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}
-                              {i18n.t('pages.mobile_inventory_page.k3')}
-                            </Typography>
-                          </Box>
-                        }
-                        onClick={() =>
-                          addNotification({
-                            title: i18n.t('mobile.mobile_inventory_page.k53'),
-                            message: `${i18n.t('pages.mobile_inventory_page.k16')}${order.orderNo}`,
-                            type: 'info',
-                          })
-                        }
-                      />
-                    </React.Fragment>
-                  ))}
-                </List>
-              )}
-            </>
-          )}
-        </PullToRefresh>
+                        </Box>
+                      }
+                      showArrow
+                      divider={index < outboundOrders.length - 1}
+                      rightContent={
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            {order.total_items}
+                            {i18n.t('pages.mobile_inventory_page.k2')}
+                          </Typography>
+                          <Typography variant='body2'>
+                            {order.total_quantity.toLocaleString()}
+                            {i18n.t('pages.mobile_inventory_page.k3')}
+                          </Typography>
+                        </Box>
+                      }
+                      onClick={() =>
+                        addNotification({
+                          title: i18n.t('mobile.mobile_inventory_page.k53'),
+                          message: `${i18n.t('pages.mobile_inventory_page.k16')}${order.orderNo}`,
+                          type: 'info',
+                        })
+                      }
+                    />
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+          </>
+        )}
+      </PullToRefresh>
     </MobilePageTemplate>
   );
 };

@@ -132,7 +132,13 @@ export function AIFormValidator({
 
         {issues.length > 0 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'grey.700',
+              }}
+            >
               {i18n.t('components.ai_form_validator.k3')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -166,14 +172,23 @@ export function AIFormValidator({
                             justifyContent: 'space-between',
                           }}
                         >
-                          <Typography sx={{ fontWeight: 500, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 500,
+                              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                            }}
+                          >
                             {issueTitleMap[issue.type]}: {issue.field}
                           </Typography>
                           {issue.fix && (
                             <Button
                               variant='outlined'
                               size='small'
-                              sx={{ height: 28, fontSize: designTokens.typography.fontSize.scale['0.75rem'], px: 1 }}
+                              sx={{
+                                height: 28,
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                                px: 1,
+                              }}
                               onClick={() => handleFixIssue(issue)}
                             >
                               {i18n.t('components.ai_form_validator.k4')}
@@ -207,7 +222,13 @@ export function AIFormValidator({
                 justifyContent: 'space-between',
               }}
             >
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'grey.700' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  fontWeight: 500,
+                  color: 'grey.700',
+                }}
+              >
                 {i18n.t('components.ai_form_validator.k5')}
               </Typography>
               {onApplySuggestions && (
@@ -243,7 +264,12 @@ export function AIFormValidator({
                         }}
                       />
                       <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 500, fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          }}
+                        >
                           {suggestion.field}
                         </Typography>
                         <Typography
@@ -290,7 +316,9 @@ export function AIFormValidator({
               }}
             />
             <Typography>{i18n.t('components.ai_form_validator.k6')}</Typography>
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], mt: 0.25 }}>
+            <Typography
+              sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], mt: 0.25 }}
+            >
               {i18n.t('components.ai_form_validator.k7')}
             </Typography>
           </Box>

@@ -166,7 +166,12 @@ const TreeItem: React.FC<{
               </Box>
             }
             secondary={node.code}
-            slotProps={{ secondary: { variant: 'caption', sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] } } }}
+            slotProps={{
+              secondary: {
+                variant: 'caption',
+                sx: { fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+              },
+            }}
           />
         </ListItemButton>
       </ListItem>
@@ -274,7 +279,11 @@ export const CategoryManagementPage: React.FC = () => {
           <Chip
             label={categories.length}
             size='small'
-            sx={{ ml: 'auto', height: 20, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+            sx={{
+              ml: 'auto',
+              height: 20,
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            }}
           />
         </Box>
       </Box>

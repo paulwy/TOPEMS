@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type RecommendationType = 'page' | 'action' | 'content' | 'feature';
 
 export interface Recommendation {
@@ -45,35 +46,55 @@ function getDefaultContentLibrary(): ContentItem[] {
       id: 'dashboard-main',
       type: 'page',
       title: i18n.t('ai.smart-recommender.k0'),
-      tags: [i18n.t('ai.smart-recommender.k3'), i18n.t('ai.smart-recommender.k2'), i18n.t('ai.smart-recommender.k1')],
+      tags: [
+        i18n.t('ai.smart-recommender.k3'),
+        i18n.t('ai.smart-recommender.k2'),
+        i18n.t('ai.smart-recommender.k1'),
+      ],
       metadata: { module: 'dashboard' },
     },
     {
       id: 'crm-dashboard',
       type: 'page',
       title: i18n.t('ai.smart-recommender.crm_0'),
-      tags: [i18n.t('ai.smart-recommender.k6'), i18n.t('ai.smart-recommender.k5'), i18n.t('ai.smart-recommender.k4')],
+      tags: [
+        i18n.t('ai.smart-recommender.k6'),
+        i18n.t('ai.smart-recommender.k5'),
+        i18n.t('ai.smart-recommender.k4'),
+      ],
       metadata: { module: 'crm' },
     },
     {
       id: 'hrm-dashboard',
       type: 'page',
       title: i18n.t('ai.smart-recommender.hrm_1'),
-      tags: [i18n.t('ai.smart-recommender.k9'), i18n.t('ai.smart-recommender.k8'), i18n.t('ai.smart-recommender.k7')],
+      tags: [
+        i18n.t('ai.smart-recommender.k9'),
+        i18n.t('ai.smart-recommender.k8'),
+        i18n.t('ai.smart-recommender.k7'),
+      ],
       metadata: { module: 'hrm' },
     },
     {
       id: 'mes-workorder',
       type: 'page',
       title: i18n.t('ai.smart-recommender.k10'),
-      tags: [i18n.t('ai.smart-recommender.k13'), i18n.t('ai.smart-recommender.k12'), i18n.t('ai.smart-recommender.k11')],
+      tags: [
+        i18n.t('ai.smart-recommender.k13'),
+        i18n.t('ai.smart-recommender.k12'),
+        i18n.t('ai.smart-recommender.k11'),
+      ],
       metadata: { module: 'mes' },
     },
     {
       id: 'scm-purchase',
       type: 'page',
       title: i18n.t('ai.smart-recommender.k14'),
-      tags: [i18n.t('ai.smart-recommender.k17'), i18n.t('ai.smart-recommender.k16'), i18n.t('ai.smart-recommender.k15')],
+      tags: [
+        i18n.t('ai.smart-recommender.k17'),
+        i18n.t('ai.smart-recommender.k16'),
+        i18n.t('ai.smart-recommender.k15'),
+      ],
       metadata: { module: 'scm' },
     },
     {
@@ -87,7 +108,11 @@ function getDefaultContentLibrary(): ContentItem[] {
       id: 'financial-report',
       type: 'content',
       title: i18n.t('ai.smart-recommender.k21'),
-      tags: [i18n.t('ai.smart-recommender.k24'), i18n.t('ai.smart-recommender.k23'), i18n.t('ai.smart-recommender.k22')],
+      tags: [
+        i18n.t('ai.smart-recommender.k24'),
+        i18n.t('ai.smart-recommender.k23'),
+        i18n.t('ai.smart-recommender.k22'),
+      ],
       metadata: { module: 'finance' },
     },
     {
@@ -101,14 +126,22 @@ function getDefaultContentLibrary(): ContentItem[] {
       id: 'quick-approve',
       type: 'action',
       title: i18n.t('ai.smart-recommender.k28'),
-      tags: [i18n.t('ai.smart-recommender.k31'), i18n.t('ai.smart-recommender.k30'), i18n.t('ai.smart-recommender.k29')],
+      tags: [
+        i18n.t('ai.smart-recommender.k31'),
+        i18n.t('ai.smart-recommender.k30'),
+        i18n.t('ai.smart-recommender.k29'),
+      ],
       metadata: { module: 'workflow' },
     },
     {
       id: 'generate-report',
       type: 'action',
       title: i18n.t('ai.smart-recommender.k32'),
-      tags: [i18n.t('ai.smart-recommender.k35'), i18n.t('ai.smart-recommender.k34'), i18n.t('ai.smart-recommender.k33')],
+      tags: [
+        i18n.t('ai.smart-recommender.k35'),
+        i18n.t('ai.smart-recommender.k34'),
+        i18n.t('ai.smart-recommender.k33'),
+      ],
       metadata: { module: 'report' },
     },
     {
@@ -127,4 +160,3 @@ function getDefaultContentLibrary(): ContentItem[] {
     },
   ];
 }
-

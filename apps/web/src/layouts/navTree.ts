@@ -133,9 +133,10 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
 function moduleCardToL2Node(module: ModuleCardConfig): L2NavNode {
   const explicitOrder = L2_MODULE_ORDER[module.code];
   const translated = module.nameKey ? i18n.t(module.nameKey) : module.name;
-  const resolvedDescription = module.description && module.description.includes('.')
-    ? i18n.t(module.description, { defaultValue: module.description })
-    : module.description;
+  const resolvedDescription =
+    module.description && module.description.includes('.')
+      ? i18n.t(module.description, { defaultValue: module.description })
+      : module.description;
   return {
     key: module.code,
     title: translated,
@@ -232,9 +233,7 @@ function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
   }, [l1Domains, i18n.language]);
 }
 
-function useDomainGroupedNavItems(
-  checkPermission: PermissionChecker
-): Record<string, NavItem[]> {
+function useDomainGroupedNavItems(checkPermission: PermissionChecker): Record<string, NavItem[]> {
   const { l1Domains } = useNavTree(checkPermission);
 
   return useMemo(() => {

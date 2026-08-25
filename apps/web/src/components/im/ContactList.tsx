@@ -253,7 +253,13 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {activeTab !== 'groups' && pendingRequests.length > 0 && (
           <div style={{ padding: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px` }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: theme.palette.text.secondary,
+                padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
+              }}
+            >
               {i18n.t('components.contact_list.k1')}
             </div>
             {pendingRequests.map((friend) => (
@@ -345,7 +351,13 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
 
         {activeTab !== 'groups' && filteredFriends.length > 0 && (
           <div style={{ padding: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px` }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: theme.palette.text.secondary,
+                padding: `${designTokens.spacing.xs}px ${designTokens.spacing.sm}px`,
+              }}
+            >
               {i18n.t('components.contact_list.k3')}
             </div>
             {filteredFriends

@@ -326,7 +326,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 primary={
                   <Box
                     component='span'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500 }}
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                      fontWeight: 500,
+                    }}
                   >
                     🧩 {i18n.t('shared.app_sidebar.k1')}
                   </Box>
@@ -334,7 +337,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 secondary={
                   <Box
                     component='span'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.7rem'], opacity: 0.7 }}
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                      opacity: 0.7,
+                    }}
                   >
                     {i18n.t('shared.app_sidebar.k2')}
                   </Box>

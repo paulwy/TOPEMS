@@ -102,7 +102,10 @@ const EhsCheckPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.ehs_check_page.plan') || i18n.t('pages.ehs_check_page.k0')}
                 </Typography>
@@ -135,7 +138,10 @@ const EhsCheckPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.ehs_check_page.active') || i18n.t('pages.ehs_check_page.k1')}
                 </Typography>
@@ -168,7 +174,10 @@ const EhsCheckPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'slate.600', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'slate.600',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {t('ehs.ehs_check_page.in_progress') || i18n.t('pages.ehs_check_page.k2')}
                 </Typography>

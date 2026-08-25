@@ -209,7 +209,10 @@ const BarcodePage: React.FC = () => {
                 <Box>
                   <Typography
                     variant='body2'
-                    sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
                   >
                     {card.label}
                   </Typography>
@@ -270,7 +273,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k8')}
           </Box>
@@ -279,7 +285,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k9')}
           </Box>
@@ -303,7 +312,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k10')}
           </Box>
@@ -312,7 +324,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k11')}
           </Box>
@@ -321,7 +336,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k12')}
           </Box>
@@ -330,7 +348,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k13')}
           </Box>
@@ -339,7 +360,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k14')}
           </Box>
@@ -350,7 +374,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k15')}
           </Box>
@@ -361,7 +388,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k16')}
           </Box>
@@ -372,7 +402,10 @@ const BarcodePage: React.FC = () => {
         <Box>
           <Box
             component='span'
-            sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+            }}
           >
             {i18n.t('pages.barcode_page.k17')}
           </Box>

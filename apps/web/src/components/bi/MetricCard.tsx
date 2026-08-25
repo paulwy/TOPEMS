@@ -386,7 +386,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {unit && (
                 <Typography
                   variant='body1'
-                  sx={{ color: 'text.secondary', fontWeight: 600, fontSize: designTokens.typography.fontSize.scale['1rem'] }}
+                  sx={{
+                    color: 'text.secondary',
+                    fontWeight: 600,
+                    fontSize: designTokens.typography.fontSize.scale['1rem'],
+                  }}
                 >
                   {unit}
                 </Typography>
@@ -394,7 +398,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {suffix && (
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                  sx={{
+                    color: 'grey.400',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
                 >
                   {suffix}
                 </Typography>
@@ -488,7 +495,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               change !== undefined ? (
                 <Typography
                   variant='caption'
-                  sx={{ color: 'grey.400', fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
+                  sx={{
+                    color: 'grey.400',
+                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                  }}
                 >
                   vs last period
                 </Typography>

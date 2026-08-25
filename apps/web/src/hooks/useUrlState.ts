@@ -20,10 +20,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-type UrlStateSetter<T> = (
-  value: T | ((prev: T) => T),
-  options?: { replace?: boolean }
-) => void;
+type UrlStateSetter<T> = (value: T | ((prev: T) => T), options?: { replace?: boolean }) => void;
 
 function parseValue<T>(raw: string | null, defaultValue: T): T {
   if (raw === null) return defaultValue;

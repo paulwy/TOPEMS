@@ -102,7 +102,13 @@ export const buildSchema: EntitySchema = {
         if (!val) return '-';
         return React.createElement(
           Typography,
-          { variant: 'body2', sx: { fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] } },
+          {
+            variant: 'body2',
+            sx: {
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            },
+          },
           val.length > 8 ? `${val.slice(0, 8)}...` : val
         );
       },

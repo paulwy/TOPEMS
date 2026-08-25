@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type DomainType = 'source' | 'consumer' | 'analytics' | 'platform' | 'reference';
@@ -136,8 +138,6 @@ interface FederationDashboard {
   cross_domain_violations: number;
   governance_score: number;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 export interface CreateDomainRequest {

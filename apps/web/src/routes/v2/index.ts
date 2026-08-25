@@ -95,14 +95,7 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
   // ✨ 按命名空间按需加载：与模块代码 import 并行触发业务 NS 加载。
   // 加载组件/templates/schemas/services/pages（与业务 NS 同时预热），
   // 这会与 DynamicRoutes / useRouteNamespacePreload 形成多入口幂等保障。
-  const baseNamespaces = [
-    moduleCode,
-    'components',
-    'templates',
-    'schemas',
-    'services',
-    'pages',
-  ];
+  const baseNamespaces = [moduleCode, 'components', 'templates', 'schemas', 'services', 'pages'];
 
   const promise = (async () => {
     // Phase 1: 并行加载基础命名空间（不阻塞模块 import）
@@ -120,7 +113,7 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
       await ensureNamespacesLoaded(preloadNamespaces).catch((e) => {
         apiLogger.warn(
           `[i18n] preload extra ns [${preloadNamespaces.join(',')}] for module ${moduleCode} skipped`,
-          e,
+          e
         );
       });
     }

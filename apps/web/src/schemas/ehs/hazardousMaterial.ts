@@ -98,7 +98,11 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
       key: 'icon',
       style: { width: 14, height: 14 },
     }),
-    React.createElement(Typography, { key: 'date', sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } }, dateText),
+    React.createElement(
+      Typography,
+      { key: 'date', sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'] } },
+      dateText
+    ),
   ];
 
   if (status) {
@@ -108,7 +112,11 @@ function renderExpiryCell(row: Record<string, unknown>, _index: number) {
         label: status.text,
         size: 'small',
         color: status.color,
-        sx: { height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'], fontWeight: 500 },
+        sx: {
+          height: 20,
+          fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+          fontWeight: 500,
+        },
       })
     );
   }

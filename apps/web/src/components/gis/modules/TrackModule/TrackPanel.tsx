@@ -304,7 +304,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                     borderRadius: 2,
                   }}
                 >
-                  <table style={{ width: '100%', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    }}
+                  >
                     <thead
                       style={{
                         backgroundColor: theme.palette.grey[50],
@@ -361,7 +366,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           key={index}
                           style={{ borderBottom: '1px solid var(--mui-palette-grey-100)' }}
                         >
-                          <td style={{ padding: `${designTokens.spacing.sm}px 12px`, color: theme.palette.text.secondary }}>
+                          <td
+                            style={{
+                              padding: `${designTokens.spacing.sm}px 12px`,
+                              color: theme.palette.text.secondary,
+                            }}
+                          >
                             {index + 1}
                           </td>
                           <td
@@ -426,7 +436,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   size={48}
                   sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
                 />
-                <Typography sx={{ color: 'text.secondary', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                <Typography
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
+                >
                   {i18n.t('components.track_panel.k7')}
                 </Typography>
               </Box>

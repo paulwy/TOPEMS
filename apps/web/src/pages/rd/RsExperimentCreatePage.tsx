@@ -10,6 +10,7 @@ import { RD_PATHS } from '@/modules/rd/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const getExperimentTypes = () => [
   i18n.t('rd.rs_experiment_create_page.k5'),
   i18n.t('rd.rs_experiment_create_page.k4'),

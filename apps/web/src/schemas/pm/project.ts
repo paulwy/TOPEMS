@@ -115,7 +115,12 @@ export const projectSchema: EntitySchema = {
           ),
           React.createElement(
             Typography,
-            { sx: { fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'grey.600' } },
+            {
+              sx: {
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'grey.600',
+              },
+            },
             `${val}%`
           )
         );

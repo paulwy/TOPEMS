@@ -559,9 +559,7 @@ export const AiChatPage: React.FC = () => {
   );
 
   const modeTabsContent = (
-    <Box
-      sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', display: { md: 'none' } }}
-    >
+    <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider', display: { md: 'none' } }}>
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v)}
@@ -569,7 +567,10 @@ export const AiChatPage: React.FC = () => {
         scrollButtons='auto'
         sx={{
           minHeight: 36,
-          '& .MuiTab-root': { minHeight: 36, fontSize: designTokens.typography.fontSize.scale['0.75rem'] },
+          '& .MuiTab-root': {
+            minHeight: 36,
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+          },
         }}
       >
         <Tab
@@ -648,7 +649,12 @@ export const AiChatPage: React.FC = () => {
               }}
             >
               {msg.content.includes('```') ? (
-                <Box sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+                <Box
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  }}
+                >
                   {msg.content.split('```').map((part, i) =>
                     i % 2 === 1 ? (
                       <Box

@@ -45,4 +45,3 @@ export interface BudgetUsage {
   percentage: number;
   status: 'pass' | 'warn' | 'fail';
 }
-

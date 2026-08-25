@@ -601,7 +601,10 @@ const AuditLogPage: React.FC = () => {
             {(row.error_message as string) && (
               <Typography
                 variant='body2'
-                sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'error.main' }}
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                  color: 'error.main',
+                }}
               >
                 {row.error_message as string}
               </Typography>

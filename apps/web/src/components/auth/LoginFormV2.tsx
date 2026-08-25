@@ -131,10 +131,22 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               >
                 TOPEMS
               </Box>
-              <Box sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary', mb: 2 }}>
+              <Box
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  color: 'text.secondary',
+                  mb: 2,
+                }}
+              >
                 {i18n.t('components.login_form_v2.k2')}
               </Box>
-              <Box sx={{ fontSize: designTokens.typography.fontSize.scale['1.5rem'], fontWeight: 600, pt: 2 }}>
+              <Box
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['1.5rem'],
+                  fontWeight: 600,
+                  pt: 2,
+                }}
+              >
                 {isRegister
                   ? i18n.t('components.login_form_v2.k11')
                   : i18n.t('components.login_form_v2.k10')}
@@ -246,7 +258,12 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                       size='small'
                     />
                     <Box>
-                      <FormLabel sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], cursor: 'pointer' }}>
+                      <FormLabel
+                        sx={{
+                          fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                          cursor: 'pointer',
+                        }}
+                      >
                         {i18n.t('components.login_form_v2.k19')}
                       </FormLabel>
                       <FormHelperText sx={{ m: 0 }}>

@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 export type ServiceStatus = 'draft' | 'published' | 'deprecated' | 'archived';
@@ -112,8 +114,6 @@ interface ServiceDashboard {
   service_type_distribution: Record<ServiceType, number>;
   top_services: Array<{ service_id: string; execution_count: number }>;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface CreateServiceRequest {

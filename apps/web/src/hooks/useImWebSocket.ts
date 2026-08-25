@@ -1,9 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import {
-  useWebSocket,
-  type WsConnectionStatus,
-  type UseWebSocketOptions,
-} from './useWebSocket';
+import { useWebSocket, type WsConnectionStatus, type UseWebSocketOptions } from './useWebSocket';
 import { useAuthStore } from '@/store';
 import config from '@/config/runtime';
 import { logger } from '@/utils/logger';
@@ -105,9 +101,7 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
         onOpen?.();
       },
       onClose: (event) => {
-        logger.info(
-          `[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`
-        );
+        logger.info(`[useImWebSocket] disconnected code=${event.code} reason="${event.reason}"`);
         onClose?.(event);
       },
       onError: (event) => {

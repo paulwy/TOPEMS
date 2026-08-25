@@ -528,7 +528,10 @@ const SupplierPortalPage: React.FC = () => {
                                       ? 'warning'
                                       : 'default'
                                 }
-                                sx={{ fontSize: designTokens.typography.fontSize.scale['0.625rem'], height: 16 }}
+                                sx={{
+                                  fontSize: designTokens.typography.fontSize.scale['0.625rem'],
+                                  height: 16,
+                                }}
                               />
                             </Box>
                           }
@@ -556,7 +559,10 @@ const SupplierPortalPage: React.FC = () => {
                                   size='small'
                                   label={i18n.t('pages.supplier_portal_page.k30')}
                                   color='error'
-                                  sx={{ fontSize: designTokens.typography.fontSize.scale['0.625rem'], height: 16 }}
+                                  sx={{
+                                    fontSize: designTokens.typography.fontSize.scale['0.625rem'],
+                                    height: 16,
+                                  }}
                                 />
                               )}
                               <Typography variant='subtitle2'>{item.title}</Typography>

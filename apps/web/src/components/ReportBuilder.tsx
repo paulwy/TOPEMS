@@ -255,8 +255,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background:
-              'linear-gradient(to right, primary.light, var(--color-primary-100))',
+            background: 'linear-gradient(to right, primary.light, var(--color-primary-100))',
           }}
         >
           <div>

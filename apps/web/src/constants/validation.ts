@@ -4,7 +4,6 @@
  * Web form-specific semantic validation rules (regex / length limits).
  */
 
-
 /** China mainland phone number regex */
 export const PHONE_REGEX = /^1[3-9]\d{9}$/;
 

@@ -122,7 +122,10 @@ const getLogFields = (): SchemaField[] => [
           <Typography
             variant='body2'
             color='text.secondary'
-            sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            }}
           >
             {formatTimeWithMs(ts)}
           </Typography>
@@ -206,7 +209,11 @@ const getLogFields = (): SchemaField[] => [
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
-          sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}
+          sx={{
+            fontFamily: 'monospace',
+            fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+            color: 'text.secondary',
+          }}
         >
           {row.trace_id as string}
         </Typography>
@@ -269,263 +276,266 @@ export const getLogSchema = (): EntitySchema => {
     title: i18n.t('shared.logs.k22'),
     description: i18n.t('shared.logs.k23'),
 
-  api: {
-    module: 'monitor',
-    resource: 'logs',
-  },
+    api: {
+      module: 'monitor',
+      resource: 'logs',
+    },
 
-  fields: logFields,
+    fields: logFields,
 
-  list: {
-    searchFields: ['message', 'service', 'trace_id'],
-    pageSize: 20,
-    filters: [
+    list: {
+      searchFields: ['message', 'service', 'trace_id'],
+      pageSize: 20,
+      filters: [
+        {
+          id: 'level',
+          label: i18n.t('shared.logs.k24'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.logs.k25'), value: 'all' },
+            ...Object.entries(LEVEL_LABELS).map(([value, label]) => ({ label, value })),
+          ],
+        },
+        {
+          id: 'service',
+          label: i18n.t('shared.logs.k26'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.logs.k27'), value: 'all' },
+            ...SERVICES.map((s) => ({ label: s, value: s })),
+          ],
+        },
+        {
+          id: 'type',
+          label: i18n.t('shared.logs.k28'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.logs.k29'), value: 'all' },
+            ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ label, value })),
+          ],
+        },
+        {
+          id: 'timeRange',
+          label: i18n.t('shared.logs.k30'),
+          type: 'select',
+          options: [
+            { label: i18n.t('shared.logs.1_31'), value: '1h' },
+            { label: i18n.t('shared.logs.6_32'), value: '6h' },
+            { label: i18n.t('shared.logs.24_33'), value: '24h' },
+            { label: i18n.t('shared.logs.7_34'), value: '7d' },
+            { label: i18n.t('shared.logs.30_35'), value: '30d' },
+          ],
+        },
+      ],
+      selectable: true,
+    },
+
+    actions: ['detail', 'delete'],
+
+    batchActions: [
       {
-        id: 'level',
-        label: i18n.t('shared.logs.k24'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.logs.k25'), value: 'all' },
-          ...Object.entries(LEVEL_LABELS).map(([value, label]) => ({ label, value })),
-        ],
-      },
-      {
-        id: 'service',
-        label: i18n.t('shared.logs.k26'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.logs.k27'), value: 'all' },
-          ...SERVICES.map((s) => ({ label: s, value: s })),
-        ],
-      },
-      {
-        id: 'type',
-        label: i18n.t('shared.logs.k28'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.logs.k29'), value: 'all' },
-          ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ label, value })),
-        ],
-      },
-      {
-        id: 'timeRange',
-        label: i18n.t('shared.logs.k30'),
-        type: 'select',
-        options: [
-          { label: i18n.t('shared.logs.1_31'), value: '1h' },
-          { label: i18n.t('shared.logs.6_32'), value: '6h' },
-          { label: i18n.t('shared.logs.24_33'), value: '24h' },
-          { label: i18n.t('shared.logs.7_34'), value: '7d' },
-          { label: i18n.t('shared.logs.30_35'), value: '30d' },
-        ],
+        key: 'batch-delete',
+        label: i18n.t('shared.logs.k36'),
+        icon: undefined,
+        color: 'error',
+        onClick: () => {},
+        confirm: true,
+        confirmMessage: i18n.t('shared.logs.k37'),
       },
     ],
-    selectable: true,
-  },
 
-  actions: ['detail', 'delete'],
+    detailTitle: i18n.t('shared.logs.k38'),
+    detailMaxWidth: 'lg',
 
-  batchActions: [
-    {
-      key: 'batch-delete',
-      label: i18n.t('shared.logs.k36'),
-      icon: undefined,
-      color: 'error',
-      onClick: () => {},
-      confirm: true,
-      confirmMessage: i18n.t('shared.logs.k37'),
-    },
-  ],
-
-  detailTitle: i18n.t('shared.logs.k38'),
-  detailMaxWidth: 'lg',
-
-  renderDetail: (row) => {
-    const level = row.level as LogLevel;
-    return (
-      <Stack
-        spacing={3}
-        sx={{ pt: 1 }}
-      >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-            <Paper sx={{ p: 2 }}>
-              <Typography
-                variant='subtitle2'
-                color='text.secondary'
-                gutterBottom
-              >
-                {i18n.t('schemas.logs.k0')}
-              </Typography>
-              <Stack spacing={1.5}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.id_1')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500, fontFamily: 'monospace' }}
-                  >
-                    {row.id as string}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.k2')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {formatTimeWithMs(row.timestamp as string)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+    renderDetail: (row) => {
+      const level = row.level as LogLevel;
+      return (
+        <Stack
+          spacing={3}
+          sx={{ pt: 1 }}
+        >
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
+              <Paper sx={{ p: 2 }}>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
                 >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.k3')}
-                  </Typography>
-                  {getLevelChip(level)}
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.k4')}
-                  </Typography>
-                  <Chip
-                    size='small'
-                    label={TYPE_LABELS[row.type as LogType]}
-                    variant='outlined'
-                  />
-                </Box>
-              </Stack>
-            </Paper>
-          </Box>
-          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-            <Paper sx={{ p: 2 }}>
-              <Typography
-                variant='subtitle2'
-                color='text.secondary'
-                gutterBottom
-              >
-                {i18n.t('schemas.logs.k5')}
-              </Typography>
-              <Stack spacing={1.5}>
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.k6')}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        bgcolor: 'primary.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Server
-                        size={10}
-                        color='primary.main'
-                      />
-                    </Box>
+                  {i18n.t('schemas.logs.k0')}
+                </Typography>
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography
                       variant='body2'
-                      sx={{ fontWeight: 500 }}
+                      color='text.secondary'
                     >
-                      {row.service as string}
+                      {i18n.t('schemas.logs.id_1')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500, fontFamily: 'monospace' }}
+                    >
+                      {row.id as string}
                     </Typography>
                   </Box>
-                </Box>
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('schemas.logs.k2')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontFamily: 'monospace' }}
+                    >
+                      {formatTimeWithMs(row.timestamp as string)}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('schemas.logs.k3')}
+                    </Typography>
+                    {getLevelChip(level)}
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('schemas.logs.k4')}
+                    </Typography>
+                    <Chip
+                      size='small'
+                      label={TYPE_LABELS[row.type as LogType]}
+                      variant='outlined'
+                    />
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
+              <Paper sx={{ p: 2 }}>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
                 >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
+                  {i18n.t('schemas.logs.k5')}
+                </Typography>
+                <Stack spacing={1.5}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    Trace ID
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontFamily: 'monospace', fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('schemas.logs.k6')}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.light',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Server
+                          size={10}
+                          color='primary.main'
+                        />
+                      </Box>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {row.service as string}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    {row.trace_id as string}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('schemas.logs.k7')}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      fontWeight: 500,
-                      color:
-                        row.duration_ms && (row.duration_ms as number) > 1000
-                          ? 'error.main'
-                          : 'text.primary',
-                    }}
-                  >
-                    {row.duration_ms ? `${row.duration_ms}ms` : '-'}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-          </Box>
-          <Box sx={{ width: '100%' }}>
-            <Paper
-              sx={{
-                p: 2,
-                bgcolor: level === 'error' ? 'error.light' : 'grey.50',
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                color='text.secondary'
-                gutterBottom
-              >
-                {i18n.t('schemas.logs.k8')}
-              </Typography>
-              <Typography
-                variant='body2'
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      Trace ID
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      }}
+                    >
+                      {row.trace_id as string}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('schemas.logs.k7')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        fontWeight: 500,
+                        color:
+                          row.duration_ms && (row.duration_ms as number) > 1000
+                            ? 'error.main'
+                            : 'text.primary',
+                      }}
+                    >
+                      {row.duration_ms ? `${row.duration_ms}ms` : '-'}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
+            <Box sx={{ width: '100%' }}>
+              <Paper
                 sx={{
-                  fontFamily: 'monospace',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  color: level === 'error' ? 'error.main' : 'text.primary',
+                  p: 2,
+                  bgcolor: level === 'error' ? 'error.light' : 'grey.50',
                 }}
               >
-                {row.message as string}
-              </Typography>
-            </Paper>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
+                >
+                  {i18n.t('schemas.logs.k8')}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontFamily: 'monospace',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                    color: level === 'error' ? 'error.main' : 'text.primary',
+                  }}
+                >
+                  {row.message as string}
+                </Typography>
+              </Paper>
+            </Box>
           </Box>
-        </Box>
-      </Stack>
-    );
-  },
+        </Stack>
+      );
+    },
   };
 };

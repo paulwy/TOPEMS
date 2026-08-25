@@ -447,7 +447,16 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
       sx={{
         ...props.sx,
         ...(maxWidth !== undefined && maxWidth !== false
-          ? { maxWidth: typeof maxWidth === 'string' && maxWidth.length === 2 && ['xs','sm','md','lg','xl'].includes(maxWidth) ? (theme => theme.breakpoints.values[maxWidth as 'xs'|'sm'|'md'|'lg'|'xl']) : maxWidth, mx: 'auto' }
+          ? {
+              maxWidth:
+                typeof maxWidth === 'string' &&
+                maxWidth.length === 2 &&
+                ['xs', 'sm', 'md', 'lg', 'xl'].includes(maxWidth)
+                  ? (theme) =>
+                      theme.breakpoints.values[maxWidth as 'xs' | 'sm' | 'md' | 'lg' | 'xl']
+                  : maxWidth,
+              mx: 'auto',
+            }
           : {}),
       }}
     >

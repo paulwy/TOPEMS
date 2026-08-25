@@ -15,30 +15,33 @@ interface CyberStatusIndicatorProps {
   sx?: SxProps<Theme>;
 }
 
-const statusConfig: Record<CyberStatusType, { color: string; glow: (theme: Theme) => string; label: string }> = {
+const statusConfig: Record<
+  CyberStatusType,
+  { color: string; glow: (theme: Theme) => string; label: string }
+> = {
   online: {
     color: 'success.500',
-    glow: (theme) => alpha(theme.palette.success.main, 0.60),
+    glow: (theme) => alpha(theme.palette.success.main, 0.6),
     label: i18n.t('components.cyber_status_indicator.k0'),
   },
   offline: {
     color: 'error.500',
-    glow: (theme) => alpha(theme.palette.error.main, 0.60),
+    glow: (theme) => alpha(theme.palette.error.main, 0.6),
     label: i18n.t('components.cyber_status_indicator.k1'),
   },
   warning: {
     color: 'yellow.400',
-    glow: (theme) => alpha(theme.palette.warning.main, 0.60),
+    glow: (theme) => alpha(theme.palette.warning.main, 0.6),
     label: i18n.t('components.cyber_status_indicator.k2'),
   },
   error: {
     color: 'purple.600',
-    glow: (theme) => alpha(theme.palette.secondary.main, 0.60),
+    glow: (theme) => alpha(theme.palette.secondary.main, 0.6),
     label: i18n.t('components.cyber_status_indicator.k3'),
   },
   idle: {
     color: 'text.muted',
-    glow: (theme) => alpha(theme.palette.grey[500], 0.40),
+    glow: (theme) => alpha(theme.palette.grey[500], 0.4),
     label: i18n.t('components.cyber_status_indicator.k4'),
   },
 };

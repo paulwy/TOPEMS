@@ -224,7 +224,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
       </DialogTitle>
 
       <DialogContent sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Typography sx={{ color: 'action.active', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>
+        <Typography
+          sx={{
+            color: 'action.active',
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          }}
+        >
           {formatDescription()}
         </Typography>
 
@@ -324,7 +329,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {i18n.t('components.enhanced_export_modal.k7')}
               </Typography>
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  color: 'text.secondary',
+                }}
+              >
                 {i18n.t('components.enhanced_export_modal.k6')}
               </Typography>
             </Box>
@@ -349,7 +359,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {i18n.t('components.enhanced_export_modal.k8')}
               </Typography>
-              <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+              <Typography
+                sx={{
+                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                  color: 'text.secondary',
+                }}
+              >
                 {i18n.t('components.enhanced_export_modal.k7')}
               </Typography>
             </Box>
@@ -432,7 +447,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                   mb: 1,
                 }}
               >
-                <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+                <Typography
+                  sx={{
+                    fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                    color: 'text.secondary',
+                  }}
+                >
                   {i18n.t('components.enhanced_export_modal.k0')} {selectedColumns.length}/
                   {availableColumns.length} {i18n.t('components.enhanced_export_modal.k1')}
                 </Typography>
@@ -440,7 +460,10 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                   <Button
                     onClick={selectAllColumns}
                     size='small'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'primary.main' }}
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      color: 'primary.main',
+                    }}
                   >
                     {i18n.t('components.enhanced_export_modal.k10')}
                   </Button>
@@ -448,7 +471,10 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                   <Button
                     onClick={deselectAllColumns}
                     size='small'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}
+                    sx={{
+                      fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                      color: 'text.secondary',
+                    }}
                   >
                     {i18n.t('components.enhanced_export_modal.k11')}
                   </Button>
@@ -473,7 +499,13 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                         sx={{ color: 'text.secondary' }}
                       />
                     }
-                    label={<Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}>{column}</Typography>}
+                    label={
+                      <Typography
+                        sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
+                      >
+                        {column}
+                      </Typography>
+                    }
                     sx={{
                       m: 0,
                       p: 1,
@@ -508,7 +540,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             width: '100%',
           }}
         >
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              color: 'text.secondary',
+            }}
+          >
             {selectedFormat === 'excel' && i18n.t('components.enhanced_export_modal.xlsx_12')}
             {selectedFormat === 'pdf' && i18n.t('components.enhanced_export_modal.k11')}
             {selectedFormat === 'csv' && i18n.t('components.enhanced_export_modal.k12')}

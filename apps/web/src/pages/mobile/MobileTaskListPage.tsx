@@ -303,261 +303,261 @@ const MobileTaskListPage: React.FC = () => {
       }}
     >
       <Box sx={{ px: 2, pt: 2 }}>
-          <TextField
-            fullWidth
-            size='small'
-            placeholder={i18n.t('mobile.mobile_task_list_page.k21')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                minHeight: 44,
-              },
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position='end'>
-                    <Button
-                      size='small'
-                      onClick={() => setSearchQuery('')}
-                      sx={{ minWidth: 'auto', p: 0 }}
-                    >
-                      {i18n.t('pages.mobile_task_list_page.k7')}
-                    </Button>
-                  </InputAdornment>
-                ) : undefined,
-              },
-            }}
-          />
-        </Box>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant='fullWidth'
+        <TextField
+          fullWidth
+          size='small'
+          placeholder={i18n.t('mobile.mobile_task_list_page.k21')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
-            px: 2,
-            mb: 1,
-            '& .MuiTab-root': {
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
               minHeight: 44,
-              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
             },
           }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab}
-            />
-          ))}
-        </Tabs>
-        <PullToRefresh onRefresh={handleRefresh}>
-          {loading ? (
-            <MobileSkeleton
-              type='list'
-              count={8}
-            />
-          ) : filteredTasks.length === 0 ? (
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search style={{ width: 20, height: 20 }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery ? (
+                <InputAdornment position='end'>
+                  <Button
+                    size='small'
+                    onClick={() => setSearchQuery('')}
+                    sx={{ minWidth: 'auto', p: 0 }}
+                  >
+                    {i18n.t('pages.mobile_task_list_page.k7')}
+                  </Button>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+        />
+      </Box>
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        variant='fullWidth'
+        sx={{
+          px: 2,
+          mb: 1,
+          '& .MuiTab-root': {
+            minHeight: 44,
+            fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+          },
+        }}
+      >
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab}
+          />
+        ))}
+      </Tabs>
+      <PullToRefresh onRefresh={handleRefresh}>
+        {loading ? (
+          <MobileSkeleton
+            type='list'
+            count={8}
+          />
+        ) : filteredTasks.length === 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 10,
+              px: 4,
+            }}
+          >
             <Box
               sx={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                bgcolor: 'grey.100',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                py: 10,
-                px: 4,
+                mb: 2,
               }}
             >
-              <Box
-                sx={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  bgcolor: 'grey.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mb: 2,
-                }}
-              >
-                <ListTodo style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
-              </Box>
-              <Typography
-                variant='subtitle1'
-                sx={{ mb: 1, fontWeight: 500 }}
-              >
-                {i18n.t('pages.mobile_task_list_page.k8')}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ textAlign: 'center' }}
-              >
-                {searchQuery
-                  ? i18n.t('mobile.mobile_task_list_page.k23')
-                  : i18n.t('mobile.mobile_task_list_page.k22')}
-              </Typography>
+              <ListTodo style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
             </Box>
-          ) : (
-            <List disablePadding>
-              {filteredTasks.map((task, index) => {
-                const statusConfig = getStatusConfig(task.status);
-                const priorityConfig = getPriorityConfig(task.priority);
-                return (
-                  <React.Fragment key={task.id}>
-                    <SwipeAction rightActions={rightSwipeActions}>
-                      <ListItem
-                        sx={{
-                          px: 2,
-                          py: 2,
-                          cursor: 'pointer',
-                          '&:hover': {
-                            bgcolor: 'action.hover',
-                          },
-                        }}
-                        onClick={() => handleTaskClick(task)}
-                      >
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              <Typography
-                                variant='subtitle2'
+            <Typography
+              variant='subtitle1'
+              sx={{ mb: 1, fontWeight: 500 }}
+            >
+              {i18n.t('pages.mobile_task_list_page.k8')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ textAlign: 'center' }}
+            >
+              {searchQuery
+                ? i18n.t('mobile.mobile_task_list_page.k23')
+                : i18n.t('mobile.mobile_task_list_page.k22')}
+            </Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {filteredTasks.map((task, index) => {
+              const statusConfig = getStatusConfig(task.status);
+              const priorityConfig = getPriorityConfig(task.priority);
+              return (
+                <React.Fragment key={task.id}>
+                  <SwipeAction rightActions={rightSwipeActions}>
+                    <ListItem
+                      sx={{
+                        px: 2,
+                        py: 2,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
+                      onClick={() => handleTaskClick(task)}
+                    >
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Typography
+                              variant='subtitle2'
+                              sx={{
+                                fontWeight: 500,
+                                flex: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {task.title}
+                            </Typography>
+                            <ChevronRight
+                              style={{
+                                width: 18,
+                                height: 18,
+                                color: theme.palette.text.secondary,
+                                flexShrink: 0,
+                              }}
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <Chip
+                                label={task.id}
+                                size='small'
+                                variant='outlined'
                                 sx={{
-                                  fontWeight: 500,
-                                  flex: 1,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
+                                  height: 20,
+                                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                                  '& .MuiChip-label': { px: 1 },
                                 }}
-                              >
-                                {task.title}
-                              </Typography>
-                              <ChevronRight
-                                style={{
-                                  width: 18,
-                                  height: 18,
-                                  color: theme.palette.text.secondary,
-                                  flexShrink: 0,
+                              />
+                              <Chip
+                                icon={statusConfig.icon}
+                                label={statusConfig.label}
+                                size='small'
+                                color={statusConfig.color}
+                                sx={{
+                                  height: 20,
+                                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                                  '& .MuiChip-label': { pl: 0.5, pr: 1 },
+                                  '& .MuiChip-icon': { ml: 0.5, mr: 0 },
+                                }}
+                              />
+                              <Chip
+                                label={`${priorityConfig.label}${i18n.t('pages.mobile_task_list_page.k1')}`}
+                                size='small'
+                                color={priorityConfig.color}
+                                variant='outlined'
+                                sx={{
+                                  height: 20,
+                                  fontSize: designTokens.typography.fontSize.scale['0.7rem'],
+                                  '& .MuiChip-label': { px: 1 },
                                 }}
                               />
                             </Box>
-                          }
-                          secondary={
-                            <Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <Chip
-                                  label={task.id}
-                                  size='small'
-                                  variant='outlined'
-                                  sx={{
-                                    height: 20,
-                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
-                                    '& .MuiChip-label': { px: 1 },
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <UserIcon
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
                                   }}
                                 />
-                                <Chip
-                                  icon={statusConfig.icon}
-                                  label={statusConfig.label}
-                                  size='small'
-                                  color={statusConfig.color}
-                                  sx={{
-                                    height: 20,
-                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
-                                    '& .MuiChip-label': { pl: 0.5, pr: 1 },
-                                    '& .MuiChip-icon': { ml: 0.5, mr: 0 },
-                                  }}
-                                />
-                                <Chip
-                                  label={`${priorityConfig.label}${i18n.t('pages.mobile_task_list_page.k1')}`}
-                                  size='small'
-                                  color={priorityConfig.color}
-                                  variant='outlined'
-                                  sx={{
-                                    height: 20,
-                                    fontSize: designTokens.typography.fontSize.scale['0.7rem'],
-                                    '& .MuiChip-label': { px: 1 },
-                                  }}
-                                />
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  {task.assignee}
+                                </Typography>
                               </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <UserIcon
-                                    style={{
-                                      width: 14,
-                                      height: 14,
-                                      color: theme.palette.text.secondary,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    {task.assignee}
-                                  </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <Calendar
-                                    style={{
-                                      width: 14,
-                                      height: 14,
-                                      color: theme.palette.text.secondary,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    {task.dueDate}
-                                  </Typography>
-                                </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Calendar
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
+                                />
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  {task.dueDate}
+                                </Typography>
                               </Box>
                             </Box>
-                          }
-                          sx={{ pr: 2 }}
-                        />
-                      </ListItem>
-                    </SwipeAction>
-                    {index < filteredTasks.length - 1 && <Divider component='li' />}
-                  </React.Fragment>
-                );
-              })}
-            </List>
-          )}
-          <Box
-            ref={loadMoreRef}
-            sx={{ py: 3, display: 'flex', justifyContent: 'center' }}
-          >
-            {loadingMore && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <CircularProgress
-                  size={20}
-                  thickness={3}
-                />
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {i18n.t('pages.mobile_task_list_page.k9')}
-                </Typography>
-              </Box>
-            )}
-            {!hasMore && !loading && filteredTasks.length > 0 && (
+                          </Box>
+                        }
+                        sx={{ pr: 2 }}
+                      />
+                    </ListItem>
+                  </SwipeAction>
+                  {index < filteredTasks.length - 1 && <Divider component='li' />}
+                </React.Fragment>
+              );
+            })}
+          </List>
+        )}
+        <Box
+          ref={loadMoreRef}
+          sx={{ py: 3, display: 'flex', justifyContent: 'center' }}
+        >
+          {loadingMore && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CircularProgress
+                size={20}
+                thickness={3}
+              />
               <Typography
-                variant='caption'
+                variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('pages.mobile_task_list_page.k10')}
+                {i18n.t('pages.mobile_task_list_page.k9')}
               </Typography>
-            )}
-          </Box>
-        </PullToRefresh>
+            </Box>
+          )}
+          {!hasMore && !loading && filteredTasks.length > 0 && (
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {i18n.t('pages.mobile_task_list_page.k10')}
+            </Typography>
+          )}
+        </Box>
+      </PullToRefresh>
     </MobilePageTemplate>
   );
 };

@@ -234,10 +234,12 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
   // 当未使用 children 透传时，data/cardConfig 必须提供（向后兼容：提供空默认）
   const data = rawData ?? [];
-  const cardConfig = rawCardConfig ?? ({
-    title: () => '',
-    description: () => '',
-  } as unknown as CardRenderConfig);
+  const cardConfig =
+    rawCardConfig ??
+    ({
+      title: () => '',
+      description: () => '',
+    } as unknown as CardRenderConfig);
 
   // 内部状态
   const [internalViewMode, setInternalViewMode] = useState<'grid' | 'list'>('grid');
@@ -714,7 +716,10 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               borderColor: 'divider',
               display: 'flex',
               gap: 1,
-              bgcolor: theme.palette.mode === 'dark' ? `${alpha(theme.palette.common.white, 0.03)}` : 'grey.50',
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? `${alpha(theme.palette.common.white, 0.03)}`
+                  : 'grey.50',
             }}
             onClick={(e) => e.stopPropagation()}
           >

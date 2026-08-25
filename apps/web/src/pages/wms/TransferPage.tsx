@@ -486,7 +486,7 @@ export default function TransferPage() {
     [queryClient, addNotification]
   );
 
-    const transferApiAdapter = createCrudPageAdapter(wmsApi.transfers);
+  const transferApiAdapter = createCrudPageAdapter(wmsApi.transfers);
 
   const customRowActions: RowAction[] = [
     {

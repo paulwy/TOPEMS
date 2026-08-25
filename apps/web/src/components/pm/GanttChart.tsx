@@ -157,7 +157,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </IconButton>
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], color: 'text.secondary' }}>{zoom}%</Typography>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+              color: 'text.secondary',
+            }}
+          >
+            {zoom}%
+          </Typography>
           <IconButton
             onClick={() => handleZoom(10)}
             sx={{
@@ -186,7 +193,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
               alignItems: 'center',
             }}
           >
-            <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'], fontWeight: 500, color: 'text.secondary' }}>
+            <Typography
+              sx={{
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                fontWeight: 500,
+                color: 'text.secondary',
+              }}
+            >
               {i18n.t('components.gantt_chart.k0')}
             </Typography>
           </Box>
@@ -217,7 +230,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     {phase.name}
                   </Typography>
                   {phase.progress > 0 && (
-                    <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+                    <Typography
+                      sx={{
+                        fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+                        color: 'text.secondary',
+                      }}
+                    >
                       {phase.progress}
                       {i18n.t('components.gantt_chart.k0')}
                     </Typography>
@@ -387,7 +405,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'primary.main',
             }}
           />
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.gantt_chart.k6')}
           </Typography>
         </Box>
@@ -400,7 +423,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'success.dark',
             }}
           />
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.gantt_chart.k7')}
           </Typography>
         </Box>
@@ -414,7 +442,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'warning.light',
             }}
           />
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.gantt_chart.k8')}
           </Typography>
         </Box>
@@ -427,7 +460,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'text.disabled',
             }}
           />
-          <Typography sx={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              color: 'text.secondary',
+            }}
+          >
             {i18n.t('components.gantt_chart.k9')}
           </Typography>
         </Box>

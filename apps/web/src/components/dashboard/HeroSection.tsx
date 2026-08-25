@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button , useTheme} from '@mui/material';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 import { Sparkles, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { designTokens } from '@topems/tokens';
@@ -34,8 +34,7 @@ export const HeroSection: React.FC = () => {
             position: 'absolute',
             inset: 0,
             opacity: 0.3,
-            background:
-              `radial-gradient(circle at 80% 20%, ${alpha(theme.palette.primary.light, 0.15)} 0%, transparent 50%)`,
+            background: `radial-gradient(circle at 80% 20%, ${alpha(theme.palette.primary.light, 0.15)} 0%, transparent 50%)`,
           }}
         />
         <Box
@@ -43,8 +42,7 @@ export const HeroSection: React.FC = () => {
             position: 'absolute',
             inset: 0,
             opacity: 0.2,
-            background:
-              `radial-gradient(circle at 20% 80%, ${alpha(theme.palette.secondary.light, 0.15)} 0%, transparent 50%)`,
+            background: `radial-gradient(circle at 20% 80%, ${alpha(theme.palette.secondary.light, 0.15)} 0%, transparent 50%)`,
           }}
         />
 
@@ -93,8 +91,7 @@ export const HeroSection: React.FC = () => {
             <Box
               component='span'
               sx={{
-                background:
-                  `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.secondary.light}, ${theme.palette.secondary.light})`,
+                background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.secondary.light}, ${theme.palette.secondary.light})`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',

@@ -510,7 +510,11 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
             <Chip
               size='small'
               label={`${value.length}${i18n.t('components.sub_table_builder.k13')}`}
-              sx={{ ml: 1, height: 20, fontSize: designTokens.typography.fontSize.scale['0.75rem'] }}
+              sx={{
+                ml: 1,
+                height: 20,
+                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
+              }}
             />
           </Typography>
           {!readOnly && allowAdd && (

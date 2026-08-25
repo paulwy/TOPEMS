@@ -1,6 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import type { PaginatedResponse } from '@/api/client';
+
 // ============ Types ============
 
 type ListingStatus = 'draft' | 'published' | 'suspended' | 'deleted';
@@ -122,8 +124,6 @@ export interface MarketplaceDashboard {
   avg_rating: number;
   total_reviews: number;
 }
-
-import type { PaginatedResponse } from '@/api/client';
 export type { PaginatedResponse };
 
 interface CreateListingRequest {
