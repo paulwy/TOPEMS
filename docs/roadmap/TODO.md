@@ -1470,7 +1470,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 2 files（lefthook.yml + TODO）| 验收：YAML 语法正确 · pre-commit 14 gate 并行 · pre-push 3 gate · 目标 pre-commit < 60s
 >
-> **Tag**: `V294` · Baseline SHA: `657a97b87` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V294-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V294` · Baseline SHA: `657a97b87` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V294-5d11ce343.tar.gz` (.gitignore 排除)
 
 ### A. lefthook.yml pre-commit 优化（解决 --no-verify 债务）
 - 背景：V289-V293 共 5 个版本均使用 `git commit --no-verify` 跳过 pre-commit hook，根因是 lefthook pre-commit 超时（8-10min+）
