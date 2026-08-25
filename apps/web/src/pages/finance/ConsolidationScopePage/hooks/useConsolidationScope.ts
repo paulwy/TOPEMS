@@ -10,11 +10,7 @@ import {
   useUpdateConsolidationScope,
 } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
-import type {
-  ConsolidationScope,
-  ConsolidationScopeStatus,
-  ConsolidationCompany,
-} from '@/types/consolidation';
+import type { ConsolidationScope, ConsolidationScopeStatus } from '@/types/consolidation';
 
 export interface ScopeFormData {
   code: string;
