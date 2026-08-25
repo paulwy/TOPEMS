@@ -11,7 +11,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from '../charts/_vendors/recharts-polar';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 export interface ChartDataPoint {
   [key: string]: string | number | boolean;
