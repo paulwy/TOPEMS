@@ -21,15 +21,3 @@ export const MAX_RETRIES = 3;
  * delay = RETRY_DELAY_MS * attempt.
  */
 export const RETRY_DELAY_MS = 1000;
-
-/**
- * API 客户端请求重试常量（与 api/client.ts L70 API_RETRY_CONFIG 去重对齐）。
- * 旧的内联 API_RETRY_CONFIG 已废弃，统一使用此处常量。
- *
- * 退避策略：exponential backoff + jitter
- *   delay = min(BASE_DELAY * 2^retries + jitter, MAX_DELAY)
- */
-const API_MAX_RETRIES = 2;
-const API_RETRY_BASE_DELAY_MS = 500;
-const API_RETRY_MAX_DELAY_MS = 3000;
-const API_RETRY_MAX_TOTAL_WAIT_MS = 10_000;

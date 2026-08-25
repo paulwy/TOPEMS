@@ -21,8 +21,6 @@ import {
   Star,
   Sparkles,
   MessageSquare,
-  ArrowRightLeft,
-  BarChart2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,7 +34,7 @@ import type {
   RecommendationData,
   Period,
 } from '@/api/crm';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 // ============ 辅助函数 ============
 
@@ -439,7 +437,7 @@ const CRMRecommendationPage: React.FC = () => {
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-                  {col.data.map((item, idx) => {
+                  {col.data.map((item) => {
                     const confColor =
                       item.confidence >= 0.9
                         ? 'success.main'

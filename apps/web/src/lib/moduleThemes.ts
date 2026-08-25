@@ -26,15 +26,12 @@ import {
   Bell,
   Database,
   Zap,
-  Globe,
   Puzzle,
   FileBarChart,
   Code2,
   Map,
   Plug,
-  FileSpreadsheet,
   MessageSquare,
-  UserCog,
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
@@ -241,14 +238,4 @@ function getModuleThemes(): Record<string, ModuleTheme> {
       color: ct.success.main,
     },
   };
-}
-
-function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
-  return getModuleThemes()[moduleCode.toLowerCase()];
-}
-
-function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {
-  const pathParts = pathname.split('/').filter(Boolean);
-  if (pathParts.length === 0) return undefined;
-  return getModuleTheme(pathParts[0]);
 }

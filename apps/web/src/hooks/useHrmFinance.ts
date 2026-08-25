@@ -2,9 +2,9 @@
  * HRM财务模块React Query Hooks
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import type { EmployeeFinance, PayrollRecord } from '@/types/hrm-finance';
+import type { EmployeeFinance } from '@/types/hrm-finance';
 import { apiClient } from '@/api/client';
 
 /**
@@ -51,69 +51,5 @@ export const useUpdateEmployeeFinanceInfo = () => {
         refetchType: 'active',
       });
     },
-  });
-};
-
-/**
- * 获取员工工资条列表
- */
-const useEmployeePayrolls = (employeeId: string) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_PAYROLLS_BASE, employeeId],
-    queryFn: async () => {
-      const response = await apiClient.hrm.get<{ data: PayrollRecord[] }>(
-        `/employees/${employeeId}/payrolls`
-      );
-      return response.data;
-    },
-    enabled: !!employeeId,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
- * 获取部门工资汇总
- */
-const useDepartmentPayrollSummary = (departmentId: string, period: string) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.DEPARTMENT_PAYROLL_SUMMARY_BASE, departmentId, period],
-    queryFn: async () => {
-      const response = await apiClient.hrm.get<{
-        data: {
-          department_id: string;
-          department_name: string;
-          employee_count: number;
-          total_base_salary: number;
-          total_bonus: number;
-          total_allowance: number;
-          total_social_security: number;
-          total_housing_fund: number;
-          total_tax: number;
-          total_net_salary: number;
-        };
-      }>(`/departments/${departmentId}/payroll-summary`, {
-        params: { period },
-      });
-      return response.data;
-    },
-    enabled: !!departmentId && !!period,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
- * 获取工资期间列表
- */
-const usePayrollPeriods = () => {
-  return useQuery({
-    queryKey: QUERY_KEYS.AD_HOC.PAYROLL_PERIODS_BASE,
-    queryFn: async () => {
-      const response = await apiClient.hrm.get<{ data: string[] }>('/payroll/periods');
-      return response.data;
-    },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
   });
 };

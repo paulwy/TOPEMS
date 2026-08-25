@@ -675,48 +675,6 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   );
 };
 
-// ============ 便捷组件导出 ============
-
-/**
- * 成功警告卡片
- */
-const SuccessAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
-  <AlertCard
-    {...props}
-    level='success'
-  />
-);
-
-/**
- * 警告警告卡片
- */
-const WarningAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
-  <AlertCard
-    {...props}
-    level='warning'
-  />
-);
-
-/**
- * 错误警告卡片
- */
-const ErrorAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
-  <AlertCard
-    {...props}
-    level='error'
-  />
-);
-
-/**
- * 信息警告卡片
- */
-const InfoAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
-  <AlertCard
-    {...props}
-    level='info'
-  />
-);
-
 // ============ 默认导出 ============
 
 export default AlertCard;

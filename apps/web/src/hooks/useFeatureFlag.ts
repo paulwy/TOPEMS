@@ -1,4 +1,3 @@
-import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -40,9 +39,6 @@ interface FeatureFlagResult {
   error: Error | null;
 }
 
-// 全局特性开关缓存（从 API 懒加载）
-const featureFlagsCache: Map<string, boolean> = new Map();
-
 /**
  * 检查特性是否开启
  *
@@ -65,47 +61,6 @@ function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagR
   };
 }
 
-/**
- * 批量检查多个特性开关
- */
-function useFeatureFlags(keys: string[], context?: FeatureFlagContext): Record<string, boolean> {
-  const { data } = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.FEATURE_FLAGS_BATCH_BASE, keys.join(',')],
-    queryFn: () => checkFeatureFlagsBatch(keys, context),
-    staleTime: 60_000,
-    enabled: keys.length > 0,
-  });
-
-  return data ?? {};
-}
-
-/**
- * 特性开关守卫组件
- *
- * 当特性开启时渲染 children，否则渲染 fallback
- */
-function FeatureGate({
-  feature,
-  context,
-  children,
-  fallback = null,
-}: {
-  feature: string;
-  context?: FeatureFlagContext;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-}) {
-  const { enabled, loading } = useFeatureFlag(feature, context);
-
-  if (loading) {
-    return null;
-  }
-
-  return enabled
-    ? React.createElement(React.Fragment, null, children)
-    : React.createElement(React.Fragment, null, fallback);
-}
-
 // 内部 API 调用函数
 async function checkFeatureFlag(key: string, context?: FeatureFlagContext): Promise<boolean> {
   try {
@@ -119,22 +74,6 @@ async function checkFeatureFlag(key: string, context?: FeatureFlagContext): Prom
   } catch {
     // 网络错误时返回 false
     return false;
-  }
-}
-
-async function checkFeatureFlagsBatch(
-  keys: string[],
-  context?: FeatureFlagContext
-): Promise<Record<string, boolean>> {
-  try {
-    const response = await fetch('/api/core/feature-flags/batch-check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keys, context }),
-    });
-    return await response.json();
-  } catch {
-    return {};
   }
 }
 

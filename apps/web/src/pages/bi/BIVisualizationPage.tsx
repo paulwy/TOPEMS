@@ -18,7 +18,6 @@ import {
   Box as BoxIcon,
   Save,
   Play,
-  RefreshCw,
 } from 'lucide-react';
 import i18n from '@/i18n';
 import {
@@ -38,7 +37,6 @@ import {
   Divider,
   Button,
 } from '@mui/material';
-import { EmptyState, Grid } from '@/components';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
@@ -128,17 +126,6 @@ const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
   height: widget.position?.h || 150,
   config: widget.config || {},
 });
-const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => ({
-  name: (comp.config.title as string) || comp.type,
-  widget_type: comp.type,
-  config: comp.config,
-  position: {
-    x: comp.x,
-    y: comp.y,
-    w: comp.width,
-    h: comp.height,
-  },
-});
 const BIVisualizationPage = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,22 +190,6 @@ const BIVisualizationPage = () => {
       logger.error('Failed to delete widget:', e);
     },
   });
-  const updateMutation = useMutation({
-    mutationFn: ({ id, widgetData }: { id: string; widgetData: Partial<Widget> }) =>
-      updateWidget(id, widgetData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    onError: (e: unknown) => {
-      logger.error('Failed to update widget:', e);
-    },
-  });
-  const actionLoading =
-    createMutation.isPending || deleteMutation.isPending || updateMutation.isPending;
   const filteredComponents = componentList.filter((comp) => {
     const matchesSearch = comp.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || comp.type === filterType;
@@ -255,13 +226,6 @@ const BIVisualizationPage = () => {
     if (selectedComponent === id) {
       setSelectedComponent(null);
     }
-  };
-  const handleUpdateComponent = (id: string, updates: Partial<CanvasComponent>) => {
-    const comp = canvasComponents.find((c) => c.id === id);
-    if (!comp) return;
-    const updatedComp = { ...comp, ...updates };
-    const widgetData = canvasComponentToWidgetData(updatedComp);
-    updateMutation.mutate({ id, widgetData });
   };
   const getComponentIcon = (type: string) => {
     const comp = componentList.find((c) => c.type === type);
