@@ -7,64 +7,6 @@
  * - 地图渲染节流
  */
 
-import { useMemo, useRef } from 'react';
-
-/**
- * 轨迹简化 - Douglas-Peucker 算法
- * 用于减少轨迹点数量以提高渲染性能
- */
-function simplifyTrack(
-  points: Array<{ lat: number; lng: number; timestamp?: number }>,
-  tolerance: number = 0.0001
-): Array<{ lat: number; lng: number; timestamp?: number }> {
-  if (points.length <= 2) return points;
-
-  const firstPoint = points[0];
-  const lastPoint = points[points.length - 1];
-
-  let maxDistance = 0;
-  let maxIndex = 0;
-
-  for (let i = 1; i < points.length - 1; i++) {
-    const distance = perpendicularDistance(points[i], firstPoint, lastPoint);
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      maxIndex = i;
-    }
-  }
-
-  if (maxDistance > tolerance) {
-    const left = simplifyTrack(points.slice(0, maxIndex + 1), tolerance);
-    const right = simplifyTrack(points.slice(maxIndex), tolerance);
-    return [...left.slice(0, -1), ...right];
-  }
-
-  return [firstPoint, lastPoint];
-}
-
-function perpendicularDistance(
-  point: { lat: number; lng: number },
-  lineStart: { lat: number; lng: number },
-  lineEnd: { lat: number; lng: number }
-): number {
-  const dx = lineEnd.lng - lineStart.lng;
-  const dy = lineEnd.lat - lineStart.lat;
-
-  if (dx === 0 && dy === 0) {
-    return Math.sqrt(
-      Math.pow(point.lng - lineStart.lng, 2) + Math.pow(point.lat - lineStart.lat, 2)
-    );
-  }
-
-  const t =
-    ((point.lng - lineStart.lng) * dx + (point.lat - lineStart.lat) * dy) / (dx * dx + dy * dy);
-
-  const closestLng = lineStart.lng + t * dx;
-  const closestLat = lineStart.lat + t * dy;
-
-  return Math.sqrt(Math.pow(point.lng - closestLng, 2) + Math.pow(point.lat - closestLat, 2));
-}
-
 /**
  * 计算两点间距离（米）
  */
@@ -87,19 +29,6 @@ function toRad(deg: number): number {
 }
 
 /**
- * 计算轨迹总长度（米）
- */
-function calculateTrackLength(points: Array<{ lat: number; lng: number }>): number {
-  if (points.length < 2) return 0;
-
-  let total = 0;
-  for (let i = 1; i < points.length; i++) {
-    total += calculateDistance(points[i - 1], points[i]);
-  }
-  return total;
-}
-
-/**
  * 创建防抖函数
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
@@ -112,47 +41,6 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
-}
-
-/**
- * 创建节流函数
- */
-
-function throttle<T extends (...args: unknown[]) => void>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle = false;
-
-  return function (...args: Parameters<typeof func>) {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  };
-}
-
-/**
- * 虚拟列表范围计算
- * 用于大型列表的按需渲染
- */
-function getVirtualRange(
-  scrollTop: number,
-  itemHeight: number,
-  containerHeight: number,
-  totalItems: number,
-  overscan: number = 3
-): { startIndex: number; endIndex: number } {
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const endIndex = Math.min(
-    totalItems - 1,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
-  );
-
-  return { startIndex, endIndex };
 }
 
 /**
@@ -182,112 +70,4 @@ export async function batchProcess<T, R>(
   }
 
   return results;
-}
-
-/**
- * 缓存计算结果
- * 用于缓存 expensive 的计算
- */
-class MemoCache<K, V> {
-  private cache = new Map<K, V>();
-  private maxSize: number;
-
-  constructor(maxSize: number = 100) {
-    this.maxSize = maxSize;
-  }
-
-  get(key: K): V | undefined {
-    return this.cache.get(key);
-  }
-
-  set(key: K, value: V): void {
-    if (this.cache.size >= this.maxSize) {
-      // 删除最老的条目
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) this.cache.delete(firstKey);
-    }
-    this.cache.set(key, value);
-  }
-
-  clear(): void {
-    this.cache.clear();
-  }
-
-  size(): number {
-    return this.cache.size;
-  }
-}
-
-/**
- * useMemoizedTrack - 用于缓存轨迹计算的 Hook
- */
-function useMemoizedTrack<T extends { lat: number; lng: number }>(
-  points: T[],
-  tolerance: number = 0.0001
-) {
-  return useMemo(() => simplifyTrack(points, tolerance), [points, tolerance]);
-}
-
-/**
- * useThrottledCallback - 节流回调 Hook
- */
-
-function useThrottledCallback<T extends (...args: unknown[]) => void>(
-  callback: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  const callbackRef = useRef(callback);
-  const throttledRef = useRef<((...args: unknown[]) => void) | null>(null);
-
-  callbackRef.current = callback;
-
-  if (!throttledRef.current) {
-    throttledRef.current = throttle(
-      (...args: unknown[]) => callbackRef.current(...(args as Parameters<T>)),
-      limit
-    );
-  }
-
-  return throttledRef.current as (...args: Parameters<T>) => void;
-}
-
-/**
- * 瓦片加载优化 - 预加载周围瓦片
- */
-function preloadAdjacentTiles(
-  centerTile: { z: number; x: number; y: number },
-  getTileUrl: (z: number, x: number, y: number) => string,
-  preloadLevels: number[] = [1, 2]
-): string[] {
-  const urls: string[] = [];
-
-  for (const level of preloadLevels) {
-    for (let dx = -level; dx <= level; dx++) {
-      for (let dy = -level; dy <= level; dy++) {
-        if (dx === 0 && dy === 0) continue;
-        const nx = centerTile.x + dx;
-        const ny = centerTile.y + dy;
-        urls.push(getTileUrl(centerTile.z, nx, ny));
-      }
-    }
-  }
-
-  return urls;
-}
-
-/**
- * 批量预加载图片
- */
-function preloadImages(urls: string[]): Promise<void> {
-  return Promise.all(
-    urls.map(
-      (url) =>
-        new Promise<void>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error(`Failed to load: ${url}`));
-          img.src = url;
-        })
-    )
-  ).then(() => {});
 }
