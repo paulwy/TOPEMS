@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { mobileApi } from '@/api/mobile';
 import { IconButton } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User, Barcode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, PullToRefresh, MobileSkeleton } from '@/components/mobile';
-import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { useMobileProduction } from './hooks/useMobileProduction';
@@ -15,18 +12,7 @@ import { MobileProductionReportDialog } from './components/MobileProductionRepor
 import i18n from '@/i18n';
 
 const MobileProductionPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['mobile-production-page'],
-    queryFn: async () => {
-      try {
-        return (await mobileApi.production.listOrders()) ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const navigate = useNavigate();
-  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const {
     searchQuery,

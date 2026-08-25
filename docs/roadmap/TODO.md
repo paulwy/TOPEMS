@@ -4170,6 +4170,78 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V321 — 批量模式第六次：Top15文件未使用项清理（~30项）+ 级联34项 + 3孤儿文件（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第六次成功 · 15 files（12 修改 + 3 删除）· 净删 1385 行 · tsc 0 errors · eslint 0 errors(1568 warnings, 从1606减38)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 孤儿 | 净删行 |
+|------|--------|------|------|--------|
+| mobile/MobileProductionPage | 2 | 3 | - | ~30 |
+| mobile/MobileProfilePage | 2 | 4 | - | ~25 |
+| mobile/PushNotificationPage | 2 | 0 | - | ~2 |
+| mobile/components/MobileQualityTaskList | 2 | 7 | ✅21行 | 21 |
+| monitor/hooks/useMonitorSettings | 2 | 4 | ✅805行 | 805 |
+| notification/NotificationTemplatesPage | 2 | 4 | - | ~25 |
+| notification/NotificationDetailPage | 2 | 0 | - | ~2 |
+| pdm/BomPage | 2 | 1 | - | ~15 |
+| pdm/PdmProjectPage | 2 | 0 | - | ~10 |
+| pdm/setting/BomTemplatePage | 2 | 1 | - | ~13 |
+| pdm/setting/CategoryRulePage | 2 | 1 | - | ~13 |
+| plugin/PluginUploadPage | 2 | 2 | - | ~15 |
+| plugin/components/PluginReviewsTab | 2 | 0 | - | 2 |
+| pm/components/PmProjectDetailHeader | 2 | 4 | ✅67行 | 67 |
+| pm/components/pmProjectDetail.constants | 2 | 0 | - | 2 |
+| **合计** | **30** | **34** | **3(893行)** | **1385** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除10项本地声明（getStatusIcon, MobileQualityTaskList, useMonitorSettings, handleDelete, extraActions, STATUS_COLORS, getStatusOptions, buildPmProjectDetailHeader等）
+
+**B轨（手动修复20项）**：
+- import整行删除（6）：useQuery×5, mobileApi×2, pluginApi, pdmApi×2, QUERY_KEYS, useNotificationStore, AUTH_PATHS
+- import单符号移除（5）：ListResponse, queryClient, Notification, SectionConfig, Upload/Download
+- useQuery整段删除（6）：MobileProductionPage, MobileProfilePage, BomPage, PluginUploadPage, BomTemplatePage, CategoryRulePage
+- 解构变量删除（2）：addNotification, setUser
+- 函数参数t→_t（3）：getStatusLabels, getRiskLabels, buildSettingsTabs
+- useCallback整段删除（2）：handleImport, handleExport
+- props解构移除（2）：averageRating, pluginRating
+
+**C轨（级联34项）**：删除useQuery后触发大量import级联（useQuery×5, mobileApi×2, pluginApi, useNotificationStore×2, AUTH_PATHS, setUser, Upload/Download, i18n×2, React, designTokens, MobileButton, 2个TS6192整行import, SettingValueType, buildSettingsTabs, PmProjectDetailHeaderProps, PmProjectDetailInfoCard, MobileQualityTaskListProps, handleImport, handleExport）
+
+**D轨（孤儿文件3个，共893行）**：
+1. `mobile/components/MobileQualityTaskList.tsx`（21行）：移除getStatusIcon和MobileQualityTaskList组件后只剩import/interface
+2. `monitor/hooks/useMonitorSettings.tsx`（805行）：无任何export，只有未使用的buildSettingsTabs函数，全文件孤儿
+3. `pm/components/PmProjectDetailHeader.tsx`（67行）：移除buildPmProjectDetailHeader函数后只剩import/interface
+
+### 关键发现
+
+1. **monitor/useMonitorSettings 805行孤儿文件**：整个文件无任何export，只有一个未使用的buildSettingsTabs函数（函数体805行包含所有设置tab定义）。删除前确认无其他文件引用。
+2. **3个孤儿文件集中爆发**：V321一次发现3个孤儿文件（共893行），占净删行的64%。批量模式下孤儿文件检测效率更高。
+3. **函数参数t未使用模式**：3个函数（getStatusLabels, getRiskLabels, buildSettingsTabs）接收t参数但函数体内用i18n.t而非t。统一改为_t。
+4. **useCallback整段删除**：handleImport/handleExport是useCallback包装的未使用函数，v6无法处理，需手动删除整个useCallback块。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors, 2 warnings（已存在） | ✅ |
+| eslint全量 | 0 errors, 1568 warnings（-38） | ✅ |
+| 孤儿文件删除 | 3个（893行），无引用 | ✅ |
+| 变更统计 | 15 files, 8 insertions, 1393 deletions | ✅ |
+
+### V321后续扩展（留给V322+）
+
+- [ ] **孤儿文件批量检测脚本**：V321一次发现3个孤儿文件（893行），可写脚本自动检测"无export且所有声明未使用"的文件
+- [ ] **函数参数未使用自动检测**：t→_t模式在V321出现3次，可扩展v6脚本处理函数参数
+- [ ] **useCallback整段删除**：V321 handleImport/handleExport，v6无法处理useCallback包装的未使用函数
+- [ ] **批量模式继续**：V316-V321连续六次成功，全src/未使用项从~282降至~197
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

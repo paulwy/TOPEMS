@@ -33,7 +33,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
@@ -91,20 +91,6 @@ export const BomPage: React.FC = () => {
   });
 
   const versions = extractListData(versionsResp);
-
-  const { data: bomItems = [] } = useQuery({
-    queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
-    queryFn: async () => {
-      if (!selectedVersionId) return [];
-      const response = await bomApi.listItems(selectedVersionId);
-      if (response.success && response.data) {
-        return response.data as BomItem[];
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-    enabled: !!selectedVersionId,
-  });
 
   const stats = useMemo(() => {
     return {

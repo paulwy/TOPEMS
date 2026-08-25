@@ -1,7 +1,5 @@
 import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { mobileApi } from '@/api/mobile';
 import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
   Home,
@@ -25,7 +23,6 @@ import { BottomTabBar, MobileCard } from '@/components/mobile';
 import { MobilePageTemplate } from '@/components/templates';
 import { useAuthStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-import { AUTH_PATHS } from '@/routes/auth';
 
 interface SettingGroup {
   title: string;
@@ -43,19 +40,9 @@ interface SettingItem {
   badge?: React.ReactNode;
 }
 const MobileSettingsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['mobile-profile-page'],
-    queryFn: async () => {
-      try {
-        return (await mobileApi.user.getProfile()) ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, setUser } = useAuthStore();
+  const { user } = useAuthStore();
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
   const settingGroups: SettingGroup[] = [
@@ -175,10 +162,6 @@ const MobileSettingsPage: React.FC = () => {
       ],
     },
   ];
-  const handleLogout = () => {
-    setUser(null);
-    navigate(AUTH_PATHS.login);
-  };
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':

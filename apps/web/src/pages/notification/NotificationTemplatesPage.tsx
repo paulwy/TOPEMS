@@ -12,7 +12,7 @@ import {
   Divider,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { FileText, Copy, Eye, Upload, Download } from 'lucide-react';
+import { FileText, Copy, Eye } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -206,10 +206,6 @@ const NotificationTemplatesPage: React.FC = () => {
       setPreviewLoading(false);
     }
   }, []);
-  const handleDelete = useCallback((template: NotificationTemplate) => {
-    setDeleteTarget(template);
-    setConfirmDialogOpen(true);
-  }, []);
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
@@ -239,20 +235,6 @@ const NotificationTemplatesPage: React.FC = () => {
       setDeleteTarget(null);
     }
   }, [deleteTarget, addNotification, queryClient]);
-  const handleImport = useCallback(() => {
-    addNotification({
-      title: i18n.t('notification.notification_templates_page.k15'),
-      message: i18n.t('notification.notification_templates_page.k16'),
-      type: 'info',
-    });
-  }, [addNotification]);
-  const handleExport = useCallback(() => {
-    addNotification({
-      title: i18n.t('notification.notification_templates_page.k17'),
-      message: i18n.t('notification.notification_templates_page.k18'),
-      type: 'success',
-    });
-  }, [addNotification]);
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
@@ -455,23 +437,6 @@ const NotificationTemplatesPage: React.FC = () => {
       </Box>
     );
   }, []);
-  const extraActions = useMemo(
-    () => [
-      {
-        label: i18n.t('notification.notification_templates_page.k21'),
-        icon: <Upload size={16} />,
-        onClick: handleImport,
-        variant: 'outlined' as const,
-      },
-      {
-        label: i18n.t('notification.notification_templates_page.k22'),
-        icon: <Download size={16} />,
-        onClick: handleExport,
-        variant: 'outlined' as const,
-      },
-    ],
-    [handleImport, handleExport]
-  );
   return (
     <>
       <CrudPage
