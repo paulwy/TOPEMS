@@ -1809,9 +1809,9 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 4 files（api/qms/types + api/mes/types + api/workflow/types + api/erp/masterData）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2408 warnings) · 目标 4 files 未使用清零
 >
-> **Tag**: `V299` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V299` · Baseline SHA: `9b97d62ad` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
 >
-> **Tag**: `V299` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V299` · Baseline SHA: `9b97d62ad` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. 第六批未使用项清理（api/ 目录，152 项，5 轮迭代）
 - 背景：V298 后全 src/ 仍有 1473 个 tsc --noUnusedLocals 错误，api/ 类型文件集中度高
