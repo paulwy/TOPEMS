@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: false
+  parallel: true
   commands:
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
@@ -47,18 +47,9 @@ pre-commit:
           node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 30 $STAGED_TS_TSX
         fi
 
-    # [Gate F] cargo test (Rust workspace)
-    cargo-test:
-      tags: rust test
-      run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
-        [ -z "$STAGED" ] && exit 0
-        cargo test --workspace
-
-    # [Gate R] Clippy pre-commit 硬门禁（与 CI clippy-check 对齐）
-    clippy-check:
-      tags: rust lint
-      run: bash scripts/ci/check-clippy.sh
+    # [Gate F/G/R] 重型检查（cargo test / clippy）已移至 pre-push hook，
+    # 避免 pre-commit 超时（cargo test --workspace 需 3-5min，clippy --all-targets 需 2-3min）。
+    # pre-push 已有 cargo-fmt-check + cargo-clippy-workspace，下方补充 cargo-test-workspace。
 
     # [Gate G] Permission matrix 3-way gate (dry-run)
     perm-matrix:
@@ -190,3 +181,11 @@ pre-push:
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
         [ -z "$STAGED" ] && exit 0
         cargo clippy --workspace --all-targets -- -D warnings
+
+    # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
+    cargo-test-workspace:
+      tags: rust test
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        cargo test --workspace
