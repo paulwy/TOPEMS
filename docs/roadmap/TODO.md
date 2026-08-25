@@ -928,6 +928,8 @@ SQLX_OFFLINE=true cargo check -p topems-mes --tests   # exit 0（当前报 12 pr
 
 > 日期：2026-08-25 | 输入：[docs/TOPEMS_Architecture_Improvement_Plan.md](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) v1.0 + 代码库事实核查 | 代码改动 80+ files（Rust 55+ / Frontend 10 / SQL 3 / Docs 2）| 验收：cargo check 0 errors · tsc 0 errors · Axum STRONG_PASS · Perm R1-6=0 · i18n PASS · 跨Schema plugin_mobile. 0 命中 · 32 stub 路由清零
 >
+> **Tag**: `V289` · Baseline SHA: `3601e9beb` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V289-{FINAL}.tar.gz` (.gitignore 排除)
+>
 > **Plan v1.0 vs 实际差距前置核查结论（★ = 核实项）**：
 > | Plan 声明 | 实际代码 | 差距 |
 > |---|---|---|
