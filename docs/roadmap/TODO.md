@@ -1870,8 +1870,80 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本 import 处理改进**：当前移除整行 import，应改为仅移除未使用的单个符号（V299 PaginatedResponse 问题的根因）
-- [ ] **src/ 其他目录未使用项清理（第七批）**：全 src/ 仍有 ~1321 个 tsc 未使用项，推荐 hooks/ 目录（useExternalErp.ts 29 + useVoucherTemplate.ts 19 + useErp.ts 14 + useConsolidation.ts 11 = 73 项）
+- [x] **v6 脚本 import 处理改进**：V300 实现单符号移除（removeImportSymbol 函数），支持 named import / default import / namespace import 三种模式；多行 import 和 TS6192 仍需手动处理
+- [x] **src/ 其他目录未使用项清理（第七批 hooks/）**：V300 清理 hooks/useExternalErp.ts + useVoucherTemplate.ts + useErp.ts + useConsolidation.ts + 级联 useConsolidationScope.ts 共 96 项，tsc --noUnusedLocals 目标 5 files 0 errors，净删 2014 行
+- [ ] **src/ 其他目录未使用项清理（第八批）**：全 src/ 仍有 ~1225 个 tsc 未使用项（pages/doc/DocumentsPage 22 / components/templates 17 / api/qms 16 / store/pluginStore 15 等），可继续用 v6 迭代脚本分批清理
+
+## 🎯 V300 — 第七批未使用项清理（hooks/ 96项）+ v6脚本import单符号移除改进 + 级联清理（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files（hooks/ 4 + 级联 useConsolidationScope）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2334 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V300` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V300` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V300-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第七批未使用项清理（hooks/ 目录，96 项）
+- 背景：V299 后全 src/ 仍有 1473 个 tsc --noUnusedLocals 错误，hooks/ 目录集中度高（useExternalErp.ts 29 + useVoucherTemplate.ts 19 + useErp.ts 14 + useConsolidation.ts 11 = 73 项首轮）
+- 修复：v6 迭代脚本扩展版 + 手动修复多行 import / TS6192
+- 迭代过程（脚本 16 轮，移除 87 项后卡在 4 项多行 import）：
+  - 脚本移除 87 项（function/const hooks + 单行 import）
+  - 手动修复 8 项（4 个多行 import type + 4 个 TS6192 整行未使用 import）
+  - 级联修复 1 项（useConsolidationScope.ts 的 ConsolidationCompany import）
+- 变更（5 files，96 项，净删 2014 行）：
+  - **hooks/useExternalErp.ts**：-769 行（29 个 hooks + import）
+  - **hooks/useErp.ts**：-554 行（14 个 hooks + import，文件清空保留占位注释）
+  - **hooks/useVoucherTemplate.ts**：-519 行（19 个 hooks + import）
+  - **hooks/useConsolidation.ts**：-175 行（11 个 hooks + 4 个 type import）
+  - **pages/.../useConsolidationScope.ts**：-6 行（级联 ConsolidationCompany import）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本 import 单符号移除改进
+- 背景：V299 PaginatedResponse 问题根因 — v6 脚本 import 处理移除整行，导致同行其他已使用 import 被误删
+- 改进：实现 `removeImportSymbol()` 函数，支持三种 import 模式：
+  1. **Named import** (`import { A, B, C } from '...'`)：仅移除未使用符号，保留其他；空则移除整行
+  2. **Default import** (`import X from '...'`)：移除整行
+  3. **Namespace import** (`import * as X from '...'`)：移除整行
+- 局限：多行 import block 和 TS6192（整行全部未使用）仍需手动处理（V300 手动修复 8 项）
+- eslint --fix：prettier 格式化修复（移除 import 后单行化）
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（96 项全部清除）
+- `eslint src/`: 0 errors, 2334 warnings（从 V299 的 2408 减少 74）
+- `cargo check --workspace`: 0 errors（V300 无 Rust 改动）
+
+### D. 文档化
+- V299 后续扩展「v6 import 改进」和「第七批 hooks/」打勾 [x]
+- 新增「第八批」后续扩展项（全 src/ 仍有 ~1225 个未使用项）
+- V300 章节写入完整交付记录 + 96 项明细 + v6 import 改进说明 + 级联清理
+
+### 变更文件清单（6 files）
+- `apps/web/src/hooks/useExternalErp.ts`（-769 行）
+- `apps/web/src/hooks/useErp.ts`（-554 行，保留占位注释）
+- `apps/web/src/hooks/useVoucherTemplate.ts`（-519 行）
+- `apps/web/src/hooks/useConsolidation.ts`（-175 行）
+- `apps/web/src/pages/finance/ConsolidationScopePage/hooks/useConsolidationScope.ts`（-6 行，级联）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（96 项全部清除）
+- [x] `eslint src/` — 0 errors（2334 warnings，从 2408 减少 74）
+- [x] `cargo check --workspace` — 0 errors
+- [x] hooks/ 4 files 96 项 — 全部移除（净删 2014 行）
+- [x] v6 脚本 import 单符号移除 — 实现 removeImportSymbol 函数
+- [x] 级联 useConsolidationScope.ts — ConsolidationCompany import 移除
+- [x] V299 后续扩展两项打勾 [x]
+
+### V300 后续扩展（留给 V301+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项
+- [ ] **src/ 其他目录未使用项清理（第八批）**：全 src/ 仍有 ~1225 个 tsc 未使用项，推荐 pages/doc/DocumentsPage(22) + components/templates(17) + api/qms(16) + store/pluginStore(15)
 
 
 
