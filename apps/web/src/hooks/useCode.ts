@@ -2,8 +2,8 @@
  * 统一编码生成服务 - 集中管理全系统ID编码
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import { useMutation } from '@tanstack/react-query';
+import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
 // ============================================
 // 一、编码规则类型定义
@@ -194,18 +194,6 @@ const codeApi = {
 // ============================================
 
 /**
- * 获取下一个编码
- */
-function useNextCode(entityType: EntityType, module?: ModuleType) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.NEXT_CODE_BASE, entityType, module],
-    queryFn: () => codeApi.getNextCode({ entity_type: entityType, module }),
-    staleTime: 0, // 每次都获取新的编码
-    enabled: !!entityType,
-  });
-}
-
-/**
  * 批量获取编码
  */
 export function useBatchNextCodes() {
@@ -242,67 +230,6 @@ export function useValidateCode() {
         refetchType: 'active',
       });
     },
-  });
-}
-
-/**
- * 预留编码
- */
-function useReserveCodes() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: { entity_type: EntityType; quantity: number; reserve_days?: number }) =>
-      codeApi.reserveCodes(params),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-}
-
-/**
- * 释放预留编码
- */
-function useReleaseCodes() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (reservationId: string) => codeApi.releaseCodes(reservationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-}
-
-/**
- * 获取编码规则列表
- */
-function useCodeRules(params?: { module?: ModuleType; entity_type?: EntityType }) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULES_BASE, params],
-    queryFn: () => codeApi.getRules(params),
-    staleTime: 30 * 60 * 1000, // 30分钟
-  });
-}
-
-/**
- * 获取编码规则详情
- */
-function useCodeRule(id: string) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULE_BASE, id],
-    queryFn: () => codeApi.getRule(id),
-    enabled: !!id,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
   });
 }
 
@@ -559,24 +486,6 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
  */
 export function getCodeRuleForEntity(entityType: EntityType): Partial<CodeRule> {
   return CODE_RULES[entityType] || { prefix: '', sequence_length: 6 };
-}
-
-/**
- * 生成实体编码（前端预览用）
- */
-function generateCodeForEntity(entityType: EntityType): string {
-  const rule = getCodeRuleForEntity(entityType);
-  const generator = new CodeGenerator(rule);
-  return generator.generate();
-}
-
-/**
- * 批量生成实体编码
- */
-function batchGenerateCodesForEntity(entityType: EntityType, count: number): string[] {
-  const rule = getCodeRuleForEntity(entityType);
-  const generator = new CodeGenerator(rule);
-  return generator.generateBatch(count);
 }
 
 // ============================================

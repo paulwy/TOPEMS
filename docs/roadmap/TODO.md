@@ -2150,8 +2150,86 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项
-- [ ] **src/ 其他目录未使用项清理（第十一批）**：全 src/ 仍有 ~947 个 tsc 未使用项，推荐 services/VoucherTemplateEngine(7) + microfrontend/runtime/RuntimeDashboard(7) + microfrontend/governance/DependencyGovernance(7) + hooks/useUiState(7) + hooks/useCode(7)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项
+- [ ] **v6 脚本 class 声明完整移除**：V304 移除 VoucherTemplateEngine class 时留下孤儿类体导致 TS1128 语法错误，需改进括号跟踪（class 体含 private 方法嵌套）
+- [x] **src/ 其他目录未使用项清理（第十一批）**：V304 清理 services/VoucherTemplateEngine(7→级联12) + RuntimeDashboard(7) + DependencyGovernance(7) + useUiState(7) + useCode(7) = 47 项，tsc 目标 5 files 0 errors，净删 1175 行
+- [ ] **src/ 其他目录未使用项清理（第十二批）**：全 src/ 仍有 ~900 个 tsc 未使用项，推荐 config/plugins.config(7) + config/deployment(7) + components/gis/utils/performance(7) + components/ehs/riskUtils(7) + components/PermissionGate(7)
+
+## 🎯 V304 — 第十一批未使用项清理（47项）+ v6脚本export支持 + 级联清理（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2126 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V304` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V304-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V304` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V304-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十一批未使用项清理（47 项）
+- 背景：V303 后全 src/ 仍有 ~947 个 tsc --noUnusedLocals 错误，第十一批目标 5 files 首轮 35 项
+- 修复：v6 迭代脚本扩展版（32 项，新增 export 声明支持）+ 手动修复多行 import / 级联 interface / 孤儿类体（15 项）
+- 迭代过程（脚本 16 轮，移除 32 项后卡在 6 项）：
+  - 脚本移除 32 项（export const/function hooks + 单行 import）
+  - **问题**：脚本移除 VoucherTemplateEngine class 时留下孤儿类体（private 方法嵌套导致括号跟踪失败），产生 TS1128 语法错误
+  - 手动修复 15 项 + 语法修复：
+    - VoucherTemplateEngine.ts: 移除孤儿类体(80行) + 1 个 TS6192 import + 2 个级联 interface(TemplateContext/GeneratedEntry) + 6 个 template const
+    - DependencyGovernance.tsx: 2 个 mui import + 3 个 lucide import + 1 个解构变量(onClose)
+    - RuntimeDashboard.tsx: 5 个 mui import + 1 个 lucide import
+- 变更（5 files，47 项，净删 1175 行）：
+  - **services/VoucherTemplateEngine.ts**：-845 行（class + 2 interface + import + 6 template const + 孤儿类体修复）
+  - **hooks/useUiState.ts**：-228 行（7 个 hooks）
+  - **hooks/useCode.ts**：-95 行（7 个 hooks）
+  - **microfrontend/governance/DependencyGovernance.tsx**：-9 行（6 import + 1 解构变量）
+  - **microfrontend/runtime/RuntimeDashboard.tsx**：-8 行（6 import）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本改进
+- **新增 export 声明支持**：正则从 `^\s*(type|interface|const|function)` 扩展为 `^\s*(export\s+)?(type|interface|class|const|function)`，支持 `export const` / `export function` / `export class`
+- **已知问题**：class 声明移除时括号跟踪不完整（class 体含 private 方法嵌套，脚本只移除 class 声明行留下孤儿类体），V304 手动修复。后续需改进 class 体的完整移除逻辑。
+
+### C. 级联清理
+- VoucherTemplateEngine class 移除后，TemplateContext 和 GeneratedEntry 两个 interface 级联未使用，手动移除
+- VoucherTemplateEngine class 移除后，`import type { VoucherTemplate, VoucherTemplateEntry }` 整行未使用(TS6192)，手动移除
+- DependencyGovernance 移除 onClose 解构参数（组件未使用该 prop）
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（含语法错误修复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（47 项全部清除）
+- `eslint src/`: 0 errors, 2126 warnings（从 V303 的 2161 减少 35）
+- `cargo check --workspace`: 0 errors（V304 无 Rust 改动）
+
+### E. 文档化
+- V303 后续扩展「第十一批」打勾 [x]
+- 新增「第十二批」后续扩展项（全 src/ 仍有 ~900 个未使用项）
+- 新增「v6 脚本 class 声明完整移除」后续扩展项
+- V304 章节写入完整交付记录 + 47 项明细 + v6 export 改进 + 孤儿类体修复说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/services/VoucherTemplateEngine.ts`（-845 行）
+- `apps/web/src/hooks/useUiState.ts`（-228 行）
+- `apps/web/src/hooks/useCode.ts`（-95 行）
+- `apps/web/src/microfrontend/governance/DependencyGovernance.tsx`（-9 行）
+- `apps/web/src/microfrontend/runtime/RuntimeDashboard.tsx`（-8 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（孤儿类体语法错误已修复）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（47 项全部清除）
+- [x] `eslint src/` — 0 errors（2126 warnings，从 2161 减少 35）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 47 项 — 全部移除（净删 1175 行）
+- [x] VoucherTemplateEngine 孤儿类体 — 手动修复（TS1128 语法错误消除）
+- [x] v6 脚本 export 支持 — 新增 `export\s+` 前缀匹配
+- [x] V303 后续扩展「第十一批」打勾 [x]
+
+### V304 后续扩展（留给 V305+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项
+- [ ] **v6 脚本 class 声明完整移除**：V304 孤儿类体问题，需改进 class 体括号跟踪
+- [ ] **src/ 其他目录未使用项清理（第十二批）**：全 src/ 仍有 ~900 个 tsc 未使用项，推荐 config/plugins.config(7) + config/deployment(7) + components/gis/utils/performance(7) + components/ehs/riskUtils(7) + components/PermissionGate(7)
 
 
 

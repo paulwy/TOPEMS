@@ -17,8 +17,6 @@ import {
   Tab,
   Alert,
   LinearProgress,
-  AccordionSummary,
-  AccordionDetails,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -26,16 +24,13 @@ import {
   AlertTriangle as AlertTriangleIcon,
   RefreshCw as RefreshIcon,
   CheckCircle as CheckCircleIcon,
-  XCircle as XCircleIcon,
   ArrowUp as ArrowUpIcon,
   Package as PackageIcon,
   Shield as ShieldIcon,
   Layers as LayersIcon,
   Link as LinkIcon,
   AlertCircle as AlertCircleIcon,
-  ChevronDown as ChevronDownIcon,
   TrendingUp as TrendingUpIcon,
-  Zap as ZapIcon,
 } from 'lucide-react';
 import {
   dependencyGovernor,
@@ -45,7 +40,7 @@ import {
   type DependencyStats,
   type ConflictSeverity,
 } from './dependency-governor';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface DependencyGovernanceProps {
   onClose?: () => void;
@@ -518,7 +513,7 @@ const UpgradeSuggestionItem: React.FC<{ suggestion: VersionUpgradeSuggestion }> 
   </Paper>
 );
 
-const DependencyGovernance: React.FC<DependencyGovernanceProps> = ({ onClose }) => {
+const DependencyGovernance: React.FC<DependencyGovernanceProps> = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [stats, setStats] = useState<DependencyStats | null>(null);
   const [graph, setGraph] = useState<DependencyGraph | null>(null);
