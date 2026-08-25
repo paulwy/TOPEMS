@@ -2,68 +2,42 @@ import { designTokens } from '@topems/tokens';
 import { CardListTemplate } from '@/components/templates';
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
-  FileText,
-  Folder,
   Upload,
   Search,
   Plus,
   ChevronLeft,
-  Star,
-  BookOpen,
-  Trash2,
-  Download,
-  Eye,
-  History,
-  FolderOpen,
   Filter,
   SortAsc,
   SortDesc,
   Grid3X3,
   List,
   Clock,
-  Tag,
   Type,
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { docApi, type Folder as FolderType } from '@/api/doc';
+import { docApi } from '@/api/doc';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
-import { DOC_PATHS } from '@/modules/doc/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {
-  TextField,
-  Card,
-  CardContent,
-  Chip,
-  Tooltip,
-  Tabs,
-  Tab,
-  Box,
-  Typography,
-  Button,
-  useTheme,
-} from '@mui/material';
+import { TextField, Tooltip, Box, Typography, Button } from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 
 import CreateFolderModal from './components/CreateFolderModal';
-import StatCard from './components/StatCard';
-import FileCard from './components/FileCard';
 import DocumentTree from './components/DocumentTree';
 import DocumentList from './components/DocumentList';
 import DocumentPreview from './components/DocumentPreview';
 import UploadDialog from './components/UploadDialog';
 import type { FileItem, DisplayItem, ViewMode } from './types';
-import { ct, formatFileSize } from './utils';
+import { formatFileSize } from './utils';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
 const DocumentsPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -351,11 +325,6 @@ const DocumentsPage: React.FC = () => {
       prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]
     );
   }, []);
-
-  const selectAllFiles = useCallback(() => {
-    const allFileIds = files.map((f) => f.id);
-    setSelectedFiles(allFileIds);
-  }, [files]);
 
   const clearSelection = useCallback(() => {
     setSelectedFiles([]);
