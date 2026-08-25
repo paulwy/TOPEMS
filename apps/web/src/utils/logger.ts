@@ -50,7 +50,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
 
   let minLevel = LOG_LEVELS[level];
 
-  function formatMessage(level: LogLevel, ...args: unknown[]): string {
+  function formatMessage(level: LogLevel): string {
     const parts: string[] = [];
 
     if (enableTimestamp) {
@@ -196,9 +196,4 @@ export const apiLogger = createLogger('API', {
 export const authLogger = createLogger('Auth', {
   level: IS_PROD ? 'error' : 'info',
   prefix: 'AUTH',
-});
-
-const errorLogger = createLogger('Error', {
-  level: 'error',
-  prefix: 'ERROR',
 });

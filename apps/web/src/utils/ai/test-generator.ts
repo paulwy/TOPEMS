@@ -149,8 +149,6 @@ const TEST_FILE_SUFFIX: Record<TestType, string> = {
 // ============ 测试生成器 ============
 
 export class TestGenerator {
-  private mockCounter = 0;
-
   /**
    * 生成测试
    */
@@ -1086,12 +1084,6 @@ export class TestGenerator {
     const parts = filePath.replace(/\\/g, '/').split('/');
     const fileName = parts[parts.length - 1];
     return fileName.replace(/\.[^.]+$/, '');
-  }
-
-  private toPascalCase(str: string): string {
-    return str
-      .replace(/[-_](.)/g, (_, c: string) => c.toUpperCase())
-      .replace(/^(.)/, (_, c: string) => c.toUpperCase());
   }
 
   private getTestTypeName(type: TestType): string {

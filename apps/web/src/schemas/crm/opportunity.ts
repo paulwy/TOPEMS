@@ -38,9 +38,6 @@ const opportunityZodSchema = z
 
 export type Opportunity = z.infer<typeof opportunityZodSchema>;
 export type OppStage = z.infer<typeof oppStage>;
-type OppPriority = z.infer<typeof oppPriority>;
-type OppStatus = z.infer<typeof oppStatus>;
-
 const createOpportunitySchema = opportunityZodSchema.omit({
   id: true,
   tenantId: true,

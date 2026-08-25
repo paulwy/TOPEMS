@@ -1,5 +1,3 @@
-import React from 'react';
-import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
@@ -10,13 +8,6 @@ const categoryLabels: Record<string, string> = {
   business: i18n.t('shared.definition.k1'),
   notification: i18n.t('shared.definition.k2'),
   automation: i18n.t('shared.definition.k3'),
-};
-
-const categoryColorMap: Record<string, { bgcolor: string; color: string }> = {
-  approval: { bgcolor: 'primary.100', color: 'primary.700' },
-  business: { bgcolor: 'success.100', color: 'success.700' },
-  notification: { bgcolor: 'info.100', color: 'info.700' },
-  automation: { bgcolor: 'warning.100', color: 'warning.700' },
 };
 
 const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({
@@ -47,30 +38,6 @@ const statusOptions = Object.entries(statusLabels).map(([value, label]) => ({
   value,
   label,
 }));
-
-// ============ 渲染辅助函数 ============
-
-function renderWorkflowCategoryBadge(category: string): React.ReactNode {
-  const config = categoryColorMap[category] || { bgcolor: 'gray.100', color: 'gray.700' };
-  const label = categoryLabels[category] || category;
-  return React.createElement(Chip, {
-    size: 'small',
-    variant: 'outlined',
-    sx: { bgcolor: config.bgcolor, color: config.color },
-    label,
-  });
-}
-
-function renderWorkflowStatusBadge(status: string): React.ReactNode {
-  const color = statusColorMap[status] || 'default';
-  const label = statusLabels[status] || status;
-  return React.createElement(Chip, {
-    size: 'small',
-    color: color === 'default' ? 'default' : color,
-    variant: color === 'default' ? 'outlined' : 'filled',
-    label,
-  });
-}
 
 // ============ Schema 定义 ============
 

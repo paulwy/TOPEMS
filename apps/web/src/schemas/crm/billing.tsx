@@ -1,7 +1,4 @@
-import React from 'react';
-import { CheckCircle, Send } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
-import type { RowAction } from '@/components/templates';
 import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined) => {
@@ -178,28 +175,4 @@ export const billingSchema: EntitySchema = {
   createTitle: i18n.t('shared.billing.k28'),
   editTitle: i18n.t('shared.billing.k29'),
   detailTitle: i18n.t('shared.billing.k30'),
-};
-
-const getBillingRowActions = (
-  handleMarkPaid: (id: string) => void,
-  handleSendNotification: (id: string) => void,
-  activeTab: string
-): RowAction[] => {
-  if (activeTab === 'invoices') {
-    return [
-      {
-        label: i18n.t('shared.billing.k31'),
-        icon: <CheckCircle size={16} />,
-        color: 'success',
-        onClick: (row: Record<string, unknown>) => handleMarkPaid(String(row.id)),
-      },
-      {
-        label: i18n.t('shared.billing.k32'),
-        icon: <Send size={16} />,
-        color: 'primary',
-        onClick: (row: Record<string, unknown>) => handleSendNotification(String(row.id)),
-      },
-    ];
-  }
-  return [];
 };
