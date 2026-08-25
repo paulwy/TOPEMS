@@ -2,8 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Box, Button } from '@mui/material';
-import { QuickSearch, PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import { Warehouse, Package, AlertCircle, ArrowRight, Truck } from 'lucide-react';
 import {
   DashboardTemplate,
@@ -15,30 +14,10 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { wmsApi } from '@/api/wms';
-
-const iconMap: Record<string, React.ComponentType<any>> = {
-  Warehouse,
-  Package,
-  AlertCircle,
-  Truck,
-};
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const { data: backendData2, isLoading: isBackendLoading2 } = useQuery({
-    queryKey: ['wms-dashboard'],
-    queryFn: async () => {
-      try {
-        const res = await wmsApi.dashboard.getOverview();
-        return res?.data ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
 
   const loadingQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE,
@@ -188,19 +167,6 @@ export const DashboardPage: React.FC = () => {
         onClick: () => navigate(WMS_PATHS.warehouseManagement),
       },
     ],
-    [t, navigate]
-  );
-
-  const headerContent = useMemo(
-    () => (
-      <QuickSearch
-        placeholder={t('wms.dashboard_page.search_placeholder')}
-        onSearch={(query) => {
-          navigate(`${WMS_PATHS.inventory}?search=${encodeURIComponent(query)}`);
-        }}
-        width={320}
-      />
-    ),
     [t, navigate]
   );
 
