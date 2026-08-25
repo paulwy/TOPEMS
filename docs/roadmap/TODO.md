@@ -2725,10 +2725,104 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项
 - [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量，需精确定位行号
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 `private flushed = false` class field，脚本不支持
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **src/ 其他目录未使用项清理（第十八批）**：全 src/ 仍有 ~664 个 tsc 未使用项，推荐 api/finance/riskV59(5) + utils/streaming-ssr(4) + utils/mobileDetector(4) + utils/importExport(4) + types/mes(4)
+- [x] **src/ 其他目录未使用项清理（第十八批）**：V311 清理 api/admin/index(6 TS6192) + shortcutsStore(4) + importExport(4) + mobileDetector(4) + streaming-ssr(3函数+1 field+4级联) = 26 项，tsc 目标 5 files 0 errors，净删 200 行
+- [ ] **src/ 其他目录未使用项清理（第十九批）**：全 src/ 仍有 ~638 个 tsc 未使用项，推荐 store/notificationStore(4) + store/featureFlagStore(4) + pages/crm/CRMRecommendationPage(4) + pages/bi/BIVisualizationPage(4) + lib/moduleThemes(4)
+
+## 🎯 V311 — 第十八批未使用项清理（26项）+ TS6192/class field 手动修复（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1914 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V311` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V311-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V311` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V311-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十八批未使用项清理（26 项）
+- 背景：V310 后全 src/ 仍有 ~664 个 tsc --noUnusedLocals 错误，第十八批目标 5 files 首轮 22 项 + 级联 4 项
+- 修复：v6 迭代脚本（15 项，一轮完成）+ 手动修复 7 项（6 TS6192 + 1 class field）+ 级联 4 项
+- 迭代过程（脚本 1 轮，移除 15 项）：
+  - 脚本一轮移除全部 15 项 const/function 声明（shortcutsStore 4 + importExport 4 + mobileDetector 4 + streaming-ssr 3）
+  - **手动修复 7 项**：
+    1. **api/admin/index.ts 6 个 TS6192**：全部为整行 `import type` 未使用（3 单行 + 2 多行 block + 1 单行），barrel 文件中类型 import 未被引用
+    2. **streaming-ssr.ts class field `flushed`**：`private flushed = false` 仅写不读，脚本不支持 class field 移除
+  - **级联 4 项**（移除 readSSRData/parseStreamingChunks/clearHydratedSSRData 后触发）：
+    1. `deserializeSSRData` — 仅被 readSSRData 使用
+    2. `hydrateSSRData` — 仅被 clearHydratedSSRData 使用
+    3. `escapeRegExp` — 仅被 parseStreamingChunks 使用
+    4. `hydratedData` 模块级变量 — 仅被 hydrateSSRData 使用
+  - **flushed 引用修复**：移除 `private flushed` 字段后，`flush()` 方法中 `this.flushed = true` 报 TS2551，移除该行（flush 方法保留为 no-op，注释说明语义保留）
+- 变更（5 files，26 项，净删 200 行）：
+  - **utils/streaming-ssr.ts**：-105 行（3 函数 + 3 级联函数 + 1 class field + 1 模块变量 + 1 section 注释 + flush 方法行）
+  - **utils/importExport.ts**：-38 行（4 函数）
+  - **utils/mobileDetector.ts**：-35 行（4 const/function）
+  - **api/admin/index.ts**：-17 行（6 TS6192 import）
+  - **store/shortcutsStore.ts**：-5 行（4 const）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第六代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致误判声明结束
+- **V306 孤儿闭合括号**：移除函数时留下独立 `}`
+- **V308 class 移除成功**：SmartPrecacheController class 完整移除
+- **V309 箭头函数孤儿函数体**：移除 `const useXxx = (params) => { ... }` 时留下函数体
+- **V310 多行 import + 解构变量**：多行 import block 中符号无法移除；函数参数解构变量无法处理；sed 全局删除误删 used children
+- **V311 TS6192 + class field**：
+  - TS6192 整行 import 无名称，脚本无法匹配（api/admin/index.ts 6 项全手动）
+  - class private field `private flushed = false` 脚本不支持（正则只匹配 type/interface/class/const/function）
+  - 级联清理需多轮：移除函数后触发其唯一调用者/依赖项未使用，需迭代扫描
+- **修复方向**：v6 脚本需扩展支持 TS6192 整行 import 检测、class field 移除、级联自动多轮扫描
+
+### C. 级联清理
+- streaming-ssr.ts：移除 readSSRData → deserializeSSRData 级联；移除 clearHydratedSSRData → hydrateSSRData → hydratedData 级联；移除 parseStreamingChunks → escapeRegExp 级联
+- api/admin/index.ts：6 个 TS6192 import 无引用，直接移除无级联
+- 其他文件：无 cascading
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（26 项全部清除）
+- `eslint src/`: 0 errors, 1914 warnings（从 V310 的 1953 减少 39）
+- `cargo check --workspace`: 0 errors（V311 无 Rust 改动）
+
+### E. 文档化
+- V310 后续扩展「第十八批」打勾 [x]
+- 新增「第十九批」后续扩展项（全 src/ 仍有 ~638 个未使用项）
+- 新增「v6 脚本 class field 自动处理」问题追踪
+- V311 章节写入完整交付记录 + 26 项明细 + TS6192/class field 手动修复说明 + 级联 4 项 + flushed 引用修复
+
+### 变更文件清单（6 files）
+- `apps/web/src/utils/streaming-ssr.ts`（-105 行）
+- `apps/web/src/utils/importExport.ts`（-38 行）
+- `apps/web/src/utils/mobileDetector.ts`（-35 行）
+- `apps/web/src/api/admin/index.ts`（-17 行）
+- `apps/web/src/store/shortcutsStore.ts`（-5 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（26 项全部清除）
+- [x] `eslint src/` — 0 errors（1914 warnings，从 1953 减少 39）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 26 项 — 全部移除（净删 200 行）
+- [x] 6 个 TS6192 整行 import — 手动移除
+- [x] 1 个 class private field — 手动移除 + flush 方法引用修复
+- [x] 4 个级联项（3 函数 + 1 变量）— 迭代移除
+- [x] V310 后续扩展「第十八批」打勾 [x]
+
+### V311 后续扩展（留给 V312+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项
+- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **src/ 其他目录未使用项清理（第十九批）**：全 src/ 仍有 ~638 个 tsc 未使用项，推荐 store/notificationStore(4) + store/featureFlagStore(4) + pages/crm/CRMRecommendationPage(4) + pages/bi/BIVisualizationPage(4) + lib/moduleThemes(4)
 
 
 

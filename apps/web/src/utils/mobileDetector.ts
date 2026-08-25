@@ -44,47 +44,12 @@ export function getDeviceInfo(): DeviceInfo {
   };
 }
 
-function getBreakpoint(): 'xs' | 'sm' | 'md' | 'lg' | 'xl' {
-  const width = window.innerWidth;
-  if (width < 576) return 'xs';
-  if (width < 768) return 'sm';
-  if (width < 992) return 'md';
-  if (width < 1200) return 'lg';
-  return 'xl';
-}
-
 function isMobileView(): boolean {
   return getDeviceInfo().isMobile || window.innerWidth < 768;
 }
 
 function isTabletView(): boolean {
   return getDeviceInfo().isTablet || (window.innerWidth >= 768 && window.innerWidth < 1024);
-}
-
-function isDesktopView(): boolean {
-  return getDeviceInfo().isDesktop && window.innerWidth >= 1024;
-}
-
-function getAppLink(): string {
-  const deviceInfo = getDeviceInfo();
-  if (deviceInfo.isIOS) {
-    return 'https://apps.apple.com/cn/app/topems/id1234567890';
-  }
-  if (deviceInfo.isAndroid) {
-    return 'https://play.google.com/store/apps/details?id=com.topems.app';
-  }
-  return '/';
-}
-
-function getDownloadUrl(): string {
-  const deviceInfo = getDeviceInfo();
-  if (deviceInfo.isIOS) {
-    return 'https://apps.apple.com/cn/app/topems/id1234567890';
-  }
-  if (deviceInfo.isAndroid) {
-    return 'https://www.topems.com/download/android';
-  }
-  return 'https://www.topems.com/download';
 }
 
 export function shouldUseMobileLayout(): boolean {

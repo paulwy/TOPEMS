@@ -88,19 +88,6 @@ function serializeSSRData(data: unknown): string {
 }
 
 /**
- * 反序列化 SSR 数据（从已转义 JSON 还原）
- */
-function deserializeSSRData(escaped: string): unknown {
-  const json = escaped
-    .replace(/\\u003c/g, '<')
-    .replace(/\\u003e/g, '>')
-    .replace(/\\u0026/g, '&')
-    .replace(/\\u2028/g, '\u2028')
-    .replace(/\\u2029/g, '\u2029');
-  return JSON.parse(json);
-}
-
-/**
  * 构建完整 SSR 数据集合（包含元信息）
  */
 function buildSSRDataCollection(entries: SSRDataEntry[]): SSRDataCollection {
@@ -130,92 +117,6 @@ function serializeSSRDataToScript(collection: SSRDataCollection): string {
 function serializeStreamingChunk(entry: SSRDataEntry): string {
   const escaped = serializeSSRData(entry);
   return `${SSR_DATA_MARKER}${escaped}${SSR_DATA_MARKER}`;
-}
-
-// ==================== 客户端水合 ====================
-
-/** 缓存的水合数据 */
-let hydratedData: SSRDataCollection | null = null;
-
-/**
- * 客户端水合：从 window.__SSR_DATA__ 读取服务端注入的数据
- *
- * 首次调用时解析并缓存，后续调用直接返回缓存结果。
- * 若服务端未注入数据，返回空集合。
- *
- * @returns SSR 数据集合
- */
-function hydrateSSRData(): SSRDataCollection {
-  if (hydratedData) return hydratedData;
-
-  if (typeof window === 'undefined') {
-    hydratedData = buildSSRDataCollection([]);
-    return hydratedData;
-  }
-
-  const raw = (window as unknown as Record<string, unknown>)[SSR_DATA_GLOBAL];
-  if (!raw) {
-    hydratedData = buildSSRDataCollection([]);
-    return hydratedData;
-  }
-
-  try {
-    const collection = raw as SSRDataCollection;
-    if (!collection || !Array.isArray(collection.entries)) {
-      hydratedData = buildSSRDataCollection([]);
-      return hydratedData;
-    }
-    hydratedData = collection;
-    ssrLogger.debug(
-      `${i18n.t('shared.streaming-ssr.ssr_0')}${collection.entries.length}${i18n.t('shared.streaming-ssr.k1')}${collection.version}`
-    );
-    return hydratedData;
-  } catch (e) {
-    ssrLogger.error(i18n.t('shared.streaming-ssr.ssr_2'), e);
-    hydratedData = buildSSRDataCollection([]);
-    return hydratedData;
-  }
-}
-
-/**
- * 客户端：按 key 读取单条 SSR 数据
- *
- * @param key 数据 key
- * @returns 数据载荷（未找到返回 undefined）
- */
-function readSSRData<T = unknown>(key: string): T | undefined {
-  const collection = hydrateSSRData();
-  const entry = collection.entries.find((e) => e.key === key);
-  return entry?.payload as T | undefined;
-}
-
-/**
- * 客户端：解析流式注入的 HTML 注释块（用于流式替换场景）
- *
- * 扫描文档中的 `<!-- SSR:DATA -->` 标记，提取流式数据。
- */
-function parseStreamingChunks(html: string): SSRDataEntry[] {
-  const chunks: SSRDataEntry[] = [];
-  const regex = new RegExp(
-    `${escapeRegExp(SSR_DATA_MARKER)}(.*?)${escapeRegExp(SSR_DATA_MARKER)}`,
-    'g'
-  );
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(html)) !== null) {
-    try {
-      const entry = deserializeSSRData(match[1]) as SSRDataEntry;
-      if (entry && typeof entry.key === 'string') {
-        chunks.push(entry);
-      }
-    } catch (e) {
-      ssrLogger.warn(i18n.t('shared.streaming-ssr.k3'), e);
-    }
-  }
-  return chunks;
-}
-
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // ==================== StreamingSSRManager ====================
@@ -262,7 +163,6 @@ interface StreamingRenderResult {
 class StreamingSSRManager {
   private entries: SSRDataEntry[] = [];
   private chunks: string[] = [];
-  private flushed = false;
   private controller: ReadableStreamDefaultController<Uint8Array> | null = null;
   private isDone = false;
   private doneResolve: (() => void) | null = null;
@@ -329,7 +229,6 @@ class StreamingSSRManager {
    * 此方法主要作为语义化接口，并触发底层 flush（如果可用）。
    */
   flush(): void {
-    this.flushed = true;
     // Web ReadableStream 无显式 flush，enqueue 即推送。
     // 此处保留语义以兼容未来基于 Node Writable 的实现。
   }
@@ -529,8 +428,4 @@ export async function collectSSRStream(stream: ReadableStream<Uint8Array>): Prom
 /**
  * 清除水合缓存（测试 / 路由切换时使用）
  */
-function clearHydratedSSRData(): void {
-  hydratedData = null;
-}
-
 export default StreamingSSRManager;

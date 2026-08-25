@@ -51,8 +51,3 @@ export function ensureShortcutsLoaded(): void {
     state.setShortcuts(getDefaultShortcuts());
   }
 }
-
-const useShortcuts = () => useShortcutsStore((state) => state.shortcuts);
-const useSetShortcuts = () => useShortcutsStore((state) => state.setShortcuts);
-const useAddShortcut = () => useShortcutsStore((state) => state.addShortcut);
-const useRemoveShortcut = () => useShortcutsStore((state) => state.removeShortcut);
