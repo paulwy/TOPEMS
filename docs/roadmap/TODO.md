@@ -1150,6 +1150,8 @@ V285 B 轨根因 callout 已明确定位：
 ## 🎯 V290 — 4 轨并行（B6 crate耦合盘点 · B2 API签名评估 · srm warning清零 · openapi SOP文档化）（并行推进 · ✅ 完成）
 
 > 日期：2026-08-25 | 代码改动 3 files（Rust 1 / Markdown 1 / TODO 1）| 验收：cargo check 0 errors 0 warnings · tsc 0 errors · Axum STRONG_PASS · Perm R1-6=0 · i18n PASS
+>
+> **Tag**: `V290` · Baseline SHA: `ef0d533cb` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V290-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### 总览
 
