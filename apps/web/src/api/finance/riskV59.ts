@@ -1,15 +1,7 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-// ==================== 类型定义 ====================
-
-type FraudSignalType = 'velocity' | 'geolocation' | 'device' | 'behavior' | 'pattern';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-type FraudAction = 'approve' | 'review' | 'block';
-type CreditGrade = 'AAA' | 'AA' | 'A' | 'B' | 'C' | 'D';
-type StressScenarioType = 'market' | 'credit' | 'liquidity' | 'operational';
-type ShockType = 'parallel' | 'sequential' | 'reverse';
-
 interface FraudSignal {
   id: string;
   signal_type: string;

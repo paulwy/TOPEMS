@@ -155,14 +155,6 @@ interface CreateQualityRuleRequest {
   description?: string;
 }
 
-interface UpdateQualityRuleRequest {
-  name?: string;
-  expression?: string;
-  severity?: string;
-  description?: string;
-  enabled?: boolean;
-}
-
 interface DetectConflictsRequest {
   master_data_ids: string[];
 }
@@ -181,27 +173,6 @@ interface CreateQualityTicketRequest {
   priority?: string;
   master_data_id?: string;
   description?: string;
-}
-
-interface CreateDataDomainRequest {
-  name: string;
-  code: string;
-  description?: string;
-  owner?: string;
-}
-
-interface UpdateDataDomainRequest {
-  name?: string;
-  description?: string;
-  owner?: string;
-}
-
-interface SetOwnershipMatrixRequest {
-  owners: Array<{
-    entity_type: string;
-    owner: string;
-    steward?: string;
-  }>;
 }
 
 interface ArchiveRequest {

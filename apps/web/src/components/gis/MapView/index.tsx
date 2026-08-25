@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useId, lazy, Suspense } fr
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Box as MuiBox, Typography, Paper, IconButton } from '@mui/material';
-import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../api/gis';
+import type { DevicePoint, StorageLocation, GeoJSONFeature } from '../../../api/gis';
 import DeviceTrackPanel from '../DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapLayer';
 import i18n from '@/i18n';
@@ -11,7 +11,6 @@ import { designTokens } from '@/theme/tokens';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
-import L from 'leaflet';
 
 import type { MapViewProps, ToolMode, DrawFeature, VisibleLayers } from './types';
 import MapEventHandler from './components/MapEventHandler';
@@ -127,92 +126,6 @@ const MapView: React.FC<MapViewProps> = ({
     setShowDetailsPanel(true);
     if (onMarkerClick) {
       onMarkerClick(item);
-    }
-  };
-
-  const _handleMapClick = (e: { latlng: { lat: number; lng: number } }) => {
-    const latlng = e.latlng;
-    const point: [number, number] = [latlng.lat, latlng.lng];
-
-    if (toolMode === 'measure-distance') {
-      const newPoints = [...measurePoints, point];
-      setMeasurePoints(newPoints);
-      if (newPoints.length >= 2) {
-        const totalDistance = calculateTotalDistance(newPoints);
-        setMeasureResult(`${i18n.t('components.index.k4')}${formatDistance(totalDistance)}`);
-      }
-    } else if (toolMode === 'measure-area') {
-      const newPoints = [...measurePoints, point];
-      setMeasurePoints(newPoints);
-      if (newPoints.length >= 3) {
-        const area = calculateArea(newPoints);
-        setMeasureResult(`${i18n.t('components.index.k5')}${formatArea(area)}`);
-      }
-    } else if (toolMode === 'draw-point') {
-      const newFeature: DrawFeature = {
-        id: `point-${Date.now()}`,
-        type: 'point',
-        points: [{ lat: point[0], lng: point[1], timestamp: Date.now() }],
-        color: 'error.main',
-      };
-      setDrawFeatures([...drawFeatures, newFeature]);
-    } else if (toolMode === 'draw-line') {
-      if (!currentDrawing) {
-        setCurrentDrawing({
-          id: `line-${Date.now()}`,
-          type: 'line',
-          points: [{ lat: point[0], lng: point[1] }],
-          color: 'primary.main',
-        });
-      } else {
-        const updatedDrawing = {
-          ...currentDrawing,
-          points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
-        };
-        setCurrentDrawing(updatedDrawing);
-      }
-    } else if (toolMode === 'draw-polygon') {
-      if (!currentDrawing) {
-        setCurrentDrawing({
-          id: `polygon-${Date.now()}`,
-          type: 'polygon',
-          points: [{ lat: point[0], lng: point[1] }],
-          color: 'success.main',
-        });
-      } else {
-        const updatedDrawing = {
-          ...currentDrawing,
-          points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
-        };
-        setCurrentDrawing(updatedDrawing);
-      }
-    }
-  };
-
-  const _handleMapMove = (e: {
-    latlng?: { lat: number; lng: number };
-    target?: { getCenter(): { lat: number; lng: number } };
-  }) => {
-    if (
-      (toolMode === 'measure-distance' || toolMode === 'measure-area') &&
-      measurePoints.length > 0
-    ) {
-      const latlng = e.latlng || e.target?.getCenter();
-      if (latlng) {
-        setTooltipPosition([latlng.lat, latlng.lng]);
-        setShowMeasureTooltip(true);
-
-        const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
-        if (toolMode === 'measure-distance') {
-          const totalDistance = calculateTotalDistance(tempPoints);
-          setMeasureResult(`${i18n.t('components.index.k6')}${formatDistance(totalDistance)}`);
-        } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
-          const area = calculateArea(tempPoints);
-          setMeasureResult(`${i18n.t('components.index.k7')}${formatArea(area)}`);
-        }
-      }
-    } else {
-      setShowMeasureTooltip(false);
     }
   };
 

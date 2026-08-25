@@ -192,58 +192,6 @@ export interface Equipment {
 export type EquipmentStatus =
   'running' | 'idle' | 'calibrating' | 'down' | 'maintenance' | 'scrapped';
 
-// ==================== E-7 AnomalyRecord ====================
-interface AnomalyRecord {
-  id: string;
-  equipment_id: string;
-  severity: AnomalySeverity;
-  status: AnomalyStatus;
-  description: string;
-  impact_duration_minutes: number;
-  handling_approval_id: string | null;
-  impact_assessment: string | null;
-  mitigation_plan: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export type AnomalySeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AnomalyStatus =
   'monitoring' | 'triggered' | 'acknowledged' | 'handling' | 'closed' | 'false_alarm_verified';
-
-// ==================== E-8 EquipmentOeeSnapshot ====================
-interface EquipmentOeeSnapshot {
-  id: string;
-  equipment_id: string;
-  date: string;
-  shift: string;
-  availability: number;
-  performance: number;
-  quality_rate: number;
-  oee: number;
-}
-
-// ==================== E-9 ProductionCostRecord ====================
-interface ProductionCostRecord {
-  id: string;
-  production_order_id: string;
-  cost_type: ProductionCostType;
-  amount: number;
-  recorded_at: string;
-}
-
-type ProductionCostType = 'material' | 'labor' | 'energy' | 'overhead';
-
-// ==================== E-10 EnergyRecord ====================
-interface EnergyRecord {
-  id: string;
-  workshop_id: string;
-  product_id: string | null;
-  energy_type: EnergyType;
-  consumption: number;
-  unit: string;
-  cost: number;
-  recorded_at: string;
-}
-
-type EnergyType = 'electric' | 'water' | 'gas' | 'steam';

@@ -22,7 +22,7 @@ interface UseDataTableOptions<TData extends RowData, TValue> {
   enablePagination?: boolean;
 }
 
-interface UseDataTableResult<TData extends RowData, TValue> {
+interface UseDataTableResult {
   sorting: SortingState;
   setSorting: (sorting: SortingState) => void;
   columnFilters: ColumnFiltersState;
@@ -50,12 +50,9 @@ interface UseDataTableResult<TData extends RowData, TValue> {
 }
 
 export function useDataTable<TData extends RowData, TValue = unknown>({
-  columns,
-  data,
   initialPageIndex = 0,
   initialPageSize = 10,
-  enablePagination = true,
-}: UseDataTableOptions<TData, TValue>): UseDataTableResult<TData, TValue> {
+}: UseDataTableOptions<TData, TValue>): UseDataTableResult {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({

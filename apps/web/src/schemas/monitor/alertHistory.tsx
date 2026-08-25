@@ -7,13 +7,9 @@
 
 import React from 'react';
 import { Box, Chip, Typography, Paper, Stack } from '@mui/material';
-import { Clock, AlertTriangle, AlertCircle, CheckCircle, Bell } from 'lucide-react';
-import type { EntitySchema, SchemaField } from '@/schema';
 import { StatusChip } from '@/components/common';
+import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
-
-type AlertSeverity = 'critical' | 'warning' | 'info';
-type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 
 const SEVERITY_LABELS: Record<string, string> = {
   critical: i18n.t('shared.alert_history.k0'),
@@ -443,12 +439,4 @@ export const alertHistorySchema: EntitySchema = {
   detailMaxWidth: 'lg',
 
   renderDetail: renderHistoryDetail,
-};
-
-const ALERT_HISTORY_ICONS = {
-  Clock,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  Bell,
 };
