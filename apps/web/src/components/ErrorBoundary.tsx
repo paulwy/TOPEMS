@@ -1,4 +1,4 @@
-import React, { type ErrorInfo, type ReactNode, Suspense } from 'react';
+import React, { type ErrorInfo, type ReactNode } from 'react';
 import {
   AlertTriangle,
   RefreshCw,
@@ -768,34 +768,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
 export default ErrorBoundary;
 
-// 高阶组件：包装普通组件添加错误边界
-const withErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
-  options?: ErrorBoundaryOptions
-): React.ComponentType<P> => {
-  const {
-    level = 'component',
-    fallback,
-    onError,
-    onReport,
-    showDetails,
-    enableRetry,
-  } = options || {};
-
-  return (props: P) => (
-    <ErrorBoundary
-      level={level}
-      fallback={fallback}
-      onError={onError}
-      onReport={onReport}
-      showDetails={showDetails}
-      enableRetry={enableRetry}
-    >
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-};
-
 // 懒加载组件带错误边界
 
 // 页面级错误边界 Provider
@@ -812,30 +784,6 @@ export const PageErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Reac
     </ErrorBoundary>
   );
 };
-
-// 模块级错误边界 Provider
-
-// 组件级错误边界 HOC
-
-// Suspense 与错误边界组合
-
-// 默认加载中组件
-const DefaultLoading: React.FC = () => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 8,
-      color: 'text.secondary',
-    }}
-  >
-    <RefreshCw
-      style={{ width: 24, height: 24, marginRight: 8, animation: 'spin 1s linear infinite' }}
-    />
-    {i18n.t('components.error_boundary.k13')}
-  </div>
-);
 
 // 错误历史工具
 

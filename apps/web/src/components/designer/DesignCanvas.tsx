@@ -13,7 +13,7 @@ import { Box, Paper, Typography, IconButton, Tooltip } from '@mui/material';
 import { EmptyState } from '@topems/shared-components';
 import { ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import { LazyIcon } from '@/components/icons/LazyIcon';
-import type { CanvasNode, DesignerComponent } from './types';
+import type { CanvasNode } from './types';
 import { getComponentByType } from './types';
 import i18n from '@/i18n';
 
@@ -36,7 +36,6 @@ export function DesignCanvas({
   onRemove,
   onMoveUp,
   onMoveDown,
-  onAddNode,
 }: DesignCanvasProps) {
   const [isDragOver, setIsDragOver] = React.useState(false);
 
@@ -138,7 +137,6 @@ interface CanvasNodeItemProps {
 
 function CanvasNodeItem({
   node,
-  index,
   isSelected,
   onSelect,
   onRemove,

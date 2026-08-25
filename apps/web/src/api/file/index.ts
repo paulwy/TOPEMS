@@ -11,7 +11,6 @@ import type {
   StorageUsage,
   RetentionPolicy,
 } from './storage';
-import i18n from '@/i18n';
 
 import { fileImageApi } from './image';
 import type {
@@ -248,36 +247,6 @@ export const fileApi = {
   listQuarantine: fileScanApi.listQuarantine,
   getScanStats: fileScanApi.getScanStats,
 };
-
-// ==================== 常量 ====================
-
-function getVisibilityOptions() {
-  return [
-    { value: 'private', label: i18n.t('shared.index.k1'), description: i18n.t('shared.index.k0') },
-    { value: 'public', label: i18n.t('shared.index.k3'), description: i18n.t('shared.index.k2') },
-    {
-      value: 'department',
-      label: i18n.t('shared.index.k5'),
-      description: i18n.t('shared.index.k4'),
-    },
-  ];
-}
-
-function getPermissionOptions() {
-  return [
-    { value: 'read', label: i18n.t('shared.index.k7'), description: i18n.t('shared.index.k6') },
-    { value: 'write', label: i18n.t('shared.index.k9'), description: i18n.t('shared.index.k8') },
-    { value: 'manage', label: i18n.t('shared.index.k11'), description: i18n.t('shared.index.k10') },
-  ];
-}
-
-function getPrincipalTypeOptions() {
-  return [
-    { value: 'user', label: i18n.t('shared.index.k12') },
-    { value: 'group', label: i18n.t('shared.index.k13') },
-    { value: 'department', label: i18n.t('shared.index.k14') },
-  ];
-}
 
 // ==================== 工具函数 ====================
 

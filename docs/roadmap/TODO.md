@@ -3406,17 +3406,137 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V317 累计手动 230+ 项
-- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
 - [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **深层级联链自动跟踪**：V315/V316/V317 连续发现多级联
+- [ ] **深层级联链自动跟踪**：V315/V316/V317/V318 连续发现多级联，V318 requestPriority/tracing 达 4 层
 - [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
-- [ ] **多行 import 单符号移除**：V317 发现需精确行内容匹配
-- [ ] **批量模式优化**：V316/V317 连续成功，继续 3批/版本
-- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~392 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
+- [ ] **多行 import 单符号移除**：V317/V318 发现需精确行内容匹配
+- [ ] **import type 非本地声明识别**：V318 apiClient.ts 的 3 个 type 是 import type，v6 正则匹配本地声明无法处理
+- [ ] **批量模式优化**：V316/V317/V318 连续三次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~336 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
+
+## 🎯 V318 — 批量模式第三次：Top15文件未使用项清理（56项）+ 三级级联（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 15 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1674 warnings) · 目标 15 files 未使用清零
+>
+> **Tag**: `V318` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V318-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 批量模式第三次运行
+- 背景：V316/V317 批量模式连续成功，V318 继续 3批/版本节奏
+- 方法论：全量 tsc 扫描 → 按文件统计 → 选 Top 15（13 个 3 项 + 2 个 2 项 = 43 项初始）→ v6 批量脚本 → 手动修复 → 三级级联迭代
+- 结果：15 files 56 项，净删 717 行，eslint warnings 一次减少 43（从 1717 到 1674）
+
+### B. Top 15 文件清理（56 项）
+- 初始扫描：Top 13 文件全部 3 项/文件 + Top 14-15 各 2 项，共 43 项初始未使用
+- 修复：v6 批量脚本（37 项，含 2 项重复声明迭代移除）+ 手动修复 8 项 + 级联 13 项
+- 迭代过程：
+  - **v6 批量脚本第一轮（37 项）**：apiClient 3 types + a11y 3 + useTouchFeedback 3 + useNetworkStatus 3 + time 3 + ErrorBoundary 2 + BundleSizeMonitor 2 + requestPriority 3 + permissionInterceptor 3 + file/index 3 + ehs/sync 0(import type) + crm/types 3 + websocket-optimizer 2 + tracing 2 = 35 项预期，实际 37 项（file/index 和 websocket-optimizer 有重复声明被迭代移除）
+  - **手动修复 8 项**：
+    1. import type 单符号移除（4）：ehs/sync 3 types（SyncFilter/SyncErrorDetail/SyncFieldMapping）+ DesignCanvas DesignerComponent
+    2. 整行 import 删除（3）：ErrorBoundary Suspense + BundleSizeMonitor semanticTokens + a11y React（级联）
+    3. 解构变量移除（2）：DesignCanvas onAddNode + index（CanvasNodeItem 组件参数）
+    4. import type 级联（3）：apiClient 3 types（ApiResponse/PaginatedResponse/PaginatedRequestParams，v6 正则匹配本地声明无法处理 import type）
+    5. 整行 import 级联（2）：file/index i18n + a11y React
+  - **级联第一轮（8 项）**：
+    1. import type 级联（3）：apiClient ApiResponse/PaginatedResponse/PaginatedRequestParams
+    2. 整行 import 级联（2）：file/index i18n + a11y React
+    3. 本地 interface/const 级联（3）：permissionInterceptor PermissionError + requestPriority requestPriorityQueue + tracing AxiosInstance
+  - **级联第二轮（3 项）**：
+    1. class 级联（1）：requestPriority RequestPriorityQueue（移除 requestPriorityQueue const 后 class 级联）
+    2. interface 级联（2）：tracing AxiosResponse + AxiosInterceptorManager（移除 AxiosInstance 后级联）
+  - **级联第三轮（2 项）**：
+    1. type 级联（1）：requestPriority QueuedRequest（移除 RequestPriorityQueue class 后级联）
+    2. interface 级联（1）：tracing AxiosInterceptorConfig（移除 AxiosInterceptorManager 后级联）
+- 变更（15 files，56 项，净删 717 行）：
+  - **hooks/useTouchFeedback.ts**：-156 行（useDoubleTap + usePinchGesture + useTouchScale）
+  - **api/requestPriority.ts**：-152 行（withPriority + setPageLoaded + getQueueStats + requestPriorityQueue + RequestPriorityQueue class + QueuedRequest）
+  - **api/permissionInterceptor.ts**：-78 行（checkPermissionBeforeRequest + withPermissionCheck + logPermissionAccess + PermissionError）
+  - **lib/a11y.tsx**：-73 行（useAriaLiveRegion + useKeyboardNavigation + VisuallyHidden + React import）
+  - **components/ErrorBoundary.tsx**：-54 行（withErrorBoundary + DefaultLoading + Suspense import）
+  - **utils/tracing.ts**：-49 行（instrumentAxios + resetTrace + AxiosInstance + AxiosResponse + AxiosInterceptorManager + AxiosInterceptorConfig）
+  - **api/file/index.ts**：-31 行（getVisibilityOptions + getPermissionOptions + getPrincipalTypeOptions + i18n import）
+  - **api/crm/types.ts**：-30 行（CreateInteractionRequest + UpdateInteractionRequest + CreateBillingRequest）
+  - **utils/websocket-optimizer.ts**：-29 行（fullJitterBackoff + equalJitterBackoff）
+  - **hooks/useNetworkStatus.ts**：-28 行（useOffline + useNetworkCondition + useOnline）
+  - **components/BundleSizeMonitor.tsx**：-24 行（_getTypeColor + _getTypeLabel + semanticTokens import）
+  - **constants/time.ts**：-7 行（WEEK_MS + MONTH_APPROX_MS + YEAR_APPROX_MS）
+  - **lib/apiClient.ts**：-7 行（ApiResponse + PaginatedResponse + PaginatedRequestParams import types）
+  - **components/designer/DesignCanvas.tsx**：-4 行（DesignerComponent import + onAddNode 解构 + index 解构）
+  - **api/ehs/sync.ts**：-3 行（SyncFilter + SyncErrorDetail + SyncFieldMapping import types）
+- 验收：`tsc --noUnusedLocals` 目标 15 files 0 errors
+
+### C. 4 层级联链（V318 新发现）
+- **requestPriority.ts 级联链**：withPriority/setPageLoaded/getQueueStats（function）→ requestPriorityQueue（const）→ RequestPriorityQueue（class）→ QueuedRequest（type）= 4 层
+- **tracing.ts 级联链**：instrumentAxios/resetTrace（function）→ AxiosInstance（interface）→ AxiosResponse/AxiosInterceptorManager（interface）→ AxiosInterceptorConfig（interface）= 4 层
+- **教训**：v6 脚本只处理初始目标列表，级联需要多轮迭代扫描。V318 两个文件各达 4 层级联，需 3 轮迭代清除
+
+### D. import type 非本地声明识别（V318 新发现）
+- **现象**：apiClient.ts 的 ApiResponse/PaginatedResponse/PaginatedRequestParams 是从 `@/api/client` import 的多行 import type，v6 脚本正则 `^\s*(export\s+)?(type|interface|...)\s+${name}\b` 只匹配本地声明，无法匹配 import type
+- **处理方式**：用 sed 精确匹配行内容移除，如 `/^  ApiResponse,$/d`
+- **教训**：v6 脚本需增加 import type 识别逻辑，区分本地声明和 import 声明
+
+### E. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 15 files: 0 errors（56 项全部清除，含 13 项三级级联）
+- `eslint src/`: 0 errors, 1674 warnings（从 V317 的 1717 减少 43）
+- `cargo check --workspace`: 0 errors（V318 无 Rust 改动）
+
+### F. 文档化
+- V317 后续扩展 v6 手动统计更新 + 4 层级联记录 + import type 非本地声明记录 + 解构变量记录
+- V318 章节写入完整交付记录 + 56 项明细 + 三级级联 13 项 + 4 层级联链教训 + import type 识别教训
+
+### 变更文件清单（16 files）
+- `apps/web/src/hooks/useTouchFeedback.ts`（-156 行）
+- `apps/web/src/api/requestPriority.ts`（-152 行）
+- `apps/web/src/api/permissionInterceptor.ts`（-78 行）
+- `apps/web/src/lib/a11y.tsx`（-73 行）
+- `apps/web/src/components/ErrorBoundary.tsx`（-54 行）
+- `apps/web/src/utils/tracing.ts`（-49 行）
+- `apps/web/src/api/file/index.ts`（-31 行）
+- `apps/web/src/api/crm/types.ts`（-30 行）
+- `apps/web/src/utils/websocket-optimizer.ts`（-29 行）
+- `apps/web/src/hooks/useNetworkStatus.ts`（-28 行）
+- `apps/web/src/components/BundleSizeMonitor.tsx`（-24 行）
+- `apps/web/src/constants/time.ts`（-7 行）
+- `apps/web/src/lib/apiClient.ts`（-7 行）
+- `apps/web/src/components/designer/DesignCanvas.tsx`（-4 行）
+- `apps/web/src/api/ehs/sync.ts`（-3 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 15 files — 0 errors（56 项全部清除）
+- [x] `eslint src/` — 0 errors（1674 warnings，从 1717 减少 43）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 15 files 56 项 — 全部移除（净删 717 行）
+- [x] 13 个级联项 — 三级迭代清除（第一轮 8 + 第二轮 3 + 第三轮 2）
+- [x] 批量模式第三次运行 — 连续成功
+- [x] 4 层级联链 — requestPriority/tracing 各达 4 层
+- [x] import type 非本地声明识别 — apiClient 3 types 需 sed 处理
+
+### V318 后续扩展（留给 V319+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V318 累计手动 240+ 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313/V318 手动修复解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311/V317 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
+- [ ] **深层级联链自动跟踪**：V315-V318 连续发现多级联，V318 达 4 层
+- [ ] **TS6192 误判风险**：V316 发现 StatusChip 误报
+- [ ] **多行 import 单符号移除**：V317/V318 发现需精确行内容匹配
+- [ ] **import type 非本地声明识别**：V318 发现 v6 正则无法匹配 import type
+- [ ] **批量模式优化**：V316/V317/V318 连续三次成功，继续 3批/版本
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~336 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
 
 
 

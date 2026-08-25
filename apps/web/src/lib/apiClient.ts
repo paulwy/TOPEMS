@@ -12,12 +12,7 @@
  */
 
 import { apiClient as axiosApiClient, handleResponse } from '@/api/client';
-import type {
-  ApiResponse,
-  PaginatedResponse,
-  RequestOptions as ApiRequestOptions,
-  PaginatedRequestParams,
-} from '@/api/client';
+import type { RequestOptions as ApiRequestOptions } from '@/api/client';
 
 // Re-export core types
 export type { ApiResponse, PaginatedResponse, PaginationParams } from '@/api/client';

@@ -93,31 +93,3 @@ export function useNetworkStatus(): NetworkInfo {
     saveData,
   };
 }
-
-function useOnline(): boolean {
-  const { status } = useNetworkStatus();
-  return status === 'online';
-}
-
-function useOffline(): boolean {
-  const { status } = useNetworkStatus();
-  return status === 'offline';
-}
-
-function useNetworkCondition(): 'slow' | 'medium' | 'fast' | 'unknown' {
-  const { effectiveType, rtt } = useNetworkStatus();
-
-  if (!effectiveType || !rtt) {
-    return 'unknown';
-  }
-
-  if (effectiveType === 'slow-2g' || effectiveType === '2g' || rtt >= 300) {
-    return 'slow';
-  }
-
-  if (effectiveType === '3g' || rtt >= 150) {
-    return 'medium';
-  }
-
-  return 'fast';
-}

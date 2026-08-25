@@ -24,11 +24,6 @@ export interface Span {
 let currentTraceId: string | null = null;
 let currentSpanId: string | null = null;
 
-function resetTrace(): void {
-  currentTraceId = null;
-  currentSpanId = null;
-}
-
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
@@ -174,48 +169,4 @@ export function instrumentFetch(originalFetch: typeof fetch): typeof fetch {
       throw error;
     }
   };
-}
-
-interface AxiosInterceptorConfig {
-  headers?: Record<string, string>;
-}
-
-interface AxiosResponse {
-  config?: AxiosInterceptorConfig;
-}
-
-interface AxiosInterceptorManager<T> {
-  use(
-    onFulfilled?: (value: T) => T | Promise<T>,
-    onRejected?: (error: unknown) => Promise<never>
-  ): number;
-}
-
-interface AxiosInstance {
-  interceptors: {
-    request: AxiosInterceptorManager<AxiosInterceptorConfig>;
-    response: AxiosInterceptorManager<AxiosResponse>;
-  };
-}
-
-function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
-  axiosInstance.interceptors.request.use((config: AxiosInterceptorConfig) => {
-    const traceHeaders = getTraceHeaders();
-    config.headers = {
-      ...config.headers,
-      ...traceHeaders,
-    };
-    return config;
-  });
-
-  axiosInstance.interceptors.response.use(
-    (response: AxiosResponse) => {
-      return response;
-    },
-    (error: unknown) => {
-      return Promise.reject(error);
-    }
-  );
-
-  return axiosInstance;
 }
