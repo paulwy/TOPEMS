@@ -66,9 +66,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   viewState,
   onViewStateChange,
   buildings = [],
-  terrain,
   enable3D = true,
-  enableTerrain = true,
   enableBuildings = true,
   children,
   className = '',
@@ -89,17 +87,6 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
       }
     };
   }, [enable3D]);
-  // 处理视角变化
-  const _handleMove = useCallback(() => {
-    if (mapRef.current && onViewStateChange) {
-      const center = mapRef.current.getCenter();
-      onViewStateChange({
-        ...viewState,
-        center: [center.lat, center.lng],
-        zoom: mapRef.current.getZoom(),
-      });
-    }
-  }, [viewState, onViewStateChange]);
   // 视角动画
   const animateTo = useCallback(
     (animation: CameraAnimation) => {
@@ -137,18 +124,6 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
     },
     [onViewStateChange]
   );
-  // 渲染3D建筑
-  const _renderBuildings = useCallback(() => {
-    if (!enableBuildings || !mapRef.current) return null;
-    return buildings.map((building) => (
-      <BuildingMarker
-        key={building.id}
-        building={building}
-        map={mapRef.current!}
-        enable3D={enable3D}
-      />
-    ));
-  }, [buildings, enableBuildings, enable3D]);
   return (
     <div
       className={`map-3d-view ${className}`}
