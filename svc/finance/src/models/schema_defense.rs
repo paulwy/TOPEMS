@@ -1,4 +1,108 @@
 pub const SERVICE_SCHEMA: &str = "finance";
+pub const INTERNAL_SCHEMA: &str = "plugin_finance";
+
+/// Finance 内部事件驱动快照表（plugin_finance schema）
+pub const INTERNAL_TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
+    (
+        "reconciliation_snapshots",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("recon_code", "VARCHAR(100)"),
+            ("recon_name", "VARCHAR(200) NOT NULL"),
+            ("recon_type", "VARCHAR(50) NOT NULL"),
+            ("status", "VARCHAR(50) NOT NULL DEFAULT 'draft'"),
+            ("period", "VARCHAR(50) NOT NULL"),
+            ("entity_id", "UUID"),
+            ("entity_type", "VARCHAR(50)"),
+            ("total_debit", "DOUBLE PRECISION"),
+            ("total_credit", "DOUBLE PRECISION"),
+            ("difference", "DOUBLE PRECISION"),
+            ("matched_count", "INTEGER DEFAULT 0"),
+            ("unmatched_count", "INTEGER DEFAULT 0"),
+            ("description", "TEXT"),
+            ("created_by", "VARCHAR(200)"),
+            ("approved_by", "VARCHAR(200)"),
+            ("approved_at", "TIMESTAMPTZ"),
+            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "reconciliation_item_snapshots",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("recon_id", "UUID NOT NULL"),
+            ("item_type", "VARCHAR(50) NOT NULL"),
+            ("item_id", "UUID"),
+            ("item_code", "VARCHAR(100)"),
+            ("item_name", "VARCHAR(200)"),
+            ("debit_amount", "DOUBLE PRECISION DEFAULT 0"),
+            ("credit_amount", "DOUBLE PRECISION DEFAULT 0"),
+            ("currency", "VARCHAR(10) DEFAULT 'CNY'"),
+            ("match_status", "VARCHAR(30) NOT NULL DEFAULT 'unmatched'"),
+            ("matched_item_id", "UUID"),
+            ("description", "TEXT"),
+            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "settlement_snapshots",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("project_id", "UUID NOT NULL"),
+            ("settlement_no", "VARCHAR(100) NOT NULL"),
+            ("settlement_type", "VARCHAR(50) NOT NULL"),
+            ("status", "VARCHAR(50) NOT NULL DEFAULT 'pending'"),
+            ("amount", "DOUBLE PRECISION"),
+            ("settlement_date", "TIMESTAMPTZ"),
+            ("remarks", "TEXT"),
+            ("created_by", "VARCHAR(200)"),
+            ("approved_by", "VARCHAR(200)"),
+            ("approved_at", "TIMESTAMPTZ"),
+            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "reconciliation_settlement_links",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("reconciliation_id", "UUID NOT NULL"),
+            ("settlement_id", "UUID NOT NULL"),
+            ("link_type", "VARCHAR(50) NOT NULL"),
+            ("amount", "DOUBLE PRECISION"),
+            ("status", "VARCHAR(50) NOT NULL DEFAULT 'linked'"),
+            ("remark", "TEXT"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "difference_adjustments",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("source_type", "VARCHAR(50) NOT NULL"),
+            ("source_id", "UUID"),
+            ("difference_type", "VARCHAR(50) NOT NULL"),
+            ("difference_amount", "DOUBLE PRECISION NOT NULL"),
+            ("reason", "TEXT"),
+            ("adjustment_amount", "DOUBLE PRECISION"),
+            ("adjustment_type", "VARCHAR(50)"),
+            ("status", "VARCHAR(30) NOT NULL DEFAULT 'pending'"),
+            ("approved_by", "UUID"),
+            ("approved_at", "TIMESTAMPTZ"),
+            ("remark", "TEXT"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+];
 
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
@@ -1110,41 +1214,49 @@ async fn verify_table_columns(
 }
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // 阶段 0：确保 TABLE_DEFS 中所有表的"骨架"都存在（空表仅含 id PK）。
-    // 新增的表如果老环境从未 CREATE 过，后续 ensure_table_columns(ALTER TABLE …)
-    // 会因为 relation does not exist 直接报错。用 IF NOT EXISTS 建最小骨架即可，
-    // 后续阶段 1 再补齐所有非 PK 列，老库已存在的表完全不受影响。
-    for (tbl, _cols_arr) in TABLE_DEFS {
-        let ddl = format!(
-            "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (\
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid()\
-            )",
-            SERVICE_SCHEMA, tbl
-        );
-        sqlx::query(&ddl).execute(pool).await?;
+    let schemas: &[(&str, &[(&str, &[(&str, &str)])])] = &[
+        (SERVICE_SCHEMA, TABLE_DEFS),
+        (INTERNAL_SCHEMA, INTERNAL_TABLE_DEFS),
+    ];
+
+    for (schema, defs) in schemas {
+        for (tbl, _cols_arr) in *defs {
+            let ddl = format!(
+                "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (\
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid()\
+                )",
+                schema, tbl
+            );
+            sqlx::query(&ddl).execute(pool).await?;
+        }
     }
 
     let mut tables_done = 0usize;
     let mut cols_added = 0usize;
-    for (tbl, cols_arr) in TABLE_DEFS {
-        let n = ensure_table_columns(pool, Some(SERVICE_SCHEMA), tbl, cols_arr).await?;
-        tables_done += 1;
-        cols_added += n;
+    for (schema, defs) in schemas {
+        for (tbl, cols_arr) in *defs {
+            let n = ensure_table_columns(pool, Some(schema), tbl, cols_arr).await?;
+            tables_done += 1;
+            cols_added += n;
+        }
     }
     tracing::info!(
         "[finance 增量迁移] 完成 {} 张表 / {} 列 ADD COLUMN IF NOT EXISTS 检查",
         tables_done,
         cols_added
     );
+
     let mut verified = 0usize;
-    for (tbl, cols_arr) in TABLE_DEFS {
-        let mut expected = vec!["id"];
-        expected.extend(cols_arr.iter().map(|(c, _)| *c));
-        verify_table_columns(pool, SERVICE_SCHEMA, tbl, &expected).await?;
-        verified += 1;
+    for (schema, defs) in schemas {
+        for (tbl, cols_arr) in *defs {
+            let mut expected = vec!["id"];
+            expected.extend(cols_arr.iter().map(|(c, _)| *c));
+            verify_table_columns(pool, schema, tbl, &expected).await?;
+            verified += 1;
+        }
     }
     tracing::info!(
-        "[finance schema 自检] 完成 {} 张表结构一致性校验（缺失列会单独 WARN）",
+        "[finance schema 自检] 完成 {} 张表结构一致性校验",
         verified
     );
     Ok(())

@@ -3,7 +3,7 @@ import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { Plus, X } from 'lucide-react';
 import { ActionButton, FormField, FormSelect, Dialog, CurrencyField } from '@/components/common';
-import type { VoucherItemRequest, AccountingSubject } from '@/api/erp';
+import type { VoucherItemRequest, AccountingSubject } from '@/api/finance';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';

@@ -12,7 +12,6 @@ use axum::{
 };
 use serde_json::json;
 
-use crate::middleware::permission::require_permission;
 use crate::AppState;
 
 /// 501 Not Implemented 通用响应
@@ -88,14 +87,7 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
         .route("/automation/variables", get(list_variables))
 }
 
-/// R4/R6 stub router: mounts require_permission("automation:dashboard:read")
-/// on /internal/stubs/automation so backend module set covers the frontend
-/// automation module (real routes return 501).
-pub fn stub_router(state: &AppState) -> Router<AppState> {
-    Router::new()
-        .route("/dashboard", get(|| async { "ok" }))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("automation:dashboard:read"),
-        ))
-}
+// V289: 已删除 R4/R6 stub_router（原挂载 /internal/stubs/automation + require_permission
+// automation:dashboard:read）。原因见 routes/mod.rs V289 注释：前端 0 业务流量 +
+// {mod}:dashboard:read 从未进入 init_permissions 权限表 + plugin.yaml 是权限真源。
+

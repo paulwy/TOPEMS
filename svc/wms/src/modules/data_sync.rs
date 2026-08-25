@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::models::OutboundOrder;
 use crate::modules::ApiState;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_event::event::ShippingOrderRequestedPayload;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundToShippingRequest {
@@ -146,24 +147,14 @@ pub async fn create_shipping_from_outbound_internal(
         }
     };
 
-    let existing_shipping = sqlx::query_scalar::<_, i64>(
-        r#"
-        SELECT COUNT(*) FROM plugin_crm.sales_orders
-        WHERE order_number = $1
-        "#,
-    )
-    .bind(&outbound_order.order_number)
-    .fetch_one(&state.db)
-    .await;
-
-    if existing_shipping.unwrap_or(0) > 0 {
+    if outbound_order.sales_order_id.is_some() {
         return Json(ApiResponse::success(
             serde_json::json!({
                 "success": false,
                 "message": "该出库单已创建销售订单".to_string(),
                 "outbound_order_id": outbound_order_id,
-                "shipping_order_id": null,
-                "shipping_order_number": null,
+                "shipping_order_id": outbound_order.sales_order_id,
+                "shipping_order_number": outbound_order.sales_order_number,
             }),
             "该出库单已创建销售订单",
         ));
@@ -173,89 +164,76 @@ pub async fn create_shipping_from_outbound_internal(
     let now = Utc::now();
     let shipping_order_number = format!("SHP-{}", outbound_order.order_number);
 
-    let result = sqlx::query(
+    let payload = ShippingOrderRequestedPayload {
+        outbound_order_id,
+        outbound_order_number: outbound_order.order_number.clone(),
+        customer_id: customer_id.or(outbound_order.customer_id),
+        order_date: outbound_order.order_date,
+        total_amount: outbound_order.total_amount.unwrap_or(0.0),
+        shipping_id,
+        shipping_order_number: shipping_order_number.clone(),
+        requested_at: now,
+    };
+
+    if let Some(ref publisher) = state.event_publisher {
+        match publisher.publish_shipping_order_requested(payload.clone()).await {
+            Ok(_) => {
+                tracing::info!(
+                    "[wms] 发布 ShippingOrderRequested 事件成功 - outbound_order_id={}, shipping_id={}, shipping_order_number={}",
+                    outbound_order_id, shipping_id, shipping_order_number
+                );
+            }
+            Err(e) => {
+                tracing::error!(
+                    "[wms] 发布 ShippingOrderRequested 事件失败: {}，将改为直接更新",
+                    e
+                );
+            }
+        }
+    }
+
+    let _ = sqlx::query(
         r#"
-        INSERT INTO plugin_crm.sales_orders (id, order_number, customer_id, order_date, 
-                                             total_amount, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+        UPDATE plugin_wms.outbound_orders 
+        SET status = 'shipped', sales_order_id = $2, 
+            sales_order_number = $3, is_synced_to_crm = TRUE, updated_at = $4
+        WHERE id = $1
         "#,
     )
+    .bind(outbound_order_id)
     .bind(shipping_id)
     .bind(&shipping_order_number)
-    .bind(customer_id.or(outbound_order.customer_id))
-    .bind(outbound_order.order_date)
-    .bind(outbound_order.total_amount)
-    .bind(now)
     .bind(now)
     .execute(&state.db)
     .await;
 
-    match result {
-        Ok(_) => {
-            let _ = sqlx::query(
-                r#"
-                UPDATE plugin_wms.outbound_orders 
-                SET status = 'shipped', sales_order_id = $2, 
-                    sales_order_number = $3, is_synced_to_crm = TRUE, updated_at = $4
-                WHERE id = $1
-                "#,
-            )
-            .bind(outbound_order_id)
-            .bind(shipping_id)
-            .bind(&shipping_order_number)
-            .bind(now)
-            .execute(&state.db)
-            .await;
+    let _ = record_sync_log(
+        state,
+        "outbound_to_shipping",
+        "wms",
+        "crm",
+        "outbound_order",
+        outbound_order_id,
+        &outbound_order.order_number,
+        Some(shipping_id),
+        &shipping_order_number,
+        "create",
+        "success",
+        None,
+        0,
+    )
+    .await;
 
-            let _ = record_sync_log(
-                state,
-                "outbound_to_shipping",
-                "wms",
-                "crm",
-                "outbound_order",
-                outbound_order_id,
-                &outbound_order.order_number,
-                Some(shipping_id),
-                &shipping_order_number,
-                "create",
-                "success",
-                None,
-                0,
-            )
-            .await;
-
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": true,
-                    "message": "销售订单创建成功".to_string(),
-                    "outbound_order_id": outbound_order_id,
-                    "shipping_order_id": shipping_id,
-                    "shipping_order_number": shipping_order_number,
-                }),
-                "出库单转销售订单成功",
-            ))
-        }
-        Err(e) => {
-            tracing::error!("创建销售订单失败: {}", e);
-            let _ = record_sync_log(
-                state,
-                "outbound_to_shipping",
-                "wms",
-                "crm",
-                "outbound_order",
-                outbound_order_id,
-                &outbound_order.order_number,
-                None,
-                "",
-                "create",
-                "failed",
-                Some(e.to_string()),
-                0,
-            )
-            .await;
-            Json(api_error(500, "创建销售订单失败"))
-        }
-    }
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "success": true,
+            "message": "出库单转销售订单事件已发布，CRM将异步创建销售订单".to_string(),
+            "outbound_order_id": outbound_order_id,
+            "shipping_order_id": shipping_id,
+            "shipping_order_number": shipping_order_number,
+        }),
+        "出库单转销售订单事件发布成功",
+    ))
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -292,8 +270,8 @@ pub async fn create_inbound_from_scm(
 
     let purchase_order = sqlx::query(
         r#"
-        SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks
-        FROM plugin_scm.purchase_orders
+        SELECT id, order_number, supplier_id, total_amount, status
+        FROM plugin_wms.purchase_order_snapshots
         WHERE id = $1 AND status = 'approved'
         "#,
     )

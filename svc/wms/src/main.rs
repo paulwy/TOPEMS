@@ -96,6 +96,16 @@ async fn main() -> Result<()> {
         auto_register_to_core(core_url.as_deref()).await;
     });
 
+    // 启动事件订阅器
+    if let Err(e) = event_handlers::start_event_subscribers(
+        ctx.db.clone(),
+        ctx.event_publisher.clone(),
+    )
+    .await
+    {
+        tracing::warn!("WMS 事件订阅器启动警告: {}", e);
+    }
+
     run(app).await
 }
 

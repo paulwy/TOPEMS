@@ -115,7 +115,7 @@ async fn main() -> Result<()> {
         .merge(create_tender_routes(ctx.db.clone()).await?)
         .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
         .merge(create_performance_routes(ctx.db.clone()).await?)
-        .merge(create_data_sync_routes(ctx.db.clone()).await?)
+        .merge(create_data_sync_routes(ctx.db.clone(), ctx.event_publisher.clone()).await?)
         .merge(create_scoring_dimension_routes(ctx.db.clone()).await?)
         .merge(create_statistics_routes(ctx.db.clone()))
         // 预应用 tenant_middleware（build_application 会叠加 auth + rls + rate_limit）

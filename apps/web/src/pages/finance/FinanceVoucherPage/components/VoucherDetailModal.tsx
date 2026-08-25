@@ -2,7 +2,7 @@ import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { Dialog } from '@/components/common';
-import type { FinancialVoucher, VoucherItem } from '@/api/erp';
+import type { FinancialVoucher, VoucherItem } from '@/api/finance';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';

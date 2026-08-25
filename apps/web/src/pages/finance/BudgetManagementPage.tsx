@@ -24,7 +24,7 @@ import { useQuery } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { getBudgetSchema } from '@/schemas/finance/budget';
 import { budgetApi } from '@/api/erp';
-import type { Budget } from '@/api/erp';
+import type { Budget } from '@/api/finance';
 import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';
 import { BackButton, PageContainer } from '@/components/common';

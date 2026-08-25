@@ -23,7 +23,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{auth::Claims, ApiResponse};
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_event::event::MasterDataAction;
+use topems_shared_event::event::{MasterDataAction, SupplierDataSyncRequestedPayload};
 use topems_shared_event::redis::{CacheService, RedisCacheService};
 
 /// 供应商缓存 TTL: 5分钟
@@ -51,6 +51,57 @@ fn suppliers_list_cache_key(
         "{}:page:{}:size:{}:search:{:?}:status:{:?}",
         CACHE_PREFIX_SUPPLIERS_LIST, page, page_size, search_pattern, status
     )
+}
+
+fn publish_supplier_sync_event(
+    event_publisher: &Option<Arc<topems_shared_event::event::EventPublisher>>,
+    supplier_id: Uuid,
+    supplier_name: String,
+    short_name: Option<String>,
+    contact_name: Option<String>,
+    contact_phone: Option<String>,
+    email: Option<String>,
+    address: Option<String>,
+    tax_number: Option<String>,
+    bank_account: Option<String>,
+    status: String,
+    tenant_id: Option<Uuid>,
+) {
+    let publisher = match event_publisher {
+        Some(p) => p.clone(),
+        None => return,
+    };
+
+    let now = Utc::now();
+
+    let payload = SupplierDataSyncRequestedPayload {
+        supplier_id,
+        supplier_name,
+        short_name,
+        contact_name,
+        contact_phone,
+        email,
+        address,
+        tax_number,
+        bank_account,
+        status,
+        sync_direction: "scm_to_srm".to_string(),
+        requested_at: now,
+        requested_by: None,
+        tenant_id,
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = publisher
+            .publish_supplier_data_sync_requested(payload)
+            .await
+        {
+            tracing::warn!(
+                "[scm] SupplierDataSyncRequested(scm_to_srm) 事件发布失败（graceful fallback）: {}",
+                e
+            );
+        }
+    });
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -286,6 +337,27 @@ pub async fn create_supplier(
         });
     }
 
+    if let Ok(supplier) = &result {
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok());
+        publish_supplier_sync_event(
+            &state.event_publisher,
+            supplier.id,
+            supplier.name.clone(),
+            supplier.short_name.clone(),
+            supplier.contact_name.clone(),
+            supplier.contact_phone.clone(),
+            supplier.email.clone(),
+            supplier.address.clone(),
+            supplier.tax_number.clone(),
+            supplier.bank_account.clone(),
+            supplier.status.clone(),
+            tid,
+        );
+    }
+
     response
 }
 
@@ -514,6 +586,27 @@ pub async fn update_supplier(
         });
     }
 
+    if let Ok(supplier) = &result {
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok());
+        publish_supplier_sync_event(
+            &state.event_publisher,
+            supplier.id,
+            supplier.name.clone(),
+            supplier.short_name.clone(),
+            supplier.contact_name.clone(),
+            supplier.contact_phone.clone(),
+            supplier.email.clone(),
+            supplier.address.clone(),
+            supplier.tax_number.clone(),
+            supplier.bank_account.clone(),
+            supplier.status.clone(),
+            tid,
+        );
+    }
+
     response
 }
 
@@ -619,6 +712,25 @@ pub async fn delete_supplier(
                 )
                 .await;
         });
+
+        let tid = claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok());
+        publish_supplier_sync_event(
+            &state.event_publisher,
+            id,
+            "".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "deleted".to_string(),
+            tid,
+        );
     }
 
     response

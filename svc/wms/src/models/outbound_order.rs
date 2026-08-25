@@ -17,6 +17,9 @@ pub struct OutboundOrder {
     pub total_amount: Option<f64>,
     pub status: String,
     pub remarks: Option<String>,
+    pub sales_order_id: Option<Uuid>,
+    pub sales_order_number: Option<String>,
+    pub is_synced_to_crm: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -61,6 +64,9 @@ mod tests {
             total_amount: Some(2500.0),
             status: "created".into(),
             remarks: Some("outbound test".into()),
+            sales_order_id: None,
+            sales_order_number: None,
+            is_synced_to_crm: Some(false),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

@@ -267,80 +267,64 @@ pub async fn calculate_turnover(
 
     let result = sqlx::query(
         r#"
-        WITH inventory_period AS (
+        WITH current_inventory AS (
             SELECT 
-                i.material_code,
-                i.material_name,
+                i.item_code as material_code,
+                i.item_name as material_name,
                 i.specification,
                 i.unit,
                 i.category,
                 i.warehouse_id,
-                w.name as warehouse_name,
+                i.warehouse_name,
                 COALESCE(i.quantity, 0) as ending_inventory,
                 COALESCE(i.total_value, 0) as ending_value
-            FROM wms.inventory i
-            LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
-            WHERE i.deleted_at IS NULL
-              AND ($5::uuid IS NULL OR i.warehouse_id = $5)
+            FROM scm.wms_inventory_snapshots i
+            WHERE ($5::uuid IS NULL OR i.warehouse_id = $5)
               AND ($6::text IS NULL OR i.category = $6)
         ),
-        outbound_summary AS (
+        movement_summary AS (
             SELECT 
-                material_code,
+                item_code as material_code,
                 warehouse_id,
-                SUM(quantity) as total_outbound_quantity,
-                SUM(total_value) as total_outbound_value
-            FROM wms.inventory_movements
-            WHERE movement_type = 'outbound'
-              AND created_at >= $1::timestamptz
-              AND created_at <= $2::timestamptz
+                SUM(CASE WHEN movement_type = 'inbound' THEN quantity ELSE 0 END) as total_inbound_qty,
+                SUM(CASE WHEN movement_type = 'outbound' THEN quantity ELSE 0 END) as total_outbound_qty,
+                SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END) as total_outbound_value
+            FROM scm.wms_inventory_movement_snapshots
+            WHERE movement_date >= $1::timestamptz
+              AND movement_date <= $2::timestamptz
               AND ($5::uuid IS NULL OR warehouse_id = $5)
-            GROUP BY material_code, warehouse_id
-        ),
-        beginning_inventory AS (
-            SELECT 
-                material_code,
-                warehouse_id,
-                AVG(quantity) as avg_beginning
-            FROM wms.inventory_snapshots
-            WHERE snapshot_date >= $1::date
-              AND snapshot_date <= $2::date
-              AND ($5::uuid IS NULL OR warehouse_id = $5)
-            GROUP BY material_code, warehouse_id
+            GROUP BY item_code, warehouse_id
         )
         SELECT 
-            ip.material_code,
-            ip.material_name,
-            ip.specification,
-            ip.unit,
-            ip.category,
-            ip.warehouse_id,
-            ip.warehouse_name,
-            COALESCE(bi.avg_beginning, ip.ending_inventory) as beginning_inventory,
-            ip.ending_inventory,
-            (COALESCE(bi.avg_beginning, ip.ending_inventory) + ip.ending_inventory) / 2 as average_inventory,
-            COALESCE(os.total_outbound_value, 0) as cost_of_goods_sold,
+            ci.material_code,
+            ci.material_name,
+            ci.specification,
+            ci.unit,
+            ci.category,
+            ci.warehouse_id,
+            ci.warehouse_name,
+            COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) as beginning_inventory,
+            ci.ending_inventory,
+            (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 as average_inventory,
+            COALESCE(ms.total_outbound_value, 0) as cost_of_goods_sold,
             CASE 
-                WHEN (COALESCE(bi.avg_beginning, ip.ending_inventory) + ip.ending_inventory) / 2 > 0
-                THEN COALESCE(os.total_outbound_value, 0) / ((COALESCE(bi.avg_beginning, ip.ending_inventory) + ip.ending_inventory) / 2)
+                WHEN (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
+                THEN COALESCE(ms.total_outbound_value, 0) / ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2)
                 ELSE 0
             END as turnover_rate,
             CASE 
                 WHEN 
-                    (COALESCE(bi.avg_beginning, ip.ending_inventory) + ip.ending_inventory) / 2 > 0
-                    AND COALESCE(os.total_outbound_value, 0) > 0
-                THEN ((COALESCE(bi.avg_beginning, ip.ending_inventory) + ip.ending_inventory) / 2) * 90 / COALESCE(os.total_outbound_value, 1)
+                    (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
+                    AND COALESCE(ms.total_outbound_value, 0) > 0
+                THEN ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2) * 90 / COALESCE(ms.total_outbound_value, 1)
                 ELSE 999
             END as turnover_days,
-            ip.ending_value as inventory_value
-        FROM inventory_period ip
-        LEFT JOIN outbound_summary os 
-            ON ip.material_code = os.material_code 
-            AND ip.warehouse_id = os.warehouse_id
-        LEFT JOIN beginning_inventory bi 
-            ON ip.material_code = bi.material_code 
-            AND ip.warehouse_id = bi.warehouse_id
-        WHERE ($3::text IS NULL OR ip.material_name ILIKE $3 OR ip.material_code ILIKE $3)
+            ci.ending_value as inventory_value
+        FROM current_inventory ci
+        LEFT JOIN movement_summary ms 
+            ON ci.material_code = ms.material_code 
+            AND ci.warehouse_id = ms.warehouse_id
+        WHERE ($3::text IS NULL OR ci.material_name ILIKE $3 OR ci.material_code ILIKE $3)
         ORDER BY turnover_rate DESC
         LIMIT $4 OFFSET $7
         "#,
@@ -360,11 +344,10 @@ pub async fn calculate_turnover(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) 
-                FROM wms.inventory i
-                WHERE i.deleted_at IS NULL
-                  AND ($1::uuid IS NULL OR i.warehouse_id = $1)
+                FROM scm.wms_inventory_snapshots i
+                WHERE ($1::uuid IS NULL OR i.warehouse_id = $1)
                   AND ($2::text IS NULL OR i.category = $2)
-                  AND ($3::text IS NULL OR i.material_name ILIKE $3 OR i.material_code ILIKE $3)
+                  AND ($3::text IS NULL OR i.item_name ILIKE $3 OR i.item_code ILIKE $3)
                 "#,
             )
             .bind(params.warehouse_id)
@@ -437,18 +420,17 @@ pub async fn turnover_days(
             SELECT 
                 SUM(COALESCE(i.total_value, 0)) as total_inventory_value,
                 COUNT(*) as sku_count
-            FROM wms.inventory i
-            WHERE i.deleted_at IS NULL
-              AND ($3::uuid IS NULL OR i.warehouse_id = $3)
+            FROM scm.wms_inventory_snapshots i
+            WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
         ),
         outbound_stats AS (
             SELECT 
                 SUM(total_value) as total_outbound_value,
-                COUNT(DISTINCT material_code) as active_skus
-            FROM wms.inventory_movements
+                COUNT(DISTINCT item_code) as active_skus
+            FROM scm.wms_inventory_movement_snapshots
             WHERE movement_type = 'outbound'
-              AND created_at >= $1::timestamptz
-              AND created_at <= $2::timestamptz
+              AND movement_date >= $1::timestamptz
+              AND movement_date <= $2::timestamptz
               AND ($3::uuid IS NULL OR warehouse_id = $3)
         )
         SELECT 
@@ -540,22 +522,21 @@ pub async fn abc_analysis(
         r#"
         WITH ranked_inventory AS (
             SELECT 
-                i.material_code,
-                i.material_name,
+                i.item_code as material_code,
+                i.item_name as material_name,
                 COALESCE(i.total_value, 0) as inventory_value,
                 SUM(COALESCE(im.total_value, 0)) as outbound_value,
                 ROW_NUMBER() OVER (ORDER BY COALESCE(i.total_value, 0) DESC) as rn,
                 COUNT(*) OVER () as total_count,
                 SUM(COALESCE(i.total_value, 0)) OVER () as total_value
-            FROM wms.inventory i
-            LEFT JOIN wms.inventory_movements im 
-                ON i.material_code = im.material_code 
+            FROM scm.wms_inventory_snapshots i
+            LEFT JOIN scm.wms_inventory_movement_snapshots im 
+                ON i.item_code = im.item_code 
                 AND im.movement_type = 'outbound'
-                AND im.created_at >= $1::timestamptz
-                AND im.created_at <= $2::timestamptz
-            WHERE i.deleted_at IS NULL
-              AND ($3::uuid IS NULL OR i.warehouse_id = $3)
-            GROUP BY i.material_code, i.material_name, i.total_value
+                AND im.movement_date >= $1::timestamptz
+                AND im.movement_date <= $2::timestamptz
+            WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
+            GROUP BY i.item_code, i.item_name, i.total_value
         ),
         cumulative AS (
             SELECT 
@@ -653,25 +634,25 @@ pub async fn turnover_trend(
         r#"
         WITH monthly_data AS (
             SELECT 
-                DATE_TRUNC('month', created_at) as month,
+                DATE_TRUNC('month', movement_date) as month,
                 SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END) as outbound_value,
                 SUM(CASE WHEN movement_type = 'inbound' THEN total_value ELSE 0 END) as inbound_value
-            FROM wms.inventory_movements
-            WHERE created_at >= $1::timestamptz
-              AND created_at <= $2::timestamptz
+            FROM scm.wms_inventory_movement_snapshots
+            WHERE movement_date >= $1::timestamptz
+              AND movement_date <= $2::timestamptz
               AND ($3::uuid IS NULL OR warehouse_id = $3)
-            GROUP BY DATE_TRUNC('month', created_at)
+            GROUP BY DATE_TRUNC('month', movement_date)
             ORDER BY month
         ),
         monthly_inventory AS (
             SELECT 
-                DATE_TRUNC('month', snapshot_date) as month,
+                DATE_TRUNC('month', synced_at) as month,
                 AVG(total_value) as avg_inventory_value
-            FROM wms.inventory_snapshots
-            WHERE snapshot_date >= $1::date
-              AND snapshot_date <= $2::date
+            FROM scm.wms_inventory_snapshots
+            WHERE synced_at >= $1::timestamptz
+              AND synced_at <= $2::timestamptz
               AND ($3::uuid IS NULL OR warehouse_id = $3)
-            GROUP BY DATE_TRUNC('month', snapshot_date)
+            GROUP BY DATE_TRUNC('month', synced_at)
         )
         SELECT 
             md.month,

@@ -2,11 +2,18 @@ use super::error::EventResult;
 use super::event_types::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventType,
     HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
-    HrmEmployeeCreatedPayload, LimsInspectionAbnormalDetectedPayload,
-    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
-    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload, SrmSupplierCreatedPayload,
-    SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload, WmsInventoryItemReceivedPayload,
+    HrmEmployeeCreatedPayload,
+    InboundOrderRequestedPayload,
+    LimsInspectionAbnormalDetectedPayload, LimsInspectionResultSubmittedPayload,
+    LimsSampleRegisteredPayload, PmProjectCreatedPayload, PmProjectUpdatedPayload,
+    PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
+    ReconciliationApprovedPayload, ReconciliationCreatedPayload, ReconciliationUpdatedPayload,
+    SalesOrderApprovedPayload, SalesOrderCreatedPayload, SettlementApprovedPayload,
+    SettlementCreatedPayload, SettlementRejectedPayload, ShippingOrderRequestedPayload,
+    SrmSupplierCreatedPayload, SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
+    SupplierDataSyncRequestedPayload, WmsInventoryItemReceivedPayload,
     WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
     WmsWarehouseTransferCompletedPayload,
 };
@@ -308,6 +315,15 @@ impl EventPublisher {
 
     // --- WMS Events（P3 事件驱动规范化） ---
 
+    /// 发布 SCM→WMS 入库单创建请求事件
+    pub async fn publish_inbound_order_requested(
+        &self,
+        payload: InboundOrderRequestedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::InboundOrderRequested, payload)
+            .await
+    }
+
     /// 发布库存出库事件，通知 SCM/Finance 出库完成
     pub async fn publish_inventory_shipped(
         &self,
@@ -344,6 +360,65 @@ impl EventPublisher {
             .await
     }
 
+    /// 发布出库单转销售订单事件，通知 CRM 在本地创建销售订单
+    /// 替代原有的跨Schema直写（WMS直写CRM表），采用事件驱动解耦
+    pub async fn publish_shipping_order_requested(
+        &self,
+        payload: ShippingOrderRequestedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::ShippingOrderRequested, payload)
+            .await
+    }
+
+    // --- ERP Sales/Purchase Events（P3 事件驱动规范化，替代跨Schema直查） ---
+
+    /// 发布销售订单创建事件，携带 payable_amount 供 Finance 本地快照存储
+    pub async fn publish_sales_order_created(
+        &self,
+        payload: SalesOrderCreatedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SalesOrderCreated, payload)
+            .await
+    }
+
+    /// 发布销售订单审批事件，携带最新 payable_amount
+    pub async fn publish_sales_order_approved(
+        &self,
+        payload: SalesOrderApprovedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SalesOrderApproved, payload)
+            .await
+    }
+
+    /// 发布采购订单创建事件，携带 payable_amount 供 Finance 本地快照存储
+    pub async fn publish_purchase_order_created(
+        &self,
+        payload: PurchaseOrderCreatedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::PurchaseOrderCreated, payload)
+            .await
+    }
+
+    /// 发布采购订单审批事件，携带最新 payable_amount
+    pub async fn publish_purchase_order_approved(
+        &self,
+        payload: PurchaseOrderApprovedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::PurchaseOrderApproved, payload)
+            .await
+    }
+
+    // --- SRM→SCM Supplier Sync Events ---
+
+    /// 发布供应商数据同步请求事件（SRM→SCM 方向）
+    pub async fn publish_supplier_data_sync_requested(
+        &self,
+        payload: SupplierDataSyncRequestedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SupplierDataSyncRequested, payload)
+            .await
+    }
+
     // --- SRM Events（P3 事件驱动规范化） ---
 
     /// 发布供应商创建事件，通知 SCM/Finance 同步供应商主数据
@@ -370,6 +445,56 @@ impl EventPublisher {
         payload: SrmSupplierStatusChangedPayload,
     ) -> EventResult<()> {
         self.publish_event(EventType::SrmSupplierStatusChanged, payload)
+            .await
+    }
+
+    // --- Finance Reconciliation & Settlement Events ---
+
+    pub async fn publish_reconciliation_created(
+        &self,
+        payload: ReconciliationCreatedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::ReconciliationCreated, payload)
+            .await
+    }
+
+    pub async fn publish_reconciliation_updated(
+        &self,
+        payload: ReconciliationUpdatedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::ReconciliationUpdated, payload)
+            .await
+    }
+
+    pub async fn publish_reconciliation_approved(
+        &self,
+        payload: ReconciliationApprovedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::ReconciliationApproved, payload)
+            .await
+    }
+
+    pub async fn publish_settlement_created(
+        &self,
+        payload: SettlementCreatedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SettlementCreated, payload)
+            .await
+    }
+
+    pub async fn publish_settlement_approved(
+        &self,
+        payload: SettlementApprovedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SettlementApproved, payload)
+            .await
+    }
+
+    pub async fn publish_settlement_rejected(
+        &self,
+        payload: SettlementRejectedPayload,
+    ) -> EventResult<()> {
+        self.publish_event(EventType::SettlementRejected, payload)
             .await
     }
 }

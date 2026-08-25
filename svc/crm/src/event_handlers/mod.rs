@@ -12,6 +12,7 @@ use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMaster
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
     EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
+    ShippingOrderRequestedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -37,6 +38,7 @@ impl CrmEventHandlers {
         let h4 = self.clone();
         let h5 = self.clone();
         let h6 = self.clone();
+        let h7 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
@@ -60,6 +62,14 @@ impl CrmEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_customer_created(event).await {
                         tracing::error!("[crm] handle_customer_created 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::ShippingOrderRequested], move |event| {
+                let h = h7.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_shipping_order_requested(event).await {
+                        tracing::error!("[crm] handle_shipping_order_requested 失败: {}", e);
                     }
                 })
             })
@@ -364,6 +374,81 @@ impl CrmEventHandlers {
         Ok(())
     }
 
+    /// ShippingOrderRequested → WMS 出库单确认后，在 CRM 本地创建销售订单
+    ///
+    /// 替代 WMS 直接跨 Schema 写 plugin_crm.sales_orders 的方式，
+    /// 采用事件驱动解耦，CRM 在本地创建销售订单。
+    async fn handle_shipping_order_requested(&self, event: Event) -> HandlerResult {
+        let payload: ShippingOrderRequestedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 ShippingOrderRequested payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[crm] ShippingOrderRequested 处理 - outbound_order_id={}, shipping_id={}, shipping_order_number={}, customer_id={:?}, total_amount={}, trace_id={:?}",
+            payload.outbound_order_id,
+            payload.shipping_id,
+            payload.shipping_order_number,
+            payload.customer_id,
+            payload.total_amount,
+            event.trace_id
+        );
+
+        let now = chrono::Utc::now();
+
+        let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
+            "SELECT id FROM plugin_crm.sales_orders WHERE order_number = $1",
+        )
+        .bind(&payload.shipping_order_number)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| format!("查询销售订单是否存在失败: {}", e))?;
+
+        if existing.is_some() {
+            tracing::warn!(
+                "[crm] 销售订单已存在（跳过）- shipping_order_number={}",
+                payload.shipping_order_number
+            );
+            return Ok(());
+        }
+
+        let result = sqlx::query(
+            r#"INSERT INTO plugin_crm.sales_orders 
+               (id, order_number, customer_id, order_date, 
+                total_amount, status, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)
+               ON CONFLICT (order_number) DO NOTHING"#,
+        )
+        .bind(payload.shipping_id)
+        .bind(&payload.shipping_order_number)
+        .bind(payload.customer_id)
+        .bind(payload.order_date)
+        .bind(payload.total_amount)
+        .bind(now)
+        .bind(now)
+        .execute(&self.db)
+        .await;
+
+        match result {
+            Ok(_) => {
+                tracing::info!(
+                    "[crm] 销售订单已创建 - shipping_id={}, shipping_order_number={}, customer_id={:?}, total_amount={}",
+                    payload.shipping_id,
+                    payload.shipping_order_number,
+                    payload.customer_id,
+                    payload.total_amount
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "[crm] 创建销售订单失败（graceful fallback）- shipping_order_number={}: {}",
+                    payload.shipping_order_number,
+                    e
+                );
+            }
+        }
+
+        Ok(())
+    }
+
     /// AC-5: 将主数据变更事件持久化到本地 ref 表
     ///
     /// 通过 master_data_id（而非业务编码）建立跨服务关联。
@@ -419,7 +504,7 @@ pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
     let handlers = CrmEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[crm] 启动事件订阅者，注册 3 个业务事件 handler");
+    tracing::info!("[crm] 启动事件订阅者，注册 4 个业务事件 handler（含 ShippingOrderRequested）");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[crm] 事件订阅者异常退出: {}", e);

@@ -17,6 +17,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_event::event::{PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -224,6 +225,28 @@ pub async fn create_purchase_order(
         }
     };
 
+    if let Some(ref publisher) = state.event_publisher {
+        let payload = PurchaseOrderCreatedPayload {
+            order_id: purchase_order.id,
+            order_no: purchase_order.order_no.clone(),
+            supplier_id: Some(purchase_order.supplier_id),
+            supplier_name: Some(purchase_order.supplier_name.clone()),
+            total_amount: Some(purchase_order.total_amount),
+            payable_amount: Some(purchase_order.payable_amount),
+            created_by: Some(claims.sub.clone()),
+        };
+        match publisher.publish_purchase_order_created(payload).await {
+            Ok(_) => tracing::info!(
+                "[erp] 发布 PurchaseOrderCreated 事件成功 - order_id={}, payable_amount={}",
+                purchase_order.id, purchase_order.payable_amount
+            ),
+            Err(e) => tracing::warn!(
+                "[erp] 发布 PurchaseOrderCreated 事件失败: {}，将由 Finance 定时补拉",
+                e
+            ),
+        }
+    }
+
     Json(ApiResponse::success(purchase_order, "创建采购订单成功"))
 }
 
@@ -349,7 +372,31 @@ pub async fn approve_purchase_order(
     .await;
 
     match result {
-        Ok(order) => Json(ApiResponse::success(order, "采购订单审批成功")),
+        Ok(order) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let payload = PurchaseOrderApprovedPayload {
+                    order_id: order.id,
+                    order_no: order.order_no.clone(),
+                    supplier_id: Some(order.supplier_id),
+                    supplier_name: Some(order.supplier_name.clone()),
+                    total_amount: Some(order.total_amount),
+                    payable_amount: Some(order.payable_amount),
+                    approved_by: Some(claims.sub.clone()),
+                    approved_at: Some(Utc::now()),
+                };
+                match publisher.publish_purchase_order_approved(payload).await {
+                    Ok(_) => tracing::info!(
+                        "[erp] 发布 PurchaseOrderApproved 事件成功 - order_id={}, payable_amount={}",
+                        order.id, order.payable_amount
+                    ),
+                    Err(e) => tracing::warn!(
+                        "[erp] 发布 PurchaseOrderApproved 事件失败: {}，将由 Finance 定时补拉",
+                        e
+                    ),
+                }
+            }
+            Json(ApiResponse::success(order, "采购订单审批成功"))
+        }
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             Json(api_error(500, "审批采购订单失败"))

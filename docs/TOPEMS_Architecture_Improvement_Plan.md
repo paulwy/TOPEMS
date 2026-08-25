@@ -1,7 +1,8 @@
 # TOPEMS 系统架构改进蓝图
 
-> 文档版本：v1.0  
+> 文档版本：v1.1  
 > 创建日期：2026-08-24  
+> 最近修订：2026-08-24（V289 差距核查+附录补充）  
 > 状态：待审批  
 > 关联文档：DSH部署指南、微服务优化方案、AI融合方案
 
@@ -846,6 +847,21 @@ topems_only_own_schema_query!(sql, "plugin_erp");  // 编译时检查
 | 运维负责人 | AI基础设施、部署模板、监控完善 | P2-P3 |
 | 产品负责人 | 商业化分层、行业解决方案、用户验证 | P3 |
 
+### 8.4 v1.1 差距修正清单（V289 代码库核查后更新）
+
+> 本节记录 v1.0 文档描述与代码库实际状态之间的 7 处差距，
+> 以及 V289 版本对应的修正落地措施（A/B/C/D 四轨并行）。
+
+| ID | v1.0 描述（过时/不完整） | 代码库实际现状 | V289 处置 | 验证点 |
+|----|--------------------------|----------------|-----------|--------|
+| **G1** | §2.1 缺陷1 Finance→ERP 跨Schema直查为"active" | 已修复：Finance 改为读取本地快照表 `plugin_finance.source_amount_snapshots`，通过 ERP 事件订阅同步。 | 保留现状（v285 已完成） | 全局 grep `plugin_erp` in `svc/finance` = 0 |
+| **G2** | §2.1 缺陷1 WMS→CRM 跨Schema直写为"active" | 已修复：WMS 改为事件发布 + fallback 写本地表，不再直写 CRM。 | 保留现状（v285 已完成） | 全局 grep `plugin_crm` in `svc/wms` = 0 |
+| **G3** | §4.1 暗示 ERP/Finance 存在 API 路径重叠 | 实际无重叠：`openapi-aggregated.json` 0 ERP / 288 Finance 路径，2-token 尾 0 重叠。 | 文档澄清：§4.1 立即清理项仅涉及前端类型/函数，不涉及后端路由。 | `openapi-aggregated.json` diff 0 冲突 |
+| **G4** | §2.1 缺陷3 未提及 Finance 页面对 ERP 类型的隐性反链 | **实际 10 个 Finance 页面 import `@/api/erp`（11 处引用）**，根因：`erp/types.ts` 定义 17 条纯财务类型（Budget/FinancialVoucher 等），而 Finance 包未定义等价类型。 | **B1 类型迁移**：新建 `apps/web/src/api/finance/types.ts`（Budget/AccountingSubject/FinancialVoucher/VoucherItem/VoucherItemRequest 5 类高频），Finance index.ts re-export，ERP 侧加 `@deprecated`；7 个 Finance 页面 type-only import 切换。 | apps/web `tsc --noEmit` = 0；`pages/finance` 内 `from '@/api/erp'` 类型引用 = 0（仅 API 函数保留，待 B2 阶段对齐签名） |
+| **G5** | §2.1 缺陷2 unified-core "30 个上帝路由声明中心" | 实际 **32 个 stub 路由**（每文件 ~16 行空壳 + `{mod}:dashboard:read` 权限中间件）；前端 grep 0 命中 `fetch('/unified-core/` 业务流量；`{mod}:dashboard:read` 权限 **未** 在 iam init_permissions 注册，亦未写入 core_permissions 表。 | **C2 全删除**：删除 31 个 stub 文件 + routes/mod.rs 的 32 个 `pub mod` + stubs Router merge；保留统一 health 路由。 | `cargo check -p topems-unified-core` = 0；`svc/unified-core/src/routes/` 目录下 stub 文件名 = 0 |
+| **G6** | §2.1 缺陷1 仅列 Finance/WMS 两条跨 Schema | **实际剩余 2 条真实违规**（已忽略 AI 注释误报）：<br>① `mes/work_report.rs` 查询 `plugin_mobile.work_reports`<br>② `qms/dashboard.rs` ×2 查询 `plugin_mobile.quality_tasks`。<br>Mobile 服务是纯代理：本身不维护这两张表，通过 `TypedServiceClient<MesApi/QmsApi>` 转发到 MES/QMS，因此 **真实数据源在 MES/QMS 自有表内**。 | **A0 自表直查**：<br>① MES 改为 `SUM(output_quantity) FROM work_reports WHERE reporter_name=$1 AND created_at >= TODAY`<br>② QMS 改为查 `qa_quality_inspections`（`status='completed' AND result='qualified'` 映射 mobile 的 `status='passed'`）。 | `cargo check -p topems-mes -p topems-qms` = 0；全局 grep `plugin_mobile\.(work_reports\|quality_tasks)` in `svc/` = 0 |
+| **G7** | §7.1 Phase 1 暗示 Finance settlement openapi schema 待补 | 已补齐：`svc/finance/src/openapi.rs` 注册 `SettlementCenterDashboard` / `CenterStatistics` 等 25 条，`openapi-aggregated.json` 中 SettlementCenter tag 存在且 shared-types 生成类型齐全。 | **D1 跳过**：现状完整，无需额外工作。 | `shared-types/src/generated/api-types.ts` 含 `SettlementCenterReconcileRequest` / `SettlementCenterDashboard` 等类型；`svc/finance/src/modules/settlement_center/` 模块完整 |
+
 ---
 
 ## 修订记录
@@ -853,6 +869,7 @@ topems_only_own_schema_query!(sql, "plugin_erp");  // 编译时检查
 | 版本 | 日期 | 修订人 | 修订内容 |
 |------|------|--------|----------|
 | v1.0 | 2026-08-24 | AI Assistant | 初始版本，整合所有分析内容 |
+| v1.1 | 2026-08-24 | AI Assistant（V289 核查） | **差距核查 + 附录 v1.1**：新增 §8.4 记录 7 处文档 vs 代码库差距与 V289 修正措施（A0 跨Schema清零 / B1 类型迁移 / C2 stub 删除 / D1 跳過）；更新页眉版本号及"最近修订"日期。 |
 
 ---
 

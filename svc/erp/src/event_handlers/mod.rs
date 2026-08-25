@@ -22,7 +22,8 @@ use topems_shared_event::event::{
     EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
     InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
     OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
-    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReturnCompletedPayload,
+    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReconciliationApprovedPayload,
+    ReconciliationCreatedPayload, ReconciliationUpdatedPayload, ReturnCompletedPayload,
     SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload,
     WorkOrderCompletedPayload,
 };
@@ -62,6 +63,9 @@ impl ErpEventHandlers {
         let h15 = self.clone();
         let h16 = self.clone();
         let h17 = self.clone();
+        let h18 = self.clone();
+        let h19 = self.clone();
+        let h20 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -200,6 +204,30 @@ impl ErpEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_master_data_material_changed(event).await {
                         tracing::error!("[erp] handle_master_data_material_changed 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::ReconciliationCreated], move |event| {
+                let h = h18.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_reconciliation_created(event).await {
+                        tracing::error!("[erp] handle_reconciliation_created 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::ReconciliationApproved], move |event| {
+                let h = h19.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_reconciliation_approved(event).await {
+                        tracing::error!("[erp] handle_reconciliation_approved 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::ReconciliationUpdated], move |event| {
+                let h = h20.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_reconciliation_updated(event).await {
+                        tracing::error!("[erp] handle_reconciliation_updated 失败: {}", e);
                     }
                 })
             }))
@@ -1803,6 +1831,98 @@ impl ErpEventHandlers {
 
         Ok(())
     }
+
+    async fn handle_reconciliation_created(&self, event: Event) -> HandlerResult {
+        let payload: ReconciliationCreatedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 ReconciliationCreated payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[erp] ReconciliationCreated 处理 - id={}, recon_code={}, trace_id={:?}",
+            payload.id,
+            payload.recon_code.as_deref().unwrap_or(""),
+            event.trace_id
+        );
+
+        let recon_code = payload
+            .recon_code
+            .clone()
+            .unwrap_or_else(|| format!("REC-{}", payload.id));
+        let now = chrono::Utc::now();
+
+        sqlx::query(
+            r#"INSERT INTO erp.fin_reconciliations
+               (id, reconciliation_no, reconciliation_type, status, period,
+                reference_id, total_amount, reconciled_amount, discrepancy_amount,
+                tenant_id, created_by, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 0, 0, 0, $7, $8, $9, $9)
+             ON CONFLICT (id) DO NOTHING"#,
+        )
+        .bind(payload.id)
+        .bind(&recon_code)
+        .bind(&payload.recon_type)
+        .bind(&payload.status)
+        .bind(&payload.period)
+        .bind(payload.entity_id)
+        .bind(payload.tenant_id)
+        .bind(payload.created_by)
+        .bind(now)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("写入 erp.fin_reconciliations 失败: {}", e))?;
+
+        Ok(())
+    }
+
+    async fn handle_reconciliation_approved(&self, event: Event) -> HandlerResult {
+        let payload: ReconciliationApprovedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 ReconciliationApproved payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[erp] ReconciliationApproved 处理 - id={}, approved_by={}, trace_id={:?}",
+            payload.id,
+            payload.approved_by,
+            event.trace_id
+        );
+
+        sqlx::query(
+            r#"UPDATE erp.fin_reconciliations
+               SET status = 'approved',
+                   updated_at = NOW()
+               WHERE id = $1 AND status IN ('pending', 'draft')"#,
+        )
+        .bind(payload.id)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
+
+        Ok(())
+    }
+
+    async fn handle_reconciliation_updated(&self, event: Event) -> HandlerResult {
+        let payload: ReconciliationUpdatedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 ReconciliationUpdated payload 失败: {}", e))?;
+
+        tracing::debug!(
+            "[erp] ReconciliationUpdated 处理 - id={}, status={}, trace_id={:?}",
+            payload.id,
+            payload.status,
+            event.trace_id
+        );
+
+        sqlx::query(
+            r#"UPDATE erp.fin_reconciliations
+               SET status = $1,
+                   updated_at = NOW()
+               WHERE id = $2"#,
+        )
+        .bind(&payload.status)
+        .bind(payload.id)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
+
+        Ok(())
+    }
 }
 
 /// 启动 ERP 服务的事件订阅
@@ -1810,7 +1930,7 @@ pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
     let handlers = ErpEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[erp] 启动事件订阅者，注册 13 个业务事件 + 4 个 MDM 主数据事件 handler");
+    tracing::info!("[erp] 启动事件订阅者，注册 16 个业务事件 + 4 个 MDM 主数据事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[erp] 事件订阅者异常退出: {}", e);

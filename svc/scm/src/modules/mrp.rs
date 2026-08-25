@@ -420,7 +420,11 @@ pub async fn compute_mrp(
               AND $6 = true
             GROUP BY material_code
         ) forecast ON m.material_code = forecast.material_code
-        LEFT JOIN wms.inventory i ON m.material_code = i.material_code AND i.deleted_at IS NULL
+        LEFT JOIN (
+            SELECT item_code, SUM(quantity) as quantity
+            FROM scm.wms_inventory_snapshots
+            GROUP BY item_code
+        ) i ON m.material_code = i.item_code
         LEFT JOIN (
             SELECT DISTINCT ON (material_code) id, name, lead_time_days, material_code
             FROM scm.supplier_products sp

@@ -517,6 +517,7 @@ pub async fn approve_order(
                         supplier_id,
                         supplier_name: None,
                         total_amount,
+                        payable_amount: None,
                         approved_by: approver_name_val,
                         approved_at: Some(now_val),
                     };

@@ -13,6 +13,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_event::event::{SalesOrderApprovedPayload, SalesOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -212,7 +213,30 @@ pub async fn create_sales_order(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, "创建销售订单成功")),
+        Ok(Some(sales_order)) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let payload = SalesOrderCreatedPayload {
+                    order_id: sales_order.id,
+                    order_no: sales_order.order_no.clone(),
+                    customer_id: Some(sales_order.customer_id),
+                    customer_name: Some(sales_order.customer_name.clone()),
+                    total_amount: Some(sales_order.total_amount),
+                    payable_amount: Some(sales_order.payable_amount),
+                    created_by: Some(claims.sub.clone()),
+                };
+                match publisher.publish_sales_order_created(payload).await {
+                    Ok(_) => tracing::info!(
+                        "[erp] 发布 SalesOrderCreated 事件成功 - order_id={}, payable_amount={}",
+                        sales_order.id, sales_order.payable_amount
+                    ),
+                    Err(e) => tracing::warn!(
+                        "[erp] 发布 SalesOrderCreated 事件失败: {}，将由 Finance 定时补拉",
+                        e
+                    ),
+                }
+            }
+            Json(ApiResponse::success(sales_order, "创建销售订单成功"))
+        }
         Ok(None) => Json(api_error(500, "创建销售订单失败")),
         Err(e) => {
             tracing::error!("创建销售订单失败: {}", e);
@@ -331,7 +355,33 @@ async fn update_sales_order_status(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, success_message)),
+        Ok(Some(sales_order)) => {
+            if status == "approved" {
+                if let Some(ref publisher) = state.event_publisher {
+                    let payload = SalesOrderApprovedPayload {
+                        order_id: sales_order.id,
+                        order_no: sales_order.order_no.clone(),
+                        customer_id: Some(sales_order.customer_id),
+                        customer_name: Some(sales_order.customer_name.clone()),
+                        total_amount: Some(sales_order.total_amount),
+                        payable_amount: Some(sales_order.payable_amount),
+                        approved_by: Some(claims.sub.clone()),
+                        approved_at: Some(Utc::now()),
+                    };
+                    match publisher.publish_sales_order_approved(payload).await {
+                        Ok(_) => tracing::info!(
+                            "[erp] 发布 SalesOrderApproved 事件成功 - order_id={}, payable_amount={}",
+                            sales_order.id, sales_order.payable_amount
+                        ),
+                        Err(e) => tracing::warn!(
+                            "[erp] 发布 SalesOrderApproved 事件失败: {}，将由 Finance 定时补拉",
+                            e
+                        ),
+                    }
+                }
+            }
+            Json(ApiResponse::success(sales_order, success_message))
+        }
         Ok(None) => Json(api_error(404, "销售订单不存在")),
         Err(e) => {
             tracing::error!("{}: {}", error_message, e);

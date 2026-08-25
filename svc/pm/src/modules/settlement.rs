@@ -6,7 +6,11 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use std::sync::Arc;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::{
+    EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
+};
 use uuid::Uuid;
 
 use crate::models::settlement::{
@@ -15,7 +19,20 @@ use crate::models::settlement::{
     UpdateSettlementRequest,
 };
 
-pub fn create_routes(pool: PgPool) -> Router {
+#[derive(Clone)]
+struct SettlementState {
+    pool: PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+}
+
+pub fn create_routes(
+    pool: PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+) -> Router {
+    let state = SettlementState {
+        pool,
+        event_publisher,
+    };
     Router::new()
         .route(
             "/projects/{project_id}/settlements",
@@ -38,18 +55,18 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/settlements/{settlement_id}/adjustments",
             get(get_settlement_adjustments).post(create_settlement_adjustment),
         )
-        .with_state(pool)
+        .with_state(state)
 }
 
 async fn get_project_settlements(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Settlement>>> {
     let settlements = sqlx::query_as::<_, Settlement>(
         "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC",
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     match settlements {
@@ -65,13 +82,13 @@ async fn get_project_settlements(
 }
 
 async fn get_settlement(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let settlement =
         sqlx::query_as::<_, Settlement>("id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE id = $1")
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&state.pool)
             .await;
 
     match settlement {
@@ -91,7 +108,7 @@ async fn get_settlement(
 }
 
 async fn create_settlement(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<CreateSettlementRequest>,
 ) -> Json<ApiResponse<Settlement>> {
@@ -113,11 +130,34 @@ async fn create_settlement(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match settlement {
-        Ok(s) => Json(ApiResponse::success(s, "创建决算成功")),
+        Ok(s) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let payload = SettlementCreatedPayload {
+                    id,
+                    tenant_id: Uuid::nil(),
+                    project_id,
+                    settlement_no: s.settlement_code.clone().unwrap_or_else(|| "".to_string()),
+                    settlement_type: s.settlement_type.clone(),
+                    status: s.status.clone(),
+                    amount: s.actual_amount,
+                    settlement_date: s.settlement_period_start,
+                    remarks: s.description.clone(),
+                    created_by: s.created_by.clone(),
+                    created_at: now,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::SettlementCreated, payload)
+                    .await
+                {
+                    tracing::warn!("[PM Settlement] 发布 SettlementCreated 事件失败: {}", e);
+                }
+            }
+            Json(ApiResponse::success(s, "创建决算成功"))
+        }
         Err(e) => {
             tracing::error!("创建决算失败: {}", e);
             Json(ApiResponse::error(
@@ -129,7 +169,7 @@ async fn create_settlement(
 }
 
 async fn update_settlement(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementRequest>,
 ) -> Json<ApiResponse<Settlement>> {
@@ -148,7 +188,7 @@ async fn update_settlement(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match settlement {
@@ -168,9 +208,10 @@ async fn update_settlement(
 }
 
 async fn approve_settlement(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
+    let now = Utc::now();
     let settlement = sqlx::query_as::<_, Settlement>(
         "UPDATE plugin_pm.settlements SET
             status = 'approved',
@@ -179,11 +220,27 @@ async fn approve_settlement(
         WHERE id = $1 RETURNING *",
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match settlement {
-        Ok(s) => Json(ApiResponse::success(s, "决算审批通过")),
+        Ok(s) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let payload = SettlementApprovedPayload {
+                    id,
+                    tenant_id: Uuid::nil(),
+                    approved_by: "system".to_string(),
+                    approved_at: now,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::SettlementApproved, payload)
+                    .await
+                {
+                    tracing::warn!("[PM Settlement] 发布 SettlementApproved 事件失败: {}", e);
+                }
+            }
+            Json(ApiResponse::success(s, "决算审批通过"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
             StatusCode::NOT_FOUND.as_u16(),
             "决算不存在",
@@ -199,14 +256,14 @@ async fn approve_settlement(
 }
 
 async fn get_settlement_items(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementItem>>> {
     let items = sqlx::query_as::<_, SettlementItem>(
         "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_reason, description, created_at FROM plugin_pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name",
     )
     .bind(settlement_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     match items {
@@ -222,7 +279,7 @@ async fn get_settlement_items(
 }
 
 async fn create_settlement_item(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
     Json(req): Json<CreateSettlementItemRequest>,
 ) -> Json<ApiResponse<SettlementItem>> {
@@ -253,7 +310,7 @@ async fn create_settlement_item(
     .bind(req.contract_ref_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match item {
@@ -269,7 +326,7 @@ async fn create_settlement_item(
 }
 
 async fn update_settlement_item(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementItemRequest>,
 ) -> Json<ApiResponse<SettlementItem>> {
@@ -282,7 +339,7 @@ async fn update_settlement_item(
             variance_percent = CASE WHEN $3 IS NOT NULL AND budget_amount != 0 THEN (($3 - budget_amount) / budget_amount) * 100 ELSE variance_percent END,
             description = COALESCE($4, description),
             updated_at = $5
-        WHERE id = $6 RETURNING *"
+        WHERE id = $6 RETURNING *",
     )
     .bind(req.item_name)
     .bind(req.category)
@@ -290,7 +347,7 @@ async fn update_settlement_item(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match item {
@@ -310,12 +367,12 @@ async fn update_settlement_item(
 }
 
 async fn delete_settlement_item(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query("DELETE FROM plugin_pm.settlement_items WHERE id = $1")
         .bind(id)
-        .execute(&pool)
+        .execute(&state.pool)
         .await;
 
     match result {
@@ -335,14 +392,14 @@ async fn delete_settlement_item(
 }
 
 async fn get_settlement_adjustments(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementAdjustment>>> {
     let adjustments = sqlx::query_as::<_, SettlementAdjustment>(
         "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM plugin_pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at",
     )
     .bind(settlement_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.pool)
     .await;
 
     match adjustments {
@@ -358,7 +415,7 @@ async fn get_settlement_adjustments(
 }
 
 async fn create_settlement_adjustment(
-    State(pool): State<PgPool>,
+    State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
     Json(req): Json<CreateSettlementAdjustmentRequest>,
 ) -> Json<ApiResponse<SettlementAdjustment>> {
@@ -379,7 +436,7 @@ async fn create_settlement_adjustment(
     .bind(req.supporting_documents)
     .bind(req.created_by)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&state.pool)
     .await;
 
     match adjustment {
@@ -415,7 +472,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(make_pool(), None);
         let _ = router;
     }
 

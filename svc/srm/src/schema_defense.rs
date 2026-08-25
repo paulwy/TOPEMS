@@ -25,6 +25,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("website", "VARCHAR(200)"),
             ("credit_rating", "VARCHAR(20)"),
             ("risk_level", "VARCHAR(20) NOT NULL DEFAULT 'medium'"),
+            ("bank_name", "VARCHAR(100)"),
+            ("bank_account", "VARCHAR(50)"),
+            ("sync_from_scm", "BOOLEAN NOT NULL DEFAULT false"),
+            ("scm_supplier_id", "UUID"),
             ("created_by", "UUID"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
@@ -250,6 +254,27 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    // SCM→SRM 供应商快照表 - 替代跨 Schema 直读 plugin_scm.suppliers
+    (
+        "scm_supplier_snapshots",
+        &[
+            ("id", "UUID PRIMARY KEY"),
+            ("supplier_code", "VARCHAR(50)"),
+            ("name", "VARCHAR(200) NOT NULL"),
+            ("short_name", "VARCHAR(200)"),
+            ("contact_name", "VARCHAR(100)"),
+            ("contact_phone", "VARCHAR(50)"),
+            ("email", "VARCHAR(200)"),
+            ("address", "VARCHAR(500)"),
+            ("tax_number", "VARCHAR(50)"),
+            ("bank_account", "VARCHAR(50)"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
+            ("synced_at", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
 ];
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -287,8 +312,8 @@ mod tests {
     }
 
     #[test]
-    fn test_table_defs_has_13_tables() {
-        assert_eq!(TABLE_DEFS.len(), 13, "SRM should define 13 tables");
+    fn test_table_defs_has_14_tables() {
+        assert_eq!(TABLE_DEFS.len(), 14, "SRM should define 14 tables");
     }
 
     #[test]

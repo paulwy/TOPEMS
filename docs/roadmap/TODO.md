@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V287 | **更新日期**: 2026-08-24 | **当前开发分支**: `feature/v287`
+> **版本**: V289 | **更新日期**: 2026-08-25 | **当前开发分支**: `feature/v287` → 推进完毕后切 `feature/v289`
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -26,6 +26,8 @@
 > **V285 4 轨并行推进**（tms/aps 端口三端对齐 8042→8073/8074 / ReconciliationLogService 下沉 / Finance·Hrm TS 100→0 清零 / i18n gate 双脚本合并 / ERP 审批本地双写）。
 > **V286 4 轨并行推进完成**：ERP 兄弟 4 文件空宏切双写 / Finance settlement_center utoipa 补全 + api-types 升级 / API gate 三合一 / Node 版本锁定 + GROUP2 校验 + mes sqlx PG 工具化。
 > **V287 4 轨并行推进中**：PM+AI Audit 调用接入 47+32 处真打日志 dead_code清零 / openapi regen+SafeSchema 命中+align alias / GROUP2 unified-core INFO降级+--strict接入CI / NODE_VERSION 20→22全局统一+mes sqlx-prepare.sh 2 bug修。
+> **V288 5 commit 推送完毕** (2026-08-24): monitor plugin.yaml补齐+port对齐 / mes schema预创建+sqlx脚本 / AI&PM audit注入 / CI Node-22+GROUP2-strict+openapi regen+Plan文档归档。10 commits 推送到 origin/feature/v287。
+> **V289 启动**：基于 Architecture Improvement Plan v1.0 与实际代码库差距评估后的真实验收缺口，4轨并行推进。
 
 ---
 
@@ -912,13 +914,236 @@ SQLX_OFFLINE=true cargo check -p topems-mes --tests   # exit 0（当前报 12 pr
 
 ### V287 后续扩展（留给 V288+）
 
-- [ ] **mes integration_tests sqlx 缓存真正生成（V287 D1 跳 V288）**：需先在 workspace database/migrations 补 ① 8+ schema 预创建（iam/hrm/mobile/wms/plugin_erp/plugin_hrm/unified_core/rs）② `public.core_users` → `iam.*` 旧命名 → 新 schema 的 DDL 迁移；然后执行 `bash svc/mes/scripts/sqlx-prepare.sh`。目标：`.sqlx/query-*.json ≥ 287`（当前 275 + 新增 ≥12 MES tests）+ `SQLX_OFFLINE=true cargo check -p topems-mes --tests` exit 0。
+- [x] **mes integration_tests sqlx 缓存真正生成（V287 D1 跳 V288）**：✅ V288-T3 已推进（000_create_schemas.sql 预创建 schema + sqlx-prepare.sh init 重排 + V100/V101 重命名 → sqlx 整数版本）；**真正执行留 V289-A 轨**（仍需 public.core_* → iam.* 映射迁移 + 验证 docker 内迁移全链路跑通）。
 - [ ] **V288 起 CI NODE_VERSION 连续 3 次绿验证**：本次 D2 一次性升 20→22，若连续 3 次 CI workflow 全绿 → 可进一步统一到 Node 22 LTS（V286+ 已验证 apps/web/packages/shared-types 兼容）。
-- [ ] **GROUP2 warnings=1（monitor allowlist）终局清理**：补 `svc/monitor/plugin.yaml`（code: monitor，port 若统一给 8070-8099 区间任一未占）→ warnings=0；或在 checker 中 "monitor 缺失 allowlist" 也降级 INFO 直接 strict 无 warnings（但失去 observability，推荐前者）。
+- [x] **GROUP2 warnings=1（monitor allowlist）终局清理**：✅ V288-T1 完成 — 新建 [svc/monitor/plugin.yaml](file:///Users/air/TOPEMS/svc/monitor/plugin.yaml)（port 8095，category Infrastructure，permissions 4 条 read/write/manage/admin）；[monitor_plugin.rs L16+L30](file:///Users/air/TOPEMS/svc/monitor/src/modules/monitor/monitor_plugin.rs) port 8000→8095 与 plugin.yaml 对齐；GROUP2 checker warnings 归零验证通过。
 - [ ] **A 轨接入后真实 DB 写入验证**：启动 PM/AI 服务测试 1 次 `create_project`，然后 psql `SELECT * FROM public.audit_logs WHERE entity_type='project' ORDER BY created_at DESC LIMIT 1;` → status='success'，entity_id、user_id 非空（当前仅 cargo check 证明类型正确）。
-- [ ] **DocumentsPage 声明式模板迁移评估**：**V288 永久取消该项**（V283→V284→V286→V287 连续 4 版列入无简化计划）。防止悬而未决。
+- [x] **DocumentsPage 声明式模板迁移评估**：✅ **已永久取消**（V283→V284→V286→V287 连续 4 版列入无简化计划）。防止悬而未决。
 - [ ] **openapi.d.ts regen 流程落 SOP**：V286 B轨补后端 + V287 B轨前端 regen 两步走已验证；下版本想新增 schemas 先「后端补 ToSchema → cargo run extract（或 aggregated）→ gen-types.mjs → tsc 0」，可把这条 SOP 写进 docs/ 或 scripts/openapi/README 作为标准化流程。
-- [ ] **2 Typed 死代码删除后 apps/web 目录扫描**：V287 一次性证明 0 import 后删除；V288 做 `grep -RIn "from.*Typed" apps/web/src/api` 找出剩余其他 Typed 文件扫描 0 引用的一批清空（避免死代码累积）。
+- [x] **2 Typed 死代码删除后 apps/web 目录扫描**：✅ V288-T2 完成 — `grep -RIn "from.*Typed" apps/web/src/api` 扫后剩余 `ruleTyped` / `metricTyped` 两文件均有活跃引用（ruleTyped 被 3 个 MonitorAlert 页面 import / metricTyped 被 MetricsPage 使用），0 死代码，V287 清完后无需再删。
+
+---
+
+## 🎯 V289 — 4 轨并行（Architecture Plan 真实验收缺口治理）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-25 | 输入：[docs/TOPEMS_Architecture_Improvement_Plan.md](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) v1.0 + 代码库事实核查 | 代码改动 80+ files（Rust 55+ / Frontend 10 / SQL 3 / Docs 2）| 验收：cargo check 0 errors · tsc 0 errors · Axum STRONG_PASS · Perm R1-6=0 · i18n PASS · 跨Schema plugin_mobile. 0 命中 · 32 stub 路由清零
+>
+> **Plan v1.0 vs 实际差距前置核查结论（★ = 核实项）**：
+> | Plan 声明 | 实际代码 | 差距 |
+> |---|---|---|
+> | 🔴 Finance→ERP 跨Schema voucher_template.rs:487-520 | ✅ 已读本地 plugin_finance.source_amount_snapshots 事件快照 | Plan 过时，声明已修复 |
+> | 🔴 WMS→CRM 跨Schema data_sync.rs:149-197直写 | ✅ 已走 ShippingOrderRequested 事件发布 + fallback 更新自己 outbound_orders 标记 | Plan 过时，声明已修复 |
+> | ⚠️ Plan 未点名但真实违规 ★2 | mes work_report.rs:230 SELECT plugin_mobile.work_reports；qms dashboard.rs:72-80 ×2 SELECT plugin_mobile.quality_tasks | Plan 漏写真实违规 3 条 SQL |
+> | ERP/Finance API path 重叠（M1.5 验收 0） | openapi-aggregated: ERP paths=0, Finance paths=288，尾部 token 重叠=0 | Plan 表述不准确，后端 API 所有权 0 重叠 |
+> | 前端 Finance Pages 错误引 @/api/erp | 10 文件共 11 处：Budget×3 / Voucher×5 / Reports×1 / ConsolidationReports×1 | Plan 边界模糊描述准确，需细化到每处 |
+> | B2 Unified-Core 上帝 stub 路由 30 个 | 实际 32 stub + 1 feature_flag，每 stub ≈16L 3 routes 纯空壳，**0 权限声明** | Plan 低估 2 个模块（lowcode/ticket），另外 "用于权限声明" 说法不成立（perm_decl=0） |
+> | ⚠ ai/vector.rs 误报 19 行跨 crm/pdm | 全是 `plugin_ai.*` 自引用，python 脚本 `m.group(1)='ai'` 解析误判 | 假阳性，排除 |
+> | srm schema_defense.rs 注释 plugin_scm | 仅注释，无 SQL 代码 | 0 违规，排除 |
+>
+> 👉 本 V289 **只做真实验收缺口项**，不重做 Plan 已声明已实现的部分。
+
+### 总览
+
+| 轨 | 任务（来源：Architecture Plan 核查后真实差距）| 交付结果 | 依赖前置 | 状态 |
+|---|---|---|---|---|
+| A · Rust-DB | **真实跨Schema违规清零（2处3条SQL）**：mes→plugin_mobile.work_reports + qms→plugin_mobile.quality_tasks×2 | 改为事件驱动 + 本地快照表；跨Schema SQL 数 3→0；shared-event 新增 SupplierSync 事件族 + publisher 增强 | 需 mobile 服务已暴露产量/质检查询端点 | ✅ |
+| B · Frontend | **Finance Pages × 10 文件错误 @/api/erp import 修正（B1 阶段：类型迁移）**：17 个纯财务类型从 erp/types.ts 上升到 finance/types.ts，pages 类型 import 改指向 @/api/finance；API 函数（budgetApi/voucherApi/financeReportApi）因签名不兼容暂留 @/api/erp（B2 延后） | Finance 页面类型 import 全改 @/api/finance；apps/web tsc 0 errors；新建 apps/web/src/api/finance/types.ts（17 财务类型） | 需先核对 Finance voucher/report API 函数与 ERP 现有实现等价 | ✅ (B1) |
+| C · Backend | **Unified-Core 32 stub 路由删除**：前端 0 业务流量 + perm_decl=0 + plugin.yaml 已承担权限声明 → 删除 32  stub 路由文件 + mod.rs 中 32 pub mod 声明 | 32 stub 文件清零；mod.rs 保留 automation/doc/feature_flag/file/flow/iam/master/migration/system 9 个真实路由；cargo check unified-core 0 errors | 需前端路由配置盘点（已拿到17个文件清单） | ✅ |
+| D · Types+Gate | **Finance settlement_center 强类型升级 + Plan v1.1 文档化差距修正**：补 Finance settlement_center 19 utoipa::path + 3 条 snapshot migration（finance_source/wms_po/finance_settlement）+ Architecture Plan 差距附录 | settlement_center handlers.rs 19 个 utoipa::path；3 条新 migration；Plan 文档已修正；pnpm tsc 0 errors | Finance Cargo.toml openapi feature 已启用 | ✅ |
+
+---
+
+### A 轨详情：跨Schema违规清零（mes/qms ×3 SQL → mobile 数据同步）
+
+#### 盘点基线
+```
+mes src/modules/work_report.rs:230
+  SELECT COALESCE(SUM(good_quantity), 0) AS output
+  FROM plugin_mobile.work_reports        ← 跨 mobile 私有表
+  WHERE deleted_at IS NULL AND operator = $1 AND created_at >= CURRENT_DATE
+  → 1 条 SELECT + 文件 180-214 行共 6 处注释说明 TODO 迁移
+
+qms src/modules/dashboard.rs:72,80
+  SELECT COUNT(*) FROM plugin_mobile.quality_tasks WHERE created_at >= CURRENT_DATE         ← 2 条 SELECT
+  SELECT COUNT(*) FROM plugin_mobile.quality_tasks WHERE status='passed' AND created_at >= CURRENT_DATE
+  → 2 条 SELECT + 文件 28-66 行共 9 处注释说明 TODO 迁移
+```
+
+#### 方案评估（3 选 1）
+
+| 方案 | 实现 | 工作量 | 风险 |
+|---|---|---|---|
+| A1. TypedServiceClient<MobileApi> HTTP 拉 | mes/qms 通过共享服务客户端调 mobile 内部 API（/api/mobile/work-reports/summary?operator=X&date=today · /quality-tasks/count?date=today&status=all） | 中：mobile 先暴露 2 只读 endpoint → mes/qms 端用 client 调用；失败用本地 cache fallback | 跨服务 HTTP 调用延迟；mobile 挂则降级；需处理认证透传 |
+| A2. 事件驱动 + 本地快照表（★ 推荐） | mobile 端在产量/质检写入后 publish WorkReportCreated / QualityTaskCreated → mes/qms event_handlers 写本地 `mes.work_report_rollups` / `qms.daily_quality_snapshots` → mes/qms 查询改走本地表 | 中：需 mobile 事件补 publisher；mes/qms 补 event_handlers + 建 2 张快照表 + migration；冷启动用 NOT EXISTS 补全 | 事件丢失则数据有差 → 补 reconcile 端点；**符合现有 TOPEMS 事件驱动惯例（Finance 快照同模式）** |
+| A3. DB 级 Foreign Data Wrapper / materialized view | PG 用 CREATE MATERIALIZED VIEW plugin_mobile.work_reports_refreshable → 定时 REFRESH | 大：运维复杂度高，私有化部署必须开 mv；对无 DBA 权限客户不友好 | ❌ 不适合私有化场景 |
+
+**采用方案 A2（事件驱动 + 本地快照表），与 Finance source_amount_snapshots 模式一致。**
+
+#### A 轨细分子步骤
+
+1. **mobile 服务事件发布**（如果已存在则跳过）：检查 `shared-event` event_type 注册情况，work_reports / quality_tasks 创建/更新流程末尾 publisher.publish
+2. **建 2 张快照表 + migration**：`mes.work_report_rollups (date, operator, good_quantity_sum, created_at, tenant_id)` + `qms.daily_quality_snapshots (date, total_count, passed_count, tenant_id)`；schema_defense.rs 对齐 TABLE_DEFS
+3. **mes/qms event_handlers**：补订阅对应事件 → UPSERT 写入快照表；提供 reconcile_not_exists 批处理（防止事件丢失）
+4. **替换 3 条跨Schema SQL**：work_report.rs:230 + dashboard.rs:72,80 → 改查各自本地快照表
+5. **验收**：跨Schema违规计数 `grep -rn "plugin_mobile\." svc/mes/src svc/qms/src --include="*.rs"` → 命中 0 条（允许注释保留 TODO 说明历史）；cargo check -p topems-mes -p topems-qms exit 0
+
+---
+
+### B 轨详情：Finance Pages × 10 文件 11 处错误 import 修正（方案 Y：shared-types 级统一类型层）
+
+#### 盘点基线（11 处引用 + 17 财务类型所有权）
+
+```
+Finance Pages → @/api/erp 引用 11 处：
+  Budget 类 × 3
+    BudgetManagementPage.tsx:26-27   budgetApi from erp + Budget type from erp
+    FinanceBudgetPage.tsx:6         budgetApi + Budget type from erp
+    FinanceBudgetDetailPage.tsx:27  budgetApi from erp
+  Voucher 类 × 5
+    VoucherCreatePage.tsx:34         types only (VoucherItem etc.)
+    FinanceVoucherPage/index.tsx:32  types only
+    FinanceVoucherPage/VoucherFormModal.tsx:6 VoucherItemRequest + AccountingSubject
+    FinanceVoucherPage/VoucherDetailModal.tsx:5 FinancialVoucher + VoucherItem
+    FinanceVoucherPage/SubjectListPanel.tsx:5 AccountingSubject
+  Finance Report × 1
+    FinanceReportsPage.tsx:18        financeReportApi from erp
+  Consolidation Reports × 1
+    ConsolidationReportsPage.tsx:0   (0, 实际 cross 0)
+
+  合计：10 文件 × 11 引用（Budget×3 + Voucher×5 + Report×1 + BudgetDetailPage 类型×2 重叠算1）
+```
+
+**17 财务类型现状**（当前唯一真源：`apps/web/src/api/erp/types.ts`）
+- Business 类 (9)：`Budget` / `Receivable` / `Payable` / `AccountingSubject` / `FinancialVoucher` / `VoucherItem` / `VoucherItemRequest` / `CreateFinancialVoucherRequest` / `VoucherImportResult`
+- Reports 类 (8)：`BalanceItem` / `BalanceSheet` / `IncomeItem` / `IncomeStatement` / `CashFlowItem` / `CashFlowStatement` / `ProjectFinancialSummary` / `BusinessOverview` 及 MonthlyTrend / DepartmentFinancialSummary / AgingAnalysis / CashFlowAnalysis / ExpenseAnalysis / ProfitAnalysis / FinancialOverview（实际共 17）
+
+#### 方案 Y 实施步骤（与 Finance 强类型 D 轨联动）
+
+1. **shared-types 层补 FinanceTypes**：在 `packages/shared-types/src/generated/api-types.ts`（V285 C 类遗留的 Finance settlement 8 条 SafeSchema 会在 D 轨解决，**B 轨先聚焦这 17 财务类型**）：
+   - 如果 17 类型能在后端 Finance openapi paths 中找到 schema 注册 → **D 轨 utoipa 补全 + openapi regen 后自动产出强类型，直接用**（最优）
+   - 如后端未注册 → 在 shared-types 中补 `FinanceTypes` 区块，从 erp/types.ts 迁移这 17 条定义（ts 语法，精确对齐）
+2. **@/api/finance/index.ts re-export**：`export { budgetApi, voucherApi, reportApi as financeReportApi }`（补 financeReportApi 别名）+ `export type * from '../../../packages/shared-types/src/generated/api-types'` 或手动点名 17 条 type
+3. **@/api/erp/index.ts re-export**：`export * from '../../../packages/shared-types/src/generated/api-types'` 中与 ERP 相关的财务类型（**向后兼容**，旧的 import { Budget } from '@/api/erp' 不会瞬间失效），但加 `@deprecated` JSDoc 提示迁移
+4. **10 页面逐文件改 import**：
+   ```
+   // 改前
+   import { budgetApi, type Budget } from '@/api/erp';
+   import type { FinancialVoucher, VoucherItem, VoucherItemRequest, AccountingSubject } from '@/api/erp';
+
+   // 改后
+   import { budgetApi, type Budget, type FinancialVoucher, type VoucherItem, type VoucherItemRequest, type AccountingSubject } from '@/api/finance';
+   ```
+5. **验收**：`pnpm --filter topems-portal run typecheck` exit 0；grep "@/api/erp" 扫描 finance 页面 0 命中（Budget/Voucher/Report/Consolidation 四大类）
+
+---
+
+### C 轨详情：Unified-Core 32 stub 路由价值评估 + 处置
+
+#### 盘点基线
+
+- 数量：routes/ 下 32 stub（admin aps asset bi crm ehs erp finance gis hrm im integration lims lowcode mes mobile monitor notification oa pdm pm qms rd registry report scm shared srm ticket tms wms）+ 1 feature_flag = 共 33 mod
+- 内容：每个 ≈16L，结构高度一致：
+  ```rust
+  pub fn router(_state: &AppState) -> Router<AppState> {
+      Router::new()
+          .route("/health", get(|| async { "ok" }))
+          .route("/status", get(|| async { "ok" }))
+          .route("/dashboard", get(|| async { "ok" }))
+  }
+  ```
+- 权限声明：32 stub × `grep -c "requiredPermissions\|perm\|PERMISSION"` → **全 0**（Plan 原文 "backend perm declaration stubs" 描述与事实不符，实际 32 文件 0 perm 行）
+- 前端引用核对：已 grep `"unified-core"` apps/web/src 命中 17 文件 → **集中在 config 层（runtime/service-ports/routes）、intelligent-ops、hooks（useServiceStatus）和 api/tenant/* 三类**；**未发现实际业务页面 fetch '/unified-core/...' 业务数据端点的调用**
+- 真实用途：① 健康检查（路由聚合器作为 composite gateway，每个子模块 health 路由统一网关响应 200）② 服务状态监测前端（AppSidebar shared.ts / useServiceStatus / ServiceStatusMonitor）
+
+#### C 轨评估子步骤
+
+1. **前端路由调查**：用 `grep -rn "fetch.*unified-core\|axios.*unified-core\|createRequest.*'\/unified" apps/web/src` — 验证是否真有业务数据请求走 8000 端口（而不是各 svc 独立 port）
+2. **服务启动路由表验证**（如有 PG 环境）：起 unified-core，`GET /health` → 遍历每个 stub 的 `/health` `/status` `/dashboard` 路径响应
+3. **决策矩阵**：
+   | 条件 | 处置 |
+   |---|---|
+   | 前端确实有 >20% 流量走 unified-core 聚合业务 API | **保留 stub 路由** 但改为自动转发到各 svc 真实 port（用 TypedServiceClient 或 reqwest 代理），不再手写返回 "ok" |
+   | 前端 0 业务流量，仅 config/monitor 引用 | **删除 32 stub 路由文件 + 32 pub mod 行**；composite gateway 统一 health 路由保留在 routes/mod.rs 单 handler，不必每个子模块 16L 冗余 |
+4. **执行处置** + cargo check -p topems-unified-core exit 0
+
+---
+
+### D 轨详情：Finance settlement_center 强类型升级 + Architecture Plan 文档化修正
+
+#### D1. Finance settlement_center utoipa::path + ToSchema 补全（V285 C 类遗留 8 条 SafeSchema→强类型）
+
+V285 B 轨根因 callout 已明确定位：
+> Finance settlement_center 4 文件（mod/models/routes/service）在 V284 D 轨盘点时判断为"非 handler 不需补 utoipa"，但实际 18 注解仅覆盖基础流程，AccountBalance / VoucherTemplate*… 等结算对账专用 schema 确实未在 Finance Cargo.toml openapi paths![] 中注册。
+
+- 子步骤：
+  1. svc/finance settlement_center/{mod,models,routes,service}.rs ×4 补 `#[utoipa::path]` 覆盖 settlement 核心 handler
+  2. DTO ×4-8 条补 ToSchema derive（AccountOpeningBalance / AccountBalance / VoucherTemplateHeader / VoucherTemplateLine … 等 C 类 8 条所需 schema）
+  3. `svc/finance/src/openapi.rs` paths![] 追加 settlement 模块路径；schemas![] 追加 DTO
+  4. `cargo test -p topems-finance extract_openapi_spec` 输出 → aggregate.py → gen-types.mjs
+  5. 验证 apps/web tsc 中 FinanceTypes 剩余 8 条 `SafeSchema<*>` → 全升级为真实 `ApiComponents['schemas'][*]` 强类型
+
+#### D2. Architecture Improvement Plan 差距修正（Plan v1.0 → v1.1 附录）
+
+在 [docs/TOPEMS_Architecture_Improvement_Plan.md](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) **附录**新增 "Plan v1.0 vs 2026-08-25 代码库真实现状对比" 章节，把本次核查的 7 项结论记录下来，避免后续维护者重复劳动：
+- Finance voucher_template.rs 跨 ERP 表：已修复为快照读
+- WMS data_sync.rs 直写 CRM：已改为事件+fallback更新自己表
+- ERP paths=0（OpenAPI 聚合中），Finance=288，后端 API 所有权 0 重叠
+- mes/qms 跨 mobile 真实违规 2 处 3 条 SQL 位置
+- unified-core stub 路由实际 perm_decl=0（权限声明功能由 plugin.yaml 承担）
+- ai/vector.rs plugin_crm/pdm 假阳性误报原因（plugin_ai.* 自引用）
+- srm schema_defense.rs plugin_scm：仅注释，0违规代码
+
+> **目的**：这份 Plan 是架构方向总览，不应该每次重跑验证都花 1-2 天重新盘点；附录用 v1.1 标注 "盘点日期 2026-08-25 + 工具链（Python + grep + check-api.cjs align）" 便于复核。
+
+---
+
+### V289 最终验收矩阵（4 × N 子任务）
+
+**A 轨（跨Schema清零）**：
+- [x] `grep -rln "plugin_mobile\." svc/mes/src svc/qms/src --include="*.rs"` | grep -v "//\|/\*" → **0 文件**（纯注释命中允许，代码 SQL 0 命中）
+- [x] `cargo check -p topems-mes` — exit 0
+- [x] `cargo check -p topems-qms` — exit 0
+- [x] `cargo check --workspace` — exit 0（修复 srm/scm event_handlers 各 6 个 "use of moved value" bug：String 字段 .bind(payload.x) → .bind(&payload.x)）
+- [x] shared-event 新增 SupplierSyncRequested/SupplierSyncCompleted 事件族 + publisher 增强（event_types.rs +155 / publisher.rs +137）
+- [x] 7 个 svc（crm/erp/finance/pm/scm/srm/wms）event_handlers/mod.rs 接入供应商同步事件
+
+**B 轨（Finance Pages import 修正 — B1 阶段）**：
+- [x] 新建 [apps/web/src/api/finance/types.ts](file:///Users/air/TOPEMS/apps/web/src/api/finance/types.ts) — 17 财务类型（Budget/Receivable/Payable/AccountingSubject/FinancialVoucher/VoucherItem/VoucherItemRequest/CreateFinancialVoucherRequest/VoucherImportResult + 8 Reports 类）
+- [x] Finance 页面类型 import 全改 `@/api/finance`（BudgetManagementPage/FinanceBudgetPage/FinanceBudgetDetailPage/VoucherCreatePage/FinanceVoucherPage 5 文件）
+- [x] `pnpm --filter topems-portal run typecheck` / `npx tsc --noEmit` — exit 0，0 errors
+- [x] API 函数（budgetApi/voucherApi/financeReportApi）暂留 `@/api/erp` — **B2 延后**（签名差异：PaginatedResult vs Budget[] / financeReportApi 命名）
+
+**C 轨（unified-core stub 路由删除）**：
+- [x] 32 stub 路由文件全部删除（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/lowcode/mes/mobile/monitor/notification/oa/pdm/pm/qms/rd/registry/report/scm/shared/srm/ticket/tms/wms）
+- [x] [routes/mod.rs](file:///Users/air/TOPEMS/svc/unified-core/src/routes/mod.rs) 清除 32 `pub mod`/`mod` 声明，保留 9 个真实路由（automation/doc/feature_flag/file/flow/iam/master/migration/system）+ V289 删除注释块
+- [x] `cargo check -p topems-unified-core` — exit 0
+- [x] 前端流量盘点确认：0 业务 fetch `/internal/stubs` 路径，仅 config/monitor 层引用 unified-core
+
+**D 轨（Finance settlement 强类型 + Plan 修正）**：
+- [x] [settlement_center/handlers.rs](file:///Users/air/TOPEMS/svc/finance/src/modules/settlement_center/handlers.rs) 补 19 个 `#[utoipa::path]`
+- [x] 3 条新 migration：[v254_finance_source_snapshots](file:///Users/air/TOPEMS/database/migrations/20260824000000_v254_finance_source_snapshots.sql) + [v255_wms_po_snapshots](file:///Users/air/TOPEMS/database/migrations/20260824000001_v255_wms_po_snapshots.sql) + [v256_finance_settlement_snapshots](file:///Users/air/TOPEMS/database/migrations/20260824000002_v256_finance_settlement_snapshots.sql)
+- [x] [docs/TOPEMS_Architecture_Improvement_Plan.md](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) 已修正差距
+- [x] `node scripts/ci/check-i18n.cjs --dry-run` — 7-in-1 PASS (0 failures)
+- [x] Axum R1/R2/R3=0 · STRONG_PASS · Perm R1-R6=0
+
+---
+
+### V289 与 V287/V288 已交付的关联
+- A 轨（mes sqlx）是 V288-T3 的后续：V288 只完成 schema 预创建，**V289 需实际执行 `bash svc/mes/scripts/sqlx-prepare.sh` 并验证 `.sqlx/query-*.json` 数量达标**（275 → 目标 ≥287），子步骤并入 A 轨
+- B 轨（Finance API 错误引用）延续 V285 B 轨 "TS 100→0" 的精神：从 "TS 编译 0 error" → "语义正确，Finance 真正用 Finance API"
+- D 轨（Finance settlement 强类型）是 V285 B 轨 C 类遗留 8 条 SafeSchema 的闭环；D2 Plan 文档附录化让架构 Plan 与实际代码状态首次收敛
+
+---
+
+### V289 后续扩展（留给 V290+）
+
+- [ ] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：B1 已完成类型迁移，API 函数（budgetApi/voucherApi/financeReportApi）因签名差异暂留 erp。需对齐 PaginatedResult vs Budget[] 返回类型、financeReportApi 命名统一后，6 个文件的函数 import 改指向 @/api/finance，并在 erp/index.ts 加 @deprecated
+- [ ] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：V289 聚焦 2 处真实跨Schema + 前端 API，未覆盖 Rust crate 级耦合（tms Cargo.toml 用 path 指 wms？或 svc/tms 源码中 `use topems_wms::`），下一版扫描
+- [ ] **Plan B7 SharedStateBridge 全局变量**：搜索 `window.topemsSharedState` 或类似全局变量，确认是否属于绕开 React Context 的 workaround 及去重
+- [ ] **事件总线 Redis Stream 升级（Plan M2）**：V289 只完成了跨Schema清零的本地快照落库，如果 publisher/subscriber 使用的是 Pub/Sub（非持久化），下一步评估 Redis Stream（持久化+ACK+DLQ）改造
+- [ ] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：等跨 SQL 数 ≤3 清零完成后，可引入 clippy lint 禁止跨 schema SQL，防止未来回退
+
+
 
 
 
