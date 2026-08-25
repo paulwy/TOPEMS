@@ -26,10 +26,12 @@ import { PageContainer, StatCardGroup, ActionButton, StatusBadge } from '@/compo
 import {
   voucherApi,
   accountingSubjectApi,
-  type FinancialVoucher,
-  type VoucherItem,
-  type VoucherItemRequest,
 } from '@/api/erp';
+import type {
+  FinancialVoucher,
+  VoucherItem,
+  VoucherItemRequest,
+} from '@/api/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/modules/finance/config';

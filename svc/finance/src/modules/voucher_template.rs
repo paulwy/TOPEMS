@@ -481,73 +481,10 @@ async fn resolve_source_amounts(
     }
 
     let stype = source_type.to_ascii_lowercase();
-    let amount_f64s: Vec<(Uuid, Option<f64>)> = match stype.as_str() {
-        "sale" | "sales" | "sales_order" | "salesorder" => {
-            sqlx::query_as::<_, (Uuid, Option<f64>)>(
-                r#"SELECT id, payable_amount FROM plugin_erp.sales_orders
-                   WHERE tenant_id = $1 AND id = ANY($2)"#,
-            )
-            .bind(tenant_id)
-            .bind(&valid_uuids)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| {
-                static LOGGED: std::sync::atomic::AtomicBool =
-                    std::sync::atomic::AtomicBool::new(false);
-                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 plugin_erp.sales_orders 失败，使用默认金额 1000.00 兜底");
-                }
-            })
-            .unwrap_or_default()
-        }
-        "purchase" | "purchase_order" | "purchaseorder" => {
-            sqlx::query_as::<_, (Uuid, Option<f64>)>(
-                r#"SELECT id, payable_amount FROM plugin_erp.purchase_orders
-                   WHERE tenant_id = $1 AND id = ANY($2)"#,
-            )
-            .bind(tenant_id)
-            .bind(&valid_uuids)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| {
-                static LOGGED: std::sync::atomic::AtomicBool =
-                    std::sync::atomic::AtomicBool::new(false);
-                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 plugin_erp.purchase_orders 失败，使用默认金额 1000.00 兜底");
-                }
-            })
-            .unwrap_or_default()
-        }
-        "payment" | "pay" => {
-            // 容错：先查 payment_records（新表），没有再查 payments（旧命名）
-            let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-                r#"SELECT id, amount FROM plugin_finance.payment_records
-                   WHERE tenant_id = $1 AND id = ANY($2)"#,
-            )
-            .bind(tenant_id)
-            .bind(&valid_uuids)
-            .fetch_all(pool)
-            .await;
-            match r1 {
-                Ok(rows) if !rows.is_empty() => rows,
-                _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(
-                    r#"SELECT id, amount FROM plugin_finance.payments
-                       WHERE tenant_id = $1 AND id = ANY($2)"#,
-                )
-                .bind(tenant_id)
-                .bind(&valid_uuids)
-                .fetch_all(pool)
-                .await
-                .map_err(|e| {
-                    static LOGGED: std::sync::atomic::AtomicBool =
-                        std::sync::atomic::AtomicBool::new(false);
-                    if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                        warn!(error = %e, "查询 plugin_finance.payments 失败，使用默认金额 1000.00 兜底");
-                    }
-                })
-                .unwrap_or_default(),
-            }
-        }
+    let snapshot_type: &str = match stype.as_str() {
+        "sale" | "sales" | "sales_order" | "salesorder" => "sales_order",
+        "purchase" | "purchase_order" | "purchaseorder" => "purchase_order",
+        "payment" | "pay" => "payment",
         other => {
             static LOGGED: std::sync::atomic::AtomicBool =
                 std::sync::atomic::AtomicBool::new(false);
@@ -557,8 +494,67 @@ async fn resolve_source_amounts(
                     "未知 source_type，使用默认金额 1000.00；支持值：sale / purchase / payment"
                 );
             }
-            Vec::new()
+            // 未知类型直接返回默认值，不查任何表
+            for id in source_ids {
+                out.insert(id.clone(), default);
+            }
+            return out;
         }
+    };
+
+    // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
+    let snapshot_rows: Vec<(Uuid, Option<f64>)> = sqlx::query_as::<_, (Uuid, Option<f64>)>(
+        r#"SELECT source_id, payable_amount FROM plugin_finance.source_amount_snapshots
+           WHERE source_type = $1 AND source_id = ANY($2)"#,
+    )
+    .bind(snapshot_type)
+    .bind(&valid_uuids)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| {
+        static LOGGED: std::sync::atomic::AtomicBool =
+            std::sync::atomic::AtomicBool::new(false);
+        if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            warn!(
+                error = %e,
+                source_type = snapshot_type,
+                "查询 source_amount_snapshots 失败，使用默认金额 1000.00 兜底；请确认 ERP 事件已正确发布"
+            );
+        }
+    })
+    .unwrap_or_default();
+
+    // payment/pay 类型特殊处理：查 payment_records 表（同 Schema，安全）
+    let amount_f64s: Vec<(Uuid, Option<f64>)> = if snapshot_type == "payment" {
+        let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(
+            r#"SELECT id, amount FROM plugin_finance.payment_records
+               WHERE tenant_id = $1 AND id = ANY($2)"#,
+        )
+        .bind(tenant_id)
+        .bind(&valid_uuids)
+        .fetch_all(pool)
+        .await;
+        match r1 {
+            Ok(rows) if !rows.is_empty() => rows,
+            _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(
+                r#"SELECT id, amount FROM plugin_finance.payments
+                   WHERE tenant_id = $1 AND id = ANY($2)"#,
+            )
+            .bind(tenant_id)
+            .bind(&valid_uuids)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                static LOGGED: std::sync::atomic::AtomicBool =
+                    std::sync::atomic::AtomicBool::new(false);
+                if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                    warn!(error = %e, "查询 plugin_finance.payments 失败，使用默认金额 1000.00 兜底");
+                }
+            })
+            .unwrap_or_default(),
+        }
+    } else {
+        snapshot_rows
     };
 
     for (uuid, amount_opt) in amount_f64s {

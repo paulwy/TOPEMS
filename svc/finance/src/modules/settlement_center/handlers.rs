@@ -89,7 +89,7 @@ pub async fn create_reconciliation(
     let tenant_id = current_tenant_id(&claims);
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
-    match service::create_reconciliation(&state.pool, tenant_id, &req, creator).await {
+    match service::create_reconciliation(&state.pool, state.event_publisher.as_ref(), tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_reconciliation 失败: {}", e);
@@ -143,7 +143,7 @@ pub async fn reconcile(
     Json(req): Json<ReconcileRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::manual_reconcile(&state.pool, tenant_id, id, &req).await {
+    match service::manual_reconcile(&state.pool, state.event_publisher.as_ref(), tenant_id, id, &req).await {
         Ok(affected) => Json(api_success(json!({ "matched_count": affected }))),
         Err(e) => {
             tracing::error!("[SettlementCenter] manual_reconcile 失败: {}", e);
@@ -235,7 +235,7 @@ pub async fn create_settlement(
     let tenant_id = current_tenant_id(&claims);
     let creator = req.created_by.clone().unwrap_or_else(|| claims.sub.clone());
 
-    match service::create_settlement(&state.pool, tenant_id, &req, creator).await {
+    match service::create_settlement(&state.pool, state.event_publisher.as_ref(), tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_settlement 失败: {}", e);
@@ -274,6 +274,32 @@ pub async fn get_settlement(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
+    path = "/api/core/settlement-center/reconciliations/{id}/approve",
+    tag = "Settlement-Center",
+    operation_id = "approve_reconciliation",
+    responses((status = 200, description = "OK")),
+)]
+/// POST /api/core/settlement-center/reconciliations/{id}/approve
+pub async fn approve_reconciliation(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<UnifiedReconciliation>> {
+    let tenant_id = current_tenant_id(&claims);
+    let approver = claims.sub.clone();
+    match service::approve_reconciliation(&state.pool, state.event_publisher.as_ref(), tenant_id, id, approver).await {
+        Ok(Some(item)) => Json(api_success(item)),
+        Ok(None) => Json(api_error(400, "对账单不存在或当前状态不允许审批")),
+        Err(e) => {
+            tracing::error!("[SettlementCenter] approve_reconciliation 失败: {}", e);
+            Json(api_error(500, "审批对账单失败"))
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/core/settlement-center/settlements/{id}/approve",
     tag = "Settlement-Center",
     operation_id = "approve_settlement",
@@ -287,7 +313,7 @@ pub async fn approve_settlement(
 ) -> Json<ApiResponse<UnifiedSettlement>> {
     let tenant_id = current_tenant_id(&claims);
     let approver = claims.sub.clone();
-    match service::approve_settlement(&state.pool, tenant_id, id, approver).await {
+    match service::approve_settlement(&state.pool, state.event_publisher.as_ref(), tenant_id, id, approver).await {
         Ok(Some(item)) => Json(api_success(item)),
         Ok(None) => Json(api_error(400, "结算单不存在或当前状态不允许审批")),
         Err(e) => {

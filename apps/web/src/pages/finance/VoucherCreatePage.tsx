@@ -29,9 +29,11 @@ import { PageContainer } from '@/components/common';
 import {
   voucherApi,
   accountingSubjectApi,
-  type AccountingSubject,
-  type VoucherItemRequest,
 } from '@/api/erp';
+import type {
+  AccountingSubject,
+  VoucherItemRequest,
+} from '@/api/finance';
 import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';

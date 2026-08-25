@@ -89,6 +89,10 @@ pub fn create_routes() -> Router<AppState> {
     // ===== 审批类路由（需要 finance:settlement:approve 权限）=====
     let approve_routes = Router::new()
         .route(
+            "/api/core/settlement-center/reconciliations/{id}/approve",
+            post(handlers::approve_reconciliation),
+        )
+        .route(
             "/api/core/settlement-center/settlements/{id}/approve",
             post(handlers::approve_settlement),
         )

@@ -32,6 +32,20 @@ export { budgetApi } from './budget';
 export { riskApi } from './risk';
 export { taxApi } from './tax';
 
+// ============================================================================
+// ERP → Finance 类型迁移（B1 阶段）
+// 语义上属于财务模块的 Budget / AccountingSubject / FinancialVoucher 等类型
+// 已从 @/api/erp/types.ts 迁移至此，Finance 页面请使用此来源。ERP 侧同名
+// 类型已标记 @deprecated，后续将移除。
+// ============================================================================
+export type {
+  Budget,
+  AccountingSubject,
+  FinancialVoucher,
+  VoucherItem,
+  VoucherItemRequest,
+} from './types';
+
 export interface FinanceDashboardStats {
   total_vouchers: number;
   draft_vouchers: number;

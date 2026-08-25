@@ -83,13 +83,10 @@ pub async fn overview(
             COALESCE(SUM(quantity), 0) as total_quantity,
             COALESCE(SUM(total_value), 0) as total_value,
             COUNT(*) FILTER (WHERE available_quantity < COALESCE(min_quantity, 0)) as low_stock_count
-        FROM wms.inventory
-        WHERE deleted_at IS NULL
-          AND ($3::uuid IS NULL OR warehouse_id = $3)
+        FROM scm.wms_inventory_snapshots
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1)
         "#,
     )
-    .bind(&start_date)
-    .bind(&end_date)
     .bind(params.warehouse_id)
     .fetch_one(&state.db)
     .await;
@@ -100,8 +97,8 @@ pub async fn overview(
             COUNT(*) as total_inbound,
             COALESCE(SUM(total_quantity), 0) as total_inbound_quantity,
             COUNT(*) FILTER (WHERE status = 'pending') as pending_inbound,
-            COUNT(*) FILTER (WHERE status = 'completed') as completed_inbound
-        FROM wms.inbound_orders
+            COUNT(*) FILTER (WHERE status = 'completed' OR status = 'received') as completed_inbound
+        FROM scm.wms_inbound_order_snapshots
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
@@ -120,8 +117,8 @@ pub async fn overview(
             COUNT(*) as total_outbound,
             COALESCE(SUM(total_quantity), 0) as total_outbound_quantity,
             COUNT(*) FILTER (WHERE status = 'pending') as pending_outbound,
-            COUNT(*) FILTER (WHERE status = 'completed') as completed_outbound
-        FROM wms.outbound_orders
+            COUNT(*) FILTER (WHERE status = 'completed' OR status = 'shipped') as completed_outbound
+        FROM scm.wms_outbound_order_snapshots
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
@@ -232,7 +229,7 @@ pub async fn purchase_inbound_outbound_stats(
             DATE_TRUNC('day', created_at) as date,
             COUNT(*) as order_count,
             COALESCE(SUM(total_quantity), 0) as total_quantity
-        FROM wms.inbound_orders
+        FROM scm.wms_inbound_order_snapshots
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
@@ -253,7 +250,7 @@ pub async fn purchase_inbound_outbound_stats(
             DATE_TRUNC('day', created_at) as date,
             COUNT(*) as order_count,
             COALESCE(SUM(total_quantity), 0) as total_quantity
-        FROM wms.outbound_orders
+        FROM scm.wms_outbound_order_snapshots
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
@@ -510,7 +507,7 @@ async fn real_time_status(
 
     let pending_inbound = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM wms.inbound_orders 
+        SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND deleted_at IS NULL
@@ -523,7 +520,7 @@ async fn real_time_status(
 
     let pending_outbound = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM wms.outbound_orders 
+        SELECT COUNT(*) FROM scm.wms_outbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND deleted_at IS NULL
@@ -536,9 +533,8 @@ async fn real_time_status(
 
     let low_stock_count = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM wms.inventory
+        SELECT COUNT(*) FROM scm.wms_inventory_snapshots
         WHERE available_quantity < COALESCE(min_quantity, 0)
-          AND deleted_at IS NULL
           AND ($1::uuid IS NULL OR warehouse_id = $1)
         "#,
     )
@@ -556,7 +552,7 @@ async fn real_time_status(
 
     let replenishment_suggestions = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM wms.replenishment_suggestions WHERE status = 'draft'
+        SELECT COUNT(*) FROM scm.wms_replenishment_suggestion_snapshots WHERE status = 'draft'
         "#,
     )
     .fetch_one(&state.db)

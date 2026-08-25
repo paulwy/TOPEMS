@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { StatusBadge, StatCardGroup } from '@/components';
 import type { StatCardGroupProps } from '@/components/common';
-import type { AccountingSubject } from '@/api/erp';
+import type { AccountingSubject } from '@/api/finance';
 
 import { useTranslation } from 'react-i18next';
 

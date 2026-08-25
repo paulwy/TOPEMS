@@ -80,6 +80,13 @@ pub enum EventType {
     WmsInventoryItemReceived,
     WmsWarehouseTransferCompleted,
     WmsInventoryLowStock,
+    // WMS→CRM 事件驱动：出库单转销售订单
+    ShippingOrderRequested,
+    // SCM→WMS 事件驱动：入库单创建请求
+    InboundOrderRequested,
+
+    // SRM→SCM 事件驱动：供应商数据同步
+    SupplierDataSyncRequested,
 
     // QMS Extended Events
     QualityIssueResolved,
@@ -167,6 +174,16 @@ pub enum EventType {
 
     // 权限元数据变更事件（V21.0 统一权限中心）
     PermissionMetadataChanged,
+
+    // Finance Reconciliation Events（结算中心跨库事件驱动）
+    ReconciliationCreated,
+    ReconciliationUpdated,
+    ReconciliationApproved,
+
+    // Finance Settlement Events（结算中心跨库事件驱动）
+    SettlementCreated,
+    SettlementApproved,
+    SettlementRejected,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -493,6 +510,7 @@ pub struct SalesOrderCreatedPayload {
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
     pub total_amount: Option<f64>,
+    pub payable_amount: Option<f64>,
     pub created_by: Option<String>,
 }
 
@@ -503,6 +521,7 @@ pub struct SalesOrderApprovedPayload {
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
     pub total_amount: Option<f64>,
+    pub payable_amount: Option<f64>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
 }
@@ -527,6 +546,7 @@ pub struct PurchaseOrderCreatedPayload {
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
     pub total_amount: Option<f64>,
+    pub payable_amount: Option<f64>,
     pub created_by: Option<String>,
 }
 
@@ -537,6 +557,7 @@ pub struct PurchaseOrderApprovedPayload {
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
     pub total_amount: Option<f64>,
+    pub payable_amount: Option<f64>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
 }
@@ -550,6 +571,26 @@ pub struct PaymentMadePayload {
     pub amount: f64,
     pub payment_method: Option<String>,
     pub paid_at: Option<DateTime<Utc>>,
+}
+
+// --- SRM↔SCM Supplier Sync Events ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SupplierDataSyncRequestedPayload {
+    pub supplier_id: Uuid,
+    pub supplier_name: String,
+    pub short_name: Option<String>,
+    pub contact_name: Option<String>,
+    pub contact_phone: Option<String>,
+    pub email: Option<String>,
+    pub address: Option<String>,
+    pub tax_number: Option<String>,
+    pub bank_account: Option<String>,
+    pub status: String,
+    pub sync_direction: String,
+    pub requested_at: DateTime<Utc>,
+    pub requested_by: Option<String>,
+    pub tenant_id: Option<Uuid>,
 }
 
 // --- MES Production Events ---
@@ -638,9 +679,15 @@ pub struct InventoryUpdatedPayload {
     pub old_quantity: f64,
     pub new_quantity: f64,
     pub delta: f64,
-    pub change_type: String, // create/update/delete
+    pub change_type: String,
     pub changed_by: Uuid,
     pub changed_at: String,
+    #[serde(default)]
+    pub available_quantity: Option<f64>,
+    #[serde(default)]
+    pub min_quantity: Option<f64>,
+    #[serde(default)]
+    pub total_value: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -752,6 +799,37 @@ pub struct WmsInventoryLowStockPayload {
     pub alert_type: String,
     pub severity: String,
     pub detected_at: Option<DateTime<Utc>>,
+}
+
+/// 出库单转销售订单事件 Payload
+///
+/// 当 WMS 出库单确认后发布，通知 CRM 在本地创建销售订单。
+/// 替代原有的跨Schema直写（WMS直写CRM表），采用事件驱动解耦。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShippingOrderRequestedPayload {
+    pub outbound_order_id: Uuid,
+    pub outbound_order_number: String,
+    pub customer_id: Option<Uuid>,
+    pub order_date: DateTime<Utc>,
+    pub total_amount: f64,
+    pub shipping_id: Uuid,
+    pub shipping_order_number: String,
+    pub requested_at: DateTime<Utc>,
+}
+
+/// SCM→WMS 入库单创建请求事件 Payload
+///
+/// 当 SCM 采购订单需要创建入库单时发布，通知 WMS 创建入库单。
+/// 替代原有的跨Schema直写（SCM直写WMS表），采用事件驱动解耦。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InboundOrderRequestedPayload {
+    pub inbound_order_id: Uuid,
+    pub inbound_order_number: String,
+    pub warehouse_id: Option<Uuid>,
+    pub supplier_id: Option<Uuid>,
+    pub purchase_order_id: Uuid,
+    pub purchase_order_number: String,
+    pub requested_at: DateTime<Utc>,
 }
 
 // --- QMS Extended Events ---
@@ -1291,6 +1369,77 @@ pub struct DocDocumentVersionCreatedPayload {
     pub created_at: Option<DateTime<Utc>>,
 }
 
+// --- Finance Reconciliation & Settlement Events ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationCreatedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub recon_code: Option<String>,
+    pub recon_name: String,
+    pub recon_type: String,
+    pub status: String,
+    pub period: String,
+    pub entity_id: Option<Uuid>,
+    pub entity_type: Option<String>,
+    pub description: Option<String>,
+    pub created_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationUpdatedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub status: String,
+    pub total_debit: Option<f64>,
+    pub total_credit: Option<f64>,
+    pub difference: Option<f64>,
+    pub matched_count: Option<i32>,
+    pub unmatched_count: Option<i32>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReconciliationApprovedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub approved_by: String,
+    pub approved_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SettlementCreatedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub project_id: Uuid,
+    pub settlement_no: String,
+    pub settlement_type: String,
+    pub status: String,
+    pub amount: Option<f64>,
+    pub settlement_date: Option<DateTime<Utc>>,
+    pub remarks: Option<String>,
+    pub created_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SettlementApprovedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub approved_by: String,
+    pub approved_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SettlementRejectedPayload {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub rejected_by: String,
+    pub rejected_at: DateTime<Utc>,
+    pub reason: Option<String>,
+}
+
 impl std::fmt::Display for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -1474,12 +1623,14 @@ mod tests {
             customer_id: None,
             customer_name: Some("Topems Inc".into()),
             total_amount: Some(12500.00),
+            payable_amount: Some(10000.00),
             created_by: Some("alice".into()),
         };
         let json = serde_json::to_string(&p).unwrap();
         let back: SalesOrderCreatedPayload = serde_json::from_str(&json).unwrap();
         assert_eq!(back.order_no, "SO-2026-0001");
         assert_eq!(back.total_amount, Some(12500.00));
+        assert_eq!(back.payable_amount, Some(10000.00));
     }
 
     #[test]

@@ -3,8 +3,8 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
-    HrmEmployeeUpdatedPayload, RdProjectCreatedPayload, WorkflowApprovedPayload,
-    WorkflowRejectedPayload,
+    HrmEmployeeUpdatedPayload, RdProjectCreatedPayload, SettlementApprovedPayload,
+    SettlementCreatedPayload, WorkflowApprovedPayload, WorkflowRejectedPayload,
 };
 use uuid::Uuid;
 
@@ -31,6 +31,8 @@ impl PmEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
+        let h4 = self.clone();
+        let h5 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(
@@ -50,6 +52,14 @@ impl PmEventHandlers {
             .subscribe_handler(vec![EventType::RdProjectCreated], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_rd_project_created(event).await })
+            })
+            .subscribe_handler(vec![EventType::SettlementCreated], move |event| {
+                let h = h4.clone();
+                Box::pin(async move { h.handle_settlement_created(event).await })
+            })
+            .subscribe_handler(vec![EventType::SettlementApproved], move |event| {
+                let h = h5.clone();
+                Box::pin(async move { h.handle_settlement_approved(event).await })
             }))
     }
 
@@ -277,6 +287,71 @@ impl PmEventHandlers {
 
         Ok(())
     }
+
+    async fn handle_settlement_created(&self, event: Event) -> HandlerResult {
+        let payload: SettlementCreatedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 SettlementCreated payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[pm] SettlementCreated 处理 - id={}, settlement_no={}, trace_id={:?}",
+            payload.id,
+            payload.settlement_no,
+            event.trace_id
+        );
+
+        let now = Utc::now();
+        let date = payload.settlement_date.unwrap_or(now);
+
+        sqlx::query(
+            r#"INSERT INTO pm.settlements
+               (id, project_id, settlement_no, settlement_type,
+                settlement_date, amount, currency, status, remarks,
+                created_by, tenant_id, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, COALESCE($6, 0), 'CNY', $7, $8, $9, $10, $11, $11)
+             ON CONFLICT (id) DO NOTHING"#,
+        )
+        .bind(payload.id)
+        .bind(payload.project_id)
+        .bind(&payload.settlement_no)
+        .bind(&payload.settlement_type)
+        .bind(date)
+        .bind(payload.amount)
+        .bind(&payload.status)
+        .bind(payload.remarks)
+        .bind(payload.created_by)
+        .bind(payload.tenant_id)
+        .bind(now)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("写入 pm.settlements 失败: {}", e))?;
+
+        Ok(())
+    }
+
+    async fn handle_settlement_approved(&self, event: Event) -> HandlerResult {
+        let payload: SettlementApprovedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 SettlementApproved payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[pm] SettlementApproved 处理 - id={}, approved_by={}, trace_id={:?}",
+            payload.id,
+            payload.approved_by,
+            event.trace_id
+        );
+
+        sqlx::query(
+            r#"UPDATE pm.settlements
+               SET status = 'approved',
+                   updated_at = NOW()
+               WHERE id = $1 AND status IN ('pending', 'draft')"#,
+        )
+        .bind(payload.id)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("更新 pm.settlements 失败: {}", e))?;
+
+        Ok(())
+    }
 }
 
 pub async fn start_event_subscribers(
@@ -286,7 +361,7 @@ pub async fn start_event_subscribers(
     let handlers = PmEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[pm] 启动事件订阅者，注册 3 类业务事件 handler");
+    tracing::info!("[pm] 启动事件订阅者，注册 5 类业务事件 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[pm] 事件订阅者异常退出: {}", e);

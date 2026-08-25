@@ -1,7 +1,5 @@
-use axum::routing::get;
 use axum::Router;
 
-use crate::middleware::permission::require_permission;
 use crate::modules;
 use crate::AppState;
 
@@ -11,13 +9,7 @@ pub fn doc_routes(_state: &AppState) -> Router<AppState> {
     Router::new().nest("/doc", modules::doc::create_routes())
 }
 
-/// R4/R6 stub router: mounts require_permission("doc:dashboard:read") on
-/// /internal/stubs/doc so backend module set covers the frontend doc module.
-pub fn stub_router(state: &AppState) -> Router<AppState> {
-    Router::new()
-        .route("/dashboard", get(|| async { "ok" }))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("doc:dashboard:read"),
-        ))
-}
+// V289: 已删除 R4/R6 stub_router（原挂载 /internal/stubs/doc + require_permission
+// doc:dashboard:read）。原因见 routes/mod.rs V289 注释：前端 0 业务流量 +
+// {mod}:dashboard:read 从未进入 init_permissions 权限表 + plugin.yaml 是权限真源。
+

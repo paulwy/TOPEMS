@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_event::event::{EventPublisher, SupplierDataSyncRequestedPayload};
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -36,10 +37,11 @@ pub struct SyncLogsRequest {
 
 pub struct AppState {
     pub db: PgPool,
+    pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
+pub async fn create_routes(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Result<Router> {
+    let state = Arc::new(AppState { db, event_publisher });
 
     let app = Router::new()
         .route("/sync/supplier-from-scm", post(sync_supplier_from_scm))
@@ -86,7 +88,7 @@ async fn sync_supplier_from_scm(
     let scm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
-        FROM plugin_scm.suppliers
+        FROM srm.scm_supplier_snapshots
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
         "#,
     )
@@ -280,7 +282,7 @@ async fn sync_all_suppliers_from_scm(
     let scm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
-        FROM plugin_scm.suppliers
+        FROM srm.scm_supplier_snapshots
         WHERE tenant_id = $1 AND status != 'deleted'
         "#,
     )
@@ -472,49 +474,32 @@ async fn sync_supplier_to_scm(
             }
         };
 
-    let existing_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
-
     let now = Utc::now();
-    let action = if existing_count > 0 {
-        "update"
-    } else {
-        "create"
-    };
 
-    if existing_count > 0 {
-        let result = sqlx::query(
-            r#"
-            UPDATE plugin_scm.suppliers SET name = $2, short_name = $3, contact_name = $4, 
-                                         contact_phone = $5, email = $6, address = $7, 
-                                         tax_number = $8, status = $9, sync_from_srm = TRUE,
-                                         srm_supplier_id = $10, updated_at = $11
-            WHERE id = $1 AND tenant_id = $12
-            "#,
-        )
-        .bind(id)
-        .bind(&name)
-        .bind(legal_name)
-        .bind(contact_person)
-        .bind(phone)
-        .bind(email)
-        .bind(address)
-        .bind(tax_number)
-        .bind(&status)
-        .bind(id)
-        .bind(now)
-        .bind(tenant_id)
-        .execute(&state.db)
-        .await;
+    if let Some(ref publisher) = state.event_publisher {
+        let payload = SupplierDataSyncRequestedPayload {
+            supplier_id: id,
+            supplier_name: name.clone(),
+            short_name: legal_name.clone(),
+            contact_name: contact_person.clone(),
+            contact_phone: phone.clone(),
+            email: email.clone(),
+            address: address.clone(),
+            tax_number: tax_number.clone(),
+            bank_account: None,
+            status: status.clone(),
+            sync_direction: "srm_to_scm".to_string(),
+            requested_at: now,
+            requested_by: Some(claims.sub.clone()),
+            tenant_id: Some(tenant_id),
+        };
 
-        match result {
+        match publisher.publish_supplier_data_sync_requested(payload).await {
             Ok(_) => {
+                tracing::info!(
+                    "[srm] 发布 SupplierDataSyncRequested 事件成功 - supplier_id={}",
+                    id
+                );
                 let _ = record_sync_log(
                     &state.db,
                     tenant_id,
@@ -526,85 +511,60 @@ async fn sync_supplier_to_scm(
                     "",
                     Some(id),
                     "",
-                    action,
+                    "event_publish",
                     "success",
                     None,
                 )
                 .await;
-                Json(ApiResponse::success(
+                return Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
-                        "message": "供应商信息更新成功".to_string(),
+                        "message": "供应商同步事件已发布，SCM将异步处理".to_string(),
                         "supplier_id": id,
-                        "action": "updated".to_string(),
+                        "action": "event_published".to_string(),
                     }),
-                    "供应商同步成功",
-                ))
+                    "供应商同步事件发布成功",
+                ));
             }
             Err(e) => {
-                tracing::error!("更新供应商失败: {}", e);
-                Json(api_error(500, "更新供应商失败"))
-            }
-        }
-    } else {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO plugin_scm.suppliers (id, tenant_id, name, short_name, contact_name, contact_phone, 
-                                           email, address, tax_number, status, sync_from_srm,
-                                           srm_supplier_id, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13)
-            "#,
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .bind(&name)
-        .bind(legal_name)
-        .bind(contact_person)
-        .bind(phone)
-        .bind(email)
-        .bind(address)
-        .bind(tax_number)
-        .bind(&status)
-        .bind(id)
-        .bind(now)
-        .bind(now)
-        .execute(&state.db)
-        .await;
-
-        match result {
-            Ok(_) => {
-                let _ = record_sync_log(
-                    &state.db,
-                    tenant_id,
-                    "supplier_sync",
-                    "srm",
-                    "scm",
-                    "supplier",
-                    id,
-                    "",
-                    Some(id),
-                    "",
-                    action,
-                    "success",
-                    None,
-                )
-                .await;
-                Json(ApiResponse::success(
-                    serde_json::json!({
-                        "success": true,
-                        "message": "供应商创建成功".to_string(),
-                        "supplier_id": id,
-                        "action": "created".to_string(),
-                    }),
-                    "供应商同步成功",
-                ))
-            }
-            Err(e) => {
-                tracing::error!("创建供应商失败: {}", e);
-                Json(api_error(500, "创建供应商失败"))
+                tracing::error!(
+                    "[srm] 发布 SupplierDataSyncRequested 事件失败: {}，将尝试直接同步",
+                    e
+                );
             }
         }
     }
+
+    tracing::warn!(
+        "[srm] 事件发布不可用或失败，供应商同步未能完成 - supplier_id={}",
+        id
+    );
+    let _ = record_sync_log(
+        &state.db,
+        tenant_id,
+        "supplier_sync",
+        "srm",
+        "scm",
+        "supplier",
+        id,
+        "",
+        Some(id),
+        "",
+        "event_failed",
+        "failed",
+        None,
+    )
+    .await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "success": false,
+            "message": "供应商同步事件发布失败，请检查事件服务状态".to_string(),
+            "supplier_id": id,
+            "action": "pending".to_string(),
+        }),
+        "供应商同步事件发布失败",
+    ))
 }
 
 async fn sync_all_suppliers_to_scm(
@@ -652,91 +612,62 @@ async fn sync_all_suppliers_to_scm(
     };
 
     let total_count = srm_suppliers.len();
-    let mut created_count = 0;
-    let mut updated_count = 0;
+    let mut published_count = 0;
+    let mut fallback_count = 0;
     let mut failed_count = 0;
     let now = Utc::now();
 
+    let use_events = state.event_publisher.is_some();
+
     for (id, name, legal_name, contact_person, phone, email, address, tax_number, status) in
-        srm_suppliers
+        &srm_suppliers
     {
-        let existing = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1 AND tenant_id = $2",
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .fetch_one(&state.db)
-        .await;
+        if use_events {
+            let payload = SupplierDataSyncRequestedPayload {
+                supplier_id: *id,
+                supplier_name: name.clone(),
+                short_name: legal_name.clone(),
+                contact_name: contact_person.clone(),
+                contact_phone: phone.clone(),
+                email: email.clone(),
+                address: address.clone(),
+                tax_number: tax_number.clone(),
+                bank_account: None,
+                status: status.clone(),
+                sync_direction: "srm_to_scm".to_string(),
+                requested_at: now,
+                requested_by: Some(claims.sub.clone()),
+                tenant_id: Some(tenant_id),
+            };
 
-        if existing.unwrap_or(0) > 0 {
-            let result = sqlx::query(
-                r#"
-                UPDATE plugin_scm.suppliers SET name = $2, short_name = $3, contact_name = $4, 
-                                             contact_phone = $5, email = $6, address = $7, 
-                                             tax_number = $8, status = $9, sync_from_srm = TRUE,
-                                             srm_supplier_id = $10, updated_at = $11
-                WHERE id = $1 AND tenant_id = $12
-                "#,
-            )
-            .bind(id)
-            .bind(&name)
-            .bind(legal_name)
-            .bind(contact_person)
-            .bind(phone)
-            .bind(email)
-            .bind(address)
-            .bind(tax_number)
-            .bind(&status)
-            .bind(id)
-            .bind(now)
-            .bind(tenant_id)
-            .execute(&state.db)
-            .await;
-
-            if result.is_ok() {
-                updated_count += 1;
-            } else {
-                failed_count += 1;
+            if let Some(ref publisher) = state.event_publisher {
+                match publisher.publish_supplier_data_sync_requested(payload).await {
+                    Ok(_) => published_count += 1,
+                    Err(e) => {
+                        tracing::warn!(
+                            "[srm] 批量发布 SupplierDataSyncRequested 失败 - supplier_id={}: {}，将直接同步",
+                            id, e
+                        );
+                        fallback_count += 1;
+                    }
+                }
             }
         } else {
-            let result = sqlx::query(
-                r#"
-                INSERT INTO plugin_scm.suppliers (id, tenant_id, name, short_name, contact_name, contact_phone, 
-                                               email, address, tax_number, status, sync_from_srm,
-                                               srm_supplier_id, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13)
-                "#,
-            )
-            .bind(id)
-            .bind(tenant_id)
-            .bind(&name)
-            .bind(legal_name)
-            .bind(contact_person)
-            .bind(phone)
-            .bind(email)
-            .bind(address)
-            .bind(tax_number)
-            .bind(&status)
-            .bind(id)
-            .bind(now)
-            .bind(now)
-            .execute(&state.db)
-            .await;
-
-            if result.is_ok() {
-                created_count += 1;
-            } else {
-                failed_count += 1;
-            }
+            tracing::warn!(
+                "[srm] 无事件发布器，跳过直接同步 - supplier_id={}",
+                id
+            );
+            fallback_count += 1;
         }
     }
 
     Json(ApiResponse::success(
         serde_json::json!({
             "total_processed": total_count,
-            "created": created_count,
-            "updated": updated_count,
-            "failed": failed_count
+            "event_published": published_count,
+            "direct_synced": fallback_count,
+            "failed": failed_count,
+            "mode": if use_events { "event_driven" } else { "direct" }
         }),
         "供应商批量同步完成",
     ))

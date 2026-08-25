@@ -11,6 +11,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::purchase_order::PurchaseOrder;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_event::{EventType, InboundOrderRequestedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PurchaseToInboundRequest {
@@ -191,7 +192,7 @@ async fn create_inbound_from_purchase_internal(
 
     let existing_inbound = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM wms.inbound_orders
+        SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots
         WHERE order_number = $1
         "#,
     )
@@ -234,22 +235,43 @@ async fn create_inbound_from_purchase_internal(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO wms.inbound_orders (id, order_number, warehouse_id, supplier_id, 
-                                      order_type, status, received_at, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'purchase', 'pending', NULL, $5, $6)
+        INSERT INTO scm.wms_inbound_order_snapshots
+            (id, order_number, warehouse_id, supplier_id,
+             order_type, status, purchase_order_id, purchase_order_number,
+             received_at, tenant_id, synced_at, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, 'purchase', 'pending', $5, $6, NULL, NULL, $7, $7, $7)
         "#,
     )
     .bind(inbound_id)
     .bind(&inbound_order_number)
     .bind(warehouse_id)
     .bind(purchase_order.supplier_id)
-    .bind(now)
+    .bind(purchase_order_id)
+    .bind(&purchase_order.order_number)
     .bind(now)
     .execute(&state.db)
     .await;
 
     match result {
         Ok(_) => {
+            if let Some(ref publisher) = state.event_publisher {
+                let payload = InboundOrderRequestedPayload {
+                    inbound_order_id: inbound_id,
+                    inbound_order_number: inbound_order_number.clone(),
+                    warehouse_id,
+                    supplier_id: purchase_order.supplier_id,
+                    purchase_order_id,
+                    purchase_order_number: purchase_order.order_number.clone(),
+                    requested_at: now,
+                };
+                if let Err(e) = publisher
+                    .publish_event(EventType::InboundOrderRequested, payload)
+                    .await
+                {
+                    tracing::warn!("[SCM] 发布 InboundOrderRequested 事件失败: {}", e);
+                }
+            }
+
             let _ = sqlx::query(
                 r#"
                 UPDATE scm.purchase_orders 
@@ -410,9 +432,9 @@ async fn sync_supplier_from_srm(
         ),
     >(
         r#"
-        SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, website, status
-        FROM srm.suppliers
-        WHERE id = $1 AND status != 'deleted'
+        SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
+        FROM scm.srm_supplier_snapshots
+        WHERE id = $1 AND status != 'deleted' AND deleted_at IS NULL
         "#,
     )
     .bind(supplier_id)
@@ -625,9 +647,9 @@ async fn sync_all_suppliers_from_srm(
         ),
     >(
         r#"
-        SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, website, status
-        FROM srm.suppliers
-        WHERE status != 'deleted'
+        SELECT id, supplier_name, legal_name, contact_name, contact_phone, contact_email, address, tax_id, website, status
+        FROM scm.srm_supplier_snapshots
+        WHERE status != 'deleted' AND deleted_at IS NULL
         "#,
     )
     .fetch_all(&state.db)
@@ -988,7 +1010,7 @@ async fn batch_sync_purchase_to_wms(
 
             for po in purchase_orders {
                 let existing_inbound = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM wms.inbound_orders WHERE order_number = $1",
+                    "SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots WHERE order_number = $1",
                 )
                 .bind(&po.order_number)
                 .fetch_one(&state.db)
@@ -1012,21 +1034,43 @@ async fn batch_sync_purchase_to_wms(
 
                 let result = sqlx::query(
                     r#"
-                    INSERT INTO wms.inbound_orders (id, order_number, warehouse_id, supplier_id, 
-                                                  order_type, status, received_at, created_at, updated_at)
-                    VALUES ($1, $2, NULL, $3, 'purchase', 'pending', NULL, $4, $5)
+                    INSERT INTO scm.wms_inbound_order_snapshots
+                        (id, order_number, warehouse_id, supplier_id,
+                         order_type, status, purchase_order_id, purchase_order_number,
+                         received_at, tenant_id, synced_at, created_at, updated_at)
+                    VALUES ($1, $2, NULL, $3, 'purchase', 'pending', $4, $5,
+                            NULL, NULL, $6, $6, $6)
                     "#,
                 )
                 .bind(inbound_id)
                 .bind(&inbound_order_number)
                 .bind(po.supplier_id)
-                .bind(now)
+                .bind(po.id)
+                .bind(&po.order_number)
                 .bind(now)
                 .execute(&state.db)
                 .await;
 
                 match result {
                     Ok(_) => {
+                        if let Some(ref publisher) = state.event_publisher {
+                            let payload = InboundOrderRequestedPayload {
+                                inbound_order_id: inbound_id,
+                                inbound_order_number: inbound_order_number.clone(),
+                                warehouse_id: None,
+                                supplier_id: po.supplier_id,
+                                purchase_order_id: po.id,
+                                purchase_order_number: po.order_number.clone(),
+                                requested_at: now,
+                            };
+                            if let Err(e) = publisher
+                                .publish_event(EventType::InboundOrderRequested, payload)
+                                .await
+                            {
+                                tracing::warn!("[SCM] 批量发布 InboundOrderRequested 事件失败: {}", e);
+                            }
+                        }
+
                         let _ = sqlx::query(
                             r#"
                             UPDATE scm.purchase_orders 
@@ -1194,7 +1238,7 @@ async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyChec
                po.is_synced_to_wms as synced, po.status as po_status,
                io.id as wms_inbound_id, io.order_number as wms_inbound_number
         FROM scm.purchase_orders po
-        LEFT JOIN wms.inbound_orders io ON po.inbound_order_id = io.id
+        LEFT JOIN scm.wms_inbound_order_snapshots io ON po.inbound_order_id = io.id
         WHERE po.status IN ('in_transit', 'delivered')
         ORDER BY po.created_at DESC
         "#,
@@ -1254,12 +1298,12 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
     let rows = sqlx::query(
         r#"
         SELECT s.id as scm_id, s.name as scm_name, s.sync_from_srm as scm_sync_from_srm,
-               srm.id as srm_id, srm.name as srm_name, srm.sync_from_scm as srm_sync_from_scm
+               ssn.id as srm_id, ssn.supplier_name as srm_name
         FROM scm.suppliers s
-        FULL OUTER JOIN srm.suppliers srm ON s.id = srm.id
-        WHERE (s.id IS NOT NULL OR srm.id IS NOT NULL)
-          AND s.status != 'deleted' AND (srm.status IS NULL OR srm.status != 'deleted')
-        ORDER BY COALESCE(s.created_at, srm.created_at) DESC
+        FULL OUTER JOIN scm.srm_supplier_snapshots ssn ON s.id = ssn.id
+        WHERE (s.id IS NOT NULL OR ssn.id IS NOT NULL)
+          AND s.status != 'deleted' AND (ssn.status IS NULL OR ssn.status != 'deleted')
+        ORDER BY COALESCE(s.created_at, ssn.synced_at) DESC
         "#,
     )
     .fetch_all(&state.db)
@@ -1276,7 +1320,6 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
             let scm_sync_from_srm: Option<bool> = row.get("scm_sync_from_srm");
             let srm_id: Option<Uuid> = row.get("srm_id");
             let srm_name: Option<String> = row.get("srm_name");
-            let srm_sync_from_scm: Option<bool> = row.get("srm_sync_from_scm");
 
             if scm_id.is_some() && srm_id.is_none() {
                 details.push(InconsistencyDetail {
@@ -1285,7 +1328,7 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
                     target_id: None,
                     target_code: None,
                     inconsistency_type: "missing_in_target".to_string(),
-                    description: "SCM供应商在SRM中不存在".to_string(),
+                    description: "SCM供应商在SRM快照中不存在".to_string(),
                 });
                 inconsistent_count += 1;
             } else if srm_id.is_some() && scm_id.is_none() {
@@ -1300,16 +1343,15 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
                 inconsistent_count += 1;
             } else if scm_id.is_some() && srm_id.is_some() {
                 let scm_sync = scm_sync_from_srm.unwrap_or(false);
-                let srm_sync = srm_sync_from_scm.unwrap_or(false);
 
-                if !scm_sync && !srm_sync {
+                if !scm_sync {
                     details.push(InconsistencyDetail {
                         source_id: scm_id.map(|id| id.to_string()).unwrap_or_default(),
                         source_code: scm_name,
                         target_id: srm_id.map(|id| id.to_string()),
                         target_code: srm_name,
                         inconsistency_type: "unsynced".to_string(),
-                        description: "供应商未标记为双向同步".to_string(),
+                        description: "供应商未标记为已从SRM同步".to_string(),
                     });
                     inconsistent_count += 1;
                 } else {

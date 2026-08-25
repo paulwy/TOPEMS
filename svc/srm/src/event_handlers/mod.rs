@@ -3,8 +3,9 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, PurchaseOrderCreatedPayload,
-    ScmPurchasePlanCreatedPayload, ScmSupplierEvaluatedPayload,
+    ScmPurchasePlanCreatedPayload, ScmSupplierEvaluatedPayload, SupplierDataSyncRequestedPayload,
 };
+use uuid::Uuid;
 
 type HandlerResult = std::result::Result<(), String>;
 
@@ -28,6 +29,7 @@ impl SrmEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
+        let h4 = self.clone();
 
         Ok(subscriber
             .subscribe_handler(vec![EventType::ScmPurchasePlanCreated], move |event| {
@@ -41,6 +43,10 @@ impl SrmEventHandlers {
             .subscribe_handler(vec![EventType::PurchaseOrderCreated], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_purchase_order_created(event).await })
+            })
+            .subscribe_handler(vec![EventType::SupplierDataSyncRequested], move |event| {
+                let h = h4.clone();
+                Box::pin(async move { h.handle_supplier_data_sync(event).await })
             }))
     }
 
@@ -218,6 +224,148 @@ impl SrmEventHandlers {
         } else {
             tracing::warn!("[srm] 采购订单无供应商ID，跳过履约记录同步");
         }
+
+        Ok(())
+    }
+
+    /// 供应商数据同步事件处理（SCM→SRM 方向：写入 scm_supplier_snapshots）
+    async fn handle_supplier_data_sync(&self, event: Event) -> HandlerResult {
+        let payload: SupplierDataSyncRequestedPayload = event
+            .parse_payload()
+            .map_err(|e| format!("解析 SupplierDataSyncRequested payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[srm] 收到 SupplierDataSyncRequested 事件 - supplier_id={}, supplier_name={}, direction={}",
+            payload.supplier_id,
+            payload.supplier_name,
+            payload.sync_direction
+        );
+
+        if payload.sync_direction != "scm_to_srm" {
+            tracing::debug!(
+                "[srm] 跳过非 scm_to_srm 方向的同步事件 - direction={}",
+                payload.sync_direction
+            );
+            return Ok(());
+        }
+
+        let now = Utc::now();
+
+        let existing_srm_count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(payload.supplier_id)
+        .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+        .fetch_one(&self.db)
+        .await
+        .unwrap_or(0);
+
+        if existing_srm_count > 0 {
+            sqlx::query(
+                r#"UPDATE plugin_srm.suppliers
+                    SET name = $2, legal_name = $3, contact_person = $4,
+                        phone = $5, email = $6, address = $7,
+                        tax_id = $8, status = $9, sync_from_scm = TRUE,
+                        scm_supplier_id = $10, updated_at = $11
+                WHERE id = $1 AND tenant_id = $12"#,
+            )
+            .bind(payload.supplier_id)
+            .bind(&payload.supplier_name)
+            .bind(&payload.short_name)
+            .bind(&payload.contact_name)
+            .bind(&payload.contact_phone)
+            .bind(&payload.email)
+            .bind(&payload.address)
+            .bind(&payload.tax_number)
+            .bind(&payload.status)
+            .bind(payload.supplier_id)
+            .bind(now)
+            .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+            .execute(&self.db)
+            .await
+            .map_err(|e| format!("更新 plugin_srm.suppliers 失败: {}", e))?;
+        } else {
+            let supplier_no = format!(
+                "SUP-{}",
+                payload
+                    .supplier_id
+                    .to_string()
+                    .split('-')
+                    .next()
+                    .unwrap_or("")
+            );
+
+            sqlx::query(
+                r#"INSERT INTO plugin_srm.suppliers
+                    (id, tenant_id, supplier_no, name, legal_name, contact_person,
+                     phone, email, address, tax_id, status,
+                     risk_level, sync_from_scm, scm_supplier_id,
+                     created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)"#,
+            )
+            .bind(payload.supplier_id)
+            .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+            .bind(supplier_no)
+            .bind(&payload.supplier_name)
+            .bind(&payload.short_name)
+            .bind(&payload.contact_name)
+            .bind(&payload.contact_phone)
+            .bind(&payload.email)
+            .bind(&payload.address)
+            .bind(&payload.tax_number)
+            .bind(&payload.status)
+            .bind(payload.supplier_id)
+            .bind(now)
+            .bind(now)
+            .execute(&self.db)
+            .await
+            .map_err(|e| format!("创建 plugin_srm.suppliers 失败: {}", e))?;
+        }
+
+        sqlx::query(
+            r#"INSERT INTO srm.scm_supplier_snapshots
+                (id, supplier_code, name, short_name, contact_name, contact_phone,
+                 email, address, tax_number, bank_account, status,
+                 synced_at, tenant_id, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $14)
+            ON CONFLICT (id) DO UPDATE SET
+                supplier_code = EXCLUDED.supplier_code,
+                name = EXCLUDED.name,
+                short_name = EXCLUDED.short_name,
+                contact_name = EXCLUDED.contact_name,
+                contact_phone = EXCLUDED.contact_phone,
+                email = EXCLUDED.email,
+                address = EXCLUDED.address,
+                tax_number = EXCLUDED.tax_number,
+                bank_account = EXCLUDED.bank_account,
+                status = EXCLUDED.status,
+                synced_at = EXCLUDED.synced_at,
+                updated_at = EXCLUDED.synced_at"#,
+        )
+        .bind(payload.supplier_id)
+        .bind(
+            payload
+                .supplier_id
+                .to_string()
+                .split('-')
+                .next()
+                .map(|s| format!("SCM-{}", s))
+                .unwrap_or_else(|| "SCM".to_string()),
+        )
+        .bind(&payload.supplier_name)
+        .bind(&payload.short_name)
+        .bind(&payload.contact_name)
+        .bind(&payload.contact_phone)
+        .bind(&payload.email)
+        .bind(&payload.address)
+        .bind(&payload.tax_number)
+        .bind(&payload.bank_account)
+        .bind(&payload.status)
+        .bind(now)
+        .bind(payload.tenant_id)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("写入 srm.scm_supplier_snapshots 失败: {}", e))?;
 
         Ok(())
     }
