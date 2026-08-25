@@ -42,10 +42,6 @@ export interface Expense {
   updated_at: string;
 }
 
-/**
- * @deprecated Use `import type { Budget } from '@/api/finance'` instead.
- *             语义归属财务模块，ERP 侧保留仅为兼容旧页面（pages/erp/*）。
- */
 export interface Budget {
   id: string;
   department_id?: string;
@@ -91,10 +87,6 @@ export interface Payable {
   updated_at: string;
 }
 
-/**
- * @deprecated Use `import type { AccountingSubject } from '@/api/finance'` instead.
- *             语义归属财务模块，ERP 侧保留仅为兼容旧页面（pages/erp/*）。
- */
 export interface AccountingSubject {
   id: string;
   code: string;
@@ -109,10 +101,6 @@ export interface AccountingSubject {
   updated_at: string;
 }
 
-/**
- * @deprecated Use `import type { FinancialVoucher } from '@/api/finance'` instead.
- *             语义归属财务模块，ERP 侧保留仅为兼容旧页面（pages/erp/*）。
- */
 export interface FinancialVoucher {
   id: string;
   voucher_number: string;
@@ -147,10 +135,6 @@ export interface FinancialVoucher {
   updated_at: string;
 }
 
-/**
- * @deprecated Use `import type { VoucherItem } from '@/api/finance'` instead.
- *             语义归属财务模块，ERP 侧保留仅为兼容旧页面（pages/erp/*）。
- */
 export interface VoucherItem {
   id: string;
   voucher_id: string;
@@ -170,10 +154,6 @@ export interface VoucherItem {
   updated_at: string;
 }
 
-/**
- * @deprecated Use `import type { VoucherItemRequest } from '@/api/finance'` instead.
- *             语义归属财务模块，ERP 侧保留仅为兼容旧页面（pages/erp/*）。
- */
 export interface VoucherItemRequest {
   line_number: number;
   subject_code: string;
