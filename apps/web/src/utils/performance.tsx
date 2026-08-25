@@ -1,8 +1,4 @@
-import React from 'react';
-import * as ReactDOM from 'react-dom/client';
 import { logger } from './logger';
-
-const lazyComponentModules = import.meta.glob('../components/*.tsx');
 
 export interface PerformanceMetrics {
   lcp: number;
@@ -176,100 +172,10 @@ export function logPerformanceMetrics(): void {
   });
 }
 
-function measureTime<T>(label: string, fn: () => T): T {
-  const start = performance.now();
-  const result = fn();
-  const end = performance.now();
-  logger.debug(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
-  return result;
-}
-
 export async function measureAsyncTime<T>(label: string, fn: () => Promise<T>): Promise<T> {
   const start = performance.now();
   const result = await fn();
   const end = performance.now();
   logger.debug(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
   return result;
-}
-
-function lazyLoadImages(): void {
-  if (typeof window === 'undefined') return;
-
-  const images = document.querySelectorAll('img[data-src]');
-  const options = {
-    root: null,
-    rootMargin: '0px 0px 100px 0px',
-    threshold: 0.1,
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const img = entry.target as HTMLImageElement;
-        img.src = img.dataset.src || '';
-        img.removeAttribute('data-src');
-        observer.unobserve(img);
-      }
-    });
-  }, options);
-
-  images.forEach((img) => observer.observe(img));
-}
-
-function lazyLoadComponents(): void {
-  if (typeof window === 'undefined') return;
-
-  const components = document.querySelectorAll('[data-lazy-component]');
-  const options = {
-    root: null,
-    rootMargin: '0px 0px 200px 0px',
-    threshold: 0,
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const el = entry.target as HTMLElement;
-        const componentName = el.dataset.lazyComponent;
-        if (componentName) {
-          const moduleKey = `../components/${componentName}.tsx`;
-          const loader = lazyComponentModules[moduleKey];
-          if (loader) {
-            (loader() as Promise<{ default?: React.ComponentType }>)
-              .then((module) => {
-                const Component = module.default;
-                if (Component) {
-                  const container = document.createElement('div');
-                  const root = ReactDOM.createRoot(container);
-                  root.render(<Component />);
-                  el.replaceWith(container.firstChild || container);
-                }
-              })
-              .catch((error) => {
-                logger.error(`Failed to load component ${componentName}:`, error);
-              });
-          } else {
-            logger.warn(`Lazy component not found: ${componentName}`);
-          }
-        }
-        observer.unobserve(el);
-      }
-    });
-  }, options);
-
-  components.forEach((el) => observer.observe(el));
-}
-
-function getPerformanceScore(metrics: PerformanceMetrics): number {
-  let score = 100;
-
-  if (metrics.lcp > 2500) score -= Math.min(30, (metrics.lcp - 2500) / 100);
-  if (metrics.fid > 100) score -= Math.min(30, (metrics.fid - 100) / 5);
-  if (metrics.cls > 0.1) score -= Math.min(40, (metrics.cls - 0.1) * 200);
-
-  return Math.max(0, Math.round(score));
-}
-
-function isPerformanceGood(metrics: PerformanceMetrics): boolean {
-  return metrics.lcp <= 2500 && metrics.fid <= 100 && metrics.cls <= 0.1 && metrics.tti <= 5000;
 }
