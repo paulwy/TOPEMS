@@ -114,7 +114,9 @@ async fn create_risk(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"project_id": project_id, "risk_code": req.risk_code, "risk_name": req.risk_name, "risk_level": req.risk_score}));
+    let details = Some(
+        serde_json::json!({"project_id": project_id, "risk_code": req.risk_code, "risk_name": req.risk_name, "risk_level": req.risk_score}),
+    );
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
         "INSERT INTO plugin_pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
@@ -144,13 +146,33 @@ async fn create_risk(
 
     match risk {
         Ok(r) => {
-            if let Err(e) = audit.log_risk_operation("create_risk", Some(r.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_risk_operation(
+                    "create_risk",
+                    Some(r.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(r, "创建风险成功"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_risk_operation("create_risk", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_risk_operation(
+                    "create_risk",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建风险失败: {}", e);
@@ -211,13 +233,33 @@ async fn update_risk(
 
     match risk {
         Ok(r) => {
-            if let Err(e) = audit.log_risk_operation("update_risk", Some(r.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_risk_operation(
+                    "update_risk",
+                    Some(r.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(r, "更新风险成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_risk_operation("update_risk", Some(id), user_id, details.clone(), "failed", Some("风险不存在")).await {
+            if let Err(e) = audit
+                .log_risk_operation(
+                    "update_risk",
+                    Some(id),
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("风险不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -226,7 +268,17 @@ async fn update_risk(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_risk_operation("update_risk", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_risk_operation(
+                    "update_risk",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新风险失败: {}", e);

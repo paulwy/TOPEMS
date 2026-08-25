@@ -173,12 +173,8 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot(
-                "sales_order",
-                payload.order_id,
-                payable_amount,
-            )
-            .await;
+            self.store_source_amount_snapshot("sales_order", payload.order_id, payable_amount)
+                .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -244,12 +240,8 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot(
-                "sales_order",
-                payload.order_id,
-                payable_amount,
-            )
-            .await;
+            self.store_source_amount_snapshot("sales_order", payload.order_id, payable_amount)
+                .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -315,12 +307,8 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot(
-                "purchase_order",
-                payload.order_id,
-                payable_amount,
-            )
-            .await;
+            self.store_source_amount_snapshot("purchase_order", payload.order_id, payable_amount)
+                .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -536,12 +524,8 @@ impl FinanceEventHandlers {
 
         let payable_amount = payload.payable_amount.unwrap_or(0.0);
         if payable_amount > 0.0 {
-            self.store_source_amount_snapshot(
-                "purchase_order",
-                payload.order_id,
-                payable_amount,
-            )
-            .await;
+            self.store_source_amount_snapshot("purchase_order", payload.order_id, payable_amount)
+                .await;
         }
 
         let amount = payload.total_amount.unwrap_or(0.0);
@@ -596,7 +580,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析对账单创建事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 ReconciliationCreated 事件 - recon_id={}, recon_name={}",
-            payload.id, payload.recon_name
+            payload.id,
+            payload.recon_name
         );
         let _ = self.store_reconciliation_snapshot(&payload).await;
         Ok(())
@@ -608,7 +593,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析对账单更新事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 ReconciliationUpdated 事件 - recon_id={}, status={}",
-            payload.id, payload.status
+            payload.id,
+            payload.status
         );
         let _ = self.update_reconciliation_snapshot(&payload).await;
         Ok(())
@@ -620,7 +606,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析对账单审批事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 ReconciliationApproved 事件 - recon_id={}, approved_by={}",
-            payload.id, payload.approved_by
+            payload.id,
+            payload.approved_by
         );
         let _ = self.approve_reconciliation_snapshot(&payload).await;
         Ok(())
@@ -632,7 +619,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析结算单创建事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 SettlementCreated 事件 - settlement_id={}, settlement_no={}",
-            payload.id, payload.settlement_no
+            payload.id,
+            payload.settlement_no
         );
         let _ = self.store_settlement_snapshot(&payload).await;
         Ok(())
@@ -644,7 +632,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析结算单审批事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 SettlementApproved 事件 - settlement_id={}, approved_by={}",
-            payload.id, payload.approved_by
+            payload.id,
+            payload.approved_by
         );
         let _ = self.approve_settlement_snapshot(&payload).await;
         Ok(())
@@ -656,7 +645,8 @@ impl FinanceEventHandlers {
             .map_err(|e| format!("解析结算单拒绝事件 payload 失败: {}", e))?;
         tracing::info!(
             "[finance] 收到 SettlementRejected 事件 - settlement_id={}, rejected_by={}",
-            payload.id, payload.rejected_by
+            payload.id,
+            payload.rejected_by
         );
         let _ = self.reject_settlement_snapshot(&payload).await;
         Ok(())
@@ -843,7 +833,9 @@ pub async fn start_event_subscribers(
     let handlers = FinanceEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[finance] 启动事件订阅者，注册 12 类业务事件 handler（销售/采购/收付款+对账/结算快照）");
+    tracing::info!(
+        "[finance] 启动事件订阅者，注册 12 类业务事件 handler（销售/采购/收付款+对账/结算快照）"
+    );
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[finance] 事件订阅者异常退出: {}", e);

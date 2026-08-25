@@ -1067,7 +1067,10 @@ async fn batch_sync_purchase_to_wms(
                                 .publish_event(EventType::InboundOrderRequested, payload)
                                 .await
                             {
-                                tracing::warn!("[SCM] 批量发布 InboundOrderRequested 事件失败: {}", e);
+                                tracing::warn!(
+                                    "[SCM] 批量发布 InboundOrderRequested 事件失败: {}",
+                                    e
+                                );
                             }
                         }
 

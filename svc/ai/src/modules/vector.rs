@@ -24,7 +24,9 @@ impl VectorApi {
     ) -> Json<ApiResponse<StoreVectorResponse>> {
         let tenant_id = get_tenant_id_from_claims(&claims);
         let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-        let details = Some(serde_json::json!({"document_id": req.document_id, "chunk_index": req.chunk_index}));
+        let details = Some(
+            serde_json::json!({"document_id": req.document_id, "chunk_index": req.chunk_index}),
+        );
         let vector_req = crate::services::vector::SaveVectorRequest {
             document_id: req.document_id,
             chunk_id: req.chunk_id,
@@ -39,7 +41,18 @@ impl VectorApi {
             .await
         {
             Ok(_) => {
-                if let Err(e) = state.audit.log_vector_operation("store_vector", Some(req.document_id), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_vector_operation(
+                        "store_vector",
+                        Some(req.document_id),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -52,7 +65,18 @@ impl VectorApi {
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_vector_operation("store_vector", Some(req.document_id), user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_vector_operation(
+                        "store_vector",
+                        Some(req.document_id),
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<StoreVectorResponse>::error(
@@ -130,20 +154,46 @@ impl VectorApi {
         let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
         match state.vector_service.delete_vector(id, tenant_id).await {
             Ok(true) => {
-                if let Err(e) = state.audit.log_vector_operation("delete_vector", Some(id), user_id, None, "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_vector_operation("delete_vector", Some(id), user_id, None, "success", None)
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success("向量已删除".to_string(), "Success"))
             }
             Ok(false) => {
-                if let Err(e) = state.audit.log_vector_operation("delete_vector", Some(id), user_id, None, "failed", Some("向量不存在")).await {
+                if let Err(e) = state
+                    .audit
+                    .log_vector_operation(
+                        "delete_vector",
+                        Some(id),
+                        user_id,
+                        None,
+                        "failed",
+                        Some("向量不存在"),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::<String>::error(404, "向量不存在"))
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_vector_operation("delete_vector", Some(id), user_id, None, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_vector_operation(
+                        "delete_vector",
+                        Some(id),
+                        user_id,
+                        None,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<String>::error(500, &e.to_string()))
@@ -176,7 +226,18 @@ impl VectorApi {
 
         match state.vector_service.save_vectors(&vectors, tenant_id).await {
             Ok(_) => {
-                if let Err(e) = state.audit.log_vector_operation("batch_store_vectors", None, user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_vector_operation(
+                        "batch_store_vectors",
+                        None,
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -189,7 +250,18 @@ impl VectorApi {
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_vector_operation("batch_store_vectors", None, user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_vector_operation(
+                        "batch_store_vectors",
+                        None,
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<BatchStoreVectorsResponse>::error(

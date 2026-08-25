@@ -28,7 +28,15 @@ impl PmAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "project", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "project",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -43,7 +51,15 @@ impl PmAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "budget", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "budget",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -58,7 +74,15 @@ impl PmAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "contract", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "contract",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -73,7 +97,15 @@ impl PmAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "risk", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "risk",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -103,14 +135,22 @@ impl PmAuditService {
         };
 
         let resources = [
-            "project", "budget", "contract", "risk", "milestone", "phase",
+            "project",
+            "budget",
+            "contract",
+            "risk",
+            "milestone",
+            "phase",
         ];
         let logs: Vec<AuditLog> = self
             .inner
             .query_audit_logs(&query, Some(&resources))
             .await?;
 
-        Ok(logs.into_iter().map(PmAuditLogEntry::from_audit_log).collect())
+        Ok(logs
+            .into_iter()
+            .map(PmAuditLogEntry::from_audit_log)
+            .collect())
     }
 }
 

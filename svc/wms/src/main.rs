@@ -97,11 +97,8 @@ async fn main() -> Result<()> {
     });
 
     // 启动事件订阅器
-    if let Err(e) = event_handlers::start_event_subscribers(
-        ctx.db.clone(),
-        ctx.event_publisher.clone(),
-    )
-    .await
+    if let Err(e) =
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("WMS 事件订阅器启动警告: {}", e);
     }

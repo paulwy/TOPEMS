@@ -11,10 +11,10 @@
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType,
-    InboundOrderRequestedPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
-    WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload,
-    WmsInventoryLowStockPayload, WmsWarehouseTransferCompletedPayload,
+    Event, EventPublisher, EventResult, EventSubscriber, EventType, InboundOrderRequestedPayload,
+    PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, WmsInventoryItemReceivedPayload,
+    WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
+    WmsWarehouseTransferCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -50,27 +50,18 @@ impl WmsEventHandlers {
         let h3 = self.clone();
 
         Ok(subscriber
-            .subscribe_handler(
-                vec![EventType::PurchaseOrderCreated],
-                move |event| {
-                    let h = h1.clone();
-                    Box::pin(async move { h.handle_po_created(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::PurchaseOrderApproved],
-                move |event| {
-                    let h = h2.clone();
-                    Box::pin(async move { h.handle_po_approved(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::InboundOrderRequested],
-                move |event| {
-                    let h = h3.clone();
-                    Box::pin(async move { h.handle_inbound_order_requested(event).await })
-                },
-            ))
+            .subscribe_handler(vec![EventType::PurchaseOrderCreated], move |event| {
+                let h = h1.clone();
+                Box::pin(async move { h.handle_po_created(event).await })
+            })
+            .subscribe_handler(vec![EventType::PurchaseOrderApproved], move |event| {
+                let h = h2.clone();
+                Box::pin(async move { h.handle_po_approved(event).await })
+            })
+            .subscribe_handler(vec![EventType::InboundOrderRequested], move |event| {
+                let h = h3.clone();
+                Box::pin(async move { h.handle_inbound_order_requested(event).await })
+            }))
     }
 
     async fn handle_po_created(&self, event: Event) -> HandlerResult {
@@ -427,10 +418,6 @@ async fn store_po_snapshot(
             id,
             order_number
         ),
-        Err(e) => tracing::warn!(
-            "[wms] 存储采购订单快照失败 - id={}, error={}",
-            id,
-            e
-        ),
+        Err(e) => tracing::warn!("[wms] 存储采购订单快照失败 - id={}, error={}", id, e),
     }
 }

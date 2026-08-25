@@ -113,7 +113,9 @@ async fn create_contract(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"project_id": req.project_id, "contract_no": req.contract_no, "contract_name": req.contract_name, "amount": req.amount}));
+    let details = Some(
+        serde_json::json!({"project_id": req.project_id, "contract_no": req.contract_no, "contract_name": req.contract_name, "amount": req.amount}),
+    );
 
     let contract = sqlx::query_as::<_, Contract>(
         r#"INSERT INTO pm.contracts (
@@ -143,13 +145,33 @@ async fn create_contract(
 
     match contract {
         Ok(c) => {
-            if let Err(e) = audit.log_contract_operation("create_contract", Some(c.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "create_contract",
+                    Some(c.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(c, "创建合同成功"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("create_contract", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "create_contract",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建合同失败: {}", e);
@@ -200,13 +222,33 @@ async fn update_contract(
 
     match contract {
         Ok(c) => {
-            if let Err(e) = audit.log_contract_operation("update_contract", Some(c.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "update_contract",
+                    Some(c.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(c, "更新合同成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_contract_operation("update_contract", Some(id), user_id, details.clone(), "failed", Some("合同不存在")).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "update_contract",
+                    Some(id),
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("合同不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -215,7 +257,17 @@ async fn update_contract(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("update_contract", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "update_contract",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新合同失败: {}", e);
@@ -241,13 +293,26 @@ async fn delete_contract(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            if let Err(e) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation("delete_contract", Some(id), user_id, None, "success", None)
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success((), "删除合同成功"))
         }
         Ok(_) => {
-            if let Err(e) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "delete_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("合同不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -256,7 +321,17 @@ async fn delete_contract(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("delete_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "delete_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("删除合同失败: {}", e);
@@ -285,13 +360,33 @@ async fn submit_contract(
 
     match contract {
         Ok(c) => {
-            if let Err(e) = audit.log_contract_operation("submit_contract", Some(c.id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "submit_contract",
+                    Some(c.id),
+                    user_id,
+                    None,
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(c, "提交审批成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_contract_operation("submit_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "submit_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("合同不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -300,7 +395,17 @@ async fn submit_contract(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("submit_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "submit_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
@@ -329,13 +434,33 @@ async fn approve_contract(
 
     match contract {
         Ok(c) => {
-            if let Err(e) = audit.log_contract_operation("approve_contract", Some(c.id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "approve_contract",
+                    Some(c.id),
+                    user_id,
+                    None,
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(c, "批准合同成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_contract_operation("approve_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "approve_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("合同不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -344,7 +469,17 @@ async fn approve_contract(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("approve_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "approve_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准合同失败: {}", e);
@@ -373,13 +508,33 @@ async fn reject_contract(
 
     match contract {
         Ok(c) => {
-            if let Err(e) = audit.log_contract_operation("reject_contract", Some(c.id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "reject_contract",
+                    Some(c.id),
+                    user_id,
+                    None,
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(c, "拒绝合同成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_contract_operation("reject_contract", Some(id), user_id, None, "failed", Some("合同不存在")).await {
+            if let Err(e) = audit
+                .log_contract_operation(
+                    "reject_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("合同不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -388,7 +543,17 @@ async fn reject_contract(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_contract_operation("reject_contract", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_contract_operation(
+                    "reject_contract",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("拒绝合同失败: {}", e);

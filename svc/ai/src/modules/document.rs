@@ -48,23 +48,39 @@ impl DocumentApi {
                     let path = std::path::Path::new(docs_dir).join(&filename);
                     if let Err(e) = std::fs::create_dir_all(docs_dir) {
                         let err_msg = format!("创建目录失败: {}", e);
-                        if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some(&err_msg)).await {
+                        if let Err(audit_err) = state
+                            .audit
+                            .log_document_operation(
+                                "upload_document",
+                                None,
+                                user_id,
+                                None,
+                                "failed",
+                                Some(&err_msg),
+                            )
+                            .await
+                        {
                             tracing::warn!("ai audit failed: {audit_err}");
                         }
-                        return Json(ApiResponse::<UploadDocumentResponse>::error(
-                            500,
-                            &err_msg,
-                        ));
+                        return Json(ApiResponse::<UploadDocumentResponse>::error(500, &err_msg));
                     }
                     if let Err(e) = std::fs::write(&path, &data) {
                         let err_msg = format!("保存文件失败: {}", e);
-                        if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some(&err_msg)).await {
+                        if let Err(audit_err) = state
+                            .audit
+                            .log_document_operation(
+                                "upload_document",
+                                None,
+                                user_id,
+                                None,
+                                "failed",
+                                Some(&err_msg),
+                            )
+                            .await
+                        {
                             tracing::warn!("ai audit failed: {audit_err}");
                         }
-                        return Json(ApiResponse::<UploadDocumentResponse>::error(
-                            500,
-                            &err_msg,
-                        ));
+                        return Json(ApiResponse::<UploadDocumentResponse>::error(500, &err_msg));
                     }
                     file_path = path.to_string_lossy().to_string();
 
@@ -88,7 +104,18 @@ impl DocumentApi {
         }
 
         if filename.is_empty() {
-            if let Err(e) = state.audit.log_document_operation("upload_document", None, user_id, None, "failed", Some("未提供文件")).await {
+            if let Err(e) = state
+                .audit
+                .log_document_operation(
+                    "upload_document",
+                    None,
+                    user_id,
+                    None,
+                    "failed",
+                    Some("未提供文件"),
+                )
+                .await
+            {
                 tracing::warn!("ai audit failed: {e}");
             }
             return Json(ApiResponse::<UploadDocumentResponse>::error(
@@ -113,7 +140,18 @@ impl DocumentApi {
         {
             Ok(doc_id) => {
                 let document_id = Uuid::parse_str(&doc_id).unwrap_or(Uuid::nil());
-                if let Err(e) = state.audit.log_document_operation("upload_document", Some(document_id), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_document_operation(
+                        "upload_document",
+                        Some(document_id),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
 
@@ -168,7 +206,18 @@ impl DocumentApi {
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_document_operation("upload_document", None, user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_document_operation(
+                        "upload_document",
+                        None,
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<UploadDocumentResponse>::error(500, &e))
@@ -240,20 +289,53 @@ impl DocumentApi {
         let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
         match state.document_service.delete_document(id, tenant_id).await {
             Ok(true) => {
-                if let Err(e) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_document_operation(
+                        "delete_document",
+                        Some(id),
+                        user_id,
+                        None,
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success("文档已删除".to_string(), "Success"))
             }
             Ok(false) => {
-                if let Err(e) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "failed", Some("文档不存在")).await {
+                if let Err(e) = state
+                    .audit
+                    .log_document_operation(
+                        "delete_document",
+                        Some(id),
+                        user_id,
+                        None,
+                        "failed",
+                        Some("文档不存在"),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::<String>::error(404, "文档不存在"))
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_document_operation("delete_document", Some(id), user_id, None, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_document_operation(
+                        "delete_document",
+                        Some(id),
+                        user_id,
+                        None,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<String>::error(500, &e))

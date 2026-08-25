@@ -2,11 +2,11 @@ use crate::models::{
     AttendanceRecord, Company, Contract, ContractRenewal, CreateAttendanceRequest,
     CreateCompanyRequest, CreateContractRequest, CreateDepartmentRequest, CreateEmployeeRequest,
     CreateSalaryAdjustmentRequest, CreateTrainingCourseRequest, CreateTrainingPlanRequest,
-    CreateTrainingRecordRequest, Department, Employee, SalaryAdjustment,
-    TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
-    UpdateAttendanceRequest, UpdateCompanyRequest, UpdateContractRequest,
-    UpdateDepartmentRequest, UpdateEmployeeRequest, UpdateSalaryAdjustmentRequest,
-    UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
+    CreateTrainingRecordRequest, Department, Employee, SalaryAdjustment, TrainingCourse,
+    TrainingPaginationParams, TrainingPlan, TrainingRecord, UpdateAttendanceRequest,
+    UpdateCompanyRequest, UpdateContractRequest, UpdateDepartmentRequest, UpdateEmployeeRequest,
+    UpdateSalaryAdjustmentRequest, UpdateTrainingCourseRequest, UpdateTrainingPlanRequest,
+    UpdateTrainingRecordRequest,
 };
 use crate::modules::audit::ListAuditLogsQuery;
 use crate::modules::leave::{CreateLeaveRequest, LeaveRequest, UpdateLeaveRequest};

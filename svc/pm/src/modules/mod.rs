@@ -57,7 +57,10 @@ pub fn create_routes(
         .merge(risk::create_routes(pool.clone()))
         .merge(quality::create_routes(pool.clone()))
         .merge(acceptance::create_routes(pool.clone()))
-        .merge(settlement::create_routes(pool.clone(), event_publisher.clone()))
+        .merge(settlement::create_routes(
+            pool.clone(),
+            event_publisher.clone(),
+        ))
         .merge(document::create_routes(pool.clone()))
         .merge(report::create_routes(pool.clone()))
         .merge(notification::create_routes(pool.clone()))

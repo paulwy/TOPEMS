@@ -165,7 +165,10 @@ pub async fn create_reconciliation(
             .publish_event(EventType::ReconciliationCreated, payload)
             .await
         {
-            tracing::warn!("[SettlementCenter] 发布 ReconciliationCreated 事件失败: {}", e);
+            tracing::warn!(
+                "[SettlementCenter] 发布 ReconciliationCreated 事件失败: {}",
+                e
+            );
         }
     }
 
@@ -248,7 +251,10 @@ pub async fn manual_reconcile(
             .publish_event(EventType::ReconciliationUpdated, payload)
             .await
         {
-            tracing::warn!("[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}", e);
+            tracing::warn!(
+                "[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}",
+                e
+            );
         }
     }
 
@@ -567,7 +573,10 @@ pub async fn approve_reconciliation(
                 .publish_event(EventType::ReconciliationApproved, approved_payload)
                 .await
             {
-                tracing::warn!("[SettlementCenter] 发布 ReconciliationApproved 事件失败: {}", e);
+                tracing::warn!(
+                    "[SettlementCenter] 发布 ReconciliationApproved 事件失败: {}",
+                    e
+                );
             }
 
             let updated_payload = topems_shared_event::ReconciliationUpdatedPayload {
@@ -585,7 +594,10 @@ pub async fn approve_reconciliation(
                 .publish_event(EventType::ReconciliationUpdated, updated_payload)
                 .await
             {
-                tracing::warn!("[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}", e);
+                tracing::warn!(
+                    "[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}",
+                    e
+                );
             }
         }
     }

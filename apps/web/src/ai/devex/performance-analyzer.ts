@@ -46,18 +46,3 @@ export interface BudgetUsage {
   status: 'pass' | 'warn' | 'fail';
 }
 
-const DEFAULT_BUDGET: PerformanceBudget = {
-  maxFpsDrop: 10,
-  maxMemoryUsage: 50 * 1024 * 1024,
-  maxCpuUsage: 80,
-  maxRenderTime: 16,
-  maxScriptTime: 50,
-  maxPaintTime: 10,
-};
-
-const MAX_SNAPSHOTS = 120;
-
-function generateId(): string {
-  return `perf_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-

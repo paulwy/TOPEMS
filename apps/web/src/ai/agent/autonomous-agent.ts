@@ -61,6 +61,3 @@ export interface AgentEvent {
   timestamp: number;
   progress?: number;
 }
-
-const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_STEP_DELAY = 100;

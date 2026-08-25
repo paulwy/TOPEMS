@@ -34,7 +34,15 @@ impl AiAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "vector", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "vector",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -50,7 +58,15 @@ impl AiAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "document", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "document",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -66,7 +82,15 @@ impl AiAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "qa", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "qa",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -82,7 +106,15 @@ impl AiAuditService {
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
         self.inner
-            .log_operation(action, "analysis", entity_id, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "analysis",
+                entity_id,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -99,7 +131,15 @@ impl AiAuditService {
     ) -> Result<(), sqlx::Error> {
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
         self.inner
-            .log_operation(action, "connector", entity_uuid, user_id, request_details, status, error_message)
+            .log_operation(
+                action,
+                "connector",
+                entity_uuid,
+                user_id,
+                request_details,
+                status,
+                error_message,
+            )
             .await
             .map(|_| ())
     }
@@ -135,7 +175,10 @@ impl AiAuditService {
             .query_audit_logs(&query, Some(&resources))
             .await?;
 
-        Ok(logs.into_iter().map(AiAuditLogEntry::from_audit_log).collect())
+        Ok(logs
+            .into_iter()
+            .map(AiAuditLogEntry::from_audit_log)
+            .collect())
     }
 }
 

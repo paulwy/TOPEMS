@@ -98,7 +98,9 @@ pub async fn create_connector(
     Json(req): Json<CreateConnectorRequest>,
 ) -> Json<ApiResponse<DataConnector>> {
     let user_id = Some(claims.sub.as_str());
-    let details = Some(serde_json::json!({"name": req.name, "connector_type": req.connector_type, "database_type": req.database_type}));
+    let details = Some(
+        serde_json::json!({"name": req.name, "connector_type": req.connector_type, "database_type": req.database_type}),
+    );
     if let Some(connectors) = CONNECTORS.get() {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -134,7 +136,18 @@ pub async fn create_connector(
 
         match lock_result {
             Ok(connector_id) => {
-                if let Err(e) = state.audit.log_connector_operation("create_connector", Some(&connector_id.to_string()), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_connector_operation(
+                        "create_connector",
+                        Some(&connector_id.to_string()),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -144,24 +157,40 @@ pub async fn create_connector(
             }
             Err(()) => {
                 let err_msg = "Internal server error";
-                if let Err(audit_err) = state.audit.log_connector_operation("create_connector", None, user_id, details.clone(), "failed", Some(err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_connector_operation(
+                        "create_connector",
+                        None,
+                        user_id,
+                        details.clone(),
+                        "failed",
+                        Some(err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(
-                    500,
-                    err_msg,
-                ))
+                Json(ApiResponse::<DataConnector>::error(500, err_msg))
             }
         }
     } else {
         let err_msg = "Connectors not initialized";
-        if let Err(e) = state.audit.log_connector_operation("create_connector", None, user_id, details, "failed", Some(err_msg)).await {
+        if let Err(e) = state
+            .audit
+            .log_connector_operation(
+                "create_connector",
+                None,
+                user_id,
+                details,
+                "failed",
+                Some(err_msg),
+            )
+            .await
+        {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(
-            500,
-            err_msg,
-        ))
+        Json(ApiResponse::<DataConnector>::error(500, err_msg))
     }
 }
 
@@ -220,7 +249,18 @@ pub async fn update_connector(
 
         match lock_result {
             Ok(Some(connector)) => {
-                if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&connector.id.to_string()), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_connector_operation(
+                        "update_connector",
+                        Some(&connector.id.to_string()),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -229,7 +269,18 @@ pub async fn update_connector(
                 ))
             }
             Ok(None) => {
-                if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some("Connector not found")).await {
+                if let Err(e) = state
+                    .audit
+                    .log_connector_operation(
+                        "update_connector",
+                        Some(&entity_id_str),
+                        user_id,
+                        details.clone(),
+                        "failed",
+                        Some("Connector not found"),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::<DataConnector>::error(
@@ -239,24 +290,40 @@ pub async fn update_connector(
             }
             Err(()) => {
                 let err_msg = "Internal server error";
-                if let Err(audit_err) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some(err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_connector_operation(
+                        "update_connector",
+                        Some(&entity_id_str),
+                        user_id,
+                        details.clone(),
+                        "failed",
+                        Some(err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(
-                    500,
-                    err_msg,
-                ))
+                Json(ApiResponse::<DataConnector>::error(500, err_msg))
             }
         }
     } else {
         let err_msg = "Connectors not initialized";
-        if let Err(e) = state.audit.log_connector_operation("update_connector", Some(&entity_id_str), user_id, details, "failed", Some(err_msg)).await {
+        if let Err(e) = state
+            .audit
+            .log_connector_operation(
+                "update_connector",
+                Some(&entity_id_str),
+                user_id,
+                details,
+                "failed",
+                Some(err_msg),
+            )
+            .await
+        {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(
-            500,
-            err_msg,
-        ))
+        Json(ApiResponse::<DataConnector>::error(500, err_msg))
     }
 }
 
@@ -298,7 +365,18 @@ pub async fn delete_connector(
 
         match lock_result {
             Ok(true) => {
-                if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_connector_operation(
+                        "delete_connector",
+                        Some(&entity_id_str),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -307,14 +385,36 @@ pub async fn delete_connector(
                 ))
             }
             Ok(false) => {
-                if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some("Connector not found")).await {
+                if let Err(e) = state
+                    .audit
+                    .log_connector_operation(
+                        "delete_connector",
+                        Some(&entity_id_str),
+                        user_id,
+                        details.clone(),
+                        "failed",
+                        Some("Connector not found"),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::<String>::error(404, "Connector not found"))
             }
             Err(()) => {
                 let err_msg = "Internal server error";
-                if let Err(audit_err) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details.clone(), "failed", Some(err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_connector_operation(
+                        "delete_connector",
+                        Some(&entity_id_str),
+                        user_id,
+                        details.clone(),
+                        "failed",
+                        Some(err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<String>::error(500, err_msg))
@@ -322,13 +422,21 @@ pub async fn delete_connector(
         }
     } else {
         let err_msg = "Connectors not initialized";
-        if let Err(e) = state.audit.log_connector_operation("delete_connector", Some(&entity_id_str), user_id, details, "failed", Some(err_msg)).await {
+        if let Err(e) = state
+            .audit
+            .log_connector_operation(
+                "delete_connector",
+                Some(&entity_id_str),
+                user_id,
+                details,
+                "failed",
+                Some(err_msg),
+            )
+            .await
+        {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<String>::error(
-            500,
-            err_msg,
-        ))
+        Json(ApiResponse::<String>::error(500, err_msg))
     }
 }
 

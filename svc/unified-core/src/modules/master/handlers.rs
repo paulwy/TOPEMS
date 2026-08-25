@@ -125,7 +125,15 @@ impl MasterDataService {
     ) {
         let _ = self
             .audit_service
-            .log_operation(action, "master_data_ref", entity_id, operator, details, status, error)
+            .log_operation(
+                action,
+                "master_data_ref",
+                entity_id,
+                operator,
+                details,
+                status,
+                error,
+            )
             .await
             .map_err(|e| tracing::warn!("[mdm-audit] 审计写入失败: {}", e));
     }
@@ -268,15 +276,8 @@ impl MasterDataService {
             .await?;
 
         // V284: 关键写入路径审计
-        self.audit_write(
-            "delete",
-            None,
-            operator.as_deref(),
-            None,
-            "success",
-            None,
-        )
-        .await;
+        self.audit_write("delete", None, operator.as_deref(), None, "success", None)
+            .await;
 
         let op_clone = operator.clone();
         self.log_change(&existing, MasterDataAction::Deleted, operator, None)
@@ -388,14 +389,20 @@ impl MasterDataService {
             "employee",
             "account_subject",
         ] {
-            let count: i64 = self.ref_service.count_by_domain(tenant_id, domain_str).await?;
+            let count: i64 = self
+                .ref_service
+                .count_by_domain(tenant_id, domain_str)
+                .await?;
 
             let active: i64 = self
                 .ref_service
                 .count_by_domain_status(tenant_id, domain_str, "active")
                 .await?;
 
-            let last_updated = self.ref_service.get_max_updated_at(tenant_id, domain_str).await?;
+            let last_updated = self
+                .ref_service
+                .get_max_updated_at(tenant_id, domain_str)
+                .await?;
 
             by_domain.push(DomainStats {
                 domain: domain_str.to_string(),

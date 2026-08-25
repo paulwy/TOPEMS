@@ -57,6 +57,3 @@ export interface WorkflowEvent {
   timestamp: number;
   progress?: number;
 }
-
-const DEFAULT_RETRY_COUNT = 3;
-const DEFAULT_PARALLEL_LIMIT = 5;

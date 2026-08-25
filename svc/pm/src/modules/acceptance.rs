@@ -103,7 +103,9 @@ async fn create_plan(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"project_id": project_id, "plan_code": req.plan_code, "plan_name": req.plan_name}));
+    let details = Some(
+        serde_json::json!({"project_id": project_id, "plan_code": req.plan_code, "plan_name": req.plan_name}),
+    );
 
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         "INSERT INTO plugin_pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at)
@@ -128,13 +130,33 @@ async fn create_plan(
 
     match plan {
         Ok(p) => {
-            if let Err(e) = audit.log_project_operation("create_acceptance_plan", Some(project_id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "create_acceptance_plan",
+                    Some(project_id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(p, "创建验收计划成功"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_project_operation("create_acceptance_plan", Some(project_id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_project_operation(
+                    "create_acceptance_plan",
+                    Some(project_id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建验收计划失败: {}", e);
@@ -181,13 +203,33 @@ async fn update_plan(
 
     match plan {
         Ok(p) => {
-            if let Err(e) = audit.log_project_operation("update_acceptance_plan", Some(p.project_id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "update_acceptance_plan",
+                    Some(p.project_id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(p, "更新验收计划成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_project_operation("update_acceptance_plan", None, user_id, details.clone(), "failed", Some("验收计划不存在")).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "update_acceptance_plan",
+                    None,
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("验收计划不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -196,7 +238,17 @@ async fn update_plan(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_project_operation("update_acceptance_plan", None, user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_project_operation(
+                    "update_acceptance_plan",
+                    None,
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新验收计划失败: {}", e);
