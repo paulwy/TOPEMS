@@ -2080,8 +2080,78 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项
-- [ ] **src/ 其他目录未使用项清理（第十批）**：全 src/ 仍有 ~1017 个 tsc 未使用项，推荐 api/qms/adapters(10) + dev-platform/v53(9) + pages/admin/TenantDetailPage(8) + components/templates/DashboardTemplate(8) + store/biStore(7)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项
+- [x] **src/ 其他目录未使用项清理（第十批）**：V303 清理 api/qms/adapters(10→级联30) + dev-platform/v53(9) + TenantDetailPage(8) + DashboardTemplate(8) + biStore(7) = 70 项，tsc 目标 5 files 0 errors，净删 391 行
+- [ ] **src/ 其他目录未使用项清理（第十一批）**：全 src/ 仍有 ~947 个 tsc 未使用项，推荐 services/VoucherTemplateEngine(7) + microfrontend/runtime/RuntimeDashboard(7) + microfrontend/governance/DependencyGovernance(7) + hooks/useUiState(7) + hooks/useCode(7)
+
+## 🎯 V303 — 第十批未使用项清理（70项）+ 级联清理（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2161 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V303` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V303-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V303` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V303-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十批未使用项清理（70 项）
+- 背景：V302 后全 src/ 仍有 ~1017 个 tsc --noUnusedLocals 错误，第十批目标 5 files 首轮 42 项
+- 修复：v6 迭代脚本扩展版（33 项）+ 手动修复多行 import / 解构变量 / 级联 type（37 项）
+- 迭代过程（脚本 16 轮，移除 33 项后卡在 37 项）：
+  - 脚本移除 33 项（const/function adapters + 单行 import）
+  - 手动修复 37 项：
+    - api/qms/adapters.ts: 20 个级联 type import（移除 10 个 adapter 函数后暴露）
+    - DashboardTemplate.tsx: 2 个 type import + 5 个解构 prop
+    - v53-platform-console.tsx: 6 个 mui import + 1 个 lucide import
+    - TenantDetailPage.tsx: 1 个 react import + 1 个 type import + 1 个解构变量
+- 变更（5 files，70 项，净删 391 行）：
+  - **api/qms/adapters.ts**：-192 行（10 个 adapter 函数 + 20 个级联 type import）
+  - **components/templates/DashboardTemplate.tsx**：-96 行（2 type import + 5 解构 prop + 相关代码）
+  - **pages/admin/TenantDetailPage.tsx**：-88 行（3 项 + 级联）
+  - **dev-platform/v53-platform-console.tsx**：-13 行（7 个 import）
+  - **store/biStore.ts**：-8 行（7 项，脚本处理）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. 级联清理
+- api/qms/adapters.ts 移除 10 个 audit/apqp adapter 函数后，20 个相关 type import 级联未使用，手动从多行 import 块移除
+- DashboardTemplate.tsx 移除未使用解构 prop（loading/recentItems/recentTitle/quickActions/quickActionsTitle），保留 onRefresh
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（70 项全部清除）
+- `eslint src/`: 0 errors, 2161 warnings（从 V302 的 2203 减少 42）
+- `cargo check --workspace`: 0 errors（V303 无 Rust 改动）
+
+### D. 文档化
+- V302 后续扩展「第十批」打勾 [x]
+- 新增「第十一批」后续扩展项（全 src/ 仍有 ~947 个未使用项）
+- V303 章节写入完整交付记录 + 70 项明细 + 级联清理说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/api/qms/adapters.ts`（-192 行）
+- `apps/web/src/components/templates/DashboardTemplate.tsx`（-96 行）
+- `apps/web/src/pages/admin/TenantDetailPage.tsx`（-88 行）
+- `apps/web/src/dev-platform/v53-platform-console.tsx`（-13 行）
+- `apps/web/src/store/biStore.ts`（-8 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（70 项全部清除）
+- [x] `eslint src/` — 0 errors（2161 warnings，从 2203 减少 42）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 70 项 — 全部移除（净删 391 行）
+- [x] adapters.ts 级联 20 type import — 手动移除
+- [x] DashboardTemplate 5 解构 prop — 手动移除
+- [x] V302 后续扩展「第十批」打勾 [x]
+
+### V303 后续扩展（留给 V304+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项
+- [ ] **src/ 其他目录未使用项清理（第十一批）**：全 src/ 仍有 ~947 个 tsc 未使用项，推荐 services/VoucherTemplateEngine(7) + microfrontend/runtime/RuntimeDashboard(7) + microfrontend/governance/DependencyGovernance(7) + hooks/useUiState(7) + hooks/useCode(7)
 
 
 

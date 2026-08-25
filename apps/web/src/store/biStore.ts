@@ -140,11 +140,3 @@ export const useBIStore = create<BIStore>((set, get) => ({
     set({ error: null });
   },
 }));
-
-const useBISummary = () => useBIStore((state) => state.summary);
-const useBIDevelopment = () => useBIStore((state) => state.development);
-const useBIQuality = () => useBIStore((state) => state.quality);
-const useBIProduction = () => useBIStore((state) => state.production);
-const useBILaboratory = () => useBIStore((state) => state.laboratory);
-const useBILoading = () => useBIStore((state) => state.loading);
-const useBIError = () => useBIStore((state) => state.error);
