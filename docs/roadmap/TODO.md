@@ -1950,9 +1950,9 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 4 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2262 warnings) · 目标 4 files 未使用清零
 >
-> **Tag**: `V301` · Baseline SHA: `065091f90` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-277b40a08.tar.gz` (.gitignore 排除)
+> **Tag**: `V301` · Baseline SHA: `065091f90` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-50aa6f756.tar.gz` (.gitignore 排除)
 >
-> **Tag**: `V301` · Baseline SHA: `065091f90` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-277b40a08.tar.gz` (.gitignore 排除)
+> **Tag**: `V301` · Baseline SHA: `065091f90` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-50aa6f756.tar.gz` (.gitignore 排除)
 
 ### A. 第八批未使用项清理（136 项）
 - 背景：V300 后全 src/ 仍有 ~1225 个 tsc --noUnusedLocals 错误，第八批目标 4 files 首轮 70 项
