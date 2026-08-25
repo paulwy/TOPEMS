@@ -2227,9 +2227,87 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项
-- [ ] **v6 脚本 class 声明完整移除**：V304 孤儿类体问题，需改进 class 体括号跟踪
-- [ ] **src/ 其他目录未使用项清理（第十二批）**：全 src/ 仍有 ~900 个 tsc 未使用项，推荐 config/plugins.config(7) + config/deployment(7) + components/gis/utils/performance(7) + components/ehs/riskUtils(7) + components/PermissionGate(7)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项，V303 手动 37 项，V304 手动 15 项，V305 手动 6 项
+- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 对象孤儿体（`> = { ... };`），需改进复杂类型注解的声明行识别
+- [x] **src/ 其他目录未使用项清理（第十二批）**：V305 清理 config/plugins.config(7) + config/deployment(7) + gis/performance(7→级联) + ehs/riskUtils(7) + PermissionGate(7→级联) = 52 项，tsc 目标 5 files 0 errors，净删 835 行
+- [ ] **src/ 其他目录未使用项清理（第十三批）**：全 src/ 仍有 ~848 个 tsc 未使用项，推荐 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(7) + utils/query-cost-analyzer(6)
+
+## 🎯 V305 — 第十二批未使用项清理（52项）+ PermissionGate孤儿对象体修复（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2092 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V305` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V305-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V305` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V305-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十二批未使用项清理（52 项）
+- 背景：V304 后全 src/ 仍有 ~900 个 tsc --noUnusedLocals 错误，第十二批目标 5 files 首轮 35 项
+- 修复：v6 迭代脚本扩展版（46 项）+ 手动修复 TS6192 / function / 孤儿对象体（6 项）
+- 迭代过程（脚本 16 轮，移除 46 项后卡在 16 项）：
+  - 脚本移除 46 项（export const/function + 单行 import）
+  - **问题**：脚本移除 PermissionGate.tsx 的 const 声明时留下孤儿对象体（`> = { ... };`），产生 TS1109/TS1005/TS1128 语法错误（与 V304 class 孤儿类体同类问题）
+  - 手动修复 6 项 + 语法修复：
+    - PermissionGate.tsx: 截断孤儿对象体(24行) + 移除 4 个级联未使用 icon import(User/Users/Crown/Eye)
+    - gis/performance.ts: 移除 TS6192 整行 import(useMemo/useRef) + perpendicularDistance 函数
+- 变更（5 files，52 项，净删 835 行）：
+  - **components/PermissionGate.tsx**：-293 行（7 组件/const + 孤儿对象体 + 4 icon import）
+  - **components/ehs/riskUtils.ts**：-230 行（7 函数/const）
+  - **components/gis/utils/performance.ts**：-220 行（7 函数/const + import + perpendicularDistance）
+  - **config/plugins.config.ts**：-52 行（7 const/函数）
+  - **config/deployment.ts**：-46 行（7 const/函数）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整，留下 private 方法类体
+- **V305 const 孤儿对象体**：移除 `const roleConfig: Record<string, { variant: string; icon: IconComponent; label: string }>` 时，复杂类型注解含嵌套 `{}` 导致脚本误判声明结束，留下 `> = { ... };` 孤儿对象体
+- **根因**：脚本的括号跟踪从声明行开始计数，但复杂类型注解中的 `{}` 会干扰深度计数，导致脚本在类型注解的 `}` 处就认为声明结束，移除了声明行但留下了 `= { ... }` 赋值部分
+- **修复方向**：需先找到 `=` 号位置，从 `=` 后开始括号跟踪，而非从声明行开始
+
+### C. 级联清理
+- PermissionGate 移除 RoleBadge/PermissionBadge 组件后，User/Users/Crown/Eye 4 个 lucide icon import 级联未使用，手动移除
+- gis/performance 移除 useMemoizedTrack/useThrottledCallback 后，`import { useMemo, useRef } from 'react'` 整行未使用(TS6192)，手动移除
+- gis/performance 移除 calculateTrackLength 后，perpendicularDistance 辅助函数级联未使用，手动移除
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（含孤儿对象体语法错误修复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（52 项全部清除）
+- `eslint src/`: 0 errors, 2092 warnings（从 V304 的 2126 减少 34）
+- `cargo check --workspace`: 0 errors（V305 无 Rust 改动）
+
+### E. 文档化
+- V304 后续扩展「第十二批」打勾 [x]
+- 新增「第十三批」后续扩展项（全 src/ 仍有 ~848 个未使用项）
+- 新增「v6 脚本 const 对象体完整移除」问题追踪（V304+V305 同类问题）
+- V305 章节写入完整交付记录 + 52 项明细 + 孤儿对象体修复说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/components/PermissionGate.tsx`（-293 行）
+- `apps/web/src/components/ehs/riskUtils.ts`（-230 行）
+- `apps/web/src/components/gis/utils/performance.ts`（-220 行）
+- `apps/web/src/config/plugins.config.ts`（-52 行）
+- `apps/web/src/config/deployment.ts`（-46 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（孤儿对象体语法错误已修复）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（52 项全部清除）
+- [x] `eslint src/` — 0 errors（2092 warnings，从 2126 减少 34）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 52 项 — 全部移除（净删 835 行）
+- [x] PermissionGate 孤儿对象体 — 手动截断修复（TS1109/TS1005/TS1128 消除）
+- [x] 级联 4 icon import + 1 TS6192 + 1 function — 手动移除
+- [x] V304 后续扩展「第十二批」打勾 [x]
+
+### V305 后续扩展（留给 V306+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V305 累计手动 116 项
+- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体，需从 `=` 后开始括号跟踪
+- [ ] **src/ 其他目录未使用项清理（第十三批）**：全 src/ 仍有 ~848 个 tsc 未使用项，推荐 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(7) + utils/query-cost-analyzer(6)
 
 
 

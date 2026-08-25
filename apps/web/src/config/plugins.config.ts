@@ -23,13 +23,6 @@ export interface RemoteModuleConfig {
   dependencies?: string[];
 }
 
-interface RemoteModuleEnvConfig {
-  [key: string]: {
-    url: string;
-    enabled: boolean;
-  };
-}
-
 export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
     name: 'Core',
@@ -162,51 +155,6 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
   },
 ];
 
-const MODULE_CATEGORIES = [
-  { id: 'system', name: i18n.t('shared.plugins.config.k10'), icon: 'Settings' },
-  { id: 'business', name: i18n.t('shared.plugins.config.k11'), icon: 'Briefcase' },
-  { id: 'analytics', name: i18n.t('shared.plugins.config.k12'), icon: 'BarChart3' },
-  { id: 'supply', name: i18n.t('shared.plugins.config.k13'), icon: 'Package' },
-  { id: 'quality', name: i18n.t('shared.plugins.config.k14'), icon: 'Shield' },
-  { id: 'rd', name: i18n.t('shared.plugins.config.k15'), icon: 'FlaskConical' },
-  { id: 'infrastructure', name: i18n.t('shared.plugins.config.k16'), icon: 'Server' },
-];
-
-const getModuleByCode = (code: string): RemoteModuleConfig | undefined => {
-  return REMOTE_MODULES.find((m) => m.code === code);
-};
-
 export const getModulesByCategory = (category: string): RemoteModuleConfig[] => {
   return REMOTE_MODULES.filter((m) => m.category === category);
-};
-
-const getRequiredModules = (): RemoteModuleConfig[] => {
-  return REMOTE_MODULES.filter((m) => m.required);
-};
-
-const getOptionalModules = (): RemoteModuleConfig[] => {
-  return REMOTE_MODULES.filter((m) => !m.required);
-};
-
-const getDefaultEnabledModules = (): RemoteModuleConfig[] => {
-  return REMOTE_MODULES.filter((m) => m.defaultEnabled);
-};
-
-const buildRemoteConfig = (): Record<string, string> => {
-  const config: Record<string, string> = {};
-  REMOTE_MODULES.forEach((module) => {
-    config[module.code] = `${module.url}/remoteEntry.js`;
-  });
-  return config;
-};
-
-const buildEnvConfig = (): RemoteModuleEnvConfig => {
-  const config: RemoteModuleEnvConfig = {};
-  REMOTE_MODULES.forEach((module) => {
-    config[module.code] = {
-      url: module.url,
-      enabled: module.defaultEnabled,
-    };
-  });
-  return config;
 };
