@@ -3197,7 +3197,7 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 15 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1759 warnings) · 目标 15 files 未使用清零
 >
-> **Tag**: `V316` · Baseline SHA: `5e0082c06` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V316-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V316` · Baseline SHA: `5e0082c06` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V316-2e32c9a19.tar.gz` (.gitignore 排除)
 
 ### A. 批量模式说明（V316 首次启用）
 - 背景：V297-V315 单版本单批模式，每版本固定开销 ~60s（pre-commit 36s + push/tag/tgz/docs 24s），与清理项数无关
