@@ -1747,7 +1747,62 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings，需逐个替换为具体类型或 `unknown`
-- [ ] **src/ 其他目录未使用项清理**：src/ai/ 已清零（tsc --noUnusedLocals），但 src/api/、src/pages/ 等目录仍有未使用项（如 src/api/admin/index.ts 7 个 TS6192），可继续清理
+- [x] **src/ 其他目录未使用项清理（第五批 types/）**：V298 清理 types/qms.ts + types/wms.ts 共 129 项（首轮 115 + 级联 14），tsc --noUnusedLocals types/ 0 errors，净删 1729 行
+- [ ] **src/ 其他目录未使用项清理（第六批）**：全 src/ 仍有 ~1459 个 tsc 未使用项（components/templates 48 / pages/admin 39 / api/qms 38 / hooks/useExternalErp.ts 29 等），可继续分批清理
+
+## 🎯 V298 — 第五批未使用项清理（types/ 129项）+ 级联清理 + 迭代脚本方法论（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 2 files（types/qms.ts + types/wms.ts）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2479 warnings) · tsc --noUnusedLocals types/ 0 errors
+>
+> **Tag**: `V298` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V298-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第五批未使用项清理（types/ 目录，129 项）
+- 背景：V297 后全 src/ 仍有 1588 个 tsc --noUnusedLocals 错误，types/qms.ts(79) + types/wms.ts(36) 集中度最高
+- 修复：迭代式脚本清理（v6 方法论）— 逐一声明处理 + 每轮重新获取未使用列表 + 支持 type/interface/const 三种声明
+- 变更（2 files，129 项，净删 1729 行）：
+  - **types/qms.ts**：首轮 79 项（8 个 State type + 71 个 DTO interface）+ 级联 11 项（7 个 const 状态数组 + 4 个 DTO interface）= 90 项，净删 1150 行
+  - **types/wms.ts**：首轮 36 项（全部 DTO interface）+ 级联 3 项（Create*ItemDto）= 39 项，净删 579 行
+- 方法论突破：v6 迭代脚本解决了 v1-v5 的孤儿类体问题——核心是「逐一声明处理 + 不包含尾部空行 + 每轮重新扫描级联项」
+- 验收：`tsc --noUnusedLocals` types/qms.ts + types/wms.ts 0 errors
+
+### B. 清理副作用修复
+- eslint --fix：types/ 文件格式修复（无 prettier errors）
+- 无级联语法错误（v6 迭代脚本逐一声明处理避免了范围重叠）
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals --noUnusedParameters` types/qms+wms: 0 errors（129 项全部清除）
+- `eslint src/`: 0 errors, 2479 warnings（从 V297 的 2601 减少 122）
+- `cargo check --workspace`: 0 errors（V298 无 Rust 改动）
+
+### D. 文档化
+- V297 后续扩展「src/ 其他目录未使用项清理」打勾 [x]
+- 新增「第六批」后续扩展项（全 src/ 仍有 ~1459 个未使用项）
+- V298 章节写入完整交付记录 + 129 项明细 + v6 迭代脚本方法论
+
+### 变更文件清单（3 files）
+- `apps/web/src/types/qms.ts`（-1150 行）
+- `apps/web/src/types/wms.ts`（-579 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` types/qms+wms — 0 errors（129 项全部清除）
+- [x] `eslint src/` — 0 errors（2479 warnings，从 2601 减少 122）
+- [x] `cargo check --workspace` — 0 errors
+- [x] types/qms.ts 90 项 — 全部移除（-1150 行）
+- [x] types/wms.ts 39 项 — 全部移除（-579 行）
+- [x] v6 迭代脚本方法论 — 逐一声明处理 + 级联扫描 + 无孤儿类体
+- [x] V297 后续扩展第五批项打勾 [x]
+
+### V298 后续扩展（留给 V299+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **src/ 其他目录未使用项清理（第六批）**：全 src/ 仍有 ~1459 个 tsc 未使用项，可继续用 v6 迭代脚本分批清理（推荐 hooks/ 48 项或 api/qms 38 项）
 
 
 
