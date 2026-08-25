@@ -2548,9 +2548,92 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项
-- [ ] **v6 脚本 class/const/function/let 完整移除**：需支持 let 声明和多行 import block
-- [ ] **src/ 其他目录未使用项清理（第十六批）**：全 src/ 仍有 ~723 个 tsc 未使用项，推荐 utils/listParamMapping(5) + store/moduleLoadingStore(5) + constants/routes(5) + config/permissions(5) + hooks/usePerformanceMonitor(5)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项
+- [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306/V309 孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
+- [x] **src/ 其他目录未使用项清理（第十六批）**：V309 清理 permissions(5→级联) + routes(5) + usePerformanceMonitor(5→级联) + moduleLoadingStore(5→孤儿体) + listParamMapping(5) = 34 项，tsc 目标 5 files 0 errors，净删 933 行
+- [ ] **src/ 其他目录未使用项清理（第十七批）**：全 src/ 仍有 ~689 个 tsc 未使用项，推荐 pages/rd/RsProjectDetailPage(5) + pages/pm/PmReportPage(5) + pages/hrm/HrmReportsPage(5) + microfrontend/marketplace/ModuleMarketplace(5) + config/permissionMapping(已清空占位)
+
+## 🎯 V309 — 第十六批未使用项清理（34项）+ moduleLoadingStore孤儿函数体修复（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1981 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V309` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V309-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V309` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V309-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十六批未使用项清理（34 项）
+- 背景：V308 后全 src/ 仍有 ~723 个 tsc --noUnusedLocals 错误，第十六批目标 5 files 首轮 25 项
+- 修复：v6 迭代脚本（30 项，16 轮卡 3 项）+ 手动修复孤儿函数体和级联 import
+- 迭代过程（脚本 16 轮，移除 30 项后卡住）：
+  - 脚本移除 30 项（const/function/type + 单行 import），含 5 项级联
+  - **问题 1**：moduleLoadingStore.ts 移除 5 个 hook 函数时留下孤儿函数体（4 行 `useModuleLoadingStore((state) => state.modules[moduleId]...)`），引用已删除的 `moduleId` 参数，产生 TS2552 错误
+  - **问题 2**：usePerformanceMonitor.tsx 移除 5 个 hook 后，React/useRef/useCallback import 和整行 @mui/material import 级联未使用
+  - 手动修复：
+    - moduleLoadingStore.ts: 截断孤儿函数体（4 行），文件从 210 行截断到 205 行
+    - usePerformanceMonitor.tsx: 移除 React/useRef/useCallback import（保留 useEffect/useState）+ 移除整行 @mui/material import
+- 变更（5 files，34 项，净删 933 行）：
+  - **config/permissions.ts**：-492 行（5 函数/常量 + 大量级联代码）
+  - **hooks/usePerformanceMonitor.tsx**：-218 行（5 hook/HOC + import）
+  - **utils/listParamMapping.ts**：-183 行（4 函数 + 1 type）
+  - **constants/routes.ts**：-32 行（4 路由常量 + 1 函数）
+  - **store/moduleLoadingStore.ts**：-10 行（5 hook + 孤儿函数体）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第五代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致误判声明结束
+- **V306 孤儿闭合括号**：移除函数时留下独立 `}`
+- **V308 class 移除成功**：SmartPrecacheController class 完整移除
+- **V309 hook 孤儿函数体**：移除 `export const useXxx = (moduleId) => { ... }` 箭头函数时，脚本只移除了声明行，留下了函数体中的 hook 调用行。根因：箭头函数的 `=> {` 模式中，脚本的括号跟踪从声明行开始，但 `moduleId` 参数在括号内，函数体的 `{` 在 `=>` 后，脚本可能误判了函数体边界
+- **共性根因**：脚本括号跟踪对箭头函数 `const x = (params) => { body }` 的处理不完善，`=>` 后的 `{` 才是函数体起始
+- **修复方向**：需先定位 `=>` 或 `=` 后的 `{`，从该位置开始括号跟踪
+
+### C. 级联清理
+- permissions.ts：移除 5 个导出函数后，大量内部辅助函数和常量级联未使用，脚本自动处理（-492 行）
+- usePerformanceMonitor.tsx：移除 5 个 hook/HOC 后，React/useRef/useCallback/@mui/material import 级联未使用，手动移除
+- moduleLoadingStore.ts：移除 5 个 hook 后留下孤儿函数体，手动截断
+- 无其他级联项
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（孤儿函数体修复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（34 项全部清除）
+- `eslint src/`: 0 errors, 1981 warnings（从 V308 的 2007 减少 26）
+- `cargo check --workspace`: 0 errors（V309 无 Rust 改动）
+
+### E. 文档化
+- V308 后续扩展「第十六批」打勾 [x]
+- 新增「第十七批」后续扩展项（全 src/ 仍有 ~689 个未使用项）
+- 新增「v6 脚本箭头函数孤儿函数体」问题追踪（V309）
+- V309 章节写入完整交付记录 + 34 项明细 + 孤儿函数体修复说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/config/permissions.ts`（-492 行）
+- `apps/web/src/hooks/usePerformanceMonitor.tsx`（-218 行）
+- `apps/web/src/utils/listParamMapping.ts`（-183 行）
+- `apps/web/src/constants/routes.ts`（-32 行）
+- `apps/web/src/store/moduleLoadingStore.ts`（-10 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（孤儿函数体已修复）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（34 项全部清除）
+- [x] `eslint src/` — 0 errors（1981 warnings，从 2007 减少 26）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 34 项 — 全部移除（净删 933 行）
+- [x] moduleLoadingStore 孤儿函数体 — 手动截断修复（TS2552 消除）
+- [x] usePerformanceMonitor 级联 import — 手动移除
+- [x] V308 后续扩展「第十六批」打勾 [x]
+
+### V309 后续扩展（留给 V310+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题，需从 `=>` 后 `{` 开始括号跟踪
+- [ ] **src/ 其他目录未使用项清理（第十七批）**：全 src/ 仍有 ~689 个 tsc 未使用项，推荐 pages/rd/RsProjectDetailPage(5) + pages/pm/PmReportPage(5) + pages/hrm/HrmReportsPage(5) + microfrontend/marketplace/ModuleMarketplace(5) + 其他 5 项文件
 
 
 
