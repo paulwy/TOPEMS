@@ -1683,7 +1683,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 ~22 files（src/ai/ 清理 + TODO）| 验收：tsc 0 errors · eslint 0 errors(2601 warnings) · cargo check 0 errors · tsc --noUnusedLocals src/ai/ 0 errors
 >
-> **Tag**: `V297` · Baseline SHA: `1cc65b5b8` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V297-6e6ce5f36.tar.gz` (.gitignore 排除)
+> **Tag**: `V297` · Baseline SHA: `1cc65b5b8` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V297-62464fbf0.tar.gz` (.gitignore 排除)
 
 ### A. eslint warnings 第四批清理（src/ai/ 30 个未使用项，20 files）
 - 背景：V296 后 src/ai/ 仍有 30 个未使用项（tsc --noUnusedLocals），分布在 governance/native/quality/review/security/ux 6 个子目录
