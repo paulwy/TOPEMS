@@ -10,7 +10,7 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const SrmSupplierDetailPage: React.FC = () => {
@@ -41,12 +41,6 @@ const SrmSupplierDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.srm_supplier_detail_page.k3'), supplierQuery.error);
     }
   }, [supplierQuery.isError, supplierQuery.error]);
-
-  const statusColors: Record<string, string> = {
-    active: 'success',
-    inactive: 'error',
-    pending: 'warning',
-  };
 
   const riskColors: Record<string, string> = {
     low: 'success',

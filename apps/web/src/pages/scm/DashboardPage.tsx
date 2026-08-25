@@ -21,7 +21,6 @@ import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type {
   SupplyChainOverview,
-  SupplyChainFullLinkStat,
   MrpPlan,
   IncomingInspection,
   InventoryTurnoverStat,
@@ -65,18 +64,6 @@ export const DashboardPage: React.FC = () => {
       const response = await scmApi.supplyChainDashboard.overview();
       if (response.success && response.data) {
         return response.data as SupplyChainOverview;
-      }
-      return null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: fullLinkStats } = useQuery({
-    queryKey: QUERY_KEYS.SCM.FULL_LINK_STATS,
-    queryFn: async () => {
-      const response = await scmApi.supplyChainDashboard.fullLinkStats();
-      if (response.success && response.data) {
-        return response.data as SupplyChainFullLinkStat;
       }
       return null;
     },
@@ -133,13 +120,6 @@ export const DashboardPage: React.FC = () => {
 
   const loading =
     overviewLoading || mrpLoading || inspectionLoading || inventoryLoading || priceLoading;
-
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('scm.dashboard_page.k7');
-    if (hour < 18) return t('scm.dashboard_page.k8');
-    return t('scm.dashboard_page.k9');
-  };
 
   const stats: StatCard[] = useMemo(
     () => [

@@ -22,7 +22,6 @@ import { Edit, History, CheckCircle } from 'lucide-react';
 import { DetailPageTemplate, type SectionConfig, type PageAction } from '@/components/templates';
 import { formulaApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
-import type { Formula, FormulaVersion } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
@@ -105,21 +104,6 @@ const RsFormulaDetailPage: React.FC = () => {
   const handleEdit = () => {
     if (formula) {
       navigate(`${RD_PATHS.formula}/${formula.id}/edit`);
-    }
-  };
-  const getStatusColor = (status: string): 'success' | 'warning' | 'primary' | 'default' => {
-    switch (status) {
-      case i18n.t('rd.rs_formula_detail_page.k8'):
-      case 'approved':
-        return 'success';
-      case i18n.t('rd.rs_formula_detail_page.k9'):
-      case 'testing':
-        return 'warning';
-      case i18n.t('rd.rs_formula_detail_page.k10'):
-      case 'draft':
-        return 'default';
-      default:
-        return 'primary';
     }
   };
   const getStatusLabel = (status: string): string => {

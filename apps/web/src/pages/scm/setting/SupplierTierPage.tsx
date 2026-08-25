@@ -1,11 +1,9 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import { scmApi } from '@/api/scm';
 
 export const SupplierTierPage: React.FC = () => {
   const { t } = useTranslation('scm');

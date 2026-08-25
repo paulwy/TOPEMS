@@ -10,7 +10,7 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const SrmContractDetailPage: React.FC = () => {
@@ -41,14 +41,6 @@ const SrmContractDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.srm_contract_detail_page.k3'), contractQuery.error);
     }
   }, [contractQuery.isError, contractQuery.error]);
-
-  const statusColors: Record<string, string> = {
-    pending: 'warning',
-    signed: 'success',
-    expired: 'error',
-    terminated: 'error',
-    active: 'success',
-  };
 
   const statusLabels: Record<string, string> = {
     pending: i18n.t('pages.srm_contract_detail_page.k4'),
