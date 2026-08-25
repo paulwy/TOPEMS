@@ -1,7 +1,5 @@
 import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { mobileApi } from '@/api/mobile';
 import {
   Box,
   Typography,
@@ -20,7 +18,6 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  MessageSquare,
   Clock,
   Settings,
   Volume2,
@@ -120,31 +117,7 @@ function getMockNotifications(): Notification[] {
     },
   ];
 }
-function getTypeLabels(): Record<NotificationType, string> {
-  return {
-    system: i18n.t('mobile.mobile_notification_page.k12'),
-    approval: i18n.t('mobile.mobile_notification_page.k13'),
-    task: i18n.t('mobile.mobile_notification_page.k14'),
-    message: i18n.t('mobile.mobile_notification_page.k15'),
-  };
-}
-const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
-  system: <Bell size={20} />,
-  approval: <CheckCheck size={20} />,
-  task: <Clock size={20} />,
-  message: <MessageSquare size={20} />,
-};
 export const MobileNotificationPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['mobile-notification-page'],
-    queryFn: async () => {
-      try {
-        return (await mobileApi.push.listPushNotifications()) ?? {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [notifications, setNotifications] = useState<Notification[]>(() => getMockNotifications());
   const [activeTab, setActiveTab] = useState<TabType>('all');

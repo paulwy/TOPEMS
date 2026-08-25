@@ -3093,13 +3093,103 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V315 累计手动 178 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
 - [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
 - [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
-- [ ] **src/ 其他目录未使用项清理（第二十二批）**：全 src/ 仍有 ~567 个 tsc 未使用项，推荐 pages/report/ReportPage(3) + pages/pm/PmContractDetailPage(3) + pages/notification/NotificationListPage(3) + pages/mobile/MobileNotificationPage(3) + pages/lims/InspectionTaskPage(3)
+- [ ] **深层级联链自动跟踪**：V315 发现 4 层级联（函数→变量→useQuery→type import）和 3 层级联（函数→mutation→import），v6 脚本需迭代跟踪
+- [x] **src/ 其他目录未使用项清理（第二十二批）**：V315 清理 ReportPage(3) + PmContractDetailPage(4) + NotificationListPage(3+5级联) + MobileNotificationPage(3+3级联) + InspectionTaskPage(3+5级联) = 24项，tsc 目标 5 files 0 errors，净删 110 行
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~543 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
+
+## 🎯 V315 — 第二十二批未使用项清理（24项）+ 深层级联链发现（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1814 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V315` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V315-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第二十二批未使用项清理（24 项）
+- 背景：V314 后全 src/ 仍有 ~567 个 tsc --noUnusedLocals 错误，第二十二批目标 5 files 首轮 16 项 + 级联 8 项
+- 修复：v6 脚本（8 项）+ 手动修复 8 项 + 级联 8 项
+- 迭代过程：
+  - **v6 脚本第一轮（8 项）**：PmContractDetailPage 1(STATUS_COLORS) + NotificationListPage 2(handleMarkAllAsRead/handleFilterImportant) + MobileNotificationPage 2(getTypeLabels/TYPE_ICONS) + InspectionTaskPage 3(getCurrentStepName/getSampleName/getProcessName) = 8 项。ReportPage 的 LoadingState/ServiceDownState 是 default import 不匹配 v6 正则，需手动
+  - **手动修复 8 项**：
+    1. ReportPage: PageContainer import + LoadingState default import + ServiceDownState default import (3)
+    2. PmContractDetailPage: lucide-react TS6192 整行 + Contract type import + index function param (3)
+    3. NotificationListPage: setActiveTab 解构变量 (1)
+    4. MobileNotificationPage: backendData useQuery 整段 (1)
+  - **级联第一轮（6 项）**：
+    1. MobileNotificationPage: useQuery import + mobileApi import + MessageSquare lucide import (3) — 移除 backendData useQuery 和 TYPE_ICONS 后级联
+    2. NotificationListPage: markAllAsReadMutation useMutation + setImportantFilter 解构变量 (2) — 移除 handleMarkAllAsRead/handleFilterImportant 后级联
+    3. InspectionTaskPage: samples const (1) — 移除 getSampleName/getProcessName/getCurrentStepName 后级联
+  - **级联第二轮（2 项，深层）**：
+    1. InspectionTaskPage: Sample type import — 移除 samples useQuery 后级联（4 层级联：函数→samples变量→samplesData useQuery→Sample type import）
+    2. NotificationListPage: markAllAsRead import — 移除 markAllAsReadMutation 后级联（3 层级联：函数→mutation→import）
+- 变更（5 files，24 项，净删 110 行）：
+  - **pages/notification/NotificationListPage.tsx**：-43 行（2 functions + markAllAsReadMutation + setActiveTab + setImportantFilter + markAllAsRead import）
+  - **pages/lims/InspectionTaskPage.tsx**：-32 行（3 functions + samples useQuery + samples const + Sample type import）
+  - **pages/mobile/MobileNotificationPage.tsx**：-27 行（getTypeLabels + TYPE_ICONS + backendData useQuery + 3 import）
+  - **pages/pm/PmContractDetailPage.tsx**：-13 行（STATUS_COLORS + lucide-react import + Contract type + index param）
+  - **pages/report/ReportPage/index.tsx**：-3 行（PageContainer + LoadingState + ServiceDownState imports）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. 深层级联链发现（V315 新发现）
+- **4 层级联（InspectionTaskPage）**：移除 getSampleName/getProcessName/getCurrentStepName 函数 → samples 变量级联未使用 → samplesData useQuery 级联未使用 → Sample type import 级联未使用。共 4 层，需迭代 3 轮 tsc 扫描才能完全清除
+- **3 层级联（NotificationListPage）**：移除 handleMarkAllAsRead 函数 → markAllAsReadMutation useMutation 级联 → markAllAsRead import 级联。共 3 层
+- **v6 脚本局限**：当前脚本只做单轮声明移除，不跟踪级联。深层级联需多轮 tsc 扫描 + 手动修复
+- **后续方向**：v6 脚本可增加"级联迭代模式"——移除声明后自动重新扫描 tsc 错误，循环直到目标文件 0 errors
+
+### C. 级联清理
+- MobileNotificationPage: 移除 backendData useQuery → useQuery/mobileApi/MessageSquare import 级联 (3)
+- NotificationListPage: 移除 handleMarkAllAsRead → markAllAsReadMutation/setImportantFilter/markAllAsRead import 级联 (3)；移除 handleFilterImportant → setImportantFilter 级联 (已包含)
+- InspectionTaskPage: 移除 3 functions → samples 变量 → samplesData useQuery → Sample type import 级联 (3)
+- 其他文件：无 cascading
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（24 项全部清除，含 8 项级联）
+- `eslint src/`: 0 errors, 1814 warnings（从 V314 的 1836 减少 22）
+- `cargo check --workspace`: 0 errors（V315 无 Rust 改动）
+
+### E. 文档化
+- V314 后续扩展「第二十二批」打勾 [x]
+- 新增「第二十三批」后续扩展项（全 src/ 仍有 ~543 个未使用项）
+- 新增「深层级联链自动跟踪」问题追踪
+- V315 章节写入完整交付记录 + 24 项明细 + 深层级联链说明 + 级联 8 项
+
+### 变更文件清单（6 files）
+- `apps/web/src/pages/notification/NotificationListPage.tsx`（-43 行）
+- `apps/web/src/pages/lims/InspectionTaskPage.tsx`（-32 行）
+- `apps/web/src/pages/mobile/MobileNotificationPage.tsx`（-27 行）
+- `apps/web/src/pages/pm/PmContractDetailPage.tsx`（-13 行）
+- `apps/web/src/pages/report/ReportPage/index.tsx`（-3 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（24 项全部清除）
+- [x] `eslint src/` — 0 errors（1814 warnings，从 1836 减少 22）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 24 项 — 全部移除（净删 110 行）
+- [x] 8 个级联项 — 两轮迭代清除（含 4 层深层级联）
+- [x] V314 后续扩展「第二十二批」打勾 [x]
+
+### V315 后续扩展（留给 V316+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V315 累计手动 178 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
+- [ ] **深层级联链自动跟踪**：V315 发现 4 层级联，v6 脚本需迭代跟踪
+- [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~543 个 tsc 未使用项，推荐 pages/finance/FinanceDashboardPage(3) + pages/hr/HrEmployeePage(3) + pages/crm/CrmCustomerPage(3) + pages/erp/ErpOrderPage(3) + pages/mes/MesWorkOrderPage(3)
 
 
 
