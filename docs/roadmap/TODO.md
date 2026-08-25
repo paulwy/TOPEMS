@@ -2925,9 +2925,9 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1857 warnings) · 目标 5 files 未使用清零
 >
-> **Tag**: `V313` · Baseline SHA: `5beca480f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-4db89da9d.tar.gz` (.gitignore 排除)
+> **Tag**: `V313` · Baseline SHA: `5beca480f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-5f104cd4f.tar.gz` (.gitignore 排除)
 >
-> **Tag**: `V313` · Baseline SHA: `5beca480f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-4db89da9d.tar.gz` (.gitignore 排除)
+> **Tag**: `V313` · Baseline SHA: `5beca480f` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V313-5f104cd4f.tar.gz` (.gitignore 排除)
 
 ### A. 第二十批未使用项清理（22 项）
 - 背景：V312 后全 src/ 仍有 ~615 个 tsc --noUnusedLocals 错误，第二十批目标 5 files 首轮 20 项 + 级联 2 项
