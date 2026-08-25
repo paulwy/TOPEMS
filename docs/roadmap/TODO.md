@@ -1619,7 +1619,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 ~25 files（src/ai/ 清理 + TODO）| 验收：tsc 0 errors · eslint 0 errors(2610 warnings) · cargo check 0 errors · pre-commit hook 36.07s 记录
 >
-> **Tag**: `V296` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V296-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V296` · Baseline SHA: `b5ed5a937` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V296-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. eslint warnings 第三批清理（TS6192 未使用 import，40 项）
 - 背景：V295 全量扫描发现 src/ai/ 有 84 个未使用错误，其中 40 个是 TS6192（整行 import 声明完全未使用），分布在 14 个文件（13 个 panel 文件 + code-completion.ts）
