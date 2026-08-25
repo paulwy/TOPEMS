@@ -4,44 +4,6 @@ import i18next from 'i18next';
 
 // i18n key 翻译函数
 
-const parseFileExtension = (filename: string): string => {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
-  if (ext === 'xlsx' || ext === 'xls') {
-    return 'xlsx';
-  }
-  return 'csv';
-};
-
-const getImportModeLabel = (mode: string): string => {
-  const labels: Record<string, string> = {
-    create: i18n.t('shared.import_export.k0'),
-    update: i18n.t('shared.import_export.k1'),
-    create_update: i18n.t('shared.import_export.k2'),
-  };
-  return labels[mode] || mode;
-};
-
-const readFileAsBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1]);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
-
-const downloadBase64File = (base64Data: string, filename: string): void => {
-  const link = document.createElement('a');
-  link.href = `data:application/octet-stream;base64,${base64Data}`;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
 export interface ExportColumn<T> {
   key: keyof T;
   label: string;
