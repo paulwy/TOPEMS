@@ -1541,7 +1541,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 ~332 files（eslint --fix 326 + src/ai 11 清理 + QmsDashboard 1 修复 + TODO 1）| 验收：tsc 0 errors · eslint 0 errors · cargo check 0 errors · pre-commit hook 首次无 --no-verify 实测
 >
-> **Tag**: `V295` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V295-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V295` · Baseline SHA: `00d2a30ba` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V295-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. eslint --fix 全量格式化修复（6303 prettier 错误）
 - 背景：V293 误判 eslint 为 0 issues，实际全量扫描发现 9147 problems（6304 errors, 2843 warnings），其中 **6303 errors 全是 `prettier/prettier` 格式化问题**（全部 auto-fixable）
