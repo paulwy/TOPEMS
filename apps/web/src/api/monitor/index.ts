@@ -4,19 +4,13 @@ import type { PaginatedResponse } from '@topems/shared-types';
 import { apiLogger } from '../../utils/logger';
 import type { CrudOperations } from '@/hooks/useCrudQueries';
 import { alertBatchApi } from './alertBatch';
-import { performanceExtendedApi } from './performanceExtended';
-import { ruleAdvancedApi } from './ruleAdvanced';
 import { ruleTypedApi } from './ruleTyped';
 import { metricTypedApi } from './metricTyped';
-import { suppressionApi } from './suppression';
 import { templateApi } from './template';
 import { thresholdApi } from './threshold';
 import { pluginApi } from './plugin';
-import { metricsSnapshotApi } from './metricsSnapshot';
 import { alertApi } from './alert';
-import { routingApi } from './routing';
 import { dashboardApi } from './dashboard';
-import { sloApi } from './slo';
 import { businessMetricApi } from './businessMetric';
 
 export interface SystemMetrics {
@@ -294,32 +288,6 @@ export const monitorApi = {
 };
 
 export default monitorApi;
-
-const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
-  list: (params?) =>
-    monitorApi.listAlerts({
-      page: params?.page as number,
-      pagesize: params?.pagesize as number,
-      ...(params as unknown as Record<string, unknown>),
-    }) as Promise<{
-      success: boolean;
-      code: number;
-      message: string;
-      data?: { items: Alert[]; total: number; page?: number; pagesize?: number };
-    }>,
-  get: monitorApi.getAlert as (
-    id: string
-  ) => Promise<{ success: boolean; code: number; message: string; data?: Alert }>,
-  create: (() => {
-    throw new Error('Not implemented');
-  }) as unknown as CrudOperations<Alert, AlertQueryParams>['create'],
-  update: (() => {
-    throw new Error('Not implemented');
-  }) as unknown as CrudOperations<Alert, AlertQueryParams>['update'],
-  delete: (() => {
-    throw new Error('Not implemented');
-  }) as unknown as CrudOperations<Alert, AlertQueryParams>['delete'],
-};
 
 export { alertBatchApi, templateApi, pluginApi, alertApi, dashboardApi, businessMetricApi };
 
