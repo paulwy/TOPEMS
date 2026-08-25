@@ -1,5 +1,4 @@
-import type { ApiResponse } from '../client';
-import type { PaginatedResponse, QmsTypes } from '@topems/shared-types';
+import type { PaginatedResponse } from '@topems/shared-types';
 
 export { PaginatedResponse };
 
@@ -41,22 +40,6 @@ export { PaginatedResponse };
 // ============================================================================
 // 生成类型与手写 Backend 类型字段高度匹配，可作为 Backend 类型的类型源真相。
 // 手写 Backend 类型保留必填字段约束，生成类型字段全可选作为参考。
-type GeneratedQualityStandard = QmsTypes.QualityStandard;
-type GeneratedInspection = QmsTypes.Inspection;
-type GeneratedInspectionAudit = QmsTypes.InspectionAudit;
-type GeneratedInspectionResultItem = QmsTypes.InspectionResultItem;
-type GeneratedQualityIssue = QmsTypes.QualityIssue;
-type GeneratedQualityIssueWithWorkflow = QmsTypes.QualityIssueWithWorkflow;
-type GeneratedStandardRevision = QmsTypes.StandardRevision;
-type GeneratedCreateStandardRequest = QmsTypes.CreateStandardRequest;
-type GeneratedUpdateStandardRequest = QmsTypes.UpdateStandardRequest;
-type GeneratedCreateInspectionRequest = QmsTypes.CreateInspectionRequest;
-type GeneratedUpdateInspectionRequest = QmsTypes.UpdateInspectionRequest;
-type GeneratedAssignInspectionRequest = QmsTypes.AssignInspectionRequest;
-type GeneratedSubmitInspectionResultRequest = QmsTypes.SubmitInspectionResultRequest;
-type GeneratedAuditInspectionRequest = QmsTypes.AuditInspectionRequest;
-type GeneratedCreateIssueRequest = QmsTypes.CreateIssueRequest;
-type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
 
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
@@ -68,29 +51,9 @@ type GeneratedUpdateIssueRequest = QmsTypes.UpdateIssueRequest;
 // 3. 生成 QualityIssue 有 issue_no/resolved_at/created_by/tenant_id，手写 Backend 无
 // 因此 QualityIssue 需要适配类型补充字段。
 
-/** 生成类型 QualityIssue 扩展手写 Backend 字段（assigned_to/priority/due_date） */
-type AdaptedQualityIssue = QmsTypes.QualityIssue & {
-  assigned_to?: string;
-  priority?: string;
-  due_date?: string;
-};
-
 // ============================================================================
 // 字段适配函数：生成类型实例 → 手写 Backend 命名实例
 // ============================================================================
-
-/**
- * 将生成类型 QualityIssue 转换为手写 Backend 命名的 AdaptedQualityIssue。
- * 生成类型缺少 assigned_to/priority/due_date，这里补 undefined 占位。
- */
-const adaptQualityIssueFromGenerated = (generated: QmsTypes.QualityIssue): AdaptedQualityIssue => {
-  return {
-    ...generated,
-    assigned_to: undefined,
-    priority: undefined,
-    due_date: undefined,
-  };
-};
 
 // ============================================================================
 // 手写类型（当前主类型）
@@ -1487,26 +1450,6 @@ export interface AuditTaskFrontend {
   updatedAt: string;
 }
 
-interface CreateAuditTaskRequest {
-  planId: string;
-  title: string;
-  description?: string;
-  assignedTo: string;
-  assignee?: string;
-  priority?: string;
-  dueDate?: string;
-}
-
-interface CreateAuditTaskRequestBackend {
-  plan_id: string;
-  title: string;
-  description?: string;
-  assigned_to: string;
-  assignee?: string;
-  priority?: string;
-  due_date?: string;
-}
-
 export interface AuditFindingFrontend {
   id: string;
   taskId: string;
@@ -1522,28 +1465,6 @@ export interface AuditFindingFrontend {
   resolvedAt?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-interface CreateAuditFindingRequest {
-  taskId: string;
-  title: string;
-  description: string;
-  severity: string;
-  category: string;
-  recommendation?: string;
-  assignedTo?: string;
-  dueDate?: string;
-}
-
-interface CreateAuditFindingRequestBackend {
-  task_id: string;
-  title: string;
-  description: string;
-  severity: string;
-  category: string;
-  recommendation?: string;
-  assigned_to?: string;
-  due_date?: string;
 }
 
 // ============================================================================

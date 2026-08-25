@@ -1802,7 +1802,76 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **src/ 其他目录未使用项清理（第六批）**：全 src/ 仍有 ~1459 个 tsc 未使用项，可继续用 v6 迭代脚本分批清理（推荐 hooks/ 48 项或 api/qms 38 项）
+- [x] **src/ 其他目录未使用项清理（第六批 api/）**：V299 清理 api/qms/types.ts + api/mes/types.ts + api/workflow/types.ts + api/erp/masterData.ts 共 152 项（5 轮迭代，级联效应显著），tsc --noUnusedLocals 目标 4 files 0 errors，净删 1405 行
+- [ ] **src/ 其他目录未使用项清理（第七批）**：全 src/ 仍有 ~1321 个 tsc 未使用项（hooks/useExternalErp.ts 29 / pages/doc 22 / hooks/useVoucherTemplate.ts 19 / components/templates 17 等），可继续用 v6 迭代脚本分批清理
+
+## 🎯 V299 — 第六批未使用项清理（api/ 152项）+ 级联迭代 + import 处理方法论（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 4 files（api/qms/types + api/mes/types + api/workflow/types + api/erp/masterData）+ TODO | 验收：tsc 0 errors · eslint 0 errors(2408 warnings) · 目标 4 files 未使用清零
+>
+> **Tag**: `V299` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V299` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V299-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第六批未使用项清理（api/ 目录，152 项，5 轮迭代）
+- 背景：V298 后全 src/ 仍有 1473 个 tsc --noUnusedLocals 错误，api/ 类型文件集中度高
+- 目标：api/qms/types.ts(22) + api/mes/types.ts(13) + api/workflow/types.ts(10) + api/erp/masterData.ts(17) = 62 项首轮
+- 修复：v6 迭代脚本扩展版 — 支持缩进声明（^\s*type/interface/const/function）+ import 行处理 + 5 轮迭代级联清理
+- 迭代过程：
+  - 第 1 轮：62 项（原始目标）
+  - 第 2 轮：67 项（级联暴露，api/erp/masterData.ts 大量 const API 对象）
+  - 第 3 轮：17 项
+  - 第 4 轮：6 项
+  - 第 5 轮：0 项（完成）
+- 变更（4 files，152 项，净删 1405 行）：
+  - **api/erp/masterData.ts**：-1163 行（最大，含 10+ 个 const API 对象 + 类型声明）
+  - **api/mes/types.ts**：-85 行
+  - **api/qms/types.ts**：-81 行（含 PaginatedResponse 重导出保留）
+  - **api/workflow/types.ts**：-77 行
+- 验收：`tsc --noUnusedLocals` 目标 4 files 0 errors
+
+### B. 清理副作用修复 + 方法论突破
+- **PaginatedResponse 重导出问题**：脚本错误移除了 `import { PaginatedResponse }` 和 `export { PaginatedResponse }`，但其他 4 个文件（improvement/inspection/issue/standard）依赖此重导出。修复：恢复 import + 重导出，仅移除未使用的 QmsTypes
+- **import 处理方法论**：v6 脚本的 import 处理过于简化（移除整行），应改为仅移除 import 语句中未使用的单个符号，保留同行其他导入。V300 改进点
+- eslint --fix：格式修复（无 prettier errors）
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 4 files: 0 errors（152 项全部清除）
+- `eslint src/`: 0 errors, 2408 warnings（从 V298 的 2479 减少 71）
+- `cargo check --workspace`: 0 errors（V299 无 Rust 改动）
+
+### D. 文档化
+- V298 后续扩展第六批项打勾 [x]
+- 新增「第七批」后续扩展项（全 src/ 仍有 ~1321 个未使用项）
+- V299 章节写入完整交付记录 + 152 项明细 + 5 轮迭代过程 + import 处理方法论
+
+### 变更文件清单（5 files）
+- `apps/web/src/api/erp/masterData.ts`（-1163 行）
+- `apps/web/src/api/mes/types.ts`（-85 行）
+- `apps/web/src/api/qms/types.ts`（-81 行，含 PaginatedResponse 重导出保留）
+- `apps/web/src/api/workflow/types.ts`（-77 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 4 files — 0 errors（152 项全部清除）
+- [x] `eslint src/` — 0 errors（2408 warnings，从 2479 减少 71）
+- [x] `cargo check --workspace` — 0 errors
+- [x] api/erp/masterData.ts — -1163 行
+- [x] api/qms/types.ts PaginatedResponse 重导出 — 保留（4 个文件依赖）
+- [x] 5 轮迭代级联清理 — 完成（62→67→17→6→0）
+- [x] V298 后续扩展第六批项打勾 [x]
+
+### V299 后续扩展（留给 V300+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本 import 处理改进**：当前移除整行 import，应改为仅移除未使用的单个符号（V299 PaginatedResponse 问题的根因）
+- [ ] **src/ 其他目录未使用项清理（第七批）**：全 src/ 仍有 ~1321 个 tsc 未使用项，推荐 hooks/ 目录（useExternalErp.ts 29 + useVoucherTemplate.ts 19 + useErp.ts 14 + useConsolidation.ts 11 = 73 项）
 
 
 
