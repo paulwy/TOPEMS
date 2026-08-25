@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
   MapPin,
-  Search as SearchIcon,
   ArrowRight,
   Warehouse,
   Camera,
@@ -12,14 +11,9 @@ import {
   AlertTriangle,
   AlertCircle,
   CheckCircle2,
-  Loader2,
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { useGis, GisProvider } from '../../../context/GisContext';
-import MapView from '@/components/gis/MapView';
-import MetricCard from '@/components/bi/MetricCard';
-import StatsChart from '@/components/bi/StatsChart';
-import type { ColumnDef } from '@tanstack/react-table';
 import type {
   DevicePoint,
   Pipeline,
@@ -28,21 +22,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
-import {
-  Box,
-  Paper,
-  Tabs,
-  Tab,
-  Snackbar,
-  Alert,
-  TableRow,
-  Checkbox,
-  FormControlLabel,
-  InputAdornment,
-  CircularProgress,
-  Button,
-  useTheme,
-} from '@mui/material';
+import { Box, Paper, Tabs, Tab, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';

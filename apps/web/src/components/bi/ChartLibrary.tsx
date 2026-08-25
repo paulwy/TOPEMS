@@ -15,11 +15,10 @@ import {
   Scatter,
   ComposedChart,
   Brush,
-  ResponsiveContainer,
   Cell,
 } from '../charts/_vendors/recharts-cartesian';
 import i18n from '@/i18n';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 const PolarCasesLazy = lazy(() =>
   import('./ChartLibrary.polar').then((m) => ({ default: m.PolarCases }))
@@ -688,68 +687,5 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     </div>
   );
 };
-
-const BarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='bar'
-    {...props}
-  />
-);
-
-const LineChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='line'
-    {...props}
-  />
-);
-
-const PieChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='pie'
-    {...props}
-  />
-);
-
-const AreaChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='area'
-    {...props}
-  />
-);
-
-const RadarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='radar'
-    {...props}
-  />
-);
-
-const ScatterChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='scatter'
-    {...props}
-  />
-);
-
-const ComposedChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='composed'
-    {...props}
-  />
-);
-
-const HistogramChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='histogram'
-    {...props}
-  />
-);
-
-const GaugeChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
-  <ChartComponent
-    type='gauge'
-    {...props}
-  />
-);
 
 export default ChartComponent;

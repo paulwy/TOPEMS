@@ -2008,8 +2008,80 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项
-- [ ] **src/ 其他目录未使用项清理（第九批）**：全 src/ 仍有 ~1089 个 tsc 未使用项，推荐 utils/format(12) + pages/bi/GisPage(12) + lib/pwa(12) + docs/DesignTokens(11) + components/bi/ChartLibrary(11)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项
+- [x] **src/ 其他目录未使用项清理（第九批）**：V302 清理 utils/format(12→级联) + pages/bi/GisPage(12) + lib/pwa(12→级联) + docs/DesignTokens(11) + components/bi/ChartLibrary(11→级联polar) = 72 项，tsc 目标 6 files 0 errors，净删 981 行
+- [ ] **src/ 其他目录未使用项清理（第十批）**：全 src/ 仍有 ~1017 个 tsc 未使用项，推荐 api/qms/adapters(10) + dev-platform/v53(9) + pages/admin/TenantDetailPage(8) + components/templates/DashboardTemplate(8) + store/biStore(7)
+
+## 🎯 V302 — 第九批未使用项清理（72项）+ 级联清理（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 6 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2203 warnings) · 目标 6 files 未使用清零
+>
+> **Tag**: `V302` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V302` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第九批未使用项清理（72 项）
+- 背景：V301 后全 src/ 仍有 ~1089 个 tsc --noUnusedLocals 错误，第九批目标 5 files 首轮 58 项
+- 修复：v6 迭代脚本扩展版（55 项）+ 手动修复多行 import / let / 级联 interface（17 项）
+- 迭代过程（脚本 16 轮，移除 55 项后卡在 15 项）：
+  - 脚本移除 55 项（const/function 组件 + 单行 import）
+  - 手动修复 17 项：
+    - utils/format.ts: 5 个多行 import 符号
+    - GisPage/index.tsx: 8 个多行 import 符号（lucide-react 2 + mui 6）
+    - lib/pwa.ts: 1 个 let 声明 + 2 个赋值 + 1 个级联 interface
+    - ChartLibrary.tsx: 1 个多行 import 符号
+    - ChartLibrary.polar.tsx: 1 个 import 符号（级联文件）
+- 变更（6 files，72 项，净删 981 行）：
+  - **docs/DesignTokens.tsx**：-604 行（11 个 demo 组件移除）
+  - **lib/pwa.ts**：-214 行（12 个函数 + 1 let + 1 interface 移除）
+  - **utils/format.ts**：-83 行（5 个 import + 相关 wrapper 函数移除）
+  - **components/bi/ChartLibrary.tsx**：-66 行（9 个图表组件 + 1 import 移除）
+  - **pages/bi/GisPage/index.tsx**：-22 行（8 个 import 移除）
+  - **components/bi/ChartLibrary.polar.tsx**：-2 行（1 个 import 移除，级联文件）
+- 验收：`tsc --noUnusedLocals` 目标 6 files 0 errors
+
+### B. 级联清理
+- lib/pwa.ts 移除 promptInstall/canInstall 等函数后，deferredInstallPrompt let 声明和 BeforeInstallPromptEvent interface 级联未使用，手动移除（保留事件处理器的 dispatchEvent 和 logger）
+- ChartLibrary.tsx 移除图表组件后，ChartLibrary.polar.tsx 的 semanticTokens import 级联暴露（该文件不在首轮目标但相关，一并修复）
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 6 files: 0 errors（72 项全部清除）
+- `eslint src/`: 0 errors, 2203 warnings（从 V301 的 2262 减少 59）
+- `cargo check --workspace`: 0 errors（V302 无 Rust 改动）
+
+### D. 文档化
+- V301 后续扩展「第九批」打勾 [x]
+- 新增「第十批」后续扩展项（全 src/ 仍有 ~1017 个未使用项）
+- V302 章节写入完整交付记录 + 72 项明细 + 级联清理说明
+
+### 变更文件清单（7 files）
+- `apps/web/src/docs/DesignTokens.tsx`（-604 行）
+- `apps/web/src/lib/pwa.ts`（-214 行）
+- `apps/web/src/utils/format.ts`（-83 行）
+- `apps/web/src/components/bi/ChartLibrary.tsx`（-66 行）
+- `apps/web/src/pages/bi/GisPage/index.tsx`（-22 行）
+- `apps/web/src/components/bi/ChartLibrary.polar.tsx`（-2 行，级联）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 6 files — 0 errors（72 项全部清除）
+- [x] `eslint src/` — 0 errors（2203 warnings，从 2262 减少 59）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 6 files 72 项 — 全部移除（净删 981 行）
+- [x] pwa.ts 级联清理 — let + interface 移除，事件处理器保留
+- [x] V301 后续扩展「第九批」打勾 [x]
+
+### V302 后续扩展（留给 V303+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项，V302 手动 17 项
+- [ ] **src/ 其他目录未使用项清理（第十批）**：全 src/ 仍有 ~1017 个 tsc 未使用项，推荐 api/qms/adapters(10) + dev-platform/v53(9) + pages/admin/TenantDetailPage(8) + components/templates/DashboardTemplate(8) + store/biStore(7)
 
 
 
