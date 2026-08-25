@@ -1,5 +1,4 @@
-import type { ThemeOptions } from '@mui/material/styles';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 export interface ThemePreset {
@@ -186,8 +185,3 @@ export const themePresets: ThemePreset[] = [
 
 export const getPresetById = (id: string): ThemePreset | undefined =>
   themePresets.find((p) => p.id === id);
-
-const getPresetColors = (preset: ThemePreset) => ({
-  primary: preset.primary || themePresets[0].primary!,
-  secondary: preset.secondary || themePresets[0].secondary!,
-});

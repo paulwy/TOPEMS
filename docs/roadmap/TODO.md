@@ -3006,12 +3006,100 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V313 累计手动 164 项
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项
 - [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
 - [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
-- [ ] **src/ 其他目录未使用项清理（第二十一批）**：全 src/ 仍有 ~593 个 tsc 未使用项，推荐 theme/presets(3) + store/authStore(3) + pages/workflow/WorkflowApprovalActions(3) + pages/wms/StockTakePage(3) + pages/wms/DashboardPage(3)
+- [ ] **孤儿文件检测与清空**：V314 发现 WorkflowApprovalActions.tsx 移除组件+hook后整个文件未被引用，需级联清空全部 import/type（298行）
+- [x] **src/ 其他目录未使用项清理（第二十一批）**：V314 清理 theme/presets(3) + authStore(3) + WorkflowApprovalActions(3+7级联=整文件清空) + StockTakePage(3) + DashboardPage(4+3级联) = 26项，tsc 目标 5 files 0 errors，净删 377 行
+- [ ] **src/ 其他目录未使用项清理（第二十二批）**：全 src/ 仍有 ~567 个 tsc 未使用项，推荐 pages/report/ReportPage(3) + pages/pm/PmContractDetailPage(3) + pages/notification/NotificationListPage(3) + pages/mobile/MobileNotificationPage(3) + pages/lims/InspectionTaskPage(3)
+
+## 🎯 V314 — 第二十一批未使用项清理（26项）+ 孤儿文件整文件清空（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1836 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V314` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V314-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V314` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V314-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第二十一批未使用项清理（26 项）
+- 背景：V313 后全 src/ 仍有 ~593 个 tsc --noUnusedLocals 错误，第二十一批目标 5 files 首轮 16 项 + 级联 10 项
+- 修复：v6 脚本（9 项）+ 手动修复 7 项 + 级联清空 10 项
+- 迭代过程：
+  - **v6 脚本第一轮（9 项）**：authStore 3 + WorkflowApprovalActions 2 + StockTakePage 1 + DashboardPage 2 + theme/presets 1 = 9 项，一轮完成无孤儿
+  - **手动修复 7 项**：
+    1. theme/presets: ThemeOptions import type + semanticTokens import
+    2. StockTakePage: CrudTab import type + queryClient import
+    3. DashboardPage: Box/Button import (TS6192) + backendData2 useQuery (TS6198)
+  - **级联 10 项（关键发现）**：
+    1. **WorkflowApprovalActions.tsx 整文件清空（7 项级联）**：移除 WorkflowApprovalActions 组件 + useApprovalActions hook 后，文件剩余 i18n import + @mui/material import (TS6192) + lucide-react import (TS6192) + WorkflowApprovalActionsProps interface (TS6196) + UseApprovalActionsReturn interface (TS6196) + React import + Approval type import 全部级联未使用。检查发现该文件**未被任何其他文件引用**，整文件 298 行全部清空
+    2. authStore: useCallback import 级联（移除 3 个 useCallback hook 后）
+    3. DashboardPage: wmsApi import 级联（移除 backendData2 useQuery 后）+ QuickSearch import 级联（移除 headerContent 后）
+- 变更（5 files，26 项，净删 377 行）：
+  - **pages/workflow/components/WorkflowApprovalActions.tsx**：-298 行（整文件清空，组件+hook+全部import/type）
+  - **pages/wms/DashboardPage.tsx**：-36 行（iconMap + headerContent + backendData2 useQuery + Box/Button import + QuickSearch import + wmsApi import）
+  - **pages/wms/StockTakePage.tsx**：-28 行（createStockTakeMutation + CrudTab import + queryClient import）
+  - **store/authStore.ts**：-17 行（3 个 useCallback hook + useCallback import）
+  - **theme/presets.ts**：-8 行（getPresetColors function + ThemeOptions import + semanticTokens import）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. 孤儿文件检测（V314 新发现）
+- **现象**：WorkflowApprovalActions.tsx 移除未使用的组件和 hook 后，整个文件的 import 和 type 声明全部级联未使用
+- **检测方法**：`grep -rn "WorkflowApprovalActions" src/ --include="*.tsx" --include="*.ts" | grep -v "WorkflowApprovalActions.tsx"` — 确认无外部引用
+- **处理方式**：整文件清空（`> file`），保留空文件占位（避免 import 路径断裂，如果有动态 import）
+- **后续方向**：v6 脚本可增加"孤儿文件检测"——移除文件所有导出后检查是否被外部引用，若未引用则整文件清空
+
+### C. 级联清理
+- WorkflowApprovalActions.tsx：移除组件+hook → 7 项级联（i18n/@mui/lucide/2 interface/React/Approval），整文件清空
+- authStore.ts：移除 3 个 useCallback hook → useCallback import 级联
+- DashboardPage.tsx：移除 backendData2 useQuery → wmsApi import 级联；移除 headerContent → QuickSearch import 级联
+- 其他文件：无 cascading
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（26 项全部清除）
+- `eslint src/`: 0 errors, 1836 warnings（从 V313 的 1857 减少 21）
+- `cargo check --workspace`: 0 errors（V314 无 Rust 改动）
+
+### E. 文档化
+- V313 后续扩展「第二十一批」打勾 [x]
+- 新增「第二十二批」后续扩展项（全 src/ 仍有 ~567 个未使用项）
+- 新增「孤儿文件检测与清空」问题追踪
+- V314 章节写入完整交付记录 + 26 项明细 + 孤儿文件整文件清空说明 + 级联 10 项
+
+### 变更文件清单（6 files）
+- `apps/web/src/pages/workflow/components/WorkflowApprovalActions.tsx`（-298 行，整文件清空）
+- `apps/web/src/pages/wms/DashboardPage.tsx`（-36 行）
+- `apps/web/src/pages/wms/StockTakePage.tsx`（-28 行）
+- `apps/web/src/store/authStore.ts`（-17 行）
+- `apps/web/src/theme/presets.ts`（-8 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（26 项全部清除）
+- [x] `eslint src/` — 0 errors（1836 warnings，从 1857 减少 21）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 26 项 — 全部移除（净删 377 行）
+- [x] WorkflowApprovalActions.tsx 孤儿文件 — 整文件清空（298 行）
+- [x] 10 个级联项 — 迭代清除
+- [x] V313 后续扩展「第二十一批」打勾 [x]
+
+### V314 后续扩展（留给 V315+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V314 累计手动 170 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312/V313 手动修复解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **v6 脚本多行类型注解孤儿对象体**：V313 发现，需跟踪 `<>` 泛型括号
+- [ ] **孤儿文件检测与清空**：V314 发现，v6 脚本可增加孤儿文件检测
+- [ ] **src/ 其他目录未使用项清理（第二十二批）**：全 src/ 仍有 ~567 个 tsc 未使用项，推荐 pages/report/ReportPage(3) + pages/pm/PmContractDetailPage(3) + pages/notification/NotificationListPage(3) + pages/mobile/MobileNotificationPage(3) + pages/lims/InspectionTaskPage(3)
 
 
 

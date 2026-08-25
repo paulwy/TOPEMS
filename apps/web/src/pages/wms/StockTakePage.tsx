@@ -18,7 +18,7 @@ import { Play, CheckCircle2, Eye, Trash2, Package, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import CrudPage, { type CrudApiAdapter, type CrudTab } from '@/components/templates/CrudPage';
+import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer, StatusBadge } from '@/components/common';
 import { useNotificationStore } from '@/store';
@@ -29,7 +29,7 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -82,30 +82,6 @@ const StockTakePage: React.FC = () => {
       />
     );
   };
-
-  const createStockTakeMutation = useMutation({
-    mutationFn: (data: CreateStockTakeRequest) => wmsApi.stockTakes.create(data),
-    onSuccess: () => {
-      addNotification({
-        type: 'success',
-        title: t('wms.stocktake_page.create'),
-        message: t('wms.stocktake_page.create_1'),
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    onError: (error: unknown) => {
-      apiLogger.error(t('wms.stocktake_page.create_2'), error);
-      addNotification({
-        type: 'error',
-        title: t('wms.stocktake_page.create_3'),
-        message: t('wms.stocktake_page.create_4'),
-      });
-    },
-  });
 
   const deleteStockTakeMutation = useMutation({
     mutationFn: (id: string) => wmsApi.stockTakes.delete(id),

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -249,21 +249,6 @@ export const useAuth = () => {
       actions,
     ]
   );
-};
-
-const useHasPermission = (_permission: string) => {
-  const hasPermission = useAuthStore((state) => state.hasPermission);
-  return useCallback((perm: string) => hasPermission(perm), [hasPermission]);
-};
-
-const useHasAnyPermission = (_permissions: string[]) => {
-  const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
-  return useCallback((perms: string[]) => hasAnyPermission(perms), [hasAnyPermission]);
-};
-
-const useHasRole = (_role: string) => {
-  const hasRole = useAuthStore((state) => state.hasRole);
-  return useCallback((r: string) => hasRole(r), [hasRole]);
 };
 
 export default useAuthStore;
