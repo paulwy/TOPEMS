@@ -1,6 +1,6 @@
-import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import type { PluginManifest, PluginRoute } from './PluginLoader';
+import type { PluginManifest } from './PluginLoader';
 import { ModuleLoadingFallback, PluginLoader } from './PluginLoader';
 import { moduleRegistry } from '@/modules/registry';
 import { eventBus, ModuleEvents } from './EventBus';
@@ -13,7 +13,6 @@ interface CacheEntry<T> {
 }
 
 const remoteModuleCache: Map<string, CacheEntry<React.ComponentType>> = new Map();
-const routeConfigCache: Map<string, DynamicRouteProps[]> = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 const MAX_CACHE_SIZE = 100;
 
@@ -109,109 +108,6 @@ export const DynamicRouter: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const location = useLocation();
-
-  const pluginLoaderRef = React.useRef(new PluginLoader());
-
-  const loadPluginRoutes = useCallback(
-    async (manifest: PluginManifest): Promise<DynamicRouteProps[]> => {
-      const pluginRoutes: DynamicRouteProps[] = [];
-
-      if (!manifest.routes || manifest.routes.length === 0) {
-        return pluginRoutes;
-      }
-
-      for (const route of manifest.routes) {
-        try {
-          const LazyComponent = await createPluginLazyComponent(manifest, route);
-          pluginRoutes.push({
-            path: route.path,
-            element: (
-              <Suspense fallback={<ModuleLoadingFallback />}>
-                <LazyComponent />
-              </Suspense>
-            ),
-          });
-        } catch (error: unknown) {
-          logger.error(`[DynamicRouter] Failed to create route for ${route.path}`, error);
-          setErrors((prev) => ({
-            ...prev,
-            [route.path]: error instanceof Error ? error.message : 'Unknown error',
-          }));
-        }
-      }
-
-      return pluginRoutes;
-    },
-    []
-  );
-
-  const createPluginLazyComponent = async (
-    manifest: PluginManifest,
-    route: PluginRoute
-  ): Promise<React.LazyExoticComponent<React.ComponentType>> => {
-    const { frontend } = manifest;
-
-    switch (frontend.type) {
-      case 'module-federation':
-        return createRemoteLazyComponent(
-          frontend.entry,
-          route.component,
-          () => {
-            eventBus.emit(ModuleEvents.MODULE_LOADED, {
-              moduleId: manifest.pluginCode,
-              path: route.path,
-            });
-          },
-          (error) => {
-            eventBus.emit(ModuleEvents.MODULE_ERROR, {
-              moduleId: manifest.pluginCode,
-              error,
-            });
-          }
-        );
-
-      case 'systemjs':
-        return lazy(async () => {
-          try {
-            const module = await pluginLoaderRef.current.loadBundle(frontend);
-            const Component = module[route.component] || module.default;
-            eventBus.emit(ModuleEvents.MODULE_LOADED, {
-              moduleId: manifest.pluginCode,
-              path: route.path,
-            });
-            return { default: Component };
-          } catch (error: unknown) {
-            eventBus.emit(ModuleEvents.MODULE_ERROR, {
-              moduleId: manifest.pluginCode,
-              error: error as Error,
-            });
-            throw error;
-          }
-        });
-
-      case 'umd':
-        return lazy(async () => {
-          try {
-            const module = await pluginLoaderRef.current.loadBundle(frontend);
-            const Component = module[route.component] || module.default;
-            eventBus.emit(ModuleEvents.MODULE_LOADED, {
-              moduleId: manifest.pluginCode,
-              path: route.path,
-            });
-            return { default: Component };
-          } catch (error: unknown) {
-            eventBus.emit(ModuleEvents.MODULE_ERROR, {
-              moduleId: manifest.pluginCode,
-              error: error as Error,
-            });
-            throw error;
-          }
-        });
-
-      default:
-        throw new Error(`Unsupported frontend type: ${frontend.type}`);
-    }
-  };
 
   useEffect(() => {
     const loadRoutes = async () => {
@@ -339,11 +235,6 @@ export const DynamicRouter: React.FC = () => {
     </Routes>
   );
 };
-
-interface RemoteConfig {
-  name: string;
-  url: string;
-}
 
 export async function preloadRemoteModules(): Promise<void> {
   const remotes = moduleRegistry.getRemoteModules();

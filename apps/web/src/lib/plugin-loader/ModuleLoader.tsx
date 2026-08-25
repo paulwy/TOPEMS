@@ -5,7 +5,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { CircularProgress, Box, Typography } from '@mui/material';
 import { LOADER_TIMEOUT } from '@topems/tokens';
-import type { ModuleStatus } from '@/store/moduleLoadingStore';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 import { ModuleLoadingProgress } from './ModuleLoadingProgress';
 import i18n from '@/i18n';
@@ -25,12 +24,6 @@ interface ModuleLoaderProps {
   showProgress?: boolean;
   /** Loading timeout in ms */
   timeout?: number;
-}
-
-interface ModuleHealthState {
-  status: ModuleStatus;
-  lastCheck?: number;
-  latency?: number;
 }
 
 /**
@@ -124,7 +117,6 @@ export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
 export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
   component,
   fallback,
-  errorFallback = <ModuleErrorFallback />,
   moduleId,
   showProgress = false,
   timeout = DEFAULT_TIMEOUT,
@@ -252,132 +244,6 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
 /**
  * Dynamic Module Loader with retry support
  */
-class DynamicModuleLoader {
-  private cache: Map<string, { default: React.ComponentType<unknown> }> = new Map();
-  private retryCount: Map<string, number> = new Map();
-  private maxRetries = 3;
-  private loadingStore = useModuleLoadingStore.getState();
-
-  async loadModule(
-    component: () => Promise<{ default: React.ComponentType<unknown> }>,
-    moduleId?: string
-  ): Promise<{ default: React.ComponentType<unknown> }> {
-    const cacheKey = moduleId || component.toString();
-
-    if (this.cache.has(cacheKey)) {
-      this.loadingStore.setLoaded(moduleId || cacheKey);
-      return this.cache.get(cacheKey)!;
-    }
-
-    const retryKey = moduleId || cacheKey;
-    const retries = this.retryCount.get(retryKey) || 0;
-
-    this.loadingStore.setLoading(moduleId || cacheKey);
-
-    try {
-      const module = await component();
-      this.cache.set(cacheKey, module);
-      this.retryCount.delete(retryKey);
-      this.loadingStore.setLoaded(moduleId || cacheKey);
-      return module;
-    } catch (error: unknown) {
-      this.loadingStore.setError(moduleId || cacheKey, error as Error);
-      if (retries < this.maxRetries) {
-        this.retryCount.set(retryKey, retries + 1);
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
-        return this.loadModule(component, moduleId);
-      }
-      throw error;
-    }
-  }
-
-  clearCache(moduleId?: string): void {
-    if (moduleId) {
-      this.cache.delete(moduleId);
-    } else {
-      this.cache.clear();
-    }
-  }
-
-  async preload(moduleId: string, loader: () => Promise<unknown>): Promise<boolean> {
-    return this.loadingStore.preload(moduleId, loader);
-  }
-
-  unload(moduleId: string): void {
-    this.cache.delete(moduleId);
-    this.loadingStore.unload(moduleId);
-  }
-}
-
-const moduleLoader = new DynamicModuleLoader();
-
 // ============================================================================
 // Route Wrapper with Module Loading
 // ============================================================================
-
-interface ModuleRouteWrapperProps {
-  routePath: string;
-  component: () => Promise<{ default: React.ComponentType<unknown> }>;
-  moduleId?: string;
-  fallback?: React.ReactNode;
-}
-
-/**
- * Route Wrapper with automatic module loading
- */
-const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
-  routePath,
-  component,
-  moduleId,
-  fallback,
-}) => {
-  const [moduleComponent, setModuleComponent] = React.useState<React.ComponentType<unknown> | null>(
-    null
-  );
-  const [error, setError] = React.useState<Error | null>(null);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    let mounted = true;
-
-    const loadComponent = async () => {
-      try {
-        setLoading(true);
-        const mod = await moduleLoader.loadModule(component, moduleId);
-        if (mounted) {
-          setModuleComponent(() => mod.default || mod);
-          setError(null);
-        }
-      } catch (err: unknown) {
-        if (mounted) {
-          setError(err as Error);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadComponent();
-
-    return () => {
-      mounted = false;
-    };
-  }, [routePath, component, moduleId]);
-
-  if (loading) {
-    return fallback || <ModuleLoadingFallback />;
-  }
-
-  if (error) {
-    return <ModuleErrorFallback error={error} />;
-  }
-
-  if (moduleComponent) {
-    const Component = moduleComponent;
-    return <Component />;
-  }
-
-  return null;
-};

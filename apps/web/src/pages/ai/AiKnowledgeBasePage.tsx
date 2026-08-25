@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -33,7 +32,6 @@ import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-import { aiApi } from '@/api/ai';
 
 const ct = designTokens.colors;
 
@@ -96,23 +94,13 @@ type ChatMessage = {
 };
 
 export const AiKnowledgeBasePage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['ai', 'knowledgeBase'],
-    queryFn: async () => {
-      try {
-        return await aiApi.getVectorCollections();
-      } catch {
-        return {};
-      }
-    },
-  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [documentList, setDocumentList] = useState(sampleDocuments);
+  const [documentList] = useState(sampleDocuments);
   const [filterType, setFilterType] = useState<string>('all');
 
   const handleSendQuery = useCallback(async () => {
@@ -153,15 +141,6 @@ export const AiKnowledgeBasePage: React.FC = () => {
     setSelectedDocs((prev) =>
       prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
     );
-  };
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    addNotification({
-      title: i18n.t('ai.knowledge_base.message.copied'),
-      message: i18n.t('ai.knowledge_base.message.copied_body'),
-      type: 'success',
-    });
   };
 
   const getTypeIcon = (type: string) => {
