@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 运行时控制台
@@ -37,13 +37,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Snackbar,
   Alert,
-  ToggleButtonGroup,
-  ToggleButton,
 } from '@mui/material';
 import {
   X as XIcon,
@@ -62,7 +57,6 @@ import {
   XCircle as XCircleIcon,
   Clock as ClockIcon,
   AlertCircle as AlertCircleIcon,
-  ChevronDown as ChevronDownIcon,
   Play as PlayIcon,
   Code as CodeIcon,
   Cpu as CpuIcon,
