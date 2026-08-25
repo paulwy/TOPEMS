@@ -1394,7 +1394,7 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 ~66 files（Rust ~55 fmt + 前端 9 + TODO 1 + pnpm-lock 1）| 验收：cargo fmt --check 0 diffs · cargo clippy --all-targets 0 warnings · tsc 0 errors · eslint 0 issues
 >
-> **Tag**: `V293` · Baseline SHA: `97b33822b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V293-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V293` · Baseline SHA: `97b33822b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V293-fe064fa90.tar.gz` (.gitignore 排除)
 
 ### A. cargo fmt 全量格式化修复（350 files，CI Gate J 闭合）
 - 背景：V289-V292 提交均使用 `--no-verify` 跳过 pre-commit hook（lefthook 超时），导致 `cargo fmt --check` 格式化债务持续积累；CI Gate J 运行 `cargo fmt --all --check`，350 个文件不通过
