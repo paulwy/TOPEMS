@@ -24,58 +24,11 @@ import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
-interface EmployeeSummary {
-  total_employees: number;
-  active_employees: number;
-  inactive_employees: number;
-  male_count: number;
-  female_count: number;
-  avg_tenure_days: number;
-  new_hires_this_month: number;
-  terminations_this_month: number;
-}
-
 interface DepartmentSummary {
   department_id: string;
   department_name: string;
   employee_count: number;
   active_count: number;
-}
-
-interface ContractSummary {
-  total_contracts: number;
-  active_contracts: number;
-  expired_contracts: number;
-  expiring_this_month: number;
-  expiring_next_month: number;
-}
-
-interface TrainingSummary {
-  total_plans: number;
-  active_plans: number;
-  total_courses: number;
-  completed_courses: number;
-  total_records: number;
-  completed_records: number;
-  avg_completion_rate: number;
-}
-
-interface AttendanceSummary {
-  total_records: number;
-  on_time_count: number;
-  late_count: number;
-  absent_count: number;
-  leave_count: number;
-  attendance_rate: number;
-}
-
-interface PayrollSummary {
-  total_payroll: number;
-  avg_salary: number;
-  min_salary: number;
-  max_salary: number;
-  employee_count: number;
-  bonus_total: number;
 }
 
 const HrmReportsPage: React.FC = () => {

@@ -68,11 +68,6 @@ export type CardColor =
 export type ChartType = 'bar' | 'line' | 'area' | 'pie';
 
 /**
- * 卡片尺寸
- */
-type CardSize = 'sm' | 'md' | 'lg';
-
-/**
  * Sparkline属性
  */
 export interface SparklineProps {
@@ -292,7 +287,6 @@ export const Sparkline: React.FC<SparklineProps> = ({
   width = 80,
   height = 32,
   strokeWidth = 2,
-  isAnimated = false,
 }) => {
   if (!data || data.length < 2) return null;
 
@@ -376,7 +370,6 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
   animate = true,
   onClick,
   sx,
-  children,
 }) => {
   const [isHovered, _setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -387,19 +380,12 @@ const StatCardBase: React.FC<StatCardBaseProps> = ({
     ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
     : colorInfo.gradient;
 
-  const {
-    isPressed,
-    ripples,
-    rippleStyle,
-    getTouchStyles,
-    handleTouchStart,
-    handleTouchEnd,
-    handleTouchCancel,
-  } = useTouchFeedback({
-    rippleColor: iconGradient,
-    minTouchTarget: 48,
-    enableHapticFeedback: true,
-  });
+  const { isPressed, ripples, rippleStyle, handleTouchStart, handleTouchEnd, handleTouchCancel } =
+    useTouchFeedback({
+      rippleColor: iconGradient,
+      minTouchTarget: 48,
+      enableHapticFeedback: true,
+    });
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -713,7 +699,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onClick,
   sx,
   sparklineData,
-  target,
   targetProgress,
   showTargetProgress = false,
 }) => {

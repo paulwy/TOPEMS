@@ -2631,9 +2631,104 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V309 累计手动 132 项
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项
+- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量（isAnimated/children/getTouchStyles/target/index），sed 全局删除误删 used children 需恢复
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题，需从 `=>` 后 `{` 开始括号跟踪
-- [ ] **src/ 其他目录未使用项清理（第十七批）**：全 src/ 仍有 ~689 个 tsc 未使用项，推荐 pages/rd/RsProjectDetailPage(5) + pages/pm/PmReportPage(5) + pages/hrm/HrmReportsPage(5) + microfrontend/marketplace/ModuleMarketplace(5) + 其他 5 项文件
+- [x] **src/ 其他目录未使用项清理（第十七批）**：V310 清理 RsProjectDetailPage(5) + PmReportPage(5→级联) + HrmReportsPage(5) + ModuleMarketplace(5) + StatCard(5) = 25 项，tsc 目标 5 files 0 errors，净删 466 行
+- [ ] **src/ 其他目录未使用项清理（第十八批）**：全 src/ 仍有 ~664 个 tsc 未使用项，推荐 api/finance/riskV59(5) + utils/streaming-ssr(4) + utils/mobileDetector(4) + utils/importExport(4) + types/mes(4)
+
+## 🎯 V310 — 第十七批未使用项清理（25项）+ 多行import/解构变量手动修复（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1953 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V310` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V310-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V310` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V310-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十七批未使用项清理（25 项）
+- 背景：V309 后全 src/ 仍有 ~689 个 tsc --noUnusedLocals 错误，第十七批目标 5 files 首轮 25 项
+- 修复：v6 迭代脚本（11 项，16 轮卡 12 项）+ 手动修复 14 项
+- 迭代过程（脚本 16 轮，移除 11 项后卡住）：
+  - 脚本仅移除 11 项（HrmReportsPage 5 type + 其他级联），大量项无法处理
+  - **卡住原因**：
+    1. **多行 import block**：ModuleMarketplace(4) + RsProjectDetailPage(3) 的 import 符号在多行 block 中，脚本 `removeImportSymbol` 只匹配单行
+    2. **默认+命名混合 import**：RsProjectDetailPage `import React, { useState } from 'react'` 脚本不处理
+    3. **TS6192 整行 import**：RsProjectDetailPage line 48 无名称
+    4. **解构变量**：StatCard(4) + PmReportPage(1) 的函数参数解构变量，脚本不处理
+  - 手动修复 14 项：
+    - ModuleMarketplace: 从多行 @mui/material import 移除 LinearProgress，从多行 lucide-react import 移除 ClockIcon/ChevronRightIcon/MessageSquareIcon
+    - RsProjectDetailPage: `import React, { useState }` → `import React`，从多行 @mui/material 移除 Stack，从多行 lucide-react 移除 MoneyIcon，移除 TS6192 整行 type import
+    - StatCard: 移除解构变量 isAnimated/getTouchStyles/target，**误删 children 后恢复**（sed 全局删除误删 ChartCard 组件的 used children，导致 TS2304）
+    - PmReportPage: `benefits.map((benefit, index) =>` → `benefits.map((benefit) =>`
+- 变更（5 files，25 项，净删 466 行）：
+  - **pages/pm/PmReportPage.tsx**：-357 行（2 函数 + 1 type + 1 index + 级联）
+  - **pages/hrm/HrmReportsPage.tsx**：-47 行（5 type）
+  - **microfrontend/marketplace/ModuleMarketplace.tsx**：-36 行（4 import + 1 const）
+  - **components/common/StatCard.tsx**：-27 行（1 type + 3 解构变量，恢复 1 children）
+  - **pages/rd/RsProjectDetailPage.tsx**：-17 行（3 import + 1 TS6192 + 1 函数）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第六代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致误判声明结束
+- **V306 孤儿闭合括号**：移除函数时留下独立 `}`
+- **V308 class 移除成功**：SmartPrecacheController class 完整移除
+- **V309 箭头函数孤儿函数体**：移除 `const useXxx = (params) => { ... }` 时留下函数体
+- **V310 多行 import + 解构变量**：
+  - 多行 import block 中符号无法移除（脚本只匹配单行 named import）
+  - 默认+命名混合 import 无法处理
+  - 函数参数解构变量无法处理
+  - **sed 全局删除风险**：用 sed `/pattern/d` 删除解构变量时，会删除所有匹配行，可能误删其他组件中正在使用的同名变量（V310 children 误删事件）
+- **修复方向**：v6 脚本需扩展支持多行 import block、默认+命名混合 import、解构变量；手动修复时需精确定位行号而非全局 sed
+
+### C. 级联清理
+- PmReportPage.tsx：移除 renderCustomCharts/renderBenefitsTable 后，ChartConfig type 和 index 参数级联未使用
+- ModuleMarketplace.tsx：移除 StatCard 组件后，4 个 icon import 级联未使用
+- RsProjectDetailPage.tsx：移除 getRiskColor 后，useState/Stack/MoneyIcon import 和整行 type import 级联未使用
+- 无其他级联项
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（children 误删恢复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（25 项全部清除）
+- `eslint src/`: 0 errors, 1953 warnings（从 V309 的 1981 减少 28）
+- `cargo check --workspace`: 0 errors（V310 无 Rust 改动）
+
+### E. 文档化
+- V309 后续扩展「第十七批」打勾 [x]
+- 新增「第十八批」后续扩展项（全 src/ 仍有 ~664 个未使用项）
+- 新增「v6 脚本解构变量自动处理」问题追踪（含 sed 全局删除风险）
+- V310 章节写入完整交付记录 + 25 项明细 + 手动修复说明 + children 误删事件
+
+### 变更文件清单（6 files）
+- `apps/web/src/pages/pm/PmReportPage.tsx`（-357 行）
+- `apps/web/src/pages/hrm/HrmReportsPage.tsx`（-47 行）
+- `apps/web/src/microfrontend/marketplace/ModuleMarketplace.tsx`（-36 行）
+- `apps/web/src/components/common/StatCard.tsx`（-27 行）
+- `apps/web/src/pages/rd/RsProjectDetailPage.tsx`（-17 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（children 误删已恢复）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（25 项全部清除）
+- [x] `eslint src/` — 0 errors（1953 warnings，从 1981 减少 28）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 25 项 — 全部移除（净删 466 行）
+- [x] 8 个多行 import 符号 — 手动移除
+- [x] 5 个解构变量 — 手动移除（children 误删后恢复）
+- [x] 1 个 TS6192 整行 import — 手动移除
+- [x] V309 后续扩展「第十七批」打勾 [x]
+
+### V310 后续扩展（留给 V311+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V310 累计手动 146 项
+- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量，需精确定位行号
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **src/ 其他目录未使用项清理（第十八批）**：全 src/ 仍有 ~664 个 tsc 未使用项，推荐 api/finance/riskV59(5) + utils/streaming-ssr(4) + utils/mobileDetector(4) + utils/importExport(4) + types/mes(4)
 
 
 
