@@ -3676,7 +3676,7 @@ let failed_count = 0;
 
 > 日期：2026-08-26 | 代码改动 15 files（14 修改 + 1 删除）+ TODO | 验收：tsc 0 errors · eslint 0 errors(1606 warnings) · 目标 14 files 未使用清零
 >
-> **Tag**: `V320` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V320-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V320` · Baseline SHA: `c6117aa17` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V320-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. 批量模式第五次运行
 - 背景：V316-V319 批量模式连续四次成功，V320 继续 3批/版本节奏
