@@ -614,7 +614,7 @@ async fn sync_all_suppliers_to_scm(
     let total_count = srm_suppliers.len();
     let mut published_count = 0;
     let mut fallback_count = 0;
-    let mut failed_count = 0;
+    let failed_count = 0;
     let now = Utc::now();
 
     let use_events = state.event_publisher.is_some();

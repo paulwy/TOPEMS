@@ -1139,11 +1139,117 @@ V285 B 轨根因 callout 已明确定位：
 
 ### V289 后续扩展（留给 V290+）
 
-- [ ] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：B1 已完成类型迁移，API 函数（budgetApi/voucherApi/financeReportApi）因签名差异暂留 erp。需对齐 PaginatedResult vs Budget[] 返回类型、financeReportApi 命名统一后，6 个文件的函数 import 改指向 @/api/finance，并在 erp/index.ts 加 @deprecated
-- [ ] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：V289 聚焦 2 处真实跨Schema + 前端 API，未覆盖 Rust crate 级耦合（tms Cargo.toml 用 path 指 wms？或 svc/tms 源码中 `use topems_wms::`），下一版扫描
+- [ ] **B2: Finance API 函数从 @/api/erp 迁移到 @/api/finance**：B1 已完成类型迁移。V290 B 轨评估确认：@/api/finance 与 @/api/erp 的 budgetApi（返回 Budget[] vs PaginatedResult）、reportApi（方法集少 4 个：businessOverview/projectSummary/monthlyTrend/departmentSummary）、voucherApi（CreateVoucherRequest 类型为 Omit<never>）均签名不兼容。需先对齐 @/api/finance/* 签名，再迁移 6 个页面 import。
+- [x] **Architecture Plan 边界 B6（TMS 依赖 WMS 源码）盘点**：✅ V290 A 轨完成 — 全项目仅 TMS→WMS 一个跨 svc path dep（dev-dependency，用于 cross_module_integration_tests.rs 的 FSM 状态转换函数），非运行时耦合。其他 svc 仅依赖 lib/shared-* crates，crate 级耦合极小。
 - [ ] **Plan B7 SharedStateBridge 全局变量**：搜索 `window.topemsSharedState` 或类似全局变量，确认是否属于绕开 React Context 的 workaround 及去重
 - [ ] **事件总线 Redis Stream 升级（Plan M2）**：V289 只完成了跨Schema清零的本地快照落库，如果 publisher/subscriber 使用的是 Pub/Sub（非持久化），下一步评估 Redis Stream（持久化+ACK+DLQ）改造
 - [ ] **编译时边界检查（Plan v1.0 §4.4 only_own_schema_query! 宏）**：等跨 SQL 数 ≤3 清零完成后，可引入 clippy lint 禁止跨 schema SQL，防止未来回退
+
+---
+
+## 🎯 V290 — 4 轨并行（B6 crate耦合盘点 · B2 API签名评估 · srm warning清零 · openapi SOP文档化）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 3 files（Rust 1 / Markdown 1 / TODO 1）| 验收：cargo check 0 errors 0 warnings · tsc 0 errors · Axum STRONG_PASS · Perm R1-6=0 · i18n PASS
+
+### 总览
+
+| 轨 | 任务 | 交付结果 | 状态 |
+|---|---|---|---|
+| A · Rust | **B6 crate 级耦合全面盘点**：扫描所有 svc Cargo.toml 跨 svc path deps + 源码 use 语句 | 全项目仅 TMS→WMS 1 个 dev-dep（跨模块 FSM 集成测试），无运行时跨 svc 依赖；其他 svc 仅依赖 lib/shared-* | ✅ |
+| B · Frontend | **B2 Finance API 函数迁移评估**：对比 @/api/finance 与 @/api/erp 的 budgetApi/reportApi/voucherApi 签名 | 确认 3 类不兼容：budgetApi 返回 Budget[] vs PaginatedResult；reportApi 少 4 方法；voucherApi CreateVoucherRequest=Omit<never>。需先对齐签名再迁移 | ✅ (评估) |
+| C · Gate | **srm unused mut warning 清零**：data_sync.rs:617 `let mut failed_count` 从未被修改 | 移除 `mut`，cargo check workspace 0 warnings | ✅ |
+| D · Docs | **openapi regen SOP 文档化 + V287 后续扩展闭合**：创建 scripts/openapi/README.md 标准化流程 | 4 步 SOP（后端补 ToSchema → extract → gen-types → 验证）+ 常见陷阱表 + 文件清单；V287 openapi SOP 项打勾 | ✅ |
+
+### A 轨详情：B6 crate 级耦合盘点
+
+#### 扫描方法
+1. 遍历所有 `svc/*/Cargo.toml`，搜索 `path = "../"` 跨 svc 依赖
+2. 遍历 `svc/*/src/`，搜索 `use topems_<other_svc>` 运行时引用
+3. 区分 `[dependencies]`（运行时）vs `[dev-dependencies]`（仅测试）
+
+#### 盘点结论
+| 服务 | 跨 svc path dep | 类型 | 用途 |
+|---|---|---|---|
+| tms | `topems-wms = { path = "../wms" }` | dev-dependency | `tests/cross_module_integration_tests.rs` 引用 `outbound_order_can_transition` / `transfer_order_can_transition` FSM 函数 |
+| 其他所有 svc | 无 | - | 仅依赖 `lib/shared-*`（shared-auth / shared-core / shared-db / shared-event / shared-bootstrap） |
+
+**结论**：crate 级运行时耦合为 0。唯一的跨 svc 依赖是 TMS 对 WMS 的 dev-dependency，用于跨模块 FSM 集成测试，属于有意设计且低风险（不影响生产构建）。
+
+#### 处置
+- 保留 TMS→WMS dev-dep（集成测试有价值）
+- 无需代码变更
+- 文档化结论，闭合 V289 B6 后续扩展项
+
+### B 轨详情：B2 Finance API 函数迁移评估
+
+#### 评估方法
+尝试将 6 个 Finance 页面的 `budgetApi` / `voucherApi` / `financeReportApi` / `accountingSubjectApi` 从 `@/api/erp` 迁移到 `@/api/finance`，运行 tsc 观察类型错误。
+
+#### 发现的签名不兼容（3 类）
+
+| API 函数 | @/api/finance 版本 | @/api/erp 版本 | 不兼容点 |
+|---|---|---|---|
+| budgetApi.list | 返回 `Budget[]` | 返回 `PaginatedResult<Budget>`（含 `.items`） | 页面用 `.items` 访问列表，finance 版本直接是数组 |
+| budgetApi.list 参数 | 无 `page` 参数 | 支持 `page` / `pagesize` / `status` / `period` / `department_id` / `keyword` | 页面传 `page` 参数，finance 版本类型不接受 |
+| reportApi | 8 方法（balanceSheet/incomeStatement/cashFlowStatement/...） | 12 方法（多 businessOverview/projectSummary/monthlyTrend/departmentSummary/agingAnalysis/cashFlowAnalysis） | FinanceReportsPage 调用 4 个缺失方法 |
+| voucherApi.create | `CreateVoucherRequest` = `Omit<never, ...>`（类型坏掉） | 正常类型 | 页面传 voucher_number/voucher_date 等字段，finance 版本类型为 never |
+
+#### 处置
+- 回退所有 B2 页面改动（6 页面恢复从 @/api/erp 导入）
+- 移除 @/api/finance 中新增的 accounting.ts 和 financeReportApi 别名
+- 移除 erp/index.ts 的 @deprecated 注解
+- **结论**：B2 全量迁移需先对齐 @/api/finance/* 的 API 函数签名（返回类型、参数类型、方法集），建议在 V291+ 作为独立任务执行
+- 文档化 3 类不兼容细节，更新 V289 B2 后续扩展项
+
+### C 轨详情：srm unused mut warning 清零
+
+#### 问题
+`svc/srm/src/modules/data_sync.rs:617` 声明 `let mut failed_count = 0;`，但该变量在后续代码中仅被读取（第 669 行 `"failed": failed_count`），从未被递增/修改。`mut` 关键字多余。
+
+#### 修复
+```rust
+// 修复前
+let mut failed_count = 0;
+
+// 修复后
+let failed_count = 0;
+```
+
+#### 验收
+- `cargo check --workspace` → 0 warnings（原 srm 1 warning 清零）
+- 同文件中 `published_count` 和 `fallback_count` 确有 `+= 1` 操作，保留 `mut` ✅
+
+### D 轨详情：openapi regen SOP 文档化
+
+#### 交付
+新建 [scripts/openapi/README.md](file:///Users/air/TOPEMS/scripts/openapi/README.md)，包含：
+1. **触发条件**：何时必须 regen（新增 ToSchema/utoipa::path、修改 handler 类型、SafeSchema 出现）
+2. **标准 4 步流程**：后端补 ToSchema → `generate.sh --extract` → `--with-types` → tsc 验证
+3. **常见陷阱表**：6 类典型问题（DTO 未 derive、handler 缺注解、嵌套类型未注册等）及解决
+4. **文件清单**：generate.sh / aggregate.py / gen-types.mjs / 输出路径
+5. **历史验证**：V286/V287/V289 三次 regen 经验
+
+#### V287 后续扩展闭合
+- [x] **openapi.d.ts regen 流程落 SOP**：V290 D 轨完成 — scripts/openapi/README.md 创建，4 步标准化流程 + 常见陷阱表 + 历史验证记录
+
+### 最终验收矩阵
+- [x] `cargo check --workspace` — exit 0，0 errors，0 warnings
+- [x] `npx tsc --noEmit` (apps/web) — exit 0，0 errors
+- [x] Axum R1/R2/R3=0 · STRONG_PASS
+- [x] Perm R1-R6=0
+- [x] i18n 7-in-1 PASS (0 failures)
+- [x] B6 盘点：全项目跨 svc 运行时依赖 = 0
+- [x] B2 评估：3 类签名不兼容已文档化
+- [x] C 轨：srm unused mut 修复，workspace 0 warnings
+- [x] D 轨：scripts/openapi/README.md 创建 + V287 SOP 项打勾
+
+### V290 后续扩展（留给 V291+）
+
+- [ ] **B2 前置：@/api/finance API 签名对齐**：对齐 budgetApi（PaginatedResult 返回）、reportApi（补 4 方法）、voucherApi（修复 CreateVoucherRequest 类型），为 B2 页面迁移铺路
+- [ ] **Plan B7 SharedStateBridge 全局变量**：V290 未覆盖，搜索 `window.topemsSharedState` 或类似全局变量
+- [ ] **事件总线 Redis Stream 升级（Plan M2）**：评估 publisher/subscriber 是否使用 Pub/Sub，改造为 Redis Stream（持久化+ACK+DLQ）
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 SQL 数清零后引入 clippy lint
+- [ ] **TMS cross_module_integration_tests 评估**：B6 盘点发现该测试依赖 WMS FSM 函数，评估是否可迁移 FSM 定义到 shared-core 以消除 dev-dep
 
 
 
