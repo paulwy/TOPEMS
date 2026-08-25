@@ -31,9 +31,6 @@ import {
   Trash2 as TrashIcon,
   RefreshCw as RefreshIcon,
   AlertTriangle as AlertIcon,
-  CheckCircle as CheckIcon,
-  XCircle as XCircleIcon,
-  ArrowRight as ArrowRightIcon,
 } from 'lucide-react';
 import {
   moduleRegistry,

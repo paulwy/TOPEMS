@@ -34,7 +34,7 @@ import { PageContainer, Grid } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { tenantApi } from '@/api/tenant';
-import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
+import type { TenantInvoice } from '@/api/tenant/types';
 import { tenantInvoiceSchema } from '@/schemas/admin';
 
 const plans = [

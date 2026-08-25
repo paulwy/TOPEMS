@@ -24,7 +24,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Divider,
   CircularProgress,
   Grid,
 } from '@mui/material';
@@ -41,7 +40,7 @@ import {
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 type ViewMode = 'list' | 'builder';
@@ -217,8 +216,6 @@ const ReportBuilderPage = () => {
       alert(i18n.t('bi.report_builder_page.k13'));
     },
   });
-  const actionLoading =
-    saveMutation.isPending || deleteMutation.isPending || exportMutation.isPending;
   const handleDelete = (id: string) => {
     if (!confirm(i18n.t('bi.report_builder_page.confirm'))) return;
     deleteMutation.mutate(id);

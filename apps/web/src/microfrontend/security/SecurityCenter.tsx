@@ -50,7 +50,6 @@ import {
   Wrench as WrenchIcon,
   ChevronDown as ChevronDownIcon,
   Check as CheckIcon,
-  X as XIcon,
 } from 'lucide-react';
 import {
   securityScanner,
@@ -61,7 +60,7 @@ import {
   type PermissionAudit,
   type ScanHistoryEntry,
 } from './security-scanner';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface SecurityCenterProps {
   onClose?: () => void;
@@ -472,7 +471,7 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
   );
 };
 
-const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
+const SecurityCenter: React.FC<SecurityCenterProps> = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<SecurityScanResult[]>([]);

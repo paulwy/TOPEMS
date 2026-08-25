@@ -23,7 +23,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Divider,
   CircularProgress,
 } from '@mui/material';
 import i18n from '@/i18n';
@@ -61,8 +60,6 @@ const DatasetPage = () => {
   const {
     data: datasets,
     loading,
-    error,
-    pagination,
     fetch,
     refresh,
     create: createItem,

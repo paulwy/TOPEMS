@@ -178,15 +178,12 @@ export class ReactAdapter implements FrameworkAdapter {
  */
 export class VueAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.VUE;
-  private componentDef: unknown;
   private app: { mount: (el: HTMLElement) => void; unmount: () => void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
   private state: Record<string, unknown> = {};
 
-  constructor(componentDef: unknown) {
-    this.componentDef = componentDef;
-  }
+  constructor(_componentDef: unknown) {}
 
   mount(container: HTMLElement, props: UnifiedProps): void {
     try {
@@ -255,15 +252,12 @@ export class VueAdapter implements FrameworkAdapter {
  */
 export class AngularAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.ANGULAR;
-  private componentClass: unknown;
   private platformRef: { destroy(): void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
   private state: Record<string, unknown> = {};
 
-  constructor(componentClass: unknown) {
-    this.componentClass = componentClass;
-  }
+  constructor(_componentClass: unknown) {}
 
   mount(container: HTMLElement, props: UnifiedProps): void {
     try {
@@ -333,15 +327,12 @@ export class AngularAdapter implements FrameworkAdapter {
  */
 export class SvelteAdapter implements FrameworkAdapter {
   readonly framework = FrameworkType.SVELTE;
-  private componentDef: unknown;
   private instance: { $destroy(): void; $set(props: UnifiedProps): void } | null = null;
   private currentProps: UnifiedProps = {};
   private errorHandler: ((error: Error) => void) | null = null;
   private state: Record<string, unknown> = {};
 
-  constructor(componentDef: unknown) {
-    this.componentDef = componentDef;
-  }
+  constructor(_componentDef: unknown) {}
 
   mount(container: HTMLElement, props: UnifiedProps): void {
     try {

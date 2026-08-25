@@ -279,18 +279,6 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   },
 };
 
-const getModuleMapping = (moduleCode: string): ModuleBackendMapping | undefined => {
-  return moduleMapping[moduleCode];
-};
-
-const getModuleApiBasePath = (moduleCode: string): string | undefined => {
-  return moduleMapping[moduleCode]?.apiBasePath;
-};
-
-const getModuleService = (moduleCode: string): string | undefined => {
-  return moduleMapping[moduleCode]?.service;
-};
-
 export const getAllModuleCodes = (): string[] => {
   return Object.keys(moduleMapping);
 };
