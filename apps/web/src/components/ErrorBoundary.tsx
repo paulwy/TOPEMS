@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import createLogger from '../utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 const logger = createLogger('ErrorBoundary');
 
@@ -797,20 +797,6 @@ const withErrorBoundary = <P extends object>(
 };
 
 // 懒加载组件带错误边界
-const lazyWithErrorBoundary = <P extends object>(
-  importFn: () => Promise<{ default: React.ComponentType<P> }>,
-  options?: ErrorBoundaryOptions
-): React.LazyExoticComponent<React.ComponentType<P>> => {
-  const { level = 'module', fallback, onError, onReport, showDetails, enableRetry } = options || {};
-
-  return React.lazy(() =>
-    importFn().catch((error) => {
-      logger.error('Lazy component import failed:', error);
-      // 返回一个抛出错误的模块，让 ErrorBoundary 处理
-      return Promise.reject(error);
-    })
-  );
-};
 
 // 页面级错误边界 Provider
 export const PageErrorBoundary: React.FC<ErrorBoundaryOptions & { children: ReactNode }> = ({
@@ -828,43 +814,10 @@ export const PageErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Reac
 };
 
 // 模块级错误边界 Provider
-const ModuleErrorBoundary: React.FC<ErrorBoundaryOptions & { children: ReactNode }> = ({
-  children,
-  ...options
-}) => {
-  return (
-    <ErrorBoundary
-      level='module'
-      {...options}
-    >
-      {children}
-    </ErrorBoundary>
-  );
-};
 
 // 组件级错误边界 HOC
-const withComponentErrorBoundary = <P extends object>(
-  Component: React.ComponentType<P>,
-  options?: Omit<ErrorBoundaryOptions, 'level'>
-): React.ComponentType<P> => {
-  return withErrorBoundary(Component, { ...options, level: 'component' });
-};
 
 // Suspense 与错误边界组合
-const SuspenseWithErrorBoundary: React.FC<{
-  children: ReactNode;
-  fallback?: ReactNode;
-  options?: ErrorBoundaryOptions;
-}> = ({ children, fallback, options }) => {
-  return (
-    <ErrorBoundary
-      level={options?.level || 'module'}
-      {...options}
-    >
-      <Suspense fallback={fallback || <DefaultLoading />}>{children}</Suspense>
-    </ErrorBoundary>
-  );
-};
 
 // 默认加载中组件
 const DefaultLoading: React.FC = () => (
@@ -885,9 +838,5 @@ const DefaultLoading: React.FC = () => (
 );
 
 // 错误历史工具
-const errorHistory = {
-  get: ErrorHistoryManager.getHistory,
-  clear: ErrorHistoryManager.clearHistory,
-};
 
 // 重新导出 ErrorBoundaryOptions 别名为 ErrorBoundaryProps（向后兼容）

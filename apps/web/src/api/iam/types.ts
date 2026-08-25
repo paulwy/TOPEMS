@@ -13,10 +13,6 @@ import type { IamTypes } from '@topems/shared-types';
 // 4. Role 生成类型有 code 字段，手写类型（旧版）暂无
 // 5. Permission 生成类型：待确认 module/category 字段（当前 schema 中暂未暴露）
 
-type GeneratedUser = IamTypes.User;
-type GeneratedRole = IamTypes.Role;
-type GeneratedPermission = IamTypes.Permission;
-
 // ============================================================================
 // 适配类型：将生成类型字段重映射到手写命名（任务 2）
 // ============================================================================
@@ -41,44 +37,6 @@ type AdaptedPermission = IamTypes.Permission & {
 // ============================================================================
 // 字段适配函数：生成类型实例 → 手写类型实例
 // ============================================================================
-
-/**
- * 将生成类型 User（含 status 字符串）转换为手写命名（含 isactive 布尔值）。
- * 用于从后端响应到前端业务类型的边界转换。
- * 约定：status === 'active' → isactive === true
- */
-const adaptUserFromGenerated = (generated: IamTypes.User): AdaptedUser => {
-  const { status, ...rest } = generated;
-  return {
-    ...rest,
-    isactive: status === 'active',
-  };
-};
-
-/**
- * 将生成类型 Permission 转换为手写命名（附加 category 可选字段）。
- * 待后端 schema 补充 module 字段后可做实际映射。
- */
-const adaptPermissionFromGenerated = (generated: IamTypes.Permission): AdaptedPermission => {
-  return {
-    ...generated,
-  };
-};
-
-/**
- * 将手写命名 User（含 isactive）转换为生成类型（含 status 字符串）。
- * 用于向前端发送请求时，将业务字段名映射回后端字段名。
- * 约定：isactive === true → status = 'active'，否则 status = 'inactive'
- */
-const adaptUserToGenerated = (
-  user: Pick<AdaptedUser, 'isactive'> & Omit<AdaptedUser, 'isactive'>
-): IamTypes.User => {
-  const { isactive, ...rest } = user;
-  return {
-    ...rest,
-    status: isactive ? 'active' : 'inactive',
-  };
-};
 
 // ============================================================================
 // 手写类型（当前主类型）
@@ -178,10 +136,6 @@ export interface UserWithPermissions {
   user: User;
   roles: Role[];
   permissions: Permission[];
-}
-
-interface PermissionCheckRequest {
-  permission: string;
 }
 
 export interface PermissionCheckResponse {

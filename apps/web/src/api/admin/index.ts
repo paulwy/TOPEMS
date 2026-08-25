@@ -1,4 +1,3 @@
-import type { ApiResponse } from '../client';
 import { userApi, roleApi, permissionApi, authModuleApi } from '../iam';
 import type { User, Role, Permission, AccessLog } from '../iam/types';
 import { tenantApi } from '../tenant';

@@ -9,7 +9,7 @@
  */
 
 import { parseQueryName } from './graphql-performance';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 export type CostLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -417,52 +417,6 @@ function getCostLevel(score: number): CostLevel {
   if (score <= COST_THRESHOLDS.medium) return 'medium';
   if (score <= COST_THRESHOLDS.high) return 'high';
   return 'critical';
-}
-
-function estimateResponseSize(query: string, variables?: Record<string, unknown>): number {
-  const analysis = analyzeQueryCost(query, variables);
-  return analysis.estimatedSizeKB;
-}
-
-function suggestOptimization(query: string): string[] {
-  const analysis = analyzeQueryCost(query);
-  return analysis.suggestions;
-}
-
-function validateQuery(
-  query: string,
-  maxScore: number,
-  variables?: Record<string, unknown>
-): { valid: boolean; score: number; reason: string } {
-  const analysis = analyzeQueryCost(query, variables);
-  const valid = analysis.score <= maxScore;
-  return {
-    valid,
-    score: analysis.score,
-    reason: valid
-      ? i18n.t('shared.query-cost-analyzer.k3')
-      : `${i18n.t('shared.query-cost-analyzer.k7')}${analysis.score}${i18n.t('shared.query-cost-analyzer.k8')}${maxScore})`,
-  };
-}
-
-function getCostLevelColor(level: CostLevel): string {
-  const colors: Record<CostLevel, string> = {
-    low: designTokens.colors.success.dark,
-    medium: designTokens.colors.warning.main,
-    high: designTokens.colors.orange[500],
-    critical: designTokens.colors.error.main,
-  };
-  return colors[level];
-}
-
-function getCostLevelLabel(level: CostLevel): string {
-  const labels: Record<CostLevel, string> = {
-    low: i18n.t('shared.query-cost-analyzer.k4'),
-    medium: i18n.t('shared.query-cost-analyzer.k5'),
-    high: i18n.t('shared.query-cost-analyzer.k6'),
-    critical: i18n.t('shared.query-cost-analyzer.k7'),
-  };
-  return labels[level];
 }
 
 export { parseQueryName };

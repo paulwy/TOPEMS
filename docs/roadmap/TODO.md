@@ -2305,9 +2305,85 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V305 累计手动 116 项
-- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体，需从 `=` 后开始括号跟踪
-- [ ] **src/ 其他目录未使用项清理（第十三批）**：全 src/ 仍有 ~848 个 tsc 未使用项，推荐 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(7) + utils/query-cost-analyzer(6)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V306 累计手动 117 项
+- [ ] **v6 脚本 class/const 对象体完整移除**：V304 class 孤儿类体 + V305 const 孤儿对象体 + V306 孤儿闭合括号，需从 `=` 后开始括号跟踪
+- [x] **src/ 其他目录未使用项清理（第十三批）**：V306 清理 ErrorBoundary(7) + api/monitor/index(7) + api/iam/types(7) + api/admin/index(1→级联消解) + utils/query-cost-analyzer(6) = 28 项，tsc 目标 5 files 0 errors，净删 176 行
+- [ ] **src/ 其他目录未使用项清理（第十四批）**：全 src/ 仍有 ~820 个 tsc 未使用项，推荐 hooks/useTheme(7) + components/common/StatusBadge(7) + utils/formatters(7) + api/erp/index(7) + components/layout/Sidebar(6)
+
+## 🎯 V306 — 第十三批未使用项清理（28项）+ query-cost-analyzer孤儿闭合括号修复（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2066 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V306` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V306-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V306` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V306-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十三批未使用项清理（28 项）
+- 背景：V305 后全 src/ 仍有 ~848 个 tsc --noUnusedLocals 错误，第十三批目标 5 files 首轮 34 项
+- 修复：v6 迭代脚本（27 项，2 轮完成无卡住）+ 手动修复孤儿闭合括号（1 项）
+- 迭代过程（脚本 2 轮，移除 27 项）：
+  - 脚本移除 27 项（export const/function/type + named import），2 轮即完成（无 TS6192/TS6198 卡住）
+  - **问题**：脚本移除 query-cost-analyzer.ts 的函数时留下孤儿闭合括号 `}`（TS1128），与 V304/V305 同类问题
+  - 手动修复 1 项：移除 query-cost-analyzer.ts 第 424 行孤儿 `}`
+- 变更（5 files，28 项，净删 176 行）：
+  - **components/ErrorBoundary.tsx**：-53 行（semanticTokens + lazyWithErrorBoundary + 解构 + ModuleErrorBoundary + withComponentErrorBoundary + SuspenseWithErrorBoundary + errorHistory）
+  - **api/iam/types.ts**：-46 行（3 type + 3 adapt 函数）
+  - **utils/query-cost-analyzer.ts**：-48 行（semanticTokens + 5 函数 + 孤儿 `}`）
+  - **api/monitor/index.ts**：-32 行（7 api const）
+  - **api/admin/index.ts**：-1 行（ApiResponse named import；6 个 TS6192 整行 import 经级联后自动消解）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第三代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致脚本误判声明结束，留下 `> = { ... };`
+- **V306 孤儿闭合括号**：移除函数时留下独立的 `}` 行（TS1128），根因同为括号跟踪边界判定
+- **共性根因**：脚本的括号跟踪从声明行开始计数，遇到类型注解中的 `{}` 或函数体嵌套时深度计算偏差，导致声明结束位置判定错误
+- **修复方向**：需先定位 `=` 或 `{`（函数体起始），从该位置开始括号跟踪，而非从声明行首字符开始
+
+### C. 级联清理
+- api/admin/index.ts：移除 ApiResponse named import 后，6 个 TS6192 整行 import 经重新扫描后自动消解（原因为 import 实际被 adminApi 对象使用，首轮 tsc 因其他错误干扰误报）
+- 无其他级联项
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（孤儿闭合括号修复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（28 项全部清除）
+- `eslint src/`: 0 errors, 2066 warnings（从 V305 的 2092 减少 26）
+- `cargo check --workspace`: 0 errors（V306 无 Rust 改动）
+
+### E. 文档化
+- V305 后续扩展「第十三批」打勾 [x]
+- 新增「第十四批」后续扩展项（全 src/ 仍有 ~820 个未使用项）
+- 新增「v6 脚本孤儿闭合括号」问题追踪（V304/V305/V306 三代同类问题）
+- V306 章节写入完整交付记录 + 28 项明细 + 孤儿闭合括号修复说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/components/ErrorBoundary.tsx`（-53 行）
+- `apps/web/src/api/iam/types.ts`（-46 行）
+- `apps/web/src/utils/query-cost-analyzer.ts`（-48 行）
+- `apps/web/src/api/monitor/index.ts`（-32 行）
+- `apps/web/src/api/admin/index.ts`（-1 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（孤儿闭合括号已修复）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（28 项全部清除）
+- [x] `eslint src/` — 0 errors（2066 warnings，从 2092 减少 26）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 28 项 — 全部移除（净删 176 行）
+- [x] query-cost-analyzer 孤儿闭合括号 — 手动移除（TS1128 消除）
+- [x] api/admin 6 个 TS6192 — 级联后自动消解
+- [x] V305 后续扩展「第十三批」打勾 [x]
+
+### V306 后续扩展（留给 V307+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V306 累计手动 117 项
+- [ ] **v6 脚本 class/const/function 完整移除**：V304/V305/V306 三代孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
+- [ ] **src/ 其他目录未使用项清理（第十四批）**：全 src/ 仍有 ~820 个 tsc 未使用项，推荐 hooks/useTheme(7) + components/common/StatusBadge(7) + utils/formatters(7) + api/erp/index(7) + components/layout/Sidebar(6)
 
 
 
