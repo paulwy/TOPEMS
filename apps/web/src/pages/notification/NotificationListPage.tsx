@@ -7,7 +7,6 @@ import {
   getNotifications,
   markAsRead,
   deleteNotification,
-  markAllAsRead,
   bulkMarkAsRead,
   bulkDeleteNotifications,
   type Notification,
@@ -25,8 +24,8 @@ type NotificationTab = 'all' | 'unread' | 'read' | 'important';
 export const NotificationListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<NotificationTab>('all');
-  const [importantFilter, setImportantFilter] = useState<string>('all');
+  const [activeTab] = useState<NotificationTab>('all');
+  const [importantFilter] = useState<string>('all');
   const { data: allNotifications = [] } = useQuery<Notification[]>({
     queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
     queryFn: async () => {
@@ -98,21 +97,6 @@ export const NotificationListPage: React.FC = () => {
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-  const markAllAsReadMutation = useMutation({
-    mutationFn: () => markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
@@ -248,29 +232,6 @@ export const NotificationListPage: React.FC = () => {
     },
     [addNotification]
   );
-  const handleMarkAllAsRead = useCallback(async () => {
-    try {
-      await markAllAsReadMutation.mutateAsync();
-      addNotification({
-        title: i18n.t('notification.notification_list_page.k12'),
-        message: i18n.t('notification.notification_list_page.k13'),
-        type: 'success',
-      });
-    } catch (err) {
-      addNotification({
-        title: i18n.t('notification.notification_list_page.k14'),
-        message: extractErrorMessage(err, i18n.t('notification.notification_list_page.k15')),
-        type: 'error',
-      });
-    }
-  }, [addNotification, markAllAsReadMutation]);
-  const handleFilterImportant = useCallback(() => {
-    if (importantFilter === 'important') {
-      setImportantFilter('all');
-    } else {
-      setImportantFilter('important');
-    }
-  }, [importantFilter]);
   const handleBulkMarkRead = useCallback(
     async (selectedIds: string[]) => {
       try {

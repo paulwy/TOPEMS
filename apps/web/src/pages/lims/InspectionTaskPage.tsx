@@ -22,7 +22,6 @@ import {
   limsApi,
   type InspectionTask,
   type InspectionProcess,
-  type Sample,
   type CreateInspectionRecordRequest,
 } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
@@ -57,22 +56,6 @@ const InspectionTaskPage: React.FC = () => {
     conclusion: '',
     inspector: '',
   });
-  const { data: samplesData } = useQuery({
-    queryKey: QUERY_KEYS.LIMS.SAMPLES,
-    queryFn: async () => {
-      const response = await limsApi.listSamples();
-      if (response.success && response.data) {
-        const data = response.data as { items?: Sample[]; samples?: Sample[] } | Sample[];
-        if (Array.isArray(data)) return data;
-        if (Array.isArray((data as { samples?: Sample[] }).samples))
-          return (data as { samples: Sample[] }).samples;
-        if (Array.isArray((data as { items?: Sample[] }).items))
-          return (data as { items: Sample[] }).items;
-      }
-      return [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
   const { data: processesData } = useQuery({
     queryKey: QUERY_KEYS.LIMS.PROCESSES,
     queryFn: async () => {
@@ -90,22 +73,7 @@ const InspectionTaskPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const samples = (samplesData || []) as Sample[];
   const processes = (processesData || []) as InspectionProcess[];
-  const getSampleName = (sampleId: string) => {
-    const sample = samples.find((s) => s.id === sampleId);
-    return sample ? sample.name : i18n.t('lims.inspection_task_page.k6');
-  };
-  const getProcessName = (processId: string) => {
-    const process = processes.find((p) => p.id === processId);
-    return process ? process.name : i18n.t('lims.inspection_task_page.k7');
-  };
-  const getCurrentStepName = (task: InspectionTask) => {
-    const process = processes.find((p) => p.id === task.process_id);
-    if (!process) return i18n.t('lims.inspection_task_page.k8');
-    const step = process.steps[task.current_step - 1];
-    return step ? step.name : i18n.t('lims.inspection_task_page.k9');
-  };
   const inspectionTaskApiAdapter: CrudApiAdapter<InspectionTask> = useMemo(
     () => ({
       list: async (params) => {

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Edit, FileText, Calendar, DollarSign, Building, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -15,7 +14,7 @@ import {
   TableRow,
 } from '@mui/material';
 import i18n from '@/i18n';
-import type { Contract, ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
+import type { ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -33,14 +32,6 @@ const getContractStatusLabels = (): Record<string, string> => ({
   completed: i18n.t('pm.pm_contract_detail_page.k4'),
   cancelled: i18n.t('pm.pm_contract_detail_page.k5'),
 });
-const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
-  draft: { bgcolor: 'grey.100', color: 'grey.700' },
-  pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
-  approved: { bgcolor: 'secondary.100', color: ct.purple[800] },
-  active: { bgcolor: 'success.lighter', color: ct.success[800] },
-  completed: { bgcolor: 'primary.100', color: 'primary.800' },
-  cancelled: { bgcolor: 'grey.100', color: 'grey.800' },
-};
 const getContractTypeLabels = (): Record<string, string> => ({
   construction: i18n.t('pm.pm_contract_detail_page.k6'),
   service: i18n.t('pm.pm_contract_detail_page.k7'),
@@ -425,7 +416,7 @@ const PmContractDetailPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {payments.map((payment: ContractPaymentSchedule, index: number) => (
+                  {payments.map((payment: ContractPaymentSchedule) => (
                     <TableRow
                       key={payment.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
