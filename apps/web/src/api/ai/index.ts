@@ -1,14 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  ValidateRequest,
-  ValidateResponse,
-  CompleteRequest,
-  CompleteResponse,
-  SummarizeRequest,
-  SummarizeResponse,
-  AITemplate,
-} from '@/types/ai';
+import type { AITemplate } from '@/types/ai';
 import type {
   Conversation,
   Message,

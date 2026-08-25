@@ -198,71 +198,6 @@ class ResourceOptimizer {
   }
 }
 
-let navPreloadSupported: boolean | null = null;
-
-function setupNavigationPreload(registration?: ServiceWorkerRegistration): boolean {
-  if (typeof registration === 'undefined') {
-    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return false;
-    return false;
-  }
-
-  if (navPreloadSupported !== null) return navPreloadSupported;
-
-  try {
-    if ('navigationPreload' in registration) {
-      registration.navigationPreload.enable().catch(() => {});
-      navPreloadSupported = true;
-      return true;
-    }
-    navPreloadSupported = false;
-    return false;
-  } catch {
-    navPreloadSupported = false;
-    return false;
-  }
-}
-
-function triggerNavPreload(url: string): void {
-  if (typeof document === 'undefined') return;
-  ResourceOptimizer.preload(url, 'document');
-}
-
-function preloadOnIdle(url: string, as: PreloadAs = 'fetch'): void {
-  if (typeof window === 'undefined') return;
-
-  const load = () => {
-    ResourceOptimizer.preload(url, as);
-  };
-
-  if ('requestIdleCallback' in window) {
-    (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(
-      load
-    );
-  } else {
-    setTimeout(load, 1000);
-  }
-}
-
-function preloadOnVisible(url: string, as: PreloadAs = 'fetch'): void {
-  if (typeof document === 'undefined') return;
-
-  const load = () => {
-    ResourceOptimizer.preload(url, as);
-  };
-
-  if (document.visibilityState === 'visible') {
-    load();
-  } else {
-    const handler = () => {
-      if (document.visibilityState === 'visible') {
-        load();
-        document.removeEventListener('visibilitychange', handler);
-      }
-    };
-    document.addEventListener('visibilitychange', handler);
-  }
-}
-
 export function prefetchOnIdle(url: string): void {
   if (typeof window === 'undefined') return;
 
@@ -277,13 +212,4 @@ export function prefetchOnIdle(url: string): void {
   } else {
     setTimeout(load, 2000);
   }
-}
-
-function preloadCriticalResources(
-  resources: Array<{ url: string; as: PreloadAs; priority?: number }>
-): void {
-  const sorted = [...resources].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  sorted.forEach((res) => {
-    ResourceOptimizer.preload(res.url, res.as);
-  });
 }

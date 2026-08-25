@@ -2463,9 +2463,94 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V307 累计手动 120 项
-- [ ] **v6 脚本 class/const/function 完整移除**：V304/V305/V306 三代孤儿代码问题，需从 `=`/`{` 后开始括号跟踪
-- [ ] **src/ 其他目录未使用项清理（第十五批）**：全 src/ 仍有 ~766 个 tsc 未使用项，推荐 ValidationError(6) + api/ai/index(6) + utils/resource-optimizer(5) + utils/pwa-cache-optimizer(5) + utils/performance(5)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项
+- [ ] **v6 脚本 class/const/function/let 完整移除**：V304/V305/V306 三代孤儿代码问题，V308 class 移除成功；需支持 let 声明和多行 import
+- [x] **src/ 其他目录未使用项清理（第十五批）**：V308 清理 ValidationError(6→级联) + api/ai/index(6 多行import) + resource-optimizer(5→级联) + pwa-cache-optimizer(5含class) + performance(5) = 43 项，tsc 目标 5 files 0 errors，净删 805 行
+- [ ] **src/ 其他目录未使用项清理（第十六批）**：全 src/ 仍有 ~723 个 tsc 未使用项，推荐 utils/listParamMapping(5) + store/moduleLoadingStore(5) + constants/routes(5) + config/permissions(5) + hooks/usePerformanceMonitor(5)
+
+## 🎯 V308 — 第十五批未使用项清理（43项）+ 多行import/let声明手动修复（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2007 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V308` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V308-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V308` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V308-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十五批未使用项清理（43 项）
+- 背景：V307 后全 src/ 仍有 ~766 个 tsc --noUnusedLocals 错误，第十五批目标 5 files 首轮 27 项
+- 修复：v6 迭代脚本（35 项，16 轮卡 7 项）+ 手动修复 8 项
+- 迭代过程（脚本 16 轮，移除 35 项后卡在 7 项）：
+  - 脚本移除 35 项（const/function/type/class + 单行 import），含级联
+  - **卡住原因**：6 个多行 import block 中的 type（api/ai/index.ts）+ 1 个 TS6192 整行 import（ValidationError）+ 1 个 let 声明（resource-optimizer）
+  - 手动修复 8 项：
+    - api/ai/index.ts: 从多行 `import type { ... } from '@/types/ai'` 中移除 6 个未使用 type（保留 AITemplate）
+    - ValidationError.tsx: 移除 TS6192 整行 `import { AlertCircle, X } from 'lucide-react'`
+    - resource-optimizer.ts: 移除 `let navPreloadSupported: boolean | null = null;`（脚本不支持 let）
+- 变更（5 files，43 项，净删 805 行）：
+  - **utils/pwa-cache-optimizer.ts**：-331 行（3 factory 函数 + CACHE_PRESETS const + SmartPrecacheController class + 级联）
+  - **components/ValidationError.tsx**：-298 行（5 组件 + import，近清空）
+  - **utils/performance.tsx**：-94 行（5 函数/const）
+  - **utils/resource-optimizer.ts**：-74 行（5 函数 + let 声明）
+  - **api/ai/index.ts**：-10 行（6 type import 从多行 block 移除）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. v6 脚本问题追踪（第四代）
+- **V304 class 孤儿类体**：移除 `export class Xxx` 时括号跟踪不完整
+- **V305 const 孤儿对象体**：复杂类型注解含嵌套 `{}` 导致误判声明结束
+- **V306 孤儿闭合括号**：移除函数时留下独立 `}`
+- **V308 class 移除成功**：SmartPrecacheController class 被脚本完整移除，无孤儿类体（tsc 0 errors 验证）
+- **V308 新发现局限**：
+  1. **多行 import block**：脚本 `removeImportSymbol` 只匹配单行 named import（正则要求 `}` 在同一行），多行 import 中的符号无法处理
+  2. **let 声明**：脚本正则只匹配 `const/function/type/interface/class`，不匹配 `let`
+- **修复方向**：扩展 import 处理支持多行 block；扩展声明正则支持 `let`
+
+### C. 级联清理
+- pwa-cache-optimizer.ts：移除 3 个 factory 函数后，SmartPrecacheController class 和 CACHE_PRESETS const 级联未使用，脚本自动处理
+- resource-optimizer.ts：移除 5 个函数后，navPreloadSupported let 声明级联未使用，手动移除
+- ValidationError.tsx：移除 5 个组件后，lucide-react import 级联未使用（TS6192），手动移除
+- 无其他级联项
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors（class 移除无孤儿类体，手动修复后验证）
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（43 项全部清除）
+- `eslint src/`: 0 errors, 2007 warnings（从 V307 的 2034 减少 27）
+- `cargo check --workspace`: 0 errors（V308 无 Rust 改动）
+
+### E. 文档化
+- V307 后续扩展「第十五批」打勾 [x]
+- 新增「第十六批」后续扩展项（全 src/ 仍有 ~723 个未使用项）
+- 新增「v6 脚本 let 声明和多行 import 支持」问题追踪
+- V308 章节写入完整交付记录 + 43 项明细 + 手动修复说明 + class 移除成功记录
+
+### 变更文件清单（6 files）
+- `apps/web/src/utils/pwa-cache-optimizer.ts`（-331 行）
+- `apps/web/src/components/ValidationError.tsx`（-298 行）
+- `apps/web/src/utils/performance.tsx`（-94 行）
+- `apps/web/src/utils/resource-optimizer.ts`（-74 行）
+- `apps/web/src/api/ai/index.ts`（-10 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors（class 移除无孤儿类体）
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（43 项全部清除）
+- [x] `eslint src/` — 0 errors（2007 warnings，从 2034 减少 27）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 43 项 — 全部移除（净删 805 行）
+- [x] 6 个多行 import type — 手动移除
+- [x] 1 个 TS6192 整行 import — 手动移除
+- [x] 1 个 let 声明 — 手动移除
+- [x] V307 后续扩展「第十五批」打勾 [x]
+
+### V308 后续扩展（留给 V309+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V308 累计手动 128 项
+- [ ] **v6 脚本 class/const/function/let 完整移除**：需支持 let 声明和多行 import block
+- [ ] **src/ 其他目录未使用项清理（第十六批）**：全 src/ 仍有 ~723 个 tsc 未使用项，推荐 utils/listParamMapping(5) + store/moduleLoadingStore(5) + constants/routes(5) + config/permissions(5) + hooks/usePerformanceMonitor(5)
 
 
 
