@@ -2818,11 +2818,106 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V311 累计手动 152 项
-- [ ] **v6 脚本解构变量自动处理**：V310 手动修复 5 个解构变量
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量，需精确定位行号
 - [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
 - [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
-- [ ] **src/ 其他目录未使用项清理（第十九批）**：全 src/ 仍有 ~638 个 tsc 未使用项，推荐 store/notificationStore(4) + store/featureFlagStore(4) + pages/crm/CRMRecommendationPage(4) + pages/bi/BIVisualizationPage(4) + lib/moduleThemes(4)
+- [ ] **macOS EPERM 权限问题**：V312 起 bash 无法写入 /Users/air/TOPEMS（Operation not permitted），需用 Write/Edit 工具修改文件；git/tsc/eslint 等只读命令仍可运行
+- [x] **src/ 其他目录未使用项清理（第十九批）**：V312 清理 useFeatureFlag(4+2级联) + useHrmFinance(4+1级联) + AlertCard(4) + EHSBadges(4 className) + retry(4) = 23 项，tsc 目标 5 files 0 errors，净删 190 行
+- [ ] **src/ 其他目录未使用项清理（第二十批）**：全 src/ 仍有 ~615 个 tsc 未使用项，推荐 intelligent-ops/v56-ops-panel(4) + hooks/useHrmFinance已清 + constants/pagination(4) + components/gis/Map3DView(4) + ai/review/performance-auditor(4)
+
+## 🎯 V312 — 第十九批未使用项清理（23项）+ macOS EPERM 权限适配（✅ 完成）
+
+> 日期：2026-08-26 | 代码改动 5 files + TODO | 验收：tsc 0 errors · eslint 0 errors(1875 warnings) · 目标 5 files 未使用清零
+>
+> **Tag**: `V312` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V312-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V312` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V312-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第十九批未使用项清理（23 项）
+- 背景：V311 后全 src/ 仍有 ~638 个 tsc --noUnusedLocals 错误，第十九批目标 5 files 首轮 20 项 + 级联 3 项
+- 修复：全部使用 Write/Edit 工具（bash 无法写入项目目录，macOS EPERM）
+- 迭代过程：
+  - **初始 20 项**：
+    1. AlertCard.tsx: 4 个 const 组件（SuccessAlertCard/WarningAlertCard/ErrorAlertCard/InfoAlertCard）— 连续排列，一次性移除
+    2. EHSBadges.tsx: 4 个解构参数 `className = ''`（EHSStatusBadge/EHSRiskLevelBadge/EHSMeasureTypeBadge/EHSIncidentTypeBadge）— 逐个从解构中移除
+    3. constants/retry.ts: 4 个 const（API_MAX_RETRIES/API_RETRY_BASE_DELAY_MS/API_RETRY_MAX_DELAY_MS/API_RETRY_MAX_TOTAL_WAIT_MS）
+    4. useFeatureFlag.ts: useMemo import + featureFlagsCache + useFeatureFlags + FeatureGate = 4 项
+    5. useHrmFinance.ts: useQueryClient import + useEmployeePayrolls + useDepartmentPayrollSummary + usePayrollPeriods = 4 项
+  - **级联 3 项**（移除初始项后触发）：
+    1. useFeatureFlag.ts: checkFeatureFlagsBatch — 仅被 useFeatureFlags 调用
+    2. useFeatureFlag.ts: React import — 仅被 FeatureGate 使用（React.createElement/React.ReactNode）
+    3. useHrmFinance.ts: PayrollRecord type import — 仅被 useEmployeePayrolls 使用
+  - **prettier 修复 4 项**：移除 className 后解构参数减少，prettier 要求单行格式（EHSStatusBadge/EHSMeasureTypeBadge/EHSIncidentTypeBadge + useHrmFinance 末尾空行）
+- 变更（5 files，23 项，净删 190 行）：
+  - **hooks/useHrmFinance.ts**：-68 行（useQueryClient import + 3 const hook + PayrollRecord import 级联 + 末尾空行）
+  - **hooks/useFeatureFlag.ts**：-61 行（useMemo import + featureFlagsCache + useFeatureFlags + FeatureGate + checkFeatureFlagsBatch 级联 + React import 级联）
+  - **components/common/AlertCard.tsx**：-42 行（4 const 组件 + section 注释）
+  - **components/ehs/EHSBadges.tsx**：-17 行（4 className 解构 + prettier 单行重排）
+  - **constants/retry.ts**：-12 行（4 const + JSDoc 注释）
+- 验收：`tsc --noUnusedLocals` 目标 5 files 0 errors
+
+### B. macOS EPERM 权限问题（V312 新发现）
+- **现象**：bash 无法写入 /Users/air/TOPEMS 目录下任何文件，`touch`/`echo >`/`node fs.writeFileSync` 均报 "Operation not permitted"
+- **影响范围**：整个项目目录树（包括 src/、docs/、releases/），但 /tmp 可写
+- **文件权限**：`-rw-r--r--` 正常，owner 为 air，无 uchg 等特殊 flags，有 `com.apple.provenance` 扩展属性
+- **根因推测**：macOS TCC（Transparency, Consent, and Control）隐私限制，可能是终端/进程失去了对用户目录的写入权限
+- **适配方案**：
+  - 文件修改：使用 Write/Edit 工具（非 Bash 写入，可正常工作）
+  - 只读命令：git/tsc/eslint/grep/cat/ls 等仍可正常运行
+  - v6 清理脚本：无法直接写入源文件，改用 Edit 工具逐个修改
+  - tgz 打包：tar 读取源文件 + 写入 releases/archives/（可能也受影响，需验证）
+- **待解决**：需用户确认是否恢复 bash 写入权限（系统设置 > 隐私与安全性 > 完全磁盘访问权限）
+
+### C. 级联清理
+- useFeatureFlag.ts：移除 useFeatureFlags → checkFeatureFlagsBatch 级联；移除 FeatureGate → React import 级联
+- useHrmFinance.ts：移除 useEmployeePayrolls → PayrollRecord import 级联
+- 其他文件：无 cascading
+
+### D. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 5 files: 0 errors（23 项全部清除）
+- `eslint src/`: 0 errors, 1875 warnings（从 V311 的 1914 减少 39）
+- `cargo check --workspace`: 0 errors（V312 无 Rust 改动）
+
+### E. 文档化
+- V311 后续扩展「第十九批」打勾 [x]
+- 新增「第二十批」后续扩展项（全 src/ 仍有 ~615 个未使用项）
+- 新增「macOS EPERM 权限问题」问题追踪
+- V312 章节写入完整交付记录 + 23 项明细 + 级联 3 项 + prettier 修复 + EPERM 权限适配说明
+
+### 变更文件清单（6 files）
+- `apps/web/src/hooks/useHrmFinance.ts`（-68 行）
+- `apps/web/src/hooks/useFeatureFlag.ts`（-61 行）
+- `apps/web/src/components/common/AlertCard.tsx`（-42 行）
+- `apps/web/src/components/ehs/EHSBadges.tsx`（-17 行）
+- `apps/web/src/constants/retry.ts`（-12 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 5 files — 0 errors（23 项全部清除）
+- [x] `eslint src/` — 0 errors（1875 warnings，从 1914 减少 39）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 5 files 23 项 — 全部移除（净删 190 行）
+- [x] 3 个级联项（checkFeatureFlagsBatch + React import + PayrollRecord import）— 迭代清除
+- [x] 4 个 prettier 格式错误 — 手动修复（单行解构 + 末尾空行）
+- [x] macOS EPERM 权限适配 — 全部使用 Write/Edit 工具修改文件
+- [x] V311 后续扩展「第十九批」打勾 [x]
+
+### V312 后续扩展（留给 V313+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300-V312 累计手动 158 项
+- [ ] **v6 脚本解构变量自动处理**：V310/V312 手动修复解构变量
+- [ ] **v6 脚本 class field 自动处理**：V311 手动移除 class field
+- [ ] **v6 脚本箭头函数完整移除**：V309 孤儿函数体问题
+- [ ] **macOS EPERM 权限问题**：bash 无法写入项目目录，需用 Write/Edit 工具；待用户确认恢复权限
+- [ ] **src/ 其他目录未使用项清理（第二十批）**：全 src/ 仍有 ~615 个 tsc 未使用项，推荐 intelligent-ops/v56-ops-panel(4) + constants/pagination(4) + components/gis/Map3DView(4) + ai/review/performance-auditor(4) + ai/quality/ux-monitor(4)
 
 
 

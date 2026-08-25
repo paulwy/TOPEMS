@@ -95,14 +95,3 @@ export const useFeatureFlagStore = create<FeatureFlagState>((set, get) => ({
     set({ error: null });
   },
 }));
-
-const useFeatureFlags = () => useFeatureFlagStore((state) => state.flags);
-const useFeatureFlagLoading = () => useFeatureFlagStore((state) => state.loading);
-const useFeatureFlagError = () => useFeatureFlagStore((state) => state.error);
-
-function useFeatureFlag(key: string): boolean {
-  return useFeatureFlagStore((state) => {
-    const flag = state.flags.find((f) => f.key === key);
-    return flag ? flag.state === 'Enabled' : false;
-  });
-}
