@@ -136,7 +136,9 @@ async fn create_budget(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"project_id": req.project_id, "budget_code": req.budget_code, "budget_name": req.budget_name, "total_amount": req.total_amount}));
+    let details = Some(
+        serde_json::json!({"project_id": req.project_id, "budget_code": req.budget_code, "budget_name": req.budget_name, "total_amount": req.total_amount}),
+    );
 
     let budget = sqlx::query_as::<_, Budget>(
         "INSERT INTO plugin_pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at)
@@ -156,13 +158,33 @@ async fn create_budget(
 
     match budget {
         Ok(b) => {
-            if let Err(e) = audit.log_budget_operation("create_budget", Some(b.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_budget_operation(
+                    "create_budget",
+                    Some(b.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(b, "创建预算成功"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_budget_operation("create_budget", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_budget_operation(
+                    "create_budget",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建预算失败: {}", e);
@@ -203,13 +225,33 @@ async fn update_budget(
 
     match budget {
         Ok(b) => {
-            if let Err(e) = audit.log_budget_operation("update_budget", Some(b.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_budget_operation(
+                    "update_budget",
+                    Some(b.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(b, "更新预算成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_budget_operation("update_budget", Some(id), user_id, details.clone(), "failed", Some("预算不存在")).await {
+            if let Err(e) = audit
+                .log_budget_operation(
+                    "update_budget",
+                    Some(id),
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("预算不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -218,7 +260,17 @@ async fn update_budget(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_budget_operation("update_budget", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_budget_operation(
+                    "update_budget",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新预算失败: {}", e);
@@ -247,13 +299,26 @@ async fn submit_budget(
 
     match budget {
         Ok(b) => {
-            if let Err(e) = audit.log_budget_operation("submit_budget", Some(b.id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_budget_operation("submit_budget", Some(b.id), user_id, None, "success", None)
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(b, "提交审批成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_budget_operation("submit_budget", Some(id), user_id, None, "failed", Some("预算不存在")).await {
+            if let Err(e) = audit
+                .log_budget_operation(
+                    "submit_budget",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("预算不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -262,7 +327,17 @@ async fn submit_budget(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_budget_operation("submit_budget", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_budget_operation(
+                    "submit_budget",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
@@ -291,13 +366,26 @@ async fn approve_budget(
 
     match budget {
         Ok(b) => {
-            if let Err(e) = audit.log_budget_operation("approve_budget", Some(b.id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_budget_operation("approve_budget", Some(b.id), user_id, None, "success", None)
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(b, "批准预算成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_budget_operation("approve_budget", Some(id), user_id, None, "failed", Some("预算不存在")).await {
+            if let Err(e) = audit
+                .log_budget_operation(
+                    "approve_budget",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("预算不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(
@@ -306,7 +394,17 @@ async fn approve_budget(
             ))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_budget_operation("approve_budget", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_budget_operation(
+                    "approve_budget",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准预算失败: {}", e);

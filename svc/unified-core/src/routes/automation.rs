@@ -90,4 +90,3 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
 // V289: 已删除 R4/R6 stub_router（原挂载 /internal/stubs/automation + require_permission
 // automation:dashboard:read）。原因见 routes/mod.rs V289 注释：前端 0 业务流量 +
 // {mod}:dashboard:read 从未进入 init_permissions 权限表 + plugin.yaml 是权限真源。
-

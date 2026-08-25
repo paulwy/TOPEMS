@@ -266,8 +266,7 @@ mod tests {
             resolved_at: None,
         };
         let json_str = serde_json::to_string(&log).expect("serialize");
-        let deserialized: ReconciliationLog =
-            serde_json::from_str(&json_str).expect("deserialize");
+        let deserialized: ReconciliationLog = serde_json::from_str(&json_str).expect("deserialize");
         assert_eq!(deserialized.id, id);
         assert_eq!(deserialized.tenant_id, tenant);
         assert_eq!(deserialized.domain, "customer");
@@ -278,7 +277,12 @@ mod tests {
 
     #[test]
     fn test_create_reconciliation_log_request_with_issue_types() {
-        let types = ["pending_sync", "data_mismatch", "stale_data", "duplicate_code"];
+        let types = [
+            "pending_sync",
+            "data_mismatch",
+            "stale_data",
+            "duplicate_code",
+        ];
         for issue_type in types {
             let req = CreateReconciliationLogRequest {
                 domain: "customer".to_string(),

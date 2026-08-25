@@ -25,14 +25,36 @@ impl AnalysisApi {
             .await
         {
             Ok(response) => {
-                if let Err(e) = state.audit.log_analysis_operation("sentiment_analysis", None, user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_analysis_operation(
+                        "sentiment_analysis",
+                        None,
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(response, "Success"))
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_analysis_operation("sentiment_analysis", None, user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_analysis_operation(
+                        "sentiment_analysis",
+                        None,
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
@@ -56,14 +78,36 @@ impl AnalysisApi {
             .await
         {
             Ok(response) => {
-                if let Err(e) = state.audit.log_analysis_operation("classify_text", None, user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_analysis_operation(
+                        "classify_text",
+                        None,
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(response, "Success"))
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_analysis_operation("classify_text", None, user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_analysis_operation(
+                        "classify_text",
+                        None,
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))

@@ -1255,9 +1255,6 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             verified += 1;
         }
     }
-    tracing::info!(
-        "[finance schema 自检] 完成 {} 张表结构一致性校验",
-        verified
-    );
+    tracing::info!("[finance schema 自检] 完成 {} 张表结构一致性校验", verified);
     Ok(())
 }

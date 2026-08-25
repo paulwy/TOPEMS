@@ -219,7 +219,9 @@ async fn create_project(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}));
+    let details = Some(
+        serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}),
+    );
 
     let result = sqlx::query_as::<_, Project>(
         r#"
@@ -261,7 +263,17 @@ async fn create_project(
     match result {
         Ok(project) => {
             let entity_id = Some(project.id);
-            if let Err(e) = audit.log_project_operation("create_project", entity_id, user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "create_project",
+                    entity_id,
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             if let Some(ref publisher) = state.event_publisher {
@@ -299,13 +311,33 @@ async fn create_project(
             Json(ApiResponse::success(project, "创建项目成功"))
         }
         Err(sqlx::Error::RowNotFound) => {
-            if let Err(e) = audit.log_project_operation("create_project", Some(id), user_id, details.clone(), "failed", Some("项目代码已存在")).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "create_project",
+                    Some(id),
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("项目代码已存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(409, "项目代码已存在"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_project_operation("create_project", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_project_operation(
+                    "create_project",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建项目失败: {}", e);
@@ -420,19 +452,49 @@ async fn update_project(
 
     match result {
         Ok(Some(project)) => {
-            if let Err(e) = audit.log_project_operation("update_project", Some(project.id), user_id, details.clone(), "success", None).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "update_project",
+                    Some(project.id),
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(project, "更新项目成功"))
         }
         Ok(None) => {
-            if let Err(e) = audit.log_project_operation("update_project", Some(id), user_id, details.clone(), "failed", Some("项目不存在")).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "update_project",
+                    Some(id),
+                    user_id,
+                    details.clone(),
+                    "failed",
+                    Some("项目不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(404, "项目不存在"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_project_operation("update_project", Some(id), user_id, details, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_project_operation(
+                    "update_project",
+                    Some(id),
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新项目失败: {}", e);
@@ -470,19 +532,42 @@ async fn delete_project(
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {
-            if let Err(e) = audit.log_project_operation("delete_project", Some(id), user_id, None, "success", None).await {
+            if let Err(e) = audit
+                .log_project_operation("delete_project", Some(id), user_id, None, "success", None)
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::success(true, "删除项目成功"))
         }
         Ok(_) => {
-            if let Err(e) = audit.log_project_operation("delete_project", Some(id), user_id, None, "failed", Some("项目不存在")).await {
+            if let Err(e) = audit
+                .log_project_operation(
+                    "delete_project",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some("项目不存在"),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {e}");
             }
             Json(ApiResponse::error(404, "项目不存在"))
         }
         Err(e) => {
-            if let Err(audit_err) = audit.log_project_operation("delete_project", Some(id), user_id, None, "failed", Some(&e.to_string())).await {
+            if let Err(audit_err) = audit
+                .log_project_operation(
+                    "delete_project",
+                    Some(id),
+                    user_id,
+                    None,
+                    "failed",
+                    Some(&e.to_string()),
+                )
+                .await
+            {
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("删除项目失败: {}", e);

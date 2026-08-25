@@ -13,8 +13,8 @@ use uuid::Uuid;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
-use topems_shared_event::event::{EventPublisher, SupplierDataSyncRequestedPayload};
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_event::event::{EventPublisher, SupplierDataSyncRequestedPayload};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SyncSupplierFromScmRequest {
@@ -40,8 +40,14 @@ pub struct AppState {
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
-pub async fn create_routes(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Result<Router> {
-    let state = Arc::new(AppState { db, event_publisher });
+pub async fn create_routes(
+    db: PgPool,
+    event_publisher: Option<Arc<EventPublisher>>,
+) -> Result<Router> {
+    let state = Arc::new(AppState {
+        db,
+        event_publisher,
+    });
 
     let app = Router::new()
         .route("/sync/supplier-from-scm", post(sync_supplier_from_scm))
@@ -494,7 +500,10 @@ async fn sync_supplier_to_scm(
             tenant_id: Some(tenant_id),
         };
 
-        match publisher.publish_supplier_data_sync_requested(payload).await {
+        match publisher
+            .publish_supplier_data_sync_requested(payload)
+            .await
+        {
             Ok(_) => {
                 tracing::info!(
                     "[srm] 发布 SupplierDataSyncRequested 事件成功 - supplier_id={}",
@@ -641,7 +650,10 @@ async fn sync_all_suppliers_to_scm(
             };
 
             if let Some(ref publisher) = state.event_publisher {
-                match publisher.publish_supplier_data_sync_requested(payload).await {
+                match publisher
+                    .publish_supplier_data_sync_requested(payload)
+                    .await
+                {
                     Ok(_) => published_count += 1,
                     Err(e) => {
                         tracing::warn!(
@@ -653,10 +665,7 @@ async fn sync_all_suppliers_to_scm(
                 }
             }
         } else {
-            tracing::warn!(
-                "[srm] 无事件发布器，跳过直接同步 - supplier_id={}",
-                id
-            );
+            tracing::warn!("[srm] 无事件发布器，跳过直接同步 - supplier_id={}", id);
             fallback_count += 1;
         }
     }

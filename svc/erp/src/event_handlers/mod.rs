@@ -1833,8 +1833,9 @@ impl ErpEventHandlers {
     }
 
     async fn handle_reconciliation_created(&self, event: Event) -> HandlerResult {
-        let payload: ReconciliationCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 ReconciliationCreated payload 失败: {}", e))?;
+        let payload: ReconciliationCreatedPayload =
+            serde_json::from_value(event.payload.clone())
+                .map_err(|e| format!("解析 ReconciliationCreated payload 失败: {}", e))?;
 
         tracing::info!(
             "[erp] ReconciliationCreated 处理 - id={}, recon_code={}, trace_id={:?}",
@@ -1899,8 +1900,9 @@ impl ErpEventHandlers {
     }
 
     async fn handle_reconciliation_updated(&self, event: Event) -> HandlerResult {
-        let payload: ReconciliationUpdatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 ReconciliationUpdated payload 失败: {}", e))?;
+        let payload: ReconciliationUpdatedPayload =
+            serde_json::from_value(event.payload.clone())
+                .map_err(|e| format!("解析 ReconciliationUpdated payload 失败: {}", e))?;
 
         tracing::debug!(
             "[erp] ReconciliationUpdated 处理 - id={}, status={}, trace_id={:?}",

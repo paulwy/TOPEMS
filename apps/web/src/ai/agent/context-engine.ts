@@ -54,15 +54,3 @@ export interface ContextEvent {
   timestamp: number;
   details?: Record<string, unknown>;
 }
-
-const DEFAULT_WINDOW: ContextWindow = {
-  maxMessages: 50,
-  maxTokens: 4000,
-  summaryThreshold: 30,
-};
-
-const IMPORTANCE_WEIGHTS = {
-  user_query: 1.0,
-  action_result: 0.7,
-  system_event: 0.4,
-};

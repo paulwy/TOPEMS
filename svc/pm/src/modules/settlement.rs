@@ -25,10 +25,7 @@ struct SettlementState {
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
-pub fn create_routes(
-    pool: PgPool,
-    event_publisher: Option<Arc<EventPublisher>>,
-) -> Router {
+pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
     let state = SettlementState {
         pool,
         event_publisher,

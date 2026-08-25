@@ -176,7 +176,10 @@ pub async fn create_shipping_from_outbound_internal(
     };
 
     if let Some(ref publisher) = state.event_publisher {
-        match publisher.publish_shipping_order_requested(payload.clone()).await {
+        match publisher
+            .publish_shipping_order_requested(payload.clone())
+            .await
+        {
             Ok(_) => {
                 tracing::info!(
                     "[wms] 发布 ShippingOrderRequested 事件成功 - outbound_order_id={}, shipping_id={}, shipping_order_number={}",

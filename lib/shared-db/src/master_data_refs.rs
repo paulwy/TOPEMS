@@ -296,7 +296,10 @@ impl MasterDataRefService {
             where_clause.push_str(&format!(" AND status = ${}", bind_count));
         }
 
-        let count_sql = format!("SELECT COUNT(*) FROM {} WHERE {}", self.table_name, where_clause);
+        let count_sql = format!(
+            "SELECT COUNT(*) FROM {} WHERE {}",
+            self.table_name, where_clause
+        );
         let list_sql = format!(
             r#"SELECT master_data_id, tenant_id, domain, code, name, status, version,
                       source_service, last_synced_at, created_at, updated_at
@@ -333,7 +336,10 @@ impl MasterDataRefService {
 
     /// 按 tenant_id 统计总数
     pub async fn count_by_tenant(&self, tenant_id: Uuid) -> Result<i64, sqlx::Error> {
-        let sql = format!("SELECT COUNT(*) FROM {} WHERE tenant_id = $1", self.table_name);
+        let sql = format!(
+            "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
+            self.table_name
+        );
         let count = sqlx::query_scalar::<_, i64>(&sql)
             .bind(tenant_id)
             .fetch_one(&self.pool)
@@ -342,11 +348,7 @@ impl MasterDataRefService {
     }
 
     /// 按 tenant_id + domain 统计总数
-    pub async fn count_by_domain(
-        &self,
-        tenant_id: Uuid,
-        domain: &str,
-    ) -> Result<i64, sqlx::Error> {
+    pub async fn count_by_domain(&self, tenant_id: Uuid, domain: &str) -> Result<i64, sqlx::Error> {
         let sql = format!(
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name

@@ -54,55 +54,34 @@ impl ScmEventHandlers {
                     Box::pin(async move { h.handle_stock_change(event).await })
                 },
             )
-            .subscribe_handler(
-                vec![EventType::SupplierDataSyncRequested],
-                move |event| {
-                    let h = h5.clone();
-                    Box::pin(async move { h.handle_supplier_data_sync(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::WmsInventoryItemReceived],
-                move |event| {
-                    let h = h6.clone();
-                    Box::pin(async move { h.handle_wms_inbound_received(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::WmsInventoryItemShipped],
-                move |event| {
-                    let h = h7.clone();
-                    Box::pin(async move { h.handle_wms_outbound_shipped(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::InventoryUpdated],
-                move |event| {
-                    let h = h8.clone();
-                    Box::pin(async move { h.handle_inventory_updated(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::SrmSupplierCreated],
-                move |event| {
-                    let h = h9.clone();
-                    Box::pin(async move { h.handle_srm_supplier_created(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::SrmSupplierUpdated],
-                move |event| {
-                    let h = h10.clone();
-                    Box::pin(async move { h.handle_srm_supplier_updated(event).await })
-                },
-            )
-            .subscribe_handler(
-                vec![EventType::SrmSupplierStatusChanged],
-                move |event| {
-                    let h = h11.clone();
-                    Box::pin(async move { h.handle_srm_supplier_status_changed(event).await })
-                },
-            )
+            .subscribe_handler(vec![EventType::SupplierDataSyncRequested], move |event| {
+                let h = h5.clone();
+                Box::pin(async move { h.handle_supplier_data_sync(event).await })
+            })
+            .subscribe_handler(vec![EventType::WmsInventoryItemReceived], move |event| {
+                let h = h6.clone();
+                Box::pin(async move { h.handle_wms_inbound_received(event).await })
+            })
+            .subscribe_handler(vec![EventType::WmsInventoryItemShipped], move |event| {
+                let h = h7.clone();
+                Box::pin(async move { h.handle_wms_outbound_shipped(event).await })
+            })
+            .subscribe_handler(vec![EventType::InventoryUpdated], move |event| {
+                let h = h8.clone();
+                Box::pin(async move { h.handle_inventory_updated(event).await })
+            })
+            .subscribe_handler(vec![EventType::SrmSupplierCreated], move |event| {
+                let h = h9.clone();
+                Box::pin(async move { h.handle_srm_supplier_created(event).await })
+            })
+            .subscribe_handler(vec![EventType::SrmSupplierUpdated], move |event| {
+                let h = h10.clone();
+                Box::pin(async move { h.handle_srm_supplier_updated(event).await })
+            })
+            .subscribe_handler(vec![EventType::SrmSupplierStatusChanged], move |event| {
+                let h = h11.clone();
+                Box::pin(async move { h.handle_srm_supplier_status_changed(event).await })
+            })
             .subscribe_master_data(vec![MasterDataDomain::Supplier], move |event| {
                 let h = h3.clone();
                 Box::pin(async move {
@@ -304,13 +283,12 @@ impl ScmEventHandlers {
             return Ok(());
         }
 
-        let existing_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1",
-        )
-        .bind(payload.supplier_id)
-        .fetch_one(&self.db)
-        .await
-        .unwrap_or(0);
+        let existing_count =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
+                .bind(payload.supplier_id)
+                .fetch_one(&self.db)
+                .await
+                .unwrap_or(0);
 
         let now = Utc::now();
 
@@ -883,7 +861,11 @@ impl ScmEventHandlers {
                             $10, NULL, $11, $11)"#,
                 )
                 .bind(format!("INV-{}", payload.inventory_id))
-                .bind(if payload.delta > 0.0 { "inbound" } else { "outbound" })
+                .bind(if payload.delta > 0.0 {
+                    "inbound"
+                } else {
+                    "outbound"
+                })
                 .bind(payload.warehouse_id)
                 .bind(payload.inventory_id)
                 .bind(&payload.material_code)

@@ -1538,10 +1538,22 @@ async fn submit_approval(
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::debug!("[finance] 收到审批提交请求: {:?}", req);
 
-    let entity_type = req.get("entity_type").and_then(|v| v.as_str()).unwrap_or("finance");
-    let record_id = req.get("record_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let from_status = req.get("from_status").and_then(|v| v.as_str()).unwrap_or("pending");
-    let to_status = req.get("to_status").and_then(|v| v.as_str()).unwrap_or("approved");
+    let entity_type = req
+        .get("entity_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("finance");
+    let record_id = req
+        .get("record_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let from_status = req
+        .get("from_status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("pending");
+    let to_status = req
+        .get("to_status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("approved");
     let approver_id = claims.user_id().ok().unwrap_or_else(Uuid::nil);
 
     if let Some(record_id) = record_id {
@@ -1584,11 +1596,26 @@ async fn approve_approval(
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::debug!("[finance] 收到审批通过请求: {:?}", req);
 
-    let entity_type = req.get("entity_type").and_then(|v| v.as_str()).unwrap_or("finance");
-    let record_id = req.get("record_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let approval_id = req.get("approval_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let from_status = req.get("from_status").and_then(|v| v.as_str()).unwrap_or("pending");
-    let to_status = req.get("to_status").and_then(|v| v.as_str()).unwrap_or("approved");
+    let entity_type = req
+        .get("entity_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("finance");
+    let record_id = req
+        .get("record_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let approval_id = req
+        .get("approval_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let from_status = req
+        .get("from_status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("pending");
+    let to_status = req
+        .get("to_status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("approved");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
         let _ = topems_shared_db::approval::execute_transition_and_log(
@@ -1627,10 +1654,23 @@ async fn reject_approval(
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::debug!("[finance] 收到审批驳回请求: {:?}", req);
 
-    let entity_type = req.get("entity_type").and_then(|v| v.as_str()).unwrap_or("finance");
-    let record_id = req.get("record_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let approval_id = req.get("approval_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let reason = req.get("reason").or_else(|| req.get("comment")).and_then(|v| v.as_str()).unwrap_or("");
+    let entity_type = req
+        .get("entity_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("finance");
+    let record_id = req
+        .get("record_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let approval_id = req
+        .get("approval_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let reason = req
+        .get("reason")
+        .or_else(|| req.get("comment"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
     if let (Some(record_id), Some(approval_id)) = (record_id, approval_id) {
         let _ = topems_shared_db::approval::reject_and_log(

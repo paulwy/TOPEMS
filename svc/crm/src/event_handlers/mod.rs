@@ -394,13 +394,12 @@ impl CrmEventHandlers {
 
         let now = chrono::Utc::now();
 
-        let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
-            "SELECT id FROM plugin_crm.sales_orders WHERE order_number = $1",
-        )
-        .bind(&payload.shipping_order_number)
-        .fetch_optional(&self.db)
-        .await
-        .map_err(|e| format!("查询销售订单是否存在失败: {}", e))?;
+        let existing: Option<(uuid::Uuid,)> =
+            sqlx::query_as("SELECT id FROM plugin_crm.sales_orders WHERE order_number = $1")
+                .bind(&payload.shipping_order_number)
+                .fetch_optional(&self.db)
+                .await
+                .map_err(|e| format!("查询销售订单是否存在失败: {}", e))?;
 
         if existing.is_some() {
             tracing::warn!(

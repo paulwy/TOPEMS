@@ -209,13 +209,6 @@ pub mod storage;
 pub use audit::{
     AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest, SchemaAwareAuditLogService,
 };
-pub use master_data_refs::{
-    CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService,
-    StaleRecord, UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,
-};
-pub use reconciliation_log::{
-    CreateReconciliationLogRequest, ReconciliationLog, ReconciliationLogService,
-};
 pub use backup::{
     BackupConfig, BackupError, BackupManager, BackupMetadata, BackupRequest, BackupSchedule,
     BackupStatistics, BackupStatus, BackupType, CompressionType, RestoreRequest,
@@ -232,9 +225,16 @@ pub use database::{
     check_pool_health, create_database_pool, ensure_master_data_refs_table,
     test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
+pub use master_data_refs::{
+    CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService, StaleRecord,
+    UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,
+};
 pub use query_optimizer::{
     suggest_query_optimization, BatchOperations, IndexRecommendation, NPlusOneDetector,
     NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,
+};
+pub use reconciliation_log::{
+    CreateReconciliationLogRequest, ReconciliationLog, ReconciliationLogService,
 };
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,

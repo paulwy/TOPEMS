@@ -227,7 +227,8 @@ pub async fn create_sales_order(
                 match publisher.publish_sales_order_created(payload).await {
                     Ok(_) => tracing::info!(
                         "[erp] 发布 SalesOrderCreated 事件成功 - order_id={}, payable_amount={}",
-                        sales_order.id, sales_order.payable_amount
+                        sales_order.id,
+                        sales_order.payable_amount
                     ),
                     Err(e) => tracing::warn!(
                         "[erp] 发布 SalesOrderCreated 事件失败: {}，将由 Finance 定时补拉",

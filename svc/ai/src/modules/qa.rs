@@ -1,4 +1,6 @@
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json};
+use axum::{
+    extract::Extension, extract::Path, extract::Query, extract::State, http::HeaderMap, Json,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -112,7 +114,18 @@ impl QaApi {
             .await
         {
             Ok((answer, sources, qa_id, confidence)) => {
-                if let Err(e) = state.audit.log_qa_operation("ask_question", Some(qa_id), user_id, details.clone(), "success", None).await {
+                if let Err(e) = state
+                    .audit
+                    .log_qa_operation(
+                        "ask_question",
+                        Some(qa_id),
+                        user_id,
+                        details.clone(),
+                        "success",
+                        None,
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {e}");
                 }
                 Json(ApiResponse::success(
@@ -127,7 +140,18 @@ impl QaApi {
             }
             Err(e) => {
                 let err_msg = e.to_string();
-                if let Err(audit_err) = state.audit.log_qa_operation("ask_question", None, user_id, details, "failed", Some(&err_msg)).await {
+                if let Err(audit_err) = state
+                    .audit
+                    .log_qa_operation(
+                        "ask_question",
+                        None,
+                        user_id,
+                        details,
+                        "failed",
+                        Some(&err_msg),
+                    )
+                    .await
+                {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
                 Json(ApiResponse::<AskResponse>::error(500, &e))
