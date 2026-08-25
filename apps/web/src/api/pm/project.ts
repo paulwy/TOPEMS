@@ -1,13 +1,5 @@
 import { apiClient } from '../client';
-import type {
-  Project,
-  CreateProjectRequest,
-  UpdateProjectRequest,
-  ProjectPhase,
-  ProjectMilestone,
-  ProjectApproval,
-  ApprovalRequest,
-} from './types';
+import type { CreateProjectRequest, UpdateProjectRequest, ApprovalRequest } from './types';
 
 export const projectApi = {
   list: async (params?: {

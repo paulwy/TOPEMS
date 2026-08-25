@@ -37,7 +37,7 @@ import {
   Divider,
 } from '@mui/material';
 import type { FilterConfig } from '@topems/shared-components';
-import type { Plugin, PluginReview, PluginVersion } from '@/api/plugin';
+import type { Plugin } from '@/api/plugin';
 import {
   SUITES,
   PLUGIN_SUITE_MAP,
@@ -850,7 +850,6 @@ const PluginMarketplacePage: React.FC = () => {
   }, []);
 
   const {
-    marketplacePlugins,
     healthStatus,
     searchQuery,
     setSearchQuery,

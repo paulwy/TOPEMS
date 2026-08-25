@@ -6,13 +6,8 @@ import type { ApiResponse } from '../client';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
-type FraudRuleType = 'velocity' | 'amount' | 'location' | 'device' | 'behavior';
-type FraudRecommendation = 'approve' | 'review' | 'block';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-type ReviewWorkflowStatus = 'pending' | 'in_progress' | 'completed' | 'rejected';
 export type ReviewSeverity = 'low' | 'medium' | 'high' | 'critical';
-type ReviewAction = 'approve' | 'reject' | 'escalate' | 'flag';
-
 export interface RiskIndicator {
   id: string;
   category: string;

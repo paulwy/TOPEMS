@@ -19,7 +19,7 @@ import {
 
 import GanttChart from '@/components/pm/GanttChart';
 import { pmApi } from '@/api/pm';
-import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
+import type { ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -27,8 +27,6 @@ import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 
 const getStatusLabels = (): Record<string, string> => ({
   active: i18n.t('pm.pm_project_detail_page.k0'),
@@ -39,26 +37,11 @@ const getStatusLabels = (): Record<string, string> => ({
   draft: i18n.t('pm.pm_project_detail_page.k5'),
 });
 
-const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
-  active: { bgcolor: 'success.lighter', color: ct.success[800] },
-  completed: { bgcolor: 'primary.100', color: 'primary.800' },
-  pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
-  approved: { bgcolor: 'secondary.100', color: 'secondary.dark' },
-  cancelled: { bgcolor: 'grey.100', color: 'grey.700' },
-  draft: { bgcolor: 'grey.100', color: 'text.secondary' },
-};
-
 const getRiskLabels = (): Record<string, string> => ({
   high: i18n.t('pm.pm_project_detail_page.k6'),
   medium: i18n.t('pm.pm_project_detail_page.k7'),
   low: i18n.t('pm.pm_project_detail_page.k8'),
 });
-
-const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
-  high: { bgcolor: 'error.lighter', color: ct.error[800] },
-  medium: { bgcolor: 'warning.100', color: ct.yellow[700] },
-  low: { bgcolor: 'success.lighter', color: ct.success[800] },
-};
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
