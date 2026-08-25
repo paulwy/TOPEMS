@@ -1676,8 +1676,78 @@ let failed_count = 0;
 - [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
 - [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
-- [ ] **eslint warnings 清零（第四批）**：剩余 2610 warnings（no-unused-vars ~1800 / exhaustive-deps 403 / no-explicit-any 307），src/ai/ 仍有 ~44 个未使用项（governance/native/quality/review/security/ux 子目录的 DEFAULT_* 数组和类型），可继续清理
+- [x] **eslint warnings 清零（第四批）**：V297 清理 src/ai/ 30 个未使用项（governance/native/quality/review/security/ux 子目录的 DEFAULT_* 数组/类型/class/function），tsc --noUnusedLocals src/ai/ 0 errors；eslint warnings 从 2610 降至 2601
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
+
+## 🎯 V297 — 4 轨并行（eslint warnings第四批清理 · 孤儿代码修复 · 全量验证 · 文档化）（并行推进 · ✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 ~22 files（src/ai/ 清理 + TODO）| 验收：tsc 0 errors · eslint 0 errors(2601 warnings) · cargo check 0 errors · tsc --noUnusedLocals src/ai/ 0 errors
+>
+> **Tag**: `V297` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V297-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. eslint warnings 第四批清理（src/ai/ 30 个未使用项，20 files）
+- 背景：V296 后 src/ai/ 仍有 30 个未使用项（tsc --noUnusedLocals），分布在 governance/native/quality/review/security/ux 6 个子目录
+- 修复：脚本批量移除（括号深度跟踪 + 单行项）
+- 变更（20 files，30 项）：
+  - **governance**（3 files）：compliance-automation.ts DEFAULT_RULES（123 行）/ policy-enforcement.ts PolicyEvaluationContext interface + DEFAULT_POLICIES（128 行）/ risk-alerting.ts DEFAULT_INDICATORS（113 行）
+  - **native**（3 files）：adaptive-ui.ts DEFAULT_PREFERENCES + BEHAVIOR_THRESHOLDS / ai-first-architecture.ts DEFAULT_CONFIG + BUILTIN_CAPABILITIES / intelligent-router.ts DEFAULT_STRATEGY + HISTORY_LIMIT + INTENT_PATH_MAP + PERFORMANCE_PROFILES（99 行）
+  - **quality**（3 files）：continuous-performance.ts ContinuousPerformanceImpl class（253 行）/ smart-testing-v2.ts SmartTestV2Impl class（308 行）/ ux-monitor.ts UXMonitorImpl class（320 行）
+  - **review**（3 files）：code-reviewer.ts DEFAULT_RULES（100 行数组）/ performance-auditor.ts ALL_PATTERNS / security-scanner.ts OWASP_RULES（165 行）
+  - **security**（3 files）：adversarial-robustness.ts DEFAULT_ATTACK_VECTORS + DEFAULT_DEFENSES / ai-security-audit.ts DEFAULT_RULES / privacy-enhancement.ts DEFAULT_CONFIG + PRIVACY_TEMPLATES
+  - **ux**（3 files）：adaptive-interaction.ts DEFAULT_PROFILE / emotional-design.ts EMOTION_VALENCE_MAP + EMOTION_AROUSAL_MAP / smart-recommender.ts BehaviorCluster interface + getDefaultContentLibrary function（121 行）
+  - **enhancement**（1 file）：code-completion.ts 移除未使用 `import i18n`
+- 验收：`tsc --noUnusedLocals --noUnusedParameters` src/ai/ 0 errors（30 项全部清除）
+
+### B. 孤儿代码修复（清理脚本副作用）
+- 背景：批量移除脚本对部分多行声明（class/数组）删除不完整，留下孤儿代码导致语法错误
+- 修复（2 files）：
+  - **smart-testing-v2.ts**：`SmartTestV2Impl` class 声明被删但类体留下（78 行孤儿方法），定位 `if (suggestions.length === 0)` 到末尾 `}` 并移除
+  - **code-reviewer.ts**：`DEFAULT_RULES` 数组声明被删但数组元素留下（100 行孤儿 `{...},`），定位首个 `{` 到 `];` 并移除
+- 额外修复：68 个 eslint prettier 错误（清理脚本留下的空行/格式问题），运行 `eslint --fix` 全部修复
+- 验收：`tsc --noEmit` 0 errors · `eslint src/` 0 errors
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals --noUnusedParameters` src/ai/: 0 errors（第四批 30 项全部清除）
+- `eslint src/`: 0 errors, 2601 warnings（从 V296 的 2610 减少 9；剩余主要为 exhaustive-deps 403 / no-explicit-any 307 / 其他 no-unused-vars）
+- `cargo check --workspace`: 0 errors（V297 无 Rust 改动）
+- `cargo fmt --all --check`: 0 diffs
+
+### D. 文档化
+- V296 后续扩展第四批 eslint warnings 清理项打勾 [x]
+- V297 章节写入完整四轨交付记录 + 30 项清理明细 + 孤儿代码修复说明
+
+### 变更文件清单（~22 files）
+**src/ai/ governance（3）**：compliance-automation.ts, policy-enforcement.ts, risk-alerting.ts
+**src/ai/ native（3）**：adaptive-ui.ts, ai-first-architecture.ts, intelligent-router.ts
+**src/ai/ quality（3）**：continuous-performance.ts, smart-testing-v2.ts, ux-monitor.ts
+**src/ai/ review（3）**：code-reviewer.ts, performance-auditor.ts, security-scanner.ts
+**src/ai/ security（3）**：adversarial-robustness.ts, ai-security-audit.ts, privacy-enhancement.ts
+**src/ai/ ux（3）**：adaptive-interaction.ts, emotional-design.ts, smart-recommender.ts
+**src/ai/ enhancement（1）**：code-completion.ts
+**eslint --fix 格式化（~3）**：清理脚本留下的 prettier 空行修复
+**文档（1）**：docs/roadmap/TODO.md
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` src/ai/ — 0 errors（30 项全部清除）
+- [x] `eslint src/` — 0 errors（2601 warnings，从 2610 减少）
+- [x] `cargo check --workspace` — 0 errors
+- [x] `cargo fmt --all --check` — 0 diffs
+- [x] src/ai/ 第四批 30 未使用项 — 全部移除（20 files）
+- [x] smart-testing-v2.ts 孤儿类体 — 修复（78 行）
+- [x] code-reviewer.ts 孤儿数组 — 修复（100 行）
+- [x] 68 eslint prettier errors — eslint --fix 全部修复
+- [x] V296 后续扩展第四批项打勾 [x]
+
+### V297 后续扩展（留给 V298+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings，需逐个评估依赖数组完整性
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings，需逐个替换为具体类型或 `unknown`
+- [ ] **src/ 其他目录未使用项清理**：src/ai/ 已清零（tsc --noUnusedLocals），但 src/api/、src/pages/ 等目录仍有未使用项（如 src/api/admin/index.ts 7 个 TS6192），可继续清理
 
 
 

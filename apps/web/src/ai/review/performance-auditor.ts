@@ -152,10 +152,3 @@ const STORAGE_PATTERNS: Array<{
     recommendation: i18n.t('ai.performance-auditor.k17'),
   },
 ];
-
-const ALL_PATTERNS = [
-  ...SCRIPTING_PATTERNS,
-  ...RENDERING_PATTERNS,
-  ...NETWORK_PATTERNS,
-  ...STORAGE_PATTERNS,
-];

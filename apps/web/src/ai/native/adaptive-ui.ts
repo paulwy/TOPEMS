@@ -89,25 +89,3 @@ export interface AdaptationStats {
   by_device: Record<DeviceType, number>;
   by_segment: Record<string, number>;
 }
-
-const DEFAULT_PREFERENCES: UserPreferences = {
-  theme: 'light',
-  density: 'normal',
-  primary_language: 'zh',
-  secondary_languages: ['en'],
-  notifications_enabled: true,
-  auto_save: true,
-  compact_mode: false,
-  show_favorites: true,
-  sidebar_collapsed: false,
-  fontSize: 14,
-  accentColor: 'secondary.500',
-  layout: 'grid',
-};
-
-const BEHAVIOR_THRESHOLDS = {
-  high_frequency: 10,
-  medium_frequency: 3,
-  engagement_decay: 0.95,
-  min_confidence: 0.5,
-};
