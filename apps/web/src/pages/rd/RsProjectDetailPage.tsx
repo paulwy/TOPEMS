@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
@@ -20,7 +20,6 @@ import {
   ListItemIcon,
   ListItemText,
   Avatar,
-  Stack,
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
@@ -38,14 +37,12 @@ import {
   FileText as DescriptionIcon,
   Users as PeopleIcon,
   Clock as Clock,
-  DollarSign as MoneyIcon,
   CheckCircle as CheckCircleIcon,
   AlertTriangle as AlertTriangle,
 } from 'lucide-react';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rdApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
-import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rd';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 const RsProjectDetailPage: React.FC = () => {
@@ -149,18 +146,6 @@ const RsProjectDetailPage: React.FC = () => {
         return 'error';
       default:
         return 'default';
-    }
-  };
-  const getRiskColor = (risk: string): 'success' | 'warning' | 'error' => {
-    switch (risk) {
-      case i18n.t('rd.rs_project_detail_page.k16'):
-        return 'success';
-      case i18n.t('rd.rs_project_detail_page.k17'):
-        return 'warning';
-      case i18n.t('rd.rs_project_detail_page.k18'):
-        return 'error';
-      default:
-        return 'warning';
     }
   };
   const teamMembers = project?.team_members || [];

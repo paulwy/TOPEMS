@@ -30,7 +30,6 @@ import {
   Grid,
   Snackbar,
   Alert,
-  LinearProgress,
   Tooltip,
 } from '@mui/material';
 import i18n from '@/i18n';
@@ -39,14 +38,11 @@ import {
   Download as DownloadIcon,
   Search as SearchIcon,
   Star as StarIcon,
-  Clock as ClockIcon,
   TrendingUp as TrendingUpIcon,
   X as XIcon,
   Check as CheckIcon,
-  ChevronRight as ChevronRightIcon,
   Folder as FolderIcon,
   Zap as ZapIcon,
-  MessageSquare as MessageSquareIcon,
   Layers as LayersIcon,
   Package as PackageIcon,
   ThumbsUp as ThumbsUpIcon,
@@ -136,38 +132,6 @@ const formatNumber = (num: number): string => {
   if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
   return String(num);
 };
-
-const StatCard: React.FC<{
-  label: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color: string;
-}> = ({ label, value, icon, color }) => (
-  <Card sx={{ flex: 1, minWidth: 0 }}>
-    <CardContent>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mb: 0.5 }}
-          >
-            {label}
-          </Typography>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 700, color }}
-          >
-            {value}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: `${color}15`, color, flexShrink: 0 }}>
-          {icon}
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
 
 const ModuleCard: React.FC<{
   module: MarketplaceModule;
