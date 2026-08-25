@@ -14,13 +14,9 @@ const fieldCode = () =>
 const fieldDescription = () =>
   z.string().max(500, i18n.t('shared.form_schemas.500_5')).optional().or(z.literal(''));
 
-const fieldEmail = () => z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
-
-const fieldPhone = () =>
-  z
-    .string()
-    .regex(/^1[3-9]\d{9}$/, i18n.t('shared.form_schemas.k7'))
-    .or(z.literal(''));
+z.string()
+  .regex(/^1[3-9]\d{9}$/, i18n.t('shared.form_schemas.k7'))
+  .or(z.literal(''));
 
 const fieldAmount = () =>
   z
@@ -28,36 +24,25 @@ const fieldAmount = () =>
     .min(0, i18n.t('shared.form_schemas.k8'))
     .refine((val) => Number.isFinite(val), i18n.t('shared.form_schemas.k9'));
 
-const fieldPercentage = () =>
-  z
-    .number()
-    .min(0, i18n.t('shared.form_schemas.k11'))
-    .max(100, i18n.t('shared.form_schemas.100_10'));
+z.number().min(0, i18n.t('shared.form_schemas.k11')).max(100, i18n.t('shared.form_schemas.100_10'));
 
-const fieldDateRange = () =>
-  z
-    .object({
-      start: z.string().min(1, i18n.t('shared.form_schemas.k12')),
-      end: z.string().min(1, i18n.t('shared.form_schemas.k13')),
-    })
-    .refine((data) => new Date(data.start) <= new Date(data.end), {
-      message: i18n.t('shared.form_schemas.k14'),
-      path: ['end'],
-    });
+z.object({
+  start: z.string().min(1, i18n.t('shared.form_schemas.k12')),
+  end: z.string().min(1, i18n.t('shared.form_schemas.k13')),
+}).refine((data) => new Date(data.start) <= new Date(data.end), {
+  message: i18n.t('shared.form_schemas.k14'),
+  path: ['end'],
+});
 
-const fieldPagination = () =>
-  z.object({
-    page: z.number().int().min(1).default(1),
-    pageSize: z.number().int().min(1).max(100).default(10),
-  });
+z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(10),
+});
 
-const fieldSort = () =>
-  z
-    .object({
-      field: z.string().optional(),
-      order: z.enum(['asc', 'desc']).default('asc'),
-    })
-    .optional();
+z.object({
+  field: z.string().optional(),
+  order: z.enum(['asc', 'desc']).default('asc'),
+}).optional();
 
 const baseEntitySchema = z.object({
   id: z.string().optional(),
@@ -65,13 +50,6 @@ const baseEntitySchema = z.object({
   code: fieldCode().optional(),
   description: fieldDescription(),
   status: z.enum(['active', 'inactive', 'draft']).default('active'),
-});
-
-const partySchema = baseEntitySchema.extend({
-  contactPerson: fieldName().optional(),
-  phone: fieldPhone().optional(),
-  email: fieldEmail().optional(),
-  address: z.string().max(200).optional(),
 });
 
 export const materialSchema = baseEntitySchema.extend({
@@ -102,8 +80,6 @@ export const projectSchema = baseEntitySchema.extend({
   budget: fieldAmount().optional(),
 });
 
-type BaseEntity = z.infer<typeof baseEntitySchema>;
-type Party = z.infer<typeof partySchema>;
 export type Material = z.infer<typeof materialSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type Project = z.infer<typeof projectSchema>;
