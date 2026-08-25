@@ -1942,8 +1942,74 @@ let failed_count = 0;
 - [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
-- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项
-- [ ] **src/ 其他目录未使用项清理（第八批）**：全 src/ 仍有 ~1225 个 tsc 未使用项，推荐 pages/doc/DocumentsPage(22) + components/templates(17) + api/qms(16) + store/pluginStore(15)
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动修复 8 项，V301 手动修复 33 项
+- [x] **src/ 其他目录未使用项清理（第八批）**：V301 清理 pages/doc/DocumentsPage(22→级联) + components/templates/list/hooks(17→级联) + api/workflow(16) + store/pluginStore(15) = 136 项，tsc 目标 4 files 0 errors，净删 1990 行
+- [ ] **src/ 其他目录未使用项清理（第九批）**：全 src/ 仍有 ~1089 个 tsc 未使用项，推荐 utils/format(12) + pages/bi/GisPage(12) + lib/pwa(12) + docs/DesignTokens(11) + components/bi/ChartLibrary(11)
+
+## 🎯 V301 — 第八批未使用项清理（136项）+ 级联清理（✅ 完成）
+
+> 日期：2026-08-25 | 代码改动 4 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2262 warnings) · 目标 4 files 未使用清零
+>
+> **Tag**: `V301` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-{FINAL}.tar.gz` (.gitignore 排除)
+>
+> **Tag**: `V301` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V301-{FINAL}.tar.gz` (.gitignore 排除)
+
+### A. 第八批未使用项清理（136 项）
+- 背景：V300 后全 src/ 仍有 ~1225 个 tsc --noUnusedLocals 错误，第八批目标 4 files 首轮 70 项
+- 修复：v6 迭代脚本扩展版（103 项）+ 手动修复多行 import / TS6192（33 项）
+- 迭代过程（脚本 16 轮，移除 103 项后卡在 33 项）：
+  - 脚本移除 103 项（function/const/hooks + 单行 import）
+  - 手动修复 33 项：
+    - api/workflow/index.ts: 16 个多行 import type 符号
+    - components/templates/list/hooks.tsx: 3 个 TS6192 整行未使用 import（文件清空）
+    - pages/doc/DocumentsPage/index.tsx: 14 个多行 import 符号（lucide-react 10 + mui 6 + api/doc 1，实际 17 项含级联）
+- 变更（4 files，136 项，净删 1990 行）：
+  - **components/templates/list/hooks.tsx**：-1841 行（所有 hooks 移除，文件清空保留占位注释）
+  - **store/pluginStore.ts**：-105 行（15 项 + 级联）
+  - **pages/doc/DocumentsPage/index.tsx**：-37 行（17 个未使用 import）
+  - **api/workflow/index.ts**：-21 行（16 个 type import）
+- 验收：`tsc --noUnusedLocals` 目标 4 files 0 errors
+
+### B. 级联清理
+- components/templates/list/hooks.tsx 所有 hooks 移除后，文件仅剩 import + 注释，确认无其他文件导入后清空
+- store/pluginStore.ts 移除未使用 const/function 后暴露级联未使用 import，脚本迭代处理
+
+### C. 全量验证
+- `tsc --noEmit`: 0 errors
+- `tsc --noUnusedLocals` 目标 4 files: 0 errors（136 项全部清除）
+- `eslint src/`: 0 errors, 2262 warnings（从 V300 的 2334 减少 72）
+- `cargo check --workspace`: 0 errors（V301 无 Rust 改动）
+
+### D. 文档化
+- V300 后续扩展「第八批」打勾 [x]
+- 新增「第九批」后续扩展项（全 src/ 仍有 ~1089 个未使用项）
+- V301 章节写入完整交付记录 + 136 项明细 + 级联清理说明
+
+### 变更文件清单（5 files）
+- `apps/web/src/components/templates/list/hooks.tsx`（-1841 行，保留占位注释）
+- `apps/web/src/store/pluginStore.ts`（-105 行）
+- `apps/web/src/pages/doc/DocumentsPage/index.tsx`（-37 行）
+- `apps/web/src/api/workflow/index.ts`（-21 行）
+- `docs/roadmap/TODO.md`
+
+### 最终验收矩阵
+- [x] `tsc --noEmit` — 0 errors
+- [x] `tsc --noUnusedLocals` 目标 4 files — 0 errors（136 项全部清除）
+- [x] `eslint src/` — 0 errors（2262 warnings，从 2334 减少 72）
+- [x] `cargo check --workspace` — 0 errors
+- [x] 4 files 136 项 — 全部移除（净删 1990 行）
+- [x] hooks.tsx 清空 — 确认无其他文件导入后保留占位注释
+- [x] V300 后续扩展「第八批」打勾 [x]
+
+### V301 后续扩展（留给 V302+）
+- [ ] **B2 后端等价性验证**：验证 finance service 与 erp service API 功能等价性
+- [ ] **编译时边界检查（only_own_schema_query! 宏）**：跨 Schema SQL 清零后引入 clippy lint 或 proc-macro
+- [ ] **Redis Stream 升级（Plan M2）**：consumer groups + ACK 语义增强
+- [ ] **mes 集成测试 sqlx 缓存补充**：有 DB 环境时运行 `cargo sqlx prepare` 恢复编译时 SQL 校验
+- [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
+- [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
+- [ ] **v6 脚本多行 import 和 TS6192 自动处理**：当前需手动修复，V300 手动 8 项，V301 手动 33 项
+- [ ] **src/ 其他目录未使用项清理（第九批）**：全 src/ 仍有 ~1089 个 tsc 未使用项，推荐 utils/format(12) + pages/bi/GisPage(12) + lib/pwa(12) + docs/DesignTokens(11) + components/bi/ChartLibrary(11)
 
 
 
