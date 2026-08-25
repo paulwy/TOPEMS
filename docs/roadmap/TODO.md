@@ -2016,9 +2016,9 @@ let failed_count = 0;
 
 > 日期：2026-08-25 | 代码改动 6 files + TODO | 验收：tsc 0 errors · eslint 0 errors(2203 warnings) · 目标 6 files 未使用清零
 >
-> **Tag**: `V302` · Baseline SHA: `993122d7b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V302` · Baseline SHA: `993122d7b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-54b071c11.tar.gz` (.gitignore 排除)
 >
-> **Tag**: `V302` · Baseline SHA: `993122d7b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-{FINAL}.tar.gz` (.gitignore 排除)
+> **Tag**: `V302` · Baseline SHA: `993122d7b` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V302-54b071c11.tar.gz` (.gitignore 排除)
 
 ### A. 第九批未使用项清理（72 项）
 - 背景：V301 后全 src/ 仍有 ~1089 个 tsc --noUnusedLocals 错误，第九批目标 5 files 首轮 58 项
