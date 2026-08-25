@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface BundleEntry {
   name: string;
@@ -40,28 +40,6 @@ const formatSize = (bytes: number): string => {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};
-
-const _getTypeColor = (type: BundleEntry['type']): string => {
-  const colors: Record<BundleEntry['type'], string> = {
-    js: 'text-blue-500',
-    css: 'text-purple-500',
-    img: 'text-green-500',
-    font: 'text-orange-500',
-    other: 'text-gray-500',
-  };
-  return colors[type];
-};
-
-const _getTypeLabel = (type: BundleEntry['type']): string => {
-  const labels: Record<BundleEntry['type'], string> = {
-    js: 'JavaScript',
-    css: 'CSS',
-    img: i18n.t('components.bundle_size_monitor.k0'),
-    font: i18n.t('components.bundle_size_monitor.k1'),
-    other: i18n.t('components.bundle_size_monitor.k2'),
-  };
-  return labels[type];
 };
 
 const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({

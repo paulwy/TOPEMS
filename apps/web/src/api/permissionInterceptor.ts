@@ -2,12 +2,6 @@ import apiClient from './client';
 import { apiLogger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-interface PermissionError {
-  code: number;
-  message: string;
-  requiredPermission?: string;
-}
-
 export const createPermissionInterceptor = () => {
   Object.entries(apiClient.getClients()).forEach(([, client]) => {
     client.interceptors.response.use(
@@ -50,78 +44,6 @@ export const createPermissionInterceptor = () => {
       }
     );
   });
-};
-
-const checkPermissionBeforeRequest = (permission: string, callback: () => void) => {
-  const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
-  const isSuperuser = JSON.parse(localStorage.getItem('user') || '{}')?.is_superuser;
-
-  if (isSuperuser || permissions.includes(permission)) {
-    callback();
-  } else {
-    apiLogger.warn(`Permission denied: ${permission}`);
-    window.dispatchEvent(
-      new CustomEvent('permission-denied', {
-        detail: {
-          message: `${i18n.t('shared.permission_interceptor.k2')}${permission}${i18n.t('shared.permission_interceptor.k3')}`,
-          requiredPermission: permission,
-        },
-      })
-    );
-  }
-};
-
-const withPermissionCheck = async <T>(
-  permission: string,
-  apiCall: () => Promise<T>
-): Promise<{ success: boolean; data?: T; error?: PermissionError }> => {
-  try {
-    const result = await apiCall();
-    return { success: true, data: result };
-  } catch (error: unknown) {
-    const err = error as { response?: { status?: number; data?: { message?: string } } };
-    if (err.response?.status === 403) {
-      return {
-        success: false,
-        error: {
-          code: 403,
-          message: err.response?.data?.message || i18n.t('shared.permission_interceptor.k1'),
-          requiredPermission: permission,
-        },
-      };
-    }
-    throw error;
-  }
-};
-
-const logPermissionAccess = async (
-  action: string,
-  resource: string,
-  success: boolean,
-  errorMessage?: string
-) => {
-  try {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-    if (!user.id) {
-      apiLogger.warn('Cannot log access: user not authenticated');
-      return;
-    }
-
-    await apiClient.iam.post('/access-logs', {
-      user_id: user.id,
-      username: user.username,
-      action,
-      resource,
-      success,
-      error_message: errorMessage,
-      ip_address: undefined,
-      user_agent: navigator.userAgent,
-      resource_id: undefined,
-    });
-  } catch (error: unknown) {
-    apiLogger.error('Failed to log permission access:', error);
-  }
 };
 
 export default createPermissionInterceptor;

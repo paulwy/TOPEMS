@@ -214,27 +214,6 @@ export interface Interaction {
   updated_at: string;
 }
 
-interface CreateInteractionRequest {
-  customer_id?: string;
-  contact_id?: string;
-  type: string;
-  subject?: string;
-  content?: string;
-  scheduled_at?: string;
-  notes?: string;
-}
-
-interface UpdateInteractionRequest {
-  customer_id?: string;
-  contact_id?: string;
-  type?: string;
-  subject?: string;
-  content?: string;
-  scheduled_at?: string;
-  completed_at?: string;
-  status?: string;
-}
-
 export interface InteractionQueryParams extends PaginationParams {
   customer_id?: string;
   contact_id?: string;
@@ -324,15 +303,6 @@ interface BillingItem {
   quantity: number;
   unit_price: number;
   amount: number;
-}
-
-interface CreateBillingRequest {
-  customer_id: string;
-  invoice_no?: string;
-  amount: number;
-  currency?: string;
-  due_date: string;
-  items: BillingItem[];
 }
 
 export interface BillingQueryParams extends PaginationParams {
