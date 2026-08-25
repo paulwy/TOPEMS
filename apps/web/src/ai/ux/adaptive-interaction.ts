@@ -75,36 +75,3 @@ export interface AdaptationRecord {
   toState: string;
   confidence: number;
 }
-
-const DEFAULT_PROFILE: InteractionProfile = {
-  userId: 'default',
-  preferences: {
-    density: 'normal',
-    fontSize: 14,
-    motion: 'no_preference',
-    highContrast: false,
-    reducedMotion: false,
-    largeText: false,
-    screenReader: false,
-    colorBlindMode: 'none',
-    language: 'zh',
-    theme: 'auto',
-  },
-  device: {
-    type: 'desktop',
-    screenWidth: 1920,
-    screenHeight: 1080,
-    touchSupport: false,
-    keyboardOnly: false,
-    networkQuality: 'good',
-    cpuCores: 4,
-    memoryGB: 8,
-  },
-  accessibility: {
-    needs: [],
-    accommodations: [],
-    lastAssessment: 0,
-  },
-  proficiency_level: 'intermediate',
-  updatedAt: Date.now(),
-};

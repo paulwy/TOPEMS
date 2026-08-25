@@ -42,38 +42,3 @@ export interface PrivacyTestResult {
   timestamp: number;
   passed: boolean;
 }
-
-const DEFAULT_CONFIG: PrivacyConfig = {
-  id: 'config-default',
-  modelId: 'default-model',
-  differential_privacy_enabled: true,
-  epsilon: 1.0,
-  delta: 1e-5,
-  noise_strategy: 'gaussian',
-  max_grad_norm: 1.0,
-  l2_norm_clip: 1.0,
-  description: i18n.t('ai.privacy-enhancement.k0'),
-  created_at: Date.now(),
-  updated_at: Date.now(),
-};
-
-const PRIVACY_TEMPLATES: Record<string, Partial<PrivacyConfig>> = {
-  strict: {
-    epsilon: 0.1,
-    delta: 1e-6,
-    noise_strategy: 'gaussian',
-    description: i18n.t('ai.privacy-enhancement.k1'),
-  },
-  balanced: {
-    epsilon: 1.0,
-    delta: 1e-5,
-    noise_strategy: 'gaussian',
-    description: i18n.t('ai.privacy-enhancement.k2'),
-  },
-  relaxed: {
-    epsilon: 10.0,
-    delta: 1e-4,
-    noise_strategy: 'laplace',
-    description: i18n.t('ai.privacy-enhancement.k3'),
-  },
-};

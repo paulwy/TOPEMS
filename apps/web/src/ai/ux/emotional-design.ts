@@ -71,37 +71,3 @@ export interface EmotionEvent {
   response: DesignResponse;
   userFeedback?: 'accepted' | 'rejected' | 'ignored';
 }
-
-const EMOTION_VALENCE_MAP: Record<EmotionType, Valence> = {
-  joy: 'positive',
-  trust: 'positive',
-  fear: 'negative',
-  surprise: 'neutral',
-  sadness: 'negative',
-  disgust: 'negative',
-  anger: 'negative',
-  anticipation: 'neutral',
-  frustration: 'negative',
-  satisfaction: 'positive',
-  confusion: 'negative',
-  boredom: 'negative',
-  excitement: 'positive',
-  calm: 'positive',
-};
-
-const EMOTION_AROUSAL_MAP: Record<EmotionType, Arousal> = {
-  joy: 'high',
-  trust: 'medium',
-  fear: 'high',
-  surprise: 'high',
-  sadness: 'low',
-  disgust: 'medium',
-  anger: 'high',
-  anticipation: 'medium',
-  frustration: 'high',
-  satisfaction: 'medium',
-  confusion: 'medium',
-  boredom: 'low',
-  excitement: 'high',
-  calm: 'low',
-};
