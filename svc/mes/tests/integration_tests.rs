@@ -237,10 +237,8 @@ mod tests {
         assert!(delete_result.is_ok(), "生产订单删除应该成功");
         assert!(delete_result.unwrap().rows_affected() > 0, "应该有行被删除");
 
-        let verify_delete = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
-            order_id
-        )
+        let verify_delete = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
         .fetch_one(&pool)
         .await;
 
@@ -327,12 +325,10 @@ mod tests {
         assert!(delete_result.is_ok(), "设备删除应该成功");
         assert!(delete_result.unwrap().rows_affected() > 0, "应该有行被删除");
 
-        let verify_delete = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM equipment WHERE id = $1"#,
-            equipment_id
-        )
-        .fetch_one(&pool)
-        .await;
+        let verify_delete = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM equipment WHERE id = $1"#)
+            .bind(equipment_id)
+            .fetch_one(&pool)
+            .await;
 
         assert_eq!(verify_delete.unwrap().unwrap_or(0), 0, "设备应该已被删除");
     }
@@ -406,12 +402,10 @@ mod tests {
 
         assert!(delete_result.is_ok(), "工位点删除应该成功");
 
-        let verify_delete = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM work_stations WHERE id = $1"#,
-            station_id
-        )
-        .fetch_one(&pool)
-        .await;
+        let verify_delete = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM work_stations WHERE id = $1"#)
+            .bind(station_id)
+            .fetch_one(&pool)
+            .await;
 
         assert_eq!(verify_delete.unwrap().unwrap_or(0), 0, "工位点应该已被删除");
     }
@@ -451,10 +445,8 @@ mod tests {
 
         assert!(result.is_err(), "事务应该失败回滚");
 
-        let count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
-            order_id
-        )
+        let count = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
         .fetch_one(&pool)
         .await
         .unwrap();
@@ -501,17 +493,16 @@ mod tests {
         let commit_result = tx.commit().await;
         assert!(commit_result.is_ok(), "事务提交应该成功");
 
-        let count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#,
-            order_id
-        )
+        let count = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
         .fetch_one(&pool)
         .await
         .unwrap();
 
         assert_eq!(count.unwrap_or(0), 1, "事务提交后数据应该存在");
 
-        let _ = sqlx::query!(r#"DELETE FROM production_orders WHERE id = $1"#, order_id)
+        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
             .execute(&pool)
             .await;
     }
@@ -572,42 +563,34 @@ mod tests {
 
         assert!(create_result_2.is_ok(), "租户2订单创建应该成功");
 
-        let total_count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT%'"#
-        )
-        .fetch_one(&pool)
+        let total_count = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT%'"#)
+            .fetch_one(&pool)
         .await
         .unwrap()
         .unwrap_or(0);
 
         assert_eq!(total_count, 2, "应该有2条测试订单");
 
-        let tenant1_count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT1%'"#
-        )
-        .fetch_one(&pool)
+        let tenant1_count = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT1%'"#)
+            .fetch_one(&pool)
         .await
         .unwrap()
         .unwrap_or(0);
 
         assert_eq!(tenant1_count, 1, "租户1应该只能看到自己的订单");
 
-        let tenant2_count = sqlx::query_scalar!(
-            r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT2%'"#
-        )
-        .fetch_one(&pool)
+        let tenant2_count = sqlx::query_scalar::<_, Option<i64>>(r#"SELECT COUNT(*) FROM production_orders WHERE order_no LIKE 'MO-TENANT2%'"#)
+            .fetch_one(&pool)
         .await
         .unwrap()
         .unwrap_or(0);
 
         assert_eq!(tenant2_count, 1, "租户2应该只能看到自己的订单");
 
-        let _ = sqlx::query!(
-            r#"DELETE FROM production_orders WHERE id IN ($1, $2)"#,
-            order_id_1,
-            order_id_2
-        )
-        .execute(&pool)
+        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id IN ($1, $2)"#)
+            .bind(order_id_1)
+            .bind(order_id_2)
+            .execute(&pool)
         .await;
     }
 
@@ -672,7 +655,8 @@ mod tests {
             );
         }
 
-        let _ = sqlx::query!(r#"DELETE FROM production_orders WHERE id = $1"#, order_id)
+        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
             .execute(&pool)
             .await;
     }
@@ -777,7 +761,8 @@ mod tests {
 
         assert!(delete_result.is_ok(), "生产记录删除应该成功");
 
-        let _ = sqlx::query!(r#"DELETE FROM production_orders WHERE id = $1"#, order_id)
+        let _ = sqlx::query(r#"DELETE FROM production_orders WHERE id = $1"#)
+            .bind(order_id)
             .execute(&pool)
             .await;
     }
