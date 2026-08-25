@@ -1324,7 +1324,9 @@ let failed_count = 0;
 
 ## 🎯 V292 — 4 轨并行（mes集成测试sqlx离线修复 · eslint配置修复 · 空目录清理 · 事件总线评估）（并行推进 · ✅ 完成）
 
-> 日期：2026-08-25 | 代码改动 3 files（Rust 1 / JS 1 / TODO 1）+ 删除空目录 1 | 验收：cargo check --workspace --tests 0 errors · tsc 0 errors · eslint 可运行
+> 日期：2026-08-25 | 代码改动 5 files（Rust 1 / JS 2 / YAML 1 / TODO 1）| 验收：cargo check --workspace --tests 0 errors · tsc 0 errors · eslint 可运行
+>
+> **Tag**: `V292` · Baseline SHA: `bcecaa3fd` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V292-{FINAL}.tar.gz` (.gitignore 排除)
 
 ### A. mes 集成测试 sqlx 离线编译修复（CI --all-targets 门禁闭合）
 - 背景：CI 使用 `SQLX_OFFLINE=true cargo clippy --workspace --all-targets -- -D warnings`（含 tests），但 V289-V291 验收仅跑 `--workspace`（不含 tests），导致 mes integration tests 的 12 个 `sqlx::query_scalar!` / `sqlx::query!` 宏缺少 `.sqlx` 离线缓存，CI 会失败
