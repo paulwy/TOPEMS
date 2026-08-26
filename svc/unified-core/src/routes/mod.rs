@@ -21,6 +21,8 @@ mod migration;
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
 // mod plugin;
 mod system;
+// V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
+mod sse;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -89,6 +91,12 @@ pub fn create_routes(
         .route(
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
+        )
+        // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
+        .route("/api/sse/connect", get(sse::sse_connect_handler))
+        .route(
+            "/api/sse/session/{session_id}",
+            post(sse::sse_session_handler),
         );
     // V68.1 A2.2: 插件 proxy 路由（原 handlers::plugin_proxy）暂时下线，后续迁移到 plugin-registry
     // .route(

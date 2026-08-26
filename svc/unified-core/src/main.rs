@@ -413,6 +413,8 @@ async fn main() -> anyhow::Result<()> {
     let pool_for_heartbeat = ctx.db.clone();
     let metrics = std::sync::Arc::new(SystemMetrics::new());
     let encryption = init_field_encryption();
+    // V430: SSE session manager for real-time communication endpoints
+    let sse_sessions = std::sync::Arc::new(crate::shared::SseSessionManager::new());
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
@@ -430,6 +432,7 @@ async fn main() -> anyhow::Result<()> {
         metrics,
         encryption,
         feature_flag_service: std::sync::Arc::new(topems_shared_core::FeatureFlagService::new()),
+        sse_sessions,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

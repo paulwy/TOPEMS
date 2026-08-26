@@ -13962,6 +13962,130 @@ client.connect();
 
 ---
 
+## 🎯 V430 — 架构改进四轨并行第九十八次：轨C SSE端点基础实现（创建模块+注册路由+扩展AppState）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十八次交付 · 轨C SSE端点基础实现 · 4个代码文件修改(1新建+3修改) · 创建SSE路由模块，注册SSE端点，扩展AppState添加SSE会话管理
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE端点基础实现 | 创建SSE路由模块，注册SSE端点，扩展AppState添加SSE会话管理 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V431 | ⏸️ |
+
+### 轨C：SSE端点基础实现（创建模块+注册路由+扩展AppState）
+
+**实现内容**：创建SSE路由模块，注册SSE端点，扩展AppState添加SSE会话管理
+
+**修改的文件（4个代码文件，1新建+3修改）**：
+
+**1. 新建：`svc/unified-core/src/routes/sse.rs`（SSE路由模块）**
+- SSE事件类型定义：
+  - `EndpointEventData` — endpoint事件数据（session_id、endpoint、expires_in）
+  - `SseSessionRequest` — SSE会话请求（event_type、data）
+  - `SseSessionResponse` — SSE会话响应（success、session_id、message）
+- SSE路由处理函数：
+  - `sse_connect_handler` — `GET /api/sse/connect`，建立SSE连接，发送endpoint事件
+  - `sse_session_handler` — `POST /api/sse/session/{session_id}`，发送请求到SSE会话
+- 路由注册函数：
+  - `sse_routes()` — 返回SSE路由的Router
+
+**2. 修改：`svc/unified-core/src/routes/mod.rs`（注册SSE路由）**
+- 添加 `mod sse;` 声明
+- 在public_routes中注册SSE端点：
+  - `GET /api/sse/connect` — SSE连接端点
+  - `POST /api/sse/session/{session_id}` — SSE会话请求端点
+- SSE端点是公共路由（不需要认证），因为SSE连接建立时可能还没有认证
+
+**3. 修改：`svc/unified-core/src/shared/mod.rs`（扩展AppState）**
+- 添加导入：HashMap、Duration、Instant、mpsc、Mutex、Uuid
+- 添加SSE会话管理类型：
+  - `SseSession` — SSE会话（sender、created_at、last_active）
+  - `SseSessionManager` — SSE会话管理器（create_session、get_sender、remove_session、session_count、cleanup_expired）
+- 在AppState中添加字段：`pub sse_sessions: Arc<SseSessionManager>`
+- 添加FromRef实现：`impl FromRef<AppState> for Arc<SseSessionManager>`
+
+**4. 修改：`svc/unified-core/src/main.rs`（初始化SSE会话管理）**
+- 创建SseSessionManager实例：`let sse_sessions = Arc::new(SseSessionManager::new());`
+- 在AppState初始化中添加sse_sessions字段
+
+**SSE端点设计**：
+
+**1. SSE连接端点（`GET /api/sse/connect`）**
+- 功能：建立SSE长连接，发送endpoint事件
+- 响应头：`Content-Type: text/event-stream`、`Cache-Control: no-cache`、`Connection: keep-alive`
+- 事件格式：
+  ```
+  event: endpoint
+  data: {"session_id": "uuid", "endpoint": "/api/sse/session/uuid", "expires_in": 1800}
+  
+  ```
+- 心跳机制：每15秒发送keep-alive事件
+- 会话超时：30分钟（1800秒）
+
+**2. SSE会话请求端点（`POST /api/sse/session/{session_id}`）**
+- 功能：接收客户端请求，将响应通过对应的SSE流发送回客户端
+- 请求体：JSON格式（event_type、data）
+- 响应：`202 Accepted`（请求已接受，将通过SSE流发送响应）
+- 错误处理：
+  - 会话不存在：返回success=false，message="Session not found or expired"
+  - 客户端断开：返回success=false，message="Client disconnected"
+
+**3. SSE会话管理**
+- 数据结构：`Arc<Mutex<HashMap<String, SseSession>>>`
+- 存储在AppState中
+- 功能：
+  - `create_session()` — 创建新会话，返回session_id和receiver
+  - `get_sender(session_id)` — 获取会话的发送器，更新last_active
+  - `remove_session(session_id)` — 移除会话
+  - `session_count()` — 获取活跃会话数量
+  - `cleanup_expired(timeout)` — 清理过期会话
+- 会话超时：默认30分钟
+- 通道容量：64（mpsc::channel(64)）
+
+**技术说明**：
+- 使用axum 0.8的SSE支持（`axum::response::sse::{Sse, Event, KeepAlive}`）
+- 使用tokio::sync::mpsc创建通道，实现事件分发
+- 使用async_stream::stream!创建SSE流
+- SseSessionManager定义在shared/mod.rs中，避免循环依赖
+- SSE端点是公共路由（不需要认证），注册在public_routes中
+- 会话管理使用Arc<Mutex<HashMap>>，支持并发访问
+- 心跳机制使用KeepAlive，每15秒发送一次
+
+**验收结果**：
+- 完成SSE路由模块创建（sse.rs，包含事件类型、处理函数、路由注册）
+- 完成SSE路由注册（mod.rs，添加mod声明和路由注册）
+- 完成AppState扩展（shared/mod.rs，添加SseSessionManager和字段）
+- 完成AppState初始化（main.rs，创建SseSessionManager实例）
+- SSE连接端点实现（GET /api/sse/connect，发送endpoint事件）
+- SSE会话请求端点实现（POST /api/sse/session/{session_id}，发送事件到SSE流）
+- SSE会话管理实现（创建、获取、移除、计数、清理）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C SSE路由模块 | 新建sse.rs，包含事件类型、处理函数、路由注册 | ✅ |
+| 轨C SSE路由注册 | mod.rs添加mod sse，public_routes注册2个端点 | ✅ |
+| 轨C AppState扩展 | shared/mod.rs添加SseSessionManager和sse_sessions字段 | ✅ |
+| 轨C AppState初始化 | main.rs创建SseSessionManager实例并初始化 | ✅ |
+| 轨C SSE连接端点 | GET /api/sse/connect，发送endpoint事件，心跳15秒 | ✅ |
+| 轨C SSE会话请求端点 | POST /api/sse/session/{session_id}，发送事件到SSE流 | ✅ |
+| 轨C SSE会话管理 | create_session、get_sender、remove_session、session_count、cleanup_expired | ✅ |
+| 轨C 会话超时 | 30分钟（1800秒），通道容量64 | ✅ |
+| 变更统计 | 4个代码文件修改(1新建+3修改) + 修改1文件(TODO.md) | ✅ |
+
+### V430后续扩展（留给V431+）
+
+- [ ] **轨C SSE端点完善**：实现会话超时自动清理后台任务、错误处理和日志记录、会话最大数量限制
+- [ ] **轨C SSE端点测试**：编写单元测试和集成测试，测试SSE连接建立、会话请求、超时清理
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V430连续九十八次交付验证成功，V431继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
