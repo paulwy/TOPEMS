@@ -45,7 +45,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   onSave,
   onExport,
   onPreview,
-  loading = false,
+  loading: _loading = false,
   availableTables = [
     { name: 'orders', label: i18n.t('templates.index.k2') },
     { name: 'users', label: i18n.t('templates.index.k3') },

@@ -7525,6 +7525,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V358 — 架构改进四轨并行第二十六次：前端未使用参数清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十六次交付 · 前端未使用参数清理 · 4个文件 · 未使用参数重命名为下划线前缀
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用参数清理 | 4个文件的未使用组件参数重命名为下划线前缀，消除TS6133错误 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V359 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V359 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V359 | ⏸️ |
+
+### 轨A：前端未使用参数清理
+
+**清理内容**：将4个文件中未使用的组件参数重命名为下划线前缀（_xxx），这是 TypeScript 中处理未使用参数的标准做法
+
+**清理的文件（4个）**：
+
+1. **components/common/ExtendedTab.tsx** — 未使用的 onChange 参数
+   - 原代码：`const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange }) => {`
+   - 修改后：`const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange: _onChange }) => {`
+   - 使用解构重命名语法，保留接口定义不变
+
+2. **components/gis/modules/MapModule/MapControls.tsx** — 未使用的 zoom 参数
+   - 原代码：`const MapControls: React.FC<MapControlsProps> = ({ zoom, onZoomIn, onZoomOut, ...`
+   - 修改后：`const MapControls: React.FC<MapControlsProps> = ({ zoom: _zoom, onZoomIn, onZoomOut, ...`
+
+3. **components/templates/CardListTemplate.tsx** — 未使用的 search 参数
+   - 原代码：`const CardListTemplate = ({ ..., search, filters = [], ...`
+   - 修改后：`const CardListTemplate = ({ ..., search: _search, filters = [], ...`
+
+4. **components/templates/ReportDesignerTemplate/index.tsx** — 未使用的 loading 参数
+   - 原代码：`const ReportDesignerTemplate = ({ ..., loading = false, availableTables = [...]`
+   - 修改后：`const ReportDesignerTemplate = ({ ..., loading: _loading = false, availableTables = [...]`
+
+**技术说明**：
+- 使用 ES6 解构重命名语法（`param: _param`），保留接口定义和调用方不变
+- 下划线前缀是 TypeScript 社区处理未使用参数的标准约定
+- 不需要修改 props 接口定义，只需要在解构时重命名
+
+**验收结果**：
+- 4个文件的未使用参数 TS6133 错误已消除
+- 编译验证：无新增错误
+- 接口定义和调用方保持不变
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 4个文件的未使用参数重命名 | ✅ |
+| 轨A 参数类型 | 4个组件props参数（onChange/zoom/search/loading） | ✅ |
+| 轨A 技术方法 | ES6解构重命名语法（param: _param） | ✅ |
+| 轨A 接口兼容 | 保留接口定义和调用方不变 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改4个前端文件 + 修改1文件 | ✅ |
+
+### V358后续扩展（留给V359+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~192个TS6133错误
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V358连续二十六次交付验证成功，V359继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

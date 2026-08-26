@@ -13,7 +13,7 @@ interface MapControlsProps {
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
-  zoom,
+  zoom: _zoom,
   onZoomIn,
   onZoomOut,
   bounds,
