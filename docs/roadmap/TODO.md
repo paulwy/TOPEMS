@@ -9830,6 +9830,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V391 — 架构改进四轨并行第五十九次：前端未使用泛型参数清理（UseBffDetailPageOptions T）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五十九次交付 · 前端未使用泛型参数清理 · 1个文件 · 删除UseBffDetailPageOptions接口中未使用的T泛型参数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用泛型参数清理 | 1个文件的未使用泛型参数删除（hooks/bff/useBffPage.ts，UseBffDetailPageOptions接口的T参数） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V392 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V392 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V392 | ⏸️ |
+
+### 轨A：前端未使用泛型参数清理（UseBffDetailPageOptions T）
+
+**清理内容**：删除1个文件中UseBffDetailPageOptions接口未使用的T泛型参数
+
+**清理的文件（1个）**：
+
+1. **hooks/bff/useBffPage.ts** — 删除UseBffDetailPageOptions接口中未使用的T泛型参数
+   - 修改的接口：`export interface UseBffDetailPageOptions<T>` → `export interface UseBffDetailPageOptions`
+   - 修改的参数类型：`options: UseBffDetailPageOptions<T>` → `options: UseBffDetailPageOptions`
+   - T泛型参数在UseBffDetailPageOptions接口中从未被使用（接口中所有字段都使用了具体类型）
+   - 保留的泛型参数：useBffDetailPage函数本身的T（在返回类型和其他地方被使用）
+   - 文件行数保持720行不变
+   - 同时提交了这个新文件（之前未跟踪）
+
+**技术说明**：
+- 删除泛型参数前验证参数未在接口中被使用
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于在函数签名中使用、但在options接口中未使用的泛型参数，只需从接口中删除，并修改函数参数类型
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查泛型参数的未使用情况，定义泛型参数后需要确保被使用
+- useBffDetailPage函数本身的T泛型参数保留，因为它在返回类型和状态管理中被使用
+
+**验收结果**：
+- 1个未使用泛型参数的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的泛型参数为未使用的遗留代码
+- 函数签名中的T泛型参数保留，因为它在返回类型和状态管理中被使用
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用泛型参数删除 | ✅ |
+| 轨A 清理泛型参数 | T（UseBffDetailPageOptions接口中未使用） | ✅ |
+| 轨A 修改位置 | 接口定义（第292行）+ 函数参数类型（第334行） | ✅ |
+| 轨A 文件变化 | useBffPage.ts保持720行不变 | ✅ |
+| 轨A 引用检查 | 删除泛型参数前验证未在接口中被使用 | ✅ |
+| 轨A 保留检查 | 函数签名中的T保留，因为在返回类型和状态管理中使用 | ✅ |
+| 轨A 语法检查 | 文件语法正确，泛型参数完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V391后续扩展（留给V392+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~100个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用泛型参数清理**：继续清理其他未使用的泛型参数
+- [ ] **轨A 未使用import清理**：继续清理其他未使用的import
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V391连续五十九次交付验证成功，V392继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
