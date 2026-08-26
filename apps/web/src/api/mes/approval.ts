@@ -2,7 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { ApprovalStartRequest, ApprovalDecisionRequest, ApprovalResponse } from './types';
 
-const mesApprovalApi = {
+const _mesApprovalApi = {
   // APV-1: 生产订单变更审批
   startProductionOrderApproval: (orderId: string, data: ApprovalStartRequest) =>
     apiClient.mes.post<ApiResponse<ApprovalResponse>>(

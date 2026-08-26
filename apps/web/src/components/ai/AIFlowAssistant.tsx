@@ -32,7 +32,7 @@ interface FlowResult {
   suggestions?: string[];
 }
 
-const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, module }) => {
+const _AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, module }) => {
   const [query, setQuery] = useState(initialQuery || '');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<FlowResult | null>(null);

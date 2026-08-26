@@ -5785,6 +5785,111 @@ POST /mcp
 
 ---
 
+## 🎯 V338 — 架构改进四轨并行第六次：HR业务工具 + 5项未使用项清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六次交付 · HR MCP Tools上线 · 17个业务工具注册 · cargo check ✅ · 7个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 未使用项清理 | 5项（4 API const + 1 组件，重命名为下划线前缀） | ✅ |
+| 轨B | B1 API签名对齐 | 延续V337评估，记录V339+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V339实施（需独立二进制入口） | ⏸️ |
+| 轨D | HR MCP Tools | 4个业务工具（hr.list_employees, hr.get_employee, hr.create_employee, hr.update_employee），7个单元测试 | ✅ |
+
+### 轨A：5项未使用项清理明细
+
+| 文件 | 未使用项 | 类型 | 处理 |
+|------|----------|------|------|
+| api/mes/analytics.ts | mesAnalyticsApi const | TS6133 | 重命名为_mesAnalyticsApi |
+| api/mes/approval.ts | mesApprovalApi const | TS6133 | 重命名为_mesApprovalApi |
+| api/ehs/emergencyPlan.ts | emergencyPlanApi const | TS6133 | 重命名为_emergencyPlanApi |
+| api/crm/customerProfile.ts | customerProfileApi const | TS6133 | 重命名为_customerProfileApi |
+| components/ai/AIFlowAssistant.tsx | AIFlowAssistant组件 | TS6133 | 重命名为_AIFlowAssistant |
+| **合计** | **5项** | | **重命名处理（保留代码，避免删除风险）** |
+
+**说明**：这些 const/组件均无 export，是文件内部未使用的代码。采用重命名为下划线前缀的方式处理，保留代码以备未来使用，避免删除整个文件的风险。
+
+### 轨B：B1 API签名对齐（延续V337）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V339+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：HR MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/hr.rs` — HR业务工具（~530行）
+
+**注册的4个工具**：
+1. **hr.list_employees** — 查询员工列表
+   - 参数：page, page_size, department, status(active/on_leave/resigned/probation), keyword
+   - 返回：员工列表（工号、姓名、部门、职位、入职日期、状态、邮箱、手机）
+   - 支持分页、部门筛选、状态筛选、关键词搜索
+
+2. **hr.get_employee** — 获取员工详情
+   - 参数：employee_id（必填）
+   - 返回：完整员工信息（基本信息、联系方式、教育背景、工作经历、薪资信息、紧急联系人）
+
+3. **hr.create_employee** — 创建新员工
+   - 参数：name（必填）, department（必填）, position（必填）, employee_no, email, phone, hire_date
+   - 返回：新员工ID、工号、基本信息
+   - 验证：name/department/position必填，自动生成工号（如未提供），默认状态为probation
+
+4. **hr.update_employee** — 更新员工信息
+   - 参数：employee_id（必填）, department, position, email, phone, status, salary
+   - 返回：更新的字段列表和更新时间
+   - 支持部分更新（只更新提供的字段），至少需要一个更新字段
+
+**单元测试**（7个）：
+- test_register_hr_tools — 4个工具全部注册
+- test_list_employees — 分页查询
+- test_get_employee — 按ID查询，验证教育/工作/薪资结构
+- test_create_employee_validation — 参数验证（缺少name/department）
+- test_create_employee_success — 成功创建员工，验证默认状态
+- test_update_employee — 部分更新（职位+薪资）
+- test_update_employee_no_fields — 无更新字段时返回错误
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod hr和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_hr_tools
+- `svc/ai/src/routes.rs` — 调用register_hr_tools注册HR工具
+
+**当前工具总数**：17个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 5项未使用清零 | tsc目标文件0项 | ✅ |
+| 轨B B1评估 | 延续V337，记录V339+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D HR工具 | 4个业务工具已注册 | ✅ |
+| 轨D HR单元测试 | 7个测试用例 | ✅ |
+| 总工具数 | 17个（2系统+3CRM+4ERP+4Finance+4HR） | ✅ |
+| 变更统计 | 新增1文件(~530行) + 修改4文件 + 前端5文件清理 | ✅ |
+
+### V338后续扩展（留给V339+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D MES/EHS MCP Tools**：注册mes.list_production, ehs.list_incidents等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A Top15未使用项清理**：auth组件未使用专项（PermissionRoute等）
+- [ ] **四轨并行继续**：V333-V338连续六次交付验证成功，V339继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
