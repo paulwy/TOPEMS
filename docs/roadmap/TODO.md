@@ -14973,6 +14973,142 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V437 — 架构改进四轨并行第一百零五次：轨C shared-service-client高级功能（重试策略+熔断机制+自动重连配置）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零五次交付 · 轨C shared-service-client高级功能 · 1个代码文件修改 · 添加重试策略、熔断机制、自动重连配置
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client高级功能 | 添加重试策略、熔断机制、自动重连配置 | ✅ |
+| 轨D | 业务工具调用示例 | 添加业务工具调用示例文档和代码示例，留给V438 | ⏸️ |
+
+### 轨C：shared-service-client高级功能（重试策略+熔断机制+自动重连配置）
+
+**实现内容**：在shared-service-client中添加重试策略、熔断机制、自动重连配置
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/shared/service_client.rs`（添加高级功能）**
+
+**新增功能**：
+
+**1. 重试策略（Retry Policy）**
+- 在ServiceConfig中添加重试配置：
+  - `max_retries: u32` — 最大重试次数（默认0，不重试）
+  - `retry_delay_ms: u64` — 重试间隔（默认1000毫秒）
+- 在request方法中添加重试逻辑：
+  - 循环执行请求，最多重试max_retries次
+  - 每次重试前等待retry_delay_ms毫秒
+  - 记录最后一次错误，重试耗尽后返回
+- 新增内部方法 `request_once` — 单次请求（不含重试逻辑）
+
+**2. 熔断机制（Circuit Breaker）**
+- 新增熔断状态类型：
+  - `CircuitBreakerState` — 熔断状态枚举（Closed、Open、HalfOpen）
+  - `CircuitBreakerStatus` — 熔断状态信息（state、failure_count、success_count、opened_at、enabled）
+  - `CircuitBreakerInternal` — 内部熔断状态（state、failure_count、success_count、opened_at）
+- 在ServiceConfig中添加熔断配置：
+  - `circuit_breaker_enabled: bool` — 是否启用熔断（默认false）
+  - `failure_threshold: u32` — 失败阈值（默认5次失败后打开熔断）
+  - `reset_timeout_secs: u64` — 重置超时（默认30秒后进入半开状态）
+- 在ServiceClient中添加熔断状态：
+  - `circuit_breaker: Arc<Mutex<CircuitBreakerInternal>>` — 共享熔断状态
+- 新增熔断方法：
+  - `check_circuit_breaker()` — 检查熔断状态，决定是否允许请求
+  - `record_success()` — 记录成功请求，重置失败计数
+  - `record_failure()` — 记录失败请求，增加失败计数，达到阈值时打开熔断
+  - `get_circuit_breaker_status()` — 获取熔断状态信息
+  - `reset_circuit_breaker()` — 重置熔断状态为Closed
+- 熔断状态转换：
+  - Closed → Open：连续失败达到failure_threshold
+  - Open → HalfOpen：经过reset_timeout_secs后
+  - HalfOpen → Closed：连续成功3次后
+  - HalfOpen → Open：再次失败时
+
+**3. 自动重连配置（Auto Reconnect Configuration）**
+- 通过重试策略实现自动重连
+- 配置max_retries > 0即可启用自动重连
+- 每次重试前等待retry_delay_ms毫秒
+- 配合熔断机制，避免在服务不可用时频繁重试
+
+**4. 新增错误类型**
+- `OperationFailed(String)` — 操作失败（如熔断打开时拒绝请求）
+
+**功能特性**：
+
+**1. 重试策略**
+- 可配置最大重试次数
+- 可配置重试间隔
+- 支持所有HTTP方法（GET、POST、PUT、DELETE等）
+- 重试时使用新的request_id
+- 重试耗尽后返回最后一次错误
+
+**2. 熔断机制**
+- 三种状态：Closed（关闭）、Open（打开）、HalfOpen（半开）
+- 可配置失败阈值
+- 可配置重置超时
+- 可配置是否启用
+- 半开状态下允许有限请求测试恢复
+- 连续成功3次后关闭熔断
+- 熔断打开时直接拒绝请求，避免浪费资源
+- 熔断状态跨ServiceClient克隆共享（Arc<Mutex>）
+
+**3. 自动重连**
+- 通过重试策略实现
+- 可配置重试次数和间隔
+- 配合熔断机制避免频繁重试
+- 适用于临时网络故障或服务重启
+
+**技术说明**：
+- 重试逻辑在request方法中实现，调用内部request_once方法
+- 熔断状态使用Arc<Mutex<CircuitBreakerInternal>>实现线程安全共享
+- 熔断检查在请求开始时执行，如果熔断打开则直接返回错误
+- 成功和失败记录在请求完成后执行
+- 半开状态下的成功计数达到3次后关闭熔断
+- 熔断打开时间使用std::time::Instant记录
+- 熔断状态信息使用chrono转换为RFC3339格式
+- 所有新配置字段都有serde默认值，保持向后兼容
+
+**验收结果**：
+- 完成重试策略实现（max_retries、retry_delay_ms配置，重试逻辑）
+- 完成熔断机制实现（CircuitBreakerState、CircuitBreakerStatus、CircuitBreakerInternal类型）
+- 完成熔断配置（circuit_breaker_enabled、failure_threshold、reset_timeout_secs）
+- 完成熔断方法（check_circuit_breaker、record_success、record_failure、get_circuit_breaker_status、reset_circuit_breaker）
+- 完成自动重连配置（通过重试策略实现）
+- 完成新增错误类型（OperationFailed）
+- 完成内部方法request_once（单次请求，不含重试）
+- 所有新配置字段都有serde默认值，保持向后兼容
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 重试策略配置 | max_retries（默认0）、retry_delay_ms（默认1000） | ✅ |
+| 轨C 重试逻辑 | 循环执行请求，最多重试max_retries次，每次等待retry_delay_ms | ✅ |
+| 轨C 内部方法 | request_once（单次请求，不含重试逻辑） | ✅ |
+| 轨C 熔断状态类型 | CircuitBreakerState（Closed、Open、HalfOpen） | ✅ |
+| 轨C 熔断状态信息 | CircuitBreakerStatus（state、failure_count、success_count、opened_at、enabled） | ✅ |
+| 轨C 熔断配置 | circuit_breaker_enabled（默认false）、failure_threshold（默认5）、reset_timeout_secs（默认30） | ✅ |
+| 轨C 熔断方法 | check_circuit_breaker、record_success、record_failure、get_circuit_breaker_status、reset_circuit_breaker | ✅ |
+| 轨C 熔断状态转换 | Closed→Open（失败达阈值）、Open→HalfOpen（超时）、HalfOpen→Closed（成功3次） | ✅ |
+| 轨C 自动重连 | 通过重试策略实现，配置max_retries > 0启用 | ✅ |
+| 轨C 新增错误类型 | OperationFailed(String） | ✅ |
+| 轨C 向后兼容 | 所有新配置字段都有serde默认值 | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V437后续扩展（留给V438+）
+
+- [ ] **轨D 业务工具调用示例**：添加业务工具调用示例文档和代码示例
+- [ ] **轨D 业务工具权限控制**：添加业务工具操作的权限控制
+- [ ] **轨C shared-service-client高级功能完善**：添加负载均衡、服务发现、限流机制
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V437连续一百零五次交付验证成功，V438继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
