@@ -1,6 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type { PaginationParams, PaginatedResult } from '../types';
+import type { PaginationParams, PaginatedResult } from '@/api/erp/types';
 
 /**
  * V19.0 Stub: 资产分类管理

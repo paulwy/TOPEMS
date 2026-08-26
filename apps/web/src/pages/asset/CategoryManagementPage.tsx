@@ -18,8 +18,8 @@ import { useTranslation } from 'react-i18next';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { assetCategorySchema } from '@/schemas/erp/assetCategory';
-import { assetCategoryApi } from '@/api/erp/finance/assetCategory';
-import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/erp/finance/assetCategory';
+import { assetCategoryApi } from '@/api/asset/assetCategory';
+import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/asset/assetCategory';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 

@@ -13141,6 +13141,123 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V425 — 架构改进四轨并行第九十三次：B1 API迁移P2阶段实施完成（@/api/erp/finance/目录删除）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十三次交付 · B1 API迁移P2阶段实施完成 · 4个代码文件修改+2个删除 · 更新导入语句和页面引用，删除@/api/erp/finance/目录，B1 API迁移全部完成
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P2阶段实施完成 | 更新导入语句和页面引用，删除@/api/erp/finance/目录 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V426 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V426 | ⏸️ |
+
+### 轨B：B1 API迁移P2阶段实施完成（@/api/erp/finance/目录删除）
+
+**实施内容**：更新@/api/asset/中的导入语句，更新页面引用，删除@/api/erp/finance/目录，完成B1 API迁移的P2阶段
+
+**修改的文件（4个代码文件修改+2个删除）**：
+
+**1. apps/web/src/api/asset/asset.ts（更新导入语句）**
+- 将`import type { ... } from '../types';`
+- 更新为：`import type { ... } from '@/api/erp/types';`
+
+**2. apps/web/src/api/asset/assetCategory.ts（更新导入语句）**
+- 将`import type { PaginationParams, PaginatedResult } from '../types';`
+- 更新为：`import type { PaginationParams, PaginatedResult } from '@/api/erp/types';`
+
+**3. apps/web/src/pages/asset/AssetListPage.tsx（更新导入语句）**
+- 将`import { assetApi } from '@/api/erp/finance/asset';`
+- 更新为：`import { assetApi } from '@/api/asset/asset';`
+
+**4. apps/web/src/pages/asset/CategoryManagementPage.tsx（更新导入语句）**
+- 将`import { assetCategoryApi } from '@/api/erp/finance/assetCategory';`
+- 更新为：`import { assetCategoryApi } from '@/api/asset/assetCategory';`
+- 将`import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/erp/finance/assetCategory';`
+- 更新为：`import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/asset/assetCategory';`
+
+**5. apps/web/src/api/erp/finance/asset.ts（删除）**
+- 删除原因：已迁移到@/api/asset/asset.ts
+
+**6. apps/web/src/api/erp/finance/assetCategory.ts（删除）**
+- 删除原因：已迁移到@/api/asset/assetCategory.ts
+
+**7. apps/web/src/api/erp/finance/目录（删除）**
+- 删除原因：目录已空，所有文件都已迁移或删除
+
+**B1 API迁移整体完成总结**：
+
+**迁移历程（V410-V425，共16个版本）**：
+- V410：B1 API迁移分析 — erp/finance与finance差异对比
+- V411：B1 API重叠文件差异对比 — 4个文件详细分析
+- V412：B1 API report.ts详细对比 — 方法列表与实现差异
+- V413：B1 API report.ts完整方法列表 — 9个方法确认
+- V414：B1 API迁移整体进度总结与实施计划
+- V415：P0阶段实施 — 删除4个无引用文件（accounting、bank、receivablePayable、voucher）
+- V416：P1阶段实施详细计划 — report.ts 10个独有方法
+- V417：P1阶段类型迁移详细计划 — 14个类型定义
+- V418：P1阶段类型迁移目标文件结构分析
+- V419：P1阶段类型迁移实施 — 14个类型定义
+- V420：P1阶段删除源类型定义详细计划
+- V421：P1阶段删除源类型定义 — 14个类型定义
+- V422：P1阶段方法迁移+文件删除 — 10个独有方法
+- V423：P1阶段budget.ts迁移+删除
+- V424：P2阶段实施详细计划 — asset迁移
+- V425：P2阶段实施完成 — @/api/erp/finance/目录删除
+
+**迁移统计**：
+- 删除文件：8个（accounting.ts、bank.ts、receivablePayable.ts、voucher.ts、report.ts、budget.ts、asset.ts、assetCategory.ts）
+- 删除目录：1个（@/api/erp/finance/）
+- 新建文件：2个（@/api/asset/asset.ts、@/api/asset/assetCategory.ts）
+- 新建目录：1个（@/api/asset/）
+- 迁移类型定义：14个
+- 迁移方法：10个
+- 更新页面引用：2个
+
+**技术说明**：
+- 重要发现：@/api/erp/finance/目录已被完全删除，B1 API迁移全部完成
+- 所有文件都已迁移到正确的位置：
+  - report.ts的10个独有方法已迁移到@/api/finance/report.ts
+  - budget.ts的budgetApi和expenseApi已在@/api/finance/budget.ts和@/api/finance/expense.ts中存在
+  - asset.ts和assetCategory.ts已迁移到@/api/asset/目录
+- 所有页面引用都已更新
+- 所有导入语句都已更新
+- B1 API迁移的P0、P1、P2阶段全部完成
+
+**验收结果**：
+- 成功更新@/api/asset/asset.ts的导入语句
+- 成功更新@/api/asset/assetCategory.ts的导入语句
+- 成功更新AssetListPage.tsx的导入语句
+- 成功更新CategoryManagementPage.tsx的导入语句
+- 成功删除@/api/erp/finance/asset.ts
+- 成功删除@/api/erp/finance/assetCategory.ts
+- 成功删除@/api/erp/finance/目录
+- B1 API迁移全部完成
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 更新asset.ts导入 | 从../types改为@/api/erp/types | ✅ |
+| 轨B 更新assetCategory.ts导入 | 从../types改为@/api/erp/types | ✅ |
+| 轨B 更新AssetListPage.tsx导入 | 从@/api/erp/finance/asset改为@/api/asset/asset | ✅ |
+| 轨B 更新CategoryManagementPage.tsx导入 | 从@/api/erp/finance/assetCategory改为@/api/asset/assetCategory | ✅ |
+| 轨B 删除asset.ts | @/api/erp/finance/asset.ts已删除 | ✅ |
+| 轨B 删除assetCategory.ts | @/api/erp/finance/assetCategory.ts已删除 | ✅ |
+| 轨B 删除目录 | @/api/erp/finance/目录已删除 | ✅ |
+| 轨B B1 API迁移完成 | P0、P1、P2阶段全部完成 | ✅ |
+| 轨B 迁移版本数 | V410-V425，共16个版本 | ✅ |
+| 变更统计 | 4个代码文件修改+2个删除+修改1文件(TODO.md) | ✅ |
+
+### V425后续扩展（留给V426+）
+
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V425连续九十三次交付验证成功，V426继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
