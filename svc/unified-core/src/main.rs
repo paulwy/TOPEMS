@@ -458,6 +458,25 @@ async fn main() -> anyhow::Result<()> {
         modules::communication::ws_event_bridge::spawn_event_bridge(ws_state_bridge, bridge_config);
     });
 
+    // V431: Spawn background task to cleanup expired SSE sessions
+    let sse_sessions_cleanup = state.sse_sessions.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            // Cleanup sessions inactive for more than 30 minutes
+            let removed = sse_sessions_cleanup
+                .cleanup_expired(tokio::time::Duration::from_secs(1800))
+                .await;
+            if removed > 0 {
+                tracing::info!(
+                    "SSE cleanup: removed {} expired sessions",
+                    removed
+                );
+            }
+        }
+    });
+
     // Spawn background task to detect stale plugin heartbeats
     {
         let pool_clone = pool_for_heartbeat.clone();

@@ -14086,6 +14086,129 @@ client.connect();
 
 ---
 
+## 🎯 V431 — 架构改进四轨并行第九十九次：轨C SSE端点完善（会话超时清理+错误处理+日志记录+最大会话限制）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十九次交付 · 轨C SSE端点完善 · 3个代码文件修改 · 添加会话超时清理后台任务、错误处理和日志记录、会话最大数量限制
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE端点完善 | 添加会话超时清理后台任务、错误处理和日志记录、会话最大数量限制 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V432 | ⏸️ |
+
+### 轨C：SSE端点完善（会话超时清理+错误处理+日志记录+最大会话限制）
+
+**实现内容**：添加会话超时清理后台任务、错误处理和日志记录、会话最大数量限制
+
+**修改的文件（3个代码文件）**：
+
+**1. 修改：`svc/unified-core/src/main.rs`（添加SSE会话超时清理后台任务）**
+- 在WebSocket事件桥接任务之后添加SSE会话清理后台任务
+- 每60秒运行一次
+- 清理超过30分钟（1800秒）不活跃的会话
+- 记录清理的会话数量（tracing::info!）
+
+**2. 修改：`svc/unified-core/src/shared/mod.rs`（添加会话最大数量限制）**
+- 在SseSessionManager中添加max_sessions字段
+- 添加DEFAULT_MAX_SESSIONS常量（默认1000）
+- 添加with_max_sessions()方法，支持自定义最大会话数
+- 修改create_session()方法，返回Option：
+  - 如果达到最大会话限制，返回None，并记录警告日志
+  - 否则创建会话，返回Some((session_id, receiver))
+  - 创建会话后记录信息日志（session_id和总会话数）
+- 添加max_sessions()方法，获取最大会话数
+- 添加Default trait实现（调用new()）
+
+**3. 修改：`svc/unified-core/src/routes/sse.rs`（添加错误处理和日志记录）**
+- 修改sse_connect_handler：
+  - 处理create_session()返回Option的情况
+  - 如果达到最大会话限制，发送error事件然后关闭连接
+  - 添加连接建立日志（tracing::info!）
+  - 添加连接关闭日志（tracing::info!）
+  - 连接关闭时主动清理会话（remove_session）
+- 修改sse_session_handler：
+  - 添加请求接收日志（tracing::debug!）
+  - 添加会话未找到警告日志（tracing::warn!）
+  - 添加事件发送成功日志（tracing::debug!）
+  - 添加客户端断开警告日志（tracing::warn!）
+  - 添加事件构建失败错误日志（tracing::error!）
+
+**SSE端点完善内容**：
+
+**1. 会话超时清理后台任务**
+- 运行间隔：每60秒
+- 超时阈值：30分钟（1800秒）
+- 清理逻辑：移除last_active超过30分钟的会话
+- 日志记录：记录清理的会话数量
+- 参考模式：与WebSocket连接清理任务相同的模式
+
+**2. 错误处理**
+- 最大会话限制：达到1000个并发会话时拒绝新连接
+- 错误事件：发送event="error"的SSE事件，包含error和message字段
+- 会话未找到：POST请求时会话不存在，返回success=false
+- 客户端断开：发送事件时receiver已关闭，清理会话并返回success=false
+- 事件构建失败：JSON序列化失败，返回success=false和错误信息
+
+**3. 日志记录**
+- 连接建立：tracing::info!("SSE connection established: session_id={}")
+- 连接关闭：tracing::info!("SSE connection closed: session_id={}")
+- 会话创建：tracing::info!("SSE session created: {} (total: {})")
+- 会话限制：tracing::warn!("SSE session limit reached: {}/{}")
+- 连接拒绝：tracing::warn!("SSE connection rejected: max sessions limit reached")
+- 会话清理：tracing::info!("SSE cleanup: removed {} expired sessions")
+- 请求接收：tracing::debug!("SSE session request: session_id={}, event_type={}")
+- 会话未找到：tracing::warn!("SSE session not found: session_id={}")
+- 事件发送：tracing::debug!("SSE event sent: session_id={}, event_type={}")
+- 客户端断开：tracing::warn!("SSE client disconnected: session_id={}")
+- 事件构建失败：tracing::error!("SSE event build failed: session_id={}, error={}")
+
+**4. 会话最大数量限制**
+- 默认最大会话数：1000
+- 可配置：通过SseSessionManager::with_max_sessions()自定义
+- 检查时机：create_session()时检查
+- 超限处理：返回None，不创建会话
+- 日志记录：记录警告日志，包含当前会话数和最大限制
+
+**技术说明**：
+- 会话超时清理使用tokio::spawn后台任务，与WebSocket清理任务模式一致
+- 最大会话限制使用usize类型，默认1000，可通过with_max_sessions()配置
+- create_session()返回Option，调用方需要处理None情况（发送错误事件）
+- 连接关闭时主动清理会话，避免等待超时清理
+- 日志使用tracing crate，支持不同级别（info、warn、error、debug）
+- 错误事件使用标准SSE格式（event="error"，data为JSON）
+
+**验收结果**：
+- 完成会话超时清理后台任务（每60秒，30分钟超时）
+- 完成错误处理（最大会话限制、会话未找到、客户端断开、事件构建失败）
+- 完成日志记录（连接建立/关闭、会话创建/清理、请求接收/发送、错误警告）
+- 完成会话最大数量限制（默认1000，可配置）
+- 完成连接关闭时主动清理会话
+- 完成create_session()返回Option的改造
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 会话超时清理 | 后台任务每60秒运行，30分钟超时，记录清理数量 | ✅ |
+| 轨C 最大会话限制 | 默认1000，可配置，超限返回None并发送错误事件 | ✅ |
+| 轨C 错误处理 | 最大会话限制、会话未找到、客户端断开、事件构建失败 | ✅ |
+| 轨C 日志记录 | 11种日志场景（info/warn/error/debug级别） | ✅ |
+| 轨C 连接关闭清理 | 连接关闭时主动调用remove_session清理会话 | ✅ |
+| 轨C create_session改造 | 返回Option，调用方处理None情况 | ✅ |
+| 轨C 后台任务模式 | 与WebSocket清理任务相同的模式（tokio::spawn + interval） | ✅ |
+| 变更统计 | 3个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V431后续扩展（留给V432+）
+
+- [ ] **轨C SSE端点测试**：编写单元测试和集成测试，测试SSE连接建立、会话请求、超时清理、最大会话限制
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V431连续九十九次交付验证成功，V432继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

@@ -62,23 +62,39 @@ pub struct SseSessionResponse {
 pub async fn sse_connect_handler(
     State(state): State<AppState>,
 ) -> Sse<impl Stream<Item = Result<Event, axum::Error>>> {
-    let (session_id, receiver) = state.sse_sessions.create_session().await;
+    // Try to create a new SSE session
+    let session_result = state.sse_sessions.create_session().await;
 
-    // Build the endpoint URL the client should POST to.
-    // Note: In production, this should be constructed from the request's
-    // host/port. For now we use a relative path that the client resolves
-    // against its current origin.
-    let endpoint = format!("/api/sse/session/{}", session_id);
-
-    let endpoint_data = EndpointEventData {
-        session_id: session_id.clone(),
-        endpoint,
-        expires_in: 1800, // 30 minutes
-    };
-
-    // Create a stream that first sends the endpoint event, then forwards
-    // everything from the receiver channel.
     let stream = async_stream::stream! {
+        let (session_id, mut receiver) = match session_result {
+            Some(s) => s,
+            None => {
+                // Max sessions limit reached — send error event and close
+                tracing::warn!("SSE connection rejected: max sessions limit reached");
+                let error_data = serde_json::json!({
+                    "error": "max_sessions_reached",
+                    "message": "Maximum number of concurrent SSE sessions has been reached",
+                });
+                let error_event = Event::default()
+                    .event("error")
+                    .json_data(error_data)
+                    .map_err(|e| axum::Error::new(e));
+                yield error_event;
+                return;
+            }
+        };
+
+        tracing::info!("SSE connection established: session_id={}", session_id);
+
+        // Build the endpoint URL the client should POST to.
+        let endpoint = format!("/api/sse/session/{}", session_id);
+
+        let endpoint_data = EndpointEventData {
+            session_id: session_id.clone(),
+            endpoint,
+            expires_in: 1800, // 30 minutes
+        };
+
         // Send the initial endpoint event.
         let endpoint_event = Event::default()
             .event("endpoint")
@@ -87,14 +103,13 @@ pub async fn sse_connect_handler(
         yield endpoint_event;
 
         // Forward all events from the receiver.
-        let mut receiver = receiver;
         while let Some(event) = receiver.recv().await {
             yield event;
         }
 
         // Connection closed — clean up the session.
-        // Note: This runs in the stream task, but we need access to state.
-        // For simplicity, sessions are cleaned up by the timeout mechanism.
+        tracing::info!("SSE connection closed: session_id={}", session_id);
+        state.sse_sessions.remove_session(&session_id).await;
     };
 
     Sse::new(stream).keep_alive(
@@ -113,9 +128,16 @@ pub async fn sse_session_handler(
     Path(session_id): Path<String>,
     Json(request): Json<SseSessionRequest>,
 ) -> Json<SseSessionResponse> {
+    tracing::debug!(
+        "SSE session request: session_id={}, event_type={}",
+        session_id,
+        request.event_type
+    );
+
     let sender = match state.sse_sessions.get_sender(&session_id).await {
         Some(s) => s,
         None => {
+            tracing::warn!("SSE session not found: session_id={}", session_id);
             return Json(SseSessionResponse {
                 success: false,
                 session_id,
@@ -132,13 +154,21 @@ pub async fn sse_session_handler(
     match event {
         Ok(evt) => {
             match sender.send(Ok(evt)).await {
-                Ok(_) => Json(SseSessionResponse {
-                    success: true,
-                    session_id,
-                    message: "Event sent successfully".to_string(),
-                }),
+                Ok(_) => {
+                    tracing::debug!(
+                        "SSE event sent: session_id={}, event_type={}",
+                        session_id,
+                        request.event_type
+                    );
+                    Json(SseSessionResponse {
+                        success: true,
+                        session_id,
+                        message: "Event sent successfully".to_string(),
+                    })
+                }
                 Err(_) => {
                     // Receiver dropped — client disconnected.
+                    tracing::warn!("SSE client disconnected: session_id={}", session_id);
                     state.sse_sessions.remove_session(&session_id).await;
                     Json(SseSessionResponse {
                         success: false,
@@ -148,11 +178,18 @@ pub async fn sse_session_handler(
                 }
             }
         }
-        Err(e) => Json(SseSessionResponse {
-            success: false,
-            session_id,
-            message: format!("Failed to build event: {}", e),
-        }),
+        Err(e) => {
+            tracing::error!(
+                "SSE event build failed: session_id={}, error={}",
+                session_id,
+                e
+            );
+            Json(SseSessionResponse {
+                success: false,
+                session_id,
+                message: format!("Failed to build event: {}", e),
+            })
+        }
     }
 }
 
