@@ -11683,6 +11683,148 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V413 — 架构改进四轨并行第八十一次：B1 API report.ts完整方法列表（9个方法确认）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十一次交付 · B1 API report.ts完整方法列表 · 0个代码文件修改 · 详细查看@/api/finance/report.ts的完整方法列表，确认9个方法
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | report.ts完整方法列表 | 详细查看@/api/finance/report.ts的完整方法列表，确认9个方法 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V414 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V414 | ⏸️ |
+
+### 轨B：B1 API report.ts完整方法列表（9个方法确认）
+
+**分析内容**：详细查看@/api/finance/report.ts的完整内容，确认所有方法
+
+**@/api/finance/report.ts 完整方法列表（9个方法）**：
+
+1. **getBalanceSheet**（第13行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<ApiResponse<BalanceSheet>>
+   - 端点：GET /reports/balance-sheet
+
+2. **getIncomeStatement**（第19行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<ApiResponse<IncomeStatement>>
+   - 端点：GET /reports/income-statement
+
+3. **getCashFlowStatement**（第25行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<ApiResponse<CashFlowStatement>>
+   - 端点：GET /reports/cash-flow
+
+4. **getAccountBalanceReport**（第31行）
+   - 参数：{ org_id, period, account_ids?, level?, show_zero_balance? }
+   - 返回：Promise<ApiResponse<{ items: AccountBalance[]; total_records: number }>>
+   - 端点：GET /reports/account-balance
+
+5. **getAccountLedger**（第48行）
+   - 参数：{ account_id, start_period, end_period, org_id?, department_id?, project_id?, page?, pagesize? }
+   - 返回：Promise<ApiResponse<PaginatedResult<{ date, voucher_no, summary, debit, credit, balance, counterparty? }>>>
+   - 端点：GET /reports/account-ledger
+
+6. **getDimensionDetail**（第75行）
+   - 参数：{ dimension, dimension_id, start_period, end_period, org_id? }
+   - 返回：Promise<ApiResponse<any>>
+   - 端点：GET /reports/dimension-detail
+
+7. **exportBalanceSheet**（第87行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<Blob>
+   - 端点：GET /reports/balance-sheet/export
+   - 使用 downloadBlob 函数
+
+8. **exportIncomeStatement**（第93行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<Blob>
+   - 端点：GET /reports/income-statement/export
+   - 使用 downloadBlob 函数
+
+9. **exportCashFlowStatement**（第99行）
+   - 参数：params: ReportQueryParams
+   - 返回：Promise<Blob>
+   - 端点：GET /reports/cash-flow/export
+   - 使用 downloadBlob 函数
+
+**文件结构**：
+- 行数：106行
+- 导入：apiClient, downloadBlob from '../client'；类型 from '../../types/finance'
+- 导出：reportApi（命名导出）+ default export
+- HTTP客户端：apiClient.finance
+
+**方法分类**：
+- **三大报表查询**（3个）：getBalanceSheet、getIncomeStatement、getCashFlowStatement
+- **明细账查询**（3个）：getAccountBalanceReport、getAccountLedger、getDimensionDetail
+- **三大报表导出**（3个）：exportBalanceSheet、exportIncomeStatement、exportCashFlowStatement
+
+**与@/api/erp/finance/report.ts的对比**：
+
+| 对比项 | @/api/erp/finance/report.ts | @/api/finance/report.ts |
+|--------|-------------------------------|--------------------------|
+| 方法数量 | 14个 | 9个 |
+| 三大报表 | balanceSheet、incomeStatement、cashFlowStatement | getBalanceSheet、getIncomeStatement、getCashFlowStatement |
+| 明细账 | 无 | getAccountBalanceReport、getAccountLedger、getDimensionDetail |
+| 财务分析 | 10个（businessOverview、projectSummary、monthlyTrend、departmentSummary、agingAnalysis、voucherStatistics、cashFlowAnalysis、expenseAnalysis、profitAnalysis、financialOverview） | 无 |
+| 导出功能 | 无 | 3个（exportBalanceSheet、exportIncomeStatement、exportCashFlowStatement） |
+| 独有方法 | 10个财务分析方法 | 3个明细账方法 + 3个导出方法 |
+
+**关键发现**：
+- 两个版本的方法功能完全不同，没有重复的方法
+- @/api/erp/finance/report.ts 专注于财务分析（10个分析方法）
+- @/api/finance/report.ts 专注于明细账查询和报表导出（3个明细账 + 3个导出）
+- 两个版本是互补的，而不是重复的
+- 迁移时需要将两个版本的方法合并，而不是简单地删除一个
+
+**迁移策略更新**：
+- 由于两个版本的方法功能完全不同，不能简单地删除一个版本
+- 建议将@/api/erp/finance/report.ts中的10个财务分析方法迁移到@/api/finance/report.ts
+- 迁移后，@/api/finance/report.ts将有19个方法（9个原有 + 10个财务分析）
+- 然后删除@/api/erp/finance/report.ts
+- 迁移时需要统一API对象名（使用reportApi）和方法命名规范（使用get前缀）
+
+**技术说明**：
+- 重要发现：两个版本的report.ts是互补的，而不是重复的
+- @/api/erp/finance/report.ts 有10个独有的财务分析方法
+- @/api/finance/report.ts 有6个独有的方法（3个明细账 + 3个导出）
+- 迁移时需要合并两个版本的方法，而不是简单地删除一个
+- 建议的迁移顺序：先迁移财务分析方法，然后删除@/api/erp/finance/report.ts
+
+**验收结果**：
+- 完成@/api/finance/report.ts的完整方法列表分析（9个方法）
+- 完成方法分类（三大报表查询、明细账查询、三大报表导出）
+- 完成与@/api/erp/finance/report.ts的对比分析
+- 确认两个版本的方法功能完全不同，没有重复
+- 更新迁移策略（合并两个版本的方法，而不是简单删除）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | @/api/finance/report.ts的完整方法列表 | ✅ |
+| 轨B 方法数量 | 9个方法 | ✅ |
+| 轨B 三大报表查询 | 3个（getBalanceSheet、getIncomeStatement、getCashFlowStatement） | ✅ |
+| 轨B 明细账查询 | 3个（getAccountBalanceReport、getAccountLedger、getDimensionDetail） | ✅ |
+| 轨B 三大报表导出 | 3个（exportBalanceSheet、exportIncomeStatement、exportCashFlowStatement） | ✅ |
+| 轨B 对比分析 | 与@/api/erp/finance/report.ts的对比 | ✅ |
+| 轨B 关键发现 | 两个版本互补，没有重复方法 | ✅ |
+| 轨B 迁移策略更新 | 合并两个版本的方法 | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V413后续扩展（留给V414+）
+
+- [ ] **轨B report.ts合并实施**：将@/api/erp/finance/report.ts中的10个财务分析方法迁移到@/api/finance/report.ts
+- [ ] **轨B report.ts删除**：迁移完成后删除@/api/erp/finance/report.ts
+- [ ] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本）
+- [ ] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V413连续八十一次交付验证成功，V414继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
