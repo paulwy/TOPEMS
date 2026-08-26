@@ -92,21 +92,7 @@ export type AdaptedRequestBody<
 // ---------------------------------------------------------------------------
 
 /**
- * 智能判断：如果 Raw 包含 success/code/message 字段（WrappedResponse），
- * 则视为 ApiResponse<T> 包裹式 schema（CRM 风格）；
- * 否则视为 Entity 本体（未包裹，HRM/ERP 风格），外层补 SharedApiResponse<T>。
- */
-type IsApiResponseWrapped<Raw> = Raw extends {
-  success?: unknown;
-  code?: unknown;
-  message?: unknown;
-}
-  ? true
-  : false;
-
-/**
  * 强类型 ApiResponse<T>。
- * - OpId=never 时：退化为 SharedApiResponse<T>
  * - 后端 schema 是 ApiResponse 包裹（CRM 风格）或 Entity 本体（HRM/ERP 风格）：
  *   统一使用 SharedApiResponse<T>，保证 success/code/message 为 required，
  *   与前端通用类型契约严格兼容（OpenAPI 生成的 Raw 中字段多为 optional，
@@ -114,7 +100,6 @@ type IsApiResponseWrapped<Raw> = Raw extends {
  */
 export type TypedApiResponse<
   T = unknown,
-  OpId extends keyof operations = never,
 > = SharedApiResponse<T>;
 
 /** 分页响应别名：返回 ApiResponse<PaginatedResponse<T>> */

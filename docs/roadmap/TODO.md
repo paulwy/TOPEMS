@@ -10531,6 +10531,79 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V401 — 架构改进四轨并行第六十九次：剩余TS6133清理（api-binding-tools未使用类型）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六十九次交付 · 剩余TS6133清理 · 1个文件 · 删除api-binding-tools.ts中未使用的IsApiResponseWrapped类型和OpId泛型参数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 剩余TS6133清理 | 1个文件的2个未使用类型/泛型参数删除（packages/shared-types/api-binding-tools.ts，IsApiResponseWrapped类型和TypedApiResponse的OpId泛型参数） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V402 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V402 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V402 | ⏸️ |
+
+### 轨A：剩余TS6133清理（api-binding-tools未使用类型）
+
+**清理内容**：删除1个文件中2个未使用的类型/泛型参数
+
+**清理的文件（1个）**：
+
+1. **packages/shared-types/src/api-binding-tools.ts** — 删除2个未使用项
+   - 删除的类型：`type IsApiResponseWrapped<Raw>`（第99-106行，共8行+注释5行=13行）
+     - 类型功能：智能判断Raw类型是否包含success/code/message字段，判断是否为ApiResponse包裹式schema
+     - 该类型定义后从未被使用
+   - 删除的泛型参数：`OpId extends keyof operations = never`（从TypedApiResponse类型中删除）
+     - 该泛型参数定义后从未在类型定义中使用
+     - TypedApiResponse只是简单地返回SharedApiResponse<T>，不需要OpId参数
+     - 同时删除注释中提到的"- OpId=never 时：退化为 SharedApiResponse<T>"
+   - grep验证：文件中没有使用IsApiResponseWrapped类型的地方
+   - 文件从164行减少到149行（删除15行）
+
+**技术说明**：
+- 删除类型/泛型参数前验证未被任何地方使用（grep检查所有引用）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于定义后从未使用的类型和泛型参数，可以安全删除
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查类型的未使用情况（TS6196），即使是类型别名，如果未使用也会报错
+- IsApiResponseWrapped 可能是在API绑定工具开发过程中引入的，用于智能判断响应类型，但实际实现中使用了其他方式
+- TypedApiResponse 的 OpId 泛型参数可能是为了未来基于操作ID精确提取类型而设计的，但当前实现中没有使用
+
+**验收结果**：
+- 1个未使用类型的 TS6196 错误已消除
+- 1个未使用泛型参数的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的类型/泛型参数为未使用的遗留代码
+- 文件语法正确，其他类型定义保留
+- 删除后剩余约1个TS6133错误（DataTable showFilters）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的2个未使用项删除 | ✅ |
+| 轨A 清理类型 | IsApiResponseWrapped（条件类型） | ✅ |
+| 轨A 清理泛型参数 | TypedApiResponse的OpId泛型参数 | ✅ |
+| 轨A 删除行数 | 15行（类型+注释+泛型参数） | ✅ |
+| 轨A 文件变化 | api-binding-tools.ts从164行到149行 | ✅ |
+| 轨A 引用检查 | 删除前验证类型/泛型参数未被任何地方使用 | ✅ |
+| 轨A 其他类型保留 | OpenApiOperation、OpenApiQueryParams等类型保留 | ✅ |
+| 轨A 语法检查 | 文件语法正确，类型定义完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V401后续扩展（留给V402+）
+
+- [ ] **轨A 剩余TS6133清理**：继续清理 packages/ 目录下的约1个TS6133错误
+- [ ] **轨A DataTable.tsx清理**：清理 showFilters 未使用变量（需要检查接口属性影响）
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V401连续六十九次交付验证成功，V402继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
