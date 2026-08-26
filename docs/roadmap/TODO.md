@@ -8930,6 +8930,83 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V378 — 架构改进四轨并行第四十六次：前端未使用import清理（V373-V377遗留，清空空文件）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十六次交付 · 前端未使用import清理 · 2个文件 · 清空V373-V377删除变量/组件后导致的空文件，消除遗留未使用import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 2个文件的未使用import删除（mes/analytics.ts和mes/approval.ts，V375-V376删除API客户端后导致的空文件，清空整个文件） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V379 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V379 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V379 | ⏸️ |
+
+### 轨A：前端未使用import清理（V373-V377遗留，清空空文件）
+
+**清理内容**：清空2个V375-V376删除API客户端后导致的空文件，消除遗留未使用import
+
+**清理的文件（2个）**：
+
+1. **api/mes/analytics.ts** — 清空整个文件
+   - V375删除了_mesAnalyticsApi变量后，文件中只剩下import语句（apiClient、ApiResponse、OeeDashboardData等类型导入）
+   - 这些import语句没有被任何实际代码使用，变成未使用的遗留import
+   - 清空整个文件，消除所有未使用import
+   - 文件从10行减少到1行（空行）
+
+2. **api/mes/approval.ts** — 清空整个文件
+   - V376删除了_mesApprovalApi变量后，文件中只剩下import语句（apiClient、ApiResponse、ApprovalStartRequest等类型导入）
+   - 这些import语句没有被任何实际代码使用，变成未使用的遗留import
+   - 清空整个文件，消除所有未使用import
+   - 文件从3行减少到1行（空行）
+
+**技术说明**：
+- V373-V377删除未使用的变量/组件后，需要检查并清理相关的未使用import
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于只有import语句、没有任何实际代码的文件，可以直接清空整个文件
+- 清空文件前验证文件中没有任何实际代码（只有import语句）
+- 对于仍有类型定义或实际代码的文件（如customerProfile.ts、emergencyPlan.ts），只删除未使用的import，保留类型定义
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import的未使用情况，删除变量/组件后需要及时清理相关import
+
+**遗留问题**：
+- customerProfile.ts中仍有2个未使用import（apiClient、ApiResponse），但文件中有类型定义，需单独清理
+- emergencyPlan.ts中仍有3个未使用import（apiClient、ApiResponse、PaginatedResponse），但文件中有类型定义，需单独清理
+- AIFlowAssistant.tsx中仍有4个未使用import（i18n、assistantApi、useNotificationStore、logger），但文件中有其他import，需单独清理
+- FinancialReports.tsx中仍有未使用import（Card、CardContent等），需单独清理
+- 这些遗留未使用import留给后续版本处理
+
+**验收结果**：
+- 2个文件的未使用import TS6133错误已消除
+- 编译验证：无新增错误
+- 清空的文件均为只有import语句、没有任何实际代码的空文件
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 2个文件的未使用import删除 | ✅ |
+| 轨A 清理类型 | 清空整个文件（只有import语句的空文件） | ✅ |
+| 轨A 文件变化 | analytics.ts从10行到1行，approval.ts从3行到1行 | ✅ |
+| 轨A 引用检查 | 清空文件前验证文件中没有任何实际代码 | ✅ |
+| 轨A 保留检查 | customerProfile.ts/emergencyPlan.ts仍有类型定义，保留不动 | ✅ |
+| 轨A 遗留问题 | 4个文件仍有未使用import，留给后续版本处理 | ⚠️ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改2个前端文件 + 修改1文件 | ✅ |
+
+### V378后续扩展（留给V379+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~130个TS6133错误
+- [ ] **轨A 未使用import清理**：继续清理customerProfile.ts/emergencyPlan.ts/AIFlowAssistant.tsx/FinancialReports.tsx中的遗留未使用import
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V378连续四十六次交付验证成功，V379继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
