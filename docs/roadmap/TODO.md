@@ -17429,6 +17429,146 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V453 — 架构改进四轨并行第一百二十一次：轨C shared-service-client Nacos服务发现（NacosConfig+NacosServiceDiscovery+NacosServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+心跳+9个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十一次交付 · 轨C shared-service-client Nacos服务发现 · 1个代码文件新建 + 1个代码文件修改 · 实现基于Nacos Open API的服务发现，支持服务注册、注销、发现、列表和心跳
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client Nacos服务发现 | 实现Nacos服务发现 | ✅ |
+| 轨D | 业务工具权限审计日志 | 实现审计日志记录和查询，留给V454 | ⏸️ |
+
+### 轨C：shared-service-client Nacos服务发现（NacosConfig+NacosServiceDiscovery+NacosServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+心跳+9个单元测试）
+
+**实现内容**：实现基于Nacos Open API的服务发现，支持服务注册、注销、发现、列表和心跳
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/shared/nacos_service_discovery.rs`（Nacos服务发现实现，约620行）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（添加nacos_service_discovery模块声明）**
+
+**新增功能**：
+
+1. **Nacos配置（NacosConfig）**
+   - 字段：address（Nacos服务器地址）、namespace（命名空间ID）、group（分组名，默认"DEFAULT_GROUP"）、cluster（集群名，默认"DEFAULT"）、username（用户名）、password（密码）、timeout_secs（请求超时，默认10秒）、heartbeat_interval_secs（心跳间隔，默认5秒）
+   - 实现Default trait
+   - 支持serde序列化/反序列化
+
+2. **Nacos服务发现实现（NacosServiceDiscovery）**
+   - 字段：config（NacosConfig）、http_client（reqwest Client）、registered_services（已注册服务信息映射，用于心跳和注销）
+   - 方法：new()、build_url()、common_params()、extract_host_port()、encode_metadata()、decode_metadata()、instance_to_registration()
+   - 实现ServiceDiscovery trait的所有方法：register、deregister、discover、list_services、heartbeat
+
+3. **Nacos API类型**
+   - NacosRegisterRequest：注册请求参数（ip、port、serviceName、groupName、clusterName、namespaceId、weight、enabled、healthy、ephemeral、metadata）
+   - NacosDeregisterRequest：注销请求参数
+   - NacosInstanceListResponse：实例列表响应（hosts、count）
+   - NacosInstance：实例信息（ip、port、weight、healthy、enabled、ephemeral、metadata、clusterName、serviceName）
+   - NacosBeatRequest：心跳请求（service_name、ip、port、weight、cluster_name、metadata、ephemeral）
+   - NacosServiceMetadata：服务元数据（name、base_url、version、description、tags、enabled、registered_at、last_heartbeat）
+   - RegisteredServiceInfo：已注册服务信息（name、ip、port、base_url）
+
+4. **Nacos服务发现构建器（NacosServiceDiscoveryBuilder）**
+   - 方法：new()、address()、namespace()、group()、cluster()、username()、password()、timeout_secs()、heartbeat_interval_secs()、build()
+   - 实现Default trait
+   - 链式调用构建NacosServiceDiscovery实例
+
+5. **心跳机制**
+   - 服务注册为临时实例（ephemeral=true）
+   - heartbeat方法通过/nacos/v1/ns/instance/beat发送心跳
+   - 心跳间隔可配置（默认5秒）
+   - Nacos自动检测不健康实例并移除
+
+6. **9个单元测试**
+   - test_nacos_config_default：测试默认配置
+   - test_extract_host_port：测试从URL提取主机和端口
+   - test_extract_host_port_default_http：测试HTTP默认端口
+   - test_encode_metadata：测试元数据编码
+   - test_decode_metadata：测试元数据解码
+   - test_build_url：测试URL构建
+   - test_common_params：测试公共参数
+   - test_builder：测试构建器
+   - test_instance_to_registration：测试实例转换
+
+**技术说明**：
+- 使用Nacos Open API（/nacos/v1/ns/instance、/nacos/v1/ns/instance/list、/nacos/v1/ns/instance/beat）
+- 使用reqwest HTTP客户端（已在项目中使用）
+- 使用async-trait实现异步ServiceDiscovery trait
+- 使用serde进行JSON序列化/反序列化
+- 使用url crate解析URL（已在项目中使用）
+- 使用chrono处理时间（已在项目中使用）
+- 使用form编码发送请求参数（Nacos API要求）
+- 支持命名空间、分组、集群配置
+- 支持用户名密码认证
+- 服务元数据存储在Nacos实例metadata中
+- 优先返回健康实例，无健康实例时返回第一个实例
+
+**Nacos服务发现特性**：
+1. 服务注册 — 通过POST /nacos/v1/ns/instance注册临时实例
+2. 服务注销 — 通过DELETE /nacos/v1/ns/instance注销实例
+3. 服务发现 — 通过GET /nacos/v1/ns/instance/list查询实例，优先返回健康实例
+4. 服务列表 — 返回已注册的服务列表
+5. 心跳 — 通过PUT /nacos/v1/ns/instance/beat发送心跳
+6. 临时实例 — 注册为ephemeral实例，心跳停止后自动移除
+7. 命名空间支持 — 支持多命名空间隔离
+8. 分组支持 — 支持服务分组
+9. 集群支持 — 支持多集群
+10. 构建器模式 — 使用NacosServiceDiscoveryBuilder链式构建实例
+
+**验收结果**：
+- 完成NacosConfig配置结构体（8个配置字段+Default实现+serde支持）
+- 完成NacosServiceDiscovery实现（new+6个辅助方法+5个ServiceDiscovery trait方法）
+- 完成7个Nacos API类型（RegisterRequest、DeregisterRequest、InstanceListResponse、Instance、BeatRequest、ServiceMetadata、RegisteredServiceInfo）
+- 完成NacosServiceDiscoveryBuilder构建器（9个配置方法+build方法+Default实现）
+- 完成心跳机制（临时实例+心跳API+可配置间隔）
+- 完成9个单元测试（全部通过）
+- 完成模块声明（shared/mod.rs添加nacos_service_discovery）
+- 代码总行数约620行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C NacosConfig配置 | 8个配置字段+Default+serde | ✅ |
+| 轨C NacosServiceDiscovery实现 | new+6辅助方法+5trait方法 | ✅ |
+| 轨C Nacos API类型 | 7个类型 | ✅ |
+| 轨C NacosServiceDiscoveryBuilder | 9配置方法+build+Default | ✅ |
+| 轨C 心跳机制 | 临时实例+心跳API+可配置间隔 | ✅ |
+| 轨C 单元测试 | 9个测试全部通过 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加 | ✅ |
+| 轨C 代码行数 | 约620行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V453后续扩展（留给V454+）
+
+- [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
+- [ ] **轨C shared-service-client Eureka服务发现**：集成Eureka服务发现
+- [ ] **轨C shared-service-client Kubernetes服务发现**：集成Kubernetes服务发现
+- [ ] **轨C NacosServiceDiscovery集成测试**：使用Docker Compose启动Nacos进行集成测试
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V453连续一百二十一次交付验证成功，V454继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
