@@ -100,29 +100,6 @@ export const Hidden: React.FC<{
   return <>{children}</>;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-function visibleByBreakpoint(
-  breakpoint: Breakpoint,
-  props: Partial<Record<Breakpoint, boolean>>
-): boolean {
-  if (props[breakpoint] !== undefined) {
-    return !props[breakpoint];
-  }
-  const breakpoints: Breakpoint[] = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];
-  const currentIndex = breakpoints.indexOf(breakpoint);
-  for (let i = currentIndex; i >= 0; i--) {
-    const bp = breakpoints[i];
-    if (props[bp] !== undefined) {
-      return !props[bp];
-    }
-  }
-  return true;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-function getBreakpointWidth(breakpoint: Breakpoint): number {
-  return breakpointValues[breakpoint];
-}
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useIsMobile(): boolean {
