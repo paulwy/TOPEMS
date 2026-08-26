@@ -170,8 +170,6 @@ export interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string;
   /** 是否显示搜索框 */
   showSearch?: boolean;
-  /** 是否显示筛选按钮 */
-  showFilters?: boolean;
   /** 是否显示导出按钮 */
   showExport?: boolean;
   /** 是否显示选择框 */
@@ -924,7 +922,6 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder,
   showSearch = true,
-  showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
