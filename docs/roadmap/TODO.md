@@ -11072,6 +11072,112 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V408 — 架构改进四轨并行第七十六次：通知测试修复 + 所有7个测试通过里程碑（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第七十六次交付 · 通知测试修复 + 所有测试通过 · 1个文件 · 重写辅助函数使用持续运行的读取线程和通道，所有7个MCP stdio集成测试全部通过
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | 通知测试修复 + 所有测试通过 | 重写辅助函数使用持续运行的读取线程和通道，所有7个测试通过 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V409 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V409 | ⏸️ |
+
+### 轨C：通知测试修复 + 所有7个测试通过里程碑
+
+**修复内容**：重写辅助函数使用持续运行的读取线程和通道，解决竞态条件问题，所有7个测试全部通过
+
+**修复的文件（1个）**：
+
+1. **svc/ai/tests/mcp_stdio_integration.rs** — 重写辅助函数，解决竞态条件问题
+   - 删除 `ReaderWrapper` 结构体（不再需要原始指针和手动实现Send trait）
+   - 重写 `start_mcp_stdio` 函数：
+     - 创建一个持续运行的读取线程，将所有读取到的 JSON 响应发送到通道中
+     - 返回通道接收端（`mpsc::Receiver<Value>`），而不是 `BufReader<std::process::ChildStdout>`
+     - 读取线程持续从 reader 中读取一行数据，解析为 JSON，发送到通道中
+     - 如果读取到 EOF 或者出错，则退出线程
+   - 重写 `read_response_with_timeout` 函数：
+     - 从通道中接收数据，带超时
+     - 不再需要创建新的读取线程，避免竞态条件
+   - 重写 `read_response` 函数：使用新的 `read_response_with_timeout`
+   - 修改所有7个测试：
+     - 将 `let (mut child, mut stdin, mut reader) = start_mcp_stdio();` 改为 `let (mut child, mut stdin, rx) = start_mcp_stdio();`
+     - 将 `read_response(&mut reader)` 改为 `read_response(&rx)`
+     - 将 `read_response_with_timeout(&mut reader, 500)` 改为 `read_response_with_timeout(&rx, 500)`
+
+**问题根因与解决方案**：
+- 问题根因（V407定位）：`read_response_with_timeout` 函数每次调用都创建一个新的读取线程，当读取超时后，读取线程仍然在运行，并且会继续读取下一行数据，导致后续的响应被之前的读取线程消耗
+- 解决方案：创建一个持续运行的读取线程，将所有读取到的数据发送到一个通道中，主线程从通道中读取数据，带超时
+- 优势：
+  1. 读取线程只会读取数据一次，不会重复读取
+  2. 主线程可以安全地超时，因为数据已经在通道中了
+  3. 不再需要原始指针和手动实现Send trait，代码更简洁、更安全
+  4. 不再有竞态条件问题
+
+**测试运行结果**：
+```
+running 7 tests
+test test_initialize_request ... ok
+test test_invalid_json_returns_parse_error ... ok
+test test_multiple_requests_in_sequence ... ok
+test test_notification_does_not_return_response ... ok
+test test_ping_request ... ok
+test test_tools_call_request ... ok
+test test_tools_list_request ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+```
+
+**里程碑意义**：
+- 所有7个MCP stdio集成测试全部通过
+- 验证了MCP stdio传输层的完整功能：
+  1. initialize 请求 → 返回 InitializeResult
+  2. tools/list 请求 → 返回工具列表
+  3. tools/call 请求 → 返回工具执行结果
+  4. ping 请求 → 返回成功
+  5. 无效 JSON → 返回解析错误
+  6. 通知（无 id）→ 不返回响应
+  7. 多个请求顺序执行 → 正确处理
+- MCP stdio传输层已经可以稳定工作
+
+**技术说明**：
+- 重要发现：使用持续运行的读取线程+通道模式是解决子进程stdout读取超时问题的最佳实践
+- 这种模式避免了每次读取都创建新线程的开销，也避免了竞态条件问题
+- 通道（mpsc）提供了可靠的超时接收机制，不需要手动实现线程取消
+- 代码简化：删除了ReaderWrapper结构体、unsafe代码、手动Send trait实现
+
+**验收结果**：
+- 所有7个MCP stdio集成测试全部通过
+- 竞态条件问题已解决
+- 代码更简洁、更安全（删除了unsafe代码）
+- 编译验证：测试文件成功编译
+- 运行时间：1.62秒（7个测试）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 修复文件数 | 1个测试文件的辅助函数重写 | ✅ |
+| 轨C 删除代码 | ReaderWrapper结构体、unsafe代码、手动Send trait | ✅ |
+| 轨C 新模式 | 持续运行的读取线程+通道 | ✅ |
+| 轨C 竞态条件 | 已解决（读取线程只会读取数据一次） | ✅ |
+| 轨C 编译验证 | 测试文件成功编译 | ✅ |
+| 轨C 测试通过 | 7个测试全部通过 | ✅ |
+| 轨C 运行时间 | 1.62秒（7个测试） | ✅ |
+| 轨C 里程碑 | MCP stdio传输层完整功能验证 | ✅ |
+| 变更统计 | 修改1个测试文件 + 修改1文件(TODO.md) | ✅ |
+
+### V408后续扩展（留给V409+）
+
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨C HTTP传输测试**：端到端测试HTTP POST /mcp JSON-RPC请求
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V408连续七十六次交付验证成功，V409继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
