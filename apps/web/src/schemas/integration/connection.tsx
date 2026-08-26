@@ -5,7 +5,6 @@
  * 删除、测试等完整 CRUD 操作。
  */
 
-import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { Database } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';

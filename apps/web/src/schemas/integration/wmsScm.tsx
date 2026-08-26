@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';

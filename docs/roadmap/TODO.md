@@ -4808,6 +4808,68 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V330 — 批量模式第十五次：Top15文件未使用项清理（15项）（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十五次成功 · 15 files（全部修改，无删除）· 净删 31 行 · tsc 0 errors · eslint 0 errors(1324 warnings, 从1333减9)
+
+### 目标文件（Top15，全部1项/文件=15初始）
+
+| 文件 | 初始项 | 类型 | 净删行 |
+|------|--------|------|--------|
+| schemas/erp/vehicle | 1 | React import | ~1 |
+| schemas/erp/vehicleRequest | 1 | React import | ~1 |
+| schemas/finance/invoice | 1 | const箭头函数 | ~8 |
+| schemas/finance/ledger | 1 | React import | ~1 |
+| schemas/finance/payment | 1 | const箭头函数 | ~8 |
+| schemas/finance/voucher | 1 | semanticTokens import | ~1 |
+| schemas/iam/user | 1 | SchemaField import | ~1 |
+| schemas/integration/connection | 1 | React import | ~1 |
+| schemas/integration/event | 1 | React import | ~1 |
+| schemas/integration/limsQms | 1 | React import | ~1 |
+| schemas/integration/mapping | 1 | React import | ~1 |
+| schemas/integration/mesErp | 1 | React import | ~1 |
+| schemas/integration/wmsScm | 1 | React import | ~1 |
+| schemas/lims/inspectionTask | 1 | React import | ~1 |
+| schemas/lims/sample | 1 | React import | ~1 |
+| **合计** | **15** | | **31** |
+
+### 清理方法论
+
+**A轨（批量sed）**：移除11项React import整行删除（全部`import React from 'react';`格式）
+
+**B轨（import单符号移除）**：2项（finance/voucher semanticTokens, iam/user SchemaField）
+
+**C轨（v6批量脚本）**：移除2项const箭头函数（finance/invoice formatMoney, finance/payment formatMoney）
+
+### 关键发现
+
+1. **React import占比极高**：15个文件中11个是React import未使用，占73%。schemas/下的.tsx文件普遍有React import未使用，是最大的未使用项来源。
+2. **全部schemas/目录**：15个目标文件全部在schemas/下（erp x2, finance x4, iam x1, integration x6, lims x2），schemas/是未使用项的主要来源。
+3. **formatMoney重复定义**：finance/invoice和finance/payment两个文件都有相同的`const formatMoney = (amount: number | undefined, color?: string) => {`箭头函数，均未使用，可考虑提取到公共utils。
+4. **无级联**：15个文件全部是独立的import或本地声明，删除后没有触发级联项。
+5. **无孤儿文件**：15个文件全部修改，没有文件变成孤儿。
+6. **净删行数持续下降**：V329净删66行→V330净删31行，未使用项数量和净删行数都在持续下降。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1324 warnings（-9） | ✅ |
+| 孤儿文件删除 | 0个（全部修改） | ✅ |
+| 变更统计 | 15 files, 2 insertions, 33 deletions | ✅ |
+
+### V330后续扩展（留给V331+）
+
+- [ ] **React import批量清理专项**：11/15文件是React import，占73%。可写脚本专门扫描schemas/*/.tsx的React import未使用，一次性清理所有剩余React import
+- [ ] **formatMoney公共提取**：finance/invoice和finance/payment两个文件都有相同的formatMoney箭头函数，可考虑提取到公共utils
+- [ ] **schemas/目录批量清理专项**：15/15文件在schemas/下，schemas/是未使用项的主要来源
+- [ ] **批量模式继续**：V316-V330连续十五次成功，全src/未使用项从~282降至~5
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

@@ -5,7 +5,6 @@
  * 支持详情查看与失败任务重试。
  */
 
-import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
