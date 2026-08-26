@@ -13012,6 +13012,135 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V424 — 架构改进四轨并行第九十二次：B1 API迁移P2阶段实施详细计划（asset迁移）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十二次交付 · B1 API迁移P2阶段实施详细计划 · 2个代码文件新建 · 创建@/api/asset/目录，复制asset.ts和assetCategory.ts，分析导入语句问题，制定详细迁移计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P2阶段实施详细计划 | 创建@/api/asset/目录，复制asset.ts和assetCategory.ts，分析导入语句问题 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V425 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V425 | ⏸️ |
+
+### 轨B：B1 API迁移P2阶段实施详细计划（asset迁移）
+
+**实施内容**：创建@/api/asset/目录，复制asset.ts和assetCategory.ts，分析导入语句问题，制定详细迁移计划
+
+**修改的文件（2个代码文件新建）**：
+
+**1. apps/web/src/api/asset/asset.ts（新建，从@/api/erp/finance/asset.ts复制）**
+- 文件大小：2819字节，76行
+- 导出：assetApi、fixedAssetApi
+- 导入语句：
+  - `import apiClient from '../../client';` — 正确（@/api/client）
+  - `import type { ApiResponse } from '../../client';` — 正确
+  - `import { cleanEmptyUuids } from '../utils';` — 正确（@/api/utils）
+  - `import type { Asset, FixedAsset, DepreciateRequest, DepreciationResult, PaginationParams, PaginatedResult } from '../types';` — **需要更新**（原来的路径是@/api/erp/types，现在需要确认新的导入路径）
+
+**2. apps/web/src/api/asset/assetCategory.ts（新建，从@/api/erp/finance/assetCategory.ts复制）**
+- 文件大小：2121字节，70行
+- 导出：assetCategoryApi、AssetCategory、CreateAssetCategoryRequest
+- 导入语句：
+  - `import apiClient from '../../client';` — 正确
+  - `import type { ApiResponse } from '../../client';` — 正确
+  - `import type { PaginationParams, PaginatedResult } from '../types';` — **需要更新**（原来的路径是@/api/erp/types，现在需要确认新的导入路径）
+
+**引用情况分析**：
+
+**引用asset.ts的文件（1个）**：
+- apps/web/src/pages/asset/AssetListPage.tsx（第24行）
+  - `import { assetApi } from '@/api/erp/finance/asset';`
+  - 需要更新为：`import { assetApi } from '@/api/asset/asset';`
+
+**引用assetCategory.ts的文件（1个）**：
+- apps/web/src/pages/asset/CategoryManagementPage.tsx（第21-22行）
+  - `import { assetCategoryApi } from '@/api/erp/finance/assetCategory';`
+  - `import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/erp/finance/assetCategory';`
+  - 需要更新为：`import { assetCategoryApi } from '@/api/asset/assetCategory';`
+  - 需要更新为：`import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/asset/assetCategory';`
+
+**导入语句问题分析**：
+
+**问题**：两个文件都从`../types`导入PaginationParams和PaginatedResult，原来的路径是@/api/erp/types，现在的路径应该是@/api/types，但是@/api/types不存在。
+
+**PaginationParams和PaginatedResult的定义位置**：
+- PaginationParams：在@/api/erp/types.ts中定义（第425行），扩展了BasePaginationParams（从../client导入）
+- PaginatedResult：从@/api/client重新导出（@/api/erp/types.ts第429行）
+
+**解决方案选项**：
+1. **选项A**：从@/api/erp/types导入PaginationParams和PaginatedResult
+   - 优点：简单，不需要修改类型定义
+   - 缺点：@/api/asset/依赖@/api/erp/，不是很理想
+2. **选项B**：从@/api/client导入PaginatedResult，在@/api/asset/中定义PaginationParams
+   - 优点：@/api/asset/不依赖@/api/erp/
+   - 缺点：需要重复定义PaginationParams
+3. **选项C**：将PaginationParams和PaginatedResult迁移到@/api/types公共位置
+   - 优点：最干净，所有模块都可以从公共位置导入
+   - 缺点：需要创建@/api/types.ts，可能影响其他模块
+
+**推荐方案**：选项A（从@/api/erp/types导入），因为这是最简单的方案，不会影响其他模块。后续可以考虑将PaginationParams和PaginatedResult迁移到公共位置。
+
+**详细迁移计划**：
+
+**步骤1：更新@/api/asset/asset.ts的导入语句（V425）**
+- 将`import type { Asset, FixedAsset, DepreciateRequest, DepreciationResult, PaginationParams, PaginatedResult } from '../types';`
+- 更新为：`import type { Asset, FixedAsset, DepreciateRequest, DepreciationResult, PaginationParams, PaginatedResult } from '@/api/erp/types';`
+
+**步骤2：更新@/api/asset/assetCategory.ts的导入语句（V425）**
+- 将`import type { PaginationParams, PaginatedResult } from '../types';`
+- 更新为：`import type { PaginationParams, PaginatedResult } from '@/api/erp/types';`
+
+**步骤3：更新页面引用（V425）**
+- 更新apps/web/src/pages/asset/AssetListPage.tsx的导入语句
+- 更新apps/web/src/pages/asset/CategoryManagementPage.tsx的导入语句
+
+**步骤4：删除@/api/erp/finance/目录（V425）**
+- 删除apps/web/src/api/erp/finance/asset.ts
+- 删除apps/web/src/api/erp/finance/assetCategory.ts
+- 删除apps/web/src/api/erp/finance/目录
+
+**技术说明**：
+- 重要发现：@/api/types.ts不存在，PaginationParams在@/api/erp/types.ts中定义，PaginatedResult从@/api/client重新导出
+- 两个文件的导入语句需要更新，从相对路径`../types`改为绝对路径`@/api/erp/types`
+- 两个页面的引用需要更新，从`@/api/erp/finance/asset`改为`@/api/asset/asset`
+- 推荐使用选项A（从@/api/erp/types导入），因为这是最简单的方案
+- 后续可以考虑将PaginationParams和PaginatedResult迁移到公共位置
+
+**验收结果**：
+- 成功创建@/api/asset/目录
+- 成功复制asset.ts和assetCategory.ts到@/api/asset/目录
+- 完成引用情况分析（1个页面引用asset.ts，1个页面引用assetCategory.ts）
+- 完成导入语句问题分析
+- 制定4步骤详细迁移计划
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 创建目录 | @/api/asset/目录已创建 | ✅ |
+| 轨B 复制文件 | asset.ts和assetCategory.ts已复制 | ✅ |
+| 轨B asset.ts引用 | 1个页面（AssetListPage.tsx） | ✅ |
+| 轨B assetCategory.ts引用 | 1个页面（CategoryManagementPage.tsx） | ✅ |
+| 轨B 导入语句问题 | ../types路径需要更新为@/api/erp/types | ✅ |
+| 轨B PaginationParams定义 | 在@/api/erp/types.ts中定义 | ✅ |
+| 轨B PaginatedResult定义 | 从@/api/client重新导出 | ✅ |
+| 轨B 推荐方案 | 选项A（从@/api/erp/types导入） | ✅ |
+| 轨B 迁移步骤 | 4步骤（更新导入、更新页面引用、删除旧文件） | ✅ |
+| 变更统计 | 2个代码文件新建 + 修改1文件(TODO.md) | ✅ |
+
+### V424后续扩展（留给V425+）
+
+- [ ] **轨B P2阶段实施（更新导入语句）**：更新@/api/asset/asset.ts和assetCategory.ts的导入语句
+- [ ] **轨B P2阶段实施（更新页面引用）**：更新AssetListPage.tsx和CategoryManagementPage.tsx的导入语句
+- [ ] **轨B P2阶段实施（删除旧文件）**：删除@/api/erp/finance/asset.ts和assetCategory.ts，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V424连续九十二次交付验证成功，V425继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
