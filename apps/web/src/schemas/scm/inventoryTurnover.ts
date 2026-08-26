@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chip, Typography } from '@mui/material';
 import type { EntitySchema } from '@/schema';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 export const inventoryTurnoverSchema: EntitySchema = {

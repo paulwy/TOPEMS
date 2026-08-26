@@ -41,14 +41,6 @@ const PHASE_COLOR_MAP: Record<string, string> = {
   closing: 'secondary',
 };
 
-const PHASE_LABEL_MAP: Record<string, string> = {
-  initiation: i18n.t('pdm.project.k15'),
-  planning: i18n.t('pdm.project.k16'),
-  execution: i18n.t('pdm.project.k17'),
-  monitoring: i18n.t('pdm.project.k18'),
-  closing: i18n.t('pdm.project.k19'),
-};
-
 export const pdmProjectSchema: EntitySchema = {
   entity: 'pdm_project',
   title: i18n.t('shared.project.pdm_0'),

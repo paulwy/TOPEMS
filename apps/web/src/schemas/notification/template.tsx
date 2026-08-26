@@ -1,4 +1,3 @@
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 import { FileText } from 'lucide-react';
 import { Chip, Box, Typography } from '@mui/material';

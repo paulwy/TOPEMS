@@ -1,4 +1,3 @@
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 import type { SubscriptionFrequency } from '@/api/report';
 import i18n from '@/i18n';

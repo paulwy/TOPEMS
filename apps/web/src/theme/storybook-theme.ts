@@ -8,4 +8,3 @@ export { createCustomTheme } from './theme';
 export const theme = createCustomTheme();
 
 // Backward compatibility alias
-const darkTheme = theme;

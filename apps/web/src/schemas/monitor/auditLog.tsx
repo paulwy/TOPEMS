@@ -2,7 +2,7 @@ import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
 import { User } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const ct = {

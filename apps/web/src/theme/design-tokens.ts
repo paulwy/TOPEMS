@@ -17,5 +17,3 @@ export const sizeTokens = {
   sidebarWidthCollapsed: '64px',
   mobileToolbarHeight: '56px',
 } as const;
-
-type SizeTokens = typeof sizeTokens;

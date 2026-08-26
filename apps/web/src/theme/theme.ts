@@ -121,37 +121,6 @@ const lightShadows = [...Array(24)].map((_, i) => {
   return shadows[i] ?? designTokens.shadows.none;
 });
 
-const darkShadows = [...Array(25)].map((_, i) => {
-  const shadows = [
-    designTokens.darkShadows.none,
-    designTokens.darkShadows.xs,
-    designTokens.darkShadows.sm,
-    designTokens.darkShadows.md,
-    designTokens.darkShadows.lg,
-    designTokens.darkShadows.xl,
-    designTokens.darkShadows['2xl'],
-    designTokens.darkShadows['3xl'],
-    designTokens.darkShadows.inner,
-    designTokens.darkShadows.sm,
-    designTokens.darkShadows.md,
-    designTokens.darkShadows.lg,
-    designTokens.darkShadows.xl,
-    designTokens.darkShadows['2xl'],
-    designTokens.darkShadows['3xl'],
-    designTokens.darkShadows.inner,
-    designTokens.darkShadows.sm,
-    designTokens.darkShadows.md,
-    designTokens.darkShadows.lg,
-    designTokens.darkShadows.xl,
-    designTokens.darkShadows['2xl'],
-    designTokens.darkShadows['3xl'],
-    designTokens.darkShadows.inner,
-    designTokens.darkShadows.sm,
-    designTokens.darkShadows.md,
-  ];
-  return shadows[i] ?? designTokens.darkShadows.none;
-});
-
 /**
  * Cyberpunk 赛博朋克色彩方案
  * - 基础色：深空（#0a0a1a），比暗 mode 更纯黑

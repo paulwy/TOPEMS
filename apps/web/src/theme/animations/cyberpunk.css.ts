@@ -5,21 +5,6 @@
  * 使用方式：在 sx prop 中引用 className，或直接使用 CSS 变量
  */
 
-const cyberpunkGlassClasses = {
-  // 基础玻璃卡片
-  glassCard: 'cyber-glass-card',
-  // 悬浮态玻璃卡片
-  glassCardHover: 'cyber-glass-card-hover',
-  // 高层玻璃面板（弹窗、下拉）
-  glassElevated: 'cyber-glass-elevated',
-  // 渐变边框卡片（VIP/重要数据）
-  glassGradientBorder: 'cyber-glass-gradient-border',
-  // 玻璃态侧边栏
-  glassSidebar: 'cyber-glass-sidebar',
-  // 玻璃态顶栏
-  glassHeader: 'cyber-glass-header',
-} as const;
-
 const cyberpunkGlassStyles = `
 /* ========================================
    {i18n.t('theme.cyberpunk.css.k0')}
