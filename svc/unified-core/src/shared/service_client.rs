@@ -250,6 +250,197 @@ impl<T> ServiceResponse<T> {
     }
 }
 
+// ===== V441: Service Discovery Types =====
+
+/// Service registration information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceRegistration {
+    /// Unique service identifier.
+    pub name: String,
+    /// Service base URL.
+    pub base_url: String,
+    /// Service version (e.g., "1.0.0").
+    #[serde(default)]
+    pub version: String,
+    /// Service description.
+    #[serde(default)]
+    pub description: String,
+    /// Service tags for filtering.
+    #[serde(default)]
+    pub tags: Vec<String>,
+    /// Service metadata (key-value pairs).
+    #[serde(default)]
+    pub metadata: HashMap<String, String>,
+    /// Whether the service is enabled.
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
+    /// Registration timestamp (RFC3339 format).
+    #[serde(default)]
+    pub registered_at: String,
+    /// Last heartbeat timestamp (RFC3339 format).
+    #[serde(default)]
+    pub last_heartbeat: String,
+}
+
+impl ServiceRegistration {
+    /// Create a new service registration.
+    pub fn new(name: &str, base_url: &str) -> Self {
+        let now = chrono::Utc::now().to_rfc3339();
+        Self {
+            name: name.to_string(),
+            base_url: base_url.to_string(),
+            version: "1.0.0".to_string(),
+            description: String::new(),
+            tags: Vec::new(),
+            metadata: HashMap::new(),
+            enabled: true,
+            registered_at: now.clone(),
+            last_heartbeat: now,
+        }
+    }
+
+    /// Convert to ServiceConfig.
+    pub fn to_config(&self) -> ServiceConfig {
+        ServiceConfig {
+            name: self.name.clone(),
+            base_url: self.base_url.clone(),
+            timeout_secs: 30,
+            api_key: None,
+            bearer_token: None,
+            default_headers: HashMap::new(),
+            enabled: self.enabled,
+            max_retries: 0,
+            retry_delay_ms: 1000,
+            circuit_breaker_enabled: false,
+            failure_threshold: 5,
+            reset_timeout_secs: 30,
+            rate_limit_enabled: false,
+            max_requests_per_second: 100,
+            load_balancing_enabled: false,
+            endpoints: Vec::new(),
+        }
+    }
+
+    /// Update the heartbeat timestamp.
+    pub fn heartbeat(&mut self) {
+        self.last_heartbeat = chrono::Utc::now().to_rfc3339();
+    }
+}
+
+/// Service discovery trait for dynamic service registration and discovery.
+#[async_trait::async_trait]
+pub trait ServiceDiscovery: Send + Sync {
+    /// Register a service.
+    async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError>;
+
+    /// Deregister a service by name.
+    async fn deregister(&self, name: &str) -> Result<(), ServiceClientError>;
+
+    /// Discover a service by name.
+    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError>;
+
+    /// List all registered services.
+    async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError>;
+
+    /// Send a heartbeat for a service.
+    async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError>;
+}
+
+/// Static service discovery based on in-memory configuration.
+/// 
+/// This is the default service discovery implementation. Services are
+/// registered manually and stored in memory. For dynamic service discovery
+/// (e.g., Consul, etcd, Zookeeper), implement the ServiceDiscovery trait.
+pub struct StaticServiceDiscovery {
+    /// Registered services (shared across clones).
+    services: Arc<std::sync::Mutex<HashMap<String, ServiceRegistration>>>,
+}
+
+impl StaticServiceDiscovery {
+    /// Create a new static service discovery.
+    pub fn new() -> Self {
+        Self {
+            services: Arc::new(std::sync::Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Create from a list of service configurations.
+    pub fn from_configs(configs: Vec<ServiceConfig>) -> Self {
+        let discovery = Self::new();
+        for config in configs {
+            let registration = ServiceRegistration {
+                name: config.name.clone(),
+                base_url: config.base_url.clone(),
+                version: "1.0.0".to_string(),
+                description: String::new(),
+                tags: Vec::new(),
+                metadata: HashMap::new(),
+                enabled: config.enabled,
+                registered_at: chrono::Utc::now().to_rfc3339(),
+                last_heartbeat: chrono::Utc::now().to_rfc3339(),
+            };
+            discovery.services.lock().unwrap().insert(config.name, registration);
+        }
+        discovery
+    }
+
+    /// Get a service registration by name (synchronous).
+    pub fn get(&self, name: &str) -> Option<ServiceRegistration> {
+        self.services.lock().unwrap().get(name).cloned()
+    }
+
+    /// List all service registrations (synchronous).
+    pub fn list(&self) -> Vec<ServiceRegistration> {
+        self.services.lock().unwrap().values().cloned().collect()
+    }
+
+    /// Check if a service is registered (synchronous).
+    pub fn has(&self, name: &str) -> bool {
+        self.services.lock().unwrap().contains_key(name)
+    }
+
+    /// Get the number of registered services (synchronous).
+    pub fn count(&self) -> usize {
+        self.services.lock().unwrap().len()
+    }
+}
+
+impl Default for StaticServiceDiscovery {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait::async_trait]
+impl ServiceDiscovery for StaticServiceDiscovery {
+    async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
+        self.services.lock().unwrap().insert(registration.name.clone(), registration);
+        Ok(())
+    }
+
+    async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
+        self.services.lock().unwrap().remove(name);
+        Ok(())
+    }
+
+    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+        Ok(self.services.lock().unwrap().get(name).cloned())
+    }
+
+    async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
+        Ok(self.services.lock().unwrap().values().cloned().collect())
+    }
+
+    async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
+        if let Some(registration) = self.services.lock().unwrap().get_mut(name) {
+            registration.heartbeat();
+            Ok(())
+        } else {
+            Err(ServiceClientError::ServiceNotFound(name.to_string()))
+        }
+    }
+}
+
 // ===== V439: Rate Limiter & Load Balancer Types =====
 
 /// Rate limiter using token bucket algorithm.
