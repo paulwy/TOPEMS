@@ -11299,6 +11299,120 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V410 — 架构改进四轨并行第七十八次：B1 API迁移分析（erp/finance与finance差异对比）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第七十八次交付 · B1 API迁移分析 · 0个代码文件修改 · 分析@/api/erp/finance/与@/api/finance/的差异，确定迁移策略
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | B1 API迁移分析 | 分析@/api/erp/finance/与@/api/finance/的差异，确定迁移策略 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V411 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V411 | ⏸️ |
+
+### 轨B：B1 API迁移分析（erp/finance与finance差异对比）
+
+**分析内容**：分析@/api/erp/finance/与@/api/finance/的差异，确定迁移策略
+
+**@/api/erp/finance/ 文件列表（8个文件）**：
+1. accounting.ts - 会计核算API
+2. asset.ts - 资产管理API（assetApi + fixedAssetApi）
+3. assetCategory.ts - 资产分类API
+4. bank.ts - 银行账户API
+5. budget.ts - 预算管理API
+6. receivablePayable.ts - 应收应付API
+7. report.ts - 财务报表API
+8. voucher.ts - 凭证管理API
+
+**@/api/finance/ 文件列表（25个文件）**：
+- account.ts、approvalConfig.ts、budget.ts、cashFlow.ts、counterparty.ts、expense.ts、expenseApproval.ts、index.ts、payment.ts、period.ts、receivablePayable.ts、reconciliation.ts、report.ts、risk.ts、riskV54.ts、riskV59.ts、settlementCenter.ts、tax.ts、types.ts、voucher.ts、voucherTemplate.ts 等
+
+**重叠文件对比（4个文件同时存在于两个目录）**：
+| 文件名 | @/api/erp/finance/ | @/api/finance/ | 迁移策略 |
+|--------|---------------------|-----------------|----------|
+| budget.ts | 存在 | 存在 | 以@/api/finance/为标准，比较差异后迁移 |
+| receivablePayable.ts | 存在 | 存在 | 以@/api/finance/为标准，比较差异后迁移 |
+| report.ts | 存在 | 存在 | 以@/api/finance/为标准，比较差异后迁移 |
+| voucher.ts | 存在 | 存在 | 以@/api/finance/为标准，比较差异后迁移 |
+
+**不重叠文件（4个文件仅存在于@/api/erp/finance/）**：
+| 文件名 | 说明 | 迁移策略 |
+|--------|------|----------|
+| accounting.ts | 会计核算API | 考虑移动到@/api/finance/目录，或保持原样 |
+| asset.ts | 资产管理API | 考虑创建@/api/asset/目录，或移动到@/api/finance/ |
+| assetCategory.ts | 资产分类API | 与asset.ts一起迁移 |
+| bank.ts | 银行账户API | 考虑移动到@/api/finance/目录，或保持原样 |
+
+**引用@/api/erp/finance/的页面（2个文件）**：
+1. apps/web/src/pages/asset/CategoryManagementPage.tsx
+   - 引用：`assetCategoryApi`、`AssetCategory`、`CreateAssetCategoryRequest`
+   - 来源：`@/api/erp/finance/assetCategory`
+2. apps/web/src/pages/asset/AssetListPage.tsx
+   - 引用：`assetApi`
+   - 来源：`@/api/erp/finance/asset`
+
+**asset.ts 内容分析**：
+- 包含两个API对象：assetApi 和 fixedAssetApi
+- assetApi 方法：list、get、create、update、delete（5个方法）
+- fixedAssetApi 方法：list、get、create、update、delete、depreciate（6个方法）
+- 使用 apiClient.erp 作为HTTP客户端
+- 类型定义来自 `../types`（@/api/erp/types）
+
+**迁移策略建议**：
+
+1. **短期策略（V411+）**：
+   - 对于重叠文件（budget.ts、receivablePayable.ts、report.ts、voucher.ts），比较两个版本的差异，以@/api/finance/为标准，将@/api/erp/finance/中的独有方法合并到@/api/finance/
+   - 对于不重叠文件（accounting.ts、asset.ts、assetCategory.ts、bank.ts），暂时保持原样，不进行迁移
+
+2. **中期策略（V415+）**：
+   - 创建@/api/asset/目录，将asset.ts和assetCategory.ts移动到该目录
+   - 更新引用这些文件的页面（CategoryManagementPage.tsx、AssetListPage.tsx）
+   - 将accounting.ts和bank.ts移动到@/api/finance/目录
+
+3. **长期策略（V420+）**：
+   - 完全删除@/api/erp/finance/目录
+   - 所有财务相关API统一到@/api/finance/目录
+   - 所有资产相关API统一到@/api/asset/目录
+
+**技术说明**：
+- 重要发现：@/api/erp/finance/和@/api/finance/是两个完全独立的实现，使用不同的HTTP客户端（apiClient.erp vs apiClient.finance）
+- 重叠文件可能有不同的方法签名和实现，需要仔细比较后才能迁移
+- 不重叠文件（特别是asset相关）可能应该放在独立的@/api/asset/目录，而不是@/api/finance/目录
+- 迁移需要更新所有引用这些文件的页面，确保不破坏现有功能
+
+**验收结果**：
+- 完成@/api/erp/finance/与@/api/finance/的文件对比
+- 确定4个重叠文件和4个不重叠文件
+- 确定2个引用@/api/erp/finance/的页面
+- 分析asset.ts的内容和方法
+- 制定短期、中期、长期迁移策略
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | @/api/erp/finance/与@/api/finance/的差异对比 | ✅ |
+| 轨B erp/finance文件数 | 8个文件 | ✅ |
+| 轨B finance文件数 | 25个文件 | ✅ |
+| 轨B 重叠文件数 | 4个（budget、receivablePayable、report、voucher） | ✅ |
+| 轨B 不重叠文件数 | 4个（accounting、asset、assetCategory、bank） | ✅ |
+| 轨B 引用页面数 | 2个（CategoryManagementPage、AssetListPage） | ✅ |
+| 轨B asset.ts分析 | 2个API对象，11个方法 | ✅ |
+| 轨B 迁移策略 | 短期、中期、长期三阶段策略 | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V410后续扩展（留给V411+）
+
+- [ ] **轨B 重叠文件差异对比**：详细比较budget.ts、receivablePayable.ts、report.ts、voucher.ts在两个目录中的差异
+- [ ] **轨B 重叠文件迁移实施**：以@/api/finance/为标准，合并@/api/erp/finance/中的独有方法
+- [ ] **轨B 不重叠文件迁移实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V410连续七十八次交付验证成功，V411继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
