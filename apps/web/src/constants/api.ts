@@ -36,8 +36,3 @@ export const PUBLIC_API_PATTERNS = [
   '/auth/forgot-password',
   '/auth/reset-password',
 ] as const;
-
-/**
- * Event name dispatched when authentication fails.
- */
-const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized' as const;
