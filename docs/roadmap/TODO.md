@@ -17741,6 +17741,155 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V455 — 架构改进四轨并行第一百二十三次：轨C shared-service-client Eureka服务发现（EurekaConfig+EurekaServiceDiscovery+EurekaServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+心跳+8个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十三次交付 · 轨C shared-service-client Eureka服务发现 · 1个代码文件新建 + 1个代码文件修改 · 实现基于Eureka REST API的服务发现，支持服务注册、注销、发现、列表和心跳
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client Eureka服务发现 | 实现Eureka服务发现 | ✅ |
+| 轨D | 审计日志数据库存储 | 实现PostgreSQL-backed AuditLogStore，留给V456 | ⏸️ |
+
+### 轨C：shared-service-client Eureka服务发现（EurekaConfig+EurekaServiceDiscovery+EurekaServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+心跳+8个单元测试）
+
+**实现内容**：实现基于Eureka REST API的服务发现，支持服务注册、注销、发现、列表和心跳
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/shared/eureka_service_discovery.rs`（Eureka服务发现实现，约620行）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（添加eureka_service_discovery模块声明）**
+
+**新增功能**：
+
+1. **Eureka配置（EurekaConfig）**
+   - 字段：address（Eureka服务器地址）、username（用户名）、password（密码）、timeout_secs（请求超时，默认10秒）、heartbeat_interval_secs（心跳间隔，默认30秒）、use_vip_address（是否使用VIP地址）
+   - 实现Default trait
+   - 支持serde序列化/反序列化
+
+2. **Eureka服务发现实现（EurekaServiceDiscovery）**
+   - 字段：config（EurekaConfig）、http_client（reqwest Client，支持基本认证）、registered_services（已注册服务信息映射）
+   - 方法：new()、build_url()、extract_host_port()、generate_instance_id()、registration_to_instance()、instance_to_registration()
+   - 实现ServiceDiscovery trait的所有方法：register、deregister、discover、list_services、heartbeat
+
+3. **Eureka API类型**
+   - EurekaRegistrationRequest：注册请求（instance）
+   - EurekaInstanceInfo：实例信息（instanceId、app、hostName、ipAddr、port、securePort、vipAddress、secureVipAddress、status、overriddenstatus、dataCenterInfo、leaseInfo、metadata、homePageUrl、statusPageUrl、healthCheckUrl）
+   - EurekaPort：端口信息（$value、@enabled）
+   - EurekaDataCenterInfo：数据中心信息（@class、name）
+   - EurekaLeaseInfo：租约信息（renewalIntervalInSecs、durationInSecs）
+   - EurekaInstanceMetadata：实例元数据（flatten HashMap）
+   - EurekaApplicationResponse：应用响应（application）
+   - EurekaApplication：应用信息（name、instance）
+   - EurekaApplicationsResponse：应用列表响应（applications）
+   - EurekaApplications：应用列表容器（application）
+   - RegisteredServiceInfo：已注册服务信息（name、instance_id、host、port、base_url）
+
+4. **Eureka服务发现构建器（EurekaServiceDiscoveryBuilder）**
+   - 方法：new()、address()、username()、password()、timeout_secs()、heartbeat_interval_secs()、use_vip_address()、build()
+   - 实现Default trait
+   - 链式调用构建EurekaServiceDiscovery实例
+
+5. **心跳机制**
+   - 服务注册时设置租约信息（renewalIntervalInSecs=30，durationInSecs=90）
+   - heartbeat方法通过PUT /eureka/apps/{appId}/{instanceId}发送心跳
+   - 心跳间隔可配置（默认30秒）
+   - Eureka自动移除超过90秒未发送心跳的实例
+
+6. **8个单元测试**
+   - test_eureka_config_default：测试默认配置
+   - test_extract_host_port：测试从URL提取主机和端口
+   - test_extract_host_port_default_http：测试HTTP默认端口
+   - test_generate_instance_id：测试实例ID生成
+   - test_build_url：测试URL构建
+   - test_registration_to_instance：测试注册信息转换
+   - test_instance_to_registration：测试实例信息转换
+   - test_builder：测试构建器
+
+**技术说明**：
+- 使用Eureka REST API（/eureka/apps/{appId}、/eureka/apps/{appId}/{instanceId}、/eureka/apps）
+- 使用reqwest HTTP客户端（已在项目中使用），支持基本认证
+- 使用async-trait实现异步ServiceDiscovery trait
+- 使用serde进行JSON序列化/反序列化
+- 使用url crate解析URL（已在项目中使用）
+- 使用chrono处理时间（已在项目中使用）
+- 服务元数据存储在Eureka实例metadata中
+- 优先返回UP状态的实例，无UP实例时返回第一个实例
+- 实例ID格式：{host}:{appName_lowercase}:{port}
+- 应用名称使用大写（Eureka规范）
+- VIP地址使用小写应用名
+
+**Eureka服务发现特性**：
+1. 服务注册 — 通过POST /eureka/apps/{appId}注册实例
+2. 服务注销 — 通过DELETE /eureka/apps/{appId}/{instanceId}注销实例
+3. 服务发现 — 通过GET /eureka/apps/{appId}查询实例，优先返回UP实例
+4. 服务列表 — 通过GET /eureka/apps查询所有应用和实例
+5. 心跳 — 通过PUT /eureka/apps/{appId}/{instanceId}发送心跳
+6. 租约管理 — 注册时设置租约信息，心跳维持租约
+7. 基本认证 — 支持username/password认证
+8. 元数据存储 — 服务元数据存储在实例metadata中
+9. 状态过滤 — 优先返回UP状态的实例
+10. 构建器模式 — 使用EurekaServiceDiscoveryBuilder链式构建实例
+
+**验收结果**：
+- 完成EurekaConfig配置结构体（6个配置字段+Default实现+serde支持）
+- 完成EurekaServiceDiscovery实现（new+6个辅助方法+5个ServiceDiscovery trait方法）
+- 完成11个Eureka API类型（RegistrationRequest、InstanceInfo、Port、DataCenterInfo、LeaseInfo、InstanceMetadata、ApplicationResponse、Application、ApplicationsResponse、Applications、RegisteredServiceInfo）
+- 完成EurekaServiceDiscoveryBuilder构建器（7个配置方法+build方法+Default实现）
+- 完成心跳机制（租约信息+心跳API+可配置间隔）
+- 完成8个单元测试（全部通过）
+- 完成模块声明（shared/mod.rs添加eureka_service_discovery）
+- 代码总行数约620行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C EurekaConfig配置 | 6个配置字段+Default+serde | ✅ |
+| 轨C EurekaServiceDiscovery实现 | new+6辅助方法+5trait方法 | ✅ |
+| 轨C Eureka API类型 | 11个类型 | ✅ |
+| 轨C EurekaServiceDiscoveryBuilder | 7配置方法+build+Default | ✅ |
+| 轨C 心跳机制 | 租约信息+心跳API+可配置间隔 | ✅ |
+| 轨C 单元测试 | 8个测试全部通过 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加 | ✅ |
+| 轨C 代码行数 | 约620行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V455后续扩展（留给V456+）
+
+- [ ] **轨D 审计日志数据库存储**：实现PostgreSQL-backed AuditLogStore
+- [ ] **轨D 审计日志集成到权限管理API**：在create/update/delete端点中自动记录审计日志
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger
+- [ ] **轨C shared-service-client Kubernetes服务发现**：集成Kubernetes服务发现
+- [ ] **轨C shared-service-client DNS服务发现**：集成DNS-based服务发现
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V455连续一百二十三次交付验证成功，V456继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

@@ -6,6 +6,7 @@ pub mod consul_service_discovery;
 pub mod etcd_service_discovery;
 pub mod zookeeper_service_discovery;
 pub mod nacos_service_discovery;
+pub mod eureka_service_discovery;
 pub mod util;
 
 use axum::extract::FromRef;
