@@ -6907,6 +6907,81 @@ POST /mcp
 
 ---
 
+## 🎯 V350 — 架构改进四轨并行第十八次：OA业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十八次交付 · OA MCP Tools上线 · 65个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V351 | ⏸️ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V351 | ⏸️ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V351实施（需独立二进制入口） | ⏸️ |
+| 轨D | OA MCP Tools | 4个业务工具（oa.list_approval_requests, oa.get_approval_request, oa.list_employees, oa.create_approval_request），6个单元测试 | ✅ |
+
+### 轨D：OA MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/oa.rs` — OA业务工具（~660行）
+
+**注册的4个工具**：
+1. **oa.list_approval_requests** — 查询审批单列表
+   - 参数：page, page_size, approval_type(leave/expense/purchase/travel/contract/overtime/business_card/seal), status(draft/pending/approved/rejected/cancelled/completed), applicant, current_approver, keyword
+   - 返回：审批单列表（审批单编号、标题、类型、状态、申请人、部门、当前审批人、金额、当前步骤、总步骤、创建时间、更新时间）
+   - 支持分页、类型筛选、状态筛选、申请人筛选、当前审批人筛选、关键词搜索
+
+2. **oa.get_approval_request** — 获取审批单详情
+   - 参数：request_id（必填）
+   - 返回：完整审批单信息（基本信息、申请人信息、金额、日期、事由、费用明细、审批流程、审批历史、附件、关联单据）
+   - 包含申请人详情（员工ID、姓名、部门、职位、邮箱、电话）、4条费用明细、3步审批流程、2条审批历史、2个附件、1个关联单据
+
+3. **oa.list_employees** — 查询员工列表
+   - 参数：page, page_size, department, status(active/on_leave/resigned/retired), position, keyword
+   - 返回：员工列表（员工编号、姓名、性别、部门、职位、状态、邮箱、电话、入职日期、直属经理、工作地点）
+   - 支持分页、部门筛选、状态筛选、职位筛选、关键词搜索
+
+4. **oa.create_approval_request** — 创建审批单
+   - 参数：approval_type（必填）, title（必填）, applicant（必填）, approver（必填）, amount, start_date, end_date, reason, remark
+   - 返回：新创建的审批单ID、审批单编号、类型、标题、申请人、审批人、金额、日期、事由、状态、当前步骤、总步骤、创建时间
+   - 验证：4个必填字段
+
+**单元测试**（6个）：
+- test_register_oa_tools — 4个工具全部注册
+- test_list_approval_requests — 分页查询
+- test_get_approval_request — 按ID查询，验证申请人/费用明细/审批流程/审批历史/附件结构
+- test_list_employees — 分页+状态筛选
+- test_create_approval_request — 成功创建审批单，验证状态和审批单ID
+- test_create_approval_request_validation — 参数验证（缺少approver、缺少title）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod oa和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_oa_tools
+- `svc/ai/src/routes.rs` — 调用register_oa_tools注册OA工具
+
+**当前工具总数**：65个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS + 4 CS + 4 SCM + 4 IoT + 4 OA）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D OA工具 | 4个业务工具已注册 | ✅ |
+| 轨D OA单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 65个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS+4BI+4APS+4CS+4SCM+4IoT+4OA） | ✅ |
+| 变更统计 | 新增1文件(~660行) + 修改4文件 | ✅ |
+
+### V350后续扩展（留给V351+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V350连续十八次交付验证成功，V351继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
