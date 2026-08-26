@@ -87,41 +87,6 @@ type GisAction =
   | { type: 'SET_SHOW_LAYER_PANEL'; payload: boolean }
   | { type: 'SET_SELECTED_ITEM'; payload: { item: unknown; show: boolean } };
 
-// Initial State
-const initialState: GisState = {
-  mapConfig: {
-    center: [31.2304, 121.4737],
-    zoom: 14,
-    tileSource: 'osm',
-    offlineEnabled: false,
-  },
-  visibleLayers: {
-    devices: true,
-    pipelines: true,
-    storage: true,
-  },
-  toolMode: 'select',
-  mapType: 'osm',
-  measurePoints: [],
-  measureResult: '',
-  drawFeatures: [],
-  currentDrawing: null,
-  activeTrack: null,
-  isPlaying: false,
-  playbackSpeed: 1,
-  showTrackPanel: false,
-  evidenceRecords: [],
-  captureInProgress: false,
-  showEvidencePanel: false,
-  showHeatmap: false,
-  heatmapMode: 'density',
-  show3DView: false,
-  offlineMode: false,
-  syncStatus: null,
-  showDetailsPanel: false,
-  showLayerPanel: true,
-  selectedItem: null,
-};
 
 // Reducer
 export function gisReducer(state: GisState, action: GisAction): GisState {
