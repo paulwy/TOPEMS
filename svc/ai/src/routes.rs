@@ -8,6 +8,8 @@ use crate::modules::{
 use crate::shared::AppState;
 use std::sync::Arc;
 
+use crate::dsh::mcp::{create_mcp_routes, register_crm_tools, McpServer};
+
 use axum::{
     extract::DefaultBodyLimit,
     routing::{delete, get, post},
@@ -361,6 +363,23 @@ pub fn create_routes(
     .layer(prometheus_layer)
     .layer(cors)
     .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
+
+    // V335: MCP (Model Context Protocol) Server 路由
+    // 端点：POST /mcp, GET /mcp/sse
+    // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
+    let mcp_server = Arc::new(McpServer::new("topems-ai-mcp", env!("CARGO_PKG_VERSION")));
+    // 异步注册内置系统工具和业务工具（fire-and-forget，注册很快，竞态风险可忽略）
+    let server_clone = mcp_server.clone();
+    tokio::task::spawn(async move {
+        server_clone.register_system_tools().await;
+        register_crm_tools(&server_clone).await;
+        tracing::info!(
+            "MCP Server tools registered: {} tools total (2 system + 3 CRM)",
+            server_clone.tool_registry().len().await
+        );
+    });
+
+    let app = app.merge(create_mcp_routes(mcp_server));
 
     app
 }

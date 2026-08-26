@@ -1,3 +1,4 @@
+mod dsh;
 mod event_handlers;
 mod handlers;
 mod models;

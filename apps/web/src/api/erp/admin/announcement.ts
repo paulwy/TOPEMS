@@ -1,7 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { Announcement, PaginationParams, PaginatedResult } from '../types';
-import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export const announcementApi = {
   async list(

@@ -13,8 +13,10 @@
 //! └── handler.rs # axum handler（SSE/HTTP 传输，待实现）
 //! ```
 
+pub mod handler;
 pub mod server;
 pub mod tools;
 
+pub use handler::{create_mcp_routes, handle_mcp_request, handle_mcp_sse, McpServerState};
 pub use server::{McpServer, ServerState};
-pub use tools::{ToolExecutionError, ToolRegistry};
+pub use tools::{register_crm_tools, ToolExecutionError, ToolRegistry};
