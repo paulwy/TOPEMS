@@ -550,23 +550,3 @@ export interface MaterialQueryParams {
 }
 
 export type { Experiment as LegacyExperimentRecord };
-
-interface CreateExperimentRequestLegacy {
-  project_id: string;
-  title: string;
-  description: string;
-  experiment_type: string;
-  result: string;
-  status: string;
-  experimenter: string;
-}
-
-interface UpdateExperimentRequestLegacy {
-  title?: string;
-  description?: string;
-  experiment_type?: string;
-  result?: string;
-  status?: string;
-  experimenter?: string;
-  conclusion?: string;
-}

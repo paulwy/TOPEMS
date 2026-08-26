@@ -1,5 +1,3 @@
-import apiClient from '../client';
-import type { ApiResponse } from '../client';
 import { systemApi } from './system';
 import { tenantApi } from './tenant';
 import { unifiedSearchApi } from './search';

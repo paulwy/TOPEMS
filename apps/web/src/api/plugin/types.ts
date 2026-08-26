@@ -74,12 +74,6 @@ export interface TenantInstalledPlugin {
   last_heartbeat?: string;
 }
 
-interface PluginWithStatus {
-  plugin: Plugin;
-  is_owned: boolean;
-  tenant_plugin?: TenantPlugin;
-}
-
 export interface PluginRuntimeInfo {
   code: string;
   name: string;
@@ -89,12 +83,6 @@ export interface PluginRuntimeInfo {
   category: string;
   plugin_type: string;
   permissions: Array<{ code: string; name: string; description: string }>;
-}
-
-interface PluginRuntimeConfig {
-  port: number;
-  health_endpoint: string;
-  base_path: string;
 }
 
 export interface SuiteInfo {
