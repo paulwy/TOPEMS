@@ -2,15 +2,6 @@ import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import i18n from '@/i18n';
 
-// 货币符号映射
-const _CURRENCY_SYMBOLS: Record<string, string> = {
-  CNY: '¥',
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-  JPY: '¥',
-};
-
 interface AmountDisplayProps {
   /** 金额数值 */
   amount: number | string;

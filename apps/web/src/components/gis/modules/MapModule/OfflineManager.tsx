@@ -20,16 +20,6 @@ function tileKeyToString(key: TileKey): string {
   return `${key.source}:${key.z}:${key.x}:${key.y}`;
 }
 
-function _parseTileKey(keyStr: string): TileKey {
-  const [source, z, x, y] = keyStr.split(':');
-  return {
-    source,
-    z: parseInt(z, 10),
-    x: parseInt(x, 10),
-    y: parseInt(y, 10),
-  };
-}
-
 interface PendingItem {
   id: string;
   type: 'evidence' | 'track';
