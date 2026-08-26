@@ -9965,6 +9965,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V393 — 架构改进四轨并行第六十一次：前端未使用组件修复（TableSection 添加export）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六十一次交付 · 前端未使用组件修复 · 1个文件 · 给TableSection组件添加export关键字，消除未使用组件错误
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用组件修复 | 1个文件的未使用组件修复（templates/list/TableSection.tsx，给TableSection组件添加export关键字） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V394 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V394 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V394 | ⏸️ |
+
+### 轨A：前端未使用组件修复（TableSection 添加export）
+
+**修复内容**：给1个文件中未导出的组件添加export关键字
+
+**修复的文件（1个）**：
+
+1. **templates/list/TableSection.tsx** — 给TableSection组件添加export关键字
+   - 修改的组件：`function TableSection<T>({` → `export function TableSection<T>({`
+   - 问题原因：TableSection组件定义后没有添加export关键字，导致组件无法被其他文件import
+   - 文件中没有任何export语句，所有类型和组件都未导出
+   - 虽然测试文件中使用了`<TableSection {...defaultProps} />`，但测试文件只import了类型（ColumnDef, ColumnWidthResult），没有import组件本身
+   - 添加export关键字后，组件可以被其他文件正常import和使用
+   - 文件行数保持758行不变
+
+**技术说明**：
+- 修复前验证组件确实没有被导出（grep export语句确认文件中没有任何export）
+- 这是组件抽离过程中的常见遗漏，从 ListPageTemplate 中抽离组件时忘记添加export关键字
+- 添加export关键字后，组件可以被其他文件正常import和使用
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查未导出的组件，如果组件定义后没有被导出且没有在文件内部使用，就会报TS6133错误
+- TableSection是一个泛型组件（TableSection<T>），添加export关键字后可以正常导出泛型组件
+
+**验收结果**：
+- 1个未使用组件的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 组件现在可以被其他文件正常import和使用
+- 文件语法正确，组件导出完整
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 修复文件数 | 1个文件的未使用组件修复 | ✅ |
+| 轨A 修复组件 | TableSection（添加export关键字） | ✅ |
+| 轨A 修改位置 | 组件定义（第119行） | ✅ |
+| 轨A 文件变化 | TableSection.tsx保持758行不变 | ✅ |
+| 轨A 导出检查 | 组件现在有export关键字，可以被其他文件import | ✅ |
+| 轨A 泛型支持 | 泛型组件TableSection<T>可以正常导出 | ✅ |
+| 轨A 语法检查 | 文件语法正确，组件导出完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V393后续扩展（留给V394+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~98个TS6133错误
+- [ ] **轨A 未使用组件修复**：继续修复其他未使用的组件（ViewModeToggle，可能也需要添加export关键字）
+- [ ] **轨A 未使用泛型参数清理**：继续清理其他未使用的泛型参数
+- [ ] **轨A 未使用import清理**：继续清理其他未使用的import
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V393连续六十一次交付验证成功，V394继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
