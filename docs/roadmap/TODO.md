@@ -6088,6 +6088,97 @@ POST /mcp
 
 ---
 
+## 🎯 V341 — 架构改进四轨并行第九次：WMS业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第九次交付 · WMS MCP Tools上线 · 29个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V342 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V340评估，记录V342+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V342实施（需独立二进制入口） | ⏸️ |
+| 轨D | WMS MCP Tools | 4个业务工具（wms.list_inventory, wms.get_inventory, wms.list_warehouses, wms.create_transfer），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V340）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V342+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：WMS MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/wms.rs` — WMS业务工具（~600行）
+
+**注册的4个工具**：
+1. **wms.list_inventory** — 查询库存列表
+   - 参数：page, page_size, warehouse_id, keyword, status(normal/low_stock/overstock/frozen)
+   - 返回：库存列表（物料编码、名称、仓库、库位、数量、单位、安全库存、状态、批次、有效期）
+   - 支持分页、仓库筛选、关键词搜索、状态筛选
+
+2. **wms.get_inventory** — 获取库存详情
+   - 参数：material_id（必填）, warehouse_id（必填）
+   - 返回：完整库存信息（物料信息、仓库信息、库位、数量、批次、有效期、供应商、最近出入库记录、近期移动记录）
+   - 包含4条近期移动记录（入库/出库/调拨）
+
+3. **wms.list_warehouses** — 查询仓库列表
+   - 参数：page, page_size, status(active/inactive/maintenance), warehouse_type(raw_material/finished_goods/wip/return/hazardous)
+   - 返回：仓库列表（仓库编码、名称、类型、地址、负责人、容量、已用容量、可用容量、利用率）
+   - 支持分页、状态筛选、类型筛选
+
+4. **wms.create_transfer** — 创建库存调拨单
+   - 参数：from_warehouse_id（必填）, to_warehouse_id（必填）, material_id（必填）, quantity（必填，正数）, remark, operator
+   - 返回：新调拨单ID、调拨单号、源/目标仓库、物料、数量、状态
+   - 验证：4个必填字段，源仓库和目标仓库不能相同，数量必须正数
+
+**单元测试**（6个）：
+- test_register_wms_tools — 4个工具全部注册
+- test_list_inventory — 分页查询
+- test_get_inventory — 按物料ID+仓库ID查询，验证近期移动记录结构
+- test_list_warehouses — 分页+状态筛选
+- test_create_transfer — 成功创建调拨单，验证默认状态
+- test_create_transfer_validation — 参数验证（源/目标仓库相同、数量为0）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod wms和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_wms_tools
+- `svc/ai/src/routes.rs` — 调用register_wms_tools注册WMS工具
+
+**当前工具总数**：29个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V340，记录V342+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D WMS工具 | 4个业务工具已注册 | ✅ |
+| 轨D WMS单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 29个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS） | ✅ |
+| 变更统计 | 新增1文件(~600行) + 修改4文件 | ✅ |
+
+### V341后续扩展（留给V342+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D PM/QMS MCP Tools**：注册pm.list_projects, qms.list_inspections等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V341连续九次交付验证成功，V342继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
