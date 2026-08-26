@@ -4745,6 +4745,69 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V329 — 批量模式第十四次：Top15文件未使用项清理（15项）（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十四次成功 · 15 files（全部修改，无删除）· 净删 66 行 · tsc 0 errors · eslint 0 errors(1333 warnings, 从1346减13)
+
+### 目标文件（Top15，全部1项/文件=15初始）
+
+| 文件 | 初始项 | 类型 | 净删行 |
+|------|--------|------|--------|
+| utils/a2ui/ai-ui-generator | 1 | type声明 | ~3 |
+| theme/theme | 1 | const声明 | ~8 |
+| theme/storybook-theme | 1 | const声明 | ~5 |
+| theme/design-tokens | 1 | type声明 | ~3 |
+| theme/animations/cyberpunk.css | 1 | const声明 | ~5 |
+| schemas/srm/inquiry | 1 | React import | ~1 |
+| schemas/scm/inventoryTurnover | 1 | semanticTokens import | ~1 |
+| schemas/report/subscription | 1 | React import | ~1 |
+| schemas/pdm/project | 1 | const声明 | ~8 |
+| schemas/notification/template | 1 | React import | ~1 |
+| schemas/notification/notification | 1 | useTheme import | ~1 |
+| schemas/notification/archive | 1 | React import | ~1 |
+| schemas/monitor/auditLog | 1 | semanticTokens import | ~1 |
+| schemas/lims/testMethod | 1 | React import | ~1 |
+| schemas/lims/task | 1 | React import | ~1 |
+| **合计** | **15** | | **66** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除5项本地声明（PHASE_LABEL_MAP, cyberpunkGlassClasses, SizeTokens, darkTheme, darkShadows）
+
+**B轨（手动修复10项）**：
+- React import整行删除（6）：lims/task, lims/testMethod, notification/archive, notification/template, report/subscription, srm/inquiry
+- import单符号移除（3）：notification/notification useTheme, monitor/auditLog semanticTokens, scm/inventoryTurnover semanticTokens
+- type声明手动删除（1）：ai-ui-generator AIUIGenerationRequest（v6误删AIUIGenerator类后恢复并手动删除）
+
+### 关键发现
+
+1. **未使用项数量持续下降**：Top15文件从V316的76项降至V329的15项，全src/未使用项从~282降至~10。15个文件全部只剩1项未使用。
+2. **React import占比高**：15个文件中6个是React import未使用（schemas/下的.tsx文件），占40%。
+3. **v6脚本type声明后无空行误删风险**：ai-ui-generator的`type AIUIGenerationRequest = GenerateOptions;`后面没有空行，v6脚本的深度跟踪把后面的`class AIUIGenerator { ... }`（164行）也一起删除了。需用git checkout恢复后手动删除type声明。
+4. **theme/目录占比高**：15个目标文件中4个在theme/下，theme/是未使用项的主要来源。
+5. **schemas/目录占比高**：15个目标文件中9个在schemas/下，schemas/下的.tsx文件普遍有React import未使用。
+6. **无级联**：15个文件全部是独立的import或本地声明，删除后没有触发级联项。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1333 warnings（-13） | ✅ |
+| 孤儿文件删除 | 0个（全部修改） | ✅ |
+| 变更统计 | 15 files, 3 insertions, 69 deletions | ✅ |
+
+### V329后续扩展（留给V330+）
+
+- [ ] **v6脚本type声明后无空行防护**：ai-ui-generator案例，需检测type声明后是否紧跟class/function，避免深度跟踪误删
+- [ ] **React import批量清理专项**：6/15文件是React import，可写脚本专门扫描schemas/*/.tsx的React import未使用
+- [ ] **theme/目录批量清理专项**：4/15文件在theme/，可写脚本专门扫描theme/*/未使用项
+- [ ] **批量模式继续**：V316-V329连续十四次成功，全src/未使用项从~282降至~10
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

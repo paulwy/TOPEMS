@@ -1,7 +1,7 @@
 import type { EntitySchema } from '@/schema';
 import { Settings, CheckSquare, Calendar, MessageSquare } from 'lucide-react';
 import React from 'react';
-import { Box, Typography, Chip, useTheme } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
