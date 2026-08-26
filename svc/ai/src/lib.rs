@@ -198,4 +198,10 @@ pub mod schema_defense;
 pub mod services;
 pub mod shared;
 
+/// DSH (Data-Driven Service Hub) AI 中间层模块
+///
+/// 基于 TOPEMS_Architecture_Improvement_Plan v1.1 + MCP_Architecture_Amendment_Plan v1.0
+/// 提供 LLM Provider 抽象、Agent 编排、Tool Registry、AI 治理、MCP 协议适配等能力。
+pub mod dsh;
+
 pub use modules::ApiDoc;

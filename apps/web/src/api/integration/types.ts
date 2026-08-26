@@ -1,5 +1,3 @@
-import type { ApiResponse } from '../client';
-
 interface IntegrationEventPayload {
   [key: string]: unknown;
 }

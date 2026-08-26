@@ -3801,7 +3801,135 @@ let failed_count = 0;
 - [ ] **批量模式优化**：V316-V320 连续五次成功，继续 3批/版本
 - [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~231 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
 
+## 🎯 V321 — 4 轨并行（B2 C1a accounting_subjects物理迁移 + 前端API签名对齐 + MCP骨架 + Plan v1.2文档化）（并行推进中）
 
+> 日期：2026-08-26 | 关联文档：[Architecture Improvement Plan v1.1](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) + [MCP Architecture Amendment Plan](file:///Users/air/TOPEMS/docs/TOPEMS_MCP_Architecture_Amendment_Plan.md)
+>
+> **Baseline SHA**: V320 `c6117aa17` | **分支**: `feature/v321`
+
+### 总览
+
+| 轨 | 主题 | 核心交付 | 依赖 |
+|----|------|----------|------|
+| A · 后端 | B2 C1a accounting_subjects 物理迁移 + Finance CRUD + 10 报表 handler | migration SQL + Finance 新模块 + ERP opening_balance 修正 | 无（独立） |
+| B · 前端 | B2 API 签名对齐 + 10 页面 import 切换 | @/api/finance 4 模块对齐 + 0 处 @/api/erp | A 轨路由注册（编译不依赖） |
+| C · MCP | shared-mcp 库 + McpTool/McpResource trait + McpServer 骨架 | 新 crate + trait 定义 + svc/ai MCP 适配层 | 无（独立） |
+| D · 文档 | Plan v1.2 交叉引用 + MCP 修正案整合 + V321 验收 | Plan 升级 + TODO 验收矩阵 | A/B/C 完成后 |
+
+### 验收标准
+
+| 验收项 | 量化指标 | 验证方法 |
+|--------|----------|---------|
+| cargo check ERP+Finance | 0 errors | `cargo check -p topems-erp -p topems-finance` |
+| cargo check AI (MCP) | 0 errors | `cargo check -p topems-ai -p topems-shared-mcp` |
+| tsc --noEmit | 0 errors | `cd apps/web && npx tsc --noEmit` |
+| Finance 页面 @/api/erp | 0 命中 | `grep -r '@/api/erp' apps/web/src/pages/finance/` |
+| ERP 跨 Schema accounting_subjects | 0 命中 | `grep 'plugin_erp.accounting_subjects' svc/erp/src/`（排除迁移 SQL） |
+| shared-mcp crate | 存在且编译 | `cargo check -p topems-shared-mcp` |
+| MCP 骨架文件 | ≥11 文件 | LS `svc/ai/src/dsh/mcp/` + `lib/shared-mcp/src/` |
+
+### A 轨详情：B2 C1a accounting_subjects 物理迁移 + Finance CRUD + 10 报表 handler
+
+**背景**：B1 已完成类型迁移（V289），B2 评估确认 @/api/finance 与 @/api/erp 签名不兼容（V290-V291 评估），用户选择 C1a 物理迁移策略。
+
+**A1 · Migration SQL**：
+- 新建 `database/migrations/` 迁移脚本
+- `CREATE TABLE IF NOT EXISTS plugin_finance.accounting_subjects` （同结构）
+- `INSERT INTO plugin_finance.accounting_subjects SELECT * FROM plugin_erp.accounting_subjects`
+- `DROP TABLE IF EXISTS plugin_erp.accounting_subjects`
+
+**A2 · ERP opening_balance.rs 修正**：
+- [opening_balance.rs:172-173](file:///Users/air/TOPEMS/svc/erp/src/modules/opening_balance.rs#L172-L173) 和 :454 改为查 `plugin_finance.accounting_subjects`（跨 Schema 但方向正确：ERP→Finance 而非 Finance→ERP）
+- 或改为 `TypedServiceClient<FinanceApi>` 调用 Finance `/accounting-subjects` API
+
+**A3 · Finance accounting_subjects CRUD 模块**：
+- 新建 `svc/finance/src/modules/accounting_subjects.rs`
+- 路由注册到 `svc/finance/src/modules/mod.rs`
+- CRUD: list/get/create/update/delete（utoipa 注解）
+
+**A4 · Finance 10 报表 handler**：
+- 扩展 `svc/finance/src/modules/financial_reports.rs`
+- 补 10 个方法: businessOverview/projectSummary/monthlyTrend/departmentSummary/agingAnalysis/voucherStatistics/cashFlowAnalysis/expenseAnalysis/profitAnalysis/financialOverview
+- 各 handler 查 Finance 自有表（budgets/vouchers/accounting_subjects 等），返回真实数据
+
+### B 轨详情：B2 前端 API 签名对齐 + 页面 import 切换
+
+**B1 · budget.ts 签名对齐**：
+- list() 参数对齐: 增加 page/pagesize/search 兼容
+- list() 返回类型: `ApiResponse<PaginatedResult<Budget>>` 兼容包装
+
+**B2 · voucher.ts 类型别名**：
+- `export type FinancialVoucher = Voucher`
+- `export type VoucherItem = VoucherEntry`
+- `export type CreateFinancialVoucherRequest = CreateVoucherRequest`
+
+**B3 · accountingSubject.ts 新建**：
+- CRUD API 调用 `/api/finance/accounting-subjects`
+
+**B4 · report.ts 补 10 方法 + financeReportApi 别名**：
+- 补 10 个 ERP 侧已有的报表方法
+- `export const financeReportApi = { balanceSheet: reportApi.getBalanceSheet, ... }` 别名
+
+**B5 · 10 页面 import 切换**：
+- FinanceBudgetPage / BudgetManagementPage / FinanceVoucherPage / VoucherCreatePage / FinanceReportsPage / SubjectListPanel / VoucherDetailModal / VoucherFormModal / 等
+- 目标: `grep '@/api/erp' apps/web/src/pages/finance/` = 0
+
+### C 轨详情：MCP 骨架（shared-mcp 库 + trait + McpServer 核心）
+
+**C1 · lib/shared-mcp/ 新 crate**：
+- `Cargo.toml` + `src/lib.rs` + `src/protocol.rs`（MCP 协议常量/类型）
+- `src/jsonrpc.rs`（JSON-RPC 2.0 实现）+ `src/transport.rs`（传输层抽象）+ `src/schema.rs`（JSON Schema 生成）
+
+**C2 · lib/shared-dsh/ MCP trait**：
+- `src/mcp_tool.rs`: McpTool trait（name/description/input_schema/execute/required_roles/rate_limit）
+- `src/mcp_resource.rs`: McpResource trait（uri_pattern/read/subscribe_events/required_roles）
+- `src/mcp.rs`: MCP 共享类型（McpToolResult/McpToolError/McpResourceResult/McpResourceError）
+
+**C3 · svc/ai/src/dsh/mcp/ 适配层骨架**：
+- `mod.rs` / `server.rs`（McpServer 核心）/ `transport.rs`（stdio/SSE/HTTP）
+- `tool_adapter.rs`（DSH Tool → MCP Tool 转换）/ `resource_manager.rs`
+- `permission_adapter.rs` / `security.rs` / `session.rs`
+
+**C4 · Cargo.toml workspace 注册**：
+- 根 Cargo.toml 增加 `shared-mcp` member
+- svc/ai/Cargo.toml 增加 shared-mcp 依赖
+
+### D 轨详情：Plan v1.2 文档化 + MCP 修正案整合
+
+**D1 · Architecture Improvement Plan v1.2**：
+- 页眉升级 v1.1 → v1.2
+- 新增 §8.5「MCP 修正案交叉引用」：指向 MCP Architecture Amendment Plan
+- §8.4 G7 补充 V321 C1a 落地记录
+
+**D2 · V321 验收矩阵**：
+- TODO.md V321 章节补完整验收记录
+- V320 后续扩展 B2 项打勾
+
+### 变更文件清单（预估）
+
+**A 轨（后端 ~8 files）**：
+- database/migrations/（migration SQL）
+- svc/erp/src/modules/opening_balance.rs（跨 Schema 查询修正）
+- svc/finance/src/modules/accounting_subjects.rs（新建）
+- svc/finance/src/modules/financial_reports.rs（扩展 10 handler）
+- svc/finance/src/modules/mod.rs（路由注册）
+- svc/finance/src/models/（AccountingSubject model 如果需要）
+
+**B 轨（前端 ~15 files）**：
+- apps/web/src/api/finance/budget.ts / voucher.ts / report.ts（签名对齐）
+- apps/web/src/api/finance/accountingSubject.ts（新建）
+- apps/web/src/api/finance/index.ts（re-export）
+- apps/web/src/pages/finance/ 10 页面（import 切换）
+
+**C 轨（MCP ~14 files）**：
+- lib/shared-mcp/Cargo.toml + src/{lib,protocol,jsonrpc,transport,schema}.rs
+- lib/shared-dsh/src/{mcp,mcp_tool,mcp_resource}.rs
+- svc/ai/src/dsh/mcp/{mod,server,transport,tool_adapter,resource_manager,permission_adapter,security,session}.rs
+- Cargo.toml（workspace 注册）+ svc/ai/Cargo.toml（依赖）
+
+**D 轨（文档 2 files）**：
+- docs/TOPEMS_Architecture_Improvement_Plan.md（v1.2 升级）
+- docs/roadmap/TODO.md（V321 章节 + V320 后续扩展更新）
 
 
 
@@ -5006,6 +5134,307 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 - [ ] **孤儿文件检测模式**：删除主函数后整个文件变孤儿（useInventoryReport 9项级联, WorkflowApprovalDetailTabs 7项级联）。可总结孤儿文件检测模式，删除主函数后自动检测是否整个文件变未使用
 - [ ] **测试文件同步删除**：useInventoryReport案例，删除源文件后需同步删除对应测试文件。可写脚本检测测试文件引用的源文件是否已删除
 - [ ] **批量模式继续**：V316-V332连续十七次成功，全src/未使用项从~282降至~0
+
+---
+
+## 🎯 V333 — 架构改进四轨并行启动：shared-mcp库 + DSH骨架 + 16项未使用项清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行首次交付 · 轨C/D从零创建 · 轨A 16项清理 · 轨B C2核查完成
+> cargo check: shared-mcp ✅ + topems-ai(dsh) ✅ · eslint: 0 errors
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 未使用项清理 | 16项（8 i18n + 1 const + 4 api import + 3 type import） | ✅ |
+| 轨B | C2 stub核查 | V289已删32 stub，剩余10个真实路由，无需操作 | ✅ |
+| 轨B | B1引用评估 | 6处Finance→ERP API引用，@/api/finance已有voucherApi/budgetApi，记录V335对齐 | ✅ |
+| 轨C | shared-mcp库 | 4源文件+lib.rs+workspace member，cargo check通过 | ✅ |
+| 轨D | DSH模块骨架 | mod.rs+provider/mod.rs+provider/trait_.rs+lib.rs声明，cargo check通过 | ✅ |
+
+### 轨A：16项未使用项清理明细
+
+| 文件 | 未使用项 | 类型 | 处理 |
+|------|----------|------|------|
+| ai/governance/compliance-automation.ts | i18n import | TS6133 | 整行删除 |
+| ai/governance/policy-enforcement.ts | i18n import | TS6133 | 整行删除 |
+| ai/governance/risk-alerting.ts | i18n import | TS6133 | 整行删除 |
+| ai/review/code-reviewer.ts | i18n import | TS6133 | 整行删除 |
+| ai/review/security-scanner.ts | i18n import | TS6133 | 整行删除 |
+| ai/security/adversarial-robustness.ts | i18n import | TS6133 | 整行删除 |
+| ai/security/ai-security-audit.ts | i18n import | TS6133 | 整行删除 |
+| ai/security/privacy-enhancement.ts | i18n import | TS6133 | 整行删除 |
+| ai/quality/smart-testing-v2.ts | DEFAULT_TEST_CASES const(99行) | TS6133 | 整块删除(84-182行) |
+| api/crmFinance/index.ts | i18n import | TS6133 | 整行删除 |
+| api/hrm/company.ts | TypedApiResponse type import | TS6133 | 单符号移除 |
+| api/hrm/department.ts | TypedApiResponse type import | TS6133 | 单符号移除 |
+| api/hrm/employee.ts | TypedApiResponse type import | TS6133 | 内联移除 |
+| api/aps/index.ts | apiClient import | TS6133 | 整行删除 |
+| api/integration/types.ts | ApiResponse type import | TS6133 | 整行删除 |
+| api/lims/types.ts | ApiResponse type import | TS6133 | 整行删除 |
+| **合计** | **16项** | | **净删~130行** |
+
+### 轨B：边界治理核查结果
+
+**C2 unified-core stub核查**：
+- V289已删除32个纯空壳stub路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/lowcode/mes/mobile/monitor/notification/oa/pdm/pm/qms/rd/registry/report/scm/shared/srm/ticket/tms/wms）
+- 剩余10个路由文件（automation/doc/feature_flag/file/flow/iam/master/migration/settings/system）均为真实路由
+- automation.rs是501 Not Implemented占位（有明确路由设计，非空壳），保留
+- **结论：C2任务已完成，无需操作**
+
+**B1 Finance API引用评估**：
+- 6处Finance页面引用`@/api/erp`的API函数（voucherApi/budgetApi/financeReportApi/accountingSubjectApi）
+- `@/api/finance`已有voucherApi和budgetApi（签名需对齐验证），缺financeReportApi和accountingSubjectApi
+- **结论：记录V335实施API签名对齐，当前版本不修改**
+
+### 轨C：shared-mcp库创建
+
+**新增文件**：
+- `lib/shared-mcp/Cargo.toml` — 库配置（依赖shared-core/serde/tokio/async-trait）
+- `lib/shared-mcp/src/lib.rs` — 库入口，导出protocol/jsonrpc/transport/schema模块
+- `lib/shared-mcp/src/protocol.rs` — MCP协议类型（McpProtocolVersion/McpCapability/McpTool/McpResource/McpContent/InitializeParams等）
+- `lib/shared-mcp/src/jsonrpc.rs` — JSON-RPC 2.0实现（JsonRpcRequest/JsonRpcResponse/JsonRpcError，含parse_error/method_not_found等工厂方法）
+- `lib/shared-mcp/src/transport.rs` — 传输层抽象（McpTransport trait/TransportType(stdio/sse/http)/TransportConfig/TransportError）
+- `lib/shared-mcp/src/schema.rs` — JSON Schema构建器（SchemaBuilder，支持string/integer/object/array/enum等类型，含empty_object_schema工具函数）
+
+**修改文件**：
+- `Cargo.toml` — workspace members添加`lib/shared-mcp`
+
+**验收**：`cargo check -p topems-shared-mcp` ✅ 通过（10.5s），单元测试覆盖protocol/jsonrpc/transport/schema各模块
+
+### 轨D：DSH模块骨架创建
+
+**新增文件**：
+- `svc/ai/src/dsh/mod.rs` — DSH模块入口，导出provider模块，规划agent/tools/governance/context/mcp子模块
+- `svc/ai/src/dsh/provider/mod.rs` — Provider模块入口，导出trait_模块
+- `svc/ai/src/dsh/provider/trait_.rs` — LlmProvider trait定义（ask/ask_stream/embed/health_check/list_models），含ProviderType/ProviderConfig/LlmRequest/LlmResponse/ChatMessage/EmbeddingRequest/EmbeddingResponse/LlmStreamChunk/LlmProviderError等类型
+
+**修改文件**：
+- `svc/ai/src/lib.rs` — 添加`pub mod dsh;`模块声明
+
+**规划中文件**（V334+实施）：
+- `svc/ai/src/dsh/provider/deepseek.rs` — DeepSeek API实现
+- `svc/ai/src/dsh/provider/ollama.rs` — Ollama本地实现
+- `svc/ai/src/dsh/provider/mock.rs` — Mock实现（测试用）
+- `svc/ai/src/dsh/provider/factory.rs` — ProviderFactory（配置驱动创建）
+
+**验收**：`cargo check -p topems-ai` ✅ 通过（65s），LlmProvider trait含完整文档和单元测试
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 16项未使用清零 | tsc目标文件0项 | ✅ |
+| 轨A eslint | 0 errors（42 warnings为原有no-explicit-any） | ✅ |
+| 轨B C2核查 | 32 stub已删，10个真实路由确认 | ✅ |
+| 轨B B1评估 | 6处引用记录V335对齐 | ✅ |
+| 轨C shared-mcp cargo check | 通过 | ✅ |
+| 轨C shared-mcp单元测试 | protocol/jsonrpc/transport/schema各有测试 | ✅ |
+| 轨D DSH cargo check | topems-ai编译通过 | ✅ |
+| 轨D LlmProvider trait | ask/stream/embed/health/list_models完整 | ✅ |
+| 变更统计 | 新增9文件(~300行) + 修改3文件 + 前端16文件清理 | ✅ |
+
+### V333后续扩展（留给V334+）
+
+- [ ] **轨C MCP Server核心骨架**：基于shared-mcp创建McpServer，支持initialize/tools/list/tools/call方法，SSE传输
+- [ ] **轨D DeepSeek/Ollama Provider实现**：实现LlmProvider trait的两个具体实现，支持真实API调用
+- [ ] **轨A TS6198解构批量清理专项**：扫描所有`const { data: ..., isLoading } = useQuery`未使用模式，一次性改为裸useQuery
+- [ ] **轨B B1 API签名对齐实施**：将6处Finance页面的`@/api/erp`引用改为`@/api/finance`，需先验证签名一致性
+- [ ] **四轨并行继续**：V333首次交付验证成功，V334继续四轨合并交付模式
+
+---
+
+## 🚀 架构改进四轨并行实施方案（V333+ 启动）
+
+> 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
+> 启动日期：2026-08-26 | 当前版本基线：V332 | 未使用项清理：~360项剩余
+
+### 实施总览
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  四轨并行，每版本合并交付                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  轨A：未使用项持续清理（维护性，每版本Top15）                              │
+│  ├── 当前：~360项 src/ 未使用（pages/下各1项为主）                        │
+│  ├── 目标：清零                                                             │
+│  └── 方法：继续批量模式，每版本Top15文件                                   │
+│                                                                             │
+│  轨B：边界治理收尾                                                          │
+│  ├── B1: Finance类型迁移（已完成，剩6处API函数引用待B2对齐）              │
+│  ├── C2: unified-core stub路由删除（剩11个文件需核查）                    │
+│  └── A0: 跨Schema清零（已完成）                                            │
+│                                                                             │
+│  轨C：MCP骨架搭建（新建）                                                   │
+│  ├── lib/shared-mcp 库（protocol/jsonrpc/transport/schema）               │
+│  ├── svc/ai/src/dsh/mcp/ 模块（server/transport/tool_adapter/security）  │
+│  └── McpServer核心 + stdio/SSE传输层                                      │
+│                                                                             │
+│  轨D：DSH骨架搭建（新建）                                                   │
+│  ├── svc/ai/src/dsh/ 模块结构（provider/agent/tools/governance/context） │
+│  ├── Provider抽象层（LlmProvider trait + DeepSeek/Ollama/Mock实现）       │
+│  └── Tool Registry + Governance骨架                                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 轨A：未使用项持续清理
+
+| 项目 | 详情 |
+|------|------|
+| 当前状态 | ~360项 src/ 未使用（packages/ 6项 + src/ ~354项），主要在 pages/ 下各1项 |
+| 目标 | tsc --noUnusedLocals 0 errors |
+| 方法 | 继续批量模式，每版本Top15文件，v6脚本+手动修复 |
+| 预计版本 | ~24个版本（15项/版本），可加速至每版本30+文件 |
+| 验收标准 | `cd apps/web && npx tsc --noEmit --noUnusedLocals --noUnusedParameters 2>&1 \| grep "error TS" \| wc -l` = 0 |
+
+### 轨B：边界治理收尾
+
+#### B1: Finance类型迁移（已完成类型部分，剩API函数对齐）
+
+| 项目 | 详情 |
+|------|------|
+| 当前状态 | 6处Finance页面引用 `@/api/erp` 的API函数（voucherApi, budgetApi, financeReportApi, accountingSubjectApi） |
+| 涉及文件 | VoucherCreatePage, BudgetManagementPage, FinanceBudgetPage, FinanceReportsPage, FinanceVoucherPage/index, FinanceBudgetDetailPage |
+| 目标 | B2阶段：API签名对齐，Finance页面不再引用 `@/api/erp` |
+| 验收标准 | `grep -rn "from '@/api/erp'" apps/web/src/pages/finance/` = 0 |
+
+#### C2: unified-core stub路由删除
+
+| 项目 | 详情 |
+|------|------|
+| 当前状态 | 11个路由文件（automation, doc, feature_flag, file, flow, iam, master, migration, mod, settings, system），需核查是否还是stub |
+| 目标 | 删除所有stub路由，保留统一health路由 |
+| 验收标准 | `cargo check -p topems-unified-core` = 0；`svc/unified-core/src/routes/` 下stub文件名 = 0 |
+
+#### A0: 跨Schema清零（已完成）
+
+| 项目 | 详情 |
+|------|------|
+| 当前状态 | MES/QMS 的 plugin_mobile 跨Schema查询已修复，grep无结果 |
+| 验收标准 | `grep -rn "plugin_mobile\.\(work_reports\|quality_tasks\)" svc/` = 0 |
+
+### 轨C：MCP骨架搭建
+
+#### 阶段1：shared-mcp 库创建（V333）
+
+| 文件 | 说明 | 验收 |
+|------|------|------|
+| `lib/shared-mcp/Cargo.toml` | 库配置，依赖serde/serde_json/thiserror/tokio | cargo check通过 |
+| `lib/shared-mcp/src/lib.rs` | 库入口，re-export所有模块 | - |
+| `lib/shared-mcp/src/protocol.rs` | MCP协议常量与类型（JSON-RPC 2.0） | 单元测试 |
+| `lib/shared-mcp/src/jsonrpc.rs` | JSON-RPC 2.0实现（Request/Response/Error） | 单元测试 |
+| `lib/shared-mcp/src/transport.rs` | 传输层抽象（Transport trait） | - |
+| `lib/shared-mcp/src/schema.rs` | JSON Schema生成工具 | 单元测试 |
+
+#### 阶段2：MCP Server核心（V334-V335）
+
+| 文件 | 说明 | 验收 |
+|------|------|------|
+| `svc/ai/src/dsh/mcp/mod.rs` | MCP模块入口 | - |
+| `svc/ai/src/dsh/mcp/server.rs` | McpServer核心（JSON-RPC引擎+Session管理） | 集成测试 |
+| `svc/ai/src/dsh/mcp/transport.rs` | stdio + SSE传输实现 | 可启动SSE服务 |
+| `svc/ai/src/dsh/mcp/tool_adapter.rs` | DSH Tool → MCP Tool转换 | - |
+| `svc/ai/src/dsh/mcp/resource_manager.rs` | MCP Resource注册管理 | - |
+| `svc/ai/src/dsh/mcp/permission_adapter.rs` | 权限模型映射 | - |
+| `svc/ai/src/dsh/mcp/security.rs` | MCP安全防护（输入校验/输出脱敏/速率限制） | 安全测试 |
+| `svc/ai/src/dsh/mcp/session.rs` | MCP Session管理 | - |
+
+#### 阶段3：MCP Tools MVP（V336-V337）
+
+| 工具 | 业务域 | 验收 |
+|------|--------|------|
+| crm.list_customers | CRM | Cursor可调用 |
+| crm.get_customer_profile | CRM | 权限正确 |
+| crm.create_opportunity | CRM | - |
+| erp.list_sales_orders | ERP | - |
+| erp.get_inventory_summary | ERP | - |
+| erp.create_purchase_order | ERP | - |
+| erp.get_sales_order_detail | ERP | - |
+| finance.create_voucher | Finance | - |
+| finance.get_account_balance | Finance | - |
+| finance.list_receivables | Finance | - |
+
+#### MCP验收标准
+
+| 验收项 | 量化指标 | 验证方法 |
+|--------|----------|----------|
+| MCP Tools数量 | ≥10个 | `GET /mcp/tools` 返回列表长度 |
+| MCP Resources数量 | ≥3个 | `GET /mcp/resources` 返回列表长度 |
+| MCP Tools调用成功率 | >99% | 压力测试1000次 |
+| MCP响应时间 | P95 < 2s（SaaS）/ <100ms（私有化） | 压测工具 |
+| MCP权限继承率 | 100% | 渗透测试无越权 |
+| MCP越权次数 | 0 | 安全测试 |
+| MCP审计覆盖率 | 100% | 所有调用有日志 |
+| MCP外部兼容性 | 通过 | Cursor/Claude Desktop可连接 |
+
+### 轨D：DSH骨架搭建
+
+#### 阶段1：DSH模块结构 + Provider抽象（V333-V334）
+
+| 文件 | 说明 | 验收 |
+|------|------|------|
+| `svc/ai/src/dsh/mod.rs` | DSH模块入口 | - |
+| `svc/ai/src/dsh/provider/mod.rs` | Provider模块入口 | - |
+| `svc/ai/src/dsh/provider/trait.rs` | LlmProvider trait（ask/stream/embed） | 单元测试 |
+| `svc/ai/src/dsh/provider/deepseek.rs` | DeepSeek API实现 | 集成测试 |
+| `svc/ai/src/dsh/provider/ollama.rs` | Ollama本地实现 | 集成测试 |
+| `svc/ai/src/dsh/provider/mock.rs` | Mock实现（测试用） | 单元测试 |
+| `svc/ai/src/dsh/provider/factory.rs` | ProviderFactory（配置驱动创建） | - |
+
+#### 阶段2：Tool Registry + Governance骨架（V335-V336）
+
+| 文件 | 说明 | 验收 |
+|------|------|------|
+| `svc/ai/src/dsh/tools/mod.rs` | Tools模块入口 | - |
+| `svc/ai/src/dsh/tools/registry.rs` | ToolRegistry（注册/查找/执行） | 单元测试 |
+| `svc/ai/src/dsh/tools/system_tools.rs` | 系统工具（search/calculator/weather） | - |
+| `svc/ai/src/dsh/governance/mod.rs` | Governance模块入口 | - |
+| `svc/ai/src/dsh/governance/meter.rs` | Token/成本计量 | - |
+| `svc/ai/src/dsh/governance/audit.rs` | AI调用审计 | - |
+| `svc/ai/src/dsh/governance/guard.rs` | 安全护栏 | - |
+
+#### 阶段3：Agent编排 + Context工程（V337+）
+
+| 文件 | 说明 | 验收 |
+|------|------|------|
+| `svc/ai/src/dsh/agent/mod.rs` | Agent模块入口 | - |
+| `svc/ai/src/dsh/agent/orchestrator.rs` | ReAct/Plan-Execute编排 | 集成测试 |
+| `svc/ai/src/dsh/agent/memory.rs` | 短期/长期记忆 | - |
+| `svc/ai/src/dsh/context/mod.rs` | Context工程模块 | - |
+| `svc/ai/src/dsh/context/builder.rs` | 上下文构建器 | - |
+
+#### DSH验收标准
+
+| 验收项 | 量化指标 | 验证方法 |
+|--------|----------|----------|
+| Provider连通率 | >99% | Ollama/DeepSeek调用成功率 |
+| Tool Registry可用 | ≥5个系统工具 | 工具调用测试 |
+| AI治理覆盖率 | 100% | 所有AI调用有审计/成本记录 |
+| Agent编排可用 | ReAct模式正常 | 端到端测试 |
+
+### 版本规划（V333-V340）
+
+| 版本 | 轨A（未使用项） | 轨B（边界治理） | 轨C（MCP骨架） | 轨D（DSH骨架） |
+|------|-----------------|-----------------|-----------------|-----------------|
+| V333 | Top15清理 | C2 stub核查+删除 | shared-mcp库创建 | DSH模块结构+Provider trait |
+| V334 | Top15清理 | C2 stub删除收尾 | MCP Server核心骨架 | DeepSeek/Ollama Provider实现 |
+| V335 | Top15清理 | B1 API对齐评估 | MCP stdio/SSE传输 | Tool Registry骨架 |
+| V336 | Top15清理 | B1 API对齐实施 | MCP tool_adapter + security | Governance骨架 |
+| V337 | Top15清理 | - | CRM MCP Tools(3个) | Agent编排骨架 |
+| V338 | Top15清理 | - | ERP MCP Tools(4个) | - |
+| V339 | Top15清理 | - | Finance MCP Tools(3个) | - |
+| V340 | 未使用项清零 | 边界治理收尾 | MCP MVP上线验收 | DSH基础版验收 |
+
+### 总体验收标准
+
+| 阶段 | 验收项 | 量化指标 |
+|------|--------|----------|
+| V333末 | 四轨启动 | shared-mcp库cargo check通过 + DSH模块结构就绪 + C2 stub核查完成 |
+| V335末 | MCP骨架就绪 | MCP Server可启动SSE + Tool Registry可用 + Provider抽象完成 |
+| V337末 | MCP MVP可用 | 10个MCP Tools全部可用 + Cursor可调用 + 权限正确 |
+| V340末 | Phase 1完成 | 未使用项清零 + 边界治理完成 + MCP MVP上线 + DSH基础版可用 |
 
 ---
 

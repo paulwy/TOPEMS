@@ -1,5 +1,3 @@
-import apiClient from '../client';
-
 import productionPlanApi from './productionPlan';
 import scheduleApi from './schedule';
 import capacityApi from './capacity';
