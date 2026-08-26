@@ -75,13 +75,6 @@ interface ExtendedLoadingOptions extends LoadingOptions {
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
-const useLoading = () => {
-  const context = useContext(LoadingContext);
-  if (!context) {
-    throw new Error('useLoading must be used within a LoadingProvider');
-  }
-  return context;
-};
 
 // ============================================================================
 // Skeleton Components
