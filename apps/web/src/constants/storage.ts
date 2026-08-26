@@ -10,8 +10,6 @@
 const TOKEN_KEY = 'token' as const;
 
 /** Key for storing tenant ID in localStorage */
-const TENANT_KEY = 'tenant_id' as const;
-
 /**
  * Unified storage key set.
  * Compatible with historical definitions in both utils/storage.ts
@@ -42,5 +40,3 @@ export const STORAGE_KEYS = {
   SIDEBAR_FAVORITES: 'sidebar-favorites',
   SIDEBAR_RECENT: 'sidebar-recent',
 } as const;
-
-type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

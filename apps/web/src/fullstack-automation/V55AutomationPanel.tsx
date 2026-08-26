@@ -27,7 +27,6 @@ import {
   LinearProgress,
   Grid,
   Tooltip,
-  Badge,
   Divider,
   Alert,
   Card,
@@ -61,7 +60,6 @@ import {
   TrendingUp,
   Server,
   Layers,
-  FileText,
 } from 'lucide-react';
 import {
   ciPipeline,

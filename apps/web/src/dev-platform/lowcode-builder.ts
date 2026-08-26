@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 /**
  * V53.0 微前端平台终局 — 低代码搭建引擎
@@ -863,7 +863,7 @@ class LowCodeBuilder {
     };
   }
 
-  publish(pageId: string, message?: string): PublishRecord | null {
+  publish(pageId: string, _message?: string): PublishRecord | null {
     const page = this.pages.get(pageId);
     if (!page) return null;
 
