@@ -15913,6 +15913,188 @@ Admin ──包含──▶ Write ──包含──▶ Read
 
 ---
 
+## 🎯 V443 — 架构改进四轨并行第一百一十一次：轨C shared-service-client连接池配置和请求统计监控（连接池配置+请求统计+监控方法+统计记录）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十一次交付 · 轨C shared-service-client连接池配置和请求统计监控 · 1个代码文件修改 · 添加连接池配置（最大空闲连接、空闲超时、最大生命周期、TCP keepalive）、请求统计（总请求数、成功/失败数、响应时间、成功率、RPS）、统计记录、监控方法
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client连接池配置和请求统计监控 | 添加连接池配置、请求统计、监控方法 | ✅ |
+| 轨D | 业务工具权限控制持久化 | 将租户权限配置存储到数据库，留给V444 | ⏸️ |
+
+### 轨C：shared-service-client连接池配置和请求统计监控（连接池配置+请求统计+监控方法+统计记录）
+
+**实现内容**：在shared-service-client中添加连接池配置和请求统计监控，包括连接池配置（最大空闲连接、空闲超时、最大生命周期、TCP keepalive）、请求统计（总请求数、成功/失败数、响应时间、成功率、RPS）、统计记录、监控方法
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/shared/service_client.rs`（添加连接池配置和请求统计）**
+
+**新增功能**：
+
+**1. 连接池配置（ConnectionPoolConfig）**
+- 字段：
+  - `max_idle_per_host: usize` — 每个主机的最大空闲连接数（默认10）
+  - `idle_timeout_secs: u64` — 空闲连接超时（秒，默认90）
+  - `max_lifetime_secs: Option<u64>` — 连接最大生命周期（秒，None表示无限制）
+  - `tcp_keepalive: bool` — 是否启用TCP keepalive（默认true）
+  - `tcp_keepalive_interval_secs: u64` — TCP keepalive间隔（秒，默认60）
+- 实现了Default trait
+- 所有字段都有serde默认值
+
+**2. 请求统计（RequestStatistics）**
+- 字段：
+  - `total_requests: u64` — 总请求数
+  - `successful_requests: u64` — 成功请求数
+  - `failed_requests: u64` — 失败请求数
+  - `rate_limited_requests: u64` — 被限流的请求数
+  - `circuit_breaker_rejected: u64` — 被熔断拒绝的请求数
+  - `total_response_time_ms: u64` — 总响应时间（毫秒）
+  - `min_response_time_ms: u64` — 最小响应时间（毫秒）
+  - `max_response_time_ms: u64` — 最大响应时间（毫秒）
+  - `avg_response_time_ms: f64` — 平均响应时间（毫秒）
+  - `success_rate: f64` — 成功率（0.0-1.0）
+  - `requests_per_second: f64` — 每秒请求数（RPS）
+  - `uptime_secs: u64` — 客户端运行时间（秒）
+  - `last_request_at: Option<String>` — 最后请求时间（RFC3339）
+  - `last_success_at: Option<String>` — 最后成功请求时间（RFC3339）
+  - `last_failure_at: Option<String>` — 最后失败请求时间（RFC3339）
+- 方法：
+  - `new()` — 创建新的空统计
+  - `record_success(response_time_ms)` — 记录成功请求
+  - `record_failure(response_time_ms)` — 记录失败请求
+  - `record_rate_limited()` — 记录被限流的请求
+  - `record_circuit_breaker_rejected()` — 记录被熔断拒绝的请求
+  - `update_calculated_fields()` — 更新计算字段（平均值、成功率、RPS）
+  - `update_uptime(secs)` — 更新运行时间
+  - `reset()` — 重置所有统计
+- 实现了Default trait
+
+**3. ServiceConfig新增字段**
+- `connection_pool: ConnectionPoolConfig` — 连接池配置
+- 使用`#[serde(default)]`，保持向后兼容
+
+**4. ServiceClient新增字段**
+- `statistics: Arc<Mutex<RequestStatistics>>` — 请求统计（跨克隆共享）
+- `created_at: std::time::Instant` — 客户端创建时间（用于计算运行时间）
+
+**5. new方法使用连接池配置**
+- 使用`pool_max_idle_per_host()`设置最大空闲连接数
+- 使用`pool_idle_timeout()`设置空闲超时
+- 使用`pool_max_lifetime()`设置最大生命周期（如果配置了）
+- 使用`tcp_keepalive()`设置TCP keepalive（如果启用）
+- 初始化statistics和created_at字段
+
+**6. request方法添加统计记录**
+- 熔断检查失败时：调用`record_circuit_breaker_rejected()`
+- 限流检查失败时：调用`record_rate_limited()`
+- 请求成功时：调用`record_success(response.duration_ms)`
+- 请求失败（所有重试耗尽后）：调用`record_failure(0)`
+
+**7. 监控方法**
+- `get_statistics()` — 获取请求统计（自动更新运行时间）
+- `reset_statistics()` — 重置请求统计
+- `get_connection_pool_config()` — 获取连接池配置
+
+**连接池配置特性**：
+1. **最大空闲连接** — 控制每个主机的空闲连接池大小，默认10
+2. **空闲超时** — 空闲连接超过指定时间后被关闭，默认90秒
+3. **最大生命周期** — 连接的最大使用时间，超过后被关闭，默认无限制
+4. **TCP keepalive** — 启用TCP keepalive防止连接被中间设备关闭，默认启用
+5. **TCP keepalive间隔** — keepalive探测间隔，默认60秒
+6. **向后兼容** — 所有字段都有默认值，不配置时使用默认值
+
+**请求统计特性**：
+1. **请求计数** — 总请求数、成功数、失败数、限流数、熔断拒绝数
+2. **响应时间统计** — 总响应时间、最小、最大、平均响应时间
+3. **成功率计算** — 成功请求数/总请求数
+4. **RPS计算** — 总请求数/运行时间
+5. **时间戳记录** — 最后请求、最后成功、最后失败时间
+6. **自动更新** — 获取统计时自动更新运行时间和计算字段
+7. **线程安全** — 使用Arc<Mutex>实现跨克隆共享
+8. **可重置** — 可以随时重置统计数据
+
+**统计记录流程**：
+```
+请求到达
+    │
+    ▼
+熔断检查 ──失败──▶ record_circuit_breaker_rejected() ──▶ 返回错误
+    │
+    通过
+    ▼
+限流检查 ──失败──▶ record_rate_limited() ──▶ 返回错误
+    │
+    通过
+    ▼
+执行请求 ──成功──▶ record_success(duration_ms) ──▶ 返回响应
+    │
+    失败
+    ▼
+重试？──是──▶ 重试请求
+    │
+    否（重试耗尽）
+    ▼
+record_failure(0) ──▶ 返回错误
+```
+
+**技术说明**：
+- 连接池配置通过reqwest的Client::builder()设置
+- 请求统计使用Arc<Mutex>实现线程安全共享
+- 统计记录在request方法中执行
+- 成功请求的响应时间从ServiceResponse的duration_ms字段获取
+- 失败请求的响应时间暂时记录为0（未来可以改进）
+- 获取统计时自动更新运行时间（created_at.elapsed()）
+- 所有新类型都实现了Debug、Clone、Serialize、Deserialize trait
+- ConnectionPoolConfig和RequestStatistics都实现了Default trait
+- 保持向后兼容（connection_pool字段使用#[serde(default)]）
+
+**验收结果**：
+- 完成连接池配置类型（ConnectionPoolConfig，5个字段）
+- 完成连接池配置默认值（max_idle_per_host=10、idle_timeout=90、tcp_keepalive=true、tcp_keepalive_interval=60）
+- 完成请求统计类型（RequestStatistics，16个字段）
+- 完成请求统计方法（new、record_success、record_failure、record_rate_limited、record_circuit_breaker_rejected、update_calculated_fields、update_uptime、reset）
+- 完成ServiceConfig新增connection_pool字段
+- 完成ServiceClient新增statistics和created_at字段
+- 完成new方法使用连接池配置创建Client
+- 完成request方法添加统计记录（熔断拒绝、限流、成功、失败）
+- 完成监控方法（get_statistics、reset_statistics、get_connection_pool_config）
+- 完成Default trait实现（ConnectionPoolConfig、RequestStatistics）
+- 所有新类型都实现了必要的trait
+- 保持向后兼容（connection_pool字段使用#[serde(default)]）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 连接池配置类型 | ConnectionPoolConfig（5个字段：max_idle_per_host、idle_timeout_secs、max_lifetime_secs、tcp_keepalive、tcp_keepalive_interval_secs） | ✅ |
+| 轨C 连接池配置默认值 | max_idle_per_host=10、idle_timeout=90、tcp_keepalive=true、tcp_keepalive_interval=60 | ✅ |
+| 轨C 请求统计类型 | RequestStatistics（16个字段：total_requests、successful_requests、failed_requests、rate_limited_requests、circuit_breaker_rejected、total_response_time_ms、min/max/avg_response_time_ms、success_rate、requests_per_second、uptime_secs、last_request_at、last_success_at、last_failure_at） | ✅ |
+| 轨C 请求统计方法 | new()、record_success()、record_failure()、record_rate_limited()、record_circuit_breaker_rejected()、update_calculated_fields()、update_uptime()、reset() | ✅ |
+| 轨C ServiceConfig新增字段 | connection_pool: ConnectionPoolConfig（#[serde(default)]） | ✅ |
+| 轨C ServiceClient新增字段 | statistics: Arc<Mutex<RequestStatistics>>、created_at: Instant | ✅ |
+| 轨C new方法连接池配置 | pool_max_idle_per_host()、pool_idle_timeout()、pool_max_lifetime()、tcp_keepalive() | ✅ |
+| 轨C request方法统计记录 | 熔断拒绝→record_circuit_breaker_rejected()、限流→record_rate_limited()、成功→record_success()、失败→record_failure() | ✅ |
+| 轨C 监控方法 | get_statistics()、reset_statistics()、get_connection_pool_config() | ✅ |
+| 轨C Default trait实现 | ConnectionPoolConfig、RequestStatistics | ✅ |
+| 轨C 线程安全 | Arc<Mutex>实现跨克隆共享 | ✅ |
+| 轨C 向后兼容 | connection_pool字段使用#[serde(default)] | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V443后续扩展（留给V444+）
+
+- [ ] **轨D 业务工具权限控制持久化**：将租户权限配置存储到数据库
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V443连续一百一十一次交付验证成功，V444继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
