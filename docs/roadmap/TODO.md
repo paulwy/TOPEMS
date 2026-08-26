@@ -14209,6 +14209,137 @@ client.connect();
 
 ---
 
+## 🎯 V432 — 架构改进四轨并行第一百次：轨C SSE端点测试（创建集成测试文件，4个测试用例）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百次交付 · 轨C SSE端点测试 · 1个代码文件新建 · 创建SSE端点集成测试文件，包含4个测试用例（连接建立、会话请求、会话未找到、心跳机制）
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE端点测试 | 创建SSE端点集成测试文件，包含4个测试用例 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V433 | ⏸️ |
+
+### 轨C：SSE端点测试（创建集成测试文件，4个测试用例）
+
+**实现内容**：创建SSE端点集成测试文件，包含4个测试用例
+
+**修改的文件（1个代码文件新建）**：
+
+**新建：`svc/unified-core/tests/sse_endpoint_tests.rs`（SSE端点集成测试）**
+- 测试用例：
+  1. `test_sse_connect_receives_endpoint_event` — SSE-001: SSE连接建立，接收endpoint事件
+  2. `test_sse_session_request_sends_event` — SSE-002: SSE会话请求，发送事件并接收响应
+  3. `test_sse_session_not_found` — SSE-003: 会话未找到错误处理
+  4. `test_sse_heartbeat` — SSE-004: SSE连接心跳机制
+- 辅助函数：
+  - `create_client()` — 创建HTTP客户端（30秒超时）
+  - `read_sse_event()` — 从SSE流中提取下一个事件
+- 测试依赖：reqwest、serde_json、tokio、futures_util、bytes
+
+**测试用例详细说明**：
+
+**1. SSE-001: SSE连接建立，接收endpoint事件**
+- 测试目标：验证GET /api/sse/connect端点能够建立SSE连接并发送endpoint事件
+- 测试步骤：
+  1. 发送GET请求到/api/sse/connect，设置Accept: text/event-stream
+  2. 验证响应状态码为200
+  3. 验证Content-Type包含text/event-stream
+  4. 读取流式响应，等待endpoint事件（最多10秒）
+  5. 验证endpoint事件包含session_id、endpoint、expires_in字段
+- 断言：
+  - 响应状态码为200
+  - Content-Type包含text/event-stream
+  - 收到endpoint事件
+  - endpoint事件包含session_id、endpoint、expires_in
+
+**2. SSE-002: SSE会话请求，发送事件并接收响应**
+- 测试目标：验证POST /api/sse/session/{session_id}端点能够发送事件到SSE会话
+- 测试步骤：
+  1. 建立SSE连接，获取session_id
+  2. 发送POST请求到/api/sse/session/{session_id}，请求体包含event_type和data
+  3. 验证响应状态码为200
+  4. 验证响应体包含success=true、session_id匹配、message="Event sent successfully"
+- 断言：
+  - 响应状态码为200
+  - success为true
+  - session_id匹配
+  - message为"Event sent successfully"
+
+**3. SSE-003: 会话未找到错误处理**
+- 测试目标：验证使用不存在的session_id发送请求时返回正确的错误响应
+- 测试步骤：
+  1. 使用不存在的session_id（"nonexistent-session-id-12345"）发送POST请求
+  2. 验证响应状态码为200（即使会话不存在，HTTP状态码仍为200）
+  3. 验证响应体包含success=false、session_id匹配、message="Session not found or expired"
+- 断言：
+  - 响应状态码为200
+  - success为false
+  - session_id匹配
+  - message为"Session not found or expired"
+
+**4. SSE-004: SSE连接心跳机制**
+- 测试目标：验证SSE连接能够保持活跃，心跳机制正常工作
+- 测试步骤：
+  1. 建立SSE连接
+  2. 验证响应状态码为200
+  3. 读取流式响应，等待心跳（最多20秒）
+  4. 验证连接保持20秒没有断开，收到至少一些数据
+- 断言：
+  - 响应状态码为200
+  - 连接保持20秒
+  - 收到至少一些数据（buffer不为空）
+
+**测试运行方式**：
+```bash
+# 先启动服务器
+cargo run --package topems-unified-core
+
+# 再运行测试（另一个终端）
+cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-threads=1
+```
+
+**技术说明**：
+- 测试类型：集成测试（需要启动服务器）
+- 测试框架：tokio::test（异步测试）
+- HTTP客户端：reqwest（支持流式响应）
+- SSE流处理：使用futures_util::StreamExt和bytes::Bytes
+- 超时控制：使用tokio::time::sleep和tokio::select!
+- 事件解析：手动解析SSE协议（event:、data:、空行分隔）
+- 测试服务器地址：http://localhost:8000
+- 测试线程：单线程（--test-threads=1），避免并发干扰
+
+**验收结果**：
+- 完成SSE端点集成测试文件创建（sse_endpoint_tests.rs）
+- 完成4个测试用例（连接建立、会话请求、会话未找到、心跳机制）
+- 完成辅助函数（create_client、read_sse_event）
+- 测试用例覆盖SSE端点的主要功能
+- 测试用例包含详细的断言和错误处理
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 测试文件创建 | 新建sse_endpoint_tests.rs，包含4个测试用例 | ✅ |
+| 轨C SSE-001 连接建立 | 测试GET /api/sse/connect，验证endpoint事件 | ✅ |
+| 轨C SSE-002 会话请求 | 测试POST /api/sse/session/{session_id}，验证事件发送 | ✅ |
+| 轨C SSE-003 会话未找到 | 测试不存在的session_id，验证错误响应 | ✅ |
+| 轨C SSE-004 心跳机制 | 测试连接保持20秒，验证心跳机制 | ✅ |
+| 轨C 辅助函数 | create_client、read_sse_event | ✅ |
+| 轨C 测试框架 | tokio::test、reqwest、futures_util | ✅ |
+| 轨C 测试覆盖 | 覆盖SSE端点的主要功能（连接、请求、错误、心跳） | ✅ |
+| 变更统计 | 1个代码文件新建 + 修改1文件(TODO.md) | ✅ |
+
+### V432后续扩展（留给V433+）
+
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V432连续一百次交付验证成功，V433继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
