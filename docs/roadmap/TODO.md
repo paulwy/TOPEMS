@@ -10243,6 +10243,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V397 — 架构改进四轨并行第六十五次：剩余TS6133清理（QueryBuilder/MutationBuilder泛型参数）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六十五次交付 · 剩余TS6133清理 · 1个文件 · 删除queryBuilder.ts中QueryBuilder和MutationBuilder类未使用的T泛型参数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 剩余TS6133清理 | 1个文件的2个未使用泛型参数删除（utils/bff/queryBuilder.ts，QueryBuilder和MutationBuilder类的T泛型参数） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V398 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V398 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V398 | ⏸️ |
+
+### 轨A：剩余TS6133清理（QueryBuilder/MutationBuilder泛型参数）
+
+**清理内容**：删除1个文件中2个类的未使用T泛型参数
+
+**清理的文件（1个）**：
+
+1. **utils/bff/queryBuilder.ts** — 删除QueryBuilder和MutationBuilder类的未使用T泛型参数
+   - QueryBuilder类：`export class QueryBuilder<T = unknown>` → `export class QueryBuilder`
+   - MutationBuilder类：`export class MutationBuilder<T = unknown>` → `export class MutationBuilder`
+   - 这两个类的T泛型参数定义后从未在类内部使用
+   - grep验证：类内部没有使用T类型的地方
+   - 文件行数保持449行不变
+
+**技术说明**：
+- 删除泛型参数前验证参数未在类内部使用（grep检查类方法和属性）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于定义了但未使用的泛型参数，可以安全删除
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查泛型参数的未使用情况，定义泛型参数后需要确保被使用
+- QueryBuilder 和 MutationBuilder 可能是为了未来类型安全扩展而添加的泛型参数，但当前实现中没有使用
+- 删除泛型参数后，类的使用方式不变（不需要指定类型参数）
+
+**验收结果**：
+- 2个未使用泛型参数的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的泛型参数为未使用的遗留代码
+- 文件语法正确，QueryBuilder 和 MutationBuilder 类保留
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的2个未使用泛型参数删除 | ✅ |
+| 轨A 清理类 | QueryBuilder 和 MutationBuilder | ✅ |
+| 轨A 清理参数 | T 泛型参数（2个） | ✅ |
+| 轨A 文件变化 | queryBuilder.ts保持449行不变 | ✅ |
+| 轨A 使用检查 | 删除前验证T未在类内部使用 | ✅ |
+| 轨A 类保留 | QueryBuilder 和 MutationBuilder 类保留 | ✅ |
+| 轨A 语法检查 | 文件语法正确，类定义完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V397后续扩展（留给V398+）
+
+- [ ] **轨A 剩余TS6133清理**：继续清理 apps/web/src/utils/ 和 packages/ 目录下的约6个TS6133错误
+- [ ] **轨A streamingSsr.ts清理**：清理 flushed 未使用变量
+- [ ] **轨A shared-components清理**：清理 DataTable.tsx 和 Responsive.tsx 中的未使用import/变量/函数
+- [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V397连续六十五次交付验证成功，V398继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
