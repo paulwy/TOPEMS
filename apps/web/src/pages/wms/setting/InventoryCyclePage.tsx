@@ -7,7 +7,7 @@ import i18n from '@/i18n';
 import { wmsApi } from '@/api/wms';
 
 export const InventoryCyclePage: React.FC = () => {
-  const { data: backendData, isLoading } = useQuery({
+  useQuery({
     queryKey: ['wms-inventory-cycle'],
     queryFn: async () => {
       try {

@@ -6,16 +6,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import type { Warehouse } from '@/api/wms';
 
 interface InventoryReportFiltersProps {
@@ -98,14 +89,4 @@ export const TabPanel: React.FC<TabPanelProps> = (props) => {
  * when only the empty/placeholder copy is needed. Currently unused by the
  * page but exported for future filter-auxiliary text.
  */
-const InventoryReportFilterHint: React.FC<{ text: string }> = ({ text }) => (
-  <Typography
-    variant='caption'
-    color='text.secondary'
-    sx={{ ml: 1 }}
-  >
-    {text}
-  </Typography>
-);
-
 export default InventoryReportFilters;

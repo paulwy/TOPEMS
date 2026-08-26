@@ -7,7 +7,7 @@ import i18n from '@/i18n';
 import { wmsApi } from '@/api/wms';
 
 export const LocationRulePage: React.FC = () => {
-  const { data: backendData, isLoading } = useQuery({
+  useQuery({
     queryKey: ['wms-location-rule'],
     queryFn: async () => {
       try {

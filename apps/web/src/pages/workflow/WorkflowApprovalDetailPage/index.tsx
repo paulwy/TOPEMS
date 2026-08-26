@@ -19,7 +19,7 @@ import {
 } from './components/ApprovalTimeline';
 import i18n from '@/i18n';
 import ApprovalActions, { buildActions, type ActionConfig } from './components/ApprovalActions';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface ApprovalDetails {
   approval: Approval;
