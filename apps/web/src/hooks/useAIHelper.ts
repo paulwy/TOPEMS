@@ -12,7 +12,7 @@ import type {
 import i18n from '@/i18n';
 import type { AIGenerateRequest } from '../api/ai';
 
-interface UseAIHelperOptions<T = unknown> {
+interface UseAIHelperOptions {
   featureType: AIFeatureType;
   onSuccess?: (result: unknown) => void;
   onError?: (error: Error) => void;
@@ -38,7 +38,7 @@ interface UseAIHelperReturn<T = unknown> {
   retry: () => Promise<void>;
 }
 
-export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIHelperReturn<T> {
+export function useAIHelper<T = unknown>(options: UseAIHelperOptions): UseAIHelperReturn<T> {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [result, setResult] = useState<T | null>(null);
