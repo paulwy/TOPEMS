@@ -18,12 +18,14 @@ use tokio::sync::RwLock;
 use topems_shared_mcp::protocol::{McpTool, McpToolResult};
 
 pub mod crm;
+pub mod ehs;
 pub mod erp;
 pub mod finance;
 pub mod hr;
 pub mod mes;
 
 pub use crm::register_crm_tools;
+pub use ehs::register_ehs_tools;
 pub use erp::register_erp_tools;
 pub use finance::register_finance_tools;
 pub use hr::register_hr_tools;
