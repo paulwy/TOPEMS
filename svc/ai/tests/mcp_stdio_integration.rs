@@ -19,6 +19,11 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
+/// 包装 BufReader 原始指针，手动实现 Send trait
+/// SAFETY: 在读取线程运行期间，主线程不会访问 reader，所以跨线程传递是安全的
+struct ReaderWrapper(*mut BufReader<std::process::ChildStdout>);
+unsafe impl Send for ReaderWrapper {}
+
 /// 启动 mcp-stdio 子进程，返回 stdin 和 stdout
 fn start_mcp_stdio() -> (std::process::Child, std::process::ChildStdin, BufReader<std::process::ChildStdout>) {
     let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-stdio"))
@@ -55,10 +60,10 @@ fn read_response_with_timeout(
     let (tx, rx) = mpsc::channel();
 
     // 在单独的线程中读取（读取操作可能阻塞）
-    let reader_ptr = reader as *mut BufReader<std::process::ChildStdout>;
+    let wrapper = ReaderWrapper(reader as *mut BufReader<std::process::ChildStdout>);
     thread::spawn(move || {
         // SAFETY: 主线程在超时前不会访问 reader，超时后读取线程可能仍在运行但不会影响结果
-        let reader = unsafe { &mut *reader_ptr };
+        let reader = unsafe { &mut *wrapper.0 };
         let mut line = String::new();
         match reader.read_line(&mut line) {
             Ok(0) => {
