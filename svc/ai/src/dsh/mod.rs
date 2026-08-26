@@ -31,6 +31,11 @@
     clippy::new_without_default
 )]
 
+pub mod mcp;
 pub mod provider;
 
-pub use provider::{LlmProvider, LlmProviderError, ProviderConfig, ProviderType};
+pub use mcp::{McpServer, ServerState, ToolExecutionError, ToolRegistry};
+pub use provider::{
+    DeepSeekProvider, LlmProvider, LlmProviderError, MockProvider, OllamaProvider, ProviderConfig,
+    ProviderFactory, ProviderType,
+};

@@ -7,13 +7,24 @@
 //! ```text
 //! provider/
 //! ├── mod.rs      # Provider 模块入口
-//! ├── trait.rs    # LlmProvider trait 定义
-//! ├── deepseek.rs # DeepSeek API 实现（待实现）
-//! ├── ollama.rs   # Ollama 本地实现（待实现）
-//! ├── mock.rs     # Mock 实现（测试用，待实现）
-//! └── factory.rs  # ProviderFactory（配置驱动创建，待实现）
+//! ├── trait_.rs   # LlmProvider trait 定义
+//! ├── deepseek.rs # DeepSeek API 实现
+//! ├── ollama.rs   # Ollama 本地实现
+//! ├── mock.rs     # Mock 实现（测试用）
+//! └── factory.rs  # ProviderFactory（配置驱动创建）
 //! ```
 
+pub mod deepseek;
+pub mod factory;
+pub mod mock;
+pub mod ollama;
 pub mod trait_;
 
-pub use trait_::{LlmProvider, LlmProviderError, ProviderConfig, ProviderType};
+pub use deepseek::DeepSeekProvider;
+pub use factory::ProviderFactory;
+pub use mock::MockProvider;
+pub use ollama::OllamaProvider;
+pub use trait_::{
+    ChatMessage, EmbeddingRequest, EmbeddingResponse, LlmProvider, LlmProviderError, LlmRequest,
+    LlmResponse, LlmStreamChunk, ProviderConfig, ProviderType,
+};

@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type TestType = 'Unit' | 'Integration' | 'E2E';
 export type TestPriority = 'low' | 'medium' | 'high' | 'critical';
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -75,8 +73,4 @@ export interface SmartTestEvent {
     | 'regenerate_completed'
     | 'suggestions_generated';
   [key: string]: unknown;
-}
-
-function generateId(): string {
-  return `tc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }

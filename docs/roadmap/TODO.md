@@ -5244,6 +5244,147 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V334 — 架构改进四轨并行第二次：MCP Server核心 + 4 Provider实现 + 12项未使用项清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二次交付 · 轨C/D核心实现 · cargo check ✅ · eslint 0 errors
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 未使用项清理 | 12项（7 import + 4 参数/函数 + 1 const） | ✅ |
+| 轨B | B1 API签名对齐评估 | 确认@/api/erp/finance/与@/api/finance/是不同实现，记录V335+ | ✅ |
+| 轨C | MCP Server核心骨架 | McpServer + ToolRegistry，支持initialize/tools/list/tools/call/ping | ✅ |
+| 轨D | 4 Provider实现 | DeepSeek/Ollama/Mock + ProviderFactory，完整实现LlmProvider trait | ✅ |
+
+### 轨A：12项未使用项清理明细
+
+| 文件 | 未使用项 | 类型 | 处理 |
+|------|----------|------|------|
+| ai/quality/smart-testing-v2.ts | i18n import | TS6133 | 整行删除 |
+| ai/quality/smart-testing-v2.ts | generateId function | TS6133 | 函数删除 |
+| api/report/index.ts | i18n import | TS6133 | 整行删除 |
+| api/pm/index.ts | ApiResponse import | TS6133 | 整行删除 |
+| api/tms/index.ts | apiClient import | TS6133 | 整行删除 |
+| api/monitor/index.ts | CrudOperations import | TS6133 | 整行删除 |
+| api/pm/team.ts | ProjectMember import | TS6133 | 整行删除 |
+| api/wms/types.ts | PaginatedResponse import | TS6133 | 整行删除 |
+| api/master/governance.ts | id参数 | TS6133 | id→_id |
+| api/qms/_mock.ts | pi参数 | TS6133 | pi→_pi |
+| components/ai/AIToolsPanel.tsx | onClose参数 | TS6133 | onClose→_onClose |
+| api/erp/admin/announcement.ts | announcementCrudApi const(12行) | TS6133 | 整块删除 |
+| **合计** | **12项** | | **净删~50行** |
+
+### 轨B：B1 API签名对齐评估结果
+
+**关键发现**：`@/api/erp/finance/` 与 `@/api/finance/` 是**不同的实现**，不能简单修改 import 路径：
+
+| 对比项 | @/api/erp/finance/ | @/api/finance/ |
+|--------|---------------------|-----------------|
+| voucher.ts | 57行，`import apiClient from '../../client'` | 178行，`import { apiClient, downloadBlob } from '../client'` |
+| budget.ts | 62行 | 48行 |
+| 方法签名 | 可能不同 | 可能不同 |
+| API端点 | 可能不同 | 可能不同 |
+
+**@/api/erp/index.ts 只是重新导出**：
+```typescript
+export { voucherApi } from './finance/voucher';
+export { budgetApi, expenseApi } from './finance/budget';
+export { accountingSubjectApi, openingBalanceApi } from './finance/accounting';
+export { financeReportApi } from './finance/report';
+```
+
+**结论**：B1 任务不是简单的 import 路径修改，需要：
+1. 验证两个模块的 API 端点和方法签名是否一致
+2. 如果不一致，需要对齐 API 签名
+3. 或者将 `@/api/erp/finance/` 的函数迁移到 `@/api/finance/`
+4. **记录为 V335+ 任务**，当前版本不修改
+
+### 轨C：MCP Server 核心骨架
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/mod.rs` — MCP 模块入口，导出 McpServer/ServerState/ToolRegistry
+- `svc/ai/src/dsh/mcp/server.rs` — McpServer 核心（~460行）
+  - ServerState 状态机（Uninitialized → Initializing → Running → Shutdown）
+  - handle_request 路由：initialize / tools/list / tools/call / ping
+  - handle_notification：notifications/initialized / notifications/cancelled
+  - register_system_tools：内置 system.ping / system.info 工具
+  - 完整单元测试（8个测试用例）
+- `svc/ai/src/dsh/mcp/tools.rs` — ToolRegistry（~260行）
+  - 线程安全的工具注册表（Arc<RwLock<HashMap>>）
+  - register / register_with_permission / list_tools / call_tool
+  - ToolExecutionError：NotFound / Validation / Execution / PermissionDenied
+  - 完整单元测试（7个测试用例）
+
+**修改文件**：
+- `svc/ai/Cargo.toml` — 添加 `topems-shared-mcp = { path = "../../lib/shared-mcp" }` 依赖
+- `svc/ai/src/dsh/mod.rs` — 添加 `pub mod mcp;` 模块声明和导出
+
+**MCP Server 能力**：
+- 协议版本：2025-03-26
+- 能力声明：tools（list_changed: true）
+- 支持方法：initialize, notifications/initialized, tools/list, tools/call, ping
+- 内置工具：system.ping, system.info
+
+### 轨D：4 Provider 实现
+
+**新增文件**：
+- `svc/ai/src/dsh/provider/deepseek.rs` — DeepSeek API 实现（~400行）
+  - 兼容 OpenAI 格式：POST /v1/chat/completions
+  - 支持 ask（同步问答）、ask_stream（流式 SSE）、health_check、list_models
+  - 完整错误处理：401/403 → Authentication, 429 → RateLimit, 其他 → Api
+  - 单元测试（4个测试用例）
+- `svc/ai/src/dsh/provider/ollama.rs` — Ollama 本地实现（~340行）
+  - 端点：POST /api/chat, GET /api/tags, POST /api/embed
+  - 支持 ask、ask_stream（NDJSON 流式）、embed（768维向量）、health_check、list_models
+  - 单元测试（4个测试用例）
+- `svc/ai/src/dsh/provider/mock.rs` — Mock 实现（~150行）
+  - 返回固定响应，不依赖外部 API
+  - 支持 ask、ask_stream（逐字符流式）、embed（768维零向量）、health_check、list_models
+  - 单元测试（6个测试用例）
+- `svc/ai/src/dsh/provider/factory.rs` — ProviderFactory（~130行）
+  - 配置驱动创建：根据 ProviderConfig.provider_type 创建对应 Provider
+  - 便捷方法：from_env / default_ollama / default_mock / deepseek / ollama
+  - Dify 暂未实现，回退到 Mock
+  - 单元测试（8个测试用例）
+
+**修改文件**：
+- `svc/ai/src/dsh/provider/mod.rs` — 导出所有 Provider 实现和类型
+
+**LlmProvider trait 实现覆盖**：
+| 方法 | DeepSeek | Ollama | Mock |
+|------|----------|--------|------|
+| ask | ✅ | ✅ | ✅ |
+| ask_stream | ✅ | ✅ | ✅ |
+| embed | ❌(Unsupported) | ✅ | ✅ |
+| health_check | ✅ | ✅ | ✅ |
+| list_models | ✅ | ✅ | ✅ |
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 12项未使用清零 | tsc目标文件0项 | ✅ |
+| 轨A eslint | 0 errors（20 warnings为原有代码） | ✅ |
+| 轨B B1评估 | 确认不同实现，记录V335+ | ✅ |
+| 轨C cargo check | topems-ai编译通过 | ✅ |
+| 轨C McpServer单元测试 | 8个测试用例 | ✅ |
+| 轨C ToolRegistry单元测试 | 7个测试用例 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D Provider单元测试 | DeepSeek4 + Ollama4 + Mock6 + Factory8 = 22个 | ✅ |
+| 变更统计 | 新增7文件(~1740行) + 修改4文件 + 前端12文件清理 | ✅ |
+
+### V334后续扩展（留给V335+）
+
+- [ ] **轨C MCP SSE/HTTP传输层**：基于 axum 创建 SSE endpoint，支持远程 AI Agent（Cursor）连接
+- [ ] **轨C MCP CRM Tools(3个)**：注册 crm.list_customers / crm.get_customer / crm.create_customer 工具
+- [ ] **轨D Provider集成测试**：连接真实 DeepSeek/Ollama 进行端到端测试
+- [ ] **轨B B1 API签名对齐实施**：验证@/api/erp/finance/与@/api/finance/的API端点和方法签名，决定迁移或对齐策略
+- [ ] **轨A TS6198解构批量清理专项**：扫描所有`const { data: ..., isLoading } = useQuery`未使用模式
+- [ ] **四轨并行继续**：V333-V334连续两次交付验证成功，V335继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

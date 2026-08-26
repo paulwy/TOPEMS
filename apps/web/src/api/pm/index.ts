@@ -1,5 +1,3 @@
-import type { ApiResponse } from '../client';
-
 import { projectApi, phaseApi, milestoneApi, approvalApi } from './project';
 import { memberApi } from './team';
 import { resourceApi, expenseApi } from './resource';

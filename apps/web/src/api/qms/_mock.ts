@@ -657,7 +657,7 @@ function buildApqpProjects(rnd: () => number, count: number): ApqpProject[] {
 
 function buildApqpPhases(rnd: () => number, projects: ApqpProject[]): ApqpPhase[] {
   const phases: ApqpPhase[] = [];
-  projects.forEach((proj, pi) => {
+  projects.forEach((proj, _pi) => {
     getApqpPhases().forEach((phaseDef, i) => {
       const phaseProgress =
         (proj.progress ?? 0) >= (i + 1) * 20 ? 100 : Math.max(0, (proj.progress ?? 0) - i * 20);
