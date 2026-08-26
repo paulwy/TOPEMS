@@ -8,6 +8,8 @@
 //! Note: sync module was migrated to integration service (2026-07 方案 C)
 
 pub mod audit;
+// V434: Business Tools module - 统一业务工具, 连接真实服务(CRM/ERP/Finance等)
+pub mod business_tools;
 pub mod communication;
 // V68.1 A2.3: dict 模块已合并到 svc/master-data/src/modules/dict/（主数据域）
 // pub mod dict;

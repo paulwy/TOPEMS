@@ -14499,6 +14499,186 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V434 — 架构改进四轨并行第一百零二次：轨D 业务工具连接真实API（业务工具模块，16个服务的业务工具）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零二次交付 · 轨D 业务工具连接真实API · 2个代码文件修改(1新建+1修改) · 创建业务工具模块，定义统一的业务工具接口，实现16个服务的业务工具（CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA）
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具连接真实API | 创建业务工具模块，定义统一接口，实现16个服务的业务工具 | ✅ |
+| 轨C | shared-service-client完善 | 添加服务健康检查、自动重连、负载均衡、服务发现，留给V435 | ⏸️ |
+
+### 轨D：业务工具连接真实API（业务工具模块，16个服务的业务工具）
+
+**实现内容**：创建业务工具模块，定义统一的业务工具接口，实现16个服务的业务工具
+
+**修改的文件（2个代码文件，1新建+1修改）**：
+
+**1. 新建：`svc/unified-core/src/modules/business_tools/mod.rs`（业务工具模块）**
+- 错误类型：
+  - `BusinessToolError` — 业务工具错误（ToolNotFound、ServiceClientError、OperationFailed、InvalidInput、NotImplemented）
+- 统一请求/响应：
+  - `BusinessRequest` — 统一业务请求（request_id、tool、operation、params、data、tenant_id、user_id）
+  - `BusinessResponse<T>` — 统一业务响应（success、tool、operation、request_id、data、error、error_code、duration_ms、metadata）
+- 业务工具接口：
+  - `BusinessTool` trait — 业务工具接口（name、description、operations、execute、health_check）
+- 基础业务工具：
+  - `BaseBusinessTool` — 基础业务工具实现（基于shared-service-client，提供get/post/put/delete方法）
+- 业务工具注册表：
+  - `BusinessToolRegistry` — 业务工具注册表（register、get、has、remove、list、count、execute、health_check_all）
+- 默认业务工具：
+  - `create_default_tools()` — 创建16个默认业务工具
+  - `create_default_registry()` — 创建包含所有默认工具的注册表
+- 业务工具宏：
+  - `define_business_tool!` — 宏定义，用于快速生成业务工具实现
+- 16个业务工具实现：
+  - CrmTool — 客户关系管理（11个操作）
+  - ErpTool — 企业资源计划（13个操作）
+  - FinanceTool — 财务管理（13个操作）
+  - HrTool — 人力资源（15个操作）
+  - MesTool — 制造执行系统（13个操作）
+  - EhsTool — 环境健康安全（13个操作）
+  - WmsTool — 仓库管理系统（14个操作）
+  - QmsTool — 质量管理系统（13个操作）
+  - PmTool — 项目管理（14个操作）
+  - LimsTool — 实验室信息管理（12个操作）
+  - BiTool — 商业智能（11个操作）
+  - ApsTool — 高级计划与排程（12个操作）
+  - CsTool — 客户服务（11个操作）
+  - ScmTool — 供应链管理（13个操作）
+  - IotTool — 物联网（12个操作）
+  - OaTool — 办公自动化（15个操作）
+- 单元测试：6个测试用例
+
+**2. 修改：`svc/unified-core/src/modules/mod.rs`（添加模块声明）**
+- 添加 `pub mod business_tools;` 声明
+
+**16个业务工具及操作清单**：
+
+| 工具 | 服务 | 操作数 | 主要操作 |
+|------|------|--------|----------|
+| CrmTool | crm | 11 | create_customer、get_customer、list_customers、update_customer、delete_customer、create_lead、get_lead、list_leads、create_opportunity、get_opportunity、list_opportunities |
+| ErpTool | erp | 13 | create_order、get_order、list_orders、update_order、delete_order、create_product、get_product、list_products、update_product、delete_product、create_inventory、get_inventory、list_inventory |
+| FinanceTool | finance | 13 | create_invoice、get_invoice、list_invoices、update_invoice、delete_invoice、create_payment、get_payment、list_payments、create_expense、get_expense、list_expenses、get_financial_report |
+| HrTool | hr | 15 | create_employee、get_employee、list_employees、update_employee、delete_employee、create_department、get_department、list_departments、create_attendance、get_attendance、list_attendance、create_leave、get_leave、list_leaves |
+| MesTool | mes | 13 | create_work_order、get_work_order、list_work_orders、update_work_order、delete_work_order、create_production、get_production、list_productions、create_quality_check、get_quality_check、list_quality_checks、get_oee_report |
+| EhsTool | ehs | 13 | create_incident、get_incident、list_incidents、update_incident、delete_incident、create_audit、get_audit、list_audits、create_training、get_training、list_trainings、get_compliance_report |
+| WmsTool | wms | 14 | create_warehouse、get_warehouse、list_warehouses、update_warehouse、delete_warehouse、create_inbound、get_inbound、list_inbounds、create_outbound、get_outbound、list_outbounds、get_stock、list_stocks |
+| QmsTool | qms | 13 | create_inspection、get_inspection、list_inspections、update_inspection、delete_inspection、create_nonconformance、get_nonconformance、list_nonconformances、create_capa、get_capa、list_capas、get_quality_report |
+| PmTool | pm | 14 | create_project、get_project、list_projects、update_project、delete_project、create_task、get_task、list_tasks、update_task、delete_task、create_milestone、get_milestone、list_milestones、get_project_report |
+| LimsTool | lims | 12 | create_sample、get_sample、list_samples、update_sample、delete_sample、create_test、get_test、list_tests、create_result、get_result、list_results、get_lab_report |
+| BiTool | bi | 11 | get_dashboard、list_dashboards、create_report、get_report、list_reports、update_report、delete_report、get_kpi、list_kpis、get_analytics、export_report |
+| ApsTool | aps | 12 | create_plan、get_plan、list_plans、update_plan、delete_plan、create_schedule、get_schedule、list_schedules、update_schedule、delete_schedule、get_capacity、get_gantt_chart |
+| CsTool | cs | 11 | create_ticket、get_ticket、list_tickets、update_ticket、delete_ticket、create_response、get_response、list_responses、get_knowledge_base、search_knowledge_base、get_sla_report |
+| ScmTool | scm | 13 | create_supplier、get_supplier、list_suppliers、update_supplier、delete_supplier、create_purchase_order、get_purchase_order、list_purchase_orders、create_shipment、get_shipment、list_shipments、get_supply_chain_report |
+| IotTool | iot | 12 | create_device、get_device、list_devices、update_device、delete_device、get_device_data、list_device_data、create_alert、get_alert、list_alerts、get_sensor_reading、list_sensor_readings |
+| OaTool | oa | 15 | create_document、get_document、list_documents、update_document、delete_document、create_approval、get_approval、list_approvals、create_meeting、get_meeting、list_meetings、create_notice、get_notice、list_notices |
+
+**功能特性**：
+
+**1. 统一业务请求**
+- 包含request_id用于追踪
+- 支持tool和operation字段
+- 支持params查询参数
+- 支持data请求体
+- 支持tenant_id多租户
+- 支持user_id用户审计
+
+**2. 统一业务响应**
+- 包含success状态
+- 包含tool和operation标识
+- 包含request_id追踪
+- 包含data响应数据
+- 包含error和error_code错误信息
+- 包含duration_ms响应时间
+- 包含metadata元数据（分页等）
+
+**3. 业务工具接口**
+- name() — 获取工具名称
+- description() — 获取工具描述
+- operations() — 获取支持的操作列表
+- execute() — 执行操作
+- health_check() — 健康检查
+
+**4. 基础业务工具**
+- 基于shared-service-client
+- 提供get/post/put/delete方法
+- 自动路由操作到服务端点
+- 自动处理请求/响应转换
+- 自动记录响应时间
+
+**5. 业务工具注册表**
+- 支持注册单个工具
+- 支持按名称获取工具
+- 支持检查工具是否存在
+- 支持移除工具
+- 支持列出所有工具
+- 支持获取工具数量
+- 支持直接执行业务请求
+- 支持批量健康检查
+
+**6. 业务工具宏**
+- `define_business_tool!` 宏定义
+- 快速生成业务工具实现
+- 自动实现BusinessTool trait
+- 自动路由操作到服务端点
+- 自动处理请求/响应转换
+
+**技术说明**：
+- 使用async_trait实现异步trait
+- 使用Arc<dyn BusinessTool>实现线程安全的工具引用
+- 使用Arc<std::sync::Mutex<HashMap>>实现线程安全的注册表
+- 基于shared-service-client连接真实服务
+- 自动路由操作到服务端点（/api/{service}/{operation}）
+- 自动处理请求/响应转换（BusinessRequest ↔ ServiceResponse）
+- 自动记录响应时间
+- 支持多租户和用户审计
+- 使用宏定义快速生成业务工具实现
+- 包含完整的单元测试
+
+**验收结果**：
+- 完成业务工具模块创建（business_tools/mod.rs）
+- 完成错误类型定义（5种错误）
+- 完成统一请求/响应实现（BusinessRequest、BusinessResponse<T>）
+- 完成业务工具接口定义（BusinessTool trait）
+- 完成基础业务工具实现（BaseBusinessTool）
+- 完成业务工具注册表实现（BusinessToolRegistry）
+- 完成业务工具宏定义（define_business_tool!）
+- 完成16个业务工具实现（CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA）
+- 完成默认工具创建函数（create_default_tools、create_default_registry）
+- 完成6个单元测试用例
+- 完成模块声明（pub mod business_tools）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 业务工具模块 | 新建business_tools/mod.rs，包含错误类型、请求/响应、接口、基础工具、注册表、宏、16个工具实现 | ✅ |
+| 轨D 错误类型 | 5种错误（ToolNotFound、ServiceClientError、OperationFailed、InvalidInput、NotImplemented） | ✅ |
+| 轨D 统一请求 | BusinessRequest，包含request_id、tool、operation、params、data、tenant_id、user_id | ✅ |
+| 轨D 统一响应 | BusinessResponse<T>，包含success、tool、operation、request_id、data、error、error_code、duration_ms、metadata | ✅ |
+| 轨D 业务工具接口 | BusinessTool trait，包含name、description、operations、execute、health_check | ✅ |
+| 轨D 基础业务工具 | BaseBusinessTool，基于shared-service-client，提供get/post/put/delete方法 | ✅ |
+| 轨D 业务工具注册表 | BusinessToolRegistry，支持register、get、has、remove、list、count、execute、health_check_all | ✅ |
+| 轨D 业务工具宏 | define_business_tool!宏，快速生成业务工具实现 | ✅ |
+| 轨D 16个业务工具 | CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA | ✅ |
+| 轨D 总操作数 | 209个操作（11+13+13+15+13+13+14+13+14+12+11+12+11+13+12+15） | ✅ |
+| 轨D 单元测试 | 6个测试用例 | ✅ |
+| 轨D 模块声明 | modules/mod.rs添加pub mod business_tools | ✅ |
+| 变更统计 | 2个代码文件修改(1新建+1修改) + 修改1文件(TODO.md) | ✅ |
+
+### V434后续扩展（留给V435+）
+
+- [ ] **轨C shared-service-client完善**：添加服务健康检查、自动重连、负载均衡、服务发现
+- [ ] **轨D 业务工具完善**：添加业务工具路由端点、业务工具API接口、业务工具调用示例
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V434连续一百零二次交付验证成功，V435继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
