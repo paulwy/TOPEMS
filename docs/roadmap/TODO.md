@@ -8573,6 +8573,76 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V373 — 架构改进四轨并行第四十一次：前端未使用API客户端清理（customerProfile _customerProfileApi）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十一次交付 · 前端未使用API客户端清理 · 1个文件 · 删除未使用的CRM客户画像API客户端，31行删除
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用API客户端清理 | 1个文件的未使用API客户端删除（customerProfile.ts，_customerProfileApi变量，31行删除） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V374 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V374 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V374 | ⏸️ |
+
+### 轨A：前端未使用API客户端清理（customerProfile _customerProfileApi）
+
+**清理内容**：删除1个文件中未使用的CRM客户画像API客户端
+
+**清理的文件（1个）**：
+
+1. **api/crm/customerProfile.ts** — 删除未使用的变量 _customerProfileApi
+   - 删除范围：第69-99行（共31行，包括空行和变量定义）
+   - 变量内容：CRM客户画像API客户端，包含多个方法：
+     - getCustomerProfile(id): 获取客户画像
+     - listCustomerProfiles(params): 列出客户画像
+     - addProfileTags(customerId, tags): 添加客户画像标签
+     - removeProfileTags(customerId, tagIds): 移除客户画像标签
+   - 原因：该变量定义后从未被使用，可能是开发过程中的遗留代码
+   - 文件从99行减少到68行
+   - 注意：文件中仍有类型定义（CustomerProfileItem、CustomerProfileListQuery等），这些类型定义可能被其他代码使用，保留不动
+
+**技术说明**：
+- 删除变量前验证变量未被任何地方引用（包括import和动态导入）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 删除前验证变量未被文件中的其他代码使用
+- 对于仍被其他代码使用的类型定义（如CustomerProfileItem），保留不动
+- 对于确实需要保留的未使用变量，建议添加注释说明用途
+- 重要发现：TypeScript 的 --noUnusedLocals 不会自动忽略下划线前缀的变量，需直接删除未使用定义
+
+**验收结果**：
+- 1个文件的未使用API客户端 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+- 文件从99行减少到68行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用API客户端删除 | ✅ |
+| 轨A 清理变量 | _customerProfileApi（CRM客户画像API客户端） | ✅ |
+| 轨A 删除行数 | 31行（包括空行和变量定义） | ✅ |
+| 轨A 文件变化 | 从99行减少到68行 | ✅ |
+| 轨A 引用检查 | 删除变量前验证未被任何地方引用 | ✅ |
+| 轨A 保留检查 | CustomerProfileItem/CustomerProfileListQuery等类型定义仍被使用，保留不动 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V373后续扩展（留给V374+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~142个TS6133错误
+- [ ] **轨A 未使用API客户端清理**：继续清理其他已下划线前缀但仍报错的API客户端（_emergencyPlanApi/_mesAnalyticsApi/_mesApprovalApi/_AIFlowAssistant等）
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V373连续四十一次交付验证成功，V374继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
