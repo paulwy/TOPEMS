@@ -15,7 +15,6 @@ import {
   Zap,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';

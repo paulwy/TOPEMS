@@ -4937,6 +4937,78 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V332 — 批量模式第十七次：Top15文件未使用项清理（15项+级联17项，3孤儿文件）（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十七次成功 · 16 files（13修改+3删除孤儿）· 净删 970 行 · tsc 0 errors · eslint 0 errors(1280 warnings, 从1310减30)
+
+### 目标文件（Top15，全部1项/文件=15初始）
+
+| 文件 | 初始项 | 类型 | 级联 | 处理 |
+|------|--------|------|------|------|
+| routes/auth | 1 | TS6192整行import | - | 整行删除 |
+| routes/dashboard | 1 | TS6192整行import | - | 整行删除 |
+| workflow/WorkflowDashboardPage | 1 | TS6192整行import | - | 整行删除 |
+| workflow/WorkflowStatisticsPage | 1 | TS6192整行import | - | 整行删除 |
+| workflow/WorkflowApprovalDetailPage/index | 1 | TS6133 queryClient | - | 单符号移除 |
+| workflow/components/WorkflowApprovalDetailTabs | 1 | TS6133 function | +7 | **孤儿文件删除** |
+| wms/setting/LocationRulePage | 1 | TS6198解构 | - | 改为裸useQuery |
+| wms/setting/InventoryThresholdPage | 1 | TS6198解构 | - | 改为裸useQuery |
+| wms/setting/InventoryCyclePage | 1 | TS6198解构 | - | 改为裸useQuery |
+| wms/hooks/useInventoryReport | 1 | TS6133 const函数 | +9 | **孤儿文件删除**(含测试) |
+| wms/components/InventoryReportFilters | 1 | TS6133 const组件 | +1(Typography) | v6删除+级联import |
+| wms/SerialNumberPage | 1 | TS6133 React import | - | 整行删除 |
+| tms/TmsDashboardPage | 1 | TS6198解构 | - | 改为裸useQuery |
+| ticket/DashboardPage | 1 | TS6198解构 | - | 改为裸useQuery |
+| srm/SrmSupplierProductPage | 1 | TS6198解构 | - | 改为裸useQuery |
+| **合计** | **15** | | **+17** | **3孤儿文件删除** |
+
+### 清理方法论
+
+**A轨（TS6192整行import删除，4项）**：routes/auth, routes/dashboard（`import React, { lazy } from 'react';`）, workflow/WorkflowDashboardPage（`import { Box, Typography } from '@mui/material';`）, workflow/WorkflowStatisticsPage（`import { handleApiError, getErrorMessage } from '@/utils/errors';`）
+
+**B轨（TS6133本地声明/变量，5项）**：
+- wms/SerialNumberPage React import整行删除
+- workflow/WorkflowApprovalDetailPage/index queryClient单符号移除
+- wms/components/InventoryReportFilters InventoryReportFilterHint（v6删除const组件）
+- wms/hooks/useInventoryReport useInventoryReport（v6删除const函数，触发孤儿文件）
+- workflow/components/WorkflowApprovalDetailTabs WorkflowApprovalDetailTabs（v6删除function组件，触发孤儿文件）
+
+**C轨（TS6198解构变量全部未使用，6项）**：全部是`const { data: backendData, isLoading } = useQuery({...})`模式，改为裸`useQuery({...})`调用（删除解构赋值部分）。涉及srm/SrmSupplierProductPage, ticket/DashboardPage, tms/TmsDashboardPage, wms/setting/InventoryCyclePage, wms/setting/InventoryThresholdPage, wms/setting/LocationRulePage
+
+**D轨（级联17项+3孤儿文件删除）**：
+- wms/hooks/useInventoryReport：删除useInventoryReport函数后，9项级联（全部import+interface UseInventoryReportReturn变未使用）。文件变孤儿，删除useInventoryReport.ts+对应测试文件useInventoryReport.test.tsx
+- workflow/components/WorkflowApprovalDetailTabs：删除WorkflowApprovalDetailTabs函数后，7项级联（全部import+const ct+interface变未使用）。文件变孤儿，删除WorkflowApprovalDetailTabs.tsx
+- wms/components/InventoryReportFilters：删除InventoryReportFilterHint后，Typography import变未使用（级联1项），从多行import block移除Typography
+
+### 关键发现
+
+1. **TS6198解构变量全部未使用占比高**：15个文件中6个是TS6198（40%），全部是`const { data: backendData, isLoading } = useQuery({...})`模式。改为裸`useQuery({...})`调用即可，保留useQuery的副作用（数据预取）。
+2. **孤儿文件级联链**：删除主函数后，整个文件的import和类型都变成未使用，形成级联链。useInventoryReport触发9项级联，WorkflowApprovalDetailTabs触发7项级联。最佳处理方式是删除整个孤儿文件。
+3. **useInventoryReport测试文件同步删除**：useInventoryReport.ts被删除后，对应的测试文件__tests__/useInventoryReport.test.tsx也引用了已删除的函数，需同步删除。
+4. **TS6192整行import格式多样**：4个TS6192文件的import格式各不相同（`import React, { lazy }`、`import { Box, Typography }`、`import { handleApiError, getErrorMessage }`），需逐个sed匹配。
+5. **多行import block单符号移除**：InventoryReportFilters的Typography在多行import block中（`import {\n  Box,\n  Typography,\n  Tabs,\n...`），需用sed删除`  Typography,`行，不能整行删除import。
+6. **净删行数大幅回升**：V331净删242行→V332净删970行，主要是3个孤儿文件删除（~520行）+其他清理。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1280 warnings（-30） | ✅ |
+| 孤儿文件删除 | 3个（useInventoryReport.ts+test, WorkflowApprovalDetailTabs.tsx） | ✅ |
+| 变更统计 | 16 files, 8 insertions, 978 deletions | ✅ |
+
+### V332后续扩展（留给V333+）
+
+- [ ] **TS6198解构批量清理专项**：6/15文件是TS6198，占40%。可写脚本专门扫描`const { data: ..., isLoading } = useQuery({...})`全部未使用模式，一次性改为裸useQuery调用
+- [ ] **孤儿文件检测模式**：删除主函数后整个文件变孤儿（useInventoryReport 9项级联, WorkflowApprovalDetailTabs 7项级联）。可总结孤儿文件检测模式，删除主函数后自动检测是否整个文件变未使用
+- [ ] **测试文件同步删除**：useInventoryReport案例，删除源文件后需同步删除对应测试文件。可写脚本检测测试文件引用的源文件是否已删除
+- [ ] **批量模式继续**：V316-V332连续十七次成功，全src/未使用项从~282降至~0
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

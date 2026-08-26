@@ -39,7 +39,6 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
-import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';

@@ -1,5 +1,4 @@
 import { designTokens } from '@topems/tokens';
-import React from 'react';
 import { Box, Chip } from '@mui/material';
 import { History, ArrowRightLeft } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';

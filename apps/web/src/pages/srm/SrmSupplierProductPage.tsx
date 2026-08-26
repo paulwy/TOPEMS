@@ -267,7 +267,7 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
 };
 
 const SrmSupplierProductPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  useQuery({
     queryKey: ['srm-supplier-product'],
     queryFn: async () => {
       try {

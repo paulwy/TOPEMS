@@ -14,7 +14,7 @@ import { TMS_PATHS } from '@/modules/tms/config';
 import { tmsApi } from '@/api/tms';
 
 const TmsDashboardPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  useQuery({
     queryKey: ['tms', 'TmsDashboardPage'],
     queryFn: async () => {
       try {

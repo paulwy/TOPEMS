@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ticketApi } from '@/api/ticket';
 
 export const DashboardPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+  useQuery({
     queryKey: ['ticket-dashboard'],
     queryFn: async () => {
       try {

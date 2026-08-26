@@ -1,4 +1,3 @@
-import React, { lazy } from 'react';
 import { createSafeLazy, type RouteConfig } from './utils';
 
 export const DASHBOARD_PATHS = {
