@@ -133,7 +133,7 @@ export interface CreateVersionRequest {
   content?: string;
 }
 
-const emergencyPlanApi = {
+const _emergencyPlanApi = {
   async listPlans(
     params?: PlanListQuery
   ): Promise<ApiResponse<PaginatedResponse<EmergencyPlanItem>>> {

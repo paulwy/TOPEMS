@@ -67,7 +67,7 @@ interface CustomerProfileListQuery {
   keyword?: string;
 }
 
-const customerProfileApi = {
+const _customerProfileApi = {
   async getCustomerProfile(id: string): Promise<ApiResponse<CustomerProfileItem>> {
     return apiClient.crm.get<CustomerProfileItem>(`/customers/${id}/profile`);
   },
