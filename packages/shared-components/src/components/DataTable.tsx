@@ -30,7 +30,6 @@ import {
   useTheme,
   Stack,
   FormControl,
-  InputLabel,
   useMediaQuery,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';

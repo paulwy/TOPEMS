@@ -10380,6 +10380,75 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V399 — 架构改进四轨并行第六十七次：剩余TS6133清理（DataTable InputLabel import）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六十七次交付 · 剩余TS6133清理 · 1个文件 · 删除DataTable.tsx中未使用的InputLabel import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 剩余TS6133清理 | 1个文件的未使用import删除（packages/shared-components/DataTable.tsx，InputLabel import） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V400 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V400 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V400 | ⏸️ |
+
+### 轨A：剩余TS6133清理（DataTable InputLabel import）
+
+**清理内容**：删除1个文件中未使用的InputLabel import
+
+**清理的文件（1个）**：
+
+1. **packages/shared-components/src/components/DataTable.tsx** — 删除未使用的InputLabel import
+   - 删除的import：`InputLabel,`（第33行，从@mui/material导入）
+   - 该import定义后从未被使用
+   - grep验证：文件中没有使用InputLabel组件的地方
+   - 文件从2094行减少到2093行（删除1行）
+
+**技术说明**：
+- 删除import前验证import未被任何地方使用（grep检查所有引用）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于导入后从未使用的组件，可以安全删除
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import的未使用情况，即使是从第三方库导入的组件，如果未使用也会报TS6133错误
+- InputLabel 可能是在DataTable组件开发过程中引入的，但实际实现中使用了其他方式实现标签功能
+- 删除后，@mui/material的import列表保持完整，其他组件（useTheme, Stack, FormControl, useMediaQuery等）保留
+
+**验收结果**：
+- 1个未使用import的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的import为未使用的遗留代码
+- 文件语法正确，DataTable组件保留
+- @mui/material的其他import保留
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用import删除 | ✅ |
+| 轨A 清理import | InputLabel（从@mui/material导入） | ✅ |
+| 轨A 删除行数 | 1行（import语句） | ✅ |
+| 轨A 文件变化 | DataTable.tsx从2094行到2093行 | ✅ |
+| 轨A 引用检查 | 删除前验证import未被任何地方使用 | ✅ |
+| 轨A 其他import保留 | @mui/material的其他import保留 | ✅ |
+| 轨A 组件保留 | DataTable组件保留 | ✅ |
+| 轨A 语法检查 | 文件语法正确，import列表完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V399后续扩展（留给V400+）
+
+- [ ] **轨A 剩余TS6133清理**：继续清理 packages/ 目录下的约4个TS6133错误
+- [ ] **轨A DataTable.tsx清理**：清理 showFilters 未使用变量（需要检查接口属性影响）
+- [ ] **轨A Responsive.tsx清理**：清理 visibleByBreakpoint 和 getBreakpointWidth 未使用函数
+- [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V399连续六十七次交付验证成功，V400继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
