@@ -5,7 +5,6 @@
  * 支持创建、编辑、删除、启停、导入导出等操作。
  */
 
-import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';

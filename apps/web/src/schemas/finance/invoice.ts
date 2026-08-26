@@ -2,16 +2,6 @@ import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
-const formatMoney = (amount: number | undefined, color?: string) => {
-  const style: React.CSSProperties = { fontWeight: 'medium' };
-  if (color) (style as Record<string, string>).color = color;
-  return React.createElement(
-    'span',
-    { style },
-    `¥${(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
-  );
-};
-
 export const invoiceSchema: EntitySchema = {
   entity: 'financeInvoice',
   title: i18n.t('finance.invoice.k0'),
