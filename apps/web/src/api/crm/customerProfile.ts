@@ -1,6 +1,3 @@
-import { apiClient } from '../client';
-import type { ApiResponse } from '../client';
-
 interface CustomerProfileItem {
   id: string;
   name: string;
