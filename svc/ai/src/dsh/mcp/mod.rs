@@ -22,4 +22,4 @@ pub mod tools;
 
 pub use handler::{create_mcp_routes, handle_mcp_request, handle_mcp_sse, McpServerState};
 pub use server::{McpServer, ServerState};
-pub use tools::{register_crm_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_mes_tools, register_pm_tools, register_qms_tools, register_wms_tools, ToolExecutionError, ToolRegistry};
+pub use tools::{register_crm_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_lims_tools, register_mes_tools, register_pm_tools, register_qms_tools, register_wms_tools, ToolExecutionError, ToolRegistry};
