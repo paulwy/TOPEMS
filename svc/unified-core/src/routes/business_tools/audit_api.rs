@@ -8,7 +8,7 @@ use axum::Json;
 use axum::Router;
 
 use crate::shared::AppState;
-use super::permission_audit_log::{AuditLogEntry, AuditLogQuery, AuditLogResponse, AuditLogStore, InMemoryAuditLogStore};
+use super::permission_audit_log::{AuditLogEntry, AuditLogQuery, AuditLogResponse};
 
 // ===== Route Handlers =====
 
@@ -17,9 +17,8 @@ pub async fn list_audit_logs(
     State(state): State<AppState>,
     Query(query): Query<AuditLogQuery>,
 ) -> Result<Json<AuditLogResponse>, (StatusCode, Json<serde_json::Value>)> {
-    // For now, use an in-memory store. In production, this would be injected via AppState.
-    let store = InMemoryAuditLogStore::new();
-    let response = store.query(&query).await.map_err(|e| {
+    // V460: Use AppState's audit_logger (supports memory and database backends)
+    let response = state.audit_logger.query(&query).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({
@@ -36,8 +35,8 @@ pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<Json<AuditLogEntry>, (StatusCode, Json<serde_json::Value>)> {
-    let store = InMemoryAuditLogStore::new();
-    let entry = store.get_by_id(&id).await.map_err(|e| {
+    // V460: Use AppState's audit_logger
+    let entry = state.audit_logger.get_by_id(&id).await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({
@@ -61,8 +60,8 @@ pub async fn get_audit_log(
 pub async fn count_audit_logs(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    let store = InMemoryAuditLogStore::new();
-    let count = store.count().await.map_err(|e| {
+    // V460: Use AppState's audit_logger
+    let count = state.audit_logger.count().await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({

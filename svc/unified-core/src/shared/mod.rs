@@ -58,6 +58,8 @@ pub struct AppState {
     pub business_tool_registry: crate::modules::business_tools::BusinessToolRegistry,
     /// V444: Permission store for persisting tenant-based permission configurations.
     pub permission_store: Arc<dyn crate::routes::business_tools::permission_store::PermissionStore>,
+    /// V460: Audit log store for persisting permission change audit logs.
+    pub audit_logger: Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore>,
 }
 
 impl FromRef<AppState> for AuthState {
