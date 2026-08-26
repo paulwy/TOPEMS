@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Play, Square, Trash2, Download } from 'lucide-react';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
@@ -24,7 +24,7 @@ export interface MarketplacePlugin {
   permissions: Array<{ code: string; name: string }>;
 }
 export type UninstallTier = 'disable' | 'uninstall' | 'delete';
-const getPluginDisplayNames = (t: (key: string) => string): Record<string, string> => ({
+const getPluginDisplayNames = (_t: (key: string) => string): Record<string, string> => ({
   workflow: i18n.t('admin.plugin_management.workflow_engine'),
   erp: i18n.t('admin.plugin_management.enterprise_resource_planning'),
   hrm: i18n.t('admin.plugin_management.human_resource_management'),

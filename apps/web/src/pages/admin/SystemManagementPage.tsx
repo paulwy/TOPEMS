@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } from 'lucide-react';
 import { MobileHeader } from '@/components/mobile';
 import { MobileNav } from '@/components/layout/MobileNav';
@@ -9,7 +8,6 @@ import { DashboardTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
-import { adminApi } from '@/api/admin';
 
 const ct = designTokens.colors;
 interface SystemManagementPageProps {
@@ -17,17 +15,6 @@ interface SystemManagementPageProps {
 }
 const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const navigate = useNavigate();
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['admin-system-management'],
-    queryFn: async () => {
-      try {
-        // TODO: adminApi 暂无 system management 对应方法
-        return {};
-      } catch {
-        return {};
-      }
-    },
-  });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const systemFeatures = [
     {

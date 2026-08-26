@@ -11,19 +11,9 @@
 
 import type { ModuleConfig, ModuleRoute } from '@topems/app-shell';
 
-import { getCoreModules } from './core-modules';
-
-import { VITEDeploymentMode } from '@/config/env';
-
 export type { ModuleConfig, ModuleRoute };
 
-const isStaticMode = VITEDeploymentMode() === 'static';
-
-export let CORE_MODULES: ModuleConfig[] = [];
-
-function initializeCoreModules() {
-  CORE_MODULES = isStaticMode ? [] : getCoreModules();
-}
+export const CORE_MODULES: ModuleConfig[] = [];
 
 // ============================================================================
 // Business Modules (sold as packages)
@@ -175,25 +165,3 @@ export const moduleRegistry = ModuleRegistry.getInstance();
 // ============================================================================
 // React Integration
 // ============================================================================
-
-function useModules() {
-  return {
-    registry: moduleRegistry,
-    allModules: moduleRegistry.getAllModules(),
-    enabledModules: moduleRegistry.getEnabledModules(),
-    coreModules: moduleRegistry.getModulesByCategory('core'),
-    businessModules: moduleRegistry.getModulesByCategory('business'),
-    pluginModules: moduleRegistry.getModulesByCategory('plugin'),
-  };
-}
-
-function useModuleRoutes() {
-  const { enabledModules } = useModules();
-
-  const routes: ModuleRoute[] = [];
-  enabledModules.forEach((module) => {
-    routes.push(...module.routes);
-  });
-
-  return routes;
-}
