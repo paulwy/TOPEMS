@@ -1,7 +1,13 @@
-//! MCP Tool Registry — 工具注册和执行。
+//! MCP 业务工具模块。
 //!
-//! 提供工具的注册、查找、列表和执行功能。
-//! 每个工具包含名称、描述、输入参数的 JSON Schema 和处理函数。
+//! 包含 ToolRegistry（工具注册和执行）以及各业务模块的 MCP 工具注册函数。
+//!
+//! ## 已注册工具
+//!
+//! - 系统工具：system.ping, system.info（由 McpServer::register_system_tools 注册）
+//! - CRM：crm.list_customers, crm.get_customer, crm.create_customer
+//! - ERP：待实现（V336+）
+//! - Finance：待实现（V337+）
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -10,6 +16,10 @@ use serde_json::Value;
 use tokio::sync::RwLock;
 
 use topems_shared_mcp::protocol::{McpTool, McpToolResult};
+
+pub mod crm;
+
+pub use crm::register_crm_tools;
 
 /// 工具处理函数类型
 ///
@@ -47,39 +57,6 @@ struct RegisteredTool {
 /// MCP Tool Registry
 ///
 /// 线程安全的工具注册表，支持动态注册和执行工具。
-///
-/// # 示例
-///
-/// ```
-/// use topems_ai::dsh::mcp::tools::ToolRegistry;
-/// use topems_shared_mcp::schema::SchemaBuilder;
-/// use serde_json::json;
-///
-/// # async fn example() {
-/// let registry = ToolRegistry::new();
-///
-/// registry.register(
-///     "calculator.add",
-///     "加法计算",
-///     SchemaBuilder::object()
-///         .property("a", SchemaBuilder::number().description("加数1"))
-///         .property("b", SchemaBuilder::number().description("加数2"))
-///         .required(&["a", "b"])
-///         .build(),
-///     |params| {
-///         let a = params["a"].as_f64().unwrap_or(0.0);
-///         let b = params["b"].as_f64().unwrap_or(0.0);
-///         Ok(topems_shared_mcp::protocol::McpToolResult {
-///             content: vec![topems_shared_mcp::protocol::McpContent::text(format!("{}", a + b))],
-///             is_error: None,
-///         })
-///     },
-/// ).await;
-///
-/// let tools = registry.list_tools().await;
-/// assert_eq!(tools.len(), 1);
-/// # }
-/// ```
 #[derive(Clone, Default)]
 pub struct ToolRegistry {
     tools: Arc<RwLock<HashMap<String, RegisteredTool>>>,
@@ -94,12 +71,6 @@ impl ToolRegistry {
     }
 
     /// 注册工具
-    ///
-    /// # 参数
-    /// - `name`: 工具名称（唯一标识，格式：{service}.{action}）
-    /// - `description`: 工具描述（AI 可理解的中文描述）
-    /// - `input_schema`: 输入参数的 JSON Schema
-    /// - `handler`: 工具处理函数
     pub async fn register<F>(&self, name: &str, description: &str, input_schema: Value, handler: F)
     where
         F: Fn(Value) -> Result<McpToolResult, ToolExecutionError> + Send + Sync + 'static,
@@ -166,14 +137,6 @@ impl ToolRegistry {
     }
 
     /// 执行工具
-    ///
-    /// # 参数
-    /// - `name`: 工具名称
-    /// - `arguments`: 工具参数（JSON Value）
-    ///
-    /// # 返回
-    /// - 成功：工具执行结果
-    /// - 失败：工具执行错误
     pub async fn call_tool(
         &self,
         name: &str,
@@ -185,7 +148,6 @@ impl ToolRegistry {
             .get(name)
             .ok_or_else(|| ToolExecutionError::NotFound(name.to_string()))?;
 
-        // 执行处理函数
         (tool.handler)(arguments)
     }
 

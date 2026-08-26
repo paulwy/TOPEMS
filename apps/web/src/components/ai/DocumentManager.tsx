@@ -201,28 +201,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
     }
   };
 
-  const _getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'processed':
-        return <CheckCircle style={{ width: 16, height: 16, color: 'success.main' }} />;
-      case 'pending':
-        return (
-          <Loader2
-            style={{
-              width: 16,
-              height: 16,
-              color: 'warning.main',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
-        );
-      case 'partial':
-        return <AlertCircle style={{ width: 16, height: 16, color: 'warning.main' }} />;
-      default:
-        return <AlertCircle style={{ width: 16, height: 16, color: 'error.main' }} />;
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'processed':
