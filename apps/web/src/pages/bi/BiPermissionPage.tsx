@@ -42,7 +42,6 @@ import {
   Select,
   Switch,
   FormControlLabel,
-  Divider,
   Grid,
   Alert,
   CircularProgress,
@@ -168,8 +167,6 @@ const BiPermissionPage = () => {
       logger.error('Failed to toggle permission:', error);
     },
   });
-  const actionLoading =
-    saveMutation.isPending || deleteMutation.isPending || toggleMutation.isPending;
   const handleOpenDialog = (item?: RowLevelPermission) => {
     if (item) {
       setEditingItem(item);

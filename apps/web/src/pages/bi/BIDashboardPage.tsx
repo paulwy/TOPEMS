@@ -70,11 +70,6 @@ interface CreateDialogState {
   name: string;
   description: string;
 }
-interface DashboardSaveConfig {
-  name: string;
-  description: string;
-  widgets: DashboardWidget[];
-}
 const BIDashboardPage = () => {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -235,12 +230,6 @@ const BIDashboardPage = () => {
       logger.error('Failed to save dashboard:', error);
     },
   });
-  const actionLoading =
-    createMutation.isPending ||
-    deleteMutation.isPending ||
-    cloneMutation.isPending ||
-    togglePublicMutation.isPending ||
-    saveMutation.isPending;
   const handleCreateDashboard = () => {
     const data: Partial<Dashboard> = {
       name: createDialog.name || i18n.t('bi.bi_dashboard_page.text_d5e229'),

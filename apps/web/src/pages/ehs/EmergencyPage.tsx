@@ -13,7 +13,6 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
@@ -30,7 +29,6 @@ const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>
 const drillAdapter: CrudApiAdapter<DrillRecord> = {
   list: baseAdapter.list as unknown as CrudApiAdapter<DrillRecord>['list'],
   create: async (data) => {
-    const t = i18n.getFixedT(null, 'ehs');
     const transformed = { ...data };
     if (typeof transformed.participants === 'string') {
       transformed.participants = (transformed.participants as string)

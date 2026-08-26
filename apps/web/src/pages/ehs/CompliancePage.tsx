@@ -10,13 +10,11 @@ import { ehsApi } from '@/api/ehs';
 import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
-  const t = i18n.getFixedT(null, 'ehs');
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
   const data = obj.data;

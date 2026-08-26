@@ -4310,6 +4310,70 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V323 — 批量模式第八次：Top15文件未使用项清理（30项）+ 级联11项（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第八次成功 · 15 files（全部修改）· 净删 112 行 · tsc 0 errors · eslint 0 errors(1496 warnings, 从1530减34)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 净删行 |
+|------|--------|------|--------|
+| finance/VoucherCreatePage | 2 | 0 | 16 |
+| erp/DatabaseManagementPage | 2 | 0 | 2 |
+| ehs/EmergencyPage | 2 | 0 | 2 |
+| ehs/EhsHazardPage | 2 | 0 | 2 |
+| ehs/EhsDrillPage | 2 | 0 | 2 |
+| ehs/CompliancePage | 2 | 0 | 2 |
+| crm/DashboardPage | 2 | 3 | ~8 |
+| crm/CrmDashboardPage | 2 | 0 | 2 |
+| bi/BiPermissionPage | 2 | 1 | ~3 |
+| bi/BIDashboardPage | 2 | 0 | 5 |
+| bi/BIAnalyticsPage | 2 | 0 | ~3 |
+| automation/AutomationDesignerPage/index | 2 | 1 | ~13 |
+| asset/TransferPage | 2 | 2 | ~15 |
+| asset/DashboardPage | 2 | 1 | ~13 |
+| asset/CategoryManagementPage | 2 | 0 | ~3 |
+| **合计** | **30** | **11** | **112** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除4项本地声明（filteredCategories, actionLoading×2, iconMap）
+
+**B轨（手动修复26项）**：
+- import整行删除（9）：useTranslation×4, assetApi, automationApi, OrganizationFilterValue, CrudTab, useQuery×3
+- import单符号移除（10）：useEffect, FormField, Divider, QuickAction, RecentItem, IconButton, Tooltip, useQuery×2(多行import), useEffect(React)
+- useQuery整段删除（3）：asset/Dashboard, automation/index, asset/Transfer
+- interface整段删除（2）：finance FormSection, bi DashboardSaveConfig
+- 本地声明删除（3）：ehs t×4(i18n.getFixedT), finance loading, bi color(props解构)
+
+**C轨（级联11项）**：删除useQuery后触发import级联（useQuery×3, erpApi, Divider, useEffect, Users, FileText）
+
+### 关键发现
+
+1. **ehs 4页面统一模式**：useTranslation import + `const t = i18n.getFixedT(null, 'ehs')` 本地声明，函数体内用i18n.t而非t。批量删除import和t声明。
+2. **多行import单符号移除需精确匹配**：asset/TransferPage的`import { useMutation, useQuery, useQueryClient }`和crm/DashboardPage的`import React, { useEffect }`，sed需精确匹配完整import行。
+3. **删除iconMap触发3项import级联**：crm/DashboardPage删除iconMap后，Users和FileText import也未使用，需级联删除。
+4. **prettier多行import格式**：删除import符号后可能导致prettier error，需eslint --fix修复（bi/BIAnalyticsPage, crm/DashboardPage）。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1496 warnings（-34） | ✅ |
+| 变更统计 | 15 files, 4 insertions, 116 deletions | ✅ |
+
+### V323后续扩展（留给V324+）
+
+- [ ] **ehs统一模式批量检测**：4页面统一useTranslation+i18n.getFixedT模式，可写脚本自动检测
+- [ ] **多行import单符号移除自动化**：asset/Transfer和crm/Dashboard案例，sed需精确匹配
+- [ ] **iconMap类const删除后import级联**：crm/Dashboard案例，删除const后需检查相关import
+- [ ] **批量模式继续**：V316-V323连续八次成功，全src/未使用项从~282降至~136
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。
