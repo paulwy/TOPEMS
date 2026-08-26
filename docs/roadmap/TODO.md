@@ -7945,6 +7945,76 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V364 — 架构改进四轨并行第三十二次：前端未使用import清理（V363遗留import + design-system）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十二次交付 · 前端未使用import清理 · 3个文件 · 删除5个未使用import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 3个文件的未使用import删除（2个V363遗留import + 3个design-system import） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V365 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V365 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V365 | ⏸️ |
+
+### 轨A：前端未使用import清理
+
+**清理内容**：删除3个文件中未使用的import，包括V363删除组件后导致的遗留import和design-system中的未使用import
+
+**清理的文件（3个）**：
+
+1. **components/gis/modules/shared/GisContext.tsx** — 删除V363遗留的useReducer import
+   - 原代码：`import React, { createContext, useContext, useReducer, type ReactNode } from 'react';`
+   - 修改后：`import React, { createContext, useContext, type ReactNode } from 'react';`
+   - 原因：V363删除GisProvider组件后，useReducer不再被使用
+
+2. **components/ui/Loading.tsx** — 删除V363遗留的i18n import
+   - 原代码：`import i18n from '@/i18n';`
+   - 修改后：（删除整行）
+   - 原因：V363删除LoadingOverlay组件后，i18n不再被使用
+
+3. **design-system/components/index.tsx** — 删除3个未使用的@mui/material import
+   - 删除的import：
+     - `Badge as MuiBadge`（第30行）
+     - `AvatarGroup`（第33行）
+     - `Tooltip`（第37行）
+   - 原因：这些import在文件中定义后从未被使用
+
+**技术说明**：
+- V363删除组件后，需要检查并清理相关的未使用import
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- design-system中的未使用import可能是历史遗留代码，需要定期清理
+
+**验收结果**：
+- 3个文件的未使用import TS6133错误已消除
+- 编译验证：无新增错误
+- 删除的import均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 3个文件的未使用import删除 | ✅ |
+| 轨A 清理import数 | 5个未使用import（2个V363遗留 + 3个design-system） | ✅ |
+| 轨A 遗留import清理 | V363删除组件后导致的useReducer和i18n import已清理 | ✅ |
+| 轨A design-system清理 | MuiBadge、AvatarGroup、Tooltip import已清理 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改3个前端文件 + 修改1文件 | ✅ |
+
+### V364后续扩展（留给V365+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~169个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 遗留import清理**：继续检查并清理之前版本删除组件后导致的未使用import
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V364连续三十二次交付验证成功，V365继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
