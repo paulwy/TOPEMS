@@ -17890,6 +17890,185 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V456 — 架构改进四轨并行第一百二十四次：轨D 审计日志数据库存储（SQL迁移+DatabaseAuditLogStore+完整AuditLogStore trait实现+4个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十四次交付 · 轨D 审计日志数据库存储 · 2个代码文件新建 + 1个代码文件修改 · 实现PostgreSQL-backed审计日志存储，支持多条件过滤、分页、排序，提供持久化审计日志能力
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志数据库存储 | 实现PostgreSQL-backed AuditLogStore | ✅ |
+| 轨C | shared-service-client Kubernetes服务发现 | 集成Kubernetes服务发现，留给V457 | ⏸️ |
+
+### 轨D：审计日志数据库存储（SQL迁移+DatabaseAuditLogStore+完整AuditLogStore trait实现+4个单元测试）
+
+**实现内容**：实现PostgreSQL-backed审计日志存储，支持多条件过滤、分页、排序，提供持久化审计日志能力
+
+**修改的文件（2个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`database/migrations/20260827000001_v456_audit_log_metadata.sql`（SQL迁移，约30行）**
+
+**新建：`svc/unified-core/src/routes/business_tools/database_audit_log_store.rs`（DatabaseAuditLogStore实现，约380行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加database_audit_log_store模块声明）**
+
+**新增功能**：
+
+1. **SQL迁移（V456审计日志元数据扩展）**
+   - 为permission_audit_logs表添加metadata字段（JSONB类型，默认'{}'）
+   - 添加metadata GIN索引（支持JSONB查询）
+   - 添加tenant_id+changed_at复合索引（优化按租户和时间查询）
+   - 添加user_id+changed_at复合索引（优化按用户和时间查询）
+   - 添加字段和索引注释
+
+2. **DatabaseAuditLogStore实现**
+   - 字段：pool（Arc<PgPool>）
+   - 方法：new()、pool()、row_to_entry()、build_where_clause()
+   - 实现AuditLogStore trait的所有方法：record、query、get_by_id、count
+
+3. **数据库行转换（row_to_entry）**
+   - 将PostgreSQL行转换为AuditLogEntry
+   - 处理id类型转换（i64 → String）
+   - 处理action类型转换（String → AuditAction）
+   - 处理ip_address类型转换（IpNetwork → String）
+   - 处理metadata类型转换（JSONB → HashMap<String, String>）
+   - 处理changed_at类型转换（DateTime<Utc> → RFC3339 String）
+
+4. **动态WHERE子句构建（build_where_clause）**
+   - 支持6个过滤条件：tenant_id、user_id、action、changed_by、start_time、end_time
+   - 动态参数绑定（使用$1、$2等占位符）
+   - 空查询时返回空WHERE子句
+   - 参数使用Json包装（兼容sqlx类型系统）
+
+5. **record方法**
+   - 插入审计日志到permission_audit_logs表
+   - 支持所有字段：tenant_id、user_id、action、old_value、new_value、changed_by、changed_at、ip_address、user_agent、metadata
+   - metadata序列化为JSONB
+   - changed_at解析为DateTime<Utc>
+   - 检查rows_affected()确保插入成功
+
+6. **query方法**
+   - 先执行COUNT查询获取总数
+   - 再执行SELECT查询获取分页数据
+   - 支持ORDER BY changed_at DESC（最新优先）
+   - 支持LIMIT和OFFSET分页
+   - 返回AuditLogResponse（total、count、offset、limit、entries）
+
+7. **get_by_id方法**
+   - 按id查询单个审计日志
+   - 支持id类型转换（String → i64）
+   - 返回Option<AuditLogEntry>
+
+8. **count方法**
+   - 查询审计日志总数
+   - 返回usize
+
+9. **4个单元测试**
+   - test_build_where_clause_empty：测试空查询
+   - test_build_where_clause_tenant：测试按租户过滤
+   - test_build_where_clause_multiple：测试多条件过滤
+   - test_build_where_clause_time_range：测试时间范围过滤
+
+**技术说明**：
+- 使用sqlx进行PostgreSQL数据库操作（已在项目中使用）
+- 使用async-trait实现异步AuditLogStore trait
+- 使用serde进行JSON序列化/反序列化
+- 使用chrono处理时间（已在项目中使用）
+- 使用ipnetwork处理IP地址类型（已在项目中使用）
+- 使用HashMap存储元数据
+- 支持多条件动态过滤
+- 支持分页（LIMIT/OFFSET）
+- 支持排序（ORDER BY changed_at DESC）
+- 数据库表使用V448创建的permission_audit_logs表
+- V456迁移添加metadata字段和索引
+
+**数据库表结构（permission_audit_logs）**：
+- id: BIGSERIAL PRIMARY KEY
+- tenant_id: VARCHAR(64) NOT NULL
+- user_id: VARCHAR(64) NOT NULL
+- action: VARCHAR(32) NOT NULL（CHECK: create/update/delete/activate/deactivate/role_change）
+- old_value: JSONB
+- new_value: JSONB
+- changed_by: VARCHAR(64) NOT NULL
+- changed_at: TIMESTAMPTZ NOT NULL DEFAULT NOW()
+- ip_address: INET
+- user_agent: TEXT
+- metadata: JSONB NOT NULL DEFAULT '{}'（V456新增）
+
+**索引**：
+- idx_audit_logs_tenant（tenant_id）
+- idx_audit_logs_user（user_id）
+- idx_audit_logs_action（action）
+- idx_audit_logs_changed_at（changed_at DESC）
+- idx_audit_logs_changed_by（changed_by）
+- idx_audit_logs_metadata（metadata GIN，V456新增）
+- idx_audit_logs_tenant_changed_at（tenant_id, changed_at DESC，V456新增）
+- idx_audit_logs_user_changed_at（user_id, changed_at DESC，V456新增）
+
+**验收结果**：
+- 完成SQL迁移（metadata字段+3个索引+注释）
+- 完成DatabaseAuditLogStore实现（new+2辅助方法+4个trait方法）
+- 完成row_to_entry转换（处理6种类型转换）
+- 完成build_where_clause动态查询构建（6个过滤条件）
+- 完成record方法（插入审计日志+10个字段）
+- 完成query方法（COUNT+SELECT+分页+排序）
+- 完成get_by_id方法（按ID查询）
+- 完成count方法（总数查询）
+- 完成4个单元测试（全部通过）
+- 完成模块声明（business_tools/mod.rs添加）
+- 代码总行数约410行（SQL迁移30行+Rust实现380行）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D SQL迁移 | metadata字段+3个索引+注释 | ✅ |
+| 轨D DatabaseAuditLogStore实现 | new+2辅助方法+4trait方法 | ✅ |
+| 轨D row_to_entry转换 | 6种类型转换 | ✅ |
+| 轨D build_where_clause | 6个过滤条件+动态参数 | ✅ |
+| 轨D record方法 | 插入+10个字段+错误检查 | ✅ |
+| 轨D query方法 | COUNT+SELECT+分页+排序 | ✅ |
+| 轨D get_by_id方法 | 按ID查询+类型转换 | ✅ |
+| 轨D count方法 | 总数查询 | ✅ |
+| 轨D 单元测试 | 4个测试全部通过 | ✅ |
+| 轨D 模块声明 | business_tools/mod.rs添加 | ✅ |
+| 轨D 代码行数 | 约410行（SQL30+Rust380） | ✅ |
+| 变更统计 | 2个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V456后续扩展（留给V457+）
+
+- [ ] **轨C shared-service-client Kubernetes服务发现**：集成Kubernetes服务发现
+- [ ] **轨C shared-service-client DNS服务发现**：集成DNS-based服务发现
+- [ ] **轨D 审计日志集成到权限管理API**：在create/update/delete端点中自动记录审计日志
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V456连续一百二十四次交付验证成功，V457继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
