@@ -705,7 +705,7 @@ interface AIToolsPanelProps {
   onClose?: () => void;
 }
 
-export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose }) => {
+export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose: _onClose }) => {
   const [activeTab, setActiveTab] = useState(defaultTool || 'json');
 
   const tools = [

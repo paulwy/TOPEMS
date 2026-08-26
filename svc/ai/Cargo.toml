@@ -28,6 +28,7 @@ topems-shared-auth = { workspace = true }
 topems-shared-ai = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-observability = { workspace = true }
+topems-shared-mcp = { path = "../../lib/shared-mcp" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 walkdir.workspace = true

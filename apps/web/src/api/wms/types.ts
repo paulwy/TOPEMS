@@ -1,4 +1,3 @@
-import type { PaginatedResponse } from '@topems/shared-types';
 import type { PaginationParams as BasePaginationParams } from '../client';
 
 export interface InventoryItem {

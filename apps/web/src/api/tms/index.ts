@@ -1,5 +1,3 @@
-import apiClient from '../client';
-
 import vehicleApi from './vehicle';
 import driverApi from './driver';
 import carrierApi from './carrier';

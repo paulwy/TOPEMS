@@ -1,5 +1,4 @@
 import { apiClient } from '../client';
-import type { ProjectMember } from './types';
 
 export const memberApi = {
   list: async (projectId: string) => {

@@ -81,7 +81,7 @@ export const governanceApi = {
     return apiClient.master.post('/mdm-v58/maturity/assess', data || {});
   },
 
-  getAssessment: async (id: string): Promise<ApiResponse<MaturityAssessment>> => {
+  getAssessment: async (_id: string): Promise<ApiResponse<MaturityAssessment>> => {
     return apiClient.master.get(`/mdm-v58/maturity/assessment`);
   },
 

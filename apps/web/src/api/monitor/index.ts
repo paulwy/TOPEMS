@@ -2,7 +2,6 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from '@topems/shared-types';
 import { apiLogger } from '../../utils/logger';
-import type { CrudOperations } from '@/hooks/useCrudQueries';
 import { alertBatchApi } from './alertBatch';
 import { ruleTypedApi } from './ruleTyped';
 import { metricTypedApi } from './metricTyped';
