@@ -6725,6 +6725,97 @@ POST /mcp
 
 ---
 
+## 🎯 V348 — 架构改进四轨并行第十六次：SCM业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十六次交付 · SCM MCP Tools上线 · 57个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V349 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V347评估，记录V349+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V349实施（需独立二进制入口） | ⏸️ |
+| 轨D | SCM MCP Tools | 4个业务工具（scm.list_suppliers, scm.get_supplier, scm.list_purchase_orders, scm.create_purchase_order），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V347）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V349+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：SCM MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/scm.rs` — SCM业务工具（~660行）
+
+**注册的4个工具**：
+1. **scm.list_suppliers** — 查询供应商列表
+   - 参数：page, page_size, supplier_level(strategic/preferred/approved/qualified/pending/blacklisted), status(active/inactive/suspended/terminated), category, keyword
+   - 返回：供应商列表（供应商编号、名称、联系人、电话、邮箱、等级、状态、品类、地址、评分、合作年限、订单统计、准时交货率、质量合格率）
+   - 支持分页、等级筛选、状态筛选、品类筛选、关键词搜索
+
+2. **scm.get_supplier** — 获取供应商详情
+   - 参数：supplier_id（必填）
+   - 返回：完整供应商信息（基本信息、联系人、银行账户、资质证书、评分、绩效、物料供应、近期订单、合同信息）
+   - 包含3个资质证书、5个评分维度、3个供应物料、3个近期订单、1个合同
+
+3. **scm.list_purchase_orders** — 查询采购订单列表
+   - 参数：page, page_size, status(draft/pending_approval/approved/sent/partial_received/received/closed/cancelled), supplier_id, start_date, end_date, keyword
+   - 返回：采购订单列表（订单编号、供应商、状态、总金额、币种、物料数、创建人、审批人、创建时间、预计/实际交货日期）
+   - 支持分页、状态筛选、供应商筛选、日期范围筛选、关键词搜索
+
+4. **scm.create_purchase_order** — 创建采购订单
+   - 参数：supplier_id（必填）, items（必填，物料明细数组）, expected_delivery_date, payment_terms, remark, creator
+   - 返回：新订单ID、订单编号、供应商、物料明细、总金额（自动计算）、预计交货日期、付款条件、状态
+   - 验证：2个必填字段，items至少包含一个物料，自动计算总金额
+
+**单元测试**（6个）：
+- test_register_scm_tools — 4个工具全部注册
+- test_list_suppliers — 分页查询
+- test_get_supplier — 按ID查询，验证银行账户/资质证书/评分/绩效/物料/订单结构
+- test_list_purchase_orders — 分页+状态筛选
+- test_create_purchase_order — 成功创建订单，验证总金额自动计算和物料明细
+- test_create_purchase_order_validation — 参数验证（缺少supplier_id、items为空）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod scm和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_scm_tools
+- `svc/ai/src/routes.rs` — 调用register_scm_tools注册SCM工具
+
+**当前工具总数**：57个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS + 4 CS + 4 SCM）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V347，记录V349+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D SCM工具 | 4个业务工具已注册 | ✅ |
+| 轨D SCM单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 57个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS+4BI+4APS+4CS+4SCM） | ✅ |
+| 变更统计 | 新增1文件(~660行) + 修改4文件 | ✅ |
+
+### V348后续扩展（留给V349+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D IoT/OA MCP Tools**：注册iot.list_devices, oa.list_approval_requests等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V348连续十六次交付验证成功，V349继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
