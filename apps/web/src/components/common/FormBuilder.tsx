@@ -403,15 +403,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
             />
           );
         case 'select': {
-          const menuItems = (field.options || []).map((opt) => (
-            <MenuItem
-              key={opt.value}
-              value={opt.value}
-            >
-              {opt.label}
-            </MenuItem>
-          ));
-
           return (
             <FormControl
               key={field.name}

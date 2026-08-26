@@ -7670,6 +7670,79 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V360 — 架构改进四轨并行第二十八次：前端未使用项持续清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十八次交付 · 前端未使用项持续清理 · 4个文件 · 混合清理（import/变量/方法）
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用项持续清理 | 4个文件的未使用项清理（1个import + 1个useState变量 + 1个类方法 + 1个局部变量） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V361 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V361 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V361 | ⏸️ |
+
+### 轨A：前端未使用项持续清理
+
+**清理内容**：清理4个文件中不同类型的未使用项，包括 import、useState 变量、类方法和局部变量
+
+**清理的文件（4个）**：
+
+1. **components/LoadingProvider.tsx** — 删除未使用的 useContext import
+   - 原代码：`import React, { createContext, useContext, useState, ... } from 'react';`
+   - 修改后：`import React, { createContext, useState, ... } from 'react';`
+   - 原因：V357 删除了 useLoading hook 后，useContext 不再被使用
+
+2. **components/I18nReadyGate.tsx** — 未使用的 useState 返回值 version
+   - 原代码：`const [version, forceRender] = useState(0);`
+   - 修改后：`const [_version, forceRender] = useState(0);`
+   - 原因：version 是强制重新渲染模式的状态值，从未被读取，只使用 forceRender 函数
+
+3. **components/bff/BffErrorBoundary.tsx** — 删除未使用的私有类方法 handleRedirect
+   - 删除范围：第563-568行（共6行）
+   - 方法内容：从 props 读取 redirectUrl，然后 window.location.href 跳转
+   - 原因：该方法从未被调用，可能是遗留代码
+
+4. **components/common/FormBuilder.tsx** — 删除未使用的局部变量 menuItems
+   - 删除范围：第406-413行（共8行）
+   - 变量内容：`(field.options || []).map((opt) => <MenuItem ...>...</MenuItem>)`
+   - 原因：该变量定义后从未被使用，第433行直接使用了 `(field.options || []).map(...)` 而不是 menuItems
+
+**技术说明**：
+- 混合清理策略：根据未使用项的类型选择不同的处理方法
+  - import：直接删除 import 行
+  - useState 返回值：重命名为下划线前缀（_version）
+  - 类方法：直接删除整个方法定义
+  - 局部变量：直接删除整个变量定义
+- 所有删除操作都经过验证，确保不会影响其他代码
+
+**验收结果**：
+- 4个文件的未使用项 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 4个文件的未使用项清理 | ✅ |
+| 轨A 清理类型 | 1个import + 1个useState变量 + 1个类方法 + 1个局部变量 | ✅ |
+| 轨A 技术方法 | 混合清理策略（删除/重命名） | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改4个前端文件 + 修改1文件 | ✅ |
+
+### V360后续扩展（留给V361+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~182个TS6133错误
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V360连续二十八次交付验证成功，V361继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
