@@ -10311,6 +10311,75 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V398 — 架构改进四轨并行第六十六次：剩余TS6133清理（streamingSsr flushed变量）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第六十六次交付 · 剩余TS6133清理 · 1个文件 · 删除streamingSsr.ts中未使用的flushed变量
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 剩余TS6133清理 | 1个文件的未使用变量删除（utils/streamingSsr.ts，flushed私有变量） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V399 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V399 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V399 | ⏸️ |
+
+### 轨A：剩余TS6133清理（streamingSsr flushed变量）
+
+**清理内容**：删除1个文件中未使用的flushed私有变量及其赋值
+
+**清理的文件（1个）**：
+
+1. **utils/streamingSsr.ts** — 删除未使用的flushed私有变量
+   - 删除的变量：`private flushed = false;`（第265行）
+   - 删除的赋值：`this.flushed = true;`（第332行，在flush()方法中）
+   - 该变量定义后只被赋值，从未被读取
+   - flush()方法是一个语义化接口，在Web ReadableStream中enqueue即推送，无需显式flush
+   - 文件从536行减少到534行（删除2行）
+
+**技术说明**：
+- 删除变量前验证变量只被赋值、从未被读取（grep检查所有引用）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于只被赋值、从未被读取的私有变量，可以安全删除
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查私有变量的未使用情况，即使变量被赋值但从未被读取，也会报TS6133错误
+- flushed 变量可能是在流式SSR管理器开发过程中引入的，用于跟踪是否已刷新，但实际实现中没有使用这个状态
+- 删除后，flush()方法保留为空方法，作为语义化接口兼容未来基于Node Writable的实现
+
+**验收结果**：
+- 1个未使用变量的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的变量为未使用的遗留代码
+- 文件语法正确，StreamingSSRManager 类保留
+- flush()方法保留为空方法，作为语义化接口
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用变量删除 | ✅ |
+| 轨A 清理变量 | flushed（私有布尔变量） | ✅ |
+| 轨A 删除行数 | 2行（变量定义+赋值语句） | ✅ |
+| 轨A 文件变化 | streamingSsr.ts从536行到534行 | ✅ |
+| 轨A 引用检查 | 删除前验证变量只被赋值、从未被读取 | ✅ |
+| 轨A 方法保留 | flush()方法保留为空方法 | ✅ |
+| 轨A 类保留 | StreamingSSRManager 类保留 | ✅ |
+| 轨A 语法检查 | 文件语法正确，类定义完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V398后续扩展（留给V399+）
+
+- [ ] **轨A 剩余TS6133清理**：继续清理 packages/ 目录下的约5个TS6133错误
+- [ ] **轨A shared-components清理**：清理 DataTable.tsx 和 Responsive.tsx 中的未使用import/变量/函数
+- [ ] **轨A shared-types清理**：清理 api-binding-tools.ts 中的未使用类型
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V398连续六十六次交付验证成功，V399继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
