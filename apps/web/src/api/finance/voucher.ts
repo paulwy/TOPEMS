@@ -4,9 +4,7 @@ import type {
   VoucherEntry,
   CreateVoucherRequest,
   VoucherQueryParams,
-  VoucherTemplate,
   VoucherOperationResult,
-  PaginatedResult,
   ApiResponse,
   BatchOperationResult,
 } from '../../types/finance';

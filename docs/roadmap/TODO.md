@@ -4607,6 +4607,75 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V327 — 批量模式第十二次：Top15文件未使用项清理（30项）+ 级联4项（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十二次成功 · 15 files（全部修改，无删除）· 净删 106 行 · tsc 0 errors · eslint 0 errors(1366 warnings, 从1394减28)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 类型 | 净删行 |
+|------|--------|------|------|--------|
+| api/bi/types | 2 | 1 | type声明 | ~8 |
+| api/ehs/accident | 2 | 0 | export type重导出 | ~3 |
+| api/ehs/compliance | 2 | 0 | export type重导出 | ~3 |
+| api/ehs/inspection | 2 | 0 | export type重导出 | ~3 |
+| api/ehs/occupationalHealth | 2 | 0 | export type重导出 | ~3 |
+| api/ehs/risk | 2 | 0 | export type重导出 | ~3 |
+| api/erp/admin/meeting | 2 | 1 | const声明 | ~8 |
+| api/erp/utils | 2 | 1 | function声明 | ~8 |
+| api/finance/voucher | 2 | 0 | export type重导出 | ~3 |
+| api/gis/index | 2 | 0 | import整行 | ~3 |
+| api/gis/map | 2 | 0 | export type重导出 | ~3 |
+| api/iam/types | 2 | 1 | type声明 | ~8 |
+| api/master/governanceV2 | 2 | 0 | 函数参数 | ~2 |
+| api/pdm/index | 2 | 0 | import整行 | ~3 |
+| api/plugin/index | 2 | 0 | import+function | ~8 |
+| **合计** | **30** | **4** | | **106** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除9项本地声明（meetingRoomCrudApi, meetingBookingCrudApi, createMockSuccessResponse, createMockErrorResponse, AdaptedUser, AdaptedPermission, getPluginCategories, ModuleAnalytics, PivotTableConfig）
+
+**B轨（手动修复21项）**：
+- export type重导出单符号移除（16）：ehs×5文件10项 + finance/voucher 2 + gis/map 2 + ehs/accident 2
+- import整行删除（5）：gis/index apiClient+ApiResponse, plugin/index ApiResponse, pdm/index pdmMaterialApi+pdmProductApi
+- 函数参数重命名（2）：governanceV2 approveStep/rejectStep id→_id
+
+**C轨（级联4项）**：
+- bi/types ModuleAnalyticsData（type声明，移除ModuleAnalytics后触发）
+- erp/admin/meeting CrudOperations（import，移除meetingRoomCrudApi后触发）
+- erp/utils i18n（import，移除createMock函数后触发）
+- iam/types IamTypes（import，移除AdaptedUser/AdaptedPermission后触发）
+
+### 关键发现
+
+1. **export type重导出块占比高**：15个文件中8个是`export type { ... }`重新导出块，单符号移除需用sed，v6无法处理。共16项，占手动项的76%。
+2. **api/types文件安全**：bi/iam/types移除未使用type后只有1项级联（ModuleAnalyticsData, IamTypes import），无孤儿文件风险。
+3. **函数参数同名误改风险**：governanceV2有多个函数使用id参数，sed全局替换`id: string`→`_id: string`会误改其他函数（getDataProduct等确实使用id）。需用Edit精确修改approveStep/rejectStep两个函数。
+4. **v6脚本对export type块无效**：ehs/finance/gis的`export type { ListQueryParams, RiskLevelMatrix, ... }`格式，v6正则`^\s*(export\s+)?(type|interface)...`匹配的是`export type`关键字行，不是块内单符号。
+5. **api/index文件import整行删除**：gis/index的apiClient+ApiResponse、pdm/index的pdmMaterialApi+pdmProductApi都是整行import，删除后无级联。
+6. **无孤儿文件**：15个文件全部修改，无删除。api/下的文件都有其他export被引用，移除未使用项后不变孤儿。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1366 warnings（-28） | ✅ |
+| 孤儿文件删除 | 0个（全部修改） | ✅ |
+| 变更统计 | 15 files, 2 insertions, 108 deletions | ✅ |
+
+### V327后续扩展（留给V328+）
+
+- [ ] **v6脚本支持export type块单符号移除**：8个文件16项需手动sed，可扩展v6自动处理`export type { A, B }`块
+- [ ] **函数参数同名精确修改工具**：governanceV2案例，需自动识别函数体内是否使用参数，避免全局替换误改
+- [ ] **api/index文件import批量检测**：gis/pdm/plugin/index的未使用import，可写脚本自动扫描api/*/index.ts
+- [ ] **批量模式继续**：V316-V327连续十二次成功，全src/未使用项从~282降至~30
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。
