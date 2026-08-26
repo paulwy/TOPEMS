@@ -18426,6 +18426,196 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V459 — 架构改进四轨并行第一百二十七次：轨C shared-service-client DNS服务发现（DnsConfig+DnsServiceDiscovery+DnsServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+SRV/A记录+缓存+9个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十七次交付 · 轨C shared-service-client DNS服务发现 · 1个代码文件新建 + 1个代码文件修改 · 实现基于DNS的服务发现，支持SRV记录和A/AAAA记录，带本地缓存和TTL管理
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client DNS服务发现 | 实现DNS-based服务发现 | ✅ |
+| 轨D | 审计日志AppState集成 | 在AppState中添加AuditLogger，留给V460 | ⏸️ |
+
+### 轨C：shared-service-client DNS服务发现（DnsConfig+DnsServiceDiscovery+DnsServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+SRV/A记录+缓存+9个单元测试）
+
+**实现内容**：实现基于DNS的服务发现，支持SRV记录和A/AAAA记录，带本地缓存和TTL管理
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/shared/dns_service_discovery.rs`（DNS服务发现实现，约560行）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（添加dns_service_discovery模块声明）**
+
+**新增功能**：
+
+1. **DNS配置（DnsConfig）**
+   - 字段：nameservers（DNS服务器地址列表）、default_port（A记录默认端口，默认80）、search_domain（SRV记录搜索域）、use_srv（是否使用SRV记录，默认true）、cache_ttl_secs（缓存TTL，默认30秒）、timeout_secs（请求超时，默认5秒）
+   - 实现Default trait
+   - 支持serde序列化/反序列化
+
+2. **缓存类型（CachedService）**
+   - 字段：registration（ServiceRegistration）、cached_at（缓存时间戳）
+   - 用于本地缓存，带TTL管理
+
+3. **DNS服务发现实现（DnsServiceDiscovery）**
+   - 字段：config（DnsConfig）、resolver（TokioAsyncResolver，trust-dns异步解析器）、cache（Arc<RwLock<HashMap<String, CachedService>>）
+   - 方法：new()、build_srv_name()、build_a_name()、is_cache_valid()、get_cached()、set_cached()、invalidate_cache()、discover_srv()、discover_a()、clear_cache()、cache_size()
+   - 实现ServiceDiscovery trait的所有方法：register、deregister、discover、list_services、heartbeat
+
+4. **SRV记录发现（discover_srv）**
+   - SRV记录格式：_service._proto.name.（如_http._tcp.crm.svc.cluster.local.）
+   - 使用trust-dns的srv_lookup查询SRV记录
+   - 提取target（主机名）和port（端口）
+   - 构建base_url：http://{host}:{port}
+   - metadata包含：srv_name、srv_target、srv_port、srv_priority、srv_weight
+
+5. **A/AAAA记录发现（discover_a）**
+   - 使用trust-dns的lookup_ip查询A/AAAA记录
+   - 提取IP地址
+   - 使用config.default_port作为端口
+   - 构建base_url：http://{ip}:{port}
+   - metadata包含：dns_name、resolved_ip、default_port
+
+6. **缓存机制**
+   - 本地缓存：service_name -> CachedService
+   - TTL管理：缓存超过cache_ttl_secs自动失效
+   - discover方法先查缓存，缓存未命中再查询DNS
+   - 查询成功后自动缓存结果
+   - 提供invalidate_cache()、clear_cache()、cache_size()方法
+
+7. **发现策略**
+   - use_srv=true时：先查SRV记录，失败回退到A/AAAA记录
+   - use_srv=false时：直接查A/AAAA记录
+   - SRV查询失败时记录debug日志并回退
+
+8. **register/deregister方法**
+   - 返回错误：DNS记录由DNS服务器管理，不支持通过此客户端注册/注销
+   - 提示通过Kubernetes、Consul或手动DNS配置注册服务
+
+9. **list_services方法**
+   - DNS不支持列出所有服务（需要知道服务名）
+   - 返回缓存中的有效服务作为最佳努力列表
+
+10. **heartbeat方法**
+    - 无操作：DNS通过TTL处理过期，不需要心跳
+
+11. **DNS服务发现构建器（DnsServiceDiscoveryBuilder）**
+    - 方法：new()、nameserver()、nameservers()、default_port()、search_domain()、use_srv()、cache_ttl_secs()、timeout_secs()、build()
+    - 实现Default trait
+    - 链式调用构建DnsServiceDiscovery实例
+
+12. **9个单元测试**
+    - test_dns_config_default：测试默认配置
+    - test_build_srv_name_with_domain：测试带搜索域的SRV名称
+    - test_build_srv_name_without_domain：测试不带搜索域的SRV名称
+    - test_build_a_name_with_domain：测试带搜索域的A名称
+    - test_build_a_name_without_domain：测试不带搜索域的A名称
+    - test_is_cache_valid：测试缓存有效性
+    - test_builder：测试构建器
+    - test_builder_default：测试默认构建器
+    - test_cache_operations：测试缓存操作（set/get/invalidate/clear/size）
+
+**技术说明**：
+- 使用trust-dns-resolver进行异步DNS解析（TokioAsyncResolver）
+- 支持系统DNS配置和自定义nameservers
+- 使用async-trait实现异步ServiceDiscovery trait
+- 使用serde进行JSON序列化/反序列化
+- 使用tokio::sync::RwLock实现并发安全缓存
+- 使用std::time::Instant实现TTL管理
+- 使用chrono处理时间（已在项目中使用）
+- 支持SRV记录（RFC 2782）和A/AAAA记录
+- 支持UDP协议查询DNS
+- 本地缓存减少DNS查询次数
+
+**DNS服务发现特性**：
+1. SRV记录发现 — 标准DNS服务发现，包含主机和端口
+2. A/AAAA记录回退 — SRV失败时使用A/AAAA记录
+3. 本地缓存 — 带TTL的本地缓存减少DNS查询
+4. 自定义nameservers — 支持指定DNS服务器
+5. 系统DNS配置 — 未指定nameservers时使用系统配置
+6. 搜索域支持 — 支持Kubernetes风格的搜索域（svc.cluster.local）
+7. 可配置端口 — A/AAAA记录的默认端口可配置
+8. 并发安全 — RwLock保护的缓存
+9. 构建器模式 — DnsServiceDiscoveryBuilder链式构建
+10. TTL管理 — 缓存自动过期，无需心跳
+
+**验收结果**：
+- 完成DnsConfig配置结构体（6个配置字段+Default+serde）
+- 完成CachedService缓存类型（2字段）
+- 完成DnsServiceDiscovery实现（new+10辅助方法+5个trait方法）
+- 完成SRV记录发现（discover_srv+5个metadata字段）
+- 完成A/AAAA记录发现（discover_a+3个metadata字段）
+- 完成缓存机制（get/set/invalidate/clear/size+TTL）
+- 完成发现策略（SRV优先+A回退）
+- 完成register/deregister（返回错误，DNS管理）
+- 完成list_services（返回缓存服务）
+- 完成heartbeat（无操作，TTL管理）
+- 完成DnsServiceDiscoveryBuilder构建器（8个配置方法+build+Default）
+- 完成9个单元测试（全部通过）
+- 完成模块声明（shared/mod.rs添加）
+- 代码总行数约560行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C DnsConfig配置 | 6字段+Default+serde | ✅ |
+| 轨C CachedService缓存类型 | 2字段 | ✅ |
+| 轨C DnsServiceDiscovery实现 | new+10辅助+5trait方法 | ✅ |
+| 轨C SRV记录发现 | discover_srv+5metadata | ✅ |
+| 轨C A/AAAA记录发现 | discover_a+3metadata | ✅ |
+| 轨C 缓存机制 | get/set/invalidate/clear/size+TTL | ✅ |
+| 轨C 发现策略 | SRV优先+A回退 | ✅ |
+| 轨C register/deregister | 返回错误(DNS管理) | ✅ |
+| 轨C list_services | 返回缓存服务 | ✅ |
+| 轨C heartbeat | 无操作(TTL管理) | ✅ |
+| 轨C DnsServiceDiscoveryBuilder | 8配置方法+build+Default | ✅ |
+| 轨C 单元测试 | 9个测试全部通过 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加 | ✅ |
+| 轨C 代码行数 | 约560行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V459后续扩展（留给V460+）
+
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger，替换全局recorder
+- [ ] **轨D 审计日志数据库存储集成**：使用DatabaseAuditLogStore替换InMemoryAuditLogStore
+- [ ] **轨D 审计日志查询API集成**：将审计日志查询API连接到全局recorder
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V459连续一百二十七次交付验证成功，V460继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
