@@ -33,6 +33,7 @@ impl std::fmt::Display for McpProtocolVersion {
 
 /// MCP Server 能力声明
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpCapability {
     /// 工具能力
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -50,6 +51,7 @@ pub struct McpCapability {
 
 /// 工具能力配置
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ToolsCapability {
     /// 是否支持工具列表变更通知
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -58,6 +60,7 @@ pub struct ToolsCapability {
 
 /// 资源能力配置
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ResourcesCapability {
     /// 是否支持资源列表变更通知
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -69,6 +72,7 @@ pub struct ResourcesCapability {
 
 /// 提示模板能力配置
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PromptsCapability {
     /// 是否支持提示模板列表变更通知
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -77,6 +81,7 @@ pub struct PromptsCapability {
 
 /// MCP 工具定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpTool {
     /// 工具名称（唯一标识，格式：{service}.{action}）
     pub name: String,
@@ -88,6 +93,7 @@ pub struct McpTool {
 
 /// MCP 资源定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpResource {
     /// 资源 URI（格式：{service}://{resource_type}/{id}）
     pub uri: String,
@@ -102,6 +108,7 @@ pub struct McpResource {
 
 /// MCP 工具执行结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpToolResult {
     /// 结果内容
     pub content: Vec<McpContent>,
@@ -145,6 +152,7 @@ impl McpContent {
 
 /// MCP 初始化请求参数
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InitializeParams {
     /// 协议版本
     pub protocol_version: McpProtocolVersion,
@@ -156,6 +164,7 @@ pub struct InitializeParams {
 
 /// MCP 客户端信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpClientInfo {
     /// 客户端名称
     pub name: String,
@@ -165,6 +174,7 @@ pub struct McpClientInfo {
 
 /// MCP 初始化结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InitializeResult {
     /// 协议版本
     pub protocol_version: McpProtocolVersion,
@@ -179,6 +189,7 @@ pub struct InitializeResult {
 
 /// MCP 服务端信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct McpServerInfo {
     /// 服务端名称
     pub name: String,
