@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
-import { designTokens } from '@topems/tokens';
 
 export type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 

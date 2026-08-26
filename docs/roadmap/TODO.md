@@ -9627,6 +9627,73 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V388 — 架构改进四轨并行第五十六次：前端未使用import清理（designTokens）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五十六次交付 · 前端未使用import清理 · 1个文件 · 删除1个未使用的designTokens import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 1个文件的未使用import删除（hooks/useResponsive.ts，designTokens import） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V389 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V389 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V389 | ⏸️ |
+
+### 轨A：前端未使用import清理（designTokens）
+
+**清理内容**：删除1个文件中1个未使用的designTokens import
+
+**清理的文件（1个）**：
+
+1. **hooks/useResponsive.ts** — 删除未使用的import designTokens
+   - 删除的import：`import { designTokens } from '@topems/tokens';`
+   - import用途：从 @topems/tokens 包导入设计令牌（design tokens）
+   - 该import导入后从未被使用，文件中只在注释中引用了 designTokens.breakpoints.values
+   - 实际使用的断点值来自 MUI theme.breakpoints.values（通过 useTheme() 获取）
+   - 文件从224行减少到223行
+
+**技术说明**：
+- 删除import前验证import未被任何实际代码使用（只在注释中引用）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于只在注释中引用、但未在实际代码中使用的import，可以安全删除
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import的未使用情况，导入后需要确保被实际代码使用
+- designTokens 可能是在 P2-10 合规化重构中引入的，但实际实现使用了 MUI theme.breakpoints.values，导致 designTokens import 未被使用
+
+**验收结果**：
+- 1个未使用import的 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的import为未使用的遗留代码
+- 文件语法正确，实际使用的断点值仍来自 MUI theme
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用import删除 | ✅ |
+| 轨A 清理import | designTokens（从 @topems/tokens 导入） | ✅ |
+| 轨A 删除行数 | 1行（import语句） | ✅ |
+| 轨A 文件变化 | useResponsive.ts从224行到223行 | ✅ |
+| 轨A 引用检查 | 删除import前验证未被任何实际代码使用（只在注释中引用） | ✅ |
+| 轨A 功能保留 | 实际使用的断点值仍来自 MUI theme.breakpoints.values | ✅ |
+| 轨A 语法检查 | 文件语法正确，import语句完整 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V388后续扩展（留给V389+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~103个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用泛型参数清理**：继续清理其他未使用的泛型参数（T/UpdateRequest等）
+- [ ] **轨A 未使用import清理**：继续清理其他未使用的import
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V388连续五十六次交付验证成功，V389继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
