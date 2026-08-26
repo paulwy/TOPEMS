@@ -12194,6 +12194,158 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V417 — 架构改进四轨并行第八十五次：B1 API迁移P1阶段类型迁移详细计划（14个类型定义）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十五次交付 · B1 API迁移P1阶段类型迁移详细计划 · 0个代码文件修改 · 查看9个导出类型+5个内部接口，制定详细迁移计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P1阶段类型迁移详细计划 | 查看9个导出类型+5个内部接口，制定详细迁移计划 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V418 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V418 | ⏸️ |
+
+### 轨B：B1 API迁移P1阶段类型迁移详细计划（14个类型定义）
+
+**分析内容**：详细查看@/api/erp/types.ts中的9个导出类型定义和5个内部接口，制定详细的迁移计划
+
+**类型定义位置**：
+- 文件：`apps/web/src/api/erp/types.ts`
+- 文件行数：564行
+- 类型定义行号范围：第244-380行
+
+**需要迁移的类型定义（14个）**：
+
+**导出接口（9个）**：
+1. **ProjectFinancialSummary**（第244行）
+   - 字段：project_id、project_name、contract_amount、received_amount、payable_amount、paid_amount、profit、margin、status
+   - 用途：项目财务摘要
+
+2. **BusinessOverview**（第265行）
+   - 字段：total_assets、total_liabilities、total_equity、total_revenue、total_expenses、net_profit、cash_flow、period、key_ratios、receivable_turnover、inventory_turnover、asset_turnover
+   - 用途：业务概览
+   - 引用：KeyRatios
+
+3. **MonthlyTrend**（第280行）
+   - 字段：month、revenue、expenses、profit、cash_flow、profit_margin
+   - 用途：月度趋势
+
+4. **DepartmentFinancialSummary**（第289行）
+   - 字段：department_id、department_name、total_expenses、budget_amount、budget_usage、expense_count
+   - 用途：部门财务摘要
+
+5. **AgingAnalysis**（第298行）
+   - 字段：category、days_0_30、days_31_60、days_61_90、days_91_180、days_181、total
+   - 用途：账龄分析
+
+6. **CashFlowAnalysis**（第308行）
+   - 字段：period、operating_cash_flow、investing_cash_flow、financing_cash_flow、net_cash_flow、cash_flow_ratio、operating_cash_flow_to_revenue
+   - 用途：现金流分析
+
+7. **ExpenseAnalysis**（第318行）
+   - 字段：period、total_expenses、department_expenses、category_expenses、monthly_trend
+   - 用途：费用分析
+   - 引用：DepartmentExpense、CategoryExpense、MonthlyExpense
+
+8. **ProfitAnalysis**（第345行）
+   - 字段：period、gross_profit、operating_profit、net_profit、gross_margin、operating_margin、net_margin、profit_trend
+   - 用途：利润分析
+   - 引用：MonthlyProfit
+
+9. **FinancialOverview**（第363行）
+   - 字段：total_assets、total_liabilities、total_equity、total_revenue、total_expenses、net_profit、operating_cash_flow、key_ratios、profit_margin、return_on_assets、return_on_equity、debt_ratio、current_ratio
+   - 用途：财务概览
+   - 引用：KeyRatios
+
+**内部接口（5个，被导出接口引用）**：
+1. **KeyRatios**（第256行）
+   - 字段：current_ratio、debt_ratio、return_on_equity、profit_margin、return_on_assets、earnings_per_share
+   - 被引用：BusinessOverview、FinancialOverview
+
+2. **DepartmentExpense**（第326行）
+   - 字段：department_id、department_name、amount、percentage
+   - 被引用：ExpenseAnalysis
+
+3. **CategoryExpense**（第333行）
+   - 字段：category、amount、percentage
+   - 被引用：ExpenseAnalysis
+
+4. **MonthlyExpense**（第339行）
+   - 字段：month、amount、growth_rate
+   - 被引用：ExpenseAnalysis
+
+5. **MonthlyProfit**（第356行）
+   - 字段：month、gross_profit、operating_profit、net_profit
+   - 被引用：ProfitAnalysis
+
+**目标文件**：
+- 文件：`apps/web/src/types/finance.ts`（需要确认是否存在）
+- 如果不存在，需要创建新文件
+
+**详细迁移计划**：
+
+**步骤1：确认目标文件（V418）**
+- 检查 `apps/web/src/types/finance.ts` 是否存在
+- 如果不存在，创建新文件
+- 查看现有类型定义，避免重复
+
+**步骤2：迁移14个类型定义（V418）**
+- 将9个导出接口和5个内部接口从 `apps/web/src/api/erp/types.ts` 迁移到 `apps/web/src/types/finance.ts`
+- 保持类型定义的完整性和正确性
+- 确保内部接口也一起迁移
+
+**步骤3：更新导入语句（V418）**
+- 更新 `apps/web/src/api/erp/finance/report.ts` 中的导入语句
+- 从 `../types` 改为 `@/types/finance`
+- 确保所有类型都能正确导入
+
+**步骤4：验证编译（V418）**
+- 运行 TypeScript 编译，确保没有类型错误
+- 确保所有引用都能正确解析
+
+**技术说明**：
+- 重要发现：需要迁移的类型定义不是10个，而是14个（9个导出接口 + 5个内部接口）
+- 5个内部接口被导出接口引用，必须一起迁移，否则会导致类型错误
+- 类型定义都在 `apps/web/src/api/erp/types.ts` 文件中，行号范围是第244-380行
+- 迁移时需要保持类型定义的完整性和正确性
+- 迁移后需要更新导入语句，确保所有引用都能正确解析
+- 预计需要1个版本（V418）完成类型迁移
+
+**验收结果**：
+- 完成9个导出接口的内容查看
+- 完成5个内部接口的内容查看
+- 确认总共需要迁移14个类型定义
+- 确认类型定义的位置和行号范围
+- 制定4步骤详细迁移计划
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | @/api/erp/types.ts中的类型定义分析 | ✅ |
+| 轨B 导出接口数 | 9个 | ✅ |
+| 轨B 内部接口数 | 5个 | ✅ |
+| 轨B 总类型数 | 14个 | ✅ |
+| 轨B 类型定义位置 | apps/web/src/api/erp/types.ts，第244-380行 | ✅ |
+| 轨B 目标文件 | apps/web/src/types/finance.ts（待确认） | ✅ |
+| 轨B 迁移步骤 | 4步骤（确认目标、迁移类型、更新导入、验证编译） | ✅ |
+| 轨B 预计版本 | V418（1个版本） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V417后续扩展（留给V418+）
+
+- [ ] **轨B P1阶段实施（类型迁移）**：将14个类型定义从@/api/erp/types.ts迁移到@/types/finance.ts
+- [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
+- [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
+- [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
+- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V417连续八十五次交付验证成功，V418继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
