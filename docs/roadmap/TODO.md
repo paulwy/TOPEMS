@@ -12568,6 +12568,108 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V420 — 架构改进四轨并行第八十八次：B1 API迁移P1阶段删除源类型定义详细计划（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十八次交付 · B1 API迁移P1阶段删除源类型定义详细计划 · 0个代码文件修改 · 确认没有其他文件引用14个类型定义，制定详细删除计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P1阶段删除源类型定义详细计划 | 确认没有其他文件引用14个类型定义，制定详细删除计划 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V421 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V421 | ⏸️ |
+
+### 轨B：B1 API迁移P1阶段删除源类型定义详细计划
+
+**分析内容**：确认没有其他文件引用14个类型定义，制定详细的删除计划
+
+**引用检查结果**：
+
+**1. 检查@/api/erp/types的引用文件**
+- 发现有10个文件引用了 `@/api/erp/types`
+- 但是这些文件引用的类型主要是：BalanceSheet、IncomeStatement、CashFlowStatement、Asset、AccountingSubject、VoucherItemRequest、FinancialVoucher、VoucherItem 等
+- 这些类型都不是我们要迁移的14个类型
+
+**2. 检查14个类型的具体引用**
+- 搜索了14个类型的具体引用：ProjectFinancialSummary、BusinessOverview、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview、KeyRatios、DepartmentExpense、CategoryExpense、MonthlyExpense、MonthlyProfit
+- 排除了定义文件（apps/web/src/api/erp/types.ts）、已迁移的report.ts（apps/web/src/api/erp/finance/report.ts）、重新导出文件（apps/web/src/types/finance.ts）
+- 搜索结果为空，确认没有其他文件引用这14个类型定义
+
+**3. 检查../types的引用文件**
+- 发现有7个文件引用了 `../types`（在apps/web/src/api/erp目录下）
+- 这些文件引用的类型主要是：Announcement、OfficeSupply、MeetingRoom、Vehicle、Budget、Expense、Asset 等
+- 这些类型都不是我们要迁移的14个类型
+
+**结论**：
+- 确认没有其他文件引用这14个类型定义
+- 可以安全地删除 `apps/web/src/api/erp/types.ts` 中的这14个类型定义
+- 删除后不会影响其他文件的编译
+
+**详细删除计划**：
+
+**步骤1：删除14个类型定义（V421）**
+- 从 `apps/web/src/api/erp/types.ts` 中删除14个类型定义
+- 删除的类型定义（14个）：
+  - 导出接口（9个）：ProjectFinancialSummary、KeyRatios、BusinessOverview、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview
+  - 内部接口（5个）：DepartmentExpense、CategoryExpense、MonthlyExpense、MonthlyProfit
+- 删除位置：第244-380行
+- 注意：需要保留其他类型定义，只删除这14个
+
+**步骤2：验证编译（V421）**
+- 运行 TypeScript 编译，确保没有类型错误
+- 确保所有引用都能正确解析
+- 确保删除后没有编译错误
+
+**步骤3：方法迁移（V422）**
+- 将10个独有方法添加到@/api/finance/report.ts
+- 统一方法命名（使用get前缀）
+- 统一HTTP客户端（使用apiClient.finance）
+- 统一参数传递方式（使用{ params }）
+
+**步骤4：文件删除（V422）**
+- 删除@/api/erp/finance/report.ts
+- 确认没有文件引用这个文件
+
+**技术说明**：
+- 重要发现：虽然有很多文件引用了 `@/api/erp/types`，但是它们引用的类型都不是我们要迁移的14个类型
+- 14个类型定义只被 `apps/web/src/api/erp/finance/report.ts` 引用，而这个文件已经在V419中更新了导入语句，从 `../types` 改为 `@/types/finance`
+- 因此，可以安全地删除 `apps/web/src/api/erp/types.ts` 中的这14个类型定义
+- 删除后需要验证编译，确保没有类型错误
+
+**验收结果**：
+- 完成@/api/erp/types的引用文件检查（10个文件）
+- 完成14个类型的具体引用检查（搜索结果为空）
+- 完成../types的引用文件检查（7个文件）
+- 确认没有其他文件引用这14个类型定义
+- 制定4步骤详细删除计划
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B @/api/erp/types引用文件 | 10个文件，引用的类型都不是14个迁移类型 | ✅ |
+| 轨B 14个类型具体引用 | 搜索结果为空，没有其他文件引用 | ✅ |
+| 轨B ../types引用文件 | 7个文件，引用的类型都不是14个迁移类型 | ✅ |
+| 轨B 结论 | 可以安全删除14个类型定义 | ✅ |
+| 轨B 删除步骤 | 4步骤（删除类型、验证编译、方法迁移、文件删除） | ✅ |
+| 轨B 预计版本 | V421-V422（2个版本） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V420后续扩展（留给V421+）
+
+- [ ] **轨B P1阶段实施（删除源类型定义）**：从apps/web/src/api/erp/types.ts中删除14个类型定义
+- [ ] **轨B P1阶段实施（验证编译）**：运行TypeScript编译，确保没有类型错误
+- [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
+- [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
+- [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
+- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V420连续八十八次交付验证成功，V421继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
