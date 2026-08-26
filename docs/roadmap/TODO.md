@@ -6179,6 +6179,97 @@ POST /mcp
 
 ---
 
+## 🎯 V342 — 架构改进四轨并行第十次：QMS业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十次交付 · QMS MCP Tools上线 · 33个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V343 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V341评估，记录V343+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V343实施（需独立二进制入口） | ⏸️ |
+| 轨D | QMS MCP Tools | 4个业务工具（qms.list_inspections, qms.get_inspection, qms.list_nonconformances, qms.create_inspection），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V341）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V343+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：QMS MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/qms.rs` — QMS业务工具（~610行）
+
+**注册的4个工具**：
+1. **qms.list_inspections** — 查询检验单列表
+   - 参数：page, page_size, inspection_type(incoming/in_process/final/outgoing/audit), status(pending/in_progress/completed/cancelled), result(pass/fail/conditional)
+   - 返回：检验单列表（检验单号、类型、物料、数量、抽样数、检验员、状态、结果、关联单号）
+   - 支持分页、类型筛选、状态筛选、结果筛选
+
+2. **qms.get_inspection** — 获取检验单详情
+   - 参数：inspection_id（必填）
+   - 返回：完整检验单信息（物料信息、供应商、数量、抽样数、合格/不合格数、检验项目、缺陷、处理决定、附件）
+   - 包含4个检验项目、2个缺陷、让步接收处理决定
+
+3. **qms.list_nonconformances** — 查询不合格品列表
+   - 参数：page, page_size, severity(minor/major/critical), status(open/analyzing/dispositioned/closed), disposition(rework/scrap/use_as_is/return_to_supplier/concession)
+   - 返回：不合格品列表（不合格单号、类型、严重程度、状态、处理方式、物料、数量、责任部门）
+   - 支持分页、严重程度筛选、状态筛选、处理方式筛选
+
+4. **qms.create_inspection** — 创建检验单
+   - 参数：inspection_type（必填）, material_id（必填）, material_code, quantity（必填，正数）, inspector, reference_order, remark
+   - 返回：新检验单ID、检验单号、类型、物料、数量、状态
+   - 验证：3个必填字段，数量必须正数
+
+**单元测试**（6个）：
+- test_register_qms_tools — 4个工具全部注册
+- test_list_inspections — 分页查询
+- test_get_inspection — 按ID查询，验证检验项目/缺陷/处理决定结构
+- test_list_nonconformances — 分页+严重程度筛选
+- test_create_inspection — 成功创建检验单，验证默认状态
+- test_create_inspection_validation — 参数验证（缺少material_id、数量为0）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod qms和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_qms_tools
+- `svc/ai/src/routes.rs` — 调用register_qms_tools注册QMS工具
+
+**当前工具总数**：33个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V341，记录V343+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D QMS工具 | 4个业务工具已注册 | ✅ |
+| 轨D QMS单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 33个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS） | ✅ |
+| 变更统计 | 新增1文件(~610行) + 修改4文件 | ✅ |
+
+### V342后续扩展（留给V343+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D PM/LIMS MCP Tools**：注册pm.list_projects, lims.list_samples等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V342连续十次交付验证成功，V343继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

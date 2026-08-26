@@ -8,7 +8,7 @@ use crate::modules::{
 use crate::shared::AppState;
 use std::sync::Arc;
 
-use crate::dsh::mcp::{create_mcp_routes, register_crm_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_mes_tools, register_wms_tools, McpServer};
+use crate::dsh::mcp::{create_mcp_routes, register_crm_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_mes_tools, register_qms_tools, register_wms_tools, McpServer};
 
 use axum::{
     extract::DefaultBodyLimit,
@@ -379,8 +379,9 @@ pub fn create_routes(
         register_mes_tools(&server_clone).await;
         register_ehs_tools(&server_clone).await;
         register_wms_tools(&server_clone).await;
+        register_qms_tools(&server_clone).await;
         tracing::info!(
-            "MCP Server tools registered: {} tools total (2 system + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS)",
+            "MCP Server tools registered: {} tools total (2 system + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS)",
             server_clone.tool_registry().len().await
         );
     });
