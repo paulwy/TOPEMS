@@ -15694,6 +15694,225 @@ Admin ──包含──▶ Write ──包含──▶ Read
 
 ---
 
+## 🎯 V442 — 架构改进四轨并行第一百一十次：轨D 业务工具权限控制完善（基于租户的权限控制+细粒度操作权限+租户角色+工具权限）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十次交付 · 轨D 业务工具权限控制完善 · 1个代码文件修改 · 添加租户角色（Owner/Admin/Member/Viewer）、租户权限配置、细粒度工具权限、操作白名单/黑名单、租户权限检查、403错误响应
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限控制完善 | 添加基于租户的权限控制、细粒度操作权限 | ✅ |
+| 轨C | shared-service-client连接池 | 添加HTTP连接池管理，留给V443 | ⏸️ |
+
+### 轨D：业务工具权限控制完善（基于租户的权限控制+细粒度操作权限+租户角色+工具权限）
+
+**实现内容**：在业务工具路由中添加基于租户的权限控制和细粒度操作权限，包括租户角色、租户权限配置、工具权限、操作白名单/黑名单、租户权限检查
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加租户权限控制）**
+
+**新增功能**：
+
+**1. 租户角色枚举（TenantRole）**
+- `Owner` — 所有者（完全访问所有租户资源和设置）
+- `Admin` — 管理员（管理用户和设置，但不能转让所有权）
+- `Member` — 成员（标准用户，可访问分配的工具）
+- `Viewer` — 查看者（只读访问租户资源）
+- 方法：
+  - `as_str()` — 获取租户角色字符串
+  - `from_str(s)` — 从字符串解析租户角色
+  - `permission_level()` — 获取租户角色对应的权限级别
+  - `can_manage_settings()` — 是否可以管理租户设置（Owner/Admin）
+  - `can_manage_users()` — 是否可以管理用户（Owner/Admin）
+  - `can_transfer_ownership()` — 是否可以转让所有权（Owner）
+
+**2. 细粒度工具权限（ToolPermission）**
+- 字段：
+  - `tool: String` — 工具名称（如"crm"、"erp"）
+  - `allowed_operations: Vec<String>` — 允许的操作列表（空表示所有操作允许）
+  - `denied_operations: Vec<String>` — 拒绝的操作列表（优先于allowed_operations）
+  - `max_permission: PermissionLevel` — 此工具的最大权限级别
+- 方法：
+  - `full_access(tool)` — 创建完全访问权限
+  - `read_only(tool)` — 创建只读权限
+  - `is_operation_allowed(operation)` — 检查特定操作是否允许
+- 操作匹配规则：
+  - 支持通配符"*"匹配所有操作
+  - 支持前缀匹配（如"create_*"匹配所有以"create_"开头的操作）
+  - denied_operations优先于allowed_operations
+  - allowed_operations为空表示所有操作允许
+
+**3. 租户权限配置（TenantPermission）**
+- 字段：
+  - `tenant_id: String` — 租户ID
+  - `user_id: String` — 用户ID
+  - `role: TenantRole` — 租户角色
+  - `tool_permissions: Vec<ToolPermission>` — 工具特定权限（空表示默认角色权限）
+  - `active: bool` — 用户在租户中是否活跃
+- 方法：
+  - `owner(tenant_id, user_id)` — 创建所有者权限
+  - `get_tool_permission(tool)` — 获取特定工具的权限
+  - `can_perform(tool, operation)` — 检查用户是否可以在工具上执行操作
+
+**4. 租户权限检查结果（TenantPermissionCheckResult）**
+- 字段：
+  - `granted: bool` — 是否授予权限
+  - `tenant_id: String` — 租户ID
+  - `user_id: String` — 用户ID
+  - `role: String` — 租户角色
+  - `tool: String` — 工具名称
+  - `operation: String` — 操作名称
+  - `required_permission: String` — 所需权限级别
+  - `effective_permission: String` — 有效权限级别
+  - `active: bool` — 用户是否活跃
+  - `error: Option<String>` — 错误信息（未授权时）
+
+**5. 租户权限检查函数（perform_tenant_permission_check）**
+- 执行详细的租户权限检查
+- 返回TenantPermissionCheckResult
+- 检查用户是否活跃
+- 检查工具特定权限（操作白名单/黑名单）
+- 检查有效权限级别是否包含所需权限级别
+- 生成详细的错误信息
+
+**6. ExecuteToolRequest新增字段**
+- `tenant_role: String` — 租户角色（owner、admin、member、viewer）
+- 默认值为"owner"（保持向后兼容）
+- 使用`default_tenant_role()`函数设置默认值
+
+**7. execute_tool处理函数添加租户权限检查**
+- 在用户角色权限检查之后、构建业务请求之前添加租户权限检查
+- 解析租户角色（从request.tenant_role字段，无效角色默认为Owner）
+- 创建租户权限配置（使用tenant_id、user_id、tenant_role）
+- 执行租户权限检查（perform_tenant_permission_check）
+- 如果权限不足，返回403 Forbidden错误：
+  - error: "Tenant permission denied"
+  - tenant_id: 租户ID
+  - user_id: 用户ID
+  - tenant_role: 租户角色
+  - tool: 工具名称
+  - operation: 操作名称
+  - required_permission: 所需权限级别
+  - effective_permission: 有效权限级别
+  - active: 用户是否活跃
+  - message: 详细错误信息
+
+**租户角色与权限级别映射**：
+| 租户角色 | 权限级别 | 可管理设置 | 可管理用户 | 可转让所有权 |
+|---------|---------|-----------|-----------|-------------|
+| Owner | Admin | ✅ | ✅ | ✅ |
+| Admin | Admin | ✅ | ✅ | ❌ |
+| Member | Write | ❌ | ❌ | ❌ |
+| Viewer | Read | ❌ | ❌ | ❌ |
+
+**细粒度工具权限特性**：
+1. **操作白名单** — allowed_operations为空表示所有操作允许，非空表示只允许列表中的操作
+2. **操作黑名单** — denied_operations中的操作始终被拒绝，优先于白名单
+3. **通配符支持** — 支持"*"匹配所有操作，支持前缀匹配（如"create_*"）
+4. **最大权限限制** — max_permission限制此工具的最大权限级别
+5. **工具特定权限** — 可以为每个工具设置不同的权限
+6. **默认角色权限** — tool_permissions为空时使用租户角色的默认权限
+
+**权限检查流程**：
+```
+请求到达
+    │
+    ▼
+工具存在检查 ──否──▶ 404 Not Found
+    │
+    是
+    ▼
+操作支持检查 ──否──▶ 400 Bad Request
+    │
+    是
+    ▼
+用户角色权限检查 ──否──▶ 403 Forbidden (Permission denied)
+    │
+    是
+    ▼
+租户权限检查 ──否──▶ 403 Forbidden (Tenant permission denied)
+    │
+    是
+    ▼
+执行业务操作
+```
+
+**功能特性**：
+
+1. **多租户权限控制** — 基于租户角色的权限控制，支持Owner、Admin、Member、Viewer四种角色
+2. **细粒度操作权限** — 支持工具特定权限，包括操作白名单/黑名单和最大权限限制
+3. **通配符操作匹配** — 支持"*"和前缀匹配（如"create_*"）
+4. **用户活跃状态检查** — 非活跃用户被拒绝访问
+5. **详细的权限检查结果** — 返回所需权限、有效权限、租户角色、用户活跃状态等详细信息
+6. **标准403错误响应** — 权限不足时返回标准的403 Forbidden错误，包含详细的权限信息
+7. **向后兼容** — tenant_role字段默认值为"owner"，不传递时具有完全权限
+8. **灵活的权限配置** — 可以为每个租户、每个用户、每个工具设置不同的权限
+
+**技术说明**：
+- 租户权限检查在execute_tool处理函数中执行
+- 租户权限检查在用户角色权限检查之后、业务请求构建之前
+- 使用TenantRole::from_str解析租户角色，无效角色默认为Owner
+- 使用perform_tenant_permission_check执行详细租户权限检查
+- 权限不足时返回(StatusCode::FORBIDDEN, Json<Value>)元组
+- 所有新类型都实现了Debug、Clone、PartialEq、Eq、Serialize、Deserialize trait
+- ToolPermission的is_operation_allowed方法支持通配符和前缀匹配
+- TenantPermission的can_perform方法综合检查用户活跃状态、工具特定权限、权限级别
+- 保持向后兼容（tenant_role字段默认值为"owner"）
+
+**验收结果**：
+- 完成租户角色枚举（TenantRole：Owner、Admin、Member、Viewer）
+- 完成租户角色方法（as_str、from_str、permission_level、can_manage_settings、can_manage_users、can_transfer_ownership）
+- 完成细粒度工具权限（ToolPermission：tool、allowed_operations、denied_operations、max_permission）
+- 完成工具权限方法（full_access、read_only、is_operation_allowed）
+- 完成操作匹配规则（通配符"*"、前缀匹配、denied优先）
+- 完成租户权限配置（TenantPermission：tenant_id、user_id、role、tool_permissions、active）
+- 完成租户权限方法（owner、get_tool_permission、can_perform）
+- 完成租户权限检查结果（TenantPermissionCheckResult：10个字段）
+- 完成租户权限检查函数（perform_tenant_permission_check）
+- 完成ExecuteToolRequest新增tenant_role字段（默认"owner"）
+- 完成execute_tool处理函数中的租户权限检查
+- 完成403 Forbidden错误响应（包含详细租户权限信息）
+- 完成租户角色与权限级别映射
+- 完成权限检查流程（工具存在→操作支持→用户角色→租户权限→执行）
+- 所有新类型都实现了必要的trait
+- 保持向后兼容（tenant_role字段默认值为"owner"）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 租户角色枚举 | TenantRole（Owner、Admin、Member、Viewer） | ✅ |
+| 轨D 租户角色方法 | as_str()、from_str()、permission_level()、can_manage_settings()、can_manage_users()、can_transfer_ownership() | ✅ |
+| 轨D 细粒度工具权限 | ToolPermission（tool、allowed_operations、denied_operations、max_permission） | ✅ |
+| 轨D 工具权限方法 | full_access()、read_only()、is_operation_allowed() | ✅ |
+| 轨D 操作匹配规则 | 通配符"*"、前缀匹配、denied优先于allowed | ✅ |
+| 轨D 租户权限配置 | TenantPermission（tenant_id、user_id、role、tool_permissions、active） | ✅ |
+| 轨D 租户权限方法 | owner()、get_tool_permission()、can_perform() | ✅ |
+| 轨D 租户权限检查结果 | TenantPermissionCheckResult（10个字段） | ✅ |
+| 轨D 租户权限检查函数 | perform_tenant_permission_check() | ✅ |
+| 轨D ExecuteToolRequest新增字段 | tenant_role: String（默认"owner"） | ✅ |
+| 轨D execute_tool租户权限检查 | 在用户角色权限检查之后添加 | ✅ |
+| 轨D 403错误响应 | StatusCode::FORBIDDEN + 详细租户权限信息 | ✅ |
+| 轨D 租户角色与权限映射 | Owner→Admin、Admin→Admin、Member→Write、Viewer→Read | ✅ |
+| 轨D 权限检查流程 | 工具存在→操作支持→用户角色→租户权限→执行 | ✅ |
+| 轨D 用户活跃状态检查 | 非活跃用户被拒绝访问 | ✅ |
+| 轨D 向后兼容 | tenant_role字段默认值为"owner" | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V442后续扩展（留给V443+）
+
+- [ ] **轨C shared-service-client连接池**：添加HTTP连接池管理
+- [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
+- [ ] **轨D 业务工具权限控制持久化**：将租户权限配置存储到数据库
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V442连续一百一十次交付验证成功，V443继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

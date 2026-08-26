@@ -199,10 +199,265 @@ pub struct ExecuteToolRequest {
     /// Defaults to "admin" for backward compatibility.
     #[serde(default = "default_user_role")]
     pub role: String,
+    /// V442: Tenant role for multi-tenant permission control (owner, admin, member, viewer).
+    /// Defaults to "owner" for backward compatibility.
+    #[serde(default = "default_tenant_role")]
+    pub tenant_role: String,
 }
 
 fn default_user_role() -> String {
     "admin".to_string()
+}
+
+fn default_tenant_role() -> String {
+    "owner".to_string()
+}
+
+// ===== V442: Tenant-based Permission Control & Fine-grained Operation Permissions =====
+
+/// Tenant role for multi-tenant permission control.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TenantRole {
+    /// Owner - full access to all tenant resources and settings.
+    Owner,
+    /// Admin - manage users and settings, but cannot transfer ownership.
+    Admin,
+    /// Member - standard user with access to assigned tools.
+    Member,
+    /// Viewer - read-only access to tenant resources.
+    Viewer,
+}
+
+impl TenantRole {
+    /// Get the tenant role as a string.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TenantRole::Owner => "owner",
+            TenantRole::Admin => "admin",
+            TenantRole::Member => "member",
+            TenantRole::Viewer => "viewer",
+        }
+    }
+
+    /// Parse a tenant role from a string.
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "owner" => Some(TenantRole::Owner),
+            "admin" => Some(TenantRole::Admin),
+            "member" => Some(TenantRole::Member),
+            "viewer" => Some(TenantRole::Viewer),
+            _ => None,
+        }
+    }
+
+    /// Get the permission level for this tenant role.
+    pub fn permission_level(&self) -> PermissionLevel {
+        match self {
+            TenantRole::Owner => PermissionLevel::Admin,
+            TenantRole::Admin => PermissionLevel::Admin,
+            TenantRole::Member => PermissionLevel::Write,
+            TenantRole::Viewer => PermissionLevel::Read,
+        }
+    }
+
+    /// Check if this role can manage tenant settings.
+    pub fn can_manage_settings(&self) -> bool {
+        matches!(self, TenantRole::Owner | TenantRole::Admin)
+    }
+
+    /// Check if this role can manage users.
+    pub fn can_manage_users(&self) -> bool {
+        matches!(self, TenantRole::Owner | TenantRole::Admin)
+    }
+
+    /// Check if this role can transfer ownership.
+    pub fn can_transfer_ownership(&self) -> bool {
+        matches!(self, TenantRole::Owner)
+    }
+}
+
+/// Fine-grained tool permission for a specific user/tenant.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ToolPermission {
+    /// Tool name (e.g., "crm", "erp").
+    pub tool: String,
+    /// Allowed operations (empty means all operations allowed).
+    pub allowed_operations: Vec<String>,
+    /// Denied operations (takes precedence over allowed_operations).
+    pub denied_operations: Vec<String>,
+    /// Maximum permission level for this tool.
+    pub max_permission: PermissionLevel,
+}
+
+impl ToolPermission {
+    /// Create a new tool permission with full access.
+    pub fn full_access(tool: &str) -> Self {
+        Self {
+            tool: tool.to_string(),
+            allowed_operations: Vec::new(),
+            denied_operations: Vec::new(),
+            max_permission: PermissionLevel::Admin,
+        }
+    }
+
+    /// Create a new tool permission with read-only access.
+    pub fn read_only(tool: &str) -> Self {
+        Self {
+            tool: tool.to_string(),
+            allowed_operations: Vec::new(),
+            denied_operations: Vec::new(),
+            max_permission: PermissionLevel::Read,
+        }
+    }
+
+    /// Check if a specific operation is allowed.
+    pub fn is_operation_allowed(&self, operation: &str) -> bool {
+        // Check denied operations first (takes precedence)
+        if self.denied_operations.iter().any(|op| {
+            op == operation || op == "*" || operation.starts_with(op.trim_end_matches('*'))
+        }) {
+            return false;
+        }
+
+        // If allowed_operations is empty, all operations are allowed
+        if self.allowed_operations.is_empty() {
+            return true;
+        }
+
+        // Check allowed operations
+        self.allowed_operations.iter().any(|op| {
+            op == operation || op == "*" || operation.starts_with(op.trim_end_matches('*'))
+        })
+    }
+}
+
+/// Tenant permission configuration for a user.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantPermission {
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tenant role.
+    pub role: TenantRole,
+    /// Tool-specific permissions (empty means default role permissions apply).
+    pub tool_permissions: Vec<ToolPermission>,
+    /// Whether the user is active in this tenant.
+    pub active: bool,
+}
+
+impl TenantPermission {
+    /// Create a new tenant permission with owner role.
+    pub fn owner(tenant_id: &str, user_id: &str) -> Self {
+        Self {
+            tenant_id: tenant_id.to_string(),
+            user_id: user_id.to_string(),
+            role: TenantRole::Owner,
+            tool_permissions: Vec::new(),
+            active: true,
+        }
+    }
+
+    /// Get the tool permission for a specific tool.
+    pub fn get_tool_permission(&self, tool: &str) -> Option<&ToolPermission> {
+        self.tool_permissions.iter().find(|tp| tp.tool == tool)
+    }
+
+    /// Check if a user can perform an operation on a tool.
+    pub fn can_perform(&self, tool: &str, operation: &str) -> bool {
+        if !self.active {
+            return false;
+        }
+
+        // Get the effective permission level
+        let effective_permission = if let Some(tp) = self.get_tool_permission(tool) {
+            tp.max_permission.clone()
+        } else {
+            self.role.permission_level()
+        };
+
+        // Check if the operation is allowed by tool-specific permissions
+        if let Some(tp) = self.get_tool_permission(tool) {
+            if !tp.is_operation_allowed(operation) {
+                return false;
+            }
+        }
+
+        // Check the required permission level for the operation
+        let required = required_permission_for_operation(operation);
+        effective_permission.includes(&required)
+    }
+}
+
+/// Tenant permission check result.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantPermissionCheckResult {
+    /// Whether the permission is granted.
+    pub granted: bool,
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tenant role.
+    pub role: String,
+    /// Tool name.
+    pub tool: String,
+    /// Operation name.
+    pub operation: String,
+    /// Required permission level.
+    pub required_permission: String,
+    /// Effective permission level.
+    pub effective_permission: String,
+    /// Whether the user is active.
+    pub active: bool,
+    /// Error message if not granted.
+    pub error: Option<String>,
+}
+
+/// Perform a tenant permission check.
+pub fn perform_tenant_permission_check(
+    permission: &TenantPermission,
+    tool: &str,
+    operation: &str,
+) -> TenantPermissionCheckResult {
+    let required = required_permission_for_operation(operation);
+    let effective = if let Some(tp) = permission.get_tool_permission(tool) {
+        tp.max_permission.clone()
+    } else {
+        permission.role.permission_level()
+    };
+
+    let granted = permission.can_perform(tool, operation);
+
+    TenantPermissionCheckResult {
+        granted,
+        tenant_id: permission.tenant_id.clone(),
+        user_id: permission.user_id.clone(),
+        role: permission.role.as_str().to_string(),
+        tool: tool.to_string(),
+        operation: operation.to_string(),
+        required_permission: required.as_str().to_string(),
+        effective_permission: effective.as_str().to_string(),
+        active: permission.active,
+        error: if granted {
+            None
+        } else if !permission.active {
+            Some(format!(
+                "User '{}' is not active in tenant '{}'",
+                permission.user_id, permission.tenant_id
+            ))
+        } else {
+            Some(format!(
+                "Tenant permission denied: user '{}' with role '{}' cannot perform '{}' on tool '{}' (required: '{}', effective: '{}')",
+                permission.user_id,
+                permission.role.as_str(),
+                operation,
+                tool,
+                required.as_str(),
+                effective.as_str()
+            ))
+        },
+    }
 }
 
 /// Information about a business tool.
@@ -339,6 +594,38 @@ pub async fn execute_tool(
                 "user_permission": permission_result.user_level,
                 "user_role": permission_result.user_role,
                 "message": permission_result.error,
+            })),
+        ));
+    }
+
+    // V442: Tenant permission check
+    let tenant_role = TenantRole::from_str(&request.tenant_role).unwrap_or(TenantRole::Owner);
+    let tenant_permission = TenantPermission {
+        tenant_id: request.tenant_id.clone().unwrap_or_else(|| "default".to_string()),
+        user_id: request.user_id.clone().unwrap_or_else(|| "anonymous".to_string()),
+        role: tenant_role,
+        tool_permissions: Vec::new(),
+        active: true,
+    };
+    let tenant_permission_result = perform_tenant_permission_check(
+        &tenant_permission,
+        &tool_name,
+        &request.operation,
+    );
+    if !tenant_permission_result.granted {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "error": "Tenant permission denied",
+                "tenant_id": tenant_permission_result.tenant_id,
+                "user_id": tenant_permission_result.user_id,
+                "tenant_role": tenant_permission_result.role,
+                "tool": tool_name,
+                "operation": request.operation,
+                "required_permission": tenant_permission_result.required_permission,
+                "effective_permission": tenant_permission_result.effective_permission,
+                "active": tenant_permission_result.active,
+                "message": tenant_permission_result.error,
             })),
         ));
     }
