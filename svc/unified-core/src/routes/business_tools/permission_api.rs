@@ -9,12 +9,13 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
+use std::sync::Arc;
 
 use crate::shared::AppState;
 use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
 use super::permission_store::PermissionStoreError;
-use super::audit_integration::{ActorInfo, InMemoryPermissionAuditRecorder};
+use super::audit_integration::ActorInfo;
+use super::permission_audit_log::AuditLogger;
 
 // ===== Request Types =====
 
@@ -234,19 +235,6 @@ fn map_store_error(err: PermissionStoreError) -> (StatusCode, Json<ErrorResponse
     }
 }
 
-// ===== Global Audit Recorder =====
-
-/// Global in-memory permission audit recorder.
-///
-/// Uses OnceLock for lazy initialization. In production, this should be
-/// replaced with a database-backed recorder injected via AppState.
-static AUDIT_RECORDER: OnceLock<InMemoryPermissionAuditRecorder> = OnceLock::new();
-
-/// Get the global audit recorder, initializing it if necessary.
-fn audit_recorder() -> &'static InMemoryPermissionAuditRecorder {
-    AUDIT_RECORDER.get_or_init(InMemoryPermissionAuditRecorder::in_memory)
-}
-
 // ===== Route Handlers =====
 
 /// `POST /api/business-tools/permissions` — Create a new permission configuration.
@@ -272,9 +260,10 @@ pub async fn create_permission(
         .await
         .map_err(map_store_error)?;
 
-    // Record audit log
+    // Record audit log using AppState's audit_logger
     let actor = ActorInfo::from_headers(&headers);
-    if let Err(e) = audit_recorder().record_create(&permission, &actor).await {
+    let audit_logger = AuditLogger::new(state.audit_logger.clone());
+    if let Err(e) = audit_logger.log_create(&permission, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
         tracing::warn!("Failed to record create audit log: {}", e);
     }
 
@@ -350,10 +339,11 @@ pub async fn update_permission(
         .await
         .map_err(map_store_error)?;
 
-    // Record audit log
+    // Record audit log using AppState's audit_logger
     let actor = ActorInfo::from_headers(&headers);
     if let Some(old_perm) = old_permission {
-        if let Err(e) = audit_recorder().record_update(&old_perm, &permission, &actor).await {
+        let audit_logger = AuditLogger::new(state.audit_logger.clone());
+        if let Err(e) = audit_logger.log_update(&old_perm, &permission, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
             tracing::warn!("Failed to record update audit log: {}", e);
         }
     }
@@ -381,10 +371,11 @@ pub async fn delete_permission(
         .await
         .map_err(map_store_error)?;
 
-    // Record audit log
+    // Record audit log using AppState's audit_logger
     if let Some(perm) = permission {
         let actor = ActorInfo::from_headers(&headers);
-        if let Err(e) = audit_recorder().record_delete(&perm, &actor).await {
+        let audit_logger = AuditLogger::new(state.audit_logger.clone());
+        if let Err(e) = audit_logger.log_delete(&perm, &actor.changed_by, actor.ip_address.as_deref(), actor.user_agent.as_deref()).await {
             tracing::warn!("Failed to record delete audit log: {}", e);
         }
     }

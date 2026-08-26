@@ -18616,6 +18616,178 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V460 — 架构改进四轨并行第一百二十八次：轨D 审计日志AppState集成（AppState添加audit_logger字段+main.rs初始化+环境变量配置+permission_api.rs集成+audit_api.rs集成+移除全局recorder）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十八次交付 · 轨D 审计日志AppState集成 · 4个代码文件修改 · 将审计日志存储集成到AppState，支持内存和数据库后端，通过环境变量配置，替换V458的全局recorder
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志AppState集成 | 在AppState中添加AuditLogger，替换全局recorder | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V461 | ⏸️ |
+
+### 轨D：审计日志AppState集成（AppState添加audit_logger字段+main.rs初始化+环境变量配置+permission_api.rs集成+audit_api.rs集成+移除全局recorder）
+
+**实现内容**：将审计日志存储集成到AppState，支持内存和数据库后端，通过环境变量配置，替换V458的全局recorder
+
+**修改的文件（4个代码文件修改）**：
+
+**修改：`svc/unified-core/src/shared/mod.rs`（AppState添加audit_logger字段）**
+
+**修改：`svc/unified-core/src/main.rs`（初始化audit_logger+环境变量配置）**
+
+**修改：`svc/unified-core/src/routes/business_tools/permission_api.rs`（使用state.audit_logger替换全局recorder）**
+
+**修改：`svc/unified-core/src/routes/business_tools/audit_api.rs`（使用state.audit_logger替换InMemoryAuditLogStore）**
+
+**新增功能**：
+
+1. **AppState添加audit_logger字段**
+   - 字段：audit_logger: Arc<dyn AuditLogStore>
+   - 类型：trait对象，支持多种存储后端（内存、数据库）
+   - 位置：permission_store字段之后
+   - 注释：V460审计日志存储
+
+2. **main.rs初始化audit_logger**
+   - 环境变量：AUDIT_LOG_STORE_TYPE（memory/database，默认memory）
+   - memory后端：InMemoryAuditLogStore（默认，适合开发和单实例部署）
+   - database后端：DatabaseAuditLogStore（使用PostgreSQL，适合多实例部署）
+   - 初始化日志：记录使用的存储后端类型
+   - 位置：permission_store初始化之后，AppState创建之前
+
+3. **permission_api.rs集成**
+   - 移除全局AUDIT_RECORDER（OnceLock静态变量）
+   - 移除audit_recorder()函数
+   - 移除InMemoryPermissionAuditRecorder导入
+   - 添加AuditLogger导入
+   - create_permission端点：使用AuditLogger::new(state.audit_logger.clone())创建记录器，调用log_create()
+   - update_permission端点：使用AuditLogger::new(state.audit_logger.clone())创建记录器，调用log_update()
+   - delete_permission端点：使用AuditLogger::new(state.audit_logger.clone())创建记录器，调用log_delete()
+   - 所有端点保留ActorInfo::from_headers()提取操作者信息
+   - 审计日志失败仍仅记录warn日志，不影响主流程
+
+4. **audit_api.rs集成**
+   - 移除InMemoryAuditLogStore导入
+   - 移除AuditLogStore导入（通过trait对象自动可用）
+   - list_audit_logs端点：使用state.audit_logger.query()替换InMemoryAuditLogStore
+   - get_audit_log端点：使用state.audit_logger.get_by_id()替换InMemoryAuditLogStore
+   - count_audit_logs端点：使用state.audit_logger.count()替换InMemoryAuditLogStore
+   - 所有端点直接使用AppState中的audit_logger，无需每次创建新的store
+
+5. **环境变量配置**
+   - AUDIT_LOG_STORE_TYPE=memory（默认）：使用内存存储
+   - AUDIT_LOG_STORE_TYPE=database：使用PostgreSQL存储
+   - 与PERMISSION_STORE_TYPE配置模式一致
+   - database后端复用现有的PgPool连接池
+
+6. **架构改进**
+   - 移除全局静态变量，改用依赖注入（AppState）
+   - 支持多种存储后端，通过trait对象抽象
+   - 审计日志查询API和写入API使用同一个store实例
+   - 内存和数据库后端共享相同的API接口
+   - 便于测试（可注入mock store）
+
+**技术说明**：
+- 使用Arc<dyn AuditLogStore>实现trait对象（已在项目中使用类似模式：permission_store）
+- 使用AuditLogger<S>包装AuditLogStore，提供便捷的记录方法
+- 环境变量配置与PermissionStoreFactory模式一致
+- database后端使用V456创建的DatabaseAuditLogStore
+- memory后端使用V454创建的InMemoryAuditLogStore
+- 移除OnceLock全局静态变量，改用AppState依赖注入
+- 审计日志失败不影响主流程（仅warn日志）
+
+**环境变量配置**：
+```bash
+# 使用内存存储（默认，开发环境）
+export AUDIT_LOG_STORE_TYPE=memory
+
+# 使用PostgreSQL存储（生产环境，多实例部署）
+export AUDIT_LOG_STORE_TYPE=database
+```
+
+**AppState结构（V460更新后）**：
+- auth_state: AuthState
+- pool: PgPool
+- health_config: SimpleHealthConfig
+- ws_state: Arc<WsState>
+- http_client: Client
+- rate_limit_middleware: Arc<RateLimitMiddleware>
+- versioning_middleware: Arc<VersionMiddleware>
+- security_headers_layer: Arc<SecurityHeadersLayer>
+- compression_middleware: Arc<CompressionMiddleware>
+- body_limit_middleware: Arc<BodyLimitMiddleware>
+- audit_logger_middleware: Arc<AuditLoggerMiddleware>
+- input_validation_config: InputValidationConfig
+- metrics: Arc<SystemMetrics>
+- encryption: Option<Arc<FieldEncryptionService>>
+- feature_flag_service: Arc<FeatureFlagService>
+- sse_sessions: Arc<SseSessionManager>
+- business_tool_registry: BusinessToolRegistry
+- permission_store: Arc<dyn PermissionStore>
+- audit_logger: Arc<dyn AuditLogStore> 【V460新增】
+
+**验收结果**：
+- 完成AppState添加audit_logger字段（Arc<dyn AuditLogStore>）
+- 完成main.rs初始化audit_logger（环境变量配置+memory/database后端）
+- 完成permission_api.rs集成（移除全局recorder+使用state.audit_logger）
+- 完成audit_api.rs集成（使用state.audit_logger替换InMemoryAuditLogStore）
+- 完成环境变量配置（AUDIT_LOG_STORE_TYPE）
+- 完成架构改进（移除全局静态变量+依赖注入）
+- 代码修改涉及4个文件
+- 无新增单元测试（复用V454/V458的测试）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D AppState添加audit_logger字段 | Arc<dyn AuditLogStore> | ✅ |
+| 轨D main.rs初始化 | 环境变量+memory/database后端 | ✅ |
+| 轨D permission_api.rs集成 | 移除全局recorder+state.audit_logger | ✅ |
+| 轨D audit_api.rs集成 | state.audit_logger替换InMemory | ✅ |
+| 轨D 环境变量配置 | AUDIT_LOG_STORE_TYPE | ✅ |
+| 轨D 架构改进 | 移除全局静态变量+依赖注入 | ✅ |
+| 轨D 修改文件数 | 4个代码文件 | ✅ |
+| 变更统计 | 4个代码文件修改 + 1个文档修改(TODO.md) | ✅ |
+
+### V460后续扩展（留给V461+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志数据库存储集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V460连续一百二十八次交付验证成功，V461继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

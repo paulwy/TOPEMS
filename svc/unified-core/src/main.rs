@@ -424,6 +424,22 @@ async fn main() -> anyhow::Result<()> {
     // Set PERMISSION_STORE_TYPE=database to use PostgreSQL-backed storage
     let permission_store = crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(Some(ctx.db.clone()));
 
+    // V460: Initialize audit log store
+    // Defaults to in-memory store. Set AUDIT_LOG_STORE_TYPE=database to use PostgreSQL-backed storage.
+    let audit_logger: std::sync::Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore> = {
+        let store_type = std::env::var("AUDIT_LOG_STORE_TYPE").unwrap_or_else(|_| "memory".to_string());
+        match store_type.as_str() {
+            "database" => {
+                tracing::info!("Using database-backed audit log store");
+                std::sync::Arc::new(crate::routes::business_tools::database_audit_log_store::DatabaseAuditLogStore::new(ctx.db.clone()))
+            }
+            _ => {
+                tracing::info!("Using in-memory audit log store");
+                std::sync::Arc::new(crate::routes::business_tools::permission_audit_log::InMemoryAuditLogStore::new())
+            }
+        }
+    };
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -443,6 +459,7 @@ async fn main() -> anyhow::Result<()> {
         sse_sessions,
         business_tool_registry,
         permission_store,
+        audit_logger,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
