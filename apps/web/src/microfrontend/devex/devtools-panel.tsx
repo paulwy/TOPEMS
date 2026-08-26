@@ -45,8 +45,7 @@ import {
   type StateStoreInfo,
 } from './smart-debugger';
 import { performanceAnalyzer, type PerformanceReport } from './performance-analyzer';
-import { codeCompletion, type CompletionItem, type Snippet } from './code-completion';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 export const V51DevExPanel: React.FC<{
   onClose: () => void;

@@ -4374,6 +4374,79 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V324 — 批量模式第九次：Top15文件未使用项清理（30项）+ 级联11项 + 3孤儿文件（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第九次成功 · 15 files（12 修改 + 3 删除）· 净删 1015 行 · tsc 0 errors · eslint 0 errors(1456 warnings, 从1496减40)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 孤儿 | 净删行 |
+|------|--------|------|------|--------|
+| ai/DifyChatPage | 2 | 1 | - | ~3 |
+| admin/hooks/useTenantDetail | 2 | 0 | ✅214行 | 214 |
+| admin/hooks/usePluginManagement | 2 | 1 | - | ~4 |
+| admin/hooks/useMonitoringAlert | 2 | 0 | ✅406行 | 406 |
+| admin/hooks/useDatabaseStructure | 2 | 0 | ✅24行 | 24 |
+| admin/SystemManagementPage | 2 | 1 | - | ~13 |
+| admin/DashboardPage | 2 | 1 | - | ~13 |
+| admin/ConfigDebugPage | 2 | 1 | - | ~13 |
+| admin/BankAccountManagementPage | 2 | 1 | - | ~13 |
+| modules/registry/index | 2 | 3 | - | ~30 |
+| microfrontend/observability/ObservabilityPanel | 2 | 0 | - | ~3 |
+| microfrontend/devex/devtools-panel | 2 | 0 | - | ~3 |
+| microfrontend/devex/code-completion | 2 | 0 | - | ~3 |
+| lib/security | 2 | 0 | - | ~20 |
+| lib/plugin-loader/PluginLoader | 2 | 0 | - | ~6 |
+| **合计** | **30** | **11** | **3(644行)** | **1015** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除8项本地声明（validateUrl, validateEmail, formatDuration, useModuleRoutes, initializeCoreModules, useDatabaseStructure, useMonitoringAlert, useTenantDetail）
+
+**B轨（手动修复22项）**：
+- import整行删除（10）：adminApi×4, queryClient×4, aiApi, semanticTokens×2, TS6192×2
+- import单符号移除（6）：ModuleRegistration, X, getCoreModules, VITEDeploymentMode, queryClient(多行), aiApi(多行)
+- useQuery整段删除（4）：admin 4页面统一模式
+- interface/props移除（2）：plugin-loader errorFallback+moduleId（interface+解构）
+- 函数参数t→_t（1）：usePluginManagement getPluginDisplayNames
+- 本地声明删除（1）：modules/registry isStaticMode+useModules
+
+**C轨（级联11项）**：删除函数后触发import级联（useQuery×3, queryClient, aiApi, VITEDeploymentMode, getCoreModules, isStaticMode, useModules）
+
+**D轨（孤儿文件3个，共644行）**：
+1. `admin/hooks/useTenantDetail.ts`（214行）：移除useTenantDetail函数后只剩import，无export
+2. `admin/hooks/useMonitoringAlert.ts`（406行）：移除useMonitoringAlert函数后只剩import+export type(TabType未被引用)
+3. `admin/hooks/useDatabaseStructure.ts`（24行）：移除useDatabaseStructure函数后只剩import+export type(NotificationState未被引用)
+
+### 关键发现
+
+1. **admin/hooks 4文件3个变孤儿**：移除主hook函数后，3个文件变孤儿（共644行），占净删行的63%。usePluginManagement因有多个export被其他文件引用而保留。
+2. **admin 4页面统一模式**：adminApi import + TS6198解构useQuery，批量删除import和useQuery块。
+3. **modules/registry多级联**：删除initializeCoreModules和useModuleRoutes后，级联触发getCoreModules import、isStaticMode const、useModules function、VITEDeploymentMode import共4项。
+4. **sed单符号移除残留**：`sed 's/{ getCoreModules }//'` 把import改成`import  from`语法错误，需手动删除整行。
+5. **plugin-loader props+interface同步移除**：errorFallback和moduleId同时在interface ModuleLoaderProps和解构参数中，需一并移除。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1456 warnings（-40） | ✅ |
+| 孤儿文件删除 | 3个（644行），无引用 | ✅ |
+| 变更统计 | 15 files, 7 insertions, 1022 deletions | ✅ |
+
+### V324后续扩展（留给V325+）
+
+- [ ] **admin/hooks孤儿文件批量检测**：4个hook文件3个变孤儿，可写脚本自动检测"移除主函数后无export"的文件
+- [ ] **modules/registry多级联跟踪**：删除2函数触发4项级联，需扩展v6脚本自动跟踪
+- [ ] **sed单符号移除安全检查**：getCoreModules案例，sed移除后可能留下`import  from`语法错误
+- [ ] **plugin-loader props+interface同步移除**：errorFallback/moduleId案例，需同时检查interface和解构
+- [ ] **批量模式继续**：V316-V324连续九次成功，全src/未使用项从~282降至~105
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

@@ -1,26 +1,13 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Box, Paper, Typography, CardContent, CardHeader } from '@mui/material';
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-import { adminApi } from '@/api/admin';
 
 const ct = designTokens.colors;
 const ConfigDebugPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['admin-config-debug'],
-    queryFn: async () => {
-      try {
-        // TODO: adminApi 暂无 config debug 对应方法
-        return {};
-      } catch {
-        return {};
-      }
-    },
-  });
   const sections: SettingSection[] = [
     {
       id: 'services',

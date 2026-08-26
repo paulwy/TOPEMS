@@ -368,14 +368,10 @@ export const pluginLoader = new PluginLoader();
 export interface ModuleLoaderProps {
   component: () => Promise<any>;
   fallback?: React.ReactNode;
-  errorFallback?: React.ReactNode;
-  moduleId?: string;
 }
 export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
   component,
   fallback = <ModuleLoadingFallback />,
-  errorFallback = <ModuleErrorFallback />,
-  moduleId,
 }) => {
   const LazyComponent = lazy(component);
   return (

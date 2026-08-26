@@ -1,5 +1,4 @@
-import { moduleRegistry, type ModuleRegistration } from '../registry/module-registry';
-import { smartDebugger, type ComponentTreeNode } from './smart-debugger';
+import { moduleRegistry } from '../registry/module-registry';
 import i18n from '@/i18n';
 
 export type CompletionKind = 'module-api' | 'prop' | 'import' | 'snippet' | 'type';

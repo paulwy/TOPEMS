@@ -30,7 +30,7 @@ import {
 } from './module-performance-metrics';
 import { errorTracker, type ErrorStats } from './error-tracker';
 import { userBehaviorAnalytics, type ModuleVisitStats } from './user-behavior-analytics';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { alpha } from '@mui/material/styles';
 
 const SLOW_MODULE_THRESHOLD = 3000;
@@ -86,11 +86,6 @@ const ObservabilityPanel: React.FC = () => {
     a.download = `observability-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const formatDuration = (ms: number): string => {
-    if (ms < 1000) return `${ms.toFixed(0)}ms`;
-    return `${(ms / 1000).toFixed(2)}s`;
   };
 
   const formatDurationShort = (ms: number): string => {

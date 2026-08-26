@@ -9,7 +9,6 @@ import {
   RefreshCw,
   Sparkles,
   User,
-  X,
   Check,
   ThumbsUp,
   ThumbsDown,
@@ -36,7 +35,7 @@ import { ChatPageTemplate } from '@/components/templates';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
-import { aiApi, difyApi } from '@/api/ai';
+import { difyApi } from '@/api/ai';
 import type {
   DifyConversation,
   DifyMessage,

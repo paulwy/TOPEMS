@@ -18,22 +18,6 @@ export const escapeHtml = (text: string): string => {
   return div.innerHTML;
 };
 
-const validateUrl = (url: string): boolean => {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return ['http:', 'https:'].includes(parsed.protocol);
-  } catch {
-    return false;
-  }
-};
-
-const validateEmail = (email: string): boolean => {
-  if (!email) return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
 const generateCsrfToken = (): string => {
   const array = new Uint32Array(8);
   crypto.getRandomValues(array);
