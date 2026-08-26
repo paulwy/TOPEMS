@@ -19,9 +19,11 @@ use topems_shared_mcp::protocol::{McpTool, McpToolResult};
 
 pub mod crm;
 pub mod erp;
+pub mod finance;
 
 pub use crm::register_crm_tools;
 pub use erp::register_erp_tools;
+pub use finance::register_finance_tools;
 
 /// 工具处理函数类型
 ///

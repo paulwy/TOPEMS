@@ -5660,6 +5660,131 @@ POST /mcp
 
 ---
 
+## 🎯 V337 — 架构改进四轨并行第五次：Finance业务工具 + addressbook组件清理 + B1深入评估（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五次交付 · Finance MCP Tools上线 · 13个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | addressbook组件未使用专项 | 删除5个完全未引用的组件文件 | ✅ |
+| 轨B | B1 API签名对齐深入评估 | 逐方法对比确认两模块完全不同，记录V338+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V338实施（需独立二进制入口） | ⏸️ |
+| 轨D | Finance MCP Tools | 4个业务工具（finance.list_transactions, finance.get_transaction, finance.create_invoice, finance.get_report），6个单元测试 | ✅ |
+
+### 轨A：addressbook组件未使用专项（5项）
+
+**删除的5个组件文件**（均完全未被任何地方引用）：
+
+| 文件 | 行数 | 说明 |
+|------|------|------|
+| AddressbookFilters.tsx | ~60行 | 通讯录筛选组件 |
+| AddressbookHeader.tsx | ~90行 | 通讯录头部组件 |
+| AddressbookList.tsx | ~45行 | 通讯录列表组件 |
+| AddressbookSidebar.tsx | ~240行 | 通讯录侧边栏组件 |
+| ContactDetailModal.tsx | ~390行 | 联系人详情弹窗 |
+| **合计** | **~825行** | |
+
+**验证**：grep 全项目搜索，5个组件均无任何引用，安全删除。
+**剩余**：addressbook目录仅剩 ContactCard.tsx（被其他地方引用）。
+
+### 轨B：B1 API签名对齐深入评估结果
+
+**逐方法对比 @/api/erp/finance/voucher.ts vs @/api/finance/voucher.ts**：
+
+| 对比维度 | @/api/erp/finance/ | @/api/finance/ | 差异 |
+|----------|---------------------|----------------|------|
+| 文件数 | 8个 | 22个 | finance功能更全 |
+| voucher.ts行数 | 57行 | 178行 | finance更复杂 |
+| 返回类型 | ApiResponse<T> | TypedApiResponse<T, 'xxx'> | 类型系统不同 |
+| 凭证类型 | FinancialVoucher | Voucher | 类型定义不同 |
+| API客户端 | apiClient.erp | apiClient.finance | 后端服务不同 |
+| API端点 | /vouchers | /finance/vouchers | 路由不同 |
+| list方法 | 有 | 有 | 签名可能不同 |
+| get方法 | 有 | 有 | 返回类型不同 |
+| getItems方法 | 有 | 无 | erp独有 |
+| create方法 | 有 | 有 | 参数类型不同 |
+| update方法 | 有 | 无 | erp独有 |
+| delete方法 | 有 | 无 | erp独有 |
+| importU8方法 | 有 | 无 | erp独有（U8导入） |
+| export方法 | 无 | 有 | finance独有（导出Blob） |
+| default export | 无 | 有 | finance有默认导出 |
+
+**结论**：两个模块是**完全独立的实现**，面向不同的后端服务（ERP vs Finance），类型系统、方法集、API端点均不同。**不能简单修改import路径**。
+
+**实施策略**（V338+）：
+1. **确定标准模块**：以 @/api/finance/ 为标准（功能更全，22个文件）
+2. **类型对齐**：将 FinancialVoucher 等类型对齐到 Voucher 类型体系
+3. **方法迁移**：逐个将 @/api/erp/finance/ 的引用迁移到 @/api/finance/
+4. **缺失方法补全**：finance模块缺少 getItems/update/delete/importU8，需要补全或使用替代方法
+5. **6处页面引用**：逐个修改Finance页面的import路径，验证运行时行为
+6. **废弃erp/finance**：迁移完成后，@/api/erp/finance/ 标记为 deprecated
+
+### 轨D：Finance MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/finance.rs` — Finance业务工具（~500行）
+
+**注册的4个工具**：
+1. **finance.list_transactions** — 查询交易列表
+   - 参数：page, page_size, type(income/expense/transfer/refund), start_date, end_date
+   - 返回：交易列表（交易号、类型、金额、日期、状态、对方账户）
+   - 支持分页、类型筛选、日期范围
+
+2. **finance.get_transaction** — 获取交易详情
+   - 参数：transaction_id（必填）
+   - 返回：完整交易信息（对方账户、支付方式、关联订单、备注、附件）
+
+3. **finance.create_invoice** — 创建发票
+   - 参数：customer_id（必填）, amount（必填）, tax_rate（必填）, invoice_type, customer_name, remark
+   - 返回：新发票ID、发票号、金额、税额、价税合计
+   - 验证：customer_id和amount必填，amount必须正数，自动计算税额和总价
+
+4. **finance.get_report** — 获取财务报表
+   - 参数：report_type（必填：monthly/quarterly/yearly）, period（必填）, department
+   - 返回：完整财务报表（收入/支出/利润明细、现金流、关键指标、同比对比）
+   - 支持月报/季报/年报三种类型
+
+**单元测试**（6个）：
+- test_register_finance_tools — 4个工具全部注册
+- test_list_transactions — 分页查询
+- test_get_transaction — 按ID查询
+- test_create_invoice_validation — 参数验证（缺少customer_id/金额为0）
+- test_create_invoice_success — 成功创建发票，验证税额计算
+- test_get_report_monthly — 获取月报，验证报表结构
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod finance和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_finance_tools
+- `svc/ai/src/routes.rs` — 调用register_finance_tools注册Finance工具
+
+**当前工具总数**：13个（2系统 + 3 CRM + 4 ERP + 4 Finance）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 5个组件删除 | grep验证无引用，安全删除 | ✅ |
+| 轨B B1深入评估 | 逐方法对比15个维度，确认完全不同 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D Finance工具 | 4个业务工具已注册 | ✅ |
+| 轨D Finance单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 13个（2系统+3CRM+4ERP+4Finance） | ✅ |
+| 变更统计 | 新增1文件(~500行) + 修改4文件 + 删除5文件(~825行) | ✅ |
+
+### V337后续扩展（留给V338+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信，供本地AI Agent使用
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D HR/MES MCP Tools**：注册hr.list_employees, mes.list_production等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法，废弃@/api/erp/finance/
+- [ ] **轨A Top15未使用项清理**：bff组件未使用专项（ABTestPanel等）
+- [ ] **四轨并行继续**：V333-V337连续五次交付验证成功，V338继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
