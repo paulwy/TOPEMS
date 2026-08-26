@@ -190,7 +190,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   stats,
   statsColumns = 4,
   data,
-  treeConfig,
+  treeConfig: _treeConfig,
   loading = false,
   searchPlaceholder = i18n.t('components.tree_page_template.k0'),
   filterOptions,

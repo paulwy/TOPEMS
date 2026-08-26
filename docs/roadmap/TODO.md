@@ -7593,6 +7593,83 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V359 — 架构改进四轨并行第二十七次：前端未使用参数清理第二批（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十七次交付 · 前端未使用参数清理第二批 · 6个文件 · 未使用参数重命名为下划线前缀
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用参数清理第二批 | 6个文件的未使用参数重命名为下划线前缀，消除TS6133错误 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V360 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V360 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V360 | ⏸️ |
+
+### 轨A：前端未使用参数清理第二批
+
+**清理内容**：将6个文件中未使用的参数重命名为下划线前缀（_xxx），这是 TypeScript 中处理未使用参数的标准做法
+
+**清理的文件（6个）**：
+
+1. **components/bff/PerformancePanel.tsx** — 未使用的 query 参数（map回调中解构）
+   - 原代码：`return Array.from(uniqueQueries.values()).map(({ query, record }) => {`
+   - 修改后：`return Array.from(uniqueQueries.values()).map(({ query: _query, record }) => {`
+   - 特殊情况：query 是在 map 回调函数中解构的，不是组件 props
+
+2. **components/common/FileUpload.tsx** — 未使用的 uploadText 参数
+   - 原代码：`uploadText = i18n.t('shared.file_upload.k0'),`
+   - 修改后：`uploadText: _uploadText = i18n.t('shared.file_upload.k0'),`
+
+3. **components/common/ImageUpload.tsx** — 未使用的 cropAspect 参数
+   - 原代码：`cropAspect = 1,`
+   - 修改后：`cropAspect: _cropAspect = 1,`
+
+4. **components/common/QuickSearch.tsx** — 未使用的 autoFocus 参数
+   - 原代码：`autoFocus = false,`
+   - 修改后：`autoFocus: _autoFocus = false,`
+
+5. **components/templates/TemplateDemoPage.tsx** — 未使用的 onClose 参数
+   - 原代码：`const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {`
+   - 修改后：`const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }) => {`
+
+6. **components/templates/TreePageTemplate.tsx** — 未使用的 treeConfig 参数
+   - 原代码：`treeConfig,`
+   - 修改后：`treeConfig: _treeConfig,`
+
+**技术说明**：
+- 使用 ES6 解构重命名语法（`param: _param`），保留接口定义和调用方不变
+- 下划线前缀是 TypeScript 社区处理未使用参数的标准约定
+- 不需要修改 props 接口定义，只需要在解构时重命名
+- 特殊情况：PerformancePanel.tsx 的 query 是在 map 回调函数中解构的，同样适用解构重命名语法
+
+**验收结果**：
+- 6个文件的未使用参数 TS6133 错误已消除
+- 编译验证：无新增错误
+- 接口定义和调用方保持不变
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 6个文件的未使用参数重命名 | ✅ |
+| 轨A 参数类型 | 5个组件props参数 + 1个map回调参数 | ✅ |
+| 轨A 技术方法 | ES6解构重命名语法（param: _param） | ✅ |
+| 轨A 接口兼容 | 保留接口定义和调用方不变 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改6个前端文件 + 修改1文件 | ✅ |
+
+### V359后续扩展（留给V360+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~186个TS6133错误
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V359连续二十七次交付验证成功，V360继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

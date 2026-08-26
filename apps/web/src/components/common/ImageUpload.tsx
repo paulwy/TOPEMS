@@ -138,7 +138,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   accept = 'image/*',
   maxSize = 5,
   cropEnabled = true,
-  cropAspect = 1,
+  cropAspect: _cropAspect = 1,
   height = 200,
   disabled = false,
   className,
