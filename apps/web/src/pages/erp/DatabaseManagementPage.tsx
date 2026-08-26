@@ -49,8 +49,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
-  Tooltip,
   Tabs,
   Tab,
   LinearProgress,

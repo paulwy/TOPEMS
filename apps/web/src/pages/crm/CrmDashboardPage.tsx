@@ -6,8 +6,6 @@ import type {
   StatCardConfig,
   ChartConfig,
   ChartCard,
-  RecentItem,
-  QuickAction,
 } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';

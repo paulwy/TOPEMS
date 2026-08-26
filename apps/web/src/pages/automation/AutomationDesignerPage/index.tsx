@@ -1,5 +1,4 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Grid } from '@mui/material';
 import { DesignerTemplate } from '@/components/templates';
 import { DesignerToolbar } from './components/DesignerToolbar';
@@ -9,20 +8,8 @@ import { PropertiesPanel } from './components/PropertiesPanel';
 import { NodeEditDialog } from './components/NodeEditDialog';
 import { useAutomationDesigner } from './useAutomationDesigner';
 import { useTranslation } from 'react-i18next';
-import { automationApi } from '@/api/automation';
 
 export const AutomationDesignerPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['automation-designer'],
-    queryFn: async () => {
-      try {
-        // TODO: 语义匹配方法暂缺，待后端提供设计器数据接口
-        return {};
-      } catch {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('automation');
   const s = useAutomationDesigner();
 

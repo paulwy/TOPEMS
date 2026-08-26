@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, MapPin, Calendar } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
-import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import type { FormSection } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { ASSET_PATHS } from '@/modules/asset/config';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
-import { erpApi } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
 
@@ -32,18 +31,6 @@ const TransferPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
-  const { data: backendData } = useQuery({
-    queryKey: ['asset', 'transfer-backend'],
-    queryFn: async () => {
-      try {
-        return await erpApi.assets.list();
-      } catch {
-        return {};
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
   const transferSchema = useMemo(
     () =>

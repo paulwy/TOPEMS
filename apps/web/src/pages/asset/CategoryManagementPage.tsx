@@ -16,7 +16,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
-import type { CrudTab } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { assetCategorySchema } from '@/schemas/erp/assetCategory';
 import { assetCategoryApi } from '@/api/erp/finance/assetCategory';
@@ -216,18 +215,6 @@ export const CategoryManagementPage: React.FC = () => {
 
   const categories = extractListData(categoriesResp);
   const tree = useMemo(() => buildTree(categories), [categories]);
-
-  const filteredCategories = useMemo(() => {
-    if (!selectedCategoryId) return categories;
-    const getDescendants = (id: string): string[] => {
-      const node = categories.some((c) => c.id === id);
-      if (!node) return [id];
-      const children = categories.flatMap((c) => (c.parentId === id ? getDescendants(c.id) : []));
-      return [id, ...children];
-    };
-    const ids = new Set(getDescendants(selectedCategoryId));
-    return categories.filter((c) => ids.has(c.id));
-  }, [categories, selectedCategoryId]);
 
   const handleToggle = useCallback((id: string) => {
     setExpanded((prev) => {

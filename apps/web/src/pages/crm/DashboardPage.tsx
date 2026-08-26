@@ -1,15 +1,7 @@
 import { designTokens } from '@topems/tokens';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Card, CardContent, CardHeader, Grid, useTheme } from '@mui/material';
-import {
-  TrendingUp,
-  Users,
-  FileText,
-  ArrowRight,
-  Target,
-  CheckCircle,
-  Activity,
-} from 'lucide-react';
+import { TrendingUp, ArrowRight, Target, CheckCircle, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   DashboardTemplate,
@@ -25,14 +17,6 @@ import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
-
-const iconMap: Record<string, React.ComponentType<any>> = {
-  TrendingUp,
-  Users,
-  FileText,
-  Target,
-  CheckCircle,
-};
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();

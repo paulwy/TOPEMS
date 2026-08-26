@@ -26,7 +26,6 @@ import {
 } from 'recharts';
 import { fetchAnalyticsOverview, fetchModuleData } from '@/api/bi';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { type OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
 import { Box, Typography, Skeleton, Alert } from '@mui/material';
 import {
   DashboardTemplate,
@@ -50,7 +49,6 @@ const ModuleCard = ({
   stats,
   trend,
   onSelect,
-  color,
 }: {
   id: string;
   name: string;

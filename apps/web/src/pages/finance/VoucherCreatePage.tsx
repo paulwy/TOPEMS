@@ -32,28 +32,12 @@ import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
 
-interface FormSection {
-  id: string;
-  title: string;
-  fields: Array<{
-    name: string;
-    label: string;
-    type: 'text' | 'number' | 'date' | 'select' | 'autocomplete';
-    required?: boolean;
-    span?: number;
-    options?: Array<{ value: string; label: string }>;
-    placeholder?: string;
-  }>;
-  collapsible?: boolean;
-}
-
 const VoucherCreatePage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const [loading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
