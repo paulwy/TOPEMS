@@ -5,14 +5,16 @@
 //! permission check endpoint for runtime authorization.
 
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
 use crate::shared::AppState;
 use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
 use super::permission_store::PermissionStoreError;
+use super::audit_integration::{ActorInfo, InMemoryPermissionAuditRecorder};
 
 // ===== Request Types =====
 
@@ -232,11 +234,25 @@ fn map_store_error(err: PermissionStoreError) -> (StatusCode, Json<ErrorResponse
     }
 }
 
+// ===== Global Audit Recorder =====
+
+/// Global in-memory permission audit recorder.
+///
+/// Uses OnceLock for lazy initialization. In production, this should be
+/// replaced with a database-backed recorder injected via AppState.
+static AUDIT_RECORDER: OnceLock<InMemoryPermissionAuditRecorder> = OnceLock::new();
+
+/// Get the global audit recorder, initializing it if necessary.
+fn audit_recorder() -> &'static InMemoryPermissionAuditRecorder {
+    AUDIT_RECORDER.get_or_init(InMemoryPermissionAuditRecorder::in_memory)
+}
+
 // ===== Route Handlers =====
 
 /// `POST /api/business-tools/permissions` — Create a new permission configuration.
 pub async fn create_permission(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(request): Json<PermissionRequest>,
 ) -> Result<(StatusCode, Json<PermissionResponse>), (StatusCode, Json<ErrorResponse>)> {
     let permission = TenantPermission::try_from(&request)
@@ -255,6 +271,12 @@ pub async fn create_permission(
         .create_permission(permission.clone())
         .await
         .map_err(map_store_error)?;
+
+    // Record audit log
+    let actor = ActorInfo::from_headers(&headers);
+    if let Err(e) = audit_recorder().record_create(&permission, &actor).await {
+        tracing::warn!("Failed to record create audit log: {}", e);
+    }
 
     Ok((
         StatusCode::CREATED,
@@ -289,6 +311,7 @@ pub async fn get_permission(
 pub async fn update_permission(
     State(state): State<AppState>,
     Path((tenant_id, user_id)): Path<(String, String)>,
+    headers: HeaderMap,
     Json(request): Json<PermissionRequest>,
 ) -> Result<Json<PermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Ensure path parameters match request body
@@ -313,11 +336,27 @@ pub async fn update_permission(
             )
         })?;
 
+    // Get old permission for audit log
+    let old_permission = state
+        .permission_store
+        .get_permission(&tenant_id, &user_id)
+        .await
+        .ok()
+        .flatten();
+
     state
         .permission_store
         .update_permission(permission.clone())
         .await
         .map_err(map_store_error)?;
+
+    // Record audit log
+    let actor = ActorInfo::from_headers(&headers);
+    if let Some(old_perm) = old_permission {
+        if let Err(e) = audit_recorder().record_update(&old_perm, &permission, &actor).await {
+            tracing::warn!("Failed to record update audit log: {}", e);
+        }
+    }
 
     Ok(Json(PermissionResponse::from(&permission)))
 }
@@ -326,12 +365,29 @@ pub async fn update_permission(
 pub async fn delete_permission(
     State(state): State<AppState>,
     Path((tenant_id, user_id)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // Get permission for audit log before deleting
+    let permission = state
+        .permission_store
+        .get_permission(&tenant_id, &user_id)
+        .await
+        .ok()
+        .flatten();
+
     state
         .permission_store
         .delete_permission(&tenant_id, &user_id)
         .await
         .map_err(map_store_error)?;
+
+    // Record audit log
+    if let Some(perm) = permission {
+        let actor = ActorInfo::from_headers(&headers);
+        if let Err(e) = audit_recorder().record_delete(&perm, &actor).await {
+            tracing::warn!("Failed to record delete audit log: {}", e);
+        }
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }

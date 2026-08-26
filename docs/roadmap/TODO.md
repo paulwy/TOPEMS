@@ -18250,6 +18250,182 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V458 — 架构改进四轨并行第一百二十六次：轨D 审计日志集成到权限管理API（audit_integration模块+ActorInfo+PermissionAuditRecorder+全局recorder+create/update/delete端点集成+10个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十六次交付 · 轨D 审计日志集成到权限管理API · 1个代码文件新建 + 2个代码文件修改 · 实现审计日志与权限管理API的集成，在create/update/delete操作中自动记录审计日志，支持从请求头提取操作者信息
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志集成到权限管理API | 在create/update/delete端点中自动记录审计日志 | ✅ |
+| 轨C | shared-service-client DNS服务发现 | 集成DNS-based服务发现，留给V459 | ⏸️ |
+
+### 轨D：审计日志集成到权限管理API（audit_integration模块+ActorInfo+PermissionAuditRecorder+全局recorder+create/update/delete端点集成+10个单元测试）
+
+**实现内容**：实现审计日志与权限管理API的集成，在create/update/delete操作中自动记录审计日志，支持从请求头提取操作者信息
+
+**修改的文件（1个代码文件新建 + 2个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_integration.rs`（审计日志集成辅助模块，约320行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/permission_api.rs`（添加审计日志集成到create/update/delete端点）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_integration模块声明）**
+
+**新增功能**：
+
+1. **操作者信息（ActorInfo）**
+   - 字段：changed_by（操作者ID）、ip_address（IP地址）、user_agent（用户代理）
+   - from_headers()方法：从请求头提取操作者信息
+     - X-User-ID或X-Actor-ID → changed_by
+     - X-Forwarded-For或X-Real-IP → ip_address（X-Forwarded-For取第一个IP）
+     - User-Agent → user_agent
+   - 实现Default trait（默认changed_by="system"）
+
+2. **权限审计记录器（PermissionAuditRecorder<S: AuditLogStore>）**
+   - 泛型结构体，包装AuditLogger
+   - 方法：new()、record_create()、record_update()、record_delete()、record_activation()、logger()
+   - record_update()自动检测角色变更（通过AuditLogger内部逻辑）
+   - 所有方法返回Result<(), String>
+
+3. **内存权限审计记录器（InMemoryPermissionAuditRecorder）**
+   - 类型别名：PermissionAuditRecorder<InMemoryAuditLogStore>
+   - in_memory()方法：创建内存记录器
+
+4. **手动审计日志创建（create_audit_entry）**
+   - 函数：create_audit_entry(permission, action, actor, old_value, new_value)
+   - 自动生成唯一ID（时间戳+UUID）
+   - 自动记录时间戳（RFC3339）
+   - 返回AuditLogEntry
+
+5. **全局审计记录器（AUDIT_RECORDER）**
+   - 使用OnceLock实现懒加载全局静态变量
+   - audit_recorder()函数：获取或初始化全局记录器
+   - 使用InMemoryPermissionAuditRecorder作为默认实现
+   - 生产环境应替换为数据库-backed记录器并通过AppState注入
+
+6. **create_permission端点集成**
+   - 添加HeaderMap参数提取操作者信息
+   - 权限创建成功后调用audit_recorder().record_create()
+   - 审计日志记录失败时仅记录warn日志，不影响主流程
+
+7. **update_permission端点集成**
+   - 添加HeaderMap参数提取操作者信息
+   - 更新前先获取旧权限（用于审计日志的old_value）
+   - 权限更新成功后调用audit_recorder().record_update(old_perm, new_perm)
+   - 旧权限获取失败时跳过审计日志记录
+   - 审计日志记录失败时仅记录warn日志
+
+8. **delete_permission端点集成**
+   - 添加HeaderMap参数提取操作者信息
+   - 删除前先获取权限（用于审计日志）
+   - 权限删除成功后调用audit_recorder().record_delete(perm)
+   - 权限获取失败时跳过审计日志记录
+   - 审计日志记录失败时仅记录warn日志
+
+9. **10个单元测试**
+   - test_actor_info_from_headers：测试从请求头提取操作者信息
+   - test_actor_info_from_headers_actor_id：测试X-Actor-ID头
+   - test_actor_info_default：测试默认操作者信息
+   - test_actor_info_real_ip：测试X-Real-IP头
+   - test_actor_info_default_trait：测试Default trait
+   - test_in_memory_recorder_create：测试创建审计记录
+   - test_in_memory_recorder_update：测试更新审计记录（角色变更检测）
+   - test_in_memory_recorder_delete：测试删除审计记录
+   - test_in_memory_recorder_activation：测试激活/停用审计记录
+   - test_create_audit_entry：测试手动创建审计条目
+
+**技术说明**：
+- 使用axum的HeaderMap提取器获取请求头
+- 使用std::sync::OnceLock实现全局静态变量（Rust 1.70+）
+- 使用tracing记录审计日志失败的warn日志（已在项目中使用）
+- 使用async-trait实现异步AuditLogStore trait
+- 使用serde进行JSON序列化/反序列化
+- 使用uuid生成唯一ID（已在项目中使用）
+- 使用chrono处理时间（已在项目中使用）
+- 审计日志记录失败不影响主流程（仅记录warn日志）
+- 全局recorder使用内存存储，生产环境应替换为数据库存储
+
+**审计日志集成特性**：
+1. 自动记录 — create/update/delete操作自动记录审计日志
+2. 操作者追踪 — 从请求头提取changed_by、ip_address、user_agent
+3. 前后快照 — update操作记录old_value和new_value
+4. 角色变更检测 — 自动检测角色变更并标记为RoleChange
+5. 容错设计 — 审计日志失败不影响主流程
+6. 全局记录器 — 使用OnceLock实现全局共享记录器
+7. 可扩展存储 — 通过泛型支持多种AuditLogStore实现
+8. 手动创建 — 支持手动创建审计日志条目
+9. 激活/停用记录 — 支持记录权限激活/停用操作
+10. 请求头支持 — 支持X-User-ID、X-Actor-ID、X-Forwarded-For、X-Real-IP、User-Agent
+
+**验收结果**：
+- 完成ActorInfo结构体（3字段+from_headers+Default）
+- 完成PermissionAuditRecorder泛型结构体（new+5方法）
+- 完成InMemoryPermissionAuditRecorder类型别名+in_memory方法
+- 完成create_audit_entry函数（手动创建审计条目）
+- 完成全局AUDIT_RECORDER（OnceLock+audit_recorder函数）
+- 完成create_permission端点集成（HeaderMap+record_create）
+- 完成update_permission端点集成（HeaderMap+获取旧权限+record_update）
+- 完成delete_permission端点集成（HeaderMap+获取权限+record_delete）
+- 完成10个单元测试（全部通过）
+- 完成模块声明（business_tools/mod.rs添加audit_integration）
+- 代码总行数约400行（新建320行+修改80行）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D ActorInfo结构体 | 3字段+from_headers+Default | ✅ |
+| 轨D PermissionAuditRecorder | new+5方法+泛型 | ✅ |
+| 轨D InMemoryPermissionAuditRecorder | 类型别名+in_memory | ✅ |
+| 轨D create_audit_entry函数 | 手动创建审计条目 | ✅ |
+| 轨D 全局AUDIT_RECORDER | OnceLock+audit_recorder | ✅ |
+| 轨D create_permission集成 | HeaderMap+record_create | ✅ |
+| 轨D update_permission集成 | HeaderMap+旧权限+record_update | ✅ |
+| 轨D delete_permission集成 | HeaderMap+权限+record_delete | ✅ |
+| 轨D 单元测试 | 10个测试全部通过 | ✅ |
+| 轨D 模块声明 | business_tools/mod.rs添加 | ✅ |
+| 轨D 代码行数 | 约400行(新建320+修改80) | ✅ |
+| 变更统计 | 1个代码文件新建 + 3个代码文件修改(含TODO.md) | ✅ |
+
+### V458后续扩展（留给V459+）
+
+- [ ] **轨C shared-service-client DNS服务发现**：集成DNS-based服务发现
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger，替换全局recorder
+- [ ] **轨D 审计日志数据库存储集成**：使用DatabaseAuditLogStore替换InMemoryAuditLogStore
+- [ ] **轨D 审计日志查询API集成**：将审计日志查询API连接到全局recorder
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V458连续一百二十六次交付验证成功，V459继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
