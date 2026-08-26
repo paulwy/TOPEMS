@@ -166,28 +166,3 @@ export function useWebVitals(onReport?: WebVitalsCallback) {
 
   return metricsRef;
 }
-
-/**
- * 获取当前所有 Web Vitals 指标（同步读取）
- */
-function getWebVitalsSnapshot(): WebVitalsMetrics {
-  if (typeof window === 'undefined') return {};
-
-  const metrics: WebVitalsMetrics = {};
-
-  // 从 PerformanceObserver 已收集的数据中读取
-  const entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-  if (entries.length > 0) {
-    const nav = entries[0];
-    metrics.ttfb = nav.responseStart;
-  }
-
-  const paints = performance.getEntriesByType('paint');
-  for (const paint of paints) {
-    if (paint.name === 'first-contentful-paint') {
-      metrics.fcp = paint.startTime;
-    }
-  }
-
-  return metrics;
-}
