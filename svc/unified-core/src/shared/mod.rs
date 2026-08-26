@@ -149,27 +149,58 @@ pub struct SseSession {
 /// Manages all active SSE sessions.
 ///
 /// Stored in `AppState` as `Arc<SseSessionManager>`.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct SseSessionManager {
     sessions: Arc<Mutex<HashMap<String, SseSession>>>,
+    /// Maximum number of concurrent SSE sessions.
+    max_sessions: usize,
+}
+
+impl Default for SseSessionManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SseSessionManager {
-    /// Create a new empty session manager.
+    /// Default maximum number of concurrent SSE sessions.
+    pub const DEFAULT_MAX_SESSIONS: usize = 1000;
+
+    /// Create a new session manager with the default max sessions limit.
     pub fn new() -> Self {
+        Self::with_max_sessions(Self::DEFAULT_MAX_SESSIONS)
+    }
+
+    /// Create a new session manager with a custom max sessions limit.
+    pub fn with_max_sessions(max_sessions: usize) -> Self {
         Self {
             sessions: Arc::new(Mutex::new(HashMap::new())),
+            max_sessions,
         }
     }
 
     /// Create a new SSE session, returning the session_id and a receiver
     /// that yields SSE events for the client stream.
+    ///
+    /// Returns `None` if the maximum number of sessions has been reached.
     pub async fn create_session(
         &self,
-    ) -> (
+    ) -> Option<(
         String,
         mpsc::Receiver<Result<axum::response::sse::Event, axum::Error>>,
-    ) {
+    )> {
+        let mut sessions = self.sessions.lock().await;
+
+        // Check max sessions limit
+        if sessions.len() >= self.max_sessions {
+            tracing::warn!(
+                "SSE session limit reached: {}/{}",
+                sessions.len(),
+                self.max_sessions
+            );
+            return None;
+        }
+
         let session_id = Uuid::new_v4().to_string();
         let (sender, receiver) = mpsc::channel(64);
 
@@ -179,10 +210,17 @@ impl SseSessionManager {
             last_active: Instant::now(),
         };
 
-        let mut sessions = self.sessions.lock().await;
         sessions.insert(session_id.clone(), session);
+        drop(sessions);
 
-        (session_id, receiver)
+        tracing::info!("SSE session created: {} (total: {})", session_id, self.session_count().await);
+
+        Some((session_id, receiver))
+    }
+
+    /// Get the maximum number of concurrent sessions.
+    pub fn max_sessions(&self) -> usize {
+        self.max_sessions
     }
 
     /// Get the sender for a given session_id, if it exists.
