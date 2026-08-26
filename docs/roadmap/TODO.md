@@ -16435,6 +16435,165 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V446 — 架构改进四轨并行第一百一十四次：轨D 业务工具权限控制数据库持久化设计文档（数据库表结构+数据访问层+PermissionStore数据库实现+AppState集成+数据库迁移+API端点设计+缓存策略+性能优化+安全考虑+实施计划）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十四次交付 · 轨D 业务工具权限控制数据库持久化设计文档 · 1个文档文件新建 · 创建详细的数据库持久化设计文档，包含数据库表结构、数据访问层、PermissionStore数据库实现、AppState集成、数据库迁移、API端点设计、缓存策略、性能优化、安全考虑、实施计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限控制数据库持久化设计文档 | 创建数据库持久化设计文档 | ✅ |
+| 轨C | shared-service-client Consul服务发现 | 集成Consul服务发现，留给V447 | ⏸️ |
+
+### 轨D：业务工具权限控制数据库持久化设计文档（数据库表结构+数据访问层+PermissionStore数据库实现+AppState集成+数据库迁移+API端点设计+缓存策略+性能优化+安全考虑+实施计划）
+
+**实现内容**：创建详细的数据库持久化设计文档，为后续实现PostgreSQL数据库权限存储提供完整的设计方案
+
+**修改的文件（1个文档文件新建）**：
+
+**新建：`docs/architecture/permission-persistence-design.md`（数据库持久化设计文档，约23000字）**
+
+**文档结构（12个主要章节）**：
+
+1. **概述**
+   - 背景：当前使用InMemoryPermissionStore的局限性
+   - 目标：实现基于PostgreSQL的权限控制持久化
+   - 范围：数据库表结构、数据访问层、PermissionStore实现、AppState集成、数据库迁移、API端点设计、缓存策略、性能优化、安全考虑
+
+2. **设计目标**
+   - 功能目标：持久化存储、多实例共享、动态更新、审计日志、批量操作、查询优化
+   - 非功能目标：高性能（<10ms）、高可用（降级到内存缓存）、可扩展、向后兼容、安全
+   - 设计原则：接口隔离、缓存优先、事务安全、软删除、索引优化
+
+3. **数据库表结构设计**
+   - **租户权限表（tenant_permissions）**：id、tenant_id、user_id、role、active、created_at、updated_at、deleted_at
+     - 约束：uk_tenant_user唯一约束、chk_role检查约束
+     - 索引：tenant_id、user_id、role、active
+   - **工具权限表（tool_permissions）**：id、tenant_permission_id、tool_name、max_permission、allowed_operations、denied_operations、created_at、updated_at
+     - 约束：uk_tenant_tool唯一约束、chk_max_permission检查约束
+     - 索引：tenant_permission_id、tool_name
+   - **权限审计日志表（permission_audit_logs）**：id、tenant_id、user_id、action、old_value、new_value、changed_by、changed_at、ip_address、user_agent
+     - 约束：chk_action检查约束
+     - 索引：tenant_id、user_id、action、changed_at、changed_by
+   - 表关系图：tenant_permissions 1:N tool_permissions，tenant_permissions 1:N permission_audit_logs
+
+4. **数据访问层设计**
+   - 数据模型：TenantPermissionRow、ToolPermissionRow、PermissionAuditLogRow
+   - 数据访问对象：TenantPermissionDao（CRUD操作、列表查询、计数）
+   - 模型转换：From<TenantPermissionRow> for TenantPermission等
+
+5. **PermissionStore 数据库实现**
+   - 结构体定义：DatabasePermissionStore（pool、cache、cache_ttl）
+   - 核心方法实现：create_permission（事务+审计日志+缓存更新）、get_permission（缓存检查+数据库查询+工具权限查询+缓存更新）
+   - 缓存策略：new()、with_cache_ttl()、invalidate_cache()、clear_cache()
+
+6. **AppState 集成**
+   - AppState修改：permission_store: Arc<dyn PermissionStore>
+   - 初始化逻辑：根据配置选择DatabasePermissionStore或InMemoryPermissionStore
+   - 配置项：store_type、cache_ttl、audit_enabled
+
+7. **数据库迁移**
+   - 迁移脚本：使用sqlx-cli管理
+   - 迁移文件内容：创建3张表、索引、约束、触发器（updated_at自动更新）
+   - 回滚脚本：删除触发器、函数、表
+
+8. **API 端点设计**
+   - 租户权限管理：POST/GET/PUT/DELETE/PATCH端点
+   - 工具权限管理：POST/GET/PUT/DELETE端点
+   - 审计日志：GET查询端点
+   - 权限检查：POST检查端点
+   - 请求/响应示例
+
+9. **缓存策略**
+   - 缓存层级：L1内存缓存、L2数据库查询
+   - 缓存失效策略：TTL过期、写操作失效、批量失效、全量清除
+   - 缓存一致性：RwLock并发安全、事务提交后更新缓存、缓存更新失败不影响数据库操作
+
+10. **性能优化**
+    - 数据库优化：索引优化、查询优化（避免N+1）、分页查询、连接池、预编译语句
+    - 应用层优化：缓存、批量操作、异步处理（审计日志）、连接复用
+    - 性能指标：权限检查<10ms、获取权限<20ms、创建/更新/删除<50ms、列表查询<100ms
+
+11. **安全考虑**
+    - SQL注入防护：参数化查询、编译时检查、输入验证
+    - 权限提升防护：管理员权限、审计日志、防止自我提升、租户隔离
+    - 数据保护：敏感字段加密、保留期限、定期备份、软删除
+    - 速率限制：API端点速率限制、防止暴力枚举、异常检测
+
+12. **实施计划**
+    - 阶段划分：阶段1数据库基础（V446）、阶段2核心实现（V447）、阶段3 API端点（V448）、阶段4优化和部署（V449）
+    - 风险评估：数据库性能瓶颈、缓存一致性、数据迁移失败、安全漏洞、向后兼容
+    - 验收标准：功能验收、性能验收、安全验收、兼容性验收
+
+**文档内容亮点**：
+
+1. **完整的数据库设计** — 3张表的完整DDL，包含约束、索引、触发器
+2. **详细的代码示例** — Rust结构体、DAO、PermissionStore实现的完整代码示例
+3. **缓存策略设计** — 两级缓存、失效策略、一致性保证
+4. **API端点设计** — 完整的RESTful API设计，包含请求/响应示例
+5. **性能优化方案** — 数据库和应用层的双重优化，包含性能指标
+6. **安全考虑** — SQL注入、权限提升、数据保护、速率限制
+7. **实施计划** — 4个阶段的详细计划，包含风险评估和验收标准
+8. **向后兼容** — 保留InMemoryPermissionStore，支持配置切换
+
+**技术说明**：
+- 使用PostgreSQL作为持久化存储
+- 使用sqlx作为数据库访问库（已在项目中使用）
+- 使用RwLock实现缓存并发安全
+- 使用数据库事务保证数据一致性
+- 使用软删除保留历史数据
+- 使用JSONB存储审计日志的旧值和新值
+- 使用INET类型存储IP地址
+- 使用TEXT[]存储操作列表
+- 使用触发器自动更新updated_at字段
+
+**验收结果**：
+- 完成数据库表结构设计（3张表：tenant_permissions、tool_permissions、permission_audit_logs）
+- 完成数据访问层设计（数据模型、DAO、模型转换）
+- 完成PermissionStore数据库实现设计（结构体、核心方法、缓存策略）
+- 完成AppState集成设计（字段、初始化逻辑、配置项）
+- 完成数据库迁移设计（迁移脚本、回滚脚本、触发器）
+- 完成API端点设计（租户权限、工具权限、审计日志、权限检查）
+- 完成缓存策略设计（两级缓存、失效策略、一致性保证）
+- 完成性能优化设计（数据库优化、应用层优化、性能指标）
+- 完成安全考虑设计（SQL注入、权限提升、数据保护、速率限制）
+- 完成实施计划设计（4个阶段、风险评估、验收标准）
+- 文档总字数约23000字
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 数据库表结构设计 | 3张表（tenant_permissions、tool_permissions、permission_audit_logs） | ✅ |
+| 轨D 表约束设计 | 唯一约束、检查约束、外键约束 | ✅ |
+| 轨D 索引设计 | 常用查询字段索引、部分索引 | ✅ |
+| 轨D 数据访问层设计 | 数据模型、DAO、模型转换 | ✅ |
+| 轨D PermissionStore数据库实现 | 结构体、核心方法、缓存策略 | ✅ |
+| 轨D AppState集成设计 | 字段、初始化逻辑、配置项 | ✅ |
+| 轨D 数据库迁移设计 | 迁移脚本、回滚脚本、触发器 | ✅ |
+| 轨D API端点设计 | 租户权限、工具权限、审计日志、权限检查 | ✅ |
+| 轨D 缓存策略设计 | 两级缓存、失效策略、一致性保证 | ✅ |
+| 轨D 性能优化设计 | 数据库优化、应用层优化、性能指标 | ✅ |
+| 轨D 安全考虑设计 | SQL注入、权限提升、数据保护、速率限制 | ✅ |
+| 轨D 实施计划设计 | 4个阶段、风险评估、验收标准 | ✅ |
+| 轨D 文档字数 | 约23000字 | ✅ |
+| 变更统计 | 1个文档文件新建 + 修改1文件(TODO.md) | ✅ |
+
+### V446后续扩展（留给V447+）
+
+- [ ] **轨D 业务工具权限控制数据库持久化实现**：实现DatabasePermissionStore、数据库迁移、AppState集成
+- [ ] **轨D 业务工具权限管理API**：实现权限管理API端点
+- [ ] **轨C shared-service-client Consul服务发现**：集成Consul服务发现
+- [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V446连续一百一十四次交付验证成功，V447继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
