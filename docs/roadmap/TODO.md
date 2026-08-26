@@ -8223,6 +8223,76 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V368 — 架构改进四轨并行第三十六次：前端未使用组件文件清理（templates/list）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十六次交付 · 前端未使用组件文件清理 · 3个文件删除+测试文件删除 · templates/list目录
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用组件文件清理 | 3个未使用组件文件删除+对应测试文件删除（CrudFormDialog/Pagination/RowActionMenu） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V369 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V369 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V369 | ⏸️ |
+
+### 轨A：前端未使用组件文件清理（templates/list）
+
+**清理内容**：删除3个未使用的组件文件和对应的测试文件
+
+**清理的文件（3个组件+3个测试）**：
+
+1. **components/templates/list/CrudFormDialog.tsx** — 删除整个未使用的组件文件
+   - 组件内容：CRUD表单对话框组件，用于列表页面的新增/编辑操作
+   - 对应测试文件：`__tests__/CrudFormDialog.test.tsx`
+   - 原因：该组件定义后从未被任何非测试代码引用，可能是开发过程中的遗留代码
+
+2. **components/templates/list/Pagination.tsx** — 删除整个未使用的组件文件
+   - 组件内容：列表分页组件（ListPagination），用于列表页面的分页控制
+   - 对应测试文件：`__tests__/Pagination.test.tsx`
+   - 原因：该组件定义后从未被任何非测试代码引用，可能是开发过程中的遗留代码
+
+3. **components/templates/list/RowActionMenu.tsx** — 删除整个未使用的组件文件
+   - 组件内容：行操作菜单组件，用于列表页面的行级操作（编辑/删除等）
+   - 对应测试文件：`__tests__/RowActionMenu.test.tsx`
+   - 原因：该组件定义后从未被任何非测试代码引用，可能是开发过程中的遗留代码
+
+**技术说明**：
+- 删除文件前验证文件未被任何非测试代码引用（包括import和动态导入）
+- 同时删除对应的测试文件，避免测试文件中的import报错
+- templates/list/ 目录下仍有其他组件被引用（ExportMenu/TableSection/ViewModeToggle），保留不动
+- 对于确实需要保留的未使用组件，建议添加注释说明用途
+
+**验收结果**：
+- 3个组件文件的未使用项 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 3个组件文件+3个测试文件删除 | ✅ |
+| 轨A 清理类型 | CrudFormDialog/Pagination/RowActionMenu | ✅ |
+| 轨A 引用检查 | 删除文件前验证未被任何非测试代码引用 | ✅ |
+| 轨A 测试文件清理 | 同时删除对应的测试文件 | ✅ |
+| 轨A 保留检查 | ExportMenu/TableSection/ViewModeToggle仍被引用，保留不动 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 删除3个前端文件+3个测试文件 + 修改1文件 | ✅ |
+
+### V368后续扩展（留给V369+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~159个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V368连续三十六次交付验证成功，V369继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
