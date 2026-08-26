@@ -40,6 +40,10 @@ pub enum ServiceClientError {
 
     #[error("Timeout after {0:?}")]
     Timeout(Duration),
+
+    /// V437: Operation failed (e.g., circuit breaker open).
+    #[error("Operation failed: {0}")]
+    OperationFailed(String),
 }
 
 // ===== Service Configuration =====
@@ -66,6 +70,33 @@ pub struct ServiceConfig {
     /// Whether the service is enabled. Defaults to true.
     #[serde(default = "default_enabled")]
     pub enabled: bool,
+    /// V437: Maximum number of retries for failed requests. Defaults to 0 (no retry).
+    #[serde(default)]
+    pub max_retries: u32,
+    /// V437: Delay between retries in milliseconds. Defaults to 1000.
+    #[serde(default = "default_retry_delay")]
+    pub retry_delay_ms: u64,
+    /// V437: Whether to enable circuit breaker. Defaults to false.
+    #[serde(default)]
+    pub circuit_breaker_enabled: bool,
+    /// V437: Failure threshold for circuit breaker (number of failures before opening). Defaults to 5.
+    #[serde(default = "default_failure_threshold")]
+    pub failure_threshold: u32,
+    /// V437: Circuit breaker reset timeout in seconds. Defaults to 30.
+    #[serde(default = "default_reset_timeout")]
+    pub reset_timeout_secs: u64,
+}
+
+fn default_retry_delay() -> u64 {
+    1000
+}
+
+fn default_failure_threshold() -> u32 {
+    5
+}
+
+fn default_reset_timeout() -> u64 {
+    30
 }
 
 fn default_timeout() -> u64 {
@@ -203,6 +234,34 @@ impl<T> ServiceResponse<T> {
     }
 }
 
+// ===== V437: Circuit Breaker Types =====
+
+/// Circuit breaker state.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CircuitBreakerState {
+    /// Circuit is closed, requests are allowed.
+    Closed,
+    /// Circuit is open, requests are rejected.
+    Open,
+    /// Circuit is half-open, allowing a limited number of requests to test recovery.
+    HalfOpen,
+}
+
+/// Circuit breaker status information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CircuitBreakerStatus {
+    /// Current state of the circuit breaker.
+    pub state: String,
+    /// Number of consecutive failures.
+    pub failure_count: u32,
+    /// Number of consecutive successes.
+    pub success_count: u32,
+    /// Timestamp when the circuit was opened (RFC3339 format).
+    pub opened_at: Option<String>,
+    /// Whether the circuit breaker is enabled.
+    pub enabled: bool,
+}
+
 // ===== Service Client =====
 
 /// Client for making requests to a specific service.
@@ -210,6 +269,17 @@ impl<T> ServiceResponse<T> {
 pub struct ServiceClient {
     config: ServiceConfig,
     http_client: Client,
+    /// V437: Circuit breaker state (shared across clones).
+    circuit_breaker: Arc<std::sync::Mutex<CircuitBreakerInternal>>,
+}
+
+/// Internal circuit breaker state.
+#[derive(Debug)]
+struct CircuitBreakerInternal {
+    state: CircuitBreakerState,
+    failure_count: u32,
+    success_count: u32,
+    opened_at: Option<std::time::Instant>,
 }
 
 impl ServiceClient {
@@ -221,9 +291,17 @@ impl ServiceClient {
             .build()
             .map_err(ServiceClientError::RequestFailed)?;
 
+        let circuit_breaker = Arc::new(std::sync::Mutex::new(CircuitBreakerInternal {
+            state: CircuitBreakerState::Closed,
+            failure_count: 0,
+            success_count: 0,
+            opened_at: None,
+        }));
+
         Ok(Self {
             config,
             http_client,
+            circuit_breaker,
         })
     }
 
@@ -274,6 +352,57 @@ impl ServiceClient {
 
     /// Send a generic request.
     pub async fn request<T: DeserializeOwned, B: Serialize>(
+        &self,
+        method: Method,
+        path: &str,
+        query: Option<&HashMap<String, String>>,
+        body: Option<&B>,
+    ) -> Result<ServiceResponse<T>, ServiceClientError> {
+        // V437: Check circuit breaker before making request
+        if self.config.circuit_breaker_enabled {
+            if let Err(e) = self.check_circuit_breaker() {
+                return Err(e);
+            }
+        }
+
+        let max_retries = self.config.max_retries;
+        let retry_delay = Duration::from_millis(self.config.retry_delay_ms);
+
+        let mut last_error: Option<ServiceClientError> = None;
+
+        for attempt in 0..=max_retries {
+            match self.request_once::<T, B>(method.clone(), path, query, body).await {
+                Ok(response) => {
+                    // V437: Record success for circuit breaker
+                    if self.config.circuit_breaker_enabled {
+                        self.record_success();
+                    }
+                    return Ok(response);
+                }
+                Err(e) => {
+                    last_error = Some(e.clone());
+
+                    // V437: Record failure for circuit breaker
+                    if self.config.circuit_breaker_enabled {
+                        self.record_failure();
+                    }
+
+                    // Retry if not the last attempt
+                    if attempt < max_retries {
+                        tokio::time::sleep(retry_delay).await;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        Err(last_error.unwrap_or(ServiceClientError::Timeout(Duration::from_secs(
+            self.config.timeout_secs,
+        ))))
+    }
+
+    /// V437: Send a single request without retry.
+    async fn request_once<T: DeserializeOwned, B: Serialize>(
         &self,
         method: Method,
         path: &str,
@@ -337,6 +466,80 @@ impl ServiceClient {
             service_name,
             duration_ms,
         ))
+    }
+
+    // ===== V437: Circuit Breaker Methods =====
+
+    /// Check if the circuit breaker allows requests.
+    fn check_circuit_breaker(&self) -> Result<(), ServiceClientError> {
+        let mut cb = self.circuit_breaker.lock().unwrap();
+
+        // Check if circuit is open and reset timeout has passed
+        if cb.state == CircuitBreakerState::Open {
+            if let Some(opened_at) = cb.opened_at {
+                if opened_at.elapsed() >= Duration::from_secs(self.config.reset_timeout_secs) {
+                    // Transition to half-open
+                    cb.state = CircuitBreakerState::HalfOpen;
+                    cb.success_count = 0;
+                } else {
+                    return Err(ServiceClientError::OperationFailed(format!(
+                        "Circuit breaker is open for service '{}'",
+                        self.config.name
+                    )));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Record a successful request.
+    fn record_success(&self) {
+        let mut cb = self.circuit_breaker.lock().unwrap();
+        cb.failure_count = 0;
+        cb.success_count += 1;
+
+        // If half-open and enough successes, close the circuit
+        if cb.state == CircuitBreakerState::HalfOpen && cb.success_count >= 3 {
+            cb.state = CircuitBreakerState::Closed;
+            cb.opened_at = None;
+        }
+    }
+
+    /// Record a failed request.
+    fn record_failure(&self) {
+        let mut cb = self.circuit_breaker.lock().unwrap();
+        cb.failure_count += 1;
+        cb.success_count = 0;
+
+        // Open the circuit if failure threshold is reached
+        if cb.failure_count >= self.config.failure_threshold {
+            cb.state = CircuitBreakerState::Open;
+            cb.opened_at = Some(std::time::Instant::now());
+        }
+    }
+
+    /// Get the circuit breaker status.
+    pub fn get_circuit_breaker_status(&self) -> CircuitBreakerStatus {
+        let cb = self.circuit_breaker.lock().unwrap();
+        CircuitBreakerStatus {
+            state: format!("{:?}", cb.state),
+            failure_count: cb.failure_count,
+            success_count: cb.success_count,
+            opened_at: cb.opened_at.map(|t| {
+                chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()
+            }),
+            enabled: self.config.circuit_breaker_enabled,
+        }
+    }
+
+    /// Reset the circuit breaker to closed state.
+    pub fn reset_circuit_breaker(&self) {
+        let mut cb = self.circuit_breaker.lock().unwrap();
+        cb.state = CircuitBreakerState::Closed;
+        cb.failure_count = 0;
+        cb.success_count = 0;
+        cb.opened_at = None;
     }
 
     /// Send a raw request and return the raw response bytes.
