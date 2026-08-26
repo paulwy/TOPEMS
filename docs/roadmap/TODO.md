@@ -6543,6 +6543,97 @@ POST /mcp
 
 ---
 
+## 🎯 V346 — 架构改进四轨并行第十四次：APS业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十四次交付 · APS MCP Tools上线 · 49个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V347 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V345评估，记录V347+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V347实施（需独立二进制入口） | ⏸️ |
+| 轨D | APS MCP Tools | 4个业务工具（aps.list_schedules, aps.get_schedule, aps.list_resources, aps.create_schedule），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V345）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V347+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：APS MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/aps.rs` — APS业务工具（~700行）
+
+**注册的4个工具**：
+1. **aps.list_schedules** — 查询排程列表
+   - 参数：page, page_size, schedule_type(production/maintenance/setup/teardown/inspection), status(planned/released/in_progress/completed/cancelled/delayed), resource_id, order_id, start_date, end_date
+   - 返回：排程列表（排程编号、类型、订单、资源、开始/结束时间、数量、完成数量、优先级、状态、操作员、进度）
+   - 支持分页、类型筛选、状态筛选、资源筛选、订单筛选
+
+2. **aps.get_schedule** — 获取排程详情
+   - 参数：schedule_id（必填）
+   - 返回：完整排程信息（基本信息、订单信息、资源信息、时间计划、工序序列、物料需求、约束条件、进度统计）
+   - 包含4个工序、3个物料需求、4个约束条件、进度统计
+
+3. **aps.list_resources** — 查询资源列表
+   - 参数：page, page_size, resource_type(machine/labor/tool/fixture/line/workstation), status(idle/busy/maintenance/offline/reserved), workshop, keyword
+   - 返回：资源列表（资源编号、名称、类型、状态、车间、产能、效率、当前负载、利用率、上次/下次维护时间）
+   - 支持分页、类型筛选、状态筛选、车间筛选、关键词搜索
+
+4. **aps.create_schedule** — 创建排程
+   - 参数：schedule_type（必填）, order_id（必填）, resource_id（必填）, start_time（必填）, end_time, quantity, priority(low/medium/high/urgent), operator, remark
+   - 返回：新排程ID、排程编号、类型、订单、资源、开始/结束时间、数量、优先级、状态
+   - 验证：4个必填字段
+
+**单元测试**（6个）：
+- test_register_aps_tools — 4个工具全部注册
+- test_list_schedules — 分页查询
+- test_get_schedule — 按ID查询，验证订单/资源/工序/物料需求/约束/进度结构
+- test_list_resources — 分页+状态筛选
+- test_create_schedule — 成功创建排程，验证默认状态和字段
+- test_create_schedule_validation — 参数验证（缺少resource_id、缺少start_time）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod aps和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_aps_tools
+- `svc/ai/src/routes.rs` — 调用register_aps_tools注册APS工具
+
+**当前工具总数**：49个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V345，记录V347+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D APS工具 | 4个业务工具已注册 | ✅ |
+| 轨D APS单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 49个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS+4BI+4APS） | ✅ |
+| 变更统计 | 新增1文件(~700行) + 修改4文件 | ✅ |
+
+### V346后续扩展（留给V347+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D CS/SCM MCP Tools**：注册cs.list_tickets, scm.list_suppliers等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V346连续十四次交付验证成功，V347继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

@@ -17,6 +17,7 @@ use tokio::sync::RwLock;
 
 use topems_shared_mcp::protocol::{McpTool, McpToolResult};
 
+pub mod aps;
 pub mod bi;
 pub mod crm;
 pub mod ehs;
@@ -29,6 +30,7 @@ pub mod pm;
 pub mod qms;
 pub mod wms;
 
+pub use aps::register_aps_tools;
 pub use bi::register_bi_tools;
 pub use crm::register_crm_tools;
 pub use ehs::register_ehs_tools;
