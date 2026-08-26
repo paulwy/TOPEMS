@@ -720,3 +720,140 @@ export interface VoucherOperationResult {
   voucher_no?: string;
   message?: string;
 }
+
+// === B1 API迁移: 从@/api/erp/types.ts迁移的14个类型定义 ===
+
+export interface ProjectFinancialSummary {
+  project_id: string;
+  project_name: string;
+  contract_amount: number;
+  received_amount: number;
+  payable_amount: number;
+  paid_amount: number;
+  profit: number;
+  margin: number;
+  status: string;
+}
+
+export interface KeyRatios {
+  current_ratio: number;
+  debt_ratio: number;
+  return_on_equity: number;
+  profit_margin: number;
+  return_on_assets: number;
+  earnings_per_share: number;
+}
+
+export interface BusinessOverview {
+  total_assets: number;
+  total_liabilities: number;
+  total_equity: number;
+  total_revenue: number;
+  total_expenses: number;
+  net_profit: number;
+  cash_flow: number;
+  period: string;
+  key_ratios: KeyRatios;
+  receivable_turnover: number;
+  inventory_turnover: number;
+  asset_turnover: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+  cash_flow: number;
+  profit_margin: number;
+}
+
+export interface DepartmentFinancialSummary {
+  department_id?: string;
+  department_name: string;
+  total_expenses: number;
+  budget_amount: number;
+  budget_usage: number;
+  expense_count: number;
+}
+
+export interface AgingAnalysis {
+  category: string;
+  days_0_30: number;
+  days_31_60: number;
+  days_61_90: number;
+  days_91_180: number;
+  days_181: number;
+  total: number;
+}
+
+export interface CashFlowAnalysis {
+  period: string;
+  operating_cash_flow: number;
+  investing_cash_flow: number;
+  financing_cash_flow: number;
+  net_cash_flow: number;
+  cash_flow_ratio: number;
+  operating_cash_flow_to_revenue: number;
+}
+
+export interface DepartmentExpense {
+  department_id?: string;
+  department_name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface CategoryExpense {
+  category: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface MonthlyExpense {
+  month: string;
+  amount: number;
+  growth_rate: number;
+}
+
+export interface ExpenseAnalysis {
+  period: string;
+  total_expenses: number;
+  department_expenses: DepartmentExpense[];
+  category_expenses: CategoryExpense[];
+  monthly_trend: MonthlyExpense[];
+}
+
+export interface MonthlyProfit {
+  month: string;
+  gross_profit: number;
+  operating_profit: number;
+  net_profit: number;
+}
+
+export interface ProfitAnalysis {
+  period: string;
+  gross_profit: number;
+  operating_profit: number;
+  net_profit: number;
+  gross_margin: number;
+  operating_margin: number;
+  net_margin: number;
+  profit_trend: MonthlyProfit[];
+}
+
+export interface FinancialOverview {
+  total_assets: number;
+  total_liabilities: number;
+  total_equity: number;
+  total_revenue: number;
+  total_expenses: number;
+  net_profit: number;
+  operating_cash_flow: number;
+  key_ratios: KeyRatios;
+  profit_margin: number;
+  return_on_assets: number;
+  return_on_equity: number;
+  debt_ratio: number;
+  current_ratio: number;
+}
