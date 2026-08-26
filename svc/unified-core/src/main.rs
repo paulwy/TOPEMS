@@ -420,6 +420,11 @@ async fn main() -> anyhow::Result<()> {
     let business_tool_registry = crate::modules::business_tools::create_default_registry(service_registry.clone())
         .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
 
+    // V444: Initialize permission store with default permissions
+    let permission_store = std::sync::Arc::new(
+        crate::routes::business_tools::permission_store::InMemoryPermissionStore::with_defaults()
+    ) as std::sync::Arc<dyn crate::routes::business_tools::permission_store::PermissionStore>;
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -438,6 +443,7 @@ async fn main() -> anyhow::Result<()> {
         feature_flag_service: std::sync::Arc::new(topems_shared_core::FeatureFlagService::new()),
         sse_sessions,
         business_tool_registry,
+        permission_store,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

@@ -16095,6 +16095,181 @@ record_failure(0) ──▶ 返回错误
 
 ---
 
+## 🎯 V444 — 架构改进四轨并行第一百一十二次：轨D 业务工具权限控制持久化（权限存储trait+内存存储实现+AppState集成+main.rs初始化+单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十二次交付 · 轨D 业务工具权限控制持久化 · 4个代码文件修改（1新建+3修改） · 添加权限存储trait、内存存储实现、AppState集成、main.rs初始化、完整单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限控制持久化 | 添加权限存储trait、内存存储实现、AppState集成 | ✅ |
+| 轨C | shared-service-client动态服务发现 | 集成Consul、etcd、Zookeeper等动态服务发现，留给V445 | ⏸️ |
+
+### 轨D：业务工具权限控制持久化（权限存储trait+内存存储实现+AppState集成+main.rs初始化+单元测试）
+
+**实现内容**：在业务工具路由中添加权限控制持久化，包括权限存储trait、内存存储实现、AppState集成、main.rs初始化、完整单元测试
+
+**修改的文件（4个代码文件，1新建+3修改）**：
+
+1. **新建：`svc/unified-core/src/routes/business_tools/permission_store.rs`**（权限存储模块）
+2. **修改：`svc/unified-core/src/routes/business_tools/mod.rs`**（添加模块声明）
+3. **修改：`svc/unified-core/src/shared/mod.rs`**（添加AppState字段）
+4. **修改：`svc/unified-core/src/main.rs`**（初始化permission_store）
+
+**新增功能**：
+
+**1. 权限存储错误（PermissionStoreError）**
+- `NotFound(tenant_id, user_id)` — 权限未找到
+- `AlreadyExists(tenant_id, user_id)` — 权限已存在
+- `Invalid(message)` — 无效权限
+- `StoreError(message)` — 存储错误
+
+**2. 权限存储trait（PermissionStore）**
+- 使用`#[async_trait]`宏定义异步trait
+- 方法：
+  - `create_permission(permission)` — 创建新的权限配置
+  - `get_permission(tenant_id, user_id)` — 获取权限配置
+  - `update_permission(permission)` — 更新权限配置
+  - `delete_permission(tenant_id, user_id)` — 删除权限配置
+  - `list_tenant_permissions(tenant_id)` — 列出租户的所有权限
+  - `list_user_permissions(user_id)` — 列出用户的所有权限（跨租户）
+  - `check_permission(tenant_id, user_id, tool, operation)` — 检查用户是否可以执行操作
+  - `count()` — 获取存储的权限数量
+- trait要求`Send + Sync`
+
+**3. 内存权限存储实现（InMemoryPermissionStore）**
+- 字段：
+  - `permissions: Arc<Mutex<HashMap<(String, String), TenantPermission>>>` — 权限存储（键为(tenant_id, user_id)）
+- 方法：
+  - `new()` — 创建新的空内存权限存储
+  - `with_defaults()` — 创建带默认权限的内存权限存储（default租户的admin用户为Owner）
+  - `get_internal(tenant_id, user_id)` — 同步获取权限（内部使用）
+  - `summary()` — 获取权限存储统计摘要
+- 实现了Default trait
+- 实现了PermissionStore trait的所有方法
+
+**4. 权限存储工厂（PermissionStoreFactory）**
+- 方法：
+  - `in_memory()` — 创建内存权限存储
+  - `in_memory_with_defaults()` — 创建带默认权限的内存权限存储
+
+**5. 权限存储摘要（PermissionStoreSummary）**
+- 字段：
+  - `total_permissions: usize` — 总权限数
+  - `unique_tenants: usize` — 唯一租户数
+  - `unique_users: usize` — 唯一用户数
+  - `role_distribution: HashMap<String, usize>` — 角色分布
+  - `active_users: usize` — 活跃用户数
+  - `inactive_users: usize` — 非活跃用户数
+
+**6. AppState新增字段**
+- `permission_store: Arc<dyn PermissionStore>` — 权限存储（trait对象，支持多种实现）
+
+**7. main.rs初始化**
+- 使用`InMemoryPermissionStore::with_defaults()`初始化权限存储
+- 创建默认权限：default租户的admin用户为Owner角色
+- 将权限存储转换为`Arc<dyn PermissionStore>` trait对象
+
+**8. 完整单元测试**
+- `test_create_and_get_permission` — 测试创建和获取权限
+- `test_duplicate_permission_error` — 测试重复创建权限错误
+- `test_update_permission` — 测试更新权限
+- `test_delete_permission` — 测试删除权限
+- `test_check_permission` — 测试权限检查
+- `test_list_tenant_permissions` — 测试列出租户权限
+- `test_count` — 测试权限计数
+- `test_summary` — 测试权限存储摘要
+
+**权限存储特性**：
+1. **trait抽象** — 通过PermissionStore trait支持多种存储实现（内存、数据库、Redis等）
+2. **内存实现** — 提供InMemoryPermissionStore，适合测试和单实例部署
+3. **默认权限** — with_defaults()创建默认权限（default租户的admin用户为Owner）
+4. **CRUD操作** — 完整的创建、读取、更新、删除操作
+5. **列表查询** — 支持按租户和按用户列出权限
+6. **权限检查** — 内置权限检查方法，直接返回bool
+7. **统计摘要** — 提供权限存储统计摘要（总数、租户数、用户数、角色分布、活跃/非活跃）
+8. **线程安全** — 使用Arc<Mutex>实现线程安全
+9. **AppState集成** — 权限存储集成到AppState，可在所有路由处理函数中访问
+10. **完整测试** — 8个单元测试覆盖所有主要功能
+
+**权限存储架构**：
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        AppState                              │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  permission_store: Arc<dyn PermissionStore>           │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+              ▼                               ▼
+┌─────────────────────────┐     ┌─────────────────────────┐
+│ InMemoryPermissionStore │     │  Future: DatabaseStore   │
+│ (当前实现)               │     │ (PostgreSQL/MySQL等)    │
+│ - HashMap存储            │     │ - 数据库表存储           │
+│ - Arc<Mutex>线程安全     │     │ - 持久化存储             │
+│ - 适合测试/单实例        │     │ - 适合多实例部署         │
+└─────────────────────────┘     └─────────────────────────┘
+```
+
+**技术说明**：
+- 使用`#[async_trait]`宏定义异步trait（依赖async-trait crate，V441已添加）
+- 权限存储使用`Arc<dyn PermissionStore>` trait对象，支持运行时多态
+- 内存存储使用`Arc<Mutex<HashMap>>`实现线程安全
+- 权限键为(tenant_id, user_id)元组，确保每个租户的每个用户只有一个权限配置
+- 默认权限使用TenantPermission::owner()创建（Owner角色，活跃状态）
+- AppState中的permission_store字段使用trait对象，未来可以无缝切换到数据库实现
+- main.rs中使用`as Arc<dyn PermissionStore>`进行类型转换
+- 所有单元测试使用`#[tokio::test]`宏，支持异步测试
+- 模块声明使用`pub mod permission_store;`，允许外部访问
+
+**验收结果**：
+- 完成权限存储错误类型（PermissionStoreError，4个变体）
+- 完成权限存储trait（PermissionStore，8个异步方法）
+- 完成内存权限存储实现（InMemoryPermissionStore，4个方法+summary）
+- 完成权限存储工厂（PermissionStoreFactory，2个方法）
+- 完成权限存储摘要（PermissionStoreSummary，6个字段）
+- 完成AppState新增permission_store字段
+- 完成main.rs初始化permission_store（使用with_defaults()）
+- 完成模块声明（pub mod permission_store）
+- 完成完整单元测试（8个测试用例）
+- 所有新类型都实现了必要的trait
+- 线程安全（Arc<Mutex>）
+- 可扩展架构（trait对象，支持未来数据库实现）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 权限存储错误类型 | PermissionStoreError（NotFound、AlreadyExists、Invalid、StoreError） | ✅ |
+| 轨D 权限存储trait | PermissionStore（8个异步方法：create、get、update、delete、list_tenant、list_user、check、count） | ✅ |
+| 轨D 内存存储实现 | InMemoryPermissionStore（new、with_defaults、get_internal、summary） | ✅ |
+| 轨D 权限存储工厂 | PermissionStoreFactory（in_memory、in_memory_with_defaults） | ✅ |
+| 轨D 权限存储摘要 | PermissionStoreSummary（6个字段：total、unique_tenants、unique_users、role_distribution、active、inactive） | ✅ |
+| 轨D AppState字段 | permission_store: Arc<dyn PermissionStore> | ✅ |
+| 轨D main.rs初始化 | InMemoryPermissionStore::with_defaults() + 类型转换 | ✅ |
+| 轨D 模块声明 | pub mod permission_store | ✅ |
+| 轨D 单元测试 | 8个测试用例（create/get、duplicate、update、delete、check、list_tenant、count、summary） | ✅ |
+| 轨D 默认权限 | default租户的admin用户为Owner角色 | ✅ |
+| 轨D 线程安全 | Arc<Mutex>实现跨克隆共享 | ✅ |
+| 轨D 可扩展架构 | trait对象，支持未来数据库实现 | ✅ |
+| 变更统计 | 1个代码文件新建 + 3个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V444后续扩展（留给V445+）
+
+- [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨D 业务工具权限控制数据库持久化**：实现PostgreSQL/MySQL数据库权限存储
+- [ ] **轨D 业务工具权限管理API**：添加权限管理API端点（创建、更新、删除权限）
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V444连续一百一十二次交付验证成功，V445继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

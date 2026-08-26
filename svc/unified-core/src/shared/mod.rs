@@ -49,6 +49,8 @@ pub struct AppState {
     pub sse_sessions: Arc<SseSessionManager>,
     /// V436: Business tool registry for connecting to real services.
     pub business_tool_registry: crate::modules::business_tools::BusinessToolRegistry,
+    /// V444: Permission store for persisting tenant-based permission configurations.
+    pub permission_store: Arc<dyn crate::routes::business_tools::permission_store::PermissionStore>,
 }
 
 impl FromRef<AppState> for AuthState {
