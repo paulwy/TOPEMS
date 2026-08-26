@@ -28,14 +28,6 @@ interface PluginContextType {
   isPluginHealthy: (code: string) => boolean;
 }
 
-const useInstalledPlugins = () => {
-  const context = useContext(PluginContext);
-  if (!context) {
-    throw new Error('useInstalledPlugins must be used within a PluginProvider');
-  }
-  return context;
-};
-
 const PluginContext = createContext<PluginContextType | undefined>(undefined);
 
 export const usePlugins = () => {
