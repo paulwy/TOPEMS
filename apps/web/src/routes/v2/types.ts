@@ -156,18 +156,6 @@ function filterModulesByTier(
  * but operates on a flat list of routes. `advancedRouteCodes` is the set of
  * route `code` values explicitly activated for the current tenant.
  */
-function filterRoutesByTier(
-  routes: RouteConfigV2[],
-  activeAdvancedRouteCodes: Set<string> = new Set()
-): RouteConfigV2[] {
-  return routes.filter((r) => {
-    const tier = r.tier ?? 'basic';
-    if (tier === 'basic') return true;
-    if (tier === 'advanced') return activeAdvancedRouteCodes.has(r.code);
-    return true;
-  });
-}
-
 export function toFlatRouteConfig(modules: RouteModuleConfig[]): RouteConfig[] {
   const result: RouteConfig[] = [];
   modules.forEach((moduleConfig) => {
