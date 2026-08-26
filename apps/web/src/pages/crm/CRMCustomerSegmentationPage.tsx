@@ -1,5 +1,5 @@
 import { designTokens } from '@topems/tokens';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { Box, Typography, Chip, Paper } from '@mui/material';
 import { Users, Tag, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

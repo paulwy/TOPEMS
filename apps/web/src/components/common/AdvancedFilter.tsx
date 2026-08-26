@@ -11,7 +11,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { useState, type Key } from 'react';
+import { useState } from 'react';
 
 import { Filter, X, Plus } from 'lucide-react';
 import dayjs from 'dayjs';
