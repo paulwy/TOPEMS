@@ -6452,6 +6452,97 @@ POST /mcp
 
 ---
 
+## 🎯 V345 — 架构改进四轨并行第十三次：BI业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十三次交付 · BI MCP Tools上线 · 45个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V346 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V344评估，记录V346+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V346实施（需独立二进制入口） | ⏸️ |
+| 轨D | BI MCP Tools | 4个业务工具（bi.list_dashboards, bi.get_dashboard, bi.list_reports, bi.get_metric_data），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V344）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V346+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：BI MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/bi.rs` — BI业务工具（~650行）
+
+**注册的4个工具**：
+1. **bi.list_dashboards** — 查询仪表盘列表
+   - 参数：page, page_size, category(sales/finance/hr/production/supply_chain/quality/executive), status(draft/published/archived), owner, keyword
+   - 返回：仪表盘列表（仪表盘编号、名称、分类、状态、负责人、描述、组件数、访问量、最近访问时间）
+   - 支持分页、分类筛选、状态筛选、负责人筛选、关键词搜索
+
+2. **bi.get_dashboard** — 获取仪表盘详情
+   - 参数：dashboard_id（必填）
+   - 返回：完整仪表盘信息（基本信息、布局、主题、刷新间隔、组件列表、筛选条件、数据源、权限设置）
+   - 包含6个组件（KPI卡片/折线图/柱状图/饼图/表格）、3个筛选条件、3个数据源
+
+3. **bi.list_reports** — 查询报表列表
+   - 参数：page, page_size, report_type(tabular/chart/pivot/crosstab/detail), status(active/paused/failed/archived), schedule(daily/weekly/monthly/quarterly/on_demand), owner
+   - 返回：报表列表（报表编号、名称、类型、状态、调度周期、负责人、描述、最近运行时间、下次运行时间、行数、文件大小）
+   - 支持分页、类型筛选、状态筛选、调度周期筛选、负责人筛选
+
+4. **bi.get_metric_data** — 获取指标数据
+   - 参数：metric_id（必填）, start_date（必填）, end_date（必填）, granularity(hourly/daily/weekly/monthly/quarterly/yearly), dimension, include_comparison
+   - 返回：指标时间序列数据（汇总统计：总计/平均/最大/最小/数量，数据点：日期/数值/同比/环比）
+   - 支持多种时间粒度，包含同比环比计算
+
+**单元测试**（6个）：
+- test_register_bi_tools — 4个工具全部注册
+- test_list_dashboards — 分页查询
+- test_get_dashboard — 按ID查询，验证组件/筛选条件/数据源/权限结构
+- test_list_reports — 分页+状态筛选
+- test_get_metric_data — 成功获取指标数据，验证汇总统计和数据点数组
+- test_get_metric_data_validation — 参数验证（缺少end_date、缺少metric_id）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod bi和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_bi_tools
+- `svc/ai/src/routes.rs` — 调用register_bi_tools注册BI工具
+
+**当前工具总数**：45个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V344，记录V346+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D BI工具 | 4个业务工具已注册 | ✅ |
+| 轨D BI单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 45个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS+4BI） | ✅ |
+| 变更统计 | 新增1文件(~650行) + 修改4文件 | ✅ |
+
+### V345后续扩展（留给V346+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D APS/CS MCP Tools**：注册aps.list_schedules, cs.list_tickets等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V345连续十三次交付验证成功，V346继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
