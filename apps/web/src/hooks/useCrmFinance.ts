@@ -3,13 +3,11 @@
  * 封装CRM模块财务数据获取和操作的React Query hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNotification } from './useNotification';
+import { useQuery } from '@tanstack/react-query';
 import { crmFinanceApi } from '../api/crmFinance';
-import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api/crmFinance';
+import type { SalesInvoice, CollectionRecord } from '../api/crmFinance';
 
-import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-import i18n from '@/i18n';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 // ============================================
 // 一、客户财务信息Hooks
@@ -30,32 +28,6 @@ export function useCustomerFinanceInfo(customerId: string) {
 /**
  * 更新客户财务信息
  */
-function useUpdateCustomerFinanceInfo() {
-  const queryClient = useQueryClient();
-  const { success, error } = useNotification();
-
-  return useMutation({
-    mutationFn: ({
-      customerId,
-      data,
-    }: {
-      customerId: string;
-      data: Partial<CustomerFinanceInfo>;
-    }) => crmFinanceApi.updateCustomerFinanceInfo(customerId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      success(i18n.t('shared.use_crm_finance.k0'));
-    },
-    onError: (err) => {
-      error(err.message || i18n.t('shared.use_crm_finance.k1'));
-    },
-  });
-}
-
 // ============================================
 // 二、销售发票Hooks
 // ============================================

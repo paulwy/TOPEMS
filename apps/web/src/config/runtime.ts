@@ -179,11 +179,3 @@ export function isProduction(): boolean {
 export function isDevelopment(): boolean {
   return getEnvBool('DEV', true);
 }
-
-function isTest(): boolean {
-  return getEnv('MODE', '') === 'test';
-}
-
-function getMode(): string {
-  return getEnv('MODE', 'development');
-}

@@ -38,7 +38,6 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import type { PieLabelRenderProps } from 'recharts';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 
 interface ProjectReportProps {
@@ -593,7 +592,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {benefits.map((benefit, index) => (
+                  {benefits.map((benefit, _index) => (
                     <TableRow
                       key={benefit.id}
                       hover

@@ -168,44 +168,7 @@ const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
   'oa', // OA 办公基础
 ]);
 
-const BUSINESS_MODULE_NAMESPACES: readonly string[] = Object.freeze([
-  'iam',
-  'admin',
-  'crm',
-  'erp',
-  'wms',
-  'mes',
-  'hrm',
-  'finance',
-  'lims',
-  'pdm',
-  'pm',
-  'qms',
-  'ehs',
-  'tms',
-  'scm',
-  'srm',
-  'doc',
-  'bi',
-  'report',
-  'ai',
-  'workflow',
-  'gis',
-  'ticket',
-  'rd',
-]);
-
 const BOOTSTRAP_SET = new Set(BOOTSTRAP_NAMESPACES);
-const FRAMEWORK_SET = new Set(FRAMEWORK_NAMESPACES);
-const BUSINESS_SET = new Set(BUSINESS_MODULE_NAMESPACES);
-
-type NamespaceTier = 'bootstrap' | 'framework' | 'business' | 'unknown';
-function classifyNamespaceTier(ns: string): NamespaceTier {
-  if (BOOTSTRAP_SET.has(ns)) return 'bootstrap';
-  if (FRAMEWORK_SET.has(ns)) return 'framework';
-  if (BUSINESS_SET.has(ns)) return 'business';
-  return 'unknown';
-}
 
 function updateDocumentDirection(lng: string): void {
   if (typeof document === 'undefined') return;
@@ -218,39 +181,6 @@ function updateDocumentDirection(lng: string): void {
  * - 跳过属于其他已知命名空间的 key（由对应命名空间文件处理）
  * - 绝不允许原始值（字符串等）覆盖已有的对象值
  */
-function mergeNamespaceData(
-  target: Record<string, unknown>,
-  nested: Record<string, unknown>,
-  currentNs: string,
-  knownNamespaces: Set<string>
-): Record<string, unknown> {
-  for (const [key, value] of Object.entries(nested)) {
-    // Skip keys that belong to OTHER known namespaces (only for explicit NS files, not root)
-    // Reason: root JSON contains the "base" translations (common.save, shared.config.*, etc.)
-    // that MUST be loaded; skipping them breaks i18n for all components.
-    if (currentNs !== '__root__' && key !== currentNs && knownNamespaces.has(key)) continue;
-
-    const existing = target[key];
-    const existingIsObject =
-      typeof existing === 'object' && existing !== null && !Array.isArray(existing);
-    const valueIsObject = typeof value === 'object' && value !== null && !Array.isArray(value);
-
-    if (existingIsObject && !valueIsObject) {
-      continue;
-    }
-
-    if (existingIsObject && valueIsObject) {
-      target[key] = deepMerge(
-        existing as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-    } else {
-      target[key] = value;
-    }
-  }
-  return target;
-}
-
 // ─── 单文件加载：根 JSON ──────────────────────────────────────────────
 async function loadRootJson(lang: 'zh' | 'en'): Promise<Record<string, unknown>> {
   const key = `./locales/${lang}.json`;

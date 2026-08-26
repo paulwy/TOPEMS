@@ -4447,6 +4447,85 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V325 — 批量模式第十次：Top15文件未使用项清理（30项）+ 级联28项 + 7孤儿文件（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十次成功 · 15 files（8 修改 + 7 删除）· 净删 1541 行 · tsc 0 errors · eslint 0 errors(1424 warnings, 从1456减32)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 孤儿 | 净删行 |
+|------|--------|------|------|--------|
+| lib/navigation/modules/lazy | 2 | 1 | ✅ | ~70 |
+| layouts/navTree | 2 | 9 | ✅ | ~240 |
+| i18n/index | 2 | 4 | - | ~30 |
+| hooks/useRealtimeSync | 2 | 0 | ✅53行 | 53 |
+| hooks/useOfflineQuery | 2 | 0 | ✅21行 | 21 |
+| hooks/useCrmFinance | 2 | 7 | - | ~40 |
+| fullstack-automation/V55AutomationPanel | 2 | 0 | - | ~3 |
+| dev-platform/lowcode-builder | 2 | 0 | - | ~3 |
+| constants/storage | 2 | 0 | - | ~3 |
+| config/runtime | 2 | 0 | - | ~10 |
+| components/templates/list/BatchDialogs | 2 | 0 | ✅36行 | 36 |
+| components/templates/MarkdownEditorTemplate | 2 | 0 | - | ~3 |
+| components/pm/ProjectReport | 2 | 0 | - | ~3 |
+| components/gis/useOfflineTiles | 2 | 0 | ✅104行 | 104 |
+| components/form/FormFileUpload | 2 | 6 | ✅ | ~900 |
+| **合计** | **30** | **28** | **7(~1427行)** | **1541** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除18项本地声明（FormFileUpload, useOfflineTiles, tileDir, isTest, getMode, TENANT_KEY, CACHE_DURATIONS, useUpdateCustomerFinanceInfo, useOfflineQuery, useOfflineMutation, useRealtimeListSync, useRealtimeSync, classifyNamespaceTier, mergeNamespaceData, useFlatNavItems, useDomainGroupedNavItems, preloadModuleConfigs, getAvailableModuleCodes, BatchConfirmDialog, BatchProgressDialog）
+
+**B轨（手动修复12项）**：
+- import整行删除（4）：React, PieLabelRenderProps, i18n(useCrmFinance), useNotification
+- import单符号移除（5）：semanticTokens, EyeOff, Trash2, Badge, FileText, NavItem, CACHE_DURATIONS, CustomerFinanceInfo, useMutation, useQueryClient
+- 函数参数修复（2）：ProjectReport index→_index, lowcode-builder message→_message
+- type删除（1）：StorageKey
+
+**C轨（级联28项）**：
+- 第一轮18项：FormFileUpload 6项(import/interface级联) + useCrmFinance 6项(import级联) + i18n 3项(本地声明级联) + navTree 2项 + lazy 1项
+- 第二轮10项：navTree 7项(删除useNavTree后触发) + lazy 1项 + i18n 1项 + useCrmFinance 1项
+
+**D轨（孤儿文件7个，共~1427行）**：
+1. `components/form/FormFileUpload.tsx`（~900行）：移除FormFileUpload组件后无export，所有import/interface级联未使用
+2. `components/gis/useOfflineTiles.ts`（104行）：移除useOfflineTiles后，openTileDB/TILE_STORE/DB_NAME export均有本地副本未被引用
+3. `components/templates/list/BatchDialogs.tsx`（36行）：移除BatchConfirmDialog/BatchProgressDialog后无export
+4. `hooks/useOfflineQuery.ts`（21行）：移除useOfflineQuery/useOfflineMutation后无export
+5. `hooks/useRealtimeSync.ts`（53行）：移除useRealtimeSync/useRealtimeListSync后无export
+6. `layouts/navTree.ts`（~240行）：移除useFlatNavItems/useDomainGroupedNavItems/useNavTree后无export，7项级联
+7. `lib/navigation/modules/lazy.ts`（~70行）：移除preloadModuleConfigs/getAvailableModuleCodes/lazyLoadModuleConfig后无export
+
+### 关键发现
+
+1. **7个孤儿文件占净删93%**：15个目标文件中7个变孤儿（~1427行），占净删1541行的93%。FormFileUpload单个文件~900行。
+2. **navTree多级联链**：删除2函数→触发useNavTree级联→删除useNavTree→触发7项级联（useMemo/navigationRegistryV2/NavTreeResult/L1_BUSINESS_DOMAINS/L2_TO_L1_MAP/moduleCardToL2Node/buildSpecialL2Nodes）→整个文件变孤儿。
+3. **FormFileUpload组件移除后全文件级联**：移除组件后，Controller/FileUpload/UploadFile/i18n/FormFileUploadProps等6项全部未使用，整个文件变孤儿。
+4. **useOfflineTiles export有本地副本**：openTileDB/TILE_STORE/DB_NAME被export，但其他文件（tileImporter.ts/OfflineManager.tsx）都有自己的本地定义，实际未被引用。
+5. **函数参数误改风险**：ProjectReport有两个index参数，line92的index被使用（index+1），line596的index未使用。误改line92导致TS2552语法错误，需恢复后改line596。
+6. **sed路径不匹配**：useCrmFinance的useNotification import路径是'./useNotification'（相对路径），不是'@/hooks/useNotification'，sed首次未匹配到。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1424 warnings（-32） | ✅ |
+| 孤儿文件删除 | 7个（~1427行），无引用 | ✅ |
+| 变更统计 | 15 files, 6 insertions, 1547 deletions | ✅ |
+
+### V325后续扩展（留给V326+）
+
+- [ ] **孤儿文件自动检测脚本**：15文件7个变孤儿（47%），可写脚本自动检测"移除主函数后无export且无引用"的文件
+- [ ] **多级联链跟踪**：navTree案例（删除2函数→useNavTree→7项→孤儿），需扩展v6脚本自动跟踪多级联
+- [ ] **函数参数同名误改防护**：ProjectReport两个index参数案例，需检查函数体内是否使用该参数
+- [ ] **sed路径不匹配检测**：useNotification相对路径案例，需统一import路径或用grep确认
+- [ ] **export有本地副本检测**：useOfflineTiles案例，export的函数/常量在其他文件有本地定义，实际未被引用
+- [ ] **批量模式继续**：V316-V325连续十次成功，全src/未使用项从~282降至~75
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。
