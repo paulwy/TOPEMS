@@ -8357,6 +8357,83 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V370 — 架构改进四轨并行第三十八次：前端未使用import清理（V369遗留）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十八次交付 · 前端未使用import清理 · 1个文件 · 删除V369删除组件后导致的遗留未使用import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 1个文件的未使用import删除（FinancialReports.tsx，V369删除FinancialReportsViewer后导致的10个遗留import） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V371 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V371 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V371 | ⏸️ |
+
+### 轨A：前端未使用import清理（V369遗留）
+
+**清理内容**：删除1个文件中V369删除FinancialReportsViewer组件后导致的遗留未使用import
+
+**清理的文件（1个）**：
+
+1. **components/finance/FinancialReports.tsx** — 删除V369遗留的未使用import
+   - 删除的import（10个）：
+     - `useState` from 'react'
+     - `useQuery` from '@tanstack/react-query'
+     - `reportApi` from '@/api/finance'
+     - `Tabs` from '@mui/material'
+     - `Tab` from '@mui/material'
+     - `Button` from '@mui/material'
+     - `Download` from 'lucide-react'
+     - `logger` from '@/utils/logger'
+     - `CACHE_DURATIONS` from '@/lib/reactQuery'
+     - `QUERY_KEYS` from '@/lib/reactQuery'
+   - 保留的import：
+     - `AlertCircle` from 'lucide-react'（仍被其他组件使用）
+     - `Card/CardContent/CardHeader/Typography/Chip/Box` from '@mui/material'（仍被其他组件使用）
+     - `recharts` 相关组件（仍被其他组件使用）
+   - 原因：V369删除FinancialReportsViewer组件后，这些import只被该组件使用，变成未使用的遗留import
+
+**技术说明**：
+- 删除组件后需要检查并清理相关的未使用import
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 删除前验证import未被文件中的其他组件使用
+- 对于仍被其他组件使用的import（如AlertCircle），保留不动
+
+**遗留问题**：
+- FinancialReports.tsx中仍有3个未使用的组件（BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer），这些组件只被FinancialReportsViewer使用，删除FinancialReportsViewer后变成未使用
+- 这些未使用组件留给后续版本处理
+
+**验收结果**：
+- 1个文件的10个未使用import TS6133错误已消除
+- 编译验证：无新增错误
+- 删除的import均为未使用的遗留import
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用import删除 | ✅ |
+| 轨A 清理import数 | 10个未使用import（V369遗留） | ✅ |
+| 轨A 技术方法 | 删除组件后检查并清理相关的未使用import | ✅ |
+| 轨A 保留检查 | AlertCircle/Card/recharts等仍被其他组件使用的import保留不动 | ✅ |
+| 轨A 遗留问题 | BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer仍未使用，留给后续版本 | ⚠️ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V370后续扩展（留给V371+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~147个TS6133错误
+- [ ] **轨A FinancialReports未使用组件清理**：删除BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer未使用组件
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V370连续三十八次交付验证成功，V371继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

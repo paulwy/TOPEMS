@@ -3,9 +3,6 @@
  * 包含资产负债表、利润表、现金流量表的展示组件
  */
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { reportApi } from '@/api/finance';
 import {
   Card,
   CardContent,
@@ -13,12 +10,9 @@ import {
   Typography,
   Chip,
   Box,
-  Tabs,
-  Tab,
-  Button,
 } from '@mui/material';
 import i18n from '@/i18n';
-import { Download, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -33,9 +27,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/types/finance';
-import { logger } from '@/utils/logger';
-
-import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
 // ============================================
 // 一、通用组件
