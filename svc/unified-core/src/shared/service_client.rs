@@ -97,6 +97,9 @@ pub struct ServiceConfig {
     /// V439: Additional endpoints for load balancing (excluding base_url).
     #[serde(default)]
     pub endpoints: Vec<String>,
+    /// V443: Connection pool configuration.
+    #[serde(default)]
+    pub connection_pool: ConnectionPoolConfig,
 }
 
 fn default_retry_delay() -> u64 {
@@ -567,6 +570,182 @@ pub struct LoadBalancerStatus {
     pub current_index: usize,
 }
 
+// ===== V443: Connection Pool Configuration & Request Statistics =====
+
+/// Connection pool configuration for the HTTP client.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionPoolConfig {
+    /// Maximum idle connections per host. Defaults to 10.
+    #[serde(default = "default_pool_max_idle_per_host")]
+    pub max_idle_per_host: usize,
+    /// Idle connection timeout in seconds. Defaults to 90.
+    #[serde(default = "default_pool_idle_timeout")]
+    pub idle_timeout_secs: u64,
+    /// Maximum connection lifetime in seconds. None means no limit.
+    #[serde(default)]
+    pub max_lifetime_secs: Option<u64>,
+    /// Whether to enable TCP keepalive. Defaults to true.
+    #[serde(default = "default_tcp_keepalive")]
+    pub tcp_keepalive: bool,
+    /// TCP keepalive interval in seconds. Defaults to 60.
+    #[serde(default = "default_tcp_keepalive_interval")]
+    pub tcp_keepalive_interval_secs: u64,
+}
+
+fn default_pool_max_idle_per_host() -> usize {
+    10
+}
+
+fn default_pool_idle_timeout() -> u64 {
+    90
+}
+
+fn default_tcp_keepalive() -> bool {
+    true
+}
+
+fn default_tcp_keepalive_interval() -> u64 {
+    60
+}
+
+impl Default for ConnectionPoolConfig {
+    fn default() -> Self {
+        Self {
+            max_idle_per_host: default_pool_max_idle_per_host(),
+            idle_timeout_secs: default_pool_idle_timeout(),
+            max_lifetime_secs: None,
+            tcp_keepalive: default_tcp_keepalive(),
+            tcp_keepalive_interval_secs: default_tcp_keepalive_interval(),
+        }
+    }
+}
+
+/// Request statistics for monitoring and metrics.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RequestStatistics {
+    /// Total number of requests made.
+    pub total_requests: u64,
+    /// Number of successful requests.
+    pub successful_requests: u64,
+    /// Number of failed requests.
+    pub failed_requests: u64,
+    /// Number of rate-limited requests.
+    pub rate_limited_requests: u64,
+    /// Number of circuit-breaker-rejected requests.
+    pub circuit_breaker_rejected: u64,
+    /// Total response time in milliseconds.
+    pub total_response_time_ms: u64,
+    /// Minimum response time in milliseconds.
+    pub min_response_time_ms: u64,
+    /// Maximum response time in milliseconds.
+    pub max_response_time_ms: u64,
+    /// Average response time in milliseconds.
+    pub avg_response_time_ms: f64,
+    /// Success rate (0.0 - 1.0).
+    pub success_rate: f64,
+    /// Requests per second (calculated from uptime).
+    pub requests_per_second: f64,
+    /// Client uptime in seconds.
+    pub uptime_secs: u64,
+    /// Last request timestamp (RFC3339 format).
+    pub last_request_at: Option<String>,
+    /// Last successful request timestamp (RFC3339 format).
+    pub last_success_at: Option<String>,
+    /// Last failed request timestamp (RFC3339 format).
+    pub last_failure_at: Option<String>,
+}
+
+impl RequestStatistics {
+    /// Create a new empty request statistics.
+    pub fn new() -> Self {
+        Self {
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
+            rate_limited_requests: 0,
+            circuit_breaker_rejected: 0,
+            total_response_time_ms: 0,
+            min_response_time_ms: u64::MAX,
+            max_response_time_ms: 0,
+            avg_response_time_ms: 0.0,
+            success_rate: 0.0,
+            requests_per_second: 0.0,
+            uptime_secs: 0,
+            last_request_at: None,
+            last_success_at: None,
+            last_failure_at: None,
+        }
+    }
+
+    /// Record a successful request.
+    pub fn record_success(&mut self, response_time_ms: u64) {
+        self.total_requests += 1;
+        self.successful_requests += 1;
+        self.total_response_time_ms += response_time_ms;
+        self.min_response_time_ms = self.min_response_time_ms.min(response_time_ms);
+        self.max_response_time_ms = self.max_response_time_ms.max(response_time_ms);
+        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_success_at = Some(chrono::Utc::now().to_rfc3339());
+        self.update_calculated_fields();
+    }
+
+    /// Record a failed request.
+    pub fn record_failure(&mut self, response_time_ms: u64) {
+        self.total_requests += 1;
+        self.failed_requests += 1;
+        self.total_response_time_ms += response_time_ms;
+        self.min_response_time_ms = self.min_response_time_ms.min(response_time_ms);
+        self.max_response_time_ms = self.max_response_time_ms.max(response_time_ms);
+        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_failure_at = Some(chrono::Utc::now().to_rfc3339());
+        self.update_calculated_fields();
+    }
+
+    /// Record a rate-limited request.
+    pub fn record_rate_limited(&mut self) {
+        self.total_requests += 1;
+        self.rate_limited_requests += 1;
+        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.update_calculated_fields();
+    }
+
+    /// Record a circuit-breaker-rejected request.
+    pub fn record_circuit_breaker_rejected(&mut self) {
+        self.total_requests += 1;
+        self.circuit_breaker_rejected += 1;
+        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.update_calculated_fields();
+    }
+
+    /// Update calculated fields (avg, success_rate, rps).
+    fn update_calculated_fields(&mut self) {
+        if self.total_requests > 0 {
+            self.avg_response_time_ms = self.total_response_time_ms as f64 / self.total_requests as f64;
+            self.success_rate = self.successful_requests as f64 / self.total_requests as f64;
+        }
+        if self.uptime_secs > 0 {
+            self.requests_per_second = self.total_requests as f64 / self.uptime_secs as f64;
+        }
+    }
+
+    /// Update uptime.
+    pub fn update_uptime(&mut self, secs: u64) {
+        self.uptime_secs = secs;
+        self.update_calculated_fields();
+    }
+
+    /// Reset all statistics.
+    pub fn reset(&mut self) {
+        *self = Self::new();
+    }
+}
+
+impl Default for RequestStatistics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 // ===== V437: Circuit Breaker Types =====
 
 /// Circuit breaker state.
@@ -608,6 +787,10 @@ pub struct ServiceClient {
     rate_limiter: Arc<std::sync::Mutex<RateLimiter>>,
     /// V439: Load balancer (shared across clones).
     load_balancer: Arc<std::sync::Mutex<LoadBalancer>>,
+    /// V443: Request statistics (shared across clones).
+    statistics: Arc<std::sync::Mutex<RequestStatistics>>,
+    /// V443: Client creation time for uptime calculation.
+    created_at: std::time::Instant,
 }
 
 /// Internal circuit breaker state.
@@ -623,8 +806,24 @@ impl ServiceClient {
     /// Create a new service client from a configuration.
     pub fn new(config: ServiceConfig) -> Result<Self, ServiceClientError> {
         let timeout = Duration::from_secs(config.timeout_secs);
-        let http_client = Client::builder()
+
+        // V443: Build HTTP client with connection pool configuration
+        let mut client_builder = Client::builder()
             .timeout(timeout)
+            .pool_max_idle_per_host(config.connection_pool.max_idle_per_host)
+            .pool_idle_timeout(Duration::from_secs(config.connection_pool.idle_timeout_secs));
+
+        if let Some(max_lifetime) = config.connection_pool.max_lifetime_secs {
+            client_builder = client_builder.pool_max_lifetime(Duration::from_secs(max_lifetime));
+        }
+
+        if config.connection_pool.tcp_keepalive {
+            client_builder = client_builder.tcp_keepalive(Duration::from_secs(
+                config.connection_pool.tcp_keepalive_interval_secs,
+            ));
+        }
+
+        let http_client = client_builder
             .build()
             .map_err(ServiceClientError::RequestFailed)?;
 
@@ -646,12 +845,18 @@ impl ServiceClient {
             config.endpoints.clone(),
         )));
 
+        // V443: Initialize request statistics
+        let statistics = Arc::new(std::sync::Mutex::new(RequestStatistics::new()));
+        let created_at = std::time::Instant::now();
+
         Ok(Self {
             config,
             http_client,
             circuit_breaker,
             rate_limiter,
             load_balancer,
+            statistics,
+            created_at,
         })
     }
 
@@ -711,6 +916,8 @@ impl ServiceClient {
         // V437: Check circuit breaker before making request
         if self.config.circuit_breaker_enabled {
             if let Err(e) = self.check_circuit_breaker() {
+                // V443: Record circuit breaker rejection
+                self.statistics.lock().unwrap().record_circuit_breaker_rejected();
                 return Err(e);
             }
         }
@@ -718,6 +925,8 @@ impl ServiceClient {
         // V439: Check rate limit before making request
         if self.config.rate_limit_enabled {
             if let Err(e) = self.check_rate_limit() {
+                // V443: Record rate limited request
+                self.statistics.lock().unwrap().record_rate_limited();
                 return Err(e);
             }
         }
@@ -734,6 +943,8 @@ impl ServiceClient {
                     if self.config.circuit_breaker_enabled {
                         self.record_success();
                     }
+                    // V443: Record successful request
+                    self.statistics.lock().unwrap().record_success(response.duration_ms);
                     return Ok(response);
                 }
                 Err(e) => {
@@ -749,6 +960,9 @@ impl ServiceClient {
                         tokio::time::sleep(retry_delay).await;
                         continue;
                     }
+
+                    // V443: Record failed request (after all retries exhausted)
+                    self.statistics.lock().unwrap().record_failure(0);
                 }
             }
         }
@@ -953,6 +1167,26 @@ impl ServiceClient {
     pub fn get_next_endpoint(&self) -> String {
         let mut lb = self.load_balancer.lock().unwrap();
         lb.next_endpoint().to_string()
+    }
+
+    // ===== V443: Request Statistics & Connection Pool Methods =====
+
+    /// Get the request statistics.
+    pub fn get_statistics(&self) -> RequestStatistics {
+        let mut stats = self.statistics.lock().unwrap().clone();
+        // Update uptime
+        stats.update_uptime(self.created_at.elapsed().as_secs());
+        stats
+    }
+
+    /// Reset the request statistics.
+    pub fn reset_statistics(&self) {
+        self.statistics.lock().unwrap().reset();
+    }
+
+    /// Get the connection pool configuration.
+    pub fn get_connection_pool_config(&self) -> ConnectionPoolConfig {
+        self.config.connection_pool.clone()
     }
 
     /// Send a raw request and return the raw response bytes.
