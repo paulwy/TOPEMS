@@ -23,8 +23,6 @@ import {
   Trash2,
   Search,
   Plus,
-  AlertCircle,
-  CheckCircle,
   Loader2,
 } from 'lucide-react';
 import type { Document } from '@/api/ai';

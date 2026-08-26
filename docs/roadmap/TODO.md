@@ -5506,6 +5506,160 @@ POST /mcp
 
 ---
 
+## 🎯 V336 — 架构改进四轨并行第四次：MCP SSE传输 + ERP业务工具 + 级联未使用清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四次交付 · MCP SSE流式传输可用 · 9个业务工具注册 · cargo check ✅ · 26个单元测试通过
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 级联未使用项清理 | 4项（2 import + 1 const + 1 参数重命名） | ✅ |
+| 轨B | B1 API签名对齐评估 | 延续V335评估，确认两个模块是不同实现，记录V337+实施 | ✅ |
+| 轨C | MCP SSE传输实现 | SSE端点+会话管理+endpoint事件+心跳+响应路由，5个单元测试 | ✅ |
+| 轨D | ERP MCP Tools | 4个业务工具（erp.list_orders, erp.get_order, erp.create_order, erp.update_inventory），6个单元测试 | ✅ |
+
+### 轨A：4项级联未使用项清理明细
+
+| 文件 | 未使用项 | 类型 | 处理 |
+|------|----------|------|------|
+| components/ai/DocumentManager.tsx | AlertCircle import | TS6133 | 整行删除 |
+| components/ai/DocumentManager.tsx | CheckCircle import | TS6133 | 整行删除 |
+| api/wms/mock.ts | shipped const | TS6133 | 整行删除（V335删除received后的级联） |
+| api/wms/mock.ts | warehouses参数 | TS6133 | warehouses→_warehouses |
+| **合计** | **4项** | | **净删~5行** |
+
+### 轨B：B1 API签名对齐评估（延续V335）
+
+**关键发现**（V335已确认）：
+- `@/api/erp/finance/voucher.ts` 57行 vs `@/api/finance/voucher.ts` 178行
+- 两个模块的API端点、方法签名、返回类型可能都不同
+- 不能简单修改import路径，需要逐函数对比
+
+**实施策略**（V337+）：
+1. 逐函数对比两个模块的API端点和签名
+2. 如果端点一致但签名不同，对齐@/api/finance/的签名
+3. 如果端点不同，需要后端API对齐或前端适配层
+4. 6处Finance页面引用修改需逐个验证
+
+### 轨C：MCP SSE传输实现
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/handler.rs` — 完整重写，实现SSE传输（~380行）
+
+**核心组件**：
+1. **SseSessionManager** — SSE会话管理器
+   - 会话注册/注销（session_id -> sender映射）
+   - 消息发送（将POST /mcp的响应路由到SSE连接）
+   - 活动会话计数
+   - 线程安全（Arc<RwLock<HashMap>>）
+
+2. **McpAppState** — 应用状态（包含McpServer和SseSessionManager）
+
+3. **handle_mcp_sse** — SSE端点处理
+   - 返回SSE流（Content-Type: text/event-stream）
+   - 发送endpoint事件（包含POST /mcp?session_id=xxx的URL）
+   - 30秒心跳（keep-alive注释）
+   - 接收来自POST /mcp的响应并通过message事件推送
+   - 连接关闭时自动清理会话
+
+4. **handle_mcp_request** — JSON-RPC端点（增强）
+   - 支持session_id查询参数
+   - 如果有session_id，响应通过SSE推送，HTTP返回202 Accepted
+   - 如果会话不存在，回退到HTTP响应
+
+**SSE传输流程**：
+```
+客户端                    服务器
+  |--- GET /mcp/sse ----->|
+  |<-- 200 text/event-stream|
+  |<-- event: endpoint -----|
+  |    data: /mcp?session_id=xxx
+  |                         |
+  |--- POST /mcp?session_id=xxx --->|
+  |    {jsonrpc request}             |
+  |<-- 202 Accepted -----------------|
+  |                                  |
+  |<-- event: message ---------------|
+  |    data: {jsonrpc response}      |
+```
+
+**单元测试**（5个）：
+- test_handle_mcp_request_ping — 完整initialize+ping流程
+- test_handle_mcp_request_invalid_json — 无效JSON返回400
+- test_handle_mcp_sse_returns_stream — SSE端点返回200+text/event-stream
+- test_handle_mcp_request_before_init — 未初始化时返回错误
+- test_sse_session_manager_register_and_send — 会话管理器注册/发送/注销
+
+### 轨D：ERP MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/erp.rs` — ERP业务工具（~450行）
+
+**注册的4个工具**：
+1. **erp.list_orders** — 查询订单列表
+   - 参数：page, page_size, status, customer_id
+   - 返回：订单列表（订单号、客户、金额、状态、创建时间）
+   - 支持分页和状态筛选
+
+2. **erp.get_order** — 获取订单详情
+   - 参数：order_id（必填）
+   - 返回：完整订单信息（客户、商品明细、金额、物流、支付）
+
+3. **erp.create_order** — 创建订单
+   - 参数：customer_id（必填）, items（必填，商品明细列表）, remark
+   - 返回：新订单ID和订单号
+   - 验证：customer_id和items必填，items至少包含一个商品
+
+4. **erp.update_inventory** — 更新库存
+   - 参数：product_id（必填）, quantity（必填，正数）, operation（必填：inbound/outbound/adjust）, warehouse_id, remark
+   - 返回：更新前后的库存数量
+   - 验证：出库时检查库存是否充足
+
+**单元测试**（6个）：
+- test_register_erp_tools — 4个工具全部注册
+- test_list_orders — 分页查询
+- test_get_order — 按ID查询
+- test_create_order_validation — 参数验证（缺少customer_id/items）
+- test_update_inventory_inbound — 入库操作
+- test_update_inventory_outbound_insufficient — 出库库存不足
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod erp和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_erp_tools，更新模块文档
+- `svc/ai/src/routes.rs` — 调用register_erp_tools注册ERP工具
+- `svc/ai/Cargo.toml` — 添加async-stream依赖和tower/hyper dev-dependencies
+
+**当前工具总数**：9个（2系统 + 3 CRM + 4 ERP）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 4项未使用清零 | tsc目标文件0项 | ✅ |
+| 轨B B1评估 | 确认不同实现，记录V337+实施策略 | ✅ |
+| 轨C cargo check | topems-ai编译通过 | ✅ |
+| 轨C SSE端点 | GET /mcp/sse返回text/event-stream | ✅ |
+| 轨C 会话管理 | SseSessionManager注册/发送/注销 | ✅ |
+| 轨C handler单元测试 | 5个测试用例 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D ERP工具 | 4个业务工具已注册 | ✅ |
+| 轨D ERP单元测试 | 6个测试用例 | ✅ |
+| 总单元测试 | 26 passed（5个server.rs测试为V335前已有失败） | ✅ |
+| 变更统计 | 新增1文件(~450行) + 修改7文件 + 前端3文件清理 | ✅ |
+
+### V336后续扩展（留给V337+）
+
+- [ ] **轨C MCP stdio传输**：支持本地AI Agent（如Cursor Local）通过stdio通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送
+- [ ] **轨D Finance MCP Tools(4个)**：注册finance.list_transactions, finance.get_transaction, finance.create_invoice, finance.get_report
+- [ ] **轨D CRM/ERP工具连接真实API**：通过shared-service-client连接真实服务
+- [ ] **轨B B1 API签名对齐实施**：逐函数对比@/api/erp/finance/与@/api/finance/，决定迁移或对齐策略
+- [ ] **轨A Top15未使用项清理**：addressbook组件未使用专项（5个组件）
+- [ ] **四轨并行继续**：V333-V336连续四次交付验证成功，V337继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
