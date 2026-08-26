@@ -415,6 +415,10 @@ async fn main() -> anyhow::Result<()> {
     let encryption = init_field_encryption();
     // V430: SSE session manager for real-time communication endpoints
     let sse_sessions = std::sync::Arc::new(crate::shared::SseSessionManager::new());
+    // V436: Business tool registry for connecting to real services
+    let service_registry = std::sync::Arc::new(crate::shared::service_client::ServiceRegistry::new());
+    let business_tool_registry = crate::modules::business_tools::create_default_registry(service_registry.clone())
+        .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
@@ -433,6 +437,7 @@ async fn main() -> anyhow::Result<()> {
         encryption,
         feature_flag_service: std::sync::Arc::new(topems_shared_core::FeatureFlagService::new()),
         sse_sessions,
+        business_tool_registry,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

@@ -47,6 +47,8 @@ pub struct AppState {
     pub feature_flag_service: Arc<FeatureFlagService>,
     /// V430: SSE session manager for real-time communication endpoints.
     pub sse_sessions: Arc<SseSessionManager>,
+    /// V436: Business tool registry for connecting to real services.
+    pub business_tool_registry: crate::modules::business_tools::BusinessToolRegistry,
 }
 
 impl FromRef<AppState> for AuthState {
