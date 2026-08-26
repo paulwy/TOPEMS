@@ -16270,6 +16270,171 @@ record_failure(0) ──▶ 返回错误
 
 ---
 
+## 🎯 V445 — 架构改进四轨并行第一百一十三次：轨C shared-service-client动态服务发现（基于环境变量的服务发现实现+自定义前缀+热重载+完整ServiceDiscovery trait实现）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十三次交付 · 轨C shared-service-client动态服务发现 · 1个代码文件修改 · 添加基于环境变量的服务发现实现，支持自定义前缀、热重载、完整ServiceDiscovery trait实现，作为Consul/etcd/Zookeeper集成的过渡
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client动态服务发现 | 添加基于环境变量的服务发现实现 | ✅ |
+| 轨D | 业务工具权限控制数据库持久化 | 实现PostgreSQL/MySQL数据库权限存储，留给V446 | ⏸️ |
+
+### 轨C：shared-service-client动态服务发现（基于环境变量的服务发现实现+自定义前缀+热重载+完整ServiceDiscovery trait实现）
+
+**实现内容**：在shared-service-client中添加基于环境变量的动态服务发现实现，支持自定义前缀、热重载、完整ServiceDiscovery trait实现，作为Consul/etcd/Zookeeper集成的过渡
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/shared/service_client.rs`（添加EnvServiceDiscovery）**
+
+**新增功能**：
+
+**1. 基于环境变量的服务发现（EnvServiceDiscovery）**
+- 字段：
+  - `prefix: String` — 环境变量前缀（默认"TOPEMS_SERVICE_"）
+  - `services: Arc<Mutex<HashMap<String, ServiceRegistration>>>` — 已发现的服务（初始加载后缓存）
+- 方法：
+  - `new()` — 使用默认前缀"TOPEMS_SERVICE_"创建
+  - `with_prefix(prefix)` — 使用自定义前缀创建
+  - `load_from_env()` — 从环境变量加载服务配置
+  - `reload()` — 重新从环境变量加载服务配置（热重载）
+  - `get(name)` — 同步获取服务注册
+  - `list()` — 同步列出所有服务注册
+  - `has(name)` — 同步检查服务是否已注册
+  - `count()` — 同步获取已注册服务数量
+  - `prefix()` — 获取环境变量前缀
+- 实现了Default trait
+- 实现了ServiceDiscovery trait的所有方法
+
+**2. 环境变量格式**
+- `TOPEMS_SERVICE_<NAME>_URL` — 服务基础URL（必需）
+- `TOPEMS_SERVICE_<NAME>_ENABLED` — 服务是否启用（可选，默认true）
+- `TOPEMS_SERVICE_<NAME>_VERSION` — 服务版本（可选，默认"1.0.0"）
+- `TOPEMS_SERVICE_<NAME>_TAGS` — 逗号分隔的服务标签（可选）
+
+**3. 环境变量示例**
+```bash
+TOPEMS_SERVICE_CRM_URL=http://localhost:8001
+TOPEMS_SERVICE_CRM_ENABLED=true
+TOPEMS_SERVICE_CRM_VERSION=2.0.0
+TOPEMS_SERVICE_CRM_TAGS=production,critical
+
+TOPEMS_SERVICE_ERP_URL=http://localhost:8002
+TOPEMS_SERVICE_ERP_ENABLED=true
+TOPEMS_SERVICE_ERP_VERSION=1.5.0
+TOPEMS_SERVICE_ERP_TAGS=production
+```
+
+**4. 服务名称提取逻辑**
+- 从环境变量键中提取服务名称
+- 支持的后缀：_URL、_ENABLED、_VERSION、_TAGS
+- 服务名称自动转换为小写
+- 示例：`TOPEMS_SERVICE_CRM_URL` → 服务名称为"crm"
+
+**5. 服务注册创建逻辑**
+- 从环境变量读取服务配置
+- URL是必需的，没有URL的服务会被跳过
+- ENABLED可选，默认true（支持"true"/"1"为true）
+- VERSION可选，默认"1.0.0"
+- TAGS可选，逗号分隔，自动去除空格
+- 注册时间和心跳时间使用当前时间
+
+**6. ServiceDiscovery trait实现**
+- `register()` — 注册服务（添加到缓存）
+- `deregister()` — 注销服务（从缓存移除）
+- `discover()` — 发现服务（从缓存查找）
+- `list_services()` — 列出所有服务（从缓存获取）
+- `heartbeat()` — 发送心跳（更新心跳时间）
+
+**7. 热重载支持**
+- `reload()`方法可以重新从环境变量加载服务配置
+- 适用于运行时修改环境变量后更新服务配置
+- 注意：大多数情况下，修改环境变量需要重启进程
+
+**动态服务发现特性**：
+1. **环境变量配置** — 通过环境变量配置服务，无需修改代码
+2. **自定义前缀** — 支持自定义环境变量前缀，适应不同部署环境
+3. **热重载** — 支持运行时重新加载服务配置
+4. **完整trait实现** — 实现ServiceDiscovery trait的所有方法
+5. **服务缓存** — 初始加载后缓存服务配置，避免重复读取环境变量
+6. **多服务支持** — 支持配置多个服务，每个服务独立配置
+7. **服务标签** — 支持为服务添加标签，用于服务过滤和分类
+8. **版本管理** — 支持服务版本配置
+9. **启用/禁用** — 支持启用/禁用服务
+10. **向后兼容** — 与现有的StaticServiceDiscovery和ServiceRegistry兼容
+
+**技术说明**：
+- 使用`std::env::vars()`遍历所有环境变量
+- 使用`extract_service_name()`方法从环境变量键中提取服务名称
+- 使用`create_registration_from_env()`方法从环境变量创建服务注册
+- 使用`Arc<Mutex<HashMap>>`实现线程安全的服务缓存
+- 服务名称自动转换为小写，保持一致性
+- 环境变量中的服务名称部分不区分大小写（CRM、Crm、crm都识别为"crm"）
+- 实现了Default trait，默认使用"TOPEMS_SERVICE_"前缀
+- 实现了ServiceDiscovery trait，可以与其他服务发现实现互换使用
+- 作为Consul/etcd/Zookeeper等高级服务发现解决方案的过渡实现
+
+**与其他服务发现实现的对比**：
+| 特性 | StaticServiceDiscovery | EnvServiceDiscovery | ConsulServiceDiscovery（未来） |
+|------|----------------------|---------------------|-------------------------------|
+| 配置方式 | 代码/配置文件 | 环境变量 | Consul API |
+| 动态更新 | 否 | 是（热重载） | 是（实时） |
+| 健康检查 | 否 | 否 | 是 |
+| 服务自动注册 | 否 | 否 | 是 |
+| 多实例支持 | 否 | 否 | 是 |
+| 适用场景 | 测试/简单部署 | 容器化部署 | 生产环境/微服务 |
+
+**验收结果**：
+- 完成EnvServiceDiscovery结构体（prefix、services字段）
+- 完成new()和with_prefix()方法
+- 完成load_from_env()方法（从环境变量加载服务配置）
+- 完成reload()方法（热重载）
+- 完成同步方法（get、list、has、count、prefix）
+- 完成环境变量格式支持（URL、ENABLED、VERSION、TAGS）
+- 完成服务名称提取逻辑（extract_service_name）
+- 完成服务注册创建逻辑（create_registration_from_env）
+- 完成ServiceDiscovery trait实现（register、deregister、discover、list_services、heartbeat）
+- 完成Default trait实现
+- 完成环境变量示例文档
+- 完成与其他服务发现实现的对比
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C EnvServiceDiscovery结构体 | prefix: String、services: Arc<Mutex<HashMap>> | ✅ |
+| 轨C 构造方法 | new()（默认前缀）、with_prefix()（自定义前缀） | ✅ |
+| 轨C 加载方法 | load_from_env()、reload()（热重载） | ✅ |
+| 轨C 同步查询方法 | get()、list()、has()、count()、prefix() | ✅ |
+| 轨C 环境变量格式 | URL（必需）、ENABLED（可选）、VERSION（可选）、TAGS（可选） | ✅ |
+| 轨C 服务名称提取 | extract_service_name()，支持_URL/_ENABLED/_VERSION/_TAGS后缀 | ✅ |
+| 轨C 服务注册创建 | create_registration_from_env()，读取所有环境变量配置 | ✅ |
+| 轨C ServiceDiscovery trait | register()、deregister()、discover()、list_services()、heartbeat() | ✅ |
+| 轨C Default trait | 默认使用"TOPEMS_SERVICE_"前缀 | ✅ |
+| 轨C 线程安全 | Arc<Mutex>实现跨克隆共享 | ✅ |
+| 轨C 热重载支持 | reload()方法重新加载环境变量 | ✅ |
+| 轨C 多服务支持 | 支持配置多个服务，每个服务独立配置 | ✅ |
+| 轨C 服务标签 | 支持逗号分隔的服务标签 | ✅ |
+| 轨C 版本管理 | 支持服务版本配置 | ✅ |
+| 轨C 启用/禁用 | 支持启用/禁用服务 | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V445后续扩展（留给V446+）
+
+- [ ] **轨D 业务工具权限控制数据库持久化**：实现PostgreSQL/MySQL数据库权限存储
+- [ ] **轨D 业务工具权限管理API**：添加权限管理API端点（创建、更新、删除权限）
+- [ ] **轨C shared-service-client Consul服务发现**：集成Consul服务发现
+- [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V445连续一百一十三次交付验证成功，V446继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
