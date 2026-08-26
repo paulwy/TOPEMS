@@ -444,6 +444,198 @@ impl ServiceDiscovery for StaticServiceDiscovery {
     }
 }
 
+// ===== V445: Environment-based Service Discovery =====
+
+/// Environment-based service discovery.
+///
+/// Reads service configurations from environment variables. This serves as
+/// a simple dynamic service discovery implementation that can be used as
+/// a transition to more advanced solutions like Consul, etcd, or Zookeeper.
+///
+/// Environment variable format:
+/// - `TOPEMS_SERVICE_<NAME>_URL` — Service base URL (required)
+/// - `TOPEMS_SERVICE_<NAME>_ENABLED` — Whether the service is enabled (optional, default: true)
+/// - `TOPEMS_SERVICE_<NAME>_VERSION` — Service version (optional, default: "1.0.0")
+/// - `TOPEMS_SERVICE_<NAME>_TAGS` — Comma-separated service tags (optional)
+///
+/// Example:
+/// ```bash
+/// TOPEMS_SERVICE_CRM_URL=http://localhost:8001
+/// TOPEMS_SERVICE_CRM_ENABLED=true
+/// TOPEMS_SERVICE_CRM_VERSION=2.0.0
+/// TOPEMS_SERVICE_CRM_TAGS=production,critical
+/// ```
+pub struct EnvServiceDiscovery {
+    /// Environment variable prefix.
+    prefix: String,
+    /// Discovered services (cached after initial load).
+    services: Arc<std::sync::Mutex<HashMap<String, ServiceRegistration>>>,
+}
+
+impl EnvServiceDiscovery {
+    /// Create a new environment-based service discovery with the default prefix "TOPEMS_SERVICE_".
+    pub fn new() -> Self {
+        Self::with_prefix("TOPEMS_SERVICE_")
+    }
+
+    /// Create a new environment-based service discovery with a custom prefix.
+    pub fn with_prefix(prefix: &str) -> Self {
+        let discovery = Self {
+            prefix: prefix.to_string(),
+            services: Arc::new(std::sync::Mutex::new(HashMap::new())),
+        };
+        // Load services from environment variables
+        discovery.load_from_env();
+        discovery
+    }
+
+    /// Load service configurations from environment variables.
+    pub fn load_from_env(&self) {
+        let mut services = HashMap::new();
+
+        // Collect all unique service names from environment variables
+        let mut service_names = std::collections::HashSet::new();
+        for (key, _value) in std::env::vars() {
+            if let Some(name) = self.extract_service_name(&key) {
+                service_names.insert(name);
+            }
+        }
+
+        // Create service registrations for each service name
+        for name in service_names {
+            if let Some(registration) = self.create_registration_from_env(&name) {
+                services.insert(name, registration);
+            }
+        }
+
+        let mut stored = self.services.lock().unwrap();
+        *stored = services;
+    }
+
+    /// Reload service configurations from environment variables.
+    pub fn reload(&self) {
+        self.load_from_env();
+    }
+
+    /// Extract the service name from an environment variable key.
+    fn extract_service_name(&self, key: &str) -> Option<String> {
+        if !key.starts_with(&self.prefix) {
+            return None;
+        }
+
+        let remaining = &key[self.prefix.len()..];
+        // Find the suffix separator (_URL, _ENABLED, _VERSION, _TAGS)
+        let suffixes = ["_URL", "_ENABLED", "_VERSION", "_TAGS"];
+        for suffix in suffixes {
+            if let Some(name) = remaining.strip_suffix(suffix) {
+                return Some(name.to_lowercase());
+            }
+        }
+
+        None
+    }
+
+    /// Create a service registration from environment variables.
+    fn create_registration_from_env(&self, name: &str) -> Option<ServiceRegistration> {
+        let upper_name = name.to_uppercase();
+
+        // URL is required
+        let url_key = format!("{}{}_URL", self.prefix, upper_name);
+        let base_url = std::env::var(&url_key).ok()?;
+
+        // Optional fields
+        let enabled_key = format!("{}{}_ENABLED", self.prefix, upper_name);
+        let enabled = std::env::var(&enabled_key)
+            .ok()
+            .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
+            .unwrap_or(true);
+
+        let version_key = format!("{}{}_VERSION", self.prefix, upper_name);
+        let version = std::env::var(&version_key).unwrap_or_else(|_| "1.0.0".to_string());
+
+        let tags_key = format!("{}{}_TAGS", self.prefix, upper_name);
+        let tags = std::env::var(&tags_key)
+            .ok()
+            .map(|v| v.split(',').map(|s| s.trim().to_string()).collect())
+            .unwrap_or_default();
+
+        let now = chrono::Utc::now().to_rfc3339();
+
+        Some(ServiceRegistration {
+            name: name.to_string(),
+            base_url,
+            version,
+            description: String::new(),
+            tags,
+            metadata: HashMap::new(),
+            enabled,
+            registered_at: now.clone(),
+            last_heartbeat: now,
+        })
+    }
+
+    /// Get a service registration by name (synchronous).
+    pub fn get(&self, name: &str) -> Option<ServiceRegistration> {
+        self.services.lock().unwrap().get(name).cloned()
+    }
+
+    /// List all service registrations (synchronous).
+    pub fn list(&self) -> Vec<ServiceRegistration> {
+        self.services.lock().unwrap().values().cloned().collect()
+    }
+
+    /// Check if a service is registered (synchronous).
+    pub fn has(&self, name: &str) -> bool {
+        self.services.lock().unwrap().contains_key(name)
+    }
+
+    /// Get the number of registered services (synchronous).
+    pub fn count(&self) -> usize {
+        self.services.lock().unwrap().len()
+    }
+
+    /// Get the environment variable prefix.
+    pub fn prefix(&self) -> &str {
+        &self.prefix
+    }
+}
+
+impl Default for EnvServiceDiscovery {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait::async_trait]
+impl ServiceDiscovery for EnvServiceDiscovery {
+    async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
+        self.services.lock().unwrap().insert(registration.name.clone(), registration);
+        Ok(())
+    }
+
+    async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
+        self.services.lock().unwrap().remove(name);
+        Ok(())
+    }
+
+    async fn discover(&self, name: &str) -> Result<Option<ServiceRegistration>, ServiceClientError> {
+        Ok(self.services.lock().unwrap().get(name).cloned())
+    }
+
+    async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
+        Ok(self.services.lock().unwrap().values().cloned().collect())
+    }
+
+    async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
+        if let Some(registration) = self.services.lock().unwrap().get_mut(name) {
+            registration.heartbeat();
+            Ok(())
+        } else {
+            Err(ServiceClientError::ServiceNotFound(name.to_string()))
+        }
+    }
+}
+
 // ===== V439: Rate Limiter & Load Balancer Types =====
 
 /// Rate limiter using token bucket algorithm.
