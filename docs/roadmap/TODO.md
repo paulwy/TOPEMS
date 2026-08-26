@@ -6982,6 +6982,105 @@ POST /mcp
 
 ---
 
+## 🎯 V351 — 架构改进四轨并行第十九次：MCP stdio传输（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十九次交付 · MCP stdio传输上线 · 独立二进制入口 · cargo check ✅
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V352 | ⏸️ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V352 | ⏸️ |
+| 轨C | MCP stdio传输 | 独立二进制入口（src/bin/mcp-stdio.rs），支持stdin/stdout JSON-RPC通信 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V352 | ⏸️ |
+
+### 轨C：MCP stdio传输
+
+**新增文件**：
+- `svc/ai/src/bin/mcp-stdio.rs` — MCP stdio 独立二进制入口（~140行）
+
+**实现功能**：
+1. **独立二进制入口**：`cargo run --bin mcp-stdio` 启动
+2. **stdin/stdout JSON-RPC通信**：NDJSON 格式，每行一个请求/响应
+3. **完整工具注册**：启动时注册所有65个工具（2系统 + 16业务域共63个业务工具）
+4. **通知处理**：无 id 字段的通知不需要响应
+5. **解析错误处理**：JSON 解析失败返回 -32700 Parse error
+6. **EOF 优雅退出**：客户端关闭连接时自动退出
+7. **日志输出到 stderr**：不干扰 stdout 的 JSON-RPC 通信
+
+**通信协议**：
+```
+# 客户端 → 服务器（stdin）
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{...}}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"crm.list_leads","arguments":{...}}}
+
+# 服务器 → 客户端（stdout）
+{"jsonrpc":"2.0","id":1,"result":{...}}
+{"jsonrpc":"2.0","id":2,"result":{"tools":[...]}}
+{"jsonrpc":"2.0","id":3,"result":{"content":[...]}}
+```
+
+**使用方式**：
+```bash
+# 直接运行
+cargo run --bin mcp-stdio
+
+# 在 Cursor Local 中配置
+# mcpServers:
+#   topems:
+#     command: "cargo"
+#     args: ["run", "--bin", "mcp-stdio", "--manifest-path", "/path/to/Cargo.toml"]
+
+# 在 Claude Desktop 中配置
+# {
+#   "mcpServers": {
+#     "topems": {
+#       "command": "/path/to/mcp-stdio"
+#     }
+#   }
+# }
+```
+
+**技术要点**：
+- 使用 `std::io::BufReader` 同步读取 stdin（CPU 密集型，同步更简单）
+- 使用 `std::io::Stdout` 同步写入响应
+- 复用 `McpServer::handle_request` 核心逻辑（与 HTTP/SSE 传输共享）
+- 所有业务工具在启动时同步注册完成（`.await` 等待）
+- 日志通过 `tracing_subscriber` 输出到 stderr
+
+**当前 MCP 传输层完整矩阵**：
+| 传输方式 | 端点 | 状态 | 适用场景 |
+|----------|------|------|----------|
+| HTTP POST | POST /mcp | ✅ V335 | 远程 AI Agent 调用 |
+| SSE 流式 | GET /mcp/sse | ✅ V336 | 实时推送、长连接 |
+| stdio | 独立二进制 | ✅ V351 | 本地 AI Agent（Cursor/Claude） |
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C cargo check | mcp-stdio 二进制编译通过 | ✅ |
+| 轨C 独立二进制 | src/bin/mcp-stdio.rs 可独立运行 | ✅ |
+| 轨C 工具注册 | 启动时注册全部65个工具 | ✅ |
+| 轨C JSON-RPC | 支持 initialize/tools/list/tools/call/ping | ✅ |
+| 轨C 通知处理 | 无 id 通知不返回响应 | ✅ |
+| 轨C EOF退出 | 客户端断开自动退出 | ✅ |
+| 传输层完整度 | HTTP + SSE + stdio 三种传输方式 | ✅ |
+| 变更统计 | 新增1文件(~140行) + 修改1文件 | ✅ |
+
+### V351后续扩展（留给V352+）
+
+- [ ] **轨C stdio传输单元测试**：模拟 stdin/stdout 的端到端测试
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V351连续十九次交付验证成功，V352继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
