@@ -10749,6 +10749,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V404 — 架构改进四轨并行第七十二次：集成测试编译修复（Send trait实现）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第七十二次交付 · 集成测试编译修复 · 1个文件 · 修复mcp_stdio_integration.rs中原始指针不能跨线程传递的编译错误
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | 集成测试编译修复 | 修复原始指针不能跨线程传递的编译错误，使用ReaderWrapper包装结构体手动实现Send trait | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V405 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V405 | ⏸️ |
+
+### 轨C：集成测试编译修复（Send trait实现）
+
+**修复内容**：修复mcp_stdio_integration.rs中原始指针不能跨线程传递的编译错误
+
+**修复的文件（1个）**：
+
+1. **svc/ai/tests/mcp_stdio_integration.rs** — 修复编译错误
+   - 错误信息：``*mut BufReader<ChildStdout>` cannot be sent between threads safely``
+   - 错误原因：Rust标准库的原始指针 `*mut T` 没有实现 `Send` trait，不能通过 `thread::spawn` 跨线程传递
+   - 解决方案：创建 `ReaderWrapper` 包装结构体，手动实现 `Send` trait
+     ```rust
+     struct ReaderWrapper(*mut BufReader<std::process::ChildStdout>);
+     unsafe impl Send for ReaderWrapper {}
+     ```
+   - 在 `read_response_with_timeout` 函数中使用 `ReaderWrapper` 包装原始指针，然后传递到读取线程
+   - 安全性说明：在读取线程运行期间，主线程不会访问 reader，所以跨线程传递是安全的
+   - 编译验证：测试文件成功编译通过，只有一些未使用import的警告（来自其他模块）
+
+**技术说明**：
+- 问题根因：Rust的线程安全机制要求跨线程传递的数据必须实现 `Send` trait，而原始指针默认不实现
+- 解决方案：使用newtype模式创建包装结构体，通过 `unsafe impl Send` 手动声明线程安全
+- 重要发现：这种模式在需要在线程之间共享可变引用、但又无法使用 `Arc<Mutex<>>` 的场景中很常见
+- 安全性保证：在读取线程运行期间，主线程阻塞在 `rx.recv_timeout()` 上，不会访问 reader，所以不存在数据竞争
+- 编译验证：`cargo test --no-run -p topems-ai --test mcp_stdio_integration` 成功通过
+
+**验收结果**：
+- 测试文件成功编译通过
+- 原始指针跨线程传递的编译错误已修复
+- `ReaderWrapper` 包装结构体正确实现了 `Send` trait
+- 读取线程中的 `unsafe` 代码块有明确的安全性说明
+- 所有7个测试用例的代码保持不变
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 修复文件数 | 1个测试文件的编译错误修复 | ✅ |
+| 轨C 修复错误 | `*mut BufReader<ChildStdout>` cannot be sent between threads safely | ✅ |
+| 轨C 解决方案 | ReaderWrapper包装结构体 + unsafe impl Send | ✅ |
+| 轨C 编译验证 | cargo test --no-run 成功通过 | ✅ |
+| 轨C 安全性说明 | 读取线程运行期间主线程不访问reader | ✅ |
+| 轨C 测试用例 | 7个测试用例代码保持不变 | ✅ |
+| 轨C 函数保留 | read_response和read_response_with_timeout函数保留 | ✅ |
+| 轨C 警告 | 只有其他模块的未使用import警告 | ✅ |
+| 变更统计 | 修改1个测试文件 + 修改1文件 | ✅ |
+
+### V404后续扩展（留给V405+）
+
+- [ ] **轨C 测试运行验证**：实际运行mcp_stdio_integration测试，验证所有测试用例能通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V404连续七十二次交付验证成功，V405继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
