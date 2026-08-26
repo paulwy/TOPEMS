@@ -391,6 +391,3 @@ export function getComponentByType(type: string): DesignerComponent | undefined 
 /**
  * 按分类获取组件列表
  */
-function getComponentsByCategory(category: ComponentCategory): DesignerComponent[] {
-  return BUILTIN_COMPONENTS.filter((c) => c.category === category);
-}

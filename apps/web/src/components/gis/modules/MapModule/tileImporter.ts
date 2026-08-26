@@ -162,17 +162,6 @@ export async function getTileCacheInfo(): Promise<{
 /**
  * 导出为可使用的离线瓦片提供器 (用于 Leaflet 等地图库)
  */
-function createOfflineTileProvider(
-  source: string,
-  _getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>
-) {
-  return function (tileCoord: [number, number, number]): string {
-    const [z, x, y] = tileCoord;
-
-    // 返回占位符 URL，实际瓦片通过 getTile 获取
-    return `offline://${source}/${z}/${x}/${y}`;
-  };
-}
 
 // 浏览器控制台暴露的全局函数
 if (typeof window !== 'undefined') {
