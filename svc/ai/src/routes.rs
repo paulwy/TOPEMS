@@ -8,7 +8,7 @@ use crate::modules::{
 use crate::shared::AppState;
 use std::sync::Arc;
 
-use crate::dsh::mcp::{create_mcp_routes, register_aps_tools, register_bi_tools, register_crm_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_lims_tools, register_mes_tools, register_pm_tools, register_qms_tools, register_wms_tools, McpServer};
+use crate::dsh::mcp::{create_mcp_routes, register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_lims_tools, register_mes_tools, register_pm_tools, register_qms_tools, register_wms_tools, McpServer};
 
 use axum::{
     extract::DefaultBodyLimit,
@@ -384,8 +384,9 @@ pub fn create_routes(
         register_lims_tools(&server_clone).await;
         register_bi_tools(&server_clone).await;
         register_aps_tools(&server_clone).await;
+        register_cs_tools(&server_clone).await;
         tracing::info!(
-            "MCP Server tools registered: {} tools total (2 system + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS)",
+            "MCP Server tools registered: {} tools total (2 system + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS + 4 CS)",
             server_clone.tool_registry().len().await
         );
     });
