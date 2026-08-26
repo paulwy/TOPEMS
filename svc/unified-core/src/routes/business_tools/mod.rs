@@ -4,6 +4,9 @@
 //! that connect to real services (CRM, ERP, Finance, HR, MES, EHS,
 //! WMS, QMS, PM, LIMS, BI, APS, CS, SCM, IoT, OA).
 
+// V444: Permission store module
+pub mod permission_store;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
