@@ -14340,6 +14340,165 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V433 — 架构改进四轨并行第一百零一次：轨C shared-service-client实现（服务客户端模块，支持16个真实服务）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零一次交付 · 轨C shared-service-client实现 · 2个代码文件修改(1新建+1修改) · 创建服务客户端模块，支持连接16个真实服务（CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA）
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client实现 | 创建服务客户端模块，支持连接16个真实服务 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V434 | ⏸️ |
+
+### 轨C：shared-service-client实现（服务客户端模块，支持16个真实服务）
+
+**实现内容**：创建服务客户端模块，支持连接多个真实服务，提供统一的请求和响应处理
+
+**修改的文件（2个代码文件，1新建+1修改）**：
+
+**1. 新建：`svc/unified-core/src/shared/service_client.rs`（服务客户端模块）**
+- 错误类型：
+  - `ServiceClientError` — 服务客户端错误（ServiceNotFound、RequestFailed、InvalidUrl、InvalidHeader、ParseFailed、ServiceError、Timeout）
+- 服务配置：
+  - `ServiceConfig` — 服务配置（name、base_url、timeout_secs、api_key、bearer_token、default_headers、enabled）
+  - 方法：new()、with_timeout()、with_api_key()、with_bearer_token()、with_header()、build_url()、build_headers()
+- 统一响应：
+  - `ServiceResponse<T>` — 统一响应（success、status、data、error、request_id、service、duration_ms）
+  - 方法：success()、error()
+- 服务客户端：
+  - `ServiceClient` — 服务客户端（基于reqwest::Client）
+  - 方法：new()、name()、config()、get()、post()、put()、delete()、request()、request_raw()
+- 服务注册表：
+  - `ServiceRegistry` — 服务注册表（管理多个服务客户端）
+  - 方法：new()、register()、register_all()、get()、has()、remove()、list()、count()、get()、post()、put()、delete()
+- 默认服务配置：
+  - `default_service_configs()` — 返回16个默认服务配置
+  - `create_default_registry()` — 创建包含所有默认服务的注册表
+- 单元测试：6个测试用例（build_url、build_headers、register_and_get、remove、not_found、default_service_configs）
+
+**2. 修改：`svc/unified-core/src/shared/mod.rs`（添加模块声明）**
+- 添加 `pub mod service_client;` 声明
+
+**支持的16个真实服务**：
+1. CRM — 客户关系管理（http://localhost:8001）
+2. ERP — 企业资源计划（http://localhost:8002）
+3. Finance — 财务管理（http://localhost:8003）
+4. HR — 人力资源（http://localhost:8004）
+5. MES — 制造执行系统（http://localhost:8005）
+6. EHS — 环境健康安全（http://localhost:8006）
+7. WMS — 仓库管理系统（http://localhost:8007）
+8. QMS — 质量管理系统（http://localhost:8008）
+9. PM — 项目管理（http://localhost:8009）
+10. LIMS — 实验室信息管理（http://localhost:8010）
+11. BI — 商业智能（http://localhost:8011）
+12. APS — 高级计划与排程（http://localhost:8012）
+13. CS — 客户服务（http://localhost:8013）
+14. SCM — 供应链管理（http://localhost:8014）
+15. IoT — 物联网（http://localhost:8015）
+16. OA — 办公自动化（http://localhost:8016）
+
+**功能特性**：
+
+**1. 服务配置**
+- 支持自定义服务名称和基础URL
+- 支持配置请求超时（默认30秒）
+- 支持API密钥认证（X-API-Key请求头）
+- 支持Bearer Token认证（Authorization请求头）
+- 支持自定义默认请求头
+- 支持启用/禁用服务
+
+**2. 统一请求方法**
+- GET请求：支持查询参数
+- POST请求：支持JSON请求体
+- PUT请求：支持JSON请求体
+- DELETE请求
+- 通用request方法：支持自定义HTTP方法
+- request_raw方法：返回原始响应字节
+
+**3. 统一响应处理**
+- 统一的ServiceResponse<T>包装
+- 包含success、status、data、error字段
+- 包含request_id用于追踪
+- 包含service名称标识
+- 包含duration_ms响应时间
+- 自动解析JSON响应
+- 自动处理错误状态码
+
+**4. 服务注册表**
+- 支持注册单个服务
+- 支持批量注册服务
+- 支持按名称获取服务客户端
+- 支持检查服务是否存在
+- 支持移除服务
+- 支持列出所有服务名称
+- 支持获取服务数量
+- 支持直接通过注册表发送请求（get/post/put/delete）
+
+**5. 错误处理**
+- ServiceNotFound：服务未找到
+- RequestFailed：请求失败（reqwest错误）
+- InvalidUrl：无效URL
+- InvalidHeader：无效请求头
+- ParseFailed：响应解析失败
+- ServiceError：服务返回错误状态
+- Timeout：请求超时
+
+**6. 单元测试**
+- test_service_config_build_url：测试URL构建
+- test_service_config_build_headers：测试请求头构建
+- test_service_registry_register_and_get：测试注册和获取
+- test_service_registry_remove：测试移除服务
+- test_service_registry_not_found：测试服务未找到
+- test_default_service_configs：测试默认服务配置
+
+**技术说明**：
+- 基于reqwest::Client实现HTTP客户端
+- 使用serde进行序列化和反序列化
+- 使用thiserror定义错误类型
+- 使用uuid生成请求ID
+- 使用Arc<Mutex<HashMap>>实现线程安全的服务注册表
+- 支持异步请求（async/await）
+- 支持泛型响应类型（ServiceResponse<T>）
+- 支持查询参数和JSON请求体
+- 支持自定义请求头和认证方式
+
+**验收结果**：
+- 完成服务客户端模块创建（service_client.rs）
+- 完成错误类型定义（7种错误）
+- 完成服务配置实现（ServiceConfig）
+- 完成统一响应实现（ServiceResponse<T>）
+- 完成服务客户端实现（ServiceClient，支持get/post/put/delete/request）
+- 完成服务注册表实现（ServiceRegistry，支持注册/获取/移除/列表）
+- 完成16个默认服务配置
+- 完成6个单元测试用例
+- 完成模块声明（pub mod service_client）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 服务客户端模块 | 新建service_client.rs，包含错误类型、配置、响应、客户端、注册表 | ✅ |
+| 轨C 错误类型 | 7种错误（ServiceNotFound、RequestFailed、InvalidUrl、InvalidHeader、ParseFailed、ServiceError、Timeout） | ✅ |
+| 轨C 服务配置 | ServiceConfig，支持name、base_url、timeout、api_key、bearer_token、default_headers | ✅ |
+| 轨C 统一响应 | ServiceResponse<T>，包含success、status、data、error、request_id、service、duration_ms | ✅ |
+| 轨C 服务客户端 | ServiceClient，支持get、post、put、delete、request、request_raw | ✅ |
+| 轨C 服务注册表 | ServiceRegistry，支持register、register_all、get、has、remove、list、count | ✅ |
+| 轨C 默认服务 | 16个服务（CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA） | ✅ |
+| 轨C 单元测试 | 6个测试用例 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加pub mod service_client | ✅ |
+| 变更统计 | 2个代码文件修改(1新建+1修改) + 修改1文件(TODO.md) | ✅ |
+
+### V433后续扩展（留给V434+）
+
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨C shared-service-client完善**：添加服务健康检查、自动重连、负载均衡、服务发现
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V433连续一百零一次交付验证成功，V434继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

@@ -1,6 +1,7 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
+pub mod service_client;
 pub mod util;
 
 use axum::extract::FromRef;
