@@ -4,7 +4,7 @@
  * 在当前页面中嵌入关联模块的数据摘要卡片。
  * 仅在关联模块已安装时显示，通过 usePluginContext.isPluginInstalled 判断。
  */
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Typography, Card, CardContent, Button, Skeleton, Divider } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { ExternalLink, TrendingUp, ArrowRight } from 'lucide-react';

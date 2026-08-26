@@ -42,7 +42,6 @@ import {
   Select,
   MenuItem,
   FormHelperText,
-  Checkbox,
   Switch,
   FormControlLabel,
 } from '@mui/material';

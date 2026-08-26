@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Package, AlertTriangle, DollarSign, CheckCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';

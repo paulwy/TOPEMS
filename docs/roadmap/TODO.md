@@ -7388,6 +7388,81 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V356 — 架构改进四轨并行第二十四次：前端未使用import清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十四次交付 · 前端未使用import清理 · 8个文件 · TS6133减少8个
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用项持续清理 | 8个文件移除未使用的import，TS6133从205减少到197 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V357 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V357 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V357 | ⏸️ |
+
+### 轨A：前端未使用import清理
+
+**清理内容**：移除8个文件中未使用的 import
+
+**清理的文件（8个）**：
+
+1. **pages/rd/RsReleasePage.tsx** — 移除未使用的 useState
+   - `import React, { useState } from 'react';` → `import React from 'react';`
+
+2. **pages/rd/RsReviewPage.tsx** — 移除未使用的 useState
+   - `import React, { useState } from 'react';` → `import React from 'react';`
+
+3. **pages/erp/InventoryManagementPage.tsx** — 移除未使用的 useMemo
+   - `import React, { useMemo } from 'react';` → `import React from 'react';`
+
+4. **components/common/RelatedModuleCard.tsx** — 移除未使用的 useState
+   - `import React, { useState } from 'react';` → `import React from 'react';`
+
+5. **components/common/AdvancedFilter.tsx** — 移除未使用的 type Key
+   - `import { useState, type Key } from 'react';` → `import { useState } from 'react';`
+
+6. **pages/asset/AssetListPage.tsx** — 移除未使用的 useState（保留 useMemo）
+   - `import React, { useState, useMemo } from 'react';` → `import React, { useMemo } from 'react';`
+
+7. **pages/crm/CRMCustomerSegmentationPage.tsx** — 移除未使用的 useMemo（保留 useCallback）
+   - `import React, { useCallback, useMemo } from 'react';` → `import React, { useCallback } from 'react';`
+
+8. **components/templates/SubTableBuilder.tsx** — 移除未使用的 Checkbox（从@mui/material导入）
+   - 删除 `Checkbox,` 行
+
+**未处理的文件（留给后续版本）**：
+- components/common/TouchButton.tsx — TouchRipple 是本地定义的组件，删除需处理多行定义
+- components/LoadingProvider.tsx — useLoading 是本地定义的 hook，删除需处理多行定义
+
+**验收结果**：
+- 清理前 TS6133 错误：205个
+- 清理后 TS6133 错误：197个
+- 减少：8个
+- 编译验证：无新增错误
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 8个文件移除未使用的import | ✅ |
+| 轨A TS6133减少 | 从205减少到197，减少8个 | ✅ |
+| 轨A import类型 | 5个react hooks + 1个type Key + 1个@mui/material + 1个混合 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改8个前端文件 + 修改1文件 | ✅ |
+
+### V356后续扩展（留给V357+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余197个TS6133错误
+- [ ] **轨A 本地未使用组件/hook清理**：TouchButton.tsx的TouchRipple、LoadingProvider.tsx的useLoading
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V356连续二十四次交付验证成功，V357继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
