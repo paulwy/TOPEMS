@@ -6,7 +6,6 @@ import { designTokens } from '@topems/tokens';
  * 根据组件的 propsPanel 配置渲染不同类型的表单控件。
  */
 
-import React from 'react';
 import {
   Box,
   Paper,

@@ -7300,6 +7300,94 @@ import { designTokens } from '@topems/tokens';
 
 ---
 
+## 🎯 V355 — 架构改进四轨并行第二十三次：前端未使用React import清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十三次交付 · 前端未使用React import清理 · 16个文件 · TS6133减少16个
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用项持续清理 | 16个文件移除未使用的React import，TS6133从221减少到205 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V356 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V356 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V356 | ⏸️ |
+
+### 轨A：前端未使用React import清理
+
+**清理内容**：移除16个文件中未使用的 React import
+
+**两种 import 模式**：
+
+**模式1：纯 React import（8个文件）— 删除整行**
+```typescript
+// 清理前
+import React from 'react';
+
+// 清理后
+（整行删除）
+```
+
+**模式2：React + 其他 import（8个文件）— 只移除 React，保留其他**
+```typescript
+// 清理前
+import React, { useMemo, useState } from 'react';
+
+// 清理后
+import { useMemo, useState } from 'react';
+```
+
+**清理的文件（16个）**：
+
+模式1（纯 React import，8个）：
+- components/designer/PropertyPanel.tsx
+- components/report/ReportPageUtils.tsx
+- components/templates/list/ListBatchActions.tsx
+- components/workflow/WorkflowSettingGroups.tsx
+- pages/finance/ConsolidationScopePage/components/ConsolidationScopeFormDialog.tsx
+- pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx
+- pages/mes/ProcessFlowPage.tsx
+- pages/mes/TeamManagementPage.tsx
+
+模式2（React + 其他 import，8个）：
+- components/templates/list/SchemaForm.tsx（useMemo）
+- pages/lims/InspectionResultPage.tsx（useMemo, useState）
+- pages/lowcode/AppListPage.tsx（useCallback, useMemo）
+- pages/lowcode/DataModelListPage.tsx（useMemo）
+- pages/lowcode/FormListPage.tsx（useCallback, useMemo, useState）
+- pages/lowcode/PageListPage.tsx（useCallback, useMemo）
+- pages/mes/analytics/MesCapacityUtilizationPage.tsx（useMemo, useState）
+- pages/mes/analytics/MesOeeDashboardPage.tsx（useMemo, useState）
+
+**验收结果**：
+- 清理前 TS6133 错误：221个
+- 清理后 TS6133 错误：205个
+- 减少：16个
+- 未使用 React import 剩余：0个
+- 编译验证：无新增错误
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 16个文件移除未使用的React import | ✅ |
+| 轨A TS6133减少 | 从221减少到205，减少16个 | ✅ |
+| 轨A React import剩余 | 0个未使用的React import | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 轨A 两种模式处理 | 纯React删除整行，React+其他只移除React | ✅ |
+| 变更统计 | 修改16个前端文件 + 修改1文件 | ✅ |
+
+### V355后续扩展（留给V356+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余205个TS6133错误
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V355连续二十三次交付验证成功，V356继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

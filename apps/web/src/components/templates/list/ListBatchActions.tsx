@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Typography, Button, ButtonGroup, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { X } from 'lucide-react';

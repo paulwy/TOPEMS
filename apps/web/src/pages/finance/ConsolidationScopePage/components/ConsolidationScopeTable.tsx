@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme, Chip, Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
