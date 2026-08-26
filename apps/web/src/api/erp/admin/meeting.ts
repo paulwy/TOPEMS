@@ -1,7 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { MeetingRoom, MeetingBooking, PaginationParams, PaginatedResult } from '../types';
-import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export const meetingRoomApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
@@ -63,30 +62,4 @@ export const meetingBookingApi = {
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.erp.delete(`/meeting-bookings/${id}`);
   },
-};
-
-const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
-  list: (params?) =>
-    meetingRoomApi.list({
-      page: params?.page as number,
-      pagesize: params?.pagesize as number,
-      ...(params as unknown as Record<string, unknown>),
-    }),
-  get: meetingRoomApi.get,
-  create: meetingRoomApi.create,
-  update: meetingRoomApi.update,
-  delete: meetingRoomApi.delete,
-};
-
-const meetingBookingCrudApi: CrudOperations<MeetingBooking> = {
-  list: (params?) =>
-    meetingBookingApi.list({
-      page: params?.page as number,
-      pagesize: params?.pagesize as number,
-      ...(params as unknown as Record<string, unknown>),
-    }),
-  get: meetingBookingApi.get,
-  create: meetingBookingApi.create,
-  update: meetingBookingApi.update,
-  delete: meetingBookingApi.delete,
 };

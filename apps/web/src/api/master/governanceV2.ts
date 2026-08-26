@@ -257,7 +257,7 @@ export const governanceApiV2 = {
   },
 
   async approveStep(
-    id: string,
+    _id: string,
     stepId: string,
     data?: { comment?: string; approver?: string }
   ): Promise<ApiResponse<GovernanceWorkflow>> {
@@ -268,7 +268,7 @@ export const governanceApiV2 = {
   },
 
   async rejectStep(
-    id: string,
+    _id: string,
     stepId: string,
     data?: { reason?: string; approver?: string }
   ): Promise<ApiResponse<GovernanceWorkflow>> {

@@ -1,5 +1,3 @@
-import type { ApiResponse } from '../client';
-
 import { marketplaceApi } from './marketplace';
 import { pluginApi } from './plugin';
 
@@ -15,7 +13,6 @@ export { fetchAllPluginInfo, checkAllPluginsHealth } from './registry';
 export { pluginApi } from './plugin';
 
 export const getMarketplaceSummary = marketplaceApi.getSummary;
-const getPluginCategories = marketplaceApi.getCategories;
 export const listPlugins = marketplaceApi.listPlugins;
 export const getPlugin = marketplaceApi.getPlugin;
 export const getPluginVersions = marketplaceApi.getVersions;

@@ -9,8 +9,6 @@ import { documentApprovalApi } from './documentApproval';
 import { changeNoticeActionApi } from './changeNoticeAction';
 import { workflowApi } from './workflow';
 import { pdmVersionApi } from './pdmVersion';
-import { pdmMaterialApi } from './pdmMaterial';
-import { pdmProductApi } from './pdmProduct';
 
 export * from './bom';
 export * from './project';

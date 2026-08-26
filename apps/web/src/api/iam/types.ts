@@ -1,5 +1,3 @@
-import type { IamTypes } from '@topems/shared-types';
-
 // ============================================================================
 // OpenAPI 生成类型别名（试点）
 // ============================================================================
@@ -25,15 +23,7 @@ import type { IamTypes } from '@topems/shared-types';
  * 生成类型 User 的字段重映射：
  * - status（string） → isactive（boolean），约定 status === 'active' 为激活
  */
-type AdaptedUser = Omit<IamTypes.User, 'status'> & {
-  isactive?: boolean;
-};
-
 /** 生成类型 Permission 的字段重映射（待 schema 补充 module/category 字段后启用） */
-type AdaptedPermission = IamTypes.Permission & {
-  category?: string;
-};
-
 // ============================================================================
 // 字段适配函数：生成类型实例 → 手写类型实例
 // ============================================================================

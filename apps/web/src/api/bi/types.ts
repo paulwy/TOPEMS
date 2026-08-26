@@ -156,20 +156,6 @@ export interface LaboratoryAnalytics {
   generated_at: string;
 }
 
-interface ModuleAnalyticsData {
-  [key: string]: unknown;
-}
-
-interface ModuleAnalytics {
-  rs?: ModuleAnalyticsData;
-  lims?: ModuleAnalyticsData;
-  qms?: ModuleAnalyticsData;
-  ehs?: ModuleAnalyticsData;
-  srm?: ModuleAnalyticsData;
-  pdm?: ModuleAnalyticsData;
-  [key: string]: ModuleAnalyticsData | undefined;
-}
-
 export interface DataSource {
   id: string;
   name: string;
@@ -375,15 +361,4 @@ export interface FilterConfig {
   default_value?: string | number | boolean;
   placeholder?: string;
   required?: boolean;
-}
-
-interface PivotTableConfig {
-  rows: string[];
-  columns: string[];
-  values: Array<{
-    field: string;
-    aggregation: 'sum' | 'avg' | 'count' | 'max' | 'min';
-    label?: string;
-  }>;
-  filters?: FilterConfig[];
 }

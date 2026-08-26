@@ -4,14 +4,12 @@ import type {
   CreateInspectionItemRequest,
   CreateInspectionPlanRequest,
   CreateInspectionRecordRequest,
-  CreateRecordItemRequest,
   InspectionItem,
   InspectionPlan,
   InspectionRecord,
   InspectionRecordDetail,
   ListQueryParams,
   PaginatedResponse,
-  RecordItem,
 } from './types';
 
 export const inspectionApi = {
