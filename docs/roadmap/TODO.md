@@ -5997,6 +5997,97 @@ POST /mcp
 
 ---
 
+## 🎯 V340 — 架构改进四轨并行第八次：EHS业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第八次交付 · EHS MCP Tools上线 · 25个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V341 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V339评估，记录V341+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V341实施（需独立二进制入口） | ⏸️ |
+| 轨D | EHS MCP Tools | 4个业务工具（ehs.list_incidents, ehs.get_incident, ehs.list_hazards, ehs.create_incident），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V339）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V341+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：EHS MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/ehs.rs` — EHS业务工具（~600行）
+
+**注册的4个工具**：
+1. **ehs.list_incidents** — 查询安全事件列表
+   - 参数：page, page_size, level(minor/major/serious/critical), status(reported/investigating/resolved/closed), incident_type
+   - 返回：安全事件列表（事件编号、标题、类型、等级、状态、发生时间、地点、报告人、受伤人数）
+   - 支持分页、等级筛选、状态筛选、类型筛选
+
+2. **ehs.get_incident** — 获取安全事件详情
+   - 参数：incident_id（必填）
+   - 返回：完整事件信息（基本信息、事件描述、受伤人员、调查过程、整改措施、附件）
+   - 包含根因分析、 contributing factors、3项整改措施、2个附件
+
+3. **ehs.list_hazards** — 查询安全隐患列表
+   - 参数：page, page_size, risk_level(low/medium/high/extreme), status(identified/assessing/rectifying/verified/closed), location
+   - 返回：隐患列表（隐患编号、描述、类别、风险等级、状态、位置、发现人、发现时间、整改期限）
+   - 支持分页、风险等级筛选、状态筛选、位置筛选
+
+4. **ehs.create_incident** — 创建安全事件
+   - 参数：title（必填）, incident_type（必填：injury/near_miss/property_damage/environmental/occupational_illness）, level（必填）, occurred_at（必填）, location（必填）, description, reporter
+   - 返回：新事件ID、事件编号、基本信息
+   - 验证：5个必填字段，自动生成事件编号，默认状态为reported
+
+**单元测试**（6个）：
+- test_register_ehs_tools — 4个工具全部注册
+- test_list_incidents — 分页查询
+- test_get_incident — 按ID查询，验证调查/整改/受伤人员结构
+- test_list_hazards — 分页+风险等级筛选
+- test_create_incident — 成功创建事件，验证默认状态
+- test_create_incident_validation — 参数验证（缺少title/location）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod ehs和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_ehs_tools
+- `svc/ai/src/routes.rs` — 调用register_ehs_tools注册EHS工具
+
+**当前工具总数**：25个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V339，记录V341+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D EHS工具 | 4个业务工具已注册 | ✅ |
+| 轨D EHS单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 25个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS） | ✅ |
+| 变更统计 | 新增1文件(~600行) + 修改4文件 | ✅ |
+
+### V340后续扩展（留给V341+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D WMS/PM MCP Tools**：注册wms.list_inventory, pm.list_work_orders等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V340连续八次交付验证成功，V341继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
