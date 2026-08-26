@@ -420,10 +420,9 @@ async fn main() -> anyhow::Result<()> {
     let business_tool_registry = crate::modules::business_tools::create_default_registry(service_registry.clone())
         .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
 
-    // V444: Initialize permission store with default permissions
-    let permission_store = std::sync::Arc::new(
-        crate::routes::business_tools::permission_store::InMemoryPermissionStore::with_defaults()
-    ) as std::sync::Arc<dyn crate::routes::business_tools::permission_store::PermissionStore>;
+    // V450: Initialize permission store using factory (supports memory and database backends)
+    // Set PERMISSION_STORE_TYPE=database to use PostgreSQL-backed storage
+    let permission_store = crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(Some(ctx.db.clone()));
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),

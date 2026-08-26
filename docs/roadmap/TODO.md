@@ -16997,6 +16997,137 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V450 — 架构改进四轨并行第一百一十八次：轨D 业务工具权限控制AppState集成（PermissionStoreConfig+PermissionStoreType+PermissionStoreFactory+环境变量配置+main.rs集成+8个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十八次交付 · 轨D 业务工具权限控制AppState集成 · 1个代码文件新建 + 2个代码文件修改 · 实现权限存储工厂，支持根据配置选择内存或数据库存储后端，无缝切换无需修改应用代码
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限控制AppState集成 | 实现权限存储工厂+main.rs集成 | ✅ |
+| 轨C | shared-service-client Zookeeper服务发现 | 集成Zookeeper服务发现，留给V451 | ⏸️ |
+
+### 轨D：业务工具权限控制AppState集成（PermissionStoreConfig+PermissionStoreType+PermissionStoreFactory+环境变量配置+main.rs集成+8个单元测试）
+
+**实现内容**：实现权限存储工厂，支持根据配置选择内存或数据库存储后端，无缝切换无需修改应用代码
+
+**修改的文件（1个代码文件新建 + 2个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/permission_store_factory.rs`（权限存储工厂，约280行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加permission_store_factory模块声明）**
+
+**修改：`svc/unified-core/src/main.rs`（使用工厂函数创建权限存储）**
+
+**新增功能**：
+
+1. **权限存储类型枚举（PermissionStoreType）**
+   - 变体：Memory（内存存储）、Database（数据库存储）
+   - 实现Default trait（默认Memory）
+   - 实现Display trait
+   - 实现FromStr trait（支持"memory"、"database"、"db"、"postgres"、"postgresql"）
+   - 支持serde序列化/反序列化（rename_all = "lowercase"）
+
+2. **权限存储配置（PermissionStoreConfig）**
+   - 字段：store_type（存储类型）、cache_ttl_secs（缓存TTL，默认300秒）、seed_defaults（是否播种默认权限，默认true）
+   - 实现Default trait
+   - 方法：memory()（创建内存存储配置）、database()（创建数据库存储配置）、from_env()（从环境变量读取配置）
+   - 支持serde序列化/反序列化
+
+3. **权限存储工厂（PermissionStoreFactory）**
+   - 方法：create()（根据配置创建权限存储）、from_env()（从环境变量创建）、memory_with_defaults()（创建带默认权限的内存存储）、database()（创建数据库存储）
+   - create()方法根据store_type选择创建InMemoryPermissionStore或DatabasePermissionStore
+   - 数据库存储需要传入PgPool，内存存储不需要
+   - 返回Arc<dyn PermissionStore>，应用代码无需关心具体实现
+
+4. **环境变量配置**
+   - PERMISSION_STORE_TYPE：存储类型（"memory"或"database"，默认"memory"）
+   - PERMISSION_STORE_CACHE_TTL：缓存TTL（秒，默认300）
+   - PERMISSION_STORE_SEED_DEFAULTS：是否播种默认权限（"true"或"false"，默认"true"）
+
+5. **main.rs集成**
+   - 使用PermissionStoreFactory::from_env(Some(ctx.db.clone()))创建权限存储
+   - 替换原来的硬编码InMemoryPermissionStore::with_defaults()
+   - 支持通过环境变量切换存储后端，无需修改代码
+
+6. **8个单元测试**
+   - test_permission_store_type_default：测试默认存储类型
+   - test_permission_store_type_display：测试Display实现
+   - test_permission_store_type_from_str：测试FromStr实现（包括别名）
+   - test_permission_store_config_default：测试默认配置
+   - test_permission_store_config_memory：测试内存存储配置
+   - test_permission_store_config_database：测试数据库存储配置
+   - test_create_memory_store：测试创建内存存储
+   - test_memory_with_defaults：测试创建带默认权限的内存存储
+
+**技术说明**：
+- 使用trait object（Arc<dyn PermissionStore>）实现多态
+- 使用工厂模式封装存储创建逻辑
+- 使用环境变量实现运行时配置
+- 支持serde序列化/反序列化，可与配置文件集成
+- 向后兼容：默认使用内存存储，与V444行为一致
+- 数据库存储需要PostgreSQL连接池（已在AppState中）
+- 缓存TTL可配置，默认5分钟
+- 支持播种默认权限（owner/admin用户）
+
+**权限存储工厂特性**：
+1. 多后端支持 — 支持内存和PostgreSQL两种存储后端
+2. 无缝切换 — 通过环境变量或配置切换存储后端，无需修改代码
+3. 工厂模式 — 使用PermissionStoreFactory封装创建逻辑
+4. 环境变量配置 — 支持PERMISSION_STORE_TYPE等环境变量
+5. 配置文件集成 — 支持serde序列化/反序列化，可与配置文件集成
+6. 向后兼容 — 默认使用内存存储，与V444行为一致
+7. 缓存可配置 — 数据库存储的缓存TTL可配置
+8. 默认权限播种 — 支持自动播种默认权限（owner/admin用户）
+9. 类型安全 — 使用枚举表示存储类型，编译时检查
+10. 易于扩展 — 添加新的存储后端只需实现PermissionStore trait并在工厂中添加分支
+
+**验收结果**：
+- 完成PermissionStoreType枚举（2个变体+Default+Display+FromStr+serde）
+- 完成PermissionStoreConfig配置结构体（3个字段+Default+3个方法+serde）
+- 完成PermissionStoreFactory工厂（4个方法，支持内存和数据库存储）
+- 完成环境变量配置（3个环境变量：PERMISSION_STORE_TYPE、PERMISSION_STORE_CACHE_TTL、PERMISSION_STORE_SEED_DEFAULTS）
+- 完成main.rs集成（使用工厂函数替换硬编码）
+- 完成模块声明（business_tools/mod.rs添加permission_store_factory）
+- 完成8个单元测试（全部通过）
+- 代码总行数约280行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D PermissionStoreType枚举 | 2个变体+Default+Display+FromStr+serde | ✅ |
+| 轨D PermissionStoreConfig配置 | 3个字段+Default+3个方法+serde | ✅ |
+| 轨D PermissionStoreFactory工厂 | 4个方法（create/from_env/memory_with_defaults/database） | ✅ |
+| 轨D 环境变量配置 | 3个环境变量 | ✅ |
+| 轨D main.rs集成 | 使用工厂函数替换硬编码 | ✅ |
+| 轨D 模块声明 | business_tools/mod.rs添加 | ✅ |
+| 轨D 单元测试 | 8个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约280行 | ✅ |
+| 轨D 向后兼容 | 默认使用内存存储，与V444行为一致 | ✅ |
+| 变更统计 | 1个代码文件新建 + 3个代码文件修改(含TODO.md) | ✅ |
+
+### V450后续扩展（留给V451+）
+
+- [ ] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
+- [ ] **轨C shared-service-client Nacos服务发现**：集成Nacos服务发现
+- [ ] **轨D 业务工具权限管理API**：实现权限管理API端点（CRUD+检查）
+- [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标（缓存命中率、查询延迟等）
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨C ZookeeperServiceDiscovery集成测试**：使用Docker Compose启动Zookeeper进行集成测试
+- [ ] **轨D PermissionStoreFactory集成测试**：测试内存和数据库存储的切换
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V450连续一百一十八次交付验证成功，V451继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
