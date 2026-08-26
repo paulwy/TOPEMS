@@ -223,15 +223,6 @@ interface GisProviderProps {
   initialState?: Partial<GisState>;
 }
 
-function GisProvider({ children, initialState: customState }: GisProviderProps) {
-  const [state, dispatch] = useReducer(gisReducer, {
-    ...initialState,
-    ...customState,
-  });
-
-  return <GisContext.Provider value={{ state, dispatch }}>{children}</GisContext.Provider>;
-}
-
 // Hook
 export function useGisContext() {
   const context = useContext(GisContext);
