@@ -439,8 +439,6 @@ function buildTransfers(
     let to = pick(rnd, warehouses);
     while (to.id === from.id) to = pick(rnd, warehouses);
     const qty = int(rnd, 10, 300);
-    const shipped = pick(rnd, [0, Math.floor(qty * 0.7), qty]);
-    const received = pick(rnd, [0, Math.floor(shipped * 0.9), shipped]);
     return {
       id: uuid(rnd, 'tr-'),
       tenant_id: 'tenant-demo',
@@ -571,7 +569,7 @@ function buildMovements(
 function buildInventory(
   rnd: () => number,
   count: number,
-  warehouses: WarehouseDto[],
+  _warehouses: WarehouseDto[],
   locations: LocationDto[]
 ): InventoryItemDto[] {
   return Array.from({ length: count }, (_, i) => {

@@ -23,7 +23,6 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
-import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -125,7 +124,7 @@ const DataExport: React.FC<DataExportProps> = ({
   buttonText = i18n.t('shared.data_export.k0'),
   showFieldSelection = true,
   showFormatSelection = true,
-  showSettingsDialog = true,
+  showSettingsDialog: _showSettingsDialog = true,
   disabled = false,
   className,
   beforeExport,

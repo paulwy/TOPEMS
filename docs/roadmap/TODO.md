@@ -4526,6 +4526,87 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V326 — 批量模式第十一次：Top15文件未使用项清理（30项）+ 级联36项 + 4孤儿文件（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十一次成功 · 15 files（11 修改 + 4 删除）· 净删 1186 行 · tsc 0 errors · eslint 0 errors(1394 warnings, 从1424减30)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 孤儿 | 净删行 |
+|------|--------|------|------|--------|
+| api/plugin/types | 2 | 0 | - | ~10 |
+| api/rd/types | 2 | 0 | - | ~15 |
+| api/scm/types | 2 | 0 | - | ~15 |
+| api/tenant/types | 2 | 0 | - | ~10 |
+| api/unified-core/index | 2 | 0 | - | ~3 |
+| api/wms/_mock | 2 | 2 | - | ~10 |
+| components/ProtectedRouteWrapper | 2 | 0 | - | ~3 |
+| components/ai/AIAnomalyAssistant | 2 | 10 | ✅24行 | 24 |
+| components/ai/AIReportAssistant | 2 | 12 | ✅38行 | 38 |
+| components/bi/PivotTable | 2 | 0 | - | ~3 |
+| components/charts/chartTheme | 2 | 0 | - | ~5 |
+| components/common/Avatar | 2 | 2 | - | ~10 |
+| components/common/DataExport | 2 | 1 | - | ~5 |
+| components/form/FormCascader | 2 | 5 | ✅18行 | 18 |
+| components/form/FormDateRangePicker | 2 | 7 | ✅22行 | 22 |
+| **合计** | **30** | **36** | **4(102行)** | **1186** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除17项本地声明（PluginWithStatus, PluginRuntimeConfig, CreateExperimentRequestLegacy, UpdateExperimentRequestLegacy, PurchaseRequisitionItem, PurchaseContractItem, ListTenantsResponse, ListTenantUsersResponse, received, AIAnomalyAssistant, AIReportAssistant, _aggregators, ChartColor, AvatarGroup, FormCascader, FormDateRangePicker）
+
+**B轨（手动修复13项）**：
+- import整行删除（5）：apiClient, ApiResponse, PageLoader, React×2
+- import单符号移除（7）：Suspense, MuiAvatarGroup, semanticTokens×4, designTokens(DataExport)
+- 函数参数/解构重命名（2）：DataExport showSettingsDialog→_showSettingsDialog(解构重命名), wms buildInventory warehouses→_warehouses
+- type/interface删除（2）：StorageKey(V325遗留), AvatarGroupProps
+
+**C轨（级联36项）**：
+- AIAnomalyAssistant 10项：移除组件后全文件import/interface级联
+- AIReportAssistant 12项：移除组件后全文件import/interface级联（含ReportResult type）
+- FormCascader 5项：移除组件后全文件import/interface级联
+- FormDateRangePicker 7项：移除组件后全文件import/interface级联
+- Avatar 2项：移除AvatarGroup后Tooltip import+AvatarGroupProps interface级联
+- DataExport 1项：designTokens import（CSS字符串中普通文本，非${}插值）
+- wms 2项：shipped const（移除received后触发）+ buildInventory warehouses参数
+
+**D轨（孤儿文件4个，共102行）**：
+1. `components/ai/AIAnomalyAssistant.tsx`（24行）：移除组件后无export，10项级联
+2. `components/ai/AIReportAssistant.tsx`（38行）：移除组件后无export，12项级联
+3. `components/form/FormCascader.tsx`（18行）：移除组件后无export，5项级联
+4. `components/form/FormDateRangePicker.tsx`（22行）：移除组件后无export，7项级联
+
+### 关键发现
+
+1. **v6脚本误删风险**：wms/_mock有两个`const shipped`，buildOutboundOrders的shipped被使用（shipped_quantity），buildTransfers的shipped未使用。v6匹配`const warehouses`误删了buildWmsMock的`const warehouses = buildWarehouses(rnd, 5)`（被大量使用），需恢复。sed `/const shipped = pick/d` 误删了所有shipped行，需恢复buildOutboundOrders的。
+2. **解构参数重命名语法**：DataExport的showSettingsDialog是从interface解构的参数，不能直接改名为`_showSettingsDialog`，需用`showSettingsDialog: _showSettingsDialog`重命名语法，否则TS2339属性不存在错误。
+3. **CSS字符串中designTokens误判**：DataExport的`padding: designTokens.spacing.lg`在模板字符串的CSS中是普通文本（没有${}包裹），不会被插值，tsc正确报未使用。
+4. **4个组件文件全文件级联**：AIAnomalyAssistant/AIReportAssistant/FormCascader/FormDateRangePicker移除主组件后，所有import和interface都未使用，整个文件变孤儿（共102行）。
+5. **api/types文件安全**：plugin/rd/scm/tenant的types文件移除未使用type后无级联，因为其他type仍被引用。
+6. **函数参数未使用**：wms buildInventory的warehouses参数未使用（函数体内只用locations），改为`_warehouses`。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1394 warnings（-30） | ✅ |
+| 孤儿文件删除 | 4个（102行），无引用 | ✅ |
+| 变更统计 | 15 files, 6 insertions, 1192 deletions | ✅ |
+
+### V326后续扩展（留给V327+）
+
+- [ ] **v6脚本同名变量防护**：wms两个shipped案例，需检查变量是否在其他位置被使用，避免误删
+- [ ] **v6脚本const函数调用防护**：`const warehouses = buildWarehouses(...)`被大量使用，v6不应删除，需检查引用
+- [ ] **解构参数重命名自动处理**：DataExport showSettingsDialog案例，需自动用`name: _name`语法
+- [ ] **CSS字符串designTokens检测**：模板字符串中无${}的designTokens是普通文本，需自动识别
+- [ ] **组件文件全文件级联检测**：4个组件文件案例，移除主组件后自动检测是否全文件变孤儿
+- [ ] **批量模式继续**：V316-V326连续十一次成功，全src/未使用项从~282降至~50
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

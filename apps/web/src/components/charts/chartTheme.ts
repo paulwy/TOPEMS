@@ -3,7 +3,7 @@
 
 import { useTheme } from '@mui/material/styles';
 import { useThemeStore } from '@/store';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 // ── Chart type enum for future MUI X Charts migration ──────────────────────
 
@@ -93,8 +93,6 @@ export const BIChartColors = {
     amber: [designTokens.colors.warning.main, 'colors.warning.400'],
   },
 } as const;
-
-type ChartColor = (typeof BIChartColors.series)[number];
 
 /** Get color by index (cycles through palette) */
 export const getChartColor = (index: number): string =>

@@ -799,21 +799,6 @@ export interface PurchaseRequisition {
   updated_at: string;
 }
 
-interface PurchaseRequisitionItem {
-  id: string;
-  requisition_id: string;
-  line_number: number;
-  product_code?: string;
-  product_name: string;
-  specification?: string;
-  unit?: string;
-  quantity: number;
-  unit_price?: number;
-  amount?: number;
-  remarks?: string;
-  created_at: string;
-}
-
 export interface CreatePurchaseRequisitionRequest {
   requisition_no: string;
   title: string;
@@ -878,22 +863,6 @@ export interface PurchaseContract {
   remarks?: string;
   created_at: string;
   updated_at: string;
-}
-
-interface PurchaseContractItem {
-  id: string;
-  contract_id: string;
-  line_number: number;
-  product_code?: string;
-  product_name: string;
-  specification?: string;
-  unit?: string;
-  quantity: number;
-  unit_price?: number;
-  amount?: number;
-  delivery_date?: string;
-  remarks?: string;
-  created_at: string;
 }
 
 export interface CreatePurchaseContractRequest {

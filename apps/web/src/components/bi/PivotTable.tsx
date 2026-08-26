@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '@mui/material';
 import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 import { alpha } from '@mui/material/styles';
 
@@ -19,14 +19,6 @@ interface PivotConfig {
   onExport?: () => void;
   onRefresh?: () => void;
 }
-
-const _aggregators = {
-  sum: (values: number[]) => values.reduce((a, b) => a + b, 0),
-  count: (values: number[]) => values.length,
-  avg: (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length,
-  min: (values: number[]) => Math.min(...values),
-  max: (values: number[]) => Math.max(...values),
-};
 
 const aggregatorLabels: Record<string, string> = {
   sum: i18n.t('components.pivot_table.k0'),

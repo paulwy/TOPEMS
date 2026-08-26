@@ -1,8 +1,7 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { ModuleGate } from './PermissionGate';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { SmartLayout } from '../layouts/SmartLayout';
-import PageLoader from './PageLoader';
 import type { RouteConfig } from '../routes';
 
 interface ProtectedRouteWrapperProps {

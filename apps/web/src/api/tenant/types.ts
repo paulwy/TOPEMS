@@ -139,17 +139,3 @@ export interface TenantContext {
   role: string;
   permissions: string[];
 }
-
-interface ListTenantsResponse {
-  items: Tenant[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-interface ListTenantUsersResponse {
-  items: TenantUser[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
