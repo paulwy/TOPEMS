@@ -7881,6 +7881,70 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V363 — 架构改进四轨并行第三十一次：前端未使用组件清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十一次交付 · 前端未使用组件清理 · 2个文件 · 删除未使用的组件定义
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用组件清理 | 2个文件的未使用组件删除（1个GIS Provider组件 + 1个UI Loading组件） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V364 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V364 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V364 | ⏸️ |
+
+### 轨A：前端未使用组件清理
+
+**清理内容**：删除2个文件中未使用的组件定义
+
+**清理的文件（2个）**：
+
+1. **components/gis/modules/shared/GisContext.tsx** — 删除未使用的组件 GisProvider
+   - 删除范围：第226-233行（共8行）
+   - 组件内容：GIS 上下文 Provider 组件，使用 useReducer 管理 GIS 状态，通过 GisContext.Provider 提供 state 和 dispatch
+   - 原因：该组件定义后从未被使用，可能是遗留代码。useGisContext hook 仍然保留并导出
+
+2. **components/ui/Loading.tsx** — 删除未使用的组件 LoadingOverlay
+   - 删除范围：第136-164行（共29行）
+   - 组件内容：加载遮罩组件，在 isLoading 为 true 时显示半透明遮罩和 Loading 组件，否则显示 children
+   - 原因：该组件定义后从未被使用，可能是遗留代码。默认导出的 Loading 组件仍然保留
+
+**技术说明**：
+- 所有删除的组件都是独立的组件定义，不依赖其他代码
+- 删除前验证组件未被任何地方引用（包括测试文件）
+- 删除后保留相关的 hook 和默认导出组件
+- 对于确实需要保留的未使用组件，建议添加注释说明用途
+
+**验收结果**：
+- 2个文件的未使用组件 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 2个文件的未使用组件删除 | ✅ |
+| 轨A 清理类型 | 1个GIS Provider组件 + 1个UI Loading组件 | ✅ |
+| 轨A 技术方法 | 直接删除未使用的组件定义 | ✅ |
+| 轨A 依赖检查 | 所有删除的组件都是独立的，不依赖其他代码 | ✅ |
+| 轨A 保留检查 | useGisContext hook 和默认导出的 Loading 组件保留 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改2个前端文件 + 修改1文件 | ✅ |
+
+### V363后续扩展（留给V364+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~174个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V363连续三十一次交付验证成功，V364继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

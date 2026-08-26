@@ -132,33 +132,3 @@ export const Loading: React.FC<LoadingProps> = ({
 };
 
 export default Loading;
-
-const LoadingOverlay: React.FC<{
-  isLoading: boolean;
-  children?: React.ReactNode;
-  text?: string;
-}> = ({ isLoading, children, text = i18n.t('components.loading.k0') }) => {
-  if (!isLoading) {
-    return <>{children}</>;
-  }
-
-  return (
-    <Box sx={{ position: 'relative' }}>
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'common.white',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10,
-        }}
-      >
-        <Loading text={text} />
-      </Box>
-      {children}
-    </Box>
-  );
-};
