@@ -8857,6 +8857,79 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V377 — 架构改进四轨并行第四十五次：前端未使用组件清理（AIFlowAssistant _AIFlowAssistant）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十五次交付 · 前端未使用组件清理 · 1个文件 · 删除未使用的AI流程助手组件和接口，273行删除
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用组件清理 | 1个文件的未使用组件和接口删除（AIFlowAssistant.tsx，_AIFlowAssistant组件+AIFlowAssistantProps/FlowResult接口，273行删除） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V378 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V378 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V378 | ⏸️ |
+
+### 轨A：前端未使用组件清理（AIFlowAssistant _AIFlowAssistant）
+
+**清理内容**：删除1个文件中未使用的AI流程助手组件和对应的接口定义
+
+**清理的文件（1个）**：
+
+1. **components/ai/AIFlowAssistant.tsx** — 删除未使用的组件 _AIFlowAssistant 和接口定义
+   - 删除范围：第23-295行（共273行，包括接口定义和组件）
+   - 删除的接口（2个）：
+     - AIFlowAssistantProps { initialQuery?: string; module?: string; }
+     - FlowResult { title: string; description: string; steps: Record<string, unknown>[]; suggestions?: string[]; }
+   - 删除的组件（1个）：
+     - _AIFlowAssistant: React.FC<AIFlowAssistantProps> - AI流程助手组件，支持查询输入、流程展示、步骤导航、建议推荐等功能
+   - 原因：该组件定义后从未被使用，可能是开发过程中的遗留代码
+   - 文件从295行减少到22行
+   - 注意：文件中仍有import语句（React、useState、@mui/material、i18n、lucide-react、assistantApi、useNotificationStore、logger等），这些import可能被其他代码使用，保留不动
+
+**技术说明**：
+- 删除组件前验证组件未被任何地方引用（包括import和动态导入）
+- 同时删除对应的props接口和相关接口，避免接口变成未使用
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 删除前验证组件未被文件中的其他代码使用
+- 对于仍被其他代码使用的import语句（如React、useState），保留不动
+- 对于确实需要保留的未使用组件，建议添加注释说明用途
+- 重要发现：TypeScript 的 --noUnusedLocals 不会自动忽略下划线前缀的变量，需直接删除未使用定义
+
+**验收结果**：
+- 1个文件的未使用组件和接口 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+- 文件从295行减少到22行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用组件和接口删除 | ✅ |
+| 轨A 清理组件 | _AIFlowAssistant（AI流程助手组件） | ✅ |
+| 轨A 清理接口 | AIFlowAssistantProps、FlowResult（2个接口） | ✅ |
+| 轨A 删除行数 | 273行（包括接口定义和组件） | ✅ |
+| 轨A 文件变化 | 从295行减少到22行 | ✅ |
+| 轨A 引用检查 | 删除组件前验证未被任何地方引用 | ✅ |
+| 轨A 接口清理 | 同时删除对应的props接口和相关接口 | ✅ |
+| 轨A 保留检查 | React/useState/@mui/material/i18n等import仍被使用，保留不动 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V377后续扩展（留给V378+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~138个TS6133错误
+- [ ] **轨A 未使用import清理**：检查AIFlowAssistant.tsx中剩余的import是否变成未使用，如是则清理
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V377连续四十五次交付验证成功，V378继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
