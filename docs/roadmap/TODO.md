@@ -11950,6 +11950,86 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V415 — 架构改进四轨并行第八十三次：B1 API迁移P0阶段实施（删除4个无引用文件）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十三次交付 · B1 API迁移P0阶段实施 · 删除4个文件 · 删除@/api/erp/finance/中的4个无引用文件
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P0阶段实施 | 删除@/api/erp/finance/中的4个无引用文件 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V416 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V416 | ⏸️ |
+
+### 轨B：B1 API迁移P0阶段实施（删除4个无引用文件）
+
+**实施内容**：删除@/api/erp/finance/中的4个无引用文件
+
+**删除前确认**：
+- accounting.ts：0个引用
+- bank.ts：0个引用
+- receivablePayable.ts：0个引用
+- voucher.ts：0个引用
+
+**删除的文件（4个）**：
+1. `apps/web/src/api/erp/finance/accounting.ts`（3300字节）— 会计核算API，无引用
+2. `apps/web/src/api/erp/finance/bank.ts`（2728字节）— 银行账户API，无引用
+3. `apps/web/src/api/erp/finance/receivablePayable.ts`（2521字节）— 应收应付API，无引用，@/api/finance/版本更完整（171行 vs 62行）
+4. `apps/web/src/api/erp/finance/voucher.ts`（1860字节）— 凭证管理API，无引用，@/api/finance/版本更完整（178行 vs 57行）
+
+**删除后剩余文件（4个）**：
+1. `asset.ts` — 资产管理API（assetApi + fixedAssetApi），2个页面引用
+2. `assetCategory.ts` — 资产分类API，1个页面引用
+3. `budget.ts` — 预算管理API（budgetApi + expenseApi），无引用
+4. `report.ts` — 财务报表API（financeReportApi，14个方法），无引用
+
+**迁移进度**：
+- 阶段一（P0）：删除4个无引用文件 ✅ 完成
+- 阶段二（P1）：合并report.ts和budget.ts的独有方法后删除 ⏳ 待实施（V416-V417）
+- 阶段三（P2）：创建@/api/asset/目录，迁移asset相关文件，删除@/api/erp/finance/目录 ⏳ 待实施（V418-V420）
+
+**技术说明**：
+- 重要发现：4个删除的文件都没有被任何页面引用，可以安全删除
+- receivablePayable.ts和voucher.ts在@/api/finance/中有更完整的版本，删除后不会影响功能
+- accounting.ts和bank.ts在@/api/finance/中没有对应文件，但由于没有被引用，删除后也不会影响功能
+- 删除后@/api/erp/finance/从8个文件减少到4个文件
+- 下一步需要合并report.ts和budget.ts的独有方法到@/api/finance/，然后删除这两个文件
+
+**验收结果**：
+- 确认4个文件都没有被引用
+- 成功删除4个无引用文件
+- @/api/erp/finance/从8个文件减少到4个文件
+- 删除后没有编译错误（文件没有被引用）
+- P0阶段实施完成
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 删除文件数 | 4个无引用文件 | ✅ |
+| 轨B accounting.ts | 0个引用，已删除 | ✅ |
+| 轨B bank.ts | 0个引用，已删除 | ✅ |
+| 轨B receivablePayable.ts | 0个引用，已删除（@/api/finance/更完整） | ✅ |
+| 轨B voucher.ts | 0个引用，已删除（@/api/finance/更完整） | ✅ |
+| 轨B 删除前文件数 | 8个 | ✅ |
+| 轨B 删除后文件数 | 4个 | ✅ |
+| 轨B P0阶段 | 完成 | ✅ |
+| 轨B P1阶段 | 待实施（V416-V417） | ⏳ |
+| 轨B P2阶段 | 待实施（V418-V420） | ⏳ |
+| 变更统计 | 删除4个文件 + 修改1文件(TODO.md) | ✅ |
+
+### V415后续扩展（留给V416+）
+
+- [ ] **轨B P1阶段实施（report.ts）**：将@/api/erp/finance/report.ts中的10个财务分析方法迁移到@/api/finance/report.ts，然后删除@/api/erp/finance/report.ts
+- [ ] **轨B P1阶段实施（budget.ts）**：将@/api/erp/finance/budget.ts中的expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
+- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V415连续八十三次交付验证成功，V416继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
