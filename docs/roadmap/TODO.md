@@ -9007,6 +9007,87 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V379 — 架构改进四轨并行第四十七次：前端未使用import清理（customerProfile/emergencyPlan遗留）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十七次交付 · 前端未使用import清理 · 2个文件 · 删除V373-V374删除API客户端后导致的遗留未使用import，保留类型定义
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 2个文件的未使用import删除（customerProfile.ts删除2个import，emergencyPlan.ts删除3个import，保留类型定义） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V380 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V380 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V380 | ⏸️ |
+
+### 轨A：前端未使用import清理（customerProfile/emergencyPlan遗留）
+
+**清理内容**：删除2个V373-V374删除API客户端后导致的遗留未使用import，保留类型定义
+
+**清理的文件（2个）**：
+
+1. **api/crm/customerProfile.ts** — 删除未使用的import
+   - 删除的import（2个）：
+     - `apiClient` from '../client'
+     - `ApiResponse` from '../client'
+   - V373删除了_customerProfileApi变量后，这些import没有被任何实际代码使用，变成未使用的遗留import
+   - 保留类型定义（CustomerProfileItem、CustomerScoreSummary、OpportunitySummary等），这些类型定义可能被其他代码使用
+   - 文件现在从 interface CustomerProfileItem 开始
+
+2. **api/ehs/emergencyPlan.ts** — 删除未使用的import
+   - 删除的import（3个）：
+     - `apiClient` from '../client'
+     - `ApiResponse` from '../client'
+     - `PaginatedResponse` from './types'
+   - V374删除了_emergencyPlanApi变量后，这些import没有被任何实际代码使用，变成未使用的遗留import
+   - 保留类型定义（EmergencyPlanItem、PlanSupply、PlanVersion、PlanApproval等），这些类型定义可能被其他代码使用
+   - 文件现在从 interface EmergencyPlanItem 开始
+
+**技术说明**：
+- V373-V374删除未使用的API客户端变量后，需要检查并清理相关的未使用import
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于有类型定义的文件，只删除未使用的import，保留类型定义
+- 删除import前验证import未被文件中的任何实际代码使用
+- 对于仍被其他代码使用的类型定义（如CustomerProfileItem），保留不动
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import的未使用情况，删除变量/组件后需要及时清理相关import
+
+**遗留问题**：
+- AIFlowAssistant.tsx中仍有4个未使用import（i18n、assistantApi、useNotificationStore、logger），但文件中有其他import，需单独清理
+- FinancialReports.tsx中仍有未使用import（Card、CardContent等），需单独清理
+- 这些遗留未使用import留给后续版本处理
+
+**验收结果**：
+- 2个文件的5个未使用import TS6133错误已消除
+- 编译验证：无新增错误
+- 删除的import均为未使用的遗留import
+- 类型定义均保留不动
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 2个文件的未使用import删除 | ✅ |
+| 轨A 清理import数 | 5个未使用import（customerProfile 2个 + emergencyPlan 3个） | ✅ |
+| 轨A 技术方法 | 删除未使用import，保留类型定义 | ✅ |
+| 轨A 引用检查 | 删除import前验证未被任何实际代码使用 | ✅ |
+| 轨A 保留检查 | CustomerProfileItem/EmergencyPlanItem等类型定义仍被使用，保留不动 | ✅ |
+| 轨A 遗留问题 | AIFlowAssistant.tsx/FinancialReports.tsx仍有未使用import，留给后续版本 | ⚠️ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改2个前端文件 + 修改1文件 | ✅ |
+
+### V379后续扩展（留给V380+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~125个TS6133错误
+- [ ] **轨A 未使用import清理**：继续清理AIFlowAssistant.tsx/FinancialReports.tsx中的遗留未使用import
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V379连续四十七次交付验证成功，V380继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
