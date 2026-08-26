@@ -112,7 +112,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   height = 150,
   disabled = false,
   className,
-  uploadText = i18n.t('shared.file_upload.k0'),
+  uploadText: _uploadText = i18n.t('shared.file_upload.k0'),
 }) => {
   const [files, setFiles] = useState<UploadFile[]>(
     value.map((url, index) => {

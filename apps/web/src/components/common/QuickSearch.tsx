@@ -136,7 +136,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   shortcutModifier = ['ctrl', 'meta'],
   shortcutKey = 'k',
   placeholder = i18n.t('components.quick_search.k0'),
-  autoFocus = false,
+  autoFocus: _autoFocus = false,
   width = 400,
   disabled = false,
   className,
