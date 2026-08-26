@@ -13572,6 +13572,194 @@ client.connect();
 
 ---
 
+## 🎯 V428 — 架构改进四轨并行第九十六次：轨C SSE端点实现详细计划（后端微服务架构分析）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十六次交付 · 轨C SSE端点实现详细计划 · 0个代码文件修改 · 分析后端微服务架构，确认使用axum 0.8，制定SSE端点详细实现计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE端点实现详细计划 | 分析后端微服务架构，确认使用axum 0.8，制定SSE端点详细实现计划 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V429 | ⏸️ |
+
+### 轨C：SSE端点实现详细计划（后端微服务架构分析）
+
+**分析内容**：分析后端微服务架构，确认使用axum 0.8作为Web框架，制定SSE端点详细实现计划
+
+**后端架构分析**：
+
+**1. 技术栈**
+- 编程语言：Rust
+- Web框架：axum 0.8（支持multipart、ws、macros特性）
+- 监控：axum-prometheus 0.8
+- 测试：axum-test 21
+- GraphQL：async-graphql-axum 7
+- 数据库：SQLx（.sqlx目录存在）
+
+**2. 微服务架构**
+- 后端代码位于 `svc/` 目录下
+- 微服务列表（20+个）：
+  - `svc/pm/` — 项目管理服务
+  - `svc/lims/` — 实验室信息管理系统
+  - `svc/unified-core/` — 统一核心服务
+  - `svc/monitor/` — 监控服务
+  - `svc/wms/` — 仓库管理系统
+  - `svc/portal/` — 门户服务
+  - `svc/integration/` — 集成服务
+  - `svc/crm/` — 客户关系管理
+  - `svc/tms/` — 运输管理系统
+  - `svc/mes/` — 制造执行系统
+  - `svc/feedback/` — 反馈服务
+  - `svc/search/` — 搜索服务
+  - `svc/master-data/` — 主数据服务
+  - `svc/ehs/` — 环境健康安全
+  - `svc/hrm/` — 人力资源管理
+  - `svc/mobile/` — 移动端服务
+  - `svc/ai/` — AI服务
+  - `svc/aps/` — 高级计划与排程
+  - 其他服务...
+
+**3. SSE相关代码搜索结果**
+- 没有找到SSE相关代码（`SSE`、`sse`、`EventSource`、`event-stream`、`ServerSent`）
+- axum 0.8支持WebSocket（ws特性），但没有找到SSE实现
+- 需要从零开始实现SSE端点
+
+**SSE端点实现计划**：
+
+**方案选择**：
+- **方案A**：在 `svc/unified-core/` 中实现SSE端点（统一核心服务，适合作为统一入口）
+- **方案B**：在 `svc/portal/` 中实现SSE端点（门户服务，适合前端访问）
+- **方案C**：创建新的微服务 `svc/sse-gateway/`（专门的SSE网关服务）
+
+**推荐方案**：方案A（在 `svc/unified-core/` 中实现SSE端点），因为统一核心服务适合作为统一入口，可以协调多个微服务的请求。
+
+**SSE端点设计**：
+
+**1. SSE连接端点**
+- 路径：`GET /api/sse/connect`
+- 功能：建立SSE长连接，发送endpoint事件，包含session_id
+- 响应头：`Content-Type: text/event-stream`、`Cache-Control: no-cache`、`Connection: keep-alive`
+- 事件格式：
+  ```
+  event: endpoint
+  data: {"session_id": "uuid", "endpoint": "http://localhost:8080/api/sse/session/uuid"}
+  
+  ```
+
+**2. SSE会话请求端点**
+- 路径：`POST /api/sse/session/{session_id}`
+- 功能：接收客户端请求，将响应通过对应的SSE流发送回客户端
+- 请求体：JSON格式的请求数据
+- 响应：`202 Accepted`（请求已接受，将通过SSE流发送响应）
+
+**3. SSE会话管理**
+- 使用HashMap存储活跃的SSE会话
+- 每个会话包含：session_id、发送器（Sender）、创建时间、最后活跃时间
+- 支持会话超时自动清理
+- 支持会话最大数量限制
+
+**4. SSE事件类型**
+- `endpoint` — 连接建立事件，包含session_id和endpoint
+- `message` — 普通消息事件
+- `error` — 错误事件
+- `ping` — 心跳事件（保持连接活跃）
+- `close` — 连接关闭事件
+
+**axum SSE实现要点**：
+
+**1. 使用axum的SSE支持**
+- axum 0.8内置SSE支持（`axum::response::sse`）
+- 使用 `Sse` 响应类型
+- 使用 `Event` 构建SSE事件
+- 使用 `KeepAlive` 配置心跳
+
+**2. 流式响应**
+- 使用 `async_stream` 或 `tokio::sync::mpsc` 创建流式响应
+- 使用 `ReceiverStream` 将Receiver转换为Stream
+- 使用 `Sse::new()` 创建SSE响应
+
+**3. 会话管理**
+- 使用 `Arc<Mutex<HashMap<String, Sender>>>` 存储会话
+- 使用 `uuid` 生成session_id
+- 使用 `tokio::spawn` 启动会话清理任务
+
+**4. 错误处理**
+- 处理客户端断开连接
+- 处理会话不存在
+- 处理会话超时
+- 处理内部错误
+
+**详细实现步骤**：
+
+**阶段一：SSE端点基础实现（V429-V430）**
+1. 在 `svc/unified-core/` 中创建SSE模块
+2. 实现SSE连接端点（`GET /api/sse/connect`）
+3. 实现SSE会话请求端点（`POST /api/sse/session/{session_id}`）
+4. 实现会话管理（HashMap存储、超时清理）
+5. 实现基本的事件类型（endpoint、message、error）
+
+**阶段二：SSE端点完善（V431-V432）**
+1. 实现心跳机制（KeepAlive）
+2. 实现错误处理和重连支持
+3. 实现会话最大数量限制
+4. 实现日志和监控
+5. 编写单元测试和集成测试
+
+**阶段三：shared-service-client实现（V433-V434）**
+1. 创建shared-service-client
+2. 实现连接多个真实服务功能
+3. 实现统一的请求和响应处理
+4. 实现服务发现和负载均衡
+
+**阶段四：端到端测试（V435）**
+1. 连接SSE端点
+2. 接收endpoint事件
+3. 提取session_id
+4. 通过POST发送请求
+5. 从SSE流接收响应
+6. 验证端到端流程
+
+**技术说明**：
+- 重要发现：后端使用Rust + axum 0.8微服务架构，有20+个微服务
+- axum 0.8内置SSE支持，使用 `axum::response::sse` 模块
+- 推荐在 `svc/unified-core/` 中实现SSE端点，作为统一入口
+- SSE端点需要实现连接管理、会话管理、事件分发、错误处理等功能
+- 预计需要4个阶段（V429-V435）完成SSE端点实现和端到端测试
+
+**验收结果**：
+- 完成后端技术栈分析（Rust + axum 0.8）
+- 完成微服务架构分析（20+个微服务）
+- 完成SSE相关代码搜索（没有找到SSE相关代码）
+- 制定SSE端点设计方案（连接端点、会话请求端点、会话管理、事件类型）
+- 制定axum SSE实现要点（SSE支持、流式响应、会话管理、错误处理）
+- 制定4阶段详细实现步骤
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 后端技术栈 | Rust + axum 0.8（支持ws、multipart、macros） | ✅ |
+| 轨C 微服务数量 | 20+个微服务（pm、lims、unified-core、monitor、wms等） | ✅ |
+| 轨C SSE代码搜索 | 没有找到SSE相关代码 | ✅ |
+| 轨C 推荐方案 | 在svc/unified-core/中实现SSE端点 | ✅ |
+| 轨C SSE端点设计 | 连接端点、会话请求端点、会话管理、事件类型 | ✅ |
+| 轨C axum实现要点 | SSE支持、流式响应、会话管理、错误处理 | ✅ |
+| 轨C 实现阶段 | 4阶段（基础实现、完善、shared-service-client、端到端测试） | ✅ |
+| 轨C 预计版本 | V429-V435（7个版本） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V428后续扩展（留给V429+）
+
+- [ ] **轨C SSE端点基础实现**：在svc/unified-core/中创建SSE模块，实现连接端点和会话请求端点
+- [ ] **轨C SSE端点完善**：实现心跳机制、错误处理、会话限制、日志监控
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V428连续九十六次交付验证成功，V429继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
