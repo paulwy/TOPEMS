@@ -9215,6 +9215,69 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V382 — 架构改进四轨并行第五十次：前端未使用常量清理（service-ports SERVICE_PORTS，清空空文件）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五十次交付 · 前端未使用常量清理 · 1个文件 · 清空未使用的服务端口注册表常量，消除遗留未使用常量
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用常量清理 | 1个文件的未使用常量删除（config/service-ports.ts，SERVICE_PORTS常量，清空整个文件） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V383 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V383 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V383 | ⏸️ |
+
+### 轨A：前端未使用常量清理（service-ports SERVICE_PORTS，清空空文件）
+
+**清理内容**：清空1个未使用的服务端口注册表常量文件，消除遗留未使用常量
+
+**清理的文件（1个）**：
+
+1. **config/service-ports.ts** — 清空整个文件
+   - 文件内容：SERVICE_PORTS常量，包含24个服务的端口注册表（core/erp/hrm/pm/crm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/report/doc/monitor/portal/ai/mobile/gis/integration）
+   - 每个服务包含name、port、description、category字段
+   - 该常量定义后从未被使用，可能是开发过程中的遗留代码
+   - 清空整个文件，消除未使用常量
+   - 文件从约200行减少到1行（空行）
+
+**技术说明**：
+- 该常量是服务端口注册表的单一数据源，与config/services.yaml、docker/docker-compose.yml、deploy/nginx/topems.conf同步
+- 但该常量定义后从未被任何实际代码使用，变成未使用的遗留代码
+- 对于只有一个未使用常量、没有任何实际使用代码的文件，可以直接清空整个文件
+- 清空文件前验证文件中没有任何实际使用的代码
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查常量的未使用情况，定义常量后需要确保被使用
+
+**验收结果**：
+- 1个文件的未使用常量 TS6133 错误已消除
+- 编译验证：无新增错误
+- 清空的文件为只有一个未使用常量、没有任何实际使用代码的空文件
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用常量删除 | ✅ |
+| 轨A 清理类型 | 清空整个文件（只有一个未使用常量的空文件） | ✅ |
+| 轨A 文件变化 | service-ports.ts从约200行到1行 | ✅ |
+| 轨A 引用检查 | 清空文件前验证文件中没有任何实际使用的代码 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V382后续扩展（留给V383+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~109个TS6133错误
+- [ ] **轨A 未使用常量清理**：继续清理其他未使用的常量（AUTH_UNAUTHORIZED_EVENT等）
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用函数清理**：继续清理其他未使用的函数（getWebVitalsSnapshot/useShortcutsHelp/useImportExport/useDeviceType等）
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V382连续五十次交付验证成功，V383继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
