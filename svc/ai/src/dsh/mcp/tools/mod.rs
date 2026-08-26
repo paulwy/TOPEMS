@@ -18,8 +18,10 @@ use tokio::sync::RwLock;
 use topems_shared_mcp::protocol::{McpTool, McpToolResult};
 
 pub mod crm;
+pub mod erp;
 
 pub use crm::register_crm_tools;
+pub use erp::register_erp_tools;
 
 /// 工具处理函数类型
 ///
