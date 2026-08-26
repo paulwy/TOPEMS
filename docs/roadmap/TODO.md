@@ -13760,6 +13760,208 @@ client.connect();
 
 ---
 
+## 🎯 V429 — 架构改进四轨并行第九十七次：轨C SSE端点基础实现详细计划（svc/unified-core代码结构分析）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十七次交付 · 轨C SSE端点基础实现详细计划 · 0个代码文件修改 · 分析svc/unified-core/的代码结构，确认路由注册方式和依赖，制定SSE端点基础实现详细计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE端点基础实现详细计划 | 分析svc/unified-core/的代码结构，确认路由注册方式和依赖，制定SSE端点基础实现详细计划 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V430 | ⏸️ |
+
+### 轨C：SSE端点基础实现详细计划（svc/unified-core代码结构分析）
+
+**分析内容**：分析svc/unified-core/的代码结构，确认路由注册方式和依赖，制定SSE端点基础实现详细计划
+
+**svc/unified-core/代码结构分析**：
+
+**1. 目录结构**
+- `svc/unified-core/src/handlers.rs` — 处理器（6631字节）
+- `svc/unified-core/src/lib.rs` — 库文件（6215字节）
+- `svc/unified-core/src/main.rs` — 主文件（24215字节）
+- `svc/unified-core/src/middleware/` — 中间件目录
+- `svc/unified-core/src/models/` — 模型目录
+- `svc/unified-core/src/modules/` — 模块目录（15个子目录）
+- `svc/unified-core/src/routes/` — 路由目录（11个路由文件）
+- `svc/unified-core/src/schema_defense.rs` — schema防御（17503字节）
+- `svc/unified-core/src/shared/` — 共享代码目录
+
+**2. 路由文件列表**
+- `routes/automation.rs` — 自动化编排路由（2919字节）
+- `routes/doc.rs` — 文档路由（581字节）
+- `routes/feature_flag.rs` — 特性开关路由（4150字节）
+- `routes/file.rs` — 文件路由（3280字节）
+- `routes/flow.rs` — 流程路由（9110字节）
+- `routes/iam.rs` — 身份认证路由（6301字节）
+- `routes/master.rs` — 主数据路由（9570字节）
+- `routes/migration.rs` — 迁移路由（936字节）
+- `routes/mod.rs` — 路由注册（9415字节）
+- `routes/settings.rs` — 设置路由（1577字节）
+- `routes/system.rs` — 系统路由（5380字节）
+
+**3. 路由注册方式**
+- 使用 `axum::Router` 注册路由
+- 使用 `axum::routing::{get, post}` 定义路由方法
+- 使用 `create_routes` 函数构建完整的应用路由器
+- 支持公共路由和受保护路由（带权限中间件）
+- 使用 `AppState` 作为应用状态
+- 使用 `auth_middleware` 进行认证
+- 使用 `tenant_rls_middleware` 进行租户级别的行级安全
+
+**4. 依赖分析**
+- `axum` — Web框架（workspace依赖，ws特性）
+- `tokio` — 异步运行时（workspace依赖）
+- `serde` — 序列化框架（workspace依赖）
+- `serde_json` — JSON序列化（workspace依赖）
+- `uuid` — UUID生成（workspace依赖）
+- `axum-prometheus` — Prometheus监控（workspace依赖）
+- `futures-util` — Futures工具（workspace依赖）
+- `redis` — Redis客户端（0.24版本，tokio-comp和connection-manager特性）
+- `topems_shared_auth` — 共享认证库
+- `topems_shared_core` — 共享核心库
+
+**5. SSE相关依赖分析**
+- 没有 `async-stream` 依赖
+- 有 `futures-util` 依赖，可以使用 `futures_util::stream`
+- axum 0.8内置SSE支持（`axum::response::sse`）
+- 可以使用 `tokio::sync::mpsc` 创建通道，然后转换为Stream
+- 可以使用 `axum::response::sse::{Sse, Event, KeepAlive}`
+
+**SSE端点基础实现计划**：
+
+**1. 创建SSE模块**
+- 文件：`svc/unified-core/src/routes/sse.rs`
+- 功能：SSE端点实现
+- 包含：
+  - SSE连接端点处理函数
+  - SSE会话请求端点处理函数
+  - SSE会话管理
+  - SSE事件类型定义
+
+**2. SSE连接端点**
+- 路径：`GET /api/sse/connect`
+- 功能：建立SSE长连接，发送endpoint事件
+- 实现：
+  - 使用 `axum::response::sse::Sse` 创建SSE响应
+  - 使用 `tokio::sync::mpsc::channel` 创建通道
+  - 使用 `futures_util::stream::unfold` 或 `ReceiverStream` 创建Stream
+  - 生成 `session_id`（使用 `uuid`）
+  - 存储会话到 `AppState` 的会话管理器中
+  - 发送 `endpoint` 事件，包含 `session_id` 和 `endpoint` URL
+  - 配置 `KeepAlive` 心跳机制
+
+**3. SSE会话请求端点**
+- 路径：`POST /api/sse/session/{session_id}`
+- 功能：接收客户端请求，将响应通过对应的SSE流发送回客户端
+- 实现：
+  - 从路径参数提取 `session_id`
+  - 从 `AppState` 的会话管理器中查找对应的发送器
+  - 如果会话不存在，返回404错误
+  - 解析请求体（JSON格式）
+  - 将响应数据通过发送器发送到SSE流
+  - 返回202 Accepted（请求已接受）
+
+**4. SSE会话管理**
+- 数据结构：`Arc<Mutex<HashMap<String, SseSender>>>`
+- 存储在 `AppState` 中
+- 功能：
+  - `create_session()` — 创建新会话，返回session_id和发送器
+  - `get_sender(session_id)` — 获取会话的发送器
+  - `remove_session(session_id)` — 移除会话
+  - `cleanup_expired_sessions()` — 清理过期会话
+- 会话超时：默认30分钟
+- 会话最大数量：默认1000个
+
+**5. SSE事件类型**
+- `endpoint` — 连接建立事件，包含session_id和endpoint
+- `message` — 普通消息事件
+- `error` — 错误事件
+- `ping` — 心跳事件
+- `close` — 连接关闭事件
+
+**6. 路由注册**
+- 在 `routes/mod.rs` 中添加 `mod sse;`
+- 在 `create_routes` 函数中注册SSE路由
+- 公共路由：`GET /api/sse/connect`
+- 公共路由：`POST /api/sse/session/{session_id}`
+
+**7. AppState扩展**
+- 添加 `sse_sessions: Arc<Mutex<HashMap<String, SseSender>>>` 字段
+- 在 `AppState::new()` 中初始化
+
+**详细实现步骤**：
+
+**步骤1：创建SSE模块（V430）**
+- 创建 `svc/unified-core/src/routes/sse.rs`
+- 定义SSE事件类型和数据结构
+- 实现SSE会话管理
+- 实现SSE连接端点处理函数
+- 实现SSE会话请求端点处理函数
+
+**步骤2：注册SSE路由（V430）**
+- 在 `routes/mod.rs` 中添加 `mod sse;`
+- 在 `create_routes` 函数中注册SSE路由
+- 扩展 `AppState`，添加SSE会话管理字段
+
+**步骤3：实现心跳和错误处理（V431）**
+- 实现KeepAlive心跳机制
+- 实现客户端断开连接处理
+- 实现会话超时自动清理
+- 实现错误处理和日志记录
+
+**步骤4：编写测试（V431）**
+- 编写单元测试
+- 编写集成测试
+- 测试SSE连接建立
+- 测试SSE会话请求
+- 测试会话超时和清理
+
+**技术说明**：
+- 重要发现：svc/unified-core/使用axum 0.8 + tokio + serde + uuid + futures-util + redis
+- 没有async-stream依赖，但可以使用futures-util和tokio::sync::mpsc实现SSE
+- axum 0.8内置SSE支持（`axum::response::sse`），使用 `Sse`、`Event`、`KeepAlive`
+- 路由注册使用 `axum::Router`，支持公共路由和受保护路由
+- SSE端点应该是公共路由（不需要认证），因为SSE连接建立时可能还没有认证
+- 会话管理使用 `Arc<Mutex<HashMap>>`，存储在 `AppState` 中
+- 预计需要2个版本（V430-V431）完成SSE端点基础实现
+
+**验收结果**：
+- 完成svc/unified-core/目录结构分析
+- 完成路由文件列表分析（11个路由文件）
+- 完成路由注册方式分析（axum::Router + create_routes函数）
+- 完成依赖分析（axum、tokio、serde、uuid、futures-util、redis等）
+- 完成SSE相关依赖分析（没有async-stream，但有futures-util和axum SSE支持）
+- 制定SSE端点基础实现计划（7个部分）
+- 制定4步骤详细实现步骤
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 目录结构 | src/下有handlers.rs、lib.rs、main.rs、middleware/、models/、modules/、routes/、schema_defense.rs、shared/ | ✅ |
+| 轨C 路由文件 | 11个路由文件（automation、doc、feature_flag、file、flow、iam、master、migration、mod、settings、system） | ✅ |
+| 轨C 路由注册方式 | axum::Router + create_routes函数，支持公共路由和受保护路由 | ✅ |
+| 轨C 核心依赖 | axum、tokio、serde、serde_json、uuid、axum-prometheus、futures-util、redis | ✅ |
+| 轨C SSE依赖 | 没有async-stream，但有futures-util和axum SSE支持 | ✅ |
+| 轨C SSE实现计划 | 7个部分（创建模块、连接端点、会话请求端点、会话管理、事件类型、路由注册、AppState扩展） | ✅ |
+| 轨C 实现步骤 | 4步骤（创建模块、注册路由、心跳和错误处理、编写测试） | ✅ |
+| 轨C 预计版本 | V430-V431（2个版本） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V429后续扩展（留给V430+）
+
+- [ ] **轨C SSE端点基础实现**：创建svc/unified-core/src/routes/sse.rs，实现连接端点和会话请求端点
+- [ ] **轨C SSE路由注册**：在routes/mod.rs中注册SSE路由，扩展AppState
+- [ ] **轨C SSE端点完善**：实现心跳机制、错误处理、会话超时清理、日志监控
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V429连续九十七次交付验证成功，V430继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
