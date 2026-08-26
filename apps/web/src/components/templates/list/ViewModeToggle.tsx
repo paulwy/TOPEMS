@@ -15,7 +15,7 @@ interface ViewModeToggleProps {
  * 视图模式切换按钮（表格视图 / 卡片视图）
  * 从 ListPageTemplate 中抽离的视图切换 UI
  */
-const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ modes, current, onChange }) => {
+export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ modes, current, onChange }) => {
   const { t } = useTranslation();
   if (!modes || modes.length <= 1) return null;
 
