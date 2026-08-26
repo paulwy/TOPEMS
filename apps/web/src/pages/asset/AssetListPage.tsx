@@ -21,7 +21,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { CrudTab } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { assetSchema } from '@/schemas/erp/asset';
-import { assetApi } from '@/api/erp/finance/asset';
+import { assetApi } from '@/api/asset/asset';
 import type { Asset } from '@/api/erp/types';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';

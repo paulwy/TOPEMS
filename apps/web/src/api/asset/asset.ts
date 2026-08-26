@@ -8,7 +8,7 @@ import type {
   DepreciationResult,
   PaginationParams,
   PaginatedResult,
-} from '../types';
+} from '@/api/erp/types';
 
 export const assetApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Asset>>> {
