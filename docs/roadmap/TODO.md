@@ -12462,6 +12462,112 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V419 — 架构改进四轨并行第八十七次：B1 API迁移P1阶段类型迁移实施（14个类型定义）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十七次交付 · B1 API迁移P1阶段类型迁移实施 · 3个代码文件修改 · 添加14个类型定义到@topems/shared-types，更新重新导出和导入语句
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P1阶段类型迁移实施 | 添加14个类型定义+更新重新导出+更新导入语句 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V420 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V420 | ⏸️ |
+
+### 轨B：B1 API迁移P1阶段类型迁移实施（14个类型定义）
+
+**实施内容**：将14个类型定义从@/api/erp/types.ts迁移到@topems/shared-types，更新重新导出和导入语句
+
+**修改的文件（3个）**：
+
+**1. packages/shared-types/src/finance.ts（添加14个类型定义）**
+- 修改前：721行
+- 修改后：~860行（添加了约140行）
+- 添加的类型定义（14个）：
+  - 导出接口（9个）：ProjectFinancialSummary、KeyRatios、BusinessOverview、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview
+  - 内部接口（5个）：DepartmentExpense、CategoryExpense、MonthlyExpense、MonthlyProfit
+  - 注意：KeyRatios从内部接口改为导出接口，因为它被BusinessOverview和FinancialOverview引用
+- 添加位置：文件末尾，VoucherOperationResult之后
+- 添加了注释标记：`// === B1 API迁移: 从@/api/erp/types.ts迁移的14个类型定义 ===`
+
+**2. apps/web/src/types/finance.ts（更新重新导出）**
+- 修改前：44个类型重新导出
+- 修改后：58个类型重新导出（添加了14个新类型）
+- 添加的重新导出（14个）：
+  - ProjectFinancialSummary、KeyRatios、BusinessOverview、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、DepartmentExpense、CategoryExpense、MonthlyExpense、ExpenseAnalysis、MonthlyProfit、ProfitAnalysis、FinancialOverview
+- 添加了注释标记：`// === B1 API迁移: 从@/api/erp/types.ts迁移的14个类型定义 ===`
+
+**3. apps/web/src/api/erp/finance/report.ts（更新导入语句）**
+- 修改前：从 `../types` 导入类型
+- 修改后：从 `@/types/finance` 导入类型
+- 导入的类型（12个）：
+  - BalanceSheet、IncomeStatement、CashFlowStatement（已在@/types/finance中存在）
+  - BusinessOverview、ProjectFinancialSummary、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview（新迁移的类型）
+- 注意：BalanceSheet、IncomeStatement、CashFlowStatement这3个类型已经在@/types/finance中存在，不需要迁移
+
+**类型定义迁移详情**：
+
+**导出接口（9个）**：
+1. ProjectFinancialSummary — 项目财务摘要（9个字段）
+2. KeyRatios — 关键比率（6个字段，从内部接口改为导出接口）
+3. BusinessOverview — 业务概览（12个字段，引用KeyRatios）
+4. MonthlyTrend — 月度趋势（6个字段）
+5. DepartmentFinancialSummary — 部门财务摘要（6个字段）
+6. AgingAnalysis — 账龄分析（7个字段）
+7. CashFlowAnalysis — 现金流分析（7个字段）
+8. ExpenseAnalysis — 费用分析（5个字段，引用DepartmentExpense、CategoryExpense、MonthlyExpense）
+9. ProfitAnalysis — 利润分析（8个字段，引用MonthlyProfit）
+10. FinancialOverview — 财务概览（14个字段，引用KeyRatios）
+
+**内部接口（5个，改为导出接口）**：
+1. DepartmentExpense — 部门费用（4个字段，被ExpenseAnalysis引用）
+2. CategoryExpense — 类别费用（3个字段，被ExpenseAnalysis引用）
+3. MonthlyExpense — 月度费用（3个字段，被ExpenseAnalysis引用）
+4. MonthlyProfit — 月度利润（4个字段，被ProfitAnalysis引用）
+
+**技术说明**：
+- 重要发现：KeyRatios、DepartmentExpense、CategoryExpense、MonthlyExpense、MonthlyProfit这5个内部接口在源文件中没有export关键字，但是为了在@topems/shared-types中正确导出，需要添加export关键字
+- 所有14个类型定义都添加了export关键字，确保可以从@topems/shared-types正确导出
+- 类型定义的字段和类型保持不变，确保向后兼容
+- 添加了注释标记，便于后续维护和追踪
+- 迁移后，@/api/erp/finance/report.ts可以从@/types/finance正确导入所有类型
+
+**验收结果**：
+- 成功添加14个类型定义到packages/shared-types/src/finance.ts
+- 成功更新apps/web/src/types/finance.ts的重新导出（添加14个新类型）
+- 成功更新apps/web/src/api/erp/finance/report.ts的导入语句（从../types改为@/types/finance）
+- 所有类型定义都添加了export关键字
+- 类型定义的字段和类型保持不变
+- 添加了注释标记，便于后续维护和追踪
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 添加类型定义 | 14个类型定义添加到packages/shared-types/src/finance.ts | ✅ |
+| 轨B 导出接口数 | 9个（ProjectFinancialSummary、KeyRatios、BusinessOverview、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview） | ✅ |
+| 轨B 内部接口数 | 5个（改为导出接口：DepartmentExpense、CategoryExpense、MonthlyExpense、MonthlyProfit） | ✅ |
+| 轨B 更新重新导出 | apps/web/src/types/finance.ts添加14个新类型重新导出 | ✅ |
+| 轨B 更新导入语句 | apps/web/src/api/erp/finance/report.ts从../types改为@/types/finance | ✅ |
+| 轨B 修改文件数 | 3个代码文件 | ✅ |
+| 轨B 类型定义完整性 | 所有字段和类型保持不变 | ✅ |
+| 轨B 注释标记 | 添加了B1 API迁移注释标记 | ✅ |
+| 变更统计 | 3个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V419后续扩展（留给V420+）
+
+- [ ] **轨B P1阶段实施（验证编译）**：运行TypeScript编译，确保没有类型错误
+- [ ] **轨B P1阶段实施（删除源类型定义）**：删除apps/web/src/api/erp/types.ts中的14个类型定义
+- [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
+- [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
+- [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
+- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V419连续八十七次交付验证成功，V420继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

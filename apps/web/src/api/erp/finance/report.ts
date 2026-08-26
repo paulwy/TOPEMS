@@ -13,7 +13,7 @@ import type {
   ExpenseAnalysis,
   ProfitAnalysis,
   FinancialOverview,
-} from '../types';
+} from '@/types/finance';
 
 export const financeReportApi = {
   async balanceSheet(params?: { period?: string }): Promise<ApiResponse<BalanceSheet>> {
