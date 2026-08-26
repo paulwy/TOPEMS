@@ -21,11 +21,13 @@ pub mod crm;
 pub mod erp;
 pub mod finance;
 pub mod hr;
+pub mod mes;
 
 pub use crm::register_crm_tools;
 pub use erp::register_erp_tools;
 pub use finance::register_finance_tools;
 pub use hr::register_hr_tools;
+pub use mes::register_mes_tools;
 
 /// 工具处理函数类型
 ///

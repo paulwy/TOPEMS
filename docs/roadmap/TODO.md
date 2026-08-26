@@ -5890,6 +5890,113 @@ POST /mcp
 
 ---
 
+## 🎯 V339 — 架构改进四轨并行第七次：MES业务工具 + auth组件清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第七次交付 · MES MCP Tools上线 · 21个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | auth组件未使用专项 | 删除PermissionRoute组件和PermissionRouteProps接口（~82行） | ✅ |
+| 轨B | B1 API签名对齐 | 延续V338评估，记录V340+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V340实施（需独立二进制入口） | ⏸️ |
+| 轨D | MES MCP Tools | 4个业务工具（mes.list_production_orders, mes.get_production_order, mes.list_work_orders, mes.get_oee_dashboard），6个单元测试 | ✅ |
+
+### 轨A：auth组件未使用专项（1项，~82行）
+
+**删除的代码**：
+| 文件 | 删除内容 | 行数 | 说明 |
+|------|----------|------|------|
+| components/auth/ProtectedRoute.tsx | PermissionRoute组件 | ~75行 | 无export，未被任何地方引用 |
+| components/auth/ProtectedRoute.tsx | PermissionRouteProps接口 | ~7行 | 仅被PermissionRoute使用，级联删除 |
+| **合计** | | **~82行** | |
+
+**验证**：
+- grep全项目搜索PermissionRoute，无任何引用（bi/config.ts中的biPermissionRoute是不同的东西）
+- ProtectedRoute组件仍被ProtectedRouteWrapper.tsx引用，保留
+- GuestRoute组件仍有export，保留
+- 删除后文件结构完整，GuestRouteProps接口正确保留
+
+### 轨B：B1 API签名对齐（延续V338）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V340+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：MES MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/mes.rs` — MES业务工具（~590行）
+
+**注册的4个工具**：
+1. **mes.list_production_orders** — 查询生产订单列表
+   - 参数：page, page_size, status(planned/released/in_progress/completed/cancelled), workshop
+   - 返回：生产订单列表（订单号、产品、数量、计划时间、状态、进度、优先级）
+   - 支持分页、状态筛选、车间筛选
+
+2. **mes.get_production_order** — 获取生产订单详情
+   - 参数：order_id（必填）
+   - 返回：完整订单信息（产品信息、BOM物料、工艺路线、生产进度、质量检验、物料消耗）
+   - 包含BOM明细、工艺路线5道工序、质量检验数据
+
+3. **mes.list_work_orders** — 查询工单列表
+   - 参数：page, page_size, status(pending/in_progress/paused/completed/scrapped), process
+   - 返回：工单列表（工单号、工序、设备、操作员、数量、状态、节拍时间）
+   - 支持分页、状态筛选、工序筛选
+
+4. **mes.get_oee_dashboard** — 获取OEE仪表盘数据
+   - 参数：from（必填）, to（必填）, workshop, equipment_id
+   - 返回：OEE三大指标（可用率85.6%、性能率92.3%、质量率98.7%、综合OEE 78.1%）
+   - 包含停机原因分析、性能损失分析、缺陷分析、设备排名、5天趋势数据
+
+**单元测试**（6个）：
+- test_register_mes_tools — 4个工具全部注册
+- test_list_production_orders — 分页查询
+- test_get_production_order — 按ID查询，验证BOM/工艺路线/质量检验结构
+- test_list_work_orders — 分页+状态筛选
+- test_get_oee_dashboard — 获取OEE仪表盘，验证指标/排名/趋势结构
+- test_get_oee_dashboard_validation — 参数验证（缺少from/to）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod mes和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_mes_tools
+- `svc/ai/src/routes.rs` — 调用register_mes_tools注册MES工具
+
+**当前工具总数**：21个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A PermissionRoute删除 | grep验证无引用，文件结构完整 | ✅ |
+| 轨B B1评估 | 延续V338，记录V340+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D MES工具 | 4个业务工具已注册 | ✅ |
+| 轨D MES单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 21个（2系统+3CRM+4ERP+4Finance+4HR+4MES） | ✅ |
+| 变更统计 | 新增1文件(~590行) + 修改4文件 + 前端1文件删除~82行 | ✅ |
+
+### V339后续扩展（留给V340+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D EHS/WMS MCP Tools**：注册ehs.list_incidents, wms.list_inventory等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A Top15未使用项清理**：bff组件未使用专项（ABTestPanel等，需确认是否为BFF架构核心组件）
+- [ ] **四轨并行继续**：V333-V339连续七次交付验证成功，V340继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
