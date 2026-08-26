@@ -7,6 +7,9 @@
 // V444: Permission store module
 pub mod permission_store;
 
+// V448: Database-backed permission store
+pub mod database_permission_store;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
