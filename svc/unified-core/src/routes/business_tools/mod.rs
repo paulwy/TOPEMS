@@ -22,6 +22,9 @@ pub mod permission_audit_log;
 // V454: Audit log API
 pub mod audit_api;
 
+// V456: Database-backed audit log store
+pub mod database_audit_log_store;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
