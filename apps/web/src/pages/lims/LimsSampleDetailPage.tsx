@@ -26,11 +26,7 @@ import { limsApi } from '@/api/lims';
 import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-import {
-  DetailPageTemplate,
-  type ColumnDef as ListColumnDef,
-  type SectionConfig,
-} from '@/components/templates';
+import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import {
   BarChart,
   Bar,
@@ -201,63 +197,6 @@ const LimsSampleDetailPage: React.FC = () => {
       });
     },
   });
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: {
-        bg: 'warning.100',
-        color: ct.yellow[600],
-        label: i18n.t('pages.lims_sample_detail_page.k8'),
-      },
-      [i18n.t('pages.lims_sample_detail_page.k2')]: {
-        bg: 'warning.100',
-        color: ct.yellow[600],
-        label: i18n.t('pages.lims_sample_detail_page.k9'),
-      },
-      in_progress: {
-        bg: 'primary.100',
-        color: 'primary.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k10'),
-      },
-      [i18n.t('pages.lims_sample_detail_page.k3')]: {
-        bg: 'primary.100',
-        color: 'primary.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k11'),
-      },
-      completed: {
-        bg: 'success.lighter',
-        color: 'success.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k12'),
-      },
-      [i18n.t('pages.lims_sample_detail_page.k4')]: {
-        bg: 'success.lighter',
-        color: 'success.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k13'),
-      },
-      cancelled: {
-        bg: 'error.lighter',
-        color: 'error.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k14'),
-      },
-      [i18n.t('pages.lims_sample_detail_page.k5')]: {
-        bg: 'error.lighter',
-        color: 'error.dark',
-        label: i18n.t('pages.lims_sample_detail_page.k15'),
-      },
-    };
-    const item = statusMap[status] || {
-      bg: 'grey.100',
-      color: 'text.secondary',
-      label: status,
-    };
-    return (
-      <Chip
-        label={item.label}
-        size='small'
-        sx={{ backgroundColor: item.bg, color: item.color }}
-      />
-    );
-  };
 
   const handleEdit = async () => {
     if (!sample) return;

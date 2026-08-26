@@ -1,9 +1,8 @@
 import { Box, Button, Tabs, Tab, Typography } from '@mui/material';
 import React from 'react';
-import { Mail, Send, Plus, ChevronLeft, MessageSquare, FileText } from 'lucide-react';
+import { Mail, Send, Plus, ChevronLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MasterDetailPageTemplate } from '@/components/templates';
-import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useMailPage } from '@/components/im/MailPageHooks';
 import EmailStatsCards from './components/EmailStatsCards';
@@ -16,8 +15,6 @@ import EditTemplateDialog from './components/EditTemplateDialog';
 import TemplatePreviewDialog from './components/TemplatePreviewDialog';
 import ConfirmDialogs from './components/ConfirmDialogs';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
 
 const MailPage: React.FC = () => {
   const { t } = useTranslation('im');

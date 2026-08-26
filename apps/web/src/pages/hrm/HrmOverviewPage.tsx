@@ -22,22 +22,10 @@ import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-import { hrmApi } from '@/api/hrm';
 
 const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
-  const { data: backendData, isLoading: isBackendLoading } = useQuery({
-    queryKey: ['hrm-overview'],
-    queryFn: async () => {
-      try {
-        // TODO: hrmApi.getOverviewSummary 不存在，等待后端接口对接
-        return {};
-      } catch (e) {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation();
   const navigate = useNavigate();
 

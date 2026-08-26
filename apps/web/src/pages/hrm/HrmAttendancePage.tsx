@@ -22,11 +22,11 @@ import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { attendanceSchema, leaveSchema } from '@/schemas/hrm';
 import { attendanceApi, leaveApi } from '@/api/hrm';
-import type { AttendanceRecord, LeaveRequest } from '@/api/hrm';
+import type { LeaveRequest } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const attendanceAdapter = createCrudPageAdapter(attendanceApi);

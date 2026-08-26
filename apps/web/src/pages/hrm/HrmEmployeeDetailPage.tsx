@@ -6,7 +6,7 @@ import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
 import { HRM_PATHS } from '@/modules/hrm/config';
-import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { PageContainer } from '@/components/common';
@@ -88,15 +88,6 @@ const HrmEmployeeDetailPage: React.FC = () => {
   const formatDate = (date: string | undefined) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('zh-CN');
-  };
-
-  const calculateWorkYears = () => {
-    if (!employee?.hire_date) return 0;
-    const hireDate = new Date(employee.hire_date);
-    const today = new Date();
-    const years = today.getFullYear() - hireDate.getFullYear();
-    const months = today.getMonth() - hireDate.getMonth();
-    return months < 0 ? years - 1 : years;
   };
 
   const basicInfoContent = useMemo(() => {
