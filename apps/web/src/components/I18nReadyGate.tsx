@@ -28,7 +28,7 @@ interface I18nReadyGateProps {
  */
 const I18nReadyGate: React.FC<I18nReadyGateProps> = ({ children }) => {
   const [ready, setReady] = useState(false);
-  const [version, forceRender] = useState(0);
+  const [_version, forceRender] = useState(0);
   const mountedRef = useRef(true);
   const rafIdRef = useRef<number | null>(null);
   const pendingRef = useRef(false);

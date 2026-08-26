@@ -2,7 +2,6 @@ import { designTokens } from '@topems/tokens';
 import type { ReactNode, CSSProperties } from 'react';
 import React, {
   createContext,
-  useContext,
   useState,
   useCallback,
   useMemo,
