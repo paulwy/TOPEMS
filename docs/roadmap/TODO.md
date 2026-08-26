@@ -15559,6 +15559,141 @@ Admin ──包含──▶ Write ──包含──▶ Read
 
 ---
 
+## 🎯 V441 — 架构改进四轨并行第一百零九次：轨C shared-service-client服务发现（服务发现类型+静态服务发现实现+服务注册信息+async-trait依赖）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零九次交付 · 轨C shared-service-client服务发现 · 2个代码文件修改 · 添加服务发现trait、静态服务发现实现、服务注册信息类型、async-trait依赖
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client服务发现 | 添加服务发现类型、静态服务发现实现 | ✅ |
+| 轨D | 业务工具权限控制完善 | 添加基于租户的权限控制、细粒度操作权限，留给V442 | ⏸️ |
+
+### 轨C：shared-service-client服务发现（服务发现类型+静态服务发现实现+服务注册信息+async-trait依赖）
+
+**实现内容**：在shared-service-client中添加服务发现功能，包括服务发现trait、静态服务发现实现、服务注册信息类型
+
+**修改的文件（2个代码文件）**：
+
+1. **修改：`svc/unified-core/src/shared/service_client.rs`**（添加服务发现）
+2. **修改：`svc/unified-core/Cargo.toml`**（添加async-trait依赖）
+
+**新增功能**：
+
+**1. 服务注册信息（ServiceRegistration）**
+- 字段：
+  - `name: String` — 唯一服务标识符
+  - `base_url: String` — 服务基础URL
+  - `version: String` — 服务版本（默认"1.0.0"）
+  - `description: String` — 服务描述
+  - `tags: Vec<String>` — 服务标签（用于过滤）
+  - `metadata: HashMap<String, String>` — 服务元数据（键值对）
+  - `enabled: bool` — 是否启用（默认true）
+  - `registered_at: String` — 注册时间（RFC3339格式）
+  - `last_heartbeat: String` — 最后心跳时间（RFC3339格式）
+- 方法：
+  - `new(name, base_url)` — 创建新的服务注册
+  - `to_config()` — 转换为ServiceConfig
+  - `heartbeat()` — 更新心跳时间戳
+
+**2. 服务发现trait（ServiceDiscovery）**
+- 使用`#[async_trait::async_trait]`宏定义异步trait
+- 方法：
+  - `register(registration)` — 注册服务
+  - `deregister(name)` — 注销服务
+  - `discover(name)` — 发现服务（按名称查找）
+  - `list_services()` — 列出所有已注册服务
+  - `heartbeat(name)` — 发送服务心跳
+- 所有方法都返回`Result<_, ServiceClientError>`
+- trait要求`Send + Sync`，可跨线程共享
+
+**3. 静态服务发现实现（StaticServiceDiscovery）**
+- 基于内存的服务发现实现
+- 字段：
+  - `services: Arc<Mutex<HashMap<String, ServiceRegistration>>>` — 已注册服务（跨克隆共享）
+- 方法：
+  - `new()` — 创建新的静态服务发现
+  - `from_configs(configs)` — 从服务配置列表创建
+  - `get(name)` — 同步获取服务注册
+  - `list()` — 同步列出所有服务注册
+  - `has(name)` — 同步检查服务是否已注册
+  - `count()` — 同步获取已注册服务数量
+- 实现了`Default` trait
+- 实现了`ServiceDiscovery` trait：
+  - `register()` — 插入服务到HashMap
+  - `deregister()` — 从HashMap移除服务
+  - `discover()` — 从HashMap查找服务
+  - `list_services()` — 返回所有服务的克隆
+  - `heartbeat()` — 更新服务的心跳时间戳
+
+**4. async-trait依赖**
+- 在Cargo.toml中添加`async-trait = "0.1"`依赖
+- 用于定义异步trait（ServiceDiscovery）
+
+**功能特性**：
+
+1. **服务注册信息** — 完整的服务元数据，包括版本、描述、标签、元数据、启用状态、注册时间、心跳时间
+2. **服务发现trait** — 标准化的服务发现接口，支持注册、注销、发现、列表、心跳
+3. **静态服务发现** — 基于内存的默认实现，简单易用，适合单实例部署
+4. **可扩展架构** — 通过实现ServiceDiscovery trait，可以集成Consul、etcd、Zookeeper等动态服务发现
+5. **服务配置转换** — ServiceRegistration可以转换为ServiceConfig，方便创建ServiceClient
+6. **心跳机制** — 支持服务心跳，用于检测服务存活状态
+7. **线程安全** — 使用Arc<Mutex>实现线程安全，可跨ServiceClient克隆共享
+8. **同步/异步接口** — StaticServiceDiscovery提供同步方法（get、list、has、count）和异步方法（ServiceDiscovery trait）
+
+**技术说明**：
+- 使用`#[async_trait::async_trait]`宏定义异步trait
+- 服务注册信息使用chrono生成RFC3339格式时间戳
+- 静态服务发现使用Arc<Mutex<HashMap>>实现线程安全共享
+- ServiceRegistration的to_config方法创建默认的ServiceConfig（超时30秒，无重试，无熔断，无限流，无负载均衡）
+- 所有新类型都实现了Debug、Clone、Serialize、Deserialize trait
+- StaticServiceDiscovery实现了Default trait
+- async-trait依赖版本为0.1
+
+**验收结果**：
+- 完成服务注册信息类型（ServiceRegistration，9个字段，3个方法）
+- 完成服务发现trait（ServiceDiscovery，5个异步方法）
+- 完成静态服务发现实现（StaticServiceDiscovery，6个同步方法+5个异步方法）
+- 完成服务配置转换（ServiceRegistration::to_config）
+- 完成心跳机制（ServiceRegistration::heartbeat，StaticServiceDiscovery::heartbeat）
+- 完成async-trait依赖添加（Cargo.toml）
+- 完成Default trait实现（StaticServiceDiscovery）
+- 所有新类型都实现了必要的trait
+- 线程安全（Arc<Mutex>）
+- 可扩展架构（ServiceDiscovery trait）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 服务注册信息类型 | ServiceRegistration（9个字段：name、base_url、version、description、tags、metadata、enabled、registered_at、last_heartbeat） | ✅ |
+| 轨C 服务注册方法 | new()、to_config()、heartbeat() | ✅ |
+| 轨C 服务发现trait | ServiceDiscovery（5个异步方法：register、deregister、discover、list_services、heartbeat） | ✅ |
+| 轨C 静态服务发现实现 | StaticServiceDiscovery（Arc<Mutex<HashMap>>存储） | ✅ |
+| 轨C 静态服务发现同步方法 | get()、list()、has()、count() | ✅ |
+| 轨C 静态服务发现异步方法 | register()、deregister()、discover()、list_services()、heartbeat() | ✅ |
+| 轨C 服务配置转换 | ServiceRegistration::to_config()创建ServiceConfig | ✅ |
+| 轨C 心跳机制 | ServiceRegistration::heartbeat()更新时间戳 | ✅ |
+| 轨C async-trait依赖 | Cargo.toml添加async-trait = "0.1" | ✅ |
+| 轨C Default trait实现 | StaticServiceDiscovery实现Default | ✅ |
+| 轨C 线程安全 | Arc<Mutex>实现跨克隆共享 | ✅ |
+| 轨C 可扩展架构 | ServiceDiscovery trait支持动态服务发现集成 | ✅ |
+| 轨C 序列化支持 | 所有新类型实现Serialize、Deserialize | ✅ |
+| 变更统计 | 2个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V441后续扩展（留给V442+）
+
+- [ ] **轨D 业务工具权限控制完善**：添加基于租户的权限控制、细粒度操作权限
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C shared-service-client连接池**：添加HTTP连接池管理
+- [ ] **轨C shared-service-client动态服务发现**：集成Consul、etcd、Zookeeper等动态服务发现
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V441连续一百零九次交付验证成功，V442继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
