@@ -9154,6 +9154,67 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V381 — 架构改进四轨并行第四十九次：前端未使用import和组件清理（FinancialReports遗留，清空空文件）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十九次交付 · 前端未使用import和组件清理 · 1个文件 · 清空V369-V371删除组件后导致的空文件，消除遗留未使用import和组件
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import和组件清理 | 1个文件的未使用import和组件删除（FinancialReports.tsx，V369-V371删除组件后导致的空文件，清空整个文件） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V382 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V382 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V382 | ⏸️ |
+
+### 轨A：前端未使用import和组件清理（FinancialReports遗留，清空空文件）
+
+**清理内容**：清空1个V369-V371删除组件后导致的空文件，消除遗留未使用import和组件
+
+**清理的文件（1个）**：
+
+1. **components/finance/FinancialReports.tsx** — 清空整个文件
+   - V369删除了FinancialReportsViewer组件，V370删除了遗留未使用import，V371删除了BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer组件
+   - 经过多次删除后，文件中只剩下import语句（@mui/material、i18n、lucide-react、recharts、类型导入）和ReportTable组件
+   - 这些import和ReportTable组件都没有被任何实际代码使用，变成未使用的遗留代码
+   - 清空整个文件，消除所有未使用import和组件
+   - 文件从111行减少到1行（空行）
+
+**技术说明**：
+- V369-V371删除未使用的组件后，需要检查并清理相关的未使用import和组件
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于只有import语句和未使用组件、没有任何实际使用代码的文件，可以直接清空整个文件
+- 清空文件前验证文件中没有任何实际使用的代码
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import和组件的未使用情况，删除组件后需要及时清理相关import和组件
+
+**验收结果**：
+- 1个文件的未使用import和组件 TS6133 错误已消除
+- 编译验证：无新增错误
+- 清空的文件为只有import语句和未使用组件、没有任何实际使用代码的空文件
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用import和组件删除 | ✅ |
+| 轨A 清理类型 | 清空整个文件（只有import语句和未使用组件的空文件） | ✅ |
+| 轨A 文件变化 | FinancialReports.tsx从111行到1行 | ✅ |
+| 轨A 引用检查 | 清空文件前验证文件中没有任何实际使用的代码 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V381后续扩展（留给V382+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~110个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V381连续四十九次交付验证成功，V382继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
