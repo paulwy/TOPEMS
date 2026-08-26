@@ -1,5 +1,3 @@
-import type { ApiResponse } from '../client';
-
 export interface Sample {
   id: string;
   sample_no?: string;

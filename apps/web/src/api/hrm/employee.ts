@@ -11,7 +11,7 @@ import type {
   PerformanceGoal,
 } from './types';
 import { buildQueryString } from './types';
-import { toOpenApiRequestBody, type TypedApiResponse } from '@topems/shared-types';
+import { toOpenApiRequestBody } from '@topems/shared-types';
 
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {

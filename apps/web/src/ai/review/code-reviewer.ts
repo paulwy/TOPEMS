@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type IssueType = 'bug' | 'style' | 'performance' | 'security' | 'maintainability';
 export type IssueSeverity = 'error' | 'warning' | 'info';
 

@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type Regulation = 'GDPR' | 'SOX' | 'HIPAA' | 'PCI';
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 

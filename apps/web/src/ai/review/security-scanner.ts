@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type SecurityCategory = 'XSS' | 'Injection' | 'CSRF' | 'Auth' | 'Encryption' | 'Exposure';
 export type SecuritySeverity = 'critical' | 'high' | 'medium' | 'low';
 

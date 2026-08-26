@@ -11,6 +11,7 @@ members = [
     "lib/shared-observability",
     "lib/shared-ai",
     "lib/shared-bootstrap",
+    "lib/shared-mcp",
     # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
     # "examples/minimal-service",
     # [核心平台] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)

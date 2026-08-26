@@ -5,7 +5,6 @@
 
 import { apiClient } from '../client';
 import type { PaginatedResponse } from '@topems/shared-types';
-import i18n from '@/i18n';
 
 // ============================================
 // 类型定义

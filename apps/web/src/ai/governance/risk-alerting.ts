@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type RiskCategory = 'Security' | 'Compliance' | 'Performance' | 'Financial';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 

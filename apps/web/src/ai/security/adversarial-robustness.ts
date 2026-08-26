@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type AttackType = 'PromptInjection' | 'ModelPoisoning' | 'DataExfiltration' | 'SideChannel';
 
 export type AttackSeverity = 'critical' | 'high' | 'medium' | 'low';

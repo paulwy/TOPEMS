@@ -7,7 +7,6 @@ import {
   toOpenApiRequestBody,
   type AdaptedQuery,
   type AdaptedRequestBody,
-  type TypedApiResponse,
 } from '@topems/shared-types';
 
 export const departmentApi: CrudOperations<Department> = {
