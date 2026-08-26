@@ -96,7 +96,7 @@ function toGraphQLValue(
 }
 
 
-export class QueryBuilder<T = unknown> {
+export class QueryBuilder {
   private entityName: string;
   private operationName: string;
   private fields: FieldSelection = [];
@@ -230,7 +230,7 @@ ${indent(selectionStr, 2)}
 
 // ============ MutationBuilder ============
 
-export class MutationBuilder<T = unknown> {
+export class MutationBuilder {
   private entityName: string;
   private operationName: string;
   private returnFields: FieldSelection = ['id'];
