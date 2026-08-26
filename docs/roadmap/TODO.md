@@ -8155,6 +8155,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V367 — 架构改进四轨并行第三十五次：前端未使用项清理（函数删除+文件删除）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十五次交付 · 前端未使用项清理 · 3个文件 · 1个函数删除 + 2个文件删除
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用项清理 | 3个文件的未使用项清理（1个GisContext缓存函数删除 + 2个Workflow示例组件文件删除） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V368 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V368 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V368 | ⏸️ |
+
+### 轨A：前端未使用项清理（函数删除+文件删除）
+
+**清理内容**：删除1个未使用的函数和2个未使用的示例组件文件
+
+**清理的文件（3个）**：
+
+1. **context/GisContext.tsx** — 删除未使用的函数 saveCache
+   - 删除范围：第264-280行（共17行）
+   - 函数内容：将GIS状态（devicePoints/pipelines/storageLocations/evidenceRecords/factoryMaps/businessLocations/statistics）保存到localStorage
+   - 原因：该函数定义后从未被调用，可能是遗留代码。loadCache 函数仍然保留并可能被使用
+
+2. **components/WorkflowFormExample.tsx** — 删除整个未使用的示例组件文件
+   - 文件内容：Workflow表单示例组件，使用react-hook-form和zod进行表单验证
+   - 原因：该组件定义后从未被任何地方引用，可能是开发过程中的示例代码
+
+3. **components/WorkflowTableExample.tsx** — 删除整个未使用的示例组件文件
+   - 文件内容：Workflow表格示例组件，展示工作流列表和操作菜单
+   - 原因：该组件定义后从未被任何地方引用，可能是开发过程中的示例代码
+
+**技术说明**：
+- 删除文件前验证文件未被任何地方引用（包括import和动态导入）
+- 删除函数前验证函数未被任何地方调用
+- 删除后保留相关的loadCache函数（可能被使用）
+- 对于确实需要保留的未使用代码，建议添加注释说明用途
+
+**验收结果**：
+- 3个文件的未使用项 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 3个文件的未使用项清理 | ✅ |
+| 轨A 清理类型 | 1个函数删除 + 2个文件删除 | ✅ |
+| 轨A 引用检查 | 删除文件前验证未被任何地方引用 | ✅ |
+| 轨A 函数检查 | 删除函数前验证未被任何地方调用 | ✅ |
+| 轨A 功能保留 | loadCache函数仍然保留 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 删除2个前端文件 + 修改1文件 | ✅ |
+
+### V367后续扩展（留给V368+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~162个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V367连续三十五次交付验证成功，V368继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

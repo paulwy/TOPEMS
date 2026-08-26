@@ -261,24 +261,6 @@ const getErrorMessage = (error: unknown): string => {
   return i18n.t('context.gis_context.k2');
 };
 
-const saveCache = (state: GisState) => {
-  try {
-    const cacheData = {
-      devicePoints: state.devicePoints,
-      pipelines: state.pipelines,
-      storageLocations: state.storageLocations,
-      evidenceRecords: state.evidenceRecords,
-      factoryMaps: state.factoryMaps,
-      businessLocations: state.businessLocations,
-      statistics: state.statistics,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-  } catch (e: unknown) {
-    logger.warn('Failed to save cache:', e);
-  }
-};
-
 const loadCache = (): Partial<GisState> | null => {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
