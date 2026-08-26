@@ -23,6 +23,7 @@ pub mod erp;
 pub mod finance;
 pub mod hr;
 pub mod mes;
+pub mod pm;
 pub mod qms;
 pub mod wms;
 
@@ -32,6 +33,7 @@ pub use erp::register_erp_tools;
 pub use finance::register_finance_tools;
 pub use hr::register_hr_tools;
 pub use mes::register_mes_tools;
+pub use pm::register_pm_tools;
 pub use qms::register_qms_tools;
 pub use wms::register_wms_tools;
 
