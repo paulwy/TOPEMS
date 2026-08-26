@@ -12030,6 +12030,170 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V416 — 架构改进四轨并行第八十四次：B1 API迁移P1阶段实施详细计划（report.ts 10个独有方法）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十四次交付 · B1 API迁移P1阶段实施详细计划 · 0个代码文件修改 · 制定report.ts的详细迁移计划，确认10个独有方法
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P1阶段实施详细计划 | 制定report.ts的详细迁移计划，确认10个独有方法 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V417 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V417 | ⏸️ |
+
+### 轨B：B1 API迁移P1阶段实施详细计划（report.ts 10个独有方法）
+
+**分析内容**：详细分析@/api/erp/finance/report.ts的13个方法，确认10个独有方法，制定详细的迁移计划
+
+**@/api/erp/finance/report.ts 方法清单（13个方法）**：
+
+1. **balanceSheet**（第19行）— 与@/api/finance/的getBalanceSheet重复
+   - 参数：{ period?: string }
+   - 返回：ApiResponse<BalanceSheet>
+   - 端点：GET /reports/balance-sheet
+
+2. **incomeStatement**（第26行）— 与@/api/finance/的getIncomeStatement重复
+   - 参数：{ period?: string }
+   - 返回：ApiResponse<IncomeStatement>
+   - 端点：GET /reports/income-statement
+
+3. **cashFlowStatement**（第33行）— 与@/api/finance/的getCashFlowStatement重复
+   - 参数：{ period?: string }
+   - 返回：ApiResponse<CashFlowStatement>
+   - 端点：GET /reports/cash-flow
+
+4. **businessOverview**（第40行）— 独有方法
+   - 参数：{ period?: string }
+   - 返回：ApiResponse<BusinessOverview>
+   - 端点：GET /reports/business-overview
+
+5. **projectSummary**（第47行）— 独有方法
+   - 参数：{ project_id?: string }
+   - 返回：ApiResponse<ProjectFinancialSummary[]>
+   - 端点：GET /reports/project-summary
+
+6. **monthlyTrend**（第56行）— 独有方法
+   - 参数：无
+   - 返回：ApiResponse<MonthlyTrend[]>
+   - 端点：GET /reports/monthly-trend
+
+7. **departmentSummary**（第60行）— 独有方法
+   - 参数：{ department_id?: string }
+   - 返回：ApiResponse<DepartmentFinancialSummary[]>
+   - 端点：GET /reports/department-summary
+
+8. **agingAnalysis**（第69行）— 独有方法
+   - 参数：无
+   - 返回：ApiResponse<AgingAnalysis[]>
+   - 端点：GET /reports/aging-analysis
+
+9. **voucherStatistics**（第73行）— 独有方法
+   - 参数：{ period?: string }
+   - 返回：ApiResponse<Record<string, any>>
+   - 端点：GET /reports/voucher-statistics
+
+10. **cashFlowAnalysis**（第80行）— 独有方法
+    - 参数：{ period?: string }
+    - 返回：ApiResponse<CashFlowAnalysis>
+    - 端点：GET /reports/cash-flow-analysis
+
+11. **expenseAnalysis**（第87行）— 独有方法
+    - 参数：{ period?: string }
+    - 返回：ApiResponse<ExpenseAnalysis>
+    - 端点：GET /reports/expense-analysis
+
+12. **profitAnalysis**（第94行）— 独有方法
+    - 参数：{ period?: string }
+    - 返回：ApiResponse<ProfitAnalysis>
+    - 端点：GET /reports/profit-analysis
+
+13. **financialOverview**（第101行）— 独有方法
+    - 参数：{ period?: string }
+    - 返回：ApiResponse<FinancialOverview>
+    - 端点：GET /reports/financial-overview
+
+**方法分类**：
+- 重复方法（3个）：balanceSheet、incomeStatement、cashFlowStatement
+- 独有方法（10个）：businessOverview、projectSummary、monthlyTrend、departmentSummary、agingAnalysis、voucherStatistics、cashFlowAnalysis、expenseAnalysis、profitAnalysis、financialOverview
+
+**类型定义来源**：
+- @/api/erp/finance/report.ts 使用的类型来自 `../types`（@/api/erp/types）
+- 需要迁移的类型（10个）：BusinessOverview、ProjectFinancialSummary、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview
+- 已存在的类型（3个）：BalanceSheet、IncomeStatement、CashFlowStatement（已在@/types/finance中定义）
+
+**详细迁移计划**：
+
+**步骤1：迁移类型定义（V417）**
+- 将10个类型定义从@/api/erp/types迁移到@/types/finance
+- 类型列表：BusinessOverview、ProjectFinancialSummary、MonthlyTrend、DepartmentFinancialSummary、AgingAnalysis、CashFlowAnalysis、ExpenseAnalysis、ProfitAnalysis、FinancialOverview
+
+**步骤2：添加10个独有方法到@/api/finance/report.ts（V418）**
+- 将10个独有方法添加到@/api/finance/report.ts的reportApi对象中
+- 统一方法命名规范（使用get前缀）：
+  - businessOverview → getBusinessOverview
+  - projectSummary → getProjectSummary
+  - monthlyTrend → getMonthlyTrend
+  - departmentSummary → getDepartmentSummary
+  - agingAnalysis → getAgingAnalysis
+  - voucherStatistics → getVoucherStatistics
+  - cashFlowAnalysis → getCashFlowAnalysis
+  - expenseAnalysis → getExpenseAnalysis
+  - profitAnalysis → getProfitAnalysis
+  - financialOverview → getFinancialOverview
+- 统一HTTP客户端（使用apiClient.finance）
+- 统一参数传递方式（使用{ params }而不是URLSearchParams）
+- 统一导入（从@/types/finance导入类型）
+
+**步骤3：删除@/api/erp/finance/report.ts（V418）**
+- 确认没有文件引用@/api/erp/finance/report.ts
+- 删除@/api/erp/finance/report.ts
+
+**迁移后@/api/finance/report.ts方法清单（19个方法）**：
+- 原有方法（9个）：getBalanceSheet、getIncomeStatement、getCashFlowStatement、getAccountBalanceReport、getAccountLedger、getDimensionDetail、exportBalanceSheet、exportIncomeStatement、exportCashFlowStatement
+- 新增方法（10个）：getBusinessOverview、getProjectSummary、getMonthlyTrend、getDepartmentSummary、getAgingAnalysis、getVoucherStatistics、getCashFlowAnalysis、getExpenseAnalysis、getProfitAnalysis、getFinancialOverview
+
+**技术说明**：
+- 重要发现：@/api/erp/finance/report.ts有13个方法，其中3个与@/api/finance/重复，10个是独有的
+- 10个独有方法都是财务分析相关的方法，需要迁移到@/api/finance/report.ts
+- 迁移时需要统一方法命名、HTTP客户端、参数传递方式、类型定义
+- 迁移分为3个步骤：迁移类型定义、添加独有方法、删除旧文件
+- 预计需要2个版本（V417-V418）完成report.ts的迁移
+
+**验收结果**：
+- 完成@/api/erp/finance/report.ts的13个方法清单确认
+- 确认10个独有方法和3个重复方法
+- 确认需要迁移的10个类型定义
+- 制定3步骤详细迁移计划
+- 预计迁移后@/api/finance/report.ts将有19个方法
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | @/api/erp/finance/report.ts的详细方法分析 | ✅ |
+| 轨B 方法总数 | 13个方法 | ✅ |
+| 轨B 重复方法 | 3个（balanceSheet、incomeStatement、cashFlowStatement） | ✅ |
+| 轨B 独有方法 | 10个财务分析方法 | ✅ |
+| 轨B 需要迁移的类型 | 10个类型定义 | ✅ |
+| 轨B 迁移步骤 | 3步骤（迁移类型、添加方法、删除文件） | ✅ |
+| 轨B 预计版本 | V417-V418（2个版本） | ✅ |
+| 轨B 迁移后方法数 | 19个方法（9原有 + 10新增） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V416后续扩展（留给V417+）
+
+- [ ] **轨B P1阶段实施（类型迁移）**：将10个类型定义从@/api/erp/types迁移到@/types/finance
+- [ ] **轨B P1阶段实施（方法迁移）**：将10个独有方法添加到@/api/finance/report.ts，统一命名和HTTP客户端
+- [ ] **轨B P1阶段实施（文件删除）**：删除@/api/erp/finance/report.ts
+- [ ] **轨B P1阶段实施（budget.ts）**：将expenseApi迁移到@/api/finance/budget.ts，然后删除@/api/erp/finance/budget.ts
+- [ ] **轨B P2阶段实施**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts，更新页面引用，删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V416连续八十四次交付验证成功，V417继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
