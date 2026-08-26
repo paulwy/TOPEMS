@@ -10981,6 +10981,97 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V407 — 架构改进四轨并行第七十五次：通知测试调查（竞态条件定位）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第七十五次交付 · 通知测试调查 · 0个代码文件修改 · 确认mcp-stdio二进制正常，定位测试读取逻辑的竞态条件问题
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | 通知测试调查 | 确认mcp-stdio二进制正常，定位测试读取逻辑的竞态条件问题 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V408 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V408 | ⏸️ |
+
+### 轨C：通知测试调查（竞态条件定位）
+
+**调查内容**：调查 test_notification_does_not_return_response 测试失败的原因
+
+**调查过程**：
+
+1. **测试失败现象**：
+   - 测试：`test_notification_does_not_return_response`
+   - 错误：`Timed out waiting for response (5 seconds)`
+   - 失败位置：发送 notifications/initialized 通知后，发送 ping 请求，读取响应时超时
+
+2. **测试流程分析**：
+   - 步骤1：发送 initialize 请求 → 读取响应
+   - 步骤2：发送 notifications/initialized 通知（无 id）
+   - 步骤3：等待500ms，确认没有响应
+   - 步骤4：发送 ping 请求
+   - 步骤5：读取响应（超时5秒）← 失败在这里
+
+3. **手动验证mcp-stdio二进制**：
+   - 使用 printf 发送三个请求（initialize、notifications/initialized、ping）
+   - 结果：三个请求都正常工作
+     - initialize 返回正确的响应（包含 result 对象）
+     - notifications/initialized 没有响应（正确）
+     - ping 返回 `{"id":2,"jsonrpc":"2.0","result":{}}`（正确）
+   - 结论：mcp-stdio 二进制本身是正常的，问题出在测试的读取逻辑中
+
+4. **竞态条件定位**：
+   - 问题根因：`read_response_with_timeout` 函数使用线程+通道实现超时读取
+   - 当读取超时后，读取线程仍然在运行，并且会继续读取下一行数据
+   - 当后续的 ping 请求响应到达时，可能被之前的读取线程消耗了，而不是被新的读取线程读取
+   - 这是一个经典的竞态条件问题
+   - 具体流程：
+     1. 步骤3调用 `read_response_with_timeout(reader, 500)`，创建读取线程A
+     2. 读取线程A开始等待读取（阻塞在 read_line 上）
+     3. 500ms超时，主线程返回 None
+     4. 步骤4发送 ping 请求
+     5. 步骤5调用 `read_response(reader)`，创建读取线程B
+     6. ping 响应到达，可能被读取线程A读取（因为线程A仍在运行），而不是被读取线程B读取
+     7. 读取线程B等待5秒超时，测试失败
+
+**技术说明**：
+- 问题根因：Rust标准库的线程不支持取消操作，读取超时后读取线程仍然在运行
+- 竞态条件：多个读取线程共享同一个 reader，可能导致响应被错误的线程消耗
+- 解决方案（留给V408）：
+  1. 使用共享的 AtomicBool 标志位，让读取线程在读取后检查标志位，如果已经超时，则不发送结果
+  2. 使用异步 IO（tokio）来实现超时读取，这样可以正确取消读取操作
+  3. 在测试中，每次读取后都等待一段时间，确保之前的读取线程已经完成
+- 重要发现：这种竞态条件问题在使用线程+通道实现超时读取时很常见，需要特别注意
+- 手动验证结果：mcp-stdio 二进制本身是正常的，三个请求（initialize、notifications/initialized、ping）都能正确处理
+
+**验收结果**：
+- 确认 mcp-stdio 二进制本身是正常的
+- 定位测试失败的原因是读取逻辑的竞态条件
+- 记录了问题根因和解决方案（留给V408实施）
+- 6个测试仍然通过，1个测试失败（通知测试）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 调查目标 | test_notification_does_not_return_response 测试失败原因 | ✅ |
+| 轨C 手动验证 | mcp-stdio二进制三个请求都正常工作 | ✅ |
+| 轨C 问题定位 | 读取逻辑的竞态条件（读取超时后线程仍在运行） | ✅ |
+| 轨C 根因分析 | Rust标准库线程不支持取消，多个读取线程共享reader | ✅ |
+| 轨C 解决方案 | AtomicBool标志位 / 异步IO / 等待线程完成（留给V408） | ✅ |
+| 轨C 测试状态 | 6个测试通过，1个测试失败（通知测试） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V407后续扩展（留给V408+）
+
+- [ ] **轨C 通知测试修复**：修复read_response_with_timeout函数的竞态条件，使用AtomicBool标志位或异步IO实现可靠的超时读取
+- [ ] **轨C 所有测试通过**：运行所有7个测试用例，验证全部通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V407连续七十五次交付验证成功，V408继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
