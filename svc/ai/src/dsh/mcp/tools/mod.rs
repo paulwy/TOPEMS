@@ -29,6 +29,7 @@ pub mod lims;
 pub mod mes;
 pub mod pm;
 pub mod qms;
+pub mod scm;
 pub mod wms;
 
 pub use aps::register_aps_tools;
@@ -43,6 +44,7 @@ pub use lims::register_lims_tools;
 pub use mes::register_mes_tools;
 pub use pm::register_pm_tools;
 pub use qms::register_qms_tools;
+pub use scm::register_scm_tools;
 pub use wms::register_wms_tools;
 
 /// 工具处理函数类型
