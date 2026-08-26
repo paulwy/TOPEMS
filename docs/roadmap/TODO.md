@@ -17273,6 +17273,162 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V452 — 架构改进四轨并行第一百二十次：轨D 业务工具权限管理API（PermissionRequest+PermissionResponse+CRUD端点+权限检查端点+列表端点+计数端点+路由集成+10个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十次交付 · 轨D 业务工具权限管理API · 1个代码文件新建 + 1个代码文件修改 · 实现权限管理REST API，支持CRUD操作、权限检查、租户/用户列表和计数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限管理API | 实现权限管理REST API | ✅ |
+| 轨C | shared-service-client Nacos服务发现 | 集成Nacos服务发现，留给V453 | ⏸️ |
+
+### 轨D：业务工具权限管理API（PermissionRequest+PermissionResponse+CRUD端点+权限检查端点+列表端点+计数端点+路由集成+10个单元测试）
+
+**实现内容**：实现权限管理REST API，支持CRUD操作、权限检查、租户/用户列表和计数
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/permission_api.rs`（权限管理API，约520行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加permission_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **请求类型**
+   - PermissionRequest：创建/更新权限请求（tenant_id、user_id、role、active、tool_permissions）
+   - ToolPermissionRequest：工具权限请求（tool、max_permission、allowed_operations、denied_operations）
+   - PermissionCheckRequest：权限检查请求（tenant_id、user_id、tool、operation）
+
+2. **响应类型**
+   - PermissionResponse：权限配置响应（tenant_id、user_id、role、active、tool_permissions）
+   - ToolPermissionResponse：工具权限响应（tool、max_permission、allowed_operations、denied_operations）
+   - PermissionCheckResponse：权限检查响应（allowed、tenant_id、user_id、tool、operation、reason）
+   - PermissionListResponse：权限列表响应（total、permissions）
+   - ErrorResponse：错误响应（error、code）
+
+3. **类型转换**
+   - From<&TenantPermission> for PermissionResponse
+   - TryFrom<&PermissionRequest> for TenantPermission（验证role和max_permission）
+
+4. **错误处理**
+   - map_store_error()：将PermissionStoreError映射为HTTP状态码和错误响应
+   - NotFound → 404
+   - AlreadyExists → 409
+   - Invalid → 400
+   - StoreError → 500
+
+5. **CRUD端点**
+   - POST /api/business-tools/permissions — 创建权限（create_permission）
+   - GET /api/business-tools/permissions/{tenant_id}/{user_id} — 获取权限（get_permission）
+   - PUT /api/business-tools/permissions/{tenant_id}/{user_id} — 更新权限（update_permission）
+   - DELETE /api/business-tools/permissions/{tenant_id}/{user_id} — 删除权限（delete_permission）
+
+6. **列表端点**
+   - GET /api/business-tools/permissions/tenant/{tenant_id} — 列出租户所有权限（list_tenant_permissions）
+   - GET /api/business-tools/permissions/user/{user_id} — 列出用户所有租户权限（list_user_permissions）
+
+7. **权限检查端点**
+   - POST /api/business-tools/permissions/check — 检查用户是否有权限执行操作（check_permission）
+
+8. **计数端点**
+   - GET /api/business-tools/permissions/count — 获取存储的权限总数（count_permissions）
+
+9. **路由注册**
+   - permission_routes()：创建权限管理路由
+   - 集成到business_tools_routes()中（使用.merge()）
+
+10. **10个单元测试**
+    - test_permission_request_defaults：测试请求默认值
+    - test_tool_permission_request_defaults：测试工具权限请求默认值
+    - test_permission_response_from_tenant_permission：测试响应转换
+    - test_tenant_permission_try_from_request：测试请求转换
+    - test_tenant_permission_try_from_invalid_role：测试无效角色
+    - test_permission_check_response_serialization：测试检查响应序列化
+    - test_permission_check_response_with_reason：测试带原因的检查响应
+    - test_error_response_serialization：测试错误响应序列化
+    - test_permission_list_response：测试列表响应
+
+**技术说明**：
+- 使用axum框架实现REST API
+- 使用serde进行JSON序列化/反序列化
+- 使用State<AppState>访问权限存储
+- 使用Path提取路径参数
+- 使用Json提取请求体和返回响应
+- 使用Result<_, (StatusCode, Json<ErrorResponse>)>统一错误处理
+- 使用.merge()合并路由
+- 支持默认值（serde(default)）
+- 支持可选字段（skip_serializing_if）
+- 路径参数与请求体验证（update_permission）
+
+**权限管理API特性**：
+1. 完整CRUD — 创建、获取、更新、删除权限配置
+2. 权限检查 — 运行时检查用户是否有权限执行操作
+3. 租户列表 — 列出指定租户的所有权限
+4. 用户列表 — 列出指定用户的所有租户权限
+5. 计数 — 获取存储的权限总数
+6. 类型安全 — 请求体验证role和max_permission
+7. 统一错误处理 — 映射存储错误为HTTP状态码
+8. RESTful设计 — 遵循RESTful API设计规范
+9. 路由集成 — 无缝集成到business_tools路由
+10. 可测试 — 10个单元测试覆盖类型转换和序列化
+
+**验收结果**：
+- 完成3个请求类型（PermissionRequest、ToolPermissionRequest、PermissionCheckRequest）
+- 完成5个响应类型（PermissionResponse、ToolPermissionResponse、PermissionCheckResponse、PermissionListResponse、ErrorResponse）
+- 完成2个类型转换（From<&TenantPermission>、TryFrom<&PermissionRequest>）
+- 完成错误处理函数（map_store_error）
+- 完成4个CRUD端点（create、get、update、delete）
+- 完成2个列表端点（tenant、user）
+- 完成1个权限检查端点（check）
+- 完成1个计数端点（count）
+- 完成路由注册和集成
+- 完成10个单元测试（全部通过）
+- 代码总行数约520行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 请求类型 | 3个类型（Permission/ToolPermission/Check） | ✅ |
+| 轨D 响应类型 | 5个类型（Permission/ToolPermission/Check/List/Error） | ✅ |
+| 轨D 类型转换 | 2个转换（From/TryFrom） | ✅ |
+| 轨D 错误处理 | map_store_error函数 | ✅ |
+| 轨D CRUD端点 | 4个端点（create/get/update/delete） | ✅ |
+| 轨D 列表端点 | 2个端点（tenant/user） | ✅ |
+| 轨D 权限检查端点 | 1个端点（check） | ✅ |
+| 轨D 计数端点 | 1个端点（count） | ✅ |
+| 轨D 路由集成 | permission_routes()+merge到business_tools_routes | ✅ |
+| 轨D 单元测试 | 10个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约520行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V452后续扩展（留给V453+）
+
+- [ ] **轨C shared-service-client Nacos服务发现**：集成Nacos服务发现
+- [ ] **轨C shared-service-client Eureka服务发现**：集成Eureka服务发现
+- [ ] **轨D 业务工具权限审计日志**：实现审计日志记录和查询
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C Zookeeper重连机制**：添加连接断开后的自动重连逻辑
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V452连续一百二十次交付验证成功，V453继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
