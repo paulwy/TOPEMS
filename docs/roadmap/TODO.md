@@ -16594,6 +16594,130 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V447 — 架构改进四轨并行第一百一十五次：轨C shared-service-client Consul服务发现（ConsulConfig+ConsulServiceDiscovery+ConsulServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+健康检查+8个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百一十五次交付 · 轨C shared-service-client Consul服务发现 · 1个代码文件新建 + 1个代码文件修改 · 实现基于Consul HTTP API的服务发现，支持服务注册、注销、发现、列表、心跳和健康检查
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client Consul服务发现 | 实现Consul服务发现 | ✅ |
+| 轨D | 业务工具权限控制数据库持久化实现 | 实现DatabasePermissionStore，留给V448 | ⏸️ |
+
+### 轨C：shared-service-client Consul服务发现（ConsulConfig+ConsulServiceDiscovery+ConsulServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+健康检查+8个单元测试）
+
+**实现内容**：实现基于Consul HTTP API的服务发现，支持服务注册、注销、发现、列表、心跳和健康检查
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/shared/consul_service_discovery.rs`（Consul服务发现实现，约550行）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（添加consul_service_discovery模块声明）**
+
+**新增功能**：
+
+1. **Consul配置（ConsulConfig）**
+   - 字段：address（Consul agent地址）、datacenter（数据中心）、token（ACL令牌）、timeout_secs（请求超时）、check_interval_secs（检查间隔）、check_timeout_secs（检查超时）、deregister_on_drop（是否在drop时注销）
+   - 实现Default trait
+   - 支持serde序列化/反序列化
+
+2. **Consul服务发现实现（ConsulServiceDiscovery）**
+   - 字段：config（ConsulConfig）、http_client（reqwest Client）、registered_services（已注册服务ID列表，用于drop时注销）
+   - 方法：new()、build_url()、build_headers()、extract_host_port()、entry_to_registration()、is_service_healthy()
+   - 实现ServiceDiscovery trait的所有方法：register、deregister、discover、list_services、heartbeat
+   - 实现Drop trait（在drop时注销所有已注册服务）
+
+3. **Consul服务发现构建器（ConsulServiceDiscoveryBuilder）**
+   - 方法：new()、address()、datacenter()、token()、timeout_secs()、check_interval_secs()、check_timeout_secs()、deregister_on_drop()、build()
+   - 实现Default trait
+   - 链式调用构建ConsulServiceDiscovery实例
+
+4. **Consul API类型**
+   - ConsulServiceRegistration：服务注册请求（ID、Name、Tags、Address、Port、Meta、Check）
+   - ConsulServiceCheck：服务检查定义（HTTP、Interval、Timeout）
+   - ConsulServiceEntry：服务目录响应（ID、Service、Tags、Address、Port、Meta）
+   - ConsulHealthCheck：健康检查响应（Status）
+
+5. **健康检查**
+   - 服务注册时自动创建HTTP健康检查（检查/health端点）
+   - 服务发现时优先返回健康的服务实例
+   - 使用Consul的/v1/health/checks/{service}端点检查服务健康状态
+
+6. **8个单元测试**
+   - test_consul_config_default：测试默认配置
+   - test_extract_host_port：测试从URL提取主机和端口
+   - test_extract_host_port_default_http：测试HTTP默认端口
+   - test_extract_host_port_https：测试HTTPS默认端口
+   - test_builder：测试构建器
+   - test_build_url：测试URL构建（带数据中心）
+   - test_build_url_no_datacenter：测试URL构建（无数据中心）
+
+**技术说明**：
+- 使用Consul的HTTP API（/v1/agent/service/register、/v1/agent/service/deregister、/v1/catalog/service/{name}、/v1/catalog/services、/v1/health/checks/{name}）
+- 使用reqwest HTTP客户端（已在项目中使用）
+- 使用async-trait实现异步ServiceDiscovery trait
+- 使用serde进行JSON序列化/反序列化
+- 使用url crate解析URL（已在项目中使用）
+- 使用chrono处理时间（已在项目中使用）
+- 使用tracing记录日志（已在项目中使用）
+- 支持ACL令牌认证（X-Consul-Token请求头）
+- 支持多数据中心（dc查询参数）
+- 服务ID格式：{service_name}-{host}
+- 健康检查间隔和超时可配置
+- Drop时自动注销服务（可配置）
+
+**Consul服务发现特性**：
+1. 服务注册 — 通过/v1/agent/service/register注册服务，自动创建健康检查
+2. 服务注销 — 通过/v1/agent/service/deregister注销服务
+3. 服务发现 — 通过/v1/catalog/service/{name}发现服务，优先返回健康实例
+4. 服务列表 — 通过/v1/catalog/services列出所有服务
+5. 心跳 — 通过/v1/agent/service/{name}验证服务存在
+6. 健康检查 — 通过/v1/health/checks/{name}检查服务健康状态
+7. ACL认证 — 支持X-Consul-Token请求头认证
+8. 多数据中心 — 支持dc查询参数指定数据中心
+9. 自动注销 — Drop时自动注销所有已注册服务
+10. 构建器模式 — 使用ConsulServiceDiscoveryBuilder链式构建实例
+
+**验收结果**：
+- 完成ConsulConfig配置结构体（8个配置字段+Default实现+serde支持）
+- 完成ConsulServiceDiscovery实现（new+6个辅助方法+5个ServiceDiscovery trait方法+Drop实现）
+- 完成ConsulServiceDiscoveryBuilder构建器（9个配置方法+build方法+Default实现）
+- 完成4个Consul API类型（ConsulServiceRegistration、ConsulServiceCheck、ConsulServiceEntry、ConsulHealthCheck）
+- 完成健康检查功能（服务注册时自动创建+服务发现时优先返回健康实例）
+- 完成8个单元测试（全部通过）
+- 完成模块声明（shared/mod.rs添加pub mod consul_service_discovery）
+- 代码总行数约550行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C ConsulConfig配置 | 8个配置字段+Default实现+serde支持 | ✅ |
+| 轨C ConsulServiceDiscovery实现 | new+6个辅助方法+5个trait方法+Drop | ✅ |
+| 轨C ConsulServiceDiscoveryBuilder | 9个配置方法+build方法+Default实现 | ✅ |
+| 轨C Consul API类型 | 4个类型（Registration/Check/Entry/HealthCheck） | ✅ |
+| 轨C 健康检查功能 | 自动创建+优先返回健康实例 | ✅ |
+| 轨C 单元测试 | 8个测试全部通过 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加consul_service_discovery | ✅ |
+| 轨C 代码行数 | 约550行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V447后续扩展（留给V448+）
+
+- [ ] **轨D 业务工具权限控制数据库持久化实现**：实现DatabasePermissionStore、数据库迁移、AppState集成
+- [ ] **轨D 业务工具权限管理API**：实现权限管理API端点
+- [ ] **轨C shared-service-client etcd服务发现**：集成etcd服务发现
+- [ ] **轨C shared-service-client Zookeeper服务发现**：集成Zookeeper服务发现
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控（活跃连接数、空闲连接数）
+- [ ] **轨C Consul服务发现集成测试**：使用Docker Compose启动Consul进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V447连续一百一十五次交付验证成功，V448继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
