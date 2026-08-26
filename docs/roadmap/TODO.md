@@ -9088,6 +9088,72 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V380 — 架构改进四轨并行第四十八次：前端未使用import清理（AIFlowAssistant遗留，清空空文件）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第四十八次交付 · 前端未使用import清理 · 1个文件 · 清空V377删除组件后导致的空文件，消除遗留未使用import
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用import清理 | 1个文件的未使用import删除（AIFlowAssistant.tsx，V377删除_AIFlowAssistant组件后导致的空文件，清空整个文件） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V381 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V381 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V381 | ⏸️ |
+
+### 轨A：前端未使用import清理（AIFlowAssistant遗留，清空空文件）
+
+**清理内容**：清空1个V377删除组件后导致的空文件，消除遗留未使用import
+
+**清理的文件（1个）**：
+
+1. **components/ai/AIFlowAssistant.tsx** — 清空整个文件
+   - V377删除了_AIFlowAssistant组件和接口定义后，文件中只剩下import语句（React、useState、@mui/material、i18n、lucide-react、assistantApi、useNotificationStore、logger等）
+   - 这些import语句没有被任何实际代码使用，变成未使用的遗留import
+   - 清空整个文件，消除所有未使用import
+   - 文件从22行减少到1行（空行）
+
+**技术说明**：
+- V377删除未使用的组件后，需要检查并清理相关的未使用import
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于只有import语句、没有任何实际代码的文件，可以直接清空整个文件
+- 清空文件前验证文件中没有任何实际代码（只有import语句）
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查import的未使用情况，删除变量/组件后需要及时清理相关import
+
+**遗留问题**：
+- FinancialReports.tsx中仍有未使用import（Card、CardContent等），需单独清理
+- 这些遗留未使用import留给后续版本处理
+
+**验收结果**：
+- 1个文件的未使用import TS6133错误已消除
+- 编译验证：无新增错误
+- 清空的文件为只有import语句、没有任何实际代码的空文件
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用import删除 | ✅ |
+| 轨A 清理类型 | 清空整个文件（只有import语句的空文件） | ✅ |
+| 轨A 文件变化 | AIFlowAssistant.tsx从22行到1行 | ✅ |
+| 轨A 引用检查 | 清空文件前验证文件中没有任何实际代码 | ✅ |
+| 轨A 遗留问题 | FinancialReports.tsx仍有未使用import，留给后续版本 | ⚠️ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V380后续扩展（留给V381+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~120个TS6133错误
+- [ ] **轨A 未使用import清理**：继续清理FinancialReports.tsx中的遗留未使用import
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V380连续四十八次交付验证成功，V381继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
