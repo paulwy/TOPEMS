@@ -17569,6 +17569,178 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V454 — 架构改进四轨并行第一百二十二次：轨D 业务工具权限审计日志（AuditAction+AuditLogEntry+AuditLogQuery+AuditLogResponse+AuditLogStore trait+InMemoryAuditLogStore+AuditLogger+审计日志API端点+9个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十二次交付 · 轨D 业务工具权限审计日志 · 2个代码文件新建 + 1个代码文件修改 · 实现权限变更审计日志，支持记录创建/更新/删除/激活/停用/角色变更，提供查询API和分页
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限审计日志 | 实现审计日志模块+API | ✅ |
+| 轨C | shared-service-client Eureka服务发现 | 集成Eureka服务发现，留给V455 | ⏸️ |
+
+### 轨D：业务工具权限审计日志（AuditAction+AuditLogEntry+AuditLogQuery+AuditLogResponse+AuditLogStore trait+InMemoryAuditLogStore+AuditLogger+审计日志API端点+9个单元测试）
+
+**实现内容**：实现权限变更审计日志，支持记录创建/更新/删除/激活/停用/角色变更，提供查询API和分页
+
+**修改的文件（2个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/permission_audit_log.rs`（审计日志模块，约520行）**
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_api.rs`（审计日志API端点，约100行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加permission_audit_log和audit_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **审计动作枚举（AuditAction）**
+   - 变体：Create、Update、Delete、Activate、Deactivate、RoleChange、Check
+   - 实现Display trait
+   - 实现FromStr trait（支持snake_case）
+   - 支持serde序列化/反序列化
+
+2. **审计日志条目（AuditLogEntry）**
+   - 字段：id、tenant_id、user_id、action、old_value、new_value、changed_by、changed_at、ip_address、user_agent、metadata
+   - 支持serde序列化/反序列化
+   - 可选字段使用skip_serializing_if
+
+3. **审计日志查询（AuditLogQuery）**
+   - 字段：tenant_id、user_id、action、changed_by、start_time、end_time、limit、offset
+   - 实现Default trait（limit默认100，offset默认0）
+   - 支持serde反序列化（用于查询参数）
+
+4. **审计日志响应（AuditLogResponse）**
+   - 字段：total、count、offset、limit、entries
+   - 支持分页响应
+
+5. **审计日志存储trait（AuditLogStore）**
+   - 方法：record()、query()、get_by_id()、count()
+   - 使用async_trait实现异步
+   - Send + Sync约束
+
+6. **审计日志错误（AuditLogError）**
+   - 变体：NotFound、InvalidQuery、StoreError
+   - 使用thiserror实现Error trait
+
+7. **内存审计日志存储（InMemoryAuditLogStore）**
+   - 字段：entries（Arc<RwLock<Vec<AuditLogEntry>>）
+   - 实现AuditLogStore trait的所有方法
+   - 支持多条件过滤（tenant_id、user_id、action、changed_by、时间范围）
+   - 支持分页（limit、offset）
+   - 按时间倒序排序（最新优先）
+   - 实现Default trait
+
+8. **审计日志记录器（AuditLogger）**
+   - 泛型结构体，包装AuditLogStore
+   - 方法：new()、log_create()、log_update()、log_delete()、log_activation()、query()、get_by_id()、count()
+   - log_update()自动检测角色变更（RoleChange vs Update）
+   - 自动生成唯一ID（时间戳+UUID）
+   - 自动记录时间戳（RFC3339）
+
+9. **审计日志API端点**
+   - GET /api/business-tools/permissions/audit-logs — 查询审计日志（支持过滤和分页）
+   - GET /api/business-tools/permissions/audit-logs/{id} — 获取单个审计日志
+   - GET /api/business-tools/permissions/audit-logs/count — 获取审计日志总数
+   - 使用Query提取查询参数
+   - 使用Path提取路径参数
+
+10. **9个单元测试**
+    - test_audit_action_display：测试Display实现
+    - test_audit_action_from_str：测试FromStr实现
+    - test_audit_log_query_default：测试默认查询参数
+    - test_in_memory_store_record_and_query：测试记录和查询
+    - test_in_memory_store_filter_by_tenant：测试按租户过滤
+    - test_in_memory_store_pagination：测试分页
+    - test_log_update_detects_role_change：测试角色变更检测
+    - test_log_delete：测试删除日志
+    - test_get_by_id：测试按ID获取
+
+**技术说明**：
+- 使用async_trait实现异步trait
+- 使用tokio::sync::RwLock实现并发安全
+- 使用serde进行JSON序列化/反序列化
+- 使用thiserror实现错误类型
+- 使用uuid生成唯一ID
+- 使用chrono处理时间（已在项目中使用）
+- 使用tracing记录日志（已在项目中使用）
+- 支持多条件过滤和分页
+- 自动检测角色变更
+- 前后快照记录（old_value/new_value）
+
+**审计日志特性**：
+1. 完整审计追踪 — 记录所有权限变更操作
+2. 前后快照 — 记录变更前后的权限状态
+3. 多条件过滤 — 支持按租户、用户、动作、操作者、时间范围过滤
+4. 分页支持 — 支持limit和offset分页
+5. 角色变更检测 — 自动检测角色变更并标记为RoleChange
+6. 操作者信息 — 记录changed_by、ip_address、user_agent
+7. 唯一ID — 每个日志条目有唯一ID（时间戳+UUID）
+8. 时间戳 — 自动记录RFC3339格式时间戳
+9. RESTful API — 提供查询、获取、计数API端点
+10. 可扩展存储 — 通过AuditLogStore trait支持多种存储后端
+
+**验收结果**：
+- 完成AuditAction枚举（7个变体+Display+FromStr+serde）
+- 完成AuditLogEntry结构体（11个字段+serde）
+- 完成AuditLogQuery结构体（8个字段+Default+serde）
+- 完成AuditLogResponse结构体（5个字段+serde）
+- 完成AuditLogStore trait（4个方法）
+- 完成AuditLogError错误类型（3个变体+thiserror）
+- 完成InMemoryAuditLogStore实现（完整trait实现+过滤+分页+排序）
+- 完成AuditLogger记录器（6个方法+角色变更检测+自动ID）
+- 完成审计日志API端点（3个端点+查询参数+路径参数）
+- 完成9个单元测试（全部通过）
+- 代码总行数约620行（审计日志模块520行+API端点100行）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D AuditAction枚举 | 7个变体+Display+FromStr+serde | ✅ |
+| 轨D AuditLogEntry结构体 | 11个字段+serde | ✅ |
+| 轨D AuditLogQuery结构体 | 8个字段+Default+serde | ✅ |
+| 轨D AuditLogResponse结构体 | 5个字段+serde | ✅ |
+| 轨D AuditLogStore trait | 4个方法 | ✅ |
+| 轨D AuditLogError错误 | 3个变体+thiserror | ✅ |
+| 轨D InMemoryAuditLogStore | 完整trait实现+过滤+分页+排序 | ✅ |
+| 轨D AuditLogger记录器 | 6个方法+角色变更检测+自动ID | ✅ |
+| 轨D 审计日志API端点 | 3个端点（查询/获取/计数） | ✅ |
+| 轨D 单元测试 | 9个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约620行（模块520+API100） | ✅ |
+| 变更统计 | 2个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V454后续扩展（留给V455+）
+
+- [ ] **轨C shared-service-client Eureka服务发现**：集成Eureka服务发现
+- [ ] **轨C shared-service-client Kubernetes服务发现**：集成Kubernetes服务发现
+- [ ] **轨D 审计日志数据库存储**：实现PostgreSQL-backed AuditLogStore
+- [ ] **轨D 审计日志集成到权限管理API**：在create/update/delete端点中自动记录审计日志
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V454连续一百二十二次交付验证成功，V455继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
