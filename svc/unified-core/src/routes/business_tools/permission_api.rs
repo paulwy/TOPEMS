@@ -1,0 +1,581 @@
+//! V452: Business Tools Permission Management API
+//!
+//! Provides REST API endpoints for managing tenant-based permission
+//! configurations. Supports CRUD operations for permissions and a
+//! permission check endpoint for runtime authorization.
+
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::Json;
+use axum::Router;
+use serde::{Deserialize, Serialize};
+
+use crate::shared::AppState;
+use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
+use super::permission_store::PermissionStoreError;
+
+// ===== Request Types =====
+
+/// Request to create or update a permission configuration.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PermissionRequest {
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tenant role (owner, admin, member, viewer).
+    #[serde(default = "default_role")]
+    pub role: String,
+    /// Whether the permission is active.
+    #[serde(default = "default_active")]
+    pub active: bool,
+    /// Tool-specific permission overrides.
+    #[serde(default)]
+    pub tool_permissions: Vec<ToolPermissionRequest>,
+}
+
+fn default_role() -> String {
+    "member".to_string()
+}
+
+fn default_active() -> bool {
+    true
+}
+
+/// Tool-specific permission override in a request.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ToolPermissionRequest {
+    /// Tool name.
+    pub tool: String,
+    /// Maximum permission level (read, write, admin).
+    #[serde(default = "default_max_permission")]
+    pub max_permission: String,
+    /// Allowed operations (empty means all operations allowed up to max_permission).
+    #[serde(default)]
+    pub allowed_operations: Vec<String>,
+    /// Denied operations (takes precedence over allowed).
+    #[serde(default)]
+    pub denied_operations: Vec<String>,
+}
+
+fn default_max_permission() -> String {
+    "read".to_string()
+}
+
+/// Request to check if a user can perform an operation.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PermissionCheckRequest {
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tool name.
+    pub tool: String,
+    /// Operation to check.
+    pub operation: String,
+}
+
+// ===== Response Types =====
+
+/// Response containing a permission configuration.
+#[derive(Debug, Clone, Serialize)]
+pub struct PermissionResponse {
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tenant role.
+    pub role: String,
+    /// Whether the permission is active.
+    pub active: bool,
+    /// Tool-specific permission overrides.
+    pub tool_permissions: Vec<ToolPermissionResponse>,
+}
+
+/// Tool-specific permission override in a response.
+#[derive(Debug, Clone, Serialize)]
+pub struct ToolPermissionResponse {
+    /// Tool name.
+    pub tool: String,
+    /// Maximum permission level.
+    pub max_permission: String,
+    /// Allowed operations.
+    pub allowed_operations: Vec<String>,
+    /// Denied operations.
+    pub denied_operations: Vec<String>,
+}
+
+/// Response for permission check.
+#[derive(Debug, Clone, Serialize)]
+pub struct PermissionCheckResponse {
+    /// Whether the operation is allowed.
+    pub allowed: bool,
+    /// Tenant ID.
+    pub tenant_id: String,
+    /// User ID.
+    pub user_id: String,
+    /// Tool name.
+    pub tool: String,
+    /// Operation checked.
+    pub operation: String,
+    /// Reason for the decision (optional).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+/// Response for listing permissions.
+#[derive(Debug, Clone, Serialize)]
+pub struct PermissionListResponse {
+    /// Total number of permissions.
+    pub total: usize,
+    /// Permission configurations.
+    pub permissions: Vec<PermissionResponse>,
+}
+
+/// Error response.
+#[derive(Debug, Clone, Serialize)]
+pub struct ErrorResponse {
+    /// Error message.
+    pub error: String,
+    /// Error code (optional).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
+}
+
+// ===== Conversion Helpers =====
+
+impl From<&TenantPermission> for PermissionResponse {
+    fn from(perm: &TenantPermission) -> Self {
+        Self {
+            tenant_id: perm.tenant_id.clone(),
+            user_id: perm.user_id.clone(),
+            role: perm.role.as_str().to_string(),
+            active: perm.active,
+            tool_permissions: perm
+                .tool_permissions
+                .iter()
+                .map(|tp| ToolPermissionResponse {
+                    tool: tp.tool.clone(),
+                    max_permission: tp.max_permission.as_str().to_string(),
+                    allowed_operations: tp.allowed_operations.clone(),
+                    denied_operations: tp.denied_operations.clone(),
+                })
+                .collect(),
+        }
+    }
+}
+
+impl TryFrom<&PermissionRequest> for TenantPermission {
+    type Error = String;
+
+    fn try_from(req: &PermissionRequest) -> Result<Self, Self::Error> {
+        let role = TenantRole::from_str(&req.role)
+            .map_err(|_| format!("Invalid role: {}", req.role))?;
+
+        let tool_permissions = req
+            .tool_permissions
+            .iter()
+            .map(|tp| {
+                let max_permission = MaxPermission::from_str(&tp.max_permission)
+                    .map_err(|_| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
+                Ok(ToolPermission {
+                    tool: tp.tool.clone(),
+                    allowed_operations: tp.allowed_operations.clone(),
+                    denied_operations: tp.denied_operations.clone(),
+                    max_permission,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+
+        Ok(TenantPermission {
+            tenant_id: req.tenant_id.clone(),
+            user_id: req.user_id.clone(),
+            role,
+            tool_permissions,
+            active: req.active,
+        })
+    }
+}
+
+// ===== Error Handling =====
+
+fn map_store_error(err: PermissionStoreError) -> (StatusCode, Json<ErrorResponse>) {
+    match err {
+        PermissionStoreError::NotFound(tenant, user) => (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: format!("Permission not found for tenant={}, user={}", tenant, user),
+                code: Some("NOT_FOUND".to_string()),
+            }),
+        ),
+        PermissionStoreError::AlreadyExists(tenant, user) => (
+            StatusCode::CONFLICT,
+            Json(ErrorResponse {
+                error: format!("Permission already exists for tenant={}, user={}", tenant, user),
+                code: Some("ALREADY_EXISTS".to_string()),
+            }),
+        ),
+        PermissionStoreError::Invalid(msg) => (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: msg,
+                code: Some("INVALID".to_string()),
+            }),
+        ),
+        PermissionStoreError::StoreError(msg) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: format!("Store error: {}", msg),
+                code: Some("STORE_ERROR".to_string()),
+            }),
+        ),
+    }
+}
+
+// ===== Route Handlers =====
+
+/// `POST /api/business-tools/permissions` — Create a new permission configuration.
+pub async fn create_permission(
+    State(state): State<AppState>,
+    Json(request): Json<PermissionRequest>,
+) -> Result<(StatusCode, Json<PermissionResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let permission = TenantPermission::try_from(&request)
+        .map_err(|msg| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: msg,
+                    code: Some("INVALID_REQUEST".to_string()),
+                }),
+            )
+        })?;
+
+    state
+        .permission_store
+        .create_permission(permission.clone())
+        .await
+        .map_err(map_store_error)?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(PermissionResponse::from(&permission)),
+    ))
+}
+
+/// `GET /api/business-tools/permissions/{tenant_id}/{user_id}` — Get a permission configuration.
+pub async fn get_permission(
+    State(state): State<AppState>,
+    Path((tenant_id, user_id)): Path<(String, String)>,
+) -> Result<Json<PermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let permission = state
+        .permission_store
+        .get_permission(&tenant_id, &user_id)
+        .await
+        .map_err(map_store_error)?;
+
+    match permission {
+        Some(perm) => Ok(Json(PermissionResponse::from(&perm))),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: format!("Permission not found for tenant={}, user={}", tenant_id, user_id),
+                code: Some("NOT_FOUND".to_string()),
+            }),
+        )),
+    }
+}
+
+/// `PUT /api/business-tools/permissions/{tenant_id}/{user_id}` — Update a permission configuration.
+pub async fn update_permission(
+    State(state): State<AppState>,
+    Path((tenant_id, user_id)): Path<(String, String)>,
+    Json(request): Json<PermissionRequest>,
+) -> Result<Json<PermissionResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Ensure path parameters match request body
+    if request.tenant_id != tenant_id || request.user_id != user_id {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: "Path parameters do not match request body".to_string(),
+                code: Some("PATH_MISMATCH".to_string()),
+            }),
+        ));
+    }
+
+    let permission = TenantPermission::try_from(&request)
+        .map_err(|msg| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: msg,
+                    code: Some("INVALID_REQUEST".to_string()),
+                }),
+            )
+        })?;
+
+    state
+        .permission_store
+        .update_permission(permission.clone())
+        .await
+        .map_err(map_store_error)?;
+
+    Ok(Json(PermissionResponse::from(&permission)))
+}
+
+/// `DELETE /api/business-tools/permissions/{tenant_id}/{user_id}` — Delete a permission configuration.
+pub async fn delete_permission(
+    State(state): State<AppState>,
+    Path((tenant_id, user_id)): Path<(String, String)>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .permission_store
+        .delete_permission(&tenant_id, &user_id)
+        .await
+        .map_err(map_store_error)?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// `GET /api/business-tools/permissions/tenant/{tenant_id}` — List all permissions for a tenant.
+pub async fn list_tenant_permissions(
+    State(state): State<AppState>,
+    Path(tenant_id): Path<String>,
+) -> Result<Json<PermissionListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let permissions = state
+        .permission_store
+        .list_tenant_permissions(&tenant_id)
+        .await
+        .map_err(map_store_error)?;
+
+    let responses: Vec<PermissionResponse> = permissions
+        .iter()
+        .map(PermissionResponse::from)
+        .collect();
+
+    Ok(Json(PermissionListResponse {
+        total: responses.len(),
+        permissions: responses,
+    }))
+}
+
+/// `GET /api/business-tools/permissions/user/{user_id}` — List all permissions for a user.
+pub async fn list_user_permissions(
+    State(state): State<AppState>,
+    Path(user_id): Path<String>,
+) -> Result<Json<PermissionListResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let permissions = state
+        .permission_store
+        .list_user_permissions(&user_id)
+        .await
+        .map_err(map_store_error)?;
+
+    let responses: Vec<PermissionResponse> = permissions
+        .iter()
+        .map(PermissionResponse::from)
+        .collect();
+
+    Ok(Json(PermissionListResponse {
+        total: responses.len(),
+        permissions: responses,
+    }))
+}
+
+/// `POST /api/business-tools/permissions/check` — Check if a user can perform an operation.
+pub async fn check_permission(
+    State(state): State<AppState>,
+    Json(request): Json<PermissionCheckRequest>,
+) -> Result<Json<PermissionCheckResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let allowed = state
+        .permission_store
+        .check_permission(&request.tenant_id, &request.user_id, &request.tool, &request.operation)
+        .await
+        .map_err(map_store_error)?;
+
+    let reason = if allowed {
+        None
+    } else {
+        Some("Permission denied".to_string())
+    };
+
+    Ok(Json(PermissionCheckResponse {
+        allowed,
+        tenant_id: request.tenant_id,
+        user_id: request.user_id,
+        tool: request.tool,
+        operation: request.operation,
+        reason,
+    }))
+}
+
+/// `GET /api/business-tools/permissions/count` — Get the total number of stored permissions.
+pub async fn count_permissions(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    let count = state
+        .permission_store
+        .count()
+        .await
+        .map_err(map_store_error)?;
+
+    Ok(Json(serde_json::json!({
+        "count": count,
+    })))
+}
+
+// ===== Route Registration =====
+
+/// Create permission management routes.
+pub fn permission_routes() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/business-tools/permissions",
+            axum::routing::post(create_permission),
+        )
+        .route(
+            "/business-tools/permissions/{tenant_id}/{user_id}",
+            axum::routing::get(get_permission)
+                .put(update_permission)
+                .delete(delete_permission),
+        )
+        .route(
+            "/business-tools/permissions/tenant/{tenant_id}",
+            axum::routing::get(list_tenant_permissions),
+        )
+        .route(
+            "/business-tools/permissions/user/{user_id}",
+            axum::routing::get(list_user_permissions),
+        )
+        .route(
+            "/business-tools/permissions/check",
+            axum::routing::post(check_permission),
+        )
+        .route(
+            "/business-tools/permissions/count",
+            axum::routing::get(count_permissions),
+        )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_permission_request_defaults() {
+        let json = r#"{"tenant_id":"t1","user_id":"u1"}"#;
+        let req: PermissionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.role, "member");
+        assert!(req.active);
+        assert!(req.tool_permissions.is_empty());
+    }
+
+    #[test]
+    fn test_tool_permission_request_defaults() {
+        let json = r#"{"tool":"crm"}"#;
+        let req: ToolPermissionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.max_permission, "read");
+        assert!(req.allowed_operations.is_empty());
+        assert!(req.denied_operations.is_empty());
+    }
+
+    #[test]
+    fn test_permission_response_from_tenant_permission() {
+        let perm = TenantPermission::owner("t1", "u1");
+        let resp = PermissionResponse::from(&perm);
+        assert_eq!(resp.tenant_id, "t1");
+        assert_eq!(resp.user_id, "u1");
+        assert_eq!(resp.role, "owner");
+        assert!(resp.active);
+    }
+
+    #[test]
+    fn test_tenant_permission_try_from_request() {
+        let req = PermissionRequest {
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            role: "admin".to_string(),
+            active: true,
+            tool_permissions: vec![ToolPermissionRequest {
+                tool: "crm".to_string(),
+                max_permission: "write".to_string(),
+                allowed_operations: vec!["read".to_string(), "write".to_string()],
+                denied_operations: vec!["delete".to_string()],
+            }],
+        };
+
+        let perm = TenantPermission::try_from(&req).unwrap();
+        assert_eq!(perm.tenant_id, "t1");
+        assert_eq!(perm.user_id, "u1");
+        assert!(matches!(perm.role, TenantRole::Admin));
+        assert_eq!(perm.tool_permissions.len(), 1);
+        assert_eq!(perm.tool_permissions[0].tool, "crm");
+    }
+
+    #[test]
+    fn test_tenant_permission_try_from_invalid_role() {
+        let req = PermissionRequest {
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            role: "invalid".to_string(),
+            active: true,
+            tool_permissions: vec![],
+        };
+
+        let result = TenantPermission::try_from(&req);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_permission_check_response_serialization() {
+        let resp = PermissionCheckResponse {
+            allowed: true,
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            tool: "crm".to_string(),
+            operation: "read".to_string(),
+            reason: None,
+        };
+
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"allowed\":true"));
+        assert!(!json.contains("reason"));
+    }
+
+    #[test]
+    fn test_permission_check_response_with_reason() {
+        let resp = PermissionCheckResponse {
+            allowed: false,
+            tenant_id: "t1".to_string(),
+            user_id: "u1".to_string(),
+            tool: "crm".to_string(),
+            operation: "delete".to_string(),
+            reason: Some("Permission denied".to_string()),
+        };
+
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"allowed\":false"));
+        assert!(json.contains("Permission denied"));
+    }
+
+    #[test]
+    fn test_error_response_serialization() {
+        let resp = ErrorResponse {
+            error: "Something went wrong".to_string(),
+            code: Some("INTERNAL_ERROR".to_string()),
+        };
+
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("Something went wrong"));
+        assert!(json.contains("INTERNAL_ERROR"));
+    }
+
+    #[test]
+    fn test_permission_list_response() {
+        let resp = PermissionListResponse {
+            total: 2,
+            permissions: vec![],
+        };
+
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"total\":2"));
+    }
+}

@@ -13,6 +13,9 @@ pub mod database_permission_store;
 // V450: Permission store factory
 pub mod permission_store_factory;
 
+// V452: Permission management API
+pub mod permission_api;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
@@ -741,6 +744,8 @@ pub fn business_tools_routes() -> Router<AppState> {
             "/business-tools/{tool}/health",
             axum::routing::get(tool_health),
         )
+        // V452: Permission management routes
+        .merge(permission_api::permission_routes())
 }
 
 // ===== Helper Extensions for BusinessRequest =====
