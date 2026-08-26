@@ -7081,6 +7081,79 @@ cargo run --bin mcp-stdio
 
 ---
 
+## 🎯 V352 — 架构改进四轨并行第二十次：bff组件未使用专项（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十次交付 · bff组件未使用专项 · 删除1个完全未使用组件 · tsc检查通过
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 删除StreamingBoundary.tsx（完全未使用），恢复ProgressiveHydration.tsx（被PerformancePanel引用） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V353 | ⏸️ |
+| 轨C | stdio传输单元测试 | 模拟stdin/stdout的端到端测试，留给V353 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V353 | ⏸️ |
+
+### 轨A：bff组件未使用专项
+
+**bff组件引用分析**（9个组件）：
+
+| 组件 | 文件大小 | index.ts导出 | bff目录外引用 | 处置 |
+|------|----------|-------------|--------------|------|
+| ABTestPanel | 26KB | ✅ | 0处 | 保留（BFF公共API） |
+| BffDataTable | 14KB | ✅ | 0处 | 保留（BFF公共API） |
+| BffDetailPage | 17KB | ✅ | 1处 | 保留（有引用） |
+| BffErrorBoundary | 18KB | ✅ | 2处 | 保留（有引用） |
+| BffFallback | 14KB | ✅ | 1处 | 保留（有引用） |
+| BffFormPage | 19KB | ✅ | 1处 | 保留（有引用） |
+| PerformancePanel | 39KB | ❌ | 2处 | 保留（有引用） |
+| ProgressiveHydration | 14KB | ❌ | 0处（被PerformancePanel引用） | 保留（间接引用） |
+| StreamingBoundary | 13KB | ❌ | 0处（完全无引用） | **删除** |
+
+**删除的文件**：
+- `apps/web/src/components/bff/StreamingBoundary.tsx`（13KB）— 完全无引用（包括bff目录内），安全删除
+
+**恢复并修复的文件**：
+- `apps/web/src/components/bff/ProgressiveHydration.tsx`（~5.5KB）— 被 PerformancePanel 引用，恢复并修复编译错误
+  - 添加 HydrationRecord.id 字段
+  - 添加 HydrationRecord.status 字段（'pending' | 'hydrating' | 'hydrated' | 'error'）
+  - 添加 HydrationRecord.priority 字段（'high' | 'medium' | 'low'）
+  - 添加 HydrationRecord.trigger 字段（'immediate' | 'idle' | 'visible' | 'manual'）
+  - 添加 HydrationStats.hydratedCount 字段
+  - 添加 HydrationStats.pendingCount 字段
+  - 更新 startHydration/endHydration/getHydrationStats 函数支持新字段
+
+**处置决策**：
+1. **ABTestPanel 和 BffDataTable**：虽然当前未被引用，但在 index.ts 中作为 BFF 公共 API 导出，是 BFF 架构的模板组件，未来可能被使用，建议保留
+2. **ProgressiveHydration**：被 PerformancePanel 间接引用（PerformancePanel 导入了 getHydrationStats/onHydrationStatsChange/HydrationRecord），不能删除
+3. **StreamingBoundary**：既没有在 index.ts 中导出，也没有在任何地方被引用（包括 bff 目录内），可以安全删除
+
+**验收**：
+- tsc 检查：ProgressiveHydration/HydrationRecord/HydrationStats 相关错误已全部修复
+- StreamingBoundary 无任何引用，删除安全
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 引用分析 | 9个bff组件全部分析完成 | ✅ |
+| 轨A 删除组件 | StreamingBoundary.tsx（13KB，完全无引用） | ✅ |
+| 轨A 恢复组件 | ProgressiveHydration.tsx（被PerformancePanel引用） | ✅ |
+| 轨A 编译错误修复 | HydrationRecord/HydrationStats 缺失字段已补全 | ✅ |
+| 轨A tsc检查 | ProgressiveHydration相关错误已全部修复 | ✅ |
+| 变更统计 | 删除1文件(13KB) + 修改1文件(~5.5KB) | ✅ |
+
+### V352后续扩展（留给V353+）
+
+- [ ] **轨C stdio传输单元测试**：模拟stdin/stdout的端到端测试
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A 前端未使用项持续清理**：继续清理TS6133/TS6198未使用项
+- [ ] **四轨并行继续**：V333-V352连续二十次交付验证成功，V353继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
