@@ -8085,6 +8085,76 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V366 — 架构改进四轨并行第三十四次：前端未使用函数清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十四次交付 · 前端未使用函数清理 · 1个文件 · 删除未使用的hook函数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用函数清理 | 1个文件的未使用hook函数删除（PluginContext的useInstalledPlugins） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V367 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V367 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V367 | ⏸️ |
+
+### 轨A：前端未使用函数清理
+
+**清理内容**：删除1个文件中未使用的hook函数定义
+
+**清理的文件（1个）**：
+
+1. **context/PluginContext.tsx** — 删除未使用的hook函数 useInstalledPlugins
+   - 删除范围：第31-37行（共7行）
+   - 函数内容：
+     ```typescript
+     const useInstalledPlugins = () => {
+       const context = useContext(PluginContext);
+       if (!context) {
+         throw new Error('useInstalledPlugins must be used within a PluginProvider');
+       }
+       return context;
+     };
+     ```
+   - 原因：该hook函数定义后从未被使用，可能是遗留代码。usePlugins hook 仍然保留并导出，功能相同
+   - 注意：删除 useInstalledPlugins 后，useContext import 仍然在 usePlugins 函数中使用，不需要删除
+
+**技术说明**：
+- 删除的hook函数是独立的定义，不依赖其他代码
+- 删除前验证函数未被任何地方调用
+- 删除后保留功能相同的 usePlugins hook
+- 对于确实需要保留的未使用函数，建议添加注释说明用途
+
+**验收结果**：
+- 1个文件的未使用hook函数 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码为未使用的遗留代码，功能由 usePlugins hook 替代
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用hook函数删除 | ✅ |
+| 轨A 清理类型 | 1个PluginContext hook函数（useInstalledPlugins） | ✅ |
+| 轨A 技术方法 | 直接删除未使用的hook函数定义 | ✅ |
+| 轨A 功能保留 | usePlugins hook 仍然保留并导出，功能相同 | ✅ |
+| 轨A import检查 | useContext import 仍然在 usePlugins 中使用，不需要删除 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V366后续扩展（留给V367+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~165个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 复杂未使用定义清理**：继续清理复杂的未使用组件/函数定义（WorkflowFormExample/WorkflowTableExample/GisContext.saveCache等）
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V366连续三十四次交付验证成功，V367继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
