@@ -30,7 +30,7 @@ import type { NavItem } from '@/lib/navigation/types';
 import { renderIcon } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface CommandPaletteProps {
   open: boolean;

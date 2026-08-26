@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, BellOff, Bell, Pin, PinOff, Trash2, Users } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface ChatSettingsModalProps {

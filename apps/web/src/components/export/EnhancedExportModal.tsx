@@ -27,7 +27,7 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 export type ExportFormat = 'excel' | 'pdf' | 'csv' | 'json' | 'html' | 'markdown' | 'image' | 'xml';
 

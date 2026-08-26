@@ -20,7 +20,7 @@ import {
   type DesignerCanvasEdge,
   type DesignerNodeItem,
 } from '../shared';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 
 interface DesignerCanvasProps {

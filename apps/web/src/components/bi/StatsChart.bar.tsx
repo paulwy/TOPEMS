@@ -12,7 +12,7 @@ import {
   Cell,
 } from '../charts/_vendors/recharts-cartesian';
 import type { ChartData } from '../charts/AreaChart';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface StatsChartBarProps {
   type: 'bar' | 'line';

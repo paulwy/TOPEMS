@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
 import { X, ChevronLeft, ChevronRight, FileText, Columns, Rows3 } from 'lucide-react';
 import type { ReportData } from '@/api/report';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface ReportViewerProps {

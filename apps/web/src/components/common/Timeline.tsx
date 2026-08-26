@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Chip, Skeleton } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Circle, CheckCircle, XCircle, Clock, AlertCircle, type LucideIcon } from 'lucide-react';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 export interface TimelineItem {
   id: string;

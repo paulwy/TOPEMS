@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 const MeasureTooltip: React.FC<{
   position: [number, number];

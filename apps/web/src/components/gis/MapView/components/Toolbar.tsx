@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import type { ToolMode } from '../types';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface ToolbarProps {
   toolMode: ToolMode;

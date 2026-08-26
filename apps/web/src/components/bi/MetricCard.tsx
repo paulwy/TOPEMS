@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface SparklineProps {
   data: number[];

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { useChartTheme } from './chartTheme';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from './_vendors/recharts-polar';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface PieChartProps {
   data: { name: string; value: number; color?: string }[];

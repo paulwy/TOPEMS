@@ -49,7 +49,7 @@ import {
   type NavigationPath,
 } from '../user-behavior-analytics';
 import { moduleRegistry, type ModuleRegistration } from '../../registry/module-registry';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabType = 'overview' | 'performance' | 'errors' | 'behavior' | 'modules';
 
