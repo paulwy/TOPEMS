@@ -121,20 +121,3 @@ export const extractErrorMessage = (
 export const logError = (context: string, error: unknown): void => {
   logger.error(`[${context}]`, error);
 };
-
-const safeExecute = async <T>(
-  fn: () => Promise<T>,
-  errorHandler?: (error: AppError) => void
-): Promise<T | null> => {
-  try {
-    return await fn();
-  } catch (error: unknown) {
-    const appError = handleApiError(error);
-    if (errorHandler) {
-      errorHandler(appError);
-    } else {
-      logger.error('Unhandled error:', appError);
-    }
-    return null;
-  }
-};

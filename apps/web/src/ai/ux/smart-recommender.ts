@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export type RecommendationType = 'page' | 'action' | 'content' | 'feature';
 
 export interface Recommendation {
@@ -24,12 +22,4 @@ export interface RecommendationStats {
   rejected_count: number;
   avg_confidence: number;
   top_categories: Array<{ type: RecommendationType; count: number }>;
-}
-
-interface ContentItem {
-  id: string;
-  type: RecommendationType;
-  title: string;
-  tags: string[];
-  metadata: Record<string, unknown>;
 }

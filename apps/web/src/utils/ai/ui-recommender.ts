@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 /**
  * V47.0 前端 AI 增强 — UI 组件推荐器
  *

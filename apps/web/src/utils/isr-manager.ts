@@ -252,11 +252,3 @@ export class IsrManager {
     return Array.from(this.cache.keys());
   }
 }
-
-const isrManager = new IsrManager({
-  revalidate: 60 * 1000,
-  maxEntries: 500,
-  staleWhileRevalidate: 24 * 60 * 60 * 1000,
-  errorRetryInterval: 5 * 1000,
-  maxRetryCount: 3,
-});

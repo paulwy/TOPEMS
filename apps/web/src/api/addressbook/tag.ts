@@ -19,8 +19,6 @@
 
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import { designTokens, semanticTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 
 interface ContactTag {
   id: string;
@@ -54,26 +52,6 @@ interface AddTagToContactRequest {
 interface AddContactToTagRequest {
   contact_ids: string[];
   contact_type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
-}
-
-interface TagColor {
-  name: string;
-  hex: string;
-}
-
-function getPresetTagColors(): TagColor[] {
-  return [
-    { name: i18n.t('shared.tag.k0'), hex: designTokens.colors.error.main },
-    { name: i18n.t('shared.tag.k1'), hex: 'colors.orange.500' },
-    { name: i18n.t('shared.tag.k2'), hex: '#EAB308' },
-    { name: i18n.t('shared.tag.k3'), hex: 'colors.success.main' },
-    { name: i18n.t('shared.tag.k4'), hex: 'colors.cyan.500' },
-    { name: i18n.t('shared.tag.k5'), hex: designTokens.colors.primary.main },
-    { name: i18n.t('shared.tag.k6'), hex: designTokens.colors.secondary.main },
-    { name: i18n.t('shared.tag.k7'), hex: designTokens.colors.pink.main },
-    { name: i18n.t('shared.tag.k8'), hex: 'colors.grey.500' },
-    { name: i18n.t('shared.tag.k9'), hex: 'colors.grey.800' },
-  ];
 }
 
 export const addressbookTagApi = {
