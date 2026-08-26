@@ -8,6 +8,7 @@ pub mod zookeeper_service_discovery;
 pub mod nacos_service_discovery;
 pub mod eureka_service_discovery;
 pub mod k8s_service_discovery;
+pub mod dns_service_discovery;
 pub mod util;
 
 use axum::extract::FromRef;
