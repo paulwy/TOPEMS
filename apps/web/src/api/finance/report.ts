@@ -7,6 +7,15 @@ import type {
   AccountBalance,
   PaginatedResult,
   ApiResponse,
+  BusinessOverview,
+  ProjectFinancialSummary,
+  MonthlyTrend,
+  DepartmentFinancialSummary,
+  AgingAnalysis,
+  CashFlowAnalysis,
+  ExpenseAnalysis,
+  ProfitAnalysis,
+  FinancialOverview,
 } from '../../types/finance';
 
 export const reportApi = {
@@ -99,6 +108,68 @@ export const reportApi = {
   exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {
     return downloadBlob('finance', '/reports/cash-flow/export', {
       params: params as unknown as Record<string, unknown>,
+    });
+  },
+
+  // === B1 API迁移: 从@/api/erp/finance/report.ts迁移的10个独有方法 ===
+
+  getBusinessOverview: (params?: { period?: string }): Promise<ApiResponse<BusinessOverview>> => {
+    return apiClient.finance.get('/reports/business-overview', {
+      params,
+    });
+  },
+
+  getProjectSummary: (params?: {
+    project_id?: string;
+  }): Promise<ApiResponse<ProjectFinancialSummary[]>> => {
+    return apiClient.finance.get('/reports/project-summary', {
+      params,
+    });
+  },
+
+  getMonthlyTrend: (): Promise<ApiResponse<MonthlyTrend[]>> => {
+    return apiClient.finance.get('/reports/monthly-trend');
+  },
+
+  getDepartmentSummary: (params?: {
+    department_id?: string;
+  }): Promise<ApiResponse<DepartmentFinancialSummary[]>> => {
+    return apiClient.finance.get('/reports/department-summary', {
+      params,
+    });
+  },
+
+  getAgingAnalysis: (): Promise<ApiResponse<AgingAnalysis[]>> => {
+    return apiClient.finance.get('/reports/aging-analysis');
+  },
+
+  getVoucherStatistics: (params?: { period?: string }): Promise<ApiResponse<Record<string, any>>> => {
+    return apiClient.finance.get('/reports/voucher-statistics', {
+      params,
+    });
+  },
+
+  getCashFlowAnalysis: (params?: { period?: string }): Promise<ApiResponse<CashFlowAnalysis>> => {
+    return apiClient.finance.get('/reports/cash-flow-analysis', {
+      params,
+    });
+  },
+
+  getExpenseAnalysis: (params?: { period?: string }): Promise<ApiResponse<ExpenseAnalysis>> => {
+    return apiClient.finance.get('/reports/expense-analysis', {
+      params,
+    });
+  },
+
+  getProfitAnalysis: (params?: { period?: string }): Promise<ApiResponse<ProfitAnalysis>> => {
+    return apiClient.finance.get('/reports/profit-analysis', {
+      params,
+    });
+  },
+
+  getFinancialOverview: (params?: { period?: string }): Promise<ApiResponse<FinancialOverview>> => {
+    return apiClient.finance.get('/reports/financial-overview', {
+      params,
     });
   },
 };
