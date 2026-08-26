@@ -12915,6 +12915,103 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V423 — 架构改进四轨并行第九十一次：B1 API迁移P1阶段budget.ts迁移+删除（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十一次交付 · B1 API迁移P1阶段budget.ts迁移+删除 · 1个代码文件修改 · 确认budgetApi和expenseApi已在@/api/finance/中存在，删除@/api/erp/finance/budget.ts
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | P1阶段budget.ts迁移+删除 | 确认budgetApi和expenseApi已在@/api/finance/中存在，删除@/api/erp/finance/budget.ts | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V424 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V424 | ⏸️ |
+
+### 轨B：B1 API迁移P1阶段budget.ts迁移+删除
+
+**实施内容**：确认@/api/erp/finance/budget.ts中的budgetApi和expenseApi已在@/api/finance/中有对应的实现，然后删除@/api/erp/finance/budget.ts
+
+**修改的文件（1个代码文件）**：
+
+**apps/web/src/api/erp/finance/budget.ts（删除）**
+- 删除前：62行，2个API对象（budgetApi和expenseApi）
+- 删除原因：两个API对象都已在@/api/finance/中有对应的实现
+- 删除前确认：没有其他文件引用@/api/erp/finance/budget.ts
+
+**已存在的对应实现**：
+
+**1. budgetApi — 已在@/api/finance/budget.ts中存在**
+- 文件：apps/web/src/api/finance/budget.ts（48行）
+- Budget接口：16个字段
+- budgetApi方法：5个（list、get、create、update、delete）
+- HTTP客户端：apiClient.finance
+- 参数：{ status、period、department_id、keyword }
+- 返回：Budget[]
+
+**2. expenseApi — 已在@/api/finance/expense.ts中存在**
+- 文件：apps/web/src/api/finance/expense.ts（54行）
+- Expense接口：18个字段
+- expenseApi方法：5个（list、get、create、update、delete）
+- HTTP客户端：apiClient.finance
+- 参数：{ status、category、department_id、employee_id、start_date、end_date、keyword }
+- 返回：Expense[]
+
+**@/api/erp/finance/budget.ts与@/api/finance/的差异对比**：
+
+| 对比项 | @/api/erp/finance/budget.ts | @/api/finance/budget.ts | @/api/finance/expense.ts |
+|--------|------------------------------|--------------------------|---------------------------|
+| budgetApi | 有（5个方法） | 有（5个方法） | 无 |
+| expenseApi | 有（5个方法） | 无 | 有（5个方法） |
+| Budget类型 | 从../types导入 | 本地定义（16字段） | 无 |
+| Expense类型 | 从../types导入 | 无 | 本地定义（18字段） |
+| HTTP客户端 | apiClient.erp | apiClient.finance | apiClient.finance |
+| 参数传递 | URLSearchParams | { params } | { params } |
+| 返回类型 | PaginatedResult | Budget[] | Expense[] |
+
+**删除后@/api/erp/finance/目录文件列表（2个文件）**：
+1. asset.ts — 资产管理API（2个页面引用）
+2. assetCategory.ts — 资产分类API（1个页面引用）
+
+**技术说明**：
+- 重要发现：@/api/erp/finance/budget.ts中的两个API对象（budgetApi和expenseApi）都已在@/api/finance/中有对应的实现
+- @/api/finance/budget.ts有budgetApi（5个方法），@/api/finance/expense.ts有expenseApi（5个方法）
+- 两个实现都使用了统一的命名规范、HTTP客户端（apiClient.finance）、参数传递方式（{ params }）
+- 删除@/api/erp/finance/budget.ts后，@/api/erp/finance/目录从3个文件减少到2个文件
+- P1阶段（report.ts和budget.ts的迁移）已全部完成，接下来是P2阶段（asset.ts和assetCategory.ts的迁移）
+
+**验收结果**：
+- 确认@/api/finance/budget.ts已有budgetApi（5个方法）
+- 确认@/api/finance/expense.ts已有expenseApi（5个方法）
+- 确认没有其他文件引用@/api/erp/finance/budget.ts
+- 成功删除@/api/erp/finance/budget.ts
+- @/api/erp/finance/目录从3个文件减少到2个文件
+- P1阶段（report.ts和budget.ts的迁移）已全部完成
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B budgetApi已存在 | @/api/finance/budget.ts有5个方法 | ✅ |
+| 轨B expenseApi已存在 | @/api/finance/expense.ts有5个方法 | ✅ |
+| 轨B 删除文件 | @/api/erp/finance/budget.ts | ✅ |
+| 轨B 删除前确认 | 没有其他文件引用 | ✅ |
+| 轨B 删除前文件数 | @/api/erp/finance/有3个文件 | ✅ |
+| 轨B 删除后文件数 | @/api/erp/finance/有2个文件 | ✅ |
+| 轨B P1阶段完成 | report.ts和budget.ts的迁移已全部完成 | ✅ |
+| 轨B 下一阶段 | P2阶段（asset.ts和assetCategory.ts的迁移） | ✅ |
+| 变更统计 | 1个代码文件删除 + 修改1文件(TODO.md) | ✅ |
+
+### V423后续扩展（留给V424+）
+
+- [ ] **轨B P2阶段实施（创建@/api/asset/目录）**：创建@/api/asset/目录，迁移asset.ts和assetCategory.ts
+- [ ] **轨B P2阶段实施（更新页面引用）**：更新引用asset.ts和assetCategory.ts的页面
+- [ ] **轨B P2阶段实施（删除@/api/erp/finance/目录）**：删除@/api/erp/finance/目录
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V423连续九十一次交付验证成功，V424继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
