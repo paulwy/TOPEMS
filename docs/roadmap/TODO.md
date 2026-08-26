@@ -6816,6 +6816,97 @@ POST /mcp
 
 ---
 
+## 🎯 V349 — 架构改进四轨并行第十七次：IoT业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十七次交付 · IoT MCP Tools上线 · 61个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V350 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V348评估，记录V350+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V350实施（需独立二进制入口） | ⏸️ |
+| 轨D | IoT MCP Tools | 4个业务工具（iot.list_devices, iot.get_device, iot.list_device_data, iot.send_command），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V348）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V350+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：IoT MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/iot.rs` — IoT业务工具（~580行）
+
+**注册的4个工具**：
+1. **iot.list_devices** — 查询设备列表
+   - 参数：page, page_size, device_type(sensor/actuator/gateway/camera/controller/meter), status(online/offline/fault/maintenance/sleeping), location, keyword
+   - 返回：设备列表（设备编号、名称、类型、状态、位置、型号、厂商、固件版本、最后在线时间、信号强度、电池电量、IP地址）
+   - 支持分页、类型筛选、状态筛选、位置筛选、关键词搜索
+
+2. **iot.get_device** — 获取设备详情
+   - 参数：device_id（必填）
+   - 返回：完整设备信息（基本信息、配置、实时状态、通信信息、近期告警、维护记录、标签）
+   - 包含配置参数、实时状态（当前值、信号、电池、运行时间）、通信信息（协议、MQTT主题、IP、MAC）、2个近期告警、2条维护记录
+
+3. **iot.list_device_data** — 查询设备数据
+   - 参数：page, page_size, device_id（必填）, data_type, start_time, end_time
+   - 返回：设备历史数据列表（时间戳、数据类型、数值、单位、质量标记、接收时间）
+   - 支持分页、设备筛选、数据类型筛选、时间范围筛选
+
+4. **iot.send_command** — 发送设备命令
+   - 参数：device_id（必填）, command（必填：on/off/restart/reset/calibrate/update_firmware/set_config/read_status）, parameters, timeout, operator
+   - 返回：命令ID、设备ID、命令、参数、状态、发送时间、操作人、超时时间
+   - 验证：2个必填字段
+
+**单元测试**（6个）：
+- test_register_iot_tools — 4个工具全部注册
+- test_list_devices — 分页查询
+- test_get_device — 按ID查询，验证配置/实时状态/通信/告警/维护记录结构
+- test_list_device_data — 分页+设备筛选
+- test_send_command — 成功发送命令，验证状态和命令ID
+- test_send_command_validation — 参数验证（缺少command、缺少device_id）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod iot和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_iot_tools
+- `svc/ai/src/routes.rs` — 调用register_iot_tools注册IoT工具
+
+**当前工具总数**：61个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS + 4 CS + 4 SCM + 4 IoT）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V348，记录V350+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D IoT工具 | 4个业务工具已注册 | ✅ |
+| 轨D IoT单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 61个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS+4BI+4APS+4CS+4SCM+4IoT） | ✅ |
+| 变更统计 | 新增1文件(~580行) + 修改4文件 | ✅ |
+
+### V349后续扩展（留给V350+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D OA/CRM扩展 MCP Tools**：注册oa.list_approval_requests, crm.create_lead等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V349连续十七次交付验证成功，V350继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
