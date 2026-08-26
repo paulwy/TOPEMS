@@ -8434,6 +8434,80 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V371 — 架构改进四轨并行第三十九次：前端未使用组件清理（FinancialReports三个Viewer）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十九次交付 · 前端未使用组件清理 · 1个文件 · 删除3个未使用的财务报表查看器组件和对应的接口，1255行删除
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用组件清理 | 1个文件的3个未使用组件和接口删除（BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer，1255行删除） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V372 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V372 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V372 | ⏸️ |
+
+### 轨A：前端未使用组件清理（FinancialReports三个Viewer）
+
+**清理内容**：删除1个文件中3个未使用的财务报表查看器组件和对应的接口
+
+**清理的文件（1个）**：
+
+1. **components/finance/FinancialReports.tsx** — 删除3个未使用的组件和对应的接口
+   - 删除范围：第112-1366行（共1255行，包括注释、接口和3个组件）
+   - 删除的组件（3个）：
+     - `BalanceSheetViewer`（资产负债表查看器，从第121行开始）
+     - `IncomeStatementViewer`（利润表查看器，从第460行开始）
+     - `CashFlowStatementViewer`（现金流量表查看器，从第853行开始）
+   - 删除的接口（3个）：
+     - `BalanceSheetViewerProps`
+     - `IncomeStatementViewerProps`
+     - `CashFlowStatementViewerProps`
+   - 原因：V369删除FinancialReportsViewer组件后，这3个组件只被FinancialReportsViewer使用，变成未使用的遗留组件
+   - 文件从1366行减少到111行，大幅减少代码量
+   - 保留的内容：第1-111行的通用组件（如财务概览卡片等）
+
+**技术说明**：
+- 删除组件前验证组件未被任何地方引用（包括import和动态导入）
+- 同时删除对应的props接口，避免接口变成未使用
+- 这是V369删除FinancialReportsViewer后的后续清理，确保代码整洁
+- 删除后文件中仍有通用组件（第1-111行）被使用，保留不动
+- 对于确实需要保留的未使用组件，建议添加注释说明用途
+
+**验收结果**：
+- 1个文件的3个未使用组件和3个接口 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+- 文件从1366行减少到111行，代码量大幅减少
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的3个未使用组件和接口删除 | ✅ |
+| 轨A 清理组件数 | 3个组件（BalanceSheetViewer/IncomeStatementViewer/CashFlowStatementViewer） | ✅ |
+| 轨A 清理接口数 | 3个接口（对应的Props接口） | ✅ |
+| 轨A 删除行数 | 1255行（从第112行到文件末尾） | ✅ |
+| 轨A 文件变化 | 从1366行减少到111行 | ✅ |
+| 轨A 引用检查 | 删除组件前验证未被任何地方引用 | ✅ |
+| 轨A 接口清理 | 同时删除对应的props接口 | ✅ |
+| 轨A 保留检查 | 第1-111行的通用组件仍被使用，保留不动 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V371后续扩展（留给V372+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~144个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用文件清理**：继续检查并删除其他未被引用的示例组件文件
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V371连续三十九次交付验证成功，V372继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
