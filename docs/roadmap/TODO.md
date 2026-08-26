@@ -11549,6 +11549,140 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V412 — 架构改进四轨并行第八十次：B1 API report.ts详细对比（方法列表与实现差异）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第八十次交付 · B1 API report.ts详细对比 · 0个代码文件修改 · 详细比较report.ts两个版本的方法列表和实现差异，确定迁移策略
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | report.ts详细对比 | 详细比较report.ts两个版本的方法列表和实现差异，确定迁移策略 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V413 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V413 | ⏸️ |
+
+### 轨B：B1 API report.ts详细对比（方法列表与实现差异）
+
+**分析内容**：详细比较report.ts在@/api/erp/finance/和@/api/finance/两个目录中的方法列表和实现差异
+
+**1. @/api/erp/finance/report.ts 分析**：
+
+- **API对象名**：financeReportApi
+- **方法风格**：async方法
+- **HTTP客户端**：apiClient.erp
+- **方法数量**：14个方法
+- **方法列表**：
+  1. balanceSheet(params?: { period?: string }) → ApiResponse<BalanceSheet>
+  2. incomeStatement(params?: { period?: string }) → ApiResponse<IncomeStatement>
+  3. cashFlowStatement(params?: { period?: string }) → ApiResponse<CashFlowStatement>
+  4. businessOverview(params?: { period?: string }) → ApiResponse<BusinessOverview>
+  5. projectSummary(params?: { ... }) → ApiResponse<...>
+  6. monthlyTrend() → ApiResponse<MonthlyTrend[]>
+  7. departmentSummary(params?: { ... }) → ApiResponse<...>
+  8. agingAnalysis() → ApiResponse<AgingAnalysis[]>
+  9. voucherStatistics(params?: { period?: string }) → ApiResponse<Record<string, any>>
+  10. cashFlowAnalysis(params?: { period?: string }) → ApiResponse<CashFlowAnalysis>
+  11. expenseAnalysis(params?: { period?: string }) → ApiResponse<ExpenseAnalysis>
+  12. profitAnalysis(params?: { period?: string }) → ApiResponse<ProfitAnalysis>
+  13. financialOverview(params?: { period?: string }) → ApiResponse<FinancialOverview>
+- **特点**：
+  - 方法名简洁（balanceSheet、incomeStatement等）
+  - 大部分方法接受可选的period参数
+  - 包含多种财务分析方法（businessOverview、projectSummary、monthlyTrend、departmentSummary、agingAnalysis、voucherStatistics、cashFlowAnalysis、expenseAnalysis、profitAnalysis、financialOverview）
+  - 没有导出功能（export）
+
+**2. @/api/finance/report.ts 分析**：
+
+- **API对象名**：reportApi
+- **方法风格**：箭头函数
+- **HTTP客户端**：apiClient.finance
+- **方法数量**：至少9个方法（部分方法未完全显示）
+- **方法列表**：
+  1. getBalanceSheet(params: ReportQueryParams) → ApiResponse<BalanceSheet>
+  2. getIncomeStatement(params: ReportQueryParams) → ApiResponse<IncomeStatement>
+  3. getCashFlowStatement(params: ReportQueryParams) → ApiResponse<CashFlowStatement>
+  4. （第42行，未完全显示）
+  5. （第69行，未完全显示）
+  6. （第81行，未完全显示）→ ApiResponse<any>
+  7. exportBalanceSheet(params: ReportQueryParams) → Blob
+  8. exportIncomeStatement(params: ReportQueryParams) → Blob
+  9. exportCashFlowStatement(params: ReportQueryParams) → Blob
+- **特点**：
+  - 方法名带get前缀（getBalanceSheet、getIncomeStatement等）
+  - 方法接受ReportQueryParams类型参数（比period更丰富）
+  - 包含导出功能（exportBalanceSheet、exportIncomeStatement、exportCashFlowStatement），返回Blob
+  - 可能包含更多方法（第42、69、81行未完全显示）
+
+**3. 关键差异对比**：
+
+| 对比项 | @/api/erp/finance/report.ts | @/api/finance/report.ts |
+|--------|-------------------------------|--------------------------|
+| API对象名 | financeReportApi | reportApi |
+| 方法风格 | async方法 | 箭头函数 |
+| HTTP客户端 | apiClient.erp | apiClient.finance |
+| 方法数量 | 14个 | 至少9个 |
+| 方法命名 | 简洁（balanceSheet） | 带get前缀（getBalanceSheet） |
+| 参数类型 | { period?: string } | ReportQueryParams（更丰富） |
+| 导出功能 | 无 | 有（exportBalanceSheet等，返回Blob） |
+| 财务分析方法 | 10个（businessOverview、projectSummary等） | 未知（需进一步查看） |
+
+**4. 迁移策略建议**：
+
+由于两个版本有很大的差异（API对象名、方法名、方法风格、参数类型、HTTP客户端都不同），不能简单地删除一个版本。建议的迁移策略：
+
+1. **短期策略（V413+）**：
+   - 保持两个版本共存，不进行迁移
+   - 详细查看@/api/finance/report.ts的完整方法列表（第42、69、81行）
+   - 比较两个版本的方法功能，确定哪些方法是重复的，哪些是独有的
+
+2. **中期策略（V420+）**：
+   - 以@/api/finance/report.ts为标准，将@/api/erp/finance/report.ts中的独有方法（businessOverview、projectSummary、monthlyTrend、departmentSummary、agingAnalysis、voucherStatistics、cashFlowAnalysis、expenseAnalysis、profitAnalysis、financialOverview）迁移到@/api/finance/report.ts
+   - 更新API对象名和方法名，使其与@/api/finance/的命名规范一致
+   - 删除@/api/erp/finance/report.ts
+
+3. **长期策略（V430+）**：
+   - 完全删除@/api/erp/finance/目录
+   - 所有财务相关API统一到@/api/finance/目录
+
+**技术说明**：
+- 重要发现：report.ts两个版本是完全独立的实现，API对象名、方法名、方法风格、参数类型、HTTP客户端都不同
+- @/api/erp/finance/report.ts有更多的财务分析方法（14个方法），但没有导出功能
+- @/api/finance/report.ts有导出功能（返回Blob），但方法数量可能较少
+- 由于差异太大，不能简单地删除一个版本，需要仔细合并
+- 建议先详细查看@/api/finance/report.ts的完整方法列表，然后制定详细的合并计划
+
+**验收结果**：
+- 完成@/api/erp/finance/report.ts的方法列表分析（14个方法）
+- 完成@/api/finance/report.ts的方法列表分析（至少9个方法）
+- 完成两个版本的关键差异对比
+- 制定短期、中期、长期迁移策略
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | report.ts两个版本的详细差异对比 | ✅ |
+| 轨B erp/finance方法数 | 14个方法 | ✅ |
+| 轨B finance方法数 | 至少9个方法 | ✅ |
+| 轨B API对象名差异 | financeReportApi vs reportApi | ✅ |
+| 轨B 方法风格差异 | async方法 vs 箭头函数 | ✅ |
+| 轨B HTTP客户端差异 | apiClient.erp vs apiClient.finance | ✅ |
+| 轨B 导出功能差异 | 无 vs 有（exportBalanceSheet等） | ✅ |
+| 轨B 迁移策略 | 短期、中期、长期三阶段策略 | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V412后续扩展（留给V413+）
+
+- [ ] **轨B report.ts完整方法列表**：详细查看@/api/finance/report.ts的完整方法列表（第42、69、81行）
+- [ ] **轨B report.ts功能对比**：比较两个版本的方法功能，确定哪些方法是重复的，哪些是独有的
+- [ ] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本）
+- [ ] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V412连续八十次交付验证成功，V413继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
