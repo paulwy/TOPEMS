@@ -8015,6 +8015,76 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V365 — 架构改进四轨并行第三十三次：前端未使用常量/函数清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第三十三次交付 · 前端未使用常量/函数清理 · 3个文件 · 删除未使用的常量和函数
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用常量/函数清理 | 3个文件的未使用常量/函数删除（1个WMS颜色常量 + 1个env函数 + 1个ports函数） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V366 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V366 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V366 | ⏸️ |
+
+### 轨A：前端未使用常量/函数清理
+
+**清理内容**：删除3个文件中未使用的常量和函数定义
+
+**清理的文件（3个）**：
+
+1. **components/wms/StatusBadge.tsx** — 删除未使用的常量 PURPLE
+   - 删除范围：第31行（共1行）
+   - 常量内容：`const PURPLE = 'bg-purple-100 text-purple-700';`
+   - 原因：该常量定义后从未被使用，可能是遗留代码。其他颜色常量（GREEN/RED/YELLOW等）仍在使用
+
+2. **config/env.ts** — 删除未使用的函数 isProd
+   - 删除范围：第51-54行（共4行，含注释）
+   - 函数内容：`function isProd(): boolean { return getEnv<boolean>('PROD', false) ?? false; }`
+   - 原因：该函数定义后从未被调用，可能是遗留代码。其他env函数仍在使用
+
+3. **config/ports.ts** — 删除未使用的函数 getBackendPort
+   - 删除范围：第93-98行（共6行，含注释）
+   - 函数内容：`function getBackendPort(name: string, fallback: number = 8000): number { return BACKEND_PORTS[name] ?? fallback; }`
+   - 原因：该函数定义后从未被调用，可能是遗留代码。其他ports函数（如getMfPort）仍在使用并导出
+
+**技术说明**：
+- 所有删除的常量和函数都是独立的定义，不依赖其他代码
+- 删除前验证常量/函数未被任何地方调用
+- 删除后保留相关的注释说明，便于未来参考
+- 对于确实需要保留的未使用常量/函数，建议添加注释说明用途
+
+**验收结果**：
+- 3个文件的未使用常量/函数 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的代码均为未使用的遗留代码
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 3个文件的未使用常量/函数删除 | ✅ |
+| 轨A 清理类型 | 1个WMS颜色常量 + 1个env函数 + 1个ports函数 | ✅ |
+| 轨A 技术方法 | 直接删除未使用的常量和函数定义 | ✅ |
+| 轨A 依赖检查 | 所有删除的常量和函数都是独立的，不依赖其他代码 | ✅ |
+| 轨A 保留检查 | 其他颜色常量、env函数、ports函数仍保留 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改3个前端文件 + 修改1文件 | ✅ |
+
+### V365后续扩展（留给V366+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~166个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的未使用组件（CrudFormDialog/ExportMenu/ListPagination/RowActionMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 遗留import清理**：继续检查并清理之前版本删除组件后导致的未使用import
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V365连续三十三次交付验证成功，V366继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

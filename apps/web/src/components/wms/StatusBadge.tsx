@@ -28,7 +28,6 @@ const BLUE = 'bg-blue-100 text-blue-700';
 const ORANGE = 'bg-orange-100 text-orange-700';
 const GREEN = 'bg-green-100 text-green-700';
 const RED = 'bg-red-100 text-red-700';
-const PURPLE = 'bg-purple-100 text-purple-700';
 const YELLOW = 'bg-yellow-50 text-yellow-700';
 const DEFAULT_COLOR = GRAY;
 
