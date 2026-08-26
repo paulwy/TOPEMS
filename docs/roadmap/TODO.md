@@ -15244,6 +15244,166 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V439 — 架构改进四轨并行第一百零七次：轨C shared-service-client高级功能完善（限流机制+负载均衡配置）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零七次交付 · 轨C shared-service-client高级功能完善 · 1个代码文件修改 · 添加限流机制（令牌桶算法）、负载均衡配置（轮询/随机策略）、状态查询方法
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client高级功能完善 | 添加限流机制、负载均衡配置 | ✅ |
+| 轨D | 业务工具权限控制 | 添加业务工具操作的权限控制，留给V440 | ⏸️ |
+
+### 轨C：shared-service-client高级功能完善（限流机制+负载均衡配置）
+
+**实现内容**：在shared-service-client中添加限流机制（令牌桶算法）、负载均衡配置（轮询/随机策略）、状态查询方法
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/shared/service_client.rs`（添加限流和负载均衡）**
+
+**新增功能**：
+
+**1. 限流机制（Rate Limiting）**
+- 新增 `RateLimiter` 结构体（令牌桶算法）：
+  - `max_tokens: u32` — 最大令牌数（每秒请求数）
+  - `current_tokens: f64` — 当前可用令牌数
+  - `last_refill: Instant` — 上次补充令牌时间
+  - 方法：`new()`、`try_acquire()`
+- 在ServiceConfig中添加限流配置：
+  - `rate_limit_enabled: bool` — 是否启用限流（默认false）
+  - `max_requests_per_second: u32` — 最大每秒请求数（默认100）
+- 在ServiceClient中添加限流器：
+  - `rate_limiter: Arc<Mutex<RateLimiter>>` — 共享限流器
+- 新增限流方法：
+  - `check_rate_limit()` — 检查限流，尝试获取令牌
+  - `get_rate_limiter_status()` — 获取限流状态
+  - `reset_rate_limiter()` — 重置限流器
+- 新增 `RateLimiterStatus` 结构体：
+  - `enabled: bool` — 是否启用
+  - `max_requests_per_second: u32` — 最大每秒请求数
+  - `current_tokens: f64` — 当前可用令牌数
+- 在request方法中添加限流检查（熔断检查之后）
+
+**2. 负载均衡配置（Load Balancing）**
+- 新增 `LoadBalancingStrategy` 枚举：
+  - `RoundRobin` — 轮询策略
+  - `Random` — 随机策略
+- 新增 `LoadBalancer` 结构体：
+  - `endpoints: Vec<String>` — 所有端点（包括base_url）
+  - `current_index: usize` — 当前轮询索引
+  - `strategy: LoadBalancingStrategy` — 负载均衡策略
+  - 方法：`new()`、`next_endpoint()`、`endpoints()`、`endpoint_count()`
+- 在ServiceConfig中添加负载均衡配置：
+  - `load_balancing_enabled: bool` — 是否启用负载均衡（默认false）
+  - `endpoints: Vec<String>` — 额外端点列表（不包括base_url）
+- 在ServiceClient中添加负载均衡器：
+  - `load_balancer: Arc<Mutex<LoadBalancer>>` — 共享负载均衡器
+- 新增负载均衡方法：
+  - `get_load_balancer_status()` — 获取负载均衡状态
+  - `get_next_endpoint()` — 获取下一个端点
+- 新增 `LoadBalancerStatus` 结构体：
+  - `enabled: bool` — 是否启用
+  - `endpoints: Vec<String>` — 所有端点
+  - `endpoint_count: usize` — 端点数量
+  - `current_index: usize` — 当前轮询索引
+- 在request_once方法中添加负载均衡端点选择：
+  - 如果启用负载均衡，使用load_balancer选择端点
+  - 如果没有启用，使用原来的build_url方法
+
+**3. ServiceConfig新增配置字段**
+- `rate_limit_enabled: bool`（默认false）
+- `max_requests_per_second: u32`（默认100）
+- `load_balancing_enabled: bool`（默认false）
+- `endpoints: Vec<String>`（默认空）
+- 所有新字段都有serde默认值，保持向后兼容
+
+**4. ServiceClient新增字段**
+- `rate_limiter: Arc<Mutex<RateLimiter>>`
+- `load_balancer: Arc<Mutex<LoadBalancer>>`
+- 在new方法中初始化这两个字段
+
+**功能特性**：
+
+**1. 限流机制（令牌桶算法）**
+- 基于令牌桶算法实现限流
+- 可配置最大每秒请求数
+- 令牌按时间自动补充
+- 请求时尝试获取令牌，获取失败返回限流错误
+- 限流器跨ServiceClient克隆共享（Arc<Mutex>）
+- 可查询当前可用令牌数
+- 可重置限流器
+
+**2. 负载均衡（轮询/随机策略）**
+- 支持轮询（RoundRobin）和随机（Random）两种策略
+- 可配置多个端点（base_url + 额外端点）
+- 请求时自动选择端点
+- 负载均衡器跨ServiceClient克隆共享（Arc<Mutex>）
+- 可查询所有端点和当前索引
+- 可手动获取下一个端点
+
+**3. 向后兼容**
+- 所有新配置字段都有serde默认值
+- 限流和负载均衡默认禁用
+- 禁用时行为与之前完全一致
+- 不需要修改现有代码
+
+**技术说明**：
+- 限流使用令牌桶算法，按秒补充令牌
+- 负载均衡默认使用轮询策略
+- 随机策略使用rand crate（版本0.8，已存在依赖）
+- 限流器和负载均衡器使用Arc<Mutex>实现线程安全共享
+- 限流检查在请求开始时执行（熔断检查之后）
+- 负载均衡端点选择在request_once方法中执行
+- 所有新类型都实现了Debug、Clone、Serialize、Deserialize trait
+
+**验收结果**：
+- 完成限流机制实现（RateLimiter结构体、令牌桶算法、try_acquire方法）
+- 完成限流配置（rate_limit_enabled、max_requests_per_second）
+- 完成限流方法（check_rate_limit、get_rate_limiter_status、reset_rate_limiter）
+- 完成限流状态结构体（RateLimiterStatus）
+- 完成负载均衡策略枚举（LoadBalancingStrategy：RoundRobin、Random）
+- 完成负载均衡器实现（LoadBalancer结构体、next_endpoint方法）
+- 完成负载均衡配置（load_balancing_enabled、endpoints）
+- 完成负载均衡方法（get_load_balancer_status、get_next_endpoint）
+- 完成负载均衡状态结构体（LoadBalancerStatus）
+- 完成request方法中的限流检查
+- 完成request_once方法中的负载均衡端点选择
+- 完成ServiceClient新增字段初始化（rate_limiter、load_balancer）
+- 所有新配置字段都有serde默认值，保持向后兼容
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C 限流机制实现 | RateLimiter结构体、令牌桶算法、try_acquire方法 | ✅ |
+| 轨C 限流配置 | rate_limit_enabled（默认false）、max_requests_per_second（默认100） | ✅ |
+| 轨C 限流方法 | check_rate_limit、get_rate_limiter_status、reset_rate_limiter | ✅ |
+| 轨C 限流状态结构体 | RateLimiterStatus（enabled、max_requests_per_second、current_tokens） | ✅ |
+| 轨C 负载均衡策略枚举 | LoadBalancingStrategy（RoundRobin、Random） | ✅ |
+| 轨C 负载均衡器实现 | LoadBalancer结构体、next_endpoint、endpoints、endpoint_count | ✅ |
+| 轨C 负载均衡配置 | load_balancing_enabled（默认false）、endpoints（默认空） | ✅ |
+| 轨C 负载均衡方法 | get_load_balancer_status、get_next_endpoint | ✅ |
+| 轨C 负载均衡状态结构体 | LoadBalancerStatus（enabled、endpoints、endpoint_count、current_index） | ✅ |
+| 轨C request方法限流检查 | 在熔断检查之后添加限流检查 | ✅ |
+| 轨C request_once负载均衡 | 启用时使用load_balancer选择端点 | ✅ |
+| 轨C ServiceClient新增字段 | rate_limiter、load_balancer（Arc<Mutex>） | ✅ |
+| 轨C 向后兼容 | 所有新配置字段都有serde默认值 | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V439后续扩展（留给V440+）
+
+- [ ] **轨D 业务工具权限控制**：添加业务工具操作的权限控制
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C shared-service-client服务发现**：添加动态服务发现功能
+- [ ] **轨C shared-service-client连接池**：添加HTTP连接池管理
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V439连续一百零七次交付验证成功，V440继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
