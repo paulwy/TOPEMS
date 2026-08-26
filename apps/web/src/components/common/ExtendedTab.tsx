@@ -32,7 +32,7 @@ interface ExtendedTabProps {
  * 渲染关联模块扩展 Tab 列表
  * 过滤掉未安装模块的 Tab，返回可渲染的 Tab 元素数组
  */
-const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange }) => {
+const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange: _onChange }) => {
   const { isPluginInstalled } = usePlugins();
 
   const visibleConfigs = configs.filter((config) => isPluginInstalled(config.moduleCode));
