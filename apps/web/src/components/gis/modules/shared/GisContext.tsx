@@ -1,5 +1,5 @@
 // modules/shared/GisContext.tsx
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import React, { createContext, useContext, type ReactNode } from 'react';
 import type { MapModuleConfig } from '../MapModule/types';
 import type { TrackRecord } from '../TrackModule/types';
 import type { EvidenceRecord } from '../EvidenceModule/types';
