@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import type { ColumnDef } from '@/components/templates/list';

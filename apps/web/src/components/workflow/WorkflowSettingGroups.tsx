@@ -1,4 +1,3 @@
-import React from 'react';
 import { Settings, CheckSquare, Bell, FileText, Shield, Plug } from 'lucide-react';
 import type { SettingGroup } from '@/pages/workflow/WorkflowSettingsPage/types';
 import i18n from '@/i18n';

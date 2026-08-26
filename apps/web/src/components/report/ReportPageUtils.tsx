@@ -1,4 +1,3 @@
-import React from 'react';
 import { FileSpreadsheet, File, FileText } from 'lucide-react';
 import type { ReportTypeInfo } from '@/api/report';
 

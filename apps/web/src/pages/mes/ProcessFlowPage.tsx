@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, BarChart3 } from 'lucide-react';
