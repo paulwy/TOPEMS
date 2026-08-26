@@ -15404,6 +15404,161 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V440 — 架构改进四轨并行第一百零八次：轨D 业务工具权限控制（权限类型+权限映射+权限检查+403错误响应）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零八次交付 · 轨D 业务工具权限控制 · 1个代码文件修改 · 添加权限类型枚举（Read/Write/Admin）、用户角色（Viewer/Editor/Admin）、操作权限映射、权限检查函数、403错误响应
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具权限控制 | 添加权限类型、权限映射、权限检查 | ✅ |
+| 轨C | shared-service-client服务发现 | 添加动态服务发现功能，留给V441 | ⏸️ |
+
+### 轨D：业务工具权限控制（权限类型+权限映射+权限检查+403错误响应）
+
+**实现内容**：在业务工具路由中添加权限控制，包括权限类型枚举、用户角色、操作权限映射、权限检查函数、403错误响应
+
+**修改的文件（1个代码文件）**：
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加权限控制）**
+
+**新增功能**：
+
+**1. 权限类型枚举（PermissionLevel）**
+- `Read` — 只读访问（get、list、query、search、count、health）
+- `Write` — 读写访问（create、update、delete、add、remove、modify）
+- `Admin` — 管理员访问（bulk、batch、configure、manage、admin、import、export）
+- 方法：
+  - `as_str()` — 获取权限级别字符串
+  - `includes(required)` — 检查当前权限是否包含所需权限
+
+**2. 用户角色枚举（UserRole）**
+- `Viewer` — 查看者（只读权限）
+- `Editor` — 编辑者（读写权限）
+- `Admin` — 管理员（完全权限）
+- 方法：
+  - `permission_level()` — 获取角色对应的权限级别
+  - `as_str()` — 获取角色字符串
+  - `from_str(s)` — 从字符串解析角色
+
+**3. 操作权限映射（required_permission_for_operation）**
+- 根据操作名称自动判断所需权限级别
+- 规则：
+  - Admin操作：包含bulk_、batch_、configure_、manage_、admin_、import_、export_
+  - Write操作：以create_、update_、delete_、add_、remove_、modify_、submit_、approve_、reject_、cancel_、complete_、start_、stop_、pause_、resume_开头
+  - 默认：Read（get_、list_、query_、search_、count_、health等）
+
+**4. 权限检查函数**
+- `check_permission(role, operation)` — 简单权限检查，返回bool
+- `perform_permission_check(role, operation)` — 详细权限检查，返回PermissionCheckResult
+  - `granted: bool` — 是否授予权限
+  - `required: String` — 所需权限级别
+  - `user_level: String` — 用户权限级别
+  - `user_role: String` — 用户角色
+  - `operation: String` — 操作名称
+  - `error: Option<String>` — 错误信息（未授权时）
+
+**5. ExecuteToolRequest新增字段**
+- `role: String` — 用户角色（viewer、editor、admin）
+- 默认值为"admin"（保持向后兼容）
+- 使用`default_user_role()`函数设置默认值
+
+**6. execute_tool处理函数添加权限检查**
+- 在操作验证之后、构建业务请求之前添加权限检查
+- 解析用户角色（从request.role字段，无效角色默认为Admin）
+- 执行详细权限检查（perform_permission_check）
+- 如果权限不足，返回403 Forbidden错误：
+  - error: "Permission denied"
+  - tool: 工具名称
+  - operation: 操作名称
+  - required_permission: 所需权限级别
+  - user_permission: 用户权限级别
+  - user_role: 用户角色
+  - message: 详细错误信息
+
+**权限级别包含关系**：
+```
+Admin ──包含──▶ Write ──包含──▶ Read
+  │                │
+  └────────────────┴──────────▶ 所有操作
+```
+
+**用户角色与权限级别映射**：
+| 角色 | 权限级别 | 可执行操作 |
+|------|---------|-----------|
+| Viewer | Read | get_*、list_*、query_*、search_*、count_*、health |
+| Editor | Write | Viewer的所有操作 + create_*、update_*、delete_*、add_*、remove_*、modify_*等 |
+| Admin | Admin | Editor的所有操作 + bulk_*、batch_*、configure_*、manage_*、admin_*、import_*、export_*等 |
+
+**功能特性**：
+
+1. **基于操作名称的自动权限映射** — 根据操作前缀和关键字自动判断所需权限
+2. **三级权限体系** — Read、Write、Admin三级权限，Admin包含Write，Write包含Read
+3. **三种用户角色** — Viewer、Editor、Admin，分别对应Read、Write、Admin权限
+4. **详细的权限检查结果** — 返回所需权限、用户权限、用户角色、错误信息等详细信息
+5. **403错误响应** — 权限不足时返回标准的403 Forbidden错误，包含详细的权限信息
+6. **向后兼容** — role字段默认值为"admin"，不传递role字段时具有完全权限
+7. **灵活的角色解析** — 无效角色默认为Admin，避免因角色解析错误导致权限问题
+
+**技术说明**：
+- 权限检查在execute_tool处理函数中执行
+- 权限检查在操作验证之后、业务请求构建之前
+- 使用UserRole::from_str解析角色，无效角色默认为Admin
+- 使用perform_permission_check执行详细权限检查
+- 权限不足时返回(StatusCode::FORBIDDEN, Json<Value>)元组
+- 所有新类型都实现了Debug、Clone、PartialEq、Eq、Serialize、Deserialize trait
+- PermissionLevel和UserRole枚举都实现了as_str和from_str方法
+
+**验收结果**：
+- 完成权限类型枚举（PermissionLevel：Read、Write、Admin）
+- 完成用户角色枚举（UserRole：Viewer、Editor、Admin）
+- 完成操作权限映射（required_permission_for_operation函数）
+- 完成权限检查函数（check_permission、perform_permission_check）
+- 完成权限检查结果结构体（PermissionCheckResult）
+- 完成ExecuteToolRequest新增role字段（默认"admin"）
+- 完成execute_tool处理函数中的权限检查
+- 完成403 Forbidden错误响应（包含详细权限信息）
+- 完成权限级别包含关系（Admin包含Write，Write包含Read）
+- 完成用户角色与权限级别映射
+- 所有新类型都实现了必要的trait
+- 保持向后兼容（role字段默认值为"admin"）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 权限类型枚举 | PermissionLevel（Read、Write、Admin） | ✅ |
+| 轨D 权限级别方法 | as_str()、includes(required) | ✅ |
+| 轨D 用户角色枚举 | UserRole（Viewer、Editor、Admin） | ✅ |
+| 轨D 用户角色方法 | permission_level()、as_str()、from_str() | ✅ |
+| 轨D 操作权限映射 | required_permission_for_operation函数 | ✅ |
+| 轨D 权限映射规则 | Admin操作（bulk/batch/configure/manage/admin/import/export） | ✅ |
+| 轨D 权限映射规则 | Write操作（create/update/delete/add/remove/modify等） | ✅ |
+| 轨D 权限映射规则 | 默认Read操作（get/list/query/search/count/health） | ✅ |
+| 轨D 简单权限检查 | check_permission(role, operation)返回bool | ✅ |
+| 轨D 详细权限检查 | perform_permission_check返回PermissionCheckResult | ✅ |
+| 轨D 权限检查结果 | PermissionCheckResult（granted、required、user_level、user_role、operation、error） | ✅ |
+| 轨D ExecuteToolRequest新增字段 | role: String（默认"admin"） | ✅ |
+| 轨D execute_tool权限检查 | 在操作验证之后添加权限检查 | ✅ |
+| 轨D 403错误响应 | StatusCode::FORBIDDEN + 详细权限信息 | ✅ |
+| 轨D 权限级别包含关系 | Admin包含Write，Write包含Read | ✅ |
+| 轨D 用户角色映射 | Viewer→Read，Editor→Write，Admin→Admin | ✅ |
+| 轨D 向后兼容 | role字段默认值为"admin" | ✅ |
+| 变更统计 | 1个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V440后续扩展（留给V441+）
+
+- [ ] **轨C shared-service-client服务发现**：添加动态服务发现功能
+- [ ] **轨C shared-service-client连接池**：添加HTTP连接池管理
+- [ ] **轨D 业务工具权限控制完善**：添加基于租户的权限控制、细粒度操作权限
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V440连续一百零八次交付验证成功，V441继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

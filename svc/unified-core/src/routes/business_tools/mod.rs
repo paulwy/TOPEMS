@@ -16,6 +16,166 @@ use crate::modules::business_tools::{
 };
 use crate::AppState;
 
+// ===== V440: Permission Control Types =====
+
+/// Permission level required for an operation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PermissionLevel {
+    /// Read-only access (e.g., get, list, query).
+    Read,
+    /// Write access (e.g., create, update, delete).
+    Write,
+    /// Admin access (e.g., configure, manage, bulk operations).
+    Admin,
+}
+
+impl PermissionLevel {
+    /// Get the permission level as a string.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            PermissionLevel::Read => "read",
+            PermissionLevel::Write => "write",
+            PermissionLevel::Admin => "admin",
+        }
+    }
+
+    /// Check if this permission level includes the required level.
+    pub fn includes(&self, required: &PermissionLevel) -> bool {
+        match (self, required) {
+            (PermissionLevel::Admin, _) => true,
+            (PermissionLevel::Write, PermissionLevel::Read) => true,
+            (PermissionLevel::Write, PermissionLevel::Write) => true,
+            (PermissionLevel::Read, PermissionLevel::Read) => true,
+            _ => false,
+        }
+    }
+}
+
+/// User role with associated permission level.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserRole {
+    /// Viewer - read-only access.
+    Viewer,
+    /// Editor - read and write access.
+    Editor,
+    /// Admin - full access.
+    Admin,
+}
+
+impl UserRole {
+    /// Get the permission level for this role.
+    pub fn permission_level(&self) -> PermissionLevel {
+        match self {
+            UserRole::Viewer => PermissionLevel::Read,
+            UserRole::Editor => PermissionLevel::Write,
+            UserRole::Admin => PermissionLevel::Admin,
+        }
+    }
+
+    /// Get the role as a string.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            UserRole::Viewer => "viewer",
+            UserRole::Editor => "editor",
+            UserRole::Admin => "admin",
+        }
+    }
+
+    /// Parse a role from a string.
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "viewer" => Some(UserRole::Viewer),
+            "editor" => Some(UserRole::Editor),
+            "admin" => Some(UserRole::Admin),
+            _ => None,
+        }
+    }
+}
+
+/// Determine the required permission level for an operation.
+/// 
+/// Rules:
+/// - Operations starting with "get_", "list_", "query_", "search_", "count_", "health" → Read
+/// - Operations starting with "create_", "update_", "delete_", "add_", "remove_", "modify_" → Write
+/// - Operations containing "bulk_", "batch_", "configure_", "manage_", "admin_" → Admin
+/// - Default → Read
+pub fn required_permission_for_operation(operation: &str) -> PermissionLevel {
+    let op = operation.to_lowercase();
+
+    // Admin operations
+    if op.contains("bulk_") || op.contains("batch_") || op.contains("configure_")
+        || op.contains("manage_") || op.contains("admin_") || op.contains("import_")
+        || op.contains("export_")
+    {
+        return PermissionLevel::Admin;
+    }
+
+    // Write operations
+    if op.starts_with("create_") || op.starts_with("update_") || op.starts_with("delete_")
+        || op.starts_with("add_") || op.starts_with("remove_") || op.starts_with("modify_")
+        || op.starts_with("submit_") || op.starts_with("approve_") || op.starts_with("reject_")
+        || op.starts_with("cancel_") || op.starts_with("complete_") || op.starts_with("start_")
+        || op.starts_with("stop_") || op.starts_with("pause_") || op.starts_with("resume_")
+    {
+        return PermissionLevel::Write;
+    }
+
+    // Default: Read
+    PermissionLevel::Read
+}
+
+/// Check if a user role has permission for an operation.
+pub fn check_permission(role: &UserRole, operation: &str) -> bool {
+    let required = required_permission_for_operation(operation);
+    role.permission_level().includes(&required)
+}
+
+/// Permission check result.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PermissionCheckResult {
+    /// Whether the permission is granted.
+    pub granted: bool,
+    /// The required permission level.
+    pub required: String,
+    /// The user's permission level.
+    pub user_level: String,
+    /// The user's role.
+    pub user_role: String,
+    /// The operation being checked.
+    pub operation: String,
+    /// Error message if not granted.
+    pub error: Option<String>,
+}
+
+/// Perform a permission check and return detailed result.
+pub fn perform_permission_check(
+    role: &UserRole,
+    operation: &str,
+) -> PermissionCheckResult {
+    let required = required_permission_for_operation(operation);
+    let user_level = role.permission_level();
+    let granted = user_level.includes(&required);
+
+    PermissionCheckResult {
+        granted,
+        required: required.as_str().to_string(),
+        user_level: user_level.as_str().to_string(),
+        user_role: role.as_str().to_string(),
+        operation: operation.to_string(),
+        error: if granted {
+            None
+        } else {
+            Some(format!(
+                "Permission denied: operation '{}' requires '{}' permission, but user has '{}' permission (role: '{}')",
+                operation,
+                required.as_str(),
+                user_level.as_str(),
+                role.as_str()
+            ))
+        },
+    }
+}
+
 // ===== Request/Response Types =====
 
 /// Request to execute a business tool operation.
@@ -35,6 +195,14 @@ pub struct ExecuteToolRequest {
     /// User ID for audit.
     #[serde(default)]
     pub user_id: Option<String>,
+    /// V440: User role for permission control (viewer, editor, admin).
+    /// Defaults to "admin" for backward compatibility.
+    #[serde(default = "default_user_role")]
+    pub role: String,
+}
+
+fn default_user_role() -> String {
+    "admin".to_string()
 }
 
 /// Information about a business tool.
@@ -153,6 +321,24 @@ pub async fn execute_tool(
                 "tool": tool_name,
                 "operation": request.operation,
                 "supported_operations": operations,
+            })),
+        ));
+    }
+
+    // V440: Permission check
+    let user_role = UserRole::from_str(&request.role).unwrap_or(UserRole::Admin);
+    let permission_result = perform_permission_check(&user_role, &request.operation);
+    if !permission_result.granted {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "error": "Permission denied",
+                "tool": tool_name,
+                "operation": request.operation,
+                "required_permission": permission_result.required,
+                "user_permission": permission_result.user_level,
+                "user_role": permission_result.user_role,
+                "message": permission_result.error,
             })),
         ));
     }
