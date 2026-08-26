@@ -4870,6 +4870,73 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V331 — 批量模式第十六次：Top15文件未使用项清理（15项+级联3项）（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十六次成功 · 15 files（全部修改，无删除）· 净删 242 行 · tsc 0 errors · eslint 0 errors(1310 warnings, 从1324减14)
+
+### 目标文件（Top15，全部1项/文件=15初始）
+
+| 文件 | 初始项 | 类型 | 级联 | 净删行 |
+|------|--------|------|------|--------|
+| routes/utils | 1 | import type React | - | ~1 |
+| routes/v2/types | 1 | const函数 | - | ~100 |
+| schemas/admin/dictionary | 1 | const | +2(dictTypeFields, categoryLabels) | ~100 |
+| schemas/crm/contact | 1 | type声明 | - | ~1 |
+| schemas/doc/document | 1 | React import | - | ~1 |
+| schemas/ehs/incidentReport | 1 | React import | - | ~1 |
+| schemas/erp/announcement | 1 | React import | - | ~1 |
+| schemas/erp/asset | 1 | React import | - | ~1 |
+| schemas/erp/bankAccount | 1 | React import | - | ~1 |
+| schemas/erp/customer | 1 | React import | - | ~1 |
+| schemas/erp/meetingRoom | 1 | React import | - | ~1 |
+| schemas/erp/officeSupplies | 1 | React import | - | ~1 |
+| schemas/erp/purchaseOrder | 1 | React import | - | ~1 |
+| schemas/erp/salesOrder | 1 | React import | - | ~1 |
+| schemas/erp/supplier | 1 | React import | - | ~1 |
+| **合计** | **15** | | **+3** | **242** |
+
+### 清理方法论
+
+**A轨（批量sed）**：移除11项`import React from 'react';`整行删除 + 1项`import type React from 'react';`（routes/utils格式不同，需单独sed）
+
+**B轨（v6批量脚本）**：移除3项本地声明（routes/v2/types filterRoutesByTier, admin/dictionary dictTypeSchema, crm/contact ContactStatus）
+
+**C轨（级联3项）**：
+- admin/dictionary dictTypeFields（删除dictTypeSchema后触发）
+- admin/dictionary categoryLabels（删除dictTypeFields后触发，级联链dictTypeSchema→dictTypeFields→categoryLabels）
+- routes/utils import type React（格式`import type React from 'react';`与标准`import React from 'react';`不同，首轮sed未匹配）
+
+**D轨（v6误删修复）**：crm/contact的ContactStatus type声明后无空行，v6深度跟踪误删后面的createContactSchema const（10行）。需git checkout恢复后手动删除ContactStatus type。
+
+### 关键发现
+
+1. **React import占比极高**：15个文件中12个是React import未使用，占80%。其中11个是标准`import React from 'react';`格式，1个是`import type React from 'react';`格式（routes/utils）。
+2. **admin/dictionary级联链**：删除dictTypeSchema后触发dictTypeFields级联，删除dictTypeFields后触发categoryLabels级联，形成3级级联链，共删除~100行。
+3. **v6脚本type声明后无空行误删风险（第二次遇到）**：crm/contact的`type ContactStatus = z.infer<typeof contactStatus>;`后面没有空行，v6脚本的深度跟踪把后面的`const createContactSchema = contactZodSchema.omit({...})`（10行）也一起删除了。V329 ai-ui-generator案例是type后无空行误删class（164行），本次是type后无空行误删const（10行）。需git checkout恢复后手动删除type声明。
+4. **routes/v2/types filterRoutesByTier大函数**：单个const函数~100行，占净删行41%。
+5. **erp/目录占比高**：15个目标文件中9个在erp/下，全部是React import未使用。
+6. **无孤儿文件**：15个文件全部修改，没有文件变成孤儿。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1310 warnings（-14） | ✅ |
+| 孤儿文件删除 | 0个（全部修改） | ✅ |
+| 变更统计 | 15 files, 0 insertions, 242 deletions | ✅ |
+
+### V331后续扩展（留给V332+）
+
+- [ ] **React import批量清理专项**：12/15文件是React import，占80%。可写脚本专门扫描所有`import React from 'react';`和`import type React from 'react';`未使用，一次性清理
+- [ ] **v6脚本type声明后无空行防护**：V329 ai-ui-generator（type后无空行误删class 164行）和V331 crm/contact（type后无空行误删const 10行）两次遇到。需检测type声明后是否紧跟const/class/function，避免深度跟踪误删
+- [ ] **admin/dictionary级联链模式**：dictTypeSchema→dictTypeFields→categoryLabels 3级级联链，可总结级联链检测模式
+- [ ] **批量模式继续**：V316-V331连续十六次成功，全src/未使用项从~282降至~2
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

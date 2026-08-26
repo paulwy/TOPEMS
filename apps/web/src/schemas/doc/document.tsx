@@ -1,5 +1,4 @@
 import type { EntitySchema } from '@/schema';
-import React from 'react';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { FileText, FileSpreadsheet, File, Image, FolderOpen } from 'lucide-react';
 import i18n from '@/i18n';

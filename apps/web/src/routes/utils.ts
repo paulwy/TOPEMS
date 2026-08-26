@@ -1,5 +1,4 @@
 import type { ComponentType, LazyExoticComponent, ReactElement } from 'react';
-import type React from 'react';
 import { lazy } from 'react';
 import ErrorPage from '../pages/shared/ErrorPage';
 import { logger } from '@/utils/logger';

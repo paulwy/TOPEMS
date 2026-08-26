@@ -23,7 +23,6 @@ const contactZodSchema = z
   .merge(commonAuditSchema);
 
 export type Contact = z.infer<typeof contactZodSchema>;
-type ContactStatus = z.infer<typeof contactStatus>;
 
 const createContactSchema = contactZodSchema.omit({
   id: true,

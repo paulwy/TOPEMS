@@ -4,7 +4,6 @@
  * 包含表单分组、状态徽章、筛选等高级功能。
  */
 
-import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
