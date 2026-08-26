@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { FormPageTemplate } from '@/components/templates';

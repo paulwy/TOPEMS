@@ -14,7 +14,7 @@ import i18n from '@/i18n';
 import { MapPin, Info, Navigation, X } from 'lucide-react';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../../api/gis';
 import type { DrawFeature } from '../shared/types';
-import { EARTH, designTokens, semanticTokens } from '@topems/tokens';
+import { EARTH, designTokens } from '@topems/tokens';
 import MapEvents from './MapEvents';
 import MapControls from './MapControls';
 import LayerManager from './LayerManager';

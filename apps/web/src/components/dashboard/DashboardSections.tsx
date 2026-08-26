@@ -12,7 +12,7 @@ import {
 import i18n from '@/i18n';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ModuleCard, type ModuleItem } from './ModuleCard';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 export const MODULE_SECTIONS = [
   {

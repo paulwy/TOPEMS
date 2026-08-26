@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { BarChart3 } from 'lucide-react';
 import type { LayoutConfig, SelectedField } from '../types';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface PreviewContentProps {

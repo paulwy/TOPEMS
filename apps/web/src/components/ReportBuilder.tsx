@@ -4,7 +4,7 @@ import { X, FileText, Loader2, CheckCircle } from 'lucide-react';
 import type { ReportType, ReportTypeInfo, CreateReportRequest } from '@/api/report';
 import { reportApi } from '@/api/report';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface ReportBuilderProps {

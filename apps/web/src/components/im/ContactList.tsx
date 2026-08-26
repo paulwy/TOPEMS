@@ -5,7 +5,7 @@ import type { Friend, ContactGroup } from '../../api/im';
 import { imApi } from '../../api/im';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface ContactListProps {

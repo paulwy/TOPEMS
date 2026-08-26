@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface LazyImageProps {
   src: string;

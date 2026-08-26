@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar as MuiAvatar, Tooltip } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import { User } from 'lucide-react';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type UserAvatarSize = 24 | 32 | 40 | 48 | number;
 

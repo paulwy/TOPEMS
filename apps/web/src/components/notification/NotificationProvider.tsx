@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 import React, { useEffect, useState } from 'react';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
 import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 import { alpha } from '@mui/material/styles';
 

@@ -1,4 +1,4 @@
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 统一设计系统

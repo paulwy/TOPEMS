@@ -2,7 +2,7 @@
 import React from 'react';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import { Box, Typography, Paper, Button } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface LayerToggleProps {

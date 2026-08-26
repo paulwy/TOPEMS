@@ -13,7 +13,7 @@ import {
 import i18n from '@/i18n';
 import type { ReportData, ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface ExportModalProps {
   report: ReportData;

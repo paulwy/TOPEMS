@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { ServiceStatusCard } from './ServiceStatusCard';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface ServiceStatusMonitorProps {
   serviceStatuses?: Record<string, boolean>;

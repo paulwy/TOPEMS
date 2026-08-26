@@ -4,7 +4,7 @@ import { X as XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { edgeRenderer, faas, onDemandLoader } from '@/microfrontend';
 import PanelCard from './PanelCard';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useTranslation();

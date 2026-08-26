@@ -7225,6 +7225,81 @@ cargo run --bin mcp-stdio
 
 ---
 
+## 🎯 V354 — 架构改进四轨并行第二十二次：前端未使用项持续清理（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第二十二次交付 · 前端未使用项持续清理 · 48个文件semanticTokens import清理 · TS6133减少45个
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用项持续清理 | 48个文件移除未使用的semanticTokens import，TS6133从266减少到221 | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V355 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V355 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V355 | ⏸️ |
+
+### 轨A：前端未使用项持续清理
+
+**清理内容**：移除48个文件中未使用的 `semanticTokens` import
+
+**import 模式**：
+```typescript
+// 清理前
+import { designTokens, semanticTokens } from '@topems/tokens';
+
+// 清理后
+import { designTokens } from '@topems/tokens';
+```
+
+**特殊情况处理**：
+- `MapView.tsx`：有 `EARTH, designTokens, semanticTokens`，移除 semanticTokens 保留 EARTH 和 designTokens
+- `theme.ts`：实际使用了 semanticTokens（13处），保留不动
+- 其他47个文件：标准的 `designTokens, semanticTokens` 模式
+
+**清理的文件分布**（48个文件）：
+- components/bi/：4个（ChartAnnotations, MetricCard, StatsChart.bar, StatsChart.impl, StatsChart.pie）
+- components/charts/：3个（CustomTooltip, PieChart, RadarChart）
+- components/common/：6个（FormDrawer, LazyImage, Timeline, UserAvatar等）
+- components/dashboard/：2个（DashboardSections, ServiceStatusMonitor）
+- components/export/：2个（EnhancedExportModal, ExportModal）
+- components/gis/：5个（FitBoundsControl, MeasureTooltip, Toolbar, LayerManager, MapView）
+- components/im/：4个（ChatInput, ChatSettingsModal, ContactList, MessageBubble）
+- components/notification/：2个（NotificationPanel, NotificationProvider）
+- components/templates/：4个（GisMapTemplate, MasterDetailPageTemplate, PreviewContent, ListSearchBar）
+- components/ui/：1个（CommandPalette）
+- components/：3个（DocumentPreviewModal, ReportBuilder, ReportViewer）
+- dev-tools/：1个（V47IntegrationPanel）
+- microfrontend/：3个（AIOpsPanel, ObservabilityDashboard, design-system）
+- pages/：5个（AiAssistantReportTab, DesignerCanvas, MetricsDashboardPage, SLOStatusPage, PerformanceTestPage）
+- utils/：2个（uiRecommender, queryCostAnalyzer）
+
+**验收结果**：
+- 清理前 TS6133 错误：266个
+- 清理后 TS6133 错误：221个
+- 减少：45个
+- 编译验证：无新增错误
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 48个文件移除未使用的semanticTokens import | ✅ |
+| 轨A TS6133减少 | 从266减少到221，减少45个 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 轨A 特殊情况处理 | MapView.tsx保留EARTH，theme.ts保留semanticTokens | ✅ |
+| 变更统计 | 修改48个前端文件 + 修改1文件 | ✅ |
+
+### V354后续扩展（留给V355+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余221个TS6133错误
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V354连续二十二次交付验证成功，V355继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

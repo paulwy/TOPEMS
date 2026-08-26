@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend } from '../charts/_vendors/recharts-polar';
 import type { ChartData } from '../charts/AreaChart';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 interface StatsChartPieProps {
   title?: string;

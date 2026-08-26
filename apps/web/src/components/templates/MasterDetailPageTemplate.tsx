@@ -27,7 +27,7 @@ import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
 import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
 import { logger } from '@/utils/logger';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 

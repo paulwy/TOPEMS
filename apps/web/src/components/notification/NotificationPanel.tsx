@@ -9,7 +9,7 @@ import { logger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface NotificationPanelProps {

@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import type { ChartData } from '../charts/AreaChart';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 export interface StatsChartProps {

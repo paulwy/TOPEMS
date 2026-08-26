@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
 import { User, FileText, Check, CheckCheck, MoreVertical, Trash2, Edit3 } from 'lucide-react';
 import type { ChatMessage } from '../../api/im';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface MessageBubbleProps {

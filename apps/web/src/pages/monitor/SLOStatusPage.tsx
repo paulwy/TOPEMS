@@ -56,7 +56,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 const getSloTypeLabels = (): Record<string, string> => ({
   all: i18n.t('pages.slo_status_page.k0'),

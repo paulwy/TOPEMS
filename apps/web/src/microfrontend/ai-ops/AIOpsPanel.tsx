@@ -67,7 +67,7 @@ import {
   type ModuleInstanceInfo,
 } from './auto-scaler';
 import { moduleRegistry, type ModuleRegistration } from '../registry/module-registry';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabType = 'overview' | 'anomaly' | 'alert' | 'prediction' | 'autoscale';
 

@@ -14,7 +14,7 @@ import {
   Chip,
   Divider,
 } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 // ============================================================
 // 色板色块组件

@@ -6,7 +6,7 @@ import type * as THREE from 'three';
 import type { DevicePoint, Pipeline, StorageLocation } from '../../api/gis';
 import { X, RotateCcw, Maximize2 } from 'lucide-react';
 import { Box as MuiBox, Typography, IconButton, Paper } from '@mui/material';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 interface Map3DViewProps {
