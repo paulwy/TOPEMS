@@ -6361,6 +6361,97 @@ POST /mcp
 
 ---
 
+## 🎯 V344 — 架构改进四轨并行第十二次：LIMS业务工具（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第十二次交付 · LIMS MCP Tools上线 · 41个业务工具注册 · cargo check ✅ · 6个单元测试
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | bff组件未使用专项 | 需确认是否为BFF架构核心组件，留给V345 | ⏸️ |
+| 轨B | B1 API签名对齐 | 延续V343评估，记录V345+实施策略 | ✅ |
+| 轨C | MCP stdio传输 | 复杂度高，留给V345实施（需独立二进制入口） | ⏸️ |
+| 轨D | LIMS MCP Tools | 4个业务工具（lims.list_samples, lims.get_sample, lims.list_tests, lims.create_sample），6个单元测试 | ✅ |
+
+### 轨B：B1 API签名对齐（延续V343）
+
+**V337已完成深入评估**，确认两模块完全不同：
+- 返回类型：ApiResponse vs TypedApiResponse
+- 类型定义：FinancialVoucher vs Voucher
+- API客户端：apiClient.erp vs apiClient.finance
+- 方法集：erp有getItems/update/delete/importU8，finance有export
+
+**实施策略**（V345+）：
+1. 以@/api/finance/为标准（功能更全，22个文件）
+2. 逐函数对比，补全finance模块缺失的方法
+3. 逐个迁移6处Finance页面引用
+4. 迁移完成后废弃@/api/erp/finance/
+
+### 轨D：LIMS MCP Tools
+
+**新增文件**：
+- `svc/ai/src/dsh/mcp/tools/lims.rs` — LIMS业务工具（~640行）
+
+**注册的4个工具**：
+1. **lims.list_samples** — 查询样品列表
+   - 参数：page, page_size, status(received/in_testing/completed/rejected/archived), sample_type(raw_material/in_process/finished_product/environment/water/air), submitter, keyword
+   - 返回：样品列表（样品编号、名称、类型、来源、状态、送检人、接收日期、检测项目数、数量、优先级）
+   - 支持分页、状态筛选、类型筛选、送检人筛选、关键词搜索
+
+2. **lims.get_sample** — 获取样品详情
+   - 参数：sample_id（必填）
+   - 返回：完整样品信息（基本信息、来源信息、存储条件、有效期、检测项目、检测结果汇总、结论、审核信息、附件）
+   - 包含5个检测项目、检测汇总统计、2个附件
+
+3. **lims.list_tests** — 查询检测项目列表
+   - 参数：page, page_size, sample_id, status(pending/in_progress/completed/reviewed/rejected), test_method, tester
+   - 返回：检测项目列表（检测编号、名称、样品、方法、状态、检测人、结果、单位、标准值、开始/完成时间）
+   - 支持分页、样品筛选、状态筛选、方法筛选、检测人筛选
+
+4. **lims.create_sample** — 创建样品
+   - 参数：name（必填）, sample_type（必填）, source（必填）, submitter（必填）, quantity, unit, description, test_items
+   - 返回：新样品ID、样品编号、名称、类型、来源、送检人、数量、状态
+   - 验证：4个必填字段
+
+**单元测试**（6个）：
+- test_register_lims_tools — 4个工具全部注册
+- test_list_samples — 分页查询
+- test_get_sample — 按ID查询，验证检测项目/检测汇总/附件结构
+- test_list_tests — 分页+状态筛选
+- test_create_sample — 成功创建样品，验证默认状态和检测项目数组
+- test_create_sample_validation — 参数验证（缺少source、缺少submitter）
+
+**修改文件**：
+- `svc/ai/src/dsh/mcp/tools/mod.rs` — 添加pub mod lims和导出
+- `svc/ai/src/dsh/mcp/mod.rs` — 导出register_lims_tools
+- `svc/ai/src/routes.rs` — 调用register_lims_tools注册LIMS工具
+
+**当前工具总数**：41个（2系统 + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B B1评估 | 延续V343，记录V345+实施策略 | ✅ |
+| 轨D cargo check | topems-ai编译通过 | ✅ |
+| 轨D LIMS工具 | 4个业务工具已注册 | ✅ |
+| 轨D LIMS单元测试 | 6个测试用例 | ✅ |
+| 总工具数 | 41个（2系统+3CRM+4ERP+4Finance+4HR+4MES+4EHS+4WMS+4QMS+4PM+4LIMS） | ✅ |
+| 变更统计 | 新增1文件(~640行) + 修改4文件 | ✅ |
+
+### V344后续扩展（留给V345+）
+
+- [ ] **轨C MCP stdio传输**：实现独立二进制入口，支持stdin/stdout JSON-RPC通信
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D BI/APS MCP Tools**：注册bi.get_dashboard, aps.list_schedules等业务工具
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **轨A bff组件未使用专项**：确认ABTestPanel等是否为BFF架构核心组件，决定是否删除
+- [ ] **四轨并行继续**：V333-V344连续十二次交付验证成功，V345继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
