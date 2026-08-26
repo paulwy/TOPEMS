@@ -9278,6 +9278,74 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V383 — 架构改进四轨并行第五十一次：前端未使用常量清理（AUTH_UNAUTHORIZED_EVENT）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五十一次交付 · 前端未使用常量清理 · 1个文件 · 删除未使用的认证未授权事件常量
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用常量清理 | 1个文件的未使用常量删除（constants/api.ts，AUTH_UNAUTHORIZED_EVENT常量） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V384 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V384 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V384 | ⏸️ |
+
+### 轨A：前端未使用常量清理（AUTH_UNAUTHORIZED_EVENT）
+
+**清理内容**：删除1个文件中未使用的认证未授权事件常量
+
+**清理的文件（1个）**：
+
+1. **constants/api.ts** — 删除未使用的常量 AUTH_UNAUTHORIZED_EVENT
+   - 删除的常量：`const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized' as const;`
+   - 常量用途：认证失败时派发的事件名称
+   - 该常量定义后从未被使用，可能是开发过程中的遗留代码
+   - 同时删除了常量前面的注释和删除常量后遗留的空注释块
+   - 文件从43行减少到38行
+   - 保留的常量：API_RETRY_CONFIG（已导出）、PUBLIC_API_PATTERNS（已导出）
+
+**技术说明**：
+- 删除常量前验证常量未被任何地方引用（包括import和动态导入）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 删除常量后需要检查并清理相关的注释和空注释块，避免语法错误
+- 对于仍被其他代码使用的已导出常量（如API_RETRY_CONFIG、PUBLIC_API_PATTERNS），保留不动
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查常量的未使用情况，定义常量后需要确保被使用或导出
+
+**验收结果**：
+- 1个文件的未使用常量 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的常量为未使用的遗留代码
+- 文件语法正确，无空注释块遗留
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用常量删除 | ✅ |
+| 轨A 清理常量 | AUTH_UNAUTHORIZED_EVENT（认证未授权事件常量） | ✅ |
+| 轨A 删除行数 | 5行（常量+注释+空注释块） | ✅ |
+| 轨A 文件变化 | constants/api.ts从43行到38行 | ✅ |
+| 轨A 引用检查 | 删除常量前验证未被任何地方引用 | ✅ |
+| 轨A 保留检查 | API_RETRY_CONFIG/PUBLIC_API_PATTERNS仍被使用，保留不动 | ✅ |
+| 轨A 语法检查 | 文件语法正确，无空注释块遗留 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V383后续扩展（留给V384+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~108个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用函数清理**：继续清理其他未使用的函数（getWebVitalsSnapshot/useShortcutsHelp/useImportExport/useDeviceType等）
+- [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V383连续五十一次交付验证成功，V384继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
