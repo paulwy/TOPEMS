@@ -16,6 +16,12 @@ pub mod permission_store_factory;
 // V452: Permission management API
 pub mod permission_api;
 
+// V454: Permission audit log
+pub mod permission_audit_log;
+
+// V454: Audit log API
+pub mod audit_api;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
@@ -746,6 +752,8 @@ pub fn business_tools_routes() -> Router<AppState> {
         )
         // V452: Permission management routes
         .merge(permission_api::permission_routes())
+        // V454: Audit log routes
+        .merge(audit_api::audit_log_routes())
 }
 
 // ===== Helper Extensions for BusinessRequest =====
