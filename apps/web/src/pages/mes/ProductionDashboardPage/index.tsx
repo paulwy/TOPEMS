@@ -209,10 +209,6 @@ export const ProductionDashboardPage: React.FC = () => {
       ).length,
     [orders]
   );
-  const _completedOrderCount = useMemo(
-    () => orders.filter((o) => o.status === 'completed').length,
-    [orders]
-  );
   const equipmentBuckets = useMemo<EquipmentStatusBucket[]>(() => {
     const map = new Map<string, number>();
     equipment.forEach((e) => {
@@ -303,9 +299,6 @@ export const ProductionDashboardPage: React.FC = () => {
       }
     };
   }, [autoRefresh, loadAll]);
-  const _runningEquipmentCount = equipmentBuckets
-    .filter((b) => b.status === 'running' || b.status === 'in_use' || b.status === 'normal')
-    .reduce((sum, b) => sum + b.count, 0);
   const trendData = useMemo(
     () =>
       hourlyOutputTrend.map((d, i) => ({

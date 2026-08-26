@@ -4242,6 +4242,74 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V322 — 批量模式第七次：Top15文件未使用项清理（30项）+ 级联22项（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第七次成功 · 15 files（全部修改）· 净删 246 行 · tsc 0 errors · eslint 0 errors(1530 warnings, 从1568减38)
+
+### 目标文件（Top15，全部2项/文件=30初始）
+
+| 文件 | 初始项 | 级联 | 净删行 |
+|------|--------|------|--------|
+| finance/VoucherDetailPage | 2 | 2 | ~50 |
+| gis/GisFencePage | 2 | 0 | ~2 |
+| gis/index.tsx | 2 | 2 | ~15 |
+| hrm/HrmAttendancePage | 2 | 0 | ~2 |
+| hrm/HrmDashboardPage | 2 | 0 | ~2 |
+| hrm/HrmEmployeeDetailPage | 2 | 0 | ~2 |
+| hrm/HrmOverviewPage | 2 | 1 | ~13 |
+| hrm/setting/AttendanceRulePage | 2 | 1 | ~13 |
+| hrm/setting/PayrollTemplatePage | 2 | 1 | ~13 |
+| hrm/setting/RecruitmentFlowPage | 2 | 1 | ~13 |
+| im/MailPage/index.tsx | 2 | 1 | ~3 |
+| integration/IntegrationEventsPage | 2 | 2 | ~14 |
+| integration/IntegrationSettingsPage | 2 | 3 | ~14 |
+| lims/LimsSampleDetailPage | 2 | 0 | ~63 |
+| mes/ProductionDashboardPage/index.tsx | 2 | 0 | ~7 |
+| **合计** | **30** | **22** | **246** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除7项本地声明（handleAudit, handlePost, handleRefresh, calculateWorkYears, getStatusBadge, _completedOrderCount, _runningEquipmentCount）
+
+**B轨（手动修复23项）**：
+- import整行删除（8）：hrmApi×4, integrationApi, externalErpApi, gisApi, useNotificationStore(TS6192误判后恢复), SettingsPageTemplate(TS6192)
+- import单符号移除（7）：ListColumnDef, SectionConfig, semanticTokens, MessageSquare, useQuery×3(多行import)
+- useQuery整段删除（7）：gis/index, hrm/HrmOverview, hrm/setting×3, integration×2
+- useMutation整段删除（2）：finance auditMutation, postMutation（各~20行）
+- 本地const删除（1）：im/MailPage ct
+- 函数声明删除（1）：gis/index showNotification
+- 语法修复（2）：HrmEmployeeDetailPage import sed误替换, mes .reduce残留行
+
+**C轨（级联22项）**：删除useQuery/useMutation后触发import级联（useQuery×6, gisApi, externalErpApi, integrationApi, designTokens, SettingsPageTemplate, auditMutation/postMutation→voucherApi级联）
+
+### 关键发现
+
+1. **TS6192误判风险**：IntegrationSettingsPage的useNotificationStore import报TS6192（All imports unused），但实际line77有`useNotificationStore((state) => state.addNotification)`引用。删除后报TS2304，需恢复import。
+2. **sed跨行替换误操作**：HrmEmployeeDetailPage的`sed 's/, type SectionConfig } from/. } from/'`把import改成`type TabConfig. }`语法错误，需Edit手动修复。
+3. **v6 .reduce残留行**：mes/ProductionDashboardPage删除`_completedOrderCount = completedOrders`后留下`.reduce(...)`残留行，报TS1128，需手动删除。
+4. **useMutation整段删除**：finance的auditMutation/postMutation各~20行，v6无法处理useCallback/useMutation包装的未使用函数，需手动删除整个块。
+5. **prettier多行import**：删除ListColumnDef后LimsSampleDetailPage的多行import变prettier error，需eslint --fix修复。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1530 warnings（-38） | ✅ |
+| 变更统计 | 15 files, 7 insertions, 253 deletions | ✅ |
+
+### V322后续扩展（留给V323+）
+
+- [ ] **TS6192误判自动检测**：IntegrationSettingsPage案例，删除前需grep确认代码中无引用
+- [ ] **sed跨行替换安全检查**：HrmEmployeeDetailPage案例，sed不支持跨行，需用Edit
+- [ ] **v6 .reduce残留行检测**：mes案例，删除const声明后检查是否有链式调用残留
+- [ ] **useMutation/useCallback整段删除**：finance案例，v6无法处理，需扩展脚本
+- [ ] **批量模式继续**：V316-V322连续七次成功，全src/未使用项从~282降至~167
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

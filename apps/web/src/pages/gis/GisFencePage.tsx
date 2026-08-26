@@ -45,7 +45,6 @@ import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/temp
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { gisApi } from '@/api/gis';
-import type { MapMarker as GisMapMarker } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -359,19 +358,6 @@ export const GisFencePage: React.FC = () => {
     },
     [deleteFenceMutation]
   );
-
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE,
-      exact: false,
-      refetchType: 'active',
-    });
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
-      exact: false,
-      refetchType: 'active',
-    });
-  }, [queryClient]);
 
   const filteredFences = useMemo(
     () => fences.filter((f) => f.name.toLowerCase().includes(searchTerm.toLowerCase())),

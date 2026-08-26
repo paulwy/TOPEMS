@@ -126,64 +126,6 @@ const VoucherDetailPage: React.FC = () => {
     if (id) deleteMutation.mutate(id);
   };
 
-  const auditMutation = useMutation({
-    mutationFn: (voucherId: string) => voucherApi.approve(voucherId),
-    onSuccess: () => {
-      addNotification({
-        title: t('finance.voucher_detail_page.success'),
-        message: t('finance.voucher_detail_page.success_1'),
-        type: 'success',
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id],
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.voucher_detail_page.fail'), err);
-      addNotification({
-        title: t('finance.voucher_detail_page.fail_1'),
-        message: t('finance.voucher_detail_page.fail_2'),
-        type: 'error',
-      });
-    },
-  });
-
-  const handleAudit = () => {
-    if (!confirm(t('finance.voucher_detail_page.confirm_1'))) return;
-    if (id) auditMutation.mutate(id);
-  };
-
-  const postMutation = useMutation({
-    mutationFn: (voucherId: string) => voucherApi.post(voucherId),
-    onSuccess: () => {
-      addNotification({
-        title: t('finance.voucher_detail_page.success'),
-        message: t('finance.voucher_detail_page.success_2'),
-        type: 'success',
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id],
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    onError: (err: unknown) => {
-      apiLogger.error(t('finance.voucher_detail_page.fail_3'), err);
-      addNotification({
-        title: t('finance.voucher_detail_page.fail_1'),
-        message: t('finance.voucher_detail_page.fail_4'),
-        type: 'error',
-      });
-    },
-  });
-
-  const handlePost = () => {
-    if (!confirm(t('finance.voucher_detail_page.confirm_2'))) return;
-    if (id) postMutation.mutate(id);
-  };
-
   const formatCurrency = (amount: number) => {
     return `¥${amount.toLocaleString('zh-CN', {
       minimumFractionDigits: 2,

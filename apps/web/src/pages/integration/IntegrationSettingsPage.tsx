@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -25,13 +25,11 @@ import i18n from '@/i18n';
 import { Save, RefreshCw, Plus, TestTube, Bell, Clock, Key, Globe } from 'lucide-react';
 
 import { PageContainer } from '@/components/common';
-import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
-import { integrationApi } from '@/api/integration';
 
 interface IntegrationConfig {
   id: string;
@@ -74,16 +72,6 @@ const MOCK_CONFIGS: IntegrationConfig[] = [
 ];
 
 export const IntegrationSettingsPage: React.FC = () => {
-  const { data: backendData } = useQuery({
-    queryKey: ['integration', 'settings'],
-    queryFn: async () => {
-      try {
-        return await integrationApi.conversionRules.listConversionRules();
-      } catch {
-        return {};
-      }
-    },
-  });
   const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
