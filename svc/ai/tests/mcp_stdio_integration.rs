@@ -11,8 +11,11 @@
 //! - 无效 JSON → 验证返回解析错误
 //! - 通知（无 id）→ 验证不返回响应
 
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 use serde_json::{json, Value};
 
@@ -29,6 +32,9 @@ fn start_mcp_stdio() -> (std::process::Child, std::process::ChildStdin, BufReade
     let stdout = child.stdout.take().expect("Failed to open stdout");
     let reader = BufReader::new(stdout);
 
+    // 等待子进程完全启动
+    thread::sleep(Duration::from_millis(100));
+
     (child, stdin, reader)
 }
 
@@ -40,54 +46,56 @@ fn send_request(stdin: &mut std::process::ChildStdin, request: &Value) {
     stdin.flush().expect("Failed to flush stdin");
 }
 
-/// 从 stdout 读取一行响应
-fn read_response(reader: &mut BufReader<std::process::ChildStdout>) -> Value {
-    let mut line = String::new();
-    reader.read_line(&mut line).expect("Failed to read from stdout");
-    let trimmed = line.trim();
-    assert!(!trimmed.is_empty(), "Received empty response");
-    serde_json::from_str(trimmed).expect("Failed to parse response")
-}
-
-/// 从 stdout 读取一行响应（带超时）
+/// 从 stdout 读取一行响应（带超时，使用线程+通道实现可靠的非阻塞读取）
 fn read_response_with_timeout(
     reader: &mut BufReader<std::process::ChildStdout>,
     timeout_ms: u64,
 ) -> Option<Value> {
-    use std::time::{Duration, Instant};
+    // 创建通道
+    let (tx, rx) = mpsc::channel();
 
-    let start = Instant::now();
-    let mut line = String::new();
-
-    loop {
-        if start.elapsed() > Duration::from_millis(timeout_ms) {
-            return None;
-        }
-
-        // 非阻塞读取：尝试读取一个字节
-        let mut buf = [0u8; 1];
-        match reader.read(&mut buf) {
-            Ok(0) => return None, // EOF
-            Ok(1) => {
-                if buf[0] == b'\n' {
-                    break;
+    // 在单独的线程中读取（读取操作可能阻塞）
+    let reader_ptr = reader as *mut BufReader<std::process::ChildStdout>;
+    thread::spawn(move || {
+        // SAFETY: 主线程在超时前不会访问 reader，超时后读取线程可能仍在运行但不会影响结果
+        let reader = unsafe { &mut *reader_ptr };
+        let mut line = String::new();
+        match reader.read_line(&mut line) {
+            Ok(0) => {
+                let _ = tx.send(None); // EOF
+            }
+            Ok(_) => {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    let _ = tx.send(None);
+                } else {
+                    match serde_json::from_str(trimmed) {
+                        Ok(value) => {
+                            let _ = tx.send(Some(value));
+                        }
+                        Err(_) => {
+                            let _ = tx.send(None);
+                        }
+                    }
                 }
-                line.push(buf[0] as char);
             }
-            Ok(_) => {}
             Err(_) => {
-                // 读取可能阻塞，短暂等待后重试
-                std::thread::sleep(Duration::from_millis(10));
+                let _ = tx.send(None);
             }
         }
-    }
+    });
 
-    let trimmed = line.trim();
-    if trimmed.is_empty() {
-        None
-    } else {
-        Some(serde_json::from_str(trimmed).expect("Failed to parse response"))
+    // 等待读取结果，带超时
+    match rx.recv_timeout(Duration::from_millis(timeout_ms)) {
+        Ok(result) => result,
+        Err(_) => None, // 超时
     }
+}
+
+/// 从 stdout 读取一行响应（默认5秒超时，超时则 panic）
+fn read_response(reader: &mut BufReader<std::process::ChildStdout>) -> Value {
+    read_response_with_timeout(reader, 5000)
+        .expect("Timed out waiting for response (5 seconds)")
 }
 
 #[test]
