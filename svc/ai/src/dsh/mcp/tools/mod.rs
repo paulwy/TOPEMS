@@ -23,6 +23,7 @@ pub mod erp;
 pub mod finance;
 pub mod hr;
 pub mod mes;
+pub mod wms;
 
 pub use crm::register_crm_tools;
 pub use ehs::register_ehs_tools;
@@ -30,6 +31,7 @@ pub use erp::register_erp_tools;
 pub use finance::register_finance_tools;
 pub use hr::register_hr_tools;
 pub use mes::register_mes_tools;
+pub use wms::register_wms_tools;
 
 /// 工具处理函数类型
 ///
