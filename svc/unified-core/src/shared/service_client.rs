@@ -477,6 +477,157 @@ impl ServiceRegistry {
         let client = self.get(service)?;
         client.delete(path).await
     }
+
+    // ===== V435: Service Health Check & Status Management =====
+
+    /// Check the health of a single service.
+    ///
+    /// Sends a GET request to the service's `/health` endpoint and returns
+    /// whether the service is healthy.
+    pub async fn health_check(&self, service: &str) -> Result<ServiceHealth, ServiceClientError> {
+        let client = self.get(service)?;
+        let start = std::time::Instant::now();
+
+        let result = client
+            .get::<serde_json::Value>("/health", None)
+            .await;
+
+        let duration_ms = start.elapsed().as_millis() as u64;
+
+        match result {
+            Ok(response) => Ok(ServiceHealth {
+                service: service.to_string(),
+                healthy: response.success,
+                status_code: response.status,
+                response_time_ms: duration_ms,
+                last_checked: chrono::Utc::now().to_rfc3339(),
+                error: None,
+            }),
+            Err(e) => Ok(ServiceHealth {
+                service: service.to_string(),
+                healthy: false,
+                status_code: 0,
+                response_time_ms: duration_ms,
+                last_checked: chrono::Utc::now().to_rfc3339(),
+                error: Some(e.to_string()),
+            }),
+        }
+    }
+
+    /// Check the health of all registered services.
+    ///
+    /// Returns a map of service name to health status.
+    pub async fn health_check_all(&self) -> HashMap<String, ServiceHealth> {
+        let services = self.list();
+        let mut results = HashMap::new();
+
+        for service in services {
+            let health = self.health_check(&service).await.unwrap_or_else(|e| ServiceHealth {
+                service: service.clone(),
+                healthy: false,
+                status_code: 0,
+                response_time_ms: 0,
+                last_checked: chrono::Utc::now().to_rfc3339(),
+                error: Some(e.to_string()),
+            });
+            results.insert(service, health);
+        }
+
+        results
+    }
+
+    /// Get the configuration of a single service.
+    pub fn get_service_config(&self, service: &str) -> Result<ServiceConfig, ServiceClientError> {
+        let client = self.get(service)?;
+        Ok(client.config().clone())
+    }
+
+    /// Get the configurations of all registered services.
+    pub fn get_all_configs(&self) -> Vec<ServiceConfig> {
+        let services = self.services.lock().unwrap();
+        services.values().map(|c| c.config().clone()).collect()
+    }
+
+    /// Update the configuration of a service.
+    ///
+    /// This will recreate the service client with the new configuration.
+    pub fn update_service_config(&self, config: ServiceConfig) -> Result<(), ServiceClientError> {
+        if !self.has(&config.name) {
+            return Err(ServiceClientError::ServiceNotFound(config.name));
+        }
+        // Remove old client and register new one
+        self.remove(&config.name);
+        self.register(config)
+    }
+
+    /// Enable a service.
+    pub fn enable_service(&self, service: &str) -> Result<(), ServiceClientError> {
+        let mut config = self.get_service_config(service)?;
+        config.enabled = true;
+        self.update_service_config(config)
+    }
+
+    /// Disable a service.
+    ///
+    /// Disabled services will still be registered but should not be used.
+    pub fn disable_service(&self, service: &str) -> Result<(), ServiceClientError> {
+        let mut config = self.get_service_config(service)?;
+        config.enabled = false;
+        self.update_service_config(config)
+    }
+
+    /// Check if a service is enabled.
+    pub fn is_service_enabled(&self, service: &str) -> Result<bool, ServiceClientError> {
+        let config = self.get_service_config(service)?;
+        Ok(config.enabled)
+    }
+
+    /// Get statistics about the service registry.
+    pub fn get_statistics(&self) -> ServiceRegistryStatistics {
+        let configs = self.get_all_configs();
+        let total = configs.len();
+        let enabled = configs.iter().filter(|c| c.enabled).count();
+        let disabled = total - enabled;
+
+        ServiceRegistryStatistics {
+            total_services: total,
+            enabled_services: enabled,
+            disabled_services: disabled,
+            service_names: configs.iter().map(|c| c.name.clone()).collect(),
+        }
+    }
+}
+
+// ===== V435: Service Health & Statistics Types =====
+
+/// Health status of a single service.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceHealth {
+    /// Service name.
+    pub service: String,
+    /// Whether the service is healthy.
+    pub healthy: bool,
+    /// HTTP status code from the health check (0 if request failed).
+    pub status_code: u16,
+    /// Response time in milliseconds.
+    pub response_time_ms: u64,
+    /// Timestamp of the last health check (RFC3339 format).
+    pub last_checked: String,
+    /// Error message if the health check failed.
+    pub error: Option<String>,
+}
+
+/// Statistics about the service registry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceRegistryStatistics {
+    /// Total number of registered services.
+    pub total_services: usize,
+    /// Number of enabled services.
+    pub enabled_services: usize,
+    /// Number of disabled services.
+    pub disabled_services: usize,
+    /// List of all registered service names.
+    pub service_names: Vec<String>,
 }
 
 // ===== Default Service Configurations =====
