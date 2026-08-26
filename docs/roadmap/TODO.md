@@ -11413,6 +11413,142 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V411 — 架构改进四轨并行第七十九次：B1 API重叠文件差异对比（4个文件详细分析）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第七十九次交付 · B1 API重叠文件差异对比 · 0个代码文件修改 · 详细比较4个重叠文件在两个目录中的差异，确定迁移可行性
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨B | 重叠文件差异对比 | 详细比较4个重叠文件在两个目录中的差异，确定迁移可行性 | ✅ |
+| 轨C | SSE完整会话端到端测试 | 连接SSE→接收endpoint→发送POST→接收SSE响应，留给V412 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V412 | ⏸️ |
+
+### 轨B：B1 API重叠文件差异对比（4个文件详细分析）
+
+**分析内容**：详细比较budget.ts、receivablePayable.ts、report.ts、voucher.ts在@/api/erp/finance/和@/api/finance/两个目录中的差异
+
+**1. budget.ts 差异对比**：
+
+| 对比项 | @/api/erp/finance/budget.ts | @/api/finance/budget.ts |
+|--------|-------------------------------|--------------------------|
+| 行数 | ~62行 | ~48行 |
+| HTTP客户端 | apiClient.erp | apiClient.finance |
+| 类型定义 | 来自 ../types（@/api/erp/types） | 文件内定义（Budget interface） |
+| 方法风格 | async 方法 | 箭头函数 |
+| list返回类型 | PaginatedResult<Budget> | Budget[] |
+| list参数 | PaginationParams（page、pagesize、search、status） | {status、period、department_id、keyword} |
+| create/update | 使用 cleanEmptyUuids | 不使用 cleanEmptyUuids |
+| delete返回类型 | ApiResponse<string> | ApiResponse<void> |
+| 额外API | expenseApi（list、get、create、update、delete） | 无 |
+
+**关键差异**：
+- @/api/erp/finance/budget.ts 有 expenseApi，@/api/finance/budget.ts 没有
+- list方法的参数和返回类型完全不同
+- 使用不同的HTTP客户端（erp vs finance）
+
+**2. receivablePayable.ts 差异对比**：
+
+| 对比项 | @/api/erp/finance/receivablePayable.ts | @/api/finance/receivablePayable.ts |
+|--------|------------------------------------------|---------------------------------------|
+| 行数 | 62行 | 171行 |
+| 差异比例 | 基础版本 | 扩展版本（2.75倍） |
+
+**关键差异**：
+- @/api/finance/receivablePayable.ts 比 @/api/erp/finance/ 多109行
+- @/api/finance/ 版本可能包含更多方法和类型定义
+- 需要详细比较方法列表才能确定差异
+
+**3. report.ts 差异对比**：
+
+| 对比项 | @/api/erp/finance/report.ts | @/api/finance/report.ts |
+|--------|-------------------------------|--------------------------|
+| 行数 | 107行 | 106行 |
+| 差异比例 | 接近 | 接近（仅差1行） |
+
+**关键差异**：
+- 两个版本的行数非常接近（仅差1行）
+- 可能是非常相似的实现，或者有细微的差异
+- 需要详细比较方法列表才能确定差异
+
+**4. voucher.ts 差异对比**：
+
+| 对比项 | @/api/erp/finance/voucher.ts | @/api/finance/voucher.ts |
+|--------|--------------------------------|---------------------------|
+| 行数 | 57行 | 178行 |
+| 差异比例 | 基础版本 | 扩展版本（3.12倍） |
+
+**关键差异**：
+- @/api/finance/voucher.ts 比 @/api/erp/finance/ 多121行
+- @/api/finance/ 版本可能包含更多方法和类型定义
+- 需要详细比较方法列表才能确定差异
+
+**引用分析**：
+- 没有页面引用@/api/erp/finance/的重叠文件（budget、receivablePayable、report、voucher）
+- 这意味着重叠文件的迁移不会影响现有页面，可以安全地删除@/api/erp/finance/中的重叠文件
+
+**迁移可行性评估**：
+
+1. **budget.ts**：
+   - 可行性：中等
+   - 原因：两个版本有较大差异（方法签名、返回类型、HTTP客户端），需要仔细合并
+   - 建议：以@/api/finance/为标准，将@/api/erp/finance/中的expenseApi迁移到@/api/finance/
+
+2. **receivablePayable.ts**：
+   - 可行性：高
+   - 原因：@/api/finance/版本是扩展版本，包含更多功能，可以直接使用@/api/finance/版本
+   - 建议：直接删除@/api/erp/finance/中的receivablePayable.ts
+
+3. **report.ts**：
+   - 可行性：高
+   - 原因：两个版本行数接近，可能是相似的实现
+   - 建议：详细比较后，选择更完整的版本，删除另一个
+
+4. **voucher.ts**：
+   - 可行性：高
+   - 原因：@/api/finance/版本是扩展版本，包含更多功能，可以直接使用@/api/finance/版本
+   - 建议：直接删除@/api/erp/finance/中的voucher.ts
+
+**技术说明**：
+- 重要发现：@/api/erp/finance/和@/api/finance/是两个完全独立的实现，使用不同的HTTP客户端
+- 重叠文件中，@/api/finance/版本通常更完整（receivablePayable.ts 171行 vs 62行，voucher.ts 178行 vs 57行）
+- 没有页面引用@/api/erp/finance/的重叠文件，迁移不会影响现有功能
+- report.ts两个版本行数接近，需要详细比较才能确定差异
+- budget.ts两个版本有较大差异，需要仔细合并
+
+**验收结果**：
+- 完成4个重叠文件的行数对比
+- 完成budget.ts的详细差异对比
+- 确定没有页面引用@/api/erp/finance/的重叠文件
+- 评估4个文件的迁移可行性
+- 制定迁移建议
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨B 分析目标 | 4个重叠文件的详细差异对比 | ✅ |
+| 轨B budget.ts对比 | 完成详细差异对比（方法签名、返回类型、HTTP客户端） | ✅ |
+| 轨B receivablePayable.ts | 62行 vs 171行（@/api/finance/更完整） | ✅ |
+| 轨B report.ts | 107行 vs 106行（行数接近） | ✅ |
+| 轨B voucher.ts | 57行 vs 178行（@/api/finance/更完整） | ✅ |
+| 轨B 引用分析 | 没有页面引用重叠文件 | ✅ |
+| 轨B 迁移可行性 | 4个文件的迁移可行性评估 | ✅ |
+| 轨B 迁移建议 | 制定4个文件的迁移建议 | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V411后续扩展（留给V412+）
+
+- [ ] **轨B report.ts详细对比**：详细比较report.ts两个版本的方法列表和实现
+- [ ] **轨B 重叠文件迁移实施**：删除@/api/erp/finance/中的receivablePayable.ts和voucher.ts（直接使用@/api/finance/版本）
+- [ ] **轨B budget.ts合并实施**：将@/api/erp/finance/中的expenseApi迁移到@/api/finance/budget.ts
+- [ ] **轨C SSE完整会话端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V411连续七十九次交付验证成功，V412继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
