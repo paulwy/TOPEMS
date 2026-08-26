@@ -9556,6 +9556,77 @@ import { useMemo, useState } from 'react';
 
 ---
 
+## 🎯 V387 — 架构改进四轨并行第五十五次：前端未使用函数清理（useShortcutsHelp）（✅ 完成）
+
+> 2026-08-26 · 架构改进四轨并行第五十五次交付 · 前端未使用函数清理 · 1个文件 · 删除未使用的快捷键帮助Hook
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨A | 前端未使用函数清理 | 1个文件的未使用函数删除（hooks/shortcuts.ts，useShortcutsHelp函数） | ✅ |
+| 轨B | B1 API签名对齐实施 | 以@/api/finance/为标准迁移，留给V388 | ⏸️ |
+| 轨C | 集成测试运行调优 | 调整子进程通信缓冲和超时，留给V388 | ⏸️ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V388 | ⏸️ |
+
+### 轨A：前端未使用函数清理（useShortcutsHelp）
+
+**清理内容**：删除1个文件中未使用的快捷键帮助Hook函数
+
+**清理的文件（1个）**：
+
+1. **hooks/shortcuts.ts** — 删除未使用的函数 useShortcutsHelp
+   - 删除的函数：`function useShortcutsHelp()`
+   - 函数功能：快捷键帮助Hook，管理帮助弹窗的打开/关闭状态
+     - 绑定 OPEN_HELP 快捷键（打开帮助弹窗）
+     - 绑定 CLOSE_MODAL 快捷键（关闭帮助弹窗）
+     - 返回 isOpen 状态和 setIsOpen 方法
+   - 该函数定义后从未被使用，可能是开发过程中的遗留代码
+   - 同时删除了函数前面的空行
+   - 文件从316行减少到295行
+   - 保留的函数：useKeyboardShortcuts、groupShortcuts 等（已导出或被使用）
+
+**技术说明**：
+- 删除函数前验证函数未被任何地方引用（包括import和动态导入）
+- 这是代码重构后的标准清理步骤，确保代码整洁
+- 对于仍被其他代码使用的已导出函数（如useKeyboardShortcuts），保留不动
+- 重要发现：TypeScript 的 --noUnusedLocals 会检查函数的未使用情况，定义函数后需要确保被使用或导出
+- useShortcutsHelp 是一个特定场景的Hook（帮助弹窗快捷键），可能在UI重构后不再需要
+
+**验收结果**：
+- 1个文件的未使用函数 TS6133 错误已消除
+- 编译验证：无新增错误
+- 删除的函数为未使用的遗留代码
+- 文件语法正确，保留的函数仍被使用
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨A 清理文件数 | 1个文件的未使用函数删除 | ✅ |
+| 轨A 清理函数 | useShortcutsHelp（快捷键帮助Hook） | ✅ |
+| 轨A 删除行数 | 21行（函数+空行） | ✅ |
+| 轨A 文件变化 | shortcuts.ts从316行到295行 | ✅ |
+| 轨A 引用检查 | 删除函数前验证未被任何地方引用 | ✅ |
+| 轨A 保留检查 | useKeyboardShortcuts等仍被使用，保留不动 | ✅ |
+| 轨A 语法检查 | 文件语法正确，无空注释块遗留 | ✅ |
+| 轨A 编译验证 | 无新增编译错误 | ✅ |
+| 变更统计 | 修改1个前端文件 + 修改1文件 | ✅ |
+
+### V387后续扩展（留给V388+）
+
+- [ ] **轨A 前端未使用项持续清理**：继续清理剩余~104个TS6133错误
+- [ ] **轨A 未使用组件清理**：继续清理 templates/list/ 目录下的其他未使用组件（ExportMenu/TableSection/ViewModeToggle），需先检查引用关系
+- [ ] **轨A 未使用变量清理**：继续清理其他未使用的变量（fieldGroups/optimisticUpdate等）
+- [ ] **轨A 未使用泛型参数清理**：继续清理其他未使用的泛型参数（T/UpdateRequest等）
+- [ ] **轨C 集成测试运行调优**：调整子进程通信缓冲和超时，确保所有测试稳定通过
+- [ ] **轨C SSE完整会话测试**：端到端测试SSE连接+POST请求+响应推送全流程
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **轨B B1 API签名对齐实施**：以@/api/finance/为标准，迁移6处页面引用，补全缺失方法
+- [ ] **四轨并行继续**：V333-V387连续五十五次交付验证成功，V388继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

@@ -293,24 +293,3 @@ export function getShortcutsByCategory(
 
   return grouped;
 }
-
-function useShortcutsHelp() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const bindings: ShortcutBinding[] = [
-    {
-      key: 'OPEN_HELP',
-      config: GLOBAL_SHORTCUTS.OPEN_HELP,
-      handler: () => setIsOpen(true),
-    },
-    {
-      key: 'CLOSE_MODAL',
-      config: GLOBAL_SHORTCUTS.CLOSE_MODAL,
-      handler: () => setIsOpen(false),
-    },
-  ];
-
-  useKeyboardShortcuts(bindings);
-
-  return { isOpen, setIsOpen };
-}
