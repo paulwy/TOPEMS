@@ -14,27 +14,3 @@ export function useIsMobile(breakpoint = 768): boolean {
   }, [checkIsMobile]);
 
   return isMobile;
-}
-
-function useDeviceType(): 'mobile' | 'tablet' | 'desktop' {
-  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
-
-  const checkDeviceType = useCallback(() => {
-    const width = window.innerWidth;
-    if (width < 768) {
-      setDeviceType('mobile');
-    } else if (width < 1024) {
-      setDeviceType('tablet');
-    } else {
-      setDeviceType('desktop');
-    }
-  }, []);
-
-  useEffect(() => {
-    checkDeviceType();
-    window.addEventListener('resize', checkDeviceType);
-    return () => window.removeEventListener('resize', checkDeviceType);
-  }, [checkDeviceType]);
-
-  return deviceType;
-}
