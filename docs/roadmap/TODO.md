@@ -18069,6 +18069,187 @@ TOPEMS_SERVICE_ERP_TAGS=production
 
 ---
 
+## 🎯 V457 — 架构改进四轨并行第一百二十五次：轨C shared-service-client Kubernetes服务发现（K8sConfig+K8sServiceDiscovery+K8sServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+Endpoints/Service API+8个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十五次交付 · 轨C shared-service-client Kubernetes服务发现 · 1个代码文件新建 + 1个代码文件修改 · 实现基于Kubernetes API的服务发现，支持in-cluster和out-of-cluster配置，通过Endpoints和Service资源发现服务
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | shared-service-client Kubernetes服务发现 | 实现Kubernetes服务发现 | ✅ |
+| 轨D | 审计日志集成到权限管理API | 在create/update/delete端点中自动记录审计日志，留给V458 | ⏸️ |
+
+### 轨C：shared-service-client Kubernetes服务发现（K8sConfig+K8sServiceDiscovery+K8sServiceDiscoveryBuilder+完整ServiceDiscovery trait实现+Endpoints/Service API+8个单元测试）
+
+**实现内容**：实现基于Kubernetes API的服务发现，支持in-cluster和out-of-cluster配置，通过Endpoints和Service资源发现服务
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/shared/k8s_service_discovery.rs`（Kubernetes服务发现实现，约700行）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（添加k8s_service_discovery模块声明）**
+
+**新增功能**：
+
+1. **Kubernetes配置（K8sConfig）**
+   - 字段：api_server（API服务器URL）、namespace（命名空间，默认default）、token（Bearer令牌）、ca_cert_path（CA证书路径）、timeout_secs（请求超时，默认10秒）、skip_tls_verify（是否跳过TLS验证）、label_selector（标签选择器）
+   - 实现Default trait
+   - 支持serde序列化/反序列化
+   - from_in_cluster()方法：从集群内环境自动检测配置（KUBERNETES_SERVICE_HOST、KUBERNETES_SERVICE_PORT、serviceaccount token、namespace、ca.crt）
+
+2. **Kubernetes API类型**
+   - K8sEndpoints：Endpoints资源（metadata、subsets）
+   - K8sObjectMeta：对象元数据（name、namespace、labels、annotations）
+   - K8sEndpointSubset：端点子集（addresses、ports）
+   - K8sEndpointAddress：端点地址（ip、nodeName、targetRef）
+   - K8sObjectReference：对象引用（kind、name、namespace）
+   - K8sEndpointPort：端点端口（name、port、protocol）
+   - K8sEndpointsList：Endpoints列表响应（items）
+   - K8sService：Service资源（metadata、spec）
+   - K8sServiceSpec：Service规格（clusterIP、ports）
+   - K8sServicePort：Service端口（name、port、targetPort、protocol）
+   - K8sServiceList：Service列表响应（items）
+
+3. **Kubernetes服务发现实现（K8sServiceDiscovery）**
+   - 字段：config（K8sConfig）、http_client（reqwest Client，支持TLS和认证）
+   - 方法：new()、build_url()、add_auth()、endpoints_to_registration()、service_to_registration()、discover_via_service()
+   - 实现ServiceDiscovery trait的所有方法：register、deregister、discover、list_services、heartbeat
+
+4. **服务发现策略**
+   - 优先通过Endpoints资源发现（获取实际Pod IP和端口）
+   - Endpoints不存在时回退到Service资源（使用ClusterIP）
+   - list_services通过Endpoints列表发现所有服务
+   - 支持label_selector过滤服务
+
+5. **Endpoints转ServiceRegistration**
+   - 使用第一个ready地址和第一个端口
+   - base_url格式：http://{ip}:{port}
+   - metadata包含：namespace、service_name、node_name、pod_name、port_name、protocol
+   - 从labels提取version（version标签）
+   - 从annotations提取description
+   - 从tag-前缀的labels提取tags
+
+6. **Service转ServiceRegistration（回退）**
+   - 使用ClusterIP和Service端口
+   - base_url格式：http://{cluster_ip}:{port}
+   - metadata包含：namespace、service_name、cluster_ip、port_name、protocol
+
+7. **register/deregister方法**
+   - 返回错误：Kubernetes服务由Kubernetes API管理，不支持通过此客户端注册/注销
+   - 提示使用kubectl或K8s API创建/删除服务
+
+8. **heartbeat方法**
+   - 无操作：Kubernetes通过liveness和readiness探针管理Pod健康
+   - 不需要客户端心跳
+
+9. **Kubernetes服务发现构建器（K8sServiceDiscoveryBuilder）**
+   - 方法：new()、from_in_cluster()、api_server()、namespace()、token()、ca_cert_path()、timeout_secs()、skip_tls_verify()、label_selector()、build()
+   - 实现Default trait
+   - 链式调用构建K8sServiceDiscovery实例
+
+10. **8个单元测试**
+    - test_k8s_config_default：测试默认配置
+    - test_k8s_config_from_in_cluster_not_in_cluster：测试非集群环境
+    - test_build_url：测试URL构建
+    - test_endpoints_to_registration：测试Endpoints转换
+    - test_endpoints_to_registration_no_subsets：测试无subset的Endpoints
+    - test_service_to_registration：测试Service转换
+    - test_builder：测试构建器
+    - test_endpoints_to_registration_with_labels：测试带labels的Endpoints
+
+**技术说明**：
+- 使用Kubernetes REST API（/api/v1/namespaces/{ns}/endpoints、/api/v1/namespaces/{ns}/services）
+- 使用reqwest HTTP客户端（已在项目中使用），支持Bearer认证和TLS
+- 使用async-trait实现异步ServiceDiscovery trait
+- 使用serde进行JSON序列化/反序列化
+- 使用chrono处理时间（已在项目中使用）
+- 支持in-cluster自动配置（serviceaccount token、namespace、ca.crt）
+- 支持out-of-cluster手动配置（api_server、token、ca_cert_path）
+- 支持TLS验证（CA证书）和跳过TLS验证
+- 支持label_selector过滤服务
+- 优先Endpoints（实际Pod IP），回退Service（ClusterIP）
+
+**Kubernetes服务发现特性**：
+1. In-cluster自动配置 — 自动检测K8s环境变量和serviceaccount文件
+2. Out-of-cluster手动配置 — 支持手动指定API服务器、令牌、证书
+3. Endpoints发现 — 通过Endpoints资源获取实际Pod IP和端口
+4. Service回退 — Endpoints不存在时使用Service ClusterIP
+5. 标签选择器 — 支持label_selector过滤服务
+6. 元数据提取 — 从labels/annotations提取version、description、tags
+7. TLS安全 — 支持CA证书验证和跳过验证
+8. Bearer认证 — 支持serviceaccount token认证
+9. 构建器模式 — K8sServiceDiscoveryBuilder链式构建
+10. 健康管理 — Kubernetes通过探针管理，无需客户端心跳
+
+**验收结果**：
+- 完成K8sConfig配置结构体（7个配置字段+Default+serde+from_in_cluster）
+- 完成11个Kubernetes API类型（Endpoints、ObjectMeta、EndpointSubset、EndpointAddress、ObjectReference、EndpointPort、EndpointsList、Service、ServiceSpec、ServicePort、ServiceList）
+- 完成K8sServiceDiscovery实现（new+5辅助方法+5个trait方法）
+- 完成Endpoints转ServiceRegistration（metadata提取+version/description/tags）
+- 完成Service转ServiceRegistration（ClusterIP回退）
+- 完成discover_via_service回退方法
+- 完成register/deregister（返回错误，K8s管理）
+- 完成heartbeat（无操作，K8s探针管理）
+- 完成K8sServiceDiscoveryBuilder构建器（9个配置方法+build+Default）
+- 完成8个单元测试（全部通过）
+- 完成模块声明（shared/mod.rs添加）
+- 代码总行数约700行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C K8sConfig配置 | 7字段+Default+serde+from_in_cluster | ✅ |
+| 轨C K8s API类型 | 11个类型 | ✅ |
+| 轨C K8sServiceDiscovery实现 | new+5辅助+5trait方法 | ✅ |
+| 轨C Endpoints转Registration | metadata+version+description+tags | ✅ |
+| 轨C Service转Registration(回退) | ClusterIP回退 | ✅ |
+| 轨C discover_via_service | Endpoints不存在时回退 | ✅ |
+| 轨C register/deregister | 返回错误(K8s管理) | ✅ |
+| 轨C heartbeat | 无操作(K8s探针) | ✅ |
+| 轨C K8sServiceDiscoveryBuilder | 9配置方法+build+Default | ✅ |
+| 轨C 单元测试 | 8个测试全部通过 | ✅ |
+| 轨C 模块声明 | shared/mod.rs添加 | ✅ |
+| 轨C 代码行数 | 约700行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V457后续扩展（留给V458+）
+
+- [ ] **轨D 审计日志集成到权限管理API**：在create/update/delete端点中自动记录审计日志
+- [ ] **轨D 审计日志AppState集成**：在AppState中添加AuditLogger
+- [ ] **轨C shared-service-client DNS服务发现**：集成DNS-based服务发现
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨D 审计日志导出**：支持导出审计日志为CSV/JSON
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V457连续一百二十五次交付验证成功，V458继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
