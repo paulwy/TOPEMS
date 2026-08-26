@@ -11,14 +11,3 @@ export function tpl(key: string, vars: Record<string, unknown> = {}): string {
     translation
   );
 }
-
-function getCurrentLocale(): string {
-  return i18n.language || 'zh';
-}
-
-function getIntlLocale(): string {
-  const locale = getCurrentLocale();
-  if (locale === 'zh') return 'zh-CN';
-  if (locale === 'en') return 'en-US';
-  return locale;
-}

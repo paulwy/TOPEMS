@@ -141,39 +141,6 @@ export interface QueryPerformanceStats {
 /**
  * 计算百分位数
  */
-function calculatePercentile(sortedValues: number[], percentile: number): number {
-  if (sortedValues.length === 0) return 0;
-  const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
-  return sortedValues[Math.max(0, Math.min(index, sortedValues.length - 1))];
-}
-
 /**
  * 从记录数组计算统计数据
  */
-function calculateStats(
-  operationName: string,
-  records: QueryPerformanceRecord[]
-): QueryPerformanceStats {
-  const durations = records.map((r) => r.duration).sort((a, b) => a - b);
-  const successRecords = records.filter((r) => r.success);
-  const cacheHitRecords = records.filter((r) => r.cached);
-
-  const totalDuration = durations.reduce((sum, d) => sum + d, 0);
-
-  return {
-    operationName,
-    totalCount: records.length,
-    successCount: successRecords.length,
-    errorCount: records.length - successRecords.length,
-    cacheHitCount: cacheHitRecords.length,
-    cacheMissCount: records.length - cacheHitRecords.length,
-    avgDuration: records.length > 0 ? totalDuration / records.length : 0,
-    minDuration: durations.length > 0 ? durations[0] : 0,
-    maxDuration: durations.length > 0 ? durations[durations.length - 1] : 0,
-    p50Duration: calculatePercentile(durations, 50),
-    p95Duration: calculatePercentile(durations, 95),
-    p99Duration: calculatePercentile(durations, 99),
-    totalDuration,
-    lastAccessed: records.length > 0 ? Math.max(...records.map((r) => r.timestamp)) : 0,
-  };
-}

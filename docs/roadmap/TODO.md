@@ -4676,6 +4676,75 @@ V254(-531) + V257(-19074 BFF) + V258(-2814 dead exports) + V264+(-96 dead export
 
 ---
 
+## 🎯 V328 — 批量模式第十三次：Top15文件未使用项清理（18项）+ 级联7项（✅ 完成）
+
+> 2026-08-26 · 批量模式连续第十三次成功 · 15 files（全部修改，无删除）· 净删 182 行 · tsc 0 errors · eslint 0 errors(1346 warnings, 从1366减20)
+
+### 目标文件（Top15，3个2项+12个1项=18初始）
+
+| 文件 | 初始项 | 级联 | 类型 | 净删行 |
+|------|--------|------|------|--------|
+| api/addressbook/tag | 2 | 3 | import+function | ~15 |
+| ai/quality/continuous-performance | 2 | 1 | function+const | ~8 |
+| ai/ux/smart-recommender | 2 | 0 | import+type | ~3 |
+| utils/status | 1 | 0 | function | ~8 |
+| utils/smart-prefetch | 1 | 1 | function | ~15 |
+| utils/query-cost-analyzer | 1 | 0 | import | ~3 |
+| utils/normalizePageParams | 1 | 0 | function | ~8 |
+| utils/isr-manager | 1 | 0 | const | ~10 |
+| utils/i18n | 1 | 1 | function | ~8 |
+| utils/graphql-performance | 1 | 1 | function | ~15 |
+| utils/errors | 1 | 0 | function | ~8 |
+| utils/errorHandler | 1 | 0 | function | ~10 |
+| utils/batchOperation | 1 | 0 | function | ~12 |
+| utils/ai/ui-recommender | 1 | 0 | import | ~3 |
+| utils/ai/code-completion | 1 | 0 | TS6192整行import | ~3 |
+| **合计** | **18** | **7** | | **182** |
+
+### 清理方法论
+
+**A轨（v6批量脚本）**：移除13项本地声明（generateId, DEFAULT_METRICS, ContentItem, getPresetTagColors, createBatchAbortController, getUserFriendlyError, safeExecute, calculateStats, getIntlLocale, isrManager, normalizeObjectKeysDeep, getPrefetchEngine, getStatusTextColor）
+
+**B轨（手动修复5项）**：
+- import整行删除（3）：smart-recommender i18n, code-completion reactQuery(TS6192), query-cost-analyzer designTokens
+- import单符号移除（2）：addressbook/tag semanticTokens, ui-recommender semanticTokens
+
+**C轨（级联7项）**：
+- addressbook/tag 3项：designTokens import + i18n import + TagColor type（移除getPresetTagColors后触发）
+- continuous-performance 1项：i18n import（移除generateId/DEFAULT_METRICS后触发）
+- graphql-performance 1项：calculatePercentile function（移除calculateStats后触发）
+- utils/i18n 1项：getCurrentLocale function（移除getIntlLocale后触发）
+- smart-prefetch 1项：globalPrefetchEngine const（移除getPrefetchEngine后触发）
+
+### 关键发现
+
+1. **未使用项数量持续下降**：Top15文件从V316的76项降至V328的18项，全src/未使用项从~282降至~15。12个文件只剩1项未使用。
+2. **utils/目录占比高**：15个目标文件中12个在utils/下，utils/是未使用项的主要来源。
+3. **TS6192整行import误删风险**：code-completion的TS6192指第一行reactQuery import全部未使用，不是i18n import。误删i18n导致函数体内大量i18n.t引用报错，需恢复。
+4. **函数级联链**：graphql-performance移除calculateStats后触发calculatePercentile级联；utils/i18n移除getIntlLocale后触发getCurrentLocale级联；smart-prefetch移除getPrefetchEngine后触发globalPrefetchEngine级联。
+5. **import位置格式问题**：恢复code-completion的i18n import时插入在注释之前，eslint --fix可自动调整。
+6. **无孤儿文件**：15个文件全部修改，utils/下的文件都有其他export被引用，移除未使用项后不变孤儿。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 目标15文件未使用清零 | tsc --noUnusedLocals 0项 | ✅ |
+| tsc全量 | 0 errors | ✅ |
+| eslint目标文件 | 0 errors | ✅ |
+| eslint全量 | 0 errors, 1346 warnings（-20） | ✅ |
+| 孤儿文件删除 | 0个（全部修改） | ✅ |
+| 变更统计 | 15 files, 1 insertion, 183 deletions | ✅ |
+
+### V328后续扩展（留给V329+）
+
+- [ ] **utils/目录批量清理专项**：12/15文件在utils/，可写脚本专门扫描utils/*/未使用项
+- [ ] **TS6192精确识别**：code-completion案例，需区分"整行import全部未使用"和"部分符号未使用"
+- [ ] **函数级联链自动跟踪**：graphql-performance/i18n/smart-prefetch案例，移除一个函数后自动扫描同级其他未使用函数
+- [ ] **批量模式继续**：V316-V328连续十三次成功，全src/未使用项从~282降至~15
+
+---
+
 ## 📚 归档索引
 
 > 已完成版本的详细验收矩阵、变更统计、EDGE CASE 记录均已按时间轴拆分至以下归档文档。

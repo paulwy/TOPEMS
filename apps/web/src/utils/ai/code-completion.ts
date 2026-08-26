@@ -1,6 +1,4 @@
-import { CACHE_DURATIONS, QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
 /**
  * V47.0 前端 AI 增强 — 智能代码补全引擎
  *

@@ -155,22 +155,6 @@ export const getStatusColor = (
   return STATUS_COLOR_MAP[normalized] || fallback;
 };
 
-const getStatusTextColor = (
-  status: string,
-  category?: 'workflow' | 'mes' | 'lims' | 'monitor'
-): string => {
-  const color = getStatusColor(status, { category });
-  if (typeof color !== 'string') return 'text.primary';
-
-  if (color.includes('success') || color === 'success') return 'success.main';
-  if (color.includes('error') || color === 'error') return 'error.main';
-  if (color.includes('warning') || color === 'warning') return 'warning.main';
-  if (color.includes('info') || color === 'info') return 'info.main';
-  if (color.includes('primary') || color === 'primary') return 'primary.main';
-  if (color.includes('secondary') || color === 'secondary') return 'secondary.main';
-  return 'text.secondary';
-};
-
 export const getChipStatusColor = (
   status: string,
   category?: 'workflow' | 'mes'
