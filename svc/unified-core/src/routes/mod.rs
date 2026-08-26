@@ -23,6 +23,8 @@ mod migration;
 mod system;
 // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
 mod sse;
+// V436: Business Tools 路由 - 统一业务工具API接口
+mod business_tools;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -97,7 +99,9 @@ pub fn create_routes(
         .route(
             "/api/sse/session/{session_id}",
             post(sse::sse_session_handler),
-        );
+        )
+        // V436: Business Tools 端点 - 统一业务工具API接口
+        .merge(business_tools::business_tools_routes());
     // V68.1 A2.2: 插件 proxy 路由（原 handlers::plugin_proxy）暂时下线，后续迁移到 plugin-registry
     // .route(
     //     "/api/plugins/{plugin_code}/{*path}",

@@ -14807,6 +14807,172 @@ cargo test --package topems-unified-core --test sse_endpoint_tests -- --test-thr
 
 ---
 
+## 🎯 V436 — 架构改进四轨并行第一百零四次：轨D 业务工具完善（业务工具路由端点+API接口+AppState集成）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百零四次交付 · 轨D 业务工具完善 · 4个代码文件修改(1新建+3修改) · 创建业务工具路由端点，提供统一的业务工具API接口，集成到AppState
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 业务工具完善 | 创建业务工具路由端点，提供统一的业务工具API接口，集成到AppState | ✅ |
+| 轨C | shared-service-client高级功能 | 添加自动重连、负载均衡、服务发现、熔断机制，留给V437 | ⏸️ |
+
+### 轨D：业务工具完善（业务工具路由端点+API接口+AppState集成）
+
+**实现内容**：创建业务工具路由端点，提供统一的业务工具API接口，集成到AppState
+
+**修改的文件（4个代码文件，1新建+3修改）**：
+
+**1. 新建：`svc/unified-core/src/routes/business_tools/mod.rs`（业务工具路由模块）**
+- 请求/响应类型：
+  - `ExecuteToolRequest` — 执行工具操作请求（operation、params、data、tenant_id、user_id）
+  - `ToolInfo` — 工具信息（name、description、operations、operation_count）
+  - `ToolListResponse` — 工具列表响应（total、tools）
+  - `ToolHealthResponse` — 工具健康响应（tool、healthy、message）
+- 路由处理函数：
+  - `list_tools` — GET /api/business-tools，列出所有业务工具
+  - `get_tool` — GET /api/business-tools/{tool}，获取特定工具详情
+  - `execute_tool` — POST /api/business-tools/{tool}/execute，执行工具操作
+  - `tool_health` — GET /api/business-tools/{tool}/health，检查特定工具健康状态
+  - `all_tools_health` — GET /api/business-tools/health/all，检查所有工具健康状态
+- 路由注册函数：
+  - `business_tools_routes()` — 返回业务工具路由的Router
+- 辅助扩展：
+  - `BusinessRequestExt` trait — 为BusinessRequest添加with_params_map、with_optional_data、with_optional_tenant、with_optional_user方法
+
+**2. 修改：`svc/unified-core/src/routes/mod.rs`（添加模块声明和路由注册）**
+- 添加 `mod business_tools;` 声明
+- 在public_routes中注册业务工具路由（.merge(business_tools::business_tools_routes())）
+
+**3. 修改：`svc/unified-core/src/shared/mod.rs`（添加AppState字段）**
+- 在AppState中添加字段：`pub business_tool_registry: crate::modules::business_tools::BusinessToolRegistry`
+
+**4. 修改：`svc/unified-core/src/main.rs`（初始化business_tool_registry）**
+- 创建service_registry实例
+- 使用create_default_registry()创建business_tool_registry（包含16个默认业务工具）
+- 如果创建失败，使用空的BusinessToolRegistry
+- 在AppState初始化中添加business_tool_registry字段
+
+**API端点清单**：
+
+| 方法 | 路径 | 功能 |
+|------|------|------|
+| GET | /api/business-tools | 列出所有业务工具 |
+| GET | /api/business-tools/{tool} | 获取特定工具详情 |
+| POST | /api/business-tools/{tool}/execute | 执行工具操作 |
+| GET | /api/business-tools/{tool}/health | 检查特定工具健康状态 |
+| GET | /api/business-tools/health/all | 检查所有工具健康状态 |
+
+**API端点详细说明**：
+
+**1. GET /api/business-tools — 列出所有业务工具**
+- 响应：ToolListResponse（total、tools）
+- 每个工具包含：name、description、operations、operation_count
+- 工具按名称排序
+
+**2. GET /api/business-tools/{tool} — 获取特定工具详情**
+- 路径参数：tool（工具名称，如"crm"、"erp"）
+- 响应：ToolInfo（name、description、operations、operation_count）
+- 错误：404 Tool not found
+
+**3. POST /api/business-tools/{tool}/execute — 执行工具操作**
+- 路径参数：tool（工具名称）
+- 请求体：ExecuteToolRequest（operation、params、data、tenant_id、user_id）
+- 响应：BusinessResponse（success、tool、operation、request_id、data、error、error_code、duration_ms、metadata）
+- 错误：
+  - 404 Tool not found
+  - 400 Operation not supported（包含supported_operations列表）
+  - 500 Execution failed
+
+**4. GET /api/business-tools/{tool}/health — 检查特定工具健康状态**
+- 路径参数：tool（工具名称）
+- 响应：ToolHealthResponse（tool、healthy、message）
+- 错误：404 Tool not found
+
+**5. GET /api/business-tools/health/all — 检查所有工具健康状态**
+- 响应：JSON对象（total、healthy、unhealthy、tools数组）
+- 每个工具包含：tool、healthy
+
+**功能特性**：
+
+**1. 统一的API接口**
+- RESTful API设计
+- 统一的请求/响应格式
+- 完整的错误处理
+- 支持多租户和用户审计
+
+**2. 业务工具管理**
+- 列出所有业务工具
+- 获取工具详情（支持的操作列表）
+- 执行工具操作
+- 检查工具健康状态
+
+**3. 操作验证**
+- 验证操作是否被工具支持
+- 不支持的操作返回400错误
+- 错误响应包含支持的操作列表
+
+**4. 健康检查**
+- 单个工具健康检查
+- 批量健康检查
+- 健康统计（总数、健康数、不健康数）
+
+**5. AppState集成**
+- business_tool_registry存储在AppState中
+- 所有路由处理函数通过State提取registry
+- 启动时自动初始化16个默认业务工具
+
+**技术说明**：
+- 使用axum的Router和路由宏
+- 使用State提取AppState
+- 使用Path提取路径参数
+- 使用Json处理请求/响应体
+- 使用BusinessToolRegistry执行业务操作
+- 使用BusinessRequest和BusinessResponse统一请求/响应格式
+- 支持异步处理（async/await）
+- 完整的错误处理（404、400、500）
+
+**验收结果**：
+- 完成业务工具路由模块创建（business_tools/mod.rs）
+- 完成5个API端点（列表、详情、执行、健康检查、批量健康检查）
+- 完成请求/响应类型定义（ExecuteToolRequest、ToolInfo、ToolListResponse、ToolHealthResponse）
+- 完成路由处理函数实现（5个处理函数）
+- 完成路由注册（mod.rs添加声明和merge）
+- 完成AppState字段添加（business_tool_registry）
+- 完成AppState初始化（main.rs创建registry并添加到state）
+- 完成操作验证（验证操作是否被支持）
+- 完成错误处理（404、400、500）
+- 完成健康检查功能（单个和批量）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 业务工具路由模块 | 新建business_tools/mod.rs，包含5个API端点 | ✅ |
+| 轨D API端点数量 | 5个端点（列表、详情、执行、健康检查、批量健康检查） | ✅ |
+| 轨D 请求/响应类型 | ExecuteToolRequest、ToolInfo、ToolListResponse、ToolHealthResponse | ✅ |
+| 轨D 路由处理函数 | list_tools、get_tool、execute_tool、tool_health、all_tools_health | ✅ |
+| 轨D 路由注册 | mod.rs添加mod声明和.merge(business_tools_routes()) | ✅ |
+| 轨D AppState字段 | shared/mod.rs添加business_tool_registry字段 | ✅ |
+| 轨D AppState初始化 | main.rs创建registry并添加到state | ✅ |
+| 轨D 操作验证 | 验证操作是否被支持，不支持返回400 | ✅ |
+| 轨D 错误处理 | 404 Tool not found、400 Operation not supported、500 Execution failed | ✅ |
+| 轨D 健康检查 | 单个工具健康检查、批量健康检查、健康统计 | ✅ |
+| 轨D 默认工具数量 | 16个默认业务工具（CRM、ERP、Finance等） | ✅ |
+| 变更统计 | 4个代码文件修改(1新建+3修改) + 修改1文件(TODO.md) | ✅ |
+
+### V436后续扩展（留给V437+）
+
+- [ ] **轨C shared-service-client高级功能**：添加自动重连、负载均衡、服务发现、熔断机制
+- [ ] **轨D 业务工具调用示例**：添加业务工具调用示例文档和代码示例
+- [ ] **轨D 业务工具权限控制**：添加业务工具操作的权限控制
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例（最大会话限制、会话超时清理、并发连接测试）
+- [ ] **四轨并行继续**：V333-V436连续一百零四次交付验证成功，V437继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
