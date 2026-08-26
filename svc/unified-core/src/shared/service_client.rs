@@ -85,6 +85,18 @@ pub struct ServiceConfig {
     /// V437: Circuit breaker reset timeout in seconds. Defaults to 30.
     #[serde(default = "default_reset_timeout")]
     pub reset_timeout_secs: u64,
+    /// V439: Whether to enable rate limiting. Defaults to false.
+    #[serde(default)]
+    pub rate_limit_enabled: bool,
+    /// V439: Maximum requests per second. Defaults to 100.
+    #[serde(default = "default_max_requests_per_second")]
+    pub max_requests_per_second: u32,
+    /// V439: Whether to enable load balancing. Defaults to false.
+    #[serde(default)]
+    pub load_balancing_enabled: bool,
+    /// V439: Additional endpoints for load balancing (excluding base_url).
+    #[serde(default)]
+    pub endpoints: Vec<String>,
 }
 
 fn default_retry_delay() -> u64 {
@@ -97,6 +109,10 @@ fn default_failure_threshold() -> u32 {
 
 fn default_reset_timeout() -> u64 {
     30
+}
+
+fn default_max_requests_per_second() -> u32 {
+    100
 }
 
 fn default_timeout() -> u64 {
@@ -234,6 +250,132 @@ impl<T> ServiceResponse<T> {
     }
 }
 
+// ===== V439: Rate Limiter & Load Balancer Types =====
+
+/// Rate limiter using token bucket algorithm.
+#[derive(Debug)]
+pub struct RateLimiter {
+    /// Maximum tokens (requests per second).
+    max_tokens: u32,
+    /// Current tokens.
+    current_tokens: f64,
+    /// Last refill time.
+    last_refill: std::time::Instant,
+}
+
+impl RateLimiter {
+    /// Create a new rate limiter.
+    pub fn new(max_requests_per_second: u32) -> Self {
+        Self {
+            max_tokens: max_requests_per_second,
+            current_tokens: max_requests_per_second as f64,
+            last_refill: std::time::Instant::now(),
+        }
+    }
+
+    /// Try to acquire a token. Returns true if acquired, false if rate limited.
+    pub fn try_acquire(&mut self) -> bool {
+        let now = std::time::Instant::now();
+        let elapsed = now.duration_since(self.last_refill).as_secs_f64();
+
+        // Refill tokens
+        self.current_tokens = (self.current_tokens + elapsed * self.max_tokens as f64)
+            .min(self.max_tokens as f64);
+        self.last_refill = now;
+
+        if self.current_tokens >= 1.0 {
+            self.current_tokens -= 1.0;
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// Load balancer strategy.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LoadBalancingStrategy {
+    /// Round-robin: distribute requests evenly across endpoints.
+    RoundRobin,
+    /// Random: randomly select an endpoint.
+    Random,
+}
+
+/// Load balancer for distributing requests across multiple endpoints.
+#[derive(Debug)]
+pub struct LoadBalancer {
+    /// All endpoints (including base_url).
+    endpoints: Vec<String>,
+    /// Current index for round-robin.
+    current_index: usize,
+    /// Load balancing strategy.
+    strategy: LoadBalancingStrategy,
+}
+
+impl LoadBalancer {
+    /// Create a new load balancer.
+    pub fn new(base_url: String, additional_endpoints: Vec<String>) -> Self {
+        let mut endpoints = vec![base_url];
+        endpoints.extend(additional_endpoints);
+        Self {
+            endpoints,
+            current_index: 0,
+            strategy: LoadBalancingStrategy::RoundRobin,
+        }
+    }
+
+    /// Get the next endpoint based on the strategy.
+    pub fn next_endpoint(&mut self) -> &str {
+        match self.strategy {
+            LoadBalancingStrategy::RoundRobin => {
+                let endpoint = &self.endpoints[self.current_index];
+                self.current_index = (self.current_index + 1) % self.endpoints.len();
+                endpoint
+            }
+            LoadBalancingStrategy::Random => {
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                let index = rng.gen_range(0..self.endpoints.len());
+                &self.endpoints[index]
+            }
+        }
+    }
+
+    /// Get all endpoints.
+    pub fn endpoints(&self) -> &[String] {
+        &self.endpoints
+    }
+
+    /// Get the number of endpoints.
+    pub fn endpoint_count(&self) -> usize {
+        self.endpoints.len()
+    }
+}
+
+/// V439: Rate limiter status information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RateLimiterStatus {
+    /// Whether rate limiting is enabled.
+    pub enabled: bool,
+    /// Maximum requests per second.
+    pub max_requests_per_second: u32,
+    /// Current available tokens.
+    pub current_tokens: f64,
+}
+
+/// V439: Load balancer status information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoadBalancerStatus {
+    /// Whether load balancing is enabled.
+    pub enabled: bool,
+    /// All endpoints (including base_url).
+    pub endpoints: Vec<String>,
+    /// Number of endpoints.
+    pub endpoint_count: usize,
+    /// Current index for round-robin.
+    pub current_index: usize,
+}
+
 // ===== V437: Circuit Breaker Types =====
 
 /// Circuit breaker state.
@@ -271,6 +413,10 @@ pub struct ServiceClient {
     http_client: Client,
     /// V437: Circuit breaker state (shared across clones).
     circuit_breaker: Arc<std::sync::Mutex<CircuitBreakerInternal>>,
+    /// V439: Rate limiter (shared across clones).
+    rate_limiter: Arc<std::sync::Mutex<RateLimiter>>,
+    /// V439: Load balancer (shared across clones).
+    load_balancer: Arc<std::sync::Mutex<LoadBalancer>>,
 }
 
 /// Internal circuit breaker state.
@@ -298,10 +444,23 @@ impl ServiceClient {
             opened_at: None,
         }));
 
+        // V439: Initialize rate limiter
+        let rate_limiter = Arc::new(std::sync::Mutex::new(RateLimiter::new(
+            config.max_requests_per_second,
+        )));
+
+        // V439: Initialize load balancer
+        let load_balancer = Arc::new(std::sync::Mutex::new(LoadBalancer::new(
+            config.base_url.clone(),
+            config.endpoints.clone(),
+        )));
+
         Ok(Self {
             config,
             http_client,
             circuit_breaker,
+            rate_limiter,
+            load_balancer,
         })
     }
 
@@ -365,6 +524,13 @@ impl ServiceClient {
             }
         }
 
+        // V439: Check rate limit before making request
+        if self.config.rate_limit_enabled {
+            if let Err(e) = self.check_rate_limit() {
+                return Err(e);
+            }
+        }
+
         let max_retries = self.config.max_retries;
         let retry_delay = Duration::from_millis(self.config.retry_delay_ms);
 
@@ -413,8 +579,15 @@ impl ServiceClient {
         let request_id = Uuid::new_v4().to_string();
         let service_name = self.config.name.clone();
 
-        // Build URL
-        let url = self.config.build_url(path)?;
+        // V439: Build URL with load balancing if enabled
+        let url = if self.config.load_balancing_enabled {
+            let endpoint = self.get_next_endpoint();
+            let base = endpoint.trim_end_matches('/');
+            let p = path.trim_start_matches('/');
+            format!("{}/{}", base, p)
+        } else {
+            self.config.build_url(path)?
+        };
 
         // Build request
         let mut req_builder = self
@@ -540,6 +713,55 @@ impl ServiceClient {
         cb.failure_count = 0;
         cb.success_count = 0;
         cb.opened_at = None;
+    }
+
+    // ===== V439: Rate Limiter Methods =====
+
+    /// Check if the rate limiter allows requests.
+    fn check_rate_limit(&self) -> Result<(), ServiceClientError> {
+        let mut rl = self.rate_limiter.lock().unwrap();
+        if !rl.try_acquire() {
+            return Err(ServiceClientError::OperationFailed(format!(
+                "Rate limit exceeded for service '{}' (max {} requests/second)",
+                self.config.name, self.config.max_requests_per_second
+            )));
+        }
+        Ok(())
+    }
+
+    /// Get the rate limiter status.
+    pub fn get_rate_limiter_status(&self) -> RateLimiterStatus {
+        let rl = self.rate_limiter.lock().unwrap();
+        RateLimiterStatus {
+            enabled: self.config.rate_limit_enabled,
+            max_requests_per_second: self.config.max_requests_per_second,
+            current_tokens: rl.current_tokens,
+        }
+    }
+
+    /// Reset the rate limiter.
+    pub fn reset_rate_limiter(&self) {
+        let mut rl = self.rate_limiter.lock().unwrap();
+        *rl = RateLimiter::new(self.config.max_requests_per_second);
+    }
+
+    // ===== V439: Load Balancer Methods =====
+
+    /// Get the load balancer status.
+    pub fn get_load_balancer_status(&self) -> LoadBalancerStatus {
+        let lb = self.load_balancer.lock().unwrap();
+        LoadBalancerStatus {
+            enabled: self.config.load_balancing_enabled,
+            endpoints: lb.endpoints().to_vec(),
+            endpoint_count: lb.endpoint_count(),
+            current_index: lb.current_index,
+        }
+    }
+
+    /// Get the next endpoint for load balancing.
+    pub fn get_next_endpoint(&self) -> String {
+        let mut lb = self.load_balancer.lock().unwrap();
+        lb.next_endpoint().to_string()
     }
 
     /// Send a raw request and return the raw response bytes.
