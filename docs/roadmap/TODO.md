@@ -13258,6 +13258,150 @@ test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; fi
 
 ---
 
+## 🎯 V426 — 架构改进四轨并行第九十四次：轨C SSE完整会话端到端测试详细计划（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第九十四次交付 · 轨C SSE完整会话端到端测试详细计划 · 0个代码文件修改 · 搜索SSE相关代码，分析现有架构，说明当前没有SSE实现，制定详细实现和测试计划
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | SSE完整会话端到端测试详细计划 | 搜索SSE相关代码，分析现有架构，制定详细实现和测试计划 | ✅ |
+| 轨D | 业务工具连接真实API | 通过shared-service-client连接真实服务，留给V427 | ⏸️ |
+
+### 轨C：SSE完整会话端到端测试详细计划
+
+**分析内容**：搜索SSE相关代码，分析现有架构，说明当前没有SSE实现，制定详细实现和测试计划
+
+**搜索结果分析**：
+
+**1. SSE端点搜索**
+- 搜索关键词：`/sse`、`/stream`、`/events`
+- 搜索结果：
+  - 找到了一些`/events`端点，但这些是普通的REST API端点（如`/risks/{riskId}/events`、`/notification/webhooks/{id}/events`、`/integration/events`），不是SSE端点
+  - 没有找到`/sse`或`/stream`端点
+- 结论：当前代码库中没有SSE端点
+
+**2. fetch流式请求搜索**
+- 搜索关键词：`ReadableStream`、`getReader`、`text/event-stream`
+- 搜索结果：
+  - 找到了`streaming-ssr.ts`，但这是SSR流式渲染（`renderToReadableStream`），不是SSE客户端实现
+  - 没有找到`text/event-stream`相关代码
+  - 没有找到`getReader`相关代码
+- 结论：当前代码库中没有fetch流式请求实现
+
+**3. shared-service-client搜索**
+- 搜索关键词：`shared-service`、`serviceClient`、`service-client`
+- 搜索结果：
+  - 找到了`apiClient.test.ts`中的`serviceClient`变量，但这是测试中的mock对象，不是真实的shared-service-client实现
+  - 没有找到真实的shared-service-client实现
+- 结论：当前代码库中没有shared-service-client实现
+
+**4. EventSource搜索**
+- 搜索关键词：`EventSource`、`SSE`、`sse`、`server-sent`
+- 搜索结果：
+  - 没有找到`EventSource`相关代码
+  - 没有找到SSE相关代码
+- 结论：当前代码库中没有EventSource实现
+
+**现有架构分析**：
+
+**API客户端架构**：
+- 当前使用`apiClient`作为统一的API客户端
+- `apiClient`支持多个服务模块（如`apiClient.finance`、`apiClient.erp`、`apiClient.pm`等）
+- `apiClient`使用普通的REST API请求（GET、POST、PUT、DELETE）
+- `apiClient`不支持流式请求或SSE
+
+**需要实现的功能**：
+
+**1. SSE客户端实现**
+- 创建SSE客户端工具，支持连接SSE端点
+- 支持接收SSE事件
+- 支持解析SSE事件数据
+- 支持错误处理和重连
+
+**2. SSE端点实现（后端）**
+- 创建SSE端点，用于建立长连接
+- 支持发送endpoint事件，包含session_id
+- 支持接收POST请求，将响应通过SSE流发送回客户端
+
+**3. shared-service-client实现**
+- 创建shared-service-client，用于连接真实服务
+- 支持多个服务模块（CRM、ERP、Finance、HR、MES、EHS、WMS、QMS、PM、LIMS、BI、APS、CS、SCM、IoT、OA）
+- 支持统一的请求和响应处理
+
+**详细实现和测试计划**：
+
+**阶段一：SSE客户端实现（V427-V428）**
+1. 创建SSE客户端工具（`apps/web/src/lib/sseClient.ts`）
+2. 实现连接SSE端点功能
+3. 实现接收SSE事件功能
+4. 实现解析SSE事件数据功能
+5. 实现错误处理和重连功能
+6. 编写单元测试
+
+**阶段二：SSE端点实现（V429-V430）**
+1. 创建SSE端点（后端）
+2. 实现发送endpoint事件功能
+3. 实现接收POST请求功能
+4. 实现将响应通过SSE流发送回客户端功能
+5. 编写集成测试
+
+**阶段三：shared-service-client实现（V431-V432）**
+1. 创建shared-service-client
+2. 实现连接真实服务功能
+3. 实现多个服务模块支持
+4. 实现统一的请求和响应处理
+5. 编写单元测试
+
+**阶段四：端到端测试（V433）**
+1. 连接SSE端点
+2. 接收endpoint事件
+3. 提取session_id
+4. 通过POST发送请求
+5. 从SSE流接收响应
+6. 验证端到端流程
+
+**技术说明**：
+- 重要发现：当前代码库中没有SSE相关实现，需要从零开始实现
+- SSE（Server-Sent Events）是一种服务器推送技术，允许服务器向客户端推送实时数据
+- SSE使用HTTP协议，支持自动重连和事件类型
+- SSE客户端可以使用浏览器原生的`EventSource`API，也可以使用fetch + ReadableStream实现
+- shared-service-client是一个统一的服务客户端，用于连接多个真实服务
+- 实现SSE功能需要前后端配合，前端实现SSE客户端，后端实现SSE端点
+
+**验收结果**：
+- 完成SSE端点搜索（没有找到SSE端点）
+- 完成fetch流式请求搜索（没有找到fetch流式请求实现）
+- 完成shared-service-client搜索（没有找到shared-service-client实现）
+- 完成EventSource搜索（没有找到EventSource实现）
+- 完成现有架构分析（apiClient不支持流式请求或SSE）
+- 制定4阶段详细实现和测试计划
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨C SSE端点搜索 | 没有找到/sse或/stream端点 | ✅ |
+| 轨C fetch流式请求搜索 | 没有找到text/event-stream或getReader | ✅ |
+| 轨C shared-service-client搜索 | 没有找到真实的shared-service-client实现 | ✅ |
+| 轨C EventSource搜索 | 没有找到EventSource实现 | ✅ |
+| 轨C 现有架构分析 | apiClient不支持流式请求或SSE | ✅ |
+| 轨C 实现阶段 | 4阶段（SSE客户端、SSE端点、shared-service-client、端到端测试） | ✅ |
+| 轨C 预计版本 | V427-V433（7个版本） | ✅ |
+| 变更统计 | 0个代码文件修改 + 修改1文件(TODO.md) | ✅ |
+
+### V426后续扩展（留给V427+）
+
+- [ ] **轨C SSE客户端实现**：创建SSE客户端工具，支持连接SSE端点、接收事件、解析数据、错误处理和重连
+- [ ] **轨C SSE端点实现**：创建SSE端点（后端），支持发送endpoint事件、接收POST请求、通过SSE流发送响应
+- [ ] **轨C shared-service-client实现**：创建shared-service-client，支持连接多个真实服务
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨D 业务工具连接真实API**：通过shared-service-client连接真实CRM/ERP/Finance/HR/MES/EHS/WMS/QMS/PM/LIMS/BI/APS/CS/SCM/IoT/OA服务
+- [ ] **四轨并行继续**：V333-V426连续九十四次交付验证成功，V427继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
