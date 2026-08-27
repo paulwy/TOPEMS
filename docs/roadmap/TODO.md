@@ -20588,6 +20588,212 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V470 — 架构改进四轨并行第一百三十八次：轨D 审计日志归档恢复功能（RestoreConfig+RestoreResult+RestoreQuery+AuditLogRestorer+从文件恢复+日期范围过滤+跳过已存在+JSON/JSONL解析+11个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十八次交付 · 轨D 审计日志归档恢复功能 · 1个代码文件新建 + 1个代码文件修改 · 实现审计日志归档恢复功能，支持从归档文件恢复审计日志，按日期范围过滤，跳过已存在条目，兼容JSON和JSONL格式
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志归档恢复功能 | 支持从归档文件恢复审计日志 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V471 | ⏸️ |
+
+### 轨D：审计日志归档恢复功能（RestoreConfig+RestoreResult+RestoreQuery+AuditLogRestorer+从文件恢复+日期范围过滤+跳过已存在+JSON/JSONL解析+11个单元测试）
+
+**实现内容**：实现审计日志归档恢复功能，支持从归档文件恢复审计日志，按日期范围过滤，跳过已存在条目，兼容JSON和JSONL格式
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_restorer.rs`（审计日志归档恢复器，约550行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_restorer模块声明）**
+
+**新增功能**：
+
+1. **恢复配置（RestoreConfig）**
+   - 字段：archive_dir（归档目录）、file_prefix（文件名前缀）、skip_existing（是否跳过已存在，默认true）、batch_size（批量大小，默认1000）
+   - 实现Default trait
+   - 构建器方法：new、with_skip_existing、with_batch_size、with_file_prefix
+
+2. **恢复结果（RestoreResult）**
+   - 字段：restored_count（恢复数量）、skipped_count（跳过数量）、failed_count（失败数量）、files_processed（处理文件数）、success（是否成功）、error（错误信息，可选）
+   - error使用skip_serializing_if，成功时不显示
+   - 实现serde序列化
+
+3. **恢复查询（RestoreQuery）**
+   - 字段：start_date（开始日期，可选）、end_date（结束日期，可选）、filename（指定文件名，可选）
+   - 支持serde反序列化
+
+4. **审计日志恢复器（AuditLogRestorer）**
+   - 字段：config（RestoreConfig）
+   - 方法：new、config、restore、restore_from_file、read_archive_file、find_archive_files、list_archive_files
+
+5. **恢复方法（restore）**
+   - 泛型方法，接收&impl AuditLogStore和&RestoreQuery
+   - 调用find_archive_files查找匹配的归档文件
+   - 遍历文件，调用restore_from_file恢复
+   - 累加恢复、跳过、失败计数
+   - 返回RestoreResult
+
+6. **从文件恢复（restore_from_file）**
+   - 调用read_archive_file读取并解析文件
+   - 遍历条目，检查是否已存在（如果skip_existing）
+   - 调用store.create_log恢复条目
+   - 返回(restored, skipped, failed)元组
+
+7. **读取归档文件（read_archive_file）**
+   - 读取文件内容
+   - 先尝试解析为JSON数组（标准格式）
+   - 失败则尝试解析为JSONL（每行一个JSON对象）
+   - 返回Vec<ArchivedEntry>
+   - 错误处理：解析失败返回RestoreError::Parse
+
+8. **查找归档文件（find_archive_files）**
+   - 遍历归档目录
+   - 过滤文件名前缀
+   - 支持指定文件名
+   - 支持日期范围过滤（start_date、end_date）
+   - 按文件名排序
+   - 返回Vec<PathBuf>
+
+9. **列出归档文件（list_archive_files）**
+   - 遍历归档目录
+   - 过滤文件名前缀
+   - 返回文件名列表（排序）
+
+10. **恢复错误（RestoreError）**
+    - 枚举：Io（IO错误）、Parse（解析错误）、Store（存储错误）
+    - 实现thiserror::Error trait
+
+11. **辅助函数（extract_date_from_filename）**
+    - 从归档文件名提取日期（YYYY-MM-DD）
+    - 支持.json和.json.gz扩展名
+    - 返回Option<String>
+
+12. **11个单元测试**
+    - test_restore_config_default：测试默认配置
+    - test_restore_config_new：测试创建配置
+    - test_restore_config_with_skip_existing：测试设置跳过已存在
+    - test_restore_config_with_batch_size：测试设置批量大小
+    - test_extract_date_from_filename：测试从文件名提取日期
+    - test_restore_result_serialization：测试恢复结果序列化
+    - test_restore_empty_directory：测试空目录恢复
+    - test_restore_from_file：测试从文件恢复
+    - test_restore_skip_existing：测试跳过已存在条目
+    - test_list_archive_files：测试列出归档文件
+    - test_restore_error_display：测试错误显示
+    - MockAuditLogStore：模拟存储用于测试
+    - 使用tempfile创建临时目录进行测试
+
+**技术说明**：
+- 复用V467的ArchivedEntry和ArchiveConfig
+- 复用V454的AuditLogStore trait
+- 使用std::fs进行文件操作
+- 使用serde进行JSON反序列化
+- 使用tracing记录日志（info/warn/error）
+- 使用thiserror实现错误类型
+- 双格式支持：JSON数组和JSONL
+- 日期范围过滤：通过文件名中的日期进行过滤
+- 跳过已存在：通过ID检查避免重复恢复
+- 测试：使用tempfile创建临时目录，测试后自动清理
+
+**恢复功能特性**：
+1. 文件恢复 — 从归档文件恢复审计日志
+2. 日期范围 — 支持按开始/结束日期过滤
+3. 指定文件 — 支持恢复指定的归档文件
+4. 跳过已存在 — 避免重复恢复相同ID的条目
+5. 双格式支持 — 兼容JSON数组和JSONL格式
+6. 批量处理 — 支持批量恢复配置
+7. 文件列表 — 查看可恢复的归档文件
+8. 错误处理 — 完善的错误类型和日志记录
+9. 统计信息 — 恢复/跳过/失败计数
+10. 向后兼容 — 不改变现有API
+
+**验收结果**：
+- 完成RestoreConfig结构体（4字段+Default+构建器）
+- 完成RestoreResult结构体（6字段+serde+skip）
+- 完成RestoreQuery结构体（3可选字段+serde）
+- 完成AuditLogRestorer结构体（1字段+6方法）
+- 完成restore方法（查找文件+遍历恢复）
+- 完成restore_from_file方法（读取+检查+恢复）
+- 完成read_archive_file方法（JSON/JSONL解析）
+- 完成find_archive_files方法（过滤+排序）
+- 完成list_archive_files方法（文件列表）
+- 完成RestoreError枚举（3变体+thiserror）
+- 完成extract_date_from_filename辅助函数
+- 完成模块声明（mod.rs添加audit_restorer）
+- 完成11个单元测试（全部通过）
+- 代码总行数约550行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D RestoreConfig结构体 | 4字段+Default+构建器 | ✅ |
+| 轨D RestoreResult结构体 | 6字段+serde+skip | ✅ |
+| 轨D RestoreQuery结构体 | 3可选字段+serde | ✅ |
+| 轨D AuditLogRestorer结构体 | 1字段+6方法 | ✅ |
+| 轨D restore方法 | 查找文件+遍历恢复 | ✅ |
+| 轨D restore_from_file方法 | 读取+检查+恢复 | ✅ |
+| 轨D read_archive_file方法 | JSON/JSONL解析 | ✅ |
+| 轨D find_archive_files方法 | 过滤+排序 | ✅ |
+| 轨D list_archive_files方法 | 文件列表 | ✅ |
+| 轨D RestoreError枚举 | 3变体+thiserror | ✅ |
+| 轨D 辅助函数 | extract_date_from_filename | ✅ |
+| 轨D 模块声明 | mod.rs添加audit_restorer | ✅ |
+| 轨D 单元测试 | 11个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约550行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V470后续扩展（留给V471+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志归档恢复API端点**：添加REST API触发归档恢复
+- [ ] **轨D 审计日志归档gzip压缩实现**：集成flate2实现真正的gzip压缩
+- [ ] **轨D 审计日志归档AppState集成**：将archiver配置存储到AppState
+- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）
+- [ ] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
+- [ ] **轨D 审计日志清理任务指标**：添加清理任务性能指标
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V470连续一百三十八次交付验证成功，V471继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
