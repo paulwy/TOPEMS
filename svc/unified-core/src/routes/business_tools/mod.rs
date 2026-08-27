@@ -43,6 +43,9 @@ pub mod audit_retention;
 // V465: Audit log retention policy API
 pub mod audit_retention_api;
 
+// V466: Audit log retention cleanup task
+pub mod audit_retention_task;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};

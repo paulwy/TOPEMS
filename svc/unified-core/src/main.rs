@@ -520,6 +520,18 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    // V466: Spawn background task for audit log retention cleanup
+    let audit_retention_policy = state.audit_retention_policy.clone();
+    let audit_logger = state.audit_logger.clone();
+    tokio::spawn(async move {
+        use crate::routes::business_tools::audit_retention_task::RetentionCleanupTask;
+        let mut task = RetentionCleanupTask::new(audit_retention_policy, audit_logger);
+        task.start();
+        // Keep the task running for the lifetime of the application
+        // The task will run until the application shuts down
+        futures::future::pending::<()>().await;
+    });
+
     // Spawn WebSocket event bridge (Redis -> WebSocket)
     let ws_state_bridge = state.ws_state.clone();
     tokio::spawn(async move {
