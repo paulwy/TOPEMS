@@ -18962,6 +18962,210 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V462 — 架构改进四轨并行第一百三十次：轨D 权限批量操作功能（BatchCreateRequest+BatchUpdateRequest+BatchDeleteRequest+批量响应类型+批量创建/更新/删除端点+路由集成+10个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十次交付 · 轨D 权限批量操作功能 · 1个代码文件新建 + 1个代码文件修改 · 实现权限批量操作API，支持批量创建、更新、删除，提供部分成功报告和错误详情
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 权限批量操作功能 | 支持批量创建/更新/删除权限 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V463 | ⏸️ |
+
+### 轨D：权限批量操作功能（BatchCreateRequest+BatchUpdateRequest+BatchDeleteRequest+批量响应类型+批量创建/更新/删除端点+路由集成+10个单元测试）
+
+**实现内容**：实现权限批量操作API，支持批量创建、更新、删除，提供部分成功报告和错误详情
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/permission_batch_api.rs`（权限批量操作API，约380行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加permission_batch_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **批量创建请求（BatchCreateRequest）**
+   - 字段：permissions（Vec<PermissionRequest>）
+   - 支持serde序列化/反序列化
+
+2. **批量更新请求（BatchUpdateRequest）**
+   - 字段：permissions（Vec<PermissionRequest>）
+   - 支持serde序列化/反序列化
+
+3. **批量删除请求（BatchDeleteRequest）**
+   - 字段：permissions（Vec<BatchDeleteItem>）
+   - 支持serde序列化/反序列化
+
+4. **批量删除项（BatchDeleteItem）**
+   - 字段：tenant_id、user_id
+   - 支持serde序列化/反序列化
+
+5. **批量操作结果（BatchOperationResult）**
+   - 字段：tenant_id、user_id、success、error（可选）
+   - error使用skip_serializing_if，成功时不显示
+   - 支持serde序列化
+
+6. **批量创建响应（BatchCreateResponse）**
+   - 字段：total、succeeded、failed、created（Vec<PermissionResponse>）、errors（Vec<BatchOperationResult>）
+   - 支持serde序列化
+
+7. **批量更新响应（BatchUpdateResponse）**
+   - 字段：total、succeeded、failed、updated（Vec<PermissionResponse>）、errors（Vec<BatchOperationResult>）
+   - 支持serde序列化
+
+8. **批量删除响应（BatchDeleteResponse）**
+   - 字段：total、succeeded、failed、errors（Vec<BatchOperationResult>）
+   - 支持serde序列化
+
+9. **转换辅助函数（try_convert）**
+   - 将PermissionRequest转换为TenantPermission
+   - 返回Result<TenantPermission, String>
+   - 复用PermissionRequest的TryFrom实现
+
+10. **批量创建端点（batch_create_permissions）**
+    - POST /api/business-tools/permissions/batch
+    - 遍历请求中的每个权限，尝试创建
+    - 成功的加入created列表，失败的加入errors列表
+    - 返回BatchCreateResponse（包含统计和详情）
+    - 部分成功时返回200（不是错误）
+
+11. **批量更新端点（batch_update_permissions）**
+    - PUT /api/business-tools/permissions/batch
+    - 遍历请求中的每个权限，尝试更新
+    - 成功的加入updated列表，失败的加入errors列表
+    - 返回BatchUpdateResponse（包含统计和详情）
+
+12. **批量删除端点（batch_delete_permissions）**
+    - DELETE /api/business-tools/permissions/batch
+    - 遍历请求中的每个(tenant_id, user_id)，尝试删除
+    - 成功的计数，失败的加入errors列表
+    - 返回BatchDeleteResponse（包含统计和详情）
+
+13. **路由注册（permission_batch_routes）**
+    - 创建Router<AppState>
+    - 注册POST/PUT/DELETE /business-tools/permissions/batch
+    - 集成到business_tools_routes()中
+
+14. **10个单元测试**
+    - test_batch_create_request_deserialization：测试批量创建请求反序列化
+    - test_batch_delete_request_deserialization：测试批量删除请求反序列化
+    - test_batch_create_response_serialization：测试批量创建响应序列化
+    - test_batch_operation_result_serialization：测试操作结果序列化（成功无error）
+    - test_batch_operation_result_with_error：测试操作结果序列化（失败有error）
+    - test_try_convert_valid：测试有效转换
+    - test_try_convert_invalid_role：测试无效角色转换
+    - test_batch_delete_item_serialization：测试删除项序列化
+    - test_batch_update_response_serialization：测试批量更新响应序列化
+    - test_batch_delete_response_serialization：测试批量删除响应序列化
+
+**技术说明**：
+- 复用V452的PermissionRequest和PermissionResponse类型
+- 复用V444的PermissionStore trait方法
+- 使用axum的State和Json提取器
+- 使用serde进行JSON序列化/反序列化
+- 部分成功模式：单个失败不影响其他操作
+- 错误详情包含tenant_id、user_id和错误信息
+- 统计信息：total、succeeded、failed
+- 批量操作使用同一端点，通过HTTP方法区分（POST创建、PUT更新、DELETE删除）
+
+**API端点**：
+- POST /api/business-tools/permissions/batch — 批量创建权限
+- PUT /api/business-tools/permissions/batch — 批量更新权限
+- DELETE /api/business-tools/permissions/batch — 批量删除权限
+
+**批量操作特性**：
+1. 批量创建 — 一次请求创建多个权限
+2. 批量更新 — 一次请求更新多个权限
+3. 批量删除 — 一次请求删除多个权限
+4. 部分成功 — 单个失败不影响其他操作
+5. 错误详情 — 每个失败操作包含tenant_id、user_id、error
+6. 统计信息 — total、succeeded、failed计数
+7. 成功详情 — 创建/更新返回完整的PermissionResponse
+8. 统一端点 — 同一URL通过HTTP方法区分操作
+9. 类型复用 — 复用PermissionRequest和PermissionResponse
+10. 错误处理 — 转换错误和存储错误都被捕获并报告
+
+**验收结果**：
+- 完成BatchCreateRequest结构体（1字段+serde）
+- 完成BatchUpdateRequest结构体（1字段+serde）
+- 完成BatchDeleteRequest结构体（1字段+serde）
+- 完成BatchDeleteItem结构体（2字段+serde）
+- 完成BatchOperationResult结构体（4字段+serde+skip_serializing_if）
+- 完成BatchCreateResponse结构体（5字段+serde）
+- 完成BatchUpdateResponse结构体（5字段+serde）
+- 完成BatchDeleteResponse结构体（4字段+serde）
+- 完成try_convert辅助函数
+- 完成batch_create_permissions端点
+- 完成batch_update_permissions端点
+- 完成batch_delete_permissions端点
+- 完成permission_batch_routes路由注册
+- 完成路由集成（business_tools_routes添加merge）
+- 完成10个单元测试（全部通过）
+- 代码总行数约380行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D BatchCreateRequest | 1字段+serde | ✅ |
+| 轨D BatchUpdateRequest | 1字段+serde | ✅ |
+| 轨D BatchDeleteRequest | 1字段+serde | ✅ |
+| 轨D BatchDeleteItem | 2字段+serde | ✅ |
+| 轨D BatchOperationResult | 4字段+serde+skip | ✅ |
+| 轨D BatchCreateResponse | 5字段+serde | ✅ |
+| 轨D BatchUpdateResponse | 5字段+serde | ✅ |
+| 轨D BatchDeleteResponse | 4字段+serde | ✅ |
+| 轨D try_convert辅助函数 | 转换+错误处理 | ✅ |
+| 轨D 批量创建端点 | POST+部分成功+错误详情 | ✅ |
+| 轨D 批量更新端点 | PUT+部分成功+错误详情 | ✅ |
+| 轨D 批量删除端点 | DELETE+部分成功+错误详情 | ✅ |
+| 轨D 路由注册+集成 | permission_batch_routes+merge | ✅ |
+| 轨D 单元测试 | 10个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约380行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V462后续扩展（留给V463+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V462连续一百三十次交付验证成功，V463继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
