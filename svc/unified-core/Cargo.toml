@@ -29,6 +29,7 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
+flate2 = "1.0"
 
 rust_decimal = { workspace = true, features = ["db-postgres"] }
 futures-util.workspace = true
