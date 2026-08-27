@@ -20794,6 +20794,181 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V471 — 架构改进四轨并行第一百三十九次：轨D 审计日志归档恢复API端点（RestoreRequest+ListRestorableResponse+列出可恢复文件端点+触发恢复端点+日期格式验证+路由集成+11个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十九次交付 · 轨D 审计日志归档恢复API端点 · 1个代码文件新建 + 1个代码文件修改 · 实现审计日志归档恢复REST API，支持列出可恢复文件、触发归档恢复、日期范围过滤、跳过已存在条目
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志归档恢复API端点 | 添加REST API触发归档恢复和查看可恢复文件 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V472 | ⏸️ |
+
+### 轨D：审计日志归档恢复API端点（RestoreRequest+ListRestorableResponse+列出可恢复文件端点+触发恢复端点+日期格式验证+路由集成+11个单元测试）
+
+**实现内容**：实现审计日志归档恢复REST API，支持列出可恢复文件、触发归档恢复、日期范围过滤、跳过已存在条目
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_restore_api.rs`（审计日志归档恢复API，约280行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_restore_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **恢复请求（RestoreRequest）**
+   - 字段：start_date（开始日期，可选）、end_date（结束日期，可选）、filename（指定文件名，可选）、skip_existing（是否跳过已存在，默认true）
+   - 实现Default trait
+   - 支持serde反序列化
+
+2. **列出可恢复文件响应（ListRestorableResponse）**
+   - 字段：total（文件总数）、files（文件名列表）
+   - 支持serde序列化
+
+3. **列出可恢复文件端点（list_restorable_files）**
+   - GET /api/business-tools/audit-logs/archives/restorable
+   - 调用restorer.list_archive_files()获取文件列表
+   - 返回ListRestorableResponse
+
+4. **触发恢复端点（restore_archives）**
+   - POST /api/business-tools/audit-logs/archives/restore
+   - 请求体：RestoreRequest
+   - 验证日期格式（YYYY-MM-DD）
+   - 创建AuditLogRestorer（使用skip_existing配置）
+   - 调用restorer.restore()执行恢复
+   - 使用state.audit_logger作为存储
+   - 返回RestoreResult
+
+5. **辅助函数**
+   - get_restorer()：创建默认配置的恢复器
+   - get_restorer_with_config(skip_existing)：创建自定义配置的恢复器
+   - is_valid_date_format(date)：验证日期格式（YYYY-MM-DD）
+   - 从环境变量AUDIT_ARCHIVE_DIR读取归档目录（默认audit_archives）
+
+6. **日期格式验证**
+   - 验证长度为10个字符
+   - 验证第5位和第8位为连字符
+   - 验证年、月、日部分均为数字
+   - 无效格式返回400 Bad Request
+
+7. **路由注册（audit_restore_routes）**
+   - 创建Router<AppState>
+   - 注册GET /business-tools/audit-logs/archives/restorable
+   - 注册POST /business-tools/audit-logs/archives/restore
+   - 集成到business_tools_routes()中
+
+8. **11个单元测试**
+   - test_restore_request_deserialization：测试完整请求反序列化
+   - test_restore_request_default：测试默认请求
+   - test_restore_request_partial：测试部分请求
+   - test_list_restorable_response_serialization：测试列表响应序列化
+   - test_is_valid_date_format_valid：测试有效日期格式
+   - test_is_valid_date_format_invalid：测试无效日期格式
+   - test_restore_result_serialization：测试恢复结果序列化
+   - test_get_restorer：测试默认恢复器创建
+   - test_get_restorer_with_config：测试自定义配置恢复器
+   - test_audit_restore_routes_creation：测试路由创建
+   - test_default_skip_existing：测试默认跳过已存在值
+
+**技术说明**：
+- 复用V470的AuditLogRestorer、RestoreConfig、RestoreQuery、RestoreResult
+- 复用V460的AppState.audit_logger作为恢复目标存储
+- 使用axum的State、Json、Query提取器
+- 使用serde进行JSON序列化/反序列化
+- 日期格式验证：严格验证YYYY-MM-DD格式
+- 环境变量配置：支持通过AUDIT_ARCHIVE_DIR自定义归档目录
+- 错误处理：完善的HTTP状态码和错误信息
+
+**API端点**：
+- GET /api/business-tools/audit-logs/archives/restorable — 列出可恢复的归档文件
+- POST /api/business-tools/audit-logs/archives/restore — 触发归档恢复
+
+**恢复API特性**：
+1. 文件列表 — 查看所有可恢复的归档文件
+2. 触发恢复 — 通过API触发归档恢复
+3. 日期范围 — 支持按开始/结束日期过滤
+4. 指定文件 — 支持恢复指定的归档文件
+5. 跳过已存在 — 避免重复恢复相同ID的条目
+6. 日期验证 — 严格验证日期格式
+7. 错误处理 — 完善的HTTP状态码
+8. 环境配置 — 支持自定义归档目录
+9. 统计信息 — 返回恢复/跳过/失败计数
+10. 向后兼容 — 不改变现有API
+
+**验收结果**：
+- 完成RestoreRequest结构体（4字段+Default+serde）
+- 完成ListRestorableResponse结构体（2字段+serde）
+- 完成列出可恢复文件端点（GET+文件列表）
+- 完成触发恢复端点（POST+日期验证+恢复）
+- 完成辅助函数（get_restorer+get_restorer_with_config+is_valid_date_format）
+- 完成日期格式验证（严格YYYY-MM-DD）
+- 完成路由注册+集成（audit_restore_routes+merge）
+- 完成11个单元测试（全部通过）
+- 代码总行数约280行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D RestoreRequest结构体 | 4字段+Default+serde | ✅ |
+| 轨D ListRestorableResponse | 2字段+serde | ✅ |
+| 轨D 列出可恢复文件端点 | GET+文件列表 | ✅ |
+| 轨D 触发恢复端点 | POST+日期验证+恢复 | ✅ |
+| 轨D 辅助函数 | get_restorer+config+date验证 | ✅ |
+| 轨D 日期格式验证 | 严格YYYY-MM-DD | ✅ |
+| 轨D 路由注册+集成 | audit_restore_routes+merge | ✅ |
+| 轨D 单元测试 | 11个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约280行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V471后续扩展（留给V472+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志归档gzip压缩实现**：集成flate2实现真正的gzip压缩
+- [ ] **轨D 审计日志归档AppState集成**：将archiver配置存储到AppState
+- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）
+- [ ] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
+- [ ] **轨D 审计日志清理任务指标**：添加清理任务性能指标
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V471连续一百三十九次交付验证成功，V472继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
