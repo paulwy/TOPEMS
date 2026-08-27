@@ -34,6 +34,9 @@ pub mod audit_export_api;
 // V462: Permission batch operations API
 pub mod permission_batch_api;
 
+// V463: Permission export/import API
+pub mod permission_export_import_api;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
@@ -766,6 +769,8 @@ pub fn business_tools_routes() -> Router<AppState> {
         .merge(permission_api::permission_routes())
         // V462: Permission batch operation routes
         .merge(permission_batch_api::permission_batch_routes())
+        // V463: Permission export/import routes
+        .merge(permission_export_import_api::permission_export_import_routes())
         // V454: Audit log routes
         .merge(audit_api::audit_log_routes())
         // V461: Audit log export routes

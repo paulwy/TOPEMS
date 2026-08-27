@@ -19166,6 +19166,229 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V463 — 架构改进四轨并行第一百三十一次：轨D 权限导出/导入功能（ExportFormat+ExportQuery+PermissionExportData+PermissionExportItem+ImportRequest+ImportResponse+导出端点+导入端点+路由集成+11个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十一次交付 · 轨D 权限导出/导入功能 · 1个代码文件新建 + 1个代码文件修改 · 实现权限配置导出/导入API，支持JSON格式，支持create/update/upsert三种导入模式，提供完整的备份和迁移能力
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 权限导出/导入功能 | 支持权限配置的导出和导入 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V464 | ⏸️ |
+
+### 轨D：权限导出/导入功能（ExportFormat+ExportQuery+PermissionExportData+PermissionExportItem+ImportRequest+ImportResponse+导出端点+导入端点+路由集成+11个单元测试）
+
+**实现内容**：实现权限配置导出/导入API，支持JSON格式，支持create/update/upsert三种导入模式，提供完整的备份和迁移能力
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/permission_export_import_api.rs`（权限导出/导入API，约600行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加permission_export_import_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **导出格式枚举（ExportFormat）**
+   - 变体：Json
+   - 实现FromStr trait（支持大小写不敏感）
+   - 实现Display trait
+
+2. **导出查询参数（ExportQuery）**
+   - 字段：format（导出格式，默认json）、tenant_id（按租户过滤，可选）
+   - 实现Default trait
+   - 支持serde反序列化
+
+3. **导出数据（PermissionExportData）**
+   - 字段：version（导出版本）、exported_at（导出时间戳）、count（权限数量）、permissions（权限列表）
+   - 支持serde序列化/反序列化
+
+4. **导出权限项（PermissionExportItem）**
+   - 字段：tenant_id、user_id、role、active、tool_permissions
+   - 支持serde序列化/反序列化
+   - 实现From<&TenantPermission>转换
+   - 实现TryFrom<&PermissionExportItem> for TenantPermission转换
+
+5. **工具权限导出项（ToolPermissionExportItem）**
+   - 字段：tool、max_permission、allowed_operations、denied_operations
+   - 支持serde序列化/反序列化
+
+6. **导入请求（ImportRequest）**
+   - 字段：data（导入数据，支持完整格式或裸数组）、mode（导入模式，默认upsert）
+   - 支持serde反序列化
+
+7. **导入数据（ImportData）**
+   - 枚举：Full（完整导出格式）、Bare（裸权限数组）
+   - 使用#[serde(untagged)]自动识别格式
+   - 支持两种输入格式
+
+8. **导入操作结果（ImportOperationResult）**
+   - 字段：tenant_id、user_id、success、operation（created/updated/skipped/error）、error（可选）
+   - error使用skip_serializing_if，成功时不显示
+   - 支持serde序列化
+
+9. **导入响应（ImportResponse）**
+   - 字段：total、created、updated、skipped、failed、results
+   - 支持serde序列化
+
+10. **导出端点（export_permissions）**
+    - GET /api/business-tools/permissions/export
+    - 查询参数：format、tenant_id
+    - 按租户过滤权限（如果指定tenant_id）
+    - 转换为PermissionExportData格式
+    - 生成带时间戳和租户后缀的文件名
+    - 设置Content-Type和Content-Disposition响应头
+    - 返回JSON文件下载
+
+11. **导入端点（import_permissions）**
+    - POST /api/business-tools/permissions/import
+    - 请求体：ImportRequest（支持完整格式或裸数组）
+    - 支持三种导入模式：
+      - create：只创建新权限，已存在的跳过
+      - update：只更新已存在的权限，不存在的跳过
+      - upsert：创建或更新（默认）
+    - 检查权限是否存在，根据模式决定操作
+    - 记录每个操作的结果（created/updated/skipped/error）
+    - 返回统计信息和详细结果
+
+12. **转换辅助**
+    - From<&TenantPermission> for PermissionExportItem
+    - TryFrom<&PermissionExportItem> for TenantPermission
+    - map_store_error错误处理函数
+
+13. **路由注册（permission_export_import_routes）**
+    - 创建Router<AppState>
+    - 注册GET /business-tools/permissions/export
+    - 注册POST /business-tools/permissions/import
+    - 集成到business_tools_routes()中
+
+14. **11个单元测试**
+    - test_export_format_from_str：测试格式解析
+    - test_export_format_display：测试格式显示
+    - test_export_query_default：测试默认查询参数
+    - test_permission_export_item_from_tenant_permission：测试权限转换
+    - test_tenant_permission_try_from_export_item：测试反向转换
+    - test_tenant_permission_try_from_invalid_role：测试无效角色
+    - test_permission_export_data_serialization：测试导出数据序列化
+    - test_import_request_full_format：测试完整格式导入请求
+    - test_import_request_bare_format：测试裸数组格式导入请求
+    - test_import_response_serialization：测试导入响应序列化
+    - test_tool_permission_export_item：测试工具权限导出项
+
+**技术说明**：
+- 使用axum的Response和IntoResponse实现文件下载
+- 使用axum的header模块设置Content-Type和Content-Disposition
+- 使用serde进行JSON序列化/反序列化
+- 使用serde(untagged)支持多种输入格式
+- 使用chrono生成时间戳
+- 复用V444的PermissionStore trait方法
+- 复用V452的PermissionResponse类型
+- 支持按租户过滤导出
+- 支持三种导入模式（create/update/upsert）
+- 部分成功模式：单个失败不影响其他操作
+- 详细的操作结果报告
+
+**API端点**：
+- GET /api/business-tools/permissions/export?format=json&tenant_id=t1 — 导出权限
+- POST /api/business-tools/permissions/import — 导入权限
+
+**导入模式**：
+- create：只创建新权限，已存在的跳过
+- update：只更新已存在的权限，不存在的跳过
+- upsert：创建或更新（默认）
+
+**导出/导入特性**：
+1. JSON格式导出 — 标准JSON格式，便于阅读和处理
+2. 按租户过滤 — 支持导出指定租户的权限
+3. 完整元数据 — 包含版本、时间戳、数量
+4. 工具权限支持 — 导出包含工具级权限覆盖
+5. 双格式导入 — 支持完整导出格式和裸数组格式
+6. 三种导入模式 — create/update/upsert灵活选择
+7. 部分成功 — 单个失败不影响其他操作
+8. 详细报告 — 每个操作的结果和错误信息
+9. 统计信息 — total/created/updated/skipped/failed计数
+10. 文件下载 — 设置Content-Disposition实现浏览器下载
+
+**验收结果**：
+- 完成ExportFormat枚举（1变体+FromStr+Display）
+- 完成ExportQuery结构体（2字段+Default+serde）
+- 完成PermissionExportData结构体（4字段+serde）
+- 完成PermissionExportItem结构体（5字段+serde+From+TryFrom）
+- 完成ToolPermissionExportItem结构体（4字段+serde）
+- 完成ImportRequest结构体（2字段+serde）
+- 完成ImportData枚举（2变体+untagged）
+- 完成ImportOperationResult结构体（5字段+serde+skip）
+- 完成ImportResponse结构体（6字段+serde）
+- 完成导出端点（export_permissions）
+- 完成导入端点（import_permissions+三种模式）
+- 完成转换辅助（From+TryFrom+map_store_error）
+- 完成路由注册+集成
+- 完成11个单元测试（全部通过）
+- 代码总行数约600行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D ExportFormat枚举 | 1变体+FromStr+Display | ✅ |
+| 轨D ExportQuery结构体 | 2字段+Default+serde | ✅ |
+| 轨D PermissionExportData | 4字段+serde | ✅ |
+| 轨D PermissionExportItem | 5字段+serde+From+TryFrom | ✅ |
+| 轨D ToolPermissionExportItem | 4字段+serde | ✅ |
+| 轨D ImportRequest结构体 | 2字段+serde | ✅ |
+| 轨D ImportData枚举 | 2变体+untagged | ✅ |
+| 轨D ImportOperationResult | 5字段+serde+skip | ✅ |
+| 轨D ImportResponse结构体 | 6字段+serde | ✅ |
+| 轨D 导出端点 | GET+过滤+文件下载 | ✅ |
+| 轨D 导入端点 | POST+三种模式+部分成功 | ✅ |
+| 轨D 路由注册+集成 | permission_export_import_routes+merge | ✅ |
+| 轨D 单元测试 | 11个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约600行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V463后续扩展（留给V464+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V463连续一百三十一次交付验证成功，V464继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
