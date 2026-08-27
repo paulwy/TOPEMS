@@ -49,6 +49,9 @@ pub mod audit_retention_task;
 // V467: Audit log archiver
 pub mod audit_archiver;
 
+// V468: Audit log archive API
+pub mod audit_archive_api;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
@@ -789,6 +792,8 @@ pub fn business_tools_routes() -> Router<AppState> {
         .merge(audit_export_api::audit_export_routes())
         // V465: Audit log retention policy routes
         .merge(audit_retention_api::audit_retention_routes())
+        // V468: Audit log archive routes
+        .merge(audit_archive_api::audit_archive_routes())
 }
 
 // ===== Helper Extensions for BusinessRequest =====
