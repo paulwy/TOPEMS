@@ -1,10 +1,10 @@
 # TOPEMS 系统架构改进蓝图
 
-> 文档版本：v1.1  
+> 文档版本：v1.2  
 > 创建日期：2026-08-24  
-> 最近修订：2026-08-24（V289 差距核查+附录补充）  
-> 状态：待审批  
-> 关联文档：DSH部署指南、微服务优化方案、AI融合方案
+> 最近修订：2026-08-27（V472 进展同步 + MCP 修正案交叉引用）  
+> 状态：实施中  
+> 关联文档：DSH部署指南、微服务优化方案、AI融合方案、[MCP架构修正方案](./TOPEMS_MCP_Architecture_Amendment_Plan.md)
 
 ---
 
@@ -33,6 +33,8 @@
    - 7.2 验收标准
    - 7.3 风险应对
 8. [附录](#8-附录)
+   - 8.4 v1.1 差距修正清单
+   - 8.5 v1.2 进展同步与 MCP 交叉引用
 
 ---
 
@@ -864,14 +866,56 @@ topems_only_own_schema_query!(sql, "plugin_erp");  // 编译时检查
 
 ---
 
+### 8.5 v1.2 进展同步与 MCP 交叉引用（V472 更新）
+
+> 本节记录 v1.1 之后的主要架构进展，以及与 MCP 修正方案的交叉引用关系。
+
+#### V290-V472 主要进展
+
+| 版本范围 | 主题 | 落地内容 | 验证状态 |
+|----------|------|----------|----------|
+| V290-V310 | B2 前端 API 签名对齐 | budget/voucher/report 签名兼容包装 + accountingSubject 壳子 + 10 页面 import 切换 | ✅ `pages/finance` `@/api/erp` = 0 |
+| V311-V320 | 编译时边界检查 + 审计日志 | SchemaAwareAuditLogService 覆盖 6 服务 + schema-defense 断言 + 跨 Schema grep CI 门禁 | ✅ `cargo check` 6 服务 = 0 |
+| V321-V340 | MCP 骨架 + DSH 适配层 | shared-mcp crate + McpTool/McpResource trait + svc/ai MCP 适配层骨架 + MCP 安全中间件 | ✅ `cargo check -p topems-shared-mcp` = 0 |
+| V341-V472 | 审计日志归档 + 运维优化 | 审计日志 gzip 压缩归档 + 前端 tsc 未使用项批量清理 + CI 严格门禁 | ✅ 已推送 origin/main |
+
+#### MCP 修正案交叉引用
+
+本蓝图 v1.2 与 [MCP 架构修正方案](./TOPEMS_MCP_Architecture_Amendment_Plan.md) v1.1 联合实施：
+
+| 本蓝图章节 | MCP 修正案对应章节 | 关系 |
+|------------|-------------------|------|
+| §5 DSH 融合方案 | §3 MCP 协议适配层架构设计 | MCP 修正案在 DSH Layer 0 新增 McpAdapter |
+| §7.1 Phase 1 分阶段实施 | §4 Phase 1 双轨并行实施节奏 | MCP 修正案将 Phase 1 调整为治理+MCP 双轨 |
+| §7.2 验收标准 | §6 MCP 验收标准与安全防护 | MCP 修正案补充 MCP 专属验收项 |
+| §8.4 G1-G7 差距修正 | — | V289 已落地，G4 B2 阶段在 V290-V310 完成 |
+
+#### 当前架构状态总结
+
+```
+✅ 跨 Schema 直查清零（V289 A0 轨 + V290+ B2 轨）
+✅ unified-core 32 stub 路由清除（V289 C2 轨）
+✅ Finance 页面 @/api/erp 反链清零（V290-V310 B2 轨）
+✅ 编译时 Schema 边界 CI 门禁（V311-V320）
+✅ MCP 骨架 + DSH 适配层就绪（V321-V340）
+✅ 审计日志 gzip 归档（V472）
+🔄 MCP MVP 工具实现（CRM/ERP/Finance 3 服务，进行中）
+🔄 DSH Provider 抽象 + Agent 编排（进行中）
+⬜ accounting_subjects 表物理迁移（C1a 策略，待启动）
+⬜ Phase 2 MCP 扩展 + AI 能力统一（待启动）
+```
+
+---
+
 ## 修订记录
 
 | 版本 | 日期 | 修订人 | 修订内容 |
 |------|------|--------|----------|
 | v1.0 | 2026-08-24 | AI Assistant | 初始版本，整合所有分析内容 |
 | v1.1 | 2026-08-24 | AI Assistant（V289 核查） | **差距核查 + 附录 v1.1**：新增 §8.4 记录 7 处文档 vs 代码库差距与 V289 修正措施（A0 跨Schema清零 / B1 类型迁移 / C2 stub 删除 / D1 跳過）；更新页眉版本号及"最近修订"日期。 |
+| v1.2 | 2026-08-27 | AI Assistant（V472 同步） | **进展同步 + MCP 交叉引用**：新增 §8.5 记录 V290-V472 主要进展（B2 签名对齐 / 编译时边界检查 / MCP 骨架 / 审计日志归档）；关联 MCP 修正方案 v1.1；状态从"待审批"升级为"实施中"；目录增加 §8.5 条目。 |
 
 ---
 
-**文档状态**：待审批  
-**下一步**：请团队核心成员评审并反馈，确认后启动Phase 1实施
+**文档状态**：实施中  
+**下一步**：MCP MVP 工具实现（CRM/ERP/Finance 3 服务）+ accounting_subjects C1a 物理迁移 + DSH Provider 抽象

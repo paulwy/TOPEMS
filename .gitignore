@@ -270,3 +270,81 @@ releases/archives/
 
 # 历史归档日志（保留本地，不入库）
 logs/_stale-*
+
+# ─────────────────────────────────────────────
+# 实验性/探索性代码（未被任何已跟踪文件引用，保留本地不入库）
+# 如需正式采用，从本节移除对应条目并 git add 即可
+# ─────────────────────────────────────────────
+
+# BFF 实验层
+apps/web/src/components/bff/
+apps/web/src/hooks/bff/
+apps/web/src/utils/bff/
+
+# Design system 探索
+apps/web/src/design-system/
+
+# 微前端实验
+apps/web/src/microfrontend/
+
+# AI 组件探索
+apps/web/src/components/ai/AIAnomalyAssistant.tsx
+apps/web/src/components/ai/AIReportAssistant.tsx
+apps/web/src/utils/ai/
+
+# A2UI / zerocode / observability 实验工具
+apps/web/src/utils/a2ui/
+apps/web/src/utils/zerocode/
+apps/web/src/utils/observability/
+
+# 实验性 hooks
+apps/web/src/hooks/useCrudForm.ts
+apps/web/src/hooks/useCrudUnified.ts
+apps/web/src/hooks/useOfflineQuery.ts
+apps/web/src/hooks/usePmFinance.ts
+apps/web/src/hooks/useUnifiedWebSocket.ts
+
+# 实验性 utils
+apps/web/src/utils/cdnScheduler.ts
+apps/web/src/utils/edgeCompute.ts
+apps/web/src/utils/graphqlPerformance.ts
+apps/web/src/utils/isrManager.ts
+apps/web/src/utils/pwaCacheOptimizer.ts
+apps/web/src/utils/queryCostAnalyzer.ts
+apps/web/src/utils/querySharding.ts
+apps/web/src/utils/resourceOptimizer.ts
+apps/web/src/utils/smartPrefetch.ts
+apps/web/src/utils/websocketOptimizer.ts
+apps/web/src/utils/workflow/
+
+# 生成型 Typed API 文件（实验性）
+apps/web/src/api/ai/documentTyped.ts
+apps/web/src/api/ai/qaTyped.ts
+apps/web/src/api/crm/mock.ts
+apps/web/src/api/ehs/hazardTyped.ts
+apps/web/src/api/ehs/incidentTyped.ts
+apps/web/src/api/ehs/trainingTyped.ts
+apps/web/src/api/iam/userTyped.ts
+apps/web/src/api/monitor/alertTyped.ts
+apps/web/src/api/monitor/sloTyped.ts
+
+# 页面级实验 hooks/components
+apps/web/src/pages/admin/hooks/
+apps/web/src/pages/lims/LimsInstrumentDataPage/components/
+apps/web/src/pages/mobile/components/MobileQualityTaskList.tsx
+apps/web/src/pages/monitor/hooks/
+apps/web/src/pages/pm/components/PmProjectDetailHeader.tsx
+apps/web/src/pages/wms/hooks/
+apps/web/src/pages/workflow/components/WorkflowApprovalDetailTabs.tsx
+apps/web/src/pages/workflow/hooks/useWorkflowApprovalDetail.ts
+
+# 其他实验性文件
+apps/web/.eslintrc.json
+apps/web/src/layouts/navTree.ts
+
+# 一次性清理脚本（已完成使命，保留本地参考）
+scripts/fix-unused-vars*.cjs
+scripts/fix-mixed-import-type.cjs
+scripts/fix-unused-usequery.cjs
+scripts/rename-filenames.cjs
+scripts/rewrite-renamed-imports.cjs

@@ -1,10 +1,12 @@
 # TOPEMS 架构改进蓝图 · MCP 协议适配修正方案
 
-> 文档版本：v1.0
+> 文档版本：v1.1
 > 创建日期：2026-08-26
-> 基于文档：TOPEMS_Architecture_Improvement_Plan.md v1.1
-> 状态：待审批
+> 最近修订：2026-08-27（状态更新为实施中，关联 TODO.md V333-V340 MCP 路线图）
+> 基于文档：TOPEMS_Architecture_Improvement_Plan.md v1.2
+> 状态：实施中
 > 关联主题：微服务治理与 MCP 对接的双轨融合
+> 关联路线图：[TODO.md V333-V340 MCP 路线图](./roadmap/TODO.md)
 
 ---
 
@@ -1122,8 +1124,9 @@ impl McpSecurityMiddleware {
 | 版本 | 日期 | 修订人 | 修订内容 |
 |------|------|--------|----------|
 | v1.0 | 2026-08-26 | AI Assistant | 初始版本，基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 的 MCP 协议适配修正方案 |
+| v1.1 | 2026-08-27 | AI Assistant（V472 同步） | 状态从"待审批"更新为"实施中"；关联 TODO.md V333-V340 MCP 路线图；基于文档升级为 v1.2。 |
 
 ---
 
-**文档状态**：待审批
-**下一步**：请团队核心成员评审本修正方案，确认后启动原方案 + 本修正方案的联合实施
+**文档状态**：实施中
+**下一步**：MCP MVP 工具实现（CRM/ERP/Finance 3 服务）+ MCP 安全中间件集成测试
