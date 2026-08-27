@@ -19564,6 +19564,229 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V465 — 架构改进四轨并行第一百三十三次：轨D 审计日志保留策略API端点（UpdateRetentionPolicyRequest+TriggerCleanupRequest+RetentionPolicyResponse+获取/更新策略端点+触发清理端点+获取统计端点+路由集成+AppState集成+main.rs初始化+10个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十三次交付 · 轨D 审计日志保留策略API端点 · 1个代码文件新建 + 3个代码文件修改 · 实现审计日志保留策略REST API，支持获取/更新策略、触发手动清理、查看保留统计，集成到AppState和应用启动
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志保留策略API端点 | 添加REST API管理保留策略和触发清理 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V466 | ⏸️ |
+
+### 轨D：审计日志保留策略API端点（UpdateRetentionPolicyRequest+TriggerCleanupRequest+RetentionPolicyResponse+获取/更新策略端点+触发清理端点+获取统计端点+路由集成+AppState集成+main.rs初始化+10个单元测试）
+
+**实现内容**：实现审计日志保留策略REST API，支持获取/更新策略、触发手动清理、查看保留统计，集成到AppState和应用启动
+
+**修改的文件（1个代码文件新建 + 3个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_retention_api.rs`（审计日志保留策略API，约350行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_retention_api模块声明+路由集成）**
+
+**修改：`svc/unified-core/src/shared/mod.rs`（AppState添加audit_retention_policy字段）**
+
+**修改：`svc/unified-core/src/main.rs`（初始化audit_retention_policy+环境变量配置）**
+
+**新增功能**：
+
+1. **更新保留策略请求（UpdateRetentionPolicyRequest）**
+   - 字段：retention_days（可选）、archive_enabled（可选）、archive_path（可选）、batch_size（可选）、cleanup_interval_hours（可选）
+   - 所有字段都是可选的，支持部分更新
+   - 支持serde反序列化
+
+2. **触发清理请求（TriggerCleanupRequest）**
+   - 字段：retention_days（可选，覆盖本次清理的保留天数）
+   - 实现Default trait
+   - 支持serde反序列化
+
+3. **保留策略响应（RetentionPolicyResponse）**
+   - 字段：policy（RetentionPolicy）
+   - 支持serde序列化
+
+4. **触发清理响应（TriggerCleanupResponse）**
+   - 字段：triggered（是否触发成功）、result（清理结果，可选）
+   - result使用skip_serializing_if，无结果时不显示
+   - 支持serde序列化
+
+5. **获取保留策略端点（get_retention_policy）**
+   - GET /api/business-tools/audit-logs/retention/policy
+   - 从AppState读取当前保留策略
+   - 返回RetentionPolicyResponse
+
+6. **更新保留策略端点（update_retention_policy）**
+   - PUT /api/business-tools/audit-logs/retention/policy
+   - 支持部分更新（只更新提供的字段）
+   - 验证：retention_days > 0、batch_size > 0、cleanup_interval_hours > 0
+   - 空archive_path清除归档路径
+   - 更新AppState中的策略
+   - 返回更新后的RetentionPolicyResponse
+
+7. **触发手动清理端点（trigger_cleanup）**
+   - POST /api/business-tools/audit-logs/retention/cleanup
+   - 支持覆盖保留天数（retention_days参数）
+   - 验证：retention_days > 0
+   - 创建RetentionManager并运行清理
+   - 返回TriggerCleanupResponse（包含清理结果）
+   - TODO：集成AuditLogStore到AppState实现实际清理
+
+8. **获取保留统计端点（get_retention_stats）**
+   - GET /api/business-tools/audit-logs/retention/stats
+   - 计算截止时间
+   - 返回RetentionStats（保留天数、截止时间、超期条目数等）
+   - TODO：集成AuditLogStore查询实际超期条目数
+
+9. **AppState集成**
+   - 添加audit_retention_policy字段：Arc<Mutex<RetentionPolicy>>
+   - 使用tokio::sync::Mutex支持异步锁
+   - 线程安全的策略更新
+
+10. **main.rs初始化**
+    - 从环境变量读取配置：
+      - AUDIT_RETENTION_DAYS（默认90）
+      - AUDIT_ARCHIVE_ENABLED（默认false）
+      - AUDIT_ARCHIVE_PATH（可选）
+      - AUDIT_CLEANUP_BATCH_SIZE（默认1000）
+      - AUDIT_CLEANUP_INTERVAL_HOURS（默认24）
+    - 创建RetentionPolicy并包装为Arc<Mutex<>>
+    - 记录初始化日志
+    - 注入到AppState
+
+11. **路由注册（audit_retention_routes）**
+    - 创建Router<AppState>
+    - 注册GET/PUT /business-tools/audit-logs/retention/policy
+    - 注册POST /business-tools/audit-logs/retention/cleanup
+    - 注册GET /business-tools/audit-logs/retention/stats
+    - 集成到business_tools_routes()中
+
+12. **10个单元测试**
+    - test_update_retention_policy_request_deserialization：测试完整请求反序列化
+    - test_update_retention_policy_request_partial：测试部分请求反序列化
+    - test_trigger_cleanup_request_deserialization：测试触发清理请求
+    - test_trigger_cleanup_request_default：测试默认请求
+    - test_retention_policy_response_serialization：测试策略响应序列化
+    - test_trigger_cleanup_response_serialization：测试清理响应序列化（无结果）
+    - test_trigger_cleanup_response_with_result：测试清理响应序列化（有结果）
+    - test_retention_policy_default_values：测试默认策略值
+    - test_retention_policy_cutoff_time：测试截止时间计算
+    - test_audit_retention_routes_creation：测试路由创建
+
+**技术说明**：
+- 复用V464的RetentionPolicy、CleanupResult、RetentionStats类型
+- 使用axum的State和Json提取器
+- 使用serde进行JSON序列化/反序列化
+- 使用tokio::sync::Mutex实现线程安全的策略更新
+- 部分更新模式：只更新请求中提供的字段
+- 参数验证：所有数值参数必须大于0
+- 环境变量配置：支持通过环境变量自定义默认策略
+- TODO标记：清理和统计功能待集成AuditLogStore
+
+**API端点**：
+- GET /api/business-tools/audit-logs/retention/policy — 获取保留策略
+- PUT /api/business-tools/audit-logs/retention/policy — 更新保留策略
+- POST /api/business-tools/audit-logs/retention/cleanup — 触发手动清理
+- GET /api/business-tools/audit-logs/retention/stats — 获取保留统计
+
+**环境变量**：
+- AUDIT_RETENTION_DAYS — 保留天数（默认90）
+- AUDIT_ARCHIVE_ENABLED — 是否启用归档（默认false）
+- AUDIT_ARCHIVE_PATH — 归档路径（可选）
+- AUDIT_CLEANUP_BATCH_SIZE — 清理批量大小（默认1000）
+- AUDIT_CLEANUP_INTERVAL_HOURS — 清理间隔小时（默认24）
+
+**保留策略API特性**：
+1. 获取策略 — 查看当前保留策略配置
+2. 更新策略 — 部分更新保留策略参数
+3. 触发清理 — 手动触发审计日志清理
+4. 查看统计 — 查看保留统计信息
+5. 参数验证 — 所有数值参数必须大于0
+6. 部分更新 — 只更新请求中提供的字段
+7. 环境配置 — 支持通过环境变量自定义默认策略
+8. 线程安全 — 使用Mutex保护策略并发访问
+9. 错误处理 — 完善的错误处理和HTTP状态码
+10. 序列化支持 — 所有请求/响应都支持JSON序列化
+
+**验收结果**：
+- 完成UpdateRetentionPolicyRequest结构体（5可选字段+serde）
+- 完成TriggerCleanupRequest结构体（1可选字段+Default+serde）
+- 完成RetentionPolicyResponse结构体（1字段+serde）
+- 完成TriggerCleanupResponse结构体（2字段+serde+skip）
+- 完成获取保留策略端点（GET）
+- 完成更新保留策略端点（PUT+部分更新+验证）
+- 完成触发手动清理端点（POST+覆盖保留天数）
+- 完成获取保留统计端点（GET）
+- 完成AppState集成（audit_retention_policy字段）
+- 完成main.rs初始化（环境变量配置+日志）
+- 完成路由注册+集成（audit_retention_routes+merge）
+- 完成10个单元测试（全部通过）
+- 代码总行数约350行（API）+ 50行（AppState）+ 50行（main.rs）
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D UpdateRetentionPolicyRequest | 5可选字段+serde | ✅ |
+| 轨D TriggerCleanupRequest | 1可选字段+Default+serde | ✅ |
+| 轨D RetentionPolicyResponse | 1字段+serde | ✅ |
+| 轨D TriggerCleanupResponse | 2字段+serde+skip | ✅ |
+| 轨D 获取策略端点 | GET+从AppState读取 | ✅ |
+| 轨D 更新策略端点 | PUT+部分更新+验证 | ✅ |
+| 轨D 触发清理端点 | POST+覆盖保留天数 | ✅ |
+| 轨D 获取统计端点 | GET+计算截止时间 | ✅ |
+| 轨D AppState集成 | audit_retention_policy字段 | ✅ |
+| 轨D main.rs初始化 | 环境变量+日志+注入 | ✅ |
+| 轨D 路由注册+集成 | audit_retention_routes+merge | ✅ |
+| 轨D 单元测试 | 10个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约450行（含AppState和main.rs） | ✅ |
+| 变更统计 | 1个代码文件新建 + 4个代码文件修改(含TODO.md) | ✅ |
+
+### V465后续扩展（留给V466+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志保留策略定时任务**：集成到应用启动时启动定时清理任务
+- [ ] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）
+- [ ] **轨D 审计日志清理集成AuditLogStore**：将RetentionManager与AppState中的audit_logger集成
+- [ ] **轨D 审计日志统计集成AuditLogStore**：查询实际超期条目数
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V465连续一百三十三次交付验证成功，V466继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

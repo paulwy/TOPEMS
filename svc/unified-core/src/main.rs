@@ -440,6 +440,47 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
+    // V465: Initialize audit log retention policy
+    // Defaults to 90 days retention. Set AUDIT_RETENTION_DAYS to customize.
+    let audit_retention_policy = {
+        let retention_days = std::env::var("AUDIT_RETENTION_DAYS")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(90);
+        let archive_enabled = std::env::var("AUDIT_ARCHIVE_ENABLED")
+            .ok()
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
+        let archive_path = std::env::var("AUDIT_ARCHIVE_PATH").ok();
+        let batch_size = std::env::var("AUDIT_CLEANUP_BATCH_SIZE")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(1000);
+        let cleanup_interval = std::env::var("AUDIT_CLEANUP_INTERVAL_HOURS")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(24);
+
+        let mut policy = crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
+            .with_batch_size(batch_size)
+            .with_cleanup_interval(cleanup_interval);
+        if archive_enabled {
+            if let Some(path) = archive_path {
+                policy = policy.with_archive(path);
+            } else {
+                policy.archive_enabled = true;
+            }
+        }
+        tracing::info!(
+            retention_days = policy.retention_days,
+            archive_enabled = policy.archive_enabled,
+            batch_size = policy.batch_size,
+            cleanup_interval_hours = policy.cleanup_interval_hours,
+            "Audit log retention policy initialized"
+        );
+        std::sync::Arc::new(tokio::sync::Mutex::new(policy))
+    };
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -460,6 +501,7 @@ async fn main() -> anyhow::Result<()> {
         business_tool_registry,
         permission_store,
         audit_logger,
+        audit_retention_policy,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

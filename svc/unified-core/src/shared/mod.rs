@@ -60,6 +60,8 @@ pub struct AppState {
     pub permission_store: Arc<dyn crate::routes::business_tools::permission_store::PermissionStore>,
     /// V460: Audit log store for persisting permission change audit logs.
     pub audit_logger: Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore>,
+    /// V465: Audit log retention policy configuration.
+    pub audit_retention_policy: Arc<Mutex<crate::routes::business_tools::audit_retention::RetentionPolicy>>,
 }
 
 impl FromRef<AppState> for AuthState {
