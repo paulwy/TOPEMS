@@ -52,6 +52,9 @@ pub mod audit_archiver;
 // V468: Audit log archive API
 pub mod audit_archive_api;
 
+// V470: Audit log restorer
+pub mod audit_restorer;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
