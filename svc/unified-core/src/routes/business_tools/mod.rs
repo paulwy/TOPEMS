@@ -37,6 +37,9 @@ pub mod permission_batch_api;
 // V463: Permission export/import API
 pub mod permission_export_import_api;
 
+// V464: Audit log retention policy
+pub mod audit_retention;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
