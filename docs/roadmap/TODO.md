@@ -19787,6 +19787,194 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V466 — 架构改进四轨并行第一百三十四次：轨D 审计日志保留策略定时任务（RetentionCleanupTask+CleanupTaskStats+后台定时清理+间隔动态更新+启动/停止+10个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十四次交付 · 轨D 审计日志保留策略定时任务 · 1个代码文件新建 + 2个代码文件修改 · 实现审计日志保留策略后台定时清理任务，支持按配置间隔定期执行清理、动态更新间隔、启动/停止控制，集成到应用启动
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志保留策略定时任务 | 在应用启动时启动后台定时清理任务 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V467 | ⏸️ |
+
+### 轨D：审计日志保留策略定时任务（RetentionCleanupTask+CleanupTaskStats+后台定时清理+间隔动态更新+启动/停止+10个单元测试）
+
+**实现内容**：实现审计日志保留策略后台定时清理任务，支持按配置间隔定期执行清理、动态更新间隔、启动/停止控制，集成到应用启动
+
+**修改的文件（1个代码文件新建 + 2个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_retention_task.rs`（审计日志保留策略定时任务，约350行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_retention_task模块声明）**
+
+**修改：`svc/unified-core/src/main.rs`（启动定时清理任务）**
+
+**新增功能**：
+
+1. **保留清理任务（RetentionCleanupTask<S: AuditLogStore>）**
+   - 泛型参数：S实现AuditLogStore + Send + Sync + 'static
+   - 字段：policy（Arc<Mutex<RetentionPolicy>>）、store（Arc<S>）、handle（Option<JoinHandle<()>>）
+   - 方法：new、start、stop、is_running、run_once、get_stats
+
+2. **启动任务（start方法）**
+   - 检查是否已在运行（避免重复启动）
+   - 克隆policy和store到异步任务
+   - 获取初始清理间隔
+   - 创建ticker按间隔触发
+   - 每次tick时：
+     - 获取当前策略（可能已更新）
+     - 检查间隔是否变化，如变化则重建ticker
+     - 创建RetentionManager并运行清理
+     - 记录清理结果日志（成功/失败）
+   - 任务无限循环直到被停止
+
+3. **停止任务（stop方法）**
+   - 取出handle并abort
+   - 记录停止日志
+
+4. **检查运行状态（is_running方法）**
+   - 返回handle是否存在
+
+5. **立即运行一次（run_once方法）**
+   - 获取当前策略
+   - 创建RetentionManager并运行清理
+   - 返回CleanupResult
+   - 用于测试或手动触发
+
+6. **获取统计信息（get_stats方法）**
+   - 返回CleanupTaskStats（运行状态、间隔、保留天数）
+
+7. **清理任务统计（CleanupTaskStats）**
+   - 字段：running（是否运行）、cleanup_interval_hours（清理间隔小时）、retention_days（保留天数）
+   - 实现serde序列化
+
+8. **动态间隔更新**
+   - 每次tick时检查当前策略的间隔
+   - 如果间隔与ticker间隔不同，重建ticker
+   - 支持运行时更新清理间隔
+
+9. **main.rs集成**
+   - 在应用启动时克隆audit_retention_policy和audit_logger
+   - 创建RetentionCleanupTask并调用start()
+   - 使用futures::future::pending()保持任务运行
+   - 任务在应用生命周期内持续运行
+
+10. **10个单元测试**
+    - test_cleanup_task_creation：测试任务创建
+    - test_cleanup_task_start_stop：测试启动和停止
+    - test_cleanup_task_run_once_empty：测试空存储运行一次
+    - test_cleanup_task_run_once_with_entries：测试有条目时运行一次
+    - test_cleanup_task_get_stats：测试获取统计信息
+    - test_cleanup_task_stats_running：测试运行时统计
+    - test_cleanup_task_stats_serialization：测试统计序列化
+    - test_cleanup_task_double_start：测试重复启动（不panic）
+    - test_cleanup_task_stop_when_not_running：测试未运行时停止（不panic）
+    - test_cleanup_task_policy_update：测试策略更新后统计反映新值
+    - MockAuditLogStore：模拟存储用于测试
+
+**技术说明**：
+- 泛型设计：RetentionCleanupTask<S: AuditLogStore>支持任何AuditLogStore实现
+- 使用tokio::spawn创建后台任务
+- 使用tokio::time::interval实现定时触发
+- 使用Arc<Mutex<>>共享策略，支持运行时更新
+- 使用JoinHandle管理任务生命周期
+- 使用abort()停止任务
+- 使用tracing记录日志（info/warn/error）
+- 动态间隔检测：每次tick检查间隔变化
+- 复用V464的RetentionManager和CleanupResult
+- 复用V460的AuditLogStore trait
+
+**定时任务特性**：
+1. 自动清理 — 按配置间隔定期执行清理
+2. 动态间隔 — 运行时更新清理间隔自动生效
+3. 启动/停止 — 支持手动启动和停止任务
+4. 状态查询 — 检查任务是否正在运行
+5. 手动触发 — 支持立即运行一次清理
+6. 统计信息 — 查看任务状态和配置
+7. 错误处理 — 清理失败时记录错误日志
+8. 重复保护 — 避免重复启动任务
+9. 优雅停止 — 使用abort安全停止任务
+10. 应用集成 — 应用启动时自动启动任务
+
+**验收结果**：
+- 完成RetentionCleanupTask泛型结构体（3字段+6方法）
+- 完成start方法（后台任务+ticker+动态间隔+清理+日志）
+- 完成stop方法（abort+日志）
+- 完成is_running方法
+- 完成run_once方法（立即清理）
+- 完成get_stats方法（返回统计）
+- 完成CleanupTaskStats结构体（3字段+serde）
+- 完成动态间隔更新逻辑
+- 完成main.rs集成（启动任务）
+- 完成模块声明（mod.rs添加audit_retention_task）
+- 完成10个单元测试（全部通过）
+- 代码总行数约350行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D RetentionCleanupTask结构体 | 3字段+6方法+泛型 | ✅ |
+| 轨D start方法 | 后台任务+ticker+动态间隔 | ✅ |
+| 轨D stop方法 | abort+日志 | ✅ |
+| 轨D is_running方法 | 状态查询 | ✅ |
+| 轨D run_once方法 | 立即清理 | ✅ |
+| 轨D get_stats方法 | 返回统计 | ✅ |
+| 轨D CleanupTaskStats结构体 | 3字段+serde | ✅ |
+| 轨D 动态间隔更新 | 每次tick检查间隔变化 | ✅ |
+| 轨D main.rs集成 | 应用启动时启动任务 | ✅ |
+| 轨D 模块声明 | mod.rs添加audit_retention_task | ✅ |
+| 轨D 单元测试 | 10个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约350行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 3个代码文件修改(含TODO.md) | ✅ |
+
+### V466后续扩展（留给V467+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志归档实现**：实现实际的归档逻辑（写入JSON文件、S3等）
+- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）
+- [ ] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
+- [ ] **轨D 审计日志清理任务指标**：添加清理任务性能指标
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V466连续一百三十四次交付验证成功，V467继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
