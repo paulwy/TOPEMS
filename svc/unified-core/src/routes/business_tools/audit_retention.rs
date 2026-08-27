@@ -9,6 +9,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::routes::business_tools::audit_log::{AuditLogEntry, AuditLogStore, AuditLogStoreError};
+use crate::routes::business_tools::audit_archiver::{ArchiveConfig, AuditLogArchiver};
 
 // ===== Retention Policy Configuration =====
 
@@ -123,17 +124,37 @@ pub struct CleanupResult {
 pub struct RetentionManager<S: AuditLogStore> {
     policy: RetentionPolicy,
     store: S,
+    /// V469: Optional archiver for actual archival of old entries.
+    archiver: Option<AuditLogArchiver>,
 }
 
 impl<S: AuditLogStore> RetentionManager<S> {
     /// Create a new retention manager with the given policy and store.
     pub fn new(policy: RetentionPolicy, store: S) -> Self {
-        Self { policy, store }
+        let archiver = if policy.archive_enabled {
+            policy.archive_path.as_ref().map(|path| {
+                let config = ArchiveConfig::new(path.clone());
+                AuditLogArchiver::new(config)
+            })
+        } else {
+            None
+        };
+        Self { policy, store, archiver }
+    }
+
+    /// Create a new retention manager with an explicit archiver.
+    pub fn with_archiver(policy: RetentionPolicy, store: S, archiver: AuditLogArchiver) -> Self {
+        Self { policy, store, archiver: Some(archiver) }
     }
 
     /// Get the current retention policy.
     pub fn policy(&self) -> &RetentionPolicy {
         &self.policy
+    }
+
+    /// Get the archiver reference.
+    pub fn archiver(&self) -> Option<&AuditLogArchiver> {
+        self.archiver.as_ref()
     }
 
     /// Update the retention policy.
@@ -215,16 +236,19 @@ impl<S: AuditLogStore> RetentionManager<S> {
             return 0;
         }
 
-        let archive_path = match &self.policy.archive_path {
-            Some(path) => path,
+        let archiver = match &self.archiver {
+            Some(a) => a,
             None => return 0,
         };
 
-        // In a real implementation, this would write entries to a file
-        // or external storage. For now, we just count them.
-        // TODO: Implement actual archival logic (write to JSON file, S3, etc.)
-        let _ = archive_path;
-        entries.len()
+        // V469: Use AuditLogArchiver for actual archival
+        match archiver.archive_entries(entries).await {
+            Ok(count) => count,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to archive audit log entries");
+                0
+            }
+        }
     }
 
     /// Get statistics about audit log retention.
@@ -496,5 +520,58 @@ mod tests {
         manager.update_policy(new_policy);
 
         assert_eq!(manager.policy().retention_days, 60);
+    }
+
+    #[tokio::test]
+    async fn test_retention_manager_with_archiver() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let store = MockAuditLogStore::new();
+        let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
+        let config = ArchiveConfig::new(temp_dir.path());
+        let archiver = AuditLogArchiver::new(config);
+        let manager = RetentionManager::with_archiver(policy, store, archiver);
+
+        assert!(manager.archiver().is_some());
+        assert!(manager.policy().archive_enabled);
+    }
+
+    #[tokio::test]
+    async fn test_retention_manager_archiver_auto_create() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let store = MockAuditLogStore::new();
+        let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
+        let manager = RetentionManager::new(policy, store);
+
+        // When archive_enabled and archive_path are set, new() should auto-create archiver
+        assert!(manager.archiver().is_some());
+    }
+
+    #[tokio::test]
+    async fn test_retention_manager_no_archiver_when_disabled() {
+        let store = MockAuditLogStore::new();
+        let policy = RetentionPolicy::new(30); // archive_enabled = false
+        let manager = RetentionManager::new(policy, store);
+
+        assert!(manager.archiver().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_retention_manager_cleanup_with_archive() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let store = MockAuditLogStore::new();
+        store.add_entry(make_entry("1", "2020-01-01T00:00:00Z"));
+        store.add_entry(make_entry("2", "2020-01-02T00:00:00Z"));
+
+        let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
+        let manager = RetentionManager::new(policy, store);
+
+        let result = manager.cleanup().await;
+        assert!(result.success);
+        assert_eq!(result.deleted_count, 2);
+        assert_eq!(result.archived_count, 2);
+
+        // Verify archive file was created
+        let archives = manager.archiver().unwrap().list_archives().unwrap();
+        assert!(!archives.is_empty());
     }
 }
