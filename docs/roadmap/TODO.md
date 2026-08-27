@@ -20208,6 +20208,233 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V468 — 架构改进四轨并行第一百三十六次：轨D 审计日志归档API端点（ListArchivesQuery+CleanupArchivesQuery+ListArchivesResponse+CleanupArchivesResponse+ArchiveStatsResponse+列表端点+下载端点+删除端点+清理端点+统计端点+路由集成+11个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十六次交付 · 轨D 审计日志归档API端点 · 1个代码文件新建 + 1个代码文件修改 · 实现审计日志归档REST API，支持归档列表查询、文件下载、文件删除、旧归档清理和归档统计，提供完整的归档生命周期管理接口
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志归档API端点 | 添加REST API查看归档列表、下载归档文件和删除归档 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V469 | ⏸️ |
+
+### 轨D：审计日志归档API端点（ListArchivesQuery+CleanupArchivesQuery+ListArchivesResponse+CleanupArchivesResponse+ArchiveStatsResponse+列表端点+下载端点+删除端点+清理端点+统计端点+路由集成+11个单元测试）
+
+**实现内容**：实现审计日志归档REST API，支持归档列表查询、文件下载、文件删除、旧归档清理和归档统计，提供完整的归档生命周期管理接口
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_archive_api.rs`（审计日志归档API，约400行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_archive_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **列表查询参数（ListArchivesQuery）**
+   - 字段：limit（最大返回数量，可选）、date（按日期前缀过滤，可选）
+   - 支持serde反序列化
+
+2. **清理查询参数（CleanupArchivesQuery）**
+   - 字段：max_age_days（最大保留天数，默认365）
+   - 支持serde反序列化
+
+3. **列表响应（ListArchivesResponse）**
+   - 字段：total（总数）、archives（归档文件列表）
+   - 支持serde序列化
+
+4. **清理响应（CleanupArchivesResponse）**
+   - 字段：deleted_count（删除数量）
+   - 支持serde序列化
+
+5. **归档统计响应（ArchiveStatsResponse）**
+   - 字段：total_files（文件总数）、total_size（总大小字节）、archive_dir（归档目录）、compress（是否压缩）
+   - 支持serde序列化
+
+6. **列表端点（list_archives）**
+   - GET /api/business-tools/audit-logs/archives
+   - 查询参数：limit、date
+   - 调用archiver.list_archives()获取列表
+   - 按日期前缀过滤
+   - 应用limit限制
+   - 返回ListArchivesResponse
+
+7. **下载端点（download_archive）**
+   - GET /api/business-tools/audit-logs/archives/{filename}
+   - 路径参数：filename
+   - 文件名验证（防止路径遍历：禁止..、/、\）
+   - 检查文件是否存在
+   - 读取文件内容
+   - 根据扩展名设置Content-Type（.gz为application/gzip，其他为application/json）
+   - 设置Content-Disposition实现下载
+   - 返回文件内容
+
+8. **删除端点（delete_archive）**
+   - DELETE /api/business-tools/audit-logs/archives/{filename}
+   - 路径参数：filename
+   - 文件名验证（防止路径遍历）
+   - 检查文件是否存在
+   - 删除文件
+   - 返回204 No Content
+
+9. **清理端点（cleanup_archives）**
+   - POST /api/business-tools/audit-logs/archives/cleanup
+   - 查询参数：max_age_days（默认365）
+   - 调用archiver.cleanup_old_archives()删除旧归档
+   - 返回CleanupArchivesResponse
+
+10. **统计端点（get_archive_stats）**
+    - GET /api/business-tools/audit-logs/archives/stats
+    - 调用archiver.list_archives()获取文件列表
+    - 调用archiver.total_archive_size()获取总大小
+    - 返回ArchiveStatsResponse
+
+11. **辅助函数（get_archiver）**
+    - 从环境变量读取配置：
+      - AUDIT_ARCHIVE_DIR（默认audit_archives）
+      - AUDIT_ARCHIVE_COMPRESS（默认false）
+    - 创建ArchiveConfig和AuditLogArchiver
+    - TODO：将archiver配置存储到AppState
+
+12. **路由注册（audit_archive_routes）**
+    - 创建Router<AppState>
+    - 注册GET /business-tools/audit-logs/archives
+    - 注册GET /business-tools/audit-logs/archives/stats
+    - 注册POST /business-tools/audit-logs/archives/cleanup
+    - 注册GET/DELETE /business-tools/audit-logs/archives/{filename}
+    - 集成到business_tools_routes()中
+
+13. **11个单元测试**
+    - test_list_archives_query_deserialization：测试列表查询参数反序列化
+    - test_list_archives_query_default：测试默认查询参数
+    - test_cleanup_archives_query_default：测试默认清理参数
+    - test_cleanup_archives_query_custom：测试自定义清理参数
+    - test_list_archives_response_serialization：测试列表响应序列化
+    - test_cleanup_archives_response_serialization：测试清理响应序列化
+    - test_archive_stats_response_serialization：测试统计响应序列化
+    - test_filename_validation_valid：测试有效文件名
+    - test_filename_validation_invalid：测试无效文件名
+    - test_audit_archive_routes_creation：测试路由创建
+    - test_content_type_detection：测试内容类型检测
+
+**技术说明**：
+- 复用V467的ArchiveConfig、ArchiveFileInfo、AuditLogArchiver
+- 使用axum的Path、Query、State提取器
+- 使用axum的Response和IntoResponse实现文件下载
+- 使用axum的header模块设置Content-Type和Content-Disposition
+- 使用serde进行JSON序列化/反序列化
+- 路径遍历防护：验证文件名不包含..、/、\
+- 错误处理：文件不存在返回404，读取失败返回500
+- 环境变量配置：支持通过环境变量自定义归档目录和压缩选项
+
+**API端点**：
+- GET /api/business-tools/audit-logs/archives — 列出归档文件
+- GET /api/business-tools/audit-logs/archives/stats — 获取归档统计
+- POST /api/business-tools/audit-logs/archives/cleanup — 清理旧归档
+- GET /api/business-tools/audit-logs/archives/{filename} — 下载归档文件
+- DELETE /api/business-tools/audit-logs/archives/{filename} — 删除归档文件
+
+**环境变量**：
+- AUDIT_ARCHIVE_DIR — 归档目录（默认audit_archives）
+- AUDIT_ARCHIVE_COMPRESS — 是否启用压缩（默认false）
+
+**归档API特性**：
+1. 列表查询 — 查看所有归档文件及其信息
+2. 日期过滤 — 按日期前缀过滤归档文件
+3. 分页限制 — 支持limit参数限制返回数量
+4. 文件下载 — 下载归档文件（支持JSON和gzip）
+5. 文件删除 — 删除指定的归档文件
+6. 旧归档清理 — 按天数清理旧归档文件
+7. 归档统计 — 查看文件总数、总大小、目录等统计信息
+8. 路径遍历防护 — 验证文件名防止目录遍历攻击
+9. 错误处理 — 完善的HTTP状态码和错误信息
+10. 环境配置 — 支持通过环境变量自定义归档配置
+
+**验收结果**：
+- 完成ListArchivesQuery结构体（2可选字段+serde）
+- 完成CleanupArchivesQuery结构体（1字段+默认值+serde）
+- 完成ListArchivesResponse结构体（2字段+serde）
+- 完成CleanupArchivesResponse结构体（1字段+serde）
+- 完成ArchiveStatsResponse结构体（4字段+serde）
+- 完成列表端点（GET+过滤+limit）
+- 完成下载端点（GET+文件名验证+文件读取+Content-Type）
+- 完成删除端点（DELETE+文件名验证+文件删除+204）
+- 完成清理端点（POST+max_age_days）
+- 完成统计端点（GET+文件列表+总大小）
+- 完成辅助函数（get_archiver+环境变量）
+- 完成路由注册+集成（audit_archive_routes+merge）
+- 完成11个单元测试（全部通过）
+- 代码总行数约400行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D ListArchivesQuery | 2可选字段+serde | ✅ |
+| 轨D CleanupArchivesQuery | 1字段+默认值+serde | ✅ |
+| 轨D ListArchivesResponse | 2字段+serde | ✅ |
+| 轨D CleanupArchivesResponse | 1字段+serde | ✅ |
+| 轨D ArchiveStatsResponse | 4字段+serde | ✅ |
+| 轨D 列表端点 | GET+过滤+limit | ✅ |
+| 轨D 下载端点 | GET+文件名验证+下载 | ✅ |
+| 轨D 删除端点 | DELETE+文件名验证+204 | ✅ |
+| 轨D 清理端点 | POST+max_age_days | ✅ |
+| 轨D 统计端点 | GET+文件列表+总大小 | ✅ |
+| 轨D 辅助函数 | get_archiver+环境变量 | ✅ |
+| 轨D 路由注册+集成 | audit_archive_routes+merge | ✅ |
+| 轨D 单元测试 | 11个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约400行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V468后续扩展（留给V469+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志归档集成到RetentionManager**：将AuditLogArchiver集成到RetentionManager的archive_entries方法
+- [ ] **轨D 审计日志归档gzip压缩实现**：集成flate2实现真正的gzip压缩
+- [ ] **轨D 审计日志归档恢复功能**：支持从归档文件恢复审计日志
+- [ ] **轨D 审计日志归档AppState集成**：将archiver配置存储到AppState
+- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）
+- [ ] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
+- [ ] **轨D 审计日志清理任务指标**：添加清理任务性能指标
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V468连续一百三十六次交付验证成功，V469继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
