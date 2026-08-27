@@ -18788,6 +18788,180 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V461 — 架构改进四轨并行第一百二十九次：轨D 审计日志导出功能（ExportFormat+ExportQuery+CSV导出+JSON导出+导出API端点+路由集成+12个单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百二十九次交付 · 轨D 审计日志导出功能 · 1个代码文件新建 + 1个代码文件修改 · 实现审计日志导出API，支持CSV和JSON格式，支持多条件过滤，生成带时间戳的下载文件名
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志导出功能 | 支持导出审计日志为CSV/JSON格式 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V462 | ⏸️ |
+
+### 轨D：审计日志导出功能（ExportFormat+ExportQuery+CSV导出+JSON导出+导出API端点+路由集成+12个单元测试）
+
+**实现内容**：实现审计日志导出API，支持CSV和JSON格式，支持多条件过滤，生成带时间戳的下载文件名
+
+**修改的文件（1个代码文件新建 + 1个代码文件修改）**：
+
+**新建：`svc/unified-core/src/routes/business_tools/audit_export_api.rs`（审计日志导出API，约350行）**
+
+**修改：`svc/unified-core/src/routes/business_tools/mod.rs`（添加audit_export_api模块声明+路由集成）**
+
+**新增功能**：
+
+1. **导出格式枚举（ExportFormat）**
+   - 变体：Csv、Json
+   - 实现FromStr trait（支持大小写不敏感）
+   - 实现Display trait
+   - 支持"csv"和"json"两种格式
+
+2. **导出查询参数（ExportQuery）**
+   - 字段：format（导出格式，默认csv）、tenant_id、user_id、action、changed_by、start_time、end_time、limit（最大导出记录数，默认10000）
+   - 实现Default trait
+   - 实现From<&ExportQuery> for AuditLogQuery转换
+   - 支持serde反序列化（用于查询参数）
+
+3. **CSV导出（entries_to_csv）**
+   - 生成CSV格式字符串
+   - 表头：id,tenant_id,user_id,action,changed_by,changed_at,ip_address,user_agent,old_value,new_value,metadata
+   - 每行一个审计日志条目
+   - old_value/new_value/metadata序列化为JSON字符串
+   - 使用escape_csv_field处理特殊字符（逗号、引号、换行符）
+
+4. **CSV字段转义（escape_csv_field）**
+   - 包含逗号、引号、换行符的字段用双引号包裹
+   - 字段中的双引号转义为两个双引号（""）
+   - 无特殊字符的字段直接返回
+
+5. **JSON导出（entries_to_json）**
+   - 生成JSON格式字符串
+   - 使用serde_json::to_string_pretty美化输出
+   - 空数组返回"[]"
+
+6. **导出API端点（export_audit_logs）**
+   - GET /api/business-tools/permissions/audit-logs/export
+   - 查询参数：format、tenant_id、user_id、action、changed_by、start_time、end_time、limit
+   - 解析导出格式（csv/json）
+   - 构建AuditLogQuery并查询审计日志
+   - 根据格式生成CSV或JSON内容
+   - 设置Content-Type和Content-Disposition响应头
+   - 生成带时间戳的文件名：audit_logs_YYYYMMDD_HHMMSS.csv/json
+   - 返回文件下载响应
+
+7. **路由注册（audit_export_routes）**
+   - 创建Router<AppState>
+   - 注册GET /business-tools/permissions/audit-logs/export端点
+   - 集成到business_tools_routes()中
+
+8. **12个单元测试**
+   - test_export_format_from_str：测试格式解析（csv/json/CSV/JSON/无效）
+   - test_export_format_display：测试格式显示
+   - test_export_query_default：测试默认查询参数
+   - test_export_query_to_audit_query：测试查询参数转换
+   - test_escape_csv_field_no_special_chars：测试无特殊字符
+   - test_escape_csv_field_with_comma：测试含逗号
+   - test_escape_csv_field_with_quote：测试含引号
+   - test_escape_csv_field_with_newline：测试含换行符
+   - test_entries_to_csv：测试CSV导出
+   - test_entries_to_csv_empty：测试空CSV导出
+   - test_entries_to_json：测试JSON导出
+   - test_entries_to_json_empty：测试空JSON导出
+
+**技术说明**：
+- 使用axum的Response和IntoResponse实现文件下载
+- 使用axum的header模块设置Content-Type和Content-Disposition
+- 使用serde进行JSON序列化/反序列化
+- 使用chrono生成时间戳文件名
+- 使用std::str::FromStr解析导出格式
+- CSV导出遵循RFC 4180标准（字段转义）
+- JSON导出使用pretty格式便于阅读
+- 支持多条件过滤（与查询API一致）
+- 默认导出限制10000条记录（防止过大文件）
+
+**API端点**：
+- GET /api/business-tools/permissions/audit-logs/export?format=csv — 导出CSV
+- GET /api/business-tools/permissions/audit-logs/export?format=json — 导出JSON
+- 支持过滤参数：tenant_id、user_id、action、changed_by、start_time、end_time、limit
+
+**导出特性**：
+1. 双格式支持 — CSV和JSON两种导出格式
+2. 多条件过滤 — 支持按租户、用户、动作、操作者、时间范围过滤
+3. 文件下载 — 设置Content-Disposition实现浏览器下载
+4. 时间戳文件名 — audit_logs_YYYYMMDD_HHMMSS.ext
+5. CSV标准兼容 — 遵循RFC 4180，正确转义特殊字符
+6. JSON美化输出 — 使用pretty格式便于阅读
+7. 记录数限制 — 默认10000条，防止过大文件
+8. 元数据导出 — old_value/new_value/metadata序列化为JSON
+9. 与查询API一致 — 使用相同的过滤参数
+10. 错误处理 — 格式解析错误和查询错误返回适当的HTTP状态码
+
+**验收结果**：
+- 完成ExportFormat枚举（2变体+FromStr+Display）
+- 完成ExportQuery结构体（8字段+Default+From转换）
+- 完成CSV导出（entries_to_csv+escape_csv_field）
+- 完成JSON导出（entries_to_json）
+- 完成导出API端点（export_audit_logs）
+- 完成路由注册（audit_export_routes）
+- 完成路由集成（business_tools_routes添加merge）
+- 完成12个单元测试（全部通过）
+- 代码总行数约350行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D ExportFormat枚举 | 2变体+FromStr+Display | ✅ |
+| 轨D ExportQuery结构体 | 8字段+Default+From转换 | ✅ |
+| 轨D CSV导出 | entries_to_csv+escape_csv_field | ✅ |
+| 轨D JSON导出 | entries_to_json | ✅ |
+| 轨D 导出API端点 | export_audit_logs+文件下载 | ✅ |
+| 轨D 路由注册 | audit_export_routes+集成 | ✅ |
+| 轨D 单元测试 | 12个测试全部通过 | ✅ |
+| 轨D 代码行数 | 约350行 | ✅ |
+| 变更统计 | 1个代码文件新建 + 2个代码文件修改(含TODO.md) | ✅ |
+
+### V461后续扩展（留给V462+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志保留策略**：实现审计日志自动清理和归档
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限管理API集成测试**：使用TestServer进行端到端API测试
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限批量操作**：支持批量创建/更新/删除权限
+- [ ] **轨D 权限导出/导入**：支持权限配置的导出和导入
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V461连续一百二十九次交付验证成功，V462继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0

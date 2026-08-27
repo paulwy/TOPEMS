@@ -28,6 +28,9 @@ pub mod database_audit_log_store;
 // V458: Permission audit log integration
 pub mod audit_integration;
 
+// V461: Audit log export API
+pub mod audit_export_api;
+
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
@@ -760,6 +763,8 @@ pub fn business_tools_routes() -> Router<AppState> {
         .merge(permission_api::permission_routes())
         // V454: Audit log routes
         .merge(audit_api::audit_log_routes())
+        // V461: Audit log export routes
+        .merge(audit_export_api::audit_export_routes())
 }
 
 // ===== Helper Extensions for BusinessRequest =====
