@@ -204,40 +204,20 @@ impl AuditLogArchiver {
         Ok(())
     }
 
-    /// Write a gzip-compressed file.
+    /// V472: Write a gzip-compressed file using flate2.
     fn write_compressed_file(&self, path: &Path, data: &[u8]) -> Result<(), ArchiveError> {
-        use std::io::Read;
+        // Compress data using flate2
+        let compressed = compress_gzip(data)?;
 
-        // For simplicity, we write uncompressed data to a temp file then compress.
-        // In a production implementation, we'd use a streaming gzip encoder.
-        let temp_path = path.with_extension("tmp");
+        // Write compressed file (append mode)
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
-            .open(&temp_path)
+            .open(path)
             .map_err(|e| ArchiveError::Io(e.to_string()))?;
 
-        file.write_all(data)
+        file.write_all(&compressed)
             .map_err(|e| ArchiveError::Io(e.to_string()))?;
-        file.write_all(b"\n")
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
-        drop(file);
-
-        // Read temp file and compress
-        let mut temp_file = fs::File::open(&temp_path)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
-        let mut contents = Vec::new();
-        temp_file.read_to_end(&mut contents)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
-        drop(temp_file);
-
-        // Write compressed file
-        let compressed = compress_gzip(&contents)?;
-        fs::write(path, compressed)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
-
-        // Clean up temp file
-        let _ = fs::remove_file(&temp_path);
 
         Ok(())
     }
@@ -359,13 +339,18 @@ fn extract_date(timestamp: &str) -> String {
         .to_string()
 }
 
-/// Simple gzip compression using the flate2 library if available.
-/// Falls back to storing data uncompressed with a gzip header.
+/// V472: Gzip compression using the flate2 library.
 fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
-    // In a real implementation, we'd use flate2::write::GzEncoder.
-    // For now, we return the data as-is (no compression).
-    // TODO: Integrate flate2 for actual gzip compression.
-    Ok(data.to_vec())
+    use flate2::write::GzEncoder;
+    use flate2::Compression;
+    use std::io::Write;
+
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(data)
+        .map_err(|e| ArchiveError::Compression(format!("Failed to write to gzip encoder: {}", e)))?;
+    let compressed = encoder.finish()
+        .map_err(|e| ArchiveError::Compression(format!("Failed to finish gzip encoding: {}", e)))?;
+    Ok(compressed)
 }
 
 // ===== Tests =====
@@ -535,8 +520,38 @@ mod tests {
 
     #[test]
     fn test_compress_gzip() {
-        let data = b"test data";
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+
+        let data = b"test data for gzip compression test";
         let compressed = compress_gzip(data).unwrap();
-        assert_eq!(compressed, data); // Fallback returns data as-is
+
+        // Compressed data should be different from original
+        assert_ne!(compressed.as_slice(), &data[..]);
+
+        // Should be able to decompress back to original
+        let mut decoder = GzDecoder::new(&compressed[..]);
+        let mut decompressed = Vec::new();
+        decoder.read_to_end(&mut decompressed).unwrap();
+        assert_eq!(decompressed, data);
+    }
+
+    #[test]
+    fn test_compress_gzip_large_data() {
+        use flate2::read::GzDecoder;
+        use std::io::Read;
+
+        // Create larger data to test compression ratio
+        let data: Vec<u8> = (0..10000).map(|i| (i % 256) as u8).collect();
+        let compressed = compress_gzip(&data).unwrap();
+
+        // Compressed should be smaller for repetitive data
+        assert!(compressed.len() < data.len());
+
+        // Should decompress correctly
+        let mut decoder = GzDecoder::new(&compressed[..]);
+        let mut decompressed = Vec::new();
+        decoder.read_to_end(&mut decompressed).unwrap();
+        assert_eq!(decompressed, data);
     }
 }
