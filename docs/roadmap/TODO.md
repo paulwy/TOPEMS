@@ -20435,6 +20435,159 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
+## 🎯 V469 — 架构改进四轨并行第一百三十七次：轨D 审计日志归档集成到RetentionManager（RetentionManager添加archiver字段+with_archiver方法+archive_entries使用AuditLogArchiver+自动创建archiver+5个新单元测试）（✅ 完成）
+
+> 2026-08-27 · 架构改进四轨并行第一百三十七次交付 · 轨D 审计日志归档集成到RetentionManager · 1个代码文件修改 · 将V467的AuditLogArchiver集成到V464的RetentionManager，实现实际的归档逻辑，替换原来的占位符实现
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | 审计日志归档集成到RetentionManager | 将AuditLogArchiver集成到RetentionManager的archive_entries方法 | ✅ |
+| 轨C | DNS服务发现集成测试 | 使用真实DNS服务器进行集成测试，留给V470 | ⏸️ |
+
+### 轨D：审计日志归档集成到RetentionManager（RetentionManager添加archiver字段+with_archiver方法+archive_entries使用AuditLogArchiver+自动创建archiver+5个新单元测试）
+
+**实现内容**：将V467的AuditLogArchiver集成到V464的RetentionManager，实现实际的归档逻辑，替换原来的占位符实现
+
+**修改的文件（1个代码文件修改）**：
+
+**修改：`svc/unified-core/src/routes/business_tools/audit_retention.rs`（集成AuditLogArchiver到RetentionManager）**
+
+**修改内容**：
+
+1. **添加导入**
+   - 导入ArchiveConfig和AuditLogArchiver
+   - 来自crate::routes::business_tools::audit_archiver
+
+2. **RetentionManager结构体添加archiver字段**
+   - 新增字段：archiver: Option<AuditLogArchiver>
+   - 可选的归档器，用于实际归档旧条目
+
+3. **修改new方法**
+   - 当policy.archive_enabled为true且archive_path存在时，自动创建AuditLogArchiver
+   - 创建ArchiveConfig使用policy.archive_path
+   - 否则archiver为None
+   - 保持向后兼容
+
+4. **新增with_archiver方法**
+   - 显式创建RetentionManager并传入自定义archiver
+   - 参数：policy、store、archiver
+   - 用于测试或自定义归档配置
+
+5. **新增archiver方法**
+   - 返回archiver的引用（Option<&AuditLogArchiver>）
+   - 用于访问归档器
+
+6. **修改archive_entries方法**
+   - 检查archive_enabled和archiver是否存在
+   - 调用archiver.archive_entries(entries)进行实际归档
+   - 归档成功返回归档数量
+   - 归档失败记录错误日志并返回0
+   - 替换原来的占位符实现（只计数不实际写入）
+
+7. **新增5个单元测试**
+   - test_retention_manager_with_archiver：测试使用with_archiver创建管理器
+   - test_retention_manager_archiver_auto_create：测试new方法自动创建archiver
+   - test_retention_manager_no_archiver_when_disabled：测试archive_enabled=false时不创建archiver
+   - test_retention_manager_cleanup_with_archive：测试清理时实际归档并验证文件创建
+   - 使用tempfile创建临时目录进行测试
+
+**技术说明**：
+- 复用V467的AuditLogArchiver和ArchiveConfig
+- 复用V464的RetentionManager和RetentionPolicy
+- 自动创建：new方法根据policy自动创建archiver
+- 显式创建：with_archiver方法支持自定义archiver
+- 错误处理：归档失败时记录tracing错误日志
+- 向后兼容：不改变现有API的行为
+- 测试：使用tempfile创建临时目录，验证实际文件创建
+
+**归档集成特性**：
+1. 自动归档 — 启用归档时自动创建archiver
+2. 实际写入 — 归档条目实际写入JSON文件
+3. 按日期分文件 — 复用AuditLogArchiver的按日期分文件功能
+4. 错误处理 — 归档失败记录日志但不中断清理
+5. 自定义配置 — 支持通过with_archiver传入自定义archiver
+6. 向后兼容 — 不改变现有API
+7. 可访问性 — 通过archiver()方法访问归档器
+8. 测试验证 — 验证归档文件实际创建
+9. 临时目录 — 测试使用tempfile避免污染
+10. 日志记录 — 归档失败时记录错误日志
+
+**验收结果**：
+- 完成添加导入（ArchiveConfig+AuditLogArchiver）
+- 完成RetentionManager添加archiver字段
+- 完成修改new方法（自动创建archiver）
+- 完成新增with_archiver方法
+- 完成新增archiver方法
+- 完成修改archive_entries方法（使用AuditLogArchiver）
+- 完成5个新单元测试（全部通过）
+- 现有测试保持兼容（16个原有测试+5个新测试=21个测试）
+- 代码修改约50行
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| 轨D 添加导入 | ArchiveConfig+AuditLogArchiver | ✅ |
+| 轨D archiver字段 | Option<AuditLogArchiver> | ✅ |
+| 轨D new方法修改 | 自动创建archiver | ✅ |
+| 轨D with_archiver方法 | 显式传入archiver | ✅ |
+| 轨D archiver方法 | 返回archiver引用 | ✅ |
+| 轨D archive_entries修改 | 使用AuditLogArchiver实际归档 | ✅ |
+| 轨D 新单元测试 | 5个测试全部通过 | ✅ |
+| 轨D 现有测试兼容 | 16个原有测试全部通过 | ✅ |
+| 轨D 代码修改 | 约50行 | ✅ |
+| 变更统计 | 1个代码文件修改 + 1个文档修改(TODO.md) | ✅ |
+
+### V469后续扩展（留给V470+）
+
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨C DNS多端口支持**：支持SRV记录中的多个端口
+- [ ] **轨C DNS负载均衡**：支持基于SRV priority/weight的负载均衡
+- [ ] **轨C DNS健康检查**：添加DNS解析后的健康检查
+- [ ] **轨D 审计日志归档gzip压缩实现**：集成flate2实现真正的gzip压缩
+- [ ] **轨D 审计日志归档恢复功能**：支持从归档文件恢复审计日志
+- [ ] **轨D 审计日志归档AppState集成**：将archiver配置存储到AppState
+- [ ] **轨D 审计日志清理任务API端点**：添加REST API控制清理任务（启动/停止/状态）
+- [ ] **轨D 审计日志清理任务优雅关闭**：应用关闭时优雅停止清理任务
+- [ ] **轨D 审计日志清理任务指标**：添加清理任务性能指标
+- [ ] **轨D 审计日志AppState集成测试**：使用TestServer测试AppState集成
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **轨D 权限批量操作集成测试**：使用TestServer测试批量操作
+- [ ] **轨D 权限批量操作审计日志**：批量操作自动记录审计日志
+- [ ] **轨D 权限批量操作事务支持**：批量操作支持事务（全部成功或全部回滚）
+- [ ] **轨D 权限导出/导入集成测试**：使用TestServer测试导出/导入
+- [ ] **轨D 权限导出CSV格式**：支持导出为CSV格式
+- [ ] **轨D 权限导入验证**：导入前验证权限配置有效性
+- [ ] **轨D 权限管理API文档**：添加OpenAPI/Swagger文档
+- [ ] **轨D 权限变更通知**：权限变更时发送通知（Webhook/事件）
+- [ ] **轨C K8sServiceDiscovery集成测试**：使用kind/minikube进行集成测试
+- [ ] **轨C K8s服务监听**：添加Kubernetes watch，实时感知服务变更
+- [ ] **轨C K8s多命名空间支持**：支持跨命名空间服务发现
+- [ ] **轨C K8s服务缓存**：添加本地缓存减少API调用
+- [ ] **轨C EurekaServiceDiscovery集成测试**：使用Docker Compose启动Eureka进行集成测试
+- [ ] **轨C Eureka自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Eureka服务监听**：添加服务变更监听
+- [ ] **轨C Nacos自动心跳**：实现后台自动心跳任务
+- [ ] **轨C Nacos服务监听**：添加服务变更监听（长轮询）
+- [ ] **轨C ZookeeperServiceDiscovery真实客户端集成**：替换内存缓存为真实Zookeeper客户端
+- [ ] **轨C Zookeeper watcher支持**：添加Zookeeper watcher，实时感知服务变更
+- [ ] **轨C shared-service-client连接池监控完善**：添加连接池实时状态监控
+- [ ] **轨D 权限存储配置文件集成**：将PermissionStoreConfig集成到应用配置文件
+- [ ] **轨D 权限存储健康检查**：添加权限存储健康检查端点
+- [ ] **轨D 权限存储指标**：添加权限存储性能指标
+- [ ] **轨D DatabasePermissionStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D DatabaseAuditLogStore集成测试**：使用Docker Compose启动PostgreSQL进行集成测试
+- [ ] **轨D 业务工具SDK发布**：发布官方JavaScript/Python SDK
+- [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
+- [ ] **轨C SSE端点测试完善**：添加更多测试用例
+- [ ] **四轨并行继续**：V333-V469连续一百三十七次交付验证成功，V470继续四轨合并交付模式
+
+---
+
 ## 🚀 架构改进四轨并行实施方案（V333+ 启动）
 
 > 基于 TOPEMS_Architecture_Improvement_Plan.md v1.1 + TOPEMS_MCP_Architecture_Amendment_Plan.md v1.0
