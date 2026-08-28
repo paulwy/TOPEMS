@@ -526,7 +526,7 @@ fn default_invalidation_rules() -> Vec<CacheInvalidationRuleGql> {
 static CACHE_INVALIDATION_RULES: std::sync::OnceLock<Vec<CacheInvalidationRuleGql>> =
     std::sync::OnceLock::new();
 
-fn cache_invalidation_rules() -> &'static Vec<CacheInvalidationRuleGql> {
+pub fn cache_invalidation_rules() -> &'static Vec<CacheInvalidationRuleGql> {
     CACHE_INVALIDATION_RULES.get_or_init(default_invalidation_rules)
 }
 
@@ -643,7 +643,7 @@ fn default_prefetch_rules() -> Vec<QueryPrefetchRuleGql> {
 
 static PREFETCH_RULES: std::sync::OnceLock<Vec<QueryPrefetchRuleGql>> = std::sync::OnceLock::new();
 
-fn prefetch_rules() -> &'static Vec<QueryPrefetchRuleGql> {
+pub fn prefetch_rules() -> &'static Vec<QueryPrefetchRuleGql> {
     PREFETCH_RULES.get_or_init(default_prefetch_rules)
 }
 
