@@ -1,3 +1,13 @@
+# ============================================================================
+# ⚠️  注意：本项目主要使用 lefthook 管理 Git hooks（见 lefthook.yml）
+# ============================================================================
+# lefthook 在 package.json 的 prepare 脚本中自动安装，是项目的首选工具。
+# 本文件（pre-commit）作为备选方案保留，需手动安装：
+#   pip install pre-commit && pre-commit install
+#
+# 两者功能有重叠（large-files、sensitive-info 等已在 lefthook.yml 中配置）。
+# 新贡献者请优先使用 lefthook，无需额外安装 Python 工具。
+# ============================================================================
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

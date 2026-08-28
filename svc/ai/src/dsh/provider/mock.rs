@@ -10,11 +10,20 @@ use super::trait_::{
 };
 
 /// Mock Provider
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct MockProvider {
     config: ProviderConfig,
     /// 固定响应内容
     fixed_response: String,
+}
+
+impl Default for MockProvider {
+    fn default() -> Self {
+        Self {
+            config: ProviderConfig::default(),
+            fixed_response: "This is a mock response from DSH MockProvider.".to_string(),
+        }
+    }
 }
 
 impl MockProvider {

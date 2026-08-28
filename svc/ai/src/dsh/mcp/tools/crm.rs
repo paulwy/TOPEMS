@@ -8,7 +8,6 @@
 //! 当前版本使用 mock 数据，后续版本将通过 shared-service-client 连接真实 CRM API。
 
 use serde_json::{json, Value};
-use std::sync::Arc;
 
 use topems_shared_mcp::protocol::{McpContent, McpToolResult};
 use topems_shared_mcp::schema::SchemaBuilder;

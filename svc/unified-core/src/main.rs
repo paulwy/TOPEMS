@@ -529,7 +529,7 @@ async fn main() -> anyhow::Result<()> {
         task.start();
         // Keep the task running for the lifetime of the application
         // The task will run until the application shuts down
-        futures::future::pending::<()>().await;
+        std::future::pending::<()>().await;
     });
 
     // Spawn WebSocket event bridge (Redis -> WebSocket)

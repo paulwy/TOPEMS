@@ -479,3 +479,115 @@ pub async fn record_sync_log(
     .await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_outbound_to_shipping_request_serialization() {
+        let request = OutboundToShippingRequest {
+            outbound_order_id: "OUT001".to_string(),
+            customer_id: Some("CUST001".to_string()),
+            remarks: Some("加急发货".to_string()),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["outbound_order_id"], "OUT001");
+        assert_eq!(json["customer_id"], "CUST001");
+        assert_eq!(json["remarks"], "加急发货");
+    }
+
+    #[test]
+    fn test_outbound_to_shipping_request_minimal() {
+        let request = OutboundToShippingRequest {
+            outbound_order_id: "OUT002".to_string(),
+            customer_id: None,
+            remarks: None,
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["outbound_order_id"], "OUT002");
+        assert!(json["customer_id"].is_null());
+        assert!(json["remarks"].is_null());
+    }
+
+    #[test]
+    fn test_outbound_to_shipping_request_deserialize() {
+        let json = r#"{
+            "outbound_order_id": "OUT003",
+            "customer_id": "CUST002",
+            "remarks": "测试同步"
+        }"#;
+        let request: OutboundToShippingRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.outbound_order_id, "OUT003");
+        assert_eq!(request.customer_id.as_deref(), Some("CUST002"));
+        assert_eq!(request.remarks.as_deref(), Some("测试同步"));
+    }
+
+    #[test]
+    fn test_shipping_sync_result_serialization() {
+        let result = ShippingSyncResult {
+            success: true,
+            message: "同步成功".to_string(),
+            outbound_order_id: Some(Uuid::nil()),
+            shipping_order_id: Some(Uuid::nil()),
+            shipping_order_number: Some("SHP001".to_string()),
+        };
+        let json = serde_json::to_value(&result).unwrap();
+        assert_eq!(json["success"], true);
+        assert_eq!(json["message"], "同步成功");
+        assert_eq!(json["shipping_order_number"], "SHP001");
+    }
+
+    #[test]
+    fn test_shipping_sync_result_failure() {
+        let result = ShippingSyncResult {
+            success: false,
+            message: "同步失败".to_string(),
+            outbound_order_id: None,
+            shipping_order_id: None,
+            shipping_order_number: None,
+        };
+        let json = serde_json::to_value(&result).unwrap();
+        assert_eq!(json["success"], false);
+        assert_eq!(json["message"], "同步失败");
+        assert!(json["outbound_order_id"].is_null());
+        assert!(json["shipping_order_id"].is_null());
+        assert!(json["shipping_order_number"].is_null());
+    }
+
+    #[test]
+    fn test_sync_logs_request_deserialize() {
+        let query = "sync_type=outbound&status=success&source_module=wms";
+        let params: SyncLogsRequest = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.sync_type.as_deref(), Some("outbound"));
+        assert_eq!(params.status.as_deref(), Some("success"));
+        assert_eq!(params.source_module.as_deref(), Some("wms"));
+    }
+
+    #[test]
+    fn test_sync_logs_request_default() {
+        let query = "";
+        let params: SyncLogsRequest = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.sync_type.is_none());
+        assert!(params.status.is_none());
+        assert!(params.source_module.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_inbound_from_scm_request_serialization() {
+        let request = InboundFromScmRequest {
+            purchase_order_id: "PO001".to_string(),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["purchase_order_id"], "PO001");
+    }
+
+    #[test]
+    fn test_inbound_from_scm_request_deserialize() {
+        let json = r#"{"purchase_order_id": "PO002"}"#;
+        let request: InboundFromScmRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.purchase_order_id, "PO002");
+    }
+}

@@ -35,6 +35,7 @@ bigdecimal.workspace = true
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }
 rust_decimal = "1.35"
+serde_urlencoded = "0.7"
 
 [[bin]]
 name = "topems-wms"

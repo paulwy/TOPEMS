@@ -14,37 +14,76 @@ use super::event_types::{
     WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
     WmsWarehouseTransferCompletedPayload,
 };
+use super::stream_publisher::StreamEventPublisher;
 use redis::Client;
 use serde::Serialize;
 use std::env;
 use tracing::info;
 
 /// Redis 事件发布者
+///
+/// 支持两种发布模式（通过环境变量 `EVENT_BUS_MODE` 切换）：
+/// - `pubsub`（默认）：使用 Redis Pub/Sub（PUBLISH 命令）
+/// - `stream`：使用 Redis Stream（XADD 命令，消息持久化，支持消费者组）
 pub struct EventPublisher {
     redis_client: Client,
     service_name: String,
+    /// 是否使用 Redis Stream 模式
+    use_stream: bool,
+    /// Stream 模式下的发布器（惰性初始化）
+    stream_publisher: Option<StreamEventPublisher>,
 }
 
 impl EventPublisher {
     /// 创建新的事件发布者
+    ///
+    /// 通过环境变量 `EVENT_BUS_MODE` 选择发布模式：
+    /// - 未设置 或 `pubsub`：使用 Redis Pub/Sub（默认，向后兼容）
+    /// - `stream`：使用 Redis Stream（消息持久化，支持消费者组）
     pub fn new(service_name: &str) -> EventResult<Self> {
         let redis_url =
             env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
 
         let redis_client = Client::open(redis_url)?;
 
+        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "pubsub".to_string());
+        let use_stream = bus_mode.eq_ignore_ascii_case("stream");
+
+        let stream_publisher = if use_stream {
+            Some(StreamEventPublisher::new(service_name)?)
+        } else {
+            None
+        };
+
         Ok(Self {
             redis_client,
             service_name: service_name.to_string(),
+            use_stream,
+            stream_publisher,
         })
     }
 
     /// 发布事件（自动携带当前 trace context）
+    ///
+    /// 根据 `EVENT_BUS_MODE` 环境变量自动选择发布模式：
+    /// - `pubsub`：使用 Redis PUBLISH 命令
+    /// - `stream`：使用 Redis XADD 命令（Stream 持久化）
     pub async fn publish_event(
         &self,
         event_type: EventType,
         payload: impl Serialize,
     ) -> EventResult<()> {
+        // Stream 模式：使用 Redis Stream（XADD）
+        if self.use_stream {
+            if let Some(stream_publisher) = &self.stream_publisher {
+                stream_publisher
+                    .publish_event(event_type, payload)
+                    .await?;
+                return Ok(());
+            }
+        }
+
+        // Pub/Sub 模式（默认）
         let payload_json = serde_json::to_value(&payload)?;
         let trace_id: Option<String> = None;
         let event =

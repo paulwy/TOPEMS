@@ -348,3 +348,7 @@ scripts/fix-mixed-import-type.cjs
 scripts/fix-unused-usequery.cjs
 scripts/rename-filenames.cjs
 scripts/rewrite-renamed-imports.cjs
+
+# 构建/测试产物目录（P0 整合补充）
+artifacts/
+test-results/

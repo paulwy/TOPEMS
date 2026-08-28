@@ -1661,3 +1661,114 @@ pub async fn reject_stock_take(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_stock_take_pagination_params_deserialize() {
+        let query = "search=ST001&status=pending";
+        let params: StockTakePaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("ST001"));
+        assert_eq!(params.status.as_deref(), Some("pending"));
+    }
+
+    #[test]
+    fn test_stock_take_pagination_params_default() {
+        let query = "";
+        let params: StockTakePaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.warehouse_id.is_none());
+    }
+
+    #[test]
+    fn test_stock_take_pagination_params_only_status() {
+        let query = "status=completed";
+        let params: StockTakePaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.status.as_deref(), Some("completed"));
+        assert!(params.search.is_none());
+    }
+
+    #[test]
+    fn test_count_item_request_serialization() {
+        let request = CountItemRequest {
+            item_id: Uuid::nil(),
+            counted_quantity: 95.0,
+            discrepancy_reason: Some("损耗".to_string()),
+            remarks: Some("盘点完成".to_string()),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["counted_quantity"], 95.0);
+        assert_eq!(json["discrepancy_reason"], "损耗");
+        assert_eq!(json["remarks"], "盘点完成");
+    }
+
+    #[test]
+    fn test_count_item_request_minimal() {
+        let request = CountItemRequest {
+            item_id: Uuid::nil(),
+            counted_quantity: 100.0,
+            discrepancy_reason: None,
+            remarks: None,
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["counted_quantity"], 100.0);
+        assert!(json["discrepancy_reason"].is_null());
+        assert!(json["remarks"].is_null());
+    }
+
+    #[test]
+    fn test_count_item_request_deserialize() {
+        let json = r#"{
+            "item_id": "00000000-0000-0000-0000-000000000000",
+            "counted_quantity": 80.0,
+            "discrepancy_reason": "丢失",
+            "remarks": "差异较大"
+        }"#;
+        let request: CountItemRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.counted_quantity, 80.0);
+        assert_eq!(request.discrepancy_reason.as_deref(), Some("丢失"));
+        assert_eq!(request.remarks.as_deref(), Some("差异较大"));
+    }
+
+    #[test]
+    fn test_approval_request_deserialize() {
+        let json = r#"{
+            "operator": "admin",
+            "comment": "同意盘点结果",
+            "discrepancy_threshold": 5.0
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "admin");
+        assert_eq!(request.comment.as_deref(), Some("同意盘点结果"));
+        assert_eq!(request.discrepancy_threshold, Some(5.0));
+    }
+
+    #[test]
+    fn test_approval_request_no_comment() {
+        let json = r#"{
+            "operator": "manager"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "manager");
+        assert!(request.comment.is_none());
+        assert!(request.discrepancy_threshold.is_none());
+    }
+
+    #[test]
+    fn test_approval_request_with_threshold() {
+        let json = r#"{
+            "operator": "auditor",
+            "comment": "差异在阈值内",
+            "discrepancy_threshold": 10.0
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "auditor");
+        assert_eq!(request.comment.as_deref(), Some("差异在阈值内"));
+        assert_eq!(request.discrepancy_threshold, Some(10.0));
+    }
+}

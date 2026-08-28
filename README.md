@@ -177,6 +177,19 @@ topems/
 
 > **默认部署方式：本地进程（无需 Docker）。** Docker 仅作为可选的容器化打包方案。
 
+### 命令入口分工
+
+项目提供四套命令入口，各有定位，按需使用：
+
+| 入口 | 定位 | 适用场景 | 典型命令 |
+|------|------|---------|---------|
+| **`scripts/topems.sh`** | **主入口**（零依赖 Bash） | 日常开发：服务启停、构建、测试、清理 | `./scripts/topems.sh start all`、`build`、`test`、`clean` |
+| **`cli/` (Python CLI)** | 高级运维工具（需 pip install） | 数据库管理、系统诊断、Schema 防御 | `topems db migrate`、`doctor`、`db backup` |
+| **`Makefile`** | Rust 专项快捷命令 | SQLx 缓存、cargo check、覆盖率基线 | `make sqlx-prepare`、`make check-offline` |
+| **`package.json` scripts** | 前端专属命令 | 前端开发、构建、lint、格式检查、设计系统审计 | `pnpm dev:web`、`build`、`lint`、`format` |
+
+> **原则**：日常开发优先用 `topems.sh`；前端专属操作用 `pnpm`；Rust 专项用 `make`；数据库/诊断用 Python CLI。
+
 ### 系统要求
 
 - **前端**: Node.js 20+, pnpm 8+
@@ -631,8 +644,8 @@ python3 -m topems_cli db migrate
 | `scripts/dev/health-check.sh` | 健康检查 | `./scripts/dev/health-check.sh` |
 | `scripts/dev/verify-route-matrix.sh` | 路由验证 | `./scripts/dev/verify-route-matrix.sh` |
 | `scripts/deploy/deploy.sh` | 部署脚本 | `./scripts/deploy/deploy.sh deploy` |
-| `deploy/scripts/install.sh` | Linux 服务器安装 | `./deploy/scripts/install.sh` |
-| `deploy/scripts/setup-db.sh` | 数据库设置 | `./deploy/scripts/setup-db.sh` |
+| `scripts/deploy/install.sh` | Linux 服务器安装 | `./scripts/deploy/install.sh` |
+| `scripts/deploy/setup-db.sh` | 数据库设置 | `./scripts/deploy/setup-db.sh` |
 
 详细说明请参考各脚本的 `--help` 输出。
 

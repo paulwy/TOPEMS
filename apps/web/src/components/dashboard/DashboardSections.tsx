@@ -48,7 +48,8 @@ export const MODULE_SECTIONS = [
     key: 'intelligent',
     title: i18n.t('shared.dashboard_sections.k3'),
     collapsedLimit: 6,
-    moduleKeys: ['ai', 'bi', 'analytics', 'report', 'search', 'portal', 'gis', 'mobile', 'lowcode'],
+    moduleKeys: ['ai', 'bi', 'analytics', 'report', 'search', 'portal', 'gis', 'mobile'],
+    // [V2026.08 已移除] lowcode 空壳占位服务
   },
 ] as const;
 

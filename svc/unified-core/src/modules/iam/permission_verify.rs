@@ -194,3 +194,80 @@ pub async fn get_my_permissions(State(state): State<AppState>) -> Json<serde_jso
         "code": 200,
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_verify_permission_request_deserialization() {
+        let json = r#"{"permission": "iam:users_read"}"#;
+        let req: VerifyPermissionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.permission, "iam:users_read");
+        assert!(req.resource_id.is_none());
+        assert!(req.resource_type.is_none());
+    }
+
+    #[test]
+    fn test_verify_permission_request_with_resource() {
+        let json = r#"{"permission": "crm:customers_read", "resource_id": "550e8400-e29b-41d4-a716-446655440000", "resource_type": "customer"}"#;
+        let req: VerifyPermissionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.permission, "crm:customers_read");
+        assert!(req.resource_id.is_some());
+        assert_eq!(req.resource_type.as_deref(), Some("customer"));
+    }
+
+    #[test]
+    fn test_verify_permission_response_serialization_granted() {
+        let resp = VerifyPermissionResponse {
+            has_permission: true,
+            permission: "iam:users_read".to_string(),
+            message: None,
+        };
+        let json = serde_json::to_value(&resp).unwrap();
+        assert_eq!(json["has_permission"], true);
+        assert_eq!(json["permission"], "iam:users_read");
+        assert!(json["message"].is_null());
+    }
+
+    #[test]
+    fn test_verify_permission_response_serialization_denied() {
+        let resp = VerifyPermissionResponse {
+            has_permission: false,
+            permission: "iam:users_delete".to_string(),
+            message: Some("无权访问".to_string()),
+        };
+        let json = serde_json::to_value(&resp).unwrap();
+        assert_eq!(json["has_permission"], false);
+        assert_eq!(json["message"], "无权访问");
+    }
+
+    #[test]
+    fn test_verify_multiple_permissions_request() {
+        let json = r#"{"permissions": ["iam:users_read", "iam:users_write"]}"#;
+        let req: VerifyMultiplePermissionsRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.permissions.len(), 2);
+        assert_eq!(req.permissions[0], "iam:users_read");
+        assert_eq!(req.permissions[1], "iam:users_write");
+    }
+
+    #[test]
+    fn test_verify_multiple_permissions_empty() {
+        let json = r#"{"permissions": []}"#;
+        let req: VerifyMultiplePermissionsRequest = serde_json::from_str(json).unwrap();
+        assert!(req.permissions.is_empty());
+    }
+
+    #[test]
+    fn test_check_resource_permission_request() {
+        let json = r#"{
+            "user_id": "550e8400-e29b-41d4-a716-446655440000",
+            "resource_type": "customer",
+            "resource_id": "660e8400-e29b-41d4-a716-446655440001",
+            "action": "read"
+        }"#;
+        let req: CheckResourcePermissionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.resource_type, "customer");
+        assert_eq!(req.action, "read");
+    }
+}

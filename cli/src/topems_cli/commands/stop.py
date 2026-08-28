@@ -1,4 +1,9 @@
-"""stop 命令 - 停止服务"""
+"""stop 命令 - 停止服务
+
+与 scripts/topems.sh 的 stop 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh stop（零依赖）。
+本命令提供 --module 按模块停止和 rich 输出，作为可选替代。
+"""
 
 import click
 from rich.console import Console

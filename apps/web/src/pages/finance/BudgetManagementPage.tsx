@@ -23,7 +23,7 @@ import { TrendingUp, Trash2, DollarSign, Calendar, Settings } from 'lucide-react
 import { useQuery } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { getBudgetSchema } from '@/schemas/finance/budget';
-import { budgetApi } from '@/api/erp';
+import { budgetApi } from '@/api/finance/budget';
 import type { Budget } from '@/api/finance';
 import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';

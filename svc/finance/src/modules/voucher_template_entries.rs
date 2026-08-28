@@ -346,3 +346,53 @@ pub async fn reorder_entries(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add_template_entry_request_deserialize() {
+        let json = r#"{
+            "description": "借方分录",
+            "account_code": "1001",
+            "direction": "debit",
+            "amount_formula": "amount * 0.1",
+            "sort_order": 1
+        }"#;
+        let request: AddTemplateEntryRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.description.as_deref(), Some("借方分录"));
+        assert_eq!(request.account_code, "1001");
+        assert_eq!(request.direction, "debit");
+        assert_eq!(request.amount_formula.as_deref(), Some("amount * 0.1"));
+        assert_eq!(request.sort_order, Some(1));
+    }
+
+    #[test]
+    fn test_add_template_entry_request_minimal() {
+        let json = r#"{"account_code": "1002", "direction": "credit"}"#;
+        let request: AddTemplateEntryRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.account_code, "1002");
+        assert_eq!(request.direction, "credit");
+        assert!(request.description.is_none());
+        assert!(request.amount_formula.is_none());
+        assert!(request.sort_order.is_none());
+    }
+
+    #[test]
+    fn test_update_template_entry_request_deserialize() {
+        let json = r#"{"description": "更新描述", "sort_order": 2}"#;
+        let request: UpdateTemplateEntryRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.description.as_deref(), Some("更新描述"));
+        assert_eq!(request.sort_order, Some(2));
+        assert!(request.account_code.is_none());
+        assert!(request.direction.is_none());
+    }
+
+    #[test]
+    fn test_reorder_entries_request_deserialize() {
+        let json = r#"{"entry_ids": ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"]}"#;
+        let request: ReorderEntriesRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.entry_ids.len(), 2);
+    }
+}

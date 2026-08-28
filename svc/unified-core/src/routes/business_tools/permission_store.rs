@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use super::{TenantPermission, TenantRole, ToolPermission};
+use super::TenantPermission;
 
 // ===== Permission Store Errors =====
 
@@ -323,6 +323,7 @@ impl InMemoryPermissionStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::TenantRole;
 
     #[tokio::test]
     async fn test_create_and_get_permission() {

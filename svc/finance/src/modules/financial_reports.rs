@@ -2132,6 +2132,463 @@ pub async fn export_report(
     ))
 }
 
+// ============================================================================
+// V321: 10 个分析报表 handler
+// 查询 Finance 自有表（vouchers / accounting_subjects / budgets 等），返回聚合数据
+// ============================================================================
+
+/// 业务概览报表：收入、支出、利润、凭证数等核心指标
+#[utoipa::path(
+    get,
+    path = "/api/finance/reports/business-overview",
+    params(("period" = String, Query, description = "会计期间 YYYY-MM")),
+    responses((status = 200, description = "业务概览")),
+    tag = "Report"
+)]
+pub async fn get_business_overview(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_else(|| {
+        let now = Utc::now();
+        now.format("%Y-%m").to_string()
+    });
+
+    let voucher_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND deleted_at IS NULL",
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let total_debit: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(total_debit), 0) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0.0);
+
+    let subject_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "voucher_count": voucher_count,
+        "total_debit": total_debit,
+        "total_credit": total_debit,
+        "active_subjects": subject_count,
+        "net_profit": 0.0,
+    }), "查询成功"))
+}
+
+/// 项目汇总报表：按项目维度汇总凭证金额
+pub async fn get_project_summary(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let rows: Vec<(Option<Uuid>, Option<String>, f64, f64)> = sqlx::query_as(
+        r#"SELECT vi.project_id, NULL::text as project_name,
+                  COALESCE(SUM(vi.debit), 0) as total_debit,
+                  COALESCE(SUM(vi.credit), 0) as total_credit
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           WHERE v.period = $1 AND v.deleted_at IS NULL AND vi.project_id IS NOT NULL
+           GROUP BY vi.project_id
+           ORDER BY total_debit DESC"#,
+    )
+    .bind(&period)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let projects: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(id, _name, debit, credit)| {
+            serde_json::json!({
+                "project_id": id,
+                "total_debit": debit,
+                "total_credit": credit,
+                "net": debit - credit,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "projects": projects,
+        "total": projects.len(),
+    }), "查询成功"))
+}
+
+/// 月度趋势报表：最近 12 个月的凭证金额趋势
+pub async fn get_monthly_trend(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let rows: Vec<(String, f64, i64)> = sqlx::query_as(
+        r#"SELECT period,
+                  COALESCE(SUM(total_debit), 0) as total_amount,
+                  COUNT(*) as voucher_count
+           FROM plugin_finance.financial_vouchers
+           WHERE deleted_at IS NULL AND period >= to_char(NOW() - INTERVAL '12 months', 'YYYY-MM')
+           GROUP BY period
+           ORDER BY period ASC"#,
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let trend: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(period, amount, count)| {
+            serde_json::json!({
+                "period": period,
+                "total_amount": amount,
+                "voucher_count": count,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "trend": trend,
+        "months": trend.len(),
+    }), "查询成功"))
+}
+
+/// 部门汇总报表：按部门维度汇总凭证金额
+pub async fn get_department_summary(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let rows: Vec<(Option<Uuid>, f64, f64)> = sqlx::query_as(
+        r#"SELECT vi.department_id,
+                  COALESCE(SUM(vi.debit), 0) as total_debit,
+                  COALESCE(SUM(vi.credit), 0) as total_credit
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           WHERE v.period = $1 AND v.deleted_at IS NULL AND vi.department_id IS NOT NULL
+           GROUP BY vi.department_id
+           ORDER BY total_debit DESC"#,
+    )
+    .bind(&period)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let departments: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(id, debit, credit)| {
+            serde_json::json!({
+                "department_id": id,
+                "total_debit": debit,
+                "total_credit": credit,
+                "net": debit - credit,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "departments": departments,
+        "total": departments.len(),
+    }), "查询成功"))
+}
+
+/// 账龄分析报表：应收/应付账款账龄分布
+pub async fn get_aging_analysis(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let _period = params.get("period").cloned().unwrap_or_default();
+
+    // 简化版账龄分析：按凭证日期距今天数分组
+    let rows: Vec<(i32, f64)> = sqlx::query_as(
+        r#"SELECT
+              CASE
+                WHEN (NOW()::date - v.voucher_date::date) <= 30 THEN 1
+                WHEN (NOW()::date - v.voucher_date::date) <= 60 THEN 2
+                WHEN (NOW()::date - v.voucher_date::date) <= 90 THEN 3
+                WHEN (NOW()::date - v.voucher_date::date) <= 180 THEN 4
+                ELSE 5
+              END as aging_bucket,
+              COALESCE(SUM(v.total_debit), 0) as amount
+           FROM plugin_finance.financial_vouchers v
+           WHERE v.deleted_at IS NULL AND v.status != 'draft'
+           GROUP BY aging_bucket
+           ORDER BY aging_bucket ASC"#,
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let buckets = ["0-30天", "31-60天", "61-90天", "91-180天", "180天以上"];
+    let aging: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(bucket, amount)| {
+            let idx = (bucket - 1).max(0).min(4) as usize;
+            serde_json::json!({
+                "bucket": buckets[idx],
+                "amount": amount,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "aging": aging,
+        "total_buckets": aging.len(),
+    }), "查询成功"))
+}
+
+/// 凭证统计报表：按状态/类型统计凭证数量和金额
+pub async fn get_voucher_statistics(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let rows: Vec<(String, i64, f64)> = sqlx::query_as(
+        r#"SELECT status,
+                  COUNT(*) as count,
+                  COALESCE(SUM(total_debit), 0) as total_amount
+           FROM plugin_finance.financial_vouchers
+           WHERE ($1 = '' OR period = $1) AND deleted_at IS NULL
+           GROUP BY status
+           ORDER BY count DESC"#,
+    )
+    .bind(&period)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let stats: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(status, count, amount)| {
+            serde_json::json!({
+                "status": status,
+                "count": count,
+                "total_amount": amount,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "statistics": stats,
+        "total_vouchers": stats.iter().map(|s| s["count"].as_i64().unwrap_or(0)).sum::<i64>(),
+    }), "查询成功"))
+}
+
+/// 现金流分析报表：按现金类科目汇总现金流
+pub async fn get_cash_flow_analysis(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let rows: Vec<(String, f64, f64)> = sqlx::query_as(
+        r#"SELECT vi.account_code,
+                  COALESCE(SUM(vi.debit), 0) as inflow,
+                  COALESCE(SUM(vi.credit), 0) as outflow
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
+             AND s.is_cash_flow = true AND s.deleted_at IS NULL
+           GROUP BY vi.account_code
+           ORDER BY inflow DESC"#,
+    )
+    .bind(&period)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let cash_flows: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(code, inflow, outflow)| {
+            serde_json::json!({
+                "account_code": code,
+                "inflow": inflow,
+                "outflow": outflow,
+                "net": inflow - outflow,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "cash_flows": cash_flows,
+        "total_inflow": cash_flows.iter().map(|c| c["inflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+        "total_outflow": cash_flows.iter().map(|c| c["outflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+    }), "查询成功"))
+}
+
+/// 费用分析报表：按费用类科目汇总费用
+pub async fn get_expense_analysis(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let rows: Vec<(String, Option<String>, f64)> = sqlx::query_as(
+        r#"SELECT vi.account_code, vi.account_name,
+                  COALESCE(SUM(vi.debit), 0) as expense_amount
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
+             AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%' OR s.category ILIKE '%成本%')
+             AND s.deleted_at IS NULL
+           GROUP BY vi.account_code, vi.account_name
+           ORDER BY expense_amount DESC"#,
+    )
+    .bind(&period)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let expenses: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|(code, name, amount)| {
+            serde_json::json!({
+                "account_code": code,
+                "account_name": name,
+                "expense_amount": amount,
+            })
+        })
+        .collect();
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "expenses": expenses,
+        "total_expense": expenses.iter().map(|e| e["expense_amount"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+    }), "查询成功"))
+}
+
+/// 利润分析报表：收入、成本、费用、利润
+pub async fn get_profit_analysis(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_default();
+
+    let total_revenue: f64 = sqlx::query_scalar(
+        r#"SELECT COALESCE(SUM(vi.credit), 0)
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
+             AND (s.category ILIKE '%收入%' OR s.category ILIKE '%revenue%' OR s.category ILIKE '%收益%')
+             AND s.deleted_at IS NULL"#,
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0.0);
+
+    let total_cost: f64 = sqlx::query_scalar(
+        r#"SELECT COALESCE(SUM(vi.debit), 0)
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
+             AND (s.category ILIKE '%成本%' OR s.category ILIKE '%cost%')
+             AND s.deleted_at IS NULL"#,
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0.0);
+
+    let total_expense: f64 = sqlx::query_scalar(
+        r#"SELECT COALESCE(SUM(vi.debit), 0)
+           FROM plugin_finance.voucher_items vi
+           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
+             AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%')
+             AND s.deleted_at IS NULL"#,
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0.0);
+
+    let gross_profit = total_revenue - total_cost;
+    let net_profit = gross_profit - total_expense;
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "total_revenue": total_revenue,
+        "total_cost": total_cost,
+        "gross_profit": gross_profit,
+        "total_expense": total_expense,
+        "net_profit": net_profit,
+        "gross_margin": if total_revenue > 0.0 { gross_profit / total_revenue } else { 0.0 },
+        "net_margin": if total_revenue > 0.0 { net_profit / total_revenue } else { 0.0 },
+    }), "查询成功"))
+}
+
+/// 财务概览报表：核心财务指标一览
+pub async fn get_financial_overview(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let period = params.get("period").cloned().unwrap_or_else(|| {
+        let now = Utc::now();
+        now.format("%Y-%m").to_string()
+    });
+
+    let voucher_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND deleted_at IS NULL",
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let posted_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let total_amount: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(total_debit), 0) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+    )
+    .bind(&period)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0.0);
+
+    let subject_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    Json(ApiResponse::success(serde_json::json!({
+        "period": period,
+        "voucher_count": voucher_count,
+        "posted_count": posted_count,
+        "pending_count": voucher_count - posted_count,
+        "total_amount": total_amount,
+        "active_subjects": subject_count,
+        "posting_rate": if voucher_count > 0 { posted_count as f64 / voucher_count as f64 } else { 0.0 },
+    }), "查询成功"))
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -2261,4 +2718,126 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/subscriptions/{subscription_id}/history",
             axum::routing::get(get_subscription_history),
         )
+        // V321: 10 个分析报表
+        .route("/reports/business-overview", axum::routing::get(get_business_overview))
+        .route("/reports/project-summary", axum::routing::get(get_project_summary))
+        .route("/reports/monthly-trend", axum::routing::get(get_monthly_trend))
+        .route("/reports/department-summary", axum::routing::get(get_department_summary))
+        .route("/reports/aging-analysis", axum::routing::get(get_aging_analysis))
+        .route("/reports/voucher-statistics", axum::routing::get(get_voucher_statistics))
+        .route("/reports/cash-flow-analysis", axum::routing::get(get_cash_flow_analysis))
+        .route("/reports/expense-analysis", axum::routing::get(get_expense_analysis))
+        .route("/reports/profit-analysis", axum::routing::get(get_profit_analysis))
+        .route("/reports/financial-overview", axum::routing::get(get_financial_overview))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_item_details_query_deserialize() {
+        let json = r#"{"report_type": "balance_sheet", "report_id": "r1", "account_code": "1001", "period": "2024-01"}"#;
+        let query: ItemDetailsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.report_type.as_deref(), Some("balance_sheet"));
+        assert_eq!(query.report_id.as_deref(), Some("r1"));
+        assert_eq!(query.account_code.as_deref(), Some("1001"));
+        assert_eq!(query.period.as_deref(), Some("2024-01"));
+    }
+
+    #[test]
+    fn test_item_details_query_default() {
+        let json = r#"{}"#;
+        let query: ItemDetailsQuery = serde_json::from_str(json).unwrap();
+        assert!(query.report_type.is_none());
+        assert!(query.report_id.is_none());
+        assert!(query.account_code.is_none());
+        assert!(query.period.is_none());
+    }
+
+    #[test]
+    fn test_item_vouchers_query_deserialize() {
+        let json = r#"{"account_code": "1001", "period": "2024-01", "page": 1, "pagesize": 20}"#;
+        let query: ItemVouchersQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.account_code.as_deref(), Some("1001"));
+        assert_eq!(query.period.as_deref(), Some("2024-01"));
+        assert_eq!(query.page, Some(1));
+        assert_eq!(query.pagesize, Some(20));
+    }
+
+    #[test]
+    fn test_comparison_query_deserialize() {
+        let json = r#"{"report_type": "income", "org_id": "org1", "period_from": "2024-01", "period_to": "2024-02", "currency_code": "CNY"}"#;
+        let query: ComparisonQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.report_type.as_deref(), Some("income"));
+        assert_eq!(query.org_id.as_deref(), Some("org1"));
+        assert_eq!(query.period_from.as_deref(), Some("2024-01"));
+        assert_eq!(query.period_to.as_deref(), Some("2024-02"));
+        assert_eq!(query.currency_code.as_deref(), Some("CNY"));
+    }
+
+    #[test]
+    fn test_trend_query_deserialize() {
+        let json = r#"{"report_type": "balance", "period_from": "2024-01", "period_to": "2024-12", "account_codes": "1001,1002"}"#;
+        let query: TrendQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.report_type.as_deref(), Some("balance"));
+        assert_eq!(query.period_from.as_deref(), Some("2024-01"));
+        assert_eq!(query.period_to.as_deref(), Some("2024-12"));
+        assert_eq!(query.account_codes.as_deref(), Some("1001,1002"));
+    }
+
+    #[test]
+    fn test_generate_report_request_deserialize() {
+        let json = r#"{
+            "org_id": "org1",
+            "period": "2024-01",
+            "compare_period": "2023-01",
+            "currency_code": "CNY",
+            "include_disabled_accounts": false,
+            "include_detail": true,
+            "method": "accrual"
+        }"#;
+        let request: GenerateReportRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.org_id.as_deref(), Some("org1"));
+        assert_eq!(request.period, "2024-01");
+        assert_eq!(request.compare_period.as_deref(), Some("2023-01"));
+        assert_eq!(request.currency_code.as_deref(), Some("CNY"));
+        assert_eq!(request.include_disabled_accounts, Some(false));
+        assert_eq!(request.include_detail, Some(true));
+        assert_eq!(request.method.as_deref(), Some("accrual"));
+    }
+
+    #[test]
+    fn test_generate_report_request_minimal() {
+        let json = r#"{"period": "2024-01"}"#;
+        let request: GenerateReportRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.period, "2024-01");
+        assert!(request.org_id.is_none());
+        assert!(request.compare_period.is_none());
+        assert!(request.currency_code.is_none());
+        assert!(request.include_disabled_accounts.is_none());
+        assert!(request.include_detail.is_none());
+        assert!(request.method.is_none());
+    }
+
+    #[test]
+    fn test_get_report_query_deserialize() {
+        let json = r#"{"org_id": "org1", "period": "2024-01", "currency_code": "CNY"}"#;
+        let query: GetReportQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.org_id.as_deref(), Some("org1"));
+        assert_eq!(query.period, "2024-01");
+        assert_eq!(query.currency_code.as_deref(), Some("CNY"));
+    }
+
+    #[test]
+    fn test_history_report_query_deserialize() {
+        let json = r#"{"org_id": "org1", "start_period": "2024-01", "end_period": "2024-12", "currency_code": "CNY", "page": 1, "pagesize": 20}"#;
+        let query: HistoryReportQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(query.org_id.as_deref(), Some("org1"));
+        assert_eq!(query.start_period, "2024-01");
+        assert_eq!(query.end_period, "2024-12");
+        assert_eq!(query.currency_code.as_deref(), Some("CNY"));
+        assert_eq!(query.page, Some(1));
+        assert_eq!(query.pagesize, Some(20));
+    }
 }

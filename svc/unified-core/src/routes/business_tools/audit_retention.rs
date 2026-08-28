@@ -3,12 +3,13 @@
 //! Provides retention policy management for audit logs, including
 //! automatic cleanup and archival of old audit log entries.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::routes::business_tools::audit_log::{AuditLogEntry, AuditLogStore, AuditLogStoreError};
+use crate::routes::business_tools::permission_audit_log::{AuditLogEntry, AuditLogStore};
 use crate::routes::business_tools::audit_archiver::{ArchiveConfig, AuditLogArchiver};
 
 // ===== Retention Policy Configuration =====
@@ -121,16 +122,16 @@ pub struct CleanupResult {
 // ===== Retention Manager =====
 
 /// Manages audit log retention and cleanup.
-pub struct RetentionManager<S: AuditLogStore> {
+pub struct RetentionManager<S: AuditLogStore + ?Sized> {
     policy: RetentionPolicy,
-    store: S,
+    store: Arc<S>,
     /// V469: Optional archiver for actual archival of old entries.
     archiver: Option<AuditLogArchiver>,
 }
 
-impl<S: AuditLogStore> RetentionManager<S> {
+impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
     /// Create a new retention manager with the given policy and store.
-    pub fn new(policy: RetentionPolicy, store: S) -> Self {
+    pub fn new(policy: RetentionPolicy, store: Arc<S>) -> Self {
         let archiver = if policy.archive_enabled {
             policy.archive_path.as_ref().map(|path| {
                 let config = ArchiveConfig::new(path.clone());
@@ -143,7 +144,7 @@ impl<S: AuditLogStore> RetentionManager<S> {
     }
 
     /// Create a new retention manager with an explicit archiver.
-    pub fn with_archiver(policy: RetentionPolicy, store: S, archiver: AuditLogArchiver) -> Self {
+    pub fn with_archiver(policy: RetentionPolicy, store: Arc<S>, archiver: AuditLogArchiver) -> Self {
         Self { policy, store, archiver: Some(archiver) }
     }
 
@@ -168,10 +169,10 @@ impl<S: AuditLogStore> RetentionManager<S> {
         let cutoff_str = cutoff.to_rfc3339();
 
         // Query old entries
-        let old_entries = match self.store.query_logs(
+        let old_entries = match self.store.as_ref().query_logs(
             None, None, None, None,
-            Some(cutoff_str.clone()),
             None,
+            Some(cutoff_str.clone()),
             Some(self.policy.batch_size as usize),
             None,
         ).await {
@@ -207,7 +208,7 @@ impl<S: AuditLogStore> RetentionManager<S> {
         // Delete old entries
         let mut deleted_count = 0;
         for entry in &old_entries {
-            match self.store.delete_log(&entry.id).await {
+            match self.store.as_ref().delete_log(&entry.id).await {
                 Ok(_) => deleted_count += 1,
                 Err(e) => {
                     return CleanupResult {
@@ -256,10 +257,10 @@ impl<S: AuditLogStore> RetentionManager<S> {
         let cutoff = self.policy.cutoff_time();
         let cutoff_str = cutoff.to_rfc3339();
 
-        let old_count = match self.store.query_logs(
+        let old_count = match self.store.as_ref().query_logs(
             None, None, None, None,
-            Some(cutoff_str),
             None,
+            Some(cutoff_str),
             None,
             None,
         ).await {
@@ -302,71 +303,7 @@ pub struct RetentionStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-
-    // Mock AuditLogStore for testing
-    struct MockAuditLogStore {
-        entries: Mutex<Vec<AuditLogEntry>>,
-    }
-
-    impl MockAuditLogStore {
-        fn new() -> Self {
-            Self {
-                entries: Mutex::new(Vec::new()),
-            }
-        }
-
-        fn add_entry(&self, entry: AuditLogEntry) {
-            self.entries.lock().unwrap().push(entry);
-        }
-    }
-
-    impl AuditLogStore for MockAuditLogStore {
-        async fn create_log(&self, entry: AuditLogEntry) -> Result<AuditLogEntry, AuditLogStoreError> {
-            self.entries.lock().unwrap().push(entry.clone());
-            Ok(entry)
-        }
-
-        async fn get_log(&self, id: &str) -> Result<Option<AuditLogEntry>, AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().iter().find(|e| e.id == id).cloned())
-        }
-
-        async fn query_logs(
-            &self,
-            _tenant_id: Option<String>,
-            _user_id: Option<String>,
-            _action: Option<String>,
-            _changed_by: Option<String>,
-            _start_time: Option<String>,
-            _end_time: Option<String>,
-            _limit: Option<usize>,
-            _offset: Option<usize>,
-        ) -> Result<Vec<AuditLogEntry>, AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().clone())
-        }
-
-        async fn delete_log(&self, id: &str) -> Result<(), AuditLogStoreError> {
-            let mut entries = self.entries.lock().unwrap();
-            entries.retain(|e| e.id != id);
-            Ok(())
-        }
-    }
-
-    fn make_entry(id: &str, created_at: &str) -> AuditLogEntry {
-        AuditLogEntry {
-            id: id.to_string(),
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            action: "create".to_string(),
-            resource_type: "permission".to_string(),
-            resource_id: "r1".to_string(),
-            changed_by: "admin".to_string(),
-            old_value: None,
-            new_value: None,
-            metadata: None,
-            created_at: created_at.to_string(),
-        }
-    }
+    use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
 
     #[test]
     fn test_retention_policy_default() {
@@ -470,7 +407,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_retention_manager_cleanup_empty() {
-        let store = MockAuditLogStore::new();
+        let store = Arc::new(MockAuditLogStore::new());
         let policy = RetentionPolicy::new(30);
         let manager = RetentionManager::new(policy, store);
 
@@ -482,9 +419,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_retention_manager_cleanup_with_entries() {
-        let store = MockAuditLogStore::new();
-        store.add_entry(make_entry("1", "2020-01-01T00:00:00Z"));
-        store.add_entry(make_entry("2", "2020-01-02T00:00:00Z"));
+        let store = Arc::new(MockAuditLogStore::new());
+        store.add_entry(make_test_entry("1", "2020-01-01T00:00:00Z"));
+        store.add_entry(make_test_entry("2", "2020-01-02T00:00:00Z"));
 
         let policy = RetentionPolicy::new(30);
         let manager = RetentionManager::new(policy, store);
@@ -496,8 +433,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_retention_manager_get_stats() {
-        let store = MockAuditLogStore::new();
-        store.add_entry(make_entry("1", "2020-01-01T00:00:00Z"));
+        let store = Arc::new(MockAuditLogStore::new());
+        store.add_entry(make_test_entry("1", "2020-01-01T00:00:00Z"));
 
         let policy = RetentionPolicy::new(30);
         let manager = RetentionManager::new(policy, store);
@@ -510,7 +447,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_retention_manager_update_policy() {
-        let store = MockAuditLogStore::new();
+        let store = Arc::new(MockAuditLogStore::new());
         let policy = RetentionPolicy::new(30);
         let mut manager = RetentionManager::new(policy, store);
 
@@ -525,7 +462,7 @@ mod tests {
     #[tokio::test]
     async fn test_retention_manager_with_archiver() {
         let temp_dir = tempfile::TempDir::new().unwrap();
-        let store = MockAuditLogStore::new();
+        let store = Arc::new(MockAuditLogStore::new());
         let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
         let config = ArchiveConfig::new(temp_dir.path());
         let archiver = AuditLogArchiver::new(config);
@@ -538,7 +475,7 @@ mod tests {
     #[tokio::test]
     async fn test_retention_manager_archiver_auto_create() {
         let temp_dir = tempfile::TempDir::new().unwrap();
-        let store = MockAuditLogStore::new();
+        let store = Arc::new(MockAuditLogStore::new());
         let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
         let manager = RetentionManager::new(policy, store);
 
@@ -548,7 +485,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_retention_manager_no_archiver_when_disabled() {
-        let store = MockAuditLogStore::new();
+        let store = Arc::new(MockAuditLogStore::new());
         let policy = RetentionPolicy::new(30); // archive_enabled = false
         let manager = RetentionManager::new(policy, store);
 
@@ -558,9 +495,9 @@ mod tests {
     #[tokio::test]
     async fn test_retention_manager_cleanup_with_archive() {
         let temp_dir = tempfile::TempDir::new().unwrap();
-        let store = MockAuditLogStore::new();
-        store.add_entry(make_entry("1", "2020-01-01T00:00:00Z"));
-        store.add_entry(make_entry("2", "2020-01-02T00:00:00Z"));
+        let store = Arc::new(MockAuditLogStore::new());
+        store.add_entry(make_test_entry("1", "2020-01-01T00:00:00Z"));
+        store.add_entry(make_test_entry("2", "2020-01-02T00:00:00Z"));
 
         let policy = RetentionPolicy::new(30).with_archive(temp_dir.path().to_string_lossy());
         let manager = RetentionManager::new(policy, store);

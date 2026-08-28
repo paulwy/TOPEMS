@@ -50,7 +50,7 @@ impl SchemaType {
 ///
 /// let schema = SchemaBuilder::object()
 ///     .property("keyword", SchemaBuilder::string().description("搜索关键词"))
-///     .property("page", SchemaBuilder::integer().minimum(1).default(1))
+///     .property("page", SchemaBuilder::integer().minimum(1.0).default(serde_json::json!(1)))
 ///     .required(&["keyword"])
 ///     .build();
 /// ```
@@ -272,13 +272,13 @@ mod tests {
     #[test]
     fn test_integer_schema() {
         let schema = SchemaBuilder::integer()
-            .minimum(1)
-            .maximum(100)
+            .minimum(1.0)
+            .maximum(100.0)
             .default(json!(1))
             .build();
         assert_eq!(schema["type"], "integer");
-        assert_eq!(schema["minimum"], 1);
-        assert_eq!(schema["maximum"], 100);
+        assert_eq!(schema["minimum"], 1.0);
+        assert_eq!(schema["maximum"], 100.0);
         assert_eq!(schema["default"], 1);
     }
 
@@ -288,7 +288,7 @@ mod tests {
             .property("keyword", SchemaBuilder::string().description("关键词"))
             .property(
                 "page",
-                SchemaBuilder::integer().minimum(1).default(json!(1)),
+                SchemaBuilder::integer().minimum(1.0).default(json!(1)),
             )
             .required(&["keyword"])
             .additional_properties(false)

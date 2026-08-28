@@ -83,7 +83,8 @@ impl Default for NacosConfig {
 struct NacosRegisterRequest {
     ip: String,
     port: u16,
-    serviceName: String,
+    #[serde(rename = "serviceName")]
+    service_name: String,
     #[serde(rename = "groupName")]
     group_name: String,
     #[serde(rename = "clusterName")]
@@ -102,7 +103,8 @@ struct NacosRegisterRequest {
 struct NacosDeregisterRequest {
     ip: String,
     port: u16,
-    serviceName: String,
+    #[serde(rename = "serviceName")]
+    service_name: String,
     #[serde(rename = "groupName")]
     group_name: String,
     #[serde(rename = "clusterName")]
@@ -133,9 +135,11 @@ struct NacosInstance {
     #[serde(default)]
     metadata: Option<HashMap<String, String>>,
     #[serde(default)]
-    clusterName: Option<String>,
+    #[serde(rename = "clusterName")]
+    cluster_name: Option<String>,
     #[serde(default)]
-    serviceName: Option<String>,
+    #[serde(rename = "serviceName")]
+    service_name: Option<String>,
 }
 
 /// Nacos heartbeat request.
@@ -299,7 +303,7 @@ impl NacosServiceDiscovery {
         };
 
         ServiceRegistration {
-            name: instance.serviceName.clone().unwrap_or_default(),
+            name: instance.service_name.clone().unwrap_or_default(),
             base_url,
             version,
             description,
@@ -430,7 +434,7 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         }
 
         // If no healthy instances, return the first one
-        hosts.first().map(|instance| Self::instance_to_registration(instance))
+        Ok(hosts.first().map(|instance| Self::instance_to_registration(instance)))
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
@@ -662,8 +666,8 @@ mod tests {
             enabled: true,
             ephemeral: true,
             metadata: Some(HashMap::new()),
-            clusterName: Some("DEFAULT".to_string()),
-            serviceName: Some("crm".to_string()),
+            cluster_name: Some("DEFAULT".to_string()),
+            service_name: Some("crm".to_string()),
         };
 
         let registration = NacosServiceDiscovery::instance_to_registration(&instance);

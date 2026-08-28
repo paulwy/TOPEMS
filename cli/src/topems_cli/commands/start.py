@@ -1,4 +1,9 @@
-"""start 命令 - 启动服务"""
+"""start 命令 - 启动服务
+
+与 scripts/topems.sh 的 start 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh start（零依赖、插件自动注册、按域分组）。
+本命令提供 rich 进度条、数据库就绪检查和前端自动启动，作为可选替代。
+"""
 
 import asyncio
 

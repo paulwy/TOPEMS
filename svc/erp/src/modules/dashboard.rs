@@ -147,3 +147,92 @@ pub async fn get_dashboard(
 pub fn create_routes() -> Router<ApiState> {
     Router::new().route("/dashboard", axum::routing::get(get_dashboard))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_erp_dashboard_stats_serialization() {
+        let stats = ErpDashboardStats {
+            total_assets: 1000,
+            active_assets: 950,
+            total_orders: 500,
+            pending_orders: 50,
+            total_inventory: 10000,
+            low_stock_items: 20,
+            total_suppliers: 100,
+            active_suppliers: 80,
+            total_customers: 2000,
+            active_customers: 1800,
+            total_vouchers: 300,
+            pending_vouchers: 30,
+        };
+        let json = serde_json::to_value(&stats).unwrap();
+        assert_eq!(json["total_assets"], 1000);
+        assert_eq!(json["active_assets"], 950);
+        assert_eq!(json["total_orders"], 500);
+        assert_eq!(json["pending_orders"], 50);
+        assert_eq!(json["total_inventory"], 10000);
+        assert_eq!(json["low_stock_items"], 20);
+        assert_eq!(json["total_suppliers"], 100);
+        assert_eq!(json["active_suppliers"], 80);
+        assert_eq!(json["total_customers"], 2000);
+        assert_eq!(json["active_customers"], 1800);
+        assert_eq!(json["total_vouchers"], 300);
+        assert_eq!(json["pending_vouchers"], 30);
+    }
+
+    #[test]
+    fn test_erp_dashboard_stats_deserialize() {
+        let json = r#"{
+            "total_assets": 500,
+            "active_assets": 450,
+            "total_orders": 200,
+            "pending_orders": 20,
+            "total_inventory": 5000,
+            "low_stock_items": 10,
+            "total_suppliers": 50,
+            "active_suppliers": 40,
+            "total_customers": 1000,
+            "active_customers": 900,
+            "total_vouchers": 150,
+            "pending_vouchers": 15
+        }"#;
+        let stats: ErpDashboardStats = serde_json::from_str(json).unwrap();
+        assert_eq!(stats.total_assets, 500);
+        assert_eq!(stats.active_assets, 450);
+        assert_eq!(stats.total_orders, 200);
+        assert_eq!(stats.pending_orders, 20);
+        assert_eq!(stats.total_inventory, 5000);
+        assert_eq!(stats.low_stock_items, 10);
+        assert_eq!(stats.total_suppliers, 50);
+        assert_eq!(stats.active_suppliers, 40);
+        assert_eq!(stats.total_customers, 1000);
+        assert_eq!(stats.active_customers, 900);
+        assert_eq!(stats.total_vouchers, 150);
+        assert_eq!(stats.pending_vouchers, 15);
+    }
+
+    #[test]
+    fn test_erp_dashboard_stats_zero() {
+        let stats = ErpDashboardStats {
+            total_assets: 0,
+            active_assets: 0,
+            total_orders: 0,
+            pending_orders: 0,
+            total_inventory: 0,
+            low_stock_items: 0,
+            total_suppliers: 0,
+            active_suppliers: 0,
+            total_customers: 0,
+            active_customers: 0,
+            total_vouchers: 0,
+            pending_vouchers: 0,
+        };
+        let json = serde_json::to_value(&stats).unwrap();
+        assert_eq!(json["total_assets"], 0);
+        assert_eq!(json["active_assets"], 0);
+        assert_eq!(json["total_orders"], 0);
+    }
+}

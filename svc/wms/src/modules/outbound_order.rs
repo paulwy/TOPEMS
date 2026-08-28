@@ -1632,3 +1632,152 @@ pub async fn reject_outbound(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_outbound_order_item_request_serialization() {
+        let item = OutboundOrderItemRequest {
+            line_number: Some(1),
+            material_code: "MAT001".to_string(),
+            material_name: "测试物料".to_string(),
+            material_type: Some("finished_goods".to_string()),
+            specification: Some("规格A".to_string()),
+            batch_number: Some("BATCH001".to_string()),
+            lot_number: Some("LOT001".to_string()),
+            serial_number: Some("SN001".to_string()),
+            requested_quantity: 100.0,
+            unit: "PCS".to_string(),
+            source_location_id: None,
+            unit_price: Some(15.5),
+            remarks: Some("测试备注".to_string()),
+        };
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["line_number"], 1);
+        assert_eq!(json["material_code"], "MAT001");
+        assert_eq!(json["material_name"], "测试物料");
+        assert_eq!(json["material_type"], "finished_goods");
+        assert_eq!(json["requested_quantity"], 100.0);
+        assert_eq!(json["unit"], "PCS");
+        assert_eq!(json["unit_price"], 15.5);
+    }
+
+    #[test]
+    fn test_outbound_order_item_request_minimal() {
+        let item = OutboundOrderItemRequest {
+            line_number: None,
+            material_code: "MAT002".to_string(),
+            material_name: "简单物料".to_string(),
+            material_type: None,
+            specification: None,
+            batch_number: None,
+            lot_number: None,
+            serial_number: None,
+            requested_quantity: 50.0,
+            unit: "KG".to_string(),
+            source_location_id: None,
+            unit_price: None,
+            remarks: None,
+        };
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["material_code"], "MAT002");
+        assert_eq!(json["requested_quantity"], 50.0);
+        assert_eq!(json["unit"], "KG");
+        assert!(json["line_number"].is_null());
+        assert!(json["material_type"].is_null());
+        assert!(json["unit_price"].is_null());
+    }
+
+    #[test]
+    fn test_outbound_order_item_request_deserialize() {
+        let json = r#"{
+            "line_number": 2,
+            "material_code": "MAT003",
+            "material_name": "反序列化物料",
+            "material_type": "raw_material",
+            "requested_quantity": 200.0,
+            "unit": "BOX",
+            "unit_price": 25.0
+        }"#;
+        let item: OutboundOrderItemRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(item.line_number, Some(2));
+        assert_eq!(item.material_code, "MAT003");
+        assert_eq!(item.material_name, "反序列化物料");
+        assert_eq!(item.material_type.as_deref(), Some("raw_material"));
+        assert_eq!(item.requested_quantity, 200.0);
+        assert_eq!(item.unit, "BOX");
+        assert_eq!(item.unit_price, Some(25.0));
+        assert!(item.batch_number.is_none());
+        assert!(item.remarks.is_none());
+    }
+
+    #[test]
+    fn test_ship_item_request_serialization() {
+        let request = ShipItemRequest {
+            item_id: Uuid::nil(),
+            shipped_quantity: 95.0,
+            remarks: Some("已发货".to_string()),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["shipped_quantity"], 95.0);
+        assert_eq!(json["remarks"], "已发货");
+    }
+
+    #[test]
+    fn test_ship_item_request_minimal() {
+        let request = ShipItemRequest {
+            item_id: Uuid::nil(),
+            shipped_quantity: 100.0,
+            remarks: None,
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["shipped_quantity"], 100.0);
+        assert!(json["remarks"].is_null());
+    }
+
+    #[test]
+    fn test_ship_item_request_deserialize() {
+        let json = r#"{
+            "item_id": "00000000-0000-0000-0000-000000000000",
+            "shipped_quantity": 80.0,
+            "remarks": "部分发货"
+        }"#;
+        let request: ShipItemRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.shipped_quantity, 80.0);
+        assert_eq!(request.remarks.as_deref(), Some("部分发货"));
+    }
+
+    #[test]
+    fn test_approval_request_deserialize() {
+        let json = r#"{
+            "operator": "admin",
+            "comment": "同意出库"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "admin");
+        assert_eq!(request.comment.as_deref(), Some("同意出库"));
+    }
+
+    #[test]
+    fn test_approval_request_no_comment() {
+        let json = r#"{
+            "operator": "manager"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "manager");
+        assert!(request.comment.is_none());
+    }
+
+    #[test]
+    fn test_approval_request_with_reject_comment() {
+        let json = r#"{
+            "operator": "auditor",
+            "comment": "库存不足，驳回"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "auditor");
+        assert_eq!(request.comment.as_deref(), Some("库存不足，驳回"));
+    }
+}

@@ -1,4 +1,9 @@
-"""logs 命令 - 查看服务日志"""
+"""logs 命令 - 查看服务日志
+
+与 scripts/topems.sh 的 logs 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh logs（零依赖）。
+本命令提供 rich 语法高亮和 --follow 持续跟踪，作为可选替代。
+"""
 
 import subprocess
 from pathlib import Path

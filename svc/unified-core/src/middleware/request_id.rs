@@ -34,3 +34,43 @@ pub async fn request_id_middleware(
 
 #[derive(Debug, Clone)]
 pub struct RequestId(pub String);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_x_request_id_constant() {
+        assert_eq!(X_REQUEST_ID, "x-request-id");
+    }
+
+    #[test]
+    fn test_request_id_struct_creation() {
+        let id = RequestId("test-id-123".to_string());
+        assert_eq!(id.0, "test-id-123");
+    }
+
+    #[test]
+    fn test_request_id_struct_clone() {
+        let id = RequestId("clone-test".to_string());
+        let cloned = id.clone();
+        assert_eq!(id.0, cloned.0);
+    }
+
+    #[test]
+    fn test_request_id_struct_debug() {
+        let id = RequestId("debug-test".to_string());
+        let debug_str = format!("{:?}", id);
+        assert!(debug_str.contains("debug-test"));
+    }
+
+    #[test]
+    fn test_generate_request_id_format() {
+        let id1 = generate_request_id();
+        let id2 = generate_request_id();
+        // 确保生成的 ID 非空且唯一
+        assert!(!id1.is_empty());
+        assert!(!id2.is_empty());
+        assert_ne!(id1, id2);
+    }
+}

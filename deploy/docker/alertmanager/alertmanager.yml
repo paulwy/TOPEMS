@@ -1,29 +1,73 @@
 global:
   resolve_timeout: 5m
+  # 邮件配置（需要通过环境变量配置）
+  smtp_smarthost: '{{ .Env.SMTP_HOST }}:{{ .Env.SMTP_PORT }}'
+  smtp_from: '{{ .Env.SMTP_FROM }}'
+  smtp_auth_username: '{{ .Env.SMTP_USERNAME }}'
+  smtp_auth_password: '{{ .Env.SMTP_PASSWORD }}'
+  smtp_require_tls: true
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
 
 route:
-  group_by: ['alertname', 'cluster', 'service']
+  group_by: ['alertname', 'cluster', 'service', 'severity']
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
   receiver: 'default-receiver'
+
   routes:
-    - match:
-        severity: critical
-      receiver: 'feishu-critical'
-      repeat_interval: 1m
-    - match:
-        severity: warning
-      receiver: 'feishu-warning'
-      repeat_interval: 15m
+    # AI 服务专用路由
+    - matchers:
+        - job="topems-ai"
+      receiver: 'ai-service-receiver'
+      group_wait: 10s
+      repeat_interval: 2h
+      routes:
+        # AI 服务 critical 告警
+        - matchers:
+            - severity="critical"
+          receiver: 'ai-critical-receiver'
+          repeat_interval: 30m
+        # AI 服务 warning 告警
+        - matchers:
+            - severity="warning"
+          receiver: 'ai-warning-receiver'
+          repeat_interval: 2h
+        # AI 服务 info 告警
+        - matchers:
+            - severity="info"
+          receiver: 'ai-info-receiver'
+          repeat_interval: 12h
+
+    # 通用 critical 告警
+    - matchers:
+        - severity="critical"
+      receiver: 'critical-receiver'
+      repeat_interval: 30m
+
+    # 通用 warning 告警
+    - matchers:
+        - severity="warning"
+      receiver: 'warning-receiver'
+      repeat_interval: 2h
+
+    # 通用 info 告警
+    - matchers:
+        - severity="info"
+      receiver: 'info-receiver'
+      repeat_interval: 12h
 
 receivers:
+  # 默认接收器
   - name: 'default-receiver'
     webhook_configs:
       - url: 'http://localhost:8080/alert-webhook'
         send_resolved: true
 
-  - name: 'feishu-critical'
+  # AI 服务接收器（飞书 + 邮件）
+  - name: 'ai-service-receiver'
     webhook_configs:
       - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
         send_resolved: true
@@ -31,19 +75,113 @@ receivers:
           tls_config:
             insecure_skip_verify: true
         max_alerts: 10
+    email_configs:
+      - to: '{{ .Env.AI_ALERT_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[TOPEMS AI] {{ .GroupLabels.alertname }}'
 
-  - name: 'feishu-warning'
+  # AI critical 接收器（飞书 + 邮件 + 电话）
+  - name: 'ai-critical-receiver'
     webhook_configs:
       - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
         send_resolved: true
         http_config:
           tls_config:
             insecure_skip_verify: true
-        max_alerts: 20
+        max_alerts: 5
+    email_configs:
+      - to: '{{ .Env.AI_CRITICAL_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[严重][TOPEMS AI] {{ .GroupLabels.alertname }}'
+
+  # AI warning 接收器（飞书 + 邮件）
+  - name: 'ai-warning-receiver'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        http_config:
+          tls_config:
+            insecure_skip_verify: true
+        max_alerts: 15
+    email_configs:
+      - to: '{{ .Env.AI_WARNING_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[警告][TOPEMS AI] {{ .GroupLabels.alertname }}'
+
+  # AI info 接收器（仅邮件）
+  - name: 'ai-info-receiver'
+    email_configs:
+      - to: '{{ .Env.AI_INFO_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[提示][TOPEMS AI] {{ .GroupLabels.alertname }}'
+
+  # 通用 critical 接收器
+  - name: 'critical-receiver'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        http_config:
+          tls_config:
+            insecure_skip_verify: true
+        max_alerts: 5
+    email_configs:
+      - to: '{{ .Env.CRITICAL_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[严重][TOPEMS] {{ .GroupLabels.alertname }}'
+
+  # 通用 warning 接收器
+  - name: 'warning-receiver'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        http_config:
+          tls_config:
+            insecure_skip_verify: true
+        max_alerts: 15
+    email_configs:
+      - to: '{{ .Env.WARNING_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[警告][TOPEMS] {{ .GroupLabels.alertname }}'
+
+  # 通用 info 接收器
+  - name: 'info-receiver'
+    email_configs:
+      - to: '{{ .Env.INFO_EMAIL }}'
+        send_resolved: true
+        headers:
+          Subject: '[提示][TOPEMS] {{ .GroupLabels.alertname }}'
 
 inhibit_rules:
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'cluster', 'service']
+  # critical 告警抑制同服务的 warning 告警
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ['alertname', 'cluster', 'service', 'instance']
+
+  # AI 服务宕机抑制其他 AI 服务告警
+  - source_matchers:
+      - alertname="AIServiceDown"
+    target_matchers:
+      - job="topems-ai"
+    equal: ['instance']
+
+  # 健康检查失败抑制其他 AI 服务告警
+  - source_matchers:
+      - alertname="AIHealthCheckFailed"
+    target_matchers:
+      - job="topems-ai"
+    equal: ['instance']
+
+  # 高错误率抑制性能告警（错误率高时性能告警可能是次生的）
+  - source_matchers:
+      - alertname="AIAPIHighErrorRate"
+    target_matchers:
+      - alertname="AIAPIHighLatencyP95"
+    equal: ['instance', 'job']

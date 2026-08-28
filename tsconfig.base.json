@@ -35,6 +35,5 @@
       "*": ["./*"]
     }
   },
-  "include": [],
-  "references": [{ "path": "./packages/shared-types" }]
+  "include": []
 }

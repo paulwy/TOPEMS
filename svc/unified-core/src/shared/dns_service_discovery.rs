@@ -163,9 +163,6 @@ impl DnsServiceDiscovery {
             opts.cache_size = 32;
 
             TokioAsyncResolver::tokio(resolver_config, opts)
-                .map_err(|e| ServiceClientError::OperationFailed(format!(
-                    "Failed to create DNS resolver: {}", e
-                )))?
         };
 
         Ok(Self {

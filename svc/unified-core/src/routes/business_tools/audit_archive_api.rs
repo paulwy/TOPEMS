@@ -4,8 +4,6 @@
 //! including listing archives, downloading archive files, and
 //! deleting old archives.
 
-use std::path::PathBuf;
-
 use axum::extract::{Path, Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};

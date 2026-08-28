@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health, workflow_handlers};
+use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, dsh_agent_handlers, dsh_ai_enhanced_handlers, dsh_performance_handlers, health, workflow_handlers};
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
     RecommendationApi, VectorApi,
@@ -36,6 +36,79 @@ pub fn create_routes(
     metric_handle: PrometheusHandle,
 ) -> Router {
     let cors = create_cors_layer();
+
+    // 创建 MCP Server 和 DSH Agent 编排器
+    let mcp_server = Arc::new(McpServer::new("topems-ai-mcp", env!("CARGO_PKG_VERSION")));
+
+    // 创建 DSH Agent 编排器（使用 MCP Server 的 ToolRegistry）
+    let mut dsh_agent_orchestrator =
+        crate::dsh::agent::AgentOrchestrator::new(mcp_server.tool_registry().clone());
+
+    // 设置性能监控器（如果已配置）
+    if let Some(perf_monitor) = &app_state.dsh_agent_performance_monitor {
+        dsh_agent_orchestrator.set_performance_monitor(perf_monitor.clone());
+    }
+
+    // 设置告警管理器
+    let alert_manager = crate::dsh::alerting::AlertManager::with_defaults();
+    dsh_agent_orchestrator.set_alert_manager(alert_manager);
+
+    // 设置缓存管理器
+    let cache_manager = crate::dsh::cache::CacheManager::with_defaults();
+    dsh_agent_orchestrator.set_cache_manager(cache_manager);
+
+    // 初始化知识图谱
+    let knowledge_graph = crate::dsh::knowledge_graph::KnowledgeGraph::with_defaults();
+
+    // 初始化 RAG 引擎
+    let rag_engine = crate::dsh::rag::RagEngine::with_defaults();
+
+    // 初始化多 Agent 协调器
+    let multi_agent_config = crate::dsh::multi_agent::CollaborationGroupConfig {
+        group_id: "default".to_string(),
+        name: "默认协作组".to_string(),
+        mode: crate::dsh::multi_agent::CollaborationMode::MasterWorker,
+        coordinator_id: None,
+        member_ids: Vec::new(),
+        max_tasks: 100,
+        task_timeout_secs: 300,
+    };
+    let multi_agent_coordinator = crate::dsh::multi_agent::MultiAgentCoordinator::new(multi_agent_config);
+
+    // 更新 app_state，添加 DSH Agent 编排器和增强能力
+    let app_state = AppState {
+        dsh_agent_orchestrator: Some(dsh_agent_orchestrator),
+        dsh_knowledge_graph: Some(knowledge_graph),
+        dsh_rag_engine: Some(rag_engine),
+        dsh_multi_agent_coordinator: Some(multi_agent_coordinator),
+        ..app_state
+    };
+
+    // 异步注册 MCP 工具
+    let server_clone = mcp_server.clone();
+    tokio::task::spawn(async move {
+        server_clone.register_system_tools().await;
+        register_crm_tools(&server_clone).await;
+        register_erp_tools(&server_clone).await;
+        register_finance_tools(&server_clone).await;
+        register_hr_tools(&server_clone).await;
+        register_mes_tools(&server_clone).await;
+        register_ehs_tools(&server_clone).await;
+        register_wms_tools(&server_clone).await;
+        register_qms_tools(&server_clone).await;
+        register_pm_tools(&server_clone).await;
+        register_lims_tools(&server_clone).await;
+        register_bi_tools(&server_clone).await;
+        register_aps_tools(&server_clone).await;
+        register_cs_tools(&server_clone).await;
+        register_scm_tools(&server_clone).await;
+        register_iot_tools(&server_clone).await;
+        register_oa_tools(&server_clone).await;
+        tracing::info!(
+            "MCP Server tools registered: {} tools total",
+            server_clone.tool_registry().len().await
+        );
+    });
 
     let public_routes = Router::new()
         .route("/", get(health::home))
@@ -190,6 +263,160 @@ pub fn create_routes(
         ))
         .with_state(app_state.clone());
 
+    // DSH Agent 编排器 API 路由
+    let dsh_agent_router = Router::new()
+        .route("/dsh/agent/execute", post(dsh_agent_handlers::execute_agent))
+        .route("/dsh/agent/stream", post(dsh_agent_handlers::stream_agent))
+        .route(
+            "/dsh/agent/session/{session_id}",
+            get(dsh_agent_handlers::get_session).delete(dsh_agent_handlers::clear_session),
+        )
+        .route("/dsh/agent/tools", get(dsh_agent_handlers::list_tools))
+        .route(
+            "/dsh/agent/active-sessions",
+            get(dsh_agent_handlers::active_sessions),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // DSH Agent 性能监控 API 路由
+    let dsh_performance_router = Router::new()
+        .route(
+            "/dsh/agent/performance/metrics",
+            get(dsh_performance_handlers::get_performance_metrics),
+        )
+        .route(
+            "/dsh/agent/performance/prometheus",
+            get(dsh_performance_handlers::export_prometheus_metrics),
+        )
+        .route(
+            "/dsh/agent/performance/reset",
+            post(dsh_performance_handlers::reset_performance_metrics),
+        )
+        .route(
+            "/dsh/agent/performance/tools/{tool_name}",
+            get(dsh_performance_handlers::get_tool_performance),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // DSH AI 增强能力 API 路由（知识图谱、RAG、多 Agent 协作）
+    let dsh_enhanced_router = Router::new()
+        // 知识图谱 API
+        .route("/dsh/kg/entities", post(dsh_ai_enhanced_handlers::add_entity).get(dsh_ai_enhanced_handlers::list_entities))
+        .route("/dsh/kg/entities/{entity_id}", get(dsh_ai_enhanced_handlers::get_entity).delete(dsh_ai_enhanced_handlers::delete_entity))
+        .route("/dsh/kg/entities/{entity_id}/neighbors", get(dsh_ai_enhanced_handlers::get_entity_neighbors))
+        .route("/dsh/kg/relations", post(dsh_ai_enhanced_handlers::add_relation).get(dsh_ai_enhanced_handlers::list_relations))
+        .route("/dsh/kg/shortest-path", post(dsh_ai_enhanced_handlers::shortest_path))
+        .route("/dsh/kg/link-entity", post(dsh_ai_enhanced_handlers::link_entity))
+        .route("/dsh/kg/communities", get(dsh_ai_enhanced_handlers::detect_communities))
+        .route("/dsh/kg/stats", get(dsh_ai_enhanced_handlers::get_graph_stats))
+        .route("/dsh/kg/extract", post(dsh_ai_enhanced_handlers::extract_entities))
+        // RAG API
+        .route("/dsh/rag/retrieve", post(dsh_ai_enhanced_handlers::rag_retrieve))
+        .route("/dsh/rag/stats", get(dsh_ai_enhanced_handlers::get_rag_stats))
+        // 多 Agent 协作 API
+        .route("/dsh/multi-agent/execute", post(dsh_ai_enhanced_handlers::multi_agent_execute))
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    // 业务 Copilot 路由
+    let copilot_state = crate::handlers::business_copilot_handlers::CopilotAppState::new();
+    let business_copilot_router = Router::new()
+        .route(
+            "/dsh/copilot/sessions",
+            post(crate::handlers::business_copilot_handlers::create_session)
+                .get(crate::handlers::business_copilot_handlers::list_active_sessions),
+        )
+        .route(
+            "/dsh/copilot/sessions/{session_id}",
+            get(crate::handlers::business_copilot_handlers::get_session)
+                .delete(crate::handlers::business_copilot_handlers::delete_session),
+        )
+        .route(
+            "/dsh/copilot/sessions/{session_id}/messages",
+            post(crate::handlers::business_copilot_handlers::send_message),
+        )
+        .route(
+            "/dsh/copilot/intent/recognize",
+            post(crate::handlers::business_copilot_handlers::recognize_intent),
+        )
+        .route(
+            "/dsh/copilot/modules",
+            get(crate::handlers::business_copilot_handlers::list_modules),
+        )
+        .route(
+            "/dsh/copilot/modules/{module}",
+            get(crate::handlers::business_copilot_handlers::get_module_config),
+        )
+        .with_state(copilot_state);
+
+    // 治理仪表盘路由
+    let governance_state = crate::handlers::governance_dashboard_handlers::GovernanceAppState::new();
+    let governance_dashboard_router = Router::new()
+        .route(
+            "/dsh/governance/dashboard",
+            get(crate::handlers::governance_dashboard_handlers::get_dashboard),
+        )
+        .route(
+            "/dsh/governance/score",
+            get(crate::handlers::governance_dashboard_handlers::get_governance_score),
+        )
+        .route(
+            "/dsh/governance/risk",
+            get(crate::handlers::governance_dashboard_handlers::get_risk_assessment),
+        )
+        .route(
+            "/dsh/governance/compliance",
+            get(crate::handlers::governance_dashboard_handlers::get_compliance_status),
+        )
+        .route(
+            "/dsh/governance/cost",
+            get(crate::handlers::governance_dashboard_handlers::get_cost_analysis),
+        )
+        .route(
+            "/dsh/governance/performance",
+            get(crate::handlers::governance_dashboard_handlers::get_performance_metrics),
+        )
+        .route(
+            "/dsh/governance/security-events",
+            get(crate::handlers::governance_dashboard_handlers::get_security_events),
+        )
+        .route(
+            "/dsh/governance/audit",
+            get(crate::handlers::governance_dashboard_handlers::get_audit_summary),
+        )
+        .route(
+            "/dsh/governance/recommendations",
+            get(crate::handlers::governance_dashboard_handlers::get_recommendations),
+        )
+        .route(
+            "/dsh/governance/cache",
+            delete(crate::handlers::governance_dashboard_handlers::clear_cache),
+        )
+        .with_state(governance_state);
+
     let recommendation_router = Router::new()
         .route("/recommend", post(RecommendationApi::recommend))
         .route(
@@ -336,6 +563,11 @@ pub fn create_routes(
         .merge(protected_routes)
         .merge(analysis_router)
         .merge(agent_router)
+        .merge(dsh_agent_router)
+        .merge(dsh_performance_router)
+        .merge(dsh_enhanced_router)
+        .merge(business_copilot_router)
+        .merge(governance_dashboard_router)
         .merge(recommendation_router)
         .merge(multimodal_router)
         .merge(dify_router)
@@ -367,33 +599,6 @@ pub fn create_routes(
     // V335: MCP (Model Context Protocol) Server 路由
     // 端点：POST /mcp, GET /mcp/sse
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
-    let mcp_server = Arc::new(McpServer::new("topems-ai-mcp", env!("CARGO_PKG_VERSION")));
-    // 异步注册内置系统工具和业务工具（fire-and-forget，注册很快，竞态风险可忽略）
-    let server_clone = mcp_server.clone();
-    tokio::task::spawn(async move {
-        server_clone.register_system_tools().await;
-        register_crm_tools(&server_clone).await;
-        register_erp_tools(&server_clone).await;
-        register_finance_tools(&server_clone).await;
-        register_hr_tools(&server_clone).await;
-        register_mes_tools(&server_clone).await;
-        register_ehs_tools(&server_clone).await;
-        register_wms_tools(&server_clone).await;
-        register_qms_tools(&server_clone).await;
-        register_pm_tools(&server_clone).await;
-        register_lims_tools(&server_clone).await;
-        register_bi_tools(&server_clone).await;
-        register_aps_tools(&server_clone).await;
-        register_cs_tools(&server_clone).await;
-        register_scm_tools(&server_clone).await;
-        register_iot_tools(&server_clone).await;
-        register_oa_tools(&server_clone).await;
-        tracing::info!(
-            "MCP Server tools registered: {} tools total (2 system + 3 CRM + 4 ERP + 4 Finance + 4 HR + 4 MES + 4 EHS + 4 WMS + 4 QMS + 4 PM + 4 LIMS + 4 BI + 4 APS + 4 CS + 4 SCM + 4 IoT + 4 OA)",
-            server_clone.tool_registry().len().await
-        );
-    });
-
     let app = app.merge(create_mcp_routes(mcp_server));
 
     app

@@ -1,0 +1,213 @@
+# TOPEMS 生产环境配置文件模板
+# 
+# 使用说明：
+# 1. 复制此文件为 config/production.yaml
+# 2. 根据实际环境修改配置值
+# 3. 敏感信息（密码、密钥）建议使用环境变量覆盖
+# 4. 配置优先级：环境变量 > YAML 配置 > 默认值
+
+# ===== 服务配置 =====
+service:
+  name: topems-unified-core
+  version: "1.0.0"
+  environment: production  # development | staging | production
+  host: 0.0.0.0
+  port: 8013
+  workers: 4  # 工作进程数，建议设置为 CPU 核心数
+  request_timeout: 30  # 请求超时时间（秒）
+  max_request_size: 10485760  # 最大请求体大小（10MB）
+
+# ===== 日志配置 =====
+logging:
+  level: error  # trace | debug | info | warn | error
+  format: json  # json | text
+  output: stdout  # stdout | stderr | file
+  file_path: /var/log/topems/app.log
+  max_file_size: 100MB
+  max_files: 10
+  include_source: false  # 是否包含源代码位置（生产环境建议关闭）
+
+# ===== 数据库配置 =====
+database:
+  url: postgres://topems:topems@localhost:5432/topems
+  min_connections: 5
+  max_connections: 20
+  acquire_timeout: 30  # 获取连接超时（秒）
+  idle_timeout: 300  # 空闲连接超时（秒）
+  max_lifetime: 1800  # 连接最大生命周期（秒）
+  ssl_mode: disable  # disable | require | verify-ca | verify-full
+  slow_query_threshold: 1000  # 慢查询阈值（毫秒）
+
+# ===== Redis 配置 =====
+redis:
+  url: redis://localhost:6379/0
+  min_connections: 2
+  max_connections: 10
+  acquire_timeout: 10
+  idle_timeout: 300
+  max_lifetime: 1800
+  key_prefix: "topems:"
+
+# ===== 认证配置 =====
+auth:
+  jwt_secret: "${JWT_SECRET}"  # 建议使用环境变量，长度至少 32 字符
+  jwt_algorithm: HS256  # HS256 | RS256 | ES256
+  jwt_expiration: 86400  # Token 过期时间（秒），24 小时
+  jwt_refresh_expiration: 604800  # Refresh Token 过期时间（秒），7 天
+  password_hash_cost: 12  # bcrypt 哈希成本
+  max_login_attempts: 5  # 最大登录尝试次数
+  lockout_duration: 900  # 账户锁定时长（秒），15 分钟
+  session_timeout: 3600  # 会话超时（秒），1 小时
+
+# ===== AI 配置 =====
+ai:
+  provider: mock  # mock | openai | azure | anthropic | ollama | local
+  api_base: http://localhost:11434
+  api_key: "${AI_API_KEY}"
+  model: nomic-embed-text
+  embedding_model: nomic-embed-text
+  max_tokens: 4096
+  temperature: 0.7
+  top_p: 0.9
+  request_timeout: 60
+  max_retries: 3
+  rate_limit: 100  # 每分钟请求数限制
+
+# ===== 缓存配置 =====
+cache:
+  enabled: true
+  default_ttl: 300  # 默认缓存时间（秒），5 分钟
+  max_size: 10000  # 最大缓存条目数
+  eviction_policy: lru  # lru | lfu | random
+
+# ===== 文件存储配置 =====
+storage:
+  provider: local  # local | s3 | oss | cos
+  local_path: /data/topems/files
+  max_file_size: 104857600  # 最大文件大小（100MB）
+  allowed_types:
+    - pdf
+    - doc
+    - docx
+    - xls
+    - xlsx
+    - ppt
+    - pptx
+    - txt
+    - csv
+    - json
+    - xml
+    - png
+    - jpg
+    - jpeg
+    - gif
+    - svg
+  s3:
+    bucket: topems-files
+    region: us-east-1
+    access_key: "${S3_ACCESS_KEY}"
+    secret_key: "${S3_SECRET_KEY}"
+    endpoint: ""
+
+# ===== 邮件配置 =====
+email:
+  enabled: false
+  provider: smtp  # smtp | sendgrid | mailgun | ses
+  smtp:
+    host: smtp.example.com
+    port: 587
+    username: "${SMTP_USERNAME}"
+    password: "${SMTP_PASSWORD}"
+    from_address: noreply@topems.example.com
+    from_name: TOPEMS
+    encryption: starttls  # none | ssl | starttls
+  sendgrid:
+    api_key: "${SENDGRID_API_KEY}"
+    from_address: noreply@topems.example.com
+
+# ===== 监控配置 =====
+monitoring:
+  enabled: true
+  metrics:
+    enabled: true
+    endpoint: /metrics
+    format: prometheus
+  tracing:
+    enabled: false
+    exporter: otlp  # otlp | jaeger | zipkin
+    endpoint: http://localhost:4317
+    sample_rate: 0.1  # 采样率 0-1
+  alerting:
+    enabled: false
+    webhook_url: "${ALERT_WEBHOOK_URL}"
+    severity_levels:
+      - critical
+      - warning
+
+# ===== 安全配置 =====
+security:
+  cors:
+    enabled: true
+    allowed_origins:
+      - http://localhost:3001
+      - https://app.topems.example.com
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowed_headers:
+      - Content-Type
+      - Authorization
+      - X-Request-ID
+    max_age: 3600
+  rate_limiting:
+    enabled: true
+    global_limit: 1000  # 全局每分钟请求数
+    per_ip_limit: 100  # 每 IP 每分钟请求数
+    burst_size: 50  # 突发请求数
+  security_headers:
+    enabled: true
+    hsts_max_age: 31536000
+    content_security_policy: "default-src 'self'"
+  encryption:
+    field_encryption_enabled: true
+    encryption_key: "${ENCRYPTION_KEY}"  # 32 字节密钥
+    algorithm: AES-256-GCM
+
+# ===== 多租户配置 =====
+tenant:
+  enabled: true
+  default_tenant: default
+  isolation_level: row_level  # row_level | schema_level | database_level
+  max_tenants: 1000
+
+# ===== 特性开关 =====
+feature_flags:
+  ai_copilot: true
+  workflow_engine: true
+  knowledge_graph: false
+  rag_search: false
+  multi_agent: false
+  realtime_collaboration: false
+  audit_logging: true
+  data_encryption: true
+
+# ===== 数据保留策略 =====
+retention:
+  audit_logs: 365  # 审计日志保留天数
+  operation_logs: 90  # 操作日志保留天数
+  temporary_files: 7  # 临时文件保留天数
+  deleted_data: 30  # 已删除数据保留天数（软删除）
+
+# ===== 备份配置 =====
+backup:
+  enabled: false
+  schedule: "0 2 * * *"  # 每天凌晨 2 点
+  retention_days: 30
+  storage_path: /data/topems/backups
+  compression: gzip
+  encryption: false
+  encryption_key: "${BACKUP_ENCRYPTION_KEY}"

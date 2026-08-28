@@ -325,7 +325,7 @@ fn generate_mock_finance_report(report_type: &str, period: &str) -> Value {
             "total_income": income,
             "total_expense": expense,
             "net_profit": profit,
-            "profit_margin": if income > 0.0 { (profit / income * 100.0) } else { 0.0 },
+            "profit_margin": if income > 0.0 { profit / income * 100.0 } else { 0.0 },
         },
         "income_breakdown": {
             "sales_revenue": income * 0.7,
@@ -348,7 +348,7 @@ fn generate_mock_finance_report(report_type: &str, period: &str) -> Value {
         "key_metrics": {
             "gross_margin": 45.2,
             "operating_margin": if income > 0.0 { (profit / income * 100.0) - 5.0 } else { 0.0 },
-            "net_margin": if income > 0.0 { (profit / income * 100.0) } else { 0.0 },
+            "net_margin": if income > 0.0 { profit / income * 100.0 } else { 0.0 },
             "current_ratio": 2.3,
             "quick_ratio": 1.8,
         },

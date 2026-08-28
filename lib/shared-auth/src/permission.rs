@@ -40,7 +40,7 @@ pub enum ModuleCode {
     Bi,
     Finance,
     Lims,
-    Lowcode,
+    // [V2026.08 已移除] Lowcode 空壳占位服务
     Mobile,
     Monitor,
     Oa,
@@ -85,7 +85,7 @@ impl ModuleCode {
             ModuleCode::Bi => "bi",
             ModuleCode::Finance => "finance",
             ModuleCode::Lims => "lims",
-            ModuleCode::Lowcode => "lowcode",
+            // [V2026.08 已移除] Lowcode 空壳占位服务
             ModuleCode::Mobile => "mobile",
             ModuleCode::Monitor => "monitor",
             ModuleCode::Oa => "oa",
@@ -131,7 +131,7 @@ impl ModuleCode {
             "bi" => Some(ModuleCode::Bi),
             "finance" => Some(ModuleCode::Finance),
             "lims" => Some(ModuleCode::Lims),
-            "lowcode" => Some(ModuleCode::Lowcode),
+            // [V2026.08 已移除] Lowcode 空壳占位服务
             "mobile" => Some(ModuleCode::Mobile),
             "monitor" => Some(ModuleCode::Monitor),
             "oa" => Some(ModuleCode::Oa),
@@ -353,7 +353,7 @@ pub fn get_all_module_permissions() -> Vec<ModulePermission> {
         ModuleCode::Bi,
         ModuleCode::Finance,
         ModuleCode::Lims,
-        ModuleCode::Lowcode,
+        // [V2026.08 已移除] Lowcode 空壳占位服务
         ModuleCode::Mobile,
         ModuleCode::Monitor,
         ModuleCode::Oa,

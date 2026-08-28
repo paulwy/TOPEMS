@@ -331,7 +331,7 @@ impl DatabasePermissionStore {
         .await
         .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
 
-        Ok(record.count as usize)
+        Ok(record.count.unwrap_or(0) as usize)
     }
 
     // ===== Cache Methods =====
@@ -611,10 +611,10 @@ impl PermissionStore for DatabasePermissionStore {
 
         // If allowed_operations is empty, check max_permission
         if tool_perm.allowed_operations.is_empty() {
-            return matches!(
+            return Ok(matches!(
                 tool_perm.max_permission,
                 super::MaxPermission::Write | super::MaxPermission::Admin
-            );
+            ));
         }
 
         Ok(false)

@@ -308,3 +308,40 @@ pub async fn delete_customer(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_customer_list_params_deserialize() {
+        let query = "status=active&customer_type=enterprise";
+        let params: CustomerListParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.customer_type.as_deref(), Some("enterprise"));
+    }
+
+    #[test]
+    fn test_customer_list_params_default() {
+        let query = "";
+        let params: CustomerListParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.status.is_none());
+        assert!(params.customer_type.is_none());
+    }
+
+    #[test]
+    fn test_customer_list_params_only_status() {
+        let query = "status=inactive";
+        let params: CustomerListParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.status.as_deref(), Some("inactive"));
+        assert!(params.customer_type.is_none());
+    }
+
+    #[test]
+    fn test_customer_list_params_only_type() {
+        let query = "customer_type=potential";
+        let params: CustomerListParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.status.is_none());
+        assert_eq!(params.customer_type.as_deref(), Some("potential"));
+    }
+}

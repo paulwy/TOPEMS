@@ -225,3 +225,46 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_list_audit_logs_query_deserialize() {
+        let query = "action=create&entity_type=customer&user_id=user1&status=success&start_date=2024-01-01&end_date=2024-01-31&page=1&page_size=20";
+        let params: ListAuditLogsQuery = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.action.as_deref(), Some("create"));
+        assert_eq!(params.entity_type.as_deref(), Some("customer"));
+        assert_eq!(params.user_id.as_deref(), Some("user1"));
+        assert_eq!(params.status.as_deref(), Some("success"));
+        assert_eq!(params.start_date.as_deref(), Some("2024-01-01"));
+        assert_eq!(params.end_date.as_deref(), Some("2024-01-31"));
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+    }
+
+    #[test]
+    fn test_list_audit_logs_query_default() {
+        let query = "";
+        let params: ListAuditLogsQuery = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.action.is_none());
+        assert!(params.entity_type.is_none());
+        assert!(params.user_id.is_none());
+        assert!(params.status.is_none());
+        assert!(params.start_date.is_none());
+        assert!(params.end_date.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_list_audit_logs_query_partial() {
+        let query = "action=update&page=2";
+        let params: ListAuditLogsQuery = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.action.as_deref(), Some("update"));
+        assert!(params.entity_type.is_none());
+        assert_eq!(params.page, Some(2));
+        assert!(params.page_size.is_none());
+    }
+}

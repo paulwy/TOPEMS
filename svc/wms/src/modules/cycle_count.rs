@@ -612,3 +612,42 @@ pub async fn generate_all_cycle_counts(
         &format!("成功生成 {} 个循环盘点", generated_count),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cycle_count_query_params_deserialize() {
+        let query = "is_active=true";
+        let params: CycleCountQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.is_active, Some(true));
+    }
+
+    #[test]
+    fn test_cycle_count_query_params_inactive() {
+        let query = "is_active=false";
+        let params: CycleCountQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.is_active, Some(false));
+    }
+
+    #[test]
+    fn test_cycle_count_query_params_default() {
+        let query = "";
+        let params: CycleCountQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.warehouse_id.is_none());
+        assert!(params.is_active.is_none());
+    }
+
+    #[test]
+    fn test_cycle_count_query_params_all_fields() {
+        let query = "page=1&page_size=20&is_active=true";
+        let params: CycleCountQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.is_active, Some(true));
+        assert!(params.warehouse_id.is_none());
+    }
+}

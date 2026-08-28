@@ -18,10 +18,18 @@ import { vectorApi } from './vector';
 import { recommendationApi } from './recommendation';
 import { assistantApi } from './assistant';
 import { difyApi } from './dify';
+import { dshAgentApi } from './dsh-agent';
+import * as businessCopilotApi from './business-copilot';
+import * as businessIntelligenceApi from './business-intelligence';
+import * as governanceDashboardApi from './governance-dashboard';
 
 export * from './types';
 export * from './assistant';
 export * from './dify';
+export * from './dsh-agent';
+export * from './business-copilot';
+export * from './business-intelligence';
+export * from './governance-dashboard';
 
 export const aiApi = {
   ...documentApi,
@@ -33,6 +41,10 @@ export const aiApi = {
   ...recommendationApi,
   ...assistantApi,
   ...difyApi,
+  ...dshAgentApi,
+  ...businessCopilotApi,
+  ...businessIntelligenceApi,
+  ...governanceDashboardApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.ai.get<string>('/health');

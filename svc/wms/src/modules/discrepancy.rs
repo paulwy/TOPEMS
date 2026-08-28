@@ -599,3 +599,42 @@ pub async fn process_stock_take_discrepancies(
         &format!("成功生成 {} 个差异处理记录", created_count),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_discrepancy_query_params_deserialize() {
+        let query = "adjustment_status=pending";
+        let params: DiscrepancyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.adjustment_status.as_deref(), Some("pending"));
+    }
+
+    #[test]
+    fn test_discrepancy_query_params_approved() {
+        let query = "adjustment_status=approved";
+        let params: DiscrepancyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.adjustment_status.as_deref(), Some("approved"));
+    }
+
+    #[test]
+    fn test_discrepancy_query_params_default() {
+        let query = "";
+        let params: DiscrepancyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.stock_take_id.is_none());
+        assert!(params.adjustment_status.is_none());
+    }
+
+    #[test]
+    fn test_discrepancy_query_params_all_fields() {
+        let query = "page=1&page_size=20&adjustment_status=rejected";
+        let params: DiscrepancyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.adjustment_status.as_deref(), Some("rejected"));
+        assert!(params.stock_take_id.is_none());
+    }
+}

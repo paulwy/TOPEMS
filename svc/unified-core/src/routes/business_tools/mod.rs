@@ -58,7 +58,8 @@ pub mod audit_restorer;
 // V471: Audit log archive restore API
 pub mod audit_restore_api;
 
-use std::sync::Arc;
+// 共享的测试 Mock 实现
+pub mod mock_audit_store;
 
 use axum::extract::{Path, State};
 use axum::Json;
@@ -66,7 +67,7 @@ use axum::Router;
 use serde::{Deserialize, Serialize};
 
 use crate::modules::business_tools::{
-    BusinessRequest, BusinessResponse, BusinessToolRegistry,
+    BusinessRequest, BusinessResponse,
 };
 use crate::AppState;
 
@@ -83,6 +84,9 @@ pub enum PermissionLevel {
     Admin,
 }
 
+/// Alias for PermissionLevel, used in database permission stores.
+pub type MaxPermission = PermissionLevel;
+
 impl PermissionLevel {
     /// Get the permission level as a string.
     pub fn as_str(&self) -> &'static str {
@@ -90,6 +94,16 @@ impl PermissionLevel {
             PermissionLevel::Read => "read",
             PermissionLevel::Write => "write",
             PermissionLevel::Admin => "admin",
+        }
+    }
+
+    /// Parse a permission level from a string.
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "read" => Some(PermissionLevel::Read),
+            "write" => Some(PermissionLevel::Write),
+            "admin" => Some(PermissionLevel::Admin),
+            _ => None,
         }
     }
 
@@ -407,6 +421,28 @@ impl TenantPermission {
             tenant_id: tenant_id.to_string(),
             user_id: user_id.to_string(),
             role: TenantRole::Owner,
+            tool_permissions: Vec::new(),
+            active: true,
+        }
+    }
+
+    /// Create a new tenant permission with admin role.
+    pub fn admin(tenant_id: &str, user_id: &str) -> Self {
+        Self {
+            tenant_id: tenant_id.to_string(),
+            user_id: user_id.to_string(),
+            role: TenantRole::Admin,
+            tool_permissions: Vec::new(),
+            active: true,
+        }
+    }
+
+    /// Create a new tenant permission with member role.
+    pub fn member(tenant_id: &str, user_id: &str) -> Self {
+        Self {
+            tenant_id: tenant_id.to_string(),
+            user_id: user_id.to_string(),
+            role: TenantRole::Member,
             tool_permissions: Vec::new(),
             active: true,
         }

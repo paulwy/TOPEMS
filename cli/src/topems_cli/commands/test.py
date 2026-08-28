@@ -1,4 +1,9 @@
-"""test 命令 - 运行测试"""
+"""test 命令 - 运行测试
+
+与 scripts/topems.sh 的 test 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh test（零依赖、后端分层测试、前端 shard）。
+本命令提供 Python 原生体验和 rich 输出，作为可选替代。
+"""
 
 import subprocess
 from pathlib import Path

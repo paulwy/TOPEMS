@@ -633,3 +633,26 @@ async fn get_tagged_customers(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tag_pagination_params_deserialize() {
+        let query = "page=1&page_size=20&search=vip";
+        let params: TagPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("vip"));
+    }
+
+    #[test]
+    fn test_tag_pagination_params_default() {
+        let query = "";
+        let params: TagPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+    }
+}

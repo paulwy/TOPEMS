@@ -22,6 +22,7 @@ pub mod tax_v56;
 pub mod treasury_v58;
 pub mod voucher_template;
 pub mod voucher_template_entries;
+pub mod accounting_subjects;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
@@ -5295,6 +5296,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(multi_dimensional::create_routes())
         .merge(shared_services::create_routes())
         .merge(financial_reports::create_routes())
+        .merge(accounting_subjects::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())
         .merge(event_routes::event_routes())
         .route("/dashboard", axum::routing::get(get_dashboard_handler))

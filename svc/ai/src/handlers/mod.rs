@@ -1,5 +1,10 @@
 pub mod ai_handlers;
+pub mod business_copilot_handlers;
 pub mod connector_handlers;
 pub mod dify_handlers;
+pub mod dsh_agent_handlers;
+pub mod dsh_ai_enhanced_handlers;
+pub mod dsh_performance_handlers;
+pub mod governance_dashboard_handlers;
 pub mod health;
 pub mod workflow_handlers;

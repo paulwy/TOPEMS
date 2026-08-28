@@ -288,6 +288,13 @@ async fn main() -> anyhow::Result<()> {
         workflow_orchestrator,
         event_publisher: ctx.event_publisher.clone(),
         audit: crate::services::audit::AiAuditService::new(pool.clone()),
+        dsh_agent_orchestrator: None,
+        dsh_agent_performance_monitor: Some(
+            crate::dsh::agent::AgentPerformanceMonitor::with_defaults(),
+        ),
+        dsh_knowledge_graph: None,
+        dsh_rag_engine: None,
+        dsh_multi_agent_coordinator: None,
     };
 
     // 创建路由（routes::create_routes 处理所有中间件：auth、tenant、rate_limit、cors、prometheus、telemetry）

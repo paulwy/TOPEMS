@@ -826,3 +826,190 @@ pub async fn cancel_wave_pick(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wave_pick_serialization() {
+        let wave = WavePick {
+            id: Uuid::nil(),
+            wave_pick_number: "WP001".to_string(),
+            wave_pick_type: "order".to_string(),
+            warehouse_id: Uuid::nil(),
+            warehouse_name: Some("主仓库".to_string()),
+            status: "pending".to_string(),
+            priority: Some("high".to_string()),
+            assigned_to: None,
+            assigned_user_name: None,
+            batch_id: None,
+            start_time: None,
+            end_time: None,
+            total_items: 10,
+            picked_items: 0,
+            total_quantity: 100.0,
+            picked_quantity: 0.0,
+            remarks: Some("测试波次".to_string()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&wave).unwrap();
+        assert_eq!(json["wave_pick_number"], "WP001");
+        assert_eq!(json["wave_pick_type"], "order");
+        assert_eq!(json["status"], "pending");
+        assert_eq!(json["priority"], "high");
+        assert_eq!(json["total_items"], 10);
+        assert_eq!(json["picked_items"], 0);
+        assert_eq!(json["total_quantity"], 100.0);
+        assert_eq!(json["picked_quantity"], 0.0);
+    }
+
+    #[test]
+    fn test_wave_pick_clone() {
+        let wave = WavePick {
+            id: Uuid::nil(),
+            wave_pick_number: "WP002".to_string(),
+            wave_pick_type: "batch".to_string(),
+            warehouse_id: Uuid::nil(),
+            warehouse_name: None,
+            status: "in_progress".to_string(),
+            priority: None,
+            assigned_to: Some(Uuid::nil()),
+            assigned_user_name: Some("张三".to_string()),
+            batch_id: Some(Uuid::nil()),
+            start_time: Some(Utc::now()),
+            end_time: None,
+            total_items: 5,
+            picked_items: 3,
+            total_quantity: 50.0,
+            picked_quantity: 30.0,
+            remarks: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let cloned = wave.clone();
+        assert_eq!(wave.wave_pick_number, cloned.wave_pick_number);
+        assert_eq!(wave.status, cloned.status);
+        assert_eq!(wave.total_items, cloned.total_items);
+        assert_eq!(wave.picked_items, cloned.picked_items);
+    }
+
+    #[test]
+    fn test_create_wave_pick_request_serialization() {
+        let request = CreateWavePickRequest {
+            wave_pick_number: "WP003".to_string(),
+            wave_pick_type: "order".to_string(),
+            warehouse_id: Uuid::nil(),
+            priority: Some("medium".to_string()),
+            batch_id: None,
+            remarks: Some("创建测试".to_string()),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["wave_pick_number"], "WP003");
+        assert_eq!(json["wave_pick_type"], "order");
+        assert_eq!(json["priority"], "medium");
+        assert!(json["batch_id"].is_null());
+        assert_eq!(json["remarks"], "创建测试");
+    }
+
+    #[test]
+    fn test_create_wave_pick_request_minimal() {
+        let request = CreateWavePickRequest {
+            wave_pick_number: "WP004".to_string(),
+            wave_pick_type: "batch".to_string(),
+            warehouse_id: Uuid::nil(),
+            priority: None,
+            batch_id: None,
+            remarks: None,
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["wave_pick_number"], "WP004");
+        assert_eq!(json["wave_pick_type"], "batch");
+        assert!(json["priority"].is_null());
+        assert!(json["remarks"].is_null());
+    }
+
+    #[test]
+    fn test_create_wave_pick_request_deserialize() {
+        let json = r#"{
+            "wave_pick_number": "WP005",
+            "wave_pick_type": "order",
+            "warehouse_id": "00000000-0000-0000-0000-000000000000",
+            "priority": "high",
+            "remarks": "反序列化测试"
+        }"#;
+        let request: CreateWavePickRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.wave_pick_number, "WP005");
+        assert_eq!(request.wave_pick_type, "order");
+        assert_eq!(request.priority.as_deref(), Some("high"));
+        assert_eq!(request.remarks.as_deref(), Some("反序列化测试"));
+    }
+
+    #[test]
+    fn test_assign_wave_pick_request_serialization() {
+        let request = AssignWavePickRequest {
+            assigned_to: Uuid::nil(),
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        assert_eq!(json["assigned_to"], "00000000-0000-0000-0000-000000000000");
+    }
+
+    #[test]
+    fn test_assign_wave_pick_request_deserialize() {
+        let json = r#"{"assigned_to": "00000000-0000-0000-0000-000000000000"}"#;
+        let request: AssignWavePickRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.assigned_to, Uuid::nil());
+    }
+
+    #[test]
+    fn test_wave_pick_item_serialization() {
+        let item = WavePickItem {
+            id: Uuid::nil(),
+            wave_pick_id: Uuid::nil(),
+            outbound_order_id: Some(Uuid::nil()),
+            outbound_order_number: Some("OUT001".to_string()),
+            material_code: "MAT001".to_string(),
+            material_name: "测试物料".to_string(),
+            location_id: Some(Uuid::nil()),
+            location_code: Some("A-01-01".to_string()),
+            planned_quantity: 10.0,
+            picked_quantity: 5.0,
+            status: "in_progress".to_string(),
+            remarks: Some("部分拣货".to_string()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["material_code"], "MAT001");
+        assert_eq!(json["material_name"], "测试物料");
+        assert_eq!(json["planned_quantity"], 10.0);
+        assert_eq!(json["picked_quantity"], 5.0);
+        assert_eq!(json["status"], "in_progress");
+        assert_eq!(json["outbound_order_number"], "OUT001");
+    }
+
+    #[test]
+    fn test_wave_pick_item_clone() {
+        let item = WavePickItem {
+            id: Uuid::nil(),
+            wave_pick_id: Uuid::nil(),
+            outbound_order_id: None,
+            outbound_order_number: None,
+            material_code: "MAT002".to_string(),
+            material_name: "简单物料".to_string(),
+            location_id: None,
+            location_code: None,
+            planned_quantity: 20.0,
+            picked_quantity: 0.0,
+            status: "pending".to_string(),
+            remarks: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let cloned = item.clone();
+        assert_eq!(item.material_code, cloned.material_code);
+        assert_eq!(item.planned_quantity, cloned.planned_quantity);
+        assert_eq!(item.status, cloned.status);
+    }
+}

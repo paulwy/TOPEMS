@@ -17,6 +17,8 @@ export const AI_PATHS = {
   settings: '/ai/settings',
   assistant: '/ai/assistant',
   difyChat: '/ai/dify-chat',
+  businessCopilot: '/ai/business-copilot',
+  governanceDashboard: '/ai/governance-dashboard',
 } as const;
 interface AiDashboardPageProps {}
 
@@ -59,9 +61,17 @@ interface DifyChatPageProps {
   initialValues?: Record<string, unknown>;
 }
 
+interface BusinessCopilotPageProps {
+  module?: string;
+}
+
+interface GovernanceDashboardPageProps {
+  timeRange?: string;
+}
+
 const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
   path: AI_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/ai/AiDashboardPage'), 'AiDashboardPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiDashboardPage'), '@/pages/ai/AiDashboardPage'),
   module: 'ai',
   code: 'ai-dashboard',
   title: i18n.t('shared.config.ai_1'),
@@ -74,7 +84,7 @@ const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
 
 const aiChatRoute: RouteConfigV2<AiChatPageProps> = {
   path: AI_PATHS.chat,
-  element: lazyWithRetry(() => import('@/pages/ai/AiChatPage'), 'AiChatPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiChatPage'), '@/pages/ai/AiChatPage'),
   module: 'ai',
   code: 'ai-chat',
   title: i18n.t('shared.config.k1'),
@@ -87,7 +97,7 @@ const aiChatRoute: RouteConfigV2<AiChatPageProps> = {
 
 const aiCodeAssistantRoute: RouteConfigV2<AiCodeAssistantPageProps> = {
   path: AI_PATHS.code,
-  element: lazyWithRetry(() => import('@/pages/ai/AiCodeAssistantPage'), 'AiCodeAssistantPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiCodeAssistantPage'), '@/pages/ai/AiCodeAssistantPage'),
   module: 'ai',
   code: 'ai-code',
   title: i18n.t('shared.config.k2'),
@@ -100,10 +110,7 @@ const aiCodeAssistantRoute: RouteConfigV2<AiCodeAssistantPageProps> = {
 
 const aiDocumentAnalysisRoute: RouteConfigV2<AiDocumentAnalysisPageProps> = {
   path: AI_PATHS.document,
-  element: lazyWithRetry(
-    () => import('@/pages/ai/AiDocumentAnalysisPage'),
-    'AiDocumentAnalysisPage'
-  ),
+  element: lazyWithRetry(() => import('@/pages/ai/AiDocumentAnalysisPage'), '@/pages/ai/AiDocumentAnalysisPage'),
   module: 'ai',
   code: 'ai-document',
   title: i18n.t('shared.config.k3'),
@@ -116,7 +123,7 @@ const aiDocumentAnalysisRoute: RouteConfigV2<AiDocumentAnalysisPageProps> = {
 
 const aiKnowledgeBaseRoute: RouteConfigV2<AiKnowledgeBasePageProps> = {
   path: AI_PATHS.knowledge,
-  element: lazyWithRetry(() => import('@/pages/ai/AiKnowledgeBasePage'), 'AiKnowledgeBasePage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiKnowledgeBasePage'), '@/pages/ai/AiKnowledgeBasePage'),
   module: 'ai',
   code: 'ai-knowledge',
   title: i18n.t('shared.config.k4'),
@@ -129,7 +136,7 @@ const aiKnowledgeBaseRoute: RouteConfigV2<AiKnowledgeBasePageProps> = {
 
 const aiPromptLibraryRoute: RouteConfigV2<AiPromptLibraryPageProps> = {
   path: AI_PATHS.prompts,
-  element: lazyWithRetry(() => import('@/pages/ai/AiPromptLibraryPage'), 'AiPromptLibraryPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiPromptLibraryPage'), '@/pages/ai/AiPromptLibraryPage'),
   module: 'ai',
   code: 'ai-prompts',
   title: i18n.t('shared.config.k5'),
@@ -142,7 +149,7 @@ const aiPromptLibraryRoute: RouteConfigV2<AiPromptLibraryPageProps> = {
 
 const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
   path: AI_PATHS.settings,
-  element: lazyWithRetry(() => import('@/pages/ai/AiModelSettingsPage'), 'AiModelSettingsPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiModelSettingsPage'), '@/pages/ai/AiModelSettingsPage'),
   module: 'ai',
   code: 'ai-settings',
   title: i18n.t('shared.config.k6'),
@@ -155,7 +162,7 @@ const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
 
 const aiAssistantRoute: RouteConfigV2<AiAssistantPageProps> = {
   path: AI_PATHS.assistant,
-  element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), 'AiAssistantPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), '@/pages/ai/AiAssistantPage'),
   module: 'ai',
   code: 'ai-assistant',
   title: i18n.t('shared.config.ai_2'),
@@ -168,7 +175,7 @@ const aiAssistantRoute: RouteConfigV2<AiAssistantPageProps> = {
 
 const difyChatRoute: RouteConfigV2<DifyChatPageProps> = {
   path: AI_PATHS.difyChat,
-  element: lazyWithRetry(() => import('@/pages/ai/DifyChatPage'), 'DifyChatPage'),
+  element: lazyWithRetry(() => import('@/pages/ai/DifyChatPage'), '@/pages/ai/DifyChatPage'),
   module: 'ai',
   code: 'ai-dify-chat',
   title: i18n.t('shared.config.ai_dify_chat'),
@@ -176,6 +183,32 @@ const difyChatRoute: RouteConfigV2<DifyChatPageProps> = {
   template: 'form',
   group: 'process',
   requiredPermissions: ['ai:chat:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const businessCopilotRoute: RouteConfigV2<BusinessCopilotPageProps> = {
+  path: AI_PATHS.businessCopilot,
+  element: lazyWithRetry(() => import('@/pages/ai/BusinessCopilotPage'), '@/pages/ai/BusinessCopilotPage'),
+  module: 'ai',
+  code: 'ai-business-copilot',
+  title: '业务 Copilot',
+  titleKey: 'shared.config.ai_business_copilot',
+  template: 'form',
+  group: 'business',
+  requiredPermissions: ['ai:dashboard:read'],
+  action: 'read',
+};
+
+const governanceDashboardRoute: RouteConfigV2<GovernanceDashboardPageProps> = {
+  path: AI_PATHS.governanceDashboard,
+  element: lazyWithRetry(() => import('@/pages/ai/GovernanceDashboardPage'), '@/pages/ai/GovernanceDashboardPage'),
+  module: 'ai',
+  code: 'ai-governance-dashboard',
+  title: 'AI 治理仪表盘',
+  titleKey: 'shared.config.ai_governance_dashboard',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['ai:dashboard:read', 'ai:governance:read'],
   action: 'read',
 };
 
@@ -202,6 +235,8 @@ export const aiModuleConfig: RouteModuleConfig = {
     aiModelSettingsRoute,
     aiAssistantRoute,
     difyChatRoute,
+    businessCopilotRoute,
+    governanceDashboardRoute,
   ],
 };
 
@@ -323,6 +358,30 @@ export const aiNavConfig: ModuleNavConfig = {
       group: 'process',
       showInTabs: true,
       description: i18n.t('shared.config.ai_dify_chat_desc'),
+    },
+    {
+      code: 'ai-business-copilot',
+      label: '业务 Copilot',
+      labelKey: 'shared.config.ai_business_copilot',
+      icon: 'Briefcase',
+      path: AI_PATHS.businessCopilot,
+      permission: 'ai:dashboard:read',
+      order: 3,
+      group: 'business',
+      showInTabs: true,
+      description: '集成业务模块选择、智能表单、文档智能的一站式 AI 助手',
+    },
+    {
+      code: 'ai-governance-dashboard',
+      label: 'AI 治理仪表盘',
+      labelKey: 'shared.config.ai_governance_dashboard',
+      icon: 'Shield',
+      path: AI_PATHS.governanceDashboard,
+      permission: 'ai:governance:read',
+      order: 1,
+      group: 'overview',
+      showInTabs: true,
+      description: '全面监控 AI 系统的安全、合规、成本和性能',
     },
   ],
 };

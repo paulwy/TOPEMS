@@ -546,3 +546,66 @@ pub async fn receive_mes_progress(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_update_status_request_deserialize() {
+        let json = r#"{"status": "in_progress"}"#;
+        let request: UpdateStatusRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.status, "in_progress");
+    }
+
+    #[test]
+    fn test_update_status_request_completed() {
+        let json = r#"{"status": "completed"}"#;
+        let request: UpdateStatusRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.status, "completed");
+    }
+
+    #[test]
+    fn test_mes_progress_update_deserialize() {
+        let json = r#"{
+            "mes_order_id": "550e8400-e29b-41d4-a716-446655440000",
+            "erp_order_id": "660e8400-e29b-41d4-a716-446655440001",
+            "completed_quantity": 50.0,
+            "status": "in_progress"
+        }"#;
+        let update: MesProgressUpdate = serde_json::from_str(json).unwrap();
+        assert_eq!(update.completed_quantity, Some(50.0));
+        assert_eq!(update.status.as_deref(), Some("in_progress"));
+        assert!(update.actual_start_date.is_none());
+        assert!(update.actual_end_date.is_none());
+    }
+
+    #[test]
+    fn test_mes_progress_update_minimal() {
+        let json = r#"{
+            "mes_order_id": "550e8400-e29b-41d4-a716-446655440000"
+        }"#;
+        let update: MesProgressUpdate = serde_json::from_str(json).unwrap();
+        assert!(update.erp_order_id.is_none());
+        assert!(update.completed_quantity.is_none());
+        assert!(update.status.is_none());
+        assert!(update.actual_start_date.is_none());
+        assert!(update.actual_end_date.is_none());
+    }
+
+    #[test]
+    fn test_mes_progress_update_with_dates() {
+        let json = r#"{
+            "mes_order_id": "550e8400-e29b-41d4-a716-446655440000",
+            "completed_quantity": 100.0,
+            "status": "completed",
+            "actual_start_date": "2024-01-01T08:00:00Z",
+            "actual_end_date": "2024-01-02T17:00:00Z"
+        }"#;
+        let update: MesProgressUpdate = serde_json::from_str(json).unwrap();
+        assert_eq!(update.completed_quantity, Some(100.0));
+        assert_eq!(update.status.as_deref(), Some("completed"));
+        assert!(update.actual_start_date.is_some());
+        assert!(update.actual_end_date.is_some());
+    }
+}

@@ -14,6 +14,8 @@
 //! └── factory.rs  # ProviderFactory（配置驱动创建）
 //! ```
 
+#![allow(unused_imports)]
+
 pub mod deepseek;
 pub mod factory;
 pub mod mock;
@@ -25,6 +27,5 @@ pub use factory::ProviderFactory;
 pub use mock::MockProvider;
 pub use ollama::OllamaProvider;
 pub use trait_::{
-    ChatMessage, EmbeddingRequest, EmbeddingResponse, LlmProvider, LlmProviderError, LlmRequest,
-    LlmResponse, LlmStreamChunk, ProviderConfig, ProviderType,
+    ChatMessage, LlmProvider, LlmProviderError, LlmRequest, ProviderConfig, ProviderType,
 };

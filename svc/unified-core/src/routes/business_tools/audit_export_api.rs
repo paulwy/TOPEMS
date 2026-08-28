@@ -4,8 +4,6 @@
 //! CSV and JSON formats. Supports filtering and streaming export for
 //! large datasets.
 
-use std::collections::HashMap;
-
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -13,7 +11,7 @@ use axum::Json;
 use axum::Router;
 
 use crate::shared::AppState;
-use super::permission_audit_log::{AuditAction, AuditLogEntry, AuditLogQuery};
+use super::permission_audit_log::{AuditLogEntry, AuditLogQuery};
 
 // ===== Export Format =====
 
@@ -245,6 +243,8 @@ pub fn audit_export_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use crate::routes::business_tools::permission_audit_log::AuditAction;
 
     #[test]
     fn test_export_format_from_str() {

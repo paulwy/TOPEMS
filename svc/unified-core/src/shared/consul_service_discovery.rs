@@ -173,7 +173,7 @@ impl ConsulServiceDiscovery {
         if let Some(token) = &self.config.token {
             headers.insert(
                 "X-Consul-Token",
-                reqwest::header::HeaderValue::from_str(token).unwrap_or_default(),
+                reqwest::header::HeaderValue::from_str(token).unwrap_or_else(|_| reqwest::header::HeaderValue::from_static("")),
             );
         }
         headers

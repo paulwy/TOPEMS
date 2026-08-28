@@ -571,3 +571,30 @@ pub async fn unpublish_announcement(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_announcement_query_params_deserialize() {
+        let query = "page=1&page_size=20&search=test&status=published&priority=high";
+        let params: AnnouncementQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("test"));
+        assert_eq!(params.status.as_deref(), Some("published"));
+        assert_eq!(params.priority.as_deref(), Some("high"));
+    }
+
+    #[test]
+    fn test_announcement_query_params_default() {
+        let query = "";
+        let params: AnnouncementQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.priority.is_none());
+    }
+}

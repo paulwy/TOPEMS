@@ -42,7 +42,7 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
                 .into_iter()
                 .map(|p| {
                     // 从 code 中提取 category（例如 "iam:users_read" -> "iam"）
-                    let category = p.code.split(':').next().unwrap_or("other").to_string();
+                    let category = extract_category(&p.code);
 
                     PermissionResponse {
                         id: p.id.to_string(),
@@ -69,5 +69,44 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
                 &format!("获取权限列表失败: {}", e),
             ))
         }
+    }
+}
+
+/// 从权限 code 中提取 category（例如 "iam:users_read" -> "iam"）
+fn extract_category(code: &str) -> String {
+    code.split(':').next().unwrap_or("other").to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_category_normal() {
+        assert_eq!(extract_category("iam:users_read"), "iam");
+        assert_eq!(extract_category("crm:customers_create"), "crm");
+        assert_eq!(extract_category("finance:invoices_read"), "finance");
+    }
+
+    #[test]
+    fn test_extract_category_multiple_colons() {
+        assert_eq!(extract_category("iam:users:read"), "iam");
+        assert_eq!(extract_category("a:b:c:d"), "a");
+    }
+
+    #[test]
+    fn test_extract_category_no_colon() {
+        assert_eq!(extract_category("users_read"), "users_read");
+        assert_eq!(extract_category("admin"), "admin");
+    }
+
+    #[test]
+    fn test_extract_category_empty() {
+        assert_eq!(extract_category(""), "");
+    }
+
+    #[test]
+    fn test_extract_category_starts_with_colon() {
+        assert_eq!(extract_category(":users_read"), "");
     }
 }

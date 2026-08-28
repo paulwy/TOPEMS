@@ -1,16 +1,9 @@
-export { AIHelperButton } from './AIHelperButton';
-export { AIGenerateModal } from './AIGenerateModal';
-export { AICodeGenerator } from './AICodeGenerator';
-export { AITextOptimizer } from './AITextOptimizer';
-export { AIFormValidator } from './AIFormValidator';
-export { AIDataCompleter } from './AIDataCompleter';
-export { AISummarizer } from './AISummarizer';
-export { AIDocumentGenerator } from './AIDocumentGenerator';
-export { AIAnalyzer } from './AIAnalyzer';
-export { DocumentManager } from './DocumentManager';
-export { FloatingAIHelper } from './FloatingAIHelper';
-export * from './copilot';
-export { AIToolsPanel } from './AIToolsPanel';
-export { ChatHistory } from './ChatHistory';
-export type { ChatSession, ChatMessage } from './ChatHistory';
-export type { PromptTemplate } from './PromptTemplateManager';
+// AI 组件统一导出
+export { default as KnowledgeGraphVisualization } from './knowledge-graph/KnowledgeGraphVisualization';
+export type { KnowledgeGraphData, GraphNode, GraphEdge } from './knowledge-graph/KnowledgeGraphVisualization';
+
+export { default as RagRetrievalPanel } from './rag/RagRetrievalPanel';
+export type { RetrievedDocument, RetrievalRequest, RetrievalResponse, RetrievalConfig } from './rag/RagRetrievalPanel';
+
+export { default as MultiAgentMonitor } from './multi-agent/MultiAgentMonitor';
+export type { AgentInfo, AgentTask, AgentMessage, CollaborationSession, AgentStatus, CollaborationMode } from './multi-agent/MultiAgentMonitor';

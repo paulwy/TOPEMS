@@ -477,3 +477,55 @@ pub async fn delete_warehouse(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_warehouse_cache_key() {
+        let tenant_id = Uuid::nil();
+        let id = Uuid::nil();
+        let key = warehouse_cache_key(tenant_id, id);
+        assert_eq!(key, format!("warehouse:{}:{}", tenant_id, id));
+        assert!(key.starts_with("warehouse:"));
+    }
+
+    #[test]
+    fn test_warehouse_cache_key_different_ids() {
+        let tenant_id = Uuid::nil();
+        let id1 = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
+        let id2 = Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap();
+        let key1 = warehouse_cache_key(tenant_id, id1);
+        let key2 = warehouse_cache_key(tenant_id, id2);
+        assert_ne!(key1, key2);
+    }
+
+    #[test]
+    fn test_warehouse_list_cache_key() {
+        let tenant_id = Uuid::nil();
+        let key = warehouse_list_cache_key(tenant_id, 1, 20, &Some("test".to_string()), &Some("active".to_string()));
+        assert!(key.starts_with("warehouses:"));
+        assert!(key.contains("page:1"));
+        assert!(key.contains("size:20"));
+        assert!(key.contains("search:"));
+        assert!(key.contains("status:"));
+    }
+
+    #[test]
+    fn test_warehouse_list_cache_key_default() {
+        let tenant_id = Uuid::nil();
+        let key = warehouse_list_cache_key(tenant_id, 1, 10, &None, &None);
+        assert!(key.starts_with("warehouses:"));
+        assert!(key.contains("page:1"));
+        assert!(key.contains("size:10"));
+    }
+
+    #[test]
+    fn test_warehouse_list_cache_key_different_pages() {
+        let tenant_id = Uuid::nil();
+        let key1 = warehouse_list_cache_key(tenant_id, 1, 10, &None, &None);
+        let key2 = warehouse_list_cache_key(tenant_id, 2, 10, &None, &None);
+        assert_ne!(key1, key2);
+    }
+}

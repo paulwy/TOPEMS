@@ -14,6 +14,7 @@ use topems_shared_mcp::protocol::{
     McpToolResult, ToolsCapability,
 };
 
+use super::security::McpSecurityMiddleware;
 use super::tools::{ToolExecutionError, ToolRegistry};
 
 /// MCP Server 状态
@@ -70,6 +71,8 @@ pub struct McpServer {
     tools: ToolRegistry,
     /// 协议版本
     protocol_version: McpProtocolVersion,
+    /// 安全中间件
+    security: McpSecurityMiddleware,
 }
 
 impl McpServer {
@@ -81,6 +84,7 @@ impl McpServer {
             state: Arc::new(RwLock::new(ServerState::Uninitialized)),
             tools: ToolRegistry::new(),
             protocol_version: McpProtocolVersion::default(),
+            security: McpSecurityMiddleware::new(),
         }
     }
 
@@ -241,6 +245,17 @@ impl McpServer {
 
         let arguments = params["arguments"].clone();
 
+        // 安全检查：校验工具输入
+        if let Err(e) = self.security.validate_tool_input(&tool_name, &arguments).await {
+            let (code, message) = match e {
+                ToolExecutionError::NotFound(_) => (-32601, e.to_string()),
+                ToolExecutionError::Validation(_) => (-32602, e.to_string()),
+                ToolExecutionError::Execution(_) => (-32000, e.to_string()),
+                ToolExecutionError::PermissionDenied(_) => (-32001, e.to_string()),
+            };
+            return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
+        }
+
         match self.tools.call_tool(&tool_name, arguments).await {
             Ok(result) => {
                 let result_value = match serde_json::to_value(result) {
@@ -252,7 +267,9 @@ impl McpServer {
                         )
                     }
                 };
-                JsonRpcResponse::success(id, result_value)
+                // 安全检查：脱敏输出
+                let sanitized = self.security.sanitize_output(result_value);
+                JsonRpcResponse::success(id, sanitized)
             }
             Err(e) => {
                 let (code, message) = match e {

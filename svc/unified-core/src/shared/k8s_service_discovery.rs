@@ -9,7 +9,6 @@
 //! a given service.
 
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -281,7 +280,7 @@ impl K8sServiceDiscovery {
 
             let base_url = format!("http://{}:{}", address.ip, port.port);
 
-            let mut metadata = HashMap::new();
+            let mut metadata: HashMap<String, String> = HashMap::new();
             metadata.insert("namespace".to_string(), endpoints.metadata.namespace.clone());
             metadata.insert("service_name".to_string(), endpoints.metadata.name.clone());
             metadata.insert("node_name".to_string(), address.node_name.clone().unwrap_or_default());
@@ -310,7 +309,7 @@ impl K8sServiceDiscovery {
                 .map(|(k, v)| format!("{}={}", k.trim_start_matches("tag-"), v))
                 .collect();
 
-            Some(ServiceRegistration {
+            return Some(ServiceRegistration {
                 name: endpoints.metadata.name.clone(),
                 base_url,
                 version,
@@ -320,7 +319,7 @@ impl K8sServiceDiscovery {
                 enabled: true,
                 registered_at: chrono::Utc::now().to_rfc3339(),
                 last_heartbeat: chrono::Utc::now().to_rfc3339(),
-            })
+            });
         }
 
         None

@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
+mod feedback_compat;
 mod handlers;
 mod models;
 mod openapi;
@@ -51,6 +52,7 @@ async fn main() -> anyhow::Result<()> {
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = handlers::ticket_routes()
+        .merge(feedback_compat::feedback_compat_routes())
         .layer(axum::middleware::from_fn(require_permission(
             "ticket:admin",
         )))

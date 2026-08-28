@@ -26,8 +26,8 @@ export const BACKEND_PORTS: Record<string, number> = {
   communication: 8084,
   billing: 8085,
   ticket: 8086,
-  feedback: 8087,
-  lowcode: 8088,
+  // [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型），原端口 8087 停用
+  // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
   'master-data': 8090,
   // V68.1 拆分服务 (8095-8096)
   monitor: 8095,

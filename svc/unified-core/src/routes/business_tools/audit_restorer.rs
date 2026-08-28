@@ -7,12 +7,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use tracing::{info, warn, error};
 
-use crate::routes::business_tools::audit_log::{AuditLogEntry, AuditLogStore, AuditLogStoreError};
-use crate::routes::business_tools::audit_archiver::{ArchiveConfig, ArchivedEntry};
+use crate::routes::business_tools::permission_audit_log::AuditLogStore;
+use crate::routes::business_tools::audit_archiver::ArchivedEntry;
 
 // ===== Restore Configuration =====
 
@@ -123,9 +122,9 @@ impl AuditLogRestorer {
     }
 
     /// Restore audit logs based on the query.
-    pub async fn restore<S: AuditLogStore>(
+    pub async fn restore(
         &self,
-        store: &S,
+        store: &dyn AuditLogStore,
         query: &RestoreQuery,
     ) -> Result<RestoreResult, RestoreError> {
         // Find archive files to restore
@@ -183,9 +182,9 @@ impl AuditLogRestorer {
     }
 
     /// Restore entries from a single archive file.
-    async fn restore_from_file<S: AuditLogStore>(
+    async fn restore_from_file(
         &self,
-        store: &S,
+        store: &dyn AuditLogStore,
         file_path: &Path,
     ) -> Result<(usize, usize, usize), RestoreError> {
         // Read and parse archive file
@@ -200,7 +199,7 @@ impl AuditLogRestorer {
 
             // Check if entry already exists
             if self.config.skip_existing {
-                match store.get_log(&entry.id).await {
+                match store.get_by_id(&entry.id).await {
                     Ok(Some(_)) => {
                         skipped += 1;
                         continue;
@@ -215,7 +214,7 @@ impl AuditLogRestorer {
             }
 
             // Restore the entry
-            match store.create_log(entry).await {
+            match store.record(entry).await {
                 Ok(_) => restored += 1,
                 Err(e) => {
                     failed += 1;
@@ -383,76 +382,18 @@ fn extract_date_from_filename(filename: &str, prefix: &str) -> Option<String> {
 
 // ===== Tests =====
 
+// ===== Tests =====
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex as StdMutex;
     use tempfile::TempDir;
-
-    // Mock AuditLogStore for testing
-    struct MockAuditLogStore {
-        entries: StdMutex<Vec<AuditLogEntry>>,
-    }
-
-    impl MockAuditLogStore {
-        fn new() -> Self {
-            Self {
-                entries: StdMutex::new(Vec::new()),
-            }
-        }
-    }
-
-    impl AuditLogStore for MockAuditLogStore {
-        async fn create_log(&self, entry: AuditLogEntry) -> Result<AuditLogEntry, AuditLogStoreError> {
-            self.entries.lock().unwrap().push(entry.clone());
-            Ok(entry)
-        }
-
-        async fn get_log(&self, id: &str) -> Result<Option<AuditLogEntry>, AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().iter().find(|e| e.id == id).cloned())
-        }
-
-        async fn query_logs(
-            &self,
-            _tenant_id: Option<String>,
-            _user_id: Option<String>,
-            _action: Option<String>,
-            _changed_by: Option<String>,
-            _start_time: Option<String>,
-            _end_time: Option<String>,
-            _limit: Option<usize>,
-            _offset: Option<usize>,
-        ) -> Result<Vec<AuditLogEntry>, AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().clone())
-        }
-
-        async fn delete_log(&self, id: &str) -> Result<(), AuditLogStoreError> {
-            let mut entries = self.entries.lock().unwrap();
-            entries.retain(|e| e.id != id);
-            Ok(())
-        }
-    }
-
-    fn make_entry(id: &str, created_at: &str) -> AuditLogEntry {
-        AuditLogEntry {
-            id: id.to_string(),
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            action: "create".to_string(),
-            resource_type: "permission".to_string(),
-            resource_id: "r1".to_string(),
-            changed_by: "admin".to_string(),
-            old_value: None,
-            new_value: None,
-            metadata: None,
-            created_at: created_at.to_string(),
-        }
-    }
+    use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
 
     fn make_archived_entry(id: &str, created_at: &str) -> ArchivedEntry {
         ArchivedEntry {
             archived_at: "2026-01-15T10:00:00Z".to_string(),
-            entry: make_entry(id, created_at),
+            entry: make_test_entry(id, created_at),
         }
     }
 
@@ -577,7 +518,7 @@ mod tests {
         let store = MockAuditLogStore::new();
 
         // Pre-populate store with entry "1"
-        store.create_log(make_entry("1", "2026-01-15T10:00:00Z")).await.unwrap();
+        store.record(make_test_entry("1", "2026-01-15T10:00:00Z")).await.unwrap();
 
         let query = RestoreQuery {
             start_date: None,

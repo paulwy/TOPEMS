@@ -42,6 +42,7 @@ hex = "0.4"
 async-trait.workspace = true
 
 [dev-dependencies]
+serde_urlencoded = "0.7"
 
 [lib]
 name = "topems_erp"

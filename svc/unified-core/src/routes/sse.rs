@@ -10,14 +10,13 @@
 
 use axum::extract::{Path, State};
 use axum::response::sse::{Event, KeepAlive, Sse};
+use axum::routing::{get, post};
 use axum::Json;
 use axum::Router;
 use futures_util::stream::Stream;
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
-use uuid::Uuid;
+use std::time::Duration;
 
-use crate::shared::SseSessionManager;
 use crate::AppState;
 
 // ===== SSE Event Types =====

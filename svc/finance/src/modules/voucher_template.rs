@@ -1006,3 +1006,88 @@ pub async fn regenerate(
         Err(e) => Json(ApiResponse::error(500, &format!("新凭证创建失败: {}", e))),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_copy_template_request_deserialize() {
+        let json = r#"{"new_code": "TPL002", "new_name": "复制模板"}"#;
+        let request: CopyTemplateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.new_code.as_deref(), Some("TPL002"));
+        assert_eq!(request.new_name, "复制模板");
+    }
+
+    #[test]
+    fn test_copy_template_request_minimal() {
+        let json = r#"{"new_name": "新模板"}"#;
+        let request: CopyTemplateRequest = serde_json::from_str(json).unwrap();
+        assert!(request.new_code.is_none());
+        assert_eq!(request.new_name, "新模板");
+    }
+
+    #[test]
+    fn test_toggle_template_request_deserialize() {
+        let json = r#"{"isactive": true}"#;
+        let request: ToggleTemplateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.isactive, true);
+    }
+
+    #[test]
+    fn test_toggle_template_request_false() {
+        let json = r#"{"isactive": false}"#;
+        let request: ToggleTemplateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.isactive, false);
+    }
+
+    #[test]
+    fn test_match_template_request_deserialize() {
+        let json = r#"{
+            "source_module": "purchase",
+            "source_type": "invoice",
+            "company_id": "comp1",
+            "amount": 1000.0,
+            "extra_data": {"key": "value"}
+        }"#;
+        let request: MatchTemplateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.source_module.as_deref(), Some("purchase"));
+        assert_eq!(request.source_type.as_deref(), Some("invoice"));
+        assert_eq!(request.company_id.as_deref(), Some("comp1"));
+        assert_eq!(request.amount, Some(1000.0));
+        assert!(request.extra_data.is_some());
+    }
+
+    #[test]
+    fn test_match_template_request_minimal() {
+        let json = r#"{}"#;
+        let request: MatchTemplateRequest = serde_json::from_str(json).unwrap();
+        assert!(request.source_module.is_none());
+        assert!(request.source_type.is_none());
+        assert!(request.company_id.is_none());
+        assert!(request.amount.is_none());
+        assert!(request.extra_data.is_none());
+    }
+
+    #[test]
+    fn test_usage_stats_query_params_deserialize() {
+        let json = r#"{"start_date": "2024-01-01", "end_date": "2024-01-31"}"#;
+        let params: UsageStatsQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.start_date.as_deref(), Some("2024-01-01"));
+        assert_eq!(params.end_date.as_deref(), Some("2024-01-31"));
+    }
+
+    #[test]
+    fn test_export_query_params_deserialize() {
+        let json = r#"{"format": "excel"}"#;
+        let params: ExportQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.format.as_deref(), Some("excel"));
+    }
+
+    #[test]
+    fn test_toggle_rule_request_deserialize() {
+        let json = r#"{"isactive": true}"#;
+        let request: ToggleRuleRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.isactive, true);
+    }
+}

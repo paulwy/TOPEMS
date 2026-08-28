@@ -188,6 +188,7 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
+pub mod feedback_compat;
 pub mod handlers;
 pub mod models;
 pub mod openapi;

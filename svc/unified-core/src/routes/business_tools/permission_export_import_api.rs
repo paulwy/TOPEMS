@@ -4,8 +4,6 @@
 //! configurations. Supports JSON format for backup, migration, and
 //! bulk configuration.
 
-use std::collections::HashMap;
-
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -15,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
 use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
-use super::permission_api::{PermissionRequest, PermissionResponse, ErrorResponse};
+use super::permission_api::ErrorResponse;
 use super::permission_store::PermissionStoreError;
 
 // ===== Export Types =====
@@ -202,14 +200,14 @@ impl TryFrom<&PermissionExportItem> for TenantPermission {
 
     fn try_from(item: &PermissionExportItem) -> Result<Self, Self::Error> {
         let role = TenantRole::from_str(&item.role)
-            .map_err(|_| format!("Invalid role: {}", item.role))?;
+            .ok_or_else(|| format!("Invalid role: {}", item.role))?;
 
         let tool_permissions = item
             .tool_permissions
             .iter()
             .map(|tp| {
                 let max_permission = MaxPermission::from_str(&tp.max_permission)
-                    .map_err(|_| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
+                    .ok_or_else(|| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
                 Ok(ToolPermission {
                     tool: tp.tool.clone(),
                     allowed_operations: tp.allowed_operations.clone(),
@@ -601,14 +599,24 @@ mod tests {
 
     #[test]
     fn test_import_request_bare_format() {
-        let json = r#"{
-            "permissions": [
-                {"tenant_id": "t1", "user_id": "u1", "role": "admin", "active": true}
-            ],
-            "mode": "create"
-        }"#;
-        let req: ImportRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(req.mode, "create");
+        // Bare format is a direct array of permission items
+        let json = r#"[
+            {"tenant_id": "t1", "user_id": "u1", "role": "admin", "active": true},
+            {"tenant_id": "t2", "user_id": "u2", "role": "member", "active": false}
+        ]"#;
+        let data: ImportData = serde_json::from_str(json).unwrap();
+        match data {
+            ImportData::Bare(items) => {
+                assert_eq!(items.len(), 2);
+                assert_eq!(items[0].tenant_id, "t1");
+                assert_eq!(items[0].role, "admin");
+                assert!(items[0].active);
+                assert_eq!(items[1].tenant_id, "t2");
+                assert_eq!(items[1].role, "member");
+                assert!(!items[1].active);
+            }
+            _ => panic!("Expected Bare format"),
+        }
     }
 
     #[test]

@@ -1,4 +1,10 @@
-"""构建命令模块"""
+"""构建命令模块
+
+与 scripts/topems.sh 的 build 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh build（零依赖、分层构建、失败汇总）。
+本命令提供 rich 进度条和 Python 原生体验，作为可选替代。
+服务列表从 scripts/services.conf 统一读取，避免重复维护。
+"""
 
 import os
 import shutil
@@ -11,18 +17,43 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
 
-# 与 topems.sh SERVICES_CONFIG 对齐的后端服务列表
-BACKEND_SERVICES = [
-    "lib",
-    "svc/unified-core", "svc/pm", "svc/portal",
-    "svc/integration", "svc/erp", "svc/finance", "svc/ai",
-    "svc/hrm", "svc/crm", "svc/mes", "svc/pdm",
-    "svc/scm", "svc/wms", "svc/srm", "svc/qms",
-    "svc/lims", "svc/ehs", "svc/rd", "svc/analytics",
-    "svc/mobile", "svc/gis",
-    "svc/search", "svc/communication", "svc/billing",
-    "svc/ticket", "svc/feedback", "svc/master-data",
-]
+
+def _load_backend_services() -> list[str]:
+    """从 scripts/services.conf 读取后端服务列表（与 topems.sh 同源）
+
+    services.conf 格式: name service_dir binary_name port
+    返回 ["lib", "svc/unified-core", "svc/erp", ...]
+    """
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+    conf_path = project_root / "scripts" / "services.conf"
+    services = ["lib"]  # lib 始终首先构建
+    if not conf_path.exists():
+        console.print(f"[yellow]警告: {conf_path} 不存在，使用空列表[/yellow]")
+        return services
+    try:
+        with open(conf_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    services.append(parts[1])  # 第二列是 service_dir
+    except Exception as e:
+        console.print(f"[yellow]警告: 读取 services.conf 失败: {e}[/yellow]")
+    return services
+
+
+# 延迟加载：首次使用时从 services.conf 读取
+_BACKEND_SERVICES_CACHE: list[str] | None = None
+
+
+def get_backend_services() -> list[str]:
+    """获取后端服务列表（缓存）"""
+    global _BACKEND_SERVICES_CACHE
+    if _BACKEND_SERVICES_CACHE is None:
+        _BACKEND_SERVICES_CACHE = _load_backend_services()
+    return _BACKEND_SERVICES_CACHE
 
 
 @click.group()
@@ -40,7 +71,7 @@ def build_all(release: bool, jobs: int):
 
     project_root = Path(__file__).parent.parent.parent.parent.parent
 
-    services = BACKEND_SERVICES
+    services = get_backend_services()
     
     build_type = "release" if release else "debug"
     passed = 0

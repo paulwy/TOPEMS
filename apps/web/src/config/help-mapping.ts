@@ -459,12 +459,7 @@ function getHelpMapping(): Record<string, HelpMappingItem> {
       description: i18n.t('shared.help-mapping.k135'),
     },
 
-    '/lowcode': {
-      guideId: 'lowcode-getting-started',
-      faqCategory: 'lowcode',
-      title: i18n.t('shared.help-mapping.k136'),
-      description: i18n.t('shared.help-mapping.k137'),
-    },
+    // [V2026.08 已移除] lowcode 空壳占位服务帮助映射
 
     '/ai': {
       guideId: 'ai-getting-started',

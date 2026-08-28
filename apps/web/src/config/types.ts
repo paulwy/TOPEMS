@@ -62,8 +62,7 @@ interface ServicesConfig {
   billing: string;
   ticket: string;
   feedback: string;
-  // 低代码平台独立服务（V64 新增）
-  lowcode: string;
+  // [V2026.08 已移除] lowcode 空壳占位服务
   // 自动化编排服务（V64 新增，初期落地 unified-core，前端通过 /api/core/automation 访问）
   automation: string;
   // V68.1 拆分服务：插件注册与管理服务（独立进程，端口 8096）

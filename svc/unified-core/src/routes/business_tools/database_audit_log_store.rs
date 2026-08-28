@@ -110,9 +110,8 @@ impl DatabaseAuditLogStore {
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get changed_by: {}", e)))?;
         let changed_at: chrono::DateTime<chrono::Utc> = row.try_get("changed_at")
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get changed_at: {}", e)))?;
-        let ip_address: Option<String> = row.try_get("ip_address")
-            .map_err(|e| AuditLogError::StoreError(format!("Failed to get ip_address: {}", e)))?
-            .map(|ip: ipnetwork::IpNetwork| ip.to_string());
+        let ip_address: Option<String> = row.try_get::<Option<String>, _>("ip_address")
+            .map_err(|e| AuditLogError::StoreError(format!("Failed to get ip_address: {}", e)))?;
         let user_agent: Option<String> = row.try_get("user_agent")
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get user_agent: {}", e)))?;
         let metadata: serde_json::Value = row.try_get("metadata")
@@ -143,6 +142,7 @@ impl DatabaseAuditLogStore {
     }
 
     /// Build the WHERE clause and parameters for a query.
+    #[allow(unused_assignments)]
     fn build_where_clause(query: &AuditLogQuery) -> (String, Vec<sqlx::types::Json<serde_json::Value>>) {
         let mut conditions = Vec::new();
         let mut params: Vec<sqlx::types::Json<serde_json::Value>> = Vec::new();
@@ -294,6 +294,24 @@ impl AuditLogStore for DatabaseAuditLogStore {
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get count: {}", e)))?;
 
         Ok(count as usize)
+    }
+
+    async fn query_logs(
+        &self,
+        _tenant_id: Option<String>,
+        _user_id: Option<String>,
+        _action: Option<String>,
+        _changed_by: Option<String>,
+        _start_time: Option<String>,
+        _end_time: Option<String>,
+        _limit: Option<usize>,
+        _offset: Option<usize>,
+    ) -> Result<Vec<AuditLogEntry>, AuditLogError> {
+        Err(AuditLogError::StoreError("query_logs not yet implemented for DatabaseAuditLogStore".to_string()))
+    }
+
+    async fn delete_log(&self, _id: &str) -> Result<(), AuditLogError> {
+        Err(AuditLogError::StoreError("delete_log not yet implemented for DatabaseAuditLogStore".to_string()))
     }
 }
 

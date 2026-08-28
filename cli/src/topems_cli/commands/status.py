@@ -1,4 +1,9 @@
-"""status 命令 - 查看服务状态"""
+"""status 命令 - 查看服务状态
+
+与 scripts/topems.sh 的 status 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh status（零依赖）。
+本命令提供 rich 表格、--json 输出和 --watch 持续监控，作为可选替代。
+"""
 
 import json
 

@@ -50,7 +50,7 @@ const GROUP2_SERVICES = [
   'billing',
   'ticket',
   'feedback',
-  'lowcode',
+  // [V2026.08 已移除] lowcode 空壳占位服务
   // master-data 已从 unified-core 外迁，路径 /api/master-data（无 /core 前缀）
   'master',
   'master-data',

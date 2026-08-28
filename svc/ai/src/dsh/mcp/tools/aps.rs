@@ -334,7 +334,7 @@ fn generate_mock_schedules(type_filter: &str, status_filter: &str, resource_filt
                 "start_time": format!("2026-08-{:02} {:02}:00:00", (i % 26) + 1, (i % 24)),
                 "end_time": format!("2026-08-{:02} {:02}:00:00", (i % 26) + 1, ((i + 4) % 24)),
                 "quantity": 100 + (i % 10) * 50,
-                "completed_quantity": if status == "completed" { 100 + (i % 10) * 50 } else { (i % 50) },
+                "completed_quantity": if status == "completed" { 100 + (i % 10) * 50 } else { i % 50 },
                 "priority": priority,
                 "status": status,
                 "operator": format!("操作员{:02}", (i % 10) + 1),

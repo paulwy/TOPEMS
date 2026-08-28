@@ -580,12 +580,12 @@ const PERMISSION_DEFS: Record<string, string> = {
   'lims:test_method:read': 'lims:test_method:read',
   'lims:uncertainty:read': 'lims:uncertainty:read',
 
-  // lowcode (5 codes)
-  'lowcode:apps:read': 'lowcode:apps:read',
-  'lowcode:dashboard:read': 'lowcode:dashboard:read',
-  'lowcode:form:read': 'lowcode:form:read',
-  'lowcode:page:read': 'lowcode:page:read',
-  'lowcode:workflow:read': 'lowcode:workflow:read',
+  // [V2026.08 已移除] lowcode 空壳占位服务（5个权限码已禁用）
+  // 'lowcode:apps:read': 'lowcode:apps:read',
+  // 'lowcode:dashboard:read': 'lowcode:dashboard:read',
+  // 'lowcode:form:read': 'lowcode:form:read',
+  // 'lowcode:page:read': 'lowcode:page:read',
+  // 'lowcode:workflow:read': 'lowcode:workflow:read',
 
   // mes (29 codes)
   'mes:analytics:read': 'mes:analytics:read',

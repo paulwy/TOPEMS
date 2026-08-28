@@ -29,7 +29,7 @@ jobs:
           - service: unified-core
             context: ./svc/unified-core
             file: ./svc/unified-core/Dockerfile
-          # 标准服务：使用统一模板 docker/Dockerfile.service
+          # 标准服务：使用统一模板 deploy/docker/Dockerfile.service
           - { service: erp,         binary: topems-erp,         dir: erp,         port: "8010", env_var: ERP_PORT }
           - { service: finance,     binary: topems-finance,     dir: finance,     port: "8011", env_var: FINANCE_PORT }
           - { service: ai,          binary: topems-ai,           dir: ai,          port: "8013", env_var: AI_PORT }
@@ -85,7 +85,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context || '.' }}
-          file: ${{ matrix.file || 'docker/Dockerfile.service' }}
+          file: ${{ matrix.file || 'deploy/docker/Dockerfile.service' }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

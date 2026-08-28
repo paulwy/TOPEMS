@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Service Config Generator - config/services.yaml single source of truth
-Generates: config/ports.env, scripts/services.conf
+Generates: config/ports.env, scripts/services.conf, deploy/docker/.env
 Usage: python3 scripts/gen-service-config.py [--check]
 """
 import os, re, sys, datetime
@@ -14,6 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVICES_YAML = os.path.join(ROOT, "config", "services.yaml")
 PORTS_ENV = os.path.join(ROOT, "config", "ports.env")
 SERVICES_CONF = os.path.join(ROOT, "scripts", "services.conf")
+DOCKER_ENV = os.path.join(ROOT, "deploy", "docker", ".env")
 CARGO_TOML = os.path.join(ROOT, "Cargo.toml")
 CHECK_ONLY = "--check" in sys.argv
 
@@ -85,6 +86,25 @@ def gen_conf(services):
     L.append("CORE_SERVICES=iam")
     return "\n".join(L)
 
+def gen_docker_env(services, sp):
+    d = datetime.date.today().isoformat()
+    L = [f"# TOPEMS Docker Compose 端口变量 (由 scripts/gen-service-config.py 从 config/services.yaml 生成)",
+         f"# 此文件已在本目录 .gitignore 中忽略，请勿提交。",
+         f"# 单一信源: config/services.yaml",
+         f"# 最后更新: {d}", ""]
+    L.append("# 业务服务端口")
+    real = [s for s in services if not s.get("virtual")]
+    for s in real:
+        L.append(f"{s['env_var']}={s['port']}")
+    L.append("")
+    if sp:
+        L.append("# 基础设施与前端端口")
+        for k,v in sp.items():
+            ev = v.get("env_var",""); p = v.get("port","")
+            if ev and p: L.append(f"{ev}={p}")
+        L.append("")
+    return "\n".join(L)
+
 def validate_cargo(services):
     with open(CARGO_TOML, encoding="utf-8") as f: t = f.read()
     dirs = re.findall(r'"svc/([^"]+)"', t)
@@ -121,12 +141,17 @@ def main():
         nc = gen_conf(services)
         if not os.path.exists(SERVICES_CONF) or open(SERVICES_CONF,encoding="utf-8").read().strip()!=nc.strip():
             print(f"DIFF: {os.path.relpath(SERVICES_CONF,ROOT)}"); hd=True
+        nd = gen_docker_env(services, sp)
+        if not os.path.exists(DOCKER_ENV) or open(DOCKER_ENV,encoding="utf-8").read().strip()!=nd.strip():
+            print(f"DIFF: {os.path.relpath(DOCKER_ENV,ROOT)}"); hd=True
         if hd: print("\nRun: python3 scripts/gen-service-config.py"); sys.exit(1)
         print("OK all downstream configs match services.yaml"); sys.exit(0)
     print("Generating config/ports.env:")
     wic(PORTS_ENV, gen_ports(services, sp))
     print("\nGenerating scripts/services.conf:")
     wic(SERVICES_CONF, gen_conf(services))
+    print("\nGenerating deploy/docker/.env:")
+    wic(DOCKER_ENV, gen_docker_env(services, sp))
     print("\nDone")
 
 if __name__=="__main__": main()

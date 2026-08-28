@@ -30,7 +30,7 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'tenant',
       ].forEach((svc) => expect(GROUP1_CORE_SERVICES.has(svc)).toBe(true));
     });
-    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/lowcode/oa/asset/master-data/search/communication/billing/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
+    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/oa/asset/master-data/search/communication/billing/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
       [
         'erp',
         'finance',
@@ -53,7 +53,7 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'mobile',
         'gis',
         'integration',
-        'lowcode',
+        // [V2026.08 已移除] lowcode 空壳占位服务
         'oa',
         'asset',
         // 主数据（独立进程 8090）
@@ -193,7 +193,8 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       // workflow 是别名，实际服务为 'flow'
       expect(SERVICE_CODES.workflow).toBe('flow');
       expect(SERVICE_CODES.monitor).toBe('monitor');
-      expect(SERVICE_CODES.lowcode).toBe('lowcode');
+      // [V2026.08 已移除] lowcode 空壳占位服务
+      // expect(SERVICE_CODES.lowcode).toBe('lowcode');
       expect(SERVICE_CODES.oa).toBe('oa');
       // V64: 新增模块
       expect(SERVICE_CODES.automation).toBe('automation');

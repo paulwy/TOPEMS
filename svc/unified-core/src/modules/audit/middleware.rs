@@ -173,3 +173,72 @@ fn extract_resource_id(path: &str) -> Option<String> {
         })
         .map(|s| s.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_resource_id_uuid() {
+        let path = "/api/core/iam/users/550e8400-e29b-41d4-a716-446655440000";
+        let id = extract_resource_id(path);
+        assert_eq!(id.as_deref(), Some("550e8400-e29b-41d4-a716-446655440000"));
+    }
+
+    #[test]
+    fn test_extract_resource_id_numeric() {
+        let path = "/api/core/iam/users/12345";
+        let id = extract_resource_id(path);
+        assert_eq!(id.as_deref(), Some("12345"));
+    }
+
+    #[test]
+    fn test_extract_resource_id_non_id_segment() {
+        let path = "/api/core/iam/users/list";
+        let id = extract_resource_id(path);
+        assert!(id.is_none());
+    }
+
+    #[test]
+    fn test_extract_resource_id_empty_path() {
+        let path = "";
+        let id = extract_resource_id(path);
+        assert!(id.is_none());
+    }
+
+    #[test]
+    fn test_extract_resource_id_root_path() {
+        let path = "/";
+        let id = extract_resource_id(path);
+        assert!(id.is_none());
+    }
+
+    #[test]
+    fn test_extract_resource_id_trailing_slash() {
+        let path = "/api/core/iam/users/550e8400-e29b-41d4-a716-446655440000/";
+        let id = extract_resource_id(path);
+        assert_eq!(id.as_deref(), Some("550e8400-e29b-41d4-a716-446655440000"));
+    }
+
+    #[test]
+    fn test_extract_resource_id_mixed_path() {
+        let path = "/api/core/iam/users/550e8400-e29b-41d4-a716-446655440000/roles";
+        let id = extract_resource_id(path);
+        assert!(id.is_none());
+    }
+
+    #[test]
+    fn test_max_request_snapshot_bytes() {
+        assert_eq!(MAX_REQUEST_SNAPSHOT_BYTES, 8 * 1024);
+    }
+
+    #[test]
+    fn test_skip_path_prefixes_contains_health() {
+        assert!(SKIP_PATH_PREFIXES.contains(&"/api/core/health"));
+    }
+
+    #[test]
+    fn test_skip_path_prefixes_contains_login() {
+        assert!(SKIP_PATH_PREFIXES.contains(&"/api/core/iam/auth/login"));
+    }
+}

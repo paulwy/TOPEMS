@@ -11,25 +11,72 @@ Group=topems
 WorkingDirectory=/opt/topems/svc/ai
 ExecStart=/opt/topems/bin/ai-service
 ExecReload=/bin/kill -HUP $MAINPID
-Restart=on-failure
+
+# 重启策略优化
+Restart=always
 RestartSec=5
+RestartSteps=10
+RestartMaxDelaySec=60
+
+# 启动频率限制（防止崩溃循环）
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# 超时设置
 TimeoutStartSec=30
 TimeoutStopSec=30
+TimeoutAbortSec=45
 
+# 看门狗（服务无响应时自动重启）
+WatchdogSec=30
+# 注意：应用需要实现 sd_notify(WD=1) 来喂狗，
+# 如果应用不支持，可以注释掉 WatchdogSec
+
+# 环境变量配置
 EnvironmentFile=/opt/topems/config/ai.env
+Environment=RUST_LOG=info
+Environment=TOKIO_WORKER_THREADS=4
+Environment=RUST_BACKTRACE=1
 
+# 日志配置
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=topems-ai
 
+# 安全加固
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/topems/logs /opt/topems/data
 
+# 资源限制
 LimitNOFILE=65536
 LimitNPROC=4096
+LimitCORE=infinity
+
+# 内存限制（根据服务器配置调整）
+# MemoryMax=4G
+# MemoryHigh=3.5G
+# MemorySwapMax=0
+
+# CPU 限制（根据服务器配置调整）
+# CPUQuota=200%
+# CPUSchedulingPolicy=other
+
+# OOM 评分调整（降低被 OOM killer 杀死的优先级）
+OOMScoreAdjust=-500
+
+# 进程组配置
+KillMode=mixed
+KillSignal=SIGTERM
+FinalKillSignal=SIGKILL
+
+# 崩溃时自动生成 core dump（用于调试）
+# Uncomment to enable core dump debugging:
+# LimitCORE=infinity
+# RuntimeDirectory=topems-ai
+# WorkingDirectory=/opt/topems/data/core-dumps
 
 [Install]
 WantedBy=multi-user.target

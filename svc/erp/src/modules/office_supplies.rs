@@ -399,3 +399,30 @@ pub async fn delete_supply(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_supply_query_params_deserialize() {
+        let query = "page=1&page_size=20&search=pen&status=active&category=stationery";
+        let params: SupplyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("pen"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.category.as_deref(), Some("stationery"));
+    }
+
+    #[test]
+    fn test_supply_query_params_default() {
+        let query = "";
+        let params: SupplyQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.category.is_none());
+    }
+}

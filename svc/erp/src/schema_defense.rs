@@ -36,24 +36,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
-    (
-        "accounting_subjects",
-        &[
-            ("organization_id", "UUID NOT NULL DEFAULT gen_random_uuid()"),
-            ("code", "VARCHAR(50) NOT NULL"),
-            ("name", "VARCHAR(200) NOT NULL"),
-            ("category", "VARCHAR(100)"),
-            ("level", "INTEGER NOT NULL DEFAULT 1"),
-            ("parent_code", "VARCHAR(50)"),
-            ("description", "TEXT"),
-            ("is_cash_flow", "BOOLEAN NOT NULL DEFAULT false"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMPTZ"),
-            ("tenant_id", "UUID"),
-        ],
-    ),
+    // V321: accounting_subjects 已物理迁移到 plugin_finance schema
+    // 详见 database/migrations/20260827000002_v321_accounting_subjects_migration.sql
     (
         "archive_marks",
         &[

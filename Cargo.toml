@@ -12,6 +12,7 @@ members = [
     "lib/shared-ai",
     "lib/shared-bootstrap",
     "lib/shared-mcp",
+    "lib/shared-dsh",
     # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
     # "examples/minimal-service",
     # [核心平台] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)
@@ -52,11 +53,11 @@ members = [
     "svc/plugin-registry",
     "svc/billing",
     "svc/ticket",
-    "svc/feedback",
+    # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型）
     "svc/search",
     "svc/communication",
-    # [V66.1 占位服务] lowcode 后端占位模板（功能待立项）
-    "svc/lowcode",
+    # [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
+    # 代码归档见 docs/archive/，如未来立项可恢复
 ]
 exclude = [
     "apps/desktop/src-tauri",
@@ -69,9 +70,9 @@ resolver = "2"
 # 28 工作区业务服务全部使用以下统一启动 API：
 #   ServiceConfig → bootstrap_service → build_application → run
 #   三种模式拆分：
-#     A. 标准 build_application (10): feedback,search,ticket,lowcode,
-#                                     communication,billing,master-data,
-#                                     hrm,finance,wms
+#     A. 标准 build_application (8): search,ticket,
+#                                    communication,billing,master-data,
+#                                    hrm,finance,wms
 #     B. stateful + build_application (11): qms,ehs,pdm,lims,erp,crm,
 #                                          srm,scm,mes,pm,rd
 #     C. Application 重建 (7): analytics,unified-core,integration,gis,portal,ai,mobile

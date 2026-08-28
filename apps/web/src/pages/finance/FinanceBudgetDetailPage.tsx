@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { PieChart, TrendingUp, DollarSign, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { budgetApi } from '@/api/erp';
+import { budgetApi } from '@/api/finance/budget';
 import { financeApi } from '@/api/finance';
 import type { AccountBalance } from '@/types/finance';
 import { useNotification } from '@/hooks/useNotification';

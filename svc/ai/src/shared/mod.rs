@@ -5,6 +5,10 @@ use std::sync::Arc;
 use topems_shared::AuthState;
 use topems_shared_event::event::EventPublisher;
 
+use crate::dsh::agent::{AgentOrchestrator, AgentPerformanceMonitor};
+use crate::dsh::knowledge_graph::KnowledgeGraph;
+use crate::dsh::multi_agent::MultiAgentCoordinator;
+use crate::dsh::rag::RagEngine;
 use crate::services::audit::AiAuditService;
 
 #[derive(Clone)]
@@ -21,6 +25,16 @@ pub struct AppState {
     pub workflow_orchestrator: std::sync::Arc<crate::services::agent::WorkflowOrchestrator>,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub audit: AiAuditService,
+    /// DSH Agent 编排器（可选）
+    pub dsh_agent_orchestrator: Option<AgentOrchestrator>,
+    /// DSH Agent 性能监控器（可选）
+    pub dsh_agent_performance_monitor: Option<AgentPerformanceMonitor>,
+    /// DSH 知识图谱（可选）
+    pub dsh_knowledge_graph: Option<KnowledgeGraph>,
+    /// DSH RAG 引擎（可选）
+    pub dsh_rag_engine: Option<RagEngine>,
+    /// DSH 多 Agent 协调器（可选）
+    pub dsh_multi_agent_coordinator: Option<MultiAgentCoordinator>,
 }
 
 impl FromRef<AppState> for AuthState {

@@ -8,10 +8,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use tracing::{info, warn, error};
 
-use crate::routes::business_tools::audit_log::AuditLogEntry;
+use crate::routes::business_tools::permission_audit_log::AuditLogEntry;
 
 // ===== Archive Configuration =====
 
@@ -70,12 +70,11 @@ impl ArchiveConfig {
 // ===== Archive Entry =====
 
 /// A single archived audit log entry with archive metadata.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchivedEntry {
     /// Archive timestamp.
     pub archived_at: String,
     /// The original audit log entry.
-    #[serde(flatten)]
     pub entry: AuditLogEntry,
 }
 
@@ -127,7 +126,7 @@ impl AuditLogArchiver {
         // Group entries by date
         let mut by_date: std::collections::HashMap<String, Vec<&AuditLogEntry>> = std::collections::HashMap::new();
         for entry in entries {
-            let date = extract_date(&entry.created_at);
+            let date = extract_date(&entry.changed_at);
             by_date.entry(date).or_default().push(entry);
         }
 
@@ -359,22 +358,7 @@ fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-
-    fn make_entry(id: &str, created_at: &str) -> AuditLogEntry {
-        AuditLogEntry {
-            id: id.to_string(),
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            action: "create".to_string(),
-            resource_type: "permission".to_string(),
-            resource_id: "r1".to_string(),
-            changed_by: "admin".to_string(),
-            old_value: None,
-            new_value: None,
-            metadata: None,
-            created_at: created_at.to_string(),
-        }
-    }
+    use crate::routes::business_tools::mock_audit_store::make_test_entry;
 
     #[test]
     fn test_archive_config_default() {
@@ -412,7 +396,7 @@ mod tests {
     #[test]
     fn test_extract_date() {
         assert_eq!(extract_date("2026-01-15T10:30:00Z"), "2026-01-15");
-        assert_eq!(extract_date("invalid"), "invalid");
+        assert_eq!(extract_date("invalid"), "unknown");
     }
 
     #[tokio::test]
@@ -432,8 +416,8 @@ mod tests {
         let archiver = AuditLogArchiver::new(config);
 
         let entries = vec![
-            make_entry("1", "2026-01-15T10:00:00Z"),
-            make_entry("2", "2026-01-15T11:00:00Z"),
+            make_test_entry("1", "2026-01-15T10:00:00Z"),
+            make_test_entry("2", "2026-01-15T11:00:00Z"),
         ];
 
         let result = archiver.archive_entries(&entries).await.unwrap();
@@ -452,9 +436,9 @@ mod tests {
         let archiver = AuditLogArchiver::new(config);
 
         let entries = vec![
-            make_entry("1", "2026-01-15T10:00:00Z"),
-            make_entry("2", "2026-01-16T10:00:00Z"),
-            make_entry("3", "2026-01-15T11:00:00Z"),
+            make_test_entry("1", "2026-01-15T10:00:00Z"),
+            make_test_entry("2", "2026-01-16T10:00:00Z"),
+            make_test_entry("3", "2026-01-15T11:00:00Z"),
         ];
 
         let result = archiver.archive_entries(&entries).await.unwrap();
@@ -488,7 +472,7 @@ mod tests {
     fn test_archived_entry_serialization() {
         let entry = ArchivedEntry {
             archived_at: "2026-01-15T10:00:00Z".to_string(),
-            entry: make_entry("1", "2026-01-15T10:00:00Z"),
+            entry: make_test_entry("1", "2026-01-15T10:00:00Z"),
         };
         let json = serde_json::to_string(&entry).unwrap();
         assert!(json.contains("\"archived_at\""));

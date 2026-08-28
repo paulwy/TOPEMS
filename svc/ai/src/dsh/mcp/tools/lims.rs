@@ -317,7 +317,7 @@ fn generate_mock_samples(status_filter: &str, type_filter: &str, submitter_filte
                 "receiver": submitters[(i + 1) % submitters.len()],
                 "received_date": format!("2026-{:02}-{:02}", (i % 12) + 1, (i % 28) + 1),
                 "test_count": 3 + (i % 8),
-                "completed_tests": if status == "completed" { 3 + (i % 8) } else { (i % 5) },
+                "completed_tests": if status == "completed" { 3 + (i % 8) } else { i % 5 },
                 "quantity": 100 + (i % 10) * 50,
                 "unit": if i % 3 == 0 { "g" } else if i % 3 == 1 { "mL" } else { "个" },
                 "priority": if i % 4 == 0 { "urgent" } else if i % 4 == 1 { "high" } else { "normal" },

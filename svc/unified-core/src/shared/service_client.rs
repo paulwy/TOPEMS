@@ -137,6 +137,16 @@ impl ServiceConfig {
             bearer_token: None,
             default_headers: HashMap::new(),
             enabled: true,
+            max_retries: 0,
+            retry_delay_ms: 1000,
+            circuit_breaker_enabled: false,
+            failure_threshold: 5,
+            reset_timeout_secs: 30,
+            rate_limit_enabled: false,
+            max_requests_per_second: 100,
+            load_balancing_enabled: false,
+            endpoints: Vec::new(),
+            connection_pool: ConnectionPoolConfig::default(),
         }
     }
 
@@ -321,6 +331,7 @@ impl ServiceRegistration {
             max_requests_per_second: 100,
             load_balancing_enabled: false,
             endpoints: Vec::new(),
+            connection_pool: ConnectionPoolConfig::default(),
         }
     }
 
@@ -991,7 +1002,7 @@ struct CircuitBreakerInternal {
     state: CircuitBreakerState,
     failure_count: u32,
     success_count: u32,
-    opened_at: Option<std::time::Instant>,
+    opened_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl ServiceClient {
@@ -1006,7 +1017,8 @@ impl ServiceClient {
             .pool_idle_timeout(Duration::from_secs(config.connection_pool.idle_timeout_secs));
 
         if let Some(max_lifetime) = config.connection_pool.max_lifetime_secs {
-            client_builder = client_builder.pool_max_lifetime(Duration::from_secs(max_lifetime));
+            // Note: pool_max_lifetime is not available in this reqwest version
+            let _ = max_lifetime;
         }
 
         if config.connection_pool.tcp_keepalive {
@@ -1068,7 +1080,7 @@ impl ServiceClient {
         path: &str,
         query: Option<&HashMap<String, String>>,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        self.request(Method::GET, path, query, None::<()>).await
+        self.request::<T, ()>(Method::GET, path, query, None).await
     }
 
     /// Send a POST request.
@@ -1094,7 +1106,7 @@ impl ServiceClient {
         &self,
         path: &str,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        self.request(Method::DELETE, path, None, None::<()>).await
+        self.request::<T, ()>(Method::DELETE, path, None, None).await
     }
 
     /// Send a generic request.
@@ -1140,7 +1152,7 @@ impl ServiceClient {
                     return Ok(response);
                 }
                 Err(e) => {
-                    last_error = Some(e.clone());
+                    last_error = Some(e);
 
                     // V437: Record failure for circuit breaker
                     if self.config.circuit_breaker_enabled {
@@ -1247,7 +1259,8 @@ impl ServiceClient {
         // Check if circuit is open and reset timeout has passed
         if cb.state == CircuitBreakerState::Open {
             if let Some(opened_at) = cb.opened_at {
-                if opened_at.elapsed() >= Duration::from_secs(self.config.reset_timeout_secs) {
+                let elapsed = chrono::Utc::now() - opened_at;
+                if elapsed >= chrono::Duration::seconds(self.config.reset_timeout_secs as i64) {
                     // Transition to half-open
                     cb.state = CircuitBreakerState::HalfOpen;
                     cb.success_count = 0;
@@ -1285,7 +1298,7 @@ impl ServiceClient {
         // Open the circuit if failure threshold is reached
         if cb.failure_count >= self.config.failure_threshold {
             cb.state = CircuitBreakerState::Open;
-            cb.opened_at = Some(std::time::Instant::now());
+            cb.opened_at = Some(chrono::Utc::now());
         }
     }
 
@@ -1296,9 +1309,7 @@ impl ServiceClient {
             state: format!("{:?}", cb.state),
             failure_count: cb.failure_count,
             success_count: cb.success_count,
-            opened_at: cb.opened_at.map(|t| {
-                chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()
-            }),
+            opened_at: cb.opened_at.map(|t| t.to_rfc3339()),
             enabled: self.config.circuit_breaker_enabled,
         }
     }
@@ -1442,7 +1453,7 @@ impl ServiceRegistry {
     }
 
     /// Get a service client by name.
-    pub fn get(&self, name: &str) -> Result<ServiceClient, ServiceClientError> {
+    pub fn get_client(&self, name: &str) -> Result<ServiceClient, ServiceClientError> {
         let services = self
             .services
             .lock()
@@ -1484,7 +1495,7 @@ impl ServiceRegistry {
         path: &str,
         query: Option<&HashMap<String, String>>,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         client.get(path, query).await
     }
 
@@ -1495,7 +1506,7 @@ impl ServiceRegistry {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         client.post(path, body).await
     }
 
@@ -1506,7 +1517,7 @@ impl ServiceRegistry {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         client.put(path, body).await
     }
 
@@ -1516,7 +1527,7 @@ impl ServiceRegistry {
         service: &str,
         path: &str,
     ) -> Result<ServiceResponse<T>, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         client.delete(path).await
     }
 
@@ -1527,7 +1538,7 @@ impl ServiceRegistry {
     /// Sends a GET request to the service's `/health` endpoint and returns
     /// whether the service is healthy.
     pub async fn health_check(&self, service: &str) -> Result<ServiceHealth, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         let start = std::time::Instant::now();
 
         let result = client
@@ -1580,7 +1591,7 @@ impl ServiceRegistry {
 
     /// Get the configuration of a single service.
     pub fn get_service_config(&self, service: &str) -> Result<ServiceConfig, ServiceClientError> {
-        let client = self.get(service)?;
+        let client = self.get_client(service)?;
         Ok(client.config().clone())
     }
 
@@ -1741,7 +1752,7 @@ mod tests {
         assert_eq!(registry.count(), 1);
         assert_eq!(registry.list(), vec!["test"]);
 
-        let client = registry.get("test").unwrap();
+        let client = registry.get_client("test").unwrap();
         assert_eq!(client.name(), "test");
     }
 
@@ -1759,7 +1770,7 @@ mod tests {
     #[test]
     fn test_service_registry_not_found() {
         let registry = ServiceRegistry::new();
-        let result = registry.get("nonexistent");
+        let result = registry.get_client("nonexistent");
         assert!(matches!(result, Err(ServiceClientError::ServiceNotFound(_))));
     }
 

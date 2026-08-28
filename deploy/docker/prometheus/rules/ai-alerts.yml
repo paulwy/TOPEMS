@@ -1,0 +1,375 @@
+# TOPEMS AI 服务 Prometheus 告警规则
+#
+# 本文件定义了 AI 服务相关的 Prometheus 告警规则，包括：
+# - AI 服务可用性告警
+# - AI 服务性能告警
+# - AI 服务错误率告警
+# - AI 治理合规告警
+# - AI 成本告警
+# - AI 资源使用告警
+#
+# 告警级别：
+# - critical：严重，需要立即处理
+# - warning：警告，需要关注
+# - info：提示，信息记录
+
+groups:
+  # =========================================================================
+  # 1. AI 服务可用性告警
+  # =========================================================================
+  - name: ai-service-availability
+    rules:
+      # AI 服务宕机
+      - alert: AIServiceDown
+        expr: up{job="topems-ai"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+          service: ai
+        annotations:
+          summary: "AI 服务宕机"
+          description: "AI 服务 (topems-ai) 已经宕机超过 1 分钟，请立即检查服务状态。"
+          runbook: "docs/runbooks/ai-service-down.md"
+
+      # AI 服务频繁重启
+      - alert: AIServiceFrequentRestarts
+        expr: increase(process_start_time_seconds{job="topems-ai"}[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          category: availability
+          service: ai
+        annotations:
+          summary: "AI 服务频繁重启"
+          description: "AI 服务在过去 15 分钟内重启超过 3 次，可能存在稳定性问题。"
+          runbook: "docs/runbooks/ai-service-restarts.md"
+
+      # AI 服务健康检查失败
+      - alert: AIHealthCheckFailed
+        expr: ai_health_check_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+          service: ai
+        annotations:
+          summary: "AI 服务健康检查失败"
+          description: "AI 服务健康检查持续失败超过 2 分钟，服务可能不可用。"
+          runbook: "docs/runbooks/ai-health-check.md"
+
+  # =========================================================================
+  # 2. AI 服务性能告警
+  # =========================================================================
+  - name: ai-service-performance
+    rules:
+      # AI API 响应时间过高（p95）
+      - alert: AIAPIHighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(ai_api_request_duration_seconds_bucket[5m])) by (le, endpoint)) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: ai
+        annotations:
+          summary: "AI API 响应时间过高 (p95 > 2s)"
+          description: "AI API 端点 {{ $labels.endpoint }} 的 p95 响应时间超过 2 秒，持续 5 分钟。"
+          runbook: "docs/runbooks/ai-api-latency.md"
+
+      # AI API 响应时间过高（p99）
+      - alert: AIAPIHighLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(ai_api_request_duration_seconds_bucket[5m])) by (le, endpoint)) > 5.0
+        for: 5m
+        labels:
+          severity: critical
+          category: performance
+          service: ai
+        annotations:
+          summary: "AI API 响应时间过高 (p99 > 5s)"
+          description: "AI API 端点 {{ $labels.endpoint }} 的 p99 响应时间超过 5 秒，持续 5 分钟。"
+          runbook: "docs/runbooks/ai-api-latency.md"
+
+      # AI Agent 执行时间过长
+      - alert: AIAgentExecutionTimeout
+        expr: ai_agent_execution_duration_seconds > 30
+        for: 3m
+        labels:
+          severity: warning
+          category: performance
+          service: ai
+        annotations:
+          summary: "AI Agent 执行时间过长"
+          description: "AI Agent 执行时间超过 30 秒，可能存在性能瓶颈或死循环。"
+          runbook: "docs/runbooks/ai-agent-timeout.md"
+
+      # AI 模型响应时间过高
+      - alert: AIModelHighLatency
+        expr: ai_model_response_duration_seconds > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: ai
+        annotations:
+          summary: "AI 模型响应时间过高"
+          description: "AI 模型 {{ $labels.model }} 响应时间超过 10 秒，可能是模型服务或网络问题。"
+          runbook: "docs/runbooks/ai-model-latency.md"
+
+  # =========================================================================
+  # 3. AI 服务错误率告警
+  # =========================================================================
+  - name: ai-service-errors
+    rules:
+      # AI API 错误率过高
+      - alert: AIAPIHighErrorRate
+        expr: sum(rate(ai_api_requests_total{status=~"5.."}[5m])) by (endpoint) / sum(rate(ai_api_requests_total[5m])) by (endpoint) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: errors
+          service: ai
+        annotations:
+          summary: "AI API 错误率过高 (>5%)"
+          description: "AI API 端点 {{ $labels.endpoint }} 的 5xx 错误率超过 5%，持续 5 分钟。"
+          runbook: "docs/runbooks/ai-api-errors.md"
+
+      # AI API 429 限流过多
+      - alert: AIAPIRateLimited
+        expr: sum(rate(ai_api_requests_total{status="429"}[5m])) by (endpoint) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: errors
+          service: ai
+        annotations:
+          summary: "AI API 请求被限流"
+          description: "AI API 端点 {{ $labels.endpoint }} 的 429 限流请求超过 10 次/分钟，可能需要调整限流配置。"
+          runbook: "docs/runbooks/ai-api-rate-limit.md"
+
+      # AI Agent 执行失败率过高
+      - alert: AIAgentHighFailureRate
+        expr: sum(rate(ai_agent_executions_total{status="failed"}[5m])) / sum(rate(ai_agent_executions_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: errors
+          service: ai
+        annotations:
+          summary: "AI Agent 执行失败率过高 (>10%)"
+          description: "AI Agent 执行失败率超过 10%，持续 5 分钟，可能存在配置或依赖问题。"
+          runbook: "docs/runbooks/ai-agent-failures.md"
+
+      # AI 模型调用失败
+      - alert: AIModelCallFailed
+        expr: increase(ai_model_calls_total{status="failed"}[10m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: errors
+          service: ai
+        annotations:
+          summary: "AI 模型调用失败"
+          description: "AI 模型 {{ $labels.model }} 在过去 10 分钟内调用失败超过 5 次。"
+          runbook: "docs/runbooks/ai-model-failures.md"
+
+  # =========================================================================
+  # 4. AI 治理合规告警
+  # =========================================================================
+  - name: ai-governance-compliance
+    rules:
+      # AI 合规率过低
+      - alert: AIComplianceRateLow
+        expr: ai_governance_compliance_rate < 0.95
+        for: 10m
+        labels:
+          severity: critical
+          category: governance
+          service: ai
+        annotations:
+          summary: "AI 合规率过低 (<95%)"
+          description: "AI 服务合规率低于 95%，持续 10 分钟，可能存在合规风险。"
+          runbook: "docs/runbooks/ai-compliance.md"
+
+      # AI 内容安全拦截
+      - alert: AIContentSafetyBlocked
+        expr: increase(ai_content_safety_blocks_total[10m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: governance
+          service: ai
+        annotations:
+          summary: "AI 内容安全拦截频繁"
+          description: "AI 内容安全在过去 10 分钟内拦截超过 10 次，可能存在用户滥用或规则过严。"
+          runbook: "docs/runbooks/ai-content-safety.md"
+
+      # AI PII 数据泄露风险
+      - alert: AIPIILeakageRisk
+        expr: increase(ai_pii_detections_total{action="blocked"}[10m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          category: governance
+          service: ai
+        annotations:
+          summary: "AI PII 数据泄露风险"
+          description: "AI 服务在过去 10 分钟内检测到并阻止了超过 5 次 PII 数据泄露风险。"
+          runbook: "docs/runbooks/ai-pii-leakage.md"
+
+      # AI 治理评分过低
+      - alert: AIGovernanceScoreLow
+        expr: ai_governance_score < 70
+        for: 15m
+        labels:
+          severity: warning
+          category: governance
+          service: ai
+        annotations:
+          summary: "AI 治理评分过低 (<70)"
+          description: "AI 治理评分低于 70 分，持续 15 分钟，需要关注治理状况。"
+          runbook: "docs/runbooks/ai-governance-score.md"
+
+  # =========================================================================
+  # 5. AI 成本告警
+  # =========================================================================
+  - name: ai-cost
+    rules:
+      # AI 日成本超预算
+      - alert: AIDailyCostOverBudget
+        expr: ai_cost_daily_usd > 100
+        for: 1m
+        labels:
+          severity: warning
+          category: cost
+          service: ai
+        annotations:
+          summary: "AI 日成本超预算 (>$100)"
+          description: "AI 服务今日成本超过 $100 预算阈值，请关注成本使用情况。"
+          runbook: "docs/runbooks/ai-cost-budget.md"
+
+      # AI 成本异常增长
+      - alert: AICostAbnormalIncrease
+        expr: ai_cost_daily_usd / (ai_cost_daily_usd offset 1d) > 2
+        for: 1m
+        labels:
+          severity: warning
+          category: cost
+          service: ai
+        annotations:
+          summary: "AI 成本异常增长 (>2x)"
+          description: "AI 服务今日成本是昨日的 2 倍以上，可能存在异常使用。"
+          runbook: "docs/runbooks/ai-cost-increase.md"
+
+      # AI Token 消耗量过高
+      - alert: AITokenUsageHigh
+        expr: ai_tokens_total[1h] > 1000000
+        for: 1m
+        labels:
+          severity: info
+          category: cost
+          service: ai
+        annotations:
+          summary: "AI Token 消耗量高 (>1M/hour)"
+          description: "AI 服务过去 1 小时 Token 消耗量超过 100 万，请关注使用情况。"
+          runbook: "docs/runbooks/ai-token-usage.md"
+
+  # =========================================================================
+  # 6. AI 资源使用告警
+  # =========================================================================
+  - name: ai-resources
+    rules:
+      # AI 服务内存使用过高
+      - alert: AIServiceHighMemory
+        expr: process_resident_memory_bytes{job="topems-ai"} / 1024 / 1024 / 1024 > 4
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+          service: ai
+        annotations:
+          summary: "AI 服务内存使用过高 (>4GB)"
+          description: "AI 服务内存使用超过 4GB，持续 10 分钟，可能存在内存泄漏。"
+          runbook: "docs/runbooks/ai-memory.md"
+
+      # AI 服务 CPU 使用过高
+      - alert: AIServiceHighCPU
+        expr: rate(process_cpu_seconds_total{job="topems-ai"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+          service: ai
+        annotations:
+          summary: "AI 服务 CPU 使用过高 (>80%)"
+          description: "AI 服务 CPU 使用率超过 80%，持续 10 分钟，可能需要扩容。"
+          runbook: "docs/runbooks/ai-cpu.md"
+
+      # AI 并发请求数过高
+      - alert: AIConcurrentRequestsHigh
+        expr: ai_concurrent_requests > 100
+        for: 5m
+        labels:
+          severity: warning
+          category: resources
+          service: ai
+        annotations:
+          summary: "AI 并发请求数过高 (>100)"
+          description: "AI 服务并发请求数超过 100，持续 5 分钟，可能需要扩容或调整限流。"
+          runbook: "docs/runbooks/ai-concurrent-requests.md"
+
+      # AI 缓存命中率过低
+      - alert: AICacheHitRateLow
+        expr: ai_cache_hit_rate < 0.5
+        for: 15m
+        labels:
+          severity: info
+          category: resources
+          service: ai
+        annotations:
+          summary: "AI 缓存命中率过低 (<50%)"
+          description: "AI 服务缓存命中率低于 50%，持续 15 分钟，可能需要优化缓存策略。"
+          runbook: "docs/runbooks/ai-cache.md"
+
+  # =========================================================================
+  # 7. AI 业务 Copilot 告警
+  # =========================================================================
+  - name: ai-business-copilot
+    rules:
+      # Copilot 会话创建失败
+      - alert: AICopilotSessionCreationFailed
+        expr: increase(ai_copilot_sessions_created_total{status="failed"}[10m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: copilot
+          service: ai
+        annotations:
+          summary: "AI Copilot 会话创建失败"
+          description: "AI Copilot 在过去 10 分钟内会话创建失败超过 5 次。"
+          runbook: "docs/runbooks/ai-copilot-session.md"
+
+      # Copilot 意图识别准确率低
+      - alert: AICopilotIntentAccuracyLow
+        expr: ai_copilot_intent_accuracy < 0.8
+        for: 30m
+        labels:
+          severity: info
+          category: copilot
+          service: ai
+        annotations:
+          summary: "AI Copilot 意图识别准确率低 (<80%)"
+          description: "AI Copilot 意图识别准确率低于 80%，持续 30 分钟，可能需要优化意图识别模型。"
+          runbook: "docs/runbooks/ai-copilot-intent.md"
+
+      # Copilot 活跃会话数过高
+      - alert: AICopilotActiveSessionsHigh
+        expr: ai_copilot_active_sessions > 50
+        for: 10m
+        labels:
+          severity: info
+          category: copilot
+          service: ai
+        annotations:
+          summary: "AI Copilot 活跃会话数高 (>50)"
+          description: "AI Copilot 活跃会话数超过 50，持续 10 分钟，使用量较高。"
+          runbook: "docs/runbooks/ai-copilot-usage.md"

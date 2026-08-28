@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 # ============================================================================
+# ⚠️  DEPRECATED - 请使用 scripts/gen-service-config.py
+# ============================================================================
+# 本脚本的功能已被 gen-service-config.py 完全覆盖：
+#   - scripts/services.conf 生成 → gen-service-config.py 从 config/services.yaml 直接生成
+#   - deploy/docker/.env 生成    → gen-service-config.py 已支持
+#
+# 正确数据流：config/services.yaml（唯一信源）
+#              → gen-service-config.py
+#              → config/ports.env + scripts/services.conf + deploy/docker/.env
+#
+# 本脚本保留仅为向后兼容，新代码请使用：
+#   python3 scripts/gen-service-config.py          # 生成所有下游配置
+#   python3 scripts/gen-service-config.py --check  # 仅校验一致性
+# ============================================================================
 # TOPEMS 端口同步脚本 (P32-2 / V66.2)
 # V66.2 Shared Bootstrap V2 (28/28 = 100%) 端口单一信源
 #   所有服务 main.rs 通过 ServiceConfig + port_env_var 解析对应 *_PORT 变量，
@@ -122,7 +136,7 @@ communication svc/communication    topems-communication         $(get_port COMMU
 billing     svc/billing            topems-billing              $(get_port BILLING_PORT 8085)
 ticket      svc/ticket             topems-ticket               $(get_port TICKET_PORT 8086)
 feedback    svc/feedback           topems-feedback             $(get_port FEEDBACK_PORT 8087)
-lowcode     svc/lowcode            topems-lowcode              $(get_port LOWCODE_PORT 8088)
+# [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 master-data svc/master-data        topems-master-data          $(get_port MASTER_DATA_PORT 8090)
 # V68.1 拆分服务 (8095-8096，从 unified-core 独立为单独进程)
 monitor     svc/monitor            topems-monitor              $(get_port MONITOR_PORT 8095)

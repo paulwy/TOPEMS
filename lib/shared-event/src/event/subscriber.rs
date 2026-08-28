@@ -84,6 +84,56 @@ impl EventSubscriber {
 
     /// 启动事件监听（持续运行）
     pub async fn start_listening(self) -> EventResult<()> {
+        // 检查是否使用 Redis Stream 模式（EVENT_BUS_MODE=stream）
+        if let Ok(mode) = std::env::var("EVENT_BUS_MODE") {
+            if mode.eq_ignore_ascii_case("stream") {
+                info!(
+                    "事件订阅者以 Redis Stream 模式启动（EVENT_BUS_MODE=stream），服务: {}",
+                    self._service_name
+                );
+
+                // 将标准事件 handlers 转发到 StreamEventSubscriber
+                let mut stream_sub = super::stream_subscriber::StreamEventSubscriber::new(
+                    &self._service_name,
+                )?;
+
+                for (event_types, handler) in &self.handlers {
+                    for event_type in event_types {
+                        // 适配：将返回 () 的 handler 包装为返回 Result<(), String>
+                        let handler_clone = handler.clone();
+                        stream_sub = stream_sub.subscribe(*event_type, move |event| {
+                            let handler_clone = handler_clone.clone();
+                            async move {
+                                handler_clone(event).await;
+                                Ok(())
+                            }
+                        });
+                    }
+                }
+
+                // Stream 模式不支持 MDM 事件（MasterDataEvent），记录警告
+                if !self.mdm_handlers.is_empty() {
+                    warn!(
+                        "Stream 模式暂不支持 MDM 事件订阅（{} 个 MDM handler 将被忽略）",
+                        self.mdm_handlers.len()
+                    );
+                }
+
+                // 启用死信队列
+                stream_sub = stream_sub.with_dlq()?;
+
+                // 启动监听（持续运行，不会返回）
+                stream_sub.start_listening().await
+            } else {
+                self.start_listening_pubsub().await
+            }
+        } else {
+            self.start_listening_pubsub().await
+        }
+    }
+
+    /// 以 Pub/Sub 模式启动事件监听（持续运行）
+    async fn start_listening_pubsub(self) -> EventResult<()> {
         let con = self.redis_client.get_async_connection().await?;
         let mut pubsub = con.into_pubsub();
 

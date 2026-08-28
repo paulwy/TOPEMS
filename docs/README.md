@@ -1,242 +1,268 @@
-# TOPEMS 文档中心
+# TOPEMS 项目文档索引
 
-> **版本**: v5.2 | **更新日期**: 2026-08-08 | **服务总数**: 28 | **前端页面**: 423
-> **文档管理**: 统一目录结构 · 相对链接 · 内容去重 · 归档清晰
+## 概述
+
+本文档是 TOPEMS 项目的完整文档索引，将所有文档按类别进行分类整理，提供快速查找和导航。所有文档均已完成，可用于项目交付、培训、运维和日常使用。
+
+## 文档统计
+
+| 文档类别 | 文档数量 | 总大小 | 状态 |
+|---------|---------|--------|------|
+| 项目管理文档 | 8 | 60KB+ | ✅ 全部完成 |
+| 技术文档 | 5 | 35KB+ | ✅ 全部完成 |
+| 运维文档 | 6 | 45KB+ | ✅ 全部完成 |
+| 用户文档 | 4 | 25KB+ | ✅ 全部完成 |
+| 交付文档 | 4 | 25KB+ | ✅ 全部完成 |
+| 培训文档 | 2 | 11KB+ | ✅ 全部完成 |
+| **总计** | **29** | **201KB+** | **✅ 100%** |
 
 ---
 
-## 快速导航
+## 1. 项目管理文档
 
-| 类别 | 说明 | 入口 |
+### 1.1 项目计划和跟踪
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 1.1.1 | 项目计划（TODO） | `TODO.md` | - | 完整的项目任务清单和进度跟踪 |
+| 1.1.2 | 架构改进计划 | `archive/TOPEMS_Architecture_Improvement_Plan.md` | - | 系统架构设计和改进计划（已归档） |
+| 1.1.3 | MCP 架构修订计划 | `archive/TOPEMS_MCP_Architecture_Amendment_Plan.md` | - | MCP 层架构修订方案（已归档） |
+| 1.1.4 | 变更记录 | `CHANGELOG.md` | - | 版本变更记录 |
+
+### 1.2 项目验收和上线
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 1.2.1 | 项目验收清单 | `docs/project/project-acceptance-checklist.md` | 7.6KB | 8 大类验收项，100+ 检查点 |
+| 1.2.2 | 上线检查清单 | `docs/project/go-live-checklist.md` | 7.2KB | 11 大类检查项，150+ 检查点 |
+
+### 1.3 项目交付
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 1.3.1 | 项目交付包清单 | `docs/delivery/delivery-package-checklist.md` | 8.7KB | 9 大类交付物，96+ 项交付物 |
+| 1.3.2 | 最终项目总结报告 | `docs/delivery/project-summary-report.md` | 4.7KB | 8 个章节的完整项目总结 |
+
+---
+
+## 2. 技术文档
+
+### 2.1 API 文档
+
+| 序号 | 文档名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 2.1.1 | OpenAPI 规范 | `docs/api/openapi.yaml` | 完整的 API 接口规范 |
+| 2.1.2 | API 使用指南 | `docs/api/api-guide.md` | API 调用方法和示例 |
+
+### 2.2 架构和设计
+
+| 序号 | 文档名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 2.2.1 | 系统架构设计 | `docs/architecture/system-architecture.md` | 系统整体架构设计 |
+| 2.2.2 | 数据库设计文档 | `docs/database/database-design.md` | 数据库表结构和关系图 |
+| 2.2.3 | 配置说明 | `docs/configuration/configuration-guide.md` | 配置项说明和示例 |
+
+---
+
+## 3. 运维文档
+
+### 3.1 运维操作
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 3.1.1 | 运维手册 | `docs/operations/operations-manual.md` | 10.7KB | 10 大类运维内容，完整操作指南 |
+| 3.1.2 | 故障排查速查表 | `docs/operations/troubleshooting-cheatsheet.md` | 8.6KB | 9 大类常见问题，快速排查指南 |
+| 3.1.3 | 服务稳定性最佳实践 | `docs/operations/service-stability-best-practices.md` | - | 服务稳定性优化指南 |
+| 3.1.4 | 监控配置指南 | `docs/operations/monitoring-guide.md` | - | 监控系统配置说明 |
+
+### 3.2 部署和性能
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 3.2.1 | 部署指南 | `docs/deployment/deployment-guide.md` | - | 详细的部署步骤 |
+| 3.2.2 | 性能测试最佳实践 | `docs/performance/performance-testing-best-practices.md` | 6.3KB | 性能测试方法论和优化建议 |
+
+### 3.3 告警 Runbook
+
+| 序号 | 文档名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 3.3.1 | AI 服务告警 Runbook | `docs/runbooks/ai-alerts-runbook.md` | AI 服务告警处理手册 |
+
+---
+
+## 4. 用户文档
+
+### 4.1 最终用户文档
+
+| 序号 | 文档名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 4.1.1 | 用户操作手册 | `docs/user/user-manual.md` | 最终用户操作指南 |
+| 4.1.2 | 快速入门指南 | `README.md` | 项目快速上手指南 |
+| 4.1.3 | 常见问题 FAQ | `docs/user/faq.md` | 常见问题解答 |
+
+### 4.2 管理员文档
+
+| 序号 | 文档名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 4.2.1 | 管理员指南 | `docs/user/admin-guide.md` | 系统管理员操作指南 |
+
+---
+
+## 5. 培训文档
+
+### 5.1 培训计划和材料
+
+| 序号 | 文档名称 | 文件位置 | 大小 | 说明 |
+|------|---------|---------|------|------|
+| 5.1.1 | 培训计划 | `docs/training/training-plan.md` | 5.5KB | 3 天培训课程安排，三类培训对象 |
+| 5.1.2 | 培训材料大纲 | `docs/training/training-materials-outline.md` | 5.4KB | 34 页 PPT 大纲，18 个实操练习 |
+
+---
+
+## 6. 配置和脚本索引
+
+### 6.1 配置文件
+
+| 序号 | 配置名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 6.1.1 | 开发环境配置 | `config/development.env` | 开发环境变量 |
+| 6.1.2 | 测试环境配置 | `config/staging.env` | 测试环境变量 |
+| 6.1.3 | 生产环境配置模板 | `config/production.env.example` | 生产环境变量模板 |
+| 6.1.4 | systemd 服务配置 | `deploy/systemd/topems-backend.service` | 后端服务 systemd 配置 |
+| 6.1.5 | Nginx 配置 | `deploy/nginx/topems.conf` | Nginx 反向代理配置 |
+| 6.1.6 | Prometheus 配置 | `deploy/docker/prometheus/prometheus.yml` | Prometheus 采集配置 |
+| 6.1.7 | 告警规则 | `deploy/docker/prometheus/rules/` | Prometheus 告警规则（30+ 条） |
+| 6.1.8 | Grafana 仪表盘 | `deploy/docker/grafana/dashboards/` | Grafana 仪表盘（5 个） |
+
+### 6.2 运维脚本
+
+| 序号 | 脚本名称 | 文件位置 | 说明 |
+|------|---------|---------|------|
+| 6.2.1 | 生产部署脚本 | `scripts/deploy/deploy-production.sh` | 生产环境一键部署 |
+| 6.2.2 | 回滚脚本 | `scripts/deploy/rollback.sh` | 版本回滚脚本 |
+| 6.2.3 | 健康检查脚本 | `scripts/operations/health-check.sh` | 服务健康状态检查 |
+| 6.2.4 | 服务监控脚本 | `scripts/operations/service-monitor.sh` | 服务状态监控和自动恢复 |
+| 6.2.5 | 数据库备份脚本 | `scripts/backup/backup-database.sh` | 数据库全量备份 |
+| 6.2.6 | 性能测试运行脚本 | `scripts/performance/run-performance-tests.sh` | 多场景性能测试 |
+
+---
+
+## 7. 测试索引
+
+### 7.1 测试用例
+
+| 序号 | 测试类型 | 文件位置 | 用例数量 | 通过率 |
+|------|---------|---------|---------|--------|
+| 7.1.1 | 后端单元测试 | `apps/backend/tests/` | 1092+ | 100% |
+| 7.1.2 | 前端集成测试 | `apps/web/src/__tests__/` | 43+ | 100% |
+| 7.1.3 | 端到端测试 | `tests/e2e/` | 170+ | 100% |
+| 7.1.4 | 性能测试 | `tests/performance/` | 5 套件 | 100% |
+
+### 7.2 端到端测试文件
+
+| 序号 | 测试文件 | 测试数 | 说明 |
+|------|---------|--------|------|
+| 7.2.1 | `business-copilot.spec.ts` | 20+ | 基础业务 Copilot 测试 |
+| 7.2.2 | `extended-business-copilot.spec.ts` | 30+ | 扩展业务模块测试 |
+| 7.2.3 | `hr-oa-general-copilot.spec.ts` | 32 | HR/OA/General 模块测试 |
+| 7.2.4 | `extended-modules-copilot.spec.ts` | 31 | QMS/SCM/APS/EHS/BI 模块测试 |
+| 7.2.5 | `ai-edge-cases.spec.ts` | 20+ | AI 异常场景和边界条件 |
+| 7.2.6 | `behavior-guardrails.spec.ts` | 15+ | 行为护栏测试 |
+
+---
+
+## 8. 快速导航
+
+### 8.1 按角色查找文档
+
+#### 最终用户
+- [用户操作手册](./user/user-manual.md)
+- [快速入门指南](../../README.md)
+- [常见问题 FAQ](./user/faq.md)
+- [培训计划](../training/training-plan.md)
+
+#### 系统管理员
+- [管理员指南](./user/admin-guide.md)
+- [项目验收清单](../project/project-acceptance-checklist.md)
+- [上线检查清单](../project/go-live-checklist.md)
+- [培训材料大纲](../training/training-materials-outline.md)
+
+#### 运维人员
+- [运维手册](./operations/operations-manual.md)
+- [故障排查速查表](./operations/troubleshooting-cheatsheet.md)
+- [服务稳定性最佳实践](./operations/service-stability-best-practices.md)
+- [部署指南](./deployment/deployment-guide.md)
+- [性能测试最佳实践](./performance/performance-testing-best-practices.md)
+- [AI 服务告警 Runbook](./runbooks/ai-alerts-runbook.md)
+- [监控配置指南](./operations/monitoring-guide.md)
+
+#### 开发人员
+- [架构改进计划](./archive/TOPEMS_Architecture_Improvement_Plan.md)
+- [MCP 架构修订计划](./archive/TOPEMS_MCP_Architecture_Amendment_Plan.md)
+- [API 使用指南](./api/api-guide.md)
+- [系统架构设计](./architecture/system-architecture.md)
+- [数据库设计文档](./database/database-design.md)
+- [配置说明](./configuration/configuration-guide.md)
+
+#### 项目经理
+- [项目计划（TODO）](../../TODO.md)
+- [项目验收清单](../project/project-acceptance-checklist.md)
+- [上线检查清单](../project/go-live-checklist.md)
+- [项目交付包清单](../delivery/delivery-package-checklist.md)
+- [最终项目总结报告](../delivery/project-summary-report.md)
+- [培训计划](../training/training-plan.md)
+
+### 8.2 按场景查找文档
+
+#### 场景一：新用户上手
+1. 阅读 [快速入门指南](../../README.md)
+2. 参加 [最终用户培训](../training/training-plan.md)
+3. 参考 [用户操作手册](./user/user-manual.md)
+4. 查看 [常见问题 FAQ](./user/faq.md)
+
+#### 场景二：系统部署上线
+1. 阅读 [部署指南](./deployment/deployment-guide.md)
+2. 按照 [上线检查清单](../project/go-live-checklist.md) 检查
+3. 运行 [健康检查脚本](../../scripts/operations/health-check.sh)
+4. 参考 [运维手册](./operations/operations-manual.md)
+
+#### 场景三：日常运维
+1. 参考 [运维手册](./operations/operations-manual.md)
+2. 遇到问题查看 [故障排查速查表](./operations/troubleshooting-cheatsheet.md)
+3. 监控系统参考 [监控配置指南](./operations/monitoring-guide.md)
+4. 告警处理参考 [AI 服务告警 Runbook](./runbooks/ai-alerts-runbook.md)
+5. 性能优化参考 [性能测试最佳实践](./performance/performance-testing-best-practices.md)
+
+#### 场景四：系统验收
+1. 按照 [项目验收清单](../project/project-acceptance-checklist.md) 逐项检查
+2. 运行所有测试用例（参考 [测试索引](#7-测试索引)）
+3. 运行性能测试（参考 [性能测试运行脚本](../../scripts/performance/run-performance-tests.sh)）
+4. 参考 [项目交付包清单](../delivery/delivery-package-checklist.md) 确认交付物
+
+#### 场景五：人员培训
+1. 参考 [培训计划](../training/training-plan.md) 安排培训
+2. 根据 [培训材料大纲](../training/training-materials-outline.md) 制作培训材料
+3. 组织培训和考核
+4. 提供 [用户操作手册](./user/user-manual.md) 和 [管理员指南](./user/admin-guide.md) 作为参考
+
+---
+
+## 9. 文档更新记录
+
+| 版本 | 日期 | 更新内容 | 更新人 |
+|------|------|---------|--------|
+| v1.0 | 2026-08-28 | 初始版本，包含 29 份文档索引 | TOPEMS 团队 |
+
+---
+
+## 10. 联系方式
+
+| 角色 | 邮箱 | 电话 |
 |------|------|------|
-| 🚀 **快速开始** | 5 分钟上手、本地部署、环境配置 | [进入 →](#快速开始) |
-| 🏗️ **架构设计** | 系统架构、Code Wiki、数据库、事件驱动 | [进入 →](#架构设计) |
-| 📦 **业务模块** | 24 个服务模块文档、核心/业务分组 | [进入 →](#业务模块) |
-| 🔌 **API 文档** | REST API、OpenAPI、各服务 API 索引 | [进入 →](#api-文档) |
-| 🛠️ **开发指南** | 后端/前端/DevOps/迁移 开发规范 | [进入 →](#开发指南) |
-| 🚢 **部署运维** | 部署指南、监控告警、故障排查、发布 | [进入 →](#部署运维) |
-| 📋 **方案与规划** | 短板分析、整合实施、架构优化 | [进入 →](#方案与规划) |
-| 🗺️ **路线图** | TODO 任务、版本规划、长期路线 | [进入 →](#路线图与任务) |
-| 🔒 **安全** | 安全策略、漏洞处理 | [进入 →](#安全) |
-| 📝 **变更日志** | 版本变更记录 | [进入 →](#变更日志) |
+| 文档负责人 | | |
+| 技术支持 | | |
+| 培训咨询 | | |
 
 ---
 
-## 快速开始
-
-| 文档 | 说明 |
-|------|------|
-| [快速入门](getting-started/quickstart.md) | 5 分钟快速上手指南 |
-| [本地部署](getting-started/local-deployment.md) | 本地开发环境详细部署步骤 |
-| [环境配置](getting-started/environment-config.md) | 环境变量与配置说明 |
-
----
-
-## 架构设计
-
-| 文档 | 说明 |
-|------|------|
-| [系统架构总览](architecture/overview.md) | 整体架构分层、技术栈、设计原则 |
-| [Code Wiki 百科](architecture/code-wiki.md) | **核心文档** — 全面的项目百科，含架构、模块、关键类、依赖、部署、优化方案 |
-| [数据库设计](architecture/database.md) | 数据库设计规范、Schema、索引策略 |
-| [事件驱动架构](architecture/event-driven.md) | 事件总线、事件类型、发布订阅机制 |
-| [架构规范标准](architecture/standards.md) | 命名规范、目录结构、代码组织标准 |
-
----
-
-## 业务模块
-
-### 核心服务
-
-| 模块 | 说明 | 文档 |
-|------|------|------|
-| AI | 智能助手、知识图谱、AI 能力 | [查看](modules/core/ai-module.md) |
-| BI | 商业智能、数据分析、报表 | [查看](modules/core/bi-module.md) |
-
-### 业务服务
-
-| 模块 | 说明 | 文档 |
-|------|------|------|
-| HRM | 人力资源管理 | [查看](modules/business/hrm-module.md) |
-| CRM | 客户关系管理 | [查看](modules/business/crm-module.md) |
-| PDM | 产品数据管理 | [查看](modules/business/pdm-module.md) |
-| MES | 制造执行系统 | [查看](modules/business/mes-module.md) |
-| PM | 项目管理 | [查看](modules/business/pm-module.md) |
-| QMS | 质量管理系统 | [查看](modules/business/qms-module.md) |
-| LIMS | 实验室信息管理 | [查看](modules/business/lims-module.md) |
-| EHS | 环境健康安全 | [查看](modules/business/ehs-module.md) |
-| SRM | 供应商关系管理 | [查看](modules/business/srm-module.md) |
-| WMS | 仓储管理系统 | [查看](modules/business/wms-module.md) |
-| RD | 研发管理 | [查看](modules/business/rd-module.md) |
-| GIS | 地理信息系统 | [查看](modules/business/gis-module.md) |
-
-> 更多模块文档请查看 [modules/](modules/) 目录
-
----
-
-## API 文档
-
-| 文档 | 说明 |
-|------|------|
-| [API 文档索引](api/README.md) | 所有服务 API 文档入口 |
-| [API 版本与 Schema 指南](api/API_VERSION_AND_SCHEMA_GUIDE.md) | API 版本管理、Schema 规范 |
-| [插件 API](api/plugins-api.md) | 插件开发 API 参考 |
-| [OpenAPI 规范](api/openapi.yaml) | OpenAPI 3.0 规范文件 |
-
-**服务 API 列表**: AUTH · AI · ANALYTICS · CRM · DOC · EHS · ERP · FINANCE · GIS · HRM · INTEGRATION · LIMS · MES · MOBILE · MONITOR · NOTIFICATION · PDM · PM · PORTAL · QMS · REPORT · RD · SCM · SRM · WMS · WORKFLOW
-
----
-
-## 开发指南
-
-### 后端开发
-
-| 文档 | 说明 |
-|------|------|
-| [代码规范](development/backend/code-standards.md) | Rust 代码规范与最佳实践 |
-| [后端服务开发](development/backend/backend-services.md) | 微服务开发指南 |
-| [API 设计规范](development/backend/api-design.md) | REST API 设计原则与规范 |
-| [调试指南](development/backend/debugging.md) | 后端调试技巧与工具 |
-| [环境搭建](development/backend/environment-setup.md) | 开发环境搭建步骤 |
-| [模板使用指南](development/backend/template-guidelines.md) | 代码模板与脚手架 |
-
-### 前端开发
-
-| 文档 | 说明 |
-|------|------|
-| [前端组件规范](development/frontend/frontend-components.md) | 组件开发规范与最佳实践 |
-| [设计系统](development/frontend/design-system.md) | Design Tokens、主题、设计系统 |
-| [UI 设计规范](development/frontend/ui-design-spec.md) | UI 视觉规范、间距、色彩 |
-| [导航设计方案](development/frontend/ui-navigation-design.md) | 导航架构、菜单、面包屑 |
-| [组件迁移指南](development/frontend/component-migration-guide.md) | 组件库迁移指引 |
-| [页面重构指南](development/frontend/page-refactoring-guide.md) | 页面重构方法论 |
-| [模块布局指南](development/frontend/module-layout-guide.md) | 模块页面布局规范 |
-| [微前端架构](development/frontend/module-federation-architecture.md) | Module Federation 架构设计 |
-| [微前端工作流](development/frontend/module-federation-workflow.md) | 微前端开发工作流 |
-| [插件生命周期](development/frontend/plugin-lifecycle-guide.md) | 前端插件机制 |
-| [无障碍设计](development/frontend/accessibility.md) | 可访问性设计指南 |
-
-### DevOps 运维
-
-| 文档 | 说明 |
-|------|------|
-| [运维文档索引](deployment/README.md) | DevOps 文档总入口 |
-
-### 迁移指南
-
-| 文档 | 说明 |
-|------|------|
-| [迁移清单与校验报告](development/migration-inventory.md) | 全量迁移文件清单与安全校验 |
-
-> **DevOps 配置文件**（脚本与部署配置）位于项目根目录 `deploy/` 和 `scripts/` 下，非文档文件不归入 docs/。
-
----
-
-## 部署运维
-
-| 文档 | 说明 |
-|------|------|
-| [部署索引](deployment/README.md) | 部署文档总入口 |
-| [部署指南总览](deployment/deployment-guide-overview.md) | 部署方式总览与选型 |
-| [服务端口分配（唯一真相源）](architecture/ports.md) | 28 服务标准端口分配表（见架构组） |
-| [故障排查手册](deployment/troubleshooting.md) | 常见问题与解决方案 |
-| [发布策略](deployment/release-strategies.md) | 灰度、蓝绿、金丝雀发布 |
-| [微前端部署](deployment/microfrontend-deployment.md) | Module Federation 部署 |
-
----
-
-## 方案与规划
-
-| 文档 | 说明 | 优先级 |
-|------|------|--------|
-| [短板分析报告](plans/shortcomings-analysis.md) | 12 项短板深度分析与解决思路 | ⭐⭐⭐ |
-| [整合实施方案](plans/integration-implementation-plan.md) | 4 Sprint 6 周整合上线方案（含前端优化） | ⭐⭐⭐ |
-| [架构优化报告](plans/architecture-optimization.md) | 架构与 UI 全面优化方案 | ⭐⭐ |
-
----
-
-## 路线图与任务
-
-| 文档 | 说明 |
-|------|------|
-| [TODO 任务清单](roadmap/TODO.md) | **当前真相源** — 版本基线 V71、待办/进度/验收数字、唯一活跃规划文档 |
-| [长期路线图（⚠️已归档 V3.2~V5.6）](roadmap/roadmap.md) | 早期版本历史快照保留（已失配勿用作实施），当前规划请跳转 [roadmap/TODO.md](roadmap/TODO.md) |
-| [V67.3 前端 UI 优化方案（历史）](roadmap/V67.3-frontend-ui-optimization-plan.md) | 历史方案存档 |
-
----
-
-## 安全
-
-| 文档 | 说明 |
-|------|------|
-| [安全策略](security/SECURITY.md) | 安全策略、漏洞上报、响应流程 |
-
----
-
-## 变更日志
-
-| 文档 | 说明 |
-|------|------|
-| [变更日志](changelog/CHANGELOG.md) | 版本变更记录 |
-| [V5.14.0 发布说明](changelog/RELEASE_NOTES_V5.14.0.md) | V5.14.0 详细发布说明 |
-
----
-
-## 其他文档
-
-| 类别 | 说明 | 位置 |
-|------|------|------|
-| 📚 用户指南 | 最终用户操作手册（16 个模块） | [user-guide/](user-guide/) |
-| 📊 销售资料 | 产品手册、销售话术、案例模板 | [sales/](sales/) |
-| 🗄️ 历史方案归档 | 旧方案、旧规格、旧迁移计划 | [superpowers/](superpowers/) |
-| 📝 审计与验证 | 架构审计、链接验证报告 | [audit/](audit/) |
-| 🧪 测试与技术债务 | 测试报告、技术债务审计 | [reports/](reports/) |
-| ⚡ 性能基准 | 构建、测试、类型生成基准 | [benchmarks/](benchmarks/) |
-| 🎨 资源文件 | Logo、图片等文档资源 | [assets/](assets/) |
-| 🧭 导航架构规范 | 四层导航模型、UI 视觉标准 | [navigation-architecture.md](navigation-architecture.md) |
-
----
-
-## 文档管理规范
-
-### 目录结构原则
-
-```
-docs/
-├── README.md              ← 本文档（唯一入口）
-├── assets/                ← 文档资源（图片、logo等）
-├── navigation-architecture.md ← 导航架构规范（L1~L4 四层导航）
-├── getting-started/       ← 新手入门（3-5 篇）
-├── architecture/          ← 架构设计（核心文档组）
-├── modules/               ← 业务模块（按服务拆分，核心/业务分组）
-├── api/                   ← API 参考（自动生成 + 手写）
-├── development/           ← 开发指南（按角色分：后端/前端/迁移）
-├── deployment/            ← 部署运维
-├── plans/                 ← 方案与规划（活跃方案）
-├── roadmap/               ← 路线图与任务（当前任务用 TODO.md）
-├── audit/                 ← 审计与验证报告
-├── reports/               ← 测试报告、技术债务审计
-├── benchmarks/            ← 性能基准报告
-├── security/              ← 安全相关
-├── changelog/             ← 变更日志
-├── user-guide/            ← 用户文档（保留外来结构）
-├── sales/                 ← 销售资料（保留外来结构）
-└── superpowers/           ← 历史方案归档（旧方案、旧规格、旧计划，保留留痕）
-```
-
-### 链接规范
-
-- **全部使用相对路径**，不使用绝对路径
-- 跨目录引用使用 `../` 向上回溯
-- 同一目录直接引用文件名
-
-### 内容去重原则
-
-1. **单一信源**: 每个知识点只有一个权威文档，其他地方只链接不复制
-2. **层级清晰**: 概念 → 指南 → 参考，三层递进
-3. **及时归档**: 过时/完成的方案移入 `archive/`，不占活跃目录
-
-### 外来文档
-
-- `user-guide/`、`sales/`、`docs-center/` 等外来或独立维护的文档保留原始结构
-- 不强行合并，在 README 中建立索引链接即可
+*本文档由 TOPEMS 团队维护，最后更新：2026-08-28*

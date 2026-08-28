@@ -9,7 +9,6 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 
 use crate::shared::AppState;
 use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
@@ -173,14 +172,14 @@ impl TryFrom<&PermissionRequest> for TenantPermission {
 
     fn try_from(req: &PermissionRequest) -> Result<Self, Self::Error> {
         let role = TenantRole::from_str(&req.role)
-            .map_err(|_| format!("Invalid role: {}", req.role))?;
+            .ok_or_else(|| format!("Invalid role: {}", req.role))?;
 
         let tool_permissions = req
             .tool_permissions
             .iter()
             .map(|tp| {
                 let max_permission = MaxPermission::from_str(&tp.max_permission)
-                    .map_err(|_| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
+                    .ok_or_else(|| format!("Invalid max_permission for tool {}: {}", tp.tool, tp.max_permission))?;
                 Ok(ToolPermission {
                     tool: tp.tool.clone(),
                     allowed_operations: tp.allowed_operations.clone(),

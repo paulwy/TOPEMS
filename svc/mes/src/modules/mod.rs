@@ -1,8 +1,11 @@
 pub mod anomaly_detection;
+pub mod aps_compat;
 pub mod approval_common;
 pub mod aps_scheduling;
 pub mod audit;
+pub mod capacity;
 pub mod dashboard_ws;
+pub mod demand_forecast;
 pub mod energy_management;
 pub mod equipment;
 pub mod equipment_oee;
@@ -17,6 +20,7 @@ pub mod process_route;
 pub mod production_cost;
 pub mod production_kanban;
 pub mod production_order;
+pub mod production_plan;
 pub mod production_process;
 pub mod production_record;
 pub mod production_scheduling;
@@ -37,6 +41,8 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .merge(anomaly_detection::create_routes())
         .merge(aps_scheduling::create_routes())
+        .merge(capacity::create_routes())
+        .merge(demand_forecast::create_routes())
         .merge(production_cost::create_routes())
         .merge(energy_management::create_routes())
         .merge(equipment::create_routes())
@@ -47,6 +53,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(process_route::create_routes())
         .merge(production_kanban::create_routes())
         .merge(production_order::create_routes())
+        .merge(production_plan::create_routes())
         .merge(production_process::create_routes())
         .merge(production_record::create_routes())
         .merge(production_scheduling::create_routes())
@@ -791,6 +798,10 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+
+    production_plan::init_database(pool).await?;
+    capacity::init_database(pool).await?;
+    demand_forecast::init_database(pool).await?;
 
     Ok(())
 }

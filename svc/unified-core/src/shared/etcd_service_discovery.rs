@@ -12,7 +12,6 @@ use std::time::Duration;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use super::service_client::{ServiceClientError, ServiceDiscovery, ServiceRegistration};
 
@@ -117,7 +116,8 @@ struct EtcdDeleteRangeRequest {
 /// etcd lease grant request.
 #[derive(Debug, Clone, Serialize)]
 struct EtcdLeaseGrantRequest {
-    TTL: i64,
+    #[serde(rename = "TTL")]
+    ttl: i64,
 }
 
 /// etcd lease revoke request.
@@ -213,18 +213,18 @@ impl EtcdServiceDiscovery {
 
     /// Get the etcd key for a service.
     fn service_key(&self, service_name: &str) -> String {
-        format!("{}{}", self.config.key_prefix.trim_end_matches('/'), service_name)
+        format!("{}/{}", self.config.key_prefix.trim_end_matches('/'), service_name)
     }
 
     /// Get the range end for listing all services (prefix + 1).
     fn range_end(&self) -> String {
-        let prefix = self.config.key_prefix.trim_end_matches('/');
+        let prefix = &self.config.key_prefix;
         // Increment the last byte to get the range end
         let mut bytes = prefix.as_bytes().to_vec();
         if let Some(last) = bytes.last_mut() {
             *last += 1;
         }
-        String::from_utf8(bytes).unwrap_or_else(|_| prefix.to_string())
+        String::from_utf8(bytes).unwrap_or_else(|_| prefix.clone())
     }
 
     /// Base64-encode a string (etcd uses base64 for keys and values).
@@ -247,7 +247,7 @@ impl EtcdServiceDiscovery {
     async fn grant_lease(&self) -> Result<String, ServiceClientError> {
         let url = self.build_url("/v3/lease/grant");
         let request = EtcdLeaseGrantRequest {
-            TTL: self.config.lease_ttl_secs,
+            ttl: self.config.lease_ttl_secs,
         };
 
         let response = self.http_client
@@ -499,7 +499,8 @@ impl ServiceDiscovery for EtcdServiceDiscovery {
         self.delete_key(&key).await?;
 
         // Revoke the lease if tracked
-        if let Some(lease_id) = self.registered_leases.lock().unwrap().remove(name) {
+        let lease_id = self.registered_leases.lock().unwrap().remove(name);
+        if let Some(lease_id) = lease_id {
             let _ = self.revoke_lease(&lease_id).await;
         }
 

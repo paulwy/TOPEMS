@@ -842,3 +842,30 @@ pub async fn get_vehicle_requests(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vehicle_query_params_deserialize() {
+        let query = "page=1&page_size=20&search=car&status=active&vehicle_type=sedan";
+        let params: VehicleQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("car"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.vehicle_type.as_deref(), Some("sedan"));
+    }
+
+    #[test]
+    fn test_vehicle_query_params_default() {
+        let query = "";
+        let params: VehicleQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.vehicle_type.is_none());
+    }
+}

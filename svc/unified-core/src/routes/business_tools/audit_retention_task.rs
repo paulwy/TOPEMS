@@ -4,7 +4,6 @@
 //! based on the configured retention policy.
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
@@ -16,13 +15,13 @@ use crate::routes::business_tools::permission_audit_log::AuditLogStore;
 // ===== Cleanup Task =====
 
 /// Manages the background audit log cleanup task.
-pub struct RetentionCleanupTask<S: AuditLogStore + Send + Sync + 'static> {
+pub struct RetentionCleanupTask<S: AuditLogStore + Send + Sync + 'static + ?Sized> {
     policy: Arc<Mutex<RetentionPolicy>>,
     store: Arc<S>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl<S: AuditLogStore + Send + Sync + 'static> RetentionCleanupTask<S> {
+impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> RetentionCleanupTask<S> {
     /// Create a new cleanup task with the given policy and store.
     pub fn new(policy: Arc<Mutex<RetentionPolicy>>, store: Arc<S>) -> Self {
         Self {
@@ -77,7 +76,7 @@ impl<S: AuditLogStore + Send + Sync + 'static> RetentionCleanupTask<S> {
                 }
 
                 // Run cleanup
-                let manager = RetentionManager::new(current_policy, store.as_ref());
+                let manager = RetentionManager::new(current_policy, store.clone());
                 let result = manager.cleanup().await;
 
                 if result.success {
@@ -117,7 +116,7 @@ impl<S: AuditLogStore + Send + Sync + 'static> RetentionCleanupTask<S> {
     /// Run a single cleanup immediately (for testing or manual trigger).
     pub async fn run_once(&self) -> CleanupResult {
         let policy = self.policy.lock().await.clone();
-        let manager = RetentionManager::new(policy, self.store.as_ref());
+        let manager = RetentionManager::new(policy, self.store.clone());
         manager.cleanup().await
     }
 }
@@ -135,7 +134,7 @@ pub struct CleanupTaskStats {
     pub retention_days: u32,
 }
 
-impl<S: AuditLogStore + Send + Sync + 'static> RetentionCleanupTask<S> {
+impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> RetentionCleanupTask<S> {
     /// Get statistics about the cleanup task.
     pub async fn get_stats(&self) -> CleanupTaskStats {
         let policy = self.policy.lock().await;
@@ -152,73 +151,7 @@ impl<S: AuditLogStore + Send + Sync + 'static> RetentionCleanupTask<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex as StdMutex;
-
-    // Mock AuditLogStore for testing
-    struct MockAuditLogStore {
-        entries: StdMutex<Vec<crate::routes::business_tools::audit_log::AuditLogEntry>>,
-    }
-
-    impl MockAuditLogStore {
-        fn new() -> Self {
-            Self {
-                entries: StdMutex::new(Vec::new()),
-            }
-        }
-    }
-
-    impl AuditLogStore for MockAuditLogStore {
-        async fn create_log(
-            &self,
-            entry: crate::routes::business_tools::audit_log::AuditLogEntry,
-        ) -> Result<crate::routes::business_tools::audit_log::AuditLogEntry, crate::routes::business_tools::audit_log::AuditLogStoreError> {
-            self.entries.lock().unwrap().push(entry.clone());
-            Ok(entry)
-        }
-
-        async fn get_log(
-            &self,
-            id: &str,
-        ) -> Result<Option<crate::routes::business_tools::audit_log::AuditLogEntry>, crate::routes::business_tools::audit_log::AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().iter().find(|e| e.id == id).cloned())
-        }
-
-        async fn query_logs(
-            &self,
-            _tenant_id: Option<String>,
-            _user_id: Option<String>,
-            _action: Option<String>,
-            _changed_by: Option<String>,
-            _start_time: Option<String>,
-            _end_time: Option<String>,
-            _limit: Option<usize>,
-            _offset: Option<usize>,
-        ) -> Result<Vec<crate::routes::business_tools::audit_log::AuditLogEntry>, crate::routes::business_tools::audit_log::AuditLogStoreError> {
-            Ok(self.entries.lock().unwrap().clone())
-        }
-
-        async fn delete_log(&self, id: &str) -> Result<(), crate::routes::business_tools::audit_log::AuditLogStoreError> {
-            let mut entries = self.entries.lock().unwrap();
-            entries.retain(|e| e.id != id);
-            Ok(())
-        }
-    }
-
-    fn make_entry(id: &str, created_at: &str) -> crate::routes::business_tools::audit_log::AuditLogEntry {
-        crate::routes::business_tools::audit_log::AuditLogEntry {
-            id: id.to_string(),
-            tenant_id: "t1".to_string(),
-            user_id: "u1".to_string(),
-            action: "create".to_string(),
-            resource_type: "permission".to_string(),
-            resource_id: "r1".to_string(),
-            changed_by: "admin".to_string(),
-            old_value: None,
-            new_value: None,
-            metadata: None,
-            created_at: created_at.to_string(),
-        }
-    }
+    use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
 
     #[tokio::test]
     async fn test_cleanup_task_creation() {
@@ -255,8 +188,8 @@ mod tests {
     #[tokio::test]
     async fn test_cleanup_task_run_once_with_entries() {
         let store = Arc::new(MockAuditLogStore::new());
-        store.create_log(make_entry("1", "2020-01-01T00:00:00Z")).await.unwrap();
-        store.create_log(make_entry("2", "2020-01-02T00:00:00Z")).await.unwrap();
+        store.record(make_test_entry("1", "2020-01-01T00:00:00Z")).await.unwrap();
+        store.record(make_test_entry("2", "2020-01-02T00:00:00Z")).await.unwrap();
 
         let policy = Arc::new(Mutex::new(RetentionPolicy::new(30)));
         let task = RetentionCleanupTask::new(policy, store);

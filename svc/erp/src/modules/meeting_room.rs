@@ -824,3 +824,28 @@ pub async fn get_room_bookings(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_room_query_params_deserialize() {
+        let query = "page=1&page_size=20&search=meeting&status=available";
+        let params: RoomQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("meeting"));
+        assert_eq!(params.status.as_deref(), Some("available"));
+    }
+
+    #[test]
+    fn test_room_query_params_default() {
+        let query = "";
+        let params: RoomQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+    }
+}

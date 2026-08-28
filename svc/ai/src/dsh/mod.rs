@@ -31,11 +31,34 @@
     clippy::new_without_default
 )]
 
+pub mod agent;
+pub mod alerting;
+pub mod business_copilot;
+pub mod business_intelligence;
+pub mod business_modules;
+pub mod cache;
+pub mod config_center;
+pub mod document_intelligence;
+pub mod event_trigger;
+pub mod governance;
+pub mod governance_dashboard;
+pub mod knowledge_graph;
+pub mod knowledge_management;
 pub mod mcp;
+pub mod mcp_resource;
+pub mod mcp_security;
+pub mod mcp_transport;
+pub mod memory;
+pub mod multi_agent;
+pub mod permission;
+pub mod plan_execute;
+pub mod predictive_analytics;
+pub mod prompt;
 pub mod provider;
+pub mod rag;
+pub mod resilience;
+pub mod smart_forms;
+pub mod standardization;
+pub mod tool_schema;
+pub mod workflow;
 
-pub use mcp::{McpServer, ServerState, ToolExecutionError, ToolRegistry};
-pub use provider::{
-    DeepSeekProvider, LlmProvider, LlmProviderError, MockProvider, OllamaProvider, ProviderConfig,
-    ProviderFactory, ProviderType,
-};

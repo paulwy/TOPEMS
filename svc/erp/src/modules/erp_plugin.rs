@@ -359,3 +359,115 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_plugin_info_serialization() {
+        let info = PluginInfo {
+            code: "erp".to_string(),
+            name: "ERP 插件".to_string(),
+            version: "1.0.0".to_string(),
+            description: "企业资源规划插件".to_string(),
+            permissions: vec![],
+            runtime_url: "http://localhost:8010".to_string(),
+            dependencies: vec![],
+            navigation_config: None,
+            category: Some("business".to_string()),
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["code"], "erp");
+        assert_eq!(json["name"], "ERP 插件");
+        assert_eq!(json["version"], "1.0.0");
+        assert_eq!(json["description"], "企业资源规划插件");
+        assert_eq!(json["runtime_url"], "http://localhost:8010");
+        assert_eq!(json["category"], "business");
+    }
+
+    #[test]
+    fn test_plugin_info_with_permissions() {
+        let perm = PermissionDef {
+            code: "erp:read".to_string(),
+            name: "读取 ERP 数据".to_string(),
+            resource_type: "erp".to_string(),
+            action: "read".to_string(),
+        };
+        let info = PluginInfo {
+            code: "erp".to_string(),
+            name: "ERP 插件".to_string(),
+            version: "1.0.0".to_string(),
+            description: "企业资源规划插件".to_string(),
+            permissions: vec![perm],
+            runtime_url: "http://localhost:8010".to_string(),
+            dependencies: vec!["core".to_string()],
+            navigation_config: Some(serde_json::json!({"menu": "ERP"})),
+            category: None,
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["permissions"][0]["code"], "erp:read");
+        assert_eq!(json["permissions"][0]["name"], "读取 ERP 数据");
+        assert_eq!(json["dependencies"][0], "core");
+        assert_eq!(json["navigation_config"]["menu"], "ERP");
+    }
+
+    #[test]
+    fn test_permission_def_serialization() {
+        let perm = PermissionDef {
+            code: "erp:write".to_string(),
+            name: "写入 ERP 数据".to_string(),
+            resource_type: "erp".to_string(),
+            action: "write".to_string(),
+        };
+        let json = serde_json::to_value(&perm).unwrap();
+        assert_eq!(json["code"], "erp:write");
+        assert_eq!(json["name"], "写入 ERP 数据");
+        assert_eq!(json["resource_type"], "erp");
+        assert_eq!(json["action"], "write");
+    }
+
+    #[test]
+    fn test_permission_def_deserialize() {
+        let json = r#"{
+            "code": "erp:delete",
+            "name": "删除 ERP 数据",
+            "resource_type": "erp",
+            "action": "delete"
+        }"#;
+        let perm: PermissionDef = serde_json::from_str(json).unwrap();
+        assert_eq!(perm.code, "erp:delete");
+        assert_eq!(perm.name, "删除 ERP 数据");
+        assert_eq!(perm.action, "delete");
+    }
+
+    #[test]
+    fn test_plugin_heartbeat_serialization() {
+        let heartbeat = PluginHeartbeat {
+            status: "running".to_string(),
+            version: Some("1.0.0".to_string()),
+        };
+        let json = serde_json::to_value(&heartbeat).unwrap();
+        assert_eq!(json["status"], "running");
+        assert_eq!(json["version"], "1.0.0");
+    }
+
+    #[test]
+    fn test_plugin_heartbeat_no_version() {
+        let heartbeat = PluginHeartbeat {
+            status: "starting".to_string(),
+            version: None,
+        };
+        let json = serde_json::to_value(&heartbeat).unwrap();
+        assert_eq!(json["status"], "starting");
+        assert!(json["version"].is_null());
+    }
+
+    #[test]
+    fn test_plugin_heartbeat_deserialize() {
+        let json = r#"{"status": "running", "version": "2.0.0"}"#;
+        let heartbeat: PluginHeartbeat = serde_json::from_str(json).unwrap();
+        assert_eq!(heartbeat.status, "running");
+        assert_eq!(heartbeat.version.as_deref(), Some("2.0.0"));
+    }
+}

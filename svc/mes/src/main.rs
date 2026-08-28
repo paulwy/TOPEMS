@@ -77,6 +77,8 @@ async fn main() -> anyhow::Result<()> {
             "/ws/mes/dashboard",
             axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         )
+        // APS API 兼容层：/api/aps/* → /api/mes/*
+        .nest("/api/aps", modules::aps_compat::create_routes())
         .with_state(state.clone());
     let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 

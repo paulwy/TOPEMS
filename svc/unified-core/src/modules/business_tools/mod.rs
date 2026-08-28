@@ -241,6 +241,16 @@ impl BaseBusinessTool {
         &self.service_name
     }
 
+    /// Get the tool name.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the tool description.
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
     /// Get the service registry.
     pub fn service_registry(&self) -> &Arc<ServiceRegistry> {
         &self.service_registry
@@ -252,10 +262,14 @@ impl BaseBusinessTool {
         path: &str,
         query: Option<&HashMap<String, String>>,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let response = self
+        let client = self
             .service_registry
-            .get::<T>(&self.service_name, path, query)
-            .await?;
+            .get_client(&self.service_name)
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let response = client
+            .get::<T>(path, query)
+            .await
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
         Ok(response)
     }
 
@@ -265,10 +279,14 @@ impl BaseBusinessTool {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let response = self
+        let client = self
             .service_registry
-            .post::<T, B>(&self.service_name, path, body)
-            .await?;
+            .get_client(&self.service_name)
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let response = client
+            .post::<T, B>(path, body)
+            .await
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
         Ok(response)
     }
 
@@ -278,10 +296,14 @@ impl BaseBusinessTool {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let response = self
+        let client = self
             .service_registry
-            .put::<T, B>(&self.service_name, path, body)
-            .await?;
+            .get_client(&self.service_name)
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let response = client
+            .put::<T, B>(path, body)
+            .await
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
         Ok(response)
     }
 
@@ -290,10 +312,14 @@ impl BaseBusinessTool {
         &self,
         path: &str,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let response = self
+        let client = self
             .service_registry
-            .delete::<T>(&self.service_name, path)
-            .await?;
+            .get_client(&self.service_name)
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let response = client
+            .delete::<T>(path)
+            .await
+            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
         Ok(response)
     }
 }
@@ -459,7 +485,7 @@ macro_rules! define_business_tool {
                         $tool_name,
                         $description,
                         $service_name,
-                        $operations.to_vec(),
+                        $operations.iter().map(|s| s.to_string()).collect(),
                         service_registry,
                     ),
                 }

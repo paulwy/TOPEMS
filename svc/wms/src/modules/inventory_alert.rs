@@ -1502,3 +1502,150 @@ pub async fn confirm_alert_record(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_alert_query_params_deserialize() {
+        let query = "search=test&alert_type=low_stock&severity=critical&status=open";
+        let params: AlertQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("test"));
+        assert_eq!(params.alert_type.as_deref(), Some("low_stock"));
+        assert_eq!(params.severity.as_deref(), Some("critical"));
+        assert_eq!(params.status.as_deref(), Some("open"));
+    }
+
+    #[test]
+    fn test_alert_query_params_default() {
+        let query = "";
+        let params: AlertQueryParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.search.is_none());
+        assert!(params.alert_type.is_none());
+        assert!(params.severity.is_none());
+        assert!(params.status.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_inventory_alert_serialization() {
+        let alert = InventoryAlert {
+            id: Uuid::nil(),
+            inventory_id: Uuid::nil(),
+            material_code: "MAT001".to_string(),
+            material_name: "测试物料".to_string(),
+            warehouse_id: None,
+            warehouse_name: None,
+            location_id: None,
+            location_code: None,
+            alert_type: "low_stock".to_string(),
+            current_quantity: 5.0,
+            threshold_value: Some(10.0),
+            deviation_quantity: Some(-5.0),
+            severity: "critical".to_string(),
+            status: "open".to_string(),
+            remarks: Some("库存不足".to_string()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&alert).unwrap();
+        assert_eq!(json["material_code"], "MAT001");
+        assert_eq!(json["alert_type"], "low_stock");
+        assert_eq!(json["severity"], "critical");
+        assert_eq!(json["status"], "open");
+        assert_eq!(json["current_quantity"], 5.0);
+    }
+
+    #[test]
+    fn test_alert_summary_serialization() {
+        let summary = AlertSummary {
+            total_alerts: 100,
+            critical_count: 20,
+            warning_count: 30,
+            info_count: 50,
+            below_min_count: 40,
+            above_max_count: 10,
+            reorder_count: 25,
+            expiry_count: 5,
+            out_of_stock_count: 15,
+        };
+        let json = serde_json::to_value(&summary).unwrap();
+        assert_eq!(json["total_alerts"], 100);
+        assert_eq!(json["critical_count"], 20);
+        assert_eq!(json["warning_count"], 30);
+        assert_eq!(json["info_count"], 50);
+        assert_eq!(json["out_of_stock_count"], 15);
+    }
+
+    #[test]
+    fn test_warehouse_alert_count_serialization() {
+        let count = WarehouseAlertCount {
+            warehouse_id: Some(Uuid::nil()),
+            warehouse_name: Some("主仓库".to_string()),
+            alert_count: 25,
+        };
+        let json = serde_json::to_value(&count).unwrap();
+        assert_eq!(json["warehouse_name"], "主仓库");
+        assert_eq!(json["alert_count"], 25);
+    }
+
+    #[test]
+    fn test_material_alert_count_serialization() {
+        let count = MaterialAlertCount {
+            material_code: "MAT001".to_string(),
+            material_name: "测试物料".to_string(),
+            alert_count: 10,
+        };
+        let json = serde_json::to_value(&count).unwrap();
+        assert_eq!(json["material_code"], "MAT001");
+        assert_eq!(json["material_name"], "测试物料");
+        assert_eq!(json["alert_count"], 10);
+    }
+
+    #[test]
+    fn test_inventory_alert_clone() {
+        let alert = InventoryAlert {
+            id: Uuid::nil(),
+            inventory_id: Uuid::nil(),
+            material_code: "MAT001".to_string(),
+            material_name: "测试物料".to_string(),
+            warehouse_id: None,
+            warehouse_name: None,
+            location_id: None,
+            location_code: None,
+            alert_type: "low_stock".to_string(),
+            current_quantity: 5.0,
+            threshold_value: None,
+            deviation_quantity: None,
+            severity: "warning".to_string(),
+            status: "open".to_string(),
+            remarks: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let cloned = alert.clone();
+        assert_eq!(alert.material_code, cloned.material_code);
+        assert_eq!(alert.alert_type, cloned.alert_type);
+        assert_eq!(alert.severity, cloned.severity);
+    }
+
+    #[test]
+    fn test_alert_summary_clone() {
+        let summary = AlertSummary {
+            total_alerts: 50,
+            critical_count: 10,
+            warning_count: 20,
+            info_count: 20,
+            below_min_count: 15,
+            above_max_count: 5,
+            reorder_count: 10,
+            expiry_count: 0,
+            out_of_stock_count: 5,
+        };
+        let cloned = summary.clone();
+        assert_eq!(summary.total_alerts, cloned.total_alerts);
+        assert_eq!(summary.critical_count, cloned.critical_count);
+    }
+}

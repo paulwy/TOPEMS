@@ -10,8 +10,7 @@ use axum::Router;
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
-use super::audit_retention::{RetentionPolicy, CleanupResult, RetentionStats, RetentionManager};
-use super::audit_log::AuditLogStore;
+use super::audit_retention::{RetentionPolicy, CleanupResult, RetentionStats};
 use super::permission_api::ErrorResponse;
 
 // ===== Request Types =====
@@ -72,7 +71,7 @@ pub async fn get_retention_policy(
     // In a full implementation, the policy would be stored in AppState or a config store.
     // For now, we return the default policy.
     // TODO: Integrate RetentionManager into AppState
-    let policy = state.audit_retention_policy.clone();
+    let policy = state.audit_retention_policy.lock().await.clone();
 
     Ok(Json(RetentionPolicyResponse { policy }))
 }
@@ -82,7 +81,7 @@ pub async fn update_retention_policy(
     State(state): State<AppState>,
     Json(request): Json<UpdateRetentionPolicyRequest>,
 ) -> Result<Json<RetentionPolicyResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let mut policy = state.audit_retention_policy.clone();
+    let mut policy = state.audit_retention_policy.lock().await.clone();
 
     if let Some(retention_days) = request.retention_days {
         if retention_days == 0 {
@@ -139,7 +138,7 @@ pub async fn update_retention_policy(
     // In a full implementation, this would be persisted to a config store.
     // For now, we update the in-memory policy.
     // TODO: Persist policy to config store
-    *state.audit_retention_policy.lock().unwrap() = policy.clone();
+    *state.audit_retention_policy.lock().await = policy.clone();
 
     Ok(Json(RetentionPolicyResponse { policy }))
 }
@@ -149,7 +148,7 @@ pub async fn trigger_cleanup(
     State(state): State<AppState>,
     Json(request): Json<TriggerCleanupRequest>,
 ) -> Result<Json<TriggerCleanupResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let mut policy = state.audit_retention_policy.lock().unwrap().clone();
+    let mut policy = state.audit_retention_policy.lock().await.clone();
 
     // Override retention days if provided
     if let Some(retention_days) = request.retention_days {
@@ -187,7 +186,7 @@ pub async fn trigger_cleanup(
 pub async fn get_retention_stats(
     State(state): State<AppState>,
 ) -> Result<Json<RetentionStats>, (StatusCode, Json<ErrorResponse>)> {
-    let policy = state.audit_retention_policy.lock().unwrap().clone();
+    let policy = state.audit_retention_policy.lock().await.clone();
     let cutoff = policy.cutoff_time();
 
     // In a full implementation, we would query the AuditLogStore for old entries.

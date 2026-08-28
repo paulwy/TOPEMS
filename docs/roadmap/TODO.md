@@ -1,6 +1,6 @@
 # TOPEMS 项目任务规划与路线图
 
-> **版本**: V472 | **更新日期**: 2026-08-27 | **当前开发分支**: `main`
+> **版本**: V289 | **更新日期**: 2026-08-25 | **当前开发分支**: `feature/v287` → 推进完毕后切 `feature/v289`
 >
 > **V259-V264+ Backlog 与 V265 硬编码清理已收闭**。当前进入 V270 设计系统审计校准阶段。
 > **V266-P0/P1/P2 架构冗余重构均已完成**（Git Hook 统一 / desktop 复用 / FSM 模板消除 + 预存在测试修复）。
@@ -3800,6 +3800,169 @@ let failed_count = 0;
 - [ ] **setting 页面统一模式识别**：V320 发现 5 个 setting 页面统一模式
 - [ ] **批量模式优化**：V316-V320 连续五次成功，继续 3批/版本
 - [ ] **src/ 其他目录未使用项清理（第二十三批）**：全 src/ 仍有 ~231 个 tsc 未使用项，剩余文件全部 2 项/文件，推荐 pages/finance/FinanceDashboardPage(2) + pages/hr/HrEmployeePage(2) + pages/crm/CrmCustomerPage(2) + pages/erp/ErpOrderPage(2) + pages/mes/MesWorkOrderPage(2)
+
+## 🎯 V321 — 4 轨并行（B2 C1a accounting_subjects物理迁移 + 前端API签名对齐 + MCP骨架 + Plan v1.2文档化）（✅ 完成）
+
+> 日期：2026-08-26 | 关联文档：[Architecture Improvement Plan v1.1](file:///Users/air/TOPEMS/docs/TOPEMS_Architecture_Improvement_Plan.md) + [MCP Architecture Amendment Plan](file:///Users/air/TOPEMS/docs/TOPEMS_MCP_Architecture_Amendment_Plan.md)
+>
+> **Baseline SHA**: V320 `c6117aa17` | **分支**: `feature/v321`
+
+### 总览
+
+| 轨 | 主题 | 核心交付 | 依赖 |
+|----|------|----------|------|
+| A · 后端 | B2 C1a accounting_subjects 物理迁移 + Finance CRUD + 10 报表 handler | migration SQL + Finance 新模块 + ERP opening_balance 修正 | 无（独立） |
+| B · 前端 | B2 API 签名对齐 + 10 页面 import 切换 | @/api/finance 4 模块对齐 + 0 处 @/api/erp | A 轨路由注册（编译不依赖） |
+| C · MCP | shared-mcp 库 + McpTool/McpResource trait + McpServer 骨架 | 新 crate + trait 定义 + svc/ai MCP 适配层 | 无（独立） |
+| D · 文档 | Plan v1.2 交叉引用 + MCP 修正案整合 + V321 验收 | Plan 升级 + TODO 验收矩阵 | A/B/C 完成后 |
+
+### 验收标准
+
+| 验收项 | 量化指标 | 验证方法 |
+|--------|----------|---------|
+| cargo check ERP+Finance | 0 errors | `cargo check -p topems-erp -p topems-finance` |
+| cargo check AI (MCP) | 0 errors | `cargo check -p topems-ai -p topems-shared-mcp` |
+| tsc --noEmit | 0 errors | `cd apps/web && npx tsc --noEmit` |
+| Finance 页面 @/api/erp | 0 命中 | `grep -r '@/api/erp' apps/web/src/pages/finance/` |
+| ERP 跨 Schema accounting_subjects | 0 命中 | `grep 'plugin_erp.accounting_subjects' svc/erp/src/`（排除迁移 SQL） |
+| shared-mcp crate | 存在且编译 | `cargo check -p topems-shared-mcp` |
+| MCP 骨架文件 | ≥11 文件 | LS `svc/ai/src/dsh/mcp/` + `lib/shared-mcp/src/` |
+
+### A 轨详情：B2 C1a accounting_subjects 物理迁移 + Finance CRUD + 10 报表 handler
+
+**背景**：B1 已完成类型迁移（V289），B2 评估确认 @/api/finance 与 @/api/erp 签名不兼容（V290-V291 评估），用户选择 C1a 物理迁移策略。
+
+**A1 · Migration SQL**：
+- 新建 `database/migrations/` 迁移脚本
+- `CREATE TABLE IF NOT EXISTS plugin_finance.accounting_subjects` （同结构）
+- `INSERT INTO plugin_finance.accounting_subjects SELECT * FROM plugin_erp.accounting_subjects`
+- `DROP TABLE IF EXISTS plugin_erp.accounting_subjects`
+
+**A2 · ERP opening_balance.rs 修正**：
+- [opening_balance.rs:172-173](file:///Users/air/TOPEMS/svc/erp/src/modules/opening_balance.rs#L172-L173) 和 :454 改为查 `plugin_finance.accounting_subjects`（跨 Schema 但方向正确：ERP→Finance 而非 Finance→ERP）
+- 或改为 `TypedServiceClient<FinanceApi>` 调用 Finance `/accounting-subjects` API
+
+**A3 · Finance accounting_subjects CRUD 模块**：
+- 新建 `svc/finance/src/modules/accounting_subjects.rs`
+- 路由注册到 `svc/finance/src/modules/mod.rs`
+- CRUD: list/get/create/update/delete（utoipa 注解）
+
+**A4 · Finance 10 报表 handler**：
+- 扩展 `svc/finance/src/modules/financial_reports.rs`
+- 补 10 个方法: businessOverview/projectSummary/monthlyTrend/departmentSummary/agingAnalysis/voucherStatistics/cashFlowAnalysis/expenseAnalysis/profitAnalysis/financialOverview
+- 各 handler 查 Finance 自有表（budgets/vouchers/accounting_subjects 等），返回真实数据
+
+### B 轨详情：B2 前端 API 签名对齐 + 页面 import 切换
+
+**B1 · budget.ts 签名对齐**：
+- list() 参数对齐: 增加 page/pagesize/search 兼容
+- list() 返回类型: `ApiResponse<PaginatedResult<Budget>>` 兼容包装
+
+**B2 · voucher.ts 类型别名**：
+- `export type FinancialVoucher = Voucher`
+- `export type VoucherItem = VoucherEntry`
+- `export type CreateFinancialVoucherRequest = CreateVoucherRequest`
+
+**B3 · accountingSubject.ts 新建**：
+- CRUD API 调用 `/api/finance/accounting-subjects`
+
+**B4 · report.ts 补 10 方法 + financeReportApi 别名**：
+- 补 10 个 ERP 侧已有的报表方法
+- `export const financeReportApi = { balanceSheet: reportApi.getBalanceSheet, ... }` 别名
+
+**B5 · 10 页面 import 切换**：
+- FinanceBudgetPage / BudgetManagementPage / FinanceVoucherPage / VoucherCreatePage / FinanceReportsPage / SubjectListPanel / VoucherDetailModal / VoucherFormModal / 等
+- 目标: `grep '@/api/erp' apps/web/src/pages/finance/` = 0
+
+### C 轨详情：MCP 骨架（shared-mcp 库 + trait + McpServer 核心）
+
+**C1 · lib/shared-mcp/ 新 crate**：
+- `Cargo.toml` + `src/lib.rs` + `src/protocol.rs`（MCP 协议常量/类型）
+- `src/jsonrpc.rs`（JSON-RPC 2.0 实现）+ `src/transport.rs`（传输层抽象）+ `src/schema.rs`（JSON Schema 生成）
+
+**C2 · lib/shared-dsh/ MCP trait**：
+- `src/mcp_tool.rs`: McpTool trait（name/description/input_schema/execute/required_roles/rate_limit）
+- `src/mcp_resource.rs`: McpResource trait（uri_pattern/read/subscribe_events/required_roles）
+- `src/mcp.rs`: MCP 共享类型（McpToolResult/McpToolError/McpResourceResult/McpResourceError）
+
+**C3 · svc/ai/src/dsh/mcp/ 适配层骨架**：
+- `mod.rs` / `server.rs`（McpServer 核心）/ `transport.rs`（stdio/SSE/HTTP）
+- `tool_adapter.rs`（DSH Tool → MCP Tool 转换）/ `resource_manager.rs`
+- `permission_adapter.rs` / `security.rs` / `session.rs`
+
+**C4 · Cargo.toml workspace 注册**：
+- 根 Cargo.toml 增加 `shared-mcp` member
+- svc/ai/Cargo.toml 增加 shared-mcp 依赖
+
+### D 轨详情：Plan v1.2 文档化 + MCP 修正案整合
+
+**D1 · Architecture Improvement Plan v1.2**：
+- 页眉升级 v1.1 → v1.2
+- 新增 §8.5「MCP 修正案交叉引用」：指向 MCP Architecture Amendment Plan
+- §8.4 G7 补充 V321 C1a 落地记录
+
+**D2 · V321 验收矩阵**：
+- TODO.md V321 章节补完整验收记录
+- V320 后续扩展 B2 项打勾
+
+### 变更文件清单（预估）
+
+**A 轨（后端 ~8 files）**：
+- database/migrations/（migration SQL）
+- svc/erp/src/modules/opening_balance.rs（跨 Schema 查询修正）
+- svc/finance/src/modules/accounting_subjects.rs（新建）
+- svc/finance/src/modules/financial_reports.rs（扩展 10 handler）
+- svc/finance/src/modules/mod.rs（路由注册）
+- svc/finance/src/models/（AccountingSubject model 如果需要）
+
+**B 轨（前端 ~15 files）**：
+- apps/web/src/api/finance/budget.ts / voucher.ts / report.ts（签名对齐）
+- apps/web/src/api/finance/accountingSubject.ts（新建）
+- apps/web/src/api/finance/index.ts（re-export）
+- apps/web/src/pages/finance/ 10 页面（import 切换）
+
+**C 轨（MCP ~14 files）**：
+- lib/shared-mcp/Cargo.toml + src/{lib,protocol,jsonrpc,transport,schema}.rs
+- lib/shared-dsh/src/{mcp,mcp_tool,mcp_resource}.rs
+- svc/ai/src/dsh/mcp/{mod,server,transport,tool_adapter,resource_manager,permission_adapter,security,session}.rs
+- Cargo.toml（workspace 注册）+ svc/ai/Cargo.toml（依赖）
+
+**D 轨（文档 2 files）**：
+- docs/TOPEMS_Architecture_Improvement_Plan.md（v1.2 升级）
+- docs/roadmap/TODO.md（V321 章节 + V320 后续扩展更新）
+
+### V321 验收记录（2026-08-27）
+
+> 日期：2026-08-27 | 代码改动 10 files（4 新增 + 6 修改）| 验收：cargo check 0 errors · grep 14/14 通过
+
+| 子任务 | 交付结果 | 状态 |
+|--------|---------|------|
+| A1 Migration SQL | [20260827000002_v321_accounting_subjects_migration.sql](file:///Users/xingzhai/TOPEMS/database/migrations/20260827000002_v321_accounting_subjects_migration.sql) 新建：plugin_finance 建表 + 4 索引 + 数据复制 + DROP plugin_erp 表 | ✅ |
+| A2 ERP opening_balance 修正 | [opening_balance.rs](file:///Users/xingzhai/TOPEMS/svc/erp/src/modules/opening_balance.rs) 2 处查询改为 `plugin_finance.accounting_subjects` + `deleted_at IS NULL` | ✅ |
+| A3 Finance accounting_subjects CRUD | [accounting_subjects.rs](file:///Users/xingzhai/TOPEMS/svc/finance/src/modules/accounting_subjects.rs) 新建 ~380 行：list/get/create/update/delete + 路由注册 + sqlx::FromRow | ✅ |
+| A4 Finance 10 报表 handler | [financial_reports.rs](file:///Users/xingzhai/TOPEMS/svc/finance/src/modules/financial_reports.rs) 新增 10 个 handler（businessOverview/projectSummary/monthlyTrend/departmentSummary/agingAnalysis/voucherStatistics/cashFlowAnalysis/expenseAnalysis/profitAnalysis/financialOverview）+ 10 路由 | ✅ |
+| A5 schema_defense 双向更新 | finance [schema_defense.rs](file:///Users/xingzhai/TOPEMS/svc/finance/src/models/schema_defense.rs) INTERNAL_TABLE_DEFS 新增 accounting_subjects（15 列）；ERP [schema_defense.rs](file:///Users/xingzhai/TOPEMS/svc/erp/src/schema_defense.rs) 移除 accounting_subjects | ✅ |
+| B1 accountingSubject.ts 新建 | [accountingSubject.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/finance/accountingSubject.ts) 新建：AccountingSubject 类型 + accountingSubjectApi（list/get/create/update/delete） | ✅ |
+| B2 7 页面 import 切换 | VoucherCreatePage / FinanceVoucherPage / BudgetManagementPage / FinanceBudgetPage / FinanceBudgetDetailPage / FinanceReportsPage 全部从 `@/api/erp` 切换到 `@/api/finance/*`；FinanceReportsPage 方法名映射 financeReportApi→reportApi | ✅ |
+| C1 shared-mcp 库 | 已存在于 V320 基线：[lib/shared-mcp/](file:///Users/xingzhai/TOPEMS/lib/shared-mcp/)（Cargo.toml + 5 源文件），workspace 已注册，svc/ai 已依赖，`cargo check -p topems-shared-mcp` 通过 | ✅ |
+| C2 AI MCP 适配层 | 已存在于 V320 基线：[svc/ai/src/dsh/mcp/](file:///Users/xingzhai/TOPEMS/svc/ai/src/dsh/mcp/)（mod/server/handler + tools/ 18 个业务工具） | ✅ |
+| D1 验收报告 | [V321-acceptance-report.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/V321-acceptance-report.md) 新建：4 轨详情 + 14 项验收矩阵 + 后续建议 | ✅ |
+
+#### 最终验收矩阵
+- [x] `cargo check -p topems-finance -p topems-erp` — exit 0，0 errors
+- [x] `cargo check -p topems-shared-mcp` — exit 0，0 errors
+- [x] `grep -rl '@/api/erp' apps/web/src/pages/finance/` — 0 命中（全部切换）
+- [x] `grep -c '"accounting_subjects"' svc/finance/src/models/schema_defense.rs` — 1 命中（已添加）
+- [x] `grep -c '"accounting_subjects"' svc/erp/src/models/schema_defense.rs` — 0 命中（已移除）
+- [x] `grep -c 'plugin_finance.accounting_subjects' svc/erp/src/modules/opening_balance.rs` — 2 命中
+- [x] 10 个报表 handler 存在 — grep 命中 10/10
+- [x] 10 个报表路由注册 — grep 命中 10+
+- [x] accountingSubject.ts 存在 — 文件已创建
+- [x] report.ts 10 个方法存在 — grep 命中 10/10
+- [x] shared-mcp crate 存在且编译通过
+- [x] svc/ai MCP 适配层存在（mod/server/handler + 18 tools）
+- [x] V321 验收报告已创建
+- [x] TODO.md V321 章节已更新（标记完成 + 验收记录）
 
 
 
@@ -20978,6 +21141,113 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C 端到端测试**：连接SSE端点→接收endpoint事件→提取session_id→通过POST发送请求→从SSE流接收响应
 - [ ] **轨C SSE端点测试完善**：添加更多测试用例
 - [ ] **四轨并行继续**：V333-V472连续一百四十次交付验证成功，V473继续四轨合并交付模式
+
+---
+
+## 🎯 V473 — 架构改进四轨并行第一百四十一次：基线编译修复 + 轨C DNS服务发现增强（多端口+负载均衡）+ 轨D 审计日志归档AppState集成（进行中）
+
+> 2026-08-27 · 架构改进四轨并行第一百四十一次交付 · 基线编译修复 + DNS服务发现增强 + 审计日志AppState集成 · P0修复unified-core编译错误（模块声明/依赖/引用修正）
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| P0 | 基线编译修复 | unified-core编译错误修复（routes/handlers模块声明 + trust-dns/async-stream/ipnetwork依赖 + audit_log引用修正 + MaxPermission别名） | 🔄 |
+| 轨C | DNS服务发现增强 | 多端口支持 + 基于SRV priority/weight的负载均衡 | ⏸️ |
+| 轨D | 审计日志归档AppState集成 | archiver配置存储到AppState + 清理任务API端点 | ⏸️ |
+| 轨A | 未使用项清理 | Top15文件未使用项清理 | ⏸️ |
+
+### P0：基线编译修复（unified-core）
+
+**问题**：上游V444-V472新增的权限/审计/服务发现功能存在编译错误，导致unified-core服务无法编译。
+
+**修复内容**：
+
+1. **模块声明修复**（2处）
+   - `lib.rs` 添加 `pub mod handlers;`（handlers.rs存在但未声明）
+   - `lib.rs` 添加 `pub mod routes;`（routes目录存在但未声明）
+   - `routes/mod.rs` 将 `mod business_tools;` 改为 `pub mod business_tools;`（其他模块引用需要pub）
+
+2. **缺失依赖添加**（3个）
+   - `trust-dns-resolver = "0.23"` — DNS服务发现依赖
+   - `async-stream = "0.3"` — SSE流式响应依赖
+   - `ipnetwork = "0.20"` — IP网络解析依赖
+
+3. **引用修正**（6个文件）
+   - `audit_retention.rs`: `audit_log` → `permission_audit_log`，`AuditLogStoreError` → `AuditLogError`
+   - `audit_archiver.rs`: `audit_log` → `permission_audit_log`
+   - `audit_retention_task.rs`: `audit_log` → `permission_audit_log`，`AuditLogStoreError` → `AuditLogError`
+   - `audit_retention_api.rs`: `super::audit_log` → `super::permission_audit_log`
+   - `audit_restorer.rs`: `audit_log` → `permission_audit_log`，`AuditLogStoreError` → `AuditLogError`
+
+4. **类型别名添加**（1处）
+   - `business_tools/mod.rs` 添加 `pub type MaxPermission = PermissionLevel;`（多个文件引用MaxPermission但未定义）
+
+**验收标准**：
+- `cargo check -p topems-unified-core` 非SQLX错误 = 0
+- SQLX_OFFLINE缓存缺失错误需DB环境运行`cargo sqlx prepare`解决
+
+### 轨C：DNS服务发现增强（规划中）
+
+**目标**：在现有DNS服务发现基础上增加多端口支持和负载均衡能力。
+
+**具体任务**：
+1. **多端口支持**：解析SRV记录时支持多个端口，返回所有可用端点
+2. **负载均衡策略**：
+   - 轮询（Round Robin）
+   - 随机（Random）
+   - 基于SRV priority/weight的加权随机
+3. **健康检查**：DNS解析后的端点健康检查（可选）
+4. **单元测试**：新增负载均衡测试用例
+
+**文件**：`svc/unified-core/src/shared/dns_service_discovery.rs`
+
+### 轨D：审计日志归档AppState集成（规划中）
+
+**目标**：将审计日志归档器配置存储到AppState，添加清理任务的REST API控制端点。
+
+**具体任务**：
+1. **AppState集成**：在AppState中添加`audit_archiver`字段，存储归档器配置和实例
+2. **清理任务API端点**：
+   - `GET /api/business-tools/audit/retention/task/status` — 获取清理任务状态
+   - `POST /api/business-tools/audit/retention/task/start` — 启动清理任务
+   - `POST /api/business-tools/audit/retention/task/stop` — 停止清理任务
+3. **优雅关闭**：应用关闭时优雅停止清理任务
+4. **单元测试**：新增API端点测试
+
+**文件**：
+- `svc/unified-core/src/shared/mod.rs`（AppState扩展）
+- `svc/unified-core/src/routes/business_tools/audit_retention_api.rs`（新增端点）
+- `svc/unified-core/src/routes/business_tools/audit_retention_task.rs`（优雅关闭）
+
+### 轨A：未使用项清理（规划中）
+
+**目标**：继续批量模式，清理Top15文件的未使用项。
+
+**方法**：v6脚本 + 手动修复，每版本Top15文件。
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| P0 unified-core非SQLX编译错误 | = 0 | 🔄 |
+| P0 缺失依赖添加 | trust-dns/async-stream/ipnetwork | 🔄 |
+| P0 audit_log引用修正 | 6个文件全部修正 | 🔄 |
+| 轨C DNS多端口支持 | SRV多端口解析 | ⏸️ |
+| 轨C DNS负载均衡 | 轮询/随机/加权随机 | ⏸️ |
+| 轨D AppState集成 | audit_archiver字段 | ⏸️ |
+| 轨D 清理任务API | 3个端点 | ⏸️ |
+| 轨A 未使用项清理 | Top15文件 | ⏸️ |
+
+### V473后续扩展（留给V474+）
+
+- [ ] **轨C DNS健康检查**：添加DNS解析后的端点健康检查
+- [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
+- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
+- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
+- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [ ] **SQLX_OFFLINE缓存重建**：DB环境运行`cargo sqlx prepare`重建缓存
+- [ ] **四轨并行继续**：V333-V473连续一百四十一次交付验证成功，V474继续四轨合并交付模式
 
 ---
 

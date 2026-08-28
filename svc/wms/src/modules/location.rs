@@ -697,3 +697,113 @@ pub async fn batch_delete_locations(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_location_pagination_params_deserialize() {
+        let query = "search=A01&status=active&warehouse_id=WH001&zone_id=Z01&location_type=storage&storage_type=pallet&isactive=true";
+        let params: LocationPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("A01"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.warehouse_id.as_deref(), Some("WH001"));
+        assert_eq!(params.zone_id.as_deref(), Some("Z01"));
+        assert_eq!(params.location_type.as_deref(), Some("storage"));
+        assert_eq!(params.storage_type.as_deref(), Some("pallet"));
+        assert_eq!(params.isactive, Some(true));
+    }
+
+    #[test]
+    fn test_location_pagination_params_default() {
+        let query = "";
+        let params: LocationPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.warehouse_id.is_none());
+        assert!(params.zone_id.is_none());
+        assert!(params.location_type.is_none());
+        assert!(params.storage_type.is_none());
+        assert!(params.isactive.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_location_status_summary_serialization() {
+        let summary = LocationStatusSummary {
+            warehouse_id: "WH001".to_string(),
+            total_locations: 100,
+            empty_locations: 20,
+            partially_filled: 30,
+            full_locations: 40,
+            inactive_locations: 10,
+        };
+        let json = serde_json::to_value(&summary).unwrap();
+        assert_eq!(json["warehouse_id"], "WH001");
+        assert_eq!(json["total_locations"], 100);
+        assert_eq!(json["empty_locations"], 20);
+        assert_eq!(json["partially_filled"], 30);
+        assert_eq!(json["full_locations"], 40);
+        assert_eq!(json["inactive_locations"], 10);
+    }
+
+    #[test]
+    fn test_location_status_summary_clone() {
+        let summary = LocationStatusSummary {
+            warehouse_id: "WH001".to_string(),
+            total_locations: 50,
+            empty_locations: 10,
+            partially_filled: 15,
+            full_locations: 20,
+            inactive_locations: 5,
+        };
+        let cloned = summary.clone();
+        assert_eq!(summary.warehouse_id, cloned.warehouse_id);
+        assert_eq!(summary.total_locations, cloned.total_locations);
+        assert_eq!(summary.empty_locations, cloned.empty_locations);
+    }
+
+    #[test]
+    fn test_batch_update_request_deserialize() {
+        let json = r#"{
+            "ids": ["loc1", "loc2", "loc3"],
+            "updates": {
+                "status": "active",
+                "zone_id": "Z01"
+            }
+        }"#;
+        let request: BatchUpdateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.ids.len(), 3);
+        assert_eq!(request.ids[0], "loc1");
+        assert_eq!(request.ids[1], "loc2");
+        assert_eq!(request.ids[2], "loc3");
+    }
+
+    #[test]
+    fn test_batch_update_request_empty_ids() {
+        let json = r#"{
+            "ids": [],
+            "updates": {
+                "status": "inactive"
+            }
+        }"#;
+        let request: BatchUpdateRequest = serde_json::from_str(json).unwrap();
+        assert!(request.ids.is_empty());
+    }
+
+    #[test]
+    fn test_location_status_params_deserialize() {
+        let query = "warehouse_id=WH001";
+        let params: LocationStatusParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.warehouse_id.as_deref(), Some("WH001"));
+    }
+
+    #[test]
+    fn test_location_status_params_default() {
+        let query = "";
+        let params: LocationStatusParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.warehouse_id.is_none());
+    }
+}

@@ -188,9 +188,11 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
+pub mod handlers;
 pub mod middleware;
 pub mod models;
 pub mod modules;
+pub mod routes;
 pub mod schema_defense;
 pub mod shared;
 

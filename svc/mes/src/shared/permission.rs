@@ -165,3 +165,289 @@ pub async fn check_permission<T>(
     let shared_perm = permission.to_shared();
     check_module_permission(db, claims, &shared_perm).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── MesPermission::to_shared() 映射测试 ─────────────
+
+    #[test]
+    fn production_order_read_maps_to_mes_read() {
+        let p = MesPermission::ProductionOrderRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn production_order_write_maps_to_mes_write() {
+        let p = MesPermission::ProductionOrderWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_order_start_maps_to_mes_write() {
+        let p = MesPermission::ProductionOrderStart.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_order_complete_maps_to_mes_write() {
+        let p = MesPermission::ProductionOrderComplete.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_order_cancel_maps_to_mes_delete() {
+        let p = MesPermission::ProductionOrderCancel.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Delete);
+    }
+
+    #[test]
+    fn process_read_maps_to_mes_read() {
+        let p = MesPermission::ProcessRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn process_write_maps_to_mes_write() {
+        let p = MesPermission::ProcessWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn record_read_maps_to_mes_read() {
+        let p = MesPermission::RecordRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn record_write_maps_to_mes_write() {
+        let p = MesPermission::RecordWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn equipment_read_maps_to_mes_read() {
+        let p = MesPermission::EquipmentRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn equipment_write_maps_to_mes_write() {
+        let p = MesPermission::EquipmentWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn work_station_read_maps_to_mes_read() {
+        let p = MesPermission::WorkStationRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn work_station_write_maps_to_mes_write() {
+        let p = MesPermission::WorkStationWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_scheduling_read_maps_to_mes_read() {
+        let p = MesPermission::ProductionSchedulingRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn production_scheduling_write_maps_to_mes_write() {
+        let p = MesPermission::ProductionSchedulingWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_scheduling_adjust_maps_to_mes_write() {
+        let p = MesPermission::ProductionSchedulingAdjust.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn material_bom_read_maps_to_mes_read() {
+        let p = MesPermission::MaterialBomRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn material_bom_write_maps_to_mes_write() {
+        let p = MesPermission::MaterialBomWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn material_bom_issue_maps_to_mes_write() {
+        let p = MesPermission::MaterialBomIssue.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn material_bom_return_maps_to_mes_write() {
+        let p = MesPermission::MaterialBomReturn.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn quality_traceability_read_maps_to_mes_read() {
+        let p = MesPermission::QualityTraceabilityRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn equipment_oee_read_maps_to_mes_read() {
+        let p = MesPermission::EquipmentOeeRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn equipment_oee_write_maps_to_mes_write() {
+        let p = MesPermission::EquipmentOeeWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn wip_read_maps_to_mes_read() {
+        let p = MesPermission::WipRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn wip_write_maps_to_mes_write() {
+        let p = MesPermission::WipWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn wip_transfer_maps_to_mes_write() {
+        let p = MesPermission::WipTransfer.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn production_cost_read_maps_to_mes_read() {
+        let p = MesPermission::ProductionCostRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    // ── 审批权限映射测试 ─────────────────────────────────
+
+    #[test]
+    fn mes_order_approve_maps_to_mes_approve() {
+        let p = MesPermission::MesOrderApprove.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Approve);
+    }
+
+    #[test]
+    fn mes_rework_approve_maps_to_mes_approve() {
+        let p = MesPermission::MesReworkApprove.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Approve);
+    }
+
+    #[test]
+    fn mes_concession_approve_maps_to_mes_approve() {
+        let p = MesPermission::MesConcessionApprove.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Approve);
+    }
+
+    #[test]
+    fn mes_anomaly_approve_maps_to_mes_approve() {
+        let p = MesPermission::MesAnomalyApprove.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Approve);
+    }
+
+    #[test]
+    fn all_maps_to_mes_admin() {
+        let p = MesPermission::All.to_shared();
+        assert_eq!(p.module, ModuleCode::Mes);
+        assert_eq!(p.action, PermissionAction::Admin);
+    }
+
+    // ── Display trait 测试 ───────────────────────────────
+
+    #[test]
+    fn display_returns_shared_permission_string() {
+        let p = MesPermission::ProductionOrderRead;
+        let s = format!("{}", p);
+        assert!(!s.is_empty());
+    }
+
+    // ── 全变体覆盖测试（确保33个变体都被处理）────────────
+
+    #[test]
+    fn all_permissions_map_to_mes_module() {
+        let all = vec![
+            MesPermission::ProductionOrderRead,
+            MesPermission::ProductionOrderWrite,
+            MesPermission::ProductionOrderStart,
+            MesPermission::ProductionOrderComplete,
+            MesPermission::ProductionOrderCancel,
+            MesPermission::ProcessRead,
+            MesPermission::ProcessWrite,
+            MesPermission::RecordRead,
+            MesPermission::RecordWrite,
+            MesPermission::EquipmentRead,
+            MesPermission::EquipmentWrite,
+            MesPermission::WorkStationRead,
+            MesPermission::WorkStationWrite,
+            MesPermission::ProductionSchedulingRead,
+            MesPermission::ProductionSchedulingWrite,
+            MesPermission::ProductionSchedulingAdjust,
+            MesPermission::MaterialBomRead,
+            MesPermission::MaterialBomWrite,
+            MesPermission::MaterialBomIssue,
+            MesPermission::MaterialBomReturn,
+            MesPermission::QualityTraceabilityRead,
+            MesPermission::EquipmentOeeRead,
+            MesPermission::EquipmentOeeWrite,
+            MesPermission::WipRead,
+            MesPermission::WipWrite,
+            MesPermission::WipTransfer,
+            MesPermission::ProductionCostRead,
+            MesPermission::MesOrderApprove,
+            MesPermission::MesReworkApprove,
+            MesPermission::MesConcessionApprove,
+            MesPermission::MesAnomalyApprove,
+            MesPermission::All,
+        ];
+        assert_eq!(all.len(), 32, "应该有32个权限变体");
+        for p in &all {
+            assert_eq!(p.to_shared().module, ModuleCode::Mes);
+        }
+    }
+}

@@ -73,7 +73,7 @@ TOPEMS 统一门户后端（Backend for Frontend）。Portal 是**聚合层**，
 | BI/分析 | analytics | — | `/api/bi` | `/api/bi/reports` |
 | 主数据 | master-data | — | `/api/master-data` | `/api/master-data/materials` |
 
-> 端口以各服务 `config/env/*.env.example` 中的 `{SERVICE}_PORT` 为准。前端通过 Vite 代理（`/api/{service}`）访问，详见 `apps/web/vite.config.ts` 中的 `generateServiceProxies`。
+> 端口以各服务 `config/services.yaml` 中的 `{SERVICE}_PORT` 为准（服务级 env 模板见 `config/env/_template.env.example`）。前端通过 Vite 代理（`/api/{service}`）访问，详见 `apps/web/vite.config.ts` 中的 `generateServiceProxies`。
 
 ### V60 精简说明
 

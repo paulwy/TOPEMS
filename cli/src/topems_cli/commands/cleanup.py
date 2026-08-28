@@ -1,4 +1,9 @@
-"""清理命令模块"""
+"""清理命令模块
+
+与 scripts/topems.sh 的 clean 命令功能重叠。
+日常开发推荐使用 ./scripts/topems.sh clean（零依赖、clean/clean-rust/clean-frontend 分类）。
+本命令提供 Python 原生体验，作为可选替代。
+"""
 
 import subprocess
 from pathlib import Path

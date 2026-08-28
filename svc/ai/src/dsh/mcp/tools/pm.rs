@@ -316,7 +316,7 @@ fn generate_mock_projects(status_filter: &str, type_filter: &str, manager_filter
                 "progress": progress,
                 "budget": 100000 + (i % 10) * 50000,
                 "task_count": 10 + (i % 20),
-                "completed_tasks": if status == "completed" { 10 + (i % 20) } else { (i % 10) },
+                "completed_tasks": if status == "completed" { 10 + (i % 20) } else { i % 10 },
                 "team_size": 3 + (i % 8),
                 "priority": if i % 3 == 0 { "high" } else if i % 3 == 1 { "medium" } else { "low" },
                 "created_at": format!("2026-{:02}-{:02}T10:00:00Z", (i % 12) + 1, (i % 28) + 1),

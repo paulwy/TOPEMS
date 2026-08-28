@@ -260,14 +260,8 @@ service_groups:
       dependencies: [unified-core]
       service_dir: ticket
 
-    - name: feedback
-      port: 8087
-      env_var: FEEDBACK_PORT
-      description: 反馈服务
-      status: implemented
-      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
-      dependencies: [unified-core]
-      service_dir: feedback
+    # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型），原端口 8087 停用
+    # 代码归档见 svc/_archive/feedback/，兼容路由 /api/feedback 已指向 ticket 服务
 
     - name: search
       port: 8082
@@ -278,14 +272,8 @@ service_groups:
       dependencies: [unified-core]
       service_dir: search
 
-    - name: lowcode
-      port: 8088
-      env_var: LOWCODE_PORT
-      description: 低代码平台（占位，后端尚未立项）
-      status: reserved
-      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（占位后端模板已迁移 V2）
-      dependencies: [unified-core]
-      service_dir: lowcode
+    # [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
+    # 代码归档见 docs/archive/，如未来立项可恢复
 
   # V68.1 拆分服务 (8095-8096)
   # monitor 和 plugin 路由已从 unified-core 迁移至独立进程
@@ -428,8 +416,7 @@ module_groups:
     - mobile
     - gis
     - integration
-    # V66.1：cross-reference — lowcode 属于基础设施平台层
-    - lowcode
+    # [V2026.08 已移除] lowcode 空壳占位服务
 
   collaboration:
     - hrm
@@ -437,9 +424,8 @@ module_groups:
     - crm
     # V66.1：cross-reference — communication（mail/im/notification）为协同办公提供通讯底座
     - communication
-    # V66.1：cross-reference — ticket/feedback 为协同办公提供工单/反馈闭环
+    # V66.1：cross-reference — ticket 为协同办公提供工单/反馈闭环（feedback 已合并至 ticket）
     - ticket
-    - feedback
 
   erp:
     - erp
@@ -457,8 +443,8 @@ module_groups:
     - communication
     - billing
     - ticket
-    - feedback
-    - lowcode
+    # [V2026.08 已合并] feedback 已合并至 ticket
+    # [V2026.08 已移除] lowcode 空壳占位服务
 
   # 物流服务（V284 补全 tms/aps 至单一信源）
   logistics:
@@ -473,8 +459,8 @@ module_groups:
     - communication
     - billing
     - ticket
-    - feedback
-    - lowcode
+    # [V2026.08 已合并] feedback 已合并至 ticket
+    # [V2026.08 已移除] lowcode 空壳占位服务
     # 经营管理（8010-8019）
     - erp
     - finance

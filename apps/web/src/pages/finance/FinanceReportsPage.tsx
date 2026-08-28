@@ -15,7 +15,7 @@ import {
   Activity,
   Download,
 } from 'lucide-react';
-import { financeReportApi } from '@/api/erp';
+import { reportApi } from '@/api/finance/report';
 import {
   Box,
   Button,
@@ -50,10 +50,10 @@ const FinanceReportsPage: React.FC = () => {
     queryKey: [...QUERY_KEYS.FINANCE.FINANCIAL_REPORT, { period }],
     queryFn: async () => {
       const [overview, projects, trends, departments] = await Promise.all([
-        financeReportApi.businessOverview(period ? { period } : undefined),
-        financeReportApi.projectSummary(),
-        financeReportApi.monthlyTrend(),
-        financeReportApi.departmentSummary(),
+        reportApi.getBusinessOverview(period ? { period } : undefined),
+        reportApi.getProjectSummary(),
+        reportApi.getMonthlyTrend(),
+        reportApi.getDepartmentSummary(),
       ]);
 
       return {

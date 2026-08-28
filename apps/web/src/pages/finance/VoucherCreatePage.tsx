@@ -26,7 +26,8 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Plus, Trash2, Calculator, AlertCircle } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { voucherApi, accountingSubjectApi } from '@/api/erp';
+import { voucherApi } from '@/api/finance/voucher';
+import { accountingSubjectApi } from '@/api/finance/accountingSubject';
 import type { AccountingSubject, VoucherItemRequest } from '@/api/finance';
 import { useNotificationStore } from '@/store';
 

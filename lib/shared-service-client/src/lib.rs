@@ -223,9 +223,9 @@ pub use service_client::api::workflow_api::{
     CreateInstanceRequest, TaskActionRequest, TaskStats, WorkflowApi, WorkflowInstance,
     WorkflowStatistics, WorkflowTask,
 };
-// P2-2: 从宏模式客户端迁移的 17 个 Api 元数据
+// P2-2: 从宏模式客户端迁移的 16 个 Api 元数据（[V2026.08 已移除] LowcodeApi）
 pub use service_client::api::macro_client_apis::{
-    AiApi, BiApi, CommunicationApi, DocApi, EhsApi, GisApi, IntegrationApi, LimsApi, LowcodeApi,
+    AiApi, BiApi, CommunicationApi, DocApi, EhsApi, GisApi, IntegrationApi, LimsApi,
     MasterDataApi, MobileApi, PdmApi, PmApi, PortalApi, RdApi, ScmApi, SrmApi,
 };
 

@@ -1,0 +1,417 @@
+name: AI Tests
+
+# AI-related tests workflow for TOPEMS.
+#
+# Triggered:
+#   - On push to main / develop (when AI-related files change)
+#   - On pull_request targeting main / develop (when AI-related files change)
+#   - Manually via workflow_dispatch
+#   - Nightly at 02:00 UTC
+#
+# Includes:
+#   - Rust backend AI module unit tests
+#   - Playwright E2E tests for AI features (governance, copilot, edge cases, mobile)
+#   - k6 performance tests for AI APIs
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'svc/ai/**'
+      - 'svc/unified-core/src/modules/ai/**'
+      - 'apps/web/src/components/ai/**'
+      - 'apps/web/src/hooks/features/ai/**'
+      - 'apps/web/src/api/ai/**'
+      - 'tests/e2e/tests/ai-*.spec.ts'
+      - 'tests/e2e/tests/*copilot*.spec.ts'
+      - 'tests/e2e/tests/mobile-viewport.spec.ts'
+      - 'tests/performance/**'
+      - '.github/workflows/ai-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'svc/ai/**'
+      - 'svc/unified-core/src/modules/ai/**'
+      - 'apps/web/src/components/ai/**'
+      - 'apps/web/src/hooks/features/ai/**'
+      - 'apps/web/src/api/ai/**'
+      - 'tests/e2e/tests/ai-*.spec.ts'
+      - 'tests/e2e/tests/*copilot*.spec.ts'
+      - 'tests/e2e/tests/mobile-viewport.spec.ts'
+      - 'tests/performance/**'
+      - '.github/workflows/ai-tests.yml'
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - e2e
+          - performance
+      browser:
+        description: 'Browser for E2E tests'
+        required: false
+        default: 'chromium'
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+          - all
+  schedule:
+    # Nightly 02:00 UTC (10:00 Asia/Shanghai)
+    - cron: '0 2 * * *'
+
+# Cancel superseded runs to save CI minutes (but never cancel nightly).
+concurrency:
+  group: ai-tests-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  RUST_TOOLCHAIN: 'stable'
+  # Defaults for the in-CI backend
+  DATABASE_URL: postgres://topems_ai:topems_ai_secret@localhost:5432/topems_ai
+  REDIS_URL: redis://localhost:6379/0
+  JWT_SECRET: ai-test-jwt-secret-key-for-testing-only-32chars
+  AI_PROVIDER: mock
+  AI_API_KEY: mock-key
+  APP_ENV: test
+  SQLX_OFFLINE: 'true'
+
+jobs:
+  # ===========================================================================
+  # Job 1: Rust Backend AI Unit Tests
+  # ===========================================================================
+  ai-unit-tests:
+    name: AI Unit Tests (Rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    if: ${{ github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'unit' || github.event_name != 'workflow_dispatch' }}
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_ai
+          POSTGRES_PASSWORD: topems_ai_secret
+          POSTGRES_DB: topems_ai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+
+      - name: Cache Rust cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_ai; do
+            sleep 1
+          done
+
+      - name: Run AI module unit tests
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          REDIS_URL: ${{ env.REDIS_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          AI_PROVIDER: ${{ env.AI_PROVIDER }}
+          AI_API_KEY: ${{ env.AI_API_KEY }}
+          SQLX_OFFLINE: ${{ env.SQLX_OFFLINE }}
+        run: |
+          cargo test -p topems-ai --lib -- --test-threads=2
+          cargo test -p topems-unified-core --lib ai:: -- --test-threads=2
+
+      - name: Run AI module clippy
+        if: always()
+        run: |
+          cargo clippy -p topems-ai -- -D warnings
+          cargo clippy -p topems-unified-core -- -D warnings
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ai-unit-test-results
+          path: target/debug/deps/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 2: AI E2E Tests (Playwright)
+  # ===========================================================================
+  ai-e2e-tests:
+    name: AI E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: ai-unit-tests
+
+    if: ${{ github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'e2e' || github.event_name != 'workflow_dispatch' }}
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_ai
+          POSTGRES_PASSWORD: topems_ai_secret
+          POSTGRES_DB: topems_ai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies (workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install E2E dependencies
+        working-directory: tests/e2e
+        run: |
+          npm install
+          if [[ "${{ github.event.inputs.browser || 'chromium' }}" == "all" ]]; then
+            npx playwright install --with-deps chromium firefox webkit
+          else
+            npx playwright install --with-deps ${{ github.event.inputs.browser || 'chromium' }}
+          fi
+
+      - name: Run AI E2E tests
+        working-directory: tests/e2e
+        env:
+          CI: 'true'
+          BASE_URL: http://localhost:8063
+          API_BASE_URL: http://localhost:8080
+        run: |
+          if [[ "${{ github.event.inputs.browser || 'chromium' }}" == "all" ]]; then
+            npx playwright test \
+              --reporter=github,html \
+              tests/ai-governance-dashboard.spec.ts \
+              tests/business-copilot.spec.ts \
+              tests/extended-business-copilot.spec.ts \
+              tests/mobile-viewport.spec.ts \
+              tests/ai-edge-cases.spec.ts
+          else
+            npx playwright test \
+              --project=${{ github.event.inputs.browser || 'chromium' }} \
+              --reporter=github,html \
+              tests/ai-governance-dashboard.spec.ts \
+              tests/business-copilot.spec.ts \
+              tests/extended-business-copilot.spec.ts \
+              tests/mobile-viewport.spec.ts \
+              tests/ai-edge-cases.spec.ts
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ai-e2e-playwright-report
+          path: tests/e2e/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ai-e2e-test-results
+          path: tests/e2e/test-results/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 3: AI Performance Tests (k6)
+  # ===========================================================================
+  ai-performance-tests:
+    name: AI Performance Tests (k6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: ai-unit-tests
+
+    if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.test_scope == 'all' || github.event.inputs.test_scope == 'performance') || github.event_name == 'schedule' }}
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_ai
+          POSTGRES_PASSWORD: topems_ai_secret
+          POSTGRES_DB: topems_ai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache Rust cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D6
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Build AI service (release)
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          REDIS_URL: ${{ env.REDIS_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          AI_PROVIDER: ${{ env.AI_PROVIDER }}
+          AI_API_KEY: ${{ env.AI_API_KEY }}
+          SQLX_OFFLINE: ${{ env.SQLX_OFFLINE }}
+        run: cargo build --release -p topems-ai
+
+      - name: Start AI service
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          REDIS_URL: ${{ env.REDIS_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          AI_PROVIDER: ${{ env.AI_PROVIDER }}
+          AI_API_KEY: ${{ env.AI_API_KEY }}
+          SQLX_OFFLINE: ${{ env.SQLX_OFFLINE }}
+          RUST_LOG: error
+        run: |
+          ./target/release/topems-ai &
+          sleep 15
+          curl -s http://localhost:8013/health
+
+      - name: Run k6 performance tests (smoke)
+        working-directory: tests/performance
+        run: |
+          k6 run --env BASE_URL=http://localhost:8013 --env SCENARIO=smoke ai-dsh-service.k6.js
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: ai-performance-results
+          path: tests/performance/
+          retention-days: 7
+
+  # ===========================================================================
+  # Job 4: AI Tests Summary
+  # ===========================================================================
+  ai-tests-summary:
+    name: AI Tests Summary
+    runs-on: ubuntu-latest
+    needs: [ai-unit-tests, ai-e2e-tests]
+    if: always()
+
+    steps:
+      - name: Build summary
+        run: |
+          echo "## AI Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Unit Tests (Rust) | ${{ needs.ai-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI E2E Tests (Playwright) | ${{ needs.ai-e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI Unit Tests**: Rust backend AI module unit tests + clippy" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI E2E Tests**: 5 test suites (governance dashboard, business copilot, extended copilot, mobile viewport, edge cases)" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI Performance Tests**: k6 performance tests (smoke/average/stress scenarios)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test reports and results are uploaded as artifacts." >> $GITHUB_STEP_SUMMARY

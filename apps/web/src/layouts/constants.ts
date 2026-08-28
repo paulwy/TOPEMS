@@ -57,7 +57,7 @@ export const L2_TO_L1_MAP: Record<string, string> = {
   gis: 'data_ai',
   admin: 'system',
   monitor: 'system',
-  lowcode: 'system',
+  // [V2026.08 已移除] lowcode 空壳占位服务
   plugin: 'system',
   mobile: 'workbench',
 };

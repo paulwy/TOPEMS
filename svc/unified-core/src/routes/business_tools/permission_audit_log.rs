@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-use super::{TenantPermission, TenantRole};
+use super::TenantPermission;
 
 // ===== Audit Log Types =====
 
@@ -177,6 +177,22 @@ pub trait AuditLogStore: Send + Sync {
 
     /// Get the total number of audit log entries.
     async fn count(&self) -> Result<usize, AuditLogError>;
+
+    /// Query audit logs with detailed filters.
+    async fn query_logs(
+        &self,
+        tenant_id: Option<String>,
+        user_id: Option<String>,
+        action: Option<String>,
+        changed_by: Option<String>,
+        start_time: Option<String>,
+        end_time: Option<String>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Result<Vec<AuditLogEntry>, AuditLogError>;
+
+    /// Delete an audit log entry by ID.
+    async fn delete_log(&self, id: &str) -> Result<(), AuditLogError>;
 }
 
 /// Errors that can occur in audit log operations.
@@ -296,16 +312,90 @@ impl AuditLogStore for InMemoryAuditLogStore {
     async fn count(&self) -> Result<usize, AuditLogError> {
         Ok(self.entries.read().await.len())
     }
+
+    async fn query_logs(
+        &self,
+        tenant_id: Option<String>,
+        user_id: Option<String>,
+        action: Option<String>,
+        changed_by: Option<String>,
+        start_time: Option<String>,
+        end_time: Option<String>,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Result<Vec<AuditLogEntry>, AuditLogError> {
+        let entries = self.entries.read().await;
+
+        let mut filtered: Vec<&AuditLogEntry> = entries
+            .iter()
+            .filter(|entry| {
+                if let Some(tid) = &tenant_id {
+                    if &entry.tenant_id != tid {
+                        return false;
+                    }
+                }
+                if let Some(uid) = &user_id {
+                    if &entry.user_id != uid {
+                        return false;
+                    }
+                }
+                if let Some(act) = &action {
+                    if entry.action.to_string() != *act {
+                        return false;
+                    }
+                }
+                if let Some(cb) = &changed_by {
+                    if &entry.changed_by != cb {
+                        return false;
+                    }
+                }
+                if let Some(start) = &start_time {
+                    if &entry.changed_at < start {
+                        return false;
+                    }
+                }
+                if let Some(end) = &end_time {
+                    if &entry.changed_at > end {
+                        return false;
+                    }
+                }
+                true
+            })
+            .collect();
+
+        // Sort by changed_at ascending (oldest first) for cleanup
+        filtered.sort_by(|a, b| a.changed_at.cmp(&b.changed_at));
+
+        let total = filtered.len();
+        let start = offset.unwrap_or(0).min(total);
+        let end = limit.map(|l| (start + l).min(total)).unwrap_or(total);
+        let page: Vec<AuditLogEntry> = filtered[start..end]
+            .iter()
+            .map(|e| (*e).clone())
+            .collect();
+
+        Ok(page)
+    }
+
+    async fn delete_log(&self, id: &str) -> Result<(), AuditLogError> {
+        let mut entries = self.entries.write().await;
+        if let Some(pos) = entries.iter().position(|e| e.id == id) {
+            entries.remove(pos);
+            Ok(())
+        } else {
+            Err(AuditLogError::NotFound(id.to_string()))
+        }
+    }
 }
 
 // ===== Audit Log Helper =====
 
 /// Helper for creating audit log entries.
-pub struct AuditLogger<S: AuditLogStore> {
+pub struct AuditLogger<S: AuditLogStore + ?Sized> {
     store: Arc<S>,
 }
 
-impl<S: AuditLogStore> AuditLogger<S> {
+impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
     /// Create a new audit logger.
     pub fn new(store: Arc<S>) -> Self {
         Self { store }

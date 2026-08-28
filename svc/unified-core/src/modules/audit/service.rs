@@ -94,3 +94,88 @@ pub fn infer_module_and_operation(method: &str, path: &str) -> (String, String, 
 
     (module, operation, resource_type)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_infer_module_post_create() {
+        let (module, operation, resource) = infer_module_and_operation("POST", "/api/core/iam/users");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "create");
+        assert_eq!(resource, "users");
+    }
+
+    #[test]
+    fn test_infer_module_put_update() {
+        let (module, operation, resource) = infer_module_and_operation("PUT", "/api/core/iam/users/123");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "update");
+        assert_eq!(resource, "users");
+    }
+
+    #[test]
+    fn test_infer_module_patch_update() {
+        let (module, operation, resource) = infer_module_and_operation("PATCH", "/api/core/crm/customers/550e8400-e29b-41d4-a716-446655440000");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "update");
+        assert_eq!(resource, "customers");
+    }
+
+    #[test]
+    fn test_infer_module_delete() {
+        let (module, operation, resource) = infer_module_and_operation("DELETE", "/api/core/iam/roles/456");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "delete");
+        assert_eq!(resource, "roles");
+    }
+
+    #[test]
+    fn test_infer_module_get_write() {
+        let (module, operation, resource) = infer_module_and_operation("GET", "/api/core/iam/users");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "write");
+        assert_eq!(resource, "users");
+    }
+
+    #[test]
+    fn test_infer_module_unknown_method() {
+        let (module, operation, resource) = infer_module_and_operation("OPTIONS", "/api/core/iam/users");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "write");
+        assert_eq!(resource, "users");
+    }
+
+    #[test]
+    fn test_infer_module_empty_path() {
+        let (module, operation, resource) = infer_module_and_operation("POST", "");
+        assert_eq!(module, "unknown");
+        assert_eq!(operation, "create");
+        assert_eq!(resource, "unknown");
+    }
+
+    #[test]
+    fn test_infer_module_root_path() {
+        let (module, operation, resource) = infer_module_and_operation("POST", "/");
+        assert_eq!(module, "unknown");
+        assert_eq!(operation, "create");
+        assert_eq!(resource, "unknown");
+    }
+
+    #[test]
+    fn test_infer_module_nested_resource() {
+        let (module, operation, resource) = infer_module_and_operation("POST", "/api/core/iam/users/123/roles");
+        assert_eq!(module, "core");
+        assert_eq!(operation, "create");
+        assert_eq!(resource, "roles");
+    }
+
+    #[test]
+    fn test_infer_module_different_service() {
+        let (module, operation, resource) = infer_module_and_operation("POST", "/api/crm/customers");
+        assert_eq!(module, "crm");
+        assert_eq!(operation, "create");
+        assert_eq!(resource, "customers");
+    }
+}

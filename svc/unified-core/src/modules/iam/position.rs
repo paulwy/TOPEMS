@@ -267,3 +267,82 @@ pub async fn delete_position(
         )),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_position_request_deserialization() {
+        let json = r#"{
+            "code": "ENGINEER",
+            "name": "工程师",
+            "department_id": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "负责软件开发",
+            "permissions": ["crm:customers_read", "crm:customers_write"],
+            "role_ids": ["660e8400-e29b-41d4-a716-446655440001"]
+        }"#;
+        let req: CreatePositionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "ENGINEER");
+        assert_eq!(req.name, "工程师");
+        assert!(req.department_id.is_some());
+        assert_eq!(req.description.as_deref(), Some("负责软件开发"));
+        assert_eq!(req.permissions.len(), 2);
+        assert_eq!(req.role_ids.len(), 1);
+    }
+
+    #[test]
+    fn test_create_position_request_minimal() {
+        let json = r#"{"code": "MANAGER", "name": "经理", "permissions": [], "role_ids": []}"#;
+        let req: CreatePositionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.code, "MANAGER");
+        assert_eq!(req.name, "经理");
+        assert!(req.department_id.is_none());
+        assert!(req.description.is_none());
+        assert!(req.permissions.is_empty());
+        assert!(req.role_ids.is_empty());
+    }
+
+    #[test]
+    fn test_update_position_request_all_fields() {
+        let json = r#"{
+            "name": "高级工程师",
+            "department_id": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "负责高级软件开发",
+            "permissions": ["crm:customers_read"],
+            "role_ids": []
+        }"#;
+        let req: UpdatePositionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.name.as_deref(), Some("高级工程师"));
+        assert!(req.department_id.is_some());
+        assert_eq!(req.permissions.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_update_position_request_empty() {
+        let json = r#"{}"#;
+        let req: UpdatePositionRequest = serde_json::from_str(json).unwrap();
+        assert!(req.name.is_none());
+        assert!(req.department_id.is_none());
+        assert!(req.description.is_none());
+        assert!(req.permissions.is_none());
+        assert!(req.role_ids.is_none());
+    }
+
+    #[test]
+    fn test_create_position_request_serialization() {
+        let req = CreatePositionRequest {
+            code: "TEST".to_string(),
+            name: "测试岗位".to_string(),
+            department_id: None,
+            description: Some("测试描述".to_string()),
+            permissions: vec!["perm1".to_string(), "perm2".to_string()],
+            role_ids: vec![],
+        };
+        let json = serde_json::to_value(&req).unwrap();
+        assert_eq!(json["code"], "TEST");
+        assert_eq!(json["name"], "测试岗位");
+        assert_eq!(json["permissions"][0], "perm1");
+        assert!(json["role_ids"].is_array());
+    }
+}

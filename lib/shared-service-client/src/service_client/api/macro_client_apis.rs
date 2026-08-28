@@ -48,13 +48,14 @@ define_service_api!(
     Some("LIMS_SERVICE_URL"),
     "/api/lims"
 );
-define_service_api!(
-    LowcodeApi,
-    "topems-lowcode",
-    8088,
-    Some("LOWCODE_SERVICE_URL"),
-    "/api/lowcode"
-);
+// [V2026.08 已移除] lowcode 空壳占位服务
+// define_service_api!(
+//     LowcodeApi,
+//     "topems-lowcode",
+//     8088,
+//     Some("LOWCODE_SERVICE_URL"),
+//     "/api/lowcode"
+// );
 define_service_api!(
     MasterDataApi,
     "topems-master-data",

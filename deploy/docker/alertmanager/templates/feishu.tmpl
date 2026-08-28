@@ -1,6 +1,12 @@
 {{ define "feishu.title" }}
 {{- if eq .Status "firing" -}}
-🚨 [{{ .CommonLabels.severity }}] {{ .CommonLabels.alertname }}
+{{- if eq .CommonLabels.severity "critical" -}}
+🚨 [严重] {{ .CommonLabels.alertname }}
+{{- else if eq .CommonLabels.severity "warning" -}}
+⚠️ [警告] {{ .CommonLabels.alertname }}
+{{- else -}}
+ℹ️ [提示] {{ .CommonLabels.alertname }}
+{{- end -}}
 {{- else -}}
 ✅ [恢复] {{ .CommonLabels.alertname }}
 {{- end -}}
@@ -11,7 +17,7 @@
 
 | 字段 | 值 |
 |------|-----|
-| 状态 | {{ .Status }} |
+| 状态 | {{ if eq .Status "firing" }}🔴 触发中{{ else }}🟢 已恢复{{ end }} |
 | 级别 | {{ .CommonLabels.severity }} |
 | 服务 | {{ .CommonLabels.job | default "未知" }} |
 | 实例 | {{ .CommonLabels.instance | default "未知" }} |
@@ -20,13 +26,78 @@
 **告警描述**:
 {{ .CommonAnnotations.description | default "无描述" }}
 
+**触发条件**:
+{{ .CommonAnnotations.summary | default "无" }}
+
+{{ if .CommonLabels.runbook_url }}
+**故障排查手册**:
+{{ .CommonLabels.runbook_url }}
+{{ end }}
+
+{{ if .CommonLabels.grafana_url }}
+**监控仪表盘**:
+{{ .CommonLabels.grafana_url }}
+{{ end }}
+
 **告警时间**:
 {{ range .Alerts }}
-- {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+- 开始: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ if .EndsAt }}- 结束: {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
 {{ end }}
+
+{{ if .CommonLabels.trace_id }}
+**Trace ID**: {{ .CommonLabels.trace_id }}
+{{ end }}
+
+{{ if gt (len .Alerts) 1 }}
+**关联告警数**: {{ len .Alerts }}
+{{ end }}
+{{ end }}
+
+{{ define "feishu.ai.text" }}
+**🤖 AI 服务告警详情**
+
+| 字段 | 值 |
+|------|-----|
+| 状态 | {{ if eq .Status "firing" }}🔴 触发中{{ else }}🟢 已恢复{{ end }} |
+| 级别 | {{ .CommonLabels.severity }} |
+| 告警名称 | {{ .CommonLabels.alertname }} |
+| 服务 | {{ .CommonLabels.job | default "topems-ai" }} |
+| 实例 | {{ .CommonLabels.instance | default "未知" }} |
+| 告警组 | {{ .CommonLabels.alert_group | default "未知" }} |
+
+**告警描述**:
+{{ .CommonAnnotations.description | default "无描述" }}
 
 **触发条件**:
 {{ .CommonAnnotations.summary | default "无" }}
+
+**故障排查手册**:
+https://github.com/TOPEMS/TOPEMS/blob/main/docs/runbooks/ai-alerts-runbook.md
+
+**AI 服务监控仪表盘**:
+http://localhost:3000/d/topems-ai-monitoring/ai-fu-wu-jian-kong-yi-biao-pan
+
+**告警时间**:
+{{ range .Alerts }}
+- 开始: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ if .EndsAt }}- 结束: {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+{{ end }}
+
+**快速排查命令**:
+```bash
+# 查看 AI 服务状态
+systemctl status topems-ai
+
+# 查看 AI 服务日志
+journalctl -u topems-ai -f --since "10 minutes ago"
+
+# 查看健康状态
+curl http://localhost:8013/health
+
+# 查看 Prometheus 指标
+curl http://localhost:8013/metrics | grep ai_
+```
 
 {{ if .CommonLabels.trace_id }}
 **Trace ID**: {{ .CommonLabels.trace_id }}
@@ -54,21 +125,49 @@
 }
 {{ end }}
 
+{{ define "feishu.ai.payload" }}
+{
+  "msg_type": "post",
+  "content": {
+    "post": {
+      "zh_cn": {
+        "title": "{{ template "feishu.title" . }}",
+        "content": [
+          [
+            {
+              "tag": "text",
+              "text": "{{ template "feishu.ai.text" . }}"
+            }
+          ]
+        ]
+      }
+    }
+  }
+}
+{{ end }}
+
 {{ define "feishu.resolved.text" }}
-**告警已恢复**
+**✅ 告警已恢复**
 
 | 字段 | 值 |
 |------|-----|
 | 告警名称 | {{ .CommonLabels.alertname }} |
 | 服务 | {{ .CommonLabels.job | default "未知" }} |
 | 实例 | {{ .CommonLabels.instance | default "未知" }} |
-| 持续时间 | {{ .Alerts.Firing | first | ResolvedAt | sub .StartsAt | duration }} |
+| 级别 | {{ .CommonLabels.severity }} |
 
 **告警描述**:
 {{ .CommonAnnotations.description | default "无描述" }}
 
 **恢复时间**:
-{{ .Alerts.Firing | first | ResolvedAt | format "2006-01-02 15:04:05" }}
+{{ range .Alerts }}
+- {{ .EndsAt.Format "2006-01-02 15:04:05" }}
+{{ end }}
+
+**持续时间**:
+{{ range .Alerts }}
+{{ if .EndsAt }}{{ .EndsAt.Sub .StartsAt }}{{ end }}
+{{ end }}
 {{ end }}
 
 {{ define "feishu.resolved.payload" }}
@@ -90,4 +189,57 @@
     }
   }
 }
+{{ end }}
+
+{{ define "email.subject" }}
+[{{ .CommonLabels.severity }}][{{ .CommonLabels.job | default "TOPEMS" }}] {{ .CommonLabels.alertname }} - {{ if eq .Status "firing" }}触发中{{ else }}已恢复{{ end }}
+{{ end }}
+
+{{ define "email.body" }}
+<h2>告警通知</h2>
+
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>状态</th>
+    <td>{{ if eq .Status "firing" }}🔴 触发中{{ else }}🟢 已恢复{{ end }}</td>
+  </tr>
+  <tr>
+    <th>级别</th>
+    <td>{{ .CommonLabels.severity }}</td>
+  </tr>
+  <tr>
+    <th>告警名称</th>
+    <td>{{ .CommonLabels.alertname }}</td>
+  </tr>
+  <tr>
+    <th>服务</th>
+    <td>{{ .CommonLabels.job | default "未知" }}</td>
+  </tr>
+  <tr>
+    <th>实例</th>
+    <td>{{ .CommonLabels.instance | default "未知" }}</td>
+  </tr>
+</table>
+
+<h3>告警描述</h3>
+<p>{{ .CommonAnnotations.description | default "无描述" }}</p>
+
+<h3>触发条件</h3>
+<p>{{ .CommonAnnotations.summary | default "无" }}</p>
+
+{{ if .CommonLabels.runbook_url }}
+<h3>故障排查手册</h3>
+<p><a href="{{ .CommonLabels.runbook_url }}">{{ .CommonLabels.runbook_url }}</a></p>
+{{ end }}
+
+<h3>告警时间</h3>
+<ul>
+{{ range .Alerts }}
+  <li>开始: {{ .StartsAt.Format "2006-01-02 15:04:05" }}</li>
+  {{ if .EndsAt }}<li>结束: {{ .EndsAt.Format "2006-01-02 15:04:05" }}</li>{{ end }}
+{{ end }}
+</ul>
+
+<hr>
+<p><small>此邮件由 TOPEMS Alertmanager 自动发送，请勿直接回复。</small></p>
 {{ end }}

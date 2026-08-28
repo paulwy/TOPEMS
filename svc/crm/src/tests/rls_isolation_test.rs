@@ -3,7 +3,6 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[sqlx::test]
-#[ignore = "requires PostgreSQL with public.tenants table and complete schema migrations"]
 async fn customer_isolated_by_tenant(pool: PgPool) {
     let tenant_a = Uuid::new_v4();
     let tenant_b = Uuid::new_v4();

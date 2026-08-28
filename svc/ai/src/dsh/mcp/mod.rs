@@ -16,10 +16,13 @@
 //!     └── erp.rs  # ERP 业务工具
 //! ```
 
+#![allow(unused_imports)]
+
 pub mod handler;
+pub mod security;
 pub mod server;
 pub mod tools;
 
-pub use handler::{create_mcp_routes, handle_mcp_request, handle_mcp_sse, McpServerState};
+pub use handler::create_mcp_routes;
 pub use server::{McpServer, ServerState};
 pub use tools::{register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_iot_tools, register_lims_tools, register_mes_tools, register_oa_tools, register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools, ToolExecutionError, ToolRegistry};

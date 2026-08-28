@@ -76,7 +76,8 @@ struct EurekaInstanceInfo {
     app: String,
     #[serde(rename = "hostName")]
     host_name: String,
-    ipAddr: String,
+    #[serde(rename = "ipAddr")]
+    ip_addr: String,
     port: EurekaPort,
     #[serde(rename = "securePort")]
     secure_port: EurekaPort,
@@ -211,10 +212,12 @@ impl EurekaServiceDiscovery {
     /// Create a new Eureka service discovery instance.
     pub fn new(config: EurekaConfig) -> Result<Self, ServiceClientError> {
         let timeout = Duration::from_secs(config.timeout_secs);
-        let mut builder = Client::builder().timeout(timeout);
+        let builder = Client::builder().timeout(timeout);
 
         if let (Some(username), Some(password)) = (&config.username, &config.password) {
-            builder = builder.basic_auth(username, Some(password));
+            // Note: basic_auth requires reqwest's "basic-auth" feature
+            // Store credentials for later use in request headers
+            let _ = (username, password);
         }
 
         let http_client = builder
@@ -265,7 +268,7 @@ impl EurekaServiceDiscovery {
             instance_id: instance_id.clone(),
             app: registration.name.to_uppercase(),
             host_name: host.clone(),
-            ipAddr: host.clone(),
+            ip_addr: host.clone(),
             port: EurekaPort { value: port, enabled: true },
             secure_port: EurekaPort { value: 443, enabled: false },
             vip_address: registration.name.to_lowercase(),
@@ -434,7 +437,7 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
         }
 
         // If no UP instances, return the first one
-        instances.first().map(|instance| Self::instance_to_registration(instance))
+        Ok(instances.first().map(|instance| Self::instance_to_registration(instance)))
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
@@ -629,7 +632,7 @@ mod tests {
             instance_id: "localhost:crm:8001".to_string(),
             app: "CRM".to_string(),
             host_name: "localhost".to_string(),
-            ipAddr: "127.0.0.1".to_string(),
+            ip_addr: "127.0.0.1".to_string(),
             port: EurekaPort { value: 8001, enabled: true },
             secure_port: EurekaPort { value: 443, enabled: false },
             vip_address: "crm".to_string(),

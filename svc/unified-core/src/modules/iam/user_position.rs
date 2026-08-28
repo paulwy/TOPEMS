@@ -168,3 +168,74 @@ pub async fn get_position_users(
         "code": 200,
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_assign_position_request_deserialization() {
+        let json = r#"{"position_id": "550e8400-e29b-41d4-a716-446655440000"}"#;
+        let req: AssignPositionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            req.position_id,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_assign_position_request_serialization() {
+        let req = AssignPositionRequest {
+            position_id: Uuid::nil(),
+        };
+        let json = serde_json::to_value(&req).unwrap();
+        assert_eq!(json["position_id"], "00000000-0000-0000-0000-000000000000");
+    }
+
+    #[test]
+    fn test_batch_assign_positions_request() {
+        let json = r#"{
+            "user_ids": [
+                "550e8400-e29b-41d4-a716-446655440001",
+                "550e8400-e29b-41d4-a716-446655440002"
+            ],
+            "position_id": "550e8400-e29b-41d4-a716-446655440000"
+        }"#;
+        let req: BatchAssignPositionsRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.user_ids.len(), 2);
+        assert_eq!(
+            req.position_id,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_batch_assign_positions_request_empty_users() {
+        let json = r#"{
+            "user_ids": [],
+            "position_id": "550e8400-e29b-41d4-a716-446655440000"
+        }"#;
+        let req: BatchAssignPositionsRequest = serde_json::from_str(json).unwrap();
+        assert!(req.user_ids.is_empty());
+    }
+
+    #[test]
+    fn test_batch_assign_positions_request_clone() {
+        let req = BatchAssignPositionsRequest {
+            user_ids: vec![Uuid::nil()],
+            position_id: Uuid::nil(),
+        };
+        let cloned = req.clone();
+        assert_eq!(req.user_ids.len(), cloned.user_ids.len());
+        assert_eq!(req.position_id, cloned.position_id);
+    }
+
+    #[test]
+    fn test_assign_position_request_clone() {
+        let req = AssignPositionRequest {
+            position_id: Uuid::nil(),
+        };
+        let cloned = req.clone();
+        assert_eq!(req.position_id, cloned.position_id);
+    }
+}

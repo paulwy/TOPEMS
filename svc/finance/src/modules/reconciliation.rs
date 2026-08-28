@@ -563,3 +563,32 @@ async fn get_aging_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_items_query_params_deserialize() {
+        let json = r#"{"source_type": "bank", "match_status": "matched"}"#;
+        let params: ItemsQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.source_type.as_deref(), Some("bank"));
+        assert_eq!(params.match_status.as_deref(), Some("matched"));
+    }
+
+    #[test]
+    fn test_items_query_params_default() {
+        let json = r#"{}"#;
+        let params: ItemsQueryParams = serde_json::from_str(json).unwrap();
+        assert!(params.source_type.is_none());
+        assert!(params.match_status.is_none());
+    }
+
+    #[test]
+    fn test_aging_query_params_deserialize() {
+        let json = r#"{"as_of_date": "2024-01-31", "direction": "debit"}"#;
+        let params: AgingQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.as_of_date.as_deref(), Some("2024-01-31"));
+        assert_eq!(params.direction, "debit");
+    }
+}

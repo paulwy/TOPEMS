@@ -4,8 +4,6 @@
 //! configurations. Supports batch create, update, and delete with
 //! partial success reporting.
 
-use std::collections::HashMap;
-
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
@@ -13,9 +11,8 @@ use axum::Router;
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
-use super::{TenantPermission, TenantRole, ToolPermission, MaxPermission};
+use super::TenantPermission;
 use super::permission_api::{PermissionRequest, PermissionResponse, ErrorResponse};
-use super::permission_store::PermissionStoreError;
 
 // ===== Batch Request Types =====
 
@@ -266,6 +263,7 @@ pub fn permission_batch_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::routes::business_tools::TenantRole;
 
     #[test]
     fn test_batch_create_request_deserialization() {

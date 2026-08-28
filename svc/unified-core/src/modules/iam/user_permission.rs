@@ -84,7 +84,7 @@ pub async fn get_user_permissions(
         let permission_responses: Vec<UserPermissionResponse> = all_permissions
             .into_iter()
             .map(|p| {
-                let category = p.code.split(':').next().unwrap_or("other").to_string();
+                let category = extract_category(&p.code);
                 UserPermissionResponse {
                     id: p.permission_id.to_string(),
                     code: p.code,
@@ -122,7 +122,7 @@ pub async fn get_user_permissions(
             let permission_responses: Vec<UserPermissionResponse> = permissions
                 .into_iter()
                 .map(|p| {
-                    let category = p.code.split(':').next().unwrap_or("other").to_string();
+                    let category = extract_category(&p.code);
                     UserPermissionResponse {
                         id: p.permission_id.to_string(),
                         code: p.code,
@@ -275,4 +275,54 @@ pub async fn update_user_permissions(
             "role_ids": role_ids
         }
     }))
+}
+
+/// 从权限 code 中提取 category（例如 "iam:users_read" -> "iam"）
+fn extract_category(code: &str) -> String {
+    code.split(':').next().unwrap_or("other").to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_category_standard() {
+        assert_eq!(extract_category("iam:users_read"), "iam");
+        assert_eq!(extract_category("crm:customers_create"), "crm");
+        assert_eq!(extract_category("finance:invoices_approve"), "finance");
+    }
+
+    #[test]
+    fn test_extract_category_nested() {
+        assert_eq!(extract_category("iam:users:read"), "iam");
+        assert_eq!(extract_category("a:b:c:d:e"), "a");
+    }
+
+    #[test]
+    fn test_extract_category_no_colon() {
+        assert_eq!(extract_category("admin_access"), "admin_access");
+        assert_eq!(extract_category("superuser"), "superuser");
+    }
+
+    #[test]
+    fn test_extract_category_edge_cases() {
+        assert_eq!(extract_category(""), "");
+        assert_eq!(extract_category(":test"), "");
+        assert_eq!(extract_category("test:"), "test");
+    }
+
+    #[test]
+    fn test_user_permission_row_struct() {
+        let row = UserPermissionRow {
+            permission_id: Uuid::nil(),
+            code: "iam:users_read".to_string(),
+            name: "读取用户".to_string(),
+            description: Some("读取用户列表".to_string()),
+            resource: Some("users".to_string()),
+            action: Some("read".to_string()),
+        };
+        assert_eq!(row.code, "iam:users_read");
+        assert_eq!(extract_category(&row.code), "iam");
+    }
 }

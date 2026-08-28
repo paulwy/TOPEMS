@@ -1153,3 +1153,44 @@ pub async fn get_value_by_warehouse(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_inventory_pagination_params_deserialize() {
+        let query = "search=MAT001&status=active";
+        let params: InventoryPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("MAT001"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+    }
+
+    #[test]
+    fn test_inventory_pagination_params_default() {
+        let query = "";
+        let params: InventoryPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.warehouse_id.is_none());
+    }
+
+    #[test]
+    fn test_inventory_pagination_params_only_status() {
+        let query = "status=low_stock";
+        let params: InventoryPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.status.as_deref(), Some("low_stock"));
+        assert!(params.search.is_none());
+    }
+
+    #[test]
+    fn test_inventory_pagination_params_with_pagination() {
+        let query = "page=1&page_size=20&search=test";
+        let params: InventoryPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.search.as_deref(), Some("test"));
+    }
+}

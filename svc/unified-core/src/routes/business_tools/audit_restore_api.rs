@@ -3,7 +3,7 @@
 //! Provides REST API endpoints for restoring audit logs from archive files,
 //! including triggering restores and listing available archive files.
 
-use axum::extract::{Query, State};
+use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 use axum::Router;

@@ -573,3 +573,15 @@ async fn batch_calculate(
         &format!("成功计算 {} 个客户评分", results.len()),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_batch_calculate_request_deserialize() {
+        let json = r#"{"customer_ids": ["550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440001"]}"#;
+        let request: BatchCalculateRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.customer_ids.len(), 2);
+    }
+}

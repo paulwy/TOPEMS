@@ -978,3 +978,38 @@ pub async fn reject_transfer(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_approval_request_deserialize() {
+        let json = r#"{
+            "operator": "admin",
+            "comment": "同意调拨"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "admin");
+        assert_eq!(request.comment.as_deref(), Some("同意调拨"));
+    }
+
+    #[test]
+    fn test_approval_request_no_comment() {
+        let json = r#"{"operator": "manager"}"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "manager");
+        assert!(request.comment.is_none());
+    }
+
+    #[test]
+    fn test_approval_request_with_reject_comment() {
+        let json = r#"{
+            "operator": "auditor",
+            "comment": "库存不足，驳回"
+        }"#;
+        let request: ApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.operator, "auditor");
+        assert_eq!(request.comment.as_deref(), Some("库存不足，驳回"));
+    }
+}

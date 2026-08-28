@@ -377,3 +377,22 @@ async fn get_sales_forecast(
 
     Json(ApiResponse::success(forecast, "获取销售预测成功"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_forecast_params_deserialize() {
+        let query = "months=6";
+        let params: ForecastParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.months, Some(6));
+    }
+
+    #[test]
+    fn test_forecast_params_default() {
+        let query = "";
+        let params: ForecastParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.months.is_none());
+    }
+}

@@ -848,3 +848,44 @@ pub async fn execute_transfer(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_transfer_pagination_params_deserialize() {
+        let query = "search=TR001&status=pending";
+        let params: TransferPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("TR001"));
+        assert_eq!(params.status.as_deref(), Some("pending"));
+    }
+
+    #[test]
+    fn test_transfer_pagination_params_default() {
+        let query = "";
+        let params: TransferPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.from_warehouse_id.is_none());
+        assert!(params.to_warehouse_id.is_none());
+    }
+
+    #[test]
+    fn test_transfer_pagination_params_only_status() {
+        let query = "status=completed";
+        let params: TransferPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.status.as_deref(), Some("completed"));
+        assert!(params.search.is_none());
+    }
+
+    #[test]
+    fn test_transfer_pagination_params_only_search() {
+        let query = "search=transfer_test";
+        let params: TransferPaginationParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.search.as_deref(), Some("transfer_test"));
+        assert!(params.status.is_none());
+    }
+}

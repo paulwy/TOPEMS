@@ -27,7 +27,8 @@ impl ServiceRegistry {
     /// 虚拟服务（iam/doc/flow/file）由 unified-core 内部模块提供，
     /// 共用端口 8000，通过 URL 路径区分，不再作为独立条目列出。
     ///
-    /// V66.1 新增：6 个扩展服务（search/communication/billing/ticket/feedback/lowcode）
+    /// V66.1 新增：5 个扩展服务（search/communication/billing/ticket/feedback）
+    /// [V2026.08 已移除] lowcode 空壳占位服务
     /// V68.1 新增：2 个拆分服务（monitor/plugin-registry，从 unified-core 外迁为独立进程）
     pub fn default_services() -> Vec<ServiceConfig> {
         vec![
@@ -82,14 +83,15 @@ impl ServiceRegistry {
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/feedback".to_string(),
             },
-            ServiceConfig {
-                name: "topems-lowcode".to_string(),
-                display_name: "低代码平台".to_string(),
-                description: "低代码开发平台（页面/表单/流程/数据模型设计器，预留）".to_string(),
-                port: 8088,
-                health_endpoint: "/health".to_string(),
-                api_prefix: "/api/lowcode".to_string(),
-            },
+            // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
+            // ServiceConfig {
+            //     name: "topems-lowcode".to_string(),
+            //     display_name: "低代码平台".to_string(),
+            //     description: "低代码开发平台（页面/表单/流程/数据模型设计器，预留）".to_string(),
+            //     port: 8088,
+            //     health_endpoint: "/health".to_string(),
+            //     api_prefix: "/api/lowcode".to_string(),
+            // },
             // === 经营管理 (8010-8019) ===
             ServiceConfig {
                 name: "topems-erp".to_string(),
@@ -340,7 +342,7 @@ impl ServiceRegistry {
     pub fn get_port_ranges(&self) -> Vec<(u16, u16)> {
         vec![
             (8000, 8009), // 核心
-            (8082, 8088), // 扩展服务（search/communication/billing/ticket/feedback/lowcode）
+            (8082, 8087), // 扩展服务（search/communication/billing/ticket/feedback）[V2026.08 已移除 lowcode 原端口8088]
             (8010, 8029), // 经营 + 协同办公
             (8030, 8039), // 生产制造
             (8040, 8049), // 供应链
@@ -462,9 +464,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn registry_new_returns_30_default_services() {
+    fn registry_new_returns_29_default_services() {
         let r = ServiceRegistry::new();
-        assert_eq!(r.services.len(), 30);
+        assert_eq!(r.services.len(), 29);
     }
 
     #[test]
@@ -551,7 +553,7 @@ mod tests {
     fn to_map_returns_correct_hashmap() {
         let r = ServiceRegistry::new();
         let m = r.to_map();
-        assert_eq!(m.len(), 30);
+        assert_eq!(m.len(), 29);
         assert!(m.contains_key("unified-core"));
         assert_eq!(m.get("topems-erp").unwrap().port, 8010);
     }
@@ -560,7 +562,7 @@ mod tests {
     fn get_all_ports_count_and_values() {
         let r = ServiceRegistry::new();
         let ports = r.get_all_ports();
-        assert_eq!(ports.len(), 30);
+        assert_eq!(ports.len(), 29);
         assert!(ports.contains(&8000));
         assert!(ports.contains(&8090));
         for p in ports {
@@ -739,7 +741,7 @@ mod tests {
         let r = ServiceRegistry::new();
         let json = serde_json::to_string(&r).expect("serialize");
         let back: ServiceRegistry = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(back.services.len(), 30);
+        assert_eq!(back.services.len(), 29);
     }
 
     #[test]

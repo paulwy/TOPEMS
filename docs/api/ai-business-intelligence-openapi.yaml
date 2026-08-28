@@ -1,0 +1,2035 @@
+openapi: 3.0.3
+info:
+  title: TOPEMS DSH AI 业务智能 API
+  description: |
+    TOPEMS DSH（Data-Driven Service Hub）AI 业务智能模块 API 规范。
+    
+    包含：
+    - 业务 Copilot：面向特定业务模块的智能对话
+    - 智能表单：表单定义、验证、自动填充
+    - 文档智能：文档解析、摘要、搜索、生成
+    - AI 治理仪表盘：治理监控、风险评估、合规检查
+    
+    版本历史：
+    - 1.0.0 (2024-01-01): 初始版本
+  version: 1.0.0
+  contact:
+    name: TOPEMS AI Team
+    email: ai-team@topems.com
+  license:
+    name: Proprietary
+servers:
+  - url: http://localhost:8080/api/ai
+    description: 开发环境
+  - url: https://api.topems.com/api/ai
+    description: 生产环境
+tags:
+  - name: Business Copilot
+    description: 业务 Copilot 智能对话 API
+  - name: Smart Forms
+    description: 智能表单 API
+  - name: Document Intelligence
+    description: 文档智能 API
+  - name: Governance Dashboard
+    description: AI 治理仪表盘 API
+paths:
+  /copilot/sessions:
+    post:
+      tags: [Business Copilot]
+      summary: 创建会话
+      description: 创建新的业务 Copilot 会话
+      operationId: createCopilotSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: 会话创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CopilotSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /copilot/sessions/{session_id}:
+    get:
+      tags: [Business Copilot]
+      summary: 获取会话信息
+      description: 获取指定会话的详细信息
+      operationId: getCopilotSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: 会话信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CopilotSession'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Business Copilot]
+      summary: 删除会话
+      description: 删除指定会话
+      operationId: deleteCopilotSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /copilot/chat:
+    post:
+      tags: [Business Copilot]
+      summary: 发送消息
+      description: 向业务 Copilot 发送消息并获取响应
+      operationId: sendCopilotMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopilotRequest'
+      responses:
+        '200':
+          description: Copilot 响应
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CopilotResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /copilot/intent:
+    post:
+      tags: [Business Copilot]
+      summary: 识别意图
+      description: 识别用户输入的意图类型
+      operationId: recognizeIntent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: 用户输入文本
+                module:
+                  $ref: '#/components/schemas/BusinessModuleType'
+      responses:
+        '200':
+          description: 意图识别结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntentRecognitionResult'
+  /copilot/modules:
+    get:
+      tags: [Business Copilot]
+      summary: 获取所有业务模块配置
+      description: 获取所有业务模块的配置列表
+      operationId: getAllModuleConfigs
+      responses:
+        '200':
+          description: 业务模块配置列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessModuleConfig'
+  /copilot/modules/{module}:
+    get:
+      tags: [Business Copilot]
+      summary: 获取业务模块配置
+      description: 获取指定业务模块的配置信息
+      operationId: getModuleConfig
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/BusinessModuleType'
+      responses:
+        '200':
+          description: 业务模块配置
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessModuleConfig'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /copilot/modules/{module}/faq:
+    get:
+      tags: [Business Copilot]
+      summary: 搜索 FAQ
+      description: 搜索指定业务模块的常见问题
+      operationId: searchFAQ
+      parameters:
+        - name: module
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/BusinessModuleType'
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 搜索关键词
+      responses:
+        '200':
+          description: FAQ 搜索结果
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQItem'
+  /forms:
+    get:
+      tags: [Smart Forms]
+      summary: 获取所有表单定义
+      description: 获取所有表单定义列表，可按分类筛选
+      operationId: getAllFormDefinitions
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 表单分类筛选
+      responses:
+        '200':
+          description: 表单定义列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormDefinition'
+  /forms/{form_id}:
+    get:
+      tags: [Smart Forms]
+      summary: 获取表单定义
+      description: 获取指定表单的定义信息
+      operationId: getFormDefinition
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      responses:
+        '200':
+          description: 表单定义
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormDefinition'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /forms/{form_id}/validate:
+    post:
+      tags: [Smart Forms]
+      summary: 验证表单数据
+      description: 验证表单数据是否符合定义的规则
+      operationId: validateForm
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [values]
+              properties:
+                values:
+                  type: object
+                  additionalProperties: true
+                  description: 表单数据键值对
+      responses:
+        '200':
+          description: 验证结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormValidationResult'
+  /forms/{form_id}/auto-fill:
+    post:
+      tags: [Smart Forms]
+      summary: 自动填充表单
+      description: 基于上下文数据自动填充表单字段
+      operationId: autoFillForm
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [context]
+              properties:
+                context:
+                  type: object
+                  additionalProperties: true
+                  description: 上下文数据
+      responses:
+        '200':
+          description: 自动填充结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormData'
+  /forms/{form_id}/generate:
+    post:
+      tags: [Smart Forms]
+      summary: 从自然语言生成表单
+      description: 从自然语言描述中提取表单数据
+      operationId: generateFormFromText
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: 自然语言描述
+      responses:
+        '200':
+          description: 生成的表单数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormData'
+  /forms/{form_id}/submit:
+    post:
+      tags: [Smart Forms]
+      summary: 提交表单
+      description: 提交表单数据进行审批或处理
+      operationId: submitForm
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [values]
+              properties:
+                values:
+                  type: object
+                  additionalProperties: true
+                record_id:
+                  type: string
+                  description: 已有记录 ID（更新时使用）
+      responses:
+        '200':
+          description: 提交结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormData'
+  /forms/{form_id}/draft:
+    post:
+      tags: [Smart Forms]
+      summary: 保存表单草稿
+      description: 保存表单数据为草稿
+      operationId: saveFormDraft
+      parameters:
+        - $ref: '#/components/parameters/FormId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [values]
+              properties:
+                values:
+                  type: object
+                  additionalProperties: true
+                record_id:
+                  type: string
+      responses:
+        '200':
+          description: 草稿保存结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormData'
+  /documents:
+    get:
+      tags: [Document Intelligence]
+      summary: 获取文档列表
+      description: 获取文档列表，支持分页和筛选
+      operationId: listDocuments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: document_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentProcessingStatus'
+      responses:
+        '200':
+          description: 文档列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentInfo'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+    post:
+      tags: [Document Intelligence]
+      summary: 上传文档
+      description: 上传文档进行处理
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 文档文件
+                metadata:
+                  type: string
+                  description: JSON 字符串，包含额外元数据
+      responses:
+        '200':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInfo'
+        '413':
+          description: 文件过大
+  /documents/{document_id}:
+    get:
+      tags: [Document Intelligence]
+      summary: 获取文档信息
+      description: 获取文档的基本信息和元数据
+      operationId: getDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: 文档信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Document Intelligence]
+      summary: 删除文档
+      description: 删除指定文档
+      operationId: deleteDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /documents/{document_id}/parse:
+    post:
+      tags: [Document Intelligence]
+      summary: 解析文档
+      description: 解析文档内容，提取文本、表格、图片和结构信息
+      operationId: parseDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: 解析结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentParseResult'
+  /documents/{document_id}/summary:
+    get:
+      tags: [Document Intelligence]
+      summary: 获取文档摘要
+      description: 获取已生成的文档摘要
+      operationId: getDocumentSummary
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/SummaryType'
+      responses:
+        '200':
+          description: 文档摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSummary'
+    post:
+      tags: [Document Intelligence]
+      summary: 生成文档摘要
+      description: 生成文档的摘要内容
+      operationId: generateDocumentSummary
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary_type:
+                  $ref: '#/components/schemas/SummaryType'
+      responses:
+        '200':
+          description: 生成的摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSummary'
+  /documents/{document_id}/search:
+    get:
+      tags: [Document Intelligence]
+      summary: 搜索文档内容
+      description: 在文档内容中搜索关键词
+      operationId: searchDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 搜索关键词
+      responses:
+        '200':
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    line_number:
+                      type: integer
+                    content:
+                      type: string
+                    match_count:
+                      type: integer
+  /documents/{document_id}/download:
+    get:
+      tags: [Document Intelligence]
+      summary: 下载文档
+      description: 下载文档文件
+      operationId: downloadDocument
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: 文档文件
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /documents/generate:
+    post:
+      tags: [Document Intelligence]
+      summary: 生成文档
+      description: 从结构化内容生成文档
+      operationId: generateDocument
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentGenerationRequest'
+      responses:
+        '200':
+          description: 生成的文档
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInfo'
+  /governance/dashboard:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取治理仪表盘数据
+      description: 获取完整的治理仪表盘数据
+      operationId: getGovernanceDashboard
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+            default: 24h
+      responses:
+        '200':
+          description: 治理仪表盘数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GovernanceDashboardData'
+  /governance/score:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取治理评分
+      description: 获取总体治理评分和各维度分解
+      operationId: getGovernanceScore
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 治理评分
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overall_score:
+                    type: number
+                  governance_level:
+                    $ref: '#/components/schemas/GovernanceLevel'
+                  breakdown:
+                    type: object
+                    properties:
+                      security:
+                        type: number
+                      compliance:
+                        type: number
+                      cost:
+                        type: number
+                      performance:
+                        type: number
+                      reliability:
+                        type: number
+  /governance/risk:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取风险评估
+      description: 获取详细的风险评估信息
+      operationId: getRiskAssessment
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 风险评估
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessment'
+  /governance/compliance:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取合规状态
+      description: 获取合规检查状态
+      operationId: getComplianceStatus
+      parameters:
+        - name: framework
+          in: query
+          schema:
+            type: string
+          description: 合规框架名称
+      responses:
+        '200':
+          description: 合规状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceStatus'
+  /governance/cost:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取成本分析
+      description: 获取成本分析数据
+      operationId: getCostAnalysis
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 成本分析
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostAnalysis'
+  /governance/performance:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取性能指标
+      description: 获取性能监控指标
+      operationId: getPerformanceMetrics
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 性能指标
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetrics'
+  /governance/security-events:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取安全事件
+      description: 获取安全事件列表
+      operationId: getSecurityEvents
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/RiskLevel'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: 安全事件列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEventSummary'
+                  total:
+                    type: integer
+    post:
+      tags: [Governance Dashboard]
+      summary: 记录安全事件
+      description: 记录新的安全事件
+      operationId: recordSecurityEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type, severity, description]
+              properties:
+                event_type:
+                  type: string
+                severity:
+                  $ref: '#/components/schemas/RiskLevel'
+                description:
+                  type: string
+                affected_resource:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '201':
+          description: 事件记录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventSummary'
+  /governance/audit:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取审计日志摘要
+      description: 获取审计日志的统计摘要
+      operationId: getAuditSummary
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 审计日志摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditSummary'
+  /governance/trends:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取趋势数据
+      description: 获取时间序列趋势数据
+      operationId: getTrends
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+            default: 24h
+        - name: metrics
+          in: query
+          schema:
+            type: string
+          description: 逗号分隔的指标列表
+      responses:
+        '200':
+          description: 趋势数据
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrendDataPoint'
+  /governance/recommendations:
+    get:
+      tags: [Governance Dashboard]
+      summary: 获取建议和改进项
+      description: 获取系统生成的优化建议
+      operationId: getRecommendations
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            $ref: '#/components/schemas/RecommendationPriority'
+      responses:
+        '200':
+          description: 建议列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recommendation'
+  /governance/refresh:
+    post:
+      tags: [Governance Dashboard]
+      summary: 刷新仪表盘缓存
+      description: 清除并刷新仪表盘数据缓存
+      operationId: refreshDashboardCache
+      responses:
+        '200':
+          description: 刷新成功
+  /governance/export:
+    get:
+      tags: [Governance Dashboard]
+      summary: 导出治理报告
+      description: 导出治理报告为指定格式
+      operationId: exportGovernanceReport
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pdf, excel, json]
+        - name: time_range
+          in: query
+          schema:
+            $ref: '#/components/schemas/TimeRange'
+      responses:
+        '200':
+          description: 报告文件
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 认证令牌
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 会话 ID
+    FormId:
+      name: form_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 表单 ID
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 文档 ID
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: 请求过于频繁
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          description: 错误码
+        message:
+          type: string
+          description: 错误信息
+        details:
+          type: object
+          additionalProperties: true
+    BusinessModuleType:
+      type: string
+      enum: [erp, finance, crm, wms, hr, oa, general]
+      description: 业务模块类型
+    CopilotIntentType:
+      type: string
+      enum: [query, create, update, delete, analyze, report, approve, reminder, knowledge, guidance, other]
+      description: Copilot 意图类型
+    ToolCallStatus:
+      type: string
+      enum: [pending, running, success, failed, cancelled]
+      description: 工具调用状态
+    CreateSessionRequest:
+      type: object
+      required: [module]
+      properties:
+        module:
+          $ref: '#/components/schemas/BusinessModuleType'
+        user_id:
+          type: string
+        tenant_id:
+          type: string
+    SelectedRecord:
+      type: object
+      required: [record_type, record_id]
+      properties:
+        record_type:
+          type: string
+        record_id:
+          type: string
+        record_name:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+    ConversationMessage:
+      type: object
+      required: [message_id, role, content, timestamp]
+      properties:
+        message_id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+    ToolCall:
+      type: object
+      required: [call_id, tool_name, parameters, status]
+      properties:
+        call_id:
+          type: string
+        tool_name:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: '#/components/schemas/ToolCallStatus'
+    SuggestedAction:
+      type: object
+      required: [action_id, action_type, label, priority]
+      properties:
+        action_id:
+          type: string
+        action_type:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: true
+        priority:
+          type: integer
+    ReferencedData:
+      type: object
+      required: [data_type, data_id]
+      properties:
+        data_type:
+          type: string
+        data_id:
+          type: string
+        data_name:
+          type: string
+        summary:
+          type: string
+        link:
+          type: string
+    CopilotSession:
+      type: object
+      required: [session_id, module, conversation_history, context_data, created_at, updated_at]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        tenant_id:
+          type: string
+        module:
+          $ref: '#/components/schemas/BusinessModuleType'
+        current_page:
+          type: string
+        selected_records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SelectedRecord'
+        conversation_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+        context_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CopilotRequest:
+      type: object
+      required: [user_input, module]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        user_input:
+          type: string
+        module:
+          $ref: '#/components/schemas/BusinessModuleType'
+        current_page:
+          type: string
+        selected_records:
+          type: array
+          items:
+            $ref: '#/components/schemas/SelectedRecord'
+        additional_context:
+          type: object
+          additionalProperties: true
+        stream:
+          type: boolean
+          default: false
+    CopilotResponse:
+      type: object
+      required: [session_id, reply, intent, confidence, tool_calls, suggested_actions, referenced_data, needs_confirmation, processing_time_ms]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        reply:
+          type: string
+        intent:
+          $ref: '#/components/schemas/CopilotIntentType'
+        confidence:
+          type: number
+          format: float
+        tool_calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolCall'
+        suggested_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuggestedAction'
+        referenced_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferencedData'
+        needs_confirmation:
+          type: boolean
+        confirmation_prompt:
+          type: string
+        processing_time_ms:
+          type: integer
+    IntentRecognitionResult:
+      type: object
+      required: [intent, confidence]
+      properties:
+        intent:
+          $ref: '#/components/schemas/CopilotIntentType'
+        confidence:
+          type: number
+          format: float
+    ToolParameter:
+      type: object
+      required: [name, param_type, description, required]
+      properties:
+        name:
+          type: string
+        param_type:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
+        default_value:
+          type: object
+          additionalProperties: true
+        enum_values:
+          type: array
+          items:
+            type: string
+    BusinessToolDefinition:
+      type: object
+      required: [tool_id, name, description, category, parameters, requires_confirmation, use_cases]
+      properties:
+        tool_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolParameter'
+        requires_confirmation:
+          type: boolean
+        use_cases:
+          type: array
+          items:
+            type: string
+    FAQItem:
+      type: object
+      required: [question, answer, keywords, category]
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+    QuickActionItem:
+      type: object
+      required: [action_id, label, description, icon, intent, preset_prompt]
+      properties:
+        action_id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        intent:
+          $ref: '#/components/schemas/CopilotIntentType'
+        preset_prompt:
+          type: string
+    BusinessModuleConfig:
+      type: object
+      required: [module, name, description, system_prompt, welcome_message, supported_intents, available_tools, faqs, quick_actions]
+      properties:
+        module:
+          $ref: '#/components/schemas/BusinessModuleType'
+        name:
+          type: string
+        description:
+          type: string
+        system_prompt:
+          type: string
+        welcome_message:
+          type: string
+        supported_intents:
+          type: array
+          items:
+            $ref: '#/components/schemas/CopilotIntentType'
+        available_tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessToolDefinition'
+        faqs:
+          type: array
+          items:
+            $ref: '#/components/schemas/FAQItem'
+        quick_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickActionItem'
+    FormFieldType:
+      type: string
+      enum: [text, textarea, number, integer, decimal, date, time, datetime, boolean, select, multiselect, radio, checkbox, file, image, email, phone, url, password, color, range, richtext, tags, reference, subform, calculated, signature, other]
+      description: 表单字段类型
+    FormFieldDefinition:
+      type: object
+      required: [field_id, name, label, field_type]
+      properties:
+        field_id:
+          type: string
+        name:
+          type: string
+        label:
+          type: string
+        field_type:
+          $ref: '#/components/schemas/FormFieldType'
+        description:
+          type: string
+        placeholder:
+          type: string
+        default_value:
+          type: object
+          additionalProperties: true
+        required:
+          type: boolean
+          default: false
+        read_only:
+          type: boolean
+          default: false
+        hidden:
+          type: boolean
+          default: false
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+        group:
+          type: string
+        order:
+          type: integer
+        validation:
+          type: object
+          properties:
+            min_length:
+              type: integer
+            max_length:
+              type: integer
+            min_value:
+              type: number
+            max_value:
+              type: number
+            pattern:
+              type: string
+            error_message:
+              type: string
+    FormDefinition:
+      type: object
+      required: [form_id, name, fields]
+      properties:
+        form_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormFieldDefinition'
+        version:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+    FormData:
+      type: object
+      required: [form_id, values, status, created_at, updated_at]
+      properties:
+        form_id:
+          type: string
+        record_id:
+          type: string
+        values:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [draft, in_progress, submitted, under_review, approved, rejected, archived]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    FieldError:
+      type: object
+      required: [code, message, severity]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+    FormValidationResult:
+      type: object
+      required: [is_valid, field_errors, form_errors, warnings, validated_at]
+      properties:
+        is_valid:
+          type: boolean
+        field_errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/FieldError'
+        form_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+              fields:
+                type: array
+                items:
+                  type: string
+        warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+              fields:
+                type: array
+                items:
+                  type: string
+        validated_at:
+          type: string
+          format: date-time
+    DocumentType:
+      type: string
+      enum: [pdf, word, excel, powerpoint, text, markdown, html, json, csv, image, other]
+      description: 文档类型
+    DocumentProcessingStatus:
+      type: string
+      enum: [pending, processing, completed, failed]
+      description: 文档处理状态
+    DocumentInfo:
+      type: object
+      required: [document_id, name, document_type, file_size, uploaded_at, processing_status]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        document_type:
+          $ref: '#/components/schemas/DocumentType'
+        file_size:
+          type: integer
+          description: 文件大小（字节）
+        content:
+          type: string
+        metadata:
+          type: object
+          properties:
+            author:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+            modified_at:
+              type: string
+              format: date-time
+            page_count:
+              type: integer
+            word_count:
+              type: integer
+            language:
+              type: string
+            title:
+              type: string
+            subject:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+        uploaded_at:
+          type: string
+          format: date-time
+        processing_status:
+          $ref: '#/components/schemas/DocumentProcessingStatus'
+    SummaryType:
+      type: string
+      enum: [brief, standard, detailed, section]
+      description: 摘要类型
+    DocumentSummary:
+      type: object
+      required: [document_id, summary_type, content, length, key_sentences, keywords, generated_at]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        summary_type:
+          $ref: '#/components/schemas/SummaryType'
+        content:
+          type: string
+        length:
+          type: integer
+        key_sentences:
+          type: array
+          items:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: object
+            properties:
+              keyword:
+                type: string
+              weight:
+                type: number
+                format: float
+              frequency:
+                type: integer
+        generated_at:
+          type: string
+          format: date-time
+    DocumentParseResult:
+      type: object
+      required: [document_id, success, parsed_at]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        text:
+          type: string
+        tables:
+          type: array
+          items:
+            type: object
+            properties:
+              table_id:
+                type: string
+              title:
+                type: string
+              headers:
+                type: array
+                items:
+                  type: string
+              rows:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: string
+              page:
+                type: integer
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              image_id:
+                type: string
+              description:
+                type: string
+              format:
+                type: string
+              size:
+                type: integer
+              page:
+                type: integer
+        structure:
+          type: object
+          properties:
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  section_id:
+                    type: string
+                  title:
+                    type: string
+                  level:
+                    type: integer
+                  content:
+                    type: string
+                  page:
+                    type: integer
+            table_of_contents:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  level:
+                    type: integer
+                  page:
+                    type: integer
+        error:
+          type: string
+        parsed_at:
+          type: string
+          format: date-time
+    DocumentGenerationRequest:
+      type: object
+      required: [document_type, title, content]
+      properties:
+        document_type:
+          $ref: '#/components/schemas/DocumentType'
+        title:
+          type: string
+        template:
+          type: string
+        content:
+          type: object
+          properties:
+            sections:
+              type: array
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  level:
+                    type: integer
+                  paragraphs:
+                    type: array
+                    items:
+                      type: string
+                  tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        headers:
+                          type: array
+                          items:
+                            type: string
+                        rows:
+                          type: array
+                          items:
+                            type: array
+                            items:
+                              type: string
+                  images:
+                    type: array
+                    items:
+                      type: string
+        style:
+          type: object
+          properties:
+            font_family:
+              type: string
+            font_size:
+              type: number
+            line_spacing:
+              type: number
+            theme_color:
+              type: string
+    TimeRange:
+      type: string
+      enum: [1h, 24h, 7d, 30d, custom]
+      description: 时间范围
+    GovernanceLevel:
+      type: string
+      enum: [excellent, good, fair, needs_improvement, poor]
+      description: 治理等级
+    RiskLevel:
+      type: string
+      enum: [low, medium, high, critical]
+      description: 风险等级
+    PerformanceLevel:
+      type: string
+      enum: [excellent, good, fair, poor]
+      description: 性能等级
+    RecommendationPriority:
+      type: string
+      enum: [critical, high, medium, low]
+      description: 建议优先级
+    ComplianceFrameworkStatus:
+      type: string
+      enum: [compliant, partially_compliant, non_compliant, under_assessment]
+      description: 合规框架状态
+    KeyMetrics:
+      type: object
+      required: [total_requests, successful_requests, failed_requests, success_rate, total_tokens, average_response_ms, p95_response_ms, active_users, active_agents, total_tool_calls, cache_hit_rate]
+      properties:
+        total_requests:
+          type: integer
+        successful_requests:
+          type: integer
+        failed_requests:
+          type: integer
+        success_rate:
+          type: number
+          format: float
+        total_tokens:
+          type: integer
+        average_response_ms:
+          type: number
+          format: float
+        p95_response_ms:
+          type: number
+          format: float
+        active_users:
+          type: integer
+        active_agents:
+          type: integer
+        total_tool_calls:
+          type: integer
+        cache_hit_rate:
+          type: number
+          format: float
+    RiskDimension:
+      type: object
+      required: [level, score, description, factors]
+      properties:
+        level:
+          $ref: '#/components/schemas/RiskLevel'
+        score:
+          type: number
+          format: float
+        description:
+          type: string
+        factors:
+          type: array
+          items:
+            type: string
+    RiskItem:
+      type: object
+      required: [risk_id, category, description, level, impact, recommendation, detected_at]
+      properties:
+        risk_id:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        level:
+          $ref: '#/components/schemas/RiskLevel'
+        impact:
+          type: string
+        recommendation:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+    RiskAssessment:
+      type: object
+      required: [overall_risk_level, risk_score, security_risk, compliance_risk, cost_risk, performance_risk, data_risk, high_risk_items]
+      properties:
+        overall_risk_level:
+          $ref: '#/components/schemas/RiskLevel'
+        risk_score:
+          type: number
+          format: float
+        security_risk:
+          $ref: '#/components/schemas/RiskDimension'
+        compliance_risk:
+          $ref: '#/components/schemas/RiskDimension'
+        cost_risk:
+          $ref: '#/components/schemas/RiskDimension'
+        performance_risk:
+          $ref: '#/components/schemas/RiskDimension'
+        data_risk:
+          $ref: '#/components/schemas/RiskDimension'
+        high_risk_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskItem'
+    ComplianceFramework:
+      type: object
+      required: [name, description, compliance_rate, status]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        compliance_rate:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/ComplianceFrameworkStatus'
+    NonCompliantItem:
+      type: object
+      required: [item_id, framework, control, description, severity, remediation, status]
+      properties:
+        item_id:
+          type: string
+        framework:
+          type: string
+        control:
+          type: string
+        description:
+          type: string
+        severity:
+          $ref: '#/components/schemas/RiskLevel'
+        remediation:
+          type: string
+        due_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+    ComplianceStatus:
+      type: object
+      required: [overall_compliance_rate, total_checks, passed_checks, failed_checks, pending_checks, frameworks, non_compliant_items]
+      properties:
+        overall_compliance_rate:
+          type: number
+          format: float
+        total_checks:
+          type: integer
+        passed_checks:
+          type: integer
+        failed_checks:
+          type: integer
+        pending_checks:
+          type: integer
+        frameworks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplianceFramework'
+        non_compliant_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NonCompliantItem'
+    BudgetUsage:
+      type: object
+      required: [total_budget, used_amount, usage_percent, budget_period, is_over_budget, projected_overage]
+      properties:
+        total_budget:
+          type: number
+          format: float
+        used_amount:
+          type: number
+          format: float
+        usage_percent:
+          type: number
+          format: float
+        budget_period:
+          type: string
+        is_over_budget:
+          type: boolean
+        projected_overage:
+          type: number
+          format: float
+    CostResource:
+      type: object
+      required: [resource_id, name, resource_type, cost, call_count, cost_percent]
+      properties:
+        resource_id:
+          type: string
+        name:
+          type: string
+        resource_type:
+          type: string
+        cost:
+          type: number
+          format: float
+        call_count:
+          type: integer
+        cost_percent:
+          type: number
+          format: float
+    CostAnalysis:
+      type: object
+      required: [total_cost, currency, llm_cost, tool_cost, storage_cost, network_cost, other_cost, average_cost_per_request, cost_trend_percent, budget_usage, top_cost_resources]
+      properties:
+        total_cost:
+          type: number
+          format: float
+        currency:
+          type: string
+        llm_cost:
+          type: number
+          format: float
+        tool_cost:
+          type: number
+          format: float
+        storage_cost:
+          type: number
+          format: float
+        network_cost:
+          type: number
+          format: float
+        other_cost:
+          type: number
+          format: float
+        average_cost_per_request:
+          type: number
+          format: float
+        cost_trend_percent:
+          type: number
+          format: float
+        budget_usage:
+          $ref: '#/components/schemas/BudgetUsage'
+        top_cost_resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostResource'
+    PerformanceMetrics:
+      type: object
+      required: [average_response_ms, p50_response_ms, p90_response_ms, p95_response_ms, p99_response_ms, throughput, concurrency, error_rate, timeout_rate, retry_rate, performance_level]
+      properties:
+        average_response_ms:
+          type: number
+          format: float
+        p50_response_ms:
+          type: number
+          format: float
+        p90_response_ms:
+          type: number
+          format: float
+        p95_response_ms:
+          type: number
+          format: float
+        p99_response_ms:
+          type: number
+          format: float
+        throughput:
+          type: number
+          format: float
+        concurrency:
+          type: integer
+        error_rate:
+          type: number
+          format: float
+        timeout_rate:
+          type: number
+          format: float
+        retry_rate:
+          type: number
+          format: float
+        performance_level:
+          $ref: '#/components/schemas/PerformanceLevel'
+    SecurityEventSummary:
+      type: object
+      required: [event_id, event_type, severity, description, occurred_at, affected_resource, status]
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        severity:
+          $ref: '#/components/schemas/RiskLevel'
+        description:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        affected_resource:
+          type: string
+        status:
+          type: string
+    AuditSummary:
+      type: object
+      required: [total_audit_logs, by_operation, by_user_top10, by_resource_type, anomalous_operations, unauthorized_attempts]
+      properties:
+        total_audit_logs:
+          type: integer
+        by_operation:
+          type: object
+          additionalProperties:
+            type: integer
+        by_user_top10:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        by_resource_type:
+          type: object
+          additionalProperties:
+            type: integer
+        anomalous_operations:
+          type: integer
+        unauthorized_attempts:
+          type: integer
+    TrendDataPoint:
+      type: object
+      required: [timestamp, requests, errors, avg_response_ms, tokens, cost]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        requests:
+          type: integer
+        errors:
+          type: integer
+        avg_response_ms:
+          type: number
+          format: float
+        tokens:
+          type: integer
+        cost:
+          type: number
+          format: float
+    Recommendation:
+      type: object
+      required: [recommendation_id, category, priority, title, description, expected_benefit, implementation_effort, related_metrics]
+      properties:
+        recommendation_id:
+          type: string
+        category:
+          type: string
+        priority:
+          $ref: '#/components/schemas/RecommendationPriority'
+        title:
+          type: string
+        description:
+          type: string
+        expected_benefit:
+          type: string
+        implementation_effort:
+          type: string
+        related_metrics:
+          type: array
+          items:
+            type: string
+    GovernanceDashboardData:
+      type: object
+      required: [generated_at, time_range, overall_score, governance_level, key_metrics, risk_assessment, compliance_status, cost_analysis, performance_metrics, security_events, audit_summary, trends, recommendations]
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        time_range:
+          $ref: '#/components/schemas/TimeRange'
+        overall_score:
+          type: number
+          format: float
+        governance_level:
+          $ref: '#/components/schemas/GovernanceLevel'
+        key_metrics:
+          $ref: '#/components/schemas/KeyMetrics'
+        risk_assessment:
+          $ref: '#/components/schemas/RiskAssessment'
+        compliance_status:
+          $ref: '#/components/schemas/ComplianceStatus'
+        cost_analysis:
+          $ref: '#/components/schemas/CostAnalysis'
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        security_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityEventSummary'
+        audit_summary:
+          $ref: '#/components/schemas/AuditSummary'
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendDataPoint'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+security:
+  - bearerAuth: []

@@ -170,7 +170,7 @@ pub async fn create_opening_balance(
     let now = Utc::now();
 
     let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-        "SELECT name FROM accounting_subjects WHERE code = $1",
+        "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
     )
     .bind(&req.subject_code)
     .fetch_optional(&state.db)
@@ -451,7 +451,7 @@ pub async fn import_opening_balances(
 
     for item in req {
         let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-            "SELECT name FROM accounting_subjects WHERE code = $1",
+            "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
         )
         .bind(&item.subject_code)
         .fetch_optional(&state.db)
@@ -594,4 +594,92 @@ pub async fn carry_forward_opening_balance(
     .await;
 
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_opening_balance_serialization() {
+        let balance = OpeningBalance {
+            id: Uuid::new_v4(),
+            company_id: Uuid::new_v4(),
+            subject_code: "1001".to_string(),
+            subject_name: "库存现金".to_string(),
+            period: "2024-01".to_string(),
+            debit_balance: 10000.0,
+            credit_balance: 0.0,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&balance).unwrap();
+        assert_eq!(json["subject_code"], "1001");
+        assert_eq!(json["subject_name"], "库存现金");
+        assert_eq!(json["period"], "2024-01");
+        assert_eq!(json["debit_balance"], 10000.0);
+        assert_eq!(json["credit_balance"], 0.0);
+    }
+
+    #[test]
+    fn test_create_opening_balance_request_deserialize() {
+        let json = r#"{
+            "company_id": "550e8400-e29b-41d4-a716-446655440000",
+            "subject_code": "1001",
+            "period": "2024-01",
+            "debit_balance": 10000.0,
+            "credit_balance": 0.0
+        }"#;
+        let request: CreateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.subject_code, "1001");
+        assert_eq!(request.period, "2024-01");
+        assert_eq!(request.debit_balance, 10000.0);
+        assert_eq!(request.credit_balance, 0.0);
+    }
+
+    #[test]
+    fn test_update_opening_balance_request_deserialize() {
+        let json = r#"{"debit_balance": 15000.0, "credit_balance": 500.0}"#;
+        let request: UpdateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.debit_balance, Some(15000.0));
+        assert_eq!(request.credit_balance, Some(500.0));
+    }
+
+    #[test]
+    fn test_update_opening_balance_request_partial() {
+        let json = r#"{"debit_balance": 20000.0}"#;
+        let request: UpdateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.debit_balance, Some(20000.0));
+        assert!(request.credit_balance.is_none());
+    }
+
+    #[test]
+    fn test_carry_forward_request_deserialize() {
+        let json = r#"{"from_period": "2024-01", "to_period": "2024-02"}"#;
+        let request: CarryForwardRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.from_period, "2024-01");
+        assert_eq!(request.to_period, "2024-02");
+    }
+
+    #[test]
+    fn test_opening_balance_params_deserialize() {
+        let query = "page=1&page_size=20&company_id=abc&period=2024-01&subject_code=1001";
+        let params: OpeningBalanceParams = serde_urlencoded::from_str(query).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.company_id.as_deref(), Some("abc"));
+        assert_eq!(params.period.as_deref(), Some("2024-01"));
+        assert_eq!(params.subject_code.as_deref(), Some("1001"));
+    }
+
+    #[test]
+    fn test_opening_balance_params_default() {
+        let query = "";
+        let params: OpeningBalanceParams = serde_urlencoded::from_str(query).unwrap();
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.company_id.is_none());
+        assert!(params.period.is_none());
+        assert!(params.subject_code.is_none());
+    }
 }

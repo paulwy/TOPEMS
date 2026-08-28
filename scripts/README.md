@@ -1,5 +1,18 @@
 # TOPEMS 脚本工具
 
+## 命令入口分工
+
+项目有四套命令入口，各有定位：
+
+| 入口 | 定位 | 典型命令 |
+|------|------|---------|
+| **`topems.sh`**（本目录） | **主入口**，零依赖 Bash，日常开发首选 | `start`/`stop`/`status`/`build`/`test`/`clean` |
+| **`cli/`**（Python CLI） | 高级运维工具，需 `pip install -e cli/` | `db migrate`/`doctor`/`db backup`/`schema-defense` |
+| **`Makefile`**（项目根目录） | Rust 专项快捷命令 | `make sqlx-prepare`/`check-offline`/`coverage-baseline` |
+| **`package.json`**（项目根目录） | 前端专属命令 | `pnpm dev:web`/`build`/`lint`/`format` |
+
+> `topems.sh` 与 Python CLI 中重叠的命令（start/stop/build/test/clean），推荐使用 `topems.sh`（零依赖）；Python CLI 专注于 `topems.sh` 未覆盖的数据库管理和系统诊断。
+
 ## 目录结构
 
 ```
@@ -188,7 +201,7 @@ node scripts/patch-react-transition-group.js --check
 | `deploy/docker/` | Docker Compose 完整部署 |
 | `deploy/k8s/` | Kubernetes 部署（Kustomize） |
 | `deploy/systemd/` | systemd 生产服务单元 |
-| `deploy/scripts/` | Linux 生产环境安装/更新/卸载脚本 |
+| `scripts/deploy/` | 部署/运维脚本（含生产环境安装/更新/卸载/监控） |
 | `deploy/nginx/` | Nginx 生产配置 |
 
 ## 支持的服务

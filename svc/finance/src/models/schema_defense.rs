@@ -102,6 +102,24 @@ pub const INTERNAL_TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    (
+        "accounting_subjects",
+        &[
+            ("organization_id", "UUID NOT NULL DEFAULT gen_random_uuid()"),
+            ("code", "VARCHAR(50) NOT NULL"),
+            ("name", "VARCHAR(200) NOT NULL"),
+            ("category", "VARCHAR(100)"),
+            ("level", "INTEGER NOT NULL DEFAULT 1"),
+            ("parent_code", "VARCHAR(50)"),
+            ("description", "TEXT"),
+            ("is_cash_flow", "BOOLEAN NOT NULL DEFAULT false"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+        ],
+    ),
 ];
 
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[

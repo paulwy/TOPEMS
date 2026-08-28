@@ -517,7 +517,7 @@ mod tests {
             let parsed: Value = serde_json::from_str(text).unwrap();
             assert_eq!(parsed["employee_id"], "EMP-00000001");
             assert_eq!(parsed["updated_fields"]["position"], "技术经理");
-            assert_eq!(parsed["updated_fields"]["salary"], 35000);
+            assert_eq!(parsed["updated_fields"]["salary"].as_f64(), Some(35000.0));
         } else {
             panic!("Expected text content");
         }

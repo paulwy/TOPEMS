@@ -222,3 +222,155 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_plugin_info_serialization() {
+        let info = PluginInfo {
+            code: "wms".to_string(),
+            name: "仓储管理".to_string(),
+            version: "1.0.0".to_string(),
+            description: "WMS 仓储管理系统".to_string(),
+            runtime_url: "http://localhost:8041".to_string(),
+            permissions: vec![
+                PermissionDef {
+                    code: "wms:warehouse:read".to_string(),
+                    name: "查看仓库".to_string(),
+                    resource_type: "warehouse".to_string(),
+                    action: "read".to_string(),
+                },
+            ],
+            dependencies: vec!["core".to_string()],
+            navigation_config: Some(serde_json::json!({"menu": "wms"})),
+            category: Some("warehouse".to_string()),
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["code"], "wms");
+        assert_eq!(json["name"], "仓储管理");
+        assert_eq!(json["version"], "1.0.0");
+        assert_eq!(json["description"], "WMS 仓储管理系统");
+        assert_eq!(json["runtime_url"], "http://localhost:8041");
+        assert_eq!(json["permissions"][0]["code"], "wms:warehouse:read");
+        assert_eq!(json["dependencies"][0], "core");
+        assert_eq!(json["category"], "warehouse");
+    }
+
+    #[test]
+    fn test_plugin_info_minimal() {
+        let info = PluginInfo {
+            code: "wms".to_string(),
+            name: "仓储管理".to_string(),
+            version: "1.0.0".to_string(),
+            description: "WMS 仓储管理系统".to_string(),
+            runtime_url: "http://localhost:8041".to_string(),
+            permissions: vec![],
+            dependencies: vec![],
+            navigation_config: None,
+            category: None,
+        };
+        let json = serde_json::to_value(&info).unwrap();
+        assert_eq!(json["code"], "wms");
+        assert_eq!(json["permissions"].as_array().unwrap().is_empty(), true);
+        assert_eq!(json["dependencies"].as_array().unwrap().is_empty(), true);
+        assert!(json["navigation_config"].is_null());
+        assert!(json["category"].is_null());
+    }
+
+    #[test]
+    fn test_plugin_info_clone() {
+        let info = PluginInfo {
+            code: "wms".to_string(),
+            name: "仓储管理".to_string(),
+            version: "1.0.0".to_string(),
+            description: "WMS 仓储管理系统".to_string(),
+            runtime_url: "http://localhost:8041".to_string(),
+            permissions: vec![],
+            dependencies: vec![],
+            navigation_config: None,
+            category: None,
+        };
+        let cloned = info.clone();
+        assert_eq!(info.code, cloned.code);
+        assert_eq!(info.name, cloned.name);
+        assert_eq!(info.version, cloned.version);
+    }
+
+    #[test]
+    fn test_plugin_info_deserialize() {
+        let json = r#"{
+            "code": "wms",
+            "name": "仓储管理",
+            "version": "2.0.0",
+            "description": "WMS 系统",
+            "runtime_url": "http://localhost:8041",
+            "permissions": [
+                {
+                    "code": "wms:inventory:read",
+                    "name": "查看库存",
+                    "resource_type": "inventory",
+                    "action": "read"
+                }
+            ],
+            "dependencies": ["core", "iam"],
+            "category": "warehouse"
+        }"#;
+        let info: PluginInfo = serde_json::from_str(json).unwrap();
+        assert_eq!(info.code, "wms");
+        assert_eq!(info.name, "仓储管理");
+        assert_eq!(info.version, "2.0.0");
+        assert_eq!(info.permissions.len(), 1);
+        assert_eq!(info.permissions[0].code, "wms:inventory:read");
+        assert_eq!(info.dependencies.len(), 2);
+        assert_eq!(info.dependencies[0], "core");
+        assert_eq!(info.dependencies[1], "iam");
+        assert_eq!(info.category.as_deref(), Some("warehouse"));
+    }
+
+    #[test]
+    fn test_permission_def_serialization() {
+        let perm = PermissionDef {
+            code: "wms:warehouse:write".to_string(),
+            name: "管理仓库".to_string(),
+            resource_type: "warehouse".to_string(),
+            action: "write".to_string(),
+        };
+        let json = serde_json::to_value(&perm).unwrap();
+        assert_eq!(json["code"], "wms:warehouse:write");
+        assert_eq!(json["name"], "管理仓库");
+        assert_eq!(json["resource_type"], "warehouse");
+        assert_eq!(json["action"], "write");
+    }
+
+    #[test]
+    fn test_permission_def_clone() {
+        let perm = PermissionDef {
+            code: "wms:inventory:write".to_string(),
+            name: "管理库存".to_string(),
+            resource_type: "inventory".to_string(),
+            action: "write".to_string(),
+        };
+        let cloned = perm.clone();
+        assert_eq!(perm.code, cloned.code);
+        assert_eq!(perm.name, cloned.name);
+        assert_eq!(perm.resource_type, cloned.resource_type);
+        assert_eq!(perm.action, cloned.action);
+    }
+
+    #[test]
+    fn test_permission_def_deserialize() {
+        let json = r#"{
+            "code": "wms:order:read",
+            "name": "查看订单",
+            "resource_type": "order",
+            "action": "read"
+        }"#;
+        let perm: PermissionDef = serde_json::from_str(json).unwrap();
+        assert_eq!(perm.code, "wms:order:read");
+        assert_eq!(perm.name, "查看订单");
+        assert_eq!(perm.resource_type, "order");
+        assert_eq!(perm.action, "read");
+    }
+}
