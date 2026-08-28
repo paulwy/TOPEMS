@@ -11,14 +11,14 @@ use std::sync::{Arc, Mutex, RwLock};
 /// V40.0: 简单 LRU 缓存实现（HashMap + VecDeque）
 #[allow(dead_code)]
 pub struct LruCache<K, V> {
-    map: HashMap<K, V>,
-    order: VecDeque<K>,
+    pub map: HashMap<K, V>,
+    pub order: VecDeque<K>,
     capacity: usize,
 }
 
 #[allow(dead_code)]
 impl<K: std::cmp::Eq + std::hash::Hash + Clone, V> LruCache<K, V> {
-    fn new(capacity: usize) -> Self {
+    pub fn new(capacity: usize) -> Self {
         Self {
             map: HashMap::new(),
             order: VecDeque::new(),
@@ -26,7 +26,7 @@ impl<K: std::cmp::Eq + std::hash::Hash + Clone, V> LruCache<K, V> {
         }
     }
 
-    fn get(&mut self, key: &K) -> Option<&V> {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         if self.map.contains_key(key) {
             self.order.retain(|k| k != key);
             self.order.push_front(key.clone());
@@ -36,7 +36,7 @@ impl<K: std::cmp::Eq + std::hash::Hash + Clone, V> LruCache<K, V> {
         }
     }
 
-    fn put(&mut self, key: K, value: V) {
+    pub fn put(&mut self, key: K, value: V) {
         if self.map.contains_key(&key) {
             self.order.retain(|k| k != &key);
         } else if self.map.len() >= self.capacity {
@@ -48,12 +48,10 @@ impl<K: std::cmp::Eq + std::hash::Hash + Clone, V> LruCache<K, V> {
         self.map.insert(key, value);
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.map.len()
     }
 }
-
-// ==================== V39.0: 查询复杂度分级缓存 ====================
 
 // ==================== V39.0: 查询复杂度分级缓存 ====================
 
@@ -333,7 +331,7 @@ struct HotQueryEntry {
     hit_count: u64,
 }
 
-fn extract_query_name(key: &str) -> String {
+pub fn extract_query_name(key: &str) -> String {
     if let Some(idx) = key.find(':') {
         key[..idx].to_string()
     } else {
