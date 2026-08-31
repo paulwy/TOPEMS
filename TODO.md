@@ -1396,3 +1396,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   1. **归档表清理**：public 101 张 `_archive_*`（旧版数据）确认无引用后可 drop 或移独立 archive schema
   2. **core_crm_*/core_erp_*/core_hrm_* 等业务表**：报告 B 项保留 public（平台级），但明显属业务域（crm/erp/hrm），**可作下一轮归位候选**（需业务 owner 确认）
   3. **lims/qms 测试 qa_* 用例**：`#[ignore]`（requires PostgreSQL），启用前需加 search_path
+
+## 2026-08-31 P1-2 阶段0 收尾：归档表移入 archive schema ✅
+- 迁移文件 `20260831190500_archive_schema.sql`（幂等）：建 archive schema + public 101 张 `_archive_*` 旧版表 SET SCHEMA archive（数据保留）。
+- 结果：public=299（纯活跃表）+ archive=101（归档数据）；门禁 PASS；workspace 编译通过。
