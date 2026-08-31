@@ -1628,3 +1628,14 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：finance 编译通过、门禁 28 PASS、断裂 FK 0、search_path 模拟查询可解析 finance.payables。
 - **累计**：public 262 → **108**（154 张影子/死表清理 + 23 张归位）；finance schema 80 → 103。
 - **剩余 public 108 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等 ~30）+ 待归位/待审计（quality_*/meeting_*/process_*/ticket_* 等 ~20 + 其他）。
+
+## 2026-09-01 拆分前置治理：meeting/process/quality 归位（108 → 98）✅
+- **归位 9 张 + DROP 1 张**：
+  - meeting_bookings/meeting_rooms → erp（仅 erp 引用）
+  - process_flows/process_flow_steps → mes（仅 mes 引用）
+  - quality_inspections/quality_standards/quality_patrols/quality_patrol_items/quality_standard_values → mes（mes 引用；qms 用显式 qms.qa_quality_* 无冲突）
+  - quality_tasks 无引用死表 DROP
+- **ticket 保留 public**：ticket 服务 search_path = "public"（无专属 schema），归位会破坏——标注待 ticket schema 化专项。
+- **验证**：mes/erp 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **98**（155 张清理 + 32 张归位）。
+- **剩余 public 98 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等）+ ticket 表（search_path=public）+ 其他待审计。
