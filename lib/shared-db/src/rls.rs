@@ -50,11 +50,19 @@ impl RlsMiddleware {
     }
 
     async fn enable_rls_on_tables(pool: &PgPool, schema: &str) -> Result<(), sqlx::Error> {
+        // 仅选择含 tenant_id 列的表，避免对无租户列的表创建策略时报错
         let tables = sqlx::query(
             r#"
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = $1 AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE 'sqlx_%'
+            SELECT t.table_name
+            FROM information_schema.tables t
+            JOIN information_schema.columns c
+              ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+            WHERE t.table_schema = $1
+              AND t.table_type = 'BASE TABLE'
+              AND t.table_name NOT LIKE 'pg_%'
+              AND t.table_name NOT LIKE 'sqlx_%'
+              AND c.column_name = 'tenant_id'
+            GROUP BY t.table_name
             "#,
         )
         .bind(schema)
@@ -70,14 +78,38 @@ impl RlsMiddleware {
             sqlx::query(&enable_rls).execute(pool).await?;
 
             let policy_name = format!("tenant_isolation_{}", table_name);
-            let create_policy = format!(
-                r#"
-                CREATE POLICY IF NOT EXISTS {} ON {}.{}
-                FOR ALL USING (tenant_id = current_setting('app.tenant_id')::UUID OR tenant_id IS NULL)
-                "#,
-                policy_name, schema, table_name
-            );
-            sqlx::query(&create_policy).execute(pool).await?;
+            // PostgreSQL 18 不支持 CREATE POLICY IF NOT EXISTS（语法错误），
+            // 需先判断策略是否存在：存在则 ALTER POLICY 更新，否则 CREATE POLICY。
+            let policy_exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS (
+                    SELECT 1 FROM pg_policies
+                    WHERE schemaname = $1 AND tablename = $2 AND policyname = $3
+                )",
+            )
+            .bind(schema)
+            .bind(&table_name)
+            .bind(&policy_name)
+            .fetch_one(pool)
+            .await?;
+
+            // 空安全：current_setting('app.tenant_id') 未设置时返回空串，''::UUID 会报错；
+            // 使用 NULLIF(...,'')::UUID 使未设置租户时仅放行 tenant_id IS NULL 的行。
+            let policy_sql = if policy_exists {
+                format!(
+                    "ALTER POLICY {} ON {}.{} USING (
+                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID OR tenant_id IS NULL
+                    )",
+                    policy_name, schema, table_name
+                )
+            } else {
+                format!(
+                    "CREATE POLICY {} ON {}.{} FOR ALL USING (
+                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID OR tenant_id IS NULL
+                    )",
+                    policy_name, schema, table_name
+                )
+            };
+            sqlx::query(&policy_sql).execute(pool).await?;
 
             debug!("Enabled RLS for table: {}", table_name);
         }
