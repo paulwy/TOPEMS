@@ -70,11 +70,11 @@
 
 | 目标 | 旧方案优先级 | 当前状态 | 影响 |
 |------|------------|---------|------|
-| 事件总线升级（Redis Pub/Sub → Redis Stream） | P0 Phase 1 M2 | ❌ 未启动 | 事件无持久化、无 ACK、无死信队列，数据一致性不可靠 |
-| 模块化单体骨架（32 svc → 7 核心模块） | P0 Phase 1 M2.5 | ❌ 未启动 | 运维复杂度仍为 32 个服务，私有化部署成本高 |
-| accounting_subjects 表物理迁移 | P0 遗留 | ❌ 待启动 | ERP/Finance 数据边界未彻底清理 |
-| Cargo Feature Flags 可粗可细部署 | P0 Phase 1 | ❌ 未启动 | 无法按客户需求裁剪模块，所有部署都是全量 |
-| 编译时边界检查覆盖率 100% | P0 Phase 1 M3 | ⚠️ 部分完成 | 仅覆盖 6 个服务，剩余 26 个服务未覆盖 |
+| 事件总线升级（Redis Pub/Sub → Redis Stream） | P0 Phase 1 M2 | ✅ 已完成（V321） | Stream 默认模式 + ACK + DLQ + 自动降级 |
+| 模块化单体骨架（32 svc → 7 核心模块） | P0 Phase 1 M2.5 | 🚧 Phase A 完成 | 分组定义 + features + topems-server 骨架已就绪，业务模块接入待推进 |
+| accounting_subjects 表物理迁移 | P0 遗留 | ✅ 已完成（V321） | 已迁移至 plugin_finance schema，ERP 无旧引用残留 |
+| Cargo Feature Flags 可粗可细部署 | P0 Phase 1 | 🚧 骨架完成 | 7 模块组 features 已定义（svc/server），按 tier 裁剪待落地 |
+| 编译时边界检查覆盖率 100% | P0 Phase 1 M3 | ✅ 已完成 | 32/32 服务全部接入 schema-defense（含 4 个骨架级） |
 | MCP MVP 正式上线（10 Tools + 3 Resources） | P1 Phase 1 M3 | ⚠️ 框架就绪 | 业务工具实现状态不明确，外部 Agent 未验证 |
 | DSH Provider 抽象完整实现 | P1 Phase 2 M4 | ⚠️ 基础完成 | DeepSeek/Ollama/Mock 已实现，Dify 迁移未确认 |
 | 前端 MF 双架构迁移到路由级懒加载 SPA | P2 Phase 3 M8 | ❌ 未启动 | 前端部署复杂度高，调试困难 |
