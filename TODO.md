@@ -1550,3 +1550,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **僵尸标注**：3 处 public 直写（qa_ehs_hazards×2 表在 ehs schema + qa_ehs_alerts×1 表不存在）标注 TODO(EHS集成)，运行必失败，待 EHS 服务集成 API 统一改 HTTP。
 - **验证**：integration 编译通过、门禁 PASS（integration 引用 108 无跨 schema 直读）；issue_id null + memo JSON 字符串变体 runtime 200。
 - 待办：步骤C process_event 接线事件订阅；步骤D 撤销 integration.allow（需先处理 3 处 EHS 僵尸直写）。
+
+## 2026-08-31 拆分前置治理：EHS 僵尸直写清理 + 撤销 integration.allow ✅（白名单 2→1）
+- **3 处 public 僵尸直写改 HTTP**（qms_lims_ehs.rs）：qa_ehs_hazards×2（表实际在 ehs schema，无 tenant_id/related_inspection_id 列）+ qa_ehs_alerts×1（表不存在）→ ehs 集成端点。
+- **ehs 集成端点**（svc/ehs/src/modules/integration.rs 新建）：`POST /api/internal/ehs/hazards/integration`（hazard_no 幂等，inspection_id FK→inspection_records 外部不可靠传 null）+ `POST /api/internal/ehs/alerts/integration`（alert_no 幂等）。
+- **建表迁移** 20260831191100_ehs_alerts.sql：建 ehs.qa_ehs_alerts（原表不存在，与 qa_ehs_hazards 风格一致无 tenant_id）。备份 topems_pre_ehs_integration_20260831_2323.dump。
+- **撤销 integration.allow=['qms','lims']**（schema_boundary.json）——integration 9 处跨 schema 直写全清零（全部改 HTTP）。
+- **门禁 PASS**：integration 引用 106 无跨 schema 直读；**白名单 2→1**（仅剩 unified-core→portal 设计性只读）。
+- 验证：integration/ehs 编译通过、警告清零、ehs 端点静态审查；runtime curl 验证待补（Bash 曾受限）。
+- 拆分前置条件 #1（integration 跨域事务直写）**代码层清零**；步骤C process_event 接线事件订阅为剩余项。

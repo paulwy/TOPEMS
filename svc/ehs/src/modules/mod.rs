@@ -4,6 +4,7 @@ pub mod ehs_plugin;
 pub mod emergency_drill;
 pub mod emergency_plan;
 pub mod environment;
+pub mod integration;
 pub mod environmental_compliance;
 pub mod hazard;
 pub mod hazardous_material;

@@ -2,7 +2,6 @@ use serde_json::Value;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
 use std::time::Duration;
-use topems_shared_boundary::only_own_schema_query;
 use tracing::{info, warn};
 
 use topems_shared_event::event::{
@@ -41,6 +40,10 @@ fn lims_url() -> String {
 
 fn qms_url() -> String {
     std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string())
+}
+
+fn ehs_url() -> String {
+    std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string())
 }
 
 pub async fn handle_qms_inspection_completed(
@@ -95,6 +98,7 @@ pub async fn handle_qms_quality_issue_created(
     tenant_id: Uuid,
     payload: &QmsQualityIssueCreatedPayload,
 ) -> anyhow::Result<()> {
+    let _ = (pool, tenant_id); // 步骤B后全改 HTTP，保留签名
     info!(
         "处理QMS质量问题创建事件 - 触发EHS安全检查: {}",
         payload.issue_no
@@ -115,22 +119,26 @@ pub async fn handle_qms_quality_issue_created(
         _ => "low",
     };
 
-    let _ = sqlx::query(
-        // TODO(EHS集成): 僵尸直写——qa_ehs_hazards 表实际位于 ehs schema（public 无此表），此直写运行必失败；integration→ehs 跨域待 EHS 服务集成 API 后统一改 HTTP。
-        only_own_schema_query!("integration", "INSERT INTO public.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by, related_inspection_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
+    // 步骤B：integration→ehs 跨域直写 → EHS 集成 API（原 public.qa_ehs_hazards 僵尸直写，
+    // 表实际在 ehs schema 且无 tenant_id/related_inspection_id 列；inspection_id FK→ehs.qa_ehs_inspection_records，
+    // 外部 QMS 相关 id 不可靠 → null）
+    call_internal_api(
+        &ehs_url(),
+        "/api/internal/ehs/hazards/integration",
+        &serde_json::json!({
+            "hazard_no": hazard_no,
+            "title": payload.title.clone(),
+            "category": "质量相关",
+            "level": level,
+            "location": "生产现场",
+            "description": payload.description.as_deref().unwrap_or(""),
+            "status": "pending",
+            "reported_by": payload.created_by.as_deref().unwrap_or("system"),
+            "inspection_id": null,
+            "source": "QMS",
+        }),
     )
-    .bind(tenant_id)
-    .bind(hazard_no)
-    .bind(payload.title.clone())
-    .bind("质量相关")
-    .bind(level)
-    .bind("生产现场")
-    .bind(payload.description.as_deref().unwrap_or(""))
-    .bind("pending")
-    .bind(payload.created_by.as_deref().unwrap_or("system"))
-    .bind(payload.related_inspection_id)
-    .execute(pool)
-    .await;
+    .await?;
 
     info!("QMS质量问题已触发EHS安全隐患检查");
     Ok(())
@@ -265,6 +273,7 @@ pub async fn handle_lims_inspection_abnormal(
     tenant_id: Uuid,
     payload: &LimsInspectionAbnormalDetectedPayload,
 ) -> anyhow::Result<()> {
+    let _ = (pool, tenant_id); // 步骤B后全改 HTTP，保留签名
     info!("处理LIMS检测异常事件 - 上报EHS: {}", payload.task_no);
 
     let hazard_title = format!("LIMS检测异常: {}", payload.test_item);
@@ -292,21 +301,24 @@ pub async fn handle_lims_inspection_abnormal(
         "medium"
     };
 
-    let _ = sqlx::query(
-        // TODO(EHS集成): 僵尸直写——qa_ehs_hazards 表实际位于 ehs schema（public 无此表），此直写运行必失败；integration→ehs 跨域待 EHS 服务集成 API 后统一改 HTTP。
-        only_own_schema_query!("integration", "INSERT INTO public.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+    // 步骤B：integration→ehs 跨域直写 → EHS 集成 API（原 public.qa_ehs_hazards 僵尸直写修正）
+    call_internal_api(
+        &ehs_url(),
+        "/api/internal/ehs/hazards/integration",
+        &serde_json::json!({
+            "hazard_no": hazard_no,
+            "title": hazard_title,
+            "category": "化学品/实验室",
+            "level": level,
+            "location": "实验室",
+            "description": description,
+            "status": "pending",
+            "reported_by": "LIMS系统",
+            "inspection_id": null,
+            "source": "LIMS",
+        }),
     )
-    .bind(tenant_id)
-    .bind(hazard_no)
-    .bind(hazard_title)
-    .bind("化学品/实验室")
-    .bind(level)
-    .bind("实验室")
-    .bind(description)
-    .bind("pending")
-    .bind("LIMS系统")
-    .execute(pool)
-    .await;
+    .await?;
 
     info!("LIMS检测异常已上报EHS");
     Ok(())
@@ -348,6 +360,7 @@ pub async fn handle_lims_reagent_alert(
     tenant_id: Uuid,
     payload: &LimsReagentAlertPayload,
 ) -> anyhow::Result<()> {
+    let _ = (pool, tenant_id); // 步骤B后全改 HTTP，保留签名
     info!("处理LIMS试剂告警事件 - 同步到EHS: {}", payload.reagent_no);
 
     let alert_no = format!(
@@ -365,21 +378,23 @@ pub async fn handle_lims_reagent_alert(
         _ => "其他告警",
     };
 
-    let _ = sqlx::query(
-        // TODO(EHS集成): 僵尸直写——qa_ehs_alerts 表不存在（public/ehs 均无），此直写运行必失败；LIMS 试剂告警→EHS 需先建表/建 API。
-        only_own_schema_query!("integration", "INSERT INTO qa_ehs_alerts (tenant_id, alert_no, title, alert_type, severity, description, status, source_system, source_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+    // 步骤B：integration→ehs 跨域直写 → EHS 集成 API（原 public.qa_ehs_alerts 僵尸直写修正——
+    // 表 20260831191100 已建 ehs.qa_ehs_alerts）
+    call_internal_api(
+        &ehs_url(),
+        "/api/internal/ehs/alerts/integration",
+        &serde_json::json!({
+            "alert_no": alert_no,
+            "title": format!("试剂告警: {}", payload.reagent_name),
+            "alert_type": alert_type,
+            "severity": payload.severity.as_deref().unwrap_or("medium"),
+            "description": payload.description.as_deref().unwrap_or(""),
+            "status": "active",
+            "source_system": "LIMS",
+            "source_id": payload.reagent_id,
+        }),
     )
-    .bind(tenant_id)
-    .bind(alert_no)
-    .bind(format!("试剂告警: {}", payload.reagent_name))
-    .bind(alert_type)
-    .bind(payload.severity.as_deref().unwrap_or("medium"))
-    .bind(payload.description.as_deref().unwrap_or(""))
-    .bind("active")
-    .bind("LIMS")
-    .bind(payload.reagent_id)
-    .execute(pool)
-    .await;
+    .await?;
 
     info!("LIMS试剂告警已同步到EHS");
     Ok(())
