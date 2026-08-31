@@ -1366,3 +1366,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 ## 2026-08-31 P1-2 阶段0 schema 归位（C 项 material_*）✅
 - 迁移文件 `20260831190100_material_schema_migrate.sql`（幂等）：public 独有 2 张（material_categories/material_requirement_items）→ SET SCHEMA mes；同名 6 张旧版归档 `_archive_material_*`（数据保留），mes 为运行真相（mes 代码无前缀引用，SEARCH_PATH='mes, public' 优先）。
 - 验证：public=0/mes=8/archive=6；mes 测试全过（424+16+13）；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（D 项 跨域同步表）✅
+- 迁移文件 `20260831190200_sync_tables_schema_migrate.sql`（幂等）：public 7 张跨域同步表（analytics_sync_records/conversion_*/core_inter_module_sync/qa_*_sync_records）归档 `_archive_*`（数据保留），目标 schema（bi/integration/ehs/lims/qms）同名表为运行真相。
+- 代码引用均指向业务 schema（lims/integration 显式前缀或 search_path 优先），public 旧版无引用。
+- 验证：public 同步表残留=0；lims/integration 测试全过；门禁 PASS。
