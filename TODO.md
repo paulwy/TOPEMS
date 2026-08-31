@@ -1776,3 +1776,17 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - monitoring build_client 5 处从转发用户 token 改为 with_service_token（monitor:read）
 - **验证**：portal 编译通过（修 E0382 move + headers unused）；portal-service token(erp:admin) → erp 公告 200 + 审计 "service=portal-service"；无 token 401。
 - **未决**：portal 自身认证拒绝手工签发的用户 token（401）——portal auth 可能有额外校验（非本轮范围，测试走 service token 链路验证）；aggregation/todos 的用户身份调用保留转发（合理）。
+
+## 2026-09-01 服务间调用可观测性（ServiceIdentity → metrics + 限流差异）✅
+- **metrics**：shared-auth service.rs 注册 Prometheus `topems_service_to_service_calls_total{service=...}`；auth_middleware 识别服务身份时 record_service_call → 各服务 /metrics 暴露。
+- **限流差异**：RateLimitConfig 加 by_service/service_max_requests（默认 1000 vs 用户 200）；rate_limit_middleware 读 ServiceIdentity → 服务独立桶 service:<name>。
+- **layer 顺序调整**（build_application）：auth → rls → rate_limit——auth 最先注入 ServiceIdentity，rate_limit 才能读到（原 rate_limit 在最外层先于 auth）。
+- **验证**：shared-auth 219+doc 测试全过；门禁 28；服务 token 调 wms → 200 + 限流头 limit 1000（服务桶）+ metrics `{service="erp-service"} 2`；用户 token → 200 + limit 200（用户桶）不计入；无 token 401 不计数。
+- **提交纪律**：bootstrap 与用户 init_telemetry 改动共存——git add -p 精确暂存 layer hunk（9 hunk 选 5-6），未误带用户改动。
+
+## 2026-09-01 服务调用审计告警消费（ServiceCallMonitor）✅
+- **新增** lib/shared-auth/src/service_monitor.rs：`ServiceCallMonitor`——消费 ServiceIdentity + 频率数据检测异常调用。
+- **规则**：①未知服务（不在白名单 → 疑似伪造 service token）；②高频调用（滑动窗口超阈值 → 疑似风暴/攻击）；告警去重（冷却期同类型只告警一次）。
+- **配置**（env 可覆盖）：SERVICE_ALERT_WINDOW_SECS(60)/HIGH_FREQ_THRESHOLD(500)/KNOWN_SERVICES(内置 31 个服务名)/COOLDOWN_SECS(60)/ENABLED。
+- **接入**：record_service_call 里调用 monitor（非阻塞纯内存）；告警 tracing::warn（target service_call_alert）可接日志/告警平台。
+- **验证**：shared-auth 223 测试全过；运行时 evil-service（未注册）→ 未知服务告警；erp-service 阈值 3 连续调用 → 高频告警；冷却期去重（告警数保持 1）。
