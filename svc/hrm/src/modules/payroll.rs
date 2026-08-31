@@ -4,12 +4,15 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use bigdecimal::BigDecimal;
+use bigdecimal::{BigDecimal, ToPrimitive};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::str::FromStr;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_event::event::{
+    EventType, HrmPayrollVoucherEntryPayload, HrmPayrollVoucherRequestedPayload,
+};
 use uuid::Uuid;
 
 use super::ApiState;
@@ -791,99 +794,94 @@ async fn generate_payroll_voucher(
         .period
         .unwrap_or_else(|| format_voucher_period(voucher_date));
 
-    // 生成凭证号（由 rand 注入 sequence）
+    // 生成凭证号（由 rand 注入 sequence，作为业务号随事件透传给 ERP）
     let voucher_number = generate_voucher_number(voucher_date, rand::random::<u16>() % 10000);
 
-    // 在ERP数据库中创建凭证
-    let voucher_id = Uuid::new_v4();
-    let now = Utc::now();
     let department_id = req.department_id.unwrap_or_else(Uuid::nil);
 
-    // 创建凭证主记录
-    let voucher_result = sqlx::query(
-        only_own_schema_query!("hrm", r#"
-        INSERT INTO erp.financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)
-        "#, "erp"),
-    )
-    .bind(voucher_id)
-    .bind(&voucher_number)
-    .bind(voucher_date)
-    .bind(&period)
-    .bind(format!("发放{}月工资", payroll_run.pay_period))
-    .bind(req.maker_id)
-    .bind(req.maker_name.clone().unwrap_or_else(|| "系统".to_string()))
-    .bind(&total_gross)
-    .bind(&total_gross)
-    .bind(id)
-    .bind(now)
-    .bind(now)
-    .execute(&state.db)
-    .await;
+    // 计算凭证分录（由纯函数构建，保证借贷平衡）
+    let summary = PayrollVoucherSummary {
+        total_gross: &total_gross,
+        total_tax: &total_tax,
+        total_social_security: &total_social_security,
+        net_salary: &net_salary,
+    };
+    let entries = build_payroll_voucher_entries(&summary);
 
-    match voucher_result {
-        Ok(_) => {
-            // 创建凭证分录（由纯函数构建，保证借贷平衡）
-            let summary = PayrollVoucherSummary {
-                total_gross: &total_gross,
-                total_tax: &total_tax,
-                total_social_security: &total_social_security,
-                net_salary: &net_salary,
-            };
-            let entries = build_payroll_voucher_entries(&summary);
+    // 构造跨域事件，发布给 ERP 生成财务凭证（不再跨 schema 直写 erp.*）
+    let entry_payloads: Vec<HrmPayrollVoucherEntryPayload> = entries
+        .iter()
+        .map(|e| HrmPayrollVoucherEntryPayload {
+            line_number: e.line as i32,
+            subject_code: e.subject_code.to_string(),
+            subject_name: e.subject_name.to_string(),
+            debit_amount: e.debit.to_f64().unwrap_or(0.0),
+            credit_amount: e.credit.to_f64().unwrap_or(0.0),
+        })
+        .collect();
 
-            for entry in entries {
-                let item_id = Uuid::new_v4();
-                let _ = sqlx::query(
-                    only_own_schema_query!("hrm", r#"
-                    INSERT INTO erp.voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                    "#, "erp"),
-                )
-                .bind(item_id)
-                .bind(voucher_id)
-                .bind(entry.line as i32)
-                .bind(entry.subject_code)
-                .bind(entry.subject_name)
-                .bind(format!("发放{}月工资", payroll_run.pay_period))
-                .bind(entry.debit)
-                .bind(entry.credit)
-                .bind(department_id)
-                .bind(now)
-                .bind(now)
-                .execute(&state.db)
-                .await;
+    let payload = HrmPayrollVoucherRequestedPayload {
+        payroll_run_id: id,
+        pay_period: payroll_run.pay_period.clone(),
+        voucher_date,
+        period: period.clone(),
+        voucher_number: voucher_number.clone(),
+        summary: format!("发放{}月工资", payroll_run.pay_period),
+        maker_id: req.maker_id,
+        maker_name: req
+            .maker_name
+            .clone()
+            .unwrap_or_else(|| "系统".to_string()),
+        department_id,
+        total_gross: total_gross.to_f64().unwrap_or(0.0),
+        total_tax: total_tax.to_f64().unwrap_or(0.0),
+        total_social_security: total_social_security.to_f64().unwrap_or(0.0),
+        total_housing_fund: total_housing_fund.to_f64().unwrap_or(0.0),
+        net_salary: net_salary.to_f64().unwrap_or(0.0),
+        employee_count: payroll_run.employee_count,
+        entries: entry_payloads,
+    };
+
+    if let Some(ref publisher) = state.event_publisher {
+        let publisher = publisher.clone();
+        let payroll_run_id = id;
+        tokio::spawn(async move {
+            if let Err(e) = publisher
+                .publish_event(EventType::HrmPayrollVoucherRequested, payload)
+                .await
+            {
+                tracing::warn!(
+                    "[hrm] HrmPayrollVoucherRequested 事件发布失败（graceful fallback）: {}",
+                    e
+                );
+            } else {
+                tracing::info!(
+                    "[hrm] HrmPayrollVoucherRequested 事件发布成功 - payroll_run_id={}",
+                    payroll_run_id
+                );
             }
-
-            tracing::debug!(
-                "[HRM] Generated payroll voucher {} for payroll run {}",
-                voucher_number,
-                id
-            );
-
-            Json(ApiResponse::success(
-                PayrollVoucherResponse {
-                    success: true,
-                    voucher_id: Some(voucher_id),
-                    voucher_number: Some(voucher_number),
-                    message: "薪资凭证生成成功".to_string(),
-                    total_salary: total_gross,
-                    total_social_security,
-                    total_housing_fund,
-                    total_tax,
-                    employee_count: payroll_run.employee_count,
-                },
-                "薪资凭证生成成功",
-            ))
-        }
-        Err(e) => {
-            tracing::error!("[HRM] Failed to generate payroll voucher: {}", e);
-            Json(ApiResponse::<PayrollVoucherResponse>::error(
-                500,
-                &format!("薪资凭证生成失败: {}", e),
-            ))
-        }
+        });
+    } else {
+        tracing::warn!(
+            "[hrm] event_publisher 未初始化，薪资凭证事件未发布 - payroll_run_id={}",
+            id
+        );
     }
+
+    Json(ApiResponse::success(
+        PayrollVoucherResponse {
+            success: true,
+            voucher_id: None,
+            voucher_number: Some(voucher_number),
+            message: "薪资凭证已提交，等待 ERP 生成".to_string(),
+            total_salary: total_gross,
+            total_social_security,
+            total_housing_fund,
+            total_tax,
+            employee_count: payroll_run.employee_count,
+        },
+        "薪资凭证已提交",
+    ))
 }
 
 /// 工资单（员工视角的薪资明细，JOIN payroll_items + payroll_runs + employees）
