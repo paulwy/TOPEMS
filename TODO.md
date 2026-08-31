@@ -1405,3 +1405,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 迁移文件 `20260831190600_core_business_schema_migrate.sql`（幂等，动态 DO 块）：public 中 core_* 业务域表按前缀归位至对应 schema（erp/crm/hrm/wms/scm/pm/pdm/doc_service/im/flow），保留 core_ 前缀命名（与 schema 内裸名表并存不合并），无同名冲突直接 SET SCHEMA；26 张处理。
 - 验证：public 299→273；erp/crm/hrm/wms/scm/pm/pdm 编译全过；门禁 PASS。
 - **保留 public（平台级/无明确 schema，待人工决策）**：core_tenant*/user*/role*/dict*/api*/menu*/permission*/billing*/ticket*/guide*/faq*/email*/file*/geofence*/location*/mobile*/usage*/plugin*/subscription*/operation*/notification*/migration*/login*/mail*/feedback* 等。
+
+## 2026-08-31 P1-2 收尾：qms 测试 search_path 修复 ✅
+- svc/qms/tests/integration_tests.rs setup_test_pool 加 after_connect `SET search_path TO qms, public`（qa_* 归位后无前缀测试查询依赖该路径；lims 测试不连 DB 无需改）。
+- 验证：qms 262+224+12 测试全过。
