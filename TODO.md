@@ -1445,3 +1445,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **级联副作用（预期）**：顺带删除 6 个指向 archive 表的遗留外键约束（core_subscriptions_plan_id_fkey、finance.core_finance_account_opening_balances/voucher_entries 的 account_id/voucher_id fkey、bom_items_bom_id_fkey 等）——这些 FK 引用已删旧版表，必须删除；活表本身保留。
 - 验证：archive schema 存在=0、public=256、总 schema=350；门禁 PASS；workspace 编译 0 error。
 - **P1-2 全部收官**：阶段0 schema 归位 + 阶段1 逻辑隔离 + archive 清理完成。
+
+## 2026-08-31 模块化单体：ticket + rd 真实服务接入 ✅
+- **ticket_real_module.rs**（feature `module-ticket`，默认启用）：SEARCH_PATH=public；State=PgPool；`handlers::ticket_routes()` + `feedback_compat::feedback_compat_routes()`；init_ticket_tables/init_sla_tables 建表（失败 warn）；tenant_middleware + require_permission("ticket:admin") + inject_dev_claims；ModuleGroup::Core。
+- **rd_real_module.rs**（feature `module-rd`，默认启用）：SEARCH_PATH=rs,public；`modules::ApiState`（db/auth_state/config(shared-core Config::load)/metrics/start_time/event_publisher）+ `create_routes()`；schema_defense 迁移验证；ModuleGroup::Wms。
+- Cargo.toml 加 optional dep + feature + default；mod.rs + main.rs 注册（编号 17/18）。
+- 验证：`cargo check -p topems-server`（default 含 module-ticket/module-rd）0 error。

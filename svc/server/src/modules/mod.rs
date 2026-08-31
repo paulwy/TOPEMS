@@ -38,5 +38,9 @@ pub mod scm_real_module;
 pub mod subscription_module;
 #[cfg(feature = "module-tms")]
 pub mod tms_real_module;
+#[cfg(feature = "module-ticket")]
+pub mod ticket_real_module;
+#[cfg(feature = "module-rd")]
+pub mod rd_real_module;
 #[cfg(feature = "module-wms")]
 pub mod wms_real_module;

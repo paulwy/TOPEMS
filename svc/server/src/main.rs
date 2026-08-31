@@ -240,6 +240,36 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 17. 真实 ticket 服务接入（feature `module-ticket` 门控，默认启用）
+    #[cfg(feature = "module-ticket")]
+    {
+        use topems_server::modules::ticket_real_module::TicketRealModule;
+        match TicketRealModule::build().await {
+            Ok(real_ticket) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_ticket));
+                tracing::info!("✅ 真实 ticket 服务已注册（ticket-real，含数据库/事件总线）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 ticket 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
+    // 18. 真实 rd 服务接入（feature `module-rd` 门控，默认启用）
+    #[cfg(feature = "module-rd")]
+    {
+        use topems_server::modules::rd_real_module::RdRealModule;
+        match RdRealModule::build().await {
+            Ok(real_rd) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_rd));
+                tracing::info!("✅ 真实 rd 服务已注册（rd-real，含数据库/事件总线）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 rd 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 17. 订阅管理模块（P5 商业化支撑，feature `module-subscription` 门控）
     #[cfg(feature = "module-subscription")]
     {
