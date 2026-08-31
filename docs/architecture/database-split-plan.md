@@ -70,8 +70,12 @@
   3. **存量显式化 + 增量阻断**：17 项既有无前缀跨 schema 引用入 `bare_ref_baseline`（输出"已知基线"不阻塞，标注处理建议）；**新增**无前缀跨 schema 直读/显式未授权引用 → 门禁 FAIL。已负向验证（master-data 新增 `FROM production_orders` → FAIL）。
   4. **修复检查工具别名误报**：`extract_schema_refs` 排除本 SQL 已声明的表别名（如 mes `FROM bom_items bi` 的 `bi.*` 不再误判为 bi schema）。
   5. **unified-core 显式跨 schema 只读** `portal.user_preferences` 入 allow（声明合法跨读）。
-- **已知基线（17 项，待逐项确认"改走 API"或"维持声明"）**：ai/analytics/users(iam)、communication→gis 3 项、finance→pm/erp 4 项、hrm→erp 2 项、monitor→hrm/wms/pm 4 项、unified-core audit_logs(同名多 schema)/users。
-- **待办（阶段 1 后续）**：17 项基线逐项治理（跨域只读改走服务 API 或集成事件）；同名多 schema 表（audit_logs 等 16 张）收敛去重。
+- **已知基线（17 项）✅ 已全部治理确认（2026-08-31）**：
+  - communication→gis 3 项：✅ 已改走 gis HTTP API（历史完成）。
+  - finance→pm/erp 4 项 / hrm→erp 2 项 / monitor→hrm/wms/pm 4 项 / ai/analytics→users：✅ 逐项代码核查**无 SQL 直读残留**（已改走 API 或本无直读）；erp→finance 直读本轮已改走 finance API（见 TODO 2026-08-31）。
+  - unified-core audit_logs(同名多 schema)/users：✅ 维持声明——audit_logs 各业务 schema 自有（审计表设计如此，门禁 ambiguous 声明不阻塞）；users 平台契约保留 public。
+- **同名多 schema 表（audit_logs 等 14 张）**：各服务自有同名表（audit_logs 18 个 schema 中 17 空 + shared 主表 345 行，代码按 search_path/显式前缀解析本服务表），门禁 `ambiguous` 声明不阻塞；**设计合理，无需物理收敛**，仅保持显式前缀规范。
+- **待办（阶段 1 后续）**：已全部完成（17 项基线治理 + 同名多 schema 声明）；剩余为阶段 2 物理拆分（触发阈值达成后再做）。
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）

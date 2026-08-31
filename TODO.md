@@ -1429,3 +1429,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 迁移文件 `20260831190700_core_residual_archive.sql`（幂等，动态 DO 块）：逐表精确检查（裸名+core_ 前缀词边界）确认 **17 张无代码引用**的 core_* 业务域残留表（core_billing_*/core_ticket_activities 等 6/core_guide_*/core_location_*/core_mobile_offline_*/core_email_*/core_mail_*/core_tenant_usage 等/core_api_version_configs）→ archive。
 - **保留 public（平台契约，有引用）**：core_users/tenants/roles/permissions/dict/menu/file/notification/plugin/workflows/subscriptions/tickets/guides/faqs/geofences/documents/feedbacks/emails/usage_records 等。
 - 验证：public 273→256、archive 101→118；门禁 PASS；workspace 编译 0 error。
+
+## 2026-08-31 P1-2 阶段 1 逻辑隔离：17 项跨域基线全部治理确认 ✅
+- **17 项基线逐项核查**（docs/architecture/database-split-plan.md 更新）：
+  - communication→gis 3 项：已改走 gis HTTP API（历史完成）
+  - finance→pm/erp 4 项 / hrm→erp 2 项 / monitor→hrm/wms/pm 4 项 / ai/analytics→users：代码核查**无 SQL 直读残留**（已治理/本无直读）
+  - erp→finance 直读：本轮已改走 finance API（见上）
+  - unified-core audit_logs/users：维持声明（audit_logs 各服务自有表设计 + users 平台契约）
+- **同名多 schema 表（14 张）**：确认设计合理（audit_logs 18 schema 中 17 空 + shared 主表；各服务 search_path/显式前缀解析本服务表），门禁 ambiguous 声明不阻塞，无需物理收敛。
+- **阶段 1 后续待办全部完成**；阶段 2 物理拆分待触发阈值。
