@@ -15,7 +15,7 @@ use topems_shared_core::{
 };
 
 use crate::middleware::service_identity::ServiceIdentity;
-use crate::service::is_service_claims;
+use crate::service::{is_service_claims, record_service_call};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -737,6 +737,8 @@ pub async fn auth_middleware(
             path = %path,
             "服务间调用（service-to-service）"
         );
+        // 服务间调用可观测性：Prometheus 计数（service 维度），/metrics 暴露
+        record_service_call(&claims.username);
         parts.extensions.insert(ServiceIdentity {
             service_name: claims.username.clone(),
             permissions: claims.permissions.clone(),

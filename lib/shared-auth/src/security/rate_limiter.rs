@@ -3,6 +3,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use crate::middleware::service_identity::ServiceIdentity;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -16,6 +17,11 @@ pub struct RateLimitConfig {
     pub window_secs: u64,
     pub by_user_id: bool,
     pub by_ip: bool,
+    /// 服务间调用是否使用独立限流桶（识别 ServiceIdentity，默认 true）。
+    /// 服务调用与用户调用隔离，避免高频服务聚合打爆用户配额，也避免用户流量拖垮服务。
+    pub by_service: bool,
+    /// 服务间调用单桶配额（默认 1000/窗口，显著高于用户配额）。
+    pub service_max_requests: u32,
 }
 
 impl Default for RateLimitConfig {
@@ -26,6 +32,8 @@ impl Default for RateLimitConfig {
             window_secs: 60,
             by_user_id: true,
             by_ip: true,
+            by_service: true,
+            service_max_requests: 1000,
         }
     }
 }
@@ -38,6 +46,8 @@ impl RateLimitConfig {
             window_secs,
             by_user_id: true,
             by_ip: true,
+            by_service: true,
+            service_max_requests: 1000,
         }
     }
 
@@ -53,6 +63,16 @@ impl RateLimitConfig {
 
     pub fn with_by_ip(mut self, by_ip: bool) -> Self {
         self.by_ip = by_ip;
+        self
+    }
+
+    pub fn with_by_service(mut self, by_service: bool) -> Self {
+        self.by_service = by_service;
+        self
+    }
+
+    pub fn with_service_max_requests(mut self, service_max_requests: u32) -> Self {
+        self.service_max_requests = service_max_requests;
         self
     }
 }
@@ -213,8 +233,51 @@ pub async fn rate_limit_middleware(
         return next.run(req).await;
     }
 
-    let key = build_rate_limit_key(&middleware.config, &req);
     let window = Duration::from_secs(middleware.config.window_secs);
+
+    // 服务间调用（有 ServiceIdentity）：独立限流桶 + 更高配额，
+    // 与用户/IP 桶隔离——服务聚合不被用户流量打爆，用户也不被服务高频拖累。
+    if middleware.config.by_service {
+        if let Some(si) = req.extensions().get::<ServiceIdentity>() {
+            let key = format!("service:{}", si.service_name);
+            let max = middleware.config.service_max_requests;
+            let (allowed, remaining, reset) = middleware
+                .store
+                .check_and_increment(&key, max, window)
+                .await;
+
+            if !allowed {
+                let body = json!({
+                    "code": 429,
+                    "success": false,
+                    "message": "Too Many Requests (service rate limit)",
+                    "data": null,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                })
+                .to_string();
+
+                let mut response = axum::response::Response::builder()
+                    .status(StatusCode::TOO_MANY_REQUESTS)
+                    .header("Content-Type", "application/json")
+                    .body(axum::body::Body::from(body))
+                    .unwrap_or_else(|_| {
+                        axum::response::Response::builder()
+                            .status(StatusCode::INTERNAL_SERVER_ERROR)
+                            .body(axum::body::Body::empty())
+                            .expect("building response with INTERNAL_SERVER_ERROR should always succeed")
+                    });
+
+                add_rate_limit_headers(&mut response, max, 0, reset);
+                return response;
+            }
+
+            let mut response = next.run(req).await;
+            add_rate_limit_headers(&mut response, max, remaining, reset);
+            return response;
+        }
+    }
+
+    let key = build_rate_limit_key(&middleware.config, &req);
     let max_requests = middleware.config.max_requests;
 
     let (allowed, remaining, reset) = middleware
