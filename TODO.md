@@ -1297,3 +1297,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 验证：perm-matrix scan R5 = 0（工作区）；finance/tms 编译 0 error；测试全过；门禁 PASS。
 - 提交：baa7a0106（finance，已推送）。
 - **遗留**：optimization.rs（untracked）待用户提交后 R5 全量归零。
+
+## 2026-08-31 SRM_SCHEMA 一致性对齐（4a 去前缀遗漏）✅
+- **4a 遗漏确认**：srm 服务去 plugin_srm 前缀（归位 srm schema、删 plugin_srm 表）后，shared-db 的 `SRM_SCHEMA` 常量仍指向 `plugin_srm`（已删空 schema），`schema.rs` 测试断言与 `srm integration_tests` 3 处 SQL 仍引用 plugin_srm.suppliers（启用必失败）。
+- **修复**：SRM_SCHEMA→"srm"；断言 srm_table('suppliers')=='srm.suppliers'；integration_tests 3 处 plugin_srm→srm。
+- 验证：shared-db 143 + srm 516 测试全过（含 srm_table 断言）；门禁 PASS；业务代码 plugin_srm.* 引用清零。
+- 提交：680c8f60d（已推送）。
+- **新登记待办（plugin_* 体系过时，不擅改）**：shared-db `schema.rs` 19 个 plugin_* SCHEMA 常量（hrm/erp/pm/crm/qms/mes/wms/srm/scm/pdm/lims/rs/gis/ehs/bi/ai/im/integration）业务零使用（仅 shared-db 内部 + 自洽断言），各服务已用真实 SERVICE_SCHEMA。其中 plugin_ai（3 表）/plugin_mes（audit_logs）有"插件系统管理"注释佐证为设计选择（且 ai/mes 主 schema 存在同名表，属双 schema 待评审）；plugin_aps（5 表）在 _archive 归档服务。**建议后续统一评审这些 plugin_* schema 归属**（属 P1-2 阶段 0 E 项代码侧）。
