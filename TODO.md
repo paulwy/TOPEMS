@@ -1603,3 +1603,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **结论**：这 4 张保留；与 dashboards/equipment/materials 等同类——**都是跨域直连的 search_path 缺陷**，需先修复（引用服务显式 schema 或 API 化）再清理。
 - **本轮最终成果**：public 262 → 172（90 张影子/死表：46 pdm/mes/analytics + 40 finance_v5x + 4 死表）；拆分阈值持续改善、门禁全 PASS（28 服务）、断裂 FK 0、pdm/mes/analytics/finance 编译通过。
 - **下一专项建议**：跨域直连 search_path 缺陷治理（ai→bi、portal→pdm.materials、pm→mes.equipment、finance→erp.payables/receivables、mes→qms.quality_inspections、lims→bi.report_data）——涉及 API 化/显式 schema 引用，需单独规划。
+
+## 2026-09-01 拆分前置治理：通用名影子表清理（172 → 151）✅
+- **精确审计**：区分"真实 SQL 引用"（FROM/INTO/UPDATE/JOIN）与"类型名/API 路由/MCP mock"——反转此前保守判断。
+  - ai 的 bi.rs 是 **MCP mock 工具**（无 DB 查询）；portal 的 materials 是 **GraphQL API 转发**（/api/erp/materials）；pm 无 FROM equipment。
+- **DROP 21 张**（引用服务主 schema 有同名活表 + 全 0 行）：
+  - 迁移 `...03_drop_public_generic_shadow.sql` 13 张：mes(equipment/process_routes/process_route_steps)、erp(financial_vouchers/voucher_items/materials)、bi(reports/report_schedules/report_subscriptions/report_execution_records/report_data/dashboards/data_sources)
+  - 迁移 `...04_drop_public_dead_bi_tables.sql` 8 张：analysis_history/analysis_queries/dashboard_widgets/datasource_fields/datasource_tables/saved_analysis_results/visualization_data/visualizations（无 SQL 引用，bi 有同名）
+- **验证**：mes/erp/analytics 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → 151（111 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善。
+- **保留（跨域活跃，待 API 化专项）**：quality_inspections/quality_standards（mes 引用 qms 表）、expenses/payables/receivables（finance 引用 erp 表）、report_templates（12 行数据待迁移评估）、inspection_records（6 行）。
