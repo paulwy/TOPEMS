@@ -114,6 +114,7 @@ async fn main() -> Result<()> {
         enable_request_context: true,
         api_prefix: "/api/mobile",
         legacy_prefixes: &["/api/v1/mobile", "/api/core/mobile/v1"],
+        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
 
@@ -134,7 +135,8 @@ async fn main() -> Result<()> {
     }
 
     // 6 个服务客户端初始化
-    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default() {
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["wms:admin"])) {
         Ok(client) => {
             tracing::info!("✅ WMS服务客户端初始化成功");
             client
@@ -149,7 +151,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let mes_api_client = match TypedServiceClient::<MesApi>::from_env_default() {
+    let mes_api_client = match TypedServiceClient::<MesApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["mes:admin"])) {
         Ok(client) => {
             tracing::info!("✅ MES API服务客户端初始化成功");
             client
@@ -164,7 +166,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let qms_api_client = match TypedServiceClient::<QmsApi>::from_env_default() {
+    let qms_api_client = match TypedServiceClient::<QmsApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["qms:admin"])) {
         Ok(client) => {
             tracing::info!("✅ QMS API服务客户端初始化成功");
             client
@@ -179,7 +181,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default() {
+    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["hrm:admin"])) {
         Ok(client) => {
             tracing::info!("✅ HRM服务客户端初始化成功");
             client
@@ -194,7 +196,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default() {
+    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["workflow:read"])) {
         Ok(client) => {
             tracing::info!("✅ Workflow服务客户端初始化成功");
             client
@@ -209,7 +211,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let notification_client = match TypedServiceClient::<NotificationApi>::from_env_default() {
+    let notification_client = match TypedServiceClient::<NotificationApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "mobile-service", &["notification:read"])) {
         Ok(client) => {
             tracing::info!("✅ Notification服务客户端初始化成功");
             client
