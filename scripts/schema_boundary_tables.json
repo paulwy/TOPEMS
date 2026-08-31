@@ -410,13 +410,11 @@
     "wms_replenishment_suggestion_snapshots": "scm",
     "wms_scm_sync": "integration",
     "work_orders": "mes",
-    "work_stations": "mes"
+    "work_stations": "mes",
+    "analysis_results": "ai",
+    "mes_qms_sync": "integration"
   },
   "ambiguous": {
-    "analysis_results": [
-      "ai",
-      "bi"
-    ],
     "audit_logs": [
       "crm",
       "mes",
@@ -450,10 +448,6 @@
     "locations": [
       "wms",
       "gis"
-    ],
-    "mes_qms_sync": [
-      "mes",
-      "integration"
     ],
     "project_members": [
       "rs",
