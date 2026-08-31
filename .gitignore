@@ -276,10 +276,10 @@ logs/_stale-*
 # 如需正式采用，从本节移除对应条目并 git add 即可
 # ─────────────────────────────────────────────
 
-# BFF 实验层
-apps/web/src/components/bff/
-apps/web/src/hooks/bff/
-apps/web/src/utils/bff/
+# BFF 层（V44/V45 Track D 已正式采用，见 docs/architecture/architecture-evolution-and-todo.md）
+# apps/web/src/components/bff/
+# apps/web/src/hooks/bff/
+# apps/web/src/utils/bff/
 
 # Design system 探索
 apps/web/src/design-system/
