@@ -1804,3 +1804,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **最大耦合点**：workflow-service（core 库）被 14 个跨库调用方依赖；wms 4 / erp 3 / hrm·mes·notification 各 2。
 - **关键结论**：跨库边均为服务 API 调用（service token）——拆分后无需额外改造；真正前置治理仍是预案 3 项（integration 直写、unified-core→portal、跨库事务边界）。
 - **输出**：service-topology.cross-db.{json,html}（红色虚线高亮跨库边）+ cross-db-calls.md（清单+优先级）。
+
+## 2026-09-01 workflow-service 拆分专项评估 ✅
+- **结论**：保持独立共享库（方案 A）——流程引擎是跨域协调器，审批流天然跨域（srm→qms→finance），分片复制（B）违背其全局性本质。
+- **对比**：A 35 分 vs B 18 分（8 维度）；A 唯一代价是 14 条跨库 API 调用，但已全部 service token 化（零额外改造）。
+- **关键证据**：任务按审批人分配（my_task_stats 全局待办）而非按域——分片后待办聚合/跨域流转/审计追溯三大难题。
+- **产出**：docs/architecture/workflow-split-assessment.md；P1 行动项 = portal 待办聚合缓存（my_task_stats TTL）。
