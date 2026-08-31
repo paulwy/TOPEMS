@@ -1,0 +1,80 @@
+{
+  "default_shared": [
+    "public",
+    "unified_core",
+    "information_schema"
+  ],
+  "services": {
+    "crm": {
+      "schema": "crm",
+      "allow": []
+    },
+    "hrm": {
+      "schema": "hrm",
+      "allow": [
+        "mobile"
+      ]
+    },
+    "scm": {
+      "schema": "scm",
+      "allow": []
+    },
+    "srm": {
+      "schema": "srm",
+      "allow": [
+        "plugin_srm"
+      ]
+    },
+    "wms": {
+      "schema": "wms",
+      "allow": [
+        "plugin_wms"
+      ]
+    },
+    "qms": {
+      "schema": "qms",
+      "allow": []
+    },
+    "erp": {
+      "schema": "erp",
+      "allow": [
+        "plugin_erp",
+        "plugin_finance"
+      ]
+    },
+    "finance": {
+      "schema": "finance",
+      "allow": []
+    },
+    "pm": {
+      "schema": "pm",
+      "allow": []
+    },
+    "mobile": {
+      "schema": "mobile",
+      "allow": []
+    },
+    "gis": {
+      "schema": "gis",
+      "allow": []
+    },
+    "ehs": {
+      "schema": "public",
+      "allow": []
+    },
+    "communication": {
+      "schema": "public",
+      "allow": []
+    },
+    "integration": {
+      "schema": "integration",
+      "allow": []
+    },
+    "ai": {
+      "schema": "ai",
+      "allow": [
+        "plugin_ai"
+      ]
+    }
+  }
+}

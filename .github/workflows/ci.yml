@@ -245,6 +245,46 @@ jobs:
         run: cargo fmt --all --check
 
   # ──────────────────────────────────────────────────────────────────────────
+  # [P0-3 NEW Gate] 配置单一真相源三向校验
+  # Cargo.toml members ↔ config/services.yaml ↔ config/ports.env 一致性
+  # 脚本: scripts/check-workspace-registry.py
+  # 触发: config/** 或 Cargo.toml 或校验脚本变更（schedule/workflow_dispatch 全量跑）
+  # ──────────────────────────────────────────────────────────────────────────
+  config-registry-gate:
+    name: Gate M · 配置单一真相源三向校验 (workspace registry)
+    if: !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install PyYAML
+        run: python3 -m pip install --user pyyaml
+
+      - name: Check workspace registry consistency
+        run: python3 scripts/check-workspace-registry.py --check
+    # 仅这些路径变更时在 push/PR 上运行；schedule/workflow_dispatch 每次全量跑
+    paths:
+      - 'config/**'
+      - 'Cargo.toml'
+      - 'scripts/check-workspace-registry.py'
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # [P2-3 NEW Gate] CHANGELOG 发布校验
+  # tag 推送时校验 CHANGELOG.md 结构完整 + 草案可生成（scripts/release.sh check），
+  # 防止打 tag 时遗漏 CHANGELOG 更新。非 tag 事件跳过（PR 不阻塞）。
+  # ──────────────────────────────────────────────────────────────────────────
+  changelog-gate:
+    name: Gate · CHANGELOG 发布校验 (P2-3)
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # 需要 tag 历史供 generate-changelog.py 定位最近 tag
+      - name: Run CHANGELOG release check
+        run: ./scripts/release.sh check
+
+  # ──────────────────────────────────────────────────────────────────────────
   # [V232-P3 NEW Gate K] Cargo clippy workspace -- -D warnings (standalone job)
   # ──────────────────────────────────────────────────────────────────────────
   clippy-check:
@@ -1800,6 +1840,7 @@ jobs:
       - code-quality
       - migration-test
       - desktop-build
+      - changelog-gate
     if: always()
     steps:
       # ────────────────────────────────────────────────────────────────────
@@ -1861,6 +1902,7 @@ jobs:
           echo "| Code Quality (API paths · naming · console.log · allow_baseline) | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CHANGELOG 发布校验 (P2-3 · tag only) | ${{ needs.changelog-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate (26 svc · strict · V274 含 sqlx 语义 advisory) | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -1881,7 +1923,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
 
           FAILED=false
           for result in $RESULTS; do
@@ -1926,6 +1968,37 @@ jobs:
   # 依赖：Postgres 16 services 声明 + Rust nightly-2026-07-01 + sqlx
   #       单服务二进制编译 + 启动 + 自检合计 ≤ 2 min，26 服务整体 ≤ 90 min（含缓存命中）。
   # ==========================================================================
+  # ──────────────────────────────────────────────────────────────────────────
+  # Gate M · Schema Boundary Static Gate
+  # 静态跨 schema SQL 引用检查（无需 DB）：扫描所有 svc/*/src 的 SQL 字符串
+  # 字面量，校验 `schema.table` 引用都在各服务白名单内（scripts/schema_boundary.json）。
+  # 与 schema-defense-gate（运行时）互补：本门禁快、无 DB 依赖、覆盖全部服务 SQL。
+  # 违规即构建失败。
+  # ──────────────────────────────────────────────────────────────────────────
+  schema-boundary-gate:
+    name: Gate M · Schema Boundary Static Gate (cross-schema SQL lint)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Run schema boundary check
+        run: python3 scripts/check_schema_boundary.py
+
+      - name: Summarize gate
+        run: |
+          python3 scripts/check_schema_boundary.py --json > /tmp/schema-boundary.json
+          {
+            echo "## Schema Boundary Static Gate"
+            echo ""
+            echo '```'
+            python3 scripts/check_schema_boundary.py
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   schema-defense-gate:
     name: Schema Defense Gate（26 services · strict mode）
     needs: [changes, rust-lint]
@@ -2003,7 +2076,7 @@ jobs:
           # 19 个非 public schema（billing/ticket/feedback/plugin-registry/unified-core/master-data/communication 共用 public）
           for schema in \
             gis ehs portal finance \
-            erp hrm crm pm scm wms srm pdm mes qms \
+            erp hrm crm pm scm wms srm pdm mes qms lims \
             ai mobile integration \
             bi rs; do
             psql -h localhost -U topems_test -d topems_defense \
@@ -2027,6 +2100,7 @@ jobs:
             -p topems-pdm \
             -p topems-mes \
             -p topems-qms \
+            -p topems-lims \
             -p topems-ai \
             -p topems-billing \
             -p topems-rd \
