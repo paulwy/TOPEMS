@@ -1516,3 +1516,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   3. **accounting_subjects 物理迁移**（ERP→Finance）✅ V321 已迁移 + erp 改走 finance API（2026-08-31）；本轮 **DROP erp.accounting_subjects 0 行空表残留**（迁移 20260831191000）收尾。
   4. **编译时边界检查全覆盖**（原 6/32 服务）✅ 门禁 schema_boundary 已覆盖 28 服务。
 - 至此 TODO 顶部"关键未启动 P0"四项全部落地/已明确状态。
+
+## 2026-08-31 物理库拆分预案可执行化：阈值监控脚本 + 拆分单元映射 ✅
+- 新增 `scripts/check_split_threshold.py`：自动实测 5 项拆分阈值（DB 大小/最大 schema 表数实测，连接/跨schema/备份标注需观测），任一触发退出码 1 提示启动评估。运行验证：5 项均未触发（DB 0.1GB、public 262 张）。
+- 预案深化（database-split-plan.md §3 阶段 2）：拆分单元映射表（core 库 ~400 表 / finance 库 127 / manufacturing 187 / supply 78 / business 300）+ **拆分前置条件**——integration 跨域事务直写与 unified-core 跨库读偏好为拆分前必须治理项（改 API/事件/Saga），跨库事务边界统一走事件+补偿。
+- 意义：物理拆分从"决策输入"升级为"可监控、可执行预案"；阈值达成时按映射 + 前置治理直接启动。

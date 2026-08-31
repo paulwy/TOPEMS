@@ -92,15 +92,26 @@
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）
-候选拆分域（按业务耦合度由高到低）：
-1. **财务域**（finance/erp/billing 关联紧密）——如需拆分，先拆 finance
-2. **制造域**（mes/pdm/qa）
-3. **供应链域**（scm/wms/srm）
 
-拆分方式：
+**拆分单元映射**（2026-08-31 基于当前 35 schema / 1080 表梳理，阈值达成时按此执行）：
+
+| 目标库 | 包含 schema | 表数(约) | 归属服务 |
+|---|---|---|---|
+| `topems_core`（平台核心库） | public（平台契约）+ core + iam + shared + doc + flow + notification + mail + storage + doc_service + integration + im + rs + report + master_data | ~400 | 平台级共享，所有服务必连 |
+| `topems_finance`（财务库，优先拆分） | finance + erp | ~127 | finance / erp |
+| `topems_manufacturing`（制造库） | mes + pdm + qms + ehs + lims | ~187 | mes / pdm / qms / ehs / lims |
+| `topems_supply`（供应链库） | scm + wms + srm + tms | ~78 | scm / wms / srm / tms |
+| `topems_business`（业务综合库） | crm + hrm + pm + bi + portal + mobile + gis + ai | ~300 | 其余业务服务 |
+
+**拆分前置条件（拆分前必须先治理，否则跨库无法工作）**：
+1. **integration 跨域事务直写**（allow=['qms','lims']）：拆分后 qms/lims 在制造库，integration 无法跨库事务直写 → 需改为「integration 调各域服务 API 编排」或「事件驱动 + 本地事务 + 补偿（Saga）」。**这是拆分最大前置改造**。
+2. **unified-core 读 portal.user_preferences**（allow=['portal']）：拆分后跨库 → 改为 unified-core 走 portal API 只读，或 portal 偏好表随用户中心库。
+3. **跨库事务边界**：任何跨域业务操作不得依赖单库事务，统一走事件（Redis Stream + DLQ 已有）+ Saga 补偿。
+
+**拆分方式**：
 - 每域独立 `CREATE DATABASE` + 独立连接串 + 独立 PgBouncer pool
 - 通过 `config/services.yaml` 的 `database_url` 覆盖配置，服务级灰度切换
-- 跨域数据需求走 `integration` 服务事件同步（已有 Redis Stream 基础）
+- **阈值监控**：`scripts/check_split_threshold.py`（本轮新增）自动检测 5 项阈值，任一触发即启动评估；生产建议接入 PgBouncer stats + pg_stat_statements 持续采集指标 3/4/5
 
 ## 4. 回退方案
 
