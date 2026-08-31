@@ -5,79 +5,240 @@
     "information_schema"
   ],
   "services": {
-    "crm": {
-      "schema": "crm",
+    "ai": {
+      "schema": "ai",
+      "search_path": "ai_service, public, shared",
       "allow": []
     },
-    "hrm": {
-      "schema": "hrm",
-      "allow": [
-        "mobile"
-      ]
-    },
-    "scm": {
-      "schema": "scm",
-      "allow": []
-    },
-    "srm": {
-      "schema": "srm",
-      "allow": [
-        "plugin_srm"
-      ]
-    },
-    "wms": {
-      "schema": "wms",
-      "allow": [
-        "plugin_wms"
-      ]
-    },
-    "qms": {
-      "schema": "qms",
-      "allow": []
-    },
-    "erp": {
-      "schema": "erp",
-      "allow": [
-        "plugin_erp",
-        "plugin_finance"
-      ]
-    },
-    "finance": {
-      "schema": "finance",
-      "allow": []
-    },
-    "pm": {
-      "schema": "pm",
-      "allow": []
-    },
-    "mobile": {
-      "schema": "mobile",
-      "allow": []
-    },
-    "gis": {
-      "schema": "gis",
-      "allow": []
-    },
-    "ehs": {
-      "schema": "public",
+    "analytics": {
+      "schema": "bi",
+      "search_path": "bi, public",
       "allow": []
     },
     "communication": {
       "schema": "public",
+      "search_path": "public",
       "allow": []
+    },
+    "crm": {
+      "schema": "crm",
+      "search_path": "crm, public, shared",
+      "allow": []
+    },
+    "ehs": {
+      "schema": "public",
+      "search_path": "ehs, public",
+      "allow": []
+    },
+    "erp": {
+      "schema": "erp",
+      "search_path": "erp, public",
+      "allow": []
+    },
+    "finance": {
+      "schema": "finance",
+      "search_path": "finance, public",
+      "allow": []
+    },
+    "gis": {
+      "schema": "gis",
+      "search_path": "gis, public",
+      "allow": []
+    },
+    "hrm": {
+      "schema": "hrm",
+      "search_path": "hrm, public, shared",
+      "allow": [
+        "mobile"
+      ]
     },
     "integration": {
       "schema": "integration",
+      "search_path": "integration, public",
       "allow": [
         "qms",
         "lims"
       ]
     },
-    "ai": {
-      "schema": "ai",
+    "lims": {
+      "schema": "lims",
+      "search_path": "lims, public",
+      "allow": []
+    },
+    "master-data": {
+      "schema": "public",
+      "search_path": "public",
+      "allow": []
+    },
+    "mes": {
+      "schema": "mes",
+      "search_path": "mes, public",
+      "allow": []
+    },
+    "mobile": {
+      "schema": "mobile",
+      "search_path": "mobile, public",
+      "allow": []
+    },
+    "monitor": {
+      "schema": "public",
+      "search_path": "public",
+      "allow": []
+    },
+    "pdm": {
+      "schema": "pdm",
+      "search_path": "pdm, public",
+      "allow": []
+    },
+    "plugin-registry": {
+      "schema": "public",
+      "search_path": "public",
+      "allow": []
+    },
+    "pm": {
+      "schema": "pm",
+      "search_path": "pm, public, shared",
+      "allow": []
+    },
+    "portal": {
+      "schema": "portal",
+      "search_path": "portal, public",
+      "allow": []
+    },
+    "qms": {
+      "schema": "qms",
+      "search_path": "qms, public",
+      "allow": []
+    },
+    "rd": {
+      "schema": "rs",
+      "search_path": "rs, public",
+      "allow": []
+    },
+    "scm": {
+      "schema": "scm",
+      "search_path": "scm, public, shared",
+      "allow": []
+    },
+    "search": {
+      "schema": "public",
+      "search_path": "public",
+      "allow": []
+    },
+    "srm": {
+      "schema": "srm",
+      "search_path": "srm, public, shared",
+      "allow": []
+    },
+    "ticket": {
+      "schema": "public",
+      "search_path": "public",
+      "allow": []
+    },
+    "tms": {
+      "schema": "tms",
+      "search_path": "tms, public, shared",
+      "allow": []
+    },
+    "unified-core": {
+      "schema": "public",
+      "search_path": "public",
       "allow": [
-        "plugin_ai"
+        "portal"
       ]
+    },
+    "wms": {
+      "schema": "wms",
+      "search_path": "wms, public, shared",
+      "allow": []
     }
-  }
+  },
+  "bare_ref_baseline": [
+    {
+      "service": "ai",
+      "table": "users",
+      "note": "认证用户表(iam)，既有引用，待确认是否改走 auth API"
+    },
+    {
+      "service": "analytics",
+      "table": "users",
+      "note": "同上"
+    },
+    {
+      "service": "communication",
+      "table": "business_locations",
+      "note": "gis 地理位置只读，既有，建议改走 gis API"
+    },
+    {
+      "service": "communication",
+      "table": "device_locations",
+      "note": "gis 只读"
+    },
+    {
+      "service": "communication",
+      "table": "warehouse_locations",
+      "note": "gis 只读"
+    },
+    {
+      "service": "finance",
+      "table": "budgets",
+      "note": "pm 预算只读，既有"
+    },
+    {
+      "service": "finance",
+      "table": "expenses",
+      "note": "erp 费用只读，既有"
+    },
+    {
+      "service": "finance",
+      "table": "payables",
+      "note": "erp 应付只读，既有"
+    },
+    {
+      "service": "finance",
+      "table": "receivables",
+      "note": "erp 应收只读，既有"
+    },
+    {
+      "service": "hrm",
+      "table": "financial_vouchers",
+      "note": "erp 凭证只读，既有"
+    },
+    {
+      "service": "hrm",
+      "table": "voucher_items",
+      "note": "erp 凭证明细只读，既有"
+    },
+    {
+      "service": "monitor",
+      "table": "departments",
+      "note": "监控跨域只读 hrm，monitor 本质为只读观测服务"
+    },
+    {
+      "service": "monitor",
+      "table": "employees",
+      "note": "监控跨域只读 hrm"
+    },
+    {
+      "service": "monitor",
+      "table": "inventory",
+      "note": "监控跨域只读 wms/erp"
+    },
+    {
+      "service": "monitor",
+      "table": "projects",
+      "note": "监控跨域只读 pm/rs"
+    },
+    {
+      "service": "unified-core",
+      "table": "audit_logs",
+      "note": "同名多 schema(8处)审计表，unified-core 统一审计视图，既有"
+    },
+    {
+      "service": "unified-core",
+      "table": "users",
+      "note": "iam 认证用户，既有"
+    }
+  ],
+  "bare_ref_allow": {}
 }

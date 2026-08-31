@@ -50,7 +50,7 @@
 | 跨 schema 查询占比 | 低（public 聚合已消除） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
 | 备份/恢复时间 | 秒级 | **> 15 分钟** | RPO/RTO 实测 |
 
-> 结论：当前 ~31MB / 449 表 / 最大 schema 58 张，远未达到物理拆分阈值，**不建议现在执行物理拆分**；阶段 1（逻辑隔离）为下一步重点。
+> 结论：当前 ~31MB / 449 表 / 最大 schema 58 张，远未达到物理拆分阈值，**不建议现在执行物理拆分**；阶段 1（逻辑隔离）已完成第一轮落地（门禁增强+基线显式化，见 §3）。
 
 ## 3. 分阶段迁移路径
 
@@ -62,8 +62,16 @@
 - 风险：涉及大量代码中的表名解析，需配合 `search_path` 兼容期。
 - 产出：public 表归位清单（`qa_*→?`、`finance_*→finance`、`pdm_*→pdm`、`analytics_*→bi`、`material_*→erp`…），需业务 owner 确认 qa 域归属。
 
-### 阶段 1：逻辑隔离（建议 2-3 个月内）
+### 阶段 1：逻辑隔离 ✅（2026-08-31 已落地第一轮）
 - 以业务 schema 为逻辑边界，明确"跨 schema 访问必须走服务 API 或集成事件"，代码层禁止跨 schema 直读。
+- **本轮落地**：
+  1. **门禁增强**：`scripts/check_schema_boundary.py` 新增**无前缀跨 schema 直读检测**——基于静态表归属映射 `scripts/schema_boundary_tables.json`（409 表单归属 + 16 同名多 schema），按各服务 `search_path` 解析裸表引用归属，非本服务 schema 即报违规。
+  2. **服务覆盖补齐**：`schema_boundary.json` services 15 → 28（补 lims/mes/pdm/analytics/master-data/unified-core/monitor/portal/rd/search/ticket/tms/plugin-registry），各带 `schema` + `search_path`；清理失效 plugin_* allow。
+  3. **存量显式化 + 增量阻断**：17 项既有无前缀跨 schema 引用入 `bare_ref_baseline`（输出"已知基线"不阻塞，标注处理建议）；**新增**无前缀跨 schema 直读/显式未授权引用 → 门禁 FAIL。已负向验证（master-data 新增 `FROM production_orders` → FAIL）。
+  4. **修复检查工具别名误报**：`extract_schema_refs` 排除本 SQL 已声明的表别名（如 mes `FROM bom_items bi` 的 `bi.*` 不再误判为 bi schema）。
+  5. **unified-core 显式跨 schema 只读** `portal.user_preferences` 入 allow（声明合法跨读）。
+- **已知基线（17 项，待逐项确认"改走 API"或"维持声明"）**：ai/analytics/users(iam)、communication→gis 3 项、finance→pm/erp 4 项、hrm→erp 2 项、monitor→hrm/wms/pm 4 项、unified-core audit_logs(同名多 schema)/users。
+- **待办（阶段 1 后续）**：17 项基线逐项治理（跨域只读改走服务 API 或集成事件）；同名多 schema 表（audit_logs 等 16 张）收敛去重。
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）
@@ -90,7 +98,7 @@
 3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
-> 本预案为决策输入；阶段 0 已按批准执行，阶段 1（逻辑隔离）为下一步。
+> 本预案为决策输入；阶段 0（schema 归位）与阶段 1 第一轮（逻辑隔离门禁）均已落地，阶段 2（物理拆分）待阈值达成后启动。
 
 ### 5.1 归属评审结论（2026-08-31）
 

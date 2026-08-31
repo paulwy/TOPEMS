@@ -1188,3 +1188,15 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **阈值对比**（全部远未达成）：总大小 31MB << 200GB ｜ 最大 schema 58 << 600 张 ｜ 连接/跨域/备份无压力
 - **预案更新**：`database-split-plan.md` 现状基线/表分布/关键观察/阈值当前值/阶段0状态/5.1 执行结果 全部同步；建议结论保持"当前不拆，阶段 1 逻辑隔离为下一步"
 - **剩余待定**：public 37 张 core_* 平台级表是否迁 unified_core schema（决策输入，不影响阶段 1）
+
+## 2026-08-31 P1-2 阶段1 逻辑隔离第一轮落地 ✅（门禁增强+基线显式化）
+- **门禁增强** `scripts/check_schema_boundary.py`：新增**无前缀跨 schema 直读检测**
+  - 静态表归属映射 `scripts/schema_boundary_tables.json`（409 表单归属 + 16 同名多 schema，由阶段0 迁移后 DB 导出）
+  - 按各服务 `search_path` 解析裸表引用归属，非本服务 schema → 违规
+- **服务覆盖补齐**：`schema_boundary.json` services 15→28（补 lims/mes/pdm/analytics/master-data/unified-core/monitor/portal/rd/search/ticket/tms/plugin-registry），各带 schema+search_path；清理失效 plugin_* allow
+- **存量显式化 + 增量阻断**：17 项既有无前缀跨 schema 引用入 `bare_ref_baseline`（输出"已知基线"，不阻塞）；新增违规 → FAIL
+- **负向验证**：master-data 新增 `FROM production_orders`（裸引用）→ FAIL；`FROM crm.customers`（显式）→ FAIL；撤销后 PASS
+- **工具修复**：extract_schema_refs 排除本 SQL 表别名（mes `FROM bom_items bi` 的 bi.* 不再误判 bi schema）
+- **unified-core** 显式跨 schema 只读 `portal.user_preferences` 入 allow
+- **17 项已知基线**（待逐项治理）：ai/analytics→users(iam)、communication→gis 3、finance→pm/erp 4、hrm→erp 2、monitor→hrm/wms/pm 4、unified-core audit_logs/users
+- **待办**：17 项基线逐项改走 API/事件；同名多 schema 表（audit_logs 等 16 张）收敛去重

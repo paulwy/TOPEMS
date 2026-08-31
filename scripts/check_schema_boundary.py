@@ -95,12 +95,19 @@ def extract_sql_strings(content):
 
 def extract_schema_refs(sql):
     """从 SQL 提取可能的 schema.table 引用，返回 (schema, table) 列表。
-    只提取"看起来像 schema 引用"的 x.y 结构（x 非 SQL 关键字/类型/常见别名）。"""
+    只提取"看起来像 schema 引用"的 x.y 结构（x 非 SQL 关键字/类型/常见别名，
+    且未被本 SQL 声明为表别名）。"""
     refs = []
+    # 该 SQL 中已声明的表别名（FROM/JOIN t [AS] a）——避免把别名当 schema
+    aliases = set()
+    for m in re.finditer(r'\b(?:from|join)\s+[a-z_][a-z0-9_]*\s+(?:as\s+)?([a-z_][a-z0-9_]*)', sql, re.IGNORECASE):
+        aliases.add(m.group(1).lower())
     for m in re.finditer(r'(?<![\w.])([a-z_][a-z0-9_]{1,63})\.([a-z_][a-z0-9_]{0,63})', sql, re.IGNORECASE):
         x, y = m.group(1).lower(), m.group(2).lower()
         if x in SQL_PREFIX_NON_SCHEMA:
             continue
+        if x in aliases:
+            continue  # 表别名，非 schema 引用
         # 排除行级安全/JSON 路径等（json->'x.y' 已在字符串外）
         refs.append((x, y))
     return refs
@@ -124,6 +131,42 @@ def service_schema_refs(service_dir, known_schemas):
     return refs
 
 
+def extract_bare_table_refs(sql):
+    """提取无前缀表名引用（FROM/JOIN/INTO/UPDATE/TABLE/REFERENCES 后的裸表名）。"""
+    refs = set()
+    for m in re.finditer(r'\b(?:from|join|into|update|table|references)\s+([a-z_][a-z0-9_]*)', sql, re.IGNORECASE):
+        n = m.group(1).lower()
+        if n not in SQL_PREFIX_NON_SCHEMA:
+            refs.add(n)
+    return refs
+
+
+def load_table_owner():
+    """加载表名->schema 静态归属映射（scripts/schema_boundary_tables.json，由阶段0 迁移结果导出）。"""
+    path = os.path.join(ROOT, "scripts", "schema_boundary_tables.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("table_owner", {}), data.get("ambiguous", {})
+    except (OSError, json.JSONDecodeError):
+        return {}, {}
+
+
+def service_bare_refs(service_dir):
+    """收集单个服务的全部无前缀表引用。"""
+    refs = set()
+    for path in glob.glob(os.path.join(service_dir, "src", "**", "*.rs"), recursive=True):
+        try:
+            content = open(path, encoding="utf-8").read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for sql in extract_sql_strings(content):
+            if not re.search(r'\b(from|into|update|join)\s+', sql, re.IGNORECASE):
+                continue
+            refs |= extract_bare_table_refs(sql)
+    return refs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--svc", help="只检查指定服务目录名")
@@ -140,7 +183,14 @@ def main():
         known_schemas.add(info["schema"])
         known_schemas.update(info.get("allow", []))
 
+    # 无前缀引用检查（阶段1 逻辑隔离）：表归属静态映射 + 存量基线豁免
+    table_owner, ambiguous = load_table_owner()
+    bare_baseline = {(b["service"], b["table"]) for b in cfg.get("bare_ref_baseline", [])}
+    bare_allow = cfg.get("bare_ref_allow", {})
+
     violations = []
+    bare_new = []
+    bare_known = []
     summary = {}
 
     for svc in sorted(services):
@@ -151,7 +201,7 @@ def main():
         allowed = set(default_shared) | {own} | set(info.get("allow", []))
         service_dir = os.path.join(ROOT, "svc", svc)
         if not os.path.isdir(service_dir):
-            summary[svc] = {"status": "SKIP", "refs": 0}
+            summary[svc] = {"status": "SKIP", "refs": 0, "bare_violations": 0, "bare_known": 0}
             continue
         refs = service_schema_refs(service_dir, known_schemas)
         bad = []
@@ -160,16 +210,44 @@ def main():
                 bad.append((x, y, rel))
         if bad:
             violations.append((svc, bad))
+
+        # 无前缀引用：解析归属 -> 跨 schema 直读检测
+        sp = set(x.strip() for x in info.get("search_path", own).split(","))
+        allowed_owner = set(default_shared) | {own} | sp | set(bare_allow.get(svc, []))
+        bnew, bknown = [], []
+        for t in sorted(service_bare_refs(service_dir)):
+            if t in ambiguous:
+                bknown.append((t, "ambiguous"))
+                continue
+            if t not in table_owner:
+                continue
+            owner = table_owner[t]
+            if owner in allowed_owner:
+                continue
+            if (svc, t) in bare_baseline:
+                bknown.append((t, owner))
+            else:
+                bnew.append((t, owner))
+        if bnew:
+            bare_new.append((svc, bnew))
+        if bknown:
+            bare_known.append((svc, bknown))
+
         summary[svc] = {
-            "status": "FAIL" if bad else "PASS",
+            "status": "FAIL" if (bad or bnew) else "PASS",
             "schema": own,
             "allowed": sorted(allowed),
             "refs": len(refs),
             "violations": [f"{x}.{y} in {rel}" for x, y, rel in bad],
+            "bare_violations": [f"{t}->{o}" for t, o in bnew],
+            "bare_known": [f"{t}->{o}" for t, o in bknown],
         }
 
     if args.json:
-        print(json.dumps({"violations": violations, "summary": summary}, ensure_ascii=False, indent=2))
+        print(json.dumps({
+            "violations": violations, "bare_new": bare_new, "bare_known": bare_known,
+            "summary": summary,
+        }, ensure_ascii=False, indent=2))
     else:
         if violations:
             print("✗ Schema 边界门禁失败：存在未授权跨 schema 引用\n")
@@ -177,12 +255,23 @@ def main():
                 print(f"  [{svc}] 引用未授权 schema:")
                 for x, y, rel in bad:
                     print(f"      {x}.{y}  <-  {rel}")
-        else:
-            print("✓ Schema 边界门禁通过：所有服务的 SQL 引用均在白名单内")
+        if bare_new:
+            print("✗ Schema 边界门禁失败：存在新增无前缀跨 schema 直读（阶段1 逻辑隔离）\n")
+            for svc, b in bare_new:
+                print(f"  [{svc}] 无前缀直读非本服务 schema:")
+                for t, o in b:
+                    print(f"      {t} -> {o}.{t}")
+        if not violations and not bare_new:
+            print("✓ Schema 边界门禁通过：所有服务 SQL 引用均在白名单内（含无前缀引用解析）")
         for svc, s in summary.items():
-            print(f"  {svc:15s} {s['status']:4s} schema={s['schema']:12s} 引用={s['refs']}")
+            extra = ""
+            if s.get("bare_violations"):
+                extra += f" 新增裸引用={len(s['bare_violations'])}"
+            if s.get("bare_known"):
+                extra += f" 已知基线={len(s['bare_known'])}"
+            print(f"  {svc:15s} {s['status']:4s} schema={s['schema']:12s} 引用={s['refs']}{extra}")
 
-    sys.exit(1 if violations else 0)
+    sys.exit(1 if (violations or bare_new) else 0)
 
 
 if __name__ == "__main__":
