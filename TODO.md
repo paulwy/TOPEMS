@@ -1200,3 +1200,17 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **unified-core** 显式跨 schema 只读 `portal.user_preferences` 入 allow
 - **17 项已知基线**（待逐项治理）：ai/analytics→users(iam)、communication→gis 3、finance→pm/erp 4、hrm→erp 2、monitor→hrm/wms/pm 4、unified-core audit_logs/users
 - **待办**：17 项基线逐项改走 API/事件；同名多 schema 表（audit_logs 等 16 张）收敛去重
+
+## 2026-08-31 P1-2 阶段1 17 项存量基线逐项治理 ✅（跨域引用显式化+归属修正+测试误报清理）
+- **前置定位结论**：17 项基线中 ai/analytics/users、unified-core/users、monitor 4 项为 **SQL 注入安全测试载荷 / 监控 SQL 模板（占位符 ?，执行时用目标连接）**，非真实跨域 SQL；真实跨域引用为 communication→gis 3、finance→erp/pm 4、hrm→erp 2、unified-core audit_logs。
+- **门禁工具改进** `scripts/check_schema_boundary.py`：跳过测试代码（`#[cfg(test)]`/`#[test]` 块、`mod tests`、`tests/` 目录、`*_test*.rs` 文件），测试 SQL 字面量不再干扰边界检查。
+- **归属修正（表迁移）**：`erp.expenses/payables/receivables/budgets` → **finance**（erp schema_defense 仅声明建表从不使用，finance operational.rs 完整 CRUD 是实际归属）——`ALTER TABLE SET SCHEMA` + `svc/erp/src/schema_defense.rs` 移除 4 条错误声明 + `schema_boundary_tables.json` 归属更新（budgets→ambiguous[pm,finance]）。
+- **显式跨域声明（改走 API/事件的过渡）**：
+  - `communication im_location.rs` 3 处 `FROM business/warehouse/device_locations` → `FROM gis.*` + `only_own_schema_query!` 白名单 `"gis"`（gis 已提供 search/list_* API，后续改 HTTP 调用）
+  - `hrm payroll.rs` 2 处 `INSERT financial_vouchers/voucher_items` → `erp.*` + 宏白名单 `"erp"`（凭证属 erp 财务域，后续事件化 hrm→erp 生成凭证）
+  - `schema_boundary.json`：communication.allow+`gis`、hrm.allow+`erp`
+- **unified-core 审计断裂修复**：`middleware/audit_log.rs` 全部 `audit_logs` → 显式 `public.audit_logs`（默认 SEARCH_PATH="rs,erp,public" 会解析到业务 schema 的 audit_logs 导致列不匹配）+ `main.rs` 补调 `init_audit_logs_table`（原从未被调用 → 审计写入一直失败）；DB 补建 `public.audit_logs`。
+- **baseline 瘦身**：`bare_ref_baseline` 17 → 4（仅 monitor 4 项，标注为 SQL 模板配置非直读）。
+- **验证**：`check_schema_boundary.py` 全 PASS（0 违规，communication/hrm/finance 均 PASS）；`cargo check --workspace` 0 error；public.audit_logs 建表成功。
+- **环境发现**：本机存在双 postgres——本地 Homebrew postgres@18 抢占 localhost:5432（数据为阶段0前旧状态），Docker 容器 topems-postgres（阶段0后权威库）通过容器网络供 docker 部署服务连接；**cargo run 本地开发会连到旧库，需注意**。8000 端口被 Docker 容器 topems-unified-core 占用（SSE 测试超时非回归）。
+- **待办**：①同名多 schema 表（audit_logs 等 16 张）收敛去重（独立项）；②communication→gis 改走 gis HTTP API；③hrm→erp 凭证写入事件化（hrm 发工资核算完成事件 → erp 消费生成凭证）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
