@@ -245,20 +245,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         ],
     ),
     (
-        "analysis_results",
-        &[
-            ("query_id", "UUID NOT NULL"),
-            ("result_data", "JSONB NOT NULL"),
-            ("metadata", "JSONB"),
-            ("execution_time_ms", "BIGINT"),
-            ("row_count", "BIGINT"),
-            ("created_at", "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"),
-            ("cached", "BOOLEAN DEFAULT FALSE"),
-            ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ"),
-        ],
-    ),
-    (
         "saved_analysis_results",
         &[
             ("query_id", "UUID NOT NULL"),
