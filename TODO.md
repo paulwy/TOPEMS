@@ -1697,3 +1697,19 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **处理**：备份（dump + CSV 归档至 /tmp）→ DROP 3 张（迁移 20260901000018）。
 - **验证**：门禁 28 PASS、gis 编译通过、gis 活表不受影响、断裂 FK 0。
 - **public 65 张**；gis 历史测试数据归档闭环。
+
+## 2026-09-01 剩余 public 活跃业务表清理（5 张）✅
+- **逐表审计结论（全部影子/测试/旧数据，无真实引用）**：
+  - report_templates(12) → analytics 用 bi.report_templates 活表，public 历史影子
+  - products(21) → "测试产品-*" 测试数据，无 SQL 引用（mes 走 API 转发）
+  - dashboard_stats(12) → portal 用 portal_dashboard_stats，public 旧统计表
+  - archive_config(14) → communication 硬编码响应、notification 用 notification 版
+  - inspection_records(6) → "陈/刘检验员" 测试数据
+- **处理**：备份 dump + CSV 归档 → DROP（迁移 20260901000019）。
+- **验证**：门禁 28 PASS、断裂 FK 0。
+- **public 65 → 60（业务活跃表清零）**：剩余全部为 core_* 平台保留 + 平台表 + 基础设施表。
+
+## 2026-09-01 收尾：public 业务表全部清零 ✅
+- **发现**：master-data 旧二进制测试启动重建了 public 4 张空影子（dynamic_data/schema_registry/core_dict_types/core_dict_items）→ DROP（迁移 20260901000020；正式表在 master_data schema 有 38/189 行）。
+- **public 60 张 = _sqlx_migrations + core_* 37 平台保留 + 平台表 + 基础设施（teams/audit_logs/cqrs_*/spatial_ref_sys 等）——非 core/平台业务表为 0**。
+- **主线闭环**：public 262 → 60；活跃业务表全部归位（ticket/master_data/erp）或归档（影子/测试/历史数据）；门禁 28 PASS、断裂 FK 0。
