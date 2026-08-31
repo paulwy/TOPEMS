@@ -85,7 +85,7 @@ async fn list_products(
           AND ($5::text IS NULL OR category = $5)
         ORDER BY created_at DESC
         LIMIT $6 OFFSET $7
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -108,8 +108,7 @@ async fn list_products(
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
                   AND ($5::text IS NULL OR category = $5)
-                "#,
-                "plugin_srm"
+                "#
             ))
             .bind(tenant_id)
             .bind(&search_pattern)
@@ -172,7 +171,7 @@ async fn create_product(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'"),
     )
     .bind(tenant_id)
     .bind(supplier_id)
@@ -187,7 +186,7 @@ async fn create_product(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_products WHERE deleted_at IS NULL AND tenant_id = $1 AND product_no = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_products WHERE deleted_at IS NULL AND tenant_id = $1 AND product_no = $2"),
     )
     .bind(tenant_id)
     .bind(&req.product_no)
@@ -231,7 +230,7 @@ async fn create_product(
         INSERT INTO supplier_products (id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -282,7 +281,7 @@ async fn get_product(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         FROM supplier_products WHERE id = $1 AND tenant_id = $2
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -320,7 +319,7 @@ async fn update_product(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, SupplierProduct>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM supplier_products WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM supplier_products WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -355,7 +354,7 @@ async fn update_product(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'"),
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
@@ -417,7 +416,7 @@ async fn update_product(
             product_no = $2, supplier_id = $3, name = $4, description = $5, category = $6, unit = $7, unit_price = $8, currency = $9, min_order_qty = $10, lead_time_days = $11, status = $12, specifications = $13, updated_at = $14
         WHERE id = $1 AND tenant_id = $15
         RETURNING id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(product_no)
@@ -463,7 +462,7 @@ async fn delete_product(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE supplier_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_srm"))
+        sqlx::query(only_own_schema_query!("srm", "UPDATE supplier_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)

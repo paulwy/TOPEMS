@@ -59,7 +59,7 @@ async fn list_quotations(
             LEFT JOIN suppliers s ON q.supplier_id = s.id
             WHERE q.deleted_at IS NULL AND q.inquiry_id = $1
             ORDER BY q.created_at DESC
-            "#, "plugin_srm"),
+            "#),
         )
         .bind(inquiry_id)
         .fetch_all(&state.db)
@@ -75,7 +75,7 @@ async fn list_quotations(
             LEFT JOIN suppliers s ON q.supplier_id = s.id
             WHERE q.deleted_at IS NULL
             ORDER BY q.created_at DESC
-            "#, "plugin_srm"),
+            "#),
         )
         .fetch_all(&state.db)
         .await
@@ -109,7 +109,7 @@ async fn create_quotation(
     };
 
     let inquiry = match sqlx::query_scalar::<_, String>(
-        only_own_schema_query!("srm", "SELECT inquiry_no FROM inquiries WHERE id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT inquiry_no FROM inquiries WHERE id = $1"),
     )
     .bind(inquiry_id)
     .fetch_optional(&state.db)
@@ -124,7 +124,7 @@ async fn create_quotation(
     };
 
     let supplier_name = match sqlx::query_scalar::<_, Option<String>>(
-        only_own_schema_query!("srm", "SELECT name FROM suppliers WHERE id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT name FROM suppliers WHERE id = $1"),
     )
     .bind(supplier_id)
     .fetch_optional(&state.db)
@@ -154,7 +154,7 @@ async fn create_quotation(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(&quotation_no)
@@ -199,7 +199,7 @@ async fn get_quotation(
         LEFT JOIN inquiries i ON q.inquiry_id = i.id
         LEFT JOIN suppliers s ON q.supplier_id = s.id
         WHERE q.id = $1 AND q.deleted_at IS NULL
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -243,7 +243,7 @@ async fn update_quotation(
         WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(req.title)
@@ -272,7 +272,7 @@ async fn delete_quotation(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE quotations SET deleted_at = NOW() WHERE id = $1", "plugin_srm"))
+    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE quotations SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
         .execute(&state.db)
         .await;
@@ -301,7 +301,7 @@ async fn award_quotation(
         WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -332,7 +332,7 @@ async fn reject_quotation(
         WHERE id = $1 AND status = 'pending'
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)

@@ -127,7 +127,7 @@ async fn create_inquiry(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM inquiries WHERE deleted_at IS NULL AND inquiry_no = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM inquiries WHERE deleted_at IS NULL AND inquiry_no = $1"),
     )
     .bind(&req.inquiry_no)
     .fetch_one(&state.db)
@@ -152,7 +152,7 @@ async fn create_inquiry(
         INSERT INTO inquiries (id, inquiry_no, title, description, category, urgency, status, deadline, items, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(&req.inquiry_no)
@@ -187,7 +187,7 @@ async fn get_inquiry(
         SELECT id, inquiry_no, title, description, category, urgency, status, published_at, deadline,
                creator, department, quotation_count, items, remarks, created_at, updated_at
         FROM inquiries WHERE id = $1
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -229,7 +229,7 @@ async fn update_inquiry(
             updated_at = $9
         WHERE id = $1
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(req.title)
@@ -256,7 +256,7 @@ async fn delete_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE inquiries SET deleted_at = NOW() WHERE id = $1", "plugin_srm"))
+    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE inquiries SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
         .execute(&state.db)
         .await;
@@ -285,7 +285,7 @@ async fn publish_inquiry(
             updated_at = $2
         WHERE id = $1 AND status = 'draft'
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -315,7 +315,7 @@ async fn close_inquiry(
             updated_at = $2
         WHERE id = $1 AND status IN ('published', 'draft')
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)

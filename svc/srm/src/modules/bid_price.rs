@@ -99,7 +99,7 @@ async fn list_bid_requests(
         FROM bid_requests
         WHERE tenant_id = $1 AND status != 'deleted'
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -173,7 +173,7 @@ async fn create_bid_request(
         INSERT INTO bid_requests (tenant_id, request_no, title, description, deadline, status, created_by)
         VALUES ($1, $2, $3, $4, $5, 'pending', $6)
         RETURNING id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(request_no)
@@ -238,7 +238,7 @@ async fn get_bid_request(
         SELECT id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
         FROM bid_requests
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -316,7 +316,7 @@ async fn update_bid_request(
             updated_at = NOW()
         WHERE id = $5 AND tenant_id = $6 AND status != 'deleted'
         RETURNING id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(title)
     .bind(description)
@@ -381,7 +381,7 @@ async fn delete_bid_request(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE bid_requests SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE bid_requests SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -436,7 +436,7 @@ async fn get_bid_request_bids(
         FROM bids
         WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
         ORDER BY price ASC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(request_uuid)
     .bind(tenant_id)
@@ -540,7 +540,7 @@ async fn create_bid(
         INSERT INTO bids (tenant_id, request_id, supplier_id, supplier_name, price, currency, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
         RETURNING id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(request_uuid)
@@ -606,7 +606,7 @@ async fn get_bid(
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
         FROM bids
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -683,7 +683,7 @@ async fn update_bid(
             updated_at = NOW()
         WHERE id = $5 AND tenant_id = $6 AND status != 'deleted'
         RETURNING id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(price)
     .bind(currency)
@@ -748,7 +748,7 @@ async fn delete_bid(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE bids SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE bids SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -799,7 +799,7 @@ async fn get_bid_comparison(
         FROM bids
         WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
         ORDER BY price ASC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(request_uuid)
     .bind(tenant_id)

@@ -72,7 +72,7 @@ async fn get_supplier_portal_stats(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -88,8 +88,7 @@ async fn get_supplier_portal_stats(
 
     let total_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2",
-        "plugin_srm"
+        "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2"
     ))
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -98,7 +97,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let pending_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'pending'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'pending'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -107,7 +106,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let completed_orders = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'completed'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'completed'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -116,7 +115,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let total_amount = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status != 'cancelled'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status != 'cancelled'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -126,7 +125,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0.0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2 AND overall_score IS NOT NULL", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2 AND overall_score IS NOT NULL"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -139,7 +138,7 @@ async fn get_supplier_portal_stats(
         only_own_schema_query!("srm", r#"
         SELECT ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2)
         FROM supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -192,7 +191,7 @@ async fn get_supplier_portal_orders(
         FROM purchase_orders
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY order_date DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)

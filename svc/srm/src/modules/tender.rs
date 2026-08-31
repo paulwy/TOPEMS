@@ -113,7 +113,7 @@ async fn list_tenders(
         FROM tenders
         WHERE tenant_id = $1 AND status != 'deleted'
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -203,7 +203,7 @@ async fn create_tender(
         INSERT INTO tenders (tenant_id, tender_no, title, description, type, budget, start_date, end_date, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9)
         RETURNING id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(tender_no)
@@ -271,7 +271,7 @@ async fn get_tender(
         SELECT id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
         FROM tenders
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -363,7 +363,7 @@ async fn update_tender(
             end_date = COALESCE($7, end_date), updated_at = NOW()
         WHERE id = $8 AND tenant_id = $9 AND status != 'deleted'
         RETURNING id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(title)
     .bind(description)
@@ -431,7 +431,7 @@ async fn delete_tender(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE tenders SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "UPDATE tenders SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(uuid)
     .bind(tenant_id)
@@ -482,7 +482,7 @@ async fn get_tender_bids(
         FROM tender_bids
         WHERE tender_id = $1 AND tenant_id = $2 AND status != 'deleted'
         ORDER BY total_score DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tender_uuid)
     .bind(tenant_id)
@@ -605,7 +605,7 @@ async fn create_tender_bid(
         INSERT INTO tender_bids (tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10)
         RETURNING id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(tender_uuid)
@@ -699,7 +699,7 @@ async fn award_tender(
         SELECT id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
         FROM tender_bids
         WHERE id = $1 AND tender_id = $2 AND tenant_id = $3 AND status != 'deleted'
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(winning_bid_uuid)
     .bind(tender_uuid)
@@ -726,7 +726,7 @@ async fn award_tender(
     match transaction {
         Ok(mut tx) => {
             if let Err(e) = sqlx::query(
-                only_own_schema_query!("srm", "UPDATE tenders SET status = 'awarded', updated_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_srm"),
+                only_own_schema_query!("srm", "UPDATE tenders SET status = 'awarded', updated_at = NOW() WHERE id = $1 AND tenant_id = $2"),
             )
             .bind(tender_uuid)
             .bind(tenant_id)
@@ -739,7 +739,7 @@ async fn award_tender(
             }
 
             if let Err(e) = sqlx::query(
-                only_own_schema_query!("srm", "UPDATE tender_bids SET status = CASE WHEN id = $1 THEN 'won' ELSE 'lost' END, updated_at = NOW() WHERE tender_id = $2 AND tenant_id = $3", "plugin_srm"),
+                only_own_schema_query!("srm", "UPDATE tender_bids SET status = CASE WHEN id = $1 THEN 'won' ELSE 'lost' END, updated_at = NOW() WHERE tender_id = $2 AND tenant_id = $3"),
             )
             .bind(winning_bid_uuid)
             .bind(tender_uuid)
@@ -759,7 +759,7 @@ async fn award_tender(
                 INSERT INTO tender_awards (tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
                 RETURNING id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
-                "#, "plugin_srm"),
+                "#),
             )
             .bind(tenant_id)
             .bind(&award_no)
@@ -826,7 +826,7 @@ async fn list_tender_awards(
         FROM tender_awards
         WHERE tenant_id = $1 AND status != 'deleted'
         ORDER BY created_at DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)

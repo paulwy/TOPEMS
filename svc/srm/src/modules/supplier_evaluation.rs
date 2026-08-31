@@ -113,7 +113,7 @@ async fn list_evaluations(
           AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
         ORDER BY evaluation_date DESC
         LIMIT $7 OFFSET $8
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -138,8 +138,7 @@ async fn list_evaluations(
                   AND ($4::uuid IS NULL OR supplier_id = $4)
                   AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
                   AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
-                "#,
-                "plugin_srm"
+                "#
             ))
             .bind(tenant_id)
             .bind(&search_pattern)
@@ -203,7 +202,7 @@ async fn create_evaluation(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'"),
     )
     .bind(tenant_id)
     .bind(supplier_id)
@@ -218,7 +217,7 @@ async fn create_evaluation(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND evaluation_no = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND evaluation_no = $2"),
     )
     .bind(tenant_id)
     .bind(&req.evaluation_no)
@@ -264,8 +263,7 @@ async fn create_evaluation(
             FROM scoring_dimensions 
             WHERE tenant_id = $1 AND is_active = true
             ORDER BY sort_order ASC
-            "#,
-            "plugin_srm"
+            "#
         ))
         .bind(tenant_id)
         .fetch_all(&state.db)
@@ -328,7 +326,7 @@ async fn create_evaluation(
         INSERT INTO supplier_evaluations (id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -378,7 +376,7 @@ async fn get_evaluation(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM supplier_evaluations WHERE id = $1 AND tenant_id = $2
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -416,7 +414,7 @@ async fn update_evaluation(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -451,7 +449,7 @@ async fn update_evaluation(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "plugin_srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'"),
         )
         .bind(tenant_id)
         .bind(supplier_uuid_val)
@@ -512,7 +510,7 @@ async fn update_evaluation(
             supplier_id = $2, evaluation_no = $3, evaluator = $4, overall_score = $5, quality_score = $6, delivery_score = $7, service_score = $8, price_score = $9, comments = $10, status = $11, updated_at = $12
         WHERE id = $1 AND tenant_id = $13
         RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(supplier_id)
@@ -556,7 +554,7 @@ async fn delete_evaluation(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query(only_own_schema_query!("srm", "UPDATE supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_srm"))
+        sqlx::query(only_own_schema_query!("srm", "UPDATE supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)
@@ -591,8 +589,7 @@ async fn get_evaluation_history(
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2",
-        "plugin_srm"
+        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(id)
@@ -612,7 +609,7 @@ async fn get_evaluation_history(
         FROM supplier_evaluations
         WHERE tenant_id = $1 AND supplier_id = $2
         ORDER BY evaluation_date DESC
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(id)
@@ -660,8 +657,7 @@ async fn get_performance_summary(
             MIN(evaluation_date) as earliest_evaluation_date
         FROM supplier_evaluations
         WHERE tenant_id = $1 AND supplier_id = $2 AND status = 'completed'
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .bind(id)
@@ -762,8 +758,7 @@ async fn get_score_trend(
           AND ($3::timestamptz IS NULL OR evaluation_date >= $3)
           AND ($4::timestamptz IS NULL OR evaluation_date <= $4)
         ORDER BY evaluation_date ASC
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .bind(id)
@@ -849,35 +844,35 @@ async fn get_evaluation_statistics(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed'"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'pending'", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'pending'"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let avg_score_result = sqlx::query_scalar::<_, f64>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL", "plugin_srm")
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL")
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let supplier_count_result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM supplier_evaluations WHERE deleted_at IS NULL AND tenant_id = $1"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)

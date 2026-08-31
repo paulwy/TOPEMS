@@ -165,8 +165,7 @@ async fn get_performance_reports(
           AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
         ORDER BY e.avg_overall_score DESC NULLS LAST
         LIMIT $5 OFFSET $10
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -203,8 +202,7 @@ async fn get_performance_reports(
                   AND ($4::text IS NULL OR s.status = $4)
                   AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
                   AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
-                "#,
-                "plugin_srm"
+                "#
             ))
             .bind(tenant_id)
             .bind(&search_pattern)
@@ -259,8 +257,7 @@ async fn get_performance_report(
         SELECT name, category, status, contact_person
         FROM suppliers
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#,
-            "plugin_srm"
+        "#
         ))
         .bind(id)
         .bind(tenant_id)
@@ -337,8 +334,7 @@ async fn get_performance_report(
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
         WHERE s.id = $1 AND s.tenant_id = $2
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(id)
     .bind(tenant_id)
@@ -369,7 +365,7 @@ async fn get_performance_report(
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY evaluation_date DESC
         LIMIT 10
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -394,8 +390,7 @@ async fn get_performance_report(
         WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
         ORDER BY start_date DESC
         LIMIT 5
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(id)
     .bind(tenant_id)
@@ -412,8 +407,7 @@ async fn get_performance_report(
         WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
         ORDER BY unit_price ASC
         LIMIT 10
-        "#,
-            "plugin_srm"
+        "#
         ))
         .bind(id)
         .bind(tenant_id)
@@ -618,8 +612,7 @@ async fn get_performance_trend(
           AND evaluation_date >= NOW() - INTERVAL $3
         GROUP BY TO_CHAR(evaluation_date, 'YYYY-MM')
         ORDER BY month
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .bind(supplier_id)
@@ -713,7 +706,7 @@ async fn get_top_suppliers(
         WHERE s.tenant_id = $1 AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
         ORDER BY e.avg_overall_score DESC
         LIMIT 10
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -757,7 +750,7 @@ async fn get_top_suppliers(
         WHERE s.tenant_id = $1 AND s.status = 'active'
         ORDER BY po.total_orders DESC NULLS LAST
         LIMIT 10
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -850,7 +843,7 @@ async fn export_performance_report(
           AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
           AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
         ORDER BY e.avg_overall_score DESC NULLS LAST
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -925,8 +918,7 @@ async fn get_score_level_distribution(
         ) s
         GROUP BY level
         ORDER BY level
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -980,8 +972,7 @@ async fn get_performance_summary(
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND status != 'deleted'",
-        "plugin_srm"
+        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND status != 'deleted'"
     ))
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -989,7 +980,7 @@ async fn get_performance_summary(
     .unwrap_or(0);
 
     let evaluated_suppliers = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM supplier_evaluations WHERE tenant_id = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM supplier_evaluations WHERE tenant_id = $1"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -997,7 +988,7 @@ async fn get_performance_summary(
     .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -1015,8 +1006,7 @@ async fn get_performance_summary(
         GROUP BY s.name
         ORDER BY avg_score DESC
         LIMIT 1
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -1033,8 +1023,7 @@ async fn get_performance_summary(
         GROUP BY s.name
         ORDER BY avg_score ASC
         LIMIT 1
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -1050,8 +1039,7 @@ async fn get_performance_summary(
         WHERE s.tenant_id = $1 AND s.status != 'deleted' AND e.overall_score IS NOT NULL
         GROUP BY s.category
         ORDER BY avg_score DESC
-        "#,
-        "plugin_srm"
+        "#
     ))
     .bind(tenant_id)
     .fetch_all(&state.db)

@@ -131,7 +131,7 @@ async fn create_bidding(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM biddings WHERE deleted_at IS NULL AND bidding_no = $1", "plugin_srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM biddings WHERE deleted_at IS NULL AND bidding_no = $1"),
     )
     .bind(&req.bidding_no)
     .fetch_one(&state.db)
@@ -164,7 +164,7 @@ async fn create_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(&req.bidding_no)
@@ -203,7 +203,7 @@ async fn get_bidding(
                publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
                supplier_count, creator, department, items, remarks, created_at, updated_at
         FROM biddings WHERE id = $1
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -255,7 +255,7 @@ async fn update_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(req.title)
@@ -285,7 +285,7 @@ async fn delete_bidding(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE biddings SET deleted_at = NOW() WHERE id = $1", "plugin_srm"))
+    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE biddings SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
         .execute(&state.db)
         .await;
@@ -313,7 +313,7 @@ async fn publish_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -343,7 +343,7 @@ async fn open_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -373,7 +373,7 @@ async fn evaluate_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -402,7 +402,7 @@ async fn award_bidding(
     };
 
     let supplier_name: Option<String> =
-        sqlx::query_scalar(only_own_schema_query!("srm", "SELECT name FROM suppliers WHERE id = $1", "plugin_srm"))
+        sqlx::query_scalar(only_own_schema_query!("srm", "SELECT name FROM suppliers WHERE id = $1"))
             .bind(supplier_id)
             .fetch_optional(&state.db)
             .await
@@ -416,7 +416,7 @@ async fn award_bidding(
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .bind(supplier_id)
@@ -443,7 +443,7 @@ async fn list_bidding_suppliers(
         SELECT s.id, s.name FROM suppliers s
         JOIN bidding_suppliers bs ON s.id = bs.supplier_id
         WHERE bs.bidding_id = $1
-        "#, "plugin_srm"),
+        "#),
     )
     .bind(id)
     .fetch_all(&state.db)
