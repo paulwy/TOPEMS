@@ -337,7 +337,13 @@ pub async fn handle_lims_record_completed(
 
     // 步骤B：跨 schema 直写 → QMS 集成 API（原 qms.qa_quality_inspections 直写，
     // 引用不存在的 test_result/test_data/conclusion 列 → 服务端已修正为 result/memo）
-    let inspection_no = payload.related_inspection_no.as_deref().unwrap_or("");
+    let Some(inspection_no) = payload.related_inspection_no.as_deref() else {
+        info!(
+            "LIMS 检测完成但无关联 QMS 检验单，跳过结果回写: record_no={}",
+            payload.record_no
+        );
+        return Ok(());
+    };
     call_internal_api(
         &qms_url(),
         &format!("/api/internal/qms/inspections/{}/result", inspection_no),

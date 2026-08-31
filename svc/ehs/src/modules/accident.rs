@@ -226,37 +226,65 @@ pub async fn list_accidents(
     responses((status = 200, description = "OK")),
 )]
 pub async fn report_accident(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateAccidentRequest>,
 ) -> Json<ApiResponse<Accident>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Reporting accident: {:?}", req);
-    Json(ApiResponse::success(
-        Accident {
-            id: uuid::Uuid::new_v4().to_string(),
-            accident_no: format!(
-                "ACC-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            description: req.description,
-            accident_type: req.accident_type,
-            severity: req.severity,
-            location: req.location,
-            occurred_at: req.occurred_at.or(Some(chrono::Utc::now().to_rfc3339())),
-            casualties: req.casualties.or(Some(0)),
-            economic_loss: req.economic_loss.or(Some(0.0)),
-            status: "reported".to_string(),
-            reported_by: req.reported_by,
+    let accident = Accident {
+        id: uuid::Uuid::new_v4().to_string(),
+        accident_no: format!(
+            "ACC-{}",
+            uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+        ),
+        title: req.title,
+        description: req.description,
+        accident_type: req.accident_type,
+        severity: req.severity,
+        location: req.location,
+        occurred_at: req.occurred_at.or(Some(chrono::Utc::now().to_rfc3339())),
+        casualties: req.casualties.or(Some(0)),
+        economic_loss: req.economic_loss.or(Some(0.0)),
+        status: "reported".to_string(),
+        reported_by: req.reported_by,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
             tenant_id,
-        },
-        "事故报告成功",
-    ))
+        };
+
+    // 发布端补全：EhsAccidentReported（→ integration → LIMS 建样/任务联动）
+    if let Some(ref publisher) = state.event_publisher {
+        let publisher = publisher.clone();
+        let accident_id = Uuid::parse_str(&accident.id).unwrap_or_else(|_| Uuid::nil());
+        let accident_no = accident.accident_no.clone();
+        let title = accident.title.clone();
+        let severity = accident.severity.clone();
+        let location = accident.location.clone();
+        let occurred_at = accident.occurred_at.clone();
+        tokio::spawn(async move {
+            let payload = topems_shared_event::event::EhsAccidentReportedPayload {
+                accident_id,
+                accident_no,
+                title,
+                severity,
+                location,
+                occurred_at,
+            };
+            if let Err(e) = publisher
+                .publish_event(
+                    topems_shared_event::event::EventType::EhsAccidentReported,
+                    payload,
+                )
+                .await
+            {
+                tracing::warn!("[ehs] EhsAccidentReported 事件发布失败: {}", e);
+            }
+        });
+    }
+
+    Json(ApiResponse::success(accident, "事故报告成功"))
 }
 
 #[utoipa::path(

@@ -1566,3 +1566,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **端到端验证**：XADD QmsQualityIssueCreated（字段 payload=Event JSON）→ integration 订阅消费 → process_event → handler → reqwest 调 ehs /api/internal/ehs/hazards/integration → ehs.qa_ehs_hazards 落库 HAZ-QMS-* ✅；测试数据/stream 消息已清理、服务已停。
 - 蓝图 integration-cross-domain-api.md 步骤 A/B/C/D 全部完成。
 - 剩余项：5 个事件发布端补发（源服务业务埋点）。
+
+## 2026-08-31 拆分前置治理：7 事件发布端全部补齐 ✅
+- **qms**：QmsInspectionCompleted（quality_inspection.rs approve 分支，BigDecimal→f64 转换）——QmsQualityIssueCreated 已有。
+- **ehs**：EhsAccidentReported（accident.rs report_accident，State(_state)→State(state) 取 publisher）——EhsHazardReported 已有。
+- **lims**：LimsRecordCompleted + LimsInspectionAbnormalDetected（inspection_task.rs submit_result 同点追加；结论非合格触发异常；qa_lab_tasks 无 related_inspection_no → None）+ LimsReagentAlert（reagent.rs create_reagent 过期检测）——LimsInspectionResultSubmitted 已有。
+- **integration handler 6 保护**：LimsRecordCompleted 无关联 QMS 检验单时跳过回写（避免空号 404）。
+- 验证：4 服务编译通过、测试全绿（251+171+149+8 等）、门禁 PASS（qms 256/lims 1/ehs 1/integration 106 无跨 schema）。
+- 拆分前置条件 #1 全链路闭环：9 处直写→API + 订阅端接线 + 7 事件发布端补齐。

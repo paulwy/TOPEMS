@@ -11,6 +11,7 @@ use bigdecimal::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 const STATUS_IN_PROGRESS: &str = "in_progress";
@@ -49,13 +50,13 @@ pub async fn list_inspections(
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
     let total: Option<i64> = match sqlx::query_scalar(
-        r#"
-        SELECT COUNT(*) as total FROM qa_quality_inspections
+        only_own_schema_query!("qms", r#"
+        SELECT COUNT(*) as total FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL AND tenant_id = $1
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_type = $3)
           AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .bind(query.status.as_deref())
@@ -72,20 +73,20 @@ pub async fn list_inspections(
     };
 
     let data = match sqlx::query_as::<_, Inspection>(
-        r#"
-        SELECT id, tenant_id, inspection_no, inspection_type, product_id, product_name,
+        only_own_schema_query!("qms", r#"
+        SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name,
             standard_id, quantity, qualified_quantity, unqualified_quantity,
             qualification_rate, status, inspector, assignee,
             inspected_at::TEXT, result, memo, created_by,
             created_at::TEXT, updated_at::TEXT
-        FROM qa_quality_inspections
+        FROM qms.qa_quality_inspections
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_type = $3)
           AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .bind(query.status.as_deref())
@@ -146,7 +147,7 @@ pub async fn create_inspection(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let inspection = sqlx::query_as::<_, Inspection>(r#"INSERT INTO qa_quality_inspections (tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8) RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(req.created_by)
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_inspections (tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -185,7 +186,7 @@ pub async fn get_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let inspection = sqlx::query_as::<_, Inspection>(r#"SELECT id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -235,7 +236,7 @@ pub async fn update_inspection(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $7 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -275,7 +276,7 @@ pub async fn delete_inspection(
     };
 
     let result = sqlx::query(
-        r#"UPDATE qa_quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET deleted_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -305,7 +306,7 @@ pub async fn assign_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -320,13 +321,13 @@ pub async fn assign_inspection(
                 return Json(ApiResponse::error(400, "当前状态不允许分配"));
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET assignee = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.assignee).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET assignee = $2, status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.assignee).bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 
             match inspection {
                 Ok(data) => {
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("assign").bind(req.operator).bind(None::<String>)
+                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("assign").bind(req.operator).bind(None::<String>)
                     .execute(&state.pool)
                     .await;
                     Json(ApiResponse::success(data, "质量检查分配成功"))
@@ -358,7 +359,7 @@ pub async fn submit_result(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -383,7 +384,7 @@ pub async fn submit_result(
             });
 
             let inspector = req.inspector.clone();
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 
@@ -391,13 +392,13 @@ pub async fn submit_result(
                 Ok(data) => {
                     if let Some(results) = req.results {
                         for item in results {
-                            let _ = sqlx::query(r#"INSERT INTO qa_inspection_results (tenant_id, inspection_id, item_name, standard_value, measured_value, is_qualified, remark) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(item.item_name).bind(item.standard_value).bind(item.measured_value).bind(item.is_qualified).bind(item.remark)
+                            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_results (tenant_id, inspection_id, item_name, standard_value, measured_value, is_qualified, remark) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(item.item_name).bind(item.standard_value).bind(item.measured_value).bind(item.is_qualified).bind(item.remark)
                             .execute(&state.pool)
                             .await;
                         }
                     }
 
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
+                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
                     .execute(&state.pool)
                     .await;
                     Json(ApiResponse::success(data, "提交检查结果成功"))
@@ -429,7 +430,7 @@ pub async fn audit_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -450,7 +451,7 @@ pub async fn audit_inspection(
                 return Json(ApiResponse::error(400, "当前状态不允许此操作"));
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(target_status).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = $2, updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(target_status).bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 
@@ -461,7 +462,7 @@ pub async fn audit_inspection(
                     } else {
                         "reject"
                     };
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(action_name).bind(req.operator).bind(req.comment)
+                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(target_status).bind(action_name).bind(req.operator).bind(req.comment)
                     .execute(&state.pool)
                     .await;
                     let msg = if target_status == STATUS_COMPLETED {
@@ -469,6 +470,42 @@ pub async fn audit_inspection(
                     } else {
                         "审核驳回"
                     };
+                    // 发布端补全：QmsInspectionCompleted（审核通过 → integration → LIMS 建样/任务联动）
+                    if target_status == STATUS_COMPLETED {
+                        if let Some(ref publisher) = state.event_publisher {
+                            let publisher = publisher.clone();
+                            let insp_id = Uuid::parse_str(&data.id).unwrap_or_else(|_| Uuid::nil());
+                            let insp_no = data.inspection_no.clone();
+                            let product_id = data.product_id;
+                            let product_name = data.product_name.clone();
+                            let result = data.result.clone().unwrap_or_default();
+                            let rate = data
+                                .qualification_rate
+                                .clone()
+                                .map(|b| b.to_string().parse::<f64>().unwrap_or(0.0));
+                            let inspector = data.inspector.clone().unwrap_or_default();
+                            tokio::spawn(async move {
+                                let payload = topems_shared_event::event::QmsInspectionCompletedPayload {
+                                    inspection_id: insp_id,
+                                    inspection_no: insp_no,
+                                    product_id,
+                                    product_name,
+                                    result,
+                                    qualification_rate: rate,
+                                    inspector,
+                                };
+                                if let Err(e) = publisher
+                                    .publish_event(
+                                        topems_shared_event::event::EventType::QmsInspectionCompleted,
+                                        payload,
+                                    )
+                                    .await
+                                {
+                                    tracing::warn!("[qms] QmsInspectionCompleted 事件发布失败: {}", e);
+                                }
+                            });
+                        }
+                    }
                     Json(ApiResponse::success(data, msg))
                 }
                 Err(e) => {
@@ -498,7 +535,7 @@ pub async fn rework_inspection(
     };
 
     let current = sqlx::query(
-        r#"SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -513,13 +550,13 @@ pub async fn rework_inspection(
                 return Json(ApiResponse::error(400, "当前状态不允许返工"));
             }
 
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 
             match inspection {
                 Ok(data) => {
-                    let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("rework").bind(&req.operator).bind(req.comment.clone())
+                    let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_IN_PROGRESS).bind("rework").bind(&req.operator).bind(req.comment.clone())
                     .execute(&state.pool)
                     .await;
                     let _ = crate::models::audit_log::log_approval_event(
@@ -561,7 +598,7 @@ pub async fn get_inspection_results(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let results = sqlx::query_as::<_, InspectionResult>(r#"SELECT id, tenant_id, inspection_id, item_name, standard_value, measured_value, is_qualified, remark, created_at::TEXT FROM qa_inspection_results WHERE inspection_id = $1 AND tenant_id = $2 ORDER BY created_at"#).bind(id).bind(tenant_id)
+    let results = sqlx::query_as::<_, InspectionResult>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, item_name, standard_value, measured_value, is_qualified, remark, created_at::TEXT FROM qms.qa_inspection_results WHERE inspection_id = $1 AND tenant_id = $2 ORDER BY created_at"#)).bind(id).bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -586,7 +623,7 @@ pub async fn get_inspection_audits(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let audits = sqlx::query_as::<_, InspectionAudit>(r#"SELECT id, tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at::TEXT FROM qa_inspection_audits WHERE inspection_id = $1 AND tenant_id = $2 ORDER BY created_at"#).bind(id).bind(tenant_id)
+    let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, status_from, status_to, action, operator, comment, created_at::TEXT FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND tenant_id = $2 ORDER BY created_at"#)).bind(id).bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -637,7 +674,7 @@ pub async fn approve_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query("SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
         .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
 
     match current {
@@ -649,7 +686,7 @@ pub async fn approve_inspection(
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'completed', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
                 .fetch_one(&state.pool).await;
             match inspection {
                 Ok(data) => {
@@ -694,7 +731,7 @@ pub async fn reject_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query("SELECT status FROM qa_quality_inspections WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
         .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
 
     match current {
@@ -705,7 +742,7 @@ pub async fn reject_inspection(
             {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回"));
             }
-            let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
+            let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'rejected', updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(tenant_id)
                 .fetch_one(&state.pool).await;
             match inspection {
                 Ok(data) => {
