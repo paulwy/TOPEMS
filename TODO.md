@@ -1455,3 +1455,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 ## 2026-08-31 模块化单体：srm 真实服务接入 ✅
 - **srm_real_module.rs**（feature `module-srm`，默认启用）：SEARCH_PATH=srm,public,shared；各业务模块 create_routes 自管状态（Router<()>）merge 13 个路由（supplier/category/evaluation/contract/product/purchase_order/bid_price/tender/supplier_portal/performance/data_sync/scoring_dimension/statistics）；依赖构造 supplier_cache(InMemoryCache 300s) + WorkflowApi client；default_init_db("srm") 迁移验证；tenant_middleware + require_permission("srm:admin")；ModuleGroup::Erp。
 - 验证：cargo check -p topems-server 0 error；累计 15 个真实服务。
+
+## 2026-08-31 模块化单体：portal 接入评估（暂缓，保持独立部署）
+- **portal 结构**：BFF 聚合层（AppState::new(db, event_publisher) 统一构造；业务路由 200+ 行直接在 main.rs 构建；含 GraphQL 聚合层（graphql_schema::build_schema）、schema_versioning、帮助中心、插件路由；lib 无统一 create_routes 导出）。
+- **嵌入成本**：需先 lib 重构提取 protected_routes 构建（200+ 行）+ 处理 GraphQL/事件总线 spawn——高成本；且 portal 作为 BFF 与 server 统一入口职责重叠。
+- **结论**：portal **保持独立微服务部署**（BFF 层职责独立）；如需嵌入需专项重构（portal lib 提取 create_routes），列入后续。
+- **累计接入 15 个真实服务**：crm/erp/finance/qms/hrm/scm/wms/pm/mes/ehs/lims/tms/ticket/rd/srm。
