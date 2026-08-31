@@ -1820,3 +1820,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **根因**：portal 自定义 router 的 layer 顺序 `tenant→auth→require_permission→rls→rate_limit`——axum 后挂先执行 → require_permission 在 auth **之前**执行 → Claims 未注入 → 401「缺少认证信息」（service token 也同理被挡）。
 - **修复**：改为 `tenant→rls→require_permission→auth→rate_limit`——auth 最先注入 Claims（+ServiceIdentity），require_permission/rls/tenant 才读到。参照 build_application 标准顺序。
 - **验证（端到端打通）**：DEVELOPMENT_MODE 启动 portal + 假 workflow server——business-stats 返回 success:true（不再 401）；第一次请求假 server 收到 1 次（数据解析 pending=4/todo=5），第二次缓存命中计数不变——**待办聚合缓存 P1 端到端闭环**。
+
+## 2026-09-01 服务间认证批量核验（crm→erp、portal→各服务 with_service_token）✅
+- **全库盘点**：TypedServiceClient 初始化生产代码 100% 已 with_service_token——crm 3 个（erp/wms/workflow）、portal 9 个（notification/workflow/mes/monitor/iam/hrm/erp/crm/finance）、其他服务（erp/mobile/finance/ehs/pm/qms/srm/server 各 real_module）全部覆盖。
+- **仅 2 类例外（合理保留）**：① pm 测试代码 mock client（modules/mod.rs:89 test）；② crm plugin 注册用 X-Plugin-Token（非服务间 API）。
+- **手工 issue_service_token 复核（2 处，服务身份已达成）**：portal announcements（ERP 公告 CRUD 代理）、erp dashboard fetch_wms_inventory_stats（erp→wms 只读，注释明确"非转发用户 token"）——均已是 service claims 认证，保留。
+- **运行时验证 with_service_token 纯链路**：portal→monitor 假 server 收到 `sub=00000000-...-0000, username=portal-service, role=service, permissions=[monitor:read], 5 分钟有效`——被调用方 is_service_claims 可识别；portal→workflow 链路此前缓存验证已通。
