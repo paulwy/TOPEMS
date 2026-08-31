@@ -66,10 +66,13 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - `bi.analysis_results` 已删：analytics `schema_defense.rs` 移除 analysis_results 定义（保留 saved_analysis_results）→ 编译 0 error → 删表（无 FK 依赖、0 数据、无业务 SQL）；ai 为主 schema（ai.schema_defense + ai/db.rs CREATE TABLE + plugin_ai.analysis_results 实际读写 3 行）
 - `bi.audit_logs`：保留（analytics 服务审计，自治）
 
-### 第三批（public 遗留双写改引用，量大）
-- 业务 schema + public 双写 ~110 组：确认代码 `public.*` 引用 → 改指向业务 schema（或确认 public 为旧库只读过渡）→ 删 public 表
-- 重点：finance 报表读 `public.financial_vouchers/voucher_items/accounting_subjects` 应改读 `finance.core_finance_vouchers/core_finance_voucher_lines`（结构不同需映射）；mobile 12 文件 `public.*` 引用；unified-core `public.audit_logs`
-- iam 平台表遗留 132 组：iam 混入的 finance/mes/lims/pdm 表 → 归位到对应业务 schema（联动待办④ core_* 归属决策）
+### 第三批（finance 组 ✅ 2026-08-31 已执行；mobile/iam 待办）
+- **finance 活跃业务表误建 public 归位（9 张）**：`core_finance_payments`(+payment_items/workflow/approval_config/approval_nodes 支付链 5 张)、`reconciliation_snapshots`、`settlement_snapshots`、`source_amount_snapshots` —— 均为无前缀/显式 public SQL 落 public 的活跃表（有 INSERT/UPDATE）。已在 finance.schema_defense TABLE_DEFS 补定义 + 建 finance 表（含 FK/UNIQUE/数组类型与 public 对齐）+ 显式列名迁移数据（payments 1 行、approval_config 4 行、approval_nodes 10 行）+ 代码 public.X→X + 删 public 表。
+- **finance 报表死读改读（2 张）**：`public.financial_vouchers→core_finance_vouchers`、`public.voucher_items→core_finance_voucher_lines`（financial_reports.rs；字段 period/total_debit/total_credit/status/debit/credit/voucher_id 均兼容）。
+- **voucher_template 容错查询修复**：`public.payment_records/public.payments`（表已不存在，恒走 1000.00 兜底）→ 改查归位后的 `core_finance_payments(total_amount)`。
+- **保留**：`public.accounting_subjects`（finance accounting_subjects.rs 活跃 CRUD 主表，与 core_finance_accounts 是否同义需深判，单独子项）。
+- 验证：finance 编译 0 error；门禁 PASS（finance 引用 433→360）。
+- **待办**：mobile 13 张 public 活跃表（与 mobile schema 异名新表 core_mobile_/mobile_ 前缀并存，需确认旧路径废弃后清理）；unified-core `public.audit_logs`；iam 平台表 132 组归位（联动待办④）。
 
 ### 第四批（跨服务读改造，同名同义但双引用）
 - customers（erp→crm API）、inventory（erp→wms API）、purchase_orders（srm/erp→scm 或确认异义）、supplier_evaluations（scm→srm）、suppliers（双主裁决）
