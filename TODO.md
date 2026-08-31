@@ -1316,3 +1316,14 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - plugin_ai（3 表 documents/document_chunks/qa_history）：ai 服务 vector.rs 写入目标（有注释"插件系统管理"）；但 ai schema 存在同名 4 表（documents 32 行孤儿数据 + analysis_results 3 行），**ai 服务横跨 ai/core/plugin_ai 三 schema，需专门评审归属**（登记待办）
   - plugin_aps（5 表）：服务在 `_archive`（归档遗留）
 - **新登记待办（ai 服务 schema 评审）**：ai 服务跨 ai（schema_defense 4 表）/core（knowledge_*）/plugin_ai（vector.rs 写入）三 schema；plugin_ai.analysis_results 缺失但代码 INSERT INTO plugin_ai.analysis_results（会失败）；ai.documents 32 行孤儿。建议按 P1-2 阶段 0 一并评审 ai 服务 schema 归属。
+
+## 2026-08-31 ai 服务 plugin_ai → ai schema 收敛（工作区完成，待用户提交 svc/ai 时一并带上）⚠️
+- **背景**：ai 服务横跨 ai/core/plugin_ai 三 schema。plugin_ai 有 3 表（documents/document_chunks/qa_history，db.rs 运行时建表，0 行空壳），ai schema 有 schema_defense 建的 4 表（documents 32 行孤儿 + analysis_results 3 行 + document_chunks/qa_history）。
+- **收敛动作（已在工作区完成 + 验证）**：
+  - SQL 前缀 plugin_ai.→ai.（7 活跃文件：event_handlers/ai_plugin/analysis/db/qa/recommendation/vector，共 37 处）
+  - **修复 2 个"引用缺表"运行时 bug**：plugin_ai.analysis_results（无表，INSERT 必失败）→ ai.analysis_results；ai_training_samples（bare 引用解析到 public 不存在）→ ai.ai_training_samples + db.rs 补建表（UNIQUE(source_type,source_id) 支撑 ON CONFLICT，事务验证 OK）
+  - event_handlers INSERT 加显式 ai. 前缀；tests/integration_tests 2 处 plugin_ai→ai
+  - DB：DROP SCHEMA plugin_ai CASCADE（3 空表）；ai.ai_training_samples 已建
+  - 验证：ai 编译 0 error；测试全过（含 integration_tests）；门禁 PASS（ai 引用=42）
+- **⚠️ 未提交原因**：svc/ai 全部 8 个文件同时含用户工作区改动（only_own_schema_query 宏包装，HEAD 无宏）+ 用户 dsh 功能 60+ 文件——我的前缀替换与用户宏包装交织，**无法干净独立提交**。svc/ai 整体留在用户工作区，待用户统一提交时一并带上（代码自洽：工作区 ai.* 引用 + DB 已建 ai 表）。
+- **遗留**：ai_knowledge 模块（service.rs/mod.rs/rag.rs）未注册（死模块），含 core.* + plugin_ai 引用未编译——启用前需先改；宏参数 "plugin_ai" 冗余（编译期白名单多余项，无害）。

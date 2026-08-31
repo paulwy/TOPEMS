@@ -121,3 +121,12 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - audit.rs/mod.rs 共 13 处 plugin_mes→mes；schema_defense audit_logs 重建为 Cluster-A 15 列；DB 建 mes.audit_logs + DROP SCHEMA plugin_mes CASCADE。
 - **plugin_* schema 现状**：plugin_srm/plugin_mes 已删；plugin_ai（3 表，ai 服务 vector.rs 写入）+ plugin_aps（5 表，_archive 归档）残留。
 - **新待办（ai 服务 schema 评审）**：ai 服务跨 ai/core/plugin_ai 三 schema（schema_defense 建 ai 4 表含 documents 32 行孤儿、knowledge 模块用 core.*、vector.rs 写 plugin_ai.* 且 plugin_ai.analysis_results 缺表致 INSERT 失败）——归 P1-2 阶段 0 评审。
+
+### 第五批续 2（ai 服务 plugin_ai→ai 收敛，2026-08-31）
+
+**5e ai 服务 plugin_ai → ai schema 收敛（工作区完成，DB 已收敛，⚠️ 待用户提交 svc/ai）**
+- 现状：ai 服务横跨 ai/core/plugin_ai 三 schema；plugin_ai 3 表由 db.rs 运行时建（0 行空壳）；ai schema 有 schema_defense 建的 4 表（documents 32 行孤儿）。
+- 动作：7 活跃文件 SQL 前缀 plugin_ai.→ai.（37 处）；修复 2 个"引用缺表"运行时 bug（plugin_ai.analysis_results 无表、ai_training_samples bare 指向 public 不存在——均 INSERT 必失败）；db.rs 补建 ai.ai_training_samples（UNIQUE(source_type,source_id)）；DB 删 plugin_ai schema + 建 ai_training_samples。
+- 验证：编译 0 error、测试全过、门禁 PASS（ai 引用=42）、INSERT 事务验证 OK。
+- **提交策略**：svc/ai 与用户工作区（only_own_schema_query 宏包装 + dsh 60+ 文件）交织，无法独立提交 → 整体留在用户工作区待统一提交；代码自洽（工作区 ai.* 引用 + DB ai 表）。
+- **遗留**：ai_knowledge 死模块（未注册，含 core.* + plugin_ai）；宏参数 "plugin_ai" 冗余。
