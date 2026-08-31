@@ -1526,3 +1526,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 新增 `lib/shared-event/tests/event_bus_smoke.rs`（3 场景，需 Redis，--ignored）：stream 发布（publish→stream_length 增长）、DLQ（push/size/pop）、订阅消费（XREADGROUP 收到事件）。
 - 运行：`cargo test -p topems-shared-event --test event_bus_smoke -- --ignored` → **3 passed**（0.31s，Redis PONG）。
 - 意义：P0 #1「事件总线升级（Redis Stream + ACK + DLQ）」从"代码已实现"升级为"**全链路实测可用**"。
+
+## 2026-08-31 拆分前置治理：integration 跨域联动直写 → API 编排蓝图 ✅
+- **审计关键事实**：integration 的 6 处跨 schema 直写**全部在未接线的僵尸模块 `qms_lims_ehs.rs`**（process_event 无调用点）；活跃的 `event_handlers/` 仅记录同步日志（无直写，合规）。其中 #6 UPDATE qms 引用**不存在的 test_result/test_data/conclusion 列**（qms 仅有 result 列）——佐证模块从未执行。
+- **现有 API 语义不匹配**：qms/lims API 自动生成 sample_no/action_no（integration 需指定幂等键）、lims create_task 需 sample_id（integration 只有 sample_no）、qms 无结果回写端点。
+- **治理方案**（`docs/architecture/integration-cross-domain-api.md`）：4 步——A 服务侧集成端点（lims sample/task 集成创建 + qms action 集成创建 + qms inspection result 回写）→ B qms_lims_ehs 重写（直写→reqwest，复用 QMS/LIMS_SERVICE_URL env）→ C process_event 接线事件订阅 → D 撤销 integration.allow（白名单 2→1）。
+- 待办：步骤 A（服务端集成端点）为下一实质实施项。
