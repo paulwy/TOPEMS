@@ -1400,3 +1400,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 ## 2026-08-31 P1-2 阶段0 收尾：归档表移入 archive schema ✅
 - 迁移文件 `20260831190500_archive_schema.sql`（幂等）：建 archive schema + public 101 张 `_archive_*` 旧版表 SET SCHEMA archive（数据保留）。
 - 结果：public=299（纯活跃表）+ archive=101（归档数据）；门禁 PASS；workspace 编译通过。
+
+## 2026-08-31 P1-2 阶段0 后续：core_* 业务域表归位 ✅
+- 迁移文件 `20260831190600_core_business_schema_migrate.sql`（幂等，动态 DO 块）：public 中 core_* 业务域表按前缀归位至对应 schema（erp/crm/hrm/wms/scm/pm/pdm/doc_service/im/flow），保留 core_ 前缀命名（与 schema 内裸名表并存不合并），无同名冲突直接 SET SCHEMA；26 张处理。
+- 验证：public 299→273；erp/crm/hrm/wms/scm/pm/pdm 编译全过；门禁 PASS。
+- **保留 public（平台级/无明确 schema，待人工决策）**：core_tenant*/user*/role*/dict*/api*/menu*/permission*/billing*/ticket*/guide*/faq*/email*/file*/geofence*/location*/mobile*/usage*/plugin*/subscription*/operation*/notification*/migration*/login*/mail*/feedback* 等。
