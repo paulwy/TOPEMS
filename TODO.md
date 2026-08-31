@@ -1613,3 +1613,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：mes/erp/analytics 编译通过、门禁 28 PASS、断裂 FK 0。
 - **累计**：public 262 → 151（111 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善。
 - **保留（跨域活跃，待 API 化专项）**：quality_inspections/quality_standards（mes 引用 qms 表）、expenses/payables/receivables（finance 引用 erp 表）、report_templates（12 行数据待迁移评估）、inspection_records（6 行）。
+
+## 2026-09-01 拆分前置治理：影子表清理第二阶段（151 → 131）✅
+- **DROP 22 张**：
+  - 迁移 `...05_drop_public_misc_dead.sql` 14 张：mobile/erp/im 影子（mobile_push_notifications/mobile_tasks/project_budgets/project_contracts/chat_rooms）+ 死表（mobile_approvals/financial_records/report_schedule_history/stocktake_records/stocktake_tasks/chat_messages/quality_traceability_records/defect_records/aps_master_data_refs）——引用均为函数名/显式 schema/带前缀表名（communication 用 core_chat_*）
+  - 迁移 `...06_drop_public_finance_v60.sql` 8 张：finance_v60 系列（上轮 finance_v5x 清理遗漏，finance schema 同名 + 0 行）
+- **验证**：mobile/communication/pm/erp 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **131**（131 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善（262→131）。
+- **归位遗漏发现（~45 张活跃表仍在 public）**：finance_v52/v53 13 张 + quality_patrols/erp_payables/meeting_*/mv_*/process_*/ticket_* 等——**有真实 SQL 引用（fallback public）**——是阶段0 归位未覆盖的服务活跃表，**不可 DROP**——待"活跃表归位专项"（SET SCHEMA 到各服务 schema + 确认 search_path）。
