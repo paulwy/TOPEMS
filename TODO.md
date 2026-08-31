@@ -1690,3 +1690,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **代码同步**：main.rs SEARCH_PATH "public"→"master_data, public"、schema_defense.rs SERVICE_SCHEMA→"master_data"、schema_boundary.json master-data 登记。
 - **验证**：编译通过、门禁 28 PASS（master-data schema=master_data 引用=0）、启动连接池 search_path 正确、schema 自检 4 表一致、健康 200、模拟查询 38 行可解析。
 - **public 72 → 68**；dynamic_data 跨域归位闭环。
+
+## 2026-09-01 public gis 旧测试数据清理（device_locations/factory_maps）✅
+- **审计**：public.device_locations(170)/factory_maps(512)/pipelines(170) 为 2026-06-13~07-08 批量**测试数据**（"测试设备"/"测试管道"/2d 类型）；gis 服务用 gis.* 同名活表（真实数据 device_locations 2/factory_maps 10 行）；public 三表无 SQL 引用（前端经 gis API 调用）。
+- **FK**：public.device_locations→factory_maps、public.pipelines→factory_maps（与 gis 版 FK 独立）——CASCADE 清理。
+- **处理**：备份（dump + CSV 归档至 /tmp）→ DROP 3 张（迁移 20260901000018）。
+- **验证**：门禁 28 PASS、gis 编译通过、gis 活表不受影响、断裂 FK 0。
+- **public 65 张**；gis 历史测试数据归档闭环。
