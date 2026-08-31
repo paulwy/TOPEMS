@@ -16,8 +16,8 @@
       "allow": []
     },
     "communication": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "communication",
+      "search_path": "communication, public",
       "allow": []
     },
     "crm": {

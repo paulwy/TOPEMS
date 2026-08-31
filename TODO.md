@@ -1719,3 +1719,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **core_documents/core_plugin_pricing**：全代码 0 提及、无建表代码重建 → 纯死表 DROP。
 - **保留**：unified-core 平台核心（roles/permissions/tenants/users/plugins/login_logs 等——平台级）、communication 专属（emails/notifications/geofences——communication 未 schema 化）、plugin-registry 建表预留（core_plugin_* 7 张——search_path=public 建表 DROP 会重建）。
 - 迁移 20260901000021；门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 communication 服务 schema 化（core_* 4 张归位）✅
+- **归位 4 张 communication 独占表 → communication schema**：core_emails/core_geofences/core_notification_templates/core_notifications（迁移 20260901000022）。
+- **同步处理 core_chat_* 残留**：chat 功能已在 im schema（im.core_chat_*），移除 communication 的 core_chat_rooms/members/messages 建表代码（main.rs init_database + schema_defense TABLE_DEFS）——避免重复空表。
+- **代码**：main.rs SEARCH_PATH "public"→"communication, public"、schema_defense SERVICE_SCHEMA→"communication"、schema_boundary.json 登记。
+- **验证**：编译通过、门禁 28 PASS、启动连接池 search_path 正确、communication schema 6 表一致（含 core_email_templates/location_messages 新建成）、im.core_chat_* 不受影响、模拟查询 core_users 平台 48 行可解析、健康 200。
+- **public 56 → 52**；communication 归位闭环。
