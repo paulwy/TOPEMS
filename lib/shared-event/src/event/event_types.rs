@@ -184,6 +184,9 @@ pub enum EventType {
     SettlementCreated,
     SettlementApproved,
     SettlementRejected,
+
+    // Payroll 凭证跨域事件（hrm 发工资核算完成事件 → erp 消费生成凭证）
+    HrmPayrollVoucherRequested,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -272,6 +275,37 @@ pub struct HrmDepartmentDeletedPayload {
     pub department_id: Uuid,
     pub department_name: String,
     pub deleted_by: Option<Uuid>,
+}
+
+// --- Payroll Voucher Events（hrm 薪资核算完成 → erp 生成凭证）---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmPayrollVoucherEntryPayload {
+    pub line_number: i32,
+    pub subject_code: String,
+    pub subject_name: String,
+    pub debit_amount: f64,
+    pub credit_amount: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmPayrollVoucherRequestedPayload {
+    pub payroll_run_id: Uuid,
+    pub pay_period: String,
+    pub voucher_date: DateTime<Utc>,
+    pub period: String,
+    pub voucher_number: String,
+    pub summary: String,
+    pub maker_id: Option<Uuid>,
+    pub maker_name: String,
+    pub department_id: Uuid,
+    pub total_gross: f64,
+    pub total_tax: f64,
+    pub total_social_security: f64,
+    pub total_housing_fund: f64,
+    pub net_salary: f64,
+    pub employee_count: i32,
+    pub entries: Vec<HrmPayrollVoucherEntryPayload>,
 }
 
 // --- PM Events ---
