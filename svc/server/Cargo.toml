@@ -30,6 +30,7 @@ topems-lims = { path = "../lims", optional = true }
 topems-tms = { path = "../tms", optional = true }
 topems-ticket = { path = "../ticket", optional = true }
 topems-rd = { path = "../rd", optional = true }
+topems-srm = { path = "../srm", optional = true }
 topems-gis = { path = "../gis", optional = true }
 axum.workspace = true
 tokio.workspace = true
@@ -68,6 +69,7 @@ default = [
     "module-lims",
     "module-ticket",
     "module-rd",
+    "module-srm",
     # [边界治理] module-advanced / module-ai 为幽灵 feature（无对应 real_module 注册），
     # 从 default 移除；保留 feature 定义与 ModuleGroup 映射，待 master-data/analytics / ai 真实接入后再启用
 ]
@@ -101,6 +103,8 @@ module-tms = ["dep:topems-tms"]
 module-ticket = ["dep:topems-ticket"]
 # 真实业务服务接入：rd 模块（研发管理，默认启用）
 module-rd = ["dep:topems-rd"]
+# 真实业务服务接入：srm 模块（供应商关系，默认启用）
+module-srm = ["dep:topems-srm"]
 # 真实业务服务接入：gis 模块（P3 feature flag，默认不启用，按客户需求裁剪）
 module-gis = ["dep:topems-gis"]
 # 订阅管理模块（P5 商业化支撑，默认不启用，按客户需求启用）

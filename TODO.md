@@ -1451,3 +1451,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **rd_real_module.rs**（feature `module-rd`，默认启用）：SEARCH_PATH=rs,public；`modules::ApiState`（db/auth_state/config(shared-core Config::load)/metrics/start_time/event_publisher）+ `create_routes()`；schema_defense 迁移验证；ModuleGroup::Wms。
 - Cargo.toml 加 optional dep + feature + default；mod.rs + main.rs 注册（编号 17/18）。
 - 验证：`cargo check -p topems-server`（default 含 module-ticket/module-rd）0 error。
+
+## 2026-08-31 模块化单体：srm 真实服务接入 ✅
+- **srm_real_module.rs**（feature `module-srm`，默认启用）：SEARCH_PATH=srm,public,shared；各业务模块 create_routes 自管状态（Router<()>）merge 13 个路由（supplier/category/evaluation/contract/product/purchase_order/bid_price/tender/supplier_portal/performance/data_sync/scoring_dimension/statistics）；依赖构造 supplier_cache(InMemoryCache 300s) + WorkflowApi client；default_init_db("srm") 迁移验证；tenant_middleware + require_permission("srm:admin")；ModuleGroup::Erp。
+- 验证：cargo check -p topems-server 0 error；累计 15 个真实服务。
