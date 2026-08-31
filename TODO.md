@@ -1588,3 +1588,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：断裂 FK 0、门禁全 PASS（28 服务）、finance 编译通过。
 - **保留待审计（~40 张通用名影子表）**：analysis_*/dashboards/data_sources/datasource_*/reports/equipment/materials/inspection_records(6 行)/report_templates(12 行)/payables/receivables/expenses/financial_vouchers/voucher_items/process_routes 等——**不可盲删**：portal/pm/ai 等经 search_path（portal,public / pm,public / ai_service,public）可能 fallback 到 public 同名表（如 portal.materials/pm.equipment 不存在→public；ai 用 ai_service 不含 bi 却引用 dashboards/data_sources→public）。**待逐表精确审计**（表 vs 各引用服务 search_path 解析）后清理或补 schema。
 - **备注**：teams/team_members 平台保留决策（public）；audit_logs 平台表保留；quality_traceability_records 无代码引用（死表，可选后续清理）。
+
+## 2026-09-01 拆分前置治理：死表清理 + 通用名表审计结论（176 → 172）✅
+- **死表清理**：payment_schedules/project_budget_items/saved_analysis_results/visualization_data 4 张（0 行、svc 全库无引用、erp/bi schema 有同名活表）→ DROP（迁移 `20260901000002_drop_public_dead_tables.sql`）→ **public 176 → 172**。
+- **通用名表逐表审计（33 张）**：产出引用服务→search_path 解析映射。
+  - **可安全删（引用解析到专属 schema）**：payables/receivables（finance）、quality_inspections（mes）、report_data（lims）——public 版为影子。
+  - **不可盲删（fallback public）**：dashboards/data_sources/reports（ai：search_path=ai_service,public,shared **不含 bi** 却引用 bi 分析表→fallback public）、equipment（pm：pm,public 无 pm.equipment→public）、materials/expenses（portal：portal,public 无 portal.materials→public）。**暴露 search_path 配置缺陷**——待专项治理（ai 加 bi、portal/pm 补 schema 或显式 schema 引用）。
+  - **2 张有数据**：inspection_records(6)/report_templates(12)——保留待迁移评估。
+  - **死表待确认**：financial_vouchers/voucher_items/process_routes/quality_standards 等有引用但需看是否 fallback public——列入 search_path 专项一并处理。
+- **累计本轮**：public 262 → 172（90 张影子/死表），5 项拆分阈值持续改善，门禁全 PASS（28 服务）、断裂 FK 0。
