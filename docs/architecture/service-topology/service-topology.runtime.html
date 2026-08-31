@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopEMS 服务调用拓扑（运行时）</title>
+<style>
+  html,body { margin:0; padding:0; background:#f7f8fa; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:18px; color:#1a1b1c; margin:8px 0 4px; }
+  .sub { font-size:12px; color:#6b7280; margin-bottom:12px; }
+  .chart { width:100%; height:680px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .legend-note { font-size:12px; color:#6b7280; margin:10px 0; }
+  .legend-note b { color:#374151; }
+  .no-echarts { display:none; padding:40px; text-align:center; color:#6b7280; font-size:14px; }
+  table { border-collapse:collapse; width:100%; margin-top:16px; background:#fff; font-size:12px; }
+  th,td { border:1px solid #e5e7eb; padding:4px 6px; text-align:center; }
+  th { background:#f3f4f6; color:#374151; }
+  td:first-child, th:first-child { text-align:left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TopEMS 服务调用拓扑（运行时）</h1>
+  <div class="sub">边方向 = 调用方 → 被调用方（被调用方 /metrics 记录调用方 label）；线宽 = 调用次数。来源：运行中 /metrics 采集</div>
+  <div class="legend-note"><b>调用方服务</b>（主动发起 service token 调用）· <b>被调用平台服务</b>（提供 API 被调用）· <b>模块化单体模块</b>（server 内嵌模块，调用独立服务）</div>
+  <div class="chart" id="chart"></div>
+  <div class="no-echarts" id="fallback">ECharts 未加载——请联网后刷新。以下为静态依赖清单：<pre>erp-service → w, m, s, -, s, e, r, v, i, c, e</pre></div>
+  <div id="matrix"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+(function(){
+  var el = document.getElementById('chart');
+  if (!window.echarts) { document.getElementById('fallback').style.display='block'; el.style.display='none'; return; }
+  var option = {
+  "series": [
+    {
+      "type": "graph",
+      "layout": "force",
+      "data": [
+        {
+          "id": "erp-service",
+          "name": "erp-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "wms-service",
+          "name": "wms-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        }
+      ],
+      "links": [
+        {
+          "source": "erp-service",
+          "target": "wms-service",
+          "value": 5,
+          "lineStyle": {
+            "width": 6
+          },
+          "sourceFlag": "runtime"
+        }
+      ],
+      "categories": [
+        {
+          "name": "调用方服务"
+        },
+        {
+          "name": "被调用平台服务"
+        },
+        {
+          "name": "模块化单体模块"
+        }
+      ],
+      "lineStyle": {
+        "color": "source",
+        "curveness": 0.12,
+        "opacity": 0.7
+      },
+      "emphasis": {
+        "focus": "adjacency",
+        "lineStyle": {
+          "width": 6
+        }
+      },
+      "edgeSymbol": [
+        "none",
+        "arrow"
+      ],
+      "edgeSymbolSize": [
+        0,
+        9
+      ]
+    }
+  ]
+};
+  option.backgroundColor = 'transparent';
+  option.tooltip = { trigger:'item', triggerOn:'click', renderMode:'richText', confine:true,
+      formatter: function(p){
+        if (!p || !p.dataType) return '';
+        if (p.dataType === 'edge') {
+          return p.data.source + ' → ' + p.data.target + String.fromCharCode(10) + '调用次数: ' + p.data.value;
+        }
+        return p.name;
+      }
+  };
+  option.legend = { top:0, type:'scroll', itemWidth:14, itemHeight:8, textStyle:{color:'#6b7280',fontSize:11} };
+  option.title = { text:'服务间调用依赖图', left:'center', top:0, textStyle:{fontSize:15,fontWeight:600,color:'#1a1b1c'} };
+  option.series[0].layout = 'force';
+  option.series[0].roam = true;
+  option.series[0].force = { repulsion:420, edgeLength:110 };
+  option.series[0].label = { show:true, position:'right', color:'#374151', fontSize:11,
+      formatter: function(p){ return p.name.replace('-service','').replace('-module','(m)'); } };
+  var chart = echarts.init(el);
+  chart.setOption(option);
+  window.addEventListener('resize', function(){ chart.resize(); });
+})();
+</script>
+<script>
+(function(){
+  var data = {"erp-service": {"wms-service": 5}};
+  var el = document.getElementById('matrix');
+  if (!el) return;
+  var callers = Object.keys(data);
+  if (!callers.length) { el.innerHTML='<div class="sub">暂无调用数据</div>'; return; }
+  var callees = [];
+  callers.forEach(function(c){ Object.keys(data[c]||{}).forEach(function(t){ if(callees.indexOf(t)<0) callees.push(t); }); });
+  callees.sort();
+  var h = '<table><tr><th>调用方 \ 被调用方</th>';
+  callees.forEach(function(t){ h += '<th>'+t.replace('-service','')+'</th>'; });
+  h += '</tr>';
+  callers.sort().forEach(function(c){
+    h += '<tr><td>'+c.replace('-service','')+'</td>';
+    callees.forEach(function(t){ var v = (data[c]&&data[c][t])||0; h += '<td>'+(v?v:'·')+'</td>'; });
+    h += '</tr>';
+  });
+  h += '</table>';
+  el.innerHTML = h;
+})();
+</script>
+</body>
+</html>

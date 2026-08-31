@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopEMS 服务调用拓扑（设计）</title>
+<style>
+  html,body { margin:0; padding:0; background:#f7f8fa; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+  h1 { font-size:18px; color:#1a1b1c; margin:8px 0 4px; }
+  .sub { font-size:12px; color:#6b7280; margin-bottom:12px; }
+  .chart { width:100%; height:680px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .legend-note { font-size:12px; color:#6b7280; margin:10px 0; }
+  .legend-note b { color:#374151; }
+  .no-echarts { display:none; padding:40px; text-align:center; color:#6b7280; font-size:14px; }
+  table { border-collapse:collapse; width:100%; margin-top:16px; background:#fff; font-size:12px; }
+  th,td { border:1px solid #e5e7eb; padding:4px 6px; text-align:center; }
+  th { background:#f3f4f6; color:#374151; }
+  td:first-child, th:first-child { text-align:left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TopEMS 服务调用拓扑（设计）</h1>
+  <div class="sub">边方向 = 调用方 → 被调用方（被调用方 /metrics 记录调用方 label）；线宽 = 调用次数。来源：with_service_token 全量接入清单</div>
+  <div class="legend-note"><b>调用方服务</b>（主动发起 service token 调用）· <b>被调用平台服务</b>（提供 API 被调用）· <b>模块化单体模块</b>（server 内嵌模块，调用独立服务）</div>
+  <div class="chart" id="chart"></div>
+  <div class="no-echarts" id="fallback">ECharts 未加载——请联网后刷新。以下为静态依赖清单：<pre>crm-service → e, r, p, -, s, e, r, v, i, c, e
+crm-service → w, m, s, -, s, e, r, v, i, c, e
+crm-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+ehs-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+erp-service → f, i, n, a, n, c, e, -, s, e, r, v, i, c, e
+erp-service → h, r, m, -, s, e, r, v, i, c, e
+erp-service → w, m, s, -, s, e, r, v, i, c, e
+finance-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+mobile-service → h, r, m, -, s, e, r, v, i, c, e
+mobile-service → m, e, s, -, s, e, r, v, i, c, e
+mobile-service → n, o, t, i, f, i, c, a, t, i, o, n, -, s, e, r, v, i, c, e
+mobile-service → q, m, s, -, s, e, r, v, i, c, e
+mobile-service → w, m, s, -, s, e, r, v, i, c, e
+mobile-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+pm-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+portal-service → c, r, m, -, s, e, r, v, i, c, e
+portal-service → e, r, p, -, s, e, r, v, i, c, e
+portal-service → f, i, n, a, n, c, e, -, s, e, r, v, i, c, e
+portal-service → h, r, m, -, s, e, r, v, i, c, e
+portal-service → i, a, m, -, s, e, r, v, i, c, e
+portal-service → m, e, s, -, s, e, r, v, i, c, e
+portal-service → m, o, n, i, t, o, r, -, s, e, r, v, i, c, e
+portal-service → n, o, t, i, f, i, c, a, t, i, o, n, -, s, e, r, v, i, c, e
+portal-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+qms-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-crm-module → e, r, p, -, s, e, r, v, i, c, e
+server-crm-module → w, m, s, -, s, e, r, v, i, c, e
+server-crm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-ehs-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-erp-module → f, i, n, a, n, c, e, -, s, e, r, v, i, c, e
+server-erp-module → h, r, m, -, s, e, r, v, i, c, e
+server-finance-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-pm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-qms-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+server-srm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
+srm-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e</pre></div>
+  <div id="matrix"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+(function(){
+  var el = document.getElementById('chart');
+  if (!window.echarts) { document.getElementById('fallback').style.display='block'; el.style.display='none'; return; }
+  var option = {
+  "series": [
+    {
+      "type": "graph",
+      "layout": "force",
+      "data": [
+        {
+          "id": "erp-service",
+          "name": "erp-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "wms-service",
+          "name": "wms-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "finance-service",
+          "name": "finance-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "hrm-service",
+          "name": "hrm-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "crm-service",
+          "name": "crm-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "workflow-service",
+          "name": "workflow-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "mobile-service",
+          "name": "mobile-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "mes-service",
+          "name": "mes-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "qms-service",
+          "name": "qms-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "notification-service",
+          "name": "notification-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "srm-service",
+          "name": "srm-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "pm-service",
+          "name": "pm-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "ehs-service",
+          "name": "ehs-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "portal-service",
+          "name": "portal-service",
+          "category": "调用方服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "monitor-service",
+          "name": "monitor-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "iam-service",
+          "name": "iam-service",
+          "category": "被调用平台服务",
+          "symbolSize": 34
+        },
+        {
+          "id": "server-erp-module",
+          "name": "server-erp-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-crm-module",
+          "name": "server-crm-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-pm-module",
+          "name": "server-pm-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-qms-module",
+          "name": "server-qms-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-finance-module",
+          "name": "server-finance-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-srm-module",
+          "name": "server-srm-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        },
+        {
+          "id": "server-ehs-module",
+          "name": "server-ehs-module",
+          "category": "模块化单体模块",
+          "symbolSize": 26
+        }
+      ],
+      "links": [
+        {
+          "source": "erp-service",
+          "target": "wms-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "erp-service",
+          "target": "finance-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "erp-service",
+          "target": "hrm-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "crm-service",
+          "target": "erp-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "crm-service",
+          "target": "wms-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "crm-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "wms-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "mes-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "qms-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "hrm-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "mobile-service",
+          "target": "notification-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "srm-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "qms-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "pm-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "finance-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "ehs-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "notification-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "mes-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "monitor-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "iam-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "hrm-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "erp-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "crm-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "portal-service",
+          "target": "finance-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-erp-module",
+          "target": "hrm-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-erp-module",
+          "target": "finance-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-crm-module",
+          "target": "erp-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-crm-module",
+          "target": "wms-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-crm-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-pm-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-qms-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-finance-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-srm-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        },
+        {
+          "source": "server-ehs-module",
+          "target": "workflow-service",
+          "value": 1,
+          "lineStyle": {
+            "width": 2
+          },
+          "sourceFlag": "design"
+        }
+      ],
+      "categories": [
+        {
+          "name": "调用方服务"
+        },
+        {
+          "name": "被调用平台服务"
+        },
+        {
+          "name": "模块化单体模块"
+        }
+      ],
+      "lineStyle": {
+        "color": "source",
+        "curveness": 0.12,
+        "opacity": 0.7
+      },
+      "emphasis": {
+        "focus": "adjacency",
+        "lineStyle": {
+          "width": 6
+        }
+      },
+      "edgeSymbol": [
+        "none",
+        "arrow"
+      ],
+      "edgeSymbolSize": [
+        0,
+        9
+      ]
+    }
+  ]
+};
+  option.backgroundColor = 'transparent';
+  option.tooltip = { trigger:'item', triggerOn:'click', renderMode:'richText', confine:true,
+      formatter: function(p){
+        if (!p || !p.dataType) return '';
+        if (p.dataType === 'edge') {
+          return p.data.source + ' → ' + p.data.target + String.fromCharCode(10) + '调用次数: ' + p.data.value;
+        }
+        return p.name;
+      }
+  };
+  option.legend = { top:0, type:'scroll', itemWidth:14, itemHeight:8, textStyle:{color:'#6b7280',fontSize:11} };
+  option.title = { text:'服务间调用依赖图', left:'center', top:0, textStyle:{fontSize:15,fontWeight:600,color:'#1a1b1c'} };
+  option.series[0].layout = 'force';
+  option.series[0].roam = true;
+  option.series[0].force = { repulsion:420, edgeLength:110 };
+  option.series[0].label = { show:true, position:'right', color:'#374151', fontSize:11,
+      formatter: function(p){ return p.name.replace('-service','').replace('-module','(m)'); } };
+  var chart = echarts.init(el);
+  chart.setOption(option);
+  window.addEventListener('resize', function(){ chart.resize(); });
+})();
+</script>
+<script>
+(function(){
+  var data = {"erp-service": {"wms-service": 1, "finance-service": 1, "hrm-service": 1}, "crm-service": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "mobile-service": {"wms-service": 1, "mes-service": 1, "qms-service": 1, "hrm-service": 1, "workflow-service": 1, "notification-service": 1}, "srm-service": {"workflow-service": 1}, "qms-service": {"workflow-service": 1}, "pm-service": {"workflow-service": 1}, "finance-service": {"workflow-service": 1}, "ehs-service": {"workflow-service": 1}, "portal-service": {"notification-service": 1, "workflow-service": 1, "mes-service": 1, "monitor-service": 1, "iam-service": 1, "hrm-service": 1, "erp-service": 1, "crm-service": 1, "finance-service": 1}, "server-erp-module": {"hrm-service": 1, "finance-service": 1}, "server-crm-module": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "server-pm-module": {"workflow-service": 1}, "server-qms-module": {"workflow-service": 1}, "server-finance-module": {"workflow-service": 1}, "server-srm-module": {"workflow-service": 1}, "server-ehs-module": {"workflow-service": 1}};
+  var el = document.getElementById('matrix');
+  if (!el) return;
+  var callers = Object.keys(data);
+  if (!callers.length) { el.innerHTML='<div class="sub">暂无调用数据</div>'; return; }
+  var callees = [];
+  callers.forEach(function(c){ Object.keys(data[c]||{}).forEach(function(t){ if(callees.indexOf(t)<0) callees.push(t); }); });
+  callees.sort();
+  var h = '<table><tr><th>调用方 \ 被调用方</th>';
+  callees.forEach(function(t){ h += '<th>'+t.replace('-service','')+'</th>'; });
+  h += '</tr>';
+  callers.sort().forEach(function(c){
+    h += '<tr><td>'+c.replace('-service','')+'</td>';
+    callees.forEach(function(t){ var v = (data[c]&&data[c][t])||0; h += '<td>'+(v?v:'·')+'</td>'; });
+    h += '</tr>';
+  });
+  h += '</table>';
+  el.innerHTML = h;
+})();
+</script>
+</body>
+</html>

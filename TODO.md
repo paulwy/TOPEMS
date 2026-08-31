@@ -1790,3 +1790,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **配置**（env 可覆盖）：SERVICE_ALERT_WINDOW_SECS(60)/HIGH_FREQ_THRESHOLD(500)/KNOWN_SERVICES(内置 31 个服务名)/COOLDOWN_SECS(60)/ENABLED。
 - **接入**：record_service_call 里调用 monitor（非阻塞纯内存）；告警 tracing::warn（target service_call_alert）可接日志/告警平台。
 - **验证**：shared-auth 223 测试全过；运行时 evil-service（未注册）→ 未知服务告警；erp-service 阈值 3 连续调用 → 高频告警；冷却期去重（告警数保持 1）。
+
+## 2026-09-01 服务调用拓扑生成（metrics → 依赖矩阵/图谱）✅
+- **新增** scripts/arch/service_topology.py：双模式聚合 `topems_service_to_service_calls_total{service=...}`。
+  - `--static`：内置 with_service_token 全量清单 → 设计依赖（36 边/23 节点）
+  - `--collect svc:port,...`：扫运行中服务 /metrics → 实际调用边（被调用方 metrics 记录调用方 label）
+- **输出** docs/architecture/service-topology/：ECharts graph JSON + 依赖矩阵 CSV + 自包含 HTML 图谱。
+- **验证**：静态 36 边/23 节点；动态实测 erp-service→wms-service（5 次调用捕获）。
