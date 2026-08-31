@@ -1479,3 +1479,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 注册：mod.rs cfg 声明 + main.rs #20 注册块（降级模式）。
 - 验证：`cargo build` 通过；启动冒烟 **18 模块**（master-data-real 已注册）；`/api/master-data/quality-v51/checks` 200；master_plugin 自含 /api/plugins 未 merge 主路由（独立 create_routes，不影响）。
 - 待办：analytics 同组（advanced）后续接入。
+
+## 2026-08-31 模块化单体：analytics / ai 保持独立部署评估 ✅
+- **analytics 评估**：protected_routes 在 main.rs 逐行组装（非 lib 汇总 create_routes，接入需重构 lib）+ `ReportScheduler` 定时调度后台任务；BI 服务定位 → **保持独立微服务**（同 gis/portal 边界规则）。
+- **ai 评估**：MCP/Agent/DSH 复杂服务 + `ai_service` 独立 schema → **保持独立微服务**（同 gis）。
+- 文档更新：已接入 default 15→16（+master-data）；待接入清空；不嵌入表新增 analytics/ai；module-ai 幽灵 feature 保留待评估。
+- 至此模块化单体：16 真实服务接入 server（18 模块含 platform/dashboard/finance），独立部署 7 个（gis/portal/analytics/ai/mobile/integration/monitor/plugin-registry/unified-core 等按边界规则）。
