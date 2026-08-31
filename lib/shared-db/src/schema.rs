@@ -11,7 +11,7 @@ pub const CRM_SCHEMA: &str = "plugin_crm";
 pub const QMS_SCHEMA: &str = "plugin_qms";
 pub const MES_SCHEMA: &str = "plugin_mes";
 pub const WMS_SCHEMA: &str = "plugin_wms";
-pub const SRM_SCHEMA: &str = "plugin_srm";
+pub const SRM_SCHEMA: &str = "srm";
 pub const SCM_SCHEMA: &str = "plugin_scm";
 pub const PDM_SCHEMA: &str = "plugin_pdm";
 pub const LIMS_SCHEMA: &str = "plugin_lims";
@@ -422,7 +422,7 @@ mod tests {
         assert_eq!(qms_table("inspections"), "plugin_qms.inspections");
         assert_eq!(mes_table("work_orders"), "plugin_mes.work_orders");
         assert_eq!(wms_table("bins"), "plugin_wms.bins");
-        assert_eq!(srm_table("suppliers"), "plugin_srm.suppliers");
+        assert_eq!(srm_table("suppliers"), "srm.suppliers");
         assert_eq!(scm_table("inventory"), "plugin_scm.inventory");
         assert_eq!(pdm_table("drawings"), "plugin_pdm.drawings");
         assert_eq!(lims_table("samples"), "plugin_lims.samples");
