@@ -1797,3 +1797,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - `--collect svc:port,...`：扫运行中服务 /metrics → 实际调用边（被调用方 metrics 记录调用方 label）
 - **输出** docs/architecture/service-topology/：ECharts graph JSON + 依赖矩阵 CSV + 自包含 HTML 图谱。
 - **验证**：静态 36 边/23 节点；动态实测 erp-service→wms-service（5 次调用捕获）。
+
+## 2026-09-01 跨库调用标记（拓扑 × 物理库拆分预案）✅
+- **新增** scripts/arch/mark_cross_db.py：把服务调用拓扑叠加 database-split-plan.md §3 阶段 2 的 5 物理库分组。
+- **结果**：36 条设计边 → 跨库 31 条（86%）/ 同库 5 条（erp→finance、mobile→hrm、portal→hrm/crm、server-erp-module→finance）。
+- **最大耦合点**：workflow-service（core 库）被 14 个跨库调用方依赖；wms 4 / erp 3 / hrm·mes·notification 各 2。
+- **关键结论**：跨库边均为服务 API 调用（service token）——拆分后无需额外改造；真正前置治理仍是预案 3 项（integration 直写、unified-core→portal、跨库事务边界）。
+- **输出**：service-topology.cross-db.{json,html}（红色虚线高亮跨库边）+ cross-db-calls.md（清单+优先级）。
