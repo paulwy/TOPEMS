@@ -82,7 +82,7 @@ async fn list_recommendations(
     let result = sqlx::query(
         r#"
         SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
-        FROM plugin_crm.customer_recommendations
+        FROM crm.customer_recommendations
         WHERE ($1::uuid IS NULL OR customer_id = $1)
           AND ($2::text IS NULL OR recommendation_type = $2)
         ORDER BY created_at DESC
@@ -100,7 +100,7 @@ async fn list_recommendations(
         Ok(records) => {
             let count_result = sqlx::query(
                 r#"
-                SELECT COUNT(*) FROM plugin_crm.customer_recommendations
+                SELECT COUNT(*) FROM crm.customer_recommendations
                 WHERE ($1::uuid IS NULL OR customer_id = $1)
                   AND ($2::text IS NULL OR recommendation_type = $2)
                 "#,
@@ -159,7 +159,7 @@ async fn get_recommendation(
     let result = sqlx::query(
         r#"
         SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
-        FROM plugin_crm.customer_recommendations WHERE id = $1
+        FROM crm.customer_recommendations WHERE id = $1
         "#,
     )
     .bind(id)
@@ -226,7 +226,7 @@ async fn create_recommendation(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO plugin_crm.customer_recommendations (
+        INSERT INTO crm.customer_recommendations (
             id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at

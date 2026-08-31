@@ -198,7 +198,7 @@ async fn fetch_customer_score(
     let result = sqlx::query(
         r#"
         SELECT score, score_level, trend, scoring_date, factors
-        FROM plugin_crm.customer_scores
+        FROM crm.customer_scores
         WHERE customer_id = $1
         ORDER BY scoring_date DESC
         LIMIT 1
@@ -227,7 +227,7 @@ async fn fetch_customer_opportunities(
     let result = sqlx::query_as::<_, OpportunitySummary>(
         r#"
         SELECT id, name, value, stage, probability, close_date
-        FROM plugin_crm.opportunities
+        FROM crm.opportunities
         WHERE customer_id = $1
         ORDER BY created_at DESC
         LIMIT 10
@@ -253,7 +253,7 @@ async fn fetch_customer_interactions(
     let result = sqlx::query_as::<_, InteractionSummary>(
         r#"
         SELECT id, type_ as "type_", subject, content, scheduled_at, completed_at, status, created_at
-        FROM plugin_crm.interactions
+        FROM crm.interactions
         WHERE customer_id = $1
         ORDER BY created_at DESC
         LIMIT 10
@@ -354,7 +354,7 @@ async fn add_profile_tags(
     for tag in &req.tags {
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_crm.customer_tags (customer_id, tag, created_at)
+            INSERT INTO crm.customer_tags (customer_id, tag, created_at)
             VALUES ($1, $2, $3)
             ON CONFLICT (customer_id, tag) DO NOTHING
             "#,
@@ -387,7 +387,7 @@ async fn remove_profile_tags(
 
     for tag in &req.tags {
         let result =
-            sqlx::query("DELETE FROM plugin_crm.customer_tags WHERE customer_id = $1 AND tag = $2")
+            sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag = $2")
                 .bind(id)
                 .bind(tag)
                 .execute(&state.db)

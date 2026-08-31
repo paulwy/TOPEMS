@@ -259,7 +259,7 @@ async fn get_sales_funnel(
 
     for (stage, stage_label) in stages {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1 AND tenant_id = $2",
+            "SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND tenant_id = $2",
         )
         .bind(stage)
         .bind(tenant_id)
@@ -268,7 +268,7 @@ async fn get_sales_funnel(
         .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND tenant_id = $2 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = $1 AND tenant_id = $2 AND value IS NOT NULL"
         )
         .bind(stage)
         .bind(tenant_id)
@@ -318,7 +318,7 @@ async fn get_sales_forecast(
         let weighted_value: Option<f64> = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
-            FROM plugin_crm.opportunities 
+            FROM crm.opportunities 
             WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
@@ -349,7 +349,7 @@ async fn get_sales_forecast(
     let last_month_actual: Option<f64> = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(value), 0) 
-        FROM plugin_crm.opportunities 
+        FROM crm.opportunities 
         WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
         "#,
     )

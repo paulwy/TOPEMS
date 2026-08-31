@@ -376,7 +376,7 @@ impl CrmEventHandlers {
 
     /// ShippingOrderRequested → WMS 出库单确认后，在 CRM 本地创建销售订单
     ///
-    /// 替代 WMS 直接跨 Schema 写 plugin_crm.sales_orders 的方式，
+    /// 替代 WMS 直接跨 Schema 写 crm.sales_orders 的方式，
     /// 采用事件驱动解耦，CRM 在本地创建销售订单。
     async fn handle_shipping_order_requested(&self, event: Event) -> HandlerResult {
         let payload: ShippingOrderRequestedPayload = serde_json::from_value(event.payload.clone())
@@ -395,7 +395,7 @@ impl CrmEventHandlers {
         let now = chrono::Utc::now();
 
         let existing: Option<(uuid::Uuid,)> =
-            sqlx::query_as("SELECT id FROM plugin_crm.sales_orders WHERE order_number = $1")
+            sqlx::query_as("SELECT id FROM crm.sales_orders WHERE order_number = $1")
                 .bind(&payload.shipping_order_number)
                 .fetch_optional(&self.db)
                 .await
@@ -410,7 +410,7 @@ impl CrmEventHandlers {
         }
 
         let result = sqlx::query(
-            r#"INSERT INTO plugin_crm.sales_orders 
+            r#"INSERT INTO crm.sales_orders 
                (id, order_number, customer_id, order_date, 
                 total_amount, status, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)

@@ -95,7 +95,7 @@ async fn get_funnel_data(
                    COALESCE(SUM(value), 0) as total_value,
                    COALESCE(AVG(value), 0) as avg_value,
                    COALESCE(AVG(probability), 0) as avg_probability
-            FROM plugin_crm.opportunities
+            FROM crm.opportunities
             WHERE stage = $1
             "#,
         )
@@ -143,7 +143,7 @@ async fn get_funnel_metrics(
                COALESCE(SUM(value), 0) as total_value,
                COALESCE(AVG(value), 0) as avg_value,
                COALESCE(SUM(CASE WHEN stage = 'closed_won' THEN 1 ELSE 0 END), 0) as won_count
-        FROM plugin_crm.opportunities
+        FROM crm.opportunities
         "#,
     )
     .fetch_one(&state.db)
@@ -165,7 +165,7 @@ async fn get_funnel_metrics(
             let weighted_result = sqlx::query_scalar(
                 r#"
                 SELECT COALESCE(SUM(value * probability / 100), 0) as weighted_value
-                FROM plugin_crm.opportunities
+                FROM crm.opportunities
                 WHERE stage != 'closed_lost'
                 "#,
             )
@@ -209,13 +209,13 @@ async fn get_funnel_conversion(
         let to_stage = stage_order[i + 1];
 
         let from_count_result: Result<i64, sqlx::Error> =
-            sqlx::query_scalar(r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#)
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
                 .bind(from_stage)
                 .fetch_one(&state.db)
                 .await;
 
         let to_count_result: Result<i64, sqlx::Error> =
-            sqlx::query_scalar(r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#)
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
                 .bind(to_stage)
                 .fetch_one(&state.db)
                 .await;
@@ -264,7 +264,7 @@ async fn get_funnel_trend(
                stage,
                COUNT(*) as count,
                COALESCE(SUM(value), 0) as value
-        FROM plugin_crm.opportunities
+        FROM crm.opportunities
         GROUP BY period, stage
         ORDER BY period DESC, stage
         LIMIT 50
@@ -314,7 +314,7 @@ async fn get_stage_opportunities(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        FROM plugin_crm.opportunities
+        FROM crm.opportunities
         WHERE stage = $1
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
@@ -329,7 +329,7 @@ async fn get_stage_opportunities(
     match result {
         Ok(opportunities) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#,
+                r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#,
             )
             .bind(&stage)
             .fetch_one(&state.db)

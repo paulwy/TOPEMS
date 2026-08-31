@@ -17,25 +17,31 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "audit_logs",
         &[
-            ("org_id", "UUID NOT NULL"),
-            ("user_id", "UUID"),
-            ("action", "VARCHAR(100) NOT NULL"),
-            ("resource", "VARCHAR(100) NOT NULL"),
-            ("resource_id", "UUID"),
-            ("old_values", "JSONB"),
-            ("new_values", "JSONB"),
-            ("ip_address", "INET"),
-            ("user_agent", "TEXT"),
-            ("details", "JSONB"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            // Cluster-A 标准审计列（与 shared-db SchemaAwareAuditLogService 一致）
+            // 历史库为旧版 action/resource 结构，经 ADD COLUMN 补齐新列；
+            // org_id 由共享审计服务不写入，历史遗留列改为可空
+            ("org_id", "UUID"),
             ("tenant_id", "UUID"),
+            ("action", "VARCHAR(255) NOT NULL"),
+            ("entity_type", "VARCHAR(50) NOT NULL"),
+            ("entity_id", "UUID"),
+            ("entity_ids", "JSONB"),
+            ("user_id", "UUID"),
+            ("user_name", "TEXT"),
+            ("request_details", "JSONB"),
+            ("response_details", "JSONB"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'success'"),
+            ("error_message", "TEXT"),
+            ("ip_address", "VARCHAR(45)"),
+            ("user_agent", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
     (
         "contacts",
         &[
-            ("org_id", "UUID NOT NULL"),
+            ("org_id", "UUID"),
             ("customer_id", "UUID"),
             ("first_name", "VARCHAR(100) NOT NULL"),
             ("last_name", "VARCHAR(100)"),
@@ -52,6 +58,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("address", "TEXT"),
             ("notes", "TEXT"),
             ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
+            // 模型/审批流程使用 approval_status，历史库缺列需补齐
+            ("approval_status", "VARCHAR(50) NOT NULL DEFAULT 'none'"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("created_by", "UUID"),
@@ -78,7 +86,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "customer_tags",
         &[
-            ("org_id", "UUID NOT NULL"),
+            ("org_id", "UUID"),
             ("customer_id", "UUID NOT NULL"),
             ("tag_id", "UUID NOT NULL"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
@@ -90,7 +98,6 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "customers",
         &[
-            ("org_id", "UUID NOT NULL"),
             ("name", "VARCHAR(255) NOT NULL"),
             ("code", "VARCHAR(100)"),
             ("industry", "VARCHAR(100)"),
@@ -108,6 +115,13 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("customer_type", "VARCHAR(50) DEFAULT 'potential'"),
             ("source", "VARCHAR(50)"),
             ("rating", "VARCHAR(20)"),
+            ("region", "VARCHAR(100)"),
+            // 注意：历史库（旧模型）无 owner_id/tags/approval_status 列，
+            // 此处可空/带默认值以保证对已有数据表安全 ADD COLUMN；
+            // 旧数据 owner_id 为空需另行数据回填（crm 预存数据债务）
+            ("owner_id", "UUID"),
+            ("tags", "TEXT[] NOT NULL DEFAULT '{}'"),
+            ("approval_status", "VARCHAR(50) NOT NULL DEFAULT 'none'"),
             ("revenue", "DECIMAL(15,2)"),
             ("employee_count", "INTEGER"),
             ("notes", "TEXT"),
@@ -179,9 +193,12 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "opportunities",
         &[
-            ("org_id", "UUID NOT NULL"),
+            ("org_id", "UUID"),
             ("customer_id", "UUID"),
             ("contact_id", "UUID"),
+            // 历史库缺列（模型/INSERT 使用但 TABLE_DEFS 缺失），补齐以修复写库
+            ("opp_no", "VARCHAR(50)"),
+            ("customer_name", "VARCHAR(255)"),
             ("name", "VARCHAR(255) NOT NULL"),
             ("code", "VARCHAR(100)"),
             ("description", "TEXT"),
@@ -189,6 +206,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("expected_revenue", "DECIMAL(15,2)"),
             ("stage", "VARCHAR(50) NOT NULL DEFAULT 'prospecting'"),
             ("probability", "INTEGER DEFAULT 0"),
+            ("win_rate", "INTEGER"),
             ("status", "VARCHAR(20) NOT NULL DEFAULT 'open'"),
             ("priority", "VARCHAR(20)"),
             ("source", "VARCHAR(50)"),
@@ -200,6 +218,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("loss_reason", "TEXT"),
             ("win_reason", "TEXT"),
             ("assigned_to", "UUID"),
+            ("owner_id", "UUID"),
             ("notes", "TEXT"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
@@ -270,7 +289,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "tags",
         &[
-            ("org_id", "UUID NOT NULL"),
+            ("org_id", "UUID"),
             ("name", "VARCHAR(100) NOT NULL"),
             ("color", "VARCHAR(20) DEFAULT '#3498db'"),
             ("description", "TEXT"),
@@ -283,6 +302,79 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_by", "UUID"),
             ("deleted_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
+        ],
+    ),
+    // 客户分层（收敛自 plugin_crm.customer_segments）
+    (
+        "customer_segments",
+        &[
+            ("name", "VARCHAR(200) NOT NULL"),
+            ("description", "TEXT"),
+            ("criteria", "JSONB"),
+            ("customer_count", "INTEGER DEFAULT 0"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 客户评分（收敛自 plugin_crm.customer_scores）
+    (
+        "customer_scores",
+        &[
+            ("tenant_id", "UUID"),
+            ("customer_id", "UUID"),
+            ("customer_name", "VARCHAR(200)"),
+            ("score", "NUMERIC(8,2)"),
+            ("score_level", "VARCHAR(20)"),
+            ("scoring_date", "TIMESTAMPTZ"),
+            ("factors", "JSONB"),
+            ("trend", "VARCHAR(20)"),
+            ("last_score", "NUMERIC(8,2)"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 客户推荐（收敛自 plugin_crm.customer_recommendations）
+    (
+        "customer_recommendations",
+        &[
+            ("customer_id", "UUID"),
+            ("customer_name", "VARCHAR(200)"),
+            ("recommendations", "JSONB"),
+            ("recommendation_type", "VARCHAR(50)"),
+            ("model", "VARCHAR(100)"),
+            ("confidence", "NUMERIC(8,2)"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 销售预测（收敛自 plugin_crm.sales_forecasts）
+    (
+        "sales_forecasts",
+        &[
+            ("tenant_id", "UUID"),
+            ("period_type", "VARCHAR(20)"),
+            ("period", "VARCHAR(20)"),
+            ("predicted_amount", "NUMERIC(15,2)"),
+            ("actual_amount", "NUMERIC(15,2)"),
+            ("accuracy", "NUMERIC(8,2)"),
+            ("trend", "VARCHAR(20)"),
+            ("confidence_level", "NUMERIC(8,2)"),
+            ("factors", "JSONB"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'draft'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 销售订单（收敛自 plugin_crm.sales_orders）
+    (
+        "sales_orders",
+        &[
+            ("order_number", "VARCHAR(100) NOT NULL"),
+            ("customer_id", "UUID"),
+            ("order_date", "TIMESTAMPTZ"),
+            ("total_amount", "NUMERIC(15,2)"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
 ];
@@ -339,6 +431,11 @@ mod tests {
         assert!(names.contains(&"customer_tags"));
         assert!(names.contains(&"dashboard_metrics"));
         assert!(names.contains(&"customer_orders"));
+        assert!(names.contains(&"customer_segments"));
+        assert!(names.contains(&"customer_scores"));
+        assert!(names.contains(&"customer_recommendations"));
+        assert!(names.contains(&"sales_forecasts"));
+        assert!(names.contains(&"sales_orders"));
         // NOTE: crm_master_data_refs is created by shared-db ensure_master_data_refs_table()
         // in default_init_db path — intentionally excluded from TABLE_DEFS.
     }
