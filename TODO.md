@@ -1646,3 +1646,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **累计**：public 262 → **88**（165 张清理 + 32 张归位）。
 - **拆分阈值**：最大 schema 表数 **public 88**（已低于 portal 120——public 不再是最大 schema，从 262 大幅收敛）。
 - **剩余 public 88 张**：core_* 42（平台保留）+ 平台表 21 + 基础设施 5（cqrs/schema_registry/spatial_ref_sys）+ ticket 2（search_path=public）+ 活跃业务表 ~18（dynamic_data/inventory_items/vehicles/warehouses/report_templates/dashboard_stats 等，有 SQL 引用需归位专项或保留）。
+
+## 2026-09-01 ticket schema 化（public → ticket）✅
+- **DB**：建 ticket schema + 归位 7 张表（迁移 `20260901000011_create_ticket_schema.sql`）：core_tickets/core_ticket_comments/core_ticket_activities/core_ticket_sla_policies/core_ticket_sla_escalations（**审计确认仅 ticket 服务引用**，core_ 前缀系历史命名非平台级，修正 core_ 保留决策）+ ticket_automation_rules/ticket_knowledge_articles。备份 topems_pre_ticket_schema_*.dump。
+- **代码**：main.rs SEARCH_PATH `"public"→"ticket, public"`；schema_defense.rs SERVICE_SCHEMA `"public"→"ticket"`；schema_boundary.json ticket `{schema: ticket, search_path: ticket, public}`。
+- **验证**：ticket 编译通过、门禁 28 PASS、运行时启动 + schema 自检 7 张表一致性通过 + search_path 模拟查询可解析 + 端点正常响应；测试服务已清理。
+- **累计**：public 262 → **81**（165 清理 + 39 归位，ticket 新增 schema 7 张）。

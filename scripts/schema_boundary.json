@@ -124,8 +124,8 @@
       "allow": []
     },
     "ticket": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "ticket",
+      "search_path": "ticket, public",
       "allow": []
     },
     "tms": {
