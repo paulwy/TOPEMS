@@ -1597,3 +1597,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - **2 张有数据**：inspection_records(6)/report_templates(12)——保留待迁移评估。
   - **死表待确认**：financial_vouchers/voucher_items/process_routes/quality_standards 等有引用但需看是否 fallback public——列入 search_path 专项一并处理。
 - **累计本轮**：public 262 → 172（90 张影子/死表），5 项拆分阈值持续改善，门禁全 PASS（28 服务）、断裂 FK 0。
+
+## 2026-09-01 审计修正：payables/receivables/quality_inspections/report_data 不可删 ⚠️
+- **修正**：此前判定"引用解析到专属 schema 可删"有误——目标同名表在 **erp/qms/bi**，但引用服务 search_path 为 **finance,public / mes,public / lims,public（不含目标 schema）** → 实际 **fallback public**——DROP 将破坏 finance/mes/lims。
+- **结论**：这 4 张保留；与 dashboards/equipment/materials 等同类——**都是跨域直连的 search_path 缺陷**，需先修复（引用服务显式 schema 或 API 化）再清理。
+- **本轮最终成果**：public 262 → 172（90 张影子/死表：46 pdm/mes/analytics + 40 finance_v5x + 4 死表）；拆分阈值持续改善、门禁全 PASS（28 服务）、断裂 FK 0、pdm/mes/analytics/finance 编译通过。
+- **下一专项建议**：跨域直连 search_path 缺陷治理（ai→bi、portal→pdm.materials、pm→mes.equipment、finance→erp.payables/receivables、mes→qms.quality_inspections、lims→bi.report_data）——涉及 API 化/显式 schema 引用，需单独规划。
