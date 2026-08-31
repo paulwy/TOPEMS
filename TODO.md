@@ -1438,3 +1438,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - unified-core audit_logs/users：维持声明（audit_logs 各服务自有表设计 + users 平台契约）
 - **同名多 schema 表（14 张）**：确认设计合理（audit_logs 18 schema 中 17 空 + shared 主表；各服务 search_path/显式前缀解析本服务表），门禁 ambiguous 声明不阻塞，无需物理收敛。
 - **阶段 1 后续待办全部完成**；阶段 2 物理拆分待触发阈值。
+
+## 2026-08-31 P1-2 收官：archive schema DROP（用户确认）✅
+- 迁移文件 `20260831190800_drop_archive_schema.sql`（幂等）：`DROP SCHEMA IF EXISTS archive CASCADE`——archive 118 张（101 旧版 _archive_* + 17 core_* 无引用残留）确认无代码/SQL 引用后清理。
+- **DROP 前备份**：`database/backup/topems_pre_archive_drop_20260831_2037.dump`（4.06M）。
+- **级联副作用（预期）**：顺带删除 6 个指向 archive 表的遗留外键约束（core_subscriptions_plan_id_fkey、finance.core_finance_account_opening_balances/voucher_entries 的 account_id/voucher_id fkey、bom_items_bom_id_fkey 等）——这些 FK 引用已删旧版表，必须删除；活表本身保留。
+- 验证：archive schema 存在=0、public=256、总 schema=350；门禁 PASS；workspace 编译 0 error。
+- **P1-2 全部收官**：阶段0 schema 归位 + 阶段1 逻辑隔离 + archive 清理完成。
