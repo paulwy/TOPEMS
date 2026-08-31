@@ -1494,3 +1494,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - `hrm→mobile` ⚠️ 迁移期遗留（mobile_attendance **0 行**，代码保留导出功能）→ 建议确认后清理 + 撤销 allow（低优先级）
   - `shared-ai→hrm.vectors` ⚠️ 设计疑问（向量应归 ai_service schema）→ 低优先级评估迁移
 - 无运行时违规；`docs/architecture/database-split-plan.md` 更新阈值表 + 新增白名单复核表。
+
+## 2026-08-31 hrm→mobile 白名单清理（迁移期遗留已治理）✅
+- **问题**：hrm attendance.rs 的 user_id 分支直读 `mobile.mobile_attendance`（跨 schema 违规）；数据迁移已完成（0 行）。
+- **清理**：user_id 分支改走 `hrm.employees`（user_id→id 映射）→ `hrm.attendance_records`（自有表），mobile 直读清除；更新迁移方案注释为"已完成"。
+- **撤销**：`schema_boundary.json` 移除 `hrm.allow=['mobile']`；门禁 hrm PASS（引用 226 无违规）。
+- **验证**：hrm 292 测试通过。

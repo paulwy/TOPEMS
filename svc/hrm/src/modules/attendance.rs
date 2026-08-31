@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -38,44 +39,9 @@ async fn get_today_status(
     State(state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // TODO(Mobile-BFF 数据迁移): 跨 schema 查询旧表待迁移
-    //
-    // 当前实现：当传入 user_id 时跨 schema 查询 `mobile.mobile_attendance`
-    // （mobile 服务私有表），违反服务边界原则。Mobile BFF 已切换为服务调用，
-    // 但本端点内部仍直接读 mobile schema，需要迁移到 HRM 自有表。
-    //
-    // 迁移方案（5 阶段）：
-    //
-    // 阶段 1 — 数据导出：
-    //   从 mobile.mobile_attendance 导出历史数据（user_id, date, check_in_time,
-    //   check_out_time, created_at），按 user_id 与 plugin_hrm.employees.user_id
-    //   做映射，得到 employee_id。
-    //
-    // 阶段 2 — 表结构映射：
-    //   mobile.mobile_attendance          →  plugin_hrm.attendance_records
-    //     user_id          (text)         →  employee_id  (uuid, 经 employees 映射)
-    //     date             (text, YYYY-MM-DD) →  date (date)
-    //     check_in_time    (text)         →  check_in     (timestamptz)
-    //     check_out_time   (text)         →  check_out    (timestamptz)
-    //     created_at       (timestamptz)  →  created_at   (timestamptz)
-    //   缺失字段 status/work_hours/notes/updated_at 使用默认值补齐。
-    //
-    // 阶段 3 — 数据导入：
-    //   INSERT INTO plugin_hrm.attendance_records (...) SELECT ... FROM
-    //   mobile.mobile_attendance m JOIN plugin_hrm.employees e ON e.user_id =
-    //   m.user_id WHERE NOT EXISTS (...); 导入后比对行数与抽样校验。
-    //
-    // 阶段 4 — 端点切换：
-    //   删除下方 user_id 分支，统一走 employee_id 路径查
-    //   plugin_hrm.attendance_records；Mobile BFF 在调用前通过
-    //   HrmApi.get_today_attendance_status 传入 user_id 时，由 HRM 内部先解析
-    //   user_id → employee_id（或新增 /attendance/today-status?user_id= 端点）。
-    //
-    // 阶段 5 — 旧表清理：
-    //   确认无其他引用后 DROP mobile.mobile_attendance（或保留只读快照一段
-    //   时间作为回滚保险），并从 mobile 服务 init.sql 中移除建表语句。
-    //
-    // 跟踪: docs/roadmap/TODO.md "V62.x Mobile BFF 数据迁移" 章节
+    // [2026-08-31] 数据迁移已完成：user_id 分支原直读 mobile.mobile_attendance（跨 schema 违规），
+    // 现统一走 hrm 自有表——user_id 先经 hrm.employees 映射为 employee_id，再查 hrm.attendance_records；
+    // mobile.mobile_attendance 数据 0 行，跨 schema 直读已清除（见白名单复核）。
     let user_id = params.user_id.as_deref();
     let employee_id = params.employee_id;
 
@@ -86,67 +52,76 @@ async fn get_today_status(
         ));
     }
 
-    let result = if let Some(uid) = user_id {
-        sqlx::query(
-            r#"
-            SELECT check_in_time, check_out_time
-            FROM mobile.mobile_attendance
-            WHERE user_id = $1 AND date = CURRENT_DATE::text
-            ORDER BY created_at DESC
-            LIMIT 1
-            "#,
-        )
+    // 解析 employee_id：优先显式传参；否则 user_id → hrm.employees.id 映射
+    // （原 user_id 分支直读 mobile.mobile_attendance，跨 schema 违规；数据迁移已完成，
+    //   mobile_attendance 0 行，统一走 hrm 自有表）
+    let employee_id = if let Some(eid) = employee_id {
+        Some(eid)
+    } else if let Some(uid) = user_id {
+        match sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "hrm",
+            "SELECT id FROM hrm.employees WHERE user_id = $1"
+        ))
         .bind(uid)
         .fetch_optional(&state.db)
         .await
-    } else if let Some(eid) = employee_id {
-        sqlx::query(
-            r#"
-            SELECT check_in_time, check_out_time
-            FROM hrm.attendance_records
-            WHERE employee_id = $1 AND date::date = CURRENT_DATE
-            ORDER BY date DESC
-            LIMIT 1
-            "#,
-        )
-        .bind(eid)
-        .fetch_optional(&state.db)
-        .await
-    } else {
-        unreachable!()
-    };
-
-    let status = match result {
-        Ok(Some(row)) => {
-            let has_check_in: bool = if user_id.is_some() {
-                row.get::<Option<String>, _>("check_in_time").is_some()
-            } else {
-                row.get::<Option<chrono::NaiveTime>, _>("check_in_time")
-                    .is_some()
-            };
-            let has_check_out: bool = if user_id.is_some() {
-                row.get::<Option<String>, _>("check_out_time").is_some()
-            } else {
-                row.get::<Option<chrono::NaiveTime>, _>("check_out_time")
-                    .is_some()
-            };
-
-            if has_check_out {
-                "checked_out"
-            } else if has_check_in {
-                "checked_in"
-            } else {
-                "not_checked_in"
+        {
+            Ok(mapped) => mapped,
+            Err(e) => {
+                tracing::error!("解析 user_id 到员工失败: {}", e);
+                return Json(ApiResponse::<serde_json::Value>::error(
+                    500,
+                    "获取今日考勤状态失败",
+                ));
             }
         }
-        Ok(None) => "not_checked_in",
-        Err(e) => {
-            tracing::error!("获取今日考勤状态失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
-                "获取今日考勤状态失败",
-            ));
+    } else {
+        None
+    };
+
+    let status = match employee_id {
+        Some(eid) => {
+            let result = sqlx::query(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT check_in_time, check_out_time
+                FROM hrm.attendance_records
+                WHERE employee_id = $1 AND date::date = CURRENT_DATE
+                ORDER BY date DESC
+                LIMIT 1
+                "#
+            ))
+            .bind(eid)
+            .fetch_optional(&state.db)
+            .await;
+            match result {
+                Ok(Some(row)) => {
+                    let has_check_in: bool = row
+                        .get::<Option<chrono::NaiveTime>, _>("check_in_time")
+                        .is_some();
+                    let has_check_out: bool = row
+                        .get::<Option<chrono::NaiveTime>, _>("check_out_time")
+                        .is_some();
+
+                    if has_check_out {
+                        "checked_out"
+                    } else if has_check_in {
+                        "checked_in"
+                    } else {
+                        "not_checked_in"
+                    }
+                }
+                Ok(None) => "not_checked_in",
+                Err(e) => {
+                    tracing::error!("获取今日考勤状态失败: {}", e);
+                    return Json(ApiResponse::<serde_json::Value>::error(
+                        500,
+                        "获取今日考勤状态失败",
+                    ));
+                }
+            }
         }
+        None => "not_checked_in",
     };
 
     Json(ApiResponse::success(
@@ -198,7 +173,8 @@ async fn list_attendance(
     let emp_filter = params.employee_id;
     let date_filter = params.date;
 
-    let result = sqlx::query_as::<_, AttendanceRecord>(
+    let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
@@ -209,8 +185,8 @@ async fn list_attendance(
           AND ($2::text IS NULL OR date::text = $2)
         ORDER BY date DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(emp_filter)
     .bind(&date_filter)
     .bind(page_size)
@@ -220,14 +196,15 @@ async fn list_attendance(
 
     match result {
         Ok(records) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.attendance_records
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR date::text = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(emp_filter)
             .bind(&date_filter)
             .fetch_one(&state.db)
@@ -287,7 +264,8 @@ async fn create_attendance(
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or(Uuid::nil());
 
-    let result = sqlx::query_as::<_, AttendanceRecord>(
+    let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         INSERT INTO hrm.attendance_records (
             id, organization_id, tenant_id, employee_id, date, check_in_time, check_out_time,
@@ -296,8 +274,8 @@ async fn create_attendance(
         RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(org_id)
     .bind(req.employee_id)
@@ -372,14 +350,15 @@ async fn get_attendance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
-    let result = sqlx::query_as::<_, AttendanceRecord>(
+    let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -421,14 +400,15 @@ async fn update_attendance(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAttendanceRequest>,
 ) -> Json<ApiResponse<AttendanceRecord>> {
-    let existing = sqlx::query_as::<_, AttendanceRecord>(
+    let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -456,7 +436,8 @@ async fn update_attendance(
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, AttendanceRecord>(
+    let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.attendance_records SET
             check_in_time = $2::TIME, check_out_time = $3::TIME, status = $4,
@@ -465,8 +446,8 @@ async fn update_attendance(
         RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(check_in)
     .bind(check_out)
@@ -508,10 +489,13 @@ async fn delete_attendance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE hrm.attendance_records SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.attendance_records SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

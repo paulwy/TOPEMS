@@ -1,179 +1,176 @@
 {
-  "default_shared": [
-    "public",
-    "unified_core",
-    "information_schema"
-  ],
-  "services": {
-    "ai": {
-      "schema": "ai",
-      "search_path": "ai_service, public, shared",
-      "allow": []
-    },
-    "analytics": {
-      "schema": "bi",
-      "search_path": "bi, public",
-      "allow": []
-    },
-    "communication": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "crm": {
-      "schema": "crm",
-      "search_path": "crm, public, shared",
-      "allow": []
-    },
-    "ehs": {
-      "schema": "public",
-      "search_path": "ehs, public",
-      "allow": []
-    },
-    "erp": {
-      "schema": "erp",
-      "search_path": "erp, public",
-      "allow": []
-    },
-    "finance": {
-      "schema": "finance",
-      "search_path": "finance, public",
-      "allow": []
-    },
-    "gis": {
-      "schema": "gis",
-      "search_path": "gis, public",
-      "allow": []
-    },
-    "hrm": {
-      "schema": "hrm",
-      "search_path": "hrm, public, shared",
-      "allow": [
-        "mobile"
-      ]
-    },
-    "integration": {
-      "schema": "integration",
-      "search_path": "integration, public",
-      "allow": [
-        "qms",
-        "lims"
-      ]
-    },
-    "lims": {
-      "schema": "lims",
-      "search_path": "lims, public",
-      "allow": []
-    },
-    "master-data": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "mes": {
-      "schema": "mes",
-      "search_path": "mes, public",
-      "allow": []
-    },
-    "mobile": {
-      "schema": "mobile",
-      "search_path": "mobile, public",
-      "allow": []
-    },
-    "monitor": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "pdm": {
-      "schema": "pdm",
-      "search_path": "pdm, public",
-      "allow": []
-    },
-    "plugin-registry": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "pm": {
-      "schema": "pm",
-      "search_path": "pm, public, shared",
-      "allow": []
-    },
-    "portal": {
-      "schema": "portal",
-      "search_path": "portal, public",
-      "allow": []
-    },
-    "qms": {
-      "schema": "qms",
-      "search_path": "qms, public",
-      "allow": []
-    },
-    "rd": {
-      "schema": "rs",
-      "search_path": "rs, public",
-      "allow": []
-    },
-    "scm": {
-      "schema": "scm",
-      "search_path": "scm, public, shared",
-      "allow": []
-    },
-    "search": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "srm": {
-      "schema": "srm",
-      "search_path": "srm, public, shared",
-      "allow": []
-    },
-    "ticket": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": []
-    },
-    "tms": {
-      "schema": "tms",
-      "search_path": "tms, public, shared",
-      "allow": []
-    },
-    "unified-core": {
-      "schema": "public",
-      "search_path": "public",
-      "allow": [
-        "portal"
-      ]
-    },
-    "wms": {
-      "schema": "wms",
-      "search_path": "wms, public, shared",
-      "allow": []
-    }
+ "default_shared": [
+  "public",
+  "unified_core",
+  "information_schema"
+ ],
+ "services": {
+  "ai": {
+   "schema": "ai",
+   "search_path": "ai_service, public, shared",
+   "allow": []
   },
-  "bare_ref_baseline": [
-    {
-      "service": "monitor",
-      "table": "departments",
-      "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
-    },
-    {
-      "service": "monitor",
-      "table": "employees",
-      "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
-    },
-    {
-      "service": "monitor",
-      "table": "inventory",
-      "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
-    },
-    {
-      "service": "monitor",
-      "table": "projects",
-      "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
-    }
-  ],
-  "bare_ref_allow": {}
+  "analytics": {
+   "schema": "bi",
+   "search_path": "bi, public",
+   "allow": []
+  },
+  "communication": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "crm": {
+   "schema": "crm",
+   "search_path": "crm, public, shared",
+   "allow": []
+  },
+  "ehs": {
+   "schema": "public",
+   "search_path": "ehs, public",
+   "allow": []
+  },
+  "erp": {
+   "schema": "erp",
+   "search_path": "erp, public",
+   "allow": []
+  },
+  "finance": {
+   "schema": "finance",
+   "search_path": "finance, public",
+   "allow": []
+  },
+  "gis": {
+   "schema": "gis",
+   "search_path": "gis, public",
+   "allow": []
+  },
+  "hrm": {
+   "schema": "hrm",
+   "search_path": "hrm, public, shared"
+  },
+  "integration": {
+   "schema": "integration",
+   "search_path": "integration, public",
+   "allow": [
+    "qms",
+    "lims"
+   ]
+  },
+  "lims": {
+   "schema": "lims",
+   "search_path": "lims, public",
+   "allow": []
+  },
+  "master-data": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "mes": {
+   "schema": "mes",
+   "search_path": "mes, public",
+   "allow": []
+  },
+  "mobile": {
+   "schema": "mobile",
+   "search_path": "mobile, public",
+   "allow": []
+  },
+  "monitor": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "pdm": {
+   "schema": "pdm",
+   "search_path": "pdm, public",
+   "allow": []
+  },
+  "plugin-registry": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "pm": {
+   "schema": "pm",
+   "search_path": "pm, public, shared",
+   "allow": []
+  },
+  "portal": {
+   "schema": "portal",
+   "search_path": "portal, public",
+   "allow": []
+  },
+  "qms": {
+   "schema": "qms",
+   "search_path": "qms, public",
+   "allow": []
+  },
+  "rd": {
+   "schema": "rs",
+   "search_path": "rs, public",
+   "allow": []
+  },
+  "scm": {
+   "schema": "scm",
+   "search_path": "scm, public, shared",
+   "allow": []
+  },
+  "search": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "srm": {
+   "schema": "srm",
+   "search_path": "srm, public, shared",
+   "allow": []
+  },
+  "ticket": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": []
+  },
+  "tms": {
+   "schema": "tms",
+   "search_path": "tms, public, shared",
+   "allow": []
+  },
+  "unified-core": {
+   "schema": "public",
+   "search_path": "public",
+   "allow": [
+    "portal"
+   ]
+  },
+  "wms": {
+   "schema": "wms",
+   "search_path": "wms, public, shared",
+   "allow": []
+  }
+ },
+ "bare_ref_baseline": [
+  {
+   "service": "monitor",
+   "table": "departments",
+   "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
+  },
+  {
+   "service": "monitor",
+   "table": "employees",
+   "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
+  },
+  {
+   "service": "monitor",
+   "table": "inventory",
+   "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
+  },
+  {
+   "service": "monitor",
+   "table": "projects",
+   "note": "SQL 模板（监控规则配置，占位符 ?，执行时用目标服务连接串），非 monitor 自身跨域直读"
+  }
+ ],
+ "bare_ref_allow": {}
 }
