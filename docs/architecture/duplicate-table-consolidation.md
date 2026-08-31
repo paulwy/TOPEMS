@@ -62,8 +62,8 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - **归属映射**：`schema_boundary_tables.json` ambiguous 16→14：`analysis_results→ai`、`mes_qms_sync→integration` 归位入 `table_owner`；`budgets`（pm+finance 异义）、`locations`（gis+wms 异义）、`documents`（ai+doc+pm+plugin_ai 异义）**保留 ambiguous**（单 owner 无法表达多业务）
 - 验证：finance 编译 0 error 0 warning；`check_schema_boundary.py` 全 PASS；7 张表已确认消失
 
-### 第二批（需改服务 DDL 声明后删）
-- `bi.analysis_results`：analytics `schema_defense.rs` TABLE_DEFS(248) 移除声明 → 删表
+### 第二批（✅ 已执行 2026-08-31）
+- `bi.analysis_results` 已删：analytics `schema_defense.rs` 移除 analysis_results 定义（保留 saved_analysis_results）→ 编译 0 error → 删表（无 FK 依赖、0 数据、无业务 SQL）；ai 为主 schema（ai.schema_defense + ai/db.rs CREATE TABLE + plugin_ai.analysis_results 实际读写 3 行）
 - `bi.audit_logs`：保留（analytics 服务审计，自治）
 
 ### 第三批（public 遗留双写改引用，量大）
