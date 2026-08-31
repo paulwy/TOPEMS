@@ -1,9 +1,9 @@
 //! Settlement Center - 业务逻辑层
 //!
 //! V256 事件驱动重构：
-//! - 对账数据：从 plugin_finance.reconciliation_snapshots 本地快照读取
-//! - 结算数据：从 plugin_finance.settlement_snapshots 本地快照读取
-//! - 关联查询：读写 plugin_finance.reconciliation_settlement_links
+//! - 对账数据：从 finance.reconciliation_snapshots 本地快照读取
+//! - 结算数据：从 finance.settlement_snapshots 本地快照读取
+//! - 关联查询：读写 finance.reconciliation_settlement_links
 //! - 写入路径：写本地快照 + 发布事件（ERP/PM 通过事件订阅接收数据）
 //! - Finance 不再跨 schema 访问 erp.* 或 pm.* 表
 //! - ERP 订阅 ReconciliationCreated/Approved/Updated 事件
