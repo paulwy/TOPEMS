@@ -33,7 +33,7 @@ pub use shared::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "analytics, public");
+    std::env::set_var("SEARCH_PATH", "bi, public"); // V2026.08 schema 归位：analytics 表统一在 bi schema
 
     let config = ServiceConfig {
         name: "topems-analytics",
@@ -45,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/bi",
         legacy_prefixes: &["/api/v1/bi"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

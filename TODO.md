@@ -1158,3 +1158,26 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：cargo check 通过 → unified-core 镜像重建 → 容器 **healthy** → 登录返回 JWT ✅（新镜像迁移幂等跑通，现有数据不受影响）
 - **效果**：新环境部署 init_database 自动建全 iam 表 + 租户 seed，登录/租户链路不再依赖手工 SQL
 - **服务栈**：24 容器全 healthy（24/24）
+
+## 2026-08-31 P1-2 阶段0 schema 归位执行 ✅（A-E 决策落地）
+- **DB 迁移**（备份 `/tmp/topems_pre_schema_migration.dump` 1.2MB，回退基线）：
+  1. 新建 schema：lims / qms / mes / pdm / finance / master_data（finance 评审笔误"已存在"实为缺失，已补建）
+  2. public 219 张表归位：182 张 `ALTER TABLE SET SCHEMA` 迁入目标 schema；5 张双写冗余（conversion_*/report_* 目标 schema 已有权威 0 行表）drop；32 张平台级 core_*/team* 保留 public
+  3. plugin 残留清理：plugin_mes.audit_logs→mes；plugin_ai.documents 与 ai.documents 重名（均 0 行，drop 残留 + CASCADE 清 FK）
+- **迁移后分布**：finance 58 / erp 41 / public 37 / lims 31 / bi 31 / mes 26 / qms 26 / scm 26 / pdm 19 / crm 13 / master_data 0（20 schema）
+- **执行中发现的 11 项归属矩阵偏差（代码证据修正）**：
+  1. `bom_items`：评审归 pdm，但 mes 完整 CRUD + 本地建表 def，pdm 用 `pdm_bom_items`（不同表）→ **回迁 mes**
+  2. `quality_records`：评审归 qms，但 mes 建表 def（REFERENCES production_orders）+ 读取，qms 不引用 → **回迁 mes**
+  3. `core_master_data_*`/`core_mdm_*`（5 张）：评审归 master_data，但 unified-core schema_defense 建表 def + 读写，master-data 服务不引用 → **回迁 public**
+  4. `crm/scm_master_data_refs`：shared-db `MasterDataRefService`/`ensure_master_data_refs_table` 全部无前缀（search_path 首位），回迁后无前缀解析断 → **回迁 crm/scm**；erp/pdm refs 已在各自 schema（master_data 冗余副本已 drop）
+- **代码修复**：
+  1. `svc/integration/src/qms_lims_ehs.rs` 6 处 `public.qa_*` → `lims.`/`qms.` 前缀 + `only_own_schema_query!` 第 3 参白名单 `"lims"/"qms"`
+  2. `scripts/schema_boundary.json` integration.allow 加 `qms/lims`
+  3. `svc/analytics/src/main.rs` SEARCH_PATH `"analytics, public"` → `"bi, public"`（analytics 表在 bi）
+- **验证**：
+  - `cargo check --workspace` 0 error（SQLX_OFFLINE）
+  - 静态边界 `check_schema_boundary.py` 全 PASS
+  - 8 个迁移 schema 216 条无前缀查询冒烟全通（search_path=<svc>,public）
+  - 精确扫描无前缀引用回归 0 项（所有迁移表对应 SEARCH_PATH 可达）
+  - integration/mes/analytics/unified-core 测试通过（unified-core SSE 3 项集成测试因 8000 端口被 Docker 占用超时，非迁移回归）
+  - unified-core server 冒烟：连库 schema 自检 30 表一致，18000 端口 HTTP 路由正常
