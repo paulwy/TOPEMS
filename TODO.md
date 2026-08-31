@@ -1733,3 +1733,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **DB**：迁移 000023 DROP public.core_plugin_* 8 张（含 FK 顺序修正：tenant_plugins 先于 plugins）；重置 core.core_plugin_categories（旧结构缺 code 列 → 服务重建新结构 9 分类种子）。
 - **验证**：编译通过、门禁 28 PASS（修复 ai/unified-core core 引用授权）、启动 search_path=core, public、categories 重建 9 行、断裂 FK 0。
 - **public 52 → 44**；插件系统统一 core schema。
+
+## 2026-09-01 erp→wms 服务间认证打通（dashboard 库存真实化）✅
+- **问题**：erp dashboard 库存统计转 WMS API 后，转发前端用户 token（无 wms:admin 权限）→ 401 → 降级 0。
+- **方案**：服务间认证——erp 用共享 JWT 密钥（.env JWT_SECRET，AuthState::from_env 所有服务一致）签发最小权限 service token（username=erp-service、permissions=["wms:admin"]、5 分钟有效）调 WMS。
+- **实现**：fetch_wms_inventory_stats 改为签发 service token（Claims.encode），不转发用户 token；调用传 state.auth_state.jwt_secret；移除 dashboard 冗余 headers 参数。
+- **验证**：service token 调 /api/wms/inventory/statistics → 200 + total_quantity=3200（真实数据）；无 token → 401；erp dashboard 返回 total_inventory=3200（不再降级 0）；编译通过。

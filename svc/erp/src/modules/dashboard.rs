@@ -10,17 +10,45 @@ use super::ApiState;
 
 /// 调用 WMS 服务库存统计 API（GET /api/wms/inventory/statistics）
 /// 返回 (总库存量, 低库存项数)；认证失败或服务不可达时降级为 (0, 0)。
-async fn fetch_wms_inventory_stats(auth_header: Option<&axum::http::HeaderValue>) -> (i64, i64) {
+/// 服务间认证：用共享 JWT 密钥签发最小权限 service token（仅 wms:admin），
+/// 而非转发前端用户 token（前端用户无 wms:admin 权限会 401 → 库存降级 0）。
+async fn fetch_wms_inventory_stats(jwt_secret: &str) -> (i64, i64) {
     let base = std::env::var("WMS_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8041".to_string());
     let url = format!("{}/api/wms/inventory/statistics", base);
-    let mut req = reqwest::Client::new().get(&url);
-    if let Some(a) = auth_header {
-        if let Ok(v) = a.to_str() {
-            req = req.header("Authorization", v);
-        }
-    }
-    match req.send().await {
+
+    // 服务身份 Claims：仅声明 wms:admin（最小权限），5 分钟有效，避免泄露超管权限
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as usize)
+        .unwrap_or(0);
+    let service_claims = Claims {
+        sub: "00000000-0000-0000-0000-000000000000".to_string(),
+        username: "erp-service".to_string(),
+        role: "service".to_string(),
+        roles: vec!["service".to_string()],
+        permissions: vec!["wms:admin".to_string()],
+        is_superuser: false,
+        exp: now + 300,
+        iat: now,
+        email: None,
+        department: None,
+        tenant_id: None,
+        department_id: None,
+        position_id: None,
+        position_code: None,
+    };
+    let token = match service_claims.encode(jwt_secret) {
+        Ok(t) => t,
+        Err(_) => return (0, 0),
+    };
+
+    match reqwest::Client::new()
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+    {
         Ok(resp) if resp.status().is_success() => {
             let v: serde_json::Value =
                 resp.json().await.unwrap_or_else(|_| serde_json::json!({}));
@@ -128,7 +156,6 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
 pub async fn get_dashboard(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ErpDashboardStats>> {
     let total_assets = count_table(&state.db, "assets").await;
     let active_assets = count_table_with_status(&state.db, "assets", "active").await;
@@ -138,7 +165,7 @@ pub async fn get_dashboard(
 
     // 库存统计改走 WMS 服务 API（public.inventory_items 已废弃，真实库存源为 wms.inventory）
     let (total_inventory, low_stock_items) =
-        fetch_wms_inventory_stats(headers.get("authorization")).await;
+        fetch_wms_inventory_stats(&state.auth_state.jwt_secret).await;
 
     let total_suppliers = count_table(&state.db, "suppliers").await;
     let active_suppliers = count_table_with_status(&state.db, "suppliers", "active").await;
