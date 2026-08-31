@@ -2,6 +2,7 @@ pub mod audit;
 pub mod data_sync;
 pub mod inspection_record;
 pub mod inspection_task;
+pub mod integration;
 pub mod instrument;
 pub mod instrument_data;
 pub mod lims_plugin;

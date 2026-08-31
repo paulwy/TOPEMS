@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/qms",
         legacy_prefixes: &[],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -86,6 +87,9 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        // 服务间内部集成端点（仅内网可达）：挂载于 public 避免被 api_prefix nest 与鉴权链路
+        // 覆盖——不经过 auth_middleware / require_permission；路径保持 /api/internal/ 原样
+        .merge(modules::integration::integration_routes())
         .with_state(api_state.clone());
 
     // Protected routes（QMS create_routes 返回 Router<AppState>，最后 with_state 擦除类型）

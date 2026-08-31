@@ -5,6 +5,7 @@ pub mod dashboard;
 pub mod data_sync;
 pub mod eight_d;
 pub mod fmea;
+pub mod integration;
 pub mod qms_plugin;
 pub mod quality_cost;
 pub mod quality_dashboard;
@@ -16,6 +17,7 @@ pub mod spc;
 use crate::AppState;
 use axum::Router;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -36,7 +38,8 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_quality_inspections (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,12 +64,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_inspection_results (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,12 +83,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_inspection_audits (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,12 +102,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_quality_issues (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -120,12 +126,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_standards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -143,12 +150,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_standard_revisions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,52 +172,65 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by VARCHAR(64),
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_inspections_no ON qa_quality_inspections(inspection_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_inspections_no ON qa_quality_inspections(inspection_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_inspections_status ON qa_quality_inspections(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_inspections_status ON qa_quality_inspections(status)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspections_created_at ON qa_quality_inspections(created_at)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_inspections_created_at ON qa_quality_inspections(created_at)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspections_inspector ON qa_quality_inspections(inspector)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_inspections_inspector ON qa_quality_inspections(inspector)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspection_results_inspection ON qa_inspection_results(inspection_id)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_inspection_results_inspection ON qa_inspection_results(inspection_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspection_audits_inspection ON qa_inspection_audits(inspection_id)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_inspection_audits_inspection ON qa_inspection_audits(inspection_id)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_issues_no ON qa_quality_issues(issue_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_issues_status ON qa_quality_issues(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_issues_created_at ON qa_quality_issues(created_at)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_issues_no ON qa_quality_issues(issue_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_standards_code ON qa_standards(code)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_standard_revisions_standard ON qa_standard_revisions(standard_id)")
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_issues_status ON qa_quality_issues(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_issues_created_at ON qa_quality_issues(created_at)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_standards_code ON qa_standards(code)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_standard_revisions_standard ON qa_standard_revisions(standard_id)"))
         .execute(pool)
         .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_qms_sync_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -226,24 +247,32 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_no ON qa_qms_sync_records(sync_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_type ON qa_qms_sync_records(sync_type)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_no ON qa_qms_sync_records(sync_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_status ON qa_qms_sync_records(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_type ON qa_qms_sync_records(sync_type)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_qms_sync_status ON qa_qms_sync_records(status)"
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_corrective_actions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -264,12 +293,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_corrective_action_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -283,12 +313,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_audit_plans (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -307,12 +338,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_audit_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -328,12 +360,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_audit_findings (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -354,56 +387,77 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_actions_no ON qa_corrective_actions(action_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_actions_issue ON qa_corrective_actions(issue_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_actions_no ON qa_corrective_actions(action_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_actions_status ON qa_corrective_actions(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_actions_issue ON qa_corrective_actions(issue_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_action_items_action ON qa_corrective_action_items(action_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_no ON qa_audit_plans(plan_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_status ON qa_audit_plans(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_plan ON qa_audit_tasks(plan_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_status ON qa_audit_tasks(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_no ON qa_audit_findings(finding_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_actions_status ON qa_corrective_actions(status)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_plan ON qa_audit_findings(plan_id)",
-    )
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_action_items_action ON qa_corrective_action_items(action_id)"))
+        .execute(pool)
+        .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_no ON qa_audit_plans(plan_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_status ON qa_audit_findings(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_status ON qa_audit_plans(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_plan ON qa_audit_tasks(plan_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_status ON qa_audit_tasks(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_no ON qa_audit_findings(finding_no)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_plan ON qa_audit_findings(plan_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_status ON qa_audit_findings(status)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_spc_charts (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -427,12 +481,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_spc_data_points (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -446,12 +501,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_quality_costs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -469,12 +525,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_eightd_reports (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -505,12 +562,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_eightd_audit_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -522,12 +580,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_fmea_analyses (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -550,12 +609,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_fmea_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -583,12 +643,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_alert_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -608,12 +669,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_alert_messages (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -630,78 +692,110 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             acknowledged_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_no ON qa_spc_charts(chart_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_type ON qa_spc_charts(chart_type)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_spc_data_points_chart ON qa_spc_data_points(chart_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_no ON qa_spc_charts(chart_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_no ON qa_quality_costs(cost_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_category ON qa_quality_costs(cost_category)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_dept ON qa_quality_costs(department)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_type ON qa_spc_charts(chart_type)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_no ON qa_eightd_reports(report_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_spc_data_points_chart ON qa_spc_data_points(chart_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_status ON qa_eightd_reports(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_no ON qa_quality_costs(cost_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_eightd_audit_logs_report ON qa_eightd_audit_logs(report_id)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_category ON qa_quality_costs(cost_category)"))
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_no ON qa_fmea_analyses(fmea_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_status ON qa_fmea_analyses(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_dept ON qa_quality_costs(department)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_fmea ON qa_fmea_items(fmea_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_rpn ON qa_fmea_items(rpn)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_type ON qa_alert_rules(alert_type)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_status ON qa_alert_rules(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_status ON qa_alert_messages(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_no ON qa_eightd_reports(report_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_severity ON qa_alert_messages(severity)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_status ON qa_eightd_reports(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_eightd_audit_logs_report ON qa_eightd_audit_logs(report_id)"))
+        .execute(pool)
+        .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_no ON qa_fmea_analyses(fmea_no)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_status ON qa_fmea_analyses(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_fmea ON qa_fmea_items(fmea_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_rpn ON qa_fmea_items(rpn)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_type ON qa_alert_rules(alert_type)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_status ON qa_alert_rules(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_status ON qa_alert_messages(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_severity ON qa_alert_messages(severity)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_apqp_projects (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -725,12 +819,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_apqp_phases (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -748,12 +843,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_apqp_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -771,12 +867,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_apqp_risks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -795,12 +892,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "qms",
         r#"
         CREATE TABLE IF NOT EXISTS qa_apqp_approvals (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -814,62 +912,84 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             approved_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_no ON qa_apqp_projects(project_no)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_no ON qa_apqp_projects(project_no)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_status ON qa_apqp_projects(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_status ON qa_apqp_projects(status)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_created_at ON qa_apqp_projects(created_at)")
+    sqlx::query(only_own_schema_query!("qms", "CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_created_at ON qa_apqp_projects(created_at)"))
         .execute(pool)
         .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_project ON qa_apqp_phases(project_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_project ON qa_apqp_phases(project_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_status ON qa_apqp_phases(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_project ON qa_apqp_tasks(project_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_status ON qa_apqp_phases(status)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_phase ON qa_apqp_tasks(phase_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_status ON qa_apqp_tasks(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_project ON qa_apqp_risks(project_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_project ON qa_apqp_tasks(project_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_rpn ON qa_apqp_risks(rpn)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_status ON qa_apqp_risks(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_project ON qa_apqp_approvals(project_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_phase ON qa_apqp_tasks(phase_id)"
+    ))
     .execute(pool)
     .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_status ON qa_apqp_approvals(status)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_status ON qa_apqp_tasks(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_project ON qa_apqp_risks(project_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_rpn ON qa_apqp_risks(rpn)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_status ON qa_apqp_risks(status)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_project ON qa_apqp_approvals(project_id)"
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "qms",
+        "CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_status ON qa_apqp_approvals(status)"
+    ))
     .execute(pool)
     .await?;
 

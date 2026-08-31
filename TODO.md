@@ -1532,3 +1532,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **现有 API 语义不匹配**：qms/lims API 自动生成 sample_no/action_no（integration 需指定幂等键）、lims create_task 需 sample_id（integration 只有 sample_no）、qms 无结果回写端点。
 - **治理方案**（`docs/architecture/integration-cross-domain-api.md`）：4 步——A 服务侧集成端点（lims sample/task 集成创建 + qms action 集成创建 + qms inspection result 回写）→ B qms_lims_ehs 重写（直写→reqwest，复用 QMS/LIMS_SERVICE_URL env）→ C process_event 接线事件订阅 → D 撤销 integration.allow（白名单 2→1）。
 - 待办：步骤 A（服务端集成端点）为下一实质实施项。
+
+## 2026-08-31 拆分前置治理：步骤A 服务侧集成端点 ✅（4 个全部 runtime 验证通过）
+- **鉴权方案**：`/api/internal/` 免鉴权路径（auth_middleware is_public_path 放行 + 挂 public 路由避免 api_prefix nest 与 require_permission）——与 integration webhooks public 先例一致，仅内网可达。
+- **qms**（svc/qms/src/modules/integration.rs 新建）：`POST /api/internal/qms/actions/integration`（纠正措施集成创建，action_no 幂等）+ `POST /api/internal/qms/inspections/{no}/result`（质检结果回写，**修正原直写不存在的 test_result/test_data/conclusion 列 → result/memo**）。
+- **lims**（svc/lims/src/modules/integration.rs 新建）：`POST /api/internal/lims/samples/integration`（样本集成创建，sample_no 幂等）+ `POST /api/internal/lims/tasks/integration`（任务集成创建，task_no 幂等，**按 sample_no 关联解析 NOT NULL 的 sample_id**，**移除原直写不存在的 priority 列**）。
+- **runtime 验证**：临时端口 18050/18051 全端点 200 + DB 落库确认 + 幂等不重复；qms/lims 测试 27 passed；门禁 PASS（qms 256/lims 引用）。
+- 待办：步骤B qms_lims_ehs 6 处直写 → reqwest 调上述端点。
