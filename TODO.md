@@ -1521,3 +1521,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 新增 `scripts/check_split_threshold.py`：自动实测 5 项拆分阈值（DB 大小/最大 schema 表数实测，连接/跨schema/备份标注需观测），任一触发退出码 1 提示启动评估。运行验证：5 项均未触发（DB 0.1GB、public 262 张）。
 - 预案深化（database-split-plan.md §3 阶段 2）：拆分单元映射表（core 库 ~400 表 / finance 库 127 / manufacturing 187 / supply 78 / business 300）+ **拆分前置条件**——integration 跨域事务直写与 unified-core 跨库读偏好为拆分前必须治理项（改 API/事件/Saga），跨库事务边界统一走事件+补偿。
 - 意义：物理拆分从"决策输入"升级为"可监控、可执行预案"；阈值达成时按映射 + 前置治理直接启动。
+
+## 2026-08-31 事件总线冒烟测试：P0 #1 全链路实测验证 ✅
+- 新增 `lib/shared-event/tests/event_bus_smoke.rs`（3 场景，需 Redis，--ignored）：stream 发布（publish→stream_length 增长）、DLQ（push/size/pop）、订阅消费（XREADGROUP 收到事件）。
+- 运行：`cargo test -p topems-shared-event --test event_bus_smoke -- --ignored` → **3 passed**（0.31s，Redis PONG）。
+- 意义：P0 #1「事件总线升级（Redis Stream + ACK + DLQ）」从"代码已实现"升级为"**全链路实测可用**"。
