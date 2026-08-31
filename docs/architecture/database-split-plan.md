@@ -1,7 +1,7 @@
 # TopEMS 数据库物理拆分预案（P1-2）
 
-> **状态**：预案（待评审） · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
-> **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml`
+> **状态**：预案已定 + schema 归属评审完成（2026-08-31） · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
+> **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）**
 
 ## 1. 现状基线（2026-08-31 实测）
 
@@ -84,3 +84,12 @@
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
 > 本预案为决策输入，是否启动阶段 0 及 qa 域归属由架构负责人评审后落定。
+
+### 5.1 归属评审结论（2026-08-31）
+
+详见 [`database-schema-ownership-review.md`](database-schema-ownership-review.md)。要点：
+
+- **核心发现**：`lims`/`qms`/`mes`/`pdm` 声明专属 schema 但 DB 无此 schema，其表全部落 public——这是 public 巨型堆（219 张）主要成因。
+- **public 219 张表已 100% 归类**（lims 31 / qms 27 / pdm 20 / mes 17 / finance 58 / bi 18 / erp 6 / master_data 8 / platform 保留 public 32 / integration 2）。
+- **待确认项**（A-E）：qa 域两分（lab/lims→lims，其余→qms）；core_finance_*→finance 剥离；core_* 平台级保留 public；material_*→mes（备选 erp）；plugin_* 残留清理。
+- **阶段 0 执行路线**：建缺失 schema → 逐表 SET SCHEMA → search_path 兼容期 → 门禁/离线编译核对 → 清理 plugin 残留。

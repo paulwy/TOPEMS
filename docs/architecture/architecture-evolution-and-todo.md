@@ -74,7 +74,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | P0-2 | unified-core 继续瘦身决策 | ✅ **边界治理第一轮落地（2026-08-31）**：被模块化单体取代后，本轮落地边界治理——清理幽灵 feature（`module-advanced`/`module-ai` 从 default 移除，保留定义待接入）+ 固化模块接入矩阵与边界规则（`modular-monolith-design.md` §5.2）；advanced（master-data/analytics）/ ai 待真实接入 |
 | P0-3 | 配置单一真相源 CI 校验 | ✅ **本次实施完成**：`scripts/check-workspace-registry.py` + CI Gate M（`config/**` 或 Cargo.toml 变更触发） |
 | P1-1 | 事件通道选型规则落地 | ✅ **已解决**：Redis Stream 迁移完成（2026-08-29），Pub/Sub 仅保留显式降级分支 |
-| P1-2 | 物理库拆分预案 | ✅ **完成预案**：`database-split-plan.md`（7 模块组映射 + 触发阈值 + 迁移/回退）；待评审 schema 归属 |
+| P1-2 | 物理库拆分预案 | ✅ **完成预案+归属评审**：`database-split-plan.md`（7 模块组映射 + 触发阈值 + 迁移/回退）+ `database-schema-ownership-review.md`（public 219 表 100% 归类；发现 lims/qms/mes/pdm 声明 schema 但 DB 缺失）；待确认项 A-E 见评审报告 §4 |
 | P1-3 | 前端测试矩阵 ROI 审视 | ✅ **完成报告+批1**：`frontend-test-roi-review.md`（L1-L4 分级 + ≤20min 预算 + 三批实施路径）；批1 E2E 收敛已落地（CI 单 chromium + apps/web 6→2，0 snapshot），批2 待页面清单确认 |
 | P1-4 | lowcode 立项决策 | ✅ **已解决**：已归档 `svc/_archive/lowcode` |
 | P2-1 | RLS 数据权限覆盖 | ✅ **完成落地**：`migrations/20260831*`（框架函数 + 302 张含 tenant_id 表启用 RLS + 策略）；修复 GUC 名不一致 / PG18 无 IF NOT EXISTS / 空值 UUID 报错 3 缺陷；`lib/shared-db/src/rls.rs` 同步修复 |

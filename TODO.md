@@ -230,6 +230,15 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
   - **验证**：default / 最小集（`--no-default-features --features module-core,module-erp,module-finance`）/ 全量（`--all-features`）三组合编译全部通过
   - **前置修复**（上一轮）：BFF 层正式采用入库（29 文件）+ mes 建表 DDL 同步（7 表）+ stash DNS 确认无需合并，均已提交推送
 
+### 继续推进记录（2026-08-31，P1-2 schema 归属评审）
+
+- [x] **P1-2 schema 归属评审完成**
+  - 实测核查：`lims`/`qms`/`mes`/`pdm` 四服务在 schema_defense 声明专属 schema，但 DB 中**这些 schema 不存在**，其业务表全部落 public（qa_lab_*/qa_lims_* 31、qa_* 27、pdm_* 20、production_*/equipment/work_*/wip* 17）——public 巨型堆（219 张/48%）主因
+  - 产出：`docs/architecture/database-schema-ownership-review.md`——public 219 张表 **100% 归类**（lims31/qms27/pdm20/mes17/finance58/bi18/erp6/master_data8/platform保留public32/integration2）
+  - 待确认项 A-E（供架构负责人落定）：A qa 域两分（lab/lims→lims，其余→qms）；B core_finance_* 剥离→finance、core_* 平台级保留 public；C material_*→mes（备选 erp）；D 跨域同步表归业务 schema；E plugin_* 残留清理
+  - 阶段 0 执行路线已给出（建 schema → SET SCHEMA → search_path 兼容期 → 门禁/离线编译核对 → 清理 plugin 残留）
+  - 同步更新：`database-split-plan.md`（状态+§5.1 评审结论）、`architecture-evolution-and-todo.md`（P1-2 状态）
+
 ---
 
 ## 📝 待办任务（基于架构路线图 v2.0）
