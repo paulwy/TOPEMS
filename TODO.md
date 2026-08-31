@@ -1758,3 +1758,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **应用** erp main.rs：finance_client（finance:read）+ hrm_client（hrm:admin）改用 with_service_token——消除转发用户 token 无目标权限 → 401 降级缺陷。
 - **审计**：communication→gis 的 /search 是 gis public 路由（无需认证）——不改造；11 服务用 TypedServiceClient，后续可按需扩展。
 - **验证**：shared-service-client + erp 编译通过；erp 启动 client 无 mock 降级；service token 调 finance → 200 + 审计日志 "service=erp-service"；无 token → 401。
+
+## 2026-09-01 批量扩展：跨服务 TypedServiceClient 应用 service token ✅
+- **封装就绪后全量应用**（with_service_token）：
+  - 独立服务：srm/qms/pm/finance/ehs Workflow(workflow:read) + crm(erp:admin/wms:admin/workflow:read) + mobile 6 客户端(wms:admin/mes:admin/qms:admin/hrm:admin/workflow:read/notification:read)
+  - server 模块化单体：pm/qms/finance/srm/ehs 模块 Workflow + erp 模块 Hrm/Finance + crm 模块 Erp/Wms/Workflow
+- **审计**：所有 TypedServiceClient 调用方（11 服务）均已应用；communication→gis 为 public 路由不改造。
+- **验证**：crm/mobile/srm/qms/pm/finance/ehs/server 编译通过；crm 启动 ERP/WMS 客户端 service token 成功；实测 crm-service token(erp:admin) → erp inventory 200 + 审计日志 "service=crm-service"；无 token 401。
+- **排坑**：erp 曾无 token 也 200 属旧 dev 实例占端口假象（erp_v2 Address in use），pkill -9 清理后新实例 auth 正常（401）。
