@@ -322,11 +322,11 @@ pub async fn create_access_log(
         Uuid::parse_str(user_id_str).ok()
     };
 
-    let status_value: i16 = if success { 200 } else { 500 };
+    let status_str = if success { "success" } else { "failed" };
 
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (user_id, action, resource_type, resource_id, ip_address, user_agent, status, response_body, created_at)
+        INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, status, response_details, created_at)
         VALUES ($1, $2, $3, $4, $5::inet, $6, $7, $8, NOW())
         RETURNING id, created_at
         "#,
@@ -334,10 +334,10 @@ pub async fn create_access_log(
     .bind(user_uuid)
     .bind(action)
     .bind(resource)
-    .bind(resource_id)
+    .bind(resource_id.and_then(|s| Uuid::parse_str(s).ok()))
     .bind(ip_address)
     .bind(user_agent)
-    .bind(status_value)
+    .bind(status_str)
     .bind(error_message.map(|m| serde_json::json!({ "error": m })))
     .fetch_one(&state.pool)
     .await;

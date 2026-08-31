@@ -83,36 +83,46 @@ pub async fn audit_log_middleware(
 async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx::Error> {
     let query = r#"
         INSERT INTO public.audit_logs (
-            request_id,
             user_id,
-            method,
-            path,
-            query_string,
-            status_code,
-            duration_ms,
+            action,
+            entity_type,
+            entity_ids,
+            request_details,
+            response_details,
+            status,
             ip_address,
             user_agent,
-            timestamp,
-            success
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            created_at
+        ) VALUES ($1, 'access', 'http_request', $2, $3, $4, $5, $6, $7, $8)
     "#;
 
+    let request_details = json!({
+        "request_id": audit_log["request_id"].as_str().unwrap_or_default(),
+        "method": audit_log["method"].as_str().unwrap_or_default(),
+        "path": audit_log["path"].as_str().unwrap_or_default(),
+        "query_string": audit_log["query_string"].as_str().unwrap_or_default(),
+    });
+    let response_details = json!({
+        "status_code": audit_log["status_code"].as_u64().unwrap_or(0),
+        "duration_ms": audit_log["duration_ms"].as_u64().unwrap_or(0),
+    });
     sqlx::query(query)
-        .bind(audit_log["request_id"].as_str().unwrap_or_default())
         .bind(
             audit_log["user_id"]
                 .as_str()
                 .and_then(|s| uuid::Uuid::parse_str(s).ok()),
         )
-        .bind(audit_log["method"].as_str().unwrap_or_default())
-        .bind(audit_log["path"].as_str().unwrap_or_default())
-        .bind(audit_log["query_string"].as_str().unwrap_or_default())
-        .bind(audit_log["status_code"].as_u64().unwrap_or(0) as i32)
-        .bind(audit_log["duration_ms"].as_u64().unwrap_or(0) as i64)
+        .bind(serde_json::Value::Null)
+        .bind(&request_details)
+        .bind(&response_details)
+        .bind(if audit_log["success"].as_bool().unwrap_or(false) {
+            "success"
+        } else {
+            "error"
+        })
         .bind(audit_log["ip_address"].as_str().unwrap_or_default())
         .bind(audit_log["user_agent"].as_str().unwrap_or_default())
         .bind(audit_log["timestamp"].as_str().unwrap_or_default())
-        .bind(audit_log["success"].as_bool().unwrap_or(false))
         .execute(&state.pool)
         .await
         .map(|_| ())
@@ -122,41 +132,40 @@ pub async fn init_audit_logs_table(pool: &sqlx::PgPool) -> Result<(), sqlx::Erro
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS public.audit_logs (
-            id BIGSERIAL PRIMARY KEY,
-            request_id VARCHAR(64) NOT NULL,
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            tenant_id UUID,
+            action VARCHAR(255) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id UUID,
+            entity_ids JSONB,
             user_id UUID,
-            method VARCHAR(10) NOT NULL,
-            path TEXT NOT NULL,
-            query_string TEXT,
-            status_code INTEGER NOT NULL,
-            duration_ms BIGINT NOT NULL,
+            user_name TEXT,
+            request_details JSONB,
+            response_details JSONB,
+            status VARCHAR(20) NOT NULL DEFAULT 'success',
+            error_message TEXT,
             ip_address VARCHAR(45),
             user_agent TEXT,
-            timestamp TIMESTAMPTZ NOT NULL,
-            success BOOLEAN NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
         "#,
     )
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_request_id ON public.audit_logs(request_id);")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON public.audit_logs(entity_type);",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);")
         .execute(pool)
         .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timestamp DESC);",
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_path ON public.audit_logs(path);")
-        .execute(pool)
-        .await?;
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_status_code ON public.audit_logs(status_code);",
+        "CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);",
     )
     .execute(pool)
     .await?;

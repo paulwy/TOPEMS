@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS permission_audit_logs (
     changed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     ip_address      INET,
     user_agent      TEXT,
+    details         JSONB,
     CONSTRAINT chk_action CHECK (action IN ('create', 'update', 'delete', 'activate', 'deactivate', 'role_change'))
 );
 
