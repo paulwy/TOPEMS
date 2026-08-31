@@ -49,7 +49,7 @@ const INDEPENDENT_SERVICES = [
   'billing',
   'ticket',
   'feedback',
-  'lowcode',
+  // [V2026.08 已移除] 'lowcode'（空壳服务已归档 svc/_archive/lowcode）
   // 监控与插件 (8095-8096)
   'monitor',
   'plugin-registry',

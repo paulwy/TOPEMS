@@ -8,6 +8,9 @@ x-common-env: &common-env
   DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
   CORE_URL: http://unified-core:8000
   CONSUL_URL: http://consul:8500
+  IAM_SERVICE_URL: http://unified-core:8000
+  JWT_SECRET: ${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
 
 x-common-env-full: &common-env-full
   <<: *common-env
@@ -26,7 +29,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:latest
+    image: pgvector/pgvector:pg18
     container_name: topems-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-topems}
@@ -137,7 +140,7 @@ services:
       -client=0.0.0.0
       -log-level=info
     healthcheck:
-      test: ["CMD", "consul", "members"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8500/v1/status/leader | grep -qE '[0-9]'"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -150,8 +153,8 @@ services:
   # ================================================
   unified-core:
     build:
-      context: ../svc/unified-core
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: svc/unified-core/Dockerfile
     container_name: topems-unified-core
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
@@ -159,6 +162,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
       - CONSUL_URL=http://consul:8500
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_change_me}
       - CONSUL_ENABLED=${CONSUL_ENABLED:-false}
       - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
       - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
@@ -223,8 +228,13 @@ services:
   # ================================================
   erp:
     build:
-      context: ../svc/erp
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-erp
+        SERVICE_PORT: "8010"
+        PORT_ENV_VAR: ERP_PORT
+        SERVICE_DIR: erp
     container_name: topems-erp
     environment:
       <<: *common-env-full
@@ -257,8 +267,13 @@ services:
   # ================================================
   hrm:
     build:
-      context: ../svc/hrm
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-hrm
+        SERVICE_PORT: "8020"
+        PORT_ENV_VAR: HRM_PORT
+        SERVICE_DIR: hrm
     container_name: topems-hrm
     environment:
       <<: *common-env-full
@@ -288,8 +303,13 @@ services:
 
   pm:
     build:
-      context: ../svc/pm
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-pm
+        SERVICE_PORT: "8023"
+        PORT_ENV_VAR: PM_PORT
+        SERVICE_DIR: pm
     container_name: topems-pm
     environment:
       <<: *common-env-full
@@ -319,8 +339,13 @@ services:
 
   crm:
     build:
-      context: ../svc/crm
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-crm
+        SERVICE_PORT: "8029"
+        PORT_ENV_VAR: CRM_PORT
+        SERVICE_DIR: crm
     container_name: topems-crm
     environment:
       <<: *common-env-full
@@ -353,8 +378,13 @@ services:
   # ================================================
   mes:
     build:
-      context: ..
-      dockerfile: svc/mes/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-mes
+        SERVICE_PORT: "8030"
+        PORT_ENV_VAR: MES_PORT
+        SERVICE_DIR: mes
     container_name: topems-mes
     environment:
       <<: *common-env
@@ -381,8 +411,13 @@ services:
 
   pdm:
     build:
-      context: ..
-      dockerfile: svc/pdm/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-pdm
+        SERVICE_PORT: "8031"
+        PORT_ENV_VAR: PDM_PORT
+        SERVICE_DIR: pdm
     container_name: topems-pdm
     environment:
       <<: *common-env
@@ -411,8 +446,13 @@ services:
   # ================================================
   scm:
     build:
-      context: ../svc/scm
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-scm
+        SERVICE_PORT: "8040"
+        PORT_ENV_VAR: SCM_PORT
+        SERVICE_DIR: scm
     container_name: topems-scm
     environment:
       <<: *common-env
@@ -443,8 +483,13 @@ services:
 
   wms:
     build:
-      context: ../svc/wms
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-wms
+        SERVICE_PORT: "8041"
+        PORT_ENV_VAR: WMS_PORT
+        SERVICE_DIR: wms
     container_name: topems-wms
     environment:
       <<: *common-env
@@ -475,8 +520,13 @@ services:
 
   srm:
     build:
-      context: ../svc/srm
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-srm
+        SERVICE_PORT: "8042"
+        PORT_ENV_VAR: SRM_PORT
+        SERVICE_DIR: srm
     container_name: topems-srm
     environment:
       <<: *common-env
@@ -510,8 +560,13 @@ services:
   # ================================================
   qms:
     build:
-      context: ..
-      dockerfile: svc/qms/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-qms
+        SERVICE_PORT: "8050"
+        PORT_ENV_VAR: QMS_PORT
+        SERVICE_DIR: qms
     container_name: topems-qms
     environment:
       <<: *common-env
@@ -542,8 +597,13 @@ services:
 
   lims:
     build:
-      context: ..
-      dockerfile: svc/lims/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-lims
+        SERVICE_PORT: "8051"
+        PORT_ENV_VAR: LIMS_PORT
+        SERVICE_DIR: lims
     container_name: topems-lims
     environment:
       <<: *common-env
@@ -571,8 +631,13 @@ services:
 
   ehs:
     build:
-      context: ..
-      dockerfile: svc/ehs/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-ehs
+        SERVICE_PORT: "8052"
+        PORT_ENV_VAR: EHS_PORT
+        SERVICE_DIR: ehs
     container_name: topems-ehs
     environment:
       <<: *common-env
@@ -603,13 +668,20 @@ services:
 
   rd:
     build:
-      context: ../svc/rd
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-rd
+        SERVICE_PORT: "8053"
+        PORT_ENV_VAR: RD_PORT
+        SERVICE_DIR: rd
     container_name: topems-rd
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - RD_PORT=8053
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
       - PM_URL=http://pm:8023
       - MES_URL=http://mes:8030
@@ -643,13 +715,20 @@ services:
   # ================================================
   bi:
     build:
-      context: ..
-      dockerfile: svc/bi/Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-analytics
+        SERVICE_PORT: "8060"
+        PORT_ENV_VAR: BI_PORT
+        SERVICE_DIR: analytics
     container_name: topems-bi
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - BI_PORT=8060
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
       - RUST_LOG=info,service_discovery=info
     ports:
@@ -676,13 +755,20 @@ services:
 
   portal:
     build:
-      context: ../svc/portal
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-portal
+        SERVICE_PORT: "8063"
+        PORT_ENV_VAR: PORTAL_PORT
+        SERVICE_DIR: portal
     container_name: topems-portal
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - PORTAL_PORT=8063
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
     ports:
       - "${PORTAL_PORT:-8063}:8063"
@@ -707,13 +793,20 @@ services:
 
   finance:
     build:
-      context: ../svc/finance
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-finance
+        SERVICE_PORT: "8011"
+        PORT_ENV_VAR: FINANCE_PORT
+        SERVICE_DIR: finance
     container_name: topems-finance
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - FINANCE_PORT=8011
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
       - ERP_URL=http://erp:8010
     ports:
@@ -750,19 +843,26 @@ services:
   # ================================================
   ai:
     build:
-      context: ../svc/ai
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-ai
+        SERVICE_PORT: "8013"
+        PORT_ENV_VAR: AI_PORT
+        SERVICE_DIR: ai
     container_name: topems-ai
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - AI_PORT=8013
       - CORE_URL=http://unified-core:8000
+      - IAM_SERVICE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
       - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
     ports:
       - "${AI_PORT:-8013}:8013"
-    volumes:
-      - ../svc/ai:/app
     networks:
       - topems-network
     depends_on:
@@ -785,13 +885,20 @@ services:
   # ================================================
   mobile:
     build:
-      context: ../svc/mobile
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-mobile
+        SERVICE_PORT: "8070"
+        PORT_ENV_VAR: MOBILE_PORT
+        SERVICE_DIR: mobile
     container_name: topems-mobile
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - MOBILE_PORT=8070
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
     ports:
       - "${MOBILE_PORT:-8070}:8070"
@@ -816,13 +923,20 @@ services:
 
   gis:
     build:
-      context: ../svc/gis
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-gis
+        SERVICE_PORT: "8071"
+        PORT_ENV_VAR: GIS_PORT
+        SERVICE_DIR: gis
     container_name: topems-gis
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - GIS_PORT=8071
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
       - MES_URL=http://mes:8030
     ports:
@@ -850,13 +964,20 @@ services:
 
   integration:
     build:
-      context: ../svc/integration
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: topems-integration
+        SERVICE_PORT: "8072"
+        PORT_ENV_VAR: INTEGRATION_PORT
+        SERVICE_DIR: integration
     container_name: topems-integration
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - INTEGRATION_PORT=8072
       - CORE_URL=http://unified-core:8000
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - CONSUL_URL=http://consul:8500
     ports:
       - "${INTEGRATION_PORT:-8072}:8072"

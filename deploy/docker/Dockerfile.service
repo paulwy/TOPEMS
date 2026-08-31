@@ -13,7 +13,7 @@
 # 或通过构建脚本:
 #   bash deploy/docker/build-service.sh erp
 
-ARG RUST_IMAGE=rust:nightly-2026-07-01-alpine
+ARG RUST_IMAGE=rust:alpine
 ARG ALPINE_IMAGE=alpine:3.19
 
 # ============================================
@@ -27,17 +27,22 @@ ARG SERVICE_DIR
 WORKDIR /app
 
 # 安装构建依赖
-RUN apk add --no-cache musl-dev openssl-dev pkgconfig
+RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig protobuf
 
 # 复制 workspace 文件（依赖缓存层）
 COPY Cargo.toml Cargo.lock ./
 COPY lib ./lib
-COPY svc/${SERVICE_DIR} ./svc/${SERVICE_DIR}
+COPY svc ./svc
+COPY tools ./tools
+COPY .sqlx ./.sqlx
+ENV SQLX_OFFLINE=true
 
 # 构建指定服务（仅编译该 crate，加速构建）
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/app/target \
-    cargo build --release -p ${SERVICE_NAME}
+    cargo build --release -p ${SERVICE_NAME} && \
+    mkdir -p /app/out && \
+    cp $(find /app/target -name ${SERVICE_NAME} -type f | head -1) /app/out/${SERVICE_NAME}
 
 # ============================================
 # Stage 2: Runtime
@@ -57,7 +62,7 @@ RUN addgroup -S topems && adduser -S topems -G topems
 WORKDIR /app
 
 # 从 builder 复制二进制
-COPY --from=builder /app/target/release/${SERVICE_NAME} /usr/local/bin/${SERVICE_NAME}
+COPY --from=builder /app/out/${SERVICE_NAME} /usr/local/bin/${SERVICE_NAME}
 
 # 设置所有权
 RUN chown -R topems:topems /app
@@ -74,5 +79,6 @@ EXPOSE ${SERVICE_PORT}
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:${SERVICE_PORT}/health || exit 1
 
-# shell form + exec 确保信号正确传递
+# 运行时二进制的确定名称（shell form + exec 确保信号正确传递）
+ENV SERVICE_NAME=${SERVICE_NAME}
 CMD sh -c "exec ${SERVICE_NAME}"

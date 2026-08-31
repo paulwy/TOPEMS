@@ -64,10 +64,9 @@ gis         svc/gis                topems-gis                  8071
 integration svc/integration        topems-integration           8072
 search      svc/search             topems-search               8082
 communication svc/communication    topems-communication         8084
-billing     svc/billing            topems-billing              8085
 ticket      svc/ticket             topems-ticket               8086
-feedback    svc/feedback           topems-feedback             8087
-lowcode     svc/lowcode            topems-lowcode              8088
+# [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型），原端口 8087 停用
+# [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 master-data svc/master-data        topems-master-data          8090
 "
         CORE_SERVICES="iam"
@@ -238,9 +237,9 @@ get_all_executables() {
 get_build_order() {
     # 层 0（无依赖，纯库级别包不单独编）
     # 层 1（核心：iam = unified-core）
-    # 层 2（业务：finance/erp/crm/scm/srm/hrm/pm/billing/qms/wms/mes/pdm/ehs/lims/rd/portal）
+    # 层 2（业务：finance/erp/crm/scm/srm/hrm/pm/qms/wms/mes/pdm/ehs/lims/rd/portal）
     # 层 3（分析/搜索/AI/集成等扩展）
-    echo "iam finance erp crm scm srm hrm pm billing qms wms mes pdm ehs lims rd portal master-data ticket feedback communication lowcode mobile gis integration search ai bi"
+    echo "iam finance erp crm scm srm hrm pm qms wms mes pdm ehs lims rd portal master-data ticket communication mobile gis integration search ai bi"
 }
 
 # 检测包管理器（pnpm > yarn）
@@ -794,11 +793,10 @@ get_port_env_var() {
         integration) echo "INTEGRATION_PORT" ;;
         search) echo "SEARCH_PORT" ;;
         communication) echo "COMMUNICATION_PORT" ;;
-        billing) echo "BILLING_PORT" ;;
         ticket) echo "TICKET_PORT" ;;
-        feedback) echo "FEEDBACK_PORT" ;;
+        # [V2026.08 已合并] feedback（原 FEEDBACK_PORT 8087，已合并至 ticket）
         master-data) echo "MASTER_DATA_PORT" ;;
-        lowcode) echo "LOWCODE_PORT" ;;
+        # [V2026.08 已移除] lowcode（原 LOWCODE_PORT）
         monitor) echo "MONITOR_PORT" ;;
         plugin-registry) echo "PLUGIN_REGISTRY_PORT" ;;
         *) echo "SERVER_PORT" ;;
@@ -1173,13 +1171,12 @@ get_service_display_name() {
         mobile) echo "移动服务" ;;
         gis) echo "地理信息" ;;
         integration) echo "集成服务" ;;
-        billing) echo "计费服务" ;;
         communication) echo "通讯服务" ;;
         feedback) echo "反馈服务" ;;
         master-data) echo "主数据服务" ;;
         search) echo "搜索服务" ;;
         ticket) echo "工单服务" ;;
-        lowcode) echo "低代码平台" ;;
+        # [V2026.08 已移除] lowcode（原低代码平台）
         *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
@@ -1208,13 +1205,12 @@ get_service_description() {
         mobile) echo "移动应用服务" ;;
         gis) echo "地理信息服务" ;;
         integration) echo "系统集成服务" ;;
-        billing) echo "订阅计费与交易结算服务" ;;
         communication) echo "IM/通知/邮件/短信等通讯能力统一服务" ;;
         feedback) echo "意见反馈与满意度调查服务" ;;
         master-data) echo "企业级主数据统一管理服务" ;;
         search) echo "Elasticsearch全文检索与搜索聚合服务" ;;
         ticket) echo "工单与服务请求流程引擎服务" ;;
-        lowcode) echo "低代码应用搭建与表单引擎平台" ;;
+        # [V2026.08 已移除] lowcode（原低代码应用搭建与表单引擎平台）
         *) echo "$(echo "$1" | sed 's/./\U&/')服务" ;;
     esac
 }
@@ -2002,7 +1998,7 @@ db_defense_check_all() {
     echo
     # 第2批（高频业务10服务 — V69.3 shared-db 抽象，已落地）
     local b2_total=0 b2_pass=0 b2_warn=0 b2_fail=0
-    for svc in erp hrm crm pm scm wms srm pdm mes qms; do
+    for svc in erp hrm crm pm scm wms srm pdm mes qms lims; do
         b2_total=$((b2_total + 1)); total=$((total + 1))
         if db_defense_check "$svc"; then pass=$((pass + 1)); b2_pass=$((b2_pass + 1))
         else
@@ -2016,10 +2012,10 @@ db_defense_check_all() {
         echo "--------------------------------------------------------------------"
     done
     echo
-    info "第2批（高频业务10服务）汇总：通过 $b2_pass / 警告 $b2_warn / 失败 $b2_fail （共 ${b2_total} 服务）"
+    info "第2批（高频业务11服务）汇总：通过 $b2_pass / 警告 $b2_warn / 失败 $b2_fail （共 ${b2_total} 服务）"
     echo
     # 第3批（业务7服务 — V69.3 shared-db 抽象，已落地）
-    local batch3="ai billing rd ticket feedback plugin-registry mobile"
+    local batch3="ai rd ticket feedback plugin-registry mobile"
     local b3_total=0 b3_pass=0 b3_warn=0 b3_fail=0
     for svc in $batch3; do
         b3_total=$((b3_total + 1)); total=$((total + 1))
@@ -2056,8 +2052,9 @@ db_defense_check_all() {
     echo
     info "第4批（平台5服务 — V69.3 shared-db 抽象）汇总：通过 $b4_pass / 警告 $b4_warn / 失败 $b4_fail （共 ${b4_total} 服务）"
     echo
-    # 骨架服务（无 DB 表，跳过）— lowcode / monitor / search
-    info "骨架服务（无 DB 表，已排除）：lowcode monitor search"
+    # 骨架服务（无 DB 表，跳过）— monitor / search
+    # [V2026.08 已移除] lowcode（原骨架服务）
+    info "骨架服务（无 DB 表，已排除）：monitor search"
     echo "===================================================================="
     info "全量汇总（共 ${total} 服务）：通过 $pass / 警告 $warn / 失败 $fail"
     echo "Exit codes: 0=全通过  1=有警告(缺列)  2=有错误(build/启动)"
@@ -2962,7 +2959,7 @@ WebSocket:
   topems db defense-check-all       全量 Schema 防御自检（4 批共 26 服务）
                                         第1批 核心4: gis ehs portal finance
                                         第2批 业务10: erp hrm crm pm scm wms srm pdm mes qms
-                                        第3批 业务7: ai billing rd ticket feedback plugin-registry mobile
+                                        第3批 业务7: ai rd ticket feedback plugin-registry mobile
                                         第4批 平台5: unified-core integration master-data communication analytics
   topems dev                  启动开发环境
   topems reset-password       重置 admin 密码为 admin123
@@ -3118,9 +3115,13 @@ case "${1:-help}" in
             defense-check-all)
                 db_defense_check_all
                 ;;
+            boundary-check)
+                # 静态跨 schema SQL 引用门禁（无需 DB，与 defense-check 运行时检查互补）
+                python3 "$SCRIPT_DIR/check_schema_boundary.py"
+                ;;
             *)
                 error "未知数据库命令: $2"
-                echo "可用命令: start, stop, status, migrate, backup, restore, reset, defense-check, defense-check-all"
+                echo "可用命令: start, stop, status, migrate, backup, restore, reset, defense-check, defense-check-all, boundary-check"
                 exit 1
                 ;;
         esac

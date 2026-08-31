@@ -75,7 +75,6 @@ declare -A SERVICE_MAP=(
   [gis]="topems-gis:gis:GIS_PORT"
   [integration]="topems-integration:integration:INTEGRATION_PORT"
   [communication]="topems-communication:communication:COMMUNICATION_PORT"
-  [billing]="topems-billing:billing:BILLING_PORT"
   [ticket]="topems-ticket:ticket:TICKET_PORT"
   # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型）
   [search]="topems-search:search:SEARCH_PORT"
@@ -83,7 +82,7 @@ declare -A SERVICE_MAP=(
   [master-data]="topems-master-data:master-data:MASTER_DATA_PORT"
   [tms]="topems-tms:tms:TMS_PORT"
   # [V2026.08 已合并] aps 服务已合并至 mes（production_plan/capacity/demand_forecast 模块），保留兼容层 /api/aps → /api/mes
-  [aps]="topems-aps:aps:APS_PORT"
+  # [V2026.08 已移除] [aps]="topems-aps:aps:APS_PORT"（服务已合并至 mes，代码归档 svc/_archive/aps）
 )
 
 MAPPING="${SERVICE_MAP[$SERVICE_NAME]:-}"

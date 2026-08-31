@@ -78,7 +78,7 @@ generate_services_conf() {
 # - unified-core (端口 8000): 平台核心，内含 iam/doc/flow/file 等模块
 # - monitor (端口 8095): V68.1 从 unified-core 拆分的独立监控服务 (alerts/metrics/slo)
 # - plugin-registry (端口 8096): V68.1 从 unified-core 拆分的独立插件注册服务
-# - communication/billing/ticket/feedback/search: 从 unified-core 外迁的独立进程 (8082-8090)
+# - communication/ticket/feedback/search: 从 unified-core 外迁的独立进程 (8082-8090)
 # - bi (analytics): 含原 report 报表功能
 #
 # 核心服务 (必须先启动): iam (unified-core)
@@ -133,9 +133,8 @@ integration svc/integration        topems-integration           $(get_port INTEG
 # 扩展服务 (8082-8096，从 unified-core 外迁为独立进程)
 search      svc/search             topems-search               $(get_port SEARCH_PORT 8082)
 communication svc/communication    topems-communication         $(get_port COMMUNICATION_PORT 8084)
-billing     svc/billing            topems-billing              $(get_port BILLING_PORT 8085)
 ticket      svc/ticket             topems-ticket               $(get_port TICKET_PORT 8086)
-feedback    svc/feedback           topems-feedback             $(get_port FEEDBACK_PORT 8087)
+# [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型），原端口 8087 停用
 # [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 master-data svc/master-data        topems-master-data          $(get_port MASTER_DATA_PORT 8090)
 # V68.1 拆分服务 (8095-8096，从 unified-core 独立为单独进程)
@@ -168,10 +167,9 @@ MONITOR_PORT=$(get_port MONITOR_PORT 8095)
 PLUGIN_REGISTRY_PORT=$(get_port PLUGIN_REGISTRY_PORT 8096)
 COMMUNICATION_PORT=$(get_port COMMUNICATION_PORT 8084)
 SEARCH_PORT=$(get_port SEARCH_PORT 8082)
-BILLING_PORT=$(get_port BILLING_PORT 8085)
 TICKET_PORT=$(get_port TICKET_PORT 8086)
-FEEDBACK_PORT=$(get_port FEEDBACK_PORT 8087)
-LOWCODE_PORT=$(get_port LOWCODE_PORT 8088)
+# [V2026.08 已合并] feedback 服务已合并至 ticket（原 FEEDBACK_PORT 8087 停用）
+# [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 ERP_PORT=$(get_port ERP_PORT 8010)
 FINANCE_PORT=$(get_port FINANCE_PORT 8011)
 AI_PORT=$(get_port AI_PORT 8013)

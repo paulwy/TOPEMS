@@ -18,7 +18,7 @@
       "private_key_type": "ec",
       "private_key_bits": 256,
       "root_cert_ttl": "720h",
-      "intermediate_cert_ttl": "24h",
+      "intermediate_cert_ttl": "48h",
       "leaf_cert_ttl": "12h"
     }
   },
@@ -36,8 +36,5 @@
     "content_path": "/ui/"
   },
   "log_level": "INFO",
-  "enable_script_checks": true,
-  "auto_encrypt": {
-    "tls": true
-  }
+  "enable_script_checks": true
 }

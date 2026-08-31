@@ -27,7 +27,7 @@ impl ServiceRegistry {
     /// 虚拟服务（iam/doc/flow/file）由 unified-core 内部模块提供，
     /// 共用端口 8000，通过 URL 路径区分，不再作为独立条目列出。
     ///
-    /// V66.1 新增：5 个扩展服务（search/communication/billing/ticket/feedback）
+    /// V66.1 新增：扩展服务（search/communication/ticket/feedback；[V2026.08] billing 已合并至 finance）
     /// [V2026.08 已移除] lowcode 空壳占位服务
     /// V68.1 新增：2 个拆分服务（monitor/plugin-registry，从 unified-core 外迁为独立进程）
     pub fn default_services() -> Vec<ServiceConfig> {
@@ -58,14 +58,6 @@ impl ServiceRegistry {
                 port: 8084,
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/communication".to_string(),
-            },
-            ServiceConfig {
-                name: "topems-billing".to_string(),
-                display_name: "计费服务".to_string(),
-                description: "多租户计费与配额管理（原 unified-core billing 模块外迁）".to_string(),
-                port: 8085,
-                health_endpoint: "/health".to_string(),
-                api_prefix: "/api/billing".to_string(),
             },
             ServiceConfig {
                 name: "topems-ticket".to_string(),
@@ -342,7 +334,7 @@ impl ServiceRegistry {
     pub fn get_port_ranges(&self) -> Vec<(u16, u16)> {
         vec![
             (8000, 8009), // 核心
-            (8082, 8087), // 扩展服务（search/communication/billing/ticket/feedback）[V2026.08 已移除 lowcode 原端口8088]
+            (8082, 8087), // 扩展服务（search/communication/ticket/feedback）[V2026.08 已移除 lowcode 原端口8088；billing 已合并至 finance]
             (8010, 8029), // 经营 + 协同办公
             (8030, 8039), // 生产制造
             (8040, 8049), // 供应链
@@ -367,10 +359,9 @@ pub fn get_default_port(service_name: &str) -> u16 {
         // 扩展服务（V66 外迁独立进程）
         "search" | "topems-search" => 8082,
         "communication" | "comm" | "topems-communication" => 8084,
-        "billing" | "topems-billing" => 8085,
         "ticket" | "topems-ticket" => 8086,
         "feedback" | "topems-feedback" => 8087,
-        "lowcode" | "topems-lowcode" => 8088,
+        // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
         // 经营管理
         "erp" | "topems-erp" => 8010,
         "finance" | "topems-finance" => 8011,
@@ -419,10 +410,9 @@ pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
         // 扩展服务
         8082 => Some("topems-search"),
         8084 => Some("topems-communication"),
-        8085 => Some("topems-billing"),
         8086 => Some("topems-ticket"),
         8087 => Some("topems-feedback"),
-        8088 => Some("topems-lowcode"),
+        // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
         // 经营管理
         8010 => Some("topems-erp"),
         8011 => Some("topems-finance"),
@@ -464,9 +454,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn registry_new_returns_29_default_services() {
+    fn registry_new_returns_28_default_services() {
         let r = ServiceRegistry::new();
-        assert_eq!(r.services.len(), 29);
+        assert_eq!(r.services.len(), 28);
     }
 
     #[test]
@@ -495,21 +485,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn get_service_exact_match() {
-        let r = ServiceRegistry::new();
-        let s = r.get_service("topems-billing").expect("found");
-        assert_eq!(s.port, 8085);
-        assert_eq!(s.api_prefix, "/api/billing");
-    }
-
-    #[test]
-    fn get_service_short_name_match() {
-        let r = ServiceRegistry::new();
-        let s = r.get_service("billing").expect("found via short name");
-        assert_eq!(s.name, "topems-billing");
-        assert_eq!(s.port, 8085);
-    }
 
     #[test]
     fn get_service_strip_prefix_then_apiprefix() {
@@ -553,7 +528,7 @@ mod tests {
     fn to_map_returns_correct_hashmap() {
         let r = ServiceRegistry::new();
         let m = r.to_map();
-        assert_eq!(m.len(), 29);
+        assert_eq!(m.len(), 28);
         assert!(m.contains_key("unified-core"));
         assert_eq!(m.get("topems-erp").unwrap().port, 8010);
     }
@@ -562,7 +537,7 @@ mod tests {
     fn get_all_ports_count_and_values() {
         let r = ServiceRegistry::new();
         let ports = r.get_all_ports();
-        assert_eq!(ports.len(), 29);
+        assert_eq!(ports.len(), 28);
         assert!(ports.contains(&8000));
         assert!(ports.contains(&8090));
         for p in ports {
@@ -593,10 +568,9 @@ mod tests {
         assert_eq!(get_default_port("topems-search"), 8082);
         assert_eq!(get_default_port("communication"), 8084);
         assert_eq!(get_default_port("comm"), 8084);
-        assert_eq!(get_default_port("billing"), 8085);
         assert_eq!(get_default_port("ticket"), 8086);
         assert_eq!(get_default_port("feedback"), 8087);
-        assert_eq!(get_default_port("lowcode"), 8088);
+        // [V2026.08 已移除] lowcode（原端口 8088）
     }
 
     #[test]
@@ -679,10 +653,9 @@ mod tests {
         assert_eq!(get_service_name_by_port(8000), Some("unified-core"));
         assert_eq!(get_service_name_by_port(8082), Some("topems-search"));
         assert_eq!(get_service_name_by_port(8084), Some("topems-communication"));
-        assert_eq!(get_service_name_by_port(8085), Some("topems-billing"));
         assert_eq!(get_service_name_by_port(8086), Some("topems-ticket"));
         assert_eq!(get_service_name_by_port(8087), Some("topems-feedback"));
-        assert_eq!(get_service_name_by_port(8088), Some("topems-lowcode"));
+        // [V2026.08 已移除] lowcode（原端口 8088）
         assert_eq!(get_service_name_by_port(8010), Some("topems-erp"));
         assert_eq!(get_service_name_by_port(8011), Some("topems-finance"));
         assert_eq!(get_service_name_by_port(8013), Some("topems-ai"));
@@ -741,7 +714,7 @@ mod tests {
         let r = ServiceRegistry::new();
         let json = serde_json::to_string(&r).expect("serialize");
         let back: ServiceRegistry = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(back.services.len(), 29);
+        assert_eq!(back.services.len(), 28);
     }
 
     #[test]

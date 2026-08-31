@@ -220,6 +220,25 @@ service_groups:
       bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application 重建（Webhook/Scheduler 后台任务）
       dependencies: [unified-core]
 
+    # V68.1 拆分服务 (8095-8096，从 unified-core 迁移至独立进程)
+    - name: monitor
+      port: 8095
+      env_var: MONITOR_PORT
+      description: 系统监控服务（V68.1 A2.1 从 unified-core 拆分）
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（指标采集 state）
+      dependencies: [unified-core]
+      service_dir: monitor
+
+    - name: plugin-registry
+      port: 8096
+      env_var: PLUGIN_REGISTRY_PORT
+      description: 插件注册与管理服务（V68.1 A2.2 从 unified-core 拆分）
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（插件状态 state）
+      dependencies: [unified-core]
+      service_dir: plugin-registry
+
   # 主数据服务 (8090)
   master-data:
     - name: master-data
@@ -241,15 +260,6 @@ service_groups:
       bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
       dependencies: [unified-core]
       service_dir: communication
-
-    - name: billing
-      port: 8085
-      env_var: BILLING_PORT
-      description: 计费服务
-      status: implemented
-      bootstrap_mode: A  # Shared Bootstrap V2 Pattern: 标准 build_application（无自定义 state）
-      dependencies: [unified-core]
-      service_dir: billing
 
     - name: ticket
       port: 8086
@@ -275,27 +285,6 @@ service_groups:
     # [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
     # 代码归档见 docs/archive/，如未来立项可恢复
 
-  # V68.1 拆分服务 (8095-8096)
-  # monitor 和 plugin 路由已从 unified-core 迁移至独立进程
-  infrastructure:
-    - name: monitor
-      port: 8095
-      env_var: MONITOR_PORT
-      description: 系统监控服务（V68.1 A2.1 从 unified-core 拆分）
-      status: implemented
-      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（指标采集 state）
-      dependencies: [unified-core]
-      service_dir: monitor
-
-    - name: plugin-registry
-      port: 8096
-      env_var: PLUGIN_REGISTRY_PORT
-      description: 插件注册与管理服务（V68.1 A2.2 从 unified-core 拆分）
-      status: implemented
-      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（插件状态 state）
-      dependencies: [unified-core]
-      service_dir: plugin-registry
-
   # 物流服务 (8073-8074，V284 补全至单一信源)
   # 注：plugin.yaml 中 tms/aps 原 port 为 8042/8043，与 srm 8042 冲突，改用 8070-8079 段空闲端口
   logistics:
@@ -308,14 +297,15 @@ service_groups:
       dependencies: []
       service_dir: tms
 
-    - name: aps
-      port: 8074
-      env_var: APS_PORT
-      description: 高级计划与排程
-      status: implemented
-      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（计划/排程 state）
-      dependencies: []
-      service_dir: aps
+    # [V2026.08 已合并] aps 服务已合并至 mes（aps_scheduling/aps_compat 模块，/api/aps 兼容层由 mes 提供），代码归档 svc/_archive/aps
+    # - name: aps
+    #   port: 8074
+    #   env_var: APS_PORT
+    #   description: 高级计划与排程
+    #   status: implemented
+    #   bootstrap_mode: B
+    #   dependencies: []
+    #   service_dir: aps
 
 # 虚拟服务（由 unified-core 内部模块提供，不独立启动）
 # 注意：iam 已作为独立服务条目存在于 service_groups.core（service_dir: unified-core）
@@ -431,8 +421,6 @@ module_groups:
     - erp
     - finance
     - ai
-    # V66.1：cross-reference — billing 计费挂入经营管理域
-    - billing
 
   master-data:
     - master-data
@@ -441,7 +429,6 @@ module_groups:
   extension:
     - search
     - communication
-    - billing
     - ticket
     # [V2026.08 已合并] feedback 已合并至 ticket
     # [V2026.08 已移除] lowcode 空壳占位服务
@@ -457,7 +444,6 @@ module_groups:
     # 扩展服务（V66 外迁，端口 8082/8084-8088）
     - search
     - communication
-    - billing
     - ticket
     # [V2026.08 已合并] feedback 已合并至 ticket
     # [V2026.08 已移除] lowcode 空壳占位服务

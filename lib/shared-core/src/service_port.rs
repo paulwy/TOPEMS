@@ -49,10 +49,9 @@ pub const APS_PORT: u16 = 8074;
 
 pub const SEARCH_PORT: u16 = 8082;
 pub const COMMUNICATION_PORT: u16 = 8084;
-pub const BILLING_PORT: u16 = 8085;
 pub const TICKET_PORT: u16 = 8086;
 pub const FEEDBACK_PORT: u16 = 8087;
-pub const LOWCODE_PORT: u16 = 8088;
+// [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 
 // ============ 主数据服务端口 ============
 
@@ -111,10 +110,9 @@ pub const GROUP2_SERVICES: &[(&str, u16)] = &[
     // 扩展服务（从 unified-core 外迁）
     ("search", SEARCH_PORT),
     ("communication", COMMUNICATION_PORT),
-    ("billing", BILLING_PORT),
     ("ticket", TICKET_PORT),
     ("feedback", FEEDBACK_PORT),
-    ("lowcode", LOWCODE_PORT),
+    // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
     // 别名
     ("analytics", BI_PORT), // 与 bi 共端口
 ];
@@ -209,10 +207,11 @@ mod tests {
 
     #[test]
     fn t10_group2_services_length_protection() {
-        // 20 主服务 + tms + aps + master-data + monitor + 6 扩展 + analytics 别名 = 31
+        // 20 主服务 + tms + aps + master-data + monitor + 4 扩展 + analytics 别名 = 29
+        // [V2026.08 已移除] lowcode（原 31 → 30）；[V2026.08] billing 已合并至 finance（30 → 29）
         assert_eq!(
             GROUP2_SERVICES.len(),
-            31,
+            29,
             "GROUP2_SERVICES 条目数变化，说明新增/删除了服务。\
             请同步更新 config/services.yaml 与本单测期望值。"
         );
