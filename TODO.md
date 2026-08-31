@@ -1334,3 +1334,14 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **shared-db 20 个 SCHEMA 常量 plugin_ 前缀对齐（0892c7fc0）**：HRM/ERP/PM/CRM/QMS/MES/WMS/SCM/PDM/LIMS/RS/GIS/EHS/BI/AI/IM/INTEGRATION/MAIL/MOBILE/PORTAL → 真实 schema。业务零使用（纯死代码），仅 lib.rs pub use + 自测断言；同步断言 + 测试更名。验证：shared-db 143 passed、7 服务编译 0 error。
 - **里程碑：全库 plugin_* schema 清零**（plugin_srm/mes/ai/aps 全部删除，含空壳）。
 - **遗留**：modules 宏参数3 "plugin_srm"/"plugin_ai" 冗余白名单（无害，编译期多余项）；svc/ai 收敛待用户提交（见上条）。
+
+## 2026-08-31 plugin_* 引用收敛（wms/finance/erp）✅ + 用户工作区跳过项 ⚠️
+- **wms（4683ec162）**：event_handlers/audit_log 3 处 plugin_wms.→wms.；补建 wms.wms_approval_events + wms.purchase_order_snapshots；测试全过、INSERT 验证 OK、门禁 PASS。
+- **finance（aa9f0f5db）**：settlement_center/service.rs 3 处 plugin_finance.→finance.（表均存在）；测试全过、门禁 PASS。
+- **erp（d60dbb34e）**：consolidation 6 文件 48 处 plugin_erp.→erp.（表均存在）；测试全过、门禁 PASS。
+- **跳过项（用户工作区改动，待用户提交时收敛）**：
+  - wms modules/data_sync.rs（plugin_wms 5 处）
+  - hrm modules/attendance.rs（plugin_hrm 5 处，attendance_records/employees 表已存在）
+  - erp modules/holidays.rs + opening_balance.rs（plugin_erp 引用 + **erp.holidays 表缺失需补建**）
+  - svc/ai（工作区 3 处）
+- **注释**：server finance_module.rs 的 plugin_finance 是注释（无 SQL，不改）。
