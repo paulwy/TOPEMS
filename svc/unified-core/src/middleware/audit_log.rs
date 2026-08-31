@@ -82,7 +82,7 @@ pub async fn audit_log_middleware(
 
 async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx::Error> {
     let query = r#"
-        INSERT INTO audit_logs (
+        INSERT INTO public.audit_logs (
             request_id,
             user_id,
             method,
@@ -121,7 +121,7 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
 pub async fn init_audit_logs_table(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS audit_logs (
+        CREATE TABLE IF NOT EXISTS public.audit_logs (
             id BIGSERIAL PRIMARY KEY,
             request_id VARCHAR(64) NOT NULL,
             user_id UUID,
@@ -141,22 +141,22 @@ pub async fn init_audit_logs_table(pool: &sqlx::PgPool) -> Result<(), sqlx::Erro
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_request_id ON audit_logs(request_id);")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_request_id ON public.audit_logs(request_id);")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);")
         .execute(pool)
         .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);",
+        "CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timestamp DESC);",
     )
     .execute(pool)
     .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_path ON audit_logs(path);")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_audit_logs_path ON public.audit_logs(path);")
         .execute(pool)
         .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_status_code ON audit_logs(status_code);",
+        "CREATE INDEX IF NOT EXISTS idx_audit_logs_status_code ON public.audit_logs(status_code);",
     )
     .execute(pool)
     .await?;

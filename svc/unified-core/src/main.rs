@@ -316,6 +316,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: false,
         api_prefix: "/api/core",
         legacy_prefixes: &[],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -357,6 +358,7 @@ async fn main() -> anyhow::Result<()> {
     // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF，8063 端口启动）
     // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
     try_init("audit", || modules::audit::init_database(&ctx.db)).await;
+    try_init("audit_middleware", || middleware::audit_log::init_audit_logs_table(&ctx.db)).await;
     try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（29 表）
@@ -416,18 +418,26 @@ async fn main() -> anyhow::Result<()> {
     // V430: SSE session manager for real-time communication endpoints
     let sse_sessions = std::sync::Arc::new(crate::shared::SseSessionManager::new());
     // V436: Business tool registry for connecting to real services
-    let service_registry = std::sync::Arc::new(crate::shared::service_client::ServiceRegistry::new());
-    let business_tool_registry = crate::modules::business_tools::create_default_registry(service_registry.clone())
-        .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
+    let service_registry =
+        std::sync::Arc::new(crate::shared::service_client::ServiceRegistry::new());
+    let business_tool_registry =
+        crate::modules::business_tools::create_default_registry(service_registry.clone())
+            .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
 
     // V450: Initialize permission store using factory (supports memory and database backends)
     // Set PERMISSION_STORE_TYPE=database to use PostgreSQL-backed storage
-    let permission_store = crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(Some(ctx.db.clone()));
+    let permission_store =
+        crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(
+            Some(ctx.db.clone()),
+        );
 
     // V460: Initialize audit log store
     // Defaults to in-memory store. Set AUDIT_LOG_STORE_TYPE=database to use PostgreSQL-backed storage.
-    let audit_logger: std::sync::Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore> = {
-        let store_type = std::env::var("AUDIT_LOG_STORE_TYPE").unwrap_or_else(|_| "memory".to_string());
+    let audit_logger: std::sync::Arc<
+        dyn crate::routes::business_tools::permission_audit_log::AuditLogStore,
+    > = {
+        let store_type =
+            std::env::var("AUDIT_LOG_STORE_TYPE").unwrap_or_else(|_| "memory".to_string());
         match store_type.as_str() {
             "database" => {
                 tracing::info!("Using database-backed audit log store");
@@ -435,7 +445,10 @@ async fn main() -> anyhow::Result<()> {
             }
             _ => {
                 tracing::info!("Using in-memory audit log store");
-                std::sync::Arc::new(crate::routes::business_tools::permission_audit_log::InMemoryAuditLogStore::new())
+                std::sync::Arc::new(
+                    crate::routes::business_tools::permission_audit_log::InMemoryAuditLogStore::new(
+                    ),
+                )
             }
         }
     };
@@ -461,9 +474,10 @@ async fn main() -> anyhow::Result<()> {
             .and_then(|v| v.parse::<u32>().ok())
             .unwrap_or(24);
 
-        let mut policy = crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
-            .with_batch_size(batch_size)
-            .with_cleanup_interval(cleanup_interval);
+        let mut policy =
+            crate::routes::business_tools::audit_retention::RetentionPolicy::new(retention_days)
+                .with_batch_size(batch_size)
+                .with_cleanup_interval(cleanup_interval);
         if archive_enabled {
             if let Some(path) = archive_path {
                 policy = policy.with_archive(path);
@@ -578,10 +592,7 @@ async fn main() -> anyhow::Result<()> {
                 .cleanup_expired(tokio::time::Duration::from_secs(1800))
                 .await;
             if removed > 0 {
-                tracing::info!(
-                    "SSE cleanup: removed {} expired sessions",
-                    removed
-                );
+                tracing::info!("SSE cleanup: removed {} expired sessions", removed);
             }
         }
     });
@@ -646,15 +657,6 @@ async fn main() -> anyhow::Result<()> {
     let app = routes::create_routes(&state, move || metric_handle.render())
         .layer(axum::middleware::from_fn(request_context_middleware))
         .with_telemetry()
-        .route(
-            "/api-docs/openapi.json",
-            axum::routing::get(|| async {
-                serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-                    tracing::error!("Failed to serialize OpenAPI spec: {}", e);
-                    "{}".to_string()
-                })
-            }),
-        )
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
