@@ -113,6 +113,48 @@ def extract_schema_refs(sql):
     return refs
 
 
+
+def is_test_file(path):
+    """测试文件（tests/ 目录或 *_test*.rs 文件名）——SQL 字面量多为安全测试 payload，跳过。"""
+    p = path.replace(os.sep, "/")
+    if "/tests/" in p:
+        return True
+    base = os.path.basename(path)
+    return "_test" in base or base.endswith("_tests.rs")
+
+
+def strip_test_code(content):
+    """粗粒度移除 #[cfg(test)] / #[test] 块与 mod tests 块，避免测试 SQL 字面量干扰边界检查。"""
+    lines = content.split("\n")
+    out = []
+    depth = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if depth == 0:
+            if ("#[cfg(test)]" in line or stripped.startswith("#[tokio::test]")
+                    or stripped.startswith("#[test]") or stripped.startswith("#[test_case]")):
+                out.append("")
+                if "{" in line:
+                    depth = line.count("{") - line.count("}")
+                else:
+                    depth = 1
+                i += 1
+                continue
+            if stripped.startswith("mod tests") or stripped.startswith("mod test "):
+                depth = line.count("{") - line.count("}")
+                out.append("")
+                i += 1
+                continue
+            out.append(line)
+        else:
+            depth += line.count("{") - line.count("}")
+            out.append("")
+        i += 1
+    return "\n".join(out)
+
+
 def service_schema_refs(service_dir, known_schemas):
     """扫描单个服务的所有 SQL，收集 schema 引用（只保留 x 属于 DB 真实 schema 的）。"""
     refs = []
@@ -121,6 +163,9 @@ def service_schema_refs(service_dir, known_schemas):
             content = open(path, encoding="utf-8").read()
         except (OSError, UnicodeDecodeError):
             continue
+        if is_test_file(path):
+            continue  # 测试代码 SQL 字面量不参与边界检查
+        content = strip_test_code(content)
         for sql in extract_sql_strings(content):
             if not re.search(r'\b(from|into|update|join)\s+', sql, re.IGNORECASE):
                 continue  # 非 SQL 字符串
@@ -160,6 +205,9 @@ def service_bare_refs(service_dir):
             content = open(path, encoding="utf-8").read()
         except (OSError, UnicodeDecodeError):
             continue
+        if is_test_file(path):
+            continue
+        content = strip_test_code(content)
         for sql in extract_sql_strings(content):
             if not re.search(r'\b(from|into|update|join)\s+', sql, re.IGNORECASE):
                 continue
