@@ -1362,3 +1362,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：finance 测试全过（1106+1107）；门禁 PASS（finance 引用=353）；迁移文件幂等重跑无副作用；归档数据完整。
 - **备份**：`database/backup/topems_pre_schema_migration_*.dump`（gitignore）。
 - **⚠️ 遗留**：public 旧版数据在 `_archive_core_finance_*`，如确需并入 finance 新版，按公共列 INSERT...SELECT...ON CONFLICT (id) DO NOTHING（注意新版无 deleted_at，软删语义差异）——需业务 owner 确认后再执行。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（C 项 material_*）✅
+- 迁移文件 `20260831190100_material_schema_migrate.sql`（幂等）：public 独有 2 张（material_categories/material_requirement_items）→ SET SCHEMA mes；同名 6 张旧版归档 `_archive_material_*`（数据保留），mes 为运行真相（mes 代码无前缀引用，SEARCH_PATH='mes, public' 优先）。
+- 验证：public=0/mes=8/archive=6；mes 测试全过（424+16+13）；门禁 PASS。
