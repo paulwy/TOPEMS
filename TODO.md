@@ -1238,7 +1238,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
 
 ## 2026-08-31 同名多 schema 表收敛 第三批 finance 组 ✅
-- **9 张 finance 活跃表从 public 归位**：支付链 5 张（core_finance_payments/items/workflow/approval_config/approval_nodes）+ 对账/结算/来源快照 3 张（reconciliation_snapshots/settlement_snapshots/source_amount_snapshots）—— 均在 finance.schema_defense 补定义 + 建表（FK/UNIQUE/数组类型对齐）+ 迁移数据（15 行）+ 代码 public.X→X + 删 public 表。
+- **8 张 finance 活跃表从 public 归位**：支付链 5 张（core_finance_payments/items/workflow/approval_config/approval_nodes）+ 对账/结算/来源快照 3 张（reconciliation_snapshots/settlement_snapshots/source_amount_snapshots）—— 均在 finance.schema_defense 补定义 + 建表（FK/UNIQUE/数组类型对齐）+ 迁移数据（15 行）+ 代码 public.X→X + 删 public 表。
 - **2 张死读改读**：financial_reports 读 public.financial_vouchers/voucher_items → core_finance_vouchers/voucher_lines。
 - **容错修复**：voucher_template 查不存在的 public.payment_records/payments → core_finance_payments。
 - **保留**：public.accounting_subjects（finance 活跃 CRUD，待深判是否与 core_finance_accounts 同义）。

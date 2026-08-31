@@ -67,7 +67,7 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - `bi.audit_logs`：保留（analytics 服务审计，自治）
 
 ### 第三批（finance 组 ✅ 2026-08-31 已执行；mobile/iam 待办）
-- **finance 活跃业务表误建 public 归位（9 张）**：`core_finance_payments`(+payment_items/workflow/approval_config/approval_nodes 支付链 5 张)、`reconciliation_snapshots`、`settlement_snapshots`、`source_amount_snapshots` —— 均为无前缀/显式 public SQL 落 public 的活跃表（有 INSERT/UPDATE）。已在 finance.schema_defense TABLE_DEFS 补定义 + 建 finance 表（含 FK/UNIQUE/数组类型与 public 对齐）+ 显式列名迁移数据（payments 1 行、approval_config 4 行、approval_nodes 10 行）+ 代码 public.X→X + 删 public 表。
+- **finance 活跃业务表误建 public 归位（8 张）**：`core_finance_payments`(+payment_items/workflow/approval_config/approval_nodes 支付链 5 张)、`reconciliation_snapshots`、`settlement_snapshots`、`source_amount_snapshots` —— 均为无前缀/显式 public SQL 落 public 的活跃表（有 INSERT/UPDATE）。已在 finance.schema_defense TABLE_DEFS 补定义 + 建 finance 表（含 FK/UNIQUE/数组类型与 public 对齐）+ 显式列名迁移数据（payments 1 行、approval_config 4 行、approval_nodes 10 行）+ 代码 public.X→X + 删 public 表。
 - **finance 报表死读改读（2 张）**：`public.financial_vouchers→core_finance_vouchers`、`public.voucher_items→core_finance_voucher_lines`（financial_reports.rs；字段 period/total_debit/total_credit/status/debit/credit/voucher_id 均兼容）。
 - **voucher_template 容错查询修复**：`public.payment_records/public.payments`（表已不存在，恒走 1000.00 兜底）→ 改查归位后的 `core_finance_payments(total_amount)`。
 - **保留**：`public.accounting_subjects`（finance accounting_subjects.rs 活跃 CRUD 主表，与 core_finance_accounts 是否同义需深判，单独子项）。
