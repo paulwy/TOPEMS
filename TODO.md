@@ -1559,3 +1559,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **门禁 PASS**：integration 引用 106 无跨 schema 直读；**白名单 2→1**（仅剩 unified-core→portal 设计性只读）。
 - 验证：integration/ehs 编译通过、警告清零、ehs 端点静态审查；runtime curl 验证待补（Bash 曾受限）。
 - 拆分前置条件 #1（integration 跨域事务直写）**代码层清零**；步骤C process_event 接线事件订阅为剩余项。
+
+## 2026-08-31 拆分前置治理：步骤C 接线（跨域联动真实化）✅
+- **event_handlers/mod.rs 追加订阅**：build_subscriber 增加 7 个领域事件（QmsInspectionCompleted/QmsQualityIssueCreated/EhsHazardReported/EhsAccidentReported/LimsInspectionAbnormalDetected/LimsRecordCompleted/LimsReagentAlert）→ handle_cross_domain_event → qms_lims_ehs::process_event 统一调度。
+- **发布端现状**：QmsQualityIssueCreated（qms）、EhsHazardReported（ehs）已发布；其余 5 事件发布端待源服务补发（lims 仅发 LimsInspectionResultSubmitted）。
+- **端到端验证**：XADD QmsQualityIssueCreated（字段 payload=Event JSON）→ integration 订阅消费 → process_event → handler → reqwest 调 ehs /api/internal/ehs/hazards/integration → ehs.qa_ehs_hazards 落库 HAZ-QMS-* ✅；测试数据/stream 消息已清理、服务已停。
+- 蓝图 integration-cross-domain-api.md 步骤 A/B/C/D 全部完成。
+- 剩余项：5 个事件发布端补发（源服务业务埋点）。

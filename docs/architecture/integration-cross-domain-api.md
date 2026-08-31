@@ -46,6 +46,10 @@ integration 跨域联动**全部改为服务 API 编排**（reqwest，复用现�
 - 将 `process_event` 接入 integration 事件订阅（`event_handlers` 的 `start_event_subscribers` 或共享事件订阅器），订阅 `QmsInspectionCompleted`/`QmsQualityIssueCreated`/`EhsHazardReported`/`EhsAccidentReported`/`LimsInspectionAbnormalDetected`/`LimsRecordCompleted`/`LimsReagentAlert`。
 - 失败语义：handler 返回 Err → 事件重试/进 DLQ（已有 Redis Stream + DLQ 基础）。
 
+> **已实施（2026-08-31）**：`event_handlers/mod.rs` 的 `build_subscriber` 追加 7 个领域事件订阅 → `handle_cross_domain_event` → `qms_lims_ehs::process_event` 统一调度（tenant_id 从 payload 取，缺失 nil 占位——步骤B后 handler 已不依赖）。
+> **发布端现状**：QmsQualityIssueCreated（qms quality_issue.rs）✅、EhsHazardReported（ehs hazard.rs）✅ 已发布；QmsInspectionCompleted/EhsAccidentReported/LimsInspectionAbnormalDetected/LimsRecordCompleted/LimsReagentAlert **发布端待源服务补发**（lims 当前仅发布 LimsInspectionResultSubmitted）。
+> **端到端验证**：XADD 至 `topems:stream:events:QmsQualityIssueCreated`（字段 `payload`=Event JSON，publisher 用 payload 字段名）→ integration 订阅消费 → process_event → handler → reqwest 调 ehs `/api/internal/ehs/hazards/integration` → ehs.qa_ehs_hazards 落库 `HAZ-QMS-*` ✅。测试数据已清理。
+
 ### 步骤 D：门禁收紧
 - 步骤 B 完成后移除 `integration.allow=['qms','lims']`（`schema_boundary.json`），门禁 integration PASS 且跨 schema 直写清零。
 - 白名单从 2 项 → 1 项（仅 unified-core→portal 设计性只读）。
@@ -58,7 +62,7 @@ integration 跨域联动**全部改为服务 API 编排**（reqwest，复用现�
 
 ## 5. 状态
 
-- [ ] 步骤 A：服务侧集成端点（lims×2 + qms×2）
-- [ ] 步骤 B：qms_lims_ehs 直写 → reqwest
-- [ ] 步骤 C：process_event 接线
-- [ ] 步骤 D：撤销 integration allow（白名单 2→1）
+- [x] 步骤 A：服务侧集成端点（lims×2 + qms×2）
+- [x] 步骤 B：qms_lims_ehs 直写 → reqwest（含 ehs×2 端点 + 撤销 integration allow，白名单 2→1）
+- [x] 步骤 C：process_event 接线（7 事件订阅 + 端到端验证通过；5 个事件发布端待源服务补发）
+- [x] 步骤 D：撤销 integration allow（白名单 2→1）
