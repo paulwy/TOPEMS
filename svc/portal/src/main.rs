@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/portal",
         legacy_prefixes: &["/api/v1/portal", "/api/core/portal/v1"],
+        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
     START_TIME.get_or_init(Instant::now);
@@ -329,15 +330,15 @@ async fn main() -> anyhow::Result<()> {
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
+            app_state.pool.clone(),
+            rls_middleware,
         ))
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
-            rls_middleware,
+            app_state.auth_state.clone(),
+            auth_middleware,
         ));
 
     let rate_limit_config = RateLimitConfig::new(200, 60)

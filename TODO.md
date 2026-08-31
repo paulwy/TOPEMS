@@ -1815,3 +1815,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **shared/mod.rs** 新增 `cached_my_task_stats(user_id, token)`：用户级待办统计缓存，key=`wf:stats:{user_id}`，TTL 60s，命中即返回、未命中调 workflow API 后写入。
 - **接入 3 处**：aggregation fetch_finance_stats / fetch_workflow_stats（传 claims.sub）+ dashboard fetch_user_pending_approvals。
 - **验证**：cargo build 通过；假 workflow server（18099）确认存活；**运行时端到端被 portal auth 遗留阻碍**（第 20 阶段已知：portal 拒绝手工签发用户 token 401，与缓存无关）。
+
+## 2026-09-01 portal auth 遗留修复（layer 顺序）✅
+- **根因**：portal 自定义 router 的 layer 顺序 `tenant→auth→require_permission→rls→rate_limit`——axum 后挂先执行 → require_permission 在 auth **之前**执行 → Claims 未注入 → 401「缺少认证信息」（service token 也同理被挡）。
+- **修复**：改为 `tenant→rls→require_permission→auth→rate_limit`——auth 最先注入 Claims（+ServiceIdentity），require_permission/rls/tenant 才读到。参照 build_application 标准顺序。
+- **验证（端到端打通）**：DEVELOPMENT_MODE 启动 portal + 假 workflow server——business-stats 返回 success:true（不再 401）；第一次请求假 server 收到 1 次（数据解析 pending=4/todo=5），第二次缓存命中计数不变——**待办聚合缓存 P1 端到端闭环**。
