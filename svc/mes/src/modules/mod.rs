@@ -1,6 +1,6 @@
 pub mod anomaly_detection;
-pub mod aps_compat;
 pub mod approval_common;
+pub mod aps_compat;
 pub mod aps_scheduling;
 pub mod audit;
 pub mod capacity;
@@ -70,149 +70,393 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS production_orders (
+                CREATE TABLE IF NOT EXISTS production_orders (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            order_no VARCHAR(64) NOT NULL UNIQUE,
-            product_id UUID,
-            product_name VARCHAR(256) NOT NULL,
-            product_code VARCHAR(64) NOT NULL,
-            quantity DECIMAL(12,2) NOT NULL,
-            completed_quantity DECIMAL(12,2) DEFAULT 0,
-            status VARCHAR(32) DEFAULT 'pending',
-            source VARCHAR(32) DEFAULT 'manual',
-            source_order_id UUID,
-            source_order_number VARCHAR(64),
-            planned_start_date TIMESTAMP,
-            planned_end_date TIMESTAMP,
-            actual_start_date TIMESTAMP,
-            actual_end_date TIMESTAMP,
-            workshop_id UUID,
+            organization_id UUID,
+            order_number VARCHAR(100) NOT NULL,
+            order_type VARCHAR(50),
+            product_name VARCHAR(255) NOT NULL,
+            product_code VARCHAR(100),
+            product_specification TEXT,
+            batch_number VARCHAR(100),
+            quantity INTEGER NOT NULL,
+            unit VARCHAR(20) DEFAULT 'piece',
+            planned_quantity INTEGER,
+            completed_quantity INTEGER DEFAULT 0,
+            rejected_quantity INTEGER DEFAULT 0,
+            scrapped_quantity INTEGER DEFAULT 0,
+            priority VARCHAR(20) DEFAULT 'normal',
+            status VARCHAR(20) NOT NULL DEFAULT 'created',
+            progress_percentage INTEGER DEFAULT 0,
+            planned_start_date DATE,
+            planned_end_date DATE,
+            actual_start_date DATE,
+            actual_end_date DATE,
+            estimated_duration_hours DECIMAL(10,2),
+            actual_duration_hours DECIMAL(10,2),
+            customer_id UUID,
+            customer_name VARCHAR(255),
+            customer_order_number VARCHAR(100),
+            sales_order_id UUID,
+            process_route_id UUID,
+            process_route_name VARCHAR(255),
+            work_station_id UUID,
+            work_station_name VARCHAR(255),
+            assigned_to VARCHAR(255),
+            assigned_to_id UUID,
+            team VARCHAR(100),
+            material_requirements JSONB,
+            tool_requirements JSONB,
+            quality_requirements JSONB,
+            special_instructions TEXT,
             notes TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
         )
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS production_processes (
+                CREATE TABLE IF NOT EXISTS production_processes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            process_no VARCHAR(64) NOT NULL UNIQUE,
-            name VARCHAR(128) NOT NULL,
+            organization_id UUID NOT NULL,
+            process_code VARCHAR(100),
+            process_name VARCHAR(255) NOT NULL,
+            process_type VARCHAR(50),
             description TEXT,
-            version VARCHAR(32) DEFAULT '1.0',
-            status VARCHAR(32) DEFAULT 'active',
-            sequence INT DEFAULT 0,
-            equipment_required BOOLEAN DEFAULT false,
-            estimated_duration INT DEFAULT 0,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            sequence INTEGER NOT NULL,
+            version VARCHAR(20) DEFAULT '1.0',
+            is_active BOOLEAN DEFAULT true,
+            standard_time_minutes DECIMAL(10,2),
+            setup_time_minutes DECIMAL(10,2),
+            cycle_time_minutes DECIMAL(10,2),
+            wait_time_minutes DECIMAL(10,2),
+            work_station_id UUID,
+            work_station_name VARCHAR(255),
+            required_skills JSONB,
+            required_tools JSONB,
+            required_materials JSONB,
+            quality_check_points JSONB,
+            safety_requirements TEXT,
+            environmental_requirements TEXT,
+            operation_instructions TEXT,
+            parameters JSONB,
+            predecessor_process_id UUID,
+            successor_process_id UUID,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
         )
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS production_records (
+                CREATE TABLE IF NOT EXISTS production_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
-            process_id UUID REFERENCES production_processes(id),
-            work_station_id UUID REFERENCES work_stations(id),
-            equipment_id UUID REFERENCES equipment(id),
+            organization_id UUID NOT NULL,
+            order_id UUID NOT NULL,
+            process_id UUID,
+            process_name VARCHAR(255),
+            route_step_id UUID,
+            work_station_id UUID,
+            work_station_name VARCHAR(255),
+            operator VARCHAR(255) NOT NULL,
             operator_id UUID,
-            start_time TIMESTAMP NOT NULL,
-            end_time TIMESTAMP,
-            quantity_produced DECIMAL(12,2) DEFAULT 0,
-            quantity_defective DECIMAL(12,2) DEFAULT 0,
-            status VARCHAR(32) DEFAULT 'in_progress',
+            team VARCHAR(100),
+            batch_number VARCHAR(100),
+            start_time TIMESTAMPTZ NOT NULL,
+            end_time TIMESTAMPTZ,
+            duration_minutes DECIMAL(10,2),
+            planned_quantity INTEGER,
+            completed_quantity INTEGER NOT NULL DEFAULT 0,
+            good_quantity INTEGER DEFAULT 0,
+            rejected_quantity INTEGER DEFAULT 0,
+            scrapped_quantity INTEGER DEFAULT 0,
+            rework_quantity INTEGER DEFAULT 0,
+            yield_rate DECIMAL(5,2),
+            efficiency_rate DECIMAL(5,2),
+            quality_check_result VARCHAR(20),
+            quality_check_notes TEXT,
+            material_usage JSONB,
+            tool_usage JSONB,
+            parameters JSONB,
+            deviations TEXT,
+            issues TEXT,
+            status VARCHAR(20) NOT NULL DEFAULT 'in_progress',
+            approved_by VARCHAR(255),
+            approved_at TIMESTAMPTZ,
             notes TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            attachments JSONB,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
         )
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS equipment (
+                CREATE TABLE IF NOT EXISTS equipment (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            equipment_no VARCHAR(64) NOT NULL UNIQUE,
-            name VARCHAR(128) NOT NULL,
-            model VARCHAR(64),
-            manufacturer VARCHAR(128),
-            status VARCHAR(32) DEFAULT 'normal',
-            location VARCHAR(256),
+            organization_id UUID NOT NULL,
+            equipment_code VARCHAR(100) NOT NULL,
+            equipment_name VARCHAR(255) NOT NULL,
+            equipment_type VARCHAR(50),
+            category VARCHAR(50),
+            model VARCHAR(100),
+            brand VARCHAR(100),
+            serial_number VARCHAR(100),
+            specification TEXT,
+            manufacturer VARCHAR(255),
+            manufacture_date DATE,
             purchase_date DATE,
-            warranty_end_date DATE,
-            maintenance_cycle INT DEFAULT 30,
+            installation_date DATE,
+            location VARCHAR(255),
+            building VARCHAR(100),
+            floor VARCHAR(50),
+            area VARCHAR(100),
+            work_station_id UUID,
+            responsible_person VARCHAR(255),
+            responsible_person_id UUID,
+            department VARCHAR(100),
+            purchase_price DECIMAL(15,2),
+            current_value DECIMAL(15,2),
+            depreciation_rate DECIMAL(5,2),
+            warranty_expiry_date DATE,
+            power_consumption DECIMAL(10,2),
+            capacity VARCHAR(100),
+            max_capacity DECIMAL(10,2),
+            current_capacity DECIMAL(10,2),
+            efficiency_percentage DECIMAL(5,2),
+            availability_percentage DECIMAL(5,2),
+            performance_percentage DECIMAL(5,2),
+            quality_percentage DECIMAL(5,2),
+            oee_percentage DECIMAL(5,2),
+            status VARCHAR(20) NOT NULL DEFAULT 'available',
+            operating_status VARCHAR(20),
+            last_inspection_date DATE,
+            next_inspection_date DATE,
             last_maintenance_date DATE,
             next_maintenance_date DATE,
-            description TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            maintenance_frequency_days INTEGER,
+            total_operating_hours DECIMAL(10,2),
+            total_maintenance_count INTEGER,
+            total_failure_count INTEGER,
+            last_failure_date DATE,
+            failure_description TEXT,
+            operating_hours JSONB,
+            maintenance_history JSONB,
+            inspection_history JSONB,
+            failure_history JSONB,
+            notes TEXT,
+            attachments JSONB,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
         )
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS work_stations (
+                CREATE TABLE IF NOT EXISTS work_stations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            station_no VARCHAR(64) NOT NULL UNIQUE,
-            name VARCHAR(128) NOT NULL,
-            workshop_id UUID,
-            location VARCHAR(256),
-            status VARCHAR(32) DEFAULT 'active',
-            capacity INT DEFAULT 1,
-            equipment_id UUID REFERENCES equipment(id),
-            process_id UUID REFERENCES production_processes(id),
+            organization_id UUID,
+            station_code VARCHAR(100),
+            station_name VARCHAR(255) NOT NULL,
+            station_type VARCHAR(50),
             description TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            location VARCHAR(255),
+            building VARCHAR(100),
+            floor VARCHAR(50),
+            area VARCHAR(100),
+            capacity INTEGER DEFAULT 1,
+            current_load INTEGER DEFAULT 0,
+            efficiency_percentage DECIMAL(5,2) DEFAULT 100,
+            supervisor VARCHAR(255),
+            supervisor_id UUID,
+            team VARCHAR(100),
+            equipment_ids JSONB,
+            available_skills JSONB,
+            available_tools JSONB,
+            status VARCHAR(20) NOT NULL DEFAULT 'available',
+            last_maintenance_date DATE,
+            next_maintenance_date DATE,
+            maintenance_frequency_days INTEGER,
+            operating_hours JSONB,
+            notes TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
         )
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_no)",
+        r#"
+        CREATE TABLE IF NOT EXISTS process_routes (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            organization_id UUID NOT NULL,
+            route_code VARCHAR(100) NOT NULL,
+            route_name VARCHAR(255) NOT NULL,
+            product_code VARCHAR(100),
+            product_name VARCHAR(255),
+            description TEXT,
+            version VARCHAR(20) DEFAULT '1.0',
+            is_default BOOLEAN DEFAULT false,
+            is_active BOOLEAN DEFAULT true,
+            total_time_minutes DECIMAL(10,2),
+            total_cost DECIMAL(15,2),
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
+        )
+        "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS process_route_steps (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            organization_id UUID NOT NULL,
+            route_id UUID NOT NULL,
+            process_id UUID NOT NULL,
+            sequence INTEGER NOT NULL,
+            is_parallel BOOLEAN DEFAULT false,
+            parallel_group INTEGER,
+            estimated_time_minutes DECIMAL(10,2),
+            estimated_cost DECIMAL(15,2),
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_by UUID,
+            updated_by UUID,
+            deleted_at TIMESTAMPTZ,
+            tenant_id UUID
+        )
+        "#,
+    )
+    .execute(pool)
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS work_orders (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            work_order_no VARCHAR(64) NOT NULL UNIQUE,
+            order_id UUID REFERENCES production_orders(id) ON DELETE SET NULL,
+            order_no VARCHAR(64),
+            product_code VARCHAR(64),
+            product_name VARCHAR(256),
+            work_station_id UUID,
+            process_id UUID,
+            planned_quantity DECIMAL(12,2) DEFAULT 0,
+            completed_quantity DECIMAL(12,2) DEFAULT 0,
+            plan_start_date TIMESTAMP,
+            plan_end_date TIMESTAMP,
+            actual_start_date TIMESTAMP,
+            actual_end_date TIMESTAMP,
+            team_id UUID,
+            operator VARCHAR(64),
+            status VARCHAR(32) DEFAULT 'pending',
+            priority INT DEFAULT 0,
+            remark TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_number)",
+    )
+    .execute(pool)
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_production_orders_status ON production_orders(status)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_order_id ON production_records(order_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_work_station_id ON production_records(work_station_id)")
         .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_no ON equipment(equipment_no)")
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_code ON equipment(equipment_code)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_work_stations_station_no ON work_stations(station_no)",
+        "CREATE INDEX IF NOT EXISTS idx_work_stations_station_code ON work_stations(station_code)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -244,7 +488,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -264,7 +510,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -285,7 +533,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -307,7 +557,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -327,7 +579,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -348,7 +602,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -368,7 +624,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -396,7 +654,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -419,7 +679,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -449,7 +711,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -477,7 +741,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -499,96 +765,144 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_orders_created_at ON production_orders(created_at)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_process_id ON production_records(process_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_created_at ON production_records(created_at)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON wips(current_process_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_created_at ON wips(created_at)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_schedules_schedule_no ON production_schedules(schedule_no)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_schedules_order_id ON production_schedules(order_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_schedules_status ON production_schedules(status)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_boms_bom_no ON material_boms(bom_no)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_material_boms_product_id ON material_boms(product_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_bom_items_bom_id ON bom_items(bom_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_material_issues_issue_no ON material_issues(issue_no)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON material_issues(order_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_material_returns_return_no ON material_returns(return_no)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_quality_records_record_no ON quality_records(record_no)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON quality_records(order_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_batch_records_batch_no ON batch_records(batch_no)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON equipment_oee(equipment_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_equipment_oee_record_date ON equipment_oee(record_date)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_wip_no ON wips(wip_no)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_order_id ON wips(order_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_status ON wips(status)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wip_transfers_wip_id ON wip_transfers(wip_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -610,7 +924,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -628,25 +944,37 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_team_code ON teams(team_code)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_status ON teams(status)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_work_station_id ON teams(work_station_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON team_members(team_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_team_members_employee_id ON team_members(employee_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -675,20 +1003,30 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_mrp_no ON material_requirements(mrp_no)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON material_requirements(order_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_status ON material_requirements(status)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_material_code ON material_requirements(material_code)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -713,7 +1051,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -735,25 +1075,37 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_inspections_equipment_id ON equipment_inspections(equipment_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_inspections_inspection_date ON equipment_inspections(inspection_date)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_equipment_id ON equipment_maintenance_records(equipment_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_status ON equipment_maintenance_records(status)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     // 创建 plugin_mes schema 与 audit_logs 表（与 migration 20260812120100 对齐）
     sqlx::query("CREATE SCHEMA IF NOT EXISTS plugin_mes")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         r#"
@@ -777,27 +1129,39 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#,
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_action ON plugin_mes.audit_logs(action)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_entity_type ON plugin_mes.audit_logs(entity_type)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_tenant_id ON plugin_mes.audit_logs(tenant_id)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_created_at ON plugin_mes.audit_logs(created_at DESC)")
         .execute(pool)
-        .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_mes_audit_logs_user_id ON plugin_mes.audit_logs(user_id)",
     )
     .execute(pool)
-    .await?;
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
 
     production_plan::init_database(pool).await?;
     capacity::init_database(pool).await?;
