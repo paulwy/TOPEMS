@@ -19,7 +19,7 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
+    std::env::set_var("SEARCH_PATH", "master_data, public");
 
     let config = ServiceConfig {
         name: "topems-master-data",
@@ -31,6 +31,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/master-data",
         legacy_prefixes: &[],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

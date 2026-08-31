@@ -1683,3 +1683,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   3. DROP public.inventory_items（0 行废弃表，无写者无读者）——迁移 20260901000016
 - **验证**：wms/erp 编译通过（无警告）、门禁 28 PASS、断裂 FK 0、两服务启动 schema 自检一致、健康 200。
 - **待办**：erp→wms 服务间认证未打通（wms require_permission 全局强制），dashboard 库存字段当前降级 0——服务间认证为独立专项。
+
+## 2026-09-01 master-data 服务 schema 化（dynamic_data 归位）✅
+- **归位 4 张 master-data 独占表 → master_data schema**：core_dict_types(38 行)/core_dict_items(189 行)/schema_registry/dynamic_data（迁移 20260901000017）。
+  - core_dict_* 为 core_ 前缀历史命名，实际仅 master-data 用；schema_registry DB 表仅 master-data 用（portal/lib 的同名项为代码内定义）。
+- **代码同步**：main.rs SEARCH_PATH "public"→"master_data, public"、schema_defense.rs SERVICE_SCHEMA→"master_data"、schema_boundary.json master-data 登记。
+- **验证**：编译通过、门禁 28 PASS（master-data schema=master_data 引用=0）、启动连接池 search_path 正确、schema 自检 4 表一致、健康 200、模拟查询 38 行可解析。
+- **public 72 → 68**；dynamic_data 跨域归位闭环。
