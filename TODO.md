@@ -1660,3 +1660,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - **~108 张"建表无查询"设计预留表**（smart_gateway/ai_ops/gateway_monitoring/federation_gateway 等模块 CREATE TABLE IF NOT EXISTS 但业务从未 FROM/INTO/UPDATE/JOIN）——**保留**（DROP 会被服务启动重建，无效）
 - **关键洞察**：portal 存在**大量"建表无查询"的代码层过度设计**（智能网关/AI Ops/联邦网关等模块预留）——非 schema 治理可解决——需代码层清理或业务确认（作为独立专项，避免误删未来功能预留）。
 - **验证**：门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 portal 建表无查询专项评估（结论：全部保留）✅
+- **审计**：108 张"建表无查询"表分布在 18 个网关/基础设施模块（smart_gateway/ai_ops/federation_gateway 等），全部有完整 handler（13-52）+ 路由挂载 + **内存态实现**（HashMap，非 mock）。
+- **证据**：表 0 行/0 查询/无 struct 编译依赖；前端使用 federation(16)/orchestration(4)/ai_ops(1)。
+- **结论**：这些是**"内存态功能 + 持久化预留表"**——**保留**（功能活跃、空表无成本、删除风险高）。
+- **报告**：docs/architecture/portal-gateway-modules-review.md（分类 A 业务活跃 / B 网关基础设施 / C 后台预留 + 可选优化方案——需业务确认产品路线后批量移除 C 类建表代码）。
