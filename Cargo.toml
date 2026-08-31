@@ -13,49 +13,62 @@ members = [
     "lib/shared-bootstrap",
     "lib/shared-mcp",
     "lib/shared-dsh",
+    "lib/shared-boundary",
     # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
     # "examples/minimal-service",
-    # [核心平台] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)
+    # [模块化单体] 统一入口服务（P0 架构优化，详见 docs/architecture/modular-monolith-design.md）
+    "svc/server",
+    # ================================================
+    # 7 个核心模块组（V2026.08 模块化单体分组）
+    # 分组定义见 docs/architecture/modular-monolith-design.md
+    # core     ：平台核心（unified-core/monitor/plugin-registry/search/
+    #             communication/integration/portal/mobile/ticket）
+    # erp      ：企业资源（erp/scm/srm/pm/pdm）
+    # finance  ：财务（finance/billing）
+    # crm      ：客户关系（crm）
+    # wms      ：仓储制造（wms/tms/mes/qms/ehs/lims/gis/rd）
+    # advanced ：高级数据（master-data/analytics）
+    # ai       ：智能（ai）
+    # ================================================
+    # [模块组: core] 统一核心平台 (IAM + Doc + Flow + File + Communication + Monitor)
     "svc/unified-core",
-    # [SDK] 默认排除（迁移工具一次性脚本，非业务常驻）
-    "tools/migration-sdk",
-    # [独立服务] 业务模块（插件式架构）
-    "svc/ai",
-    "svc/erp",
-    "svc/hrm",
-    "svc/crm",
-    "svc/pm",
-    "svc/portal",
-    "svc/rd",
-    "svc/scm",
-    "svc/srm",
-    "svc/wms",
-    "svc/tms",
-    "svc/gis",
-    "svc/integration",
-    "svc/mobile",
-    # [生产制造]
-    "svc/mes",
-    "svc/aps",
-    "svc/pdm",
-    # [质量与研发]
-    "svc/qms",
-    "svc/lims",
-    "svc/ehs",
-    # [财务与文档]
-    "svc/finance",
-    # [数据分析]
-    "svc/analytics",
-    # [主数据管理]
-    "svc/master-data",
-    # [统一核心模块独立]
     "svc/monitor",
     "svc/plugin-registry",
-    "svc/billing",
-    "svc/ticket",
-    # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型）
     "svc/search",
     "svc/communication",
+    "svc/integration",
+    "svc/portal",
+    "svc/mobile",
+    "svc/ticket",
+    "svc/hrm",
+    # [模块组: erp] 企业资源
+    "svc/erp",
+    "svc/scm",
+    "svc/srm",
+    "svc/pm",
+    "svc/pdm",
+    # [模块组: finance] 财务
+    "svc/finance",
+    # [模块组: crm] 客户关系
+    "svc/crm",
+    # [模块组: wms] 仓储制造
+    "svc/wms",
+    "svc/tms",
+    "svc/mes",
+    # [V2026.08 已合并] svc/aps 已合并至 mes（aps_scheduling/aps_compat 模块，/api/aps 兼容层由 mes 提供），代码归档 svc/_archive/aps
+    "svc/qms",
+    "svc/ehs",
+    "svc/lims",
+    "svc/gis",
+    "svc/rd",
+    # [模块组: advanced] 高级数据
+    "svc/master-data",
+    "svc/analytics",
+    # [模块组: ai] 智能
+    "svc/ai",
+    # [SDK] 默认排除（迁移工具一次性脚本，非业务常驻）
+    "tools/migration-sdk",
+    # [V2026.08 已合并] feedback 服务已合并至 ticket（customer_feedback 类型）
     # [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
     # 代码归档见 docs/archive/，如未来立项可恢复
 ]
@@ -63,6 +76,15 @@ exclude = [
     "apps/desktop/src-tauri",
 ]
 resolver = "2"
+
+# ================================================
+# 模块化单体分组（P0 架构优化）
+# 注意：虚拟 workspace 不允许 [features]，模块组 feature flags
+# 定义在 svc/server/Cargo.toml（topems-server 统一入口）。
+# 分组定义详见 docs/architecture/modular-monolith-design.md
+# 7 个核心模块组：core / erp / finance / crm / wms / advanced / ai
+# 部署模式：private-deployment（进程内 trait）/ saas-deployment（HTTP）
+# ================================================
 
 # ================================================
 # V66.2 Shared Bootstrap V2 覆盖率：28/28 (100%)
@@ -331,6 +353,11 @@ futures = "0.3"
 jsonwebtoken = "9.0"
 lazy_static = "1"
 regex = "1"
+
+# 编译时边界检查宏（only_own_schema_query!）依赖
+quote = "1"
+syn = { version = "2", features = ["full"] }
+proc-macro2 = "1"
 
 async-trait = "0.1"
 axum-test = "21"
