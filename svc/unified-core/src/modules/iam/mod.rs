@@ -468,5 +468,168 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // ---- 兼容层：iam schema（auth/tenant 中间件依赖） ----
+    // auth.rs 引用 iam.users / iam.sessions / iam.refresh_tokens，
+    // 但历史上未在建表迁移中创建。此处幂等补建 + 从 core_users 同步数据，
+    // 保证新环境部署即可用，避免登录 500 / 租户 400。
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS iam")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.users (
+            id UUID PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            full_name VARCHAR(255),
+            is_active BOOLEAN DEFAULT true,
+            is_superuser BOOLEAN DEFAULT false,
+            roles JSONB,
+            permissions JSONB,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.sessions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id UUID NOT NULL,
+            token_hash VARCHAR(255),
+            ip_address INET,
+            user_agent TEXT,
+            expires_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.refresh_tokens (
+            id BIGSERIAL PRIMARY KEY,
+            user_id UUID NOT NULL,
+            token_hash VARCHAR(255),
+            ip_address INET,
+            user_agent TEXT,
+            expires_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    // 岗位/资源权限表（position.rs / user_position.rs / permission_verify.rs 依赖，
+    // 历史未建导致 relation does not exist；此处幂等补建）
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.positions (
+            id UUID PRIMARY KEY,
+            code VARCHAR(100),
+            name VARCHAR(255) NOT NULL,
+            department_id UUID,
+            description TEXT,
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMPTZ
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.user_positions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id UUID NOT NULL,
+            position_id UUID NOT NULL,
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.position_permissions (
+            id BIGSERIAL PRIMARY KEY,
+            position_id UUID NOT NULL,
+            permission VARCHAR(255),
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.position_roles (
+            id BIGSERIAL PRIMARY KEY,
+            position_id UUID NOT NULL,
+            role_id UUID NOT NULL,
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS iam.resource_permissions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id UUID NOT NULL,
+            resource_type VARCHAR(100),
+            resource_id UUID,
+            permission VARCHAR(100),
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    // 同步 core_users → iam.users（幂等）
+    sqlx::query(
+        r#"
+        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser, created_at)
+        SELECT id, username, email, password_hash, full_name, (status = 'active'), is_superuser, created_at
+        FROM core_users
+        ON CONFLICT (username) DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // ---- 默认租户 + admin 关联（tenant 中间件依赖 JWT claims.tenant_id） ----
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenants (name, code, tenant_type, plan, quota_users)
+        VALUES ('默认租户', 'default', 'shared', 'basic', 20)
+        ON CONFLICT (code) DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenant_users (tenant_id, user_id, email, role, status)
+        SELECT t.id, u.id, u.email, 'owner', 'active'
+        FROM core_tenants t, core_users u
+        WHERE t.code = 'default' AND u.username = 'admin'
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

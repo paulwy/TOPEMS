@@ -1266,3 +1266,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **保留 iam 10 张**：7 平台表（users/roles/permissions/sessions/refresh_tokens/password_reset_tokens/audit_logs）+ 3 疑似表（role_permissions/user_roles/user_access_logs）。
 - **发现待办缺陷**：unified-core **双轨**——认证 auth.rs 用 iam.users/iam.sessions/iam.refresh_tokens（旧），用户管理用 public.core_users/core_roles/core_permissions（新，schema_defense 建）。新注册用户写 core_users 但登录查 iam.users → 新用户登录失败。**待专项统一**（建议 auth.rs 迁 core_* 前缀，sessions/refresh_tokens 需建 core_ 新表或保留 iam）。
 - 验证：门禁 PASS；unified-core 编译 0 error。
+
+## 2026-08-31 认证双轨统一（auth.rs 双写 core_users）✅
+- **修复用户数据分裂**：auth 注册原先只写 iam.users（兼容副本），不写 core_users（主表）→ 新注册用户不在用户管理/租户系统。现改为**双写** core_users（主，status='active'）+ iam.users（副本），登录仍读 iam.users 副本无延迟。
+- **数据回填**：将 iam.users 中仅有的旧注册用户（schemafixer）同步进 core_users，两端数据一致（48=48）。
+- **补建 iam positions 系列 5 张表**（positions/user_positions/position_permissions/position_roles/resource_permissions）——position.rs/user_position.rs/permission_verify.rs 引用但历史未建，修复 relation does not exist；DDL 幂等入 mod.rs 兼容层 + DB 已建。
+- **保留 iam.sessions/iam.refresh_tokens**（auth 专有表，无 core_ 对应，非双轨）。
+- **记录待办**：audit_query.rs 读 iam.audit_logs（0 行无人写，登录日志实际写 core_login_logs）——审计查询指向空表，待后续对齐。
+- 验证：unified-core 编译 0 error；测试 1022 passed 0 failed；门禁 PASS。

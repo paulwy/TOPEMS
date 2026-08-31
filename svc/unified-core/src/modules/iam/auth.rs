@@ -532,12 +532,27 @@ pub async fn register(
         }
     };
 
-    // 创建用户
+    // 创建用户：双写 core_users（主表，用户管理/租户系统读取）与 iam.users（auth 兼容副本）
     let user_id = Uuid::new_v4();
-    match sqlx::query(
+    let write_core = sqlx::query(
+        r#"
+        INSERT INTO core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
+        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
+        ON CONFLICT (username) DO NOTHING
+        "#,
+    )
+    .bind(user_id)
+    .bind(&username)
+    .bind(&email)
+    .bind(&password_hash)
+    .bind(&full_name)
+    .execute(&state.pool)
+    .await;
+    let write_iam = sqlx::query(
         r#"
         INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser)
         VALUES ($1, $2, $3, $4, $5, true, false)
+        ON CONFLICT (username) DO NOTHING
         "#,
     )
     .bind(user_id)
@@ -546,9 +561,9 @@ pub async fn register(
     .bind(&password_hash)
     .bind(&full_name)
     .execute(&state.pool)
-    .await
-    {
-        Ok(_) => {
+    .await;
+    match (write_core, write_iam) {
+        (Ok(_), Ok(_)) => {
             tracing::info!("用户注册成功: {}", username);
             Json(serde_json::json!({
                 "success": true,
@@ -561,7 +576,7 @@ pub async fn register(
                 "code": 0
             }))
         }
-        Err(e) => {
+        (Err(e), _) | (_, Err(e)) => {
             tracing::error!("创建用户失败: {}", e);
             Json(topems_shared_core::response::error_value(500, "注册失败"))
         }
