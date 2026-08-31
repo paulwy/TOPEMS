@@ -1826,3 +1826,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **仅 2 类例外（合理保留）**：① pm 测试代码 mock client（modules/mod.rs:89 test）；② crm plugin 注册用 X-Plugin-Token（非服务间 API）。
 - **手工 issue_service_token 复核（2 处，服务身份已达成）**：portal announcements（ERP 公告 CRUD 代理）、erp dashboard fetch_wms_inventory_stats（erp→wms 只读，注释明确"非转发用户 token"）——均已是 service claims 认证，保留。
 - **运行时验证 with_service_token 纯链路**：portal→monitor 假 server 收到 `sub=00000000-...-0000, username=portal-service, role=service, permissions=[monitor:read], 5 分钟有效`——被调用方 is_service_claims 可识别；portal→workflow 链路此前缓存验证已通。
+
+## 2026-09-01 "转发用户 token"手工调用审计（portal）+ 搜索降级日志 ✅
+- **审计报告**：docs/architecture/service-token-audit.md——portal 精确 14 处 token 转发调用点分类——A 类用户维度 7 处（保持）、B 类裸 reqwest 系统级搜索 4 处（erp/crm/bi/doc，潜在降级）、C 类 TypedServiceClient 全量列表搜索 3 处（hrm/workflow/mes，待评估权限）、D 类服务身份 1 处（正确）、E 类非认证（health/plugin）。
+- **结论**：B/C 类 7 处不能无脑改 service token（越权泄露风险）——依赖下游搜索接口权限过滤语义，P1 先确认下游 RLS/claims 过滤。
+- **P1 工程改进（已落地）**：search.rs 统一 `send_global_search` helper——补 401 降级日志区分「权限不足降级」vs「HTTP 错误降级」vs「网络错误」，消除静默空结果。运行时验证：ERP/BI 401 → "权限不足降级"，CRM/DOC 404 → "HTTP 错误降级"。

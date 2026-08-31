@@ -229,69 +229,86 @@ pub async fn search_suggestions(
     ))
 }
 
-async fn search_erp(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let url = format!("{}/api/erp/search", erp_base_url());
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
+/// 发送系统级全局搜索请求并解析结果。
+/// 补降级日志：区分「用户 token 权限不足（401）」与「网络/解析错误」，避免静默空结果。
+async fn send_global_search(
+    state: &AppState,
+    service_label: &str,
+    display_name: &str,
+    url: &str,
+    query: &str,
+    extra_params: &[(&str, &str)],
+    token: Option<&str>,
+) -> Vec<SearchResult> {
+    let mut req = state.http_client.get(url).query(&[("q", query)]);
+    if !extra_params.is_empty() {
+        req = req.query(extra_params);
+    }
     if let Some(t) = token {
         req = req.bearer_auth(t);
     }
     match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "erp", "ERP系统", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse ERP search response: {}", e);
-                vec![]
+        Ok(resp) => {
+            let status = resp.status();
+            if status.as_u16() == 401 {
+                tracing::warn!(
+                    target: "portal::search",
+                    service = service_label,
+                    status = %status,
+                    "全局搜索源权限不足降级（转发用户 token 无 {} 权限），结果缺失",
+                    service_label
+                );
+                return vec![];
             }
-        },
+            if !status.is_success() {
+                tracing::warn!(
+                    target: "portal::search",
+                    service = service_label,
+                    status = %status,
+                    "全局搜索源 HTTP 错误降级",
+                );
+                return vec![];
+            }
+            match resp.json::<serde_json::Value>().await {
+                Ok(json) => parse_search_results(&json, service_label, display_name, query),
+                Err(e) => {
+                    tracing::warn!(
+                        target: "portal::search",
+                        service = service_label,
+                        "全局搜索源响应解析失败: {}",
+                        e
+                    );
+                    vec![]
+                }
+            }
+        }
         Err(e) => {
-            tracing::warn!("ERP search failed: {}", e);
+            tracing::warn!(
+                target: "portal::search",
+                service = service_label,
+                "全局搜索源网络错误降级: {}",
+                e
+            );
             vec![]
         }
     }
+}
+
+async fn search_erp(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
+    let url = format!("{}/api/erp/search", erp_base_url());
+    send_global_search(state, "erp", "ERP系统", &url, query, &[], token).await
 }
 
 async fn search_crm(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
     let base = resolve_service_url("CRM_SERVICE_URL", DEFAULT_CRM_URL, "CRM");
     let url = format!("{}/api/crm/search", base);
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "crm", "客户管理", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse CRM search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("CRM search failed: {}", e);
-            vec![]
-        }
-    }
+    send_global_search(state, "crm", "客户管理", &url, query, &[], token).await
 }
 
 async fn search_bi(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
     let base = resolve_service_url("BI_SERVICE_URL", DEFAULT_BI_URL, "BI");
     let url = format!("{}/api/bi/search", base);
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "bi", "商业智能", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse BI search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("BI search failed: {}", e);
-            vec![]
-        }
-    }
+    send_global_search(state, "bi", "商业智能", &url, query, &[], token).await
 }
 
 async fn search_notifications(
@@ -347,27 +364,16 @@ async fn search_notifications(
 async fn search_documents(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
     let base = resolve_service_url("DOC_SERVICE_URL", DEFAULT_DOC_URL, "DOC");
     let url = format!("{}/api/doc/search", base);
-    let mut req =
-        state
-            .http_client
-            .get(&url)
-            .query(&[("q", query), ("page", "1"), ("pagesize", "10")]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "doc", "文档中心", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse doc search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("Doc search failed: {}", e);
-            vec![]
-        }
-    }
+    send_global_search(
+        state,
+        "doc",
+        "文档中心",
+        &url,
+        query,
+        &[("page", "1"), ("pagesize", "10")],
+        token,
+    )
+    .await
 }
 
 async fn search_hrm_employees(
