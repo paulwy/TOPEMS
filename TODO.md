@@ -1213,7 +1213,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **baseline 瘦身**：`bare_ref_baseline` 17 → 4（仅 monitor 4 项，标注为 SQL 模板配置非直读）。
 - **验证**：`check_schema_boundary.py` 全 PASS（0 违规，communication/hrm/finance 均 PASS）；`cargo check --workspace` 0 error；public.audit_logs 建表成功。
 - **环境发现**：本机存在双 postgres——本地 Homebrew postgres@18 抢占 localhost:5432（数据为阶段0前旧状态），Docker 容器 topems-postgres（阶段0后权威库）通过容器网络供 docker 部署服务连接；**cargo run 本地开发会连到旧库，需注意**。8000 端口被 Docker 容器 topems-unified-core 占用（SSE 测试超时非回归）。
-- **待办**：①同名多 schema 表（audit_logs 等 16 张）收敛去重（独立项）；②~~communication→gis 改走 gis HTTP API~~ ✅（2026-08-31 已落地，见下）；③~~hrm→erp 凭证写入事件化~~ ✅（2026-08-31 已落地，见下）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
+- **待办**：①同名多 schema 表收敛去重——第一批（7 张 public/erp 空壳删除 + 归属归位）✅（2026-08-31，见下），剩余 public/iam 遗留双写 ~240 组与跨服务读改造待后续批次；②~~communication→gis 改走 gis HTTP API~~ ✅（2026-08-31 已落地，见下）；③~~hrm→erp 凭证写入事件化~~ ✅（2026-08-31 已落地，见下）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
 
 ## 2026-08-31 P1-2 communication→gis 改走 HTTP API ✅
 - **改造** `svc/communication/src/im_location.rs`：新增 `gis_search_locations()` 辅助函数调用 gis HTTP `GET /api/gis/search?q=..&type=business|warehouse|device`，`unified_search_pois` 中 3 处 `gis.*` 直查 SQL 全部替换为 HTTP 调用（business/warehouse→gis_count、device→third_party_count），移除 only_own_schema_query! 对 gis 的白名单依赖。
@@ -1229,3 +1229,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **门禁**：`schema_boundary.json` hrm.allow 移除 erp（不再引用 erp schema，引用 0）。
 - **验证**：`cargo check -p topems-shared-event -p topems-hrm -p topems-erp` 0 error 0 warning；`check_schema_boundary.py` 全 PASS（hrm 引用=0）；**端到端冒烟**：起 erp+hrm → 注入 HrmPayrollVoucherRequested 到本机 Redis Stream（localhost:6379，注意非容器 Redis）→ erp 消费落库 financial_vouchers（draft/10000/HRM/source_id=payroll_run_id）+ 4 条 voucher_items，消息 ACK；测试数据已清理。
 - **说明**：(1) 本机 6379 为 brew Redis（事件总线），容器 topems-redis 为另一实例，冒烟须注入本机；(2) erp 消费端按 payload 落库未做借贷平衡二次校验（hrm 唯一发布者已保证平衡），如需可后续加防御校验；(3) hrm 接口语义由「同步生成成功」变为「已提交待 ERP 生成」。
+
+## 2026-08-31 同名多 schema 表收敛 第一批 ✅
+- **盘点**：DB 实为 325 组同名表（远超阶段0快照 16 张）。分类：public 遗留双写 ~110、iam 平台表遗留 ~132、plugin 并存 ~7（保留）、服务自治 audit_logs×19（保留）、跨服务同名异义 ~15（保留）、文档内部 3。
+- **16 张 ambiguous 决策**：analysis_results→ai、mes_qms_sync→integration 归位；budgets（pm+finance 异义）、locations（gis+wms 异义）、documents（ai+doc+pm+plugin_ai 异义）保留；contracts/projects/project_*（pm vs rd/hrm）异义保留；audit_logs 自治保留；customers/inventory/purchase_orders/supplier_evaluations/suppliers 待跨服务读改造（后续批次）。
+- **第一批执行**：删 7 张空壳（public.analysis_results/mes_qms_sync/budgets/locations/documents/document_versions + erp.budgets）；**finance.budgets 自建修复**（删除 public.budgets 后发现 finance operational.rs 无前缀 budgets 真实 SQL——财务部门预算与 pm 项目预算同名异义，已入 finance.schema_defense TABLE_DEFS + 建表）；ambiguous 16→14。
+- **验证**：7 张确认无真实 SQL 引用后删；finance 编译 0 error；门禁全 PASS。
+- **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
