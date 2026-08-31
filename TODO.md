@@ -1353,3 +1353,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **门禁**：erp.allow 加 finance（过渡白名单）。
 - **⚠️ 跨域待办（P1-2 阶段 0）**：erp opening_balance.rs **直读 finance.accounting_subjects**（跨域只读，宏白名单放行）。收敛 plugin_* 后门禁开始真实检查跨 schema——此引用为已知跨域，**应改走 finance API/集成事件**，届时移除 erp.allow:finance。
 - **已确认无害（不改）**：hrm attendance.rs / server finance_module.rs 的 plugin_* 在注释；ai agent.rs 的 plugin_* 为 NL 路由字符串；lib/shared-boundary 的 plugin_* 为宏文档示例/测试用例。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（B 项 core_finance_*）✅
+- **背景**：finance 代码已用 `finance.core_finance_*`（显式/无前缀+SEARCH_PATH='finance, public'），但表在 public 旧版（13 列含 deleted_at）与 finance 新版（26 列扩展，无 deleted_at）**同名并存**——public 表在 finance 显式限定查询下**运行必失败**。
+- **处理**（迁移文件 `20260831190000_core_finance_schema_migrate.sql`，幂等）：
+  - ① public 独有 3 张（account_opening_balances/voucher_entries/voucher_templates）→ SET SCHEMA finance（finance core_finance_* 15→18）
+  - ② 同名 10 张：public 旧版 rename `_archive_core_finance_*`（**数据保留**：accounts=21/vouchers=17/ledger=16/voucher_lines=25 等），finance 新版为运行真相
+- **验证**：finance 测试全过（1106+1107）；门禁 PASS（finance 引用=353）；迁移文件幂等重跑无副作用；归档数据完整。
+- **备份**：`database/backup/topems_pre_schema_migration_*.dump`（gitignore）。
+- **⚠️ 遗留**：public 旧版数据在 `_archive_core_finance_*`，如确需并入 finance 新版，按公共列 INSERT...SELECT...ON CONFLICT (id) DO NOTHING（注意新版无 deleted_at，软删语义差异）——需业务 owner 确认后再执行。
