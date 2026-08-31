@@ -246,7 +246,7 @@ pub async fn list_plugins_with_status(
                p.is_published, p.category,
                pi.runtime_status, pi.runtime_url, pi.base_path, pi.last_heartbeat
         FROM core.core_plugins p
-        LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
+        LEFT JOIN core.core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE p.is_published = true
         ORDER BY p.code
         "#,

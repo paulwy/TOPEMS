@@ -7,7 +7,7 @@
 use sqlx::PgPool;
 use topems_shared_db::schema::run_schema_defense;
 
-pub const SERVICE_SCHEMA: &str = "public";
+pub const SERVICE_SCHEMA: &str = "core";
 pub const SERVICE_TAG: &str = "plugin-registry";
 
 // ============================================================================

@@ -1726,3 +1726,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **代码**：main.rs SEARCH_PATH "public"→"communication, public"、schema_defense SERVICE_SCHEMA→"communication"、schema_boundary.json 登记。
 - **验证**：编译通过、门禁 28 PASS、启动连接池 search_path 正确、communication schema 6 表一致（含 core_email_templates/location_messages 新建成）、im.core_chat_* 不受影响、模拟查询 core_users 平台 48 行可解析、健康 200。
 - **public 56 → 52**；communication 归位闭环。
+
+## 2026-09-01 plugin-registry 建表预留治理（core_plugin_* 统一 core schema）✅
+- **审计结论**：core schema 为插件功能真实数据层（core.core_plugin_* 显式查询），public.core_plugin_* 8 张为旧副本/建表残留（含裸名查询缺陷）。
+- **改造**：4 处裸名 core_plugin_* 引用改显式 core.*（unified-core handlers.rs + plugin-registry mod.rs/runtime.rs/simple_api.rs）；plugin-registry SEARCH_PATH/SERVICE_SCHEMA "public"→"core"；schema_boundary 登记 core + **core 加入 default_shared**（ai/unified-core/plugin-registry 三服务共享数据层）。
+- **DB**：迁移 000023 DROP public.core_plugin_* 8 张（含 FK 顺序修正：tenant_plugins 先于 plugins）；重置 core.core_plugin_categories（旧结构缺 code 列 → 服务重建新结构 9 分类种子）。
+- **验证**：编译通过、门禁 28 PASS（修复 ai/unified-core core 引用授权）、启动 search_path=core, public、categories 重建 9 行、断裂 FK 0。
+- **public 52 → 44**；插件系统统一 core schema。

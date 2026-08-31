@@ -2,7 +2,8 @@
   "default_shared": [
     "public",
     "unified_core",
-    "information_schema"
+    "information_schema",
+    "core"
   ],
   "services": {
     "ai": {
@@ -84,8 +85,8 @@
       "allow": []
     },
     "plugin-registry": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "core",
+      "search_path": "core, public",
       "allow": []
     },
     "pm": {

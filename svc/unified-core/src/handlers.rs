@@ -32,8 +32,8 @@ pub(crate) async fn plugin_proxy(
     let plugin_info: Option<(String, String)> = sqlx::query_as(
         r#"
         SELECT pi.runtime_url, pi.base_path
-        FROM core_plugin_instances pi
-        JOIN core_plugins p ON pi.plugin_id = p.id
+        FROM core.core_plugin_instances pi
+        JOIN core.core_plugins p ON pi.plugin_id = p.id
         WHERE p.code = $1 AND pi.runtime_status = 'running'
         "#,
     )
