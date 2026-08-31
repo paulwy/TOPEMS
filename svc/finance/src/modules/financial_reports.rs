@@ -2177,7 +2177,7 @@ pub async fn get_business_overview(
     .unwrap_or(0.0);
 
     let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM public.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
     )
     .fetch_one(&state.pool)
     .await
@@ -2431,7 +2431,7 @@ pub async fn get_cash_flow_analysis(
                   COALESCE(SUM(vi.credit), 0) as outflow
            FROM core_finance_voucher_lines vi
            JOIN core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN public.accounting_subjects s ON s.code = vi.account_code
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND s.is_cash_flow = true AND s.deleted_at IS NULL
            GROUP BY vi.account_code
@@ -2477,7 +2477,7 @@ pub async fn get_expense_analysis(
                   COALESCE(SUM(vi.debit), 0) as expense_amount
            FROM core_finance_voucher_lines vi
            JOIN core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN public.accounting_subjects s ON s.code = vi.account_code
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%' OR s.category ILIKE '%成本%')
              AND s.deleted_at IS NULL
@@ -2521,7 +2521,7 @@ pub async fn get_profit_analysis(
         only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
            FROM core_finance_voucher_lines vi
            JOIN core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN public.accounting_subjects s ON s.code = vi.account_code
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%收入%' OR s.category ILIKE '%revenue%' OR s.category ILIKE '%收益%')
              AND s.deleted_at IS NULL"#),
@@ -2536,7 +2536,7 @@ pub async fn get_profit_analysis(
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM core_finance_voucher_lines vi
            JOIN core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN public.accounting_subjects s ON s.code = vi.account_code
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%成本%' OR s.category ILIKE '%cost%')
              AND s.deleted_at IS NULL"#
@@ -2551,7 +2551,7 @@ pub async fn get_profit_analysis(
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM core_finance_voucher_lines vi
            JOIN core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN public.accounting_subjects s ON s.code = vi.account_code
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%')
              AND s.deleted_at IS NULL"#
@@ -2615,7 +2615,7 @@ pub async fn get_financial_overview(
     .unwrap_or(0.0);
 
     let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM public.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
     )
     .fetch_one(&state.pool)
     .await

@@ -1215,6 +1215,25 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
+    // 简版会计科目（accounting_subjects.rs 活跃 CRUD，与 core_finance_accounts 异义；原 public 表缺 organization_id 导致写入失败，归位并补列）
+    (
+        "accounting_subjects",
+        &[
+            ("organization_id", "UUID NOT NULL"),
+            ("code", "VARCHAR NOT NULL"),
+            ("name", "VARCHAR NOT NULL"),
+            ("category", "VARCHAR"),
+            ("level", "INTEGER"),
+            ("parent_code", "VARCHAR"),
+            ("description", "TEXT"),
+            ("is_cash_flow", "BOOLEAN"),
+            ("status", "VARCHAR"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("tenant_id", "UUID"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
 ];
 
 use sqlx::PgPool;

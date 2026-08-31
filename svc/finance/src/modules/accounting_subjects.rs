@@ -110,7 +110,7 @@ impl<T: Serialize> ApiResponse<T> {
 // CRUD Handlers
 // ============================================================================
 
-const TABLE: &str = "plugin_finance.accounting_subjects";
+const TABLE: &str = "accounting_subjects";
 
 /// 列表查询（支持分页、搜索、筛选）
 #[utoipa::path(
@@ -134,7 +134,11 @@ pub async fn list_accounting_subjects(
     let mut params: Vec<String> = vec![];
 
     if let Some(search) = &query.search {
-        conditions.push(format!("(code ILIKE ${} OR name ILIKE ${})", params.len() + 1, params.len() + 2));
+        conditions.push(format!(
+            "(code ILIKE ${} OR name ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
         params.push(format!("%{}%", search));
         params.push(format!("%{}%", search));
     }
@@ -151,10 +155,7 @@ pub async fn list_accounting_subjects(
 
     // 总数查询
     let count_sql = format!("SELECT COUNT(*) FROM {} WHERE {}", TABLE, where_clause);
-    let total: i64 = match sqlx::query_scalar(&count_sql)
-        .fetch_all(&state.pool)
-        .await
-    {
+    let total: i64 = match sqlx::query_scalar(&count_sql).fetch_all(&state.pool).await {
         Ok(rows) => rows.first().copied().unwrap_or(0),
         Err(e) => {
             tracing::error!("查询会计科目总数失败: {}", e);
@@ -206,7 +207,10 @@ pub async fn get_accounting_subject(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AccountingSubject>> {
-    let sql = format!("SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL", TABLE);
+    let sql = format!(
+        "SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL",
+        TABLE
+    );
 
     match sqlx::query_as::<_, AccountingSubject>(&sql)
         .bind(id)
@@ -258,7 +262,7 @@ pub async fn create_accounting_subject(
         .bind(&req.description)
         .bind(is_cash_flow)
         .bind(&status)
-        .bind(&req.tenant_id)
+        .bind(req.tenant_id)
         .fetch_one(&state.pool)
         .await
     {
@@ -287,18 +291,22 @@ pub async fn update_accounting_subject(
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
     // 先查询现有记录
-    let existing_sql = format!("SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL", TABLE);
-    let existing: Option<AccountingSubject> = match sqlx::query_as::<_, AccountingSubject>(&existing_sql)
-        .bind(id)
-        .fetch_optional(&state.pool)
-        .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("查询会计科目失败: {}", e);
-            return Json(ApiResponse::error("查询失败"));
-        }
-    };
+    let existing_sql = format!(
+        "SELECT * FROM {} WHERE id = $1 AND deleted_at IS NULL",
+        TABLE
+    );
+    let existing: Option<AccountingSubject> =
+        match sqlx::query_as::<_, AccountingSubject>(&existing_sql)
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("查询会计科目失败: {}", e);
+                return Json(ApiResponse::error("查询失败"));
+            }
+        };
 
     let Some(existing) = existing else {
         return Json(ApiResponse::error("会计科目不存在"));
@@ -353,12 +361,17 @@ pub async fn delete_accounting_subject(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let sql = format!("UPDATE {} SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL", TABLE);
+    let sql = format!(
+        "UPDATE {} SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        TABLE
+    );
 
     match sqlx::query(&sql).bind(id).execute(&state.pool).await {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(serde_json::json!({"id": id.to_string()})))
+                Json(ApiResponse::success(
+                    serde_json::json!({"id": id.to_string()}),
+                ))
             } else {
                 Json(ApiResponse::error("会计科目不存在"))
             }
@@ -377,7 +390,10 @@ pub async fn delete_accounting_subject(
 pub fn create_routes() -> axum::Router<AppState> {
     use axum::routing::get;
     axum::Router::new()
-        .route("/accounting-subjects", get(list_accounting_subjects).post(create_accounting_subject))
+        .route(
+            "/accounting-subjects",
+            get(list_accounting_subjects).post(create_accounting_subject),
+        )
         .route(
             "/accounting-subjects/{id}",
             get(get_accounting_subject)
@@ -390,10 +406,7 @@ pub fn create_routes() -> axum::Router<AppState> {
 // 工具函数：根据 code 查询科目名称（供 ERP opening_balance 等跨服务调用）
 // ============================================================================
 
-pub async fn get_subject_name_by_code(
-    pool: &PgPool,
-    code: &str,
-) -> Option<String> {
+pub async fn get_subject_name_by_code(pool: &PgPool, code: &str) -> Option<String> {
     let sql = format!(
         "SELECT name FROM {} WHERE code = $1 AND deleted_at IS NULL LIMIT 1",
         TABLE
@@ -502,6 +515,6 @@ mod tests {
         assert_eq!(json["total"], 0);
         assert_eq!(json["page"], 1);
         assert_eq!(json["page_size"], 20);
-        assert_eq!(json["items"].as_array().unwrap().is_empty(), true);
+        assert!(json["items"].as_array().unwrap().is_empty());
     }
 }
