@@ -1,9 +1,10 @@
-//! 真实 Ticket 服务接入模块（TicketRealModule）—— feature flag 控制
+//! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
 //!
 //! 将真实 `topems-ticket` 服务（lib 形态）作为模块接入统一入口。
-//! ticket 路由 State 为 PgPool（handlers::ticket_routes + feedback_compat_routes）。
+//! ticket 使用 `handlers::ticket_routes() -> Router<PgPool>`（无 ApiState，简化模式），
+//! 含 feedback 兼容路由（feedback 已合并至 ticket）。
 //!
-//! 由 feature `module-ticket` 门控（默认启用，核心业务域）。
+//! 由 feature `module-ticket` 门控（默认不启用，按客户需求裁剪）。
 
 #![cfg(feature = "module-ticket")]
 
@@ -14,9 +15,10 @@ use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_event::event::EventPublisher;
-use topems_ticket::{feedback_compat, handlers};
+use topems_ticket::feedback_compat;
+use topems_ticket::handlers;
 
-/// 真实 Ticket 模块：持有数据库连接池 + 完整业务路由
+/// 真实 Ticket 模块：持有数据库连接池 + 完整业务路由（ticket + feedback 兼容）
 pub struct TicketRealModule {
     routes: Router,
     db: sqlx::PgPool,
@@ -26,7 +28,7 @@ pub struct TicketRealModule {
 impl TicketRealModule {
     /// 异步构建真实 Ticket 模块
     pub async fn build() -> anyhow::Result<Self> {
-        // ticket 表位于 public（schema_defense 归属 public）
+        // 与独立部署 main.rs 一致：search_path public（ticket 表在 public）
         std::env::set_var("SEARCH_PATH", "public");
 
         let config = ServiceConfig {
@@ -49,21 +51,17 @@ impl TicketRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
-        // 2. Ticket 数据库初始化（建表，失败不阻塞）
-        if let Err(e) = handlers::init_ticket_tables(&ctx.db).await {
-            tracing::warn!("Ticket 工单表初始化警告（不阻塞）: {}", e);
-        }
-        if let Err(e) = handlers::init_sla_tables(&ctx.db).await {
-            tracing::warn!("Ticket SLA 表初始化警告（不阻塞）: {}", e);
-        }
+        // 2. Ticket 数据库初始化（与独立部署 main.rs 一致：ticket + SLA 建表）
+        handlers::init_ticket_tables(&ctx.db)
+            .await
+            .map_err(|e| anyhow::anyhow!("初始化 ticket 表失败: {e}"))?;
+        handlers::init_sla_tables(&ctx.db)
+            .await
+            .map_err(|e| anyhow::anyhow!("初始化 SLA 表失败: {e}"))?;
 
         // 3. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.db.clone(),
-                topems_shared_auth::tenant_middleware(),
-            ))
             .layer(axum::middleware::from_fn(require_permission("ticket:admin")))
             .with_state(ctx.db.clone());
 

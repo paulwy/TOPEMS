@@ -1461,3 +1461,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **嵌入成本**：需先 lib 重构提取 protected_routes 构建（200+ 行）+ 处理 GraphQL/事件总线 spawn——高成本；且 portal 作为 BFF 与 server 统一入口职责重叠。
 - **结论**：portal **保持独立微服务部署**（BFF 层职责独立）；如需嵌入需专项重构（portal lib 提取 create_routes），列入后续。
 - **累计接入 15 个真实服务**：crm/erp/finance/qms/hrm/scm/wms/pm/mes/ehs/lims/tms/ticket/rd/srm。
+
+## 2026-08-31 模块化单体剩余服务接入：ticket/rd/srm 验证 + srm 双前缀修复 ✅
+- **ticket-real 接入完成**（新建 `svc/server/src/modules/ticket_real_module.rs`，feature `module-ticket`，骨架已就位）：复用 ticket `handlers::ticket_routes()`（Router<PgPool>）+ feedback_compat_routes；冒烟 `/api/ticket/tickets` 200。
+- **rd-real / srm-real 验证**（real_module 已存在）：`/api/rd/change-requests` 200、`/api/srm/suppliers` 200。
+- **srm 双前缀修复**：`svc/srm/src/modules/supplier.rs` 13 处 `"/api/srm/` → `"/`（supplier 路由自含前缀，与其他模块相对路径不一致，导致 nest /api/srm 后双前缀 404）；修复后 `/api/srm/suppliers` 200；srm 516 测试全过。
+- server 已注册 17 模块（16 real + platform/dashboard/finance）；srm bidding 模块未挂路由（独立服务亦未挂，非本次问题）。
