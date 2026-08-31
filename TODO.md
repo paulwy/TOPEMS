@@ -1500,3 +1500,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **清理**：user_id 分支改走 `hrm.employees`（user_id→id 映射）→ `hrm.attendance_records`（自有表），mobile 直读清除；更新迁移方案注释为"已完成"。
 - **撤销**：`schema_boundary.json` 移除 `hrm.allow=['mobile']`；门禁 hrm PASS（引用 226 无违规）。
 - **验证**：hrm 292 测试通过。
+
+## 2026-08-31 shared-ai 向量归属迁移（hrm.vectors → ai.vectors）✅
+- **问题**：shared-ai/vector_store.rs SQL 硬编码 `hrm.vectors`（历史遗留，向量属 AI 能力但表在 hrm schema）。
+- **迁移**：新建迁移 `20260831190900_ai_vectors_schema.sql`——建 `ai.vectors`（结构一致：key PK + pgvector）→ 数据迁移（0 行）→ DROP `hrm.vectors`；备份 topems_pre_vector_migrate_20260831_2234.dump。
+- **代码**：vector_store.rs 5 处 `hrm.vectors → ai.vectors`（引用仅 shared-ai，svc/ai 唯一使用者）。
+- **验证**：迁移执行成功（ai|vectors 存在、hrm.vectors 已删）；ai 编译通过（SQLX_OFFLINE）；门禁 ai PASS schema=ai 引用 42（向量表现为自有 schema 合法）。
+- **意义**：白名单 3 项 allow + 1 白名单外 → 2 项 allow（integration/unified-core 均成立），**无待处理项**。

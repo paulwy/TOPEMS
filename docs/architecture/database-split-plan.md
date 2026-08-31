@@ -86,9 +86,9 @@
 | ~~`hrm.allow=['mobile']`~~（已撤销） | svc/hrm/src/modules/attendance.rs | ~~历史考勤数据迁移只读~~ → **2026-08-31 已清理**：user_id 分支改走 `hrm.employees` 映射 → `hrm.attendance_records`，mobile 直读清除；`mobile.mobile_attendance` 0 行无影响 | ✅ **已治理**（allow 撤销，hrm 引用 226 无违规，292 测试通过） |
 | `integration.allow=['qms','lims']` | svc/integration/src/qms_lims_ehs.rs | 集成编排事务**直写**（INSERT/UPDATE，经 `only_own_schema_query` 宏显式声明） | ✅ **成立**：跨域编排必须直写目标 schema 保证事务原子性，走 API 会破坏原子性；宏显式声明合规。 |
 | `unified-core.allow=['portal']` | svc/unified-core/src/modules/iam/user/profile.rs | IAM 只读用户偏好（SELECT portal.user_preferences，notification_settings/shortcuts/language/timezone） | ✅ **成立**：用户偏好归 portal schema，unified-core 作为 IAM 平台核心只读消费，设计合理。 |
-| `shared-ai→hrm.vectors`（白名单外） | lib/shared-ai/src/vector_store.rs | AI 向量读写（INSERT/SELECT/UPDATE hrm.vectors） | ⚠️ **设计疑问**：向量数据属 AI 能力，应归 `ai_service` schema 而非 hrm。建议：低优先级评估 `hrm.vectors → ai_service.vectors` 迁移（shared-ai 多处引用需同步，且需确认门禁映射）。 |
+| ~~`shared-ai→hrm.vectors`~~（已治理） | lib/shared-ai/src/vector_store.rs | ~~AI 向量读写 hrm.vectors~~ → **2026-08-31 已迁移**：`hrm.vectors → ai.vectors`（迁移 20260831190900，数据 0 行，DROP 旧表）；引用仅 shared-ai 5 处，ai 服务边界 schema=ai 自有合法 | ✅ **已治理**（ai.vectors 自有 schema，门禁 ai PASS 引用 42，编译通过） |
 
-**结论**：4 项设计性保留中 2 项**确认成立**（integration 直写、unified-core 只读），1 项**已治理**（hrm→mobile 迁移期遗留已清理、allow 已撤销），1 项**待评估**（shared-ai→hrm.vectors 归属疑问）；无运行时违规。
+**结论**：4 项设计性保留中 2 项**确认成立**（integration 直写、unified-core 只读），2 项**已治理**（hrm→mobile 清理+allow 撤销、shared-ai 向量迁移至 ai.vectors）；白名单剩余 2 项均确认成立，**无待处理项**。
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）
