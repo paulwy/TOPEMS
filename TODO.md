@@ -714,7 +714,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - [x] **mes 接入受阻（已解决 2026-08-30）**：**根因是编译环境 search_path，非代码缺陷**。mes 代码/schema_defense/DB(mes schema) 三者一致（equipment_code/order_number/route_code 等均为新结构）；在线编译 83 个"列不存在"错误是 query! 编译期默认 search_path 解析到 **public 旧表**（public.production_orders 为 order_no 旧结构）所致
   - 修复：在线编译/构建需设 `DATABASE_URL` 带 `?options=-csearch_path%3Dmes,public`（query! 不读 SEARCH_PATH env）
   - 验证：`DATABASE_URL=...mes,public cargo test -p topems-mes` → **506 passed / 0 failed**；离线编译通过（缓存一致）；`cargo check -p topems-server --features module-mes` 通过（mes_real_module 正常挂载）
-- [x] **pm/aps/ehs/lims 待评估**：：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
+- [x] **pm/aps/ehs/lims 待评估**：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
 
 ## 2026-08-29 批量接入（续）：APS 域接入完成（第 8 个真实服务）
 - [x] **aps 真实接入**（网关 8099 `/api/aps` + MCP 4 工具真实化）：
