@@ -64,8 +64,8 @@ default = [
     "module-mes",
     "module-ehs",
     "module-lims",
-    "module-advanced",
-    "module-ai",
+    # [边界治理] module-advanced / module-ai 为幽灵 feature（无对应 real_module 注册），
+    # 从 default 移除；保留 feature 定义与 ModuleGroup 映射，待 master-data/analytics / ai 真实接入后再启用
 ]
 module-core = []
 # 真实业务服务接入：finance 模块（Phase B3）

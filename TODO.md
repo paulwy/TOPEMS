@@ -222,6 +222,14 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
 - [x] 文档同步：`rls-coverage-report.md` 追加落地状态；`frontend-test-roi-review.md` 批 1 状态更新
 - [x] 回归：`scripts/check-workspace-registry.py --check` 通过（29/32/38）
 
+### 继续推进记录（2026-08-31，P0-2 模块化单体边界治理第一轮）
+
+- [x] **P0-2 边界治理落地**
+  - **幽灵 feature 清理**：`svc/server/Cargo.toml` 从 default 移除 `module-advanced` / `module-ai`（此前 default 启用但无任何对应 `*_real_module` 注册，属配置与代码脱节）；保留 feature 定义 + ModuleGroup 映射，作为 advanced（master-data/analytics）/ ai 真实接入的挂载点
+  - **边界治理基线固化**：`docs/architecture/modular-monolith-design.md` 新增 §5.2——模块接入矩阵（已接入 12 真实服务 / 可选 tms+subscription / 待接入 advanced+ai / 明确不嵌入 gis）+ 幽灵 feature 清理记录 + 边界规则 4 条
+  - **验证**：default / 最小集（`--no-default-features --features module-core,module-erp,module-finance`）/ 全量（`--all-features`）三组合编译全部通过
+  - **前置修复**（上一轮）：BFF 层正式采用入库（29 文件）+ mes 建表 DDL 同步（7 表）+ stash DNS 确认无需合并，均已提交推送
+
 ---
 
 ## 📝 待办任务（基于架构路线图 v2.0）

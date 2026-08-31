@@ -71,7 +71,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 | 原编号 | 工作包 | 2026-08-31 校准状态 |
 |---|---|---|
 | P0-1 | 架构文档基线对齐 | ✅ 本次实施：修复 services.yaml 重复键、补齐 ports.env 4 端口、接入 CI Gate M、overview.md 对齐 |
-| P0-2 | unified-core 继续瘦身决策 | 🔄 **方向变更**：被"模块化单体"取代（svc/server + 7 模块组），改为跟踪模块化单体演进与边界治理 |
+| P0-2 | unified-core 继续瘦身决策 | ✅ **边界治理第一轮落地（2026-08-31）**：被模块化单体取代后，本轮落地边界治理——清理幽灵 feature（`module-advanced`/`module-ai` 从 default 移除，保留定义待接入）+ 固化模块接入矩阵与边界规则（`modular-monolith-design.md` §5.2）；advanced（master-data/analytics）/ ai 待真实接入 |
 | P0-3 | 配置单一真相源 CI 校验 | ✅ **本次实施完成**：`scripts/check-workspace-registry.py` + CI Gate M（`config/**` 或 Cargo.toml 变更触发） |
 | P1-1 | 事件通道选型规则落地 | ✅ **已解决**：Redis Stream 迁移完成（2026-08-29），Pub/Sub 仅保留显式降级分支 |
 | P1-2 | 物理库拆分预案 | ✅ **完成预案**：`database-split-plan.md`（7 模块组映射 + 触发阈值 + 迁移/回退）；待评审 schema 归属 |
@@ -122,6 +122,7 @@ TopEMS 从早期的集中式服务逐步演进为"微服务 + 插件化 + 统一
 
 **背景**：monitor、plugin-registry 已独立，但 IAM/Doc/Flow/File 仍内聚于 8000，是事实上的单点依赖与单点故障面；所有业务服务都依赖 unified-core 认证，扩容与发布受影响。
 
+- **状态（2026-08-31）**：✅ **方向已变更**——被"模块化单体"取代（svc/server + 7 模块组），统一入口已承载 12 个真实业务服务；unified-core 本身保持独立微服务（IAM/Doc/Flow/File 虚拟服务）。边界治理第一轮落地：幽灵 feature 清理 + 模块接入矩阵固化（见 `modular-monolith-design.md` §5.2）。
 - **交付物**：doc/flow/file 外迁的可行性评估（依赖面、共享 state、虚拟服务到独立进程的迁移成本），输出"拆分 / 暂缓"决策及理由。
 - **依赖**：依赖评估先行，拆分排期须由评估产出推导。
 - **完成定义**：决策文档含明确结论、若拆分则给出服务清单、端口段与迁移顺序；暂缓则给出复核触发条件。

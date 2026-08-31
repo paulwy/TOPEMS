@@ -135,6 +135,30 @@ module-ai = []
 6. **路由前缀**：真实模块路由相对路径需按 `config.api_prefix` nest（与 `build_application` 一致）；演示模块用独立前缀避免冲突
 7. **权限中间件**：erp 在路由上叠加 `require_permission("erp:admin")`（与独立部署一致）
 
+### 5.2 边界治理基线（2026-08-31）
+
+> P0-2「模块化单体演进与边界治理」落地记录。目标：server 模块接入与服务清单保持单一真相源一致，消除"幽灵 feature"。
+
+**模块接入矩阵**（`svc/server`，对照 `config/services.yaml`）：
+
+| 状态 | 模块 | 说明 |
+|------|------|------|
+| ✅ 已接入（default） | platform / finance-demo / dashboard + 真实服务 crm / erp / finance / qms / hrm / scm / wms / pm / mes / ehs / lims | 12 个真实业务服务经 real_module 接入统一入口，feature 门控，default 启用 |
+| ✅ 已接入（可选） | tms / subscription | `module-tms` / `module-subscription`，默认不启用，按客户裁剪 |
+| 🔄 待接入 | advanced（master-data / analytics）、ai | `module-advanced` / `module-ai` feature 已保留 + ModuleGroup 映射，无 real_module；接入后再从 default 启用 |
+| 🚫 明确不嵌入 | gis | WebSocket/事件订阅/插件体系，保持独立微服务部署（`module-gis` 仅编译依赖） |
+
+**幽灵 feature 清理**（2026-08-31）：
+- `module-advanced` / `module-ai` 此前在 `default` features 中启用，但 server 无任何对应 `*_real_module` 注册（仅 `ModuleGroup::Advanced/Ai` 的 feature_flag 字符串映射），属"配置与代码脱节"的边界不一致。
+- 治理动作：从 `default` 移除两个幽灵 feature；**保留 feature 定义与 ModuleGroup 映射**，作为 advanced/ai 真实接入的挂载点。
+- 验证：default / 最小集（`--no-default-features --features module-core,module-erp,module-finance`）/ 全量（`--all-features`）三组合编译全部通过。
+
+**边界规则**（决定"何时接入 server vs 保持独立微服务"）：
+1. 无 WebSocket 长连接、无独立后台任务/插件体系、可复用 Shared Bootstrap 的纯 REST 业务服务 → 优先接入 server（real_module 模式）。
+2. 含 WebSocket / 事件订阅者 / 自定义 Prometheus / 插件注册体系的服务（gis / mobile / integration / monitor / plugin-registry / unified-core）→ 保持独立微服务部署，server 通过 HTTP 网关访问。
+3. 接入前必须存在可编译的 lib 目标（`create_routes` 可实例化），否则先完成 lib+bin 化。
+4. 每个接入模块必须注册真实业务路由 + 健康检查依赖，禁止空壳模块进入 default。
+
 ## 6. 风险与回退
 
 - **重构回归风险**：每个模块组独立迁移，充分测试后再合并
