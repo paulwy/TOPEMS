@@ -1379,3 +1379,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **测试修复**：svc/ehs/tests/ehs_tests.rs create_test_pool 加 after_connect `SET search_path TO ehs, public`（qa_ehs_* 归位后无前缀测试查询依赖该路径）
 - 验证：public qa_ 残留=0；lims/qms/ehs 测试全过；门禁 PASS。
 - **⚠️ 已知待办**：lims/qms 测试中 qa_* 相关用例为 `#[ignore]`（requires PostgreSQL），启用前需同样加 search_path。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（B 项子项 core_master_data_*/core_mdm_*）✅
+- 迁移文件 `20260831190400_master_data_schema_migrate.sql`（幂等）：CREATE SCHEMA IF NOT EXISTS master_data + 5 张表（core_master_data_refs/change_log/event_outbox/core_mdm_approvals/reconciliation_log）public → SET SCHEMA master_data（全部空表，无同名冲突）。
+- shared-db 同步：master_data_refs.rs `new()` 默认表名 → "master_data.core_master_data_refs"；reconciliation_log.rs 默认表名 → master_data.core_mdm_reconciliation_log + refs → master_data.core_master_data_refs（crm/scm 的 with_table 本地表不受影响）。
+- 验证：public=0/master_data=5；shared-db+unified-core+crm+scm+master-data 编译全过；门禁 PASS。
