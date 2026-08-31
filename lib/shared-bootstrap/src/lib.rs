@@ -896,10 +896,11 @@ pub fn build_application(
         }
     });
 
-    let mut protected = protected_routes.layer(axum::middleware::from_fn_with_state(
-        ctx.auth_state.clone(),
-        auth_middleware,
-    ));
+    // layer 顺序（axum 后挂先执行，即外层先执行）：
+    // auth → rls → rate_limit。
+    // auth 最先执行：注入 Claims + ServiceIdentity（服务身份），
+    // 供 rls 与 rate_limit 读取（服务调用独立限流桶）。
+    let mut protected = protected_routes.layer(rate_limit_layer);
 
     if config.enable_rls {
         protected = protected.layer(axum::middleware::from_fn_with_state(
@@ -908,7 +909,10 @@ pub fn build_application(
         ));
     }
 
-    protected = protected.layer(rate_limit_layer);
+    protected = protected.layer(axum::middleware::from_fn_with_state(
+        ctx.auth_state.clone(),
+        auth_middleware,
+    ));
 
     let mut app = register_routes_with_legacy_alias(
         Router::new().merge(public_routes),
