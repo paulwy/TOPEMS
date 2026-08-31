@@ -1621,3 +1621,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：mobile/communication/pm/erp 编译通过、门禁 28 PASS、断裂 FK 0。
 - **累计**：public 262 → **131**（131 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善（262→131）。
 - **归位遗漏发现（~45 张活跃表仍在 public）**：finance_v52/v53 13 张 + quality_patrols/erp_payables/meeting_*/mv_*/process_*/ticket_* 等——**有真实 SQL 引用（fallback public）**——是阶段0 归位未覆盖的服务活跃表，**不可 DROP**——待"活跃表归位专项"（SET SCHEMA 到各服务 schema + 确认 search_path）。
+
+## 2026-09-01 拆分前置治理：finance 活跃表归位（131 → 108）✅
+- **归位 23 张**（public → finance）：erp_collection_records/erp_payables/erp_payment_records/erp_receivables/expenses/payables/receivables/financial_reports/mv_receivable_aging/mv_voucher_summary + finance_v52/v53 13 张（历史版本表但 finance 仍在查询）。
+- **依据**：仅 finance 服务 SQL 引用、无显式 public.* 引用、finance schema 无同名冲突、全 0 行；search_path 本就含 finance → 归位即时生效无需重启。
+- **验证**：finance 编译通过、门禁 28 PASS、断裂 FK 0、search_path 模拟查询可解析 finance.payables。
+- **累计**：public 262 → **108**（154 张影子/死表清理 + 23 张归位）；finance schema 80 → 103。
+- **剩余 public 108 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等 ~30）+ 待归位/待审计（quality_*/meeting_*/process_*/ticket_* 等 ~20 + 其他）。
