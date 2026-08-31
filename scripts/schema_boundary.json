@@ -18,9 +18,7 @@
     "communication": {
       "schema": "public",
       "search_path": "public",
-      "allow": [
-        "gis"
-      ]
+      "allow": []
     },
     "crm": {
       "schema": "crm",
