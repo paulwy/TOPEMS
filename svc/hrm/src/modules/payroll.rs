@@ -9,6 +9,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::str::FromStr;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -156,7 +157,8 @@ async fn list_payroll_runs(
     let pay_period = params.pay_period.clone();
     let status_filter = params.status;
 
-    let result = sqlx::query_as::<_, PayrollRun>(
+    let result = sqlx::query_as::<_, PayrollRun>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         FROM hrm.payroll_runs
@@ -164,8 +166,8 @@ async fn list_payroll_runs(
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&pay_period)
     .bind(&status_filter)
     .bind(page_size)
@@ -176,11 +178,11 @@ async fn list_payroll_runs(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("hrm", r#"
                 SELECT COUNT(*) FROM hrm.payroll_runs
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
                   AND ($2::text IS NULL OR status = $2)
-                "#,
+                "#),
             )
             .bind(&pay_period)
             .bind(&status_filter)
@@ -222,11 +224,11 @@ async fn create_payroll_run(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PayrollRun>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at)
         VALUES ($1, $2, 'draft', 0, 0, $3, $4)
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(&req.pay_period)
@@ -282,7 +284,7 @@ async fn get_payroll_run(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollRun>(
-        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -291,7 +293,7 @@ async fn get_payroll_run(
     match result {
         Ok(Some(run)) => {
             let items = sqlx::query_as::<_, PayrollItem>(
-                "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE payroll_run_id = $1"
+                only_own_schema_query!("hrm", "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE payroll_run_id = $1")
             )
             .bind(id)
             .fetch_all(&state.db)
@@ -325,9 +327,10 @@ async fn delete_payroll_run(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(
-        "UPDATE hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "hrm",
+        "UPDATE hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -384,21 +387,23 @@ async fn calculate_payroll_run(
 ) -> Json<ApiResponse<PayrollRun>> {
     let now = Utc::now();
 
-    let result =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'")
-            .fetch_one(&state.db)
-            .await;
+    let result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "hrm",
+        "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"
+    ))
+    .fetch_one(&state.db)
+    .await;
 
     let emp_count = result.unwrap_or(0);
     let total_amount = estimate_total_payroll(emp_count, 5000);
 
     let result = sqlx::query_as::<_, PayrollRun>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'calculated', total_amount = $2, employee_count = $3, updated_at = $4
         WHERE id = $1 AND status = 'draft'
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(total_amount)
@@ -438,10 +443,10 @@ async fn create_payroll_items(
         let net_amount = amounts.net;
 
         let _ = sqlx::query(
-            r#"
+            only_own_schema_query!("hrm", r#"
             INSERT INTO hrm.payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), NOW())
-            "#
+            "#)
         )
         .bind(item_id)
         .bind(payroll_run_id)
@@ -463,25 +468,26 @@ async fn pay_payroll_run(
 ) -> Json<ApiResponse<PayrollRun>> {
     let now = Utc::now();
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "hrm",
         r#"
         UPDATE hrm.payroll_items
         SET status = 'paid', paid_at = $2
         WHERE payroll_run_id = $1 AND status = 'pending'
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .execute(&state.db)
     .await;
 
     let result = sqlx::query_as::<_, PayrollRun>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'paid', paid_at = $2, updated_at = $2
         WHERE id = $1 AND status = 'calculated'
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(now)
@@ -514,7 +520,7 @@ async fn list_payroll_items(
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, PayrollItem>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at
         FROM hrm.payroll_items
         WHERE ($1::uuid IS NULL OR payroll_run_id = $1)
@@ -522,7 +528,7 @@ async fn list_payroll_items(
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(payroll_run_id)
     .bind(emp_id)
@@ -534,14 +540,15 @@ async fn list_payroll_items(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.payroll_items
                 WHERE ($1::uuid IS NULL OR payroll_run_id = $1)
                   AND ($2::uuid IS NULL OR employee_id = $2)
                   AND ($3::text IS NULL OR status = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(payroll_run_id)
             .bind(emp_id)
             .bind(&status_filter)
@@ -575,7 +582,7 @@ async fn get_payroll_item(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PayrollItem>(
-        "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE id = $1"
+        only_own_schema_query!("hrm", "SELECT id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, bank_account, paid_at, created_at, updated_at FROM hrm.payroll_items WHERE id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -584,7 +591,7 @@ async fn get_payroll_item(
     match result {
         Ok(Some(item)) => {
             let details = sqlx::query_as::<_, PayrollDetail>(
-                "SELECT id, payroll_item_id, item_type, category, description, amount, created_at FROM hrm.payroll_details WHERE payroll_item_id = $1"
+                only_own_schema_query!("hrm", "SELECT id, payroll_item_id, item_type, category, description, amount, created_at FROM hrm.payroll_details WHERE payroll_item_id = $1")
             )
             .bind(id)
             .fetch_all(&state.db)
@@ -623,15 +630,16 @@ async fn list_payroll_details(
 
     let payroll_item_id = params.payroll_item_id;
 
-    let result = sqlx::query_as::<_, PayrollDetail>(
+    let result = sqlx::query_as::<_, PayrollDetail>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT id, payroll_item_id, item_type, category, description, amount, created_at
         FROM hrm.payroll_details
         WHERE ($1::uuid IS NULL OR payroll_item_id = $1)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-        "#,
-    )
+        "#
+    ))
     .bind(payroll_item_id)
     .bind(page_size)
     .bind(offset)
@@ -641,7 +649,7 @@ async fn list_payroll_details(
     match result {
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM hrm.payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)",
+                only_own_schema_query!("hrm", "SELECT COUNT(*) FROM hrm.payroll_details WHERE ($1::uuid IS NULL OR payroll_item_id = $1)"),
             )
             .bind(payroll_item_id)
             .fetch_one(&state.db)
@@ -676,11 +684,11 @@ async fn create_payroll_detail(
     let id = Uuid::new_v4();
 
     let result = sqlx::query_as::<_, PayrollDetail>(
-        r#"
+        only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
         RETURNING id, payroll_item_id, item_type, category, description, amount, created_at
-        "#
+        "#)
     )
     .bind(id)
     .bind(req.payroll_item_id)
@@ -709,7 +717,7 @@ async fn generate_payroll_voucher(
 ) -> Json<ApiResponse<PayrollVoucherResponse>> {
     // 获取薪资发放记录
     let payroll_run: Option<PayrollRun> = sqlx::query_as(
-        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1"
+        only_own_schema_query!("hrm", "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM hrm.payroll_runs WHERE deleted_at IS NULL AND id = $1")
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -742,7 +750,8 @@ async fn generate_payroll_voucher(
         total_deductions: BigDecimal,
     }
 
-    let payroll_summary: Option<PayrollSummary> = sqlx::query_as(
+    let payroll_summary: Option<PayrollSummary> = sqlx::query_as(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT
             COALESCE(SUM(gross_amount), 0) as total_gross,
@@ -750,8 +759,8 @@ async fn generate_payroll_voucher(
             COALESCE(SUM(deductions), 0) as total_deductions
         FROM hrm.payroll_items
         WHERE payroll_run_id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_one(&state.db)
     .await
@@ -792,10 +801,10 @@ async fn generate_payroll_voucher(
 
     // 创建凭证主记录
     let voucher_result = sqlx::query(
-        r#"
-        INSERT INTO financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
+        only_own_schema_query!("hrm", r#"
+        INSERT INTO erp.financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)
-        "#,
+        "#, "erp"),
     )
     .bind(voucher_id)
     .bind(&voucher_number)
@@ -826,10 +835,10 @@ async fn generate_payroll_voucher(
             for entry in entries {
                 let item_id = Uuid::new_v4();
                 let _ = sqlx::query(
-                    r#"
-                    INSERT INTO voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
+                    only_own_schema_query!("hrm", r#"
+                    INSERT INTO erp.voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                    "#,
+                    "#, "erp"),
                 )
                 .bind(item_id)
                 .bind(voucher_id)
@@ -910,7 +919,8 @@ async fn list_payroll_slips(
     let emp_id = params.employee_id;
     let status_filter = params.status;
 
-    let result = sqlx::query_as::<_, PayrollSlip>(
+    let result = sqlx::query_as::<_, PayrollSlip>(only_own_schema_query!(
+        "hrm",
         r#"
         SELECT
             pi.id,
@@ -938,8 +948,8 @@ async fn list_payroll_slips(
           AND ($3::text IS NULL OR pi.status = $3)
         ORDER BY pi.created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(payroll_run_id)
     .bind(emp_id)
     .bind(&status_filter)
@@ -950,15 +960,16 @@ async fn list_payroll_slips(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
                 r#"
                 SELECT COUNT(*)
                 FROM hrm.payroll_items pi
                 WHERE ($1::uuid IS NULL OR pi.payroll_run_id = $1)
                   AND ($2::uuid IS NULL OR pi.employee_id = $2)
                   AND ($3::text IS NULL OR pi.status = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(payroll_run_id)
             .bind(emp_id)
             .bind(&status_filter)
