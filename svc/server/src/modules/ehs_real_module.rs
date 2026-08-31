@@ -64,7 +64,8 @@ impl EhsRealModule {
         // 3. 事件订阅者：ehs 的 event_handlers 为 bin-only（main.rs 内 mod），lib 不暴露，跳过
 
         // 4. 工作流服务客户端（构造失败则 ehs 模块本次不注册，降级跳过）
-        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default() {
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "ehs-module", &["workflow:read"])) {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!("⚠️ 工作流服务客户端初始化失败，EHS 模块本次不注册: {e}");

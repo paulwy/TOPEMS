@@ -78,13 +78,14 @@ impl CrmRealModule {
         let encryption_service = topems_shared::init_encryption_from_env();
 
         // 4. ERP / WMS / Workflow 服务客户端（ERP/WMS 失败不阻塞，联动功能优雅降级）
-        let erp_client = TypedServiceClient::<ErpApi>::from_env_default()
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let erp_client = TypedServiceClient::<ErpApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "crm-module", &["erp:admin"]))
             .ok()
             .map(Arc::new);
-        let wms_client = TypedServiceClient::<WmsApi>::from_env_default()
+        let wms_client = TypedServiceClient::<WmsApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "crm-module", &["wms:admin"]))
             .ok()
             .map(Arc::new);
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "crm-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 5. 构建业务 ApiState（与独立部署 main.rs 一致）

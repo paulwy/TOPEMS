@@ -65,7 +65,8 @@ impl SrmRealModule {
             Arc::new(topems_shared_core::cache::InMemoryCache::new(
                 Duration::from_secs(300),
             ));
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("SRM 工作流客户端初始化失败: {e}"))?;
 
         let db = ctx.db.clone();
