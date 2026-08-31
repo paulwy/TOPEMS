@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -73,7 +74,7 @@ pub async fn list_transfers(
     let to_warehouse_id = params.to_warehouse_id;
 
     let result = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
         FROM transfers
         WHERE ($1::text IS NULL OR transfer_number ILIKE $1)
@@ -82,7 +83,7 @@ pub async fn list_transfers(
           AND ($4::uuid IS NULL OR to_warehouse_id = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -96,13 +97,13 @@ pub async fn list_transfers(
     match result {
         Ok(transfers) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("wms", r#"
                 SELECT COUNT(*) FROM transfers
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR from_warehouse_id = $3)
                   AND ($4::uuid IS NULL OR to_warehouse_id = $4)
-                "#,
+                "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -145,11 +146,11 @@ pub async fn create_transfer(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO transfers (id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.transfer_number)
@@ -214,10 +215,10 @@ pub async fn get_transfer(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
         FROM transfers WHERE id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -247,9 +248,9 @@ pub async fn update_transfer(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -270,13 +271,13 @@ pub async fn update_transfer(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE transfers SET
             from_warehouse_id = $2, from_location_id = $3, to_warehouse_id = $4, to_location_id = $5, 
             status = $6, remarks = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&from_warehouse_id)
@@ -340,7 +341,7 @@ pub async fn delete_transfer(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("UPDATE transfers SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query(only_own_schema_query!("wms", "UPDATE transfers SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
         .execute(&state.db)
         .await;
@@ -402,12 +403,12 @@ pub async fn list_transfer_items(
     }
 
     let result = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
         FROM transfer_items
         WHERE transfer_id = $1
         ORDER BY created_at ASC
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_all(&state.db)
@@ -452,11 +453,11 @@ pub async fn create_transfer_item(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO transfer_items (id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7)
         RETURNING id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(item_id)
     .bind(id)
@@ -519,10 +520,10 @@ pub async fn get_transfer_item(
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
         FROM transfer_items WHERE transfer_id = $1 AND id = $2
-        "#,
+        "#),
     )
     .bind(id)
     .bind(item_id)
@@ -553,9 +554,9 @@ pub async fn update_transfer_item(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at FROM transfer_items WHERE transfer_id = $1 AND id = $2
-        "#,
+        "#),
     )
     .bind(id)
     .bind(item_id)
@@ -574,12 +575,12 @@ pub async fn update_transfer_item(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE transfer_items SET
             quantity = $2, status = $3, remarks = $4, updated_at = $5
         WHERE transfer_id = $6 AND id = $7
         RETURNING id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(quantity)
@@ -642,7 +643,7 @@ pub async fn delete_transfer_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM transfer_items WHERE transfer_id = $1 AND id = $2")
+    let result = sqlx::query(only_own_schema_query!("wms", "DELETE FROM transfer_items WHERE transfer_id = $1 AND id = $2"))
         .bind(id)
         .bind(item_id)
         .execute(&state.db)
@@ -707,9 +708,9 @@ pub async fn execute_transfer(
     let now = Utc::now();
 
     let transfer = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -726,10 +727,10 @@ pub async fn execute_transfer(
     }
 
     let items = sqlx::query_as::<_, TransferItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
         FROM transfer_items WHERE transfer_id = $1
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_all(&state.db)
@@ -746,11 +747,11 @@ pub async fn execute_transfer(
 
     for item in &items {
         let result = sqlx::query(
-            r#"
-            UPDATE inventory_items
+            only_own_schema_query!("wms", r#"
+            UPDATE wms.inventory
             SET quantity = quantity - $1, updated_at = $2
             WHERE id = $3 AND quantity >= $1
-            "#,
+            "#),
         )
         .bind(item.quantity)
         .bind(now)
@@ -776,11 +777,11 @@ pub async fn execute_transfer(
         let new_warehouse_id = transfer.to_warehouse_id.clone();
 
         let update_result = sqlx::query(
-            r#"
-            UPDATE inventory_items
+            only_own_schema_query!("wms", r#"
+            UPDATE wms.inventory
             SET location_id = COALESCE($1, location_id), warehouse_id = COALESCE($2, warehouse_id), updated_at = $3
             WHERE id = $4
-            "#,
+            "#),
         )
         .bind(&new_location_id)
         .bind(&new_warehouse_id)
@@ -796,12 +797,12 @@ pub async fn execute_transfer(
     }
 
     let result = sqlx::query_as::<_, Transfer>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE transfers SET
             status = 'completed', updated_at = $2
         WHERE id = $1
         RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)

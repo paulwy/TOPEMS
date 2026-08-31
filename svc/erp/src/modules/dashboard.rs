@@ -8,6 +8,37 @@ use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
 
+/// 调用 WMS 服务库存统计 API（GET /api/wms/inventory/statistics）
+/// 返回 (总库存量, 低库存项数)；认证失败或服务不可达时降级为 (0, 0)。
+async fn fetch_wms_inventory_stats(auth_header: Option<&axum::http::HeaderValue>) -> (i64, i64) {
+    let base = std::env::var("WMS_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8041".to_string());
+    let url = format!("{}/api/wms/inventory/statistics", base);
+    let mut req = reqwest::Client::new().get(&url);
+    if let Some(a) = auth_header {
+        if let Ok(v) = a.to_str() {
+            req = req.header("Authorization", v);
+        }
+    }
+    match req.send().await {
+        Ok(resp) if resp.status().is_success() => {
+            let v: serde_json::Value =
+                resp.json().await.unwrap_or_else(|_| serde_json::json!({}));
+            let data = v.get("data").unwrap_or(&v);
+            let total = data
+                .get("total_quantity")
+                .and_then(|x| x.as_f64())
+                .unwrap_or(0.0) as i64;
+            let low = data
+                .get("low_stock_count")
+                .and_then(|x| x.as_i64())
+                .unwrap_or(0);
+            (total, low)
+        }
+        _ => (0, 0),
+    }
+}
+
 const ALLOWED_TABLES: &[&str] = &[
     "assets",
     "production_orders",
@@ -97,6 +128,7 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
 pub async fn get_dashboard(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ErpDashboardStats>> {
     let total_assets = count_table(&state.db, "assets").await;
     let active_assets = count_table_with_status(&state.db, "assets", "active").await;
@@ -104,18 +136,9 @@ pub async fn get_dashboard(
     let total_orders = count_table(&state.db, "production_orders").await;
     let pending_orders = count_table_with_status(&state.db, "production_orders", "pending").await;
 
-    let total_inventory =
-        sqlx::query_scalar("SELECT COALESCE(SUM(quantity), 0) FROM inventory_items")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
-
-    let low_stock_items = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM inventory_items WHERE quantity < COALESCE(reorder_point, 10)",
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    // 库存统计改走 WMS 服务 API（public.inventory_items 已废弃，真实库存源为 wms.inventory）
+    let (total_inventory, low_stock_items) =
+        fetch_wms_inventory_stats(headers.get("authorization")).await;
 
     let total_suppliers = count_table(&state.db, "suppliers").await;
     let active_suppliers = count_table_with_status(&state.db, "suppliers", "active").await;

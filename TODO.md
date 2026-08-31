@@ -1674,3 +1674,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **保留（有数据/跨域/无专属 schema）**：device_locations(170)/factory_maps(512)/report_templates(12)/archive_config(14)/dashboard_stats(12)/products(21)/inspection_records(6) 有历史数据；dynamic_data（master-data 用 public 未 schema 化）；inventory_items（erp/wms 跨域待 API 化）。
 - **验证**：门禁 28 PASS、断裂 FK 0、wms/gis/erp/ticket 编译通过。
 - **累计**：public 262 → **73**；core_* 37 平台保留 + 平台表 + 9 张活跃业务表合理保留。
+
+## 2026-09-01 inventory_items 跨域 API 化（归位前置）✅
+- **审计发现**：public.inventory_items 是**废弃旧库存表**（0 行）；WMS 真实主库存表为 `wms.inventory`（有 quantity/updated_at/location_id/warehouse_id 全字段）。
+- **改造**：
+  1. wms/transfer.rs 2 处 `UPDATE inventory_items` → `UPDATE wms.inventory`（消除 wms→public 直连写；调拨扣减真实主表）
+  2. erp/dashboard.rs 库存统计（total_inventory/low_stock_items）改走 WMS statistics API（GET /api/wms/inventory/statistics，转发 Authorization + 失败降级 0）——消除 erp→public 直连读
+  3. DROP public.inventory_items（0 行废弃表，无写者无读者）——迁移 20260901000016
+- **验证**：wms/erp 编译通过（无警告）、门禁 28 PASS、断裂 FK 0、两服务启动 schema 自检一致、健康 200。
+- **待办**：erp→wms 服务间认证未打通（wms require_permission 全局强制），dashboard 库存字段当前降级 0——服务间认证为独立专项。
