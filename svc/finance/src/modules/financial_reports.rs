@@ -2145,6 +2145,7 @@ pub async fn export_report(
 /// 业务概览报表：收入、支出、利润、凭证数等核心指标
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/api/finance/reports/business-overview",
     params(("period" = String, Query, description = "会计期间 YYYY-MM")),
     responses((status = 200, description = "业务概览")),

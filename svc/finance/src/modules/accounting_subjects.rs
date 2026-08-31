@@ -115,6 +115,7 @@ const TABLE: &str = "accounting_subjects";
 /// 列表查询（支持分页、搜索、筛选）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/api/finance/accounting-subjects",
     params(AccountingSubjectQuery),
     responses(
@@ -195,6 +196,7 @@ pub async fn list_accounting_subjects(
 /// 根据 ID 获取单个会计科目
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     responses(
@@ -229,6 +231,7 @@ pub async fn get_accounting_subject(
 /// 创建会计科目
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/finance/accounting-subjects",
     request_body = CreateAccountingSubjectRequest,
     responses(
@@ -277,6 +280,7 @@ pub async fn create_accounting_subject(
 /// 更新会计科目
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     request_body = UpdateAccountingSubjectRequest,
@@ -350,6 +354,7 @@ pub async fn update_accounting_subject(
 /// 删除会计科目（软删除）
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/api/finance/accounting-subjects/{id}",
     params(("id" = Uuid, Path, description = "会计科目 ID")),
     responses(
