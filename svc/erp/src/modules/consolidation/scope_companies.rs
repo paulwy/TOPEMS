@@ -26,7 +26,7 @@ pub async fn list_scope_companies(
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        SELECT * FROM plugin_erp.consolidation_scope_companies
+        SELECT * FROM erp.consolidation_scope_companies
         WHERE deleted_at IS NULL AND scope_id = $1
         ORDER BY is_parent DESC, company_name ASC
         "#,
@@ -58,7 +58,7 @@ pub async fn add_scope_company(
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        INSERT INTO plugin_erp.consolidation_scope_companies
+        INSERT INTO erp.consolidation_scope_companies
         (id, scope_id, company_id, is_parent, control_type, ownership_percentage, consolidation_percentage, minority_interest, effective_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
@@ -111,7 +111,7 @@ pub async fn update_scope_company(
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        UPDATE plugin_erp.consolidation_scope_companies
+        UPDATE erp.consolidation_scope_companies
         SET control_type = COALESCE($2, control_type),
             ownership_percentage = COALESCE($3, ownership_percentage),
             consolidation_percentage = COALESCE($4, consolidation_percentage),
@@ -163,7 +163,7 @@ pub async fn remove_scope_company(
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(
-        "UPDATE plugin_erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
+        "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
     )
     .bind(company_id)
     .execute(&state.db)

@@ -30,8 +30,8 @@ pub async fn list_reports(
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
-        FROM plugin_erp.consolidation_reports cr
-        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        FROM erp.consolidation_reports cr
+        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
         WHERE ($1::uuid IS NULL OR cr.scope_id = $1)
           AND ($2::text IS NULL OR cr.report_type = $2)
           AND ($3::text IS NULL OR cr.period >= $3)
@@ -53,7 +53,7 @@ pub async fn list_reports(
         Ok(reports) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_erp.consolidation_reports
+                SELECT COUNT(*) FROM erp.consolidation_reports
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR scope_id = $1)
                   AND ($2::text IS NULL OR report_type = $2)
                   AND ($3::text IS NULL OR period >= $3)
@@ -95,8 +95,8 @@ pub async fn get_report(
     match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
-        FROM plugin_erp.consolidation_reports cr
-        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        FROM erp.consolidation_reports cr
+        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
         WHERE cr.id = $1
         "#,
     )
@@ -140,7 +140,7 @@ pub async fn generate_report(
     let quarter = (month - 1) / 3 + 1;
 
     let company_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_erp.consolidation_scope_companies WHERE scope_id = $1",
+        "SELECT COUNT(*) FROM erp.consolidation_scope_companies WHERE scope_id = $1",
     )
     .bind(req.scope_id)
     .fetch_one(&state.db)
@@ -149,7 +149,7 @@ pub async fn generate_report(
 
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        INSERT INTO plugin_erp.consolidation_reports
+        INSERT INTO erp.consolidation_reports
         (id, report_no, report_type, scope_id, period, year, quarter, month, status, company_count)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'calculating', $9)
         RETURNING *
@@ -181,7 +181,7 @@ pub async fn generate_report(
 
     let updated_report = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE plugin_erp.consolidation_reports
+        UPDATE erp.consolidation_reports
         SET status = 'completed',
             total_assets = $2,
             total_liabilities = $3,
@@ -236,7 +236,7 @@ pub async fn get_report_lines(
     Path(report_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
     match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+        "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
     .fetch_all(&state.db)
@@ -267,8 +267,8 @@ pub async fn export_report(
     let report = match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
-        FROM plugin_erp.consolidation_reports cr
-        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        FROM erp.consolidation_reports cr
+        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
         WHERE cr.id = $1
         "#,
     )
@@ -285,7 +285,7 @@ pub async fn export_report(
     };
 
     let lines = match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+        "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
     .fetch_all(&state.db)
@@ -329,7 +329,7 @@ pub async fn submit_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)
@@ -359,7 +359,7 @@ pub async fn submit_report(
 
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE plugin_erp.consolidation_reports
+        UPDATE erp.consolidation_reports
         SET approval_status = 'pending'
         WHERE id = $1
         RETURNING *
@@ -409,7 +409,7 @@ pub async fn approve_report(
     let _ = username;
 
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
-        "SELECT * FROM plugin_erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(report_id)
     .fetch_optional(&state.db)
@@ -439,7 +439,7 @@ pub async fn approve_report(
 
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE plugin_erp.consolidation_reports
+        UPDATE erp.consolidation_reports
         SET approval_status = 'approved', approved_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -483,7 +483,7 @@ pub async fn publish_report(
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE plugin_erp.consolidation_reports
+        UPDATE erp.consolidation_reports
         SET status = 'published', published_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -526,7 +526,7 @@ pub async fn delete_report(
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
     match sqlx::query(
-        "UPDATE plugin_erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1",
+        "UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1",
     )
     .bind(report_id)
     .execute(&state.db)
