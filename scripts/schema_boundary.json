@@ -49,8 +49,7 @@
       "schema": "hrm",
       "search_path": "hrm, public, shared",
       "allow": [
-        "mobile",
-        "erp"
+        "mobile"
       ]
     },
     "integration": {
