@@ -4,6 +4,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
@@ -17,28 +18,8 @@ async fn fetch_wms_inventory_stats(jwt_secret: &str) -> (i64, i64) {
         .unwrap_or_else(|_| "http://localhost:8041".to_string());
     let url = format!("{}/api/wms/inventory/statistics", base);
 
-    // 服务身份 Claims：仅声明 wms:admin（最小权限），5 分钟有效，避免泄露超管权限
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as usize)
-        .unwrap_or(0);
-    let service_claims = Claims {
-        sub: "00000000-0000-0000-0000-000000000000".to_string(),
-        username: "erp-service".to_string(),
-        role: "service".to_string(),
-        roles: vec!["service".to_string()],
-        permissions: vec!["wms:admin".to_string()],
-        is_superuser: false,
-        exp: now + 300,
-        iat: now,
-        email: None,
-        department: None,
-        tenant_id: None,
-        department_id: None,
-        position_id: None,
-        position_code: None,
-    };
-    let token = match service_claims.encode(jwt_secret) {
+    // 服务身份 Claims：仅声明 wms:admin（最小权限），5 分钟有效
+    let token = match issue_service_token(jwt_secret, "erp-service", &["wms:admin"], None) {
         Ok(t) => t,
         Err(_) => return (0, 0),
     };

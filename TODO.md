@@ -1739,3 +1739,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **方案**：服务间认证——erp 用共享 JWT 密钥（.env JWT_SECRET，AuthState::from_env 所有服务一致）签发最小权限 service token（username=erp-service、permissions=["wms:admin"]、5 分钟有效）调 WMS。
 - **实现**：fetch_wms_inventory_stats 改为签发 service token（Claims.encode），不转发用户 token；调用传 state.auth_state.jwt_secret；移除 dashboard 冗余 headers 参数。
 - **验证**：service token 调 /api/wms/inventory/statistics → 200 + total_quantity=3200（真实数据）；无 token → 401；erp dashboard 返回 total_inventory=3200（不再降级 0）；编译通过。
+
+## 2026-09-01 统一服务间认证封装（shared-auth service 模块）✅
+- **新增** lib/shared-auth/src/service.rs：`issue_service_token`（共享密钥签发服务身份 token，最小权限 + 5 分钟短时效 + 服务名审计）、`is_service_claims`（识别服务调用）、SERVICE_TOKEN_TTL_SECS/SERVICE_SUBJECT/SERVICE_ROLE 常量。
+- **lib.rs** 注册 service 模块。
+- **erp dashboard 重构**：改用 `issue_service_token`（移除手工 Claims 构造），后续服务可复用同一封装。
+- **验证**：shared-auth 3 单测通过（roundtrip/custom_ttl/is_service_claims）、erp 编译通过、运行时复验 dashboard total_inventory=3200。
