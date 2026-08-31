@@ -1345,3 +1345,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - erp modules/holidays.rs + opening_balance.rs（plugin_erp 引用 + **erp.holidays 表缺失需补建**）
   - svc/ai（工作区 3 处）
 - **注释**：server finance_module.rs 的 plugin_finance 是注释（无 SQL，不改）。
+
+## 2026-08-31 plugin_* 引用收敛（收尾：shared-ai/mobile/erp-holidays）+ 跨域待办
+- **shared-ai（可提交）**：vector_store.rs 5 处 plugin_hrm.→hrm.；补建 hrm.vectors（key PK/embedding vector/metadata JSONB/deleted_at）；INSERT ON CONFLICT 验证 OK。
+- **mobile 测试（可提交）**：integration_tests.rs 2 处 plugin_mobile.→mobile.（表存在 22 行）。
+- **erp（工作区待用户提交）**：holidays.rs 5 处 plugin_erp.holidays→erp.holidays + 补建 erp.holidays（PK tenant_id,year,date,kind，验证 OK）；opening_balance.rs 2 处 plugin_finance.accounting_subjects→finance.accounting_subjects + 宏参数白名单→finance。
+- **门禁**：erp.allow 加 finance（过渡白名单）。
+- **⚠️ 跨域待办（P1-2 阶段 0）**：erp opening_balance.rs **直读 finance.accounting_subjects**（跨域只读，宏白名单放行）。收敛 plugin_* 后门禁开始真实检查跨 schema——此引用为已知跨域，**应改走 finance API/集成事件**，届时移除 erp.allow:finance。
+- **已确认无害（不改）**：hrm attendance.rs / server finance_module.rs 的 plugin_* 在注释；ai agent.rs 的 plugin_* 为 NL 路由字符串；lib/shared-boundary 的 plugin_* 为宏文档示例/测试用例。

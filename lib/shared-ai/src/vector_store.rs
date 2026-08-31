@@ -294,7 +294,7 @@ pub mod pgvector_store {
 
             sqlx::query!(
                 r#"
-                INSERT INTO plugin_hrm.vectors (key, embedding, metadata)
+                INSERT INTO hrm.vectors (key, embedding, metadata)
                 VALUES ($1, $2::vector, $3)
                 ON CONFLICT (key) DO UPDATE SET
                     embedding = EXCLUDED.embedding,
@@ -330,7 +330,7 @@ pub mod pgvector_store {
             let rows = sqlx::query!(
                 r#"
                 SELECT key, 1 - (embedding <=> $1::vector) as score, metadata
-                FROM plugin_hrm.vectors
+                FROM hrm.vectors
                 ORDER BY embedding <=> $1::vector
                 LIMIT $2
                 "#,
@@ -356,7 +356,7 @@ pub mod pgvector_store {
 
         async fn get(&self, key: &str) -> Result<Option<(Vec<f32>, VectorMetadata)>> {
             let row = sqlx::query!(
-                r#"SELECT embedding::text, metadata FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1"#,
+                r#"SELECT embedding::text, metadata FROM hrm.vectors WHERE deleted_at IS NULL AND key = $1"#,
                 key,
             )
             .fetch_optional(&self.pool)
@@ -379,7 +379,7 @@ pub mod pgvector_store {
 
         async fn delete(&self, key: &str) -> Result<()> {
             sqlx::query!(
-                "UPDATE plugin_hrm.vectors SET deleted_at = NOW() WHERE key = $1",
+                "UPDATE hrm.vectors SET deleted_at = NOW() WHERE key = $1",
                 key
             )
             .execute(&self.pool)
@@ -389,7 +389,7 @@ pub mod pgvector_store {
 
         async fn exists(&self, key: &str) -> Result<bool> {
             let result: Option<(i64,)> = sqlx::query_as(
-                "SELECT 1 FROM plugin_hrm.vectors WHERE deleted_at IS NULL AND key = $1",
+                "SELECT 1 FROM hrm.vectors WHERE deleted_at IS NULL AND key = $1",
             )
             .bind(key)
             .fetch_optional(&self.pool)

@@ -97,7 +97,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_mobile.patrol_records (id, title, location_lat, location_lng, patrol_type, status, checked_by, checked_at, created_at)
+            INSERT INTO mobile.patrol_records (id, title, location_lat, location_lng, patrol_type, status, checked_by, checked_at, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title
@@ -130,7 +130,7 @@ mod tests {
         let result = sqlx::query(
             r#"
             SELECT id, title, patrol_type, status, checked_by, created_at
-            FROM plugin_mobile.patrol_records
+            FROM mobile.patrol_records
             ORDER BY created_at DESC
             LIMIT 10
             "#,
