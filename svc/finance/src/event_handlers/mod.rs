@@ -1,6 +1,7 @@
 use chrono::{Datelike, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, PaymentMadePayload,
     PaymentReceivedPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
@@ -113,10 +114,10 @@ impl FinanceEventHandlers {
         let created_by = created_by.unwrap_or("system");
 
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_type, source_id, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_type, source_id, created_by)
              VALUES ('00000000-0000-0000-0000-000000000000', $1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
              ON CONFLICT (tenant_id, source_type, source_id) DO NOTHING
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(&voucher_no)
         .bind(now)
@@ -479,14 +480,15 @@ impl FinanceEventHandlers {
         payable_amount: f64,
     ) {
         let now = Utc::now();
-        let result = sqlx::query(
-            r#"INSERT INTO plugin_finance.source_amount_snapshots
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO source_amount_snapshots
                (source_type, source_id, payable_amount, updated_at)
                VALUES ($1, $2, $3, $4)
                ON CONFLICT (source_type, source_id) DO UPDATE
                SET payable_amount = EXCLUDED.payable_amount,
-                   updated_at = EXCLUDED.updated_at"#,
-        )
+                   updated_at = EXCLUDED.updated_at"#
+        ))
         .bind(source_type)
         .bind(source_id)
         .bind(payable_amount)
@@ -661,8 +663,9 @@ impl FinanceEventHandlers {
         payload: &ReconciliationCreatedPayload,
     ) -> Result<(), String> {
         let now = Utc::now();
-        sqlx::query(
-            r#"INSERT INTO plugin_finance.reconciliation_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO reconciliation_snapshots
                (id, tenant_id, recon_code, recon_name, recon_type, status, period,
                 entity_id, entity_type, description, created_by, synced_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $12)
@@ -676,8 +679,8 @@ impl FinanceEventHandlers {
                    entity_type = EXCLUDED.entity_type,
                    description = EXCLUDED.description,
                    synced_at = EXCLUDED.synced_at,
-                   updated_at = EXCLUDED.updated_at"#,
-        )
+                   updated_at = EXCLUDED.updated_at"#
+        ))
         .bind(payload.id)
         .bind(payload.tenant_id)
         .bind(&payload.recon_code)
@@ -700,8 +703,9 @@ impl FinanceEventHandlers {
         &self,
         payload: &ReconciliationUpdatedPayload,
     ) -> Result<(), String> {
-        sqlx::query(
-            r#"UPDATE plugin_finance.reconciliation_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"UPDATE reconciliation_snapshots
                SET status = $1,
                    total_debit = $2,
                    total_credit = $3,
@@ -710,8 +714,8 @@ impl FinanceEventHandlers {
                    unmatched_count = $6,
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $7"#,
-        )
+               WHERE id = $7"#
+        ))
         .bind(&payload.status)
         .bind(payload.total_debit)
         .bind(payload.total_credit)
@@ -729,15 +733,16 @@ impl FinanceEventHandlers {
         &self,
         payload: &ReconciliationApprovedPayload,
     ) -> Result<(), String> {
-        sqlx::query(
-            r#"UPDATE plugin_finance.reconciliation_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"UPDATE reconciliation_snapshots
                SET status = 'approved',
                    approved_by = $1,
                    approved_at = $2,
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $3"#,
-        )
+               WHERE id = $3"#
+        ))
         .bind(&payload.approved_by)
         .bind(payload.approved_at)
         .bind(payload.id)
@@ -752,8 +757,9 @@ impl FinanceEventHandlers {
         payload: &SettlementCreatedPayload,
     ) -> Result<(), String> {
         let now = Utc::now();
-        sqlx::query(
-            r#"INSERT INTO plugin_finance.settlement_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"INSERT INTO settlement_snapshots
                (id, tenant_id, project_id, settlement_no, settlement_type, status,
                 amount, settlement_date, remarks, created_by, synced_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $11)
@@ -766,8 +772,8 @@ impl FinanceEventHandlers {
                    settlement_date = EXCLUDED.settlement_date,
                    remarks = EXCLUDED.remarks,
                    synced_at = EXCLUDED.synced_at,
-                   updated_at = EXCLUDED.updated_at"#,
-        )
+                   updated_at = EXCLUDED.updated_at"#
+        ))
         .bind(payload.id)
         .bind(payload.tenant_id)
         .bind(payload.project_id)
@@ -789,15 +795,16 @@ impl FinanceEventHandlers {
         &self,
         payload: &SettlementApprovedPayload,
     ) -> Result<(), String> {
-        sqlx::query(
-            r#"UPDATE plugin_finance.settlement_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"UPDATE settlement_snapshots
                SET status = 'approved',
                    approved_by = $1,
                    approved_at = $2,
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $3"#,
-        )
+               WHERE id = $3"#
+        ))
         .bind(&payload.approved_by)
         .bind(payload.approved_at)
         .bind(payload.id)
@@ -811,13 +818,14 @@ impl FinanceEventHandlers {
         &self,
         payload: &SettlementRejectedPayload,
     ) -> Result<(), String> {
-        sqlx::query(
-            r#"UPDATE plugin_finance.settlement_snapshots
+        sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"UPDATE settlement_snapshots
                SET status = 'rejected',
                    updated_at = NOW(),
                    synced_at = NOW()
-               WHERE id = $1"#,
-        )
+               WHERE id = $1"#
+        ))
         .bind(payload.id)
         .execute(&self.db)
         .await

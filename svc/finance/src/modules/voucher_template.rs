@@ -6,6 +6,7 @@ use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use tracing::warn;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -142,7 +143,7 @@ pub async fn toggle_template(
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
-        "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+        only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -194,7 +195,7 @@ pub async fn match_template(
         None => return Json(ApiResponse::error(400, "source_type 为必填")),
     };
     let rule: Option<VoucherGenerationRule> = match sqlx::query_as(
-        "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1",
+        only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
     .bind(tenant_id)
     .bind(&source_type)
@@ -259,7 +260,7 @@ pub async fn get_usage_stats(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())
@@ -397,7 +398,7 @@ pub async fn toggle_generate_rule(
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let res = sqlx::query(
-        "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4",
+        only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -414,7 +415,7 @@ pub async fn toggle_generate_rule(
                 VoucherGenerationRule,
                 sqlx::Error,
             > = sqlx::query_as(
-                "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2",
+                only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"),
             )
             .bind(tenant_id)
             .bind(rule_id)
@@ -443,7 +444,7 @@ pub async fn toggle_generate_rule(
 /// |-------------|--------|---------|------|
 /// | `sale` / `sales_order` | `plugin_erp.sales_orders` | `payable_amount` (F64→Decimal) | 销售订单应付金额 |
 /// | `purchase` / `purchase_order` | `plugin_erp.purchase_orders` | `payable_amount` (F64→Decimal) | 采购订单应付金额 |
-/// | `payment` | `plugin_finance.payment_records` 或 `plugin_finance.payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
+/// | `payment` | `public.payment_records` 或 `public.payments` | `amount` (F64→Decimal) | 支付记录金额（两表容错查询） |
 /// | 其他 / 未知 | — | 1000.00 默认 | 兼容 legacy 调用（如 demo/preview） |
 async fn resolve_source_amounts(
     pool: &PgPool,
@@ -504,8 +505,8 @@ async fn resolve_source_amounts(
 
     // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
     let snapshot_rows: Vec<(Uuid, Option<f64>)> = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-        r#"SELECT source_id, payable_amount FROM plugin_finance.source_amount_snapshots
-           WHERE source_type = $1 AND source_id = ANY($2)"#,
+        only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM source_amount_snapshots
+           WHERE source_type = $1 AND source_id = ANY($2)"#),
     )
     .bind(snapshot_type)
     .bind(&valid_uuids)
@@ -524,34 +525,27 @@ async fn resolve_source_amounts(
     })
     .unwrap_or_default();
 
-    // payment/pay 类型特殊处理：查 payment_records 表（同 Schema，安全）
+    // payment/pay 类型特殊处理：查 core_finance_payments（归位后的支付单表）
     let amount_f64s: Vec<(Uuid, Option<f64>)> = if snapshot_type == "payment" {
-        let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(
-            r#"SELECT id, amount FROM plugin_finance.payment_records
-               WHERE tenant_id = $1 AND id = ANY($2)"#,
-        )
+        let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
+            "finance",
+            r#"SELECT id, total_amount AS amount FROM core_finance_payments
+               WHERE tenant_id = $1 AND id = ANY($2)"#
+        ))
         .bind(tenant_id)
         .bind(&valid_uuids)
         .fetch_all(pool)
         .await;
         match r1 {
-            Ok(rows) if !rows.is_empty() => rows,
-            _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(
-                r#"SELECT id, amount FROM plugin_finance.payments
-                   WHERE tenant_id = $1 AND id = ANY($2)"#,
-            )
-            .bind(tenant_id)
-            .bind(&valid_uuids)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| {
+            Ok(rows) => rows,
+            Err(e) => {
                 static LOGGED: std::sync::atomic::AtomicBool =
                     std::sync::atomic::AtomicBool::new(false);
                 if !LOGGED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                    warn!(error = %e, "查询 plugin_finance.payments 失败，使用默认金额 1000.00 兜底");
+                    warn!(error = %e, "查询 core_finance_payments 失败，使用默认金额 1000.00 兜底");
                 }
-            })
-            .unwrap_or_default(),
+                Vec::new()
+            }
         }
     } else {
         snapshot_rows
@@ -861,7 +855,7 @@ pub async fn auto_generate(
     } else {
         // 查询所有活跃规则
         let rules: Vec<VoucherGenerationRule> = sqlx::query_as(
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND status = 'active' ORDER BY priority ASC",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND status = 'active' ORDER BY priority ASC"),
         )
         .bind(tenant_id)
         .fetch_all(&state.pool)
@@ -1031,14 +1025,14 @@ mod tests {
     fn test_toggle_template_request_deserialize() {
         let json = r#"{"isactive": true}"#;
         let request: ToggleTemplateRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.isactive, true);
+        assert!(request.isactive);
     }
 
     #[test]
     fn test_toggle_template_request_false() {
         let json = r#"{"isactive": false}"#;
         let request: ToggleTemplateRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.isactive, false);
+        assert!(!request.isactive);
     }
 
     #[test]
@@ -1088,6 +1082,6 @@ mod tests {
     fn test_toggle_rule_request_deserialize() {
         let json = r#"{"isactive": true}"#;
         let request: ToggleRuleRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.isactive, true);
+        assert!(request.isactive);
     }
 }
