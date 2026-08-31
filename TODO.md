@@ -1652,3 +1652,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **代码**：main.rs SEARCH_PATH `"public"→"ticket, public"`；schema_defense.rs SERVICE_SCHEMA `"public"→"ticket"`；schema_boundary.json ticket `{schema: ticket, search_path: ticket, public}`。
 - **验证**：ticket 编译通过、门禁 28 PASS、运行时启动 + schema 自检 7 张表一致性通过 + search_path 模拟查询可解析 + 端点正常响应；测试服务已清理。
 - **累计**：public 262 → **81**（165 清理 + 39 归位，ticket 新增 schema 7 张）。
+
+## 2026-09-01 portal schema 审计（120 → 116）✅
+- **审计结论**：portal schema 120 张中——
+  - **4 张真死表**（portal_access_logs/portal_configs/portal_layouts/portal_menus——全 svc+lib+apps 无任何代码提及连建表 DDL 都没有 + 0 行）→ DROP（迁移 `20260901000012_drop_portal_dead.sql`）
+  - **~8 张活跃**（portal 查询 core_faqs/core_guides/core_guide_lessons/portal_quick_actions/portal_todos/user_preferences + 事件处理 portal_notifications/portal_dashboard_stats）
+  - **~108 张"建表无查询"设计预留表**（smart_gateway/ai_ops/gateway_monitoring/federation_gateway 等模块 CREATE TABLE IF NOT EXISTS 但业务从未 FROM/INTO/UPDATE/JOIN）——**保留**（DROP 会被服务启动重建，无效）
+- **关键洞察**：portal 存在**大量"建表无查询"的代码层过度设计**（智能网关/AI Ops/联邦网关等模块预留）——非 schema 治理可解决——需代码层清理或业务确认（作为独立专项，避免误删未来功能预留）。
+- **验证**：门禁 28 PASS、断裂 FK 0。
