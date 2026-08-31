@@ -1419,3 +1419,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 ## 2026-08-31 收尾：billing/feedback 合并脚本引用清理 + TODO 遗留项勾选 ✅
 - 脚本清理：`coverage-baseline.sh` / `sqlx-prepare.sh` / `ci.yml` 移除 `topems-billing`、`topems-feedback`、`topems-lowcode` 活跃引用（对应服务均已归档/合并，属 P5 收尾遗漏）；bash -n 语法全过。
 - TODO 遗留 [ ] 勾选：finance 遗留债务（列失配+补建表均已 [x]）、pm/aps/ehs/lims 评估（后续 pm/aps 已接入 server、ehs/lims 已门控）。
+
+## 2026-08-31 archive schema 清理前检查 ✅（待用户确认 DROP）
+- **101 张 archive 表确认无代码/SQL 引用**：精确 grep（`archive.` schema / `_archive_` 表名）零命中（5 处 `archive.by_name` 为 Rust zip 变量，非 SQL）；schema-boundary 门禁 PASS（无 archive SQL 引用）。
+- 结论：archive 101 张旧版表可安全清理（DROP），但**涉及旧数据永久删除**，DROP 需用户/业务 owner 确认后执行。
+- 备份仍存：database/backup/topems_pre_schema_migration_20260831_1907.dump（3.8M）。
