@@ -4,27 +4,27 @@
 pub const PUBLIC_SCHEMA: &str = "public";
 pub const UNIFIED_CORE_SCHEMA: &str = "unified_core";
 
-pub const HRM_SCHEMA: &str = "plugin_hrm";
-pub const ERP_SCHEMA: &str = "plugin_erp";
-pub const PM_SCHEMA: &str = "plugin_pm";
-pub const CRM_SCHEMA: &str = "plugin_crm";
-pub const QMS_SCHEMA: &str = "plugin_qms";
-pub const MES_SCHEMA: &str = "plugin_mes";
-pub const WMS_SCHEMA: &str = "plugin_wms";
+pub const HRM_SCHEMA: &str = "hrm";
+pub const ERP_SCHEMA: &str = "erp";
+pub const PM_SCHEMA: &str = "pm";
+pub const CRM_SCHEMA: &str = "crm";
+pub const QMS_SCHEMA: &str = "qms";
+pub const MES_SCHEMA: &str = "mes";
+pub const WMS_SCHEMA: &str = "wms";
 pub const SRM_SCHEMA: &str = "srm";
-pub const SCM_SCHEMA: &str = "plugin_scm";
-pub const PDM_SCHEMA: &str = "plugin_pdm";
-pub const LIMS_SCHEMA: &str = "plugin_lims";
-pub const RS_SCHEMA: &str = "plugin_rs";
-pub const GIS_SCHEMA: &str = "plugin_gis";
-pub const EHS_SCHEMA: &str = "plugin_ehs";
-pub const BI_SCHEMA: &str = "plugin_bi";
-pub const AI_SCHEMA: &str = "plugin_ai";
-pub const IM_SCHEMA: &str = "plugin_im";
-pub const INTEGRATION_SCHEMA: &str = "plugin_integration";
-pub const MAIL_SCHEMA: &str = "plugin_mail";
-pub const MOBILE_SCHEMA: &str = "plugin_mobile";
-pub const PORTAL_SCHEMA: &str = "plugin_portal";
+pub const SCM_SCHEMA: &str = "scm";
+pub const PDM_SCHEMA: &str = "pdm";
+pub const LIMS_SCHEMA: &str = "lims";
+pub const RS_SCHEMA: &str = "rs";
+pub const GIS_SCHEMA: &str = "gis";
+pub const EHS_SCHEMA: &str = "ehs";
+pub const BI_SCHEMA: &str = "bi";
+pub const AI_SCHEMA: &str = "ai";
+pub const IM_SCHEMA: &str = "im";
+pub const INTEGRATION_SCHEMA: &str = "integration";
+pub const MAIL_SCHEMA: &str = "mail";
+pub const MOBILE_SCHEMA: &str = "mobile";
+pub const PORTAL_SCHEMA: &str = "portal";
 
 pub fn with_schema(table_name: &str, schema: &str) -> String {
     format!("{}.{}", schema, table_name)
@@ -394,48 +394,48 @@ mod tests {
 
     #[test]
     fn test_hrm_table() {
-        assert_eq!(hrm_table("payroll_runs"), "plugin_hrm.payroll_runs");
+        assert_eq!(hrm_table("payroll_runs"), "hrm.payroll_runs");
         assert_eq!(
             hrm_table("attendance_records"),
-            "plugin_hrm.attendance_records"
+            "hrm.attendance_records"
         );
     }
 
     #[test]
     fn test_erp_table() {
-        assert_eq!(erp_table("assets"), "plugin_erp.assets");
+        assert_eq!(erp_table("assets"), "erp.assets");
         assert_eq!(
             erp_table("financial_records"),
-            "plugin_erp.financial_records"
+            "erp.financial_records"
         );
     }
 
     #[test]
     fn test_pm_table() {
-        assert_eq!(pm_table("projects"), "plugin_pm.projects");
+        assert_eq!(pm_table("projects"), "pm.projects");
     }
 
     #[test]
-    fn test_all_business_schema_helpers_use_plugin_prefix() {
-        // 抽样校验所有 *_table 输出格式，保证前缀拼写统一
-        assert_eq!(crm_table("leads"), "plugin_crm.leads");
-        assert_eq!(qms_table("inspections"), "plugin_qms.inspections");
-        assert_eq!(mes_table("work_orders"), "plugin_mes.work_orders");
-        assert_eq!(wms_table("bins"), "plugin_wms.bins");
+    fn test_all_business_schema_helpers_use_real_schema() {
+        // 抽样校验所有 *_table 输出格式，保证 schema 前缀统一（真实 schema，非 plugin_ 前缀）
+        assert_eq!(crm_table("leads"), "crm.leads");
+        assert_eq!(qms_table("inspections"), "qms.inspections");
+        assert_eq!(mes_table("work_orders"), "mes.work_orders");
+        assert_eq!(wms_table("bins"), "wms.bins");
         assert_eq!(srm_table("suppliers"), "srm.suppliers");
-        assert_eq!(scm_table("inventory"), "plugin_scm.inventory");
-        assert_eq!(pdm_table("drawings"), "plugin_pdm.drawings");
-        assert_eq!(lims_table("samples"), "plugin_lims.samples");
-        assert_eq!(rs_table("requisitions"), "plugin_rs.requisitions");
-        assert_eq!(gis_table("geo_zones"), "plugin_gis.geo_zones");
-        assert_eq!(ehs_table("incidents"), "plugin_ehs.incidents");
-        assert_eq!(bi_table("dashboards"), "plugin_bi.dashboards");
-        assert_eq!(ai_table("prompts"), "plugin_ai.prompts");
-        assert_eq!(im_table("messages"), "plugin_im.messages");
-        assert_eq!(integration_table("syncs"), "plugin_integration.syncs");
-        assert_eq!(mail_table("templates"), "plugin_mail.templates");
-        assert_eq!(mobile_table("pushes"), "plugin_mobile.pushes");
-        assert_eq!(portal_table("notices"), "plugin_portal.notices");
+        assert_eq!(scm_table("inventory"), "scm.inventory");
+        assert_eq!(pdm_table("drawings"), "pdm.drawings");
+        assert_eq!(lims_table("samples"), "lims.samples");
+        assert_eq!(rs_table("requisitions"), "rs.requisitions");
+        assert_eq!(gis_table("geo_zones"), "gis.geo_zones");
+        assert_eq!(ehs_table("incidents"), "ehs.incidents");
+        assert_eq!(bi_table("dashboards"), "bi.dashboards");
+        assert_eq!(ai_table("prompts"), "ai.prompts");
+        assert_eq!(im_table("messages"), "im.messages");
+        assert_eq!(integration_table("syncs"), "integration.syncs");
+        assert_eq!(mail_table("templates"), "mail.templates");
+        assert_eq!(mobile_table("pushes"), "mobile.pushes");
+        assert_eq!(portal_table("notices"), "portal.notices");
     }
 
     #[test]
@@ -476,8 +476,8 @@ mod tests {
     #[test]
     fn test_build_add_column_sql_schema_and_plain() {
         assert_eq!(
-            build_add_column_sql(Some("plugin_hrm"), "employee", "email", "TEXT NOT NULL"),
-            r#"ALTER TABLE "plugin_hrm"."employee" ADD COLUMN IF NOT EXISTS "email" TEXT NOT NULL"#
+            build_add_column_sql(Some("hrm"), "employee", "email", "TEXT NOT NULL"),
+            r#"ALTER TABLE "hrm"."employee" ADD COLUMN IF NOT EXISTS "email" TEXT NOT NULL"#
         );
         assert_eq!(
             build_add_column_sql(None, "t", "c1", "INT DEFAULT 0"),
