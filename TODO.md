@@ -1574,3 +1574,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **integration handler 6 保护**：LimsRecordCompleted 无关联 QMS 检验单时跳过回写（避免空号 404）。
 - 验证：4 服务编译通过、测试全绿（251+171+149+8 等）、门禁 PASS（qms 256/lims 1/ehs 1/integration 106 无跨 schema）。
 - 拆分前置条件 #1 全链路闭环：9 处直写→API + 订阅端接线 + 7 事件发布端补齐。
+
+## 2026-09-01 拆分前置治理：public 影子表清理（262 → 216）✅
+- **发现**：ownership review 归属矩阵中 pdm（pdm_*+bom_items 20 张）/mes（production_*/equipment_*/work_*/wip* 17 张）/bi（analytics_* 18 张）的历史表**未在阶段0 A-E 归位**，残留在 public（pdm 15 + mes 制造 14 + mes 2 + analytics 15 = 46 张）。
+- **判定**：这些是**影子表**——pdm/mes/bi schema 已有同名新表，代码经 search_path（pdm,public / bi,public）用新表；public 残留无显式 public.* 引用、无视图依赖、30+13 张 0 行（production_records 3 / analytics_comparison_* 各 1 为历史残留）。
+- **清理**：备份 topems_pre_shadow_drop_20260901_0009.dump → 迁移 `20260901000000_drop_public_shadow_tables.sql` DROP 46 张 → **public 262 → 216**；CASCADE 级联删 quality_traceability_records 指向 public.production_orders 的失效 FK（该 FK 引用影子表，删除合理，无数据影响）。
+- **验证**：无断裂 FK、门禁全 PASS（28 服务）、pdm/mes/analytics 编译通过、阈值"最大 schema 表数"改善。
+- **备注**：core_* 42 张符合平台保留决策（public）；portal 120 张为独立部署服务主表，非影子表。
