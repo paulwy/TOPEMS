@@ -62,6 +62,14 @@ pub struct AppState {
     pub audit_logger: Arc<dyn crate::routes::business_tools::permission_audit_log::AuditLogStore>,
     /// V465: Audit log retention policy configuration.
     pub audit_retention_policy: Arc<Mutex<crate::routes::business_tools::audit_retention::RetentionPolicy>>,
+    /// V468: Audit log archiver used by retention cleanup runs to write
+    ///       old entries to JSON / JSON.gz files before deletion.
+    pub audit_archiver: Arc<crate::routes::business_tools::audit_archiver::AuditLogArchiver>,
+    /// V473: Object-safe controller wrapping the generic retention
+    ///       cleanup task.  Exposes `start` / `stop` / `status` entry
+    ///       points used by the retention HTTP API.  The store is
+    ///       type-erased so it can live in non-generic AppState.
+    pub audit_cleanup_controller: Arc<crate::routes::business_tools::audit_retention_task::AuditCleanupController>,
 }
 
 impl FromRef<AppState> for AuthState {

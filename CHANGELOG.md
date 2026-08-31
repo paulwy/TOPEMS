@@ -7,6 +7,16 @@
 
 ## [未发布]
 
+### 变更
+
+- **Rust TLS 依赖切换**：`lapin`(AMQP 客户端) 的 TLS feature 从 `rustls`（默认 `aws-lc-rs`，需 CMake/Perl/NASM 等 C 工具链）切换为 `rustls--ring`（纯 Rust ring 加密库），CI/本地编译无需额外 C 工具链即可通过。涉及 `lib/Cargo.toml` 与 `lib/shared-event/Cargo.toml`
+
+### 修复
+
+- **unified-core 编译错误**：修复 V473 暴露的 P0 编译错误（audit trait 对象安全/dns 借用与字段缺失/AppState 初始化缺失字段），`cargo check -p topems-unified-core` 0 error 0 warning
+- **SQLX 离线缓存**：为 `database_permission_store.rs` 13 个查询手工生成 `.sqlx` 缓存（LF 规范化 + SHA256 hash，无需 DB 环境运行 `cargo sqlx prepare`），`SQLX_OFFLINE=true` 编译通过
+- **单元测试**：audit_retention_task + dns_service_discovery 共 33 个测试全部通过
+
 ### 计划中
 
 - v1.1.0 功能增强版本开发

@@ -481,6 +481,18 @@ async fn main() -> anyhow::Result<()> {
         std::sync::Arc::new(tokio::sync::Mutex::new(policy))
     };
 
+    let audit_archiver = std::sync::Arc::new(
+        crate::routes::business_tools::audit_archiver::AuditLogArchiver::new(
+            crate::routes::business_tools::audit_archiver::ArchiveConfig::default(),
+        ),
+    );
+    let audit_cleanup_controller = std::sync::Arc::new(
+        crate::routes::business_tools::audit_retention_task::AuditCleanupController::new(
+            audit_retention_policy.clone(),
+            audit_logger.clone(),
+        ),
+    );
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -502,6 +514,8 @@ async fn main() -> anyhow::Result<()> {
         permission_store,
         audit_logger,
         audit_retention_policy,
+        audit_archiver,
+        audit_cleanup_controller,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

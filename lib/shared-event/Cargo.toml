@@ -26,7 +26,7 @@ futures-lite = "2.3"
 
 # Redis/消息队列依赖
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
-lapin = { version = "4.10", default-features = false, features = ["rustls"] }
+lapin = { version = "4.10", default-features = false, features = ["rustls--ring", "default-runtime"] }
 
 # 缓存依赖
 parking_lot = "0.12"
