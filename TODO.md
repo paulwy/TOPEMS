@@ -1472,3 +1472,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **portal 评估**：AppState::new 简单（db+event_publisher），但 protected_routes 组装在 main.rs（非 lib）+ GraphQL/WebSocket/service_aggregator 复杂依赖；用户中心适合独立部署。
 - **决策**：portal **保持独立微服务**（与 gis 一致）——server Cargo 加 `module-portal` 占位（optional dep topems-portal，仅编译依赖不注册路由）；文档 modular-monolith-design.md 更新"明确不嵌入"表 + 边界规则 2。
 - 验证：`cargo check -p topems-server --features module-portal` 编译通过。
+
+## 2026-08-31 模块化单体：master-data 真实接入（advanced 组首个挂载）✅
+- 新建 `svc/server/src/modules/master_data_real_module.rs`（feature `module-advanced` 门控，仿 tms 模式）：复用 master-data `modules::create_routes()`（Router<AppState>，AppState=db/auth/metrics/start_time）；SEARCH_PATH public；nest /api/master-data + require_permission("master-data:admin")。
+- Cargo：`module-advanced` 由空幽灵改为挂载 `dep:topems-master-data`，**加回 default**（真实服务）；module-ai 仍幽灵保留待 ai 接入。
+- 注册：mod.rs cfg 声明 + main.rs #20 注册块（降级模式）。
+- 验证：`cargo build` 通过；启动冒烟 **18 模块**（master-data-real 已注册）；`/api/master-data/quality-v51/checks` 200；master_plugin 自含 /api/plugins 未 merge 主路由（独立 create_routes，不影响）。
+- 待办：analytics 同组（advanced）后续接入。

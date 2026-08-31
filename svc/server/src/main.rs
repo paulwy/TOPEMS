@@ -285,6 +285,21 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 20. 真实 master-data 服务接入（advanced 组，feature `module-advanced` 门控，默认启用）
+    #[cfg(feature = "module-advanced")]
+    {
+        use topems_server::modules::master_data_real_module::MasterDataRealModule;
+        match MasterDataRealModule::build().await {
+            Ok(real_md) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_md));
+                tracing::info!("✅ 真实 master-data 服务已注册（master-data-real，含数据库/事件总线）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 master-data 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 17. 订阅管理模块（P5 商业化支撑，feature `module-subscription` 门控）
     #[cfg(feature = "module-subscription")]
     {
