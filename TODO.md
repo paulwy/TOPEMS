@@ -1581,3 +1581,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **清理**：备份 topems_pre_shadow_drop_20260901_0009.dump → 迁移 `20260901000000_drop_public_shadow_tables.sql` DROP 46 张 → **public 262 → 216**；CASCADE 级联删 quality_traceability_records 指向 public.production_orders 的失效 FK（该 FK 引用影子表，删除合理，无数据影响）。
 - **验证**：无断裂 FK、门禁全 PASS（28 服务）、pdm/mes/analytics 编译通过、阈值"最大 schema 表数"改善。
 - **备注**：core_* 42 张符合平台保留决策（public）；portal 120 张为独立部署服务主表，非影子表。
+
+## 2026-09-01 拆分前置治理：finance_v5x 影子表清理（216 → 176）✅
+- **续查**：public 影子表全量对照（finance/bi/mes/qms/lims/erp/master_data 同名）——发现 82 张候选。
+- **本轮清理**：finance_v5x 40 张（finance_v54-v60 历史版本表）——仅 finance 引用、全 0 行、无视图依赖 → DROP（迁移 `20260901000001_drop_public_finance_shadow.sql`）→ **public 216 → 176**。
+- **验证**：断裂 FK 0、门禁全 PASS（28 服务）、finance 编译通过。
+- **保留待审计（~40 张通用名影子表）**：analysis_*/dashboards/data_sources/datasource_*/reports/equipment/materials/inspection_records(6 行)/report_templates(12 行)/payables/receivables/expenses/financial_vouchers/voucher_items/process_routes 等——**不可盲删**：portal/pm/ai 等经 search_path（portal,public / pm,public / ai_service,public）可能 fallback 到 public 同名表（如 portal.materials/pm.equipment 不存在→public；ai 用 ai_service 不含 bi 却引用 dashboards/data_sources→public）。**待逐表精确审计**（表 vs 各引用服务 search_path 解析）后清理或补 schema。
+- **备注**：teams/team_members 平台保留决策（public）；audit_logs 平台表保留；quality_traceability_records 无代码引用（死表，可选后续清理）。
