@@ -1244,3 +1244,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **保留**：public.accounting_subjects（finance 活跃 CRUD，待深判是否与 core_finance_accounts 同义）。
 - 验证：finance 编译 0 error；门禁 PASS（finance 引用 433→360）。
 - **剩余**：mobile 13 张 public 活跃表（异名新表并存待清理）、unified-core public.audit_logs、iam 132 组、accounting_subjects 深判。
+
+## 2026-08-31 同名多 schema 表收敛 第三批 mobile 组 ✅
+- **13 张 mobile 活跃表从 public 归位**：pg_dump DDL 重放 mobile schema（FK 链）+ schema_defense 补 13 张定义 + 代码 public.X→X + devices 显式 mobile.devices + 连带删 refresh_tokens/notifications 孤儿。
+- 验证：mobile 编译 0 error；门禁 PASS（mobile 引用 51）。
+- **剩余**：unified-core public.audit_logs、iam 132 组、accounting_subjects 深判。
