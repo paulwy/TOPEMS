@@ -1287,3 +1287,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 验证：unified-core 编译 0 error 无 warning；测试 1022 passed 0 failed；门禁 PASS；事务级 SQL 全验证（4 写入+2 查询）。
 - 提交：e80e2fd3f（已推送 origin/main）。
 - **遗留**：① mobile 12 文件 public 前缀替换待用户合并提交；② 用户工作区前端改动；③ perm-matrix R5 9 处 FAIL 既有技术债。
+
+## 2026-08-31 perm-matrix R5 utoipa security 注解补齐（finance 完成）✅
+- **R5 技术债（utoipa path 宏缺 security()/permission()）9 处修复 6 处**：
+  - finance accounting_subjects 5 个宏补 BearerAuth scope（list/get=finance:read、create/update=finance:write、delete=finance:delete）。
+  - financial_reports business-overview 补 finance:report:read。
+  - 采用现有 scope 命名（不新造），格式参考 financial_reports 既有宏（security 位于 method 行后）。
+- **tms optimization 3 处**（assignments/plan、routes/optimize、freight/quote → tms:write）：注解已补入 `svc/tms/src/modules/optimization.rs`，但该文件为 **untracked 用户新文件**（从未提交），未纳入本次提交，待用户提交该文件时一并带上。
+- 验证：perm-matrix scan R5 = 0（工作区）；finance/tms 编译 0 error；测试全过；门禁 PASS。
+- 提交：baa7a0106（finance，已推送）。
+- **遗留**：optimization.rs（untracked）待用户提交后 R5 全量归零。
