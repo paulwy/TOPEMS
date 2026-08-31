@@ -1371,3 +1371,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 迁移文件 `20260831190200_sync_tables_schema_migrate.sql`（幂等）：public 7 张跨域同步表（analytics_sync_records/conversion_*/core_inter_module_sync/qa_*_sync_records）归档 `_archive_*`（数据保留），目标 schema（bi/integration/ehs/lims/qms）同名表为运行真相。
 - 代码引用均指向业务 schema（lims/integration 显式前缀或 search_path 优先），public 旧版无引用。
 - 验证：public 同步表残留=0；lims/integration 测试全过；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（A 项 qa_* 域两分 + ehs 扩展）✅
+- 迁移文件 `20260831190300_qa_schema_migrate.sql`（幂等，动态 DO 块）：public 78 张 qa_* 表归位——
+  - qa_lab_* → lims；qa_ehs_* → **ehs**（EHS 域，ehs schema 已有 43 张同名真相，超报告 A 项范围扩展）；其余质量体系 qa_* → qms
+  - 规则：目标 schema 同名 → public 旧版归档 `_archive_*`（数据保留）；无同名 → SET SCHEMA
+- **测试修复**：svc/ehs/tests/ehs_tests.rs create_test_pool 加 after_connect `SET search_path TO ehs, public`（qa_ehs_* 归位后无前缀测试查询依赖该路径）
+- 验证：public qa_ 残留=0；lims/qms/ehs 测试全过；门禁 PASS。
+- **⚠️ 已知待办**：lims/qms 测试中 qa_* 相关用例为 `#[ignore]`（requires PostgreSQL），启用前需同样加 search_path。
