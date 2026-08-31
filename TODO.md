@@ -1539,3 +1539,14 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **lims**（svc/lims/src/modules/integration.rs 新建）：`POST /api/internal/lims/samples/integration`（样本集成创建，sample_no 幂等）+ `POST /api/internal/lims/tasks/integration`（任务集成创建，task_no 幂等，**按 sample_no 关联解析 NOT NULL 的 sample_id**，**移除原直写不存在的 priority 列**）。
 - **runtime 验证**：临时端口 18050/18051 全端点 200 + DB 落库确认 + 幂等不重复；qms/lims 测试 27 passed；门禁 PASS（qms 256/lims 引用）。
 - 待办：步骤B qms_lims_ehs 6 处直写 → reqwest 调上述端点。
+
+## 2026-08-31 拆分前置治理：步骤B integration 直写 → reqwest 集成 API ✅
+- **6 处 lims/qms 跨 schema 直写全部改 HTTP**（svc/integration/src/qms_lims_ehs.rs）：
+  - 新增 call_internal_api 辅助 + lims_url/qms_url（复用 LIMS/QMS_SERVICE_URL env）
+  - #1/#4 lims 样本 → `POST /api/internal/lims/samples/integration`
+  - #2/#5 lims 任务 → `POST /api/internal/lims/tasks/integration`
+  - #3 qms 纠正措施 → `POST /api/internal/qms/actions/integration`（**issue_id 须 null**——FK→qa_quality_issues，EHS hazard 非质量issue，原直写 related_issue_id 违反 FK 属僵尸）
+  - #6 qms 质检结果 → `POST /api/internal/qms/inspections/{no}/result`（test_data Value→JSON 字符串写 text 列 memo）
+- **僵尸标注**：3 处 public 直写（qa_ehs_hazards×2 表在 ehs schema + qa_ehs_alerts×1 表不存在）标注 TODO(EHS集成)，运行必失败，待 EHS 服务集成 API 统一改 HTTP。
+- **验证**：integration 编译通过、门禁 PASS（integration 引用 108 无跨 schema 直读）；issue_id null + memo JSON 字符串变体 runtime 200。
+- 待办：步骤C process_event 接线事件订阅；步骤D 撤销 integration.allow（需先处理 3 处 EHS 僵尸直写）。
