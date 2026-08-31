@@ -61,7 +61,7 @@ pub async fn get_dashboard_stats(
 
     let (notif_unread, pending_approvals, local_pending, mes_stats) = tokio::join!(
         fetch_user_notification_unread(&state, &headers),
-        fetch_user_pending_approvals(&state, &headers),
+        fetch_user_pending_approvals(&state, &claims.sub, &headers),
         fetch_user_local_pending_tasks(&state, &claims),
         fetch_mes_stats(&state),
     );
@@ -169,21 +169,15 @@ async fn fetch_user_notification_unread(state: &AppState, headers: &HeaderMap) -
     }
 }
 
-async fn fetch_user_pending_approvals(state: &AppState, headers: &HeaderMap) -> u64 {
+async fn fetch_user_pending_approvals(state: &AppState, user_id: &str, headers: &HeaderMap) -> u64 {
     let token = match extract_bearer_token(headers) {
         Some(t) => t,
         None => return 0,
     };
 
-    let mut client = state.workflow_client.clone();
-    client.set_auth_token(token);
-
-    match client.get_my_task_stats().await {
-        Ok(stats) => stats.my_pending.max(stats.todo) as u64,
-        Err(e) => {
-            tracing::warn!("Failed to fetch workflow pending approvals: {}", e);
-            0
-        }
+    match state.cached_my_task_stats(user_id, &token).await {
+        Some(stats) => stats.my_pending.max(stats.todo) as u64,
+        None => 0,
     }
 }
 

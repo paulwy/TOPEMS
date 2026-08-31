@@ -1810,3 +1810,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **对比**：A 35 分 vs B 18 分（8 维度）；A 唯一代价是 14 条跨库 API 调用，但已全部 service token 化（零额外改造）。
 - **关键证据**：任务按审批人分配（my_task_stats 全局待办）而非按域——分片后待办聚合/跨域流转/审计追溯三大难题。
 - **产出**：docs/architecture/workflow-split-assessment.md；P1 行动项 = portal 待办聚合缓存（my_task_stats TTL）。
+
+## 2026-09-01 portal 待办聚合缓存（P1，拆分前置优化）✅
+- **shared/mod.rs** 新增 `cached_my_task_stats(user_id, token)`：用户级待办统计缓存，key=`wf:stats:{user_id}`，TTL 60s，命中即返回、未命中调 workflow API 后写入。
+- **接入 3 处**：aggregation fetch_finance_stats / fetch_workflow_stats（传 claims.sub）+ dashboard fetch_user_pending_approvals。
+- **验证**：cargo build 通过；假 workflow server（18099）确认存活；**运行时端到端被 portal auth 遗留阻碍**（第 20 阶段已知：portal 拒绝手工签发用户 token 401，与缓存无关）。

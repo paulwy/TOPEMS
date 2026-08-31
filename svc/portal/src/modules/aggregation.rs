@@ -104,18 +104,19 @@ pub struct UnifiedTodosAggregation {
 /// 业务统计聚合 API
 pub async fn get_business_stats(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<BusinessStatsAggregation>> {
     let token = extract_bearer_token(&headers);
+    let user_id = &claims.sub;
 
     let (erp_stats, crm_stats, hrm_stats, finance_stats, mes_stats, workflow_stats) = tokio::join!(
         fetch_erp_stats(&state),
         fetch_crm_stats(&state),
         fetch_hrm_stats(&state),
-        fetch_finance_stats(&state, token.as_deref()),
+        fetch_finance_stats(&state, user_id, token.as_deref()),
         fetch_mes_stats(&state),
-        fetch_workflow_stats(&state, token.as_deref()),
+        fetch_workflow_stats(&state, user_id, token.as_deref()),
     );
 
     let result = BusinessStatsAggregation {
@@ -291,7 +292,7 @@ async fn fetch_hrm_stats(state: &AppState) -> HrmStats {
     }
 }
 
-async fn fetch_finance_stats(state: &AppState, token: Option<&str>) -> FinanceStats {
+async fn fetch_finance_stats(state: &AppState, user_id: &str, token: Option<&str>) -> FinanceStats {
     let client = state.erp_client.clone();
 
     let vouchers = match client.list_vouchers(1, 1).await {
@@ -300,12 +301,11 @@ async fn fetch_finance_stats(state: &AppState, token: Option<&str>) -> FinanceSt
     };
 
     let pending_approvals = if let Some(t) = token {
-        let mut wf = state.workflow_client.clone();
-        wf.set_auth_token(t);
-        match wf.get_my_task_stats().await {
-            Ok(stats) => stats.my_pending as u64,
-            Err(_) => 0,
-        }
+        state
+            .cached_my_task_stats(user_id, t)
+            .await
+            .map(|stats| stats.my_pending as u64)
+            .unwrap_or(0)
     } else {
         0
     };
@@ -341,17 +341,19 @@ async fn fetch_mes_stats(state: &AppState) -> MesStats {
     }
 }
 
-async fn fetch_workflow_stats(state: &AppState, token: Option<&str>) -> WorkflowStats {
+async fn fetch_workflow_stats(
+    state: &AppState,
+    user_id: &str,
+    token: Option<&str>,
+) -> WorkflowStats {
     if let Some(t) = token {
-        let mut client = state.workflow_client.clone();
-        client.set_auth_token(t);
-        match client.get_my_task_stats().await {
-            Ok(stats) => WorkflowStats {
+        match state.cached_my_task_stats(user_id, t).await {
+            Some(stats) => WorkflowStats {
                 pending_tasks: stats.my_pending as u64,
                 todo_count: stats.todo as u64,
                 available: true,
             },
-            Err(_) => WorkflowStats::default(),
+            None => WorkflowStats::default(),
         }
     } else {
         WorkflowStats::default()
