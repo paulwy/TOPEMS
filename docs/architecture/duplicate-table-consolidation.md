@@ -35,22 +35,23 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 | audit_logs | ×19 | 各服务自写 | 服务自治 | **保留 19 份**（每服务独立审计日志，平台审计由 unified-core 写 public.audit_logs） |
 | budgets | pm/erp/public | pm(7)、erp(0)、public(0) | 同义 | **pm 主**；删 erp.budgets + public.budgets（均无声明无数据） |
 | contracts | hrm/pm | hrm(18)、pm(10) | **异义** | hrm=劳动合同、pm=项目合同，**保留两份** |
-| customers | crm/erp | crm(38)、erp(8) | 待确认 | crm 主（177 行）；erp.customers 8 处引用待查（erp 若读 crm 客户应改 API）——后续批次 |
+| customers | crm/erp | crm(38)、erp(8) | **异义** | **保留两份**：crm.customers=CRM 客户主档（189 行）、erp.customers=ERP 客户模块（完整 CRUD），结构不同（crm 有 tags/rating，erp 有 credit_limit/customer_type）✅ 2026-08-31 |
 | documents | ai/doc/plugin_ai/pm/public | plugin_ai(22)、ai(2)、doc(0) | 同义 | doc 服务文档主（doc.* 独立命名）；public.documents 空壳删；doc/pm/ai/plugin_ai 属各自业务保留 |
-| inventory | wms/erp | wms(33)、erp(12) | 待确认 | wms 主（4 行）；erp.inventory 12 处引用待查（erp 读库存应改 API）——后续批次 |
+| inventory | wms/erp | wms(33)、erp(12) | **异义** | **保留两份**：wms.inventory=WMS 仓储库存（4 行）、erp.inventory=ERP 物料库存模块（完整 CRUD 含批次/单价），结构不同 ✅ 2026-08-31 |
 | locations | gis/public/wms | wms(14)、gis(11) | **异义** | gis=地理坐标、wms=库位，**保留**；删 public.locations 空壳 |
 | mes_qms_sync | integration/public | integration(10) | 同义 | **integration 主**；删 public.mes_qms_sync 空壳 |
 | project_members | pm/rs | rs(11)、pm(7) | **异义** | pm=项目管理、rs=RD 研发（rd 服务用 rs schema），**保留两份** |
 | project_milestones | pm/rs | rs(11)、pm(7) | **异义** | 同上，**保留** |
 | project_phases | pm/rs | rs(13)、pm(9) | **异义** | 同上，**保留** |
 | projects | pm/rs | rs(20)、pm(10) | **异义** | 同上，**保留** |
-| purchase_orders | erp/public/scm/srm | scm(31)、srm(26)、erp(11) | 待确认 | scm 主（65 行）；srm/erp 各自业务引用待查——后续批次 |
-| supplier_evaluations | public/scm/srm | srm(41)、scm(8) | 同义 | **srm 主**；scm 8 处引用待查——后续批次 |
-| suppliers | erp/public/scm/srm | srm(65)、scm(28)、erp(8) | 待确认 | srm 主（92 行）+ scm 主（195 行）疑似双主——后续批次 |
+| purchase_orders | erp/public/scm/srm | scm(31)、srm(26)、erp(11) | **收敛** | scm 主（65 行增强版含 WMS 同步列）+ erp 异义保留（ERP 采购单 order_no/tax）；**srm 表归 srm**（代码原错引 plugin_srm 已修复）；删 public.purchase_orders/purchase_items 空壳 ✅ 2026-08-31 |
+| supplier_evaluations | public/scm/srm | srm(41)、scm(8) | **收敛** | srm 主（代码错引 plugin_srm 已修复归 srm）；scm 副本模式保留（绑定 scm.suppliers 同步副本）；删 public.supplier_evaluations 空壳 ✅ 2026-08-31 |
+| suppliers | erp/public/scm/srm | srm(65)、scm(28)、erp(8) | **收敛** | srm 主档（92 行，代码错引 plugin_srm 已修复）+ scm 同步副本保留（sync_from_srm 字段，195 行）+ erp 异义保留（采购单读 name）；删 public.suppliers 空壳 ✅ 2026-08-31 |
 
-**结论**：16 张中，可收敛删除 = **6 张空壳**（analysis_results×2、budgets×2、mes_qms_sync、locations）；
-同名异义保留 = **7 组**（contracts、locations、project_*×4、audit_logs）；
-待业务确认/跨服务改造 = **customers、inventory、documents、purchase_orders、supplier_evaluations、suppliers**（后续批次）。
+**结论**：16 张中，可收敛删除 = **6 张空壳**（analysis_results×2、budgets×2、mes_qms_sync、locations）+ 后续批次 **5 张 public 空壳**（purchase_orders/purchase_items/supplier_evaluations/suppliers 等）；
+同名异义保留 = **7 组**（contracts、locations、project_*×4、audit_logs）+ **customers、inventory**（跨服务异义保留）+ **documents**（doc 主 + 各业务保留）；
+收敛归位 = **purchase_orders、supplier_evaluations、suppliers**（srm 代码错引 plugin_srm 已修复归 srm schema；scm 同步副本模式保留）。
+**16 张判定全部完成 ✅ 2026-08-31**。
 
 ---
 
@@ -75,7 +76,9 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - **mobile 13 张活跃表归位（✅ 2026-08-31）**：`offline_operations/sync_policies/push_notifications/push_devices/push_templates/photo_uploads/shortcuts/media_files/barcode_scans/offline_sync_records/devices/mobile_users/mobile_scan_records` —— 均为移动端活跃路由（/offline/sync、/scan/barcode 等）数据表误建 public。pg_dump 导出 DDL 重放到 mobile schema（含 FK 链，0 行数据）+ mobile.schema_defense TABLE_DEFS 补 13 张定义（新环境可自建）+ 代码 public.X→X + devices 显式 mobile.devices（门禁 table_owner 判定）+ 连带删 public.refresh_tokens/notifications（无服务引用的 FK 孤儿）。验证：mobile 编译 0 error；门禁 PASS（mobile 引用 51）。
 - **`public.accounting_subjects` 归位 finance（✅ 2026-08-31）**：深判为**同名异义**（简版科目 organization_id/category 结构 vs core_finance_accounts 企业科目体系），且是 finance 活跃功能（前端 accountingSubject.ts CRUD + 路由）。归位 `finance.accounting_subjects` 并**补列修复**——原 public 表缺 organization_id 列导致 INSERT/RETURNING 一直失败（创建功能损坏），新表含该列；代码 public→无前缀 + 删 public 表。验证：finance 编译 0 error；门禁 PASS（finance 引用 353）。
 - **`unified-core public.audit_logs` 判定保留（✅ 2026-08-31）**：unified-core schema=public（平台服务以 public 为 own schema），audit_logs 是其合法审计表（active INSERT/SELECT），**非冗余**，无需迁移。
-- **待办**：iam 平台表 132 组归位（联动待办④）；跨服务双引用 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）需裁决。
+- **跨服务 6 张裁决完成（✅ 2026-08-31）**：customers/inventory 异义保留；purchase_orders/supplier_evaluations/suppliers 收敛（srm 代码错引 plugin_srm 修复归 srm + public 空壳删 + scm 副本保留）。
+- **srm plugin_srm 前缀错位修复（✅ 2026-08-31）**：srm 18 张表代码全错引 `plugin_srm.*`（schema_defense 实际建在 srm），plugin_srm schema 仅 5 张招标表且均 0 行；统一去前缀归 srm，删 plugin_srm 冗余表。修复 srm 采购/供应商/评估/招标模块运行时"relation does not exist"缺陷。
+- **待办**：iam 平台表 132 组归位（联动待办④）。
 
 ### 第四批（跨服务读改造，同名同义但双引用）
 - customers（erp→crm API）、inventory（erp→wms API）、purchase_orders（srm/erp→scm 或确认异义）、supplier_evaluations（scm→srm）、suppliers（双主裁决）

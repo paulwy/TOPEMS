@@ -1254,3 +1254,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **accounting_subjects 归位 finance**：深判同名异义（简版 vs core_finance_accounts），活跃功能；归位 finance.accounting_subjects + **补 organization_id 列**（修复原 public 表缺列导致创建失败）+ 代码引用替换 + 删 public 表。门禁 PASS（finance 引用 353）。
 - **unified-core public.audit_logs 判定保留**：unified-core schema=public（own），audit_logs 合法审计表，非冗余。
 - **剩余**：iam 132 组、跨服务双引用 6 张裁决。
+
+## 2026-08-31 同名多 schema 表收敛 跨服务 6 张裁决 + srm plugin_srm 修复 ✅
+- **16 张 ambiguous 判定全部完成**：customers/inventory 跨服务异义保留；purchase_orders/supplier_evaluations/suppliers 收敛（srm 归位 + public 空壳删 + scm 副本保留）。
+- **srm 代码错引 plugin_srm 系统性修复**：18 张表 241 处 `plugin_srm.*` 前缀全去（schema_defense 建在 srm），修复 srm 采购/供应商/评估/招标模块运行时失败；删 plugin_srm 冗余招标 5 张 + public 空壳 4 张（purchase_orders/purchase_items/supplier_evaluations/suppliers）。
+- 验证：srm 编译 0 error；门禁 PASS（srm 引用 5）。
+- **剩余**：iam 132 组归位。
