@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -207,7 +208,8 @@ pub async fn send_location_message(
 
     let map_provider = payload.map_provider.unwrap_or_else(|| "osm".to_string());
 
-    let msg = match sqlx::query_as::<_, LocationMessage>(
+    let msg = match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
+        "public",
         r#"
         INSERT INTO core_location_messages (
             chat_id, sender_id, location_type, coordinates,
@@ -216,8 +218,8 @@ pub async fn send_location_message(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(payload.chat_id)
     .bind(Uuid::nil())
     .bind(&payload.location_type)
@@ -261,9 +263,10 @@ async fn check_geofence_triggers(
     lat: f64,
     lon: f64,
 ) -> Vec<serde_json::Value> {
-    let geofences = match sqlx::query_as::<_, ImGeofence>(
-        "SELECT * FROM core_geofences WHERE chat_id = $1 AND status = 'active'",
-    )
+    let geofences = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
+        "public",
+        "SELECT * FROM core_geofences WHERE chat_id = $1 AND status = 'active'"
+    ))
     .bind(chat_id)
     .fetch_all(pool)
     .await
@@ -299,9 +302,10 @@ pub async fn list_location_messages(
     State(pool): State<PgPool>,
     Path(chat_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, LocationMessage>(
-        "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50",
-    )
+    match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
+        "public",
+        "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50"
+    ))
     .bind(chat_id)
     .fetch_all(&pool)
     .await
@@ -332,7 +336,8 @@ pub async fn create_geofence(
         .unwrap_or_else(|| vec!["notification".to_string()]));
     let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
 
-    let created = match sqlx::query_as::<_, ImGeofence>(
+    let created = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
+        "public",
         r#"
         INSERT INTO core_geofences (
             name, description, chat_id, creator_id, shape_type,
@@ -341,8 +346,8 @@ pub async fn create_geofence(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.name)
     .bind(&payload.description)
     .bind(payload.chat_id)
@@ -383,11 +388,14 @@ pub async fn create_geofence(
                 sync_result.gis_sync_status = "synced".to_string();
                 sync_result.gis_fence_id = Some(gis_id);
 
-                let _ = sqlx::query("UPDATE core_geofences SET gis_fence_id = $1 WHERE id = $2")
-                    .bind(gis_id)
-                    .bind(created.id)
-                    .execute(&pool)
-                    .await;
+                let _ = sqlx::query(only_own_schema_query!(
+                    "public",
+                    "UPDATE core_geofences SET gis_fence_id = $1 WHERE id = $2"
+                ))
+                .bind(gis_id)
+                .bind(created.id)
+                .execute(&pool)
+                .await;
 
                 sync_result.geofence.gis_fence_id = Some(gis_id);
             }
@@ -409,10 +417,13 @@ pub async fn get_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ImGeofence>> {
-    match sqlx::query_as::<_, ImGeofence>("SELECT * FROM core_geofences WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
+        "public",
+        "SELECT * FROM core_geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(g) => Json(ApiResponse::success(g, "获取地理围栏成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
@@ -487,23 +498,25 @@ pub async fn update_geofence(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateImGeofenceRequest>,
 ) -> Json<ApiResponse<GeofenceSyncResult>> {
-    let current =
-        match sqlx::query_as::<_, ImGeofence>("SELECT * FROM core_geofences WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await
-        {
-            Ok(g) => g,
-            Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::error(404, "地理围栏未找到"));
-            }
-            Err(e) => {
-                return Json(ApiResponse::error(
-                    StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                    &format!("数据库查询失败: {}", e),
-                ));
-            }
-        };
+    let current = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
+        "public",
+        "SELECT * FROM core_geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(g) => g,
+        Err(sqlx::Error::RowNotFound) => {
+            return Json(ApiResponse::error(404, "地理围栏未找到"));
+        }
+        Err(e) => {
+            return Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                &format!("数据库查询失败: {}", e),
+            ));
+        }
+    };
 
     let name = payload.name.unwrap_or(current.name);
     let description = payload.description.or(current.description);
@@ -515,15 +528,16 @@ pub async fn update_geofence(
         .unwrap_or(current.event_types);
     let status = payload.status.unwrap_or_else(|| current.status.clone());
 
-    let updated = match sqlx::query_as::<_, ImGeofence>(
+    let updated = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
+        "public",
         r#"
         UPDATE core_geofences
         SET name = $1, description = $2, coordinates = $3, radius = $4,
             event_types = $5, status = $6, updated_at = NOW()
         WHERE id = $7
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&name)
     .bind(&description)
     .bind(&coordinates)
@@ -576,10 +590,13 @@ pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    match sqlx::query("DELETE FROM core_geofences WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "public",
+        "DELETE FROM core_geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -609,7 +626,7 @@ pub async fn unified_search_pois(
 
     if include_gis {
         if let Ok(gis_results) = sqlx::query(
-            "SELECT id, name, business_type, position, address FROM business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1",
+            only_own_schema_query!("public", "SELECT id, name, business_type, position, address FROM gis.business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1", "gis"),
         )
         .bind(&keyword)
         .fetch_all(&pool)
@@ -636,7 +653,7 @@ pub async fn unified_search_pois(
         }
 
         if let Ok(warehouses) = sqlx::query(
-            "SELECT id, warehouse_name, position FROM warehouse_locations WHERE warehouse_name ILIKE $1",
+            only_own_schema_query!("public", "SELECT id, warehouse_name, position FROM gis.warehouse_locations WHERE warehouse_name ILIKE $1", "gis"),
         )
         .bind(&keyword)
         .fetch_all(&pool)
@@ -666,7 +683,7 @@ pub async fn unified_search_pois(
     }
 
     if let Ok(device_results) = sqlx::query(
-        "SELECT id, device_name, position FROM device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1",
+        only_own_schema_query!("public", "SELECT id, device_name, position FROM gis.device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1", "gis"),
     )
     .bind(&keyword)
     .fetch_all(&pool)
@@ -780,7 +797,8 @@ pub fn create_location_routes() -> Router<PgPool> {
 }
 
 pub async fn register_geofence_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS core_location_messages (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -805,12 +823,13 @@ pub async fn register_geofence_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
             description TEXT,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "public",
         r#"
         CREATE TABLE IF NOT EXISTS core_geofences (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -833,24 +852,30 @@ pub async fn register_geofence_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_core_location_messages_chat ON core_location_messages(chat_id)",
+        only_own_schema_query!("public", "CREATE INDEX IF NOT EXISTS idx_core_location_messages_chat ON core_location_messages(chat_id)"),
     )
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_geofences_chat ON core_geofences(chat_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_core_geofences_chat ON core_geofences(chat_id)"
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_geofences_status ON core_geofences(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "public",
+        "CREATE INDEX IF NOT EXISTS idx_core_geofences_status ON core_geofences(status)"
+    ))
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
