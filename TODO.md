@@ -1327,3 +1327,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - 验证：ai 编译 0 error；测试全过（含 integration_tests）；门禁 PASS（ai 引用=42）
 - **⚠️ 未提交原因**：svc/ai 全部 8 个文件同时含用户工作区改动（only_own_schema_query 宏包装，HEAD 无宏）+ 用户 dsh 功能 60+ 文件——我的前缀替换与用户宏包装交织，**无法干净独立提交**。svc/ai 整体留在用户工作区，待用户统一提交时一并带上（代码自洽：工作区 ai.* 引用 + DB 已建 ai 表）。
 - **遗留**：ai_knowledge 模块（service.rs/mod.rs/rag.rs）未注册（死模块），含 core.* + plugin_ai 引用未编译——启用前需先改；宏参数 "plugin_ai" 冗余（编译期白名单多余项，无害）。
+
+## 2026-08-31 plugin_* schema 全库清零 + srm 残留修复 + shared-db 常量对齐 ✅
+- **plugin_aps 清理**：备份（docs/archive/plugin_aps_backup_20260831.sql，pg_dump）+ DROP SCHEMA plugin_aps CASCADE（9 行测试残留：capacities 1 + schedules 8，APS 已并入 mes 且归档，迁移脚本保留在生产环境用）。
+- **srm plugin_srm 残留清零（0606054f5）**：event_handlers 6 处 plugin_srm_ 表名→srm. 真实表（修复 2 个"引用缺表"运行时 bug：inquiries/supplier_performance 均不存在）；schema_defense TABLE_DEFS 补 2 表（14→16）；DB 建 srm.inquiries + srm.supplier_performance（UNIQUE(supplier_id,tenant_id)）；init/01+000 删 CREATE SCHEMA plugin_srm（防重跑复活）；init/04 26 处 plugin_srm.→srm.；snippets 模板清理。验证：srm 测试全过、3 类 SQL 事务验证 OK（upsert 1→2）、门禁 PASS。
+- **shared-db 20 个 SCHEMA 常量 plugin_ 前缀对齐（0892c7fc0）**：HRM/ERP/PM/CRM/QMS/MES/WMS/SCM/PDM/LIMS/RS/GIS/EHS/BI/AI/IM/INTEGRATION/MAIL/MOBILE/PORTAL → 真实 schema。业务零使用（纯死代码），仅 lib.rs pub use + 自测断言；同步断言 + 测试更名。验证：shared-db 143 passed、7 服务编译 0 error。
+- **里程碑：全库 plugin_* schema 清零**（plugin_srm/mes/ai/aps 全部删除，含空壳）。
+- **遗留**：modules 宏参数3 "plugin_srm"/"plugin_ai" 冗余白名单（无害，编译期多余项）；svc/ai 收敛待用户提交（见上条）。

@@ -130,3 +130,14 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - 验证：编译 0 error、测试全过、门禁 PASS（ai 引用=42）、INSERT 事务验证 OK。
 - **提交策略**：svc/ai 与用户工作区（only_own_schema_query 宏包装 + dsh 60+ 文件）交织，无法独立提交 → 整体留在用户工作区待统一提交；代码自洽（工作区 ai.* 引用 + DB ai 表）。
 - **遗留**：ai_knowledge 死模块（未注册，含 core.* + plugin_ai）；宏参数 "plugin_ai" 冗余。
+
+### 第五批续 3（srm 残留修复 + shared-db 常量 + plugin_* 全库清零，2026-08-31）
+
+**5f srm plugin_srm 残留清零（✅ 0606054f5）**
+- event_handlers 6 处 plugin_srm_ 表名→srm. 真实表（修复 2 个"引用缺表"运行时 bug：srm.inquiries / srm.supplier_performance 原不存在，INSERT/UPDATE 必失败）；schema_defense TABLE_DEFS 补 2 表（14→16，断言同步）；DB 建 2 表（supplier_performance 含 UNIQUE(supplier_id,tenant_id) 支撑 ON CONFLICT upsert，事务验证 1→2）；init/01 + migrations/000 删 CREATE SCHEMA plugin_srm（防重跑 init 复活）；init/04 26 处 plugin_srm.→srm.；snippets 模板清理。
+
+**5g shared-db 20 个 SCHEMA 常量对齐（✅ 0892c7fc0）**
+- HRM/ERP/PM/CRM/QMS/MES/WMS/SCM/PDM/LIMS/RS/GIS/EHS/BI/AI/IM/INTEGRATION/MAIL/MOBILE/PORTAL_SCHEMA：plugin_xxx → 真实 schema。实测业务零使用（仅 lib.rs pub use + 自测；gis 用本地常量），纯历史遗留修正；测试断言 + 更名同步。
+
+**5h plugin_* schema 全库清零（✅ 里程碑）**
+- plugin_srm/mes/ai/aps 四个 plugin_* schema 全部删除（含 plugin_srm 空壳）；备份 plugin_aps 至 docs/archive/。
