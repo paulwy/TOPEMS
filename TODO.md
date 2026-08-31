@@ -1260,3 +1260,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **srm 代码错引 plugin_srm 系统性修复**：18 张表 241 处 `plugin_srm.*` 前缀全去（schema_defense 建在 srm），修复 srm 采购/供应商/评估/招标模块运行时失败；删 plugin_srm 冗余招标 5 张 + public 空壳 4 张（purchase_orders/purchase_items/supplier_evaluations/suppliers）。
 - 验证：srm 编译 0 error；门禁 PASS（srm 引用 5）。
 - **剩余**：iam 132 组归位。
+
+## 2026-08-31 iam 平台表归位（第四批收官）✅
+- **删除 iam schema 133 张业务表误建副本**（qa_lims/qa_lab 31 张、core_finance+finance_v5x 62 张、core_ticket 5 张、pdm_* 19 张、equipment/material/production 等）——全部 0 行 + 无代码引用 + 其他 schema（finance/public/mes/pdm 等）有真表。
+- **保留 iam 10 张**：7 平台表（users/roles/permissions/sessions/refresh_tokens/password_reset_tokens/audit_logs）+ 3 疑似表（role_permissions/user_roles/user_access_logs）。
+- **发现待办缺陷**：unified-core **双轨**——认证 auth.rs 用 iam.users/iam.sessions/iam.refresh_tokens（旧），用户管理用 public.core_users/core_roles/core_permissions（新，schema_defense 建）。新注册用户写 core_users 但登录查 iam.users → 新用户登录失败。**待专项统一**（建议 auth.rs 迁 core_* 前缀，sessions/refresh_tokens 需建 core_ 新表或保留 iam）。
+- 验证：门禁 PASS；unified-core 编译 0 error。
