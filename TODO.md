@@ -1666,3 +1666,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **证据**：表 0 行/0 查询/无 struct 编译依赖；前端使用 federation(16)/orchestration(4)/ai_ops(1)。
 - **结论**：这些是**"内存态功能 + 持久化预留表"**——**保留**（功能活跃、空表无成本、删除风险高）。
 - **报告**：docs/architecture/portal-gateway-modules-review.md（分类 A 业务活跃 / B 网关基础设施 / C 后台预留 + 可选优化方案——需业务确认产品路线后批量移除 C 类建表代码）。
+
+## 2026-09-01 剩余活跃业务表归位收尾（78 → 73）✅
+- **发现**：ticket 服务运行时验证用**旧二进制**（SEARCH_PATH=public）启动，重建了 public.core_tickets 系列空影子表 → DROP 7 张（core_tickets/ticket_automation_rules/ticket_knowledge_articles + core_ticket_comments/activities/sla_escalations/sla_policies）；正式二进制用 ticket schema 不重建。
+- **归位**：vehicle_requests/vehicles → erp（仅 erp 引用、0 行）；DROP public.batch_records 影子（mes 同名活表）。
+- **DROP 5 张**：inbound_orders/outbound_orders/warehouses（wms 显式 wms.* 引用）、business_locations（gis 同名）、supply_chain_orders（纯死表 0 提及）。
+- **保留（有数据/跨域/无专属 schema）**：device_locations(170)/factory_maps(512)/report_templates(12)/archive_config(14)/dashboard_stats(12)/products(21)/inspection_records(6) 有历史数据；dynamic_data（master-data 用 public 未 schema 化）；inventory_items（erp/wms 跨域待 API 化）。
+- **验证**：门禁 28 PASS、断裂 FK 0、wms/gis/erp/ticket 编译通过。
+- **累计**：public 262 → **73**；core_* 37 平台保留 + 平台表 + 9 张活跃业务表合理保留。
