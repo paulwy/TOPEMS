@@ -1213,4 +1213,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **baseline 瘦身**：`bare_ref_baseline` 17 → 4（仅 monitor 4 项，标注为 SQL 模板配置非直读）。
 - **验证**：`check_schema_boundary.py` 全 PASS（0 违规，communication/hrm/finance 均 PASS）；`cargo check --workspace` 0 error；public.audit_logs 建表成功。
 - **环境发现**：本机存在双 postgres——本地 Homebrew postgres@18 抢占 localhost:5432（数据为阶段0前旧状态），Docker 容器 topems-postgres（阶段0后权威库）通过容器网络供 docker 部署服务连接；**cargo run 本地开发会连到旧库，需注意**。8000 端口被 Docker 容器 topems-unified-core 占用（SSE 测试超时非回归）。
-- **待办**：①同名多 schema 表（audit_logs 等 16 张）收敛去重（独立项）；②communication→gis 改走 gis HTTP API；③hrm→erp 凭证写入事件化（hrm 发工资核算完成事件 → erp 消费生成凭证）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
+- **待办**：①同名多 schema 表（audit_logs 等 16 张）收敛去重（独立项）；②~~communication→gis 改走 gis HTTP API~~ ✅（2026-08-31 已落地，见下）；③hrm→erp 凭证写入事件化（hrm 发工资核算完成事件 → erp 消费生成凭证）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
+
+## 2026-08-31 P1-2 communication→gis 改走 HTTP API ✅
+- **改造** `svc/communication/src/im_location.rs`：新增 `gis_search_locations()` 辅助函数调用 gis HTTP `GET /api/gis/search?q=..&type=business|warehouse|device`，`unified_search_pois` 中 3 处 `gis.*` 直查 SQL 全部替换为 HTTP 调用（business/warehouse→gis_count、device→third_party_count），移除 only_own_schema_query! 对 gis 的白名单依赖。
+- **gis 侧** `svc/gis/src/modules/search.rs`：business 搜索结果补 `address` 字段（此前缺失，communication 原有读取）。
+- **门禁**：`schema_boundary.json` communication.allow 清空 gis（不再引用 gis schema，引用 0）。
+- **验证**：`cargo check -p topems-communication -p topems-gis` 0 error 0 warning（修复 unused Row import / _pool）；`check_schema_boundary.py` 全 PASS（communication 引用=0）；gis HTTP API 实测 200（data.results 结构匹配，三表 0 行无数据）。
+- **说明**：`create_location_routes` 为既有 dead code，POI 搜索当前无 HTTP 入口（如需启用需挂载路由，超出本次范围）。
