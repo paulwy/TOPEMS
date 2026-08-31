@@ -1304,3 +1304,15 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 验证：shared-db 143 + srm 516 测试全过（含 srm_table 断言）；门禁 PASS；业务代码 plugin_srm.* 引用清零。
 - 提交：680c8f60d（已推送）。
 - **新登记待办（plugin_* 体系过时，不擅改）**：shared-db `schema.rs` 19 个 plugin_* SCHEMA 常量（hrm/erp/pm/crm/qms/mes/wms/srm/scm/pdm/lims/rs/gis/ehs/bi/ai/im/integration）业务零使用（仅 shared-db 内部 + 自洽断言），各服务已用真实 SERVICE_SCHEMA。其中 plugin_ai（3 表）/plugin_mes（audit_logs）有"插件系统管理"注释佐证为设计选择（且 ai/mes 主 schema 存在同名表，属双 schema 待评审）；plugin_aps（5 表）在 _archive 归档服务。**建议后续统一评审这些 plugin_* schema 归属**（属 P1-2 阶段 0 E 项代码侧）。
+
+## 2026-08-31 mes 审计表统一 + plugin_* 残留收尾 ✅
+- **mes 全仓库唯一 plugin_* 审计残留收敛**：crm/hrm/rd 均用真实 schema 审计表（Some("crm"/"hrm"/"rs")），mes 独用 plugin_mes.audit_logs。
+  - audit.rs 7 处 + mod.rs 建表/索引 6 处 plugin_mes→mes；schema_defense audit_logs 加回 Cluster-A 15 列。
+  - DB：mes.audit_logs 建表（Cluster-A）+ DROP SCHEMA plugin_mes CASCADE。
+  - 验证：mes 编译 0 error；测试全过；写入事务验证 OK；门禁 PASS（mes 引用=3）。
+  - 提交：894a56596（已推送；含上一轮 caf57d68c 移除的中间态，最终态正确）。
+- **plugin_* schema 现状盘点**：
+  - plugin_srm：已删（4a）✓；plugin_mes：已删（本轮）✓
+  - plugin_ai（3 表 documents/document_chunks/qa_history）：ai 服务 vector.rs 写入目标（有注释"插件系统管理"）；但 ai schema 存在同名 4 表（documents 32 行孤儿数据 + analysis_results 3 行），**ai 服务横跨 ai/core/plugin_ai 三 schema，需专门评审归属**（登记待办）
+  - plugin_aps（5 表）：服务在 `_archive`（归档遗留）
+- **新登记待办（ai 服务 schema 评审）**：ai 服务跨 ai（schema_defense 4 表）/core（knowledge_*）/plugin_ai（vector.rs 写入）三 schema；plugin_ai.analysis_results 缺失但代码 INSERT INTO plugin_ai.analysis_results（会失败）；ai.documents 32 行孤儿。建议按 P1-2 阶段 0 一并评审 ai 服务 schema 归属。

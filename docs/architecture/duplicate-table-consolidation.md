@@ -110,3 +110,14 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 1. **mobile 12 文件 public 前缀替换**：3b 批次中 12 个移动端代码文件（public.X→无前缀）已编译/门禁通过，因与用户工作区改动混叠未提交，待用户合并提交。
 2. **用户工作区改动**：apps/web 前端测试/API、svc/srm/Cargo.toml 等（勿动）。
 3. **perm-matrix R5 9 处 FAIL**（finance accounting_subjects 5 + financial_reports 2、tms optimization 3）：既有技术债（utoipa security 注解缺失），不阻断门禁（DRY-RUN）。
+
+### 第五批续（plugin_* 残留收尾，2026-08-31）
+
+**5c SRM_SCHEMA 一致性（✅ commit 680c8f60d）**
+- 4a 去前缀后 shared-db `SRM_SCHEMA` 仍指向已删的 plugin_srm → 改 "srm"；断言与 srm integration_tests 3 处同步；业务 plugin_srm.* 引用清零。
+
+**5d mes 审计表统一（✅ commit 894a56596）**
+- mes 是全仓库唯一用 plugin_mes 审计表的服务（crm/hrm/rd 均用真实 schema）。
+- audit.rs/mod.rs 共 13 处 plugin_mes→mes；schema_defense audit_logs 重建为 Cluster-A 15 列；DB 建 mes.audit_logs + DROP SCHEMA plugin_mes CASCADE。
+- **plugin_* schema 现状**：plugin_srm/plugin_mes 已删；plugin_ai（3 表，ai 服务 vector.rs 写入）+ plugin_aps（5 表，_archive 归档）残留。
+- **新待办（ai 服务 schema 评审）**：ai 服务跨 ai/core/plugin_ai 三 schema（schema_defense 建 ai 4 表含 documents 32 行孤儿、knowledge 模块用 core.*、vector.rs 写 plugin_ai.* 且 plugin_ai.analysis_results 缺表致 INSERT 失败）——归 P1-2 阶段 0 评审。
