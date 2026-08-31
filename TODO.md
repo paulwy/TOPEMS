@@ -1752,3 +1752,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **效果**：所有服务（经 build_application protected 路由）自动区分服务调用 vs 用户调用；下游可读 ServiceIdentity（RLS 豁免/限流差异/审计）。
 - **验证**：shared-auth 219 测试全过（含 service 3 + service_identity 2）、编译通过、运行时实测——service token 调 statistics → 200 + 审计日志 "服务间调用 service=erp-service"；无 token 401 不触发（区分服务/用户）。
 - **注意**：RLS 豁免（service 跨租户聚合）未做——当前 RLS 未阻碍（wms statistics 实测返回全量 3200）；若未来业务连接启用 RLS 需 service 豁免时再处理。
+
+## 2026-09-01 批量改造跨服务调用（TypedServiceClient 服务间认证封装）✅
+- **封装** lib/shared-service-client trait_api.rs：`TypedServiceClient::with_service_token/set_service_token`（加 topems-shared-auth 依赖）——一键签发 service token 设置认证（自动 Bearer）。
+- **应用** erp main.rs：finance_client（finance:read）+ hrm_client（hrm:admin）改用 with_service_token——消除转发用户 token 无目标权限 → 401 降级缺陷。
+- **审计**：communication→gis 的 /search 是 gis public 路由（无需认证）——不改造；11 服务用 TypedServiceClient，后续可按需扩展。
+- **验证**：shared-service-client + erp 编译通过；erp 启动 client 无 mock 降级；service token 调 finance → 200 + 审计日志 "service=erp-service"；无 token → 401。
