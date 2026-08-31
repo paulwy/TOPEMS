@@ -252,7 +252,7 @@ impl SrmEventHandlers {
         let now = Utc::now();
 
         let existing_srm_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+            "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2",
         )
         .bind(payload.supplier_id)
         .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
@@ -262,7 +262,7 @@ impl SrmEventHandlers {
 
         if existing_srm_count > 0 {
             sqlx::query(
-                r#"UPDATE plugin_srm.suppliers
+                r#"UPDATE suppliers
                     SET name = $2, legal_name = $3, contact_person = $4,
                         phone = $5, email = $6, address = $7,
                         tax_id = $8, status = $9, sync_from_scm = TRUE,
@@ -283,7 +283,7 @@ impl SrmEventHandlers {
             .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
             .execute(&self.db)
             .await
-            .map_err(|e| format!("更新 plugin_srm.suppliers 失败: {}", e))?;
+            .map_err(|e| format!("更新 suppliers 失败: {}", e))?;
         } else {
             let supplier_no = format!(
                 "SUP-{}",
@@ -296,7 +296,7 @@ impl SrmEventHandlers {
             );
 
             sqlx::query(
-                r#"INSERT INTO plugin_srm.suppliers
+                r#"INSERT INTO suppliers
                     (id, tenant_id, supplier_no, name, legal_name, contact_person,
                      phone, email, address, tax_id, status,
                      risk_level, sync_from_scm, scm_supplier_id,
@@ -319,7 +319,7 @@ impl SrmEventHandlers {
             .bind(now)
             .execute(&self.db)
             .await
-            .map_err(|e| format!("创建 plugin_srm.suppliers 失败: {}", e))?;
+            .map_err(|e| format!("创建 suppliers 失败: {}", e))?;
         }
 
         sqlx::query(
