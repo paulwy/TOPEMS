@@ -1181,3 +1181,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - 精确扫描无前缀引用回归 0 项（所有迁移表对应 SEARCH_PATH 可达）
   - integration/mes/analytics/unified-core 测试通过（unified-core SSE 3 项集成测试因 8000 端口被 Docker 占用超时，非迁移回归）
   - unified-core server 冒烟：连库 schema 自检 30 表一致，18000 端口 HTTP 路由正常
+
+## 2026-08-31 P1-2 阶段0 后拆分阈值基线重测 ✅（预案同步）
+- **动机**：database-split-plan.md 现状基线为阶段 0 前（29MB/457 表/17 schema/public 219），阶段 0 落地后需重测
+- **重测结果**：~31MB（32,372,415 B）/ 449 表 / 20 schema / **public 37（8.2%）** / 最大业务 schema finance 58 / RLS 298（66%）
+- **阈值对比**（全部远未达成）：总大小 31MB << 200GB ｜ 最大 schema 58 << 600 张 ｜ 连接/跨域/备份无压力
+- **预案更新**：`database-split-plan.md` 现状基线/表分布/关键观察/阈值当前值/阶段0状态/5.1 执行结果 全部同步；建议结论保持"当前不拆，阶段 1 逻辑隔离为下一步"
+- **剩余待定**：public 37 张 core_* 平台级表是否迁 unified_core schema（决策输入，不影响阶段 1）

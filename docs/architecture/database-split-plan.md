@@ -1,49 +1,56 @@
 # TopEMS 数据库物理拆分预案（P1-2）
 
-> **状态**：预案已定 + schema 归属评审完成（2026-08-31） · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
-> **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）**
+> **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
+> **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）** · `TODO.md`（阶段 0 执行记录）
 
-## 1. 现状基线（2026-08-31 实测）
+## 1. 现状基线（2026-08-31，阶段 0 执行后重测）
 
-以下数据来自运行中的 `topems-postgres` 实例（docker，`pgvector/pgvector:pg18`）：
+以下数据来自运行中的 `topems-postgres` 实例（docker，`pgvector/pgvector:pg18`），为阶段 0 schema 归位落地后的实测值：
 
 | 指标 | 实测值 | 说明 |
 |---|---|---|
 | PostgreSQL 版本 | **18.6**（Debian pg18） | 文档多处标注 16，需同步修正 |
-| 数据库总大小 | **29 MB** | 体量很小，远未触及单实例瓶颈 |
-| 表总数 | **457 张**（17 个 schema） | 见下方分布 |
-| RLS 覆盖 | **0 / 457（0%）** | 全部 schema 均未启用 RLS（见 P2-1 报告） |
+| 数据库总大小 | **~31 MB**（32,372,415 B） | 体量很小，远未触及单实例瓶颈 |
+| 表总数 | **449 张**（20 个 schema） | 阶段 0 前 457 张（drop 5 双写冗余 + 1 残留） |
+| public 承载表 | **37 张（8.2%）** | 阶段 0 前 219 张（48%），巨型堆已消除 |
+| 最大业务 schema | **finance 58 张** | 阶段 0 前 erp 41 张 |
+| RLS 覆盖 | **298 / 449（66%）** | 阶段 0 前 0%（P2-1 已启用，见 rls-coverage-report.md） |
 
-### 表分布（按 schema）
+### 表分布（按 schema，阶段 0 后）
 
 | schema | 表数 | schema | 表数 |
 |---|---|---|---|
-| **public** | **219（48%）** | crm | 12 |
-| erp | 41 | mobile | 10 |
+| **finance** | **58** | pdm | 19 |
+| erp | 41 | pm | 18 |
+| **public** | **37**（平台 core_*/team*） | srm | 14 |
+| **lims** | **31** | crm | 13 |
+| **bi** | **31** | mobile | 10 |
 | wms | 29 | integration | 9 |
 | hrm | 28 | rs | 6 |
-| scm | 25 | ai | 4 |
-| gis | 20 | iam | 3 |
-| pm | 18 | plugin_ai / plugin_mes | 1+1 |
-| bi | 16 | srm | 14 |
+| **qms** | **26** | ai | 4 |
+| **mes** | **26** | iam | 3 |
+| **scm** | **26** | master_data | 0（已清空，保留空 schema） |
+| gis | 20 | — | — |
 
-### 关键观察
+> 新增 schema：lims / qms / mes / pdm / finance / master_data；`plugin_ai` / `plugin_mes` 残留已清理。
 
-1. **public schema 承载 48% 的表（219 张）**，按业务前缀组织（qa 57 / finance 48 / core 45 / pdm 19 / analytics 13 / material 6…），大量业务表并未归入各自业务 schema——这是当前最大的"数据边界不整洁"来源。
-2. 业务 schema（erp/wms/hrm/scm 等）已存在且表量适中，天然可作为物理拆分边界。
-3. 数据库 29MB、连接以 PgBouncer 汇聚，单实例容量与连接均无压力。
+### 关键观察（阶段 0 后更新）
+
+1. **public schema 巨型堆已消除**：219 张（48%）→ 37 张（8.2%），仅保留平台级 `core_*`（unified-core 域）与 `team*`，与"public=跨域共享"目标一致。
+2. 阶段 0 执行中基于代码证据修正 11 项归属偏差（`bom_items`/`quality_records`→mes、`core_master_data_*`→public、refs→各业务服务），详见 `TODO.md` 阶段 0 记录。
+3. 数据库 ~31MB、连接以 PgBouncer 汇聚，单实例容量与连接均无压力。
 
 ## 2. 拆分触发阈值（达到任一即启动评估）
 
-| 阈值指标 | 当前值 | 触发值（建议） | 度量方式 |
+| 阈值指标 | 当前值（阶段 0 后） | 触发值（建议） | 度量方式 |
 |---|---|---|---|
-| 数据库总大小 | 29 MB | **> 200 GB** | `pg_database_size` |
-| 最大业务 schema 表数 | erp 41 | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
+| 数据库总大小 | **~31 MB** | **> 200 GB** | `pg_database_size` |
+| 最大业务 schema 表数 | **finance 58** | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
 | 活跃连接峰值（经 PgBouncer） | 未达压力 | **> 400** 持续 10 分钟 | PgBouncer stats |
-| 跨 schema 查询占比 | 低（public 聚合） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
+| 跨 schema 查询占比 | 低（public 聚合已消除） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
 | 备份/恢复时间 | 秒级 | **> 15 分钟** | RPO/RTO 实测 |
 
-> 结论：当前 29MB / 457 表远未达到物理拆分阈值，**不建议现在执行物理拆分**。
+> 结论：当前 ~31MB / 449 表 / 最大 schema 58 张，远未达到物理拆分阈值，**不建议现在执行物理拆分**；阶段 1（逻辑隔离）为下一步重点。
 
 ## 3. 分阶段迁移路径
 
@@ -78,12 +85,12 @@
 
 ## 5. 建议与开放决策
 
-1. **当前不拆**：29MB 规模物理拆分只会增加运维复杂度而无收益，采纳"阈值触发式"预案。
-2. **优先做阶段 0（schema 归位）**：这是真正的技术债，比物理拆分更紧迫，且是未来拆分的先决条件。
-3. **待定项**：qa 域（57 表）的业务归属需确认（独立 qa schema 还是并入 mes/质量域）；public 中 `core_*` 45 表的去留（平台级保留 vs 迁入 unified_core schema）。
+1. **当前不拆**：~31MB 规模物理拆分只会增加运维复杂度而无收益，采纳"阈值触发式"预案。
+2. **阶段 0（schema 归位）已完成（2026-08-31）**：public 219 → 37 张，建 lims/qms/mes/pdm/finance/master_data schema；执行中修正 11 项归属偏差（详见 `TODO.md` 阶段 0 记录与 §5.1）。
+3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
-> 本预案为决策输入，是否启动阶段 0 及 qa 域归属由架构负责人评审后落定。
+> 本预案为决策输入；阶段 0 已按批准执行，阶段 1（逻辑隔离）为下一步。
 
 ### 5.1 归属评审结论（2026-08-31）
 
@@ -92,4 +99,9 @@
 - **核心发现**：`lims`/`qms`/`mes`/`pdm` 声明专属 schema 但 DB 无此 schema，其表全部落 public——这是 public 巨型堆（219 张）主要成因。
 - **public 219 张表已 100% 归类**（lims 31 / qms 27 / pdm 20 / mes 17 / finance 58 / bi 18 / erp 6 / master_data 8 / platform 保留 public 32 / integration 2）。
 - **待确认项**（A-E）：qa 域两分（lab/lims→lims，其余→qms）；core_finance_*→finance 剥离；core_* 平台级保留 public；material_*→mes（备选 erp）；plugin_* 残留清理。
-- **阶段 0 执行路线**：建缺失 schema → 逐表 SET SCHEMA → search_path 兼容期 → 门禁/离线编译核对 → 清理 plugin 残留。
+- **阶段 0 执行结果（2026-08-31，已落地）**：A–E 全部批准执行。建 lims/qms/mes/pdm/finance/master_data；182 张表 SET SCHEMA 归位 + drop 5 双写冗余 + plugin 清理；**执行中发现 11 项归属矩阵与代码证据偏差并修正**：
+  - `bom_items`/`quality_records` → **mes**（mes 完整 CRUD/建表 def；pdm 用 `pdm_bom_items` 不同表、qms 不引用）
+  - `core_master_data_*`/`core_mdm_*`（5 张）→ **public**（unified-core schema_defense 建表+读写，master-data 服务不引用）
+  - `crm/scm_master_data_refs` → **crm/scm**（shared-db `MasterDataRefService` 无前缀，search_path 首位）；erp/pdm refs 已在各自 schema，master_data 冗余副本已 drop
+  - 最终 master_data schema 清空（0 张，保留空 schema）
+- **阶段 0 验证**：`cargo check --workspace` 0 error · 静态边界门禁 PASS · 216 表无前缀可达冒烟 · 精确扫描无前缀回归 0 项 · unified-core 连库自检 30 表一致 · 迁移备份 `/tmp/topems_pre_schema_migration.dump`。
