@@ -1639,3 +1639,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：mes/erp 编译通过、门禁 28 PASS、断裂 FK 0。
 - **累计**：public 262 → **98**（155 张清理 + 32 张归位）。
 - **剩余 public 98 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等）+ ticket 表（search_path=public）+ 其他待审计。
+
+## 2026-09-01 拆分前置治理：IoT/GIS/Mobile 影子清理（98 → 88）✅
+- **DROP 10 张**：audio_recordings/video_recordings/patrol_records/photo_evidences（mobile 显式 schema）、location_photos/map_markers/warehouse_locations（gis 显式 schema）、scan_records（lims 用 qa_lims_barcode_scan_records 前缀）、anomaly_records/product_boms（0 引用死表）。
+- **验证**：gis/mobile/lims 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **88**（165 张清理 + 32 张归位）。
+- **拆分阈值**：最大 schema 表数 **public 88**（已低于 portal 120——public 不再是最大 schema，从 262 大幅收敛）。
+- **剩余 public 88 张**：core_* 42（平台保留）+ 平台表 21 + 基础设施 5（cqrs/schema_registry/spatial_ref_sys）+ ticket 2（search_path=public）+ 活跃业务表 ~18（dynamic_data/inventory_items/vehicles/warehouses/report_templates/dashboard_stats 等，有 SQL 引用需归位专项或保留）。
