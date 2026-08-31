@@ -760,9 +760,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **缓存**：`cargo sqlx prepare`（DATABASE_URL 需带 `options=-csearch_path=mes,public`）重新生成 .sqlx（236 文件）
 - **警告**：cargo fix 清理 5 个 unused import/变量
 - **下一步（用户 P0 列表）**：
-  - [ ] mes 挂网关路由（scripts/services.conf + 8099 网关）+ 启动验证
-  - [ ] ai MCP 接入 mes 真实工具（schema_defense 风格，参考 crm/erp 的 29+3=32 个已有工具）
-  - [ ] MES 子服务/服务发现配置（lib/shared-core config/services.rs）
+  - [x] mes 挂网关路由（scripts/services.conf + 8099 网关）+ 启动验证（2026-08-29 mes_real_module 第 13 模块，`/api/mes/orders` 真实数据）
+  - [x] ai MCP 接入 mes 真实工具（schema_defense 风格，参考 crm/erp 的 29+3=32 个已有工具）（2026-08-29 mes.rs 4 工具真实化，6 测试通过）
+  - [x] MES 子服务/服务发现配置（lib/shared-core config/services.rs）（2026-08-31 收尾勾选：已被 server 统一入口 module-mes 取代，MES_SERVICE_URL env 提供独立部署 fallback，services.rs 静态配置不再需要）
 
 ## 2026-08-29 mes 网关接入 + MCP 真实化：✅ 完成
 - **mes 挂网关 8099**：svc/server 新增 `module-mes` feature + `mes_real_module.rs`（AppState 直传模式，参照 pm/crm），加入 default features + main.rs 注册（第 13 模块）
@@ -1507,3 +1507,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **代码**：vector_store.rs 5 处 `hrm.vectors → ai.vectors`（引用仅 shared-ai，svc/ai 唯一使用者）。
 - **验证**：迁移执行成功（ai|vectors 存在、hrm.vectors 已删）；ai 编译通过（SQLX_OFFLINE）；门禁 ai PASS schema=ai 引用 42（向量表现为自有 schema 合法）。
 - **意义**：白名单 3 项 allow + 1 白名单外 → 2 项 allow（integration/unified-core 均成立），**无待处理项**。
+
+## 2026-08-31 收尾：MES 遗留项勾选 + P0 四巨头状态校准 + erp 空表清理 ✅
+- **MES 3 项勾选**：mes 网关路由（2026-08-29 完成）/ ai MCP mes 工具真实化（完成）/ MES 服务发现（被 module-mes 统一入口 + MES_SERVICE_URL 取代，静态 services.rs 不再需要）。
+- **P0 四巨头状态校准**（2026-08-28 标注"未启动"）：
+  1. **事件总线升级**（Redis Stream + ACK + DLQ）✅ **已完整落地**：publisher 默认 stream 模式（V321）+ StreamEventPublisher（ACK）+ dead_letter_queue.rs（DLQ/重试/统计），Pub/Sub 降级为显式 fallback。
+  2. **模块化单体**（32 svc → 7 模块组 + Feature Flags）✅ 已落地：16 真实服务接入 server 统一入口（18 模块），独立部署 7 个按边界规则。
+  3. **accounting_subjects 物理迁移**（ERP→Finance）✅ V321 已迁移 + erp 改走 finance API（2026-08-31）；本轮 **DROP erp.accounting_subjects 0 行空表残留**（迁移 20260831191000）收尾。
+  4. **编译时边界检查全覆盖**（原 6/32 服务）✅ 门禁 schema_boundary 已覆盖 28 服务。
+- 至此 TODO 顶部"关键未启动 P0"四项全部落地/已明确状态。
