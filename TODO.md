@@ -1467,3 +1467,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **rd-real / srm-real 验证**（real_module 已存在）：`/api/rd/change-requests` 200、`/api/srm/suppliers` 200。
 - **srm 双前缀修复**：`svc/srm/src/modules/supplier.rs` 13 处 `"/api/srm/` → `"/`（supplier 路由自含前缀，与其他模块相对路径不一致，导致 nest /api/srm 后双前缀 404）；修复后 `/api/srm/suppliers` 200；srm 516 测试全过。
 - server 已注册 17 模块（16 real + platform/dashboard/finance）；srm bidding 模块未挂路由（独立服务亦未挂，非本次问题）。
+
+## 2026-08-31 模块化单体：portal 保持独立部署决策 ✅
+- **portal 评估**：AppState::new 简单（db+event_publisher），但 protected_routes 组装在 main.rs（非 lib）+ GraphQL/WebSocket/service_aggregator 复杂依赖；用户中心适合独立部署。
+- **决策**：portal **保持独立微服务**（与 gis 一致）——server Cargo 加 `module-portal` 占位（optional dep topems-portal，仅编译依赖不注册路由）；文档 modular-monolith-design.md 更新"明确不嵌入"表 + 边界规则 2。
+- 验证：`cargo check -p topems-server --features module-portal` 编译通过。

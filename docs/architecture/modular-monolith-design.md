@@ -143,10 +143,11 @@ module-ai = []
 
 | 状态 | 模块 | 说明 |
 |------|------|------|
-| ✅ 已接入（default） | platform / finance-demo / dashboard + 真实服务 crm / erp / finance / qms / hrm / scm / wms / pm / mes / ehs / lims | 12 个真实业务服务经 real_module 接入统一入口，feature 门控，default 启用 |
+| ✅ 已接入（default） | platform / finance-demo / dashboard + 真实服务 crm / erp / finance / qms / hrm / scm / wms / pm / mes / ehs / lims / ticket / rd / srm | 15 个真实业务服务经 real_module 接入统一入口，feature 门控，default 启用（2026-08-31 补 ticket/rd/srm） |
 | ✅ 已接入（可选） | tms / subscription | `module-tms` / `module-subscription`，默认不启用，按客户裁剪 |
 | 🔄 待接入 | advanced（master-data / analytics）、ai | `module-advanced` / `module-ai` feature 已保留 + ModuleGroup 映射，无 real_module；接入后再从 default 启用 |
 | 🚫 明确不嵌入 | gis | WebSocket/事件订阅/插件体系，保持独立微服务部署（`module-gis` 仅编译依赖） |
+| 🚫 明确不嵌入 | portal | 含 GraphQL/WebSocket/service_aggregator 复杂依赖，用户中心适合独立部署（`module-portal` 仅编译依赖占位，2026-08-31） |
 
 **幽灵 feature 清理**（2026-08-31）：
 - `module-advanced` / `module-ai` 此前在 `default` features 中启用，但 server 无任何对应 `*_real_module` 注册（仅 `ModuleGroup::Advanced/Ai` 的 feature_flag 字符串映射），属"配置与代码脱节"的边界不一致。
@@ -155,7 +156,7 @@ module-ai = []
 
 **边界规则**（决定"何时接入 server vs 保持独立微服务"）：
 1. 无 WebSocket 长连接、无独立后台任务/插件体系、可复用 Shared Bootstrap 的纯 REST 业务服务 → 优先接入 server（real_module 模式）。
-2. 含 WebSocket / 事件订阅者 / 自定义 Prometheus / 插件注册体系的服务（gis / mobile / integration / monitor / plugin-registry / unified-core）→ 保持独立微服务部署，server 通过 HTTP 网关访问。
+2. 含 WebSocket / 事件订阅者 / 自定义 Prometheus / 插件注册体系的服务（gis / mobile / integration / monitor / plugin-registry / unified-core）以及含 GraphQL/用户中心定位的 portal → 保持独立微服务部署，server 通过 HTTP 网关访问。
 3. 接入前必须存在可编译的 lib 目标（`create_routes` 可实例化），否则先完成 lib+bin 化。
 4. 每个接入模块必须注册真实业务路由 + 健康检查依赖，禁止空壳模块进入 default。
 
