@@ -1766,3 +1766,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **审计**：所有 TypedServiceClient 调用方（11 服务）均已应用；communication→gis 为 public 路由不改造。
 - **验证**：crm/mobile/srm/qms/pm/finance/ehs/server 编译通过；crm 启动 ERP/WMS 客户端 service token 成功；实测 crm-service token(erp:admin) → erp inventory 200 + 审计日志 "service=crm-service"；无 token 401。
 - **排坑**：erp 曾无 token 也 200 属旧 dev 实例占端口假象（erp_v2 Address in use），pkill -9 清理后新实例 auth 正常（401）。
+
+## 2026-09-01 剩余"转发用户 token"手工调用审计与替换（portal）✅
+- **审计**：全库非 TypedServiceClient 的转发模式——portal 是主要聚集地（announcements/monitoring/aggregation/todos/user/quick_actions 等）。
+- **分类**：服务级数据（应 service token：announcements→erp 公告、monitoring→monitor）vs 用户身份必需（保留转发：todos/user/aggregation 待办、workflow my_task_stats 等）。
+- **改造**：
+  - portal 9 个 TypedServiceClient（上轮遗漏）创建处统一 with_service_token（服务级默认，用户级调用处显式覆盖）
+  - announcements 8 处请求（get/list/create/update/delete/publish/pinned）从转发用户 token 改为 erp_auth（portal-service erp:admin）
+  - monitoring build_client 5 处从转发用户 token 改为 with_service_token（monitor:read）
+- **验证**：portal 编译通过（修 E0382 move + headers unused）；portal-service token(erp:admin) → erp 公告 200 + 审计 "service=portal-service"；无 token 401。
+- **未决**：portal 自身认证拒绝手工签发的用户 token（401）——portal auth 可能有额外校验（非本轮范围，测试走 service token 链路验证）；aggregation/todos 的用户身份调用保留转发（合理）。

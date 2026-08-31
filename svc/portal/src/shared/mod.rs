@@ -53,6 +53,7 @@ impl AppState {
         let cache_config = CacheConfig::default();
         let dashboard_cache = CacheManager::new(&cache_config);
 
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_default();
         Self {
             auth_state: AuthState::from_env(),
             service_registry: Arc::new(LocalServiceRegistry::new()),
@@ -61,39 +62,39 @@ impl AppState {
             pool,
             event_publisher,
             dashboard_cache,
-            notification_client: TypedServiceClient::<NotificationApi>::from_env_default()
+            notification_client: TypedServiceClient::<NotificationApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["notification:read"]))
                 .unwrap_or_else(|_| {
                     TypedServiceClient::new(NotificationApi, "http://localhost:8000".to_string())
                         .unwrap()
                 }),
-            workflow_client: TypedServiceClient::<WorkflowApi>::from_env_default().unwrap_or_else(
+            workflow_client: TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["workflow:read"])).unwrap_or_else(
                 |_| {
                     TypedServiceClient::new(WorkflowApi, "http://localhost:8000".to_string())
                         .unwrap()
                 },
             ),
-            mes_client: TypedServiceClient::<MesApi>::from_env_default().unwrap_or_else(|_| {
+            mes_client: TypedServiceClient::<MesApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["mes:admin"])).unwrap_or_else(|_| {
                 TypedServiceClient::new(MesApi, "http://localhost:8030".to_string()).unwrap()
             }),
-            monitor_client: TypedServiceClient::<MonitorApi>::from_env_default().unwrap_or_else(
+            monitor_client: TypedServiceClient::<MonitorApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["monitor:read"])).unwrap_or_else(
                 |_| {
                     TypedServiceClient::new(MonitorApi, "http://localhost:8000".to_string())
                         .unwrap()
                 },
             ),
-            iam_client: TypedServiceClient::<IamApi>::from_env_default().unwrap_or_else(|_| {
+            iam_client: TypedServiceClient::<IamApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["iam:read"])).unwrap_or_else(|_| {
                 TypedServiceClient::new(IamApi, "http://localhost:8000".to_string()).unwrap()
             }),
-            hrm_client: TypedServiceClient::<HrmApi>::from_env_default().unwrap_or_else(|_| {
+            hrm_client: TypedServiceClient::<HrmApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["hrm:admin"])).unwrap_or_else(|_| {
                 TypedServiceClient::new(HrmApi, "http://localhost:8020".to_string()).unwrap()
             }),
-            erp_client: TypedServiceClient::<ErpApi>::from_env_default().unwrap_or_else(|_| {
+            erp_client: TypedServiceClient::<ErpApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["erp:admin"])).unwrap_or_else(|_| {
                 TypedServiceClient::new(ErpApi, "http://localhost:8010".to_string()).unwrap()
             }),
-            crm_client: TypedServiceClient::<CrmApi>::from_env_default().unwrap_or_else(|_| {
+            crm_client: TypedServiceClient::<CrmApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["crm:admin"])).unwrap_or_else(|_| {
                 TypedServiceClient::new(CrmApi, "http://localhost:8029".to_string()).unwrap()
             }),
-            finance_client: TypedServiceClient::<FinanceApi>::from_env_default().unwrap_or_else(
+            finance_client: TypedServiceClient::<FinanceApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "portal-service", &["finance:read"])).unwrap_or_else(
                 |_| {
                     TypedServiceClient::new(FinanceApi, "http://localhost:8011".to_string())
                         .unwrap()

@@ -15,26 +15,26 @@ use topems_shared_service_client::TypedServiceClient;
 use crate::{
     models::{Alert, LogEntry, MonitoringMetrics, MonitoringService as MonitoringServiceModel},
     shared::AppState,
-    utils::user_context::extract_bearer_token,
 };
-
 fn build_client(
     base: &TypedServiceClient<MonitorApi>,
-    headers: &HeaderMap,
+    state: &AppState,
 ) -> TypedServiceClient<MonitorApi> {
     let client = base.clone();
-    if let Some(token) = extract_bearer_token(headers) {
-        client.with_auth_token(token)
-    } else {
-        client
+    match client
+        .clone()
+        .with_service_token(&state.auth_state.jwt_secret, "portal-service", &["monitor:read"])
+    {
+        Ok(c) => c,
+        Err(_) => client,
     }
 }
 
 pub async fn get_monitoring_services(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<MonitoringServiceModel>>> {
-    let client = build_client(&state.monitor_client, &headers);
+    let client = build_client(&state.monitor_client, &state);
     match client.get_service_status().await {
         Ok(resp) => {
             let services = parse_service_status(Some(resp));
@@ -77,9 +77,9 @@ fn parse_service_status(data: Option<serde_json::Value>) -> Vec<MonitoringServic
 
 pub async fn get_monitoring_metrics(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<MonitoringMetrics>> {
-    let client = build_client(&state.monitor_client, &headers);
+    let client = build_client(&state.monitor_client, &state);
     match client.list_metrics().await {
         Ok(resp) => {
             let metrics = parse_metrics(Some(resp));
@@ -139,9 +139,9 @@ fn parse_metrics(data: Option<Vec<serde_json::Value>>) -> MonitoringMetrics {
 
 pub async fn get_monitoring_alerts(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Alert>>> {
-    let client = build_client(&state.monitor_client, &headers);
+    let client = build_client(&state.monitor_client, &state);
     match client.list_alerts(1, 50).await {
         Ok(resp) => {
             let alerts = parse_alerts(Some(resp));
@@ -183,9 +183,9 @@ fn parse_alerts(data: Option<Vec<serde_json::Value>>) -> Vec<Alert> {
 pub async fn acknowledge_alert(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let client = build_client(&state.monitor_client, &headers);
+    let client = build_client(&state.monitor_client, &state);
     match client.acknowledge_alert(&id, &serde_json::json!({})).await {
         Ok(resp) => Json(ApiResponse::success(resp, "告警已确认")),
         Err(e) => {
@@ -197,9 +197,9 @@ pub async fn acknowledge_alert(
 
 pub async fn get_monitoring_logs(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<LogEntry>>> {
-    let client = build_client(&state.monitor_client, &headers);
+    let client = build_client(&state.monitor_client, &state);
     match client.list_logs(1, 50).await {
         Ok(resp) => {
             let logs = parse_logs(Some(resp));
