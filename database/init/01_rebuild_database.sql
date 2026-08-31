@@ -63,7 +63,6 @@ CREATE SCHEMA plugin_crm;        -- 客户关系管理
 CREATE SCHEMA plugin_pm;         -- 项目管理
 CREATE SCHEMA plugin_rs;         -- 研发管理
 CREATE SCHEMA plugin_scm;        -- 供应链管理
-CREATE SCHEMA plugin_srm;        -- 供应商管理
 CREATE SCHEMA plugin_wms;        -- 仓储管理
 
 -- 生产质量插件
