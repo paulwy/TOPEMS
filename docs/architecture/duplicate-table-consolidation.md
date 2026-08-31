@@ -73,7 +73,9 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 - **保留**：`public.accounting_subjects`（finance accounting_subjects.rs 活跃 CRUD 主表，与 core_finance_accounts 是否同义需深判，单独子项）。
 - 验证：finance 编译 0 error；门禁 PASS（finance 引用 433→360）。
 - **mobile 13 张活跃表归位（✅ 2026-08-31）**：`offline_operations/sync_policies/push_notifications/push_devices/push_templates/photo_uploads/shortcuts/media_files/barcode_scans/offline_sync_records/devices/mobile_users/mobile_scan_records` —— 均为移动端活跃路由（/offline/sync、/scan/barcode 等）数据表误建 public。pg_dump 导出 DDL 重放到 mobile schema（含 FK 链，0 行数据）+ mobile.schema_defense TABLE_DEFS 补 13 张定义（新环境可自建）+ 代码 public.X→X + devices 显式 mobile.devices（门禁 table_owner 判定）+ 连带删 public.refresh_tokens/notifications（无服务引用的 FK 孤儿）。验证：mobile 编译 0 error；门禁 PASS（mobile 引用 51）。
-- **待办**：unified-core `public.audit_logs`；iam 平台表 132 组归位（联动待办④）；`public.accounting_subjects` 深判（finance 活跃 CRUD 与 core_finance_accounts 是否同义）。
+- **`public.accounting_subjects` 归位 finance（✅ 2026-08-31）**：深判为**同名异义**（简版科目 organization_id/category 结构 vs core_finance_accounts 企业科目体系），且是 finance 活跃功能（前端 accountingSubject.ts CRUD + 路由）。归位 `finance.accounting_subjects` 并**补列修复**——原 public 表缺 organization_id 列导致 INSERT/RETURNING 一直失败（创建功能损坏），新表含该列；代码 public→无前缀 + 删 public 表。验证：finance 编译 0 error；门禁 PASS（finance 引用 353）。
+- **`unified-core public.audit_logs` 判定保留（✅ 2026-08-31）**：unified-core schema=public（平台服务以 public 为 own schema），audit_logs 是其合法审计表（active INSERT/SELECT），**非冗余**，无需迁移。
+- **待办**：iam 平台表 132 组归位（联动待办④）；跨服务双引用 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）需裁决。
 
 ### 第四批（跨服务读改造，同名同义但双引用）
 - customers（erp→crm API）、inventory（erp→wms API）、purchase_orders（srm/erp→scm 或确认异义）、supplier_evaluations（scm→srm）、suppliers（双主裁决）

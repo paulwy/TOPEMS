@@ -1249,3 +1249,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **13 张 mobile 活跃表从 public 归位**：pg_dump DDL 重放 mobile schema（FK 链）+ schema_defense 补 13 张定义 + 代码 public.X→X + devices 显式 mobile.devices + 连带删 refresh_tokens/notifications 孤儿。
 - 验证：mobile 编译 0 error；门禁 PASS（mobile 引用 51）。
 - **剩余**：unified-core public.audit_logs、iam 132 组、accounting_subjects 深判。
+
+## 2026-08-31 同名多 schema 表收敛 第三批 accounting_subjects + audit_logs ✅
+- **accounting_subjects 归位 finance**：深判同名异义（简版 vs core_finance_accounts），活跃功能；归位 finance.accounting_subjects + **补 organization_id 列**（修复原 public 表缺列导致创建失败）+ 代码引用替换 + 删 public 表。门禁 PASS（finance 引用 353）。
+- **unified-core public.audit_logs 判定保留**：unified-core schema=public（own），audit_logs 合法审计表，非冗余。
+- **剩余**：iam 132 组、跨服务双引用 6 张裁决。
