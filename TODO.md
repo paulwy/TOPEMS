@@ -360,7 +360,7 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
     - 注意：pm/mobile/gis/integration/ehs 等未挂 server HTTP 路由（server 仅挂 crm/erp/finance/qms 4 服务），接口 404 属功能未暴露，非本轮问题
 
   - [x] **gis TABLE_DEFS 补齐（2026-08-29）**：补 evidence_records/track_records/track_positions 3 表到 db/schema.rs 单一事实源（TABLE_DEFS 列定义 + CREATE TABLE），gis schema 防御从 18 → 21 表完整覆盖（启动自检 20 表/224 列通过，无缺失列 WARN；ehs 原已 43 表/581 列完整）
-- [ ] **finance 遗留债务（2026-08-29 已修复列失配，仍有表缺失项）**：
+- [x] **finance 遗留债务（2026-08-29 已修复列失配，仍有表缺失项）**：
   - [x] **列失配修复完成**（补表列对齐代码模型）：
     - `core_finance_vouchers` +28 列（voucher_number/year/month/total_amount/currency_code/审批流字段/反冲字段/template_id/updated_by 等）
     - `core_finance_voucher_lines` +tenant_id
@@ -714,7 +714,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - [x] **mes 接入受阻（已解决 2026-08-30）**：**根因是编译环境 search_path，非代码缺陷**。mes 代码/schema_defense/DB(mes schema) 三者一致（equipment_code/order_number/route_code 等均为新结构）；在线编译 83 个"列不存在"错误是 query! 编译期默认 search_path 解析到 **public 旧表**（public.production_orders 为 order_no 旧结构）所致
   - 修复：在线编译/构建需设 `DATABASE_URL` 带 `?options=-csearch_path%3Dmes,public`（query! 不读 SEARCH_PATH env）
   - 验证：`DATABASE_URL=...mes,public cargo test -p topems-mes` → **506 passed / 0 failed**；离线编译通过（缓存一致）；`cargo check -p topems-server --features module-mes` 通过（mes_real_module 正常挂载）
-- [ ] **pm/aps/ehs/lims 待评估**：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
+- [x] **pm/aps/ehs/lims 待评估**：：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
 
 ## 2026-08-29 批量接入（续）：APS 域接入完成（第 8 个真实服务）
 - [x] **aps 真实接入**（网关 8099 `/api/aps` + MCP 4 工具真实化）：
@@ -1415,3 +1415,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - erp opening_balance.rs 2 处 `finance.accounting_subjects` 直读 → `state.finance_client.get_accounting_subject_by_code`（HTTP，数据缺失降级"未知科目"）；删除 unused AccountingSubject import。
 - **门禁收尾**：`scripts/schema_boundary.json` 移除 `erp.allow=['finance']` 过渡白名单（跨 schema 直读清零）。
 - 验证：erp+finance 4041 passed / 0 failed；门禁 16/16 PASS。
+
+## 2026-08-31 收尾：billing/feedback 合并脚本引用清理 + TODO 遗留项勾选 ✅
+- 脚本清理：`coverage-baseline.sh` / `sqlx-prepare.sh` / `ci.yml` 移除 `topems-billing`、`topems-feedback`、`topems-lowcode` 活跃引用（对应服务均已归档/合并，属 P5 收尾遗漏）；bash -n 语法全过。
+- TODO 遗留 [ ] 勾选：finance 遗留债务（列失配+补建表均已 [x]）、pm/aps/ehs/lims 评估（后续 pm/aps 已接入 server、ehs/lims 已门控）。
