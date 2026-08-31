@@ -1713,3 +1713,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **发现**：master-data 旧二进制测试启动重建了 public 4 张空影子（dynamic_data/schema_registry/core_dict_types/core_dict_items）→ DROP（迁移 20260901000020；正式表在 master_data schema 有 38/189 行）。
 - **public 60 张 = _sqlx_migrations + core_* 37 平台保留 + 平台表 + 基础设施（teams/audit_logs/cqrs_*/spatial_ref_sys 等）——非 core/平台业务表为 0**。
 - **主线闭环**：public 262 → 60；活跃业务表全部归位（ticket/master_data/erp）或归档（影子/测试/历史数据）；门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 core_* 平台表复核（4 张清理，public 60→56）✅
+- **core_faqs/core_guides**：portal schema 有同名活表（portal search_path="portal, public" 解析到 portal 版），public 12=12 影子 → DROP。
+- **core_documents/core_plugin_pricing**：全代码 0 提及、无建表代码重建 → 纯死表 DROP。
+- **保留**：unified-core 平台核心（roles/permissions/tenants/users/plugins/login_logs 等——平台级）、communication 专属（emails/notifications/geofences——communication 未 schema 化）、plugin-registry 建表预留（core_plugin_* 7 张——search_path=public 建表 DROP 会重建）。
+- 迁移 20260901000021；门禁 28 PASS、断裂 FK 0。
