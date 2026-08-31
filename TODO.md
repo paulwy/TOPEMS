@@ -1409,3 +1409,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 ## 2026-08-31 P1-2 收尾：qms 测试 search_path 修复 ✅
 - svc/qms/tests/integration_tests.rs setup_test_pool 加 after_connect `SET search_path TO qms, public`（qa_* 归位后无前缀测试查询依赖该路径；lims 测试不连 DB 无需改）。
 - 验证：qms 262+224+12 测试全过。
+
+## 2026-08-31 跨域只读治理：erp→finance 直读改走 API（17 项基线第 N 项）✅
+- finance 新增 `GET /api/finance/accounting-subjects/by-code/{code}`（精确按 code 查科目，返回 AccountingSubject）；FinanceApi 新增 `get_accounting_subject_by_code`。
+- erp opening_balance.rs 2 处 `finance.accounting_subjects` 直读 → `state.finance_client.get_accounting_subject_by_code`（HTTP，数据缺失降级"未知科目"）；删除 unused AccountingSubject import。
+- **门禁收尾**：`scripts/schema_boundary.json` 移除 `erp.allow=['finance']` 过渡白名单（跨 schema 直读清零）。
+- 验证：erp+finance 4041 passed / 0 failed；门禁 16/16 PASS。

@@ -33,9 +33,7 @@
     "erp": {
       "schema": "erp",
       "search_path": "erp, public",
-      "allow": [
-        "finance"
-      ]
+      "allow": []
     },
     "finance": {
       "schema": "finance",

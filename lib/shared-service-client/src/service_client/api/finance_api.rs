@@ -26,6 +26,15 @@ impl TypedServiceClient<FinanceApi> {
         self.get(&self.build_path(&path)).await
     }
 
+    /// 按编码获取会计科目（跨服务只读，供 erp 期初余额等消费）
+    pub async fn get_accounting_subject_by_code(
+        &self,
+        code: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/accounting-subjects/by-code/{}", code);
+        self.get(&self.build_path(&path)).await
+    }
+
     /// 列出凭证
     pub async fn list_vouchers(
         &self,
