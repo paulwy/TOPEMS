@@ -1745,3 +1745,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **lib.rs** 注册 service 模块。
 - **erp dashboard 重构**：改用 `issue_service_token`（移除手工 Claims 构造），后续服务可复用同一封装。
 - **验证**：shared-auth 3 单测通过（roundtrip/custom_ttl/is_service_claims）、erp 编译通过、运行时复验 dashboard total_inventory=3200。
+
+## 2026-09-01 被调用方服务身份中间件（审计/告警区分）✅
+- **新增** lib/shared-auth/src/middleware/service_identity.rs：`ServiceIdentity`（service_name/permissions）+ `service_identity_middleware`（识别服务调用打审计日志 + 注入 extension）。
+- **集成** auth_middleware（auth.rs）：token 验证通过后判断 `is_service_claims` → 打 info 审计日志（服务名+方法+路径）+ 注入 ServiceIdentity——避免独立挂载的 layer 顺序问题（auth 外挂时 Claims 未解析）。
+- **效果**：所有服务（经 build_application protected 路由）自动区分服务调用 vs 用户调用；下游可读 ServiceIdentity（RLS 豁免/限流差异/审计）。
+- **验证**：shared-auth 219 测试全过（含 service 3 + service_identity 2）、编译通过、运行时实测——service token 调 statistics → 200 + 审计日志 "服务间调用 service=erp-service"；无 token 401 不触发（区分服务/用户）。
+- **注意**：RLS 豁免（service 跨租户聚合）未做——当前 RLS 未阻碍（wms statistics 实测返回全量 3200）；若未来业务连接启用 RLS 需 service 豁免时再处理。
