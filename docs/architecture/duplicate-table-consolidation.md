@@ -89,3 +89,24 @@ DB 中共 **325 组同名表**（`information_schema.tables` 按表名分组计�
 
 - `schema_boundary_tables.json`：`ambiguous`（16 张）为无前缀引用豁免项。收敛后已明确归属的表**必须从 ambiguous 移入 table_owner**，避免"豁免=逃避检查"。
 - 第一批完成后 ambiguous 16 → 14（analysis_results、mes_qms_sync 归位；budgets/locations/documents 为同名异义保留在 ambiguous）。
+
+### 第五批（认证双轨统一 + 审计日志生态对齐，2026-08-31）
+
+**5a 认证双轨统一（✅ commit 1d12364ac）**
+- unified-core 用户数据曾分裂：auth 注册只写 iam.users（副本）不写 core_users（主表）→ 新用户对用户管理/租户系统不可见。
+- 修复为双写 core_users（status='active'）+ iam.users；补建 iam positions 系列 5 张表（positions/user_positions/position_permissions/position_roles/resource_permissions，代码引用但从未建表）；数据回填使两端一致（48=48）。测试 1022 passed。
+
+**5b audit_query 审计对齐（✅ commit e80e2fd3f）**
+- **audit_logs 生态三方断裂**：建表 DDL（13 列中间件）、真实表（19 列+enum，无 DDL 源孤儿表）、写入方（middleware 11 列/access_log 8 列/models/store）与 audit_query 查询分支（entity_type/request_details 等）互不匹配 → 写入全失败 0 行、audit_query 查死表/不存在表。
+- **收敛决策**：统一到**权威 Cluster-A 签名**（lims `AuditLog` struct 1:1，init SQL `01_rebuild_database.sql` 与 migration `V100_audit_logs_clusterA` 一致、有 DDL 源可 rebuild 复现）；原 19 列+audit_action enum 表全仓库无 CREATE 源（孤儿），DROP 重建为 Cluster-A 15 列。
+- 改动：
+  - `audit_query.rs`：iam.audit_logs→public.audit_logs（死表→真实表）、iam.permission_audit_logs→public.permission_audit_logs（v448 10 列 changed_at/old_value/new_value 对齐）；login_logs 分支可用不动。
+  - `middleware/audit_log.rs`：INSERT + init 定义统一 Cluster-A（entity_type/entity_ids/request_details/response_details/status）。
+  - `access_log.rs`/`models.rs`：适配 Cluster-A；entity_id 仅合法 UUID 绑定。
+  - `database_audit_log_store.rs`：metadata→details（public.permission_audit_logs 加 details JSONB，v448 migration 补定义）。
+- 验证：unified-core 编译 0 error 无 warning；测试 1022 passed 0 failed；门禁 PASS（unified-core 28 引用）；事务级 SQL 全验证（4 写入 + 2 查询）。
+
+### 遗留待办（表收敛系列收尾）
+1. **mobile 12 文件 public 前缀替换**：3b 批次中 12 个移动端代码文件（public.X→无前缀）已编译/门禁通过，因与用户工作区改动混叠未提交，待用户合并提交。
+2. **用户工作区改动**：apps/web 前端测试/API、svc/srm/Cargo.toml 等（勿动）。
+3. **perm-matrix R5 9 处 FAIL**（finance accounting_subjects 5 + financial_reports 2、tms optimization 3）：既有技术债（utoipa security 注解缺失），不阻断门禁（DRY-RUN）。

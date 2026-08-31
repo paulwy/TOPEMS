@@ -1274,3 +1274,16 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **保留 iam.sessions/iam.refresh_tokens**（auth 专有表，无 core_ 对应，非双轨）。
 - **记录待办**：audit_query.rs 读 iam.audit_logs（0 行无人写，登录日志实际写 core_login_logs）——审计查询指向空表，待后续对齐。
 - 验证：unified-core 编译 0 error；测试 1022 passed 0 failed；门禁 PASS。
+
+## 2026-08-31 audit_query 审计日志查询对齐（5b）✅
+- **audit_logs 生态三方断裂确认并修复**：建表 DDL、写入方（middleware/access_log/models/store）、audit_query 查询分支的列定义互不匹配，写入实际全失败（0 行）。
+- **统一到权威 Cluster-A 签名**（lims AuditLog struct 1:1，init SQL/migration V100 一致）：
+  - DB 重建 public.audit_logs 为 Cluster-A 15 列（id/tenant_id/action/entity_type/entity_id/entity_ids/user_id/user_name/request_details/response_details/status/error_message/ip_address/user_agent/created_at）——原 19 列+audit_action enum 表为无 DDL 源孤儿表（全仓库 grep 无 CREATE 源），已删。
+  - audit_query：iam.audit_logs→public.audit_logs（死表/不存在表改真实表）、iam.permission_audit_logs→public.permission_audit_logs（v448 10 列，changed_at/old_value/new_value 对齐）；login_logs 分支已验证可用（core_login_logs）。
+  - middleware/audit_log：INSERT + init 定义统一 Cluster-A（entity_type/entity_ids/request_details/response_details/status），原 13 列 request_id/method/path/... 与实际表不符。
+  - access_log：适配 Cluster-A（status/response_details），entity_id 仅合法 UUID 绑定（防非 UUID 崩溃）。
+  - models record_audit_log：适配 Cluster-A（request_details/response_details/status）。
+  - database_audit_log_store：metadata→details（public.permission_audit_logs 加 details JSONB，v448 migration 补定义）。
+- 验证：unified-core 编译 0 error 无 warning；测试 1022 passed 0 failed；门禁 PASS；事务级 SQL 全验证（4 写入+2 查询）。
+- 提交：e80e2fd3f（已推送 origin/main）。
+- **遗留**：① mobile 12 文件 public 前缀替换待用户合并提交；② 用户工作区前端改动；③ perm-matrix R5 9 处 FAIL 既有技术债。
