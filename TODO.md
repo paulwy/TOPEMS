@@ -1384,3 +1384,15 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - 迁移文件 `20260831190400_master_data_schema_migrate.sql`（幂等）：CREATE SCHEMA IF NOT EXISTS master_data + 5 张表（core_master_data_refs/change_log/event_outbox/core_mdm_approvals/reconciliation_log）public → SET SCHEMA master_data（全部空表，无同名冲突）。
 - shared-db 同步：master_data_refs.rs `new()` 默认表名 → "master_data.core_master_data_refs"；reconciliation_log.rs 默认表名 → master_data.core_mdm_reconciliation_log + refs → master_data.core_master_data_refs（crm/scm 的 with_table 本地表不受影响）。
 - 验证：public=0/master_data=5；shared-db+unified-core+crm+scm+master-data 编译全过；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位 A-E 全部完成 🎉 + 归档清理待办
+- **A（qa_*）✅** 4afa40cc6：78 张归位（qa_lab_*→lims、qa_ehs_*→ehs、质量体系→qms）；ehs 测试 search_path 修复
+- **B（core_finance_*）✅** ed6828def：3 张 SET SCHEMA + 10 张同名归档；**B 子项（core_master_data_*/core_mdm_*）✅** 5c5eda8fe：建 master_data schema + 5 张 SET SCHEMA + shared-db 默认表名前缀
+- **C（material_*）✅** 419a6d620：2 张 SET SCHEMA + 6 张同名归档
+- **D（跨域同步表）✅** f1b298ed8：7 张归档（bi/integration/ehs/lims/qms 同名真相）
+- **E（plugin_*）✅** 全库清零
+- **结果**：public 410→400（活跃 299 + 归档 _archive_* 101，数据保留）；门禁 PASS；workspace 编译通过
+- **⚠️ 后续待办**：
+  1. **归档表清理**：public 101 张 `_archive_*`（旧版数据）确认无引用后可 drop 或移独立 archive schema
+  2. **core_crm_*/core_erp_*/core_hrm_* 等业务表**：报告 B 项保留 public（平台级），但明显属业务域（crm/erp/hrm），**可作下一轮归位候选**（需业务 owner 确认）
+  3. **lims/qms 测试 qa_* 用例**：`#[ignore]`（requires PostgreSQL），启用前需加 search_path
