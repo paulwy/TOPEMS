@@ -42,15 +42,15 @@
 
 ## 2. 拆分触发阈值（达到任一即启动评估）
 
-| 阈值指标 | 当前值（阶段 0 后） | 触发值（建议） | 度量方式 |
+| 阈值指标 | 当前值（2026-08-31 实测） | 触发值（建议） | 度量方式 |
 |---|---|---|---|
-| 数据库总大小 | **~31 MB** | **> 200 GB** | `pg_database_size` |
-| 最大业务 schema 表数 | **finance 58** | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
-| 活跃连接峰值（经 PgBouncer） | 未达压力 | **> 400** 持续 10 分钟 | PgBouncer stats |
-| 跨 schema 查询占比 | 低（public 聚合已消除） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
-| 备份/恢复时间 | 秒级 | **> 15 分钟** | RPO/RTO 实测 |
+| 数据库总大小 | **96 MB**（2026-08-31 实测，阶段 0 后 31MB→现 96MB） | **> 200 GB** | `pg_database_size` |
+| 最大业务 schema 表数 | **public 262** / portal 120（独立服务） | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
+| 活跃连接峰值（经 PgBouncer） | 开发单实例未压测 | **> 400** 持续 10 分钟 | PgBouncer stats |
+| 跨 schema 查询占比 | 低（业务服务跨 schema 直读已清零，仅 4 项设计性 allow） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
+| 备份/恢复时间 | 秒级（整库 dump ~4MB） | **> 15 分钟** | RPO/RTO 实测 |
 
-> 结论：当前 ~31MB / 449 表 / 最大 schema 58 张，远未达到物理拆分阈值，**不建议现在执行物理拆分**；阶段 1（逻辑隔离）已完成第一轮落地（门禁增强+基线显式化，见 §3）。
+> **2026-08-31 阈值评估结论**：5 项阈值均未触发（DB 96MB vs 200GB、最大 schema 262 vs 600、跨 schema 直读清零、连接/备份无压力），**物理拆分不启动**，维持"阈值触发式"预案；待规模增长达任一阈值后再评估（见 §3 阶段 2）。阶段 1（逻辑隔离）已落地（门禁增强+基线显式化，见 §3）。
 
 ## 3. 分阶段迁移路径
 
@@ -76,6 +76,19 @@
   - unified-core audit_logs(同名多 schema)/users：✅ 维持声明——audit_logs 各业务 schema 自有（审计表设计如此，门禁 ambiguous 声明不阻塞）；users 平台契约保留 public。
 - **同名多 schema 表（audit_logs 等 14 张）**：各服务自有同名表（audit_logs 18 个 schema 中 17 空 + shared 主表 345 行，代码按 search_path/显式前缀解析本服务表），门禁 `ambiguous` 声明不阻塞；**设计合理，无需物理收敛**，仅保持显式前缀规范。
 - **待办（阶段 1 后续）**：已全部完成（17 项基线治理 + 同名多 schema 声明）；剩余为阶段 2 物理拆分（触发阈值达成后再做）。
+
+### 剩余跨域白名单复核（2026-08-31）
+
+当前 `schema_boundary.json` 仅 3 项 `allow` + 1 项白名单外合法引用，逐项代码核查：
+
+| 白名单 | 引用位置 | 性质 | 复核结论 |
+|---|---|---|---|
+| `hrm.allow=['mobile']` | svc/hrm/src/modules/attendance.rs | 历史考勤数据迁移只读（SELECT FROM mobile.mobile_attendance） | ⚠️ **迁移期遗留**：`mobile.mobile_attendance` 现 **0 行**（迁移已完成），代码仍保留导出 handler。建议：确认导出功能无后续使用后，清理该迁移代码并撤销 allow（低优先级，0 行无实际跨 schema 读）。 |
+| `integration.allow=['qms','lims']` | svc/integration/src/qms_lims_ehs.rs | 集成编排事务**直写**（INSERT/UPDATE，经 `only_own_schema_query` 宏显式声明） | ✅ **成立**：跨域编排必须直写目标 schema 保证事务原子性，走 API 会破坏原子性；宏显式声明合规。 |
+| `unified-core.allow=['portal']` | svc/unified-core/src/modules/iam/user/profile.rs | IAM 只读用户偏好（SELECT portal.user_preferences，notification_settings/shortcuts/language/timezone） | ✅ **成立**：用户偏好归 portal schema，unified-core 作为 IAM 平台核心只读消费，设计合理。 |
+| `shared-ai→hrm.vectors`（白名单外） | lib/shared-ai/src/vector_store.rs | AI 向量读写（INSERT/SELECT/UPDATE hrm.vectors） | ⚠️ **设计疑问**：向量数据属 AI 能力，应归 `ai_service` schema 而非 hrm。建议：低优先级评估 `hrm.vectors → ai_service.vectors` 迁移（shared-ai 多处引用需同步，且需确认门禁映射）。 |
+
+**结论**：4 项设计性保留中 2 项**确认成立**（integration 直写、unified-core 只读），2 项**标记待清理/待评估**（hrm→mobile 迁移期遗留 0 行、shared-ai→hrm.vectors 归属疑问）；无运行时违规。
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）

@@ -1485,3 +1485,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **ai 评估**：MCP/Agent/DSH 复杂服务 + `ai_service` 独立 schema → **保持独立微服务**（同 gis）。
 - 文档更新：已接入 default 15→16（+master-data）；待接入清空；不嵌入表新增 analytics/ai；module-ai 幽灵 feature 保留待评估。
 - 至此模块化单体：16 真实服务接入 server（18 模块含 platform/dashboard/finance），独立部署 7 个（gis/portal/analytics/ai/mobile/integration/monitor/plugin-registry/unified-core 等按边界规则）。
+
+## 2026-08-31 物理库拆分阶段 2 阈值评估 + 跨域白名单复核 ✅
+- **阶段 2 阈值实测**（5 项）：DB **96 MB**（vs 200GB）、最大 schema **public 262**（vs 600）、连接未压测、跨 schema 直读清零（仅 4 项设计性 allow）、备份秒级 → **5 项均未触发，物理拆分不启动**，维持"阈值触发式"预案。文档当前值刷新（31MB→96MB）。
+- **跨域白名单复核**（3 allow + 1 白名单外）：
+  - `integration→qms/lims` ✅ 成立（集成编排事务直写，only_own_schema_query 显式声明，走 API 破坏原子性）
+  - `unified-core→portal` ✅ 成立（IAM 只读用户偏好消费）
+  - `hrm→mobile` ⚠️ 迁移期遗留（mobile_attendance **0 行**，代码保留导出功能）→ 建议确认后清理 + 撤销 allow（低优先级）
+  - `shared-ai→hrm.vectors` ⚠️ 设计疑问（向量应归 ai_service schema）→ 低优先级评估迁移
+- 无运行时违规；`docs/architecture/database-split-plan.md` 更新阈值表 + 新增白名单复核表。
