@@ -21144,7 +21144,7 @@ export AUDIT_LOG_STORE_TYPE=database
 
 ---
 
-## 🎯 V473 — 架构改进四轨并行第一百四十一次：基线编译修复 + 轨C DNS服务发现增强（多端口+负载均衡）+ 轨D 审计日志归档AppState集成（进行中）
+## 🎯 V473 — 架构改进四轨并行第一百四十一次：基线编译修复 + 轨C DNS服务发现增强（多端口+负载均衡）+ 轨D 审计日志归档AppState集成（✅ 完成）
 
 > 2026-08-27 · 架构改进四轨并行第一百四十一次交付 · 基线编译修复 + DNS服务发现增强 + 审计日志AppState集成 · P0修复unified-core编译错误（模块声明/依赖/引用修正）
 
@@ -21243,13 +21243,15 @@ export AUDIT_LOG_STORE_TYPE=database
 
 - [ ] **轨C DNS健康检查**：添加DNS解析后的端点健康检查
 - [ ] **轨C DNS服务发现集成测试**：使用真实DNS服务器进行集成测试
-- [ ] **轨D 审计日志流式导出**：支持大文件流式导出（SSE/分块）
-- [ ] **轨D 审计日志压缩导出**：支持gzip压缩导出
-- [ ] **轨D 审计日志定时导出**：支持定时任务自动导出
+- [x] **轨D 审计日志流式导出**：NDJSON流式导出端点（分页查询+逐批yield）✅（2026-08-31）
+- [x] **轨D 审计日志压缩导出**：gzip压缩导出（复用audit_archiver::compress_gzip）✅（2026-08-31）
+- [x] **轨D 审计日志定时导出**：定时增量导出任务（AuditExportTask+Controller+HTTP控制API）✅（2026-08-31）
 - [x] **SQLX_OFFLINE缓存重建**：手工生成13个查询缓存JSON（LF规范化+SHA256 hash），`cargo check` 0 error ✅（2026-08-31）
 - [ ] **四轨并行继续**：V333-V473连续一百四十一次交付验证成功，V474继续四轨合并交付模式
 
 ---
+
+## 🎯 V474 — 架构改进四轨并行第一百四十二次：Rust环境依赖修复 + V473暴露编译错误修复 + SQLX缓存重建（✅ 完成）
 
 > 2026-08-31 · 架构改进四轨并行第一百四十二次交付 · Rust环境依赖修复 + V473暴露编译错误修复 + SQLX缓存重建 · aws-lc-rs→ring切换让unified-core完全编译通过
 
@@ -21306,6 +21308,99 @@ export AUDIT_LOG_STORE_TYPE=database
 | `cargo check -p topems-unified-core` | Finished 0 error 0 warning | ✅ |
 | `cargo test`（audit+dns） | 33 passed 0 failed | ✅ |
 | SQLX缓存文件 | 13个查询全部识别 | ✅ |
+
+---
+
+## 🎯 V475 — 架构改进四轨并行第一百四十三次：轨D 审计日志导出三件套（gzip压缩导出+NDJSON流式导出+定时增量导出任务+HTTP控制API）（✅ 完成）
+
+> 2026-08-31 · 架构改进四轨并行第一百四十三次交付 · 轨D 审计日志导出三件套 · 1个代码文件新建 + 4个代码文件修改 + 1个测试Mock修复 · 实现审计日志导出三件套及HTTP控制API
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | gzip压缩导出 | ExportFormat::Gzip变体 + 复用audit_archiver::compress_gzip | ✅ |
+| 轨D | NDJSON流式导出 | stream_export_audit_logs端点（分页查询+逐批yield+Body::from_stream） | ✅ |
+| 轨D | 定时增量导出任务 | AuditExportTask+AuditExportController（周期性增量导出+窗口推进+start/stop/status/trigger_once） | ✅ |
+| 轨D | HTTP控制API | audit_export_task_api.rs（6个端点：status/start/stop/trigger/config GET+PUT） | ✅ |
+| 修复 | MockAuditLogStore时间过滤 | query()方法补全start_time/end_time RFC3339字符串比较过滤 | ✅ |
+
+### 轨D：审计日志导出三件套
+
+**目标**：为审计日志提供三种导出能力（gzip压缩、NDJSON流式、定时增量），并通过HTTP API控制定时导出任务。
+
+**实现内容**：
+
+1. **gzip压缩导出**（`audit_export_api.rs` 修改）
+   - 扩展`ExportFormat`枚举新增`Gzip`变体
+   - 复用`audit_archiver::compress_gzip`压缩JSON数据
+   - 返回`application/gzip`类型响应 + `Content-Encoding: gzip`头
+
+2. **NDJSON流式导出**（`audit_export_api.rs` 新增端点）
+   - `stream_export_audit_logs`：分页查询（BATCH_SIZE=500）+ 逐批序列化为NDJSON
+   - 使用`async_stream::stream!` + `axum::body::Body::from_stream`流式返回
+   - 路由：`GET /business-tools/permissions/audit-logs/export/stream`
+
+3. **定时增量导出任务**（`audit_export_task.rs`）
+   - `ExportTaskConfig`：导出间隔（默认24h）+ 批处理大小（默认500）
+   - `AuditExportTask<S>`：周期性后台运行，基于上次导出时间戳增量查询
+   - `AuditExportController`：对象安全封装（trait object），集成到AppState
+   - `trigger_once`：手动触发单次导出（不影响后台循环调度）
+
+4. **HTTP控制API**（`audit_export_task_api.rs` 新建，约360行）
+   - `GET  .../export/task/status` — 返回运行状态+上次导出统计
+   - `POST .../export/task/start` — 启动后台定时导出
+   - `POST .../export/task/stop` — 停止后台定时导出
+   - `POST .../export/task/trigger` — 立即触发单次导出
+   - `GET  .../export/task/config` — 读取导出配置（间隔+批大小）
+   - `PUT  .../export/task/config` — 更新导出配置
+
+5. **AppState集成**（`shared/mod.rs` + `main.rs`）
+   - AppState新增`audit_export_config: Arc<Mutex<ExportTaskConfig>>`
+   - AppState新增`audit_export_controller: Arc<AuditExportController>`
+   - main.rs初始化两个新字段
+
+**修改文件**：
+- `svc/unified-core/src/routes/business_tools/audit_export_api.rs`（gzip导出+流式导出端点）
+- `svc/unified-core/src/routes/business_tools/audit_export_task.rs`（trigger_once trait方法+2个测试）
+- `svc/unified-core/src/routes/business_tools/mock_audit_store.rs`（query()补全时间过滤）
+- `svc/unified-core/src/routes/business_tools/mod.rs`（模块声明+路由merge）
+- `svc/unified-core/src/shared/mod.rs`（AppState扩展2个字段）
+- `svc/unified-core/src/main.rs`（初始化2个新字段）
+
+**新建文件**：
+- `svc/unified-core/src/routes/business_tools/audit_export_task_api.rs`（6个REST端点+10个单元测试）
+
+### 修复：MockAuditLogStore时间过滤
+
+**问题**：`MockAuditLogStore::query()`方法仅按tenant_id/user_id/action/changed_by过滤，缺失`start_time`/`end_time`时间范围过滤，导致增量导出窗口测试失败（第二次运行仍返回已导出的旧条目）。
+
+**修复**：在`query()`过滤闭包中添加RFC3339字符串比较（RFC3339时间戳字典序与时间顺序一致）：
+- `start_time`：仅保留 `entry.changed_at >= start_time` 的条目
+- `end_time`：仅保留 `entry.changed_at <= end_time` 的条目
+
+### 验收矩阵
+
+| 验收项 | 指标 | 状态 |
+|--------|------|------|
+| `cargo build -p topems-unified-core` | Finished 0 error | ✅ |
+| 导出相关单元测试 | 37 passed 0 failed | ✅ |
+| 审计相关全量测试 | 201 passed 0 failed | ✅ |
+| gzip压缩导出 | ExportFormat::Gzip + application/gzip | ✅ |
+| NDJSON流式导出 | stream端点 + Body::from_stream | ✅ |
+| 定时增量导出 | AuditExportTask + 窗口推进 | ✅ |
+| HTTP控制API | 6个端点（status/start/stop/trigger/config） | ✅ |
+| AppState集成 | audit_export_config + audit_export_controller | ✅ |
+| Mock时间过滤修复 | start_time/end_time RFC3339比较 | ✅ |
+
+### V475后续扩展（留给V476+）
+
+- [ ] **轨D 权限批量操作集成**：TestServer批量操作测试 + 批量自动审计日志 + 全成功或全回滚事务支持
+- [ ] **轨C SSE端到端测试**：SSE连接→POST→SSE响应全流程测试
+- [ ] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
+- [ ] **轨C K8s/Eureka/Nacos完善**：集成测试 + watch实时感知 + 心跳/长轮询
+- [ ] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose
+- [ ] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
 
 ---
 

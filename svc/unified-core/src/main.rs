@@ -493,6 +493,18 @@ async fn main() -> anyhow::Result<()> {
         ),
     );
 
+    // V474: Audit log export task (periodic incremental export to archive).
+    let audit_export_config = std::sync::Arc::new(tokio::sync::Mutex::new(
+        crate::routes::business_tools::audit_export_task::ExportTaskConfig::default(),
+    ));
+    let audit_export_controller = std::sync::Arc::new(
+        crate::routes::business_tools::audit_export_task::AuditExportController::new(
+            audit_export_config.clone(),
+            audit_logger.clone(),
+            audit_archiver.clone(),
+        ),
+    );
+
     let state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),
@@ -516,6 +528,8 @@ async fn main() -> anyhow::Result<()> {
         audit_retention_policy,
         audit_archiver,
         audit_cleanup_controller,
+        audit_export_config,
+        audit_export_controller,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections

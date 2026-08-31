@@ -339,7 +339,7 @@ fn extract_date(timestamp: &str) -> String {
 }
 
 /// V472: Gzip compression using the flate2 library.
-fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
+pub(crate) fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
     use flate2::write::GzEncoder;
     use flate2::Compression;
     use std::io::Write;

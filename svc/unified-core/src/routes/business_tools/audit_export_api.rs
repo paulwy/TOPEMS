@@ -22,6 +22,8 @@ pub enum ExportFormat {
     Csv,
     /// JSON format.
     Json,
+    /// V474: Gzip-compressed JSON format.
+    Gzip,
 }
 
 impl std::str::FromStr for ExportFormat {
@@ -31,7 +33,8 @@ impl std::str::FromStr for ExportFormat {
         match s.to_lowercase().as_str() {
             "csv" => Ok(Self::Csv),
             "json" => Ok(Self::Json),
-            _ => Err(format!("Unknown export format: {}. Use 'csv' or 'json'.", s)),
+            "gzip" | "gz" => Ok(Self::Gzip),
+            _ => Err(format!("Unknown export format: {}. Use 'csv', 'json', or 'gzip'.", s)),
         }
     }
 }
@@ -41,6 +44,7 @@ impl std::fmt::Display for ExportFormat {
         match self {
             Self::Csv => write!(f, "csv"),
             Self::Json => write!(f, "json"),
+            Self::Gzip => write!(f, "gz"),
         }
     }
 }
@@ -227,17 +231,121 @@ pub async fn export_audit_logs(
                 json,
             ).into_response())
         }
+        ExportFormat::Gzip => {
+            // V474: gzip-compressed JSON export (reuse archiver's compress_gzip).
+            let json = entries_to_json(&response.entries);
+            let gz_filename = format!("audit_logs_{}.json.gz", timestamp);
+            let compressed = super::audit_archiver::compress_gzip(json.as_bytes())
+                .map_err(|e| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({
+                            "error": format!("Failed to gzip audit logs: {}", e),
+                        })),
+                    )
+                })?;
+            Ok((
+                StatusCode::OK,
+                [
+                    (header::CONTENT_TYPE, "application/gzip".to_string()),
+                    (header::CONTENT_DISPOSITION, format!("attachment; filename=\"{}\"", gz_filename)),
+                    (header::CONTENT_ENCODING, "gzip".to_string()),
+                ],
+                compressed,
+            ).into_response())
+        }
     }
+}
+
+// ===== V474: Streaming Export (NDJSON, chunked) =====
+
+/// `GET /api/business-tools/permissions/audit-logs/export/stream` —
+/// Stream audit logs as NDJSON (one JSON object per line).
+///
+/// Unlike the one-shot `export_audit_logs` endpoint (which is capped by
+/// `ExportQuery::limit`), the streaming endpoint pages through the store
+/// in batches and streams every matching entry, making it suitable for
+/// exporting very large audit datasets without buffering them all in
+/// memory at once.
+pub async fn stream_export_audit_logs(
+    State(state): State<AppState>,
+    Query(query): Query<ExportQuery>,
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
+    const BATCH_SIZE: usize = 500;
+
+    // Base query carries only the filters; limit/offset are overridden
+    // per-batch below so the export is not capped by ExportQuery::limit.
+    let base_query = AuditLogQuery::from(&query);
+    let store = state.audit_logger.clone();
+
+    let stream = async_stream::stream! {
+        let mut offset = 0usize;
+        loop {
+            let mut q = base_query.clone();
+            q.offset = offset;
+            q.limit = BATCH_SIZE;
+
+            let resp = match store.query(&q).await {
+                Ok(r) => r,
+                Err(e) => {
+                    let msg = format!("query failed at offset {}: {}", offset, e);
+                    yield Err(std::io::Error::new(std::io::ErrorKind::Other, msg));
+                    return;
+                }
+            };
+
+            if resp.entries.is_empty() {
+                break;
+            }
+
+            for entry in &resp.entries {
+                match serde_json::to_string(entry) {
+                    Ok(s) => yield Ok::<Vec<u8>, std::io::Error>(
+                        format!("{}\n", s).into_bytes(),
+                    ),
+                    Err(e) => {
+                        let msg = format!("serialization failed: {}", e);
+                        yield Err(std::io::Error::new(std::io::ErrorKind::InvalidData, msg));
+                        return;
+                    }
+                }
+            }
+
+            offset += resp.entries.len();
+            if resp.entries.len() < BATCH_SIZE {
+                break;
+            }
+        }
+    };
+
+    let body = axum::body::Body::from_stream(stream);
+    Ok((
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, "application/x-ndjson; charset=utf-8".to_string()),
+            (
+                header::CONTENT_DISPOSITION,
+                "attachment; filename=\"audit_logs_stream.ndjson\"".to_string(),
+            ),
+        ],
+        body,
+    )
+        .into_response())
 }
 
 // ===== Route Registration =====
 
 /// Create audit log export routes.
 pub fn audit_export_routes() -> Router<AppState> {
-    Router::new().route(
-        "/business-tools/permissions/audit-logs/export",
-        axum::routing::get(export_audit_logs),
-    )
+    Router::new()
+        .route(
+            "/business-tools/permissions/audit-logs/export",
+            axum::routing::get(export_audit_logs),
+        )
+        .route(
+            "/business-tools/permissions/audit-logs/export/stream",
+            axum::routing::get(stream_export_audit_logs),
+        )
 }
 
 #[cfg(test)]

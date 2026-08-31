@@ -31,6 +31,12 @@ pub mod audit_integration;
 // V461: Audit log export API
 pub mod audit_export_api;
 
+// V474: Audit log export task (background periodic export)
+pub mod audit_export_task;
+
+// V474: Audit log export task control API (start/stop/trigger/config)
+pub mod audit_export_task_api;
+
 // V462: Permission batch operations API
 pub mod permission_batch_api;
 
@@ -832,6 +838,8 @@ pub fn business_tools_routes() -> Router<AppState> {
         .merge(audit_api::audit_log_routes())
         // V461: Audit log export routes
         .merge(audit_export_api::audit_export_routes())
+        // V474: Audit log export task control routes
+        .merge(audit_export_task_api::audit_export_task_routes())
         // V465: Audit log retention policy routes
         .merge(audit_retention_api::audit_retention_routes())
         // V468: Audit log archive routes

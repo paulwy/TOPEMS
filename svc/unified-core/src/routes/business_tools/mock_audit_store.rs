@@ -90,6 +90,18 @@ impl AuditLogStore for MockAuditLogStore {
                         return false;
                     }
                 }
+                // RFC3339 timestamps sort correctly lexicographically, so
+                // string comparison is a valid time-range filter here.
+                if let Some(start_time) = &query.start_time {
+                    if e.changed_at.as_str() < start_time.as_str() {
+                        return false;
+                    }
+                }
+                if let Some(end_time) = &query.end_time {
+                    if e.changed_at.as_str() > end_time.as_str() {
+                        return false;
+                    }
+                }
                 true
             })
             .cloned()

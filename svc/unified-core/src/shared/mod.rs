@@ -70,6 +70,15 @@ pub struct AppState {
     ///       points used by the retention HTTP API.  The store is
     ///       type-erased so it can live in non-generic AppState.
     pub audit_cleanup_controller: Arc<crate::routes::business_tools::audit_retention_task::AuditCleanupController>,
+    /// V474: Shared config for the periodic audit log export task
+    ///       (interval + batch size).  Stored separately so the export
+    ///       task control API can read/update it without going through
+    ///       the controller.
+    pub audit_export_config: Arc<Mutex<crate::routes::business_tools::audit_export_task::ExportTaskConfig>>,
+    /// V474: Object-safe controller wrapping the generic export task.
+    ///       Exposes `start` / `stop` / `status` / `trigger_once` entry
+    ///       points used by the export task control HTTP API.
+    pub audit_export_controller: Arc<crate::routes::business_tools::audit_export_task::AuditExportController>,
 }
 
 impl FromRef<AppState> for AuthState {
