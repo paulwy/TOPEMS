@@ -1424,3 +1424,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **101 张 archive 表确认无代码/SQL 引用**：精确 grep（`archive.` schema / `_archive_` 表名）零命中（5 处 `archive.by_name` 为 Rust zip 变量，非 SQL）；schema-boundary 门禁 PASS（无 archive SQL 引用）。
 - 结论：archive 101 张旧版表可安全清理（DROP），但**涉及旧数据永久删除**，DROP 需用户/业务 owner 确认后执行。
 - 备份仍存：database/backup/topems_pre_schema_migration_20260831_1907.dump（3.8M）。
+
+## 2026-08-31 P1-2 阶段0 最终收尾：core_* 无引用残留归档 archive ✅
+- 迁移文件 `20260831190700_core_residual_archive.sql`（幂等，动态 DO 块）：逐表精确检查（裸名+core_ 前缀词边界）确认 **17 张无代码引用**的 core_* 业务域残留表（core_billing_*/core_ticket_activities 等 6/core_guide_*/core_location_*/core_mobile_offline_*/core_email_*/core_mail_*/core_tenant_usage 等/core_api_version_configs）→ archive。
+- **保留 public（平台契约，有引用）**：core_users/tenants/roles/permissions/dict/menu/file/notification/plugin/workflows/subscriptions/tickets/guides/faqs/geofences/documents/feedbacks/emails/usage_records 等。
+- 验证：public 273→256、archive 101→118；门禁 PASS；workspace 编译 0 error。
