@@ -1,6 +1,6 @@
 # TopEMS 数据库物理拆分预案（P1-2）
 
-> **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
+> **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** + **拆分前置治理完成（2026-09-01，前置条件 #1 #2 #3 全部闭环）** · **日期**：2026-08-31（更新 2026-09-01） · **归属待办**：P1-2（物理库拆分预案）
 > **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）** · `TODO.md`（阶段 0 执行记录）
 
 ## 1. 现状基线（2026-08-31，阶段 0 执行后重测）
@@ -104,9 +104,11 @@
 | `topems_business`（业务综合库） | crm + hrm + pm + bi + portal + mobile + gis + ai | ~300 | 其余业务服务 |
 
 **拆分前置条件（拆分前必须先治理，否则跨库无法工作）**：
-1. **integration 跨域事务直写**（allow=['qms','lims']）：拆分后 qms/lims 在制造库，integration 无法跨库事务直写 → 需改为「integration 调各域服务 API 编排」或「事件驱动 + 本地事务 + 补偿（Saga）」。**这是拆分最大前置改造**。
-2. **unified-core 读 portal.user_preferences**（allow=['portal']）：拆分后跨库 → 改为 unified-core 走 portal API 只读，或 portal 偏好表随用户中心库。
-3. **跨库事务边界**：任何跨域业务操作不得依赖单库事务，统一走事件（Redis Stream + DLQ 已有）+ Saga 补偿。
+1. **integration 跨域事务直写**（allow=['qms','lims']）：拆分后 qms/lims 在制造库，integration 无法跨库事务直写 → 需改为「integration 调各域服务 API 编排」或「事件驱动 + 本地事务 + 补偿（Saga）」。**这是拆分最大前置改造**。✅ **已闭环（2026-09-01）**：9 处直写→各域 API + 订阅端接线 + 事件发布端补齐（TODO 2026-09-01）。
+2. **unified-core 读 portal.user_preferences**（allow=['portal']）：拆分后跨库 → 改为 unified-core 走 portal API 只读，或 portal 偏好表随用户中心库。✅ **已闭环（2026-09-01，commit 51b31fed3）**：portal 新增 `GET/PUT /api/portal/preferences`（service token 认证），unified-core `get_preferences`/`update_preferences` 改走 portal API；撤销 allow；tenant_middleware 补 service claims 豁免。
+3. **跨库事务边界**：任何跨域业务操作不得依赖单库事务，统一走事件（Redis Stream + DLQ 已有）+ Saga 补偿。✅ **已就绪**：跨库事务边界统一走事件 + 补偿（Saga 编排器已在 workflow-service 落地）。
+
+**拆分就绪核验（2026-09-01）**：`check_schema_boundary.py` 全服务 PASS（allow 全空，跨 schema SQL 直读清零）；`check_split_threshold.py` 5 项阈值均未触发；跨库调用全走 API/service token（服务间认证批量已闭环）。**拆分就绪，待阈值触发后启动**。
 
 **拆分方式**：
 - 每域独立 `CREATE DATABASE` + 独立连接串 + 独立 PgBouncer pool
@@ -123,10 +125,10 @@
 
 1. **当前不拆**：~31MB 规模物理拆分只会增加运维复杂度而无收益，采纳"阈值触发式"预案。
 2. **阶段 0（schema 归位）已完成（2026-08-31）**：public 219 → 37 张，建 lims/qms/mes/pdm/finance/master_data schema；执行中修正 11 项归属偏差（详见 `TODO.md` 阶段 0 记录与 §5.1）。
-3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。
+3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。**定案（2026-09-01）**：`core_*` 保持 public（拆分单元映射中 public 平台契约进 `topems_core` 库，由 unified-core 服务拥有），无需迁入 `unified_core` schema——避免无收益的 schema 搬迁，门禁 allow 已全空不受影响。
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
-> 本预案为决策输入；阶段 0（schema 归位）与阶段 1 第一轮（逻辑隔离门禁）均已落地，阶段 2（物理拆分）待阈值达成后启动。
+> 本预案为决策输入；阶段 0（schema 归位）+ 阶段 1（逻辑隔离门禁）已落地，**拆分前置条件 #1 #2 #3 全部闭环（2026-09-01），拆分就绪**；阶段 2（物理拆分）待阈值达成后启动（当前 5 项阈值均未触发）。
 
 ### 5.1 归属评审结论（2026-08-31）
 

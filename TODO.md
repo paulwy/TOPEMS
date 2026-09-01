@@ -1900,3 +1900,13 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **门禁**：撤销 schema_boundary.json `unified-core.allow=['portal']`；check_schema_boundary.py 全服务 PASS（仅注释残留）。
 - **运行时验证**：service token 读/写/默认值/401/403 全过；unified-core IAM get_preferences 端到端返回偏好，portal 日志确认 service-to-service 调用 + tenant 豁免生效。
 - **状态**：拆分前置条件 #1 #2 全部 ✅——无跨库直读，物理库拆分前置治理完成。
+
+## 2026-09-01 拆分就绪核验：前置条件全部闭环，物理拆分就绪待阈值 ✅
+- **核验（拆分前置治理收口）**：
+  - `check_schema_boundary.py` 全服务 **28 PASS**——`allow` 全空（跨 schema SQL 直读清零；此前 unified-core allow=['portal'] 已随 #2 撤销）。
+  - `check_split_threshold.py` **5 项阈值均未触发**——含"跨 schema 查询占比=低（直读清零）"，按预案维持单库等待规模增长。
+  - 跨库调用全走 API/service token（服务间认证批量已闭环）——service_topology 跨库 31 边均为服务调用非 SQL 直连。
+- **前置条件 #1 #2 #3 全部闭环**：#1 integration 直写→API/事件+补偿 ✅、#2 unified-core 读偏好→portal API ✅（51b31fed3）、#3 跨库事务边界统一事件+Saga ✅。
+- **§5 待定项 3 定案**：`public.core_*` 37 张平台表保持 public（拆分映射中 public 平台契约进 `topems_core` 库，由 unified-core 拥有），无需迁 unified_core schema。
+- **文档同步**：database-split-plan.md（状态行 + 前置条件 ✅ + §5 定案）、architecture-evolution-and-todo.md（P1-2 更新为拆分就绪）。
+- **状态**：**拆分前置治理全部完成，物理拆分就绪**——待任一阈值触发后启动阶段 2。
