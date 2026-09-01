@@ -21,7 +21,7 @@ pub use prometheus::{default_registry, Gauge};
 pub use tower_cookies::CookieManagerLayer;
 pub use utoipa::OpenApi;
 
-pub use topems_shared::auth_middleware;
+pub use topems_shared_auth::auth_middleware;
 pub use topems_shared::ApiResponse;
 pub use topems_shared::{
     create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,

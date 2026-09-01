@@ -10,7 +10,7 @@ use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use topems_shared::auth::auth_middleware;
+use topems_shared_auth::auth_middleware;
 use topems_shared::{
     create_api_info_router, create_cors_layer, register_routes_with_legacy_alias, ApiResponse,
 };
