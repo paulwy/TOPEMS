@@ -111,5 +111,5 @@ traefik:
 - [x] 端口冲突处理方案（第 3 节：Dashboard 8080 → 8089）
 - [x] 落地方案与配置补丁（第 4 节）
 - [x] 灰度切换与验证步骤（第 5 节）
-- [ ] 待部署执行：staging 应用补丁并验证；同步补齐 search/extension/logistics 路由
-- [ ] 待更新：`services.yaml` api_gateway status → implemented（部署验证通过后）
+- [x] 待部署执行：staging 应用补丁并验证；同步补齐 search/extension/logistics 路由（09-01 本地容器验证通过：33 router api 挂载、dashboard 8089 200、jwt-auth forwardAuth 生效；补齐 search/communication/ticket/master-data/monitor/plugin/tms/aps 8 个 extension 路由至 dynamic.yml；traefik v3.0 兼容修复 4 处）
+- [x] 待更新：`services.yaml` api_gateway status → implemented（09-01 已更新）

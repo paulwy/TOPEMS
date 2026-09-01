@@ -1,4 +1,6 @@
+use axum::extract::Extension;
 use axum::http::HeaderMap;
+use axum::response::{IntoResponse, Response};
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -1197,6 +1199,41 @@ pub async fn reset_password(
         "data": null,
         "code": 0
     }))
+}
+
+/// JWT 校验端点（供 API 网关 Traefik jwt-auth forwardAuth 调用）。
+/// auth_middleware 已拦截缺失/无效 token（401）；此处仅对有效 token 返回 200，
+/// 并回写 X-Auth-* 透传头，供网关注入下游请求。
+pub async fn verify_token(Extension(claims): Extension<Claims>) -> Response {
+    let mut headers = HeaderMap::new();
+    if let Ok(v) = claims.sub.parse() {
+        headers.insert("X-Auth-User-Id", v);
+    }
+    if let Ok(v) = claims.username.parse() {
+        headers.insert("X-Auth-Username", v);
+    }
+    if let Ok(v) = claims.roles.join(",").parse() {
+        headers.insert("X-Auth-Roles", v);
+    }
+    if let Ok(v) = claims.tenant_id.clone().unwrap_or_default().parse() {
+        headers.insert("X-Auth-Tenant", v);
+    }
+    if let Ok(v) = claims.permissions.join(",").parse() {
+        headers.insert("X-Auth-Permissions", v);
+    }
+    if let Ok(v) = claims.exp.to_string().parse() {
+        headers.insert("X-Auth-Token-Exp", v);
+    }
+    (
+        headers,
+        Json(serde_json::json!({
+            "code": 200,
+            "success": true,
+            "data": { "sub": claims.sub, "username": claims.username },
+            "message": "token 有效"
+        })),
+    )
+        .into_response()
 }
 
 fn verify_password(password: &str, password_hash: &str) -> bool {

@@ -13,9 +13,9 @@ http:
       rule: "PathPrefix(`/api/core`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-core
       middlewares:
-        - strip-prefix-core
         - default-chain
       priority: 100
 
@@ -24,9 +24,9 @@ http:
       rule: "PathPrefix(`/api/erp`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-erp
       middlewares:
-        - strip-prefix-erp
         - default-chain
       priority: 100
 
@@ -34,9 +34,9 @@ http:
       rule: "PathPrefix(`/api/finance`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-finance
       middlewares:
-        - strip-prefix-finance
         - default-chain
       priority: 100
 
@@ -45,9 +45,9 @@ http:
       rule: "PathPrefix(`/api/hrm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-hrm
       middlewares:
-        - strip-prefix-hrm
         - default-chain
       priority: 100
 
@@ -55,9 +55,9 @@ http:
       rule: "PathPrefix(`/api/pm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-pm
       middlewares:
-        - strip-prefix-pm
         - default-chain
       priority: 100
 
@@ -65,9 +65,9 @@ http:
       rule: "PathPrefix(`/api/crm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-crm
       middlewares:
-        - strip-prefix-crm
         - default-chain
       priority: 100
 
@@ -76,9 +76,9 @@ http:
       rule: "PathPrefix(`/api/mes`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-mes
       middlewares:
-        - strip-prefix-mes
         - default-chain
       priority: 100
 
@@ -86,9 +86,9 @@ http:
       rule: "PathPrefix(`/api/pdm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-pdm
       middlewares:
-        - strip-prefix-pdm
         - default-chain
       priority: 100
 
@@ -97,9 +97,9 @@ http:
       rule: "PathPrefix(`/api/scm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-scm
       middlewares:
-        - strip-prefix-scm
         - default-chain
       priority: 100
 
@@ -107,9 +107,9 @@ http:
       rule: "PathPrefix(`/api/wms`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-wms
       middlewares:
-        - strip-prefix-wms
         - default-chain
       priority: 100
 
@@ -117,9 +117,9 @@ http:
       rule: "PathPrefix(`/api/srm`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-srm
       middlewares:
-        - strip-prefix-srm
         - default-chain
       priority: 100
 
@@ -128,9 +128,9 @@ http:
       rule: "PathPrefix(`/api/qms`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-qms
       middlewares:
-        - strip-prefix-qms
         - default-chain
       priority: 100
 
@@ -138,9 +138,9 @@ http:
       rule: "PathPrefix(`/api/lims`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-lims
       middlewares:
-        - strip-prefix-lims
         - default-chain
       priority: 100
 
@@ -148,9 +148,9 @@ http:
       rule: "PathPrefix(`/api/ehs`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-ehs
       middlewares:
-        - strip-prefix-ehs
         - default-chain
       priority: 100
 
@@ -158,9 +158,9 @@ http:
       rule: "PathPrefix(`/api/rd`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-rd
       middlewares:
-        - strip-prefix-rd
         - default-chain
       priority: 100
 
@@ -169,9 +169,9 @@ http:
       rule: "PathPrefix(`/api/bi`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-bi
       middlewares:
-        - strip-prefix-bi
         - default-chain
       priority: 100
 
@@ -179,9 +179,9 @@ http:
       rule: "PathPrefix(`/api/bi`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-analytics
       middlewares:
-        - strip-prefix-analytics
         - default-chain
       priority: 100
 
@@ -189,9 +189,9 @@ http:
       rule: "PathPrefix(`/api/report`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-report
       middlewares:
-        - strip-prefix-report
         - default-chain
       priority: 100
 
@@ -199,9 +199,9 @@ http:
       rule: "PathPrefix(`/api/portal`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-portal
       middlewares:
-        - strip-prefix-portal
         - default-chain
       priority: 100
 
@@ -210,9 +210,9 @@ http:
       rule: "PathPrefix(`/api/ai`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-ai
       middlewares:
-        - strip-prefix-ai
         - default-chain
       priority: 100
 
@@ -220,9 +220,9 @@ http:
       rule: "PathPrefix(`/api/mobile`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-mobile
       middlewares:
-        - strip-prefix-mobile
         - default-chain
       priority: 100
 
@@ -230,9 +230,9 @@ http:
       rule: "PathPrefix(`/api/gis`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-gis
       middlewares:
-        - strip-prefix-gis
         - default-chain
       priority: 100
 
@@ -240,9 +240,9 @@ http:
       rule: "PathPrefix(`/api/integration`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-integration
       middlewares:
-        - strip-prefix-integration
         - default-chain
       priority: 100
 
@@ -251,10 +251,91 @@ http:
       rule: "Path(`/health`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-core
       middlewares:
         - cors-headers
       priority: 200
+
+    router-search:
+      rule: "PathPrefix(`/api/search`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-search
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-communication:
+      rule: "PathPrefix(`/api/communication`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-communication
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-ticket:
+      rule: "PathPrefix(`/api/ticket`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-ticket
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-master-data:
+      rule: "PathPrefix(`/api/master-data`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-master-data
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-monitor:
+      rule: "PathPrefix(`/api/monitor`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-monitor
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-plugin:
+      rule: "PathPrefix(`/api/plugin`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-plugin
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-tms:
+      rule: "PathPrefix(`/api/tms`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-tms
+      middlewares:
+        - default-chain
+      priority: 100
+
+    router-aps:
+      rule: "PathPrefix(`/api/aps`)"
+      entryPoints:
+        - web
+        - api  # API 网关入口（8080）
+      service: svc-aps
+      middlewares:
+        - default-chain
+      priority: 100
 
     # ===== 静态资源路由（fallback 到 nginx）=====
     # 最低优先级，兜底处理所有非 /api/* 请求，转发到 nginx 静态资源服务
@@ -262,6 +343,7 @@ http:
       rule: "PathPrefix(`/`)"
       entryPoints:
         - web
+        - api  # API 网关入口（8080）
       service: svc-nginx
       middlewares:
         - gzip-compress
@@ -273,11 +355,13 @@ http:
   # ================================================
   middlewares:
     # ----- 默认中间件链（统一应用到所有路由）-----
-    # 顺序: request-id → cors → rate-limit → jwt-auth → retry
+    # 顺序: cors → rate-limit → jwt-auth → retry
+    # request-id 注入口：traefik v3.0.4 插件 ABI 过老 + 原插件源 404，社区替代（jeroentrappers/traefik-plugin-request-id）
+    # 仅 1 commit 无 release tag 且面向 v3.5+；应用层 unified-core 已有 request_id 中间件覆盖追踪关联，
+    # 待 traefik 升级 v3.5+ 后按 catalog 模式接入
     default-chain:
       chain:
         middlewares:
-          - request-id
           - cors-headers
           - rate-limit
           - jwt-auth
@@ -295,9 +379,6 @@ http:
           - X-Auth-Permissions
           - X-Auth-Token-Exp
         trustForwardHeader: true
-        http:
-          timeout: "5s"
-          followRedirects: false
 
     # ----- 全局限流（每秒 100 请求，突发 200）-----
     rate-limit:
@@ -328,22 +409,13 @@ http:
 
     # ----- Gzip 压缩 -----
     gzip-compress:
-      compress:
-        minWidth: 1024
-        minResponseLength: 1024
+      compress: {}
 
     # ----- 重试（最多 3 次）-----
     retry:
       retry:
         attempts: 3
         initialInterval: "100ms"
-
-    # ----- 请求 ID 注入（使用 requestid 插件，需在静态配置 experimental 中启用）-----
-    request-id:
-      plugin:
-        requestid:
-          headerName: "X-Request-Id"
-          overwrite: true
 
     # ----- 租户头部转发 -----
     tenant-header:
@@ -354,29 +426,6 @@ http:
           X-Tenant-Resolved: "true"
 
     # ----- 各服务路径前缀剥离（保持与 nginx 行为一致）-----
-    strip-prefix-core:        { stripPrefix: { prefixes: ["/api/core"], forceSlash: false } }
-    strip-prefix-erp:         { stripPrefix: { prefixes: ["/api/erp"], forceSlash: false } }
-    strip-prefix-finance:     { stripPrefix: { prefixes: ["/api/finance"], forceSlash: false } }
-    strip-prefix-hrm:         { stripPrefix: { prefixes: ["/api/hrm"], forceSlash: false } }
-    strip-prefix-pm:          { stripPrefix: { prefixes: ["/api/pm"], forceSlash: false } }
-    strip-prefix-crm:         { stripPrefix: { prefixes: ["/api/crm"], forceSlash: false } }
-    strip-prefix-mes:         { stripPrefix: { prefixes: ["/api/mes"], forceSlash: false } }
-    strip-prefix-pdm:         { stripPrefix: { prefixes: ["/api/pdm"], forceSlash: false } }
-    strip-prefix-scm:         { stripPrefix: { prefixes: ["/api/scm"], forceSlash: false } }
-    strip-prefix-wms:         { stripPrefix: { prefixes: ["/api/wms"], forceSlash: false } }
-    strip-prefix-srm:         { stripPrefix: { prefixes: ["/api/srm"], forceSlash: false } }
-    strip-prefix-qms:         { stripPrefix: { prefixes: ["/api/qms"], forceSlash: false } }
-    strip-prefix-lims:        { stripPrefix: { prefixes: ["/api/lims"], forceSlash: false } }
-    strip-prefix-ehs:         { stripPrefix: { prefixes: ["/api/ehs"], forceSlash: false } }
-    strip-prefix-rd:          { stripPrefix: { prefixes: ["/api/rd"], forceSlash: false } }
-    strip-prefix-bi:          { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
-    strip-prefix-analytics:   { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
-    strip-prefix-report:      { stripPrefix: { prefixes: ["/api/report"], forceSlash: false } }
-    strip-prefix-portal:      { stripPrefix: { prefixes: ["/api/portal"], forceSlash: false } }
-    strip-prefix-ai:          { stripPrefix: { prefixes: ["/api/ai"], forceSlash: false } }
-    strip-prefix-mobile:      { stripPrefix: { prefixes: ["/api/mobile"], forceSlash: false } }
-    strip-prefix-gis:         { stripPrefix: { prefixes: ["/api/gis"], forceSlash: false } }
-    strip-prefix-integration: { stripPrefix: { prefixes: ["/api/integration"], forceSlash: false } }
 
   # ================================================
   # 后端服务定义（含健康检查）
@@ -577,7 +626,7 @@ http:
       loadBalancer:
         passHostHeader: true
         servers:
-          - url: "http://ai:8064"
+          - url: "http://ai:8013"
         healthCheck:
           path: "/health"
           interval: "10s"
@@ -608,6 +657,86 @@ http:
         passHostHeader: true
         servers:
           - url: "http://integration:8072"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-search:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://search:8082"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-communication:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://communication:8084"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-ticket:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://ticket:8086"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-master-data:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://master-data:8090"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-monitor:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://monitor:8095"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-plugin:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://plugin-registry:8096"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-tms:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://tms:8073"
+        healthCheck:
+          path: "/health"
+          interval: "10s"
+          timeout: "3s"
+
+    svc-aps:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://mes:8030"
         healthCheck:
           path: "/health"
           interval: "10s"

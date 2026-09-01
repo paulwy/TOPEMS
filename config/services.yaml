@@ -343,7 +343,7 @@ special_ports:
     port: 8080
     env_var: GATEWAY_PORT
     description: API网关
-    status: reserved
+    status: implemented
     deployment_modes: [docker, saas]
 
   frontend:

@@ -41,7 +41,7 @@ mod openapi;
 // 如有需要未来 dashboard:read 权限请改在 plugin.yaml 或 iam/mod.rs init_permissions vec 中
 // 直接声明，不要走 "挂空壳路由触发 require_permission 中间件运行时注册" 模式。
 
-use axum::routing::{get, post};
+use axum::routing::{any, get, post};
 use axum::Router;
 
 use topems_shared_auth::auth::auth_middleware;
@@ -153,6 +153,11 @@ pub fn create_routes(
 
     // ===== Core API protected routes (dual-rail: /api/core/ + /api/v1/core/) =====
     let core_protected_routes = iam::iam_routes(state)
+        // VXX: JWT 校验端点（API 网关 Traefik jwt-auth forwardAuth 目标，任意方法）
+        .route(
+            "/iam/auth/verify",
+            any(modules::iam::auth::verify_token),
+        )
         .nest("/flow", flow::flow_routes(state))
         .merge(file::file_routes(state))
         .merge(master::master_routes(state))
