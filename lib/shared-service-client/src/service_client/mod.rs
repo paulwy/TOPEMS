@@ -5,6 +5,7 @@ pub mod trait_api;
 
 // ============ 基础设施（保留）============
 pub mod base_client;
+pub mod circuit_breaker;
 pub mod error;
 pub mod generic;
 
@@ -33,8 +34,8 @@ pub use api::workflow_api::{
 
 // P2-2: 从宏模式客户端迁移的 16 个 Api 元数据（[V2026.08 已移除] LowcodeApi）
 pub use api::macro_client_apis::{
-    AiApi, BiApi, CommunicationApi, DocApi, EhsApi, GisApi, IntegrationApi, LimsApi,
-    MasterDataApi, MobileApi, PdmApi, PmApi, PortalApi, RdApi, ScmApi, SrmApi,
+    AiApi, BiApi, CommunicationApi, DocApi, EhsApi, GisApi, IntegrationApi, LimsApi, MasterDataApi,
+    MobileApi, PdmApi, PmApi, PortalApi, RdApi, ScmApi, SrmApi,
 };
 
 pub fn create_generic_client(

@@ -1871,3 +1871,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **portal search.rs**：`record_search_degrade` helper——4 个搜索源 Err 分支接入；**仅 5xx/网络错误上报降级**，401/403（权限不足）仅 warn 不上报（可预期降级）。
 - **顺带修复**：portal `/metrics` 原本只渲染 axum-prometheus 自带 3 个指标（default_registry 全部隐藏，含 service_calls/custom_gauge）——改为合并 `default_registry().gather()` + axum render，业务指标可观测。
 - **验证**：坏端口下 4 源（notification/hrm/workflow/mes）各触发 1 条 service_call_alert + `degraded_total{service}=1`；再次搜索冷却期去重不增加；/metrics 可见全部指标。
+
+## 2026-09-01 workflow 拆分评估 P2：服务调用熔断器（防雪崩）✅
+- **workflow-split-assessment §5 行动项 4**：服务不可用时调用方降级（现状已降级），补熔断器防雪崩。
+- **实现**（shared-service-client 通用，所有 TypedServiceClient 受益）：
+  - `circuit_breaker.rs`（新建）：CLOSED→连续失败阈值(默认5)→OPEN（快速失败）→冷却(默认30s)→HALF_OPEN（放行试探）→成功回 CLOSED / 失败重 OPEN；env 可配（SERVICE_CIRCUIT_*）。
+  - `base_client.rs`：`execute_request` + `get_without_response` 包熔断（`allow_request` 快速失败 → `record_success/failure`）；**仅 5xx / 网络错误计入失败**，4xx/解析错误不计（防误熔断）。
+- **验证**：单测 4 个全过；运行时——坏 workflow（假 server 500）连续 12 次搜索→假 server 仅收 5 次（后续快速失败 503）；冷却 32s 后半开试探 1 次（+1 请求）→失败重新 OPEN。
+- **备注**：熔断快速失败返回 503 ServiceError，与搜索降级告警（P2 前项）联动——熔断期不再产生连接错误告警。
