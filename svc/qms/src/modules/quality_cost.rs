@@ -43,7 +43,7 @@ pub async fn list_quality_costs(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(category) = &query.cost_category {
@@ -75,7 +75,7 @@ pub async fn list_quality_costs(
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_quality_costs{}", where_clause);
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.clone());
+        count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
     let total: i64 = match count_query.fetch_one(&state.pool).await {
@@ -95,7 +95,7 @@ pub async fn list_quality_costs(
 
     let mut fetch_query = sqlx::query_as::<_, QualityCost>(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.clone());
+        fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
@@ -316,7 +316,7 @@ pub async fn get_cost_statistics(
 ) -> Json<ApiResponse<QualityCostStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(category) = &query.cost_category {
@@ -351,7 +351,7 @@ pub async fn get_cost_statistics(
     );
     let mut total_query = sqlx::query_scalar::<_, BigDecimal>(&total_sql);
     for p in &params {
-        total_query = total_query.bind(p.clone());
+        total_query = total_query.bind(p.as_str().unwrap_or(""));
     }
     let total: Option<BigDecimal> = match total_query.fetch_one(&state.pool).await {
         Ok(v) => Some(v),
@@ -368,7 +368,7 @@ pub async fn get_cost_statistics(
     );
     let mut category_query = sqlx::query(&category_sql);
     for p in &params {
-        category_query = category_query.bind(p.clone());
+        category_query = category_query.bind(p.as_str().unwrap_or(""));
     }
     let category_rows = category_query.fetch_all(&state.pool).await;
 
@@ -402,7 +402,7 @@ pub async fn get_cost_statistics(
     );
     let mut dept_query = sqlx::query(&dept_sql);
     for p in &params {
-        dept_query = dept_query.bind(p.clone());
+        dept_query = dept_query.bind(p.as_str().unwrap_or(""));
     }
     let dept_rows = dept_query.fetch_all(&state.pool).await;
 
@@ -465,7 +465,7 @@ pub async fn get_cost_trend(
 ) -> Json<ApiResponse<Vec<CostTrendItem>>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(start) = &query.start_date {
@@ -516,7 +516,7 @@ pub async fn get_cost_trend(
 
     let mut q = sqlx::query(&sql);
     for p in &params {
-        q = q.bind(p.clone());
+        q = q.bind(p.as_str().unwrap_or(""));
     }
     let rows = q.fetch_all(&state.pool).await;
 
