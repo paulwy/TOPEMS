@@ -15,7 +15,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
 > 09-01 编译库一致性治理已闭环：`.cargo/config.toml` 固化 `SQLX_OFFLINE=true`（编译默认离线缓存，绕开 Homebrew 库缺表）；容器库已对齐（postgres 映射 `5433:5432`，`.env DATABASE_URL` 指向 `localhost:5433` 容器库）——根治项完成，详见 `docs/development/backend/database-development.md` §7.8。
 
-**当前待办总数：12 项**（✅ 已完成 8 / ⏳ 待触发 1 / 🔲 待办 1 / 🔲 可选后续 2）
+**当前待办总数：12 项**（✅ 已完成 9 / ⏳ 待触发 1 / 🔲 可选后续 2 —— 实质待办全部清零）
 
 | # | 待办 | 优先级 | 状态 | 说明 |
 |---|---|---|---|---|
@@ -29,7 +29,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 8 | portal 嵌入模块化单体 | P3 | 🔲 可选 | 已决策保持独立部署（BFF 层职责独立）；嵌入需专项重构，列入后续 |
 | 9 | 容器环境遗留（ai exit 0 / 剩余服务启动） | P3 | ✅ 已确认（09-01） | ai exit 0 已解决（容器 healthy）；17 个主服务全 healthy；8 个 extension 服务（ehs/monitor/plugin-registry/master-data/communication/ticket/search/tms）未启动属按需部署（网关路由已就绪）；修复 portal 重建后 unhealthy（健康检查 `curl localhost:${SERVICE_PORT}/health` 缺 SERVICE_PORT env → 补 `-e SERVICE_PORT=8063`） |
 | 11 | QMS 其他模块 Value bind 同类 bug（uuid=jsonb） | P2 | ✅ 已闭环（09-01） | #10 验证发现 quality_standard/corrective_action/quality_cost/apqp 与 eight_d 同模式；质量检查：quality_standard 直接 bind Uuid 无 bug、apqp 已类型化 bind 无 bug；**corrective_action（2 处）+ quality_cost（6 处 bind + 3 处 where_clause）修复**（WHERE tenant_id::TEXT + bind(p.as_str())）；容器重建后 /actions /quality-costs /statistics /trend /apqp/projects /standards 全 200 success，#10 4 端点回归全过。**顺带修复 v477 merge 编译遗漏**：12 服务入口补 ..Default::default() + 14 server 模块补 init_telemetry:false，cargo check --workspace 全量通过 |
-| 12 | qms 建表 DDL 未入库 + init_database 未在启动调用 | P2 | 🔲 待办 | 09-01 容器重建暴露：qms 26 张 qa_* 表 DDL 仅在 `svc/qms/src/modules/mod.rs` 的 `init_database()`（main.rs 未调用），无 SQL 入库 → 容器重建后 qms schema 全空（业务 500）。已从 mod.rs 提取 `/tmp/qms_schema.sql` 手动建表恢复；**根治**：main.rs 启动调 `init_database()` 或建表 SQL 入库（database/init/）+ 重建验证 |
+| 12 | qms 建表 DDL 未入库 + init_database 未在启动调用 | P2 | ✅ 已闭环（09-01） | 根因澄清：init_database 已被 main.rs:68 调用，但缺 CREATE SCHEMA（only_own_schema_query! 仅编译期校验展开，不建 schema；01_rebuild 只 DROP 不 CREATE qms）→ 容器重建后建表失败被 warn 吞、业务 500；**修复**：init_database 开头补 `CREATE SCHEMA IF NOT EXISTS qms` + 26 表 DDL 入库 `database/init/07_create_qms_tables.sql`；**验证**：DROP SCHEMA qms CASCADE 模拟全新库 → 重启容器自动建 26 表 → 8 端点全 success |
 | 10 | QMS 查询层 id cast 专项修复 | P2 | ✅ 已闭环（09-01） | 82 处 `SELECT id` → `id::TEXT`（11 模块）修复 id UUID→String 解码失败；顺带并入 schema 隔离改造（only_own_schema_query! + qms. 前缀）；qms 查询均为非宏 `sqlx::query/query_as`，无需更新 .sqlx 缓存；**运行时验证完成**（容器重建 + 26 张表 DDL 提取建表 + eightd uuid=jsonb 修复）：/issues /checks /audit-plans /eightd 全 200 success；#7 测试凭据对齐新库 admin123，7/7 全过 |
 
 **已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
