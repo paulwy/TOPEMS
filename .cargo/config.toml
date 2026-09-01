@@ -21,6 +21,14 @@ protocol = "sparse"
 # 网络不稳定时 3 次重试（指数退避），避免因单次网络抖动导致整次构建失败
 retry = 3
 
+[env]
+# 编译库一致性治理（2026-09-01）：编译期 sqlx 宏默认走离线缓存（.sqlx/query-*.json），
+# 不连接 DATABASE_URL（本机 localhost:5432 被 Homebrew postgres 占用，schema 落后于容器库）。
+# - 编译默认：SQLX_OFFLINE=true，避免"关系不存在"编译错（analytics_* 等新表只在容器库）
+# - 覆盖方式：需要连库（如 `cargo sqlx prepare` 更新离线缓存）时，显式 `SQLX_OFFLINE=false cargo ...`
+#   （force=false，显式环境变量优先）
+SQLX_OFFLINE = "true"
+
 [test]
 # cargo-nextest：2–5× 测试执行速度，测试报告友好
 runner = "cargo-nextest run"
