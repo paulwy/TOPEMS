@@ -505,4 +505,57 @@ weeklyAuditArchive();
 
 ---
 
-> **状态标记**：Draft · 待后续版本评审实现路径与工时估算
+> **状态标记**：Draft · 已完成 V477 评审（见附录 B）· 待 V0.2 TS 实现
+
+---
+
+## 附录 B：V477 评审 Action Items（2026-09-01）
+
+> 评审基线：本文档 V0.1 Draft 全文 + 后端实际路由核对
+> 评审目标：识别 V0.2 实现前必须解决的阻塞项和应改进项
+
+### B.1 阻塞项（V0.2 实现前必须解决，3 项）
+
+| # | 问题 | 影响 | 建议 |
+|---|------|------|------|
+| **B1** | **API 端点路径与后端实际路由不一致** | SDK 方法调用会 404 | 文档 §3 写 `auditLogs → /business-tools/permissions/audit-logs/*`，但后端实际路由为 `/business-tools/audit-export/*`（gzip/NDJSON 导出）和 `/business-tools/audit-export-task/*`（定时任务控制）。V0.2 前必须用 `grep -r 'Router::new' svc/unified-core/src/routes/business_tools/` 核实全部端点路径，同步修正 §3 对应表 |
+| **B2** | **TypeScript 类型定义缺失** | V0.2 实现无法启动 | 文档展示了方法签名但未定义核心接口（Permission / AuditLogEntry / RetentionPolicy / CleanupResult / ExportRunResult / FailedItem / InvalidRow 等 ~12 个）。V0.2 前需先输出 `types.ts` 设计稿，字段与后端 serde Serialize 输出对齐 |
+| **B3** | **分页协议未明确** | list/batch 方法返回结构不确定 | 文档写 `{ items, total, page, pageSize }`（offset-based），但后端如果用 cursor-based（如 `nextCursor`），SDK 设计需改。V0.2 前需确认后端 `GET /permissions` 的实际分页参数和返回结构 |
+
+### B.2 应改进项（V0.2 可延后但建议尽早处理，7 项）
+
+| # | 问题 | 影响 | 建议 |
+|---|------|------|------|
+| **I1** | **Token 刷新钩子延迟到 V0.3** | 生产环境 token 过期后 SDK 不可用 | 将 `tokenProvider: () => Promise<string>` 从 V0.3 提前到 V0.2，因为 1 小时 access_token 会过期，静态 token 仅适合测试 |
+| **I2** | **NDJSON 流断点恢复缺失** | 百万级日志流中断需从头重来 | 增加 `resumeFrom` 参数（传 last processed ID 或 timestamp），后端支持 `Range` 或自定义 `X-Resume-After` header |
+| **I3** | **429 Rate Limiting 处理未明确** | 调用方可能被限流但 SDK 不感知 | SDK 应读 `Retry-After` 响应头自动等待，而非走通用 retry 策略 |
+| **I4** | **browser 端 exportToFile 方法签名不一致** | 浏览器无 `filePath` 概念 | 拆为 `exportToFile()`（Node，写文件）和 `exportAsBlob()`（Browser，返回 Blob），或用 union type 区分 |
+| **I5** | **permission check helper 缺失** | 常见 "can user X do Y on Z?" 查询无便捷方法 | 增加 `client.permissions.check({ roleCode, resourceCode, action }) -> { allowed: boolean }`，对齐后端 auth_middleware 逻辑 |
+| **I6** | **SDK tree-shaking 未考虑** | 浏览器引入全量 SDK 增大 bundle | 支持 sub-path imports：`import { AuditLogsClient } from '@topems/business-tools-sdk/audit-logs'` |
+| **I7** | **minimum_backend_version 检查方式未定义** | SDK 与后端版本不兼容时静默失败 | V0.2 在初始化时调 `GET /health` 检查 `X-API-Version` 响应头，低于 `minimum_backend_version` 时 warn 或 throw |
+
+### B.3 设计优点（保持不变）
+
+- ✅ 5 模块切分清晰，职责单一
+- ✅ TS + Python 方法签名一一对应，跨语言心智负担低
+- ✅ NDJSON 流式导出设计（for-await 消费）是核心亮点
+- ✅ `triggerOnce()` 运维脚本模式实用
+- ✅ 版本路线 V0.1→V1.0 渐进式合理
+- ✅ 测试策略 4 层分层（Unit/Contract/Integration/E2E）完善
+- ✅ 风险表覆盖 CORS / proxy buffering / token refresh 真实痛点
+
+### B.4 V0.2 实施优先级建议
+
+```
+Phase 1（阻塞项 B1+B2+B3）→ 端点核实 + types.ts + 分页确认
+Phase 2（核心模块）       → permissions + auditLogs + exportTask 骨架
+Phase 3（I1+I3+I5）       → tokenProvider + 429 处理 + check helper
+Phase 4（测试）           → vitest + msw Mock 覆盖率 ≥ 70%
+Phase 5（I4+I6）          → browser 适配 + sub-path imports
+```
+
+### B.5 评审结论
+
+**文档状态**：Draft → Reviewed（可进入 V0.2 实现）
+**阻塞项**：3 项（B1 端点路径 / B2 类型定义 / B3 分页协议），均在 V0.2 Phase 1 解决
+**工时预估**：V0.2 TS 骨架 + 单测 ≈ 2-3 个版本交付周期（四轨并行节奏）

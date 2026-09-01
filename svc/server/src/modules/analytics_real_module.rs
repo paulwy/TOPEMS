@@ -1,4 +1,4 @@
-//! 真实 Analytics 服务接入模块（AnalyticsRealModule）—— advanced 组挂载
+﻿//! 真实 Analytics 服务接入模块（AnalyticsRealModule）—— advanced 组挂载
 //!
 //! 将真实 `topems-analytics` 服务（lib 形态）作为模块接入统一入口。
 //! analytics 使用 `routes::create_protected_routes() -> Router`（内部已含
@@ -41,7 +41,6 @@ impl AnalyticsRealModule {
             api_prefix: "/api/bi",
             legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

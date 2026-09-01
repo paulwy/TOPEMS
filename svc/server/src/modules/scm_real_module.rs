@@ -1,4 +1,4 @@
-//! 真实 SCM 服务接入模块（ScmRealModule）—— Phase B3 扩展
+﻿//! 真实 SCM 服务接入模块（ScmRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-scm` 服务（lib 形态）作为模块接入统一入口。
 //! 与 FinanceRealModule / ErpRealModule / QmsRealModule / CrmRealModule / HrmRealModule
@@ -41,7 +41,6 @@ impl ScmRealModule {
             api_prefix: "/api/scm",
             legacy_prefixes: &["/api/v1/scm"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

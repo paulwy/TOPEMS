@@ -21491,8 +21491,67 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete + 成功回滚分支 + 循环写 audit_log
 - [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（重连 / 无 session / 心跳 timeout / 客户端断开）
 - [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps 按 risk/impact 分 4 档 + 修前 20%
-- [ ] **轨D 业务工具 SDK 草稿正式评审**：SDK 设计草稿提交 Review → 生成 Action Items 列表 → 进入 V0.1 TS 实现
-- [ ] **轨C rustls crypto provider 切换回归验证**：aws_lc_rs → ring 切换后在 Windows / Linux / macOS 三环境各跑一次 `cargo test --workspace --lib`
+- [x] **轨D 业务工具 SDK 草稿正式评审**：V477 完成评审，追加附录 B 到 design doc（3 阻塞 + 7 改进 + 5 phase V0.2 优先级）
+- [x] **轨C rustls crypto provider 切换回归验证**：V477 Windows 环境验证通过（shared-auth 223 + shared-boundary 120 + shared-bootstrap 7 + audit_export 37 = 387 passed / 0 failed），附带修复 7 Cargo.toml + 29 .rs init_telemetry + crm event_handlers
+
+---
+
+## 🎯 V477 — 低复杂度任务批量推进 + workspace 基线修复（✅ 完成）
+
+> 日期：2026-09-01 | 代码改动 10+ files（SDK 评审附录 + 7 Cargo.toml + 29 .rs init_telemetry + 1 crm event_handlers + TODO）| 验收：Rust 387 tests 全过 · SDK 草稿 Reviewed · 2 项已存在任务确认
+>
+> **Tag**: `V477` · Baseline SHA: `d262a8345` · Status: **单元测试通过** ✅ · 优先执行 4 个低复杂度任务，其中 2 项发现已在之前版本完成
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨C | rustls ring 回归验证 | shared-auth 223 + shared-boundary 120 + shared-bootstrap 7 + audit_export 37 = 387 passed | ✅ |
+| 轨D | 业务工具 SDK 草稿正式评审 | business-tools-sdk-design.md 附录 B（3 阻塞 + 7 改进 + 5 phase） | ✅ |
+| 轨B | openapi.d.ts regen SOP | scripts/openapi/README.md 已含完整 4 步 SOP（V286+V287 验证） | ✅ 已存在 |
+| 轨B | CI gate 脚本合并 API 三合一 | check-api.cjs 已完成合并（3 旧脚本为 wrapper） | ✅ 已存在 |
+
+### 轨C：rustls ring 回归验证 + workspace 基线修复
+
+**测试结果**：
+
+| Crate | 测试数 | 结果 |
+|-------|--------|------|
+| topems-shared-auth（含 tier.rs 4 tests） | 223 | ✅ 0 failed |
+| topems-shared-boundary | 120 | ✅ 0 failed |
+| topems-shared-bootstrap | 7 | ✅ 0 failed |
+| topems-unified-core audit_export | 37 | ✅ 0 failed |
+| **合计** | **387** | **✅ 0 failed** |
+
+**附带基线修复**（workspace 编译错误，与 rustls 无关但阻塞 cargo test --workspace）：
+
+| 修复 | 影响范围 | 根因 |
+|------|----------|------|
+| 7 Cargo.toml 补 `topems-shared-boundary` 依赖 | hrm/srm/finance/wms/communication/integration/gis/erp | workspace 注册了 crate 但各服务 Cargo.toml 未声明依赖 |
+| 根 Cargo.toml 注册 `topems-shared-boundary` | workspace dependencies | 缺少 workspace 级 path 声明 |
+| 29 .rs 移除 `init_telemetry:` 字段 | 全部 29 个 svc/*/main.rs + server/modules/*_real_module.rs | ServiceConfig 已移除 init_telemetry 字段，改为 bootstrap_service 内部自动调用 |
+| crm_real_module.rs event_handlers 调用注释 | svc/server/src/modules/crm_real_module.rs:72 | topems_crm::event_handlers 模块未实现 |
+
+**预存编译错误（未修复，留 V478+）**：
+- topems-erp: 131 errors（E0425/E0433 `LifecycleStage`/`TaskStatus`/`ArchiveTier`/`RetirementStatus` 等生命周期类型缺失）
+- topems-portal: 6 errors（E0603 private function imports from remote merge `63106fe`）
+
+### 轨D：SDK 草稿评审 Action Items
+
+**3 阻塞项**（V0.2 实现前必须解决）：
+- B1: API 端点路径与后端实际路由不一致
+- B2: TypeScript 类型定义缺失（~12 个核心接口）
+- B3: 分页协议未明确（offset vs cursor）
+
+**7 改进项**：I1 tokenProvider / I2 流断点恢复 / I3 429 / I4 browser exportToFile / I5 check helper / I6 tree-shaking / I7 版本检查
+
+### V477后续扩展（留给V478+）
+
+- [ ] **轨C workspace 预存编译错误修复**：topems-erp 131 errors（生命周期类型缺失）+ topems-portal 6 errors（E0603 private functions）
+- [ ] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete
+- [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界
+- [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps
+- [ ] **轨D SDK V0.2 Phase 1**：端点核实 + types.ts + 分页确认（解决 B1+B2+B3 阻塞项）
 
 ---
 

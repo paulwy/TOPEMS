@@ -1,4 +1,4 @@
-use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
+﻿use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_boundary::only_own_schema_query;
@@ -25,7 +25,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/communication",
         legacy_prefixes: &["/api/core/comm", "/api/core/notification"],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

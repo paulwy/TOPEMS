@@ -1,4 +1,4 @@
-mod event_handlers;
+﻿mod event_handlers;
 use axum::{
     response::IntoResponse,
     routing::{delete, get, post, put},
@@ -70,7 +70,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/portal",
         legacy_prefixes: &["/api/v1/portal", "/api/core/portal/v1"],
-        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
     START_TIME.get_or_init(Instant::now);

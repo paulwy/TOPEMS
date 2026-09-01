@@ -1,4 +1,4 @@
-//! TOPEMS Unified Core Platform
+﻿//! TOPEMS Unified Core Platform
 //!
 //! Unified service for: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync
 //!
@@ -316,7 +316,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: false,
         api_prefix: "/api/core",
         legacy_prefixes: &[],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

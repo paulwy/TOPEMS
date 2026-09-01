@@ -1,4 +1,4 @@
-//! TOPEMS Analytics Service (API path: /api/bi)
+﻿//! TOPEMS Analytics Service (API path: /api/bi)
 //!
 //! Note: The service directory is named "analytics" for historical reasons,
 //! but all API routes are registered under /api/bi (not /api/analytics).
@@ -39,7 +39,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/bi",
         legacy_prefixes: &["/api/v1/bi"],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

@@ -398,6 +398,7 @@ topems-shared-event = { path = "lib/shared-event" }
 topems-shared-observability = { path = "lib/shared-observability" }
 topems-shared-ai = { path = "lib/shared-ai" }
 topems-shared-bootstrap = { path = "lib/shared-bootstrap" }
+topems-shared-boundary = { path = "lib/shared-boundary" }
 
 # GraphQL BFF 聚合层（V33.0 Portal BFF Phase 3）
 async-graphql = { version = "7", features = ["tokio", "chrono", "uuid", "dataloader", "apollo_persisted_queries"] }

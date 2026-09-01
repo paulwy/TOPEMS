@@ -1,4 +1,4 @@
-//! 真实 LIMS 服务接入模块（LimsRealModule）—— Phase B3 扩展
+﻿//! 真实 LIMS 服务接入模块（LimsRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-lims` 服务（lib 形态，AppState 直传模式）作为模块接入统一入口。
 //! lims 的 `modules::create_api_routes() -> Router<AppState>` 无参，
@@ -45,7 +45,6 @@ impl LimsRealModule {
             api_prefix: "/api/lims",
             legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

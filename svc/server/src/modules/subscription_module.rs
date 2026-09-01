@@ -1,4 +1,4 @@
-//! 订阅管理模块（SubscriptionModule）—— P5 商业化支撑
+﻿//! 订阅管理模块（SubscriptionModule）—— P5 商业化支撑
 //!
 //! 提供订阅制存储与 API：
 //! - `public.subscriptions` 表（tenant 唯一）
@@ -230,7 +230,6 @@ impl SubscriptionModule {
             enable_request_context: false,
             api_prefix: "/api/subscriptions",
             legacy_prefixes: &[],
-            init_telemetry: false,
         };
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
