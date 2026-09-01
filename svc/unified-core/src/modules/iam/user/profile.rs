@@ -2,8 +2,9 @@ use crate::AppState;
 use axum::Extension;
 use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::service::issue_service_token;
 
-use super::models::{PreferenceRow, UserResponse, UserRow};
+use super::models::{UserResponse, UserRow};
 
 pub async fn get_preferences(
     State(state): State<AppState>,
@@ -11,6 +12,11 @@ pub async fn get_preferences(
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user get_preferences called for user: {}", claims.sub);
 
+    // 拆分前置（database-split-plan §3 前置条件 2）：不再直读 portal.user_preferences，
+    // 改走 portal 偏好接口（service token 认证）；portal 不可用时回退默认值。
+    let (ok, data) = call_portal_preferences(&state, &claims.sub, "GET", None).await;
+
+    // 默认值（与旧行为一致）
     let mut notification_settings = serde_json::json!({
         "email_notifications": true,
         "push_notifications": true,
@@ -21,75 +27,29 @@ pub async fn get_preferences(
         {"id": "1", "title": "仪表盘", "icon": "Activity", "path": "/dashboard"},
         {"id": "2", "title": "文档中心", "icon": "FileText", "path": "/documents"}
     ]);
-    let mut language = "zh-CN".to_string();
-    let mut timezone = "Asia/Shanghai".to_string();
+    let mut language = serde_json::Value::String("zh-CN".into());
+    let mut timezone = serde_json::Value::String("Asia/Shanghai".into());
 
-    let notification_row: Option<PreferenceRow> = sqlx::query_as(
-        "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'notification_settings'"
-    )
-    .bind(&claims.sub)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::warn!("Failed to query notification_settings: {}", e);
-        None
-    });
-
-    if let Some(row) = notification_row {
-        if let Ok(value) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
-            notification_settings = value;
+    if ok {
+        if let Some(d) = data {
+            if let Some(v) = d.get("notification_settings") {
+                notification_settings = v.clone();
+            }
+            if let Some(v) = d.get("shortcuts") {
+                shortcuts = v.clone();
+            }
+            if let Some(v) = d.get("language") {
+                language = v.clone();
+            }
+            if let Some(v) = d.get("timezone") {
+                timezone = v.clone();
+            }
         }
-    }
-
-    let shortcuts_row: Option<PreferenceRow> = sqlx::query_as(
-        "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'shortcuts'"
-    )
-    .bind(&claims.sub)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::warn!("Failed to query shortcuts: {}", e);
-        None
-    });
-
-    if let Some(row) = shortcuts_row {
-        if let Ok(value) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
-            shortcuts = value;
-        }
-    }
-
-    let language_row: Option<PreferenceRow> = sqlx::query_as(
-        "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'language'"
-    )
-    .bind(&claims.sub)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::warn!("Failed to query language: {}", e);
-        None
-    });
-
-    if let Some(row) = language_row {
-        if let Ok(value) = serde_json::from_value::<String>(row.preference_value) {
-            language = value;
-        }
-    }
-
-    let timezone_row: Option<PreferenceRow> = sqlx::query_as(
-        "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'timezone'"
-    )
-    .bind(&claims.sub)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or_else(|e| {
-        tracing::warn!("Failed to query timezone: {}", e);
-        None
-    });
-
-    if let Some(row) = timezone_row {
-        if let Ok(value) = serde_json::from_value::<String>(row.preference_value) {
-            timezone = value;
-        }
+    } else {
+        tracing::warn!(
+            "portal preferences unavailable for {}, fallback to defaults",
+            claims.sub
+        );
     }
 
     Json(serde_json::json!({
@@ -116,96 +76,17 @@ pub async fn update_preferences(
         payload
     );
 
-    if let Some(shortcuts) = payload.get("shortcuts") {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at)
-            VALUES ($1, 'shortcuts', $2, NOW())
-            ON CONFLICT (user_id, preference_key)
-            DO UPDATE SET preference_value = $2, updated_at = NOW()
-            "#
-        )
-        .bind(&claims.sub)
-        .bind(shortcuts)
-        .execute(&state.pool)
-        .await;
-
-        if let Err(e) = result {
-            tracing::error!("Failed to save shortcuts: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("保存快捷方式失败: {}", e),
-            ));
-        }
-    }
-
-    if let Some(notification_settings) = payload.get("notification_settings") {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at)
-            VALUES ($1, 'notification_settings', $2, NOW())
-            ON CONFLICT (user_id, preference_key)
-            DO UPDATE SET preference_value = $2, updated_at = NOW()
-            "#
-        )
-        .bind(&claims.sub)
-        .bind(notification_settings)
-        .execute(&state.pool)
-        .await;
-
-        if let Err(e) = result {
-            tracing::error!("Failed to save notification_settings: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("保存通知设置失败: {}", e),
-            ));
-        }
-    }
-
-    if let Some(language) = payload.get("language") {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at)
-            VALUES ($1, 'language', $2, NOW())
-            ON CONFLICT (user_id, preference_key)
-            DO UPDATE SET preference_value = $2, updated_at = NOW()
-            "#
-        )
-        .bind(&claims.sub)
-        .bind(language)
-        .execute(&state.pool)
-        .await;
-
-        if let Err(e) = result {
-            tracing::error!("Failed to save language: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("保存语言设置失败: {}", e),
-            ));
-        }
-    }
-
-    if let Some(timezone) = payload.get("timezone") {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at)
-            VALUES ($1, 'timezone', $2, NOW())
-            ON CONFLICT (user_id, preference_key)
-            DO UPDATE SET preference_value = $2, updated_at = NOW()
-            "#
-        )
-        .bind(&claims.sub)
-        .bind(timezone)
-        .execute(&state.pool)
-        .await;
-
-        if let Err(e) = result {
-            tracing::error!("Failed to save timezone: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("保存时区设置失败: {}", e),
-            ));
-        }
+    // 拆分前置：不再直写 portal.user_preferences，改走 portal 偏好写接口（service token）。
+    let (ok, _) = call_portal_preferences(&state, &claims.sub, "PUT", Some(&payload)).await;
+    if !ok {
+        tracing::error!(
+            "save preferences failed: portal service unavailable for {}",
+            claims.sub
+        );
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "保存偏好失败：portal 服务不可用",
+        ));
     }
 
     tracing::info!(
@@ -303,3 +184,54 @@ pub async fn get_current_user(
         }
     }
 }
+
+
+/// 调用 portal 偏好接口（service token 认证）。
+///
+/// 拆分前置（database-split-plan §3 前置条件 2）：unified-core IAM 聚合用户偏好
+/// 改走 portal 服务 API（`/api/portal/preferences`），不再直读 `portal.user_preferences`。
+/// 返回 `(ok, Option<data>)`——`ok=false` 表示 portal 不可用/失败（调用方回退默认值）。
+async fn call_portal_preferences(
+    state: &AppState,
+    user_id: &str,
+    method: &str,
+    payload: Option<&serde_json::Value>,
+) -> (bool, Option<serde_json::Value>) {
+    let Ok(token) = issue_service_token(
+        &state.auth_state.jwt_secret,
+        "unified-core",
+        &["portal:admin"],
+        None,
+    ) else {
+        return (false, None);
+    };
+
+    let portal_url = std::env::var("PORTAL_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:18050".to_string());
+    let url = format!(
+        "{}/api/portal/preferences?user_id={}",
+        portal_url.trim_end_matches('/'),
+        user_id
+    );
+    let client = reqwest::Client::new();
+
+    let resp = if method == "GET" {
+        client.get(&url).bearer_auth(&token).send().await
+    } else {
+        client
+            .put(&url)
+            .bearer_auth(&token)
+            .json(payload.unwrap_or(&serde_json::Value::Null))
+            .send()
+            .await
+    };
+
+    match resp {
+        Ok(r) if r.status().is_success() => match r.json::<serde_json::Value>().await {
+            Ok(v) => (true, v.get("data").cloned()),
+            Err(_) => (false, None),
+        },
+        _ => (false, None),
+    }
+}
+

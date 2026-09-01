@@ -9,7 +9,7 @@ use std::time::Instant;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge, TextEncoder};
+use prometheus::{default_registry, Gauge};
 use topems_shared::auth::auth_middleware;
 use topems_shared::{
     create_api_info_router, create_cors_layer, register_routes_with_legacy_alias, ApiResponse,
@@ -171,6 +171,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/todos/{id}", post(modules::todos::complete_todo))
         .route("/todos/{id}", delete(modules::todos::delete_todo))
         .route("/user", get(modules::user::get_user_info))
+        // 服务间内部偏好读写接口（unified-core IAM 聚合用户偏好用；service token 认证）
+        .route(
+            "/preferences",
+            get(modules::preferences::get_user_preferences)
+                .put(modules::preferences::update_user_preferences),
+        )
         .route(
             "/monitoring/services",
             get(modules::monitoring::get_monitoring_services),

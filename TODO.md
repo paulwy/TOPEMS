@@ -1888,3 +1888,15 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - 新增 `--mark` 显式触发 + 阈值触发时自动联动 `mark_cross_db.py` 重新生成跨库清单（cross-db-calls.md + cross-db.html）。
   - 实测：5 项阈值均未触发；联动重生成跨库 31 / 同库 5，**workflow 14 条跨库边在清单中高亮**。
 - **状态**：workflow-split-assessment §5 行动项 1/3/4 全部 ✅，P3 规模未触发待观察；§7 建议 1/2/3 全部 ✅。
+
+## 2026-09-01 拆分前置条件 #2：unified-core 读 portal.user_preferences 改走 portal API ✅
+- **背景**：database-split-plan §3 阶段 2 前置条件之一（前置条件 #1 integration 直写已闭环）——unified-core IAM `get_preferences`/`update_preferences` 直读/直写 `portal.user_preferences`，为拆分前**唯一遗留跨库直读**。
+- **portal 侧**（新建 `modules/preferences.rs` + 路由挂载）：
+  - `GET /api/portal/preferences?user_id=`——一次性取全部偏好（notification_settings/shortcuts/language/timezone），缺失 key 回退默认值（与旧行为一致）。
+  - `PUT /api/portal/preferences?user_id=`——批量 upsert（`ON CONFLICT (user_id, preference_key)`）。
+  - **仅 service claims 可访问**（`is_service_claims` 校验；普通用户 403）。
+- **unified-core 侧**（profile.rs）：`call_portal_preferences` helper——`issue_service_token("unified-core", ["portal:admin"])` + reqwest 调 portal（`PORTAL_SERVICE_URL` env，默认 18050）；get_preferences 改走 GET（portal 不可用回退默认值），update_preferences 改走 PUT（失败返回 500）。
+- **tenant_middleware service 豁免**（lib/shared-auth）：service token 不携带 tenant_id（原会 400"缺少租户ID"）——新增 `is_service_claims` 分支跳过租户注入（服务间调用为全局基础设施，无租户维度）。
+- **门禁**：撤销 schema_boundary.json `unified-core.allow=['portal']`；check_schema_boundary.py 全服务 PASS（仅注释残留）。
+- **运行时验证**：service token 读/写/默认值/401/403 全过；unified-core IAM get_preferences 端到端返回偏好，portal 日志确认 service-to-service 调用 + tenant 豁免生效。
+- **状态**：拆分前置条件 #1 #2 全部 ✅——无跨库直读，物理库拆分前置治理完成。

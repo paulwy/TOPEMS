@@ -1,4 +1,5 @@
 use crate::auth::Claims;
+use crate::service::is_service_claims;
 use axum::{
     body::Body,
     extract::Request,
@@ -93,6 +94,21 @@ pub fn tenant_middleware() -> impl Fn(
                         .into_response();
                 }
             };
+
+            // 服务身份（service token）豁免租户上下文：服务间调用是全局基础设施，
+            // 无租户维度（service token 不携带 tenant_id），跳过 RLS 租户注入。
+            if is_service_claims(claims) {
+                tracing::debug!(
+                    "service claims: skip tenant context for {}",
+                    claims.username
+                );
+                let mut req = req;
+                req.extensions_mut().insert(TenantContext {
+                    tenant_id: Uuid::nil(),
+                    user_id: Uuid::nil(),
+                });
+                return next.run(req).await;
+            }
 
             let tenant_id_str = match claims.tenant_id.as_ref() {
                 Some(id) => id,
