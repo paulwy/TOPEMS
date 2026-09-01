@@ -626,7 +626,7 @@ http:
       loadBalancer:
         passHostHeader: true
         servers:
-          - url: "http://ai:8064"
+          - url: "http://ai:8013"
         healthCheck:
           path: "/health"
           interval: "10s"
