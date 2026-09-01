@@ -1925,3 +1925,19 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - 一致性对比：匹配 5、仅 runtime 0（设计表补齐后）、仅 design 32（未启动服务）✅
   - 说明：portal→unified-core 用户接口（get_user_info）是 **A 类用户 token 转发**（build_iam_client 覆盖 with_service_token）——正确保持，不产生 service_calls metric（非 service-to-service）。
 - **备注**：runtime 产物（json/html/csv）含验证用模拟数据——不提交（runtime 随运行环境变化）；提交脚本补强 + /metrics 修复 + 设计表。
+
+## 2026-09-01 阈值监控接入服务拓扑一致性（--topology / --topology auto）✅
+- **check_split_threshold.py 新增第 6 项：服务拓扑一致性**——扫描运行中服务 /metrics，与设计依赖表（service_topology.py STATIC_DEPS）比对——存在"仅 runtime"边（设计表缺口）→ 触发告警，提示补齐设计依赖表。
+- **`--topology "svc:port,..."`**：显式指定运行中服务清单（复用 service_topology.py --collect 的命名归一化 + consistency_report）。
+- **`--topology auto`**：自动从 config/services.yaml 探测运行中服务——
+  - 仅扫描 service_groups（真实独立服务），跳过 virtual_services（unified-core 虚拟服务 flow/doc/file/automation 无独立进程）；
+  - 探测验证 /metrics body 含 `topems_` 指标特征（仅端口可达不可靠——Docker 映射端口也会响应，已过滤）；
+  - 供 crontab/launchd/CI 周期性扫描接入。
+- **service_topology.py LOGIC_SERVICE_NAMES 补全**：新增 scm/srm/ai/bi/gis/integration/tms/rd/ticket/search/plugin-registry/master-data——auto 探测节点命名不产生 warn。
+- **运行时验证**：
+  - 显式 --topology：portal/unified-core 真实调用 → 匹配 1 / 仅 runtime 0 / 仅 design 36 ✅
+  - auto 模式：本地探测到 erp/pm/scm/srm 4 个运行服务，无 service 调用边时准确提示 ✅
+- **定时任务接入示例**：
+  - Linux crontab：`0 */6 * * * cd /Users/air/TOPEMS && /usr/bin/python3 scripts/check_split_threshold.py --topology auto >> /var/log/topems-split.log 2>&1`
+  - macOS launchd：StartInterval 21600（6h）运行同一命令
+  - 触发语义：仅 runtime 边 > 0 → 退出码 1 + WARNING（设计表缺口），可接告警通道。

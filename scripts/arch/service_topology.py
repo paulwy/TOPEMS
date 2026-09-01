@@ -81,7 +81,8 @@ CALLER_SERVICES = set(STATIC_DEPS.keys()) - MODULE_NODES
 LOGIC_SERVICE_NAMES = {
     "wms", "erp", "finance", "hrm", "portal", "crm", "mobile",
     "iam", "workflow", "notification", "mes", "qms", "monitor",
-    "srm", "pm", "ehs",
+    "srm", "pm", "ehs", "scm", "ai", "bi", "gis", "integration",
+    "tms", "rd", "ticket", "search", "plugin-registry", "master-data",
 }
 
 # 进程名 → 逻辑服务名映射：collect 的 spec 通常用进程名（如 unified-core），
