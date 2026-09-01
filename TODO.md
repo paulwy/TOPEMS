@@ -1843,3 +1843,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **实施 P0 决策**：移除指向不存在接口的 4 个全局搜索源（`/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search`）——search.rs 净删 129 行（4 个搜索函数 + send_global_search helper + erp_base_url + 4 个 DEFAULT_* 常量）。
 - **保留 4 个真实源**：notification（get_unread 用户通知）、hrm（list_employees 有 EmployeeRead+tenant 过滤）、workflow（list_instances 待下游补过滤）、mes（list_production_orders）。
 - **验证**：编译干净；运行时搜索 by_service 仅 {hrm,notification,mes,workflow}，不再尝试调用不存在的接口（无 404 噪音）；search_suggestions 同步收敛。
+
+## 2026-09-01 workflow list_instances 补用户维度过滤（消除越权）✅
+- **问题**：list_instances 无 Claims 过滤，全量查 core_workflow_instances——普通用户认证后可见全量实例。
+- **修复**（unified-core flow/instance.rs）：handler 加 Extension<Claims>——`is_service_claims` 豁免（service token 全量）；普通用户过滤 `initiator_id = user OR EXISTS(core_workflow_tasks t WHERE t.instance_id = cwi.id AND t.assignee_id = user AND t.deleted_at IS NULL)`（自己发起 or 任务处理人参与）。
+- **实现**：$N::uuid IS NULL 技巧统一处理 service（NULL→全量）与用户（过滤）；total + items 两查询 + has_filters 两分支同步加过滤；error_instances 补 Claims 转发。
+- **验证**：编译干净；SQL 逻辑 4 场景（service→3 / initiator→1 / assignee→1 / 无关→0）；flow 路由在 auth_middleware 保护下（Claims 必有）。
+- **候选扩展（P2）**：审批记录（approval_records actor_id）参与可见、候选人（candidate）可见——当前仅 initiator + assignee。
