@@ -650,10 +650,6 @@ test result: ok. ... passed; 0 failed; 0 ignored
 ### 8.3 推送到 GitHub
 
 ```powershell
-# 如需通过代理推送（SOCKS5 代理）
-$env:HTTP_PROXY='socks5://127.0.0.1:10808'
-$env:HTTPS_PROXY='socks5://127.0.0.1:10808'
-
 # 拉取远程变更并 rebase
 git pull --rebase origin main
 
@@ -733,5 +729,3 @@ git push origin main
 |------|------|--------|
 | `SQLX_OFFLINE` | 启用 SQLX 离线缓存模式（无 DB 环境时必需） | `true` |
 | `CARGO_INCREMENTAL` | 禁用增量编译（规避 ThinLTO 缓存写入问题） | `0` |
-| `HTTP_PROXY` | HTTP/SOCKS5 代理（推送 GitHub 时使用） | `socks5://127.0.0.1:10808` |
-| `HTTPS_PROXY` | HTTPS/SOCKS5 代理（推送 GitHub 时使用） | `socks5://127.0.0.1:10808` |

@@ -1803,7 +1803,7 @@ let failed_count = 0;
 - [ ] **eslint exhaustive-deps 修复**：403 个 react-hooks/exhaustive-deps warnings
 - [ ] **eslint no-explicit-any 修复**：307 个 `any` 类型 warnings
 - [x] **src/ 其他目录未使用项清理（第六批 api/）**：V299 清理 api/qms/types.ts + api/mes/types.ts + api/workflow/types.ts + api/erp/masterData.ts 共 152 项（5 轮迭代，级联效应显著），tsc --noUnusedLocals 目标 4 files 0 errors，净删 1405 行
-- [ ] **src/ 其他目录未使用项清理（第七批）**：全 src/ 仍有 ~1321 个 tsc 未使用项（hooks/useExternalErp.ts 29 / pages/doc 22 / hooks/useVoucherTemplate.ts 19 / components/templates 17 等），可继续用 v6 迭代脚本分批清理
+- [x] **src/ 其他目录未使用项清理（第七批）**：V300 已做 hooks/ 96 项，V476 再清级联死代码 3 项（useVoucherTemplate.ts 死文件 + api/index.ts / hooks/features/finance/index.ts 两处零消费 re-export 移除），级联效应显著
 
 ## 🎯 V299 — 第六批未使用项清理（api/ 152项）+ 级联迭代 + import 处理方法论（✅ 完成）
 
@@ -21400,7 +21400,99 @@ export AUDIT_LOG_STORE_TYPE=database
 - [ ] **轨C DNS健康检查 + DNS集成测试**：DNS解析后端点健康检查 + 真实DNS服务器集成测试
 - [ ] **轨C K8s/Eureka/Nacos完善**：集成测试 + watch实时感知 + 心跳/长轮询
 - [ ] **轨D 存储健康检查+指标+DB集成测试**：配置文件集成 + 健康检查端点 + 性能指标 + PostgreSQL Docker Compose
-- [ ] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
+- [x] **四轨并行继续**：V333-V475连续一百四十三次交付验证成功，V476继续四轨合并交付模式
+
+---
+
+## 🎯 V476 — 架构改进四轨并行第一百四十四次：SQLX_OFFLINE缓存重建SOP + 业务工具SDK设计草稿 + eslint未使用项级联清理 + shared-auth tier基线修复（✅ 完成）
+
+> 日期：2026-09-01 | 代码改动 6 files（新增 2 文档 + 1 Rust 模块 + 1 TS 删除 + 2 TS re-export 移除）+ TODO | 验收：Rust 41 tests 全过（tier 4 + audit_export 37）· 文档生成 2 份 · 3 项未使用项零消费
+>
+> **Tag**: `V476` · Baseline SHA: `93c9c6b6d` · Status: **单元测试通过** ✅ · 本次优先交付复杂度最低的 3 项（文档 + 死代码清理），并顺手修复 shared-auth 基线编译错误
+
+### 四轨交付清单
+
+| 轨道 | 任务 | 交付物 | 状态 |
+|------|------|--------|------|
+| 轨D | SQLX_OFFLINE 缓存重建 SOP 文档 | `docs/development/backend/database-development.md` §7 完整 SOP | ✅ |
+| 轨D | 业务工具 SDK 设计草稿 | `docs/architecture/business-tools-sdk-design.md`（TS + Python 双语言） | ✅ |
+| 轨A | eslint 未使用项级联清理（第七批收尾） | 删除 useVoucherTemplate.ts 死文件 + 2 处 re-export（3 项） | ✅ |
+| 轨C | shared-auth tier.rs 基线修复 | Tier / SubscriptionStatus / resolve_effective_tier 模块 + 4 单测 | ✅ |
+
+### 轨D（文档）：SQLX_OFFLINE 缓存重建 SOP（docs/development/backend/database-development.md §7，新增 236 行）
+
+**文档定位**：无 DB / 外部服务环境下的 `cargo check --workspace --tests` 或 `clippy --all-targets` 遇到 `no cached data for query` 时的标准化重建流程。
+
+**章节构成（8 小节）**：
+1. §7.1 背景与适用场景 — CI 双开关与本地无 DB 工作模式的冲突解释
+2. §7.2 方式 A（有 DB 环境）— 标准 `cargo sqlx prepare --workspace`
+3. §7.3 方式 B（无 DB，手工生成）— 5 步法：
+   - Step 1：提取 sqlx::query! 宏原始 SQL（含参数 `$N`）
+   - Step 2：LF 规范化（强制换行符为 `\n`，无 BOM）
+   - Step 3：计算 SHA256（SQL 文本直接哈希，与 sqlx-macros 算法一致）
+   - Step 4：推断返回列类型（PG → SQLX 对照表：bool/int2/int4/int8/float4/float8/text/timestamptz/uuid/jsonb/bytea）
+   - Step 5：写入 `crate/.sqlx/query-<SHA256>.json`
+4. §7.4 PG ↔ SQLX 类型对照表（15 个常见类型，含 Nullable 说明）
+5. §7.5 常见错误速查（5 类：SHA 不匹配 / missing-offline / LF CRLF 混用 / 类型错判 / `Option<Vec<u8>>` 误用）
+6. §7.6 TOPEMS 典型场景 3 例（database_permission_store.rs 13 条 query、mes 集成测试 12 条、finance 结算 schema 53 条）
+7. §7.7 最佳实践 5 条（缓存进仓库、`Option<T>` 语义对齐、query_as 模式、`--tests` 覆盖、CI 强制 SQLX_OFFLINE）
+
+### 轨D（文档）：业务工具 SDK 设计草稿（docs/architecture/business-tools-sdk-design.md，TS + Python 双语言）
+
+**模块切分（BusinessToolsClient 组合 5 个子客户端）**：
+- `permissions` — 权限 + 批量（list/get/create/delete/batchCreate/batchDelete），含分页查询、批量事务回滚语义
+- `auditLogs` — 审计日志查询 + 流式（list/get/stream NDJSON、日期范围、操作人过滤）
+- `retention` — 保留策略 CRUD + 启动时自动拉取
+- `retentionTask` — 定时清理任务控制（start/stop/status/triggerOnce）
+- `exportTask` — 审计导出三件套控制（start/stop/status/triggerOnce/config/stream），支持 for-await 消费 NDJSON 流
+
+**版本路线**：
+- V0.1 TS：核心 5 子客户端 + 鉴权 + 分页 + 流式 + 3 个 E2E 用例
+- V0.2 Python：同等能力，`httpx + async` 替代 `fetch`
+- V0.3：新增 retry 指数退避 + 类型校验（zod / pydantic）
+- V1.0：发布到 npm + PyPI + 文档站点（12 SDK clients 矩阵全量）
+
+**测试策略分层（4 层）**：Unit（MockFetchTransport）→ Contract（schemas 校验）→ Integration（真实 unified-core Docker Compose）→ E2E（Cursor/Claude Desktop 通过 MCP 调用 SDK）。
+
+### 轨A：eslint 未使用项级联清理（3 项，grep 零引用 → 100% 安全）
+
+| # | 文件 | 操作 | 说明 |
+|---|------|------|------|
+| 1 | `apps/web/src/hooks/useVoucherTemplate.ts` | **整文件删除**（死文件）| `useVoucherTemplate` 调用点全 grep 0 处，全项目未消费 |
+| 2 | `apps/web/src/hooks/features/finance/index.ts:25` | 移除 re-export `useVoucherTemplate` | index.ts 本身也无消费方，属于冗余聚合 |
+| 3 | `apps/web/src/api/index.ts:45` | 移除 re-export `voucherTemplateApi` | 原 re-export 仅被死文件引用，级联清除 |
+
+> 说明：完整 Top15 未使用项清理（~1321 项原始剩余）需在 `node_modules` 就位后跑 `tsc --noUnusedLocals` 精确定位 TS6133/6192，本版本因环境限制仅做 grep 零引用的保守级联清理。
+
+### 轨C：shared-auth tier.rs 基线修复（编译阻塞修复 + 4 单测）
+
+**修复背景**：`lib/shared-auth/src/lib.rs:207` 声明 `pub mod tier;`，但 `tier.rs` 文件缺失 → `svc/server/src/modules/subscription_module.rs:27` 使用 `topems_shared_auth::tier::{Tier, SubscriptionStatus, resolve_effective_tier}` → 全 workspace 编译失败（E0583 file not found for module `tier`）。
+
+**新增 `lib/shared-auth/src/tier.rs` 内容**：
+- **Tier 枚举**（Free / Basic / Advanced）：`from_str(&str) -> Option<Self>` 大小写不敏感，`Display` 输出小写字符串，roundtrip 自测通过
+- **SubscriptionStatus 枚举**（Active / Trial / Expired / Canceled）：同上解析/显示 trait，兼容 "cancelled" 英式拼写
+- **resolve_effective_tier(Tier, SubscriptionStatus) -> Tier**：Active/Trial → 维持原订阅；Expired/Canceled → 降级 Free（与 subscription_module 单元测试断言一致）
+- **模块内单元测试（4 个）**：tier_from_str_accepts_case_insensitive、subscription_status_from_str_variants、resolve_effective_tier_matches_contract、display_roundtrip_succeeds_for_valid_variants
+
+### 验收矩阵
+
+| 验收项 | 指标 | 实测结果 | 状态 |
+|--------|------|----------|------|
+| 轨D SOP 文档覆盖 | 8 小节完整（含 5 步法 + 15 类型对照 + 5 错误速查） | 236 行新内容，写入 §7 | ✅ |
+| 轨D SDK 文档覆盖 | TS + Python 双语言 + 5 子模块 + 路线 V0.1-V1.0 | 新建完整草稿文件 | ✅ |
+| 轨A 未使用项清理 | grep 全 src/ 0 引用（安全删除 3 项） | 死文件 × 1 + re-export × 2 全部移除 | ✅ |
+| 轨C tier 编译 | `cargo test --lib tier` 无 E0583 | Finished + Running 成功 | ✅ |
+| 轨C tier 单元测试 | 4 用例全通过 | 4 passed; 0 failed | ✅ |
+| 轨D audit_export 回归 | 37 用例无回归 | 37 passed; 0 failed | ✅ |
+| 变更总量 | 新增 3 文件 + 修改 3 文件 + 删除 1 文件 + TODO | 7 处变更 | ✅ |
+
+### V476后续扩展（留给V477+）
+
+- [ ] **轨D 权限批量操作纯单元测试 + 审计日志**：MockPermissionStore 覆盖 batchCreate/batchDelete + 成功回滚分支 + 循环写 audit_log
+- [ ] **轨C SSE handler 纯单元测试扩展**：axum 侧 SSE handler 边界（重连 / 无 session / 心跳 timeout / 客户端断开）
+- [ ] **轨A exhaustive-deps 分类 + 修前 20%**：403 处 react-hooks/exhaustive-deps 按 risk/impact 分 4 档 + 修前 20%
+- [ ] **轨D 业务工具 SDK 草稿正式评审**：SDK 设计草稿提交 Review → 生成 Action Items 列表 → 进入 V0.1 TS 实现
+- [ ] **轨C rustls crypto provider 切换回归验证**：aws_lc_rs → ring 切换后在 Windows / Linux / macOS 三环境各跑一次 `cargo test --workspace --lib`
 
 ---
 
