@@ -16,7 +16,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-core
       middlewares:
-        - strip-prefix-core
         - default-chain
       priority: 100
 
@@ -28,7 +27,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-erp
       middlewares:
-        - strip-prefix-erp
         - default-chain
       priority: 100
 
@@ -39,7 +37,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-finance
       middlewares:
-        - strip-prefix-finance
         - default-chain
       priority: 100
 
@@ -51,7 +48,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-hrm
       middlewares:
-        - strip-prefix-hrm
         - default-chain
       priority: 100
 
@@ -62,7 +58,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-pm
       middlewares:
-        - strip-prefix-pm
         - default-chain
       priority: 100
 
@@ -73,7 +68,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-crm
       middlewares:
-        - strip-prefix-crm
         - default-chain
       priority: 100
 
@@ -85,7 +79,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-mes
       middlewares:
-        - strip-prefix-mes
         - default-chain
       priority: 100
 
@@ -96,7 +89,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-pdm
       middlewares:
-        - strip-prefix-pdm
         - default-chain
       priority: 100
 
@@ -108,7 +100,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-scm
       middlewares:
-        - strip-prefix-scm
         - default-chain
       priority: 100
 
@@ -119,7 +110,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-wms
       middlewares:
-        - strip-prefix-wms
         - default-chain
       priority: 100
 
@@ -130,7 +120,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-srm
       middlewares:
-        - strip-prefix-srm
         - default-chain
       priority: 100
 
@@ -142,7 +131,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-qms
       middlewares:
-        - strip-prefix-qms
         - default-chain
       priority: 100
 
@@ -153,7 +141,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-lims
       middlewares:
-        - strip-prefix-lims
         - default-chain
       priority: 100
 
@@ -164,7 +151,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-ehs
       middlewares:
-        - strip-prefix-ehs
         - default-chain
       priority: 100
 
@@ -175,7 +161,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-rd
       middlewares:
-        - strip-prefix-rd
         - default-chain
       priority: 100
 
@@ -187,7 +172,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-bi
       middlewares:
-        - strip-prefix-bi
         - default-chain
       priority: 100
 
@@ -198,7 +182,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-analytics
       middlewares:
-        - strip-prefix-analytics
         - default-chain
       priority: 100
 
@@ -209,7 +192,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-report
       middlewares:
-        - strip-prefix-report
         - default-chain
       priority: 100
 
@@ -220,7 +202,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-portal
       middlewares:
-        - strip-prefix-portal
         - default-chain
       priority: 100
 
@@ -232,7 +213,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-ai
       middlewares:
-        - strip-prefix-ai
         - default-chain
       priority: 100
 
@@ -243,7 +223,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-mobile
       middlewares:
-        - strip-prefix-mobile
         - default-chain
       priority: 100
 
@@ -254,7 +233,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-gis
       middlewares:
-        - strip-prefix-gis
         - default-chain
       priority: 100
 
@@ -265,7 +243,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-integration
       middlewares:
-        - strip-prefix-integration
         - default-chain
       priority: 100
 
@@ -287,7 +264,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-search
       middlewares:
-        - strip-prefix-search
         - default-chain
       priority: 100
 
@@ -298,7 +274,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-communication
       middlewares:
-        - strip-prefix-communication
         - default-chain
       priority: 100
 
@@ -309,7 +284,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-ticket
       middlewares:
-        - strip-prefix-ticket
         - default-chain
       priority: 100
 
@@ -320,7 +294,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-master-data
       middlewares:
-        - strip-prefix-master-data
         - default-chain
       priority: 100
 
@@ -331,7 +304,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-monitor
       middlewares:
-        - strip-prefix-monitor
         - default-chain
       priority: 100
 
@@ -342,7 +314,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-plugin
       middlewares:
-        - strip-prefix-plugin
         - default-chain
       priority: 100
 
@@ -353,7 +324,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-tms
       middlewares:
-        - strip-prefix-tms
         - default-chain
       priority: 100
 
@@ -364,7 +334,6 @@ http:
         - api  # API 网关入口（8080）
       service: svc-aps
       middlewares:
-        - strip-prefix-aps
         - default-chain
       priority: 100
 
@@ -386,7 +355,10 @@ http:
   # ================================================
   middlewares:
     # ----- 默认中间件链（统一应用到所有路由）-----
-    # 顺序: cors → rate-limit → jwt-auth → retry（request-id 插件 v3 源 404 暂移除，待接入）
+    # 顺序: cors → rate-limit → jwt-auth → retry
+    # request-id 注入口：traefik v3.0.4 插件 ABI 过老 + 原插件源 404，社区替代（jeroentrappers/traefik-plugin-request-id）
+    # 仅 1 commit 无 release tag 且面向 v3.5+；应用层 unified-core 已有 request_id 中间件覆盖追踪关联，
+    # 待 traefik 升级 v3.5+ 后按 catalog 模式接入
     default-chain:
       chain:
         middlewares:
@@ -454,37 +426,6 @@ http:
           X-Tenant-Resolved: "true"
 
     # ----- 各服务路径前缀剥离（保持与 nginx 行为一致）-----
-    strip-prefix-core:        { stripPrefix: { prefixes: ["/api/core"], forceSlash: false } }
-    strip-prefix-erp:         { stripPrefix: { prefixes: ["/api/erp"], forceSlash: false } }
-    strip-prefix-finance:     { stripPrefix: { prefixes: ["/api/finance"], forceSlash: false } }
-    strip-prefix-hrm:         { stripPrefix: { prefixes: ["/api/hrm"], forceSlash: false } }
-    strip-prefix-pm:          { stripPrefix: { prefixes: ["/api/pm"], forceSlash: false } }
-    strip-prefix-crm:         { stripPrefix: { prefixes: ["/api/crm"], forceSlash: false } }
-    strip-prefix-mes:         { stripPrefix: { prefixes: ["/api/mes"], forceSlash: false } }
-    strip-prefix-pdm:         { stripPrefix: { prefixes: ["/api/pdm"], forceSlash: false } }
-    strip-prefix-scm:         { stripPrefix: { prefixes: ["/api/scm"], forceSlash: false } }
-    strip-prefix-wms:         { stripPrefix: { prefixes: ["/api/wms"], forceSlash: false } }
-    strip-prefix-srm:         { stripPrefix: { prefixes: ["/api/srm"], forceSlash: false } }
-    strip-prefix-qms:         { stripPrefix: { prefixes: ["/api/qms"], forceSlash: false } }
-    strip-prefix-lims:        { stripPrefix: { prefixes: ["/api/lims"], forceSlash: false } }
-    strip-prefix-ehs:         { stripPrefix: { prefixes: ["/api/ehs"], forceSlash: false } }
-    strip-prefix-rd:          { stripPrefix: { prefixes: ["/api/rd"], forceSlash: false } }
-    strip-prefix-bi:          { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
-    strip-prefix-analytics:   { stripPrefix: { prefixes: ["/api/bi"], forceSlash: false } }
-    strip-prefix-report:      { stripPrefix: { prefixes: ["/api/report"], forceSlash: false } }
-    strip-prefix-portal:      { stripPrefix: { prefixes: ["/api/portal"], forceSlash: false } }
-    strip-prefix-ai:          { stripPrefix: { prefixes: ["/api/ai"], forceSlash: false } }
-    strip-prefix-mobile:      { stripPrefix: { prefixes: ["/api/mobile"], forceSlash: false } }
-    strip-prefix-gis:         { stripPrefix: { prefixes: ["/api/gis"], forceSlash: false } }
-    strip-prefix-integration: { stripPrefix: { prefixes: ["/api/integration"], forceSlash: false } }
-    strip-prefix-search:        { stripPrefix: { prefixes: ["/api/search"], forceSlash: false } }
-    strip-prefix-communication:        { stripPrefix: { prefixes: ["/api/communication"], forceSlash: false } }
-    strip-prefix-ticket:        { stripPrefix: { prefixes: ["/api/ticket"], forceSlash: false } }
-    strip-prefix-master-data:        { stripPrefix: { prefixes: ["/api/master-data"], forceSlash: false } }
-    strip-prefix-monitor:        { stripPrefix: { prefixes: ["/api/monitor"], forceSlash: false } }
-    strip-prefix-plugin:        { stripPrefix: { prefixes: ["/api/plugin"], forceSlash: false } }
-    strip-prefix-tms:        { stripPrefix: { prefixes: ["/api/tms"], forceSlash: false } }
-    strip-prefix-aps:        { stripPrefix: { prefixes: ["/api/aps"], forceSlash: false } }
 
   # ================================================
   # 后端服务定义（含健康检查）
