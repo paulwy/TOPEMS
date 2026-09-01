@@ -10,6 +10,7 @@ topems-shared = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-db = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-event = { workspace = true }
 topems-shared-auth = { workspace = true }
 axum.workspace = true

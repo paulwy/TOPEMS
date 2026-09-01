@@ -5,6 +5,7 @@ use crate::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
+use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -91,7 +92,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 // Plugin health check endpoint
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
-    let db_status = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
+    let db_status = sqlx::query(only_own_schema_query!("qms", "SELECT 1"))
+        .fetch_one(&state.pool)
+        .await
+        .is_ok();
 
     let health = PluginHealth {
         status: if db_status {

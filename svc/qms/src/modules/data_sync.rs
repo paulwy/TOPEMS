@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== Data Structures ====================
@@ -64,16 +65,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_qms_sync_records WHERE tenant_id = $1 AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE tenant_id = $1 AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
         }
         (Some(_), None) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_qms_sync_records WHERE tenant_id = $1 AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE tenant_id = $1 AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, Some(_)) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_qms_sync_records WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, None) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_qms_sync_records WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
     };
 
@@ -136,7 +137,7 @@ pub async fn get_sync_record(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_qms_sync_records WHERE id = $1 AND tenant_id = $2"
+        only_own_schema_query!("qms", "SELECT id::TEXT, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE id = $1 AND tenant_id = $2")
     )
     .bind(id)
     .bind(tenant_id)
@@ -183,7 +184,7 @@ pub async fn sync_inspection_to_lims(
 
     // Fetch inspection data
     let inspection = sqlx::query(
-        "SELECT id, inspection_no, inspection_type, product_name, quantity, qualified_quantity, unqualified_quantity, qualification_rate, result, status, inspector, inspected_at::TEXT FROM qa_quality_inspections WHERE id = $1 AND tenant_id = $2"
+        only_own_schema_query!("qms", "SELECT id::TEXT, inspection_no, inspection_type, product_name, quantity, qualified_quantity, unqualified_quantity, qualification_rate, result, status, inspector, inspected_at::TEXT FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2")
     )
     .bind(inspection_id)
     .bind(tenant_id)
@@ -238,7 +239,7 @@ pub async fn sync_inspection_to_lims(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'inspection_to_lims', $3, 'lims', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("qms", "INSERT INTO qms.qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'inspection_to_lims', $3, 'lims', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(tenant_id)
     .bind(&sync_no)
@@ -290,7 +291,7 @@ pub async fn sync_issue_to_ehs(
 
     // Fetch issue data
     let issue = sqlx::query(
-        "SELECT id, issue_no, title, description, severity, status, related_inspection_id, created_by FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"
+        only_own_schema_query!("qms", "SELECT id::TEXT, issue_no, title, description, severity, status, related_inspection_id, created_by FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2")
     )
     .bind(issue_id)
     .bind(tenant_id)
@@ -334,7 +335,7 @@ pub async fn sync_issue_to_ehs(
     });
 
     let row = sqlx::query(
-        "INSERT INTO qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'issue_to_ehs', $3, 'ehs', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("qms", "INSERT INTO qms.qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'issue_to_ehs', $3, 'ehs', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(tenant_id)
     .bind(&sync_no)
@@ -385,7 +386,7 @@ pub async fn retry_sync(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        "UPDATE qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
+        only_own_schema_query!("qms", "UPDATE qms.qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(id)
     .bind(tenant_id)
@@ -430,11 +431,14 @@ pub async fn delete_sync_record(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query("DELETE FROM qa_qms_sync_records WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "qms",
+        "DELETE FROM qms.qa_qms_sync_records WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "同步记录删除成功")),

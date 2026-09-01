@@ -3,6 +3,7 @@
 use axum::{extract::State, routing::get, Json, Router};
 use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::Serialize;
+use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -32,16 +33,17 @@ pub async fn get_today_quality_pass_rate(
     //   status='passed' 合格数   → COUNT(*) WHERE status='completed' AND (result='qualified')
     //
     // 跟踪: docs/roadmap/TODO.md "V62.x Mobile BFF 数据迁移" 章节
-    let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM qa_quality_inspections WHERE created_at >= CURRENT_DATE",
-    )
+    let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE created_at >= CURRENT_DATE"
+    ))
     .fetch_one(&state.pool)
     .await
     .ok()
     .unwrap_or(0);
 
     let passed = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND created_at >= CURRENT_DATE",
+        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND created_at >= CURRENT_DATE"),
     )
     .fetch_one(&state.pool)
     .await
@@ -64,31 +66,34 @@ pub async fn get_dashboard_stats(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<DashboardStats>> {
     // Total inspections
-    let total_inspections: Option<i64> =
-        sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections")
-            .fetch_one(&state.pool)
-            .await
-            .ok();
+    let total_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections"
+    ))
+    .fetch_one(&state.pool)
+    .await
+    .ok();
     let total_inspections = total_inspections.unwrap_or(0);
 
     // Pending inspections
-    let pending_inspections: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'pending' OR status = 'in_progress' OR status = 'pending_audit'")
+    let pending_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'pending' OR status = 'in_progress' OR status = 'pending_audit'"))
     .fetch_one(&state.pool)
     .await
     .ok();
     let pending_inspections = pending_inspections.unwrap_or(0);
 
     // Completed inspections
-    let completed_inspections: Option<i64> = sqlx::query_scalar::<_, _>(
-        "SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed'",
-    )
+    let completed_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed'"
+    ))
     .fetch_one(&state.pool)
     .await
     .ok();
     let completed_inspections = completed_inspections.unwrap_or(0);
 
     // Qualification rate
-    let qualified_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qa_quality_inspections WHERE status = 'completed'"#)
+    let qualified_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed'"#))
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -97,49 +102,57 @@ pub async fn get_dashboard_stats(
         .unwrap_or(0.0);
 
     // Total issues
-    let total_issues: Option<i64> =
-        sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues")
-            .fetch_one(&state.pool)
-            .await
-            .ok();
+    let total_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_issues"
+    ))
+    .fetch_one(&state.pool)
+    .await
+    .ok();
     let total_issues = total_issues.unwrap_or(0);
 
     // Open issues
-    let open_issues: Option<i64> =
-        sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues WHERE status = 'open'")
-            .fetch_one(&state.pool)
-            .await
-            .ok();
+    let open_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'open'"
+    ))
+    .fetch_one(&state.pool)
+    .await
+    .ok();
     let open_issues = open_issues.unwrap_or(0);
 
     // Resolved issues
-    let resolved_issues: Option<i64> = sqlx::query_scalar::<_, _>(
-        "SELECT COUNT(*) FROM qa_quality_issues WHERE status = 'resolved'",
-    )
+    let resolved_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'resolved'"
+    ))
     .fetch_one(&state.pool)
     .await
     .ok();
     let resolved_issues = resolved_issues.unwrap_or(0);
 
     // Pending actions
-    let pending_actions: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_corrective_actions WHERE status = 'pending' OR status = 'in_progress'")
+    let pending_actions: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE status = 'pending' OR status = 'in_progress'"))
     .fetch_one(&state.pool)
     .await
     .ok();
     let pending_actions = pending_actions.unwrap_or(0);
 
     // Total audit plans
-    let total_audit_plans: Option<i64> =
-        sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_audit_plans")
-            .fetch_one(&state.pool)
-            .await
-            .ok();
+    let total_audit_plans: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_audit_plans"
+    ))
+    .fetch_one(&state.pool)
+    .await
+    .ok();
     let total_audit_plans = total_audit_plans.unwrap_or(0);
 
     // In progress audit plans
-    let in_progress_plans: Option<i64> = sqlx::query_scalar::<_, _>(
-        "SELECT COUNT(*) FROM qa_audit_plans WHERE status = 'in_progress'",
-    )
+    let in_progress_plans: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+        "qms",
+        "SELECT COUNT(*) FROM qms.qa_audit_plans WHERE status = 'in_progress'"
+    ))
     .fetch_one(&state.pool)
     .await
     .ok();

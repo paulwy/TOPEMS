@@ -10,6 +10,7 @@ use bigdecimal::{BigDecimal, ToPrimitive};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 #[utoipa::path(
@@ -71,7 +72,7 @@ pub async fn list_quality_costs(
         params.push(serde_json::Value::String(end.clone()));
     }
 
-    let count_sql = format!("SELECT COUNT(*) FROM qa_quality_costs{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) FROM qms.qa_quality_costs{}", where_clause);
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
@@ -86,7 +87,7 @@ pub async fn list_quality_costs(
     };
 
     let fetch_sql = format!(
-        r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
+        r#"SELECT id::TEXT, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
         where_clause,
         params.len() + 1,
         params.len() + 2
@@ -146,7 +147,7 @@ pub async fn create_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"INSERT INTO qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -185,7 +186,7 @@ pub async fn get_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -234,7 +235,7 @@ pub async fn update_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"UPDATE qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -273,9 +274,10 @@ pub async fn delete_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let result = sqlx::query(
-        r#"UPDATE qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "qms",
+        r#"UPDATE qms.qa_quality_costs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .execute(&state.pool)
@@ -344,7 +346,7 @@ pub async fn get_cost_statistics(
     }
 
     let total_sql = format!(
-        "SELECT COALESCE(SUM(amount), 0) FROM qa_quality_costs{}",
+        "SELECT COALESCE(SUM(amount), 0) FROM qms.qa_quality_costs{}",
         where_clause
     );
     let mut total_query = sqlx::query_scalar::<_, BigDecimal>(&total_sql);
@@ -361,7 +363,7 @@ pub async fn get_cost_statistics(
     let total_cost: f64 = total.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
 
     let category_sql = format!(
-        r#"SELECT cost_category as category, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qa_quality_costs{} GROUP BY cost_category ORDER BY total DESC"#,
+        r#"SELECT cost_category as category, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qms.qa_quality_costs{} GROUP BY cost_category ORDER BY total DESC"#,
         where_clause
     );
     let mut category_query = sqlx::query(&category_sql);
@@ -395,7 +397,7 @@ pub async fn get_cost_statistics(
     };
 
     let dept_sql = format!(
-        r#"SELECT COALESCE(department, '未分配') as department, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qa_quality_costs{} GROUP BY department ORDER BY total DESC"#,
+        r#"SELECT COALESCE(department, '未分配') as department, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qms.qa_quality_costs{} GROUP BY department ORDER BY total DESC"#,
         where_clause
     );
     let mut dept_query = sqlx::query(&dept_sql);
@@ -504,7 +506,7 @@ pub async fn get_cost_trend(
             COALESCE(SUM(CASE WHEN cost_category = 'internal_failure' THEN amount ELSE 0 END), 0) as internal_failure,
             COALESCE(SUM(CASE WHEN cost_category = 'external_failure' THEN amount ELSE 0 END), 0) as external_failure,
             COALESCE(SUM(amount), 0) as total
-        FROM qa_quality_costs
+        FROM qms.qa_quality_costs
         {}
         GROUP BY DATE_TRUNC('month', COALESCE(incurred_date, created_at))
         ORDER BY period ASC

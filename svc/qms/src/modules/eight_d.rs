@@ -10,6 +10,7 @@ use axum::{
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 const STATUS_VERIFIED: &str = "verified";
@@ -59,7 +60,7 @@ pub async fn list_eightd_reports(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM qa_eightd_reports{}",
+        "SELECT COUNT(*) as total FROM qms.qa_eightd_reports{}",
         where_clause
     );
 
@@ -78,13 +79,13 @@ pub async fn list_eightd_reports(
 
     let fetch_sql = format!(
         r#"
-        SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT,
+        SELECT id::TEXT, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT,
             d1_team, d1_leader, d2_problem_description, d3_containment_action,
             d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis,
             d5_permanent_action, d6_verification_result, d6_verified_at::TEXT,
             d7_preventive_action, d8_congratulations, d8_closed_at::TEXT,
             assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT
-        FROM qa_eightd_reports
+        FROM qms.qa_eightd_reports
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -137,7 +138,7 @@ pub async fn create_eightd_report(
         .due_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"INSERT INTO qa_eightd_reports (tenant_id, report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'new', $8, $9, $10) RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_reports (tenant_id, report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'new', $8, $9, $10) RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -146,7 +147,7 @@ pub async fn create_eightd_report(
             let report_id = Uuid::parse_str(&data.id).ok();
             let created_by = data.created_by.clone();
             if let Some(rid) = report_id {
-                let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, operator, comment) VALUES ($1, $2, 'create', 'D2', $3, '创建8D报告')"#).bind(tenant_id).bind(rid).bind(created_by)
+                let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, operator, comment) VALUES ($1, $2, 'create', 'D2', $3, '创建8D报告')"#)).bind(tenant_id).bind(rid).bind(created_by)
                 .execute(&state.pool)
                 .await;
             }
@@ -171,7 +172,7 @@ pub async fn get_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -201,7 +202,7 @@ pub async fn update_eightd_report(
         .due_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -226,9 +227,10 @@ pub async fn delete_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let result = sqlx::query(
-        r#"UPDATE qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "qms",
+        r#"UPDATE qms.qa_eightd_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .execute(&state.pool)
@@ -256,13 +258,13 @@ pub async fn update_d1_team(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D1团队组建更新成功"))
@@ -287,13 +289,13 @@ pub async fn submit_d3_containment(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D3', '提交临时遏制措施')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D3', '提交临时遏制措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D3临时遏制措施提交成功"))
@@ -318,13 +320,13 @@ pub async fn submit_d4_root_cause(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D4', '提交根本原因分析')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D4', '提交根本原因分析')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D4根本原因分析提交成功"))
@@ -349,13 +351,13 @@ pub async fn submit_d5_permanent_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D5', '提交永久纠正措施')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D5', '提交永久纠正措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D5永久纠正措施提交成功"))
@@ -380,13 +382,13 @@ pub async fn verify_d6_effectiveness(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'verify', 'D6', '验证措施有效性')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'verify', 'D6', '验证措施有效性')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D6效果验证成功"))
@@ -411,13 +413,13 @@ pub async fn submit_d7_preventive(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D7', '提交预防再发生措施')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D7', '提交预防再发生措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "D7预防措施提交成功"))
@@ -442,13 +444,13 @@ pub async fn close_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.content).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.content).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match report {
         Ok(data) => {
-            let _ = sqlx::query(r#"INSERT INTO qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'close', 'D8', '关闭8D报告')"#).bind(tenant_id).bind(id)
+            let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'close', 'D8', '关闭8D报告')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "8D报告已关闭"))
@@ -472,7 +474,7 @@ pub async fn get_eightd_audit_logs(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let logs = sqlx::query_as::<_, EightDAuditLog>(r#"SELECT id, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qa_eightd_audit_logs WHERE report_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#).bind(id).bind(tenant_id)
+    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#)).bind(id).bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -506,7 +508,7 @@ pub async fn approve_eightd(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
         .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
 
     match current {
@@ -521,7 +523,7 @@ pub async fn approve_eightd(
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS).as_str()
+                format!("UPDATE qms.qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS).as_str()
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {
@@ -566,7 +568,7 @@ pub async fn close_eightd_approval(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
         .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
 
     match current {
@@ -581,7 +583,7 @@ pub async fn close_eightd_approval(
                 return Json(ApiResponse::error(400, "当前状态不允许关闭"));
             }
             let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS).as_str()
+                format!("UPDATE qms.qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS).as_str()
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {
@@ -626,7 +628,7 @@ pub async fn cancel_eightd(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let current = sqlx::query("SELECT status FROM qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
+    let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
         .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
 
     match current {
@@ -636,7 +638,7 @@ pub async fn cancel_eightd(
                 return Json(ApiResponse::error(400, "当前状态不允许取消"));
             }
             let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS).as_str()
+                format!("UPDATE qms.qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS).as_str()
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {
