@@ -21,9 +21,6 @@ export {
 // HRM 财务（员工薪资等）
 export { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '../../useHrmFinance';
 
-// 凭证模板
-export { useVoucherTemplate } from '../../useVoucherTemplate';
-
 // 合并报表
 export {
   useConsolidationScopes,

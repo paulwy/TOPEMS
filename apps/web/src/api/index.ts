@@ -42,7 +42,6 @@ export { tenantApi } from './tenant';
 export { addressbookApi } from './addressbook';
 export { crmFinanceApi } from './crmFinance';
 export { financialReportApi } from './financialReport';
-export { voucherTemplateApi } from './voucherTemplate';
 export { templateApi } from './template';
 export { integrationApi } from './integration';
 export { automationApi } from './automation';
