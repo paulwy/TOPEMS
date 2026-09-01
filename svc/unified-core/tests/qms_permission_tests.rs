@@ -91,7 +91,7 @@ async fn no_auth_request(client: &Client, endpoint: &str) -> Result<u16, String>
 #[ignore]
 async fn test_qms_001_list_inspections() {
     tracing::info!("测试 QMS-001: 管理员查看质量检查列表");
-    let token = login("admin", "TopemsAdmin2026!").await.expect("管理员登录失败");
+    let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
     let (status, body) =
         auth_request(&client, &token, "/api/qms/checks").await.expect("请求失败");
@@ -118,7 +118,7 @@ async fn test_qms_002_no_token_rejected() {
 #[ignore]
 async fn test_qms_003_list_issues() {
     tracing::info!("测试 QMS-003: 管理员查看质量问题列表");
-    let token = login("admin", "TopemsAdmin2026!").await.expect("管理员登录失败");
+    let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
     let (status, _) = auth_request(&client, &token, "/api/qms/issues")
         .await
@@ -149,7 +149,7 @@ async fn test_qms_004_no_token_issues_rejected() {
 #[ignore]
 async fn test_qms_005_view_reports() {
     tracing::info!("测试 QMS-005: 管理员查看 8D 报告");
-    let token = login("admin", "TopemsAdmin2026!").await.expect("管理员登录失败");
+    let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
     let (status, _) = auth_request(&client, &token, "/api/qms/eightd")
         .await
@@ -167,7 +167,7 @@ async fn test_qms_005_view_reports() {
 #[ignore]
 async fn test_qms_006_view_audit_plan() {
     tracing::info!("测试 QMS-006: 管理员查看审核计划");
-    let token = login("admin", "TopemsAdmin2026!").await.expect("管理员登录失败");
+    let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
     let (status, body) =
         auth_request(&client, &token, "/api/qms/audit-plans").await.expect("请求失败");
@@ -184,6 +184,6 @@ async fn run_all_qms_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  QMS 权限测试套件 (6个用例)");
     tracing::info!("  端点: /checks /issues /eightd /audit-plans (qms:8050)");
-    tracing::info!("  凭据: admin/TopemsAdmin2026! (登录 unified-core:8000)");
+    tracing::info!("  凭据: admin/admin123 (登录 unified-core:8000)");
     tracing::info!("========================================");
 }
