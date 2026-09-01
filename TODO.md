@@ -1831,3 +1831,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **审计报告**：docs/architecture/service-token-audit.md——portal 精确 14 处 token 转发调用点分类——A 类用户维度 7 处（保持）、B 类裸 reqwest 系统级搜索 4 处（erp/crm/bi/doc，潜在降级）、C 类 TypedServiceClient 全量列表搜索 3 处（hrm/workflow/mes，待评估权限）、D 类服务身份 1 处（正确）、E 类非认证（health/plugin）。
 - **结论**：B/C 类 7 处不能无脑改 service token（越权泄露风险）——依赖下游搜索接口权限过滤语义，P1 先确认下游 RLS/claims 过滤。
 - **P1 工程改进（已落地）**：search.rs 统一 `send_global_search` helper——补 401 降级日志区分「权限不足降级」vs「HTTP 错误降级」vs「网络错误」，消除静默空结果。运行时验证：ERP/BI 401 → "权限不足降级"，CRM/DOC 404 → "HTTP 错误降级"。
+
+## 2026-09-01 下游搜索接口权限过滤核查（B/C 类 token 策略决定）✅
+- **决定性发现**：portal 的 B 类 4 个全局搜索源（`/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search`）在全部 svc 代码中**不存在**——永远 404 降级空结果——**"token 策略"问题不成立**（接口从未实现）。已更新 service-token-audit.md。
+- **C 类核查**：hrm `list_employees` 有 EmployeeRead + tenant 过滤（用户 token 正确保持）；workflow `list_instances` 无 Claims 过滤全量查询（下游设计问题）；mes `list_production_orders` 待确认。
+- **结论**：任何一处都不应改 service token（hrm 改则越权、workflow/mes 问题在下游、B 类无接口）。
+- **P0 待决策**：portal 全局搜索 4 个无效源——移除（收敛到 notifications/hrm/workflow/mes 真实源）或标记"未接入"。
+- **P1 下游治理**：workflow list_instances 补用户维度过滤（越权风险）；mes list_production_orders 确认。

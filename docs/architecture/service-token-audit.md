@@ -11,6 +11,19 @@
 
 ## 二、审计矩阵
 
+### ⚠️ 接口存在性核查（决定性发现，2026-09-01 补充）
+
+**portal 的 B 类 4 个全局搜索源指向的接口在全部 svc 代码中均不存在**：
+
+| 调用 | 全库 grep（svc/ 非 portal） | 结论 |
+|---|---|---|
+| `GET /api/erp/search` | 无定义 | ❌ 接口不存在 |
+| `GET /api/crm/search` | 无定义 | ❌ 接口不存在 |
+| `GET /api/bi/search` | 无定义（bi 服务实为 svc/analytics，无此接口） | ❌ 接口不存在 |
+| `GET /api/doc/search` | 仅 unified-core 有 `/api/core/file/files/search`（路径不符） | ❌ 接口不存在 |
+
+**影响**：4 个搜索源永远 404 → 降级空结果。**B 类的"token 策略"问题不成立**——接口从未实现，讨论用户 token / service token 无意义。应先解决接口存在性（见 §四）。
+
 ### A 类：用户维度数据（转发用户 token 正确，保持）—— 7 处
 
 | # | 位置 | 调用目标 | 语义 | 判定 |
@@ -46,15 +59,15 @@
 
 **建议**：先确认下游 `/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search` 是否含用户权限过滤（RLS / claims 过滤）。有 → 选项 A（现状正确，仅需补降级日志）；无且业务确认全局搜索属管理功能 → 选项 B（改 service token + 下游补过滤）。
 
-### C 类：TypedServiceClient 全量列表搜索（需评估权限语义）—— 3 处
+### C 类：TypedServiceClient 全量列表搜索（已核查权限语义）—— 3 处
 
-| # | 位置 | 调用目标 | 语义 | 判定 |
+| # | 位置 | 调用目标 | 下游权限过滤现状 | 判定 |
 |---|---|---|---|---|
-| 12 | search.rs:380 | hrm `list_employees` | 员工全量列表搜索 | 🔍 待评估 |
-| 13 | search.rs:422 | workflow `list_instances` | 流程实例全量搜索 | 🔍 待评估 |
-| 14 | search.rs:463 | mes `list_production_orders` | 生产订单全量搜索 | 🔍 待评估 |
+| 12 | search.rs:380 | hrm `list_employees` | ✅ `check_permission(EmployeeRead)` + `get_tenant_id` 按 tenant 过滤 | **保持用户 token 正确**（改 service token 反而越权） |
+| 13 | search.rs:422 | workflow `list_instances` | ⚠️ **无 Claims 过滤**，直接全量查 `core_workflow_instances`（unified-core flow/instance.rs:42） | 转发用户 token 仅作认证，普通用户可见全量实例——**下游接口设计问题**，标记下游治理（P2） |
+| 14 | search.rs:463 | mes `list_production_orders` | 🔍 需确认（production_order.rs），推断同 workflow | 待下游确认后定 |
 
-**说明**：已走 TypedServiceClient（内置 service token），但 `set_auth_token` 覆盖为用户 token。`list_*` 为全量列表语义——若搜索应返回用户可见范围 → 转发用户 token 正确（依赖下游过滤）；若应全量 → 应去掉 set_auth_token 直接用 service token。**同 B 类，取决于下游权限语义**。
+**结论**：C 类 hrm 保持用户 token 正确；workflow/mes 的问题在下游接口缺用户维度过滤（而非 portal token 策略），应作为下游治理项补过滤。
 
 ### D 类：服务身份（已正确，保持）—— 1 处
 
@@ -70,15 +83,17 @@
 ## 三、核心结论
 
 1. **A 类 7 处用户维度转发正确**——保持，无改动。
-2. **B 类 4 处 + C 类 3 处（共 7 处）为"降级模式"候选**——根因是**转发用户 token 依赖下游权限过滤**，若用户无权限则静默空结果。
-3. **不推荐无脑替换为 service token**——存在越权数据泄露风险。正确路径是先**确认下游搜索接口的权限过滤语义**，再决定 A/B 选项。
-4. **工程改进（无争议）**：B 类 4 处裸 reqwest 无统一超时/重试/ServiceIdentity 记录——无论最终选 A 还是 B，都应**收敛到统一 client 封装**（复用已 with_service_token 的 erp_client/crm_client 等），统一降级日志（`tracing::warn` 区分"下游 401 权限不足"与"网络错误"），避免静默空结果。
+2. **B 类 4 处全局搜索源（erp/crm/bi/doc）指向不存在的接口**——永远 404 空结果。**token 策略讨论不成立**——先解决接口存在性。
+3. **C 类 3 处**：hrm 有 EmployeeRead + tenant 过滤（用户 token 正确）；workflow/mes 的 `list_*` 接口**缺用户维度过滤**（下游设计问题），转发用户 token 仅作认证，存在"普通用户可见全量"越权风险。
+4. **不推荐任何一处改 service token**——hrm 改 service token 会越权（绕过 tenant 过滤）；workflow/mes 改 service token 仍全量（问题在下游）；B 类接口不存在（无从谈起）。
+5. **工程改进（已落地）**：B 类 4 处统一 `send_global_search` helper + 401/HTTP/网络错误降级日志（上一轮提交 e863c0413）。
 
 ## 四、P 级行动项
 
 | 优先级 | 行动 | 归属 |
 |---|---|---|
-| P1 | 确认 erp/crm/bi/doc 4 个搜索接口是否含用户权限过滤（RLS/claims）；补下游过滤 | 下游各服务 |
-| P1 | B 类 4 处收敛到统一 client 封装 + 降级日志（区分 401 vs 网络错误） | portal search.rs |
-| P2 | 按 P1 确认结果决定 B/C 类 7 处 token 策略（A 保持 / B 改 service token） | portal + 业务确认 |
+| P0 | **决策 portal 全局搜索 4 个无效源**：移除（收敛到 notifications/hrm/workflow/mes 4 个真实源）或标记"未接入"（保留占位等实现） | portal + 产品 |
+| P1 | **workflow `list_instances` 补用户维度过滤**（按 claims 过滤用户可见/相关实例），消除越权风险 | unified-core flow |
+| P1 | **mes `list_production_orders` 确认权限过滤**，无则补 | svc/mes |
+| P2 | C 类 3 处按下游过滤就位后，复核 token 策略（hrm 已正确） | 复核 |
 | P2 | 搜索降级指标（per-source 401 计数）接入 ServiceCallMonitor 告警 | shared-auth + portal |
