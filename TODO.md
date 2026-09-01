@@ -14,7 +14,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 基于 2026-09-01 核对 TODO.md 全量推进记录 + 代码现状生成。
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
 
-**当前待办总数：8 项**（✅ 已完成 4 / ⏳ 待触发 1 / 🔲 待环境确认 1 / 🔲 可选后续 3）
+**当前待办总数：8 项**（✅ 已完成 5 / ⏳ 待触发 1 / 🔲 暂缓 1 / 🔲 可选后续 2）
 
 | # | 待办 | 优先级 | 状态 | 说明 |
 |---|---|---|---|---|
@@ -24,9 +24,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 4 | 前端批 2 页面单测降级 | P2 | ✅ 已实施 | 167 文件分类：保留 103（核心 68 + hooks 34 + NotFoundPage）/ 降级 smoke 64 计划 → **实际 59 文件收敛 it + 1 gitignore 本地**；全量 vitest 通过（167 文件 / 756 用例，110s）；分片 8→5 已落地（package.json + ci.yml），CI 每片实测 ~22s ≪ 10min 预算；smoke 化不触及 coverage include（pages 不在其中） |
 | 5 | Traefik 8080 API 网关 staging 验证 | P2 | ✅ 已闭环（09-01） | 8080 释放给 API 网关入口 + Dashboard 迁 8089；traefik v3.0 兼容修复 4 处（metrics.addServerTLS / providers.file.debugLogGeneratedFile / jaeger tracing / compress 字段）；33 router 挂 `api` entryPoint（25 业务 + 8 extension）；services.yaml api_gateway status → implemented。**遗留闭环**：① requestid——traefik v3.0.4 插件 ABI 过老 + 原插件源 404，替代插件仅 1 commit 无 tag，网关层暂不注入（应用层 unified-core 已有 request_id 中间件），待 traefik 升级 v3.5+ 接入；② unified-core 新增 `/iam/auth/verify` JWT 校验端点（auth_middleware 拦截无/无效 token 401、有效 200 + X-Auth-* 头），jwt-auth forwardAuth 完整验证 401/200；③ strip-prefix 设计错误（服务监听 `/api/<svc>` 完整前缀，剥离致 404）——已移除全部 31 处透传完整路径（匹配 nginx 约定），业务路由验证 403 权限层；④ 网关全服务端到端验证（admin 带权限业务流）——11 服务经网关全 200（core/erp/crm/finance/mes/hrm/pm/scm/wms/bi/ai），发现并修复 svc-ai 端口错误（8064→8013，healthCheck 失败致 503），admin 密码已重置用于验证；⑤ portal 认证统一——portal 双轨认证遗留已闭环（import 迁移 topems_shared::auth → topems_shared_auth::auth_middleware，重建容器 docker-portal，经网关 admin 业务流全 200 / 无 token 401），12 服务经网关全通 |
 | 6 | consul 服务注册接入 | P3 | 🔲 可选 | 网络名直连已满足；21 服务 main 接入为可选优化 |
-| 7 | lims/qms qa_* 测试启用 | P3 | 🔲 待环境确认 | PostgreSQL 环境启用前需加 search_path（`#[ignore]` 用例） |
+| 7 | lims/qms qa_* 测试启用 | P3 | 🔲 暂缓 | 评估（09-01）：`qms_permission_tests.rs` 7 个 `#[ignore]` 用例端点 `/api/qms/*` 全部 404（unified-core 与 qms 服务均无匹配路由），测试代码已过时；待 QMS 路由与测试同步后再启用（需更新凭据 + 端点） |
 | 8 | portal 嵌入模块化单体 | P3 | 🔲 可选 | 已决策保持独立部署（BFF 层职责独立）；嵌入需专项重构，列入后续 |
-| 9 | 容器环境遗留（ai exit 0 / 剩余服务启动） | P3 | 🔲 待确认 | 08-30 记录（容器部署场景），可能已过时，需确认是否仍需要 |
+| 9 | 容器环境遗留（ai exit 0 / 剩余服务启动） | P3 | ✅ 已确认（09-01） | ai exit 0 已解决（容器 healthy）；17 个主服务全 healthy；8 个 extension 服务（ehs/monitor/plugin-registry/master-data/communication/ticket/search/tms）未启动属按需部署（网关路由已就绪）；修复 portal 重建后 unhealthy（健康检查 `curl localhost:${SERVICE_PORT}/health` 缺 SERVICE_PORT env → 补 `-e SERVICE_PORT=8063`） |
 
 **已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
 
