@@ -300,6 +300,21 @@ async fn main() -> Result<()> {
         }
     }
 
+    // 20b. 真实 analytics 服务接入（advanced 组，feature `module-advanced` 门控，默认启用）
+    #[cfg(feature = "module-advanced")]
+    {
+        use topems_server::modules::analytics_real_module::AnalyticsRealModule;
+        match AnalyticsRealModule::build().await {
+            Ok(real_bi) => {
+                registry.lock().unwrap().register_boxed(Box::new(real_bi));
+                tracing::info!("✅ 真实 analytics 服务已注册（analytics-real，含数据库/BI 路由）");
+            }
+            Err(e) => {
+                tracing::error!("⚠️ 真实 analytics 服务构建失败（降级运行）: {:#}", e);
+            }
+        }
+    }
+
     // 17. 订阅管理模块（P5 商业化支撑，feature `module-subscription` 门控）
     #[cfg(feature = "module-subscription")]
     {

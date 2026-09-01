@@ -34,6 +34,7 @@ topems-srm = { path = "../srm", optional = true }
 topems-gis = { path = "../gis", optional = true }
 topems-portal = { path = "../portal", optional = true }
 topems-master-data = { path = "../master-data", optional = true }
+topems-analytics = { path = "../analytics", optional = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -115,8 +116,8 @@ module-gis = ["dep:topems-gis"]
 module-portal = ["dep:topems-portal"]
 # 订阅管理模块（P5 商业化支撑，默认不启用，按客户需求启用）
 module-subscription = []
-# advanced 组真实接入：master-data（2026-08-31 挂载；analytics 后续同组接入）
-module-advanced = ["dep:topems-master-data"]
+# advanced 组真实接入：master-data + analytics（2026-09-01 挂载）
+module-advanced = ["dep:topems-master-data", "dep:topems-analytics"]
 module-ai = []
 # 私有化部署模式（进程内 trait 调用）
 private-deployment = []

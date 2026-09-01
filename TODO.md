@@ -1980,3 +1980,11 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - **refresh 端到端**：新用户注册→登录→refresh 成功（FK 迁移后）✅
   - 孤儿清零（refresh_tokens 553/sessions 95/user_roles 1 已统一）✅
 - **遗留**：`iam.users`/`iam.roles`/`iam.permissions` 旧表保留兼容，无业务引用，可后续归档。
+
+## 2026-09-01 analytics 接入模块化单体（待办②）✅
+- **重构 lib 化**：新增 `svc/analytics/src/routes.rs`（832 行）——protected_routes 组装 + 3 个 handler（detailed_health/reports_center_stats/reports_center_export）从 main.rs 提取；`create_protected_routes(app_state) -> Router`（含 require_permission + with_state）。
+- **main.rs 瘦身**：980 → 173 行——去掉 binary 自身 mod 声明，统一走 lib（`topems_analytics::{modules, routes, shared::AppState}`）；独立部署仍可跑。
+- **server 接入**：`analytics_real_module.rs`（module-advanced 门控，仿 master_data_real_module）——bootstrap + BI/Report init_database + ReportScheduler spawn（start() 内部 spawn 不阻塞）+ create_protected_routes + nest /api/bi + inject_dev_claims。Cargo.toml 加 `topems-analytics` 依赖 + module-advanced 扩 feature；mod.rs + main.rs 注册。
+- **验证**：独立 analytics（BI_PORT=18060）启动 ✅ /health=200、/api/plugins/info=200、/api/bi/dashboard=401（鉴权路由存在）；server（18099）启动 → **analytics-real 注册（19 模块）** ✅ /api/bi/dashboard=200（dev claims）+ 返回 `{"items":[],"total":0}` 业务数据 ✅ /api/bi/health/detailed=200 ✅。
+- **推翻 08-31"保持独立"评估的接入成本顾虑**：with_state 泛型（Router<S2>）返回类型由上下文推断，create_protected_routes 声明 `Router`（with_state 后）即可同时服务独立部署（build_application）与 server（nest）。
+- **遗留**：analytics 独立部署与 server 嵌入可并存（双模式）；ReportScheduler 若独立部署 + server 同时跑会重复调度（部署时二选一）。
