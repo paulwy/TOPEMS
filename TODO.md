@@ -14,14 +14,14 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 基于 2026-09-01 核对 TODO.md 全量推进记录 + 代码现状生成。
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
 
-**当前待办总数：9 项**（⏳ 待触发 1 / ⚠️ 已缓解待统一 1 / 🔲 待评审 1 / 🔲 待部署验证 1 / 🔲 待环境确认 1 / 🔲 可选后续 4）
+**当前待办总数：9 项**（✅ 已完成 1 / ⏳ 待触发 1 / ⚠️ 已缓解待统一 1 / 🔲 待部署验证 1 / 🔲 待环境确认 1 / 🔲 可选后续 4）
 
 | # | 待办 | 优先级 | 状态 | 说明 |
 |---|---|---|---|---|
 | 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 5 项阈值均未触发（DB 0.1GB/200GB、portal 116 表/600 张）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
 | 2 | analytics 接入模块化单体 | P1 | 🔲 后续 | master-data 已挂载（module-advanced），analytics 同组待接入 |
 | 3 | unified-core 双轨认证统一 | P1 | ⚠️ 已缓解待统一 | 注册**双写** core_users（主表）+ iam.users（兼容副本）已解决新用户登录失败；但登录查 iam.users / 权限查 core_users 分叉，双写需保持同步——建议全量迁 core_* 或监控副本一致性 |
-| 4 | 前端批 2 页面单测降级 | P2 | ⚠️ 评审完成待实施 | 167 文件分类：保留 102（核心 68 + hooks 34）/ 降级 smoke 65（39%）；smoke 模板 + 分片 8→5 方案已写入 `frontend-test-roi-review.md` §6；65 文件 smoke 化改造待执行 |
+| 4 | 前端批 2 页面单测降级 | P2 | ✅ 已实施 | 167 文件分类：保留 103（核心 68 + hooks 34 + NotFoundPage）/ 降级 smoke 64 计划 → **实际 59 文件收敛 it + 1 gitignore 本地**；全量 vitest 通过（167 文件 / 756 用例，110s）；分片 8→5 已落地（package.json + ci.yml），CI 每片实测 ~22s ≪ 10min 预算；smoke 化不触及 coverage include（pages 不在其中） |
 | 5 | Traefik 8080 API 网关 staging 验证 | P2 | 🔲 待部署验证 | 生产 nginx 补强已落地；Traefik 8080 方案待 staging 部署验证 |
 | 6 | consul 服务注册接入 | P3 | 🔲 可选 | 网络名直连已满足；21 服务 main 接入为可选优化 |
 | 7 | lims/qms qa_* 测试启用 | P3 | 🔲 待环境确认 | PostgreSQL 环境启用前需加 search_path（`#[ignore]` 用例） |

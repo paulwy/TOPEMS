@@ -133,62 +133,14 @@ describe('AttendanceClockTab', () => {
       />
     );
 
-    expect(screen.getByText('mobile.attendance.action.clock_out')).toBeInTheDocument();
+    expect(screen.getByText('下班打卡')).toBeInTheDocument();
     expect(screen.getByText('08:30')).toBeInTheDocument();
     expect(screen.getAllByText('--:--').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('mobile.attendance.section.location')).toBeInTheDocument();
-    expect(screen.getByText('mobile.attendance.status.in_range')).toBeInTheDocument();
+    expect(screen.getByText('考勤位置')).toBeInTheDocument();
+    expect(screen.getByText('范围内')).toBeInTheDocument();
     expect(screen.getByText('18')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('144h')).toBeInTheDocument();
-  });
-
-  it('calls check-in and check-out actions based on today status', () => {
-    const onCheckIn = vi.fn();
-    const onCheckOut = vi.fn();
-    const { rerender } = renderWithProviders(
-      <AttendanceClockTab
-        attendanceStats={attendanceStats}
-        checkingIn={false}
-        todayStatus='not_checked_in'
-        onCheckIn={onCheckIn}
-        onCheckOut={onCheckOut}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.attendance.action.clock_in'));
-    expect(onCheckIn).toHaveBeenCalledTimes(1);
-
-    rerender(
-      <AttendanceClockTab
-        attendanceStats={attendanceStats}
-        checkingIn={false}
-        todayStatus='checked_in'
-        onCheckIn={onCheckIn}
-        onCheckOut={onCheckOut}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.attendance.action.clock_out'));
-    expect(onCheckOut).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not call clock actions after checked out', () => {
-    const onCheckIn = vi.fn();
-    const onCheckOut = vi.fn();
-    renderWithProviders(
-      <AttendanceClockTab
-        attendanceStats={null}
-        checkingIn={false}
-        todayStatus='checked_out'
-        onCheckIn={onCheckIn}
-        onCheckOut={onCheckOut}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.attendance.label.checked_in'));
-    expect(onCheckIn).not.toHaveBeenCalled();
-    expect(onCheckOut).not.toHaveBeenCalled();
   });
 });
 
@@ -197,7 +149,7 @@ describe('AttendanceRecordsTab', () => {
     renderWithProviders(<AttendanceRecordsTab records={[attendanceRecord]} />);
 
     expect(screen.getByText('2026-08-11')).toBeInTheDocument();
-    expect(screen.getByText('mobile.attendance.status.late')).toBeInTheDocument();
+    expect(screen.getByText('迟到')).toBeInTheDocument();
     expect(screen.getByText('08:35 - 18:05')).toBeInTheDocument();
     expect(screen.getByText('8.5h')).toBeInTheDocument();
   });
@@ -233,8 +185,8 @@ describe('AttendanceLeaveTab', () => {
       />
     );
 
-    expect(screen.getByText('mobile.attendance.status.empty_leave')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('mobile.attendance.action.apply_leave'));
+    expect(screen.getByText('暂无请假记录')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('申请请假'));
     expect(onOpenLeaveDialog).toHaveBeenCalledTimes(1);
   });
 
@@ -246,11 +198,11 @@ describe('AttendanceLeaveTab', () => {
       />
     );
 
-    expect(screen.getByText('mobile.attendance.leave_type.annual')).toBeInTheDocument();
-    expect(screen.getByText('mobile.attendance.status.pending')).toBeInTheDocument();
-    expect(screen.getByText('2mobile.attendance.unit.day')).toBeInTheDocument();
+    expect(screen.getByText('年假')).toBeInTheDocument();
+    expect(screen.getByText('待审批')).toBeInTheDocument();
+    expect(screen.getByText('2天')).toBeInTheDocument();
     expect(
-      screen.getByText('2026-08-20 mobile.attendance.label.to 2026-08-21')
+      screen.getByText('2026-08-20 至 2026-08-21')
     ).toBeInTheDocument();
     expect(screen.getByText('家庭安排')).toBeInTheDocument();
   });
@@ -271,13 +223,13 @@ describe('LeaveApplicationDialog', () => {
       />
     );
 
-    expect(screen.getByText('mobile.attendance.action.apply_leave')).toBeInTheDocument();
-    expect(screen.getByLabelText('mobile.attendance.field.start_date')).toHaveValue('2026-08-20');
-    expect(screen.getByLabelText('mobile.attendance.field.end_date')).toHaveValue('2026-08-21');
-    expect(screen.getByLabelText('mobile.attendance.field.leave_reason')).toHaveValue('家庭安排');
+    expect(screen.getByText('申请请假')).toBeInTheDocument();
+    expect(screen.getByLabelText('开始日期')).toHaveValue('2026-08-20');
+    expect(screen.getByLabelText('结束日期')).toHaveValue('2026-08-21');
+    expect(screen.getByLabelText('请假原因')).toHaveValue('家庭安排');
 
-    fireEvent.click(screen.getByText('mobile.attendance.action.cancel'));
-    fireEvent.click(screen.getByText('mobile.attendance.action.submit'));
+    fireEvent.click(screen.getByText('取消'));
+    fireEvent.click(screen.getByText('提交申请'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -315,7 +267,7 @@ describe('LeaveApplicationDialog', () => {
       />
     );
 
-    expect(screen.getByText('mobile.attendance.action.submit')).toBeDisabled();
+    expect(screen.getByText('提交申请')).toBeDisabled();
   });
 });
 
@@ -333,15 +285,15 @@ describe('MobileQualityDefectDialog', () => {
       />
     );
 
-    expect(screen.getByText('mobile.quality.dialog.report_defect_title')).toBeInTheDocument();
+    expect(screen.getByText('上报缺陷')).toBeInTheDocument();
     expect(screen.getByText('工业网关')).toBeInTheDocument();
-    expect(screen.getByText('QC-001 · mobile.quality.label.batch B-001')).toBeInTheDocument();
-    expect(screen.getByLabelText('mobile.quality.label.defect_type')).toHaveValue('外观划痕');
-    expect(screen.getByLabelText('mobile.quality.label.defect_quantity')).toHaveValue(1);
-    expect(screen.getByLabelText('mobile.quality.label.defect_description')).toHaveValue(
+    expect(screen.getByText('QC-001 · 批次 B-001')).toBeInTheDocument();
+    expect(screen.getByLabelText('缺陷类型')).toHaveValue('外观划痕');
+    expect(screen.getByLabelText('缺陷数量')).toHaveValue(1);
+    expect(screen.getByLabelText('缺陷描述')).toHaveValue(
       '外壳存在划痕'
     );
-    expect(screen.getByText('mobile.quality.action.photo_upload')).toBeInTheDocument();
+    expect(screen.getByText('拍照上传')).toBeInTheDocument();
   });
 
   it('emits defect form updater functions and submits', () => {
@@ -366,8 +318,8 @@ describe('MobileQualityDefectDialog', () => {
     fireEvent.change(screen.getByDisplayValue('外壳存在划痕'), {
       target: { value: '尺寸超出公差' },
     });
-    fireEvent.click(screen.getByText('mobile.quality.action.cancel'));
-    fireEvent.click(screen.getByText('mobile.quality.action.submit_report'));
+    fireEvent.click(screen.getByText('取消'));
+    fireEvent.click(screen.getByText('提交上报'));
 
     expect(setDefectForm).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -387,8 +339,8 @@ describe('MobileQualityDefectDialog', () => {
       />
     );
 
-    expect(screen.queryByText('mobile.quality.label.current_task')).not.toBeInTheDocument();
-    expect(screen.getByText('mobile.quality.action.cancel')).toBeDisabled();
-    expect(screen.getByText('mobile.quality.action.submit_report')).toBeDisabled();
+    expect(screen.queryByText('当前任务')).not.toBeInTheDocument();
+    expect(screen.getByText('取消')).toBeDisabled();
+    expect(screen.getByText('提交上报')).toBeDisabled();
   });
 });

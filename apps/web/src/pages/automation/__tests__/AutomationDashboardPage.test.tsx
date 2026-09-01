@@ -174,39 +174,4 @@ describe('AutomationDashboardPage', () => {
     expect(await screen.findByRole('progressbar')).toBeInTheDocument();
     resolvePromise?.(stats);
   });
-
-  it('renders stat cards with key metrics', async () => {
-    mockGetStats.mockResolvedValue({ data: stats });
-
-    renderWithProviders(<AutomationDashboardPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('规则总数')).toBeInTheDocument();
-    });
-    expect(screen.getByText('启用规则')).toBeInTheDocument();
-    expect(screen.getByText('平均耗时')).toBeInTheDocument();
-    expect(screen.getByText('8')).toBeInTheDocument();
-    expect(screen.getByText('91%')).toBeInTheDocument();
-  });
-
-  it('shows recent runs table', async () => {
-    mockGetStats.mockResolvedValue({ data: stats });
-
-    renderWithProviders(<AutomationDashboardPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('每日库存同步')).toBeInTheDocument();
-    });
-    expect(screen.getByText('邮件发送')).toBeInTheDocument();
-  });
-
-  it('shows error on stats failure', async () => {
-    mockGetStats.mockRejectedValue(new Error('无法获取统计'));
-
-    renderWithProviders(<AutomationDashboardPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/无法获取统计/)).toBeInTheDocument();
-    });
-  });
 });

@@ -79,22 +79,4 @@ describe('SettingsTabRenderer', () => {
     expect(screen.getByText('基础设置')).toBeInTheDocument();
     expect(screen.getByText('告警设置')).toBeInTheDocument();
   });
-
-  it('calls handleSave with template data', () => {
-    const handleSave = vi.fn();
-    renderWithProviders(
-      <SettingsTabRenderer
-        title='监控设置'
-        tabs={tabs as any}
-        handleSave={handleSave}
-      />
-    );
-
-    fireEvent.click(screen.getByText('保存设置'));
-
-    expect(handleSave).toHaveBeenCalledWith({
-      refreshInterval: 30,
-      enabled: true,
-    });
-  });
 });

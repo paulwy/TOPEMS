@@ -10,12 +10,6 @@ import IntegrationDashboardPage from '../integration/IntegrationDashboardPage';
 import IntegrationEventsPage from '../integration/IntegrationEventsPage';
 import IntegrationMappingsPage from '../integration/IntegrationMappingsPage';
 import IntegrationSettingsPage from '../integration/IntegrationSettingsPage';
-import LowCodeHomePage from '../lowcode/LowCodeHomePage';
-import AppManagementPage from '../lowcode/AppManagementPage';
-import DataModelListPage from '../lowcode/DataModelListPage';
-import FormListPage from '../lowcode/FormListPage';
-import PageListPage from '../lowcode/PageListPage';
-import DataSourcePage from '../lowcode/DataSourcePage';
 import MobileHomePage from '../mobile/MobileHomePage';
 import MobileApprovalPage from '../mobile/MobileApprovalPage';
 import MobileAttendancePage from '../mobile/MobileAttendancePage';
@@ -89,11 +83,17 @@ vi.mock('@/components/templates', () => {
     React.createElement('div', null, children || 'MockTreePageTemplate');
   const MockDashboardTemplate = ({ children }: { children?: React.ReactNode }) =>
     React.createElement('div', null, children || 'MockDashboardTemplate');
+  const MockMobilePageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockMobilePageTemplate');
+  const MockListPageTemplate = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockListPageTemplate');
   return {
     SettingsPageTemplate: MockSettingsPageTemplate,
     CardListTemplate: MockCardListTemplate,
     TreePageTemplate: MockTreePageTemplate,
     DashboardTemplate: MockDashboardTemplate,
+    MobilePageTemplate: MockMobilePageTemplate,
+    ListPageTemplate: MockListPageTemplate,
   };
 });
 
@@ -275,78 +275,6 @@ describe('Integration Module', () => {
       const { container } = render(
         <BrowserRouter>
           <IntegrationSettingsPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-});
-
-describe('LowCode Module', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe('LowCodeHomePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <LowCodeHomePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-
-  describe('AppManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <AppManagementPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-
-  describe('DataModelListPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <DataModelListPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-
-  describe('FormListPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <FormListPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-
-  describe('PageListPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PageListPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-  });
-
-  describe('DataSourcePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <DataSourcePage />
         </BrowserRouter>
       );
       expect(container).toBeDefined();

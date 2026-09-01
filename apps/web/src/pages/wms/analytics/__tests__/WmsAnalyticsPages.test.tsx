@@ -78,29 +78,4 @@ describe('WMS BI Analytics Pages', () => {
     render(<WmsInventoryTurnoverPage />);
     expect(screen.getByText('库存周转率分析')).toBeInTheDocument();
   });
-
-  it('WmsAgeParetoPage renders title without crashing', () => {
-    render(<WmsAgeParetoPage />);
-    expect(screen.getByText(/库龄帕累托分析/)).toBeInTheDocument();
-  });
-
-  it('WmsFlowTrendPage renders title without crashing', () => {
-    render(<WmsFlowTrendPage />);
-    expect(screen.getByText(/出入库流量趋势/)).toBeInTheDocument();
-  });
-
-  it('WmsAbcAnalysisPage renders title without crashing', () => {
-    render(<WmsAbcAnalysisPage />);
-    expect(screen.getByText(/ABC 分类分析/)).toBeInTheDocument();
-  });
-
-  it('WmsLocationUtilizationPage renders title without crashing', () => {
-    render(<WmsLocationUtilizationPage />);
-    expect(screen.getByText('库位利用率分析')).toBeInTheDocument();
-  });
-
-  it('WmsOrderFulfillmentPage renders title without crashing', () => {
-    render(<WmsOrderFulfillmentPage />);
-    expect(screen.getByText(/订单履约与 SLA 分析/)).toBeInTheDocument();
-  });
 });

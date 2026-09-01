@@ -124,14 +124,4 @@ describe('GisTrackingPage', () => {
     );
     expect(container).toBeDefined();
   });
-
-  it('should have GIS API methods defined', () => {
-    render(
-      <BrowserRouter>
-        <GisTrackingPage />
-      </BrowserRouter>
-    );
-    expect(gisApi.devices.list).toBeDefined();
-    expect(gisApi.tracking.list).toBeDefined();
-  });
 });

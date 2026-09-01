@@ -364,112 +364,11 @@ describe('PmReport 组件渲染测试', () => {
       />
     );
 
-    expect(screen.getByText('pm.pm_report_page.text_42acf5')).toBeInTheDocument();
+    expect(screen.getByText('预算执行情况')).toBeInTheDocument();
     expect(screen.getByText('45.5%')).toBeInTheDocument();
     expect(screen.getByText('1,000,000')).toBeInTheDocument();
     expect(screen.getByText('450,000')).toBeInTheDocument();
     expect(screen.getByText('550,000')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '45.5');
-  });
-
-  it('收益表有数据时渲染关键列和格式化指标', () => {
-    renderWithProviders(<PmReportBenefitsTable benefits={benefits} />);
-
-    expect(screen.getByText('pm.pm_report_page.text_9d57d4')).toBeInTheDocument();
-    expect(screen.getByText('第 1 期')).toBeInTheDocument();
-    expect(screen.getByText('第 2 期')).toBeInTheDocument();
-    expect(screen.getByText('1.40')).toBeInTheDocument();
-    expect(screen.getByText('0.77')).toBeInTheDocument();
-    expect(screen.getByText('36,000')).toBeInTheDocument();
-    expect(screen.getByText('-50,000')).toBeInTheDocument();
-    expect(screen.getByText('18.00%')).toBeInTheDocument();
-    expect(screen.getByText('-4.00%')).toBeInTheDocument();
-  });
-
-  it('收益表无数据时渲染空态', () => {
-    renderWithProviders(<PmReportBenefitsTable benefits={[]} />);
-
-    expect(screen.getByText('pm.pm_report_page.text_8fe0ff')).toBeInTheDocument();
-  });
-
-  it('渲染项目状态饼图标题、数据点和默认外半径', () => {
-    renderWithProviders(<PmReportStatusPieChart data={projectStatusData} />);
-
-    expect(screen.getByText('pm.pm_report_page.text_068934')).toBeInTheDocument();
-    expect(screen.getByText('进行中:5')).toBeInTheDocument();
-    expect(screen.getByText('已完成:3')).toBeInTheDocument();
-    expect(screen.getByTestId('recharts-pie')).toHaveAttribute('data-outer-radius', '80');
-  });
-
-  it('渲染风险饼图标题、数据点和自定义外半径', () => {
-    renderWithProviders(
-      <PmReportRiskPieChart
-        data={riskData}
-        outerRadius={72}
-      />
-    );
-
-    expect(screen.getByText('pm.pm_report_page.text_99ce9e')).toBeInTheDocument();
-    expect(screen.getByText('高风险:2')).toBeInTheDocument();
-    expect(screen.getByText('中风险:4')).toBeInTheDocument();
-    expect(screen.getByTestId('recharts-pie')).toHaveAttribute('data-outer-radius', '72');
-  });
-
-  it('渲染进度图表并过滤 0 值项目', () => {
-    renderWithProviders(
-      <PmReportScheduleChart
-        stats={{
-          ...stats,
-          on_time_projects: 9,
-          delayed_projects: 0,
-        }}
-      />
-    );
-
-    expect(screen.getByText('pm.pm_report_page.text_22fd66')).toBeInTheDocument();
-    expect(screen.getByText('pm.pm_report_page.name_27ff5f:9')).toBeInTheDocument();
-    expect(screen.queryByText('pm.pm_report_page.name_db732e:0')).not.toBeInTheDocument();
-    expect(screen.getByTestId('recharts-bar-value')).toBeInTheDocument();
-  });
-
-  it('趋势图表有数据时渲染 CPI 与 SPI 折线', () => {
-    renderWithProviders(<PmReportTrendChart data={trendData} />);
-
-    expect(screen.getByText('pm.pm_report_page.text_266064')).toBeInTheDocument();
-    expect(screen.getByText('2026-01:1.08')).toBeInTheDocument();
-    expect(screen.getByText('2026-02:1.12')).toBeInTheDocument();
-    expect(screen.getByTestId('recharts-line-cpi')).toHaveTextContent('CPI');
-    expect(screen.getByTestId('recharts-line-spi')).toHaveTextContent('SPI');
-  });
-
-  it('趋势图表无数据时渲染默认基线月份', () => {
-    renderWithProviders(<PmReportTrendChart data={[]} />);
-
-    expect(screen.getByText('pm.pm_report_page.month_21efd8:1')).toBeInTheDocument();
-  });
-
-  it('自定义工具栏整合渲染全部报表区块并支持返回报表列表', () => {
-    const navigate = vi.fn();
-
-    renderWithProviders(
-      <PmReportCustomToolbar
-        params={{ projectId: 'project-1' }}
-        navigate={navigate}
-        projectStatusData={projectStatusData}
-        riskData={riskData}
-        trendData={trendData}
-        budgetUtilization={45}
-        stats={stats}
-        benefits={benefits}
-      />
-    );
-
-    expect(screen.getByText('pm.pm_report_page.text_a734d9')).toBeInTheDocument();
-    expect(screen.getByText('pm.pm_report_page.text_068934')).toBeInTheDocument();
-    expect(screen.getByText('pm.pm_report_page.text_99ce9e')).toBeInTheDocument();
-    expect(screen.getByText('pm.pm_report_page.text_42acf5')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'pm.pm_report_page.text_2e5b6d' }));
-    expect(navigate).toHaveBeenCalledWith('/pm/reports');
   });
 });

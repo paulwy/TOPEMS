@@ -1274,14 +1274,14 @@ jobs:
           exit $FAILED
 
   # ──────────────────────────────────────────────────────────────────────────
-  # Frontend Tests — 9 路并行分片（unit + 8 component shards）
+  # Frontend Tests — 6 路并行分片（unit + 5 component shards）
   #
   # 旧方案在单个 job 中运行 `test:coverage`（全量测试 + 覆盖率 + 构建），
   # 导致内存峰值过高、反馈周期长（~12 min）。
   #
-  # 新方案将测试拆为 9 个并行 matrix job，每个 job 只运行一个分片：
+  # 新方案将测试拆为 6 个并行 matrix job，每个 job 只运行一个分片：
   #   - unit:    vitest run --project unit          (纯函数/工具类)
-  #   - shard-N: vitest run --project component --shard=N/8  (组件/页面)
+  #   - shard-N: vitest run --project component --shard=N/5  (组件/页面)
   #
   # 覆盖率和构建拆为独立 job，与测试并行执行。
   # ──────────────────────────────────────────────────────────────────────────
@@ -1307,12 +1307,6 @@ jobs:
             cmd: test:shard:4
           - name: shard-5
             cmd: test:shard:5
-          - name: shard-6
-            cmd: test:shard:6
-          - name: shard-7
-            cmd: test:shard:7
-          - name: shard-8
-            cmd: test:shard:8
 
     steps:
       - uses: actions/checkout@v5

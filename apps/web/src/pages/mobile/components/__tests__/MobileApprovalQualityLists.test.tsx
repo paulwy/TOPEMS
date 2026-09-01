@@ -279,29 +279,6 @@ describe('ApprovalFilter', () => {
     expect(screen.getByText('我发起')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
   });
-
-  it('emits search and tab changes', () => {
-    const onSearchChange = vi.fn();
-    const onTabChange = vi.fn();
-    renderWithProviders(
-      <ApprovalFilter
-        searchQuery=''
-        onSearchChange={onSearchChange}
-        activeTab={0}
-        onTabChange={onTabChange}
-        tabs={['待审批', '已审批']}
-        pendingCount={1}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText('mobile.approval.action.search'), {
-      target: { value: '采购' },
-    });
-    fireEvent.click(screen.getByText('已审批'));
-
-    expect(onSearchChange).toHaveBeenCalledWith('采购');
-    expect(onTabChange).toHaveBeenCalled();
-  });
 });
 
 describe('ApprovalList', () => {

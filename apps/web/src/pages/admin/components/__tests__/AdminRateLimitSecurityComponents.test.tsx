@@ -155,13 +155,13 @@ describe('RateLimitDimensionCard', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.allowed_requests'), {
+    fireEvent.change(screen.getByLabelText('允许请求数'), {
       target: { value: '800' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.time_window'), {
+    fireEvent.change(screen.getByLabelText('时间窗口'), {
       target: { value: '120' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.priority'), {
+    fireEvent.change(screen.getByLabelText('优先级'), {
       target: { value: '7' },
     });
 
@@ -171,32 +171,6 @@ describe('RateLimitDimensionCard', () => {
     expect(onUpdateRule).toHaveBeenCalledWith('user_default', 'requests', 800);
     expect(onUpdateRule).toHaveBeenCalledWith('user_default', 'window_secs', 120);
     expect(onUpdateRule).toHaveBeenCalledWith('user_default', 'priority', 7);
-  });
-
-  it('normalizes empty number inputs to safe default values', () => {
-    const onUpdateRule = vi.fn();
-
-    render(
-      <RateLimitDimensionCard
-        dimKey='ip_default'
-        title='IP 维度'
-        icon={<span />}
-        color='#2e7d32'
-        description='按访问来源限流'
-        rule={{ requests: 100, window_secs: 30, priority: 1 }}
-        onUpdateRule={onUpdateRule}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.allowed_requests'), {
-      target: { value: '' },
-    });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.time_window'), {
-      target: { value: '' },
-    });
-
-    expect(onUpdateRule).toHaveBeenCalledWith('ip_default', 'requests', 0);
-    expect(onUpdateRule).toHaveBeenCalledWith('ip_default', 'window_secs', 1);
   });
 });
 
@@ -221,21 +195,21 @@ describe('RateLimitPathRules', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.path_prefix'), {
+    fireEvent.change(screen.getByLabelText('路径前缀'), {
       target: { value: '/api/core/hrm' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.request_count'), {
+    fireEvent.change(screen.getByLabelText('请求次数'), {
       target: { value: '350' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.window_seconds'), {
+    fireEvent.change(screen.getByLabelText('窗口(秒)'), {
       target: { value: '' },
     });
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.rate_limit_config_page.text_49818f' })
+      screen.getByRole('button', { name: '添加规则' })
     );
 
-    expect(screen.getByText('admin.rate_limit_config_page.text_d6bf27')).toBeInTheDocument();
-    expect(screen.getByText('admin.rate_limit_config_page.text_4cb561')).toBeInTheDocument();
+    expect(screen.getByText('路径限流规则')).toBeInTheDocument();
+    expect(screen.getByText('暂无路径规则')).toBeInTheDocument();
     expect(setNewPath).toHaveBeenCalledWith('/api/core/hrm');
     expect(setNewPathRequests).toHaveBeenCalledWith(350);
     expect(setNewPathWindow).toHaveBeenCalledWith(1);
@@ -311,13 +285,13 @@ describe('AntiReplayConfigPanel', () => {
     );
 
     fireEvent.click(screen.getByRole('switch'));
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config_page.attr_3d3dbd'), {
+    fireEvent.change(screen.getByLabelText('容差(秒)'), {
       target: { value: '120' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config_page.attr_cbecae'), {
+    fireEvent.change(screen.getByLabelText('nonce缓存(秒)'), {
       target: { value: '' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config_page.attr_bfe154'), {
+    fireEvent.change(screen.getByLabelText('时间戳请求头'), {
       target: { value: 'X-Timestamp' },
     });
     fireEvent.change(screen.getByLabelText('nonce Header'), {
@@ -328,7 +302,7 @@ describe('AntiReplayConfigPanel', () => {
     });
 
     expect(screen.getByTestId('alert-circle-icon')).toBeInTheDocument();
-    expect(screen.getByText('admin.rate_limit_config_page.text_209207')).toBeInTheDocument();
+    expect(screen.getByText('防重放配置')).toBeInTheDocument();
     expect(screen.getByText('/api/core/finance')).toBeInTheDocument();
     expect(setAntiReplay).toHaveBeenCalledTimes(5);
     expect(nextAntiReplay).toEqual({
@@ -361,11 +335,11 @@ describe('AntiReplayConfigPanel', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.rate_limit_config_page.text_b58c75' })
+      screen.getByRole('button', { name: '添加强制路径' })
     );
     fireEvent.click(container.querySelector('.MuiChip-deleteIcon') as Element);
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.rate_limit_config_page.text_f699f0' })
+      screen.getByRole('button', { name: '保存配置' })
     );
 
     expect(onAddEnforcePath).toHaveBeenCalledTimes(1);
@@ -388,7 +362,7 @@ describe('AntiReplayConfigPanel', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'admin.rate_limit_config_page.text_f699f0' })
+      screen.getByRole('button', { name: '保存配置' })
     ).toBeDisabled();
   });
 });

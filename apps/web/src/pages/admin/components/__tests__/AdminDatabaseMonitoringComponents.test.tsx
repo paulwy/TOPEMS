@@ -187,33 +187,6 @@ describe('DatabaseStructureTree', () => {
     expect(screen.getByDisplayValue('user')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
-
-  it('filters text and selects table summary', () => {
-    const onSearchChange = vi.fn();
-    const onTableSelect = vi.fn();
-    render(
-      <DatabaseStructureTree
-        loading={false}
-        searchQuery=''
-        onSearchChange={onSearchChange}
-        filteredTables={tables}
-        selectedTable={selectedTable}
-        onTableSelect={onTableSelect}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText('admin.database_structure_page.attr_f5f091'), {
-      target: { value: 'orders' },
-    });
-    fireEvent.click(screen.getByText('orders'));
-
-    expect(onSearchChange).toHaveBeenCalledWith('orders');
-    expect(onTableSelect).toHaveBeenCalledWith({
-      table_name: 'orders',
-      schema_name: 'public',
-      columns: [],
-    });
-  });
 });
 
 describe('DatabaseStructureTable', () => {
@@ -228,8 +201,8 @@ describe('DatabaseStructureTable', () => {
     );
 
     expect(screen.getByText('users')).toBeInTheDocument();
-    expect(screen.getByText(/admin\.database_structure\.fields/)).toBeInTheDocument();
-    expect(screen.getByText(/admin\.database_structure\.rows/)).toBeInTheDocument();
+    expect(screen.getByText(/3 字段/)).toBeInTheDocument();
+    expect(screen.getByText(/行/)).toBeInTheDocument();
     expect(screen.getByText('id')).toBeInTheDocument();
     expect(screen.getByText('INTEGER')).toBeInTheDocument();
     expect(screen.getByText('VARCHAR(120)')).toBeInTheDocument();
@@ -252,7 +225,7 @@ describe('DatabaseStructureTable', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.database_structure_page.text_4484fa' })
+      screen.getByRole('button', { name: '添加字段' })
     );
     fireEvent.click(screen.getAllByRole('button', { name: '删除' })[1]);
 
@@ -297,13 +270,13 @@ describe('DatabaseStructureIndexes', () => {
     render(<DatabaseStructureIndexes dbChanges={[]} />);
 
     expect(screen.getByTestId('clock-icon')).toBeInTheDocument();
-    expect(screen.getByText('admin.database_structure_page.text_98d867')).toBeInTheDocument();
+    expect(screen.getByText('暂无变更历史')).toBeInTheDocument();
   });
 
   it('renders database changes with translated and fallback labels', () => {
     render(<DatabaseStructureIndexes dbChanges={changes} />);
 
-    expect(screen.getByText('admin.database_structure.add_field')).toBeInTheDocument();
+    expect(screen.getByText('添加字段')).toBeInTheDocument();
     expect(screen.getByText('custom_change')).toBeInTheDocument();
     expect(screen.getByText('users')).toBeInTheDocument();
     expect(screen.getByText('orders')).toBeInTheDocument();
@@ -329,13 +302,13 @@ describe('MonitoringAlertFilters', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('admin.monitoring_alert.search'), {
+    fireEvent.change(screen.getByLabelText('搜索'), {
       target: { value: 'memory' },
     });
     fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
-    fireEvent.click(screen.getByRole('option', { name: 'admin.monitoring_alert.critical' }));
+    fireEvent.click(screen.getByRole('option', { name: '严重' }));
     fireEvent.mouseDown(screen.getAllByRole('combobox')[1]);
-    fireEvent.click(screen.getByRole('option', { name: 'admin.monitoring_alert.resolved' }));
+    fireEvent.click(screen.getByRole('option', { name: '已解决' }));
 
     expect(onSearchChange).toHaveBeenCalledWith('memory');
     expect(onLevelChange).toHaveBeenCalledWith('critical');

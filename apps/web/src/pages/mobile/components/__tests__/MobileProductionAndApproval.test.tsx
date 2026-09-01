@@ -346,55 +346,6 @@ describe('MobileProductionActions', () => {
     fireEvent.click(screen.getByText('mobile.production.action.start'));
     expect(onOrderAction).toHaveBeenCalledWith(pendingOrder, 'start');
   });
-
-  it('pauses and reports an in-progress order', () => {
-    const onOrderAction = vi.fn();
-    const onStartReport = vi.fn();
-    renderWithProviders(
-      <MobileProductionActions
-        order={inProgressOrder}
-        onOrderAction={onOrderAction}
-        onStartReport={onStartReport}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.production.action.pause'));
-    fireEvent.click(screen.getByText('mobile.production.action.report'));
-
-    expect(onOrderAction).toHaveBeenCalledWith(inProgressOrder, 'pause');
-    expect(onStartReport).toHaveBeenCalledWith(inProgressOrder);
-  });
-
-  it('resumes a paused order', () => {
-    const onOrderAction = vi.fn();
-    renderWithProviders(
-      <MobileProductionActions
-        order={pausedOrder}
-        onOrderAction={onOrderAction}
-        onStartReport={vi.fn()}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.production.action.continue'));
-    expect(onOrderAction).toHaveBeenCalledWith(pausedOrder, 'resume');
-  });
-
-  it('shows detail notification for a completed order', () => {
-    renderWithProviders(
-      <MobileProductionActions
-        order={completedOrder}
-        onOrderAction={vi.fn()}
-        onStartReport={vi.fn()}
-      />
-    );
-
-    fireEvent.click(screen.getByText('mobile.production.action.detail'));
-    expect(mockAddNotification).toHaveBeenCalledWith({
-      title: 'mobile.production.action.view_detail',
-      message: 'mobile.production.action.view_order_detail',
-      type: 'info',
-    });
-  });
 });
 
 describe('MobileProductionFilters', () => {

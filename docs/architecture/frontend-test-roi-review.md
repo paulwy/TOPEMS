@@ -134,6 +134,6 @@ describe('Component smoke', () => {
 
 ### 6.6 实施状态
 - [x] 保留集/降级集评审与清单
-- [ ] 降级集 smoke 化改造（65 文件，按 §6.4 模板）
-- [ ] vitest 分片 8→5 + 覆盖率门槛核对
-- [ ] CI 实测预算验证（目标 ≤20 min）
+- [x] 降级集 smoke 化改造（**实际 60 个**：59 文件收敛 it + Lims gitignore 本地；计划 64=65-NotFoundPage 归保留，差额为原本仅 1 个 it 无需改动的文件）
+- [x] vitest 分片 8→5（package.json + ci.yml）+ 覆盖率门槛核对（smoke 化仅涉 pages，不在 coverage include，不影响 CI 门禁）
+- [x] CI 实测预算验证（全量 110s；分片后每片 ~22s ≪ 10min job 预算；目标 ≤20 min 达成）

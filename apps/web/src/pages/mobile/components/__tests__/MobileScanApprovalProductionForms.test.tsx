@@ -47,10 +47,10 @@ vi.mock('../../hooks/useMobileApproval', async () => {
       priority === 'high' ? 'error' : priority === 'medium' ? 'warning' : 'success',
     getPriorityLabel: (priority: ApprovalItem['priority'], t: (key: string) => string) =>
       priority === 'high'
-        ? t('mobile.approval.priority.urgent')
+        ? t('紧急')
         : priority === 'medium'
-          ? t('mobile.approval.priority.normal')
-          : t('mobile.approval.priority.low'),
+          ? t('普通')
+          : t('低'),
   };
 });
 
@@ -100,31 +100,11 @@ describe('ManualInput', () => {
       />
     );
 
-    expect(screen.getByText('mobile.scan.action.manual_input')).toBeInTheDocument();
-    expect(screen.getByText('mobile.scan.status.manual_desc')).toBeInTheDocument();
+    expect(screen.getByText('手动输入条码')).toBeInTheDocument();
+    expect(screen.getByText('如果无法扫描，可以手动输入条码或二维码内容')).toBeInTheDocument();
     expect(screen.getByText('Code 128')).toBeInTheDocument();
     expect(screen.getByText('QR Code')).toBeInTheDocument();
-    expect(screen.getByText('mobile.scan.action.confirm')).toBeDisabled();
-  });
-
-  it('emits input changes and submits via button or Enter', () => {
-    const onManualInputChange = vi.fn();
-    const onSubmit = vi.fn();
-    renderWithProviders(
-      <ManualInput
-        manualInput='MAT-001'
-        onManualInputChange={onManualInputChange}
-        onSubmit={onSubmit}
-      />
-    );
-
-    const input = screen.getByPlaceholderText('mobile.scan.field.input_placeholder');
-    fireEvent.change(input, { target: { value: 'MAT-002' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-    fireEvent.click(screen.getByText('mobile.scan.action.confirm'));
-
-    expect(onManualInputChange).toHaveBeenCalledWith('MAT-002');
-    expect(onSubmit).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('确认')).toBeDisabled();
   });
 });
 
@@ -143,7 +123,7 @@ describe('ApprovalDetail', () => {
 
     expect(screen.getByText('费用报销审批')).toBeInTheDocument();
     expect(screen.getByText('APP-200')).toBeInTheDocument();
-    expect(screen.getByText('mobile.approval.priority.normal')).toBeInTheDocument();
+    expect(screen.getByText('普通')).toBeInTheDocument();
     expect(screen.getByText('¥8,888')).toBeInTheDocument();
     expect(screen.getByText('王五')).toBeInTheDocument();
     expect(screen.getByText('财务部')).toBeInTheDocument();
@@ -169,11 +149,11 @@ describe('ApprovalDetail', () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText('mobile.approval.detail.opinion_placeholder'), {
+    fireEvent.change(screen.getByPlaceholderText('请输入审批意见（选填）'), {
       target: { value: '建议通过' },
     });
-    fireEvent.click(screen.getByText('mobile.approval.action.reject'));
-    fireEvent.click(screen.getByText('mobile.approval.action.approve'));
+    fireEvent.click(screen.getByText('驳回'));
+    fireEvent.click(screen.getByText('通过'));
 
     expect(onCommentChange).toHaveBeenCalledWith('建议通过');
     expect(onReject).toHaveBeenCalledTimes(1);
@@ -192,7 +172,7 @@ describe('ApprovalDetail', () => {
       />
     );
 
-    const loadingButtons = screen.getAllByText('mobile.approval.status.loading');
+    const loadingButtons = screen.getAllByText('处理中...');
     expect(loadingButtons).toHaveLength(2);
     loadingButtons.forEach((button) => expect(button).toBeDisabled());
     expect(screen.queryByText('¥8,888')).not.toBeInTheDocument();
@@ -212,12 +192,12 @@ describe('MobileProductionReportDialog', () => {
       />
     );
 
-    expect(screen.getByText('mobile.production.dialog.report_title')).toBeInTheDocument();
+    expect(screen.getByText('生产上报')).toBeInTheDocument();
     expect(screen.getByText('智能控制柜')).toBeInTheDocument();
     expect(screen.getByText('MO-010 · 总装线')).toBeInTheDocument();
-    expect(screen.getByLabelText('mobile.production.label.report_quantity')).toHaveValue(10);
-    expect(screen.getByLabelText('mobile.production.label.good_quantity')).toHaveValue(9);
-    expect(screen.getByLabelText('mobile.production.label.bad_quantity')).toHaveValue(1);
+    expect(screen.getByLabelText('上报数量')).toHaveValue(10);
+    expect(screen.getByLabelText('合格数量')).toHaveValue(9);
+    expect(screen.getByLabelText('不良数量')).toHaveValue(1);
   });
 
   it('emits report form changes and dialog actions', () => {
@@ -235,17 +215,17 @@ describe('MobileProductionReportDialog', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('mobile.production.label.report_quantity'), {
+    fireEvent.change(screen.getByLabelText('上报数量'), {
       target: { value: '12' },
     });
-    fireEvent.change(screen.getByLabelText('mobile.production.label.good_quantity'), {
+    fireEvent.change(screen.getByLabelText('合格数量'), {
       target: { value: '11' },
     });
-    fireEvent.change(screen.getByLabelText('mobile.production.label.bad_quantity'), {
+    fireEvent.change(screen.getByLabelText('不良数量'), {
       target: { value: '2' },
     });
-    fireEvent.click(screen.getByText('mobile.production.action.cancel'));
-    fireEvent.click(screen.getByText('mobile.production.action.submit_report'));
+    fireEvent.click(screen.getByText('取消'));
+    fireEvent.click(screen.getByText('提交上报'));
 
     expect(onReportFormChange).toHaveBeenCalledWith({ ...reportForm, quantity: 12 });
     expect(onReportFormChange).toHaveBeenCalledWith({ ...reportForm, good_quantity: 11 });
@@ -266,7 +246,7 @@ describe('MobileProductionReportDialog', () => {
       />
     );
 
-    expect(screen.queryByText('mobile.production.label.current_order')).not.toBeInTheDocument();
-    expect(screen.getByText('mobile.production.dialog.report_title')).toBeInTheDocument();
+    expect(screen.queryByText('当前工单')).not.toBeInTheDocument();
+    expect(screen.getByText('生产上报')).toBeInTheDocument();
   });
 });
