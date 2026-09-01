@@ -13,6 +13,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 > 基于 2026-09-01 核对 TODO.md 全量推进记录 + 代码现状生成。
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
+> 09-01 编译库一致性治理已闭环：`.cargo/config.toml` 固化 `SQLX_OFFLINE=true`（编译默认离线缓存，绕开 Homebrew 库缺表）；容器库 5433 对齐列为后续根治项（见 `docs/development/backend/database-development.md` §7.8）。
 
 **当前待办总数：8 项**（✅ 已完成 5 / ⏳ 待触发 1 / 🔲 暂缓 1 / 🔲 可选后续 2）
 

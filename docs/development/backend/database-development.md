@@ -502,3 +502,18 @@ cargo check -p <package> --tests
 3. **`mes/tests/` 这类仅集成测试场景的 `query!` 宏 → 优先改为非宏版本 `query()` 移除缓存依赖**（见 V292 路径）。
 4. **`.gitattributes` 强制 `.sqlx/*.json = LF`**（项目已配置），避免跨平台行尾坑。
 5. **不要把方式 B 当常态**：这只是无 DB 环境的临时生存手段。后续有 PG Docker 时，建议所有方式 B 生成的缓存再用方式 A 校验一次。
+
+---
+
+### 7.8 本仓库编译库一致性治理（2026-09-01）
+
+**问题**：本机 `localhost:5432` 被 Homebrew postgres 18.4 占用，schema 落后于容器库；docker postgres 容器（172.18.0.13）因 macOS 网络隔离宿主不可直连，其 `0.0.0.0:5432` 映射被 Homebrew 抢占。在线编译（默认连 `DATABASE_URL`）会报 `relation "analytics_*" does not exist` 等缺表错（新表只在容器库）。
+
+**固化**：`.cargo/config.toml` 已追加 `[env] SQLX_OFFLINE = "true"`（force=false），本仓库 `cargo check / build / test` 编译默认走离线缓存（`.sqlx/query-*.json`，当前 285 条），不再连接 `DATABASE_URL`。
+
+**覆盖方式**：需连库更新缓存时显式覆盖（force=false 优先）：
+```bash
+SQLX_OFFLINE=false cargo sqlx prepare --workspace --database-url "$DATABASE_URL"
+```
+
+**后续根治项（待做）**：给 postgres 容器加宿主机 `5433:5432` 映射，`.env DATABASE_URL` 指向 `localhost:5433`（容器库 schema 完整），使在线编译 / prepare 连真实运行时库，从根上消除编译库与运行时库分裂。
