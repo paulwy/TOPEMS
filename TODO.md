@@ -21,7 +21,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 5 项阈值均未触发（DB 0.1GB/200GB、portal 116 表/600 张）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
 | 2 | analytics 接入模块化单体 | P1 | 🔲 后续 | master-data 已挂载（module-advanced），analytics 同组待接入 |
 | 3 | unified-core 双轨认证统一 | P1 | ⚠️ 已缓解待统一 | 注册**双写** core_users（主表）+ iam.users（兼容副本）已解决新用户登录失败；但登录查 iam.users / 权限查 core_users 分叉，双写需保持同步——建议全量迁 core_* 或监控副本一致性 |
-| 4 | 前端批 2 页面单测降级 | P2 | 🔲 待评审 | 需按页面清单逐个确认保留集（`frontend-test-roi-review.md` 批 2） |
+| 4 | 前端批 2 页面单测降级 | P2 | ⚠️ 评审完成待实施 | 167 文件分类：保留 102（核心 68 + hooks 34）/ 降级 smoke 65（39%）；smoke 模板 + 分片 8→5 方案已写入 `frontend-test-roi-review.md` §6；65 文件 smoke 化改造待执行 |
 | 5 | Traefik 8080 API 网关 staging 验证 | P2 | 🔲 待部署验证 | 生产 nginx 补强已落地；Traefik 8080 方案待 staging 部署验证 |
 | 6 | consul 服务注册接入 | P3 | 🔲 可选 | 网络名直连已满足；21 服务 main 接入为可选优化 |
 | 7 | lims/qms qa_* 测试启用 | P3 | 🔲 待环境确认 | PostgreSQL 环境启用前需加 search_path（`#[ignore]` 用例） |
@@ -1988,3 +1988,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **验证**：独立 analytics（BI_PORT=18060）启动 ✅ /health=200、/api/plugins/info=200、/api/bi/dashboard=401（鉴权路由存在）；server（18099）启动 → **analytics-real 注册（19 模块）** ✅ /api/bi/dashboard=200（dev claims）+ 返回 `{"items":[],"total":0}` 业务数据 ✅ /api/bi/health/detailed=200 ✅。
 - **推翻 08-31"保持独立"评估的接入成本顾虑**：with_state 泛型（Router<S2>）返回类型由上下文推断，create_protected_routes 声明 `Router`（with_state 后）即可同时服务独立部署（build_application）与 server（nest）。
 - **遗留**：analytics 独立部署与 server 嵌入可并存（双模式）；ReportScheduler 若独立部署 + server 同时跑会重复调度（部署时二选一）。
+
+## 2026-09-01 前端批 2 页面单测保留集评审（待办④）✅评审
+- **167 文件逐项分类**（apps/web/src/pages，按业务域）：
+  - **保留 102（61%）**：核心页面 68（认证/工作台/订单/生产/质量/HR/报表/审批/移动核心/IAM/EHS/LIMS/模块聚合/Admin 核心）+ 页面 hooks 34（逻辑测试 L1 原则）
+  - **降级 smoke 65（39%）**：低变更/低访问（系统管理/管理后台次级/AI/插件/自动化/GIS/监控/文档/移动次级/分析聚合）
+- **smoke 化模板**：仅渲染不崩溃（不 mock API/Store），保留 1-3 断言，删繁重 mock
+- **分片 8→5**：component 项目 `--shard=N/5`，每分片 ≤4 min；覆盖门槛"核心路径 100% + 全量 ≥ 下限"
+- **落地**：frontend-test-roi-review.md §6 已写入保留集/降级集完整清单 + 模板 + 分片方案
+- **待实施**：65 文件 smoke 化改造（按 §6.4 模板）→ 分片调整 → CI 预算实测

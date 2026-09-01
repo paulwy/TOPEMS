@@ -72,4 +72,68 @@ CI 前端全链路单次 PR 预算（从当前 ~25–35 min 收敛至 ≤ 20 min
 - [x] CI 时间预算（≤ 20 min 目标）
 - [x] 分三批实施路径
 - [x] 批 1 E2E 矩阵收敛（2026-08-31 落地）：CI 实际使用的 `tests/e2e/playwright.config.ts` 本就为单 chromium project；`apps/web/playwright.config.ts` 6 project（未被 CI 引用）已收敛为 chromium + mobile-iphone，firefox/webkit/tablet/android 注释保留。全项目 0 snapshot 文件，视觉快照项无对象可清理。
-- [ ] 待执行：批 2 页面单测降级（需按页面清单逐个确认保留集）
+- [x] 批 2 页面单测保留集评审（2026-09-01 落地）：167 文件逐项分类——**保留 102（61%）**（核心页面 68 + 页面 hooks 34）/ **降级 smoke 65（39%）**；vitest 分片 8→5（见下节 §6）。
+
+## 6. 批 2 保留集评审结论（2026-09-01）
+
+### 6.1 分类口径
+- **保留（完整单测）**：高频核心业务页面（认证/工作台/订单/生产/质量/HR/报表/审批/移动核心/模块聚合）+ **全部页面 hooks**（逻辑测试，成本低价值高，符合 L1 原则）。
+- **降级 smoke（仅渲染不崩溃）**：低变更/低访问页面与页面专属组件（系统管理/管理后台次级/AI/插件/自动化/GIS/监控/文档/移动次级/分析聚合）。smoke 化模板见 §6.4，保留 1-3 个渲染断言，删繁重 mock。
+
+### 6.2 保留集（102 个，完整单测）
+**核心页面（68）**：
+- 工作台/仪表盘：BIDashboardPage、FinanceDashboardPage、ProductionDashboardPage、WorkStationPage
+- 订单/客户：SrmOrderPage.api、CrmCustomerManagementPage、CrmOpportunityManagementPage、CustomerManagementPage、CrmCrudPages
+- 生产/工单：ProductionOrderManagementPage、ProductionProcessPage、ProductionRecordPage、WIPPage、MaterialBOMPage、WorkflowApprovalsPage
+- 质量：QmsAuditManagementPage、QmsInspectionPage、QmsNonconformancePage、QmsQualityControlPage、QualityTraceabilityPage
+- HR：HrmEmployeePage(.form)、HrmAttendancePage、HrmLeavePage、HrmPayrollPage、HrmDepartmentPage
+- 报表/BI：ReportListPage、ReportSchedulePage、ReportSubscriptionPage、BIComparisonPage、BIDataSourcePage
+- 移动核心：MobileApprovalPage、MobileTaskListPage、MobileHomePage
+- IAM：IamUserManagementPage、IamRoleManagementPage、IamPermissionManagementPage、IamCompanyStructurePage
+- EHS：EhsPlanPage、EhsCheckPage、EhsAccidentPage、EhsDrillPage、EhsHazardPage
+- LIMS：LimsSamplePage、LimsSampleDetailPage、LimsTaskPage、LimsInstrumentPage、LimsProcessPage
+- 模块聚合：ErpModule、FinanceModule、MesModule、PdmModule、PmModule、ScmModule、WmsModule、BiModule、ImModule、QmsModule、ReportModule、WorkflowModule、CoreInteractions、BatchOperations
+- Admin 核心：AdminTenantManagementPage、AdminSystemSettingsPage、AdminAuditMonitoringComponents、AdminBasicComponents
+- 公共：shared/NotFoundPage（极简 404，防回归）
+
+**页面 hooks（34）**：admin/hooks 7、ai/hooks 4、bi/hooks 1、doc/hooks 1、ehs/hooks 1、erp/hooks 3、finance/hooks 1、gis/hooks 1、mobile/hooks 6、monitor/hooks 1、plugin/hooks 2、pm/hooks 2、report/hooks 1、shared/hooks 2、system/hooks 1
+
+### 6.3 降级集（65 个，smoke 化）
+- 模块聚合（低访问）：AiModule、SrmModule、OtherModules、CrmMobDbg、GisTrackingPage、IamAdminRouteConfig、MobileScanPage
+- 管理后台次级：admin/components（Database/Dictionary/Plugin/RateLimit/TenantDetail 5）
+- AI：ai/components（AiAssistant/AiModelSettings/Chat/Dashboard/QuickAction/StatCard 6）
+- 自动化：automation（Designer/Rules/Runs/Variables/Dashboard 5）
+- BI/GIS 次级：bi/GisPageComponents、BiPermissionComponents、gis/components（DataTable/StatisticsCards/StatusChip 3）
+- 文档/EHS/ERP/Finance 组件：doc/DocumentBasicComponents、ehs/EhsHazardComponents、erp/Operational/FinancialReport、finance/ConsolidationScope/FinanceVoucher
+- IAM 独立页：iam/__tests__（CompanyStructure/Permission/Role/User 4——与 __tests__/Iam* 聚合重复，保留聚合套）
+- 移动次级：mobile/components 6 + lims/LimsInstrumentDataComponents
+- 监控/插件/PM/报告组件：monitor/SettingsTabRenderer、plugin/components 4、pm/components 2、report/ReportPageComponents
+- 系统管理：system（AuditLogDetailDialog、CacheConfigPanel、LogConfigPanel、SystemConfigPanel、BackupPage 5）
+- 分析聚合：mes/qms/wms AnalyticsPages 3 + wms/InventoryReportComponents
+- 共享组件：shared/ProfileShortcuts
+
+### 6.4 smoke 化模板（降级集使用）
+```tsx
+import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { describe, it, expect } from 'vitest';
+// 不 mock API/Store —— 组件内部容错空数据，仅验证渲染不崩溃 + 标题/关键占位
+import Component from '../Component';
+describe('Component smoke', () => {
+  it('renders without crash', () => {
+    render(<BrowserRouter><Component /></BrowserRouter>);
+    expect(screen.getByTestId('root') ?? document.body).toBeTruthy();
+  });
+});
+```
+
+### 6.5 分片调整（8 → 5）
+- 现 component 项目 8 分片（`--shard=N/8`）；降级 65 文件 smoke 化后单文件执行与 mock 成本大幅下降。
+- 目标 5 分片（`--shard=N/5`），每分片预算维持 ≤4 min；若实测仍宽裕可再收至 4。
+- 覆盖门槛：**核心路径 100% + 全量 ≥ 现有值下限**（不随裁剪上调阈值）。
+
+### 6.6 实施状态
+- [x] 保留集/降级集评审与清单
+- [ ] 降级集 smoke 化改造（65 文件，按 §6.4 模板）
+- [ ] vitest 分片 8→5 + 覆盖率门槛核对
+- [ ] CI 实测预算验证（目标 ≤20 min）
