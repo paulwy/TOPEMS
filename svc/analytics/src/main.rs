@@ -39,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/bi",
         legacy_prefixes: &["/api/v1/bi"],
+        ..Default::default()
     };
 
     let ctx = bootstrap_service(&config).await?;

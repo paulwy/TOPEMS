@@ -230,6 +230,7 @@ impl SubscriptionModule {
             enable_request_context: false,
             api_prefix: "/api/subscriptions",
             legacy_prefixes: &[],
+            init_telemetry: false,
         };
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;

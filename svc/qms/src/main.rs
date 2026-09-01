@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/qms",
         legacy_prefixes: &[],
+        ..Default::default()
     };
 
     let ctx = bootstrap_service(&config).await?;

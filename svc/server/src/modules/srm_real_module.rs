@@ -42,6 +42,7 @@ impl SrmRealModule {
             enable_request_context: true,
             api_prefix: "/api/srm",
             legacy_prefixes: &["/api/v1/srm"],
+            init_telemetry: false,
         };
 
         let ctx = bootstrap_service(&config).await?;

@@ -25,6 +25,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/communication",
         legacy_prefixes: &["/api/core/comm", "/api/core/notification"],
+        ..Default::default()
     };
 
     let ctx = bootstrap_service(&config).await?;

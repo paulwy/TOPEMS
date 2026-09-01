@@ -41,6 +41,7 @@ async fn main() -> Result<()> {
         enable_request_context: true,
         api_prefix: "/api/pm",
         legacy_prefixes: &["/api/v1/pm"],
+        ..Default::default()
     };
 
     let ctx = bootstrap_service(&config).await?;

@@ -48,6 +48,7 @@ impl CrmRealModule {
             api_prefix: "/api/crm",
             legacy_prefixes: &["/api/v1/crm"],
             // 宿主进程统一初始化全局 telemetry
+            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

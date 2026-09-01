@@ -316,6 +316,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: false,
         api_prefix: "/api/core",
         legacy_prefixes: &[],
+        ..Default::default()
     };
 
     let ctx = bootstrap_service(&config).await?;
