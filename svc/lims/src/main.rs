@@ -1,4 +1,4 @@
-//! TOPEMS LIMS Service
+﻿//! TOPEMS LIMS Service
 //!
 //! Unified service for QMS (Quality Management), LIMS (Laboratory), and EHS (Environment Health Safety)
 
@@ -42,7 +42,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/lims",
         legacy_prefixes: &[],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

@@ -1,4 +1,4 @@
-//! 真实 PM 服务接入模块（PmRealModule）—— Phase B3 扩展
+﻿//! 真实 PM 服务接入模块（PmRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-pm` 服务（lib 形态，pool 直传模式）作为模块接入统一入口。
 //! 与 Aps/Wms 不同：pm 的 create_routes 直接接收 (pool, event_publisher, workflow_client)。
@@ -42,7 +42,6 @@ impl PmRealModule {
             api_prefix: "/api/pm",
             legacy_prefixes: &["/api/v1/pm"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
             ..Default::default()
         };
 

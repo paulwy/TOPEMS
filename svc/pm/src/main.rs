@@ -1,4 +1,4 @@
-//! TOPEMS-PM 统一项目管理系统
+﻿//! TOPEMS-PM 统一项目管理系统
 //!
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
@@ -41,7 +41,6 @@ async fn main() -> Result<()> {
         enable_request_context: true,
         api_prefix: "/api/pm",
         legacy_prefixes: &["/api/v1/pm"],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

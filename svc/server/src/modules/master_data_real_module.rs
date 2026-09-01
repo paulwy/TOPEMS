@@ -1,4 +1,4 @@
-//! 真实 MasterData 服务接入模块（MasterDataRealModule）—— advanced 组挂载
+﻿//! 真实 MasterData 服务接入模块（MasterDataRealModule）—— advanced 组挂载
 //!
 //! 将真实 `topems-master-data` 服务（lib 形态）作为模块接入统一入口。
 //! master-data 使用 `modules::create_routes() -> Router<AppState>`（AppState: db/auth/metrics/start_time）。
@@ -41,7 +41,6 @@ impl MasterDataRealModule {
             api_prefix: "/api/master-data",
             legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

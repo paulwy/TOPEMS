@@ -1,4 +1,4 @@
-//! TOPEMS Ticket Service
+﻿//! TOPEMS Ticket Service
 //!
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
@@ -28,7 +28,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/ticket",
         legacy_prefixes: &["/api/v1/ticket"],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

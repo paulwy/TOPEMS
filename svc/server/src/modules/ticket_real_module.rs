@@ -1,4 +1,4 @@
-//! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
+﻿//! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
 //!
 //! 将真实 `topems-ticket` 服务（lib 形态）作为模块接入统一入口。
 //! ticket 使用 `handlers::ticket_routes() -> Router<PgPool>`（无 ApiState，简化模式），
@@ -42,7 +42,6 @@ impl TicketRealModule {
             api_prefix: "/api/ticket",
             legacy_prefixes: &["/api/v1/ticket"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

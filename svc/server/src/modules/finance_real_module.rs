@@ -1,4 +1,4 @@
-//! 真实财务服务接入模块（FinanceRealModule）—— Phase B3
+﻿//! 真实财务服务接入模块（FinanceRealModule）—— Phase B3
 //!
 //! 将真实 `topems-finance` 服务（lib 形态）作为模块接入统一入口。
 //! 与演示版 `FinanceModule` 不同，这里使用**真实业务代码**：
@@ -47,7 +47,6 @@ impl FinanceRealModule {
             legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
             // 模块化单体嵌入：由宿主进程（topems-server）统一初始化全局 telemetry，
             // 避免重复设置全局 tracing subscriber 导致 panic
-            init_telemetry: false,
             ..Default::default()
         };
 

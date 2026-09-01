@@ -1,4 +1,4 @@
-//! 真实 SRM 服务接入模块（SrmRealModule）—— feature flag 控制
+﻿//! 真实 SRM 服务接入模块（SrmRealModule）—— feature flag 控制
 //!
 //! 将真实 `topems-srm` 服务（lib 形态）作为模块接入统一入口。
 //! srm 各业务模块 create_routes 自行管理内部状态（Router<()>），server 侧合并 + 认证。
@@ -42,7 +42,6 @@ impl SrmRealModule {
             enable_request_context: true,
             api_prefix: "/api/srm",
             legacy_prefixes: &["/api/v1/srm"],
-            init_telemetry: false,
         };
 
         let ctx = bootstrap_service(&config).await?;

@@ -1,4 +1,4 @@
-use crate::shared::AppState;
+﻿use crate::shared::AppState;
 use std::sync::Arc;
 
 use axum::{extract::State, routing::get, Json, Router};
@@ -31,7 +31,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/master-data",
         legacy_prefixes: &[],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

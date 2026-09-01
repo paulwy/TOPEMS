@@ -1,4 +1,4 @@
-//! TOPEMS EHS Service
+﻿//! TOPEMS EHS Service
 //!
 //! Environment Health Safety Service
 
@@ -38,7 +38,6 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/ehs",
         legacy_prefixes: &["/api/v1/ehs"],
-        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

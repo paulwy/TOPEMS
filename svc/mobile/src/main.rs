@@ -1,4 +1,4 @@
-mod event_handlers;
+﻿mod event_handlers;
 
 mod db;
 mod models;
@@ -114,7 +114,6 @@ async fn main() -> Result<()> {
         enable_request_context: true,
         api_prefix: "/api/mobile",
         legacy_prefixes: &["/api/v1/mobile", "/api/core/mobile/v1"],
-        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
 

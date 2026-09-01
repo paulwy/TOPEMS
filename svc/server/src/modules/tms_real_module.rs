@@ -1,4 +1,4 @@
-//! 真实 TMS 服务接入模块（TmsRealModule）—— P3 feature flag 控制
+﻿//! 真实 TMS 服务接入模块（TmsRealModule）—— P3 feature flag 控制
 //!
 //! 将真实 `topems-tms` 服务（lib 形态）作为模块接入统一入口。
 //! tms 的 `modules::create_routes::<AppState>()` 泛型路由 + `shared::AppState`。
@@ -41,7 +41,6 @@ impl TmsRealModule {
             api_prefix: "/api/tms",
             legacy_prefixes: &["/api/v1/tms"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标

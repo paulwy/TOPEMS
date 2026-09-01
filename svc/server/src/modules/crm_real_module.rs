@@ -48,7 +48,6 @@ impl CrmRealModule {
             api_prefix: "/api/crm",
             legacy_prefixes: &["/api/v1/crm"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
@@ -70,9 +69,10 @@ impl CrmRealModule {
         }
 
         // 2.1 事件订阅者（消费业务事件写 interactions 等，失败不阻塞）
-        if let Err(e) = topems_crm::event_handlers::start_event_subscribers(ctx.db.clone()).await {
-            tracing::warn!("CRM 事件订阅者启动失败（不阻塞）: {}", e);
-        }
+        // TODO: CRM event_handlers 模块尚未实现，待 CRM 服务补齐后恢复
+        // if let Err(e) = topems_crm::event_handlers::start_event_subscribers(ctx.db.clone()).await {
+        //     tracing::warn!("CRM 事件订阅者启动失败（不阻塞）: {}", e);
+        // }
 
         // 3. 字段加密服务
         let encryption_service = topems_shared::init_encryption_from_env();

@@ -1,4 +1,4 @@
-//! 真实 MES 服务接入模块（MesRealModule）—— Phase B3 扩展
+﻿//! 真实 MES 服务接入模块（MesRealModule）—— Phase B3 扩展
 //!
 //! 将真实 `topems-mes` 服务（lib 形态，AppState 直传模式）作为模块接入统一入口。
 //! mes 的 `modules::create_routes() -> Router<AppState>` 无参（与 pm 不同），
@@ -41,7 +41,6 @@ impl MesRealModule {
             api_prefix: "/api/mes",
             legacy_prefixes: &["/api/v1/mes"],
             // 宿主进程统一初始化全局 telemetry
-            init_telemetry: false,
             ..Default::default()
         };
 
