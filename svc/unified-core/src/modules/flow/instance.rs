@@ -72,6 +72,15 @@ pub async fn list_instances(
                WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
                    SELECT 1 FROM core_workflow_tasks t
                    WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+               ) OR EXISTS (
+                   SELECT 1 FROM approvals a
+                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     AND (a.assignee_id = $1 OR a.approved_by = $1)
+               ) OR EXISTS (
+                   SELECT 1 FROM approval_records ar
+                   JOIN approvals a ON a.id = ar.approval_id
+                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                     AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))"#,
         )
         .bind(user_uuid)
@@ -87,6 +96,15 @@ pub async fn list_instances(
                  AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
                      SELECT 1 FROM core_workflow_tasks t
                      WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                 ) OR EXISTS (
+                     SELECT 1 FROM approvals a
+                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                       AND (a.assignee_id = $4 OR a.approved_by = $4)
+                 ) OR EXISTS (
+                     SELECT 1 FROM approval_records ar
+                     JOIN approvals a ON a.id = ar.approval_id
+                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                       AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))"#,
         )
         .bind(format!("%{}%", search.clone()))
@@ -110,6 +128,15 @@ pub async fn list_instances(
                WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
                    SELECT 1 FROM core_workflow_tasks t
                    WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+               ) OR EXISTS (
+                   SELECT 1 FROM approvals a
+                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     AND (a.assignee_id = $1 OR a.approved_by = $1)
+               ) OR EXISTS (
+                   SELECT 1 FROM approval_records ar
+                   JOIN approvals a ON a.id = ar.approval_id
+                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                     AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
                ORDER BY created_at DESC LIMIT $2 OFFSET $3"#
         )
@@ -140,6 +167,15 @@ pub async fn list_instances(
                  AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
                      SELECT 1 FROM core_workflow_tasks t
                      WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                 ) OR EXISTS (
+                     SELECT 1 FROM approvals a
+                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                       AND (a.assignee_id = $4 OR a.approved_by = $4)
+                 ) OR EXISTS (
+                     SELECT 1 FROM approval_records ar
+                     JOIN approvals a ON a.id = ar.approval_id
+                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                       AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
                ORDER BY created_at DESC LIMIT $5 OFFSET $6"#
         )

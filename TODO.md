@@ -1850,3 +1850,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **实现**：$N::uuid IS NULL 技巧统一处理 service（NULL→全量）与用户（过滤）；total + items 两查询 + has_filters 两分支同步加过滤；error_instances 补 Claims 转发。
 - **验证**：编译干净；SQL 逻辑 4 场景（service→3 / initiator→1 / assignee→1 / 无关→0）；flow 路由在 auth_middleware 保护下（Claims 必有）。
 - **候选扩展（P2）**：审批记录（approval_records actor_id）参与可见、候选人（candidate）可见——当前仅 initiator + assignee。
+
+## 2026-09-01 workflow list_instances P2 扩展：审批记录参与可见 ✅
+- 在 P1 过滤（initiator + task assignee）基础上扩展：
+  - **approvals.assignee_id OR approved_by = user**（被指派为审批人 / 实际审批过）
+  - **approval_records.actor_id = user**（JOIN approvals → workflow_instance_id，执行过任何审批动作）
+- candidate 概念未真正实现（core_workflow_tasks 无 candidate 字段，TaskStats.candidate 恒 0，candidate_tasks 只是 list_tasks 别名）——**跳过候选人可见**。
+- 验证：编译干净；SQL 5 场景（service→3 / initiator→1 / task assignee→1 / approved_by→1 / approval_records actor→1 / 无关→0）。
