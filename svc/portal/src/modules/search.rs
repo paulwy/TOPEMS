@@ -49,10 +49,6 @@ fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &st
     }
 }
 
-const DEFAULT_CRM_URL: &str = "http://localhost:8029";
-const DEFAULT_BI_URL: &str = "http://localhost:8060";
-const DEFAULT_DOC_URL: &str = "http://localhost:8000";
-const DEFAULT_ERP_URL: &str = "http://localhost:8010";
 
 #[derive(Serialize, Deserialize)]
 pub struct SearchResult {
@@ -117,20 +113,12 @@ pub async fn global_search(
     let token = extract_bearer_token(&headers);
 
     let (
-        erp_results,
-        crm_results,
-        bi_results,
         notif_results,
-        doc_results,
         hrm_results,
         workflow_results,
         mes_results,
     ) = tokio::join!(
-        search_erp(&state, &query, token.as_deref()),
-        search_crm(&state, &query, token.as_deref()),
-        search_bi(&state, &query, token.as_deref()),
         search_notifications(&state, &query, token.as_deref()),
-        search_documents(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),
         search_mes_production_orders(&state, &query, token.as_deref()),
@@ -145,11 +133,7 @@ pub async fn global_search(
         let _ = svc_name;
     };
 
-    add_results("erp", "ERP系统", erp_results);
-    add_results("crm", "客户管理", crm_results);
-    add_results("bi", "商业智能", bi_results);
     add_results("notification", "通知中心", notif_results);
-    add_results("doc", "文档中心", doc_results);
     add_results("hrm", "人力资源", hrm_results);
     add_results("workflow", "审批中心", workflow_results);
     add_results("mes", "生产制造", mes_results);
@@ -189,31 +173,19 @@ pub async fn search_suggestions(
     let token = extract_bearer_token(&headers);
 
     let (
-        erp_results,
-        crm_results,
-        bi_results,
         notif_results,
-        doc_results,
         hrm_results,
         workflow_results,
         mes_results,
     ) = tokio::join!(
-        search_erp(&state, &query, token.as_deref()),
-        search_crm(&state, &query, token.as_deref()),
-        search_bi(&state, &query, token.as_deref()),
         search_notifications(&state, &query, token.as_deref()),
-        search_documents(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),
         search_mes_production_orders(&state, &query, token.as_deref()),
     );
 
     let mut all_titles = Vec::new();
-    all_titles.extend(erp_results.into_iter().map(|r| r.title));
-    all_titles.extend(crm_results.into_iter().map(|r| r.title));
-    all_titles.extend(bi_results.into_iter().map(|r| r.title));
     all_titles.extend(notif_results.into_iter().map(|r| r.title));
-    all_titles.extend(doc_results.into_iter().map(|r| r.title));
     all_titles.extend(hrm_results.into_iter().map(|r| r.title));
     all_titles.extend(workflow_results.into_iter().map(|r| r.title));
     all_titles.extend(mes_results.into_iter().map(|r| r.title));
@@ -227,88 +199,6 @@ pub async fn search_suggestions(
         },
         "搜索建议获取成功",
     ))
-}
-
-/// 发送系统级全局搜索请求并解析结果。
-/// 补降级日志：区分「用户 token 权限不足（401）」与「网络/解析错误」，避免静默空结果。
-async fn send_global_search(
-    state: &AppState,
-    service_label: &str,
-    display_name: &str,
-    url: &str,
-    query: &str,
-    extra_params: &[(&str, &str)],
-    token: Option<&str>,
-) -> Vec<SearchResult> {
-    let mut req = state.http_client.get(url).query(&[("q", query)]);
-    if !extra_params.is_empty() {
-        req = req.query(extra_params);
-    }
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => {
-            let status = resp.status();
-            if status.as_u16() == 401 {
-                tracing::warn!(
-                    target: "portal::search",
-                    service = service_label,
-                    status = %status,
-                    "全局搜索源权限不足降级（转发用户 token 无 {} 权限），结果缺失",
-                    service_label
-                );
-                return vec![];
-            }
-            if !status.is_success() {
-                tracing::warn!(
-                    target: "portal::search",
-                    service = service_label,
-                    status = %status,
-                    "全局搜索源 HTTP 错误降级",
-                );
-                return vec![];
-            }
-            match resp.json::<serde_json::Value>().await {
-                Ok(json) => parse_search_results(&json, service_label, display_name, query),
-                Err(e) => {
-                    tracing::warn!(
-                        target: "portal::search",
-                        service = service_label,
-                        "全局搜索源响应解析失败: {}",
-                        e
-                    );
-                    vec![]
-                }
-            }
-        }
-        Err(e) => {
-            tracing::warn!(
-                target: "portal::search",
-                service = service_label,
-                "全局搜索源网络错误降级: {}",
-                e
-            );
-            vec![]
-        }
-    }
-}
-
-async fn search_erp(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let url = format!("{}/api/erp/search", erp_base_url());
-    send_global_search(state, "erp", "ERP系统", &url, query, &[], token).await
-}
-
-async fn search_crm(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("CRM_SERVICE_URL", DEFAULT_CRM_URL, "CRM");
-    let url = format!("{}/api/crm/search", base);
-    send_global_search(state, "crm", "客户管理", &url, query, &[], token).await
-}
-
-async fn search_bi(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("BI_SERVICE_URL", DEFAULT_BI_URL, "BI");
-    let url = format!("{}/api/bi/search", base);
-    send_global_search(state, "bi", "商业智能", &url, query, &[], token).await
 }
 
 async fn search_notifications(
@@ -359,21 +249,6 @@ async fn search_notifications(
             vec![]
         }
     }
-}
-
-async fn search_documents(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("DOC_SERVICE_URL", DEFAULT_DOC_URL, "DOC");
-    let url = format!("{}/api/doc/search", base);
-    send_global_search(
-        state,
-        "doc",
-        "文档中心",
-        &url,
-        query,
-        &[("page", "1"), ("pagesize", "10")],
-        token,
-    )
-    .await
 }
 
 async fn search_hrm_employees(
@@ -606,10 +481,6 @@ fn parse_search_results(
         })
         .take(10)
         .collect()
-}
-
-fn erp_base_url() -> String {
-    resolve_service_url("ERP_SERVICE_URL", DEFAULT_ERP_URL, "ERP")
 }
 
 #[cfg(test)]

@@ -1838,3 +1838,8 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **结论**：任何一处都不应改 service token（hrm 改则越权、workflow/mes 问题在下游、B 类无接口）。
 - **P0 待决策**：portal 全局搜索 4 个无效源——移除（收敛到 notifications/hrm/workflow/mes 真实源）或标记"未接入"。
 - **P1 下游治理**：workflow list_instances 补用户维度过滤（越权风险）；mes list_production_orders 确认。
+
+## 2026-09-01 portal 全局搜索移除 4 个无效源（erp/crm/bi/doc）✅
+- **实施 P0 决策**：移除指向不存在接口的 4 个全局搜索源（`/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search`）——search.rs 净删 129 行（4 个搜索函数 + send_global_search helper + erp_base_url + 4 个 DEFAULT_* 常量）。
+- **保留 4 个真实源**：notification（get_unread 用户通知）、hrm（list_employees 有 EmployeeRead+tenant 过滤）、workflow（list_instances 待下游补过滤）、mes（list_production_orders）。
+- **验证**：编译干净；运行时搜索 by_service 仅 {hrm,notification,mes,workflow}，不再尝试调用不存在的接口（无 404 噪音）；search_suggestions 同步收敛。
