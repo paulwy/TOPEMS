@@ -1857,3 +1857,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - **approval_records.actor_id = user**（JOIN approvals → workflow_instance_id，执行过任何审批动作）
 - candidate 概念未真正实现（core_workflow_tasks 无 candidate 字段，TaskStats.candidate 恒 0，candidate_tasks 只是 list_tasks 别名）——**跳过候选人可见**。
 - 验证：编译干净；SQL 5 场景（service→3 / initiator→1 / task assignee→1 / approved_by→1 / approval_records actor→1 / 无关→0）。
+
+## 2026-09-01 mes list_production_orders 权限确认（P1 完成）✅
+- **核查**：handler 有 `Extension<Claims>` + `check_permission(ProductionOrderRead)`（mes:read）；portal service token 传 `mes:admin` 命中 admin 路径 → 服务间调用通过；用户需 mes:read 否则 403。
+- **tenant 维度**：production_orders 为 **mes schema 单组织表**（无 tenant_id，有 organization_id）——RLS/租户隔离不适用，无"全量泄漏"风险。
+- **对比 workflow**：workflow 是多租户表（tenant_id）需 Claims 过滤（已修）；mes 无租户数据维度 + 有权限码隔离 → **无越权**。
+- **service-token-audit.md**：C 类 14 项 mes 状态更新为已确认 ✅，P1 行动项关闭。
+- **至此 C 类 3 处（hrm/workflow/mes）全部闭环**。

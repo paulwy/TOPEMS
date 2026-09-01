@@ -65,9 +65,9 @@
 |---|---|---|---|---|
 | 12 | search.rs:380 | hrm `list_employees` | ✅ `check_permission(EmployeeRead)` + `get_tenant_id` 按 tenant 过滤 | **保持用户 token 正确**（改 service token 反而越权） |
 | 13 | search.rs:422 | workflow `list_instances` | ⚠️ **无 Claims 过滤**，直接全量查 `core_workflow_instances`（unified-core flow/instance.rs:42） | 转发用户 token 仅作认证，普通用户可见全量实例——**下游接口设计问题**，标记下游治理（P2） |
-| 14 | search.rs:463 | mes `list_production_orders` | 🔍 需确认（production_order.rs），推断同 workflow | 待下游确认后定 |
+| 14 | search.rs:463 | mes `list_production_orders` | ✅ 已确认有 `check_permission(ProductionOrderRead)`；production_orders 为 mes schema 单组织表（无 tenant_id，有 organization_id），权限隔离成立 | 无越权，无需改动 |
 
-**结论**：C 类 hrm 保持用户 token 正确；workflow/mes 的问题在下游接口缺用户维度过滤（而非 portal token 策略），应作为下游治理项补过滤。
+**结论**：C 类 hrm 保持用户 token 正确；workflow 缺用户维度过滤（已修复，见 2026-09-01 list_instances 补过滤）；mes 有 check_permission 权限隔离成立（单组织表无 tenant 维度，无越权）。
 
 ### D 类：服务身份（已正确，保持）—— 1 处
 
@@ -84,7 +84,7 @@
 
 1. **A 类 7 处用户维度转发正确**——保持，无改动。
 2. **B 类 4 处全局搜索源（erp/crm/bi/doc）指向不存在的接口**——永远 404 空结果。**token 策略讨论不成立**——先解决接口存在性。
-3. **C 类 3 处**：hrm 有 EmployeeRead + tenant 过滤（用户 token 正确）；workflow/mes 的 `list_*` 接口**缺用户维度过滤**（下游设计问题），转发用户 token 仅作认证，存在"普通用户可见全量"越权风险。
+3. **C 类 3 处**：hrm 有 EmployeeRead + tenant 过滤（用户 token 正确）；workflow `list_instances` 缺用户维度过滤（已修复：2026-09-01 补 initiator/assignee/审批参与过滤）；mes `list_production_orders` 有 check_permission(ProductionOrderRead) + 单组织表（无 tenant_id），权限隔离成立——**均无遗留越权**。
 4. **不推荐任何一处改 service token**——hrm 改 service token 会越权（绕过 tenant 过滤）；workflow/mes 改 service token 仍全量（问题在下游）；B 类接口不存在（无从谈起）。
 5. **工程改进（已落地）**：B 类 4 处统一 `send_global_search` helper + 401/HTTP/网络错误降级日志（上一轮提交 e863c0413）。
 
@@ -94,6 +94,6 @@
 |---|---|---|
 | P0 | **决策 portal 全局搜索 4 个无效源**：移除（收敛到 notifications/hrm/workflow/mes 4 个真实源）或标记"未接入"（保留占位等实现） | portal + 产品 |
 | P1 | **workflow `list_instances` 补用户维度过滤**（按 claims 过滤用户可见/相关实例），消除越权风险 | unified-core flow |
-| P1 | **mes `list_production_orders` 确认权限过滤**，无则补 | svc/mes |
+| P1 | ~~mes `list_production_orders` 确认权限过滤~~ **已完成**：有 check_permission(ProductionOrderRead) + 单组织表无 tenant 维度，无越权；workflow `list_instances` 已补用户维度过滤 | svc/mes（✅）/ svc/unified-core（✅） |
 | P2 | C 类 3 处按下游过滤就位后，复核 token 策略（hrm 已正确） | 复核 |
 | P2 | 搜索降级指标（per-source 401 计数）接入 ServiceCallMonitor 告警 | shared-auth + portal |
