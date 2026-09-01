@@ -254,6 +254,33 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    // 询价单表（event_handlers 写入，收敛自 plugin_srm_inquiries）
+    (
+        "inquiries",
+        &[
+            ("inquiry_no", "VARCHAR(50) NOT NULL"),
+            ("title", "VARCHAR(200)"),
+            ("description", "TEXT"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'draft'"),
+            ("creator", "UUID"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 供应商绩效表（event_handlers 写入，收敛自 plugin_srm_supplier_performance）
+    (
+        "supplier_performance",
+        &[
+            ("supplier_id", "UUID"),
+            ("order_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("total_amount", "NUMERIC(15,2)"),
+            ("last_order_date", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
     // SCM→SRM 供应商快照表 - 替代跨 Schema 直读 plugin_scm.suppliers
     (
         "scm_supplier_snapshots",
@@ -312,8 +339,8 @@ mod tests {
     }
 
     #[test]
-    fn test_table_defs_has_14_tables() {
-        assert_eq!(TABLE_DEFS.len(), 14, "SRM should define 14 tables");
+    fn test_table_defs_has_16_tables() {
+        assert_eq!(TABLE_DEFS.len(), 16, "SRM should define 16 tables");
     }
 
     #[test]

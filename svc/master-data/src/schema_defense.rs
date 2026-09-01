@@ -10,7 +10,7 @@
 
 use sqlx::PgPool;
 
-pub const SERVICE_SCHEMA: &str = "public";
+pub const SERVICE_SCHEMA: &str = "master_data";
 pub const SERVICE_TAG: &str = "master-data";
 
 /// master-data 4 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。

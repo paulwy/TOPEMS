@@ -13,7 +13,7 @@
 use sqlx::PgPool;
 
 /// Schema where all communication-service tables live.
-const SERVICE_SCHEMA: &str = "public";
+const SERVICE_SCHEMA: &str = "communication";
 
 /// Tag used for logging / defense diagnostics.
 const SERVICE_TAG: &str = "communication";
@@ -53,43 +53,6 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_by", "UUID"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
             ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    // 3. core_chat_rooms
-    (
-        "core_chat_rooms",
-        &[
-            ("name", "VARCHAR(128)"),
-            ("room_type", "VARCHAR(32) DEFAULT 'private'"),
-            ("creator_id", "UUID NOT NULL"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    // 4. core_chat_members (composite PK: room_id, user_id — no id column)
-    (
-        "core_chat_members",
-        &[
-            ("room_id", "UUID NOT NULL"),
-            ("user_id", "UUID NOT NULL"),
-            ("role", "VARCHAR(32) DEFAULT 'member'"),
-            ("joined_at", "TIMESTAMP DEFAULT NOW()"),
-        ],
-    ),
-    // 5. core_chat_messages
-    (
-        "core_chat_messages",
-        &[
-            ("room_id", "UUID NOT NULL"),
-            ("sender_id", "UUID NOT NULL"),
-            ("sender_name", "VARCHAR(128)"),
-            ("message_type", "VARCHAR(32) DEFAULT 'text'"),
-            ("content", "TEXT NOT NULL"),
-            ("file_url", "VARCHAR(512)"),
-            ("is_recalled", "BOOLEAN DEFAULT FALSE"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
             ("deleted_at", "TIMESTAMP"),
         ],
     ),

@@ -38,6 +38,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/ehs",
         legacy_prefixes: &["/api/v1/ehs"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -53,8 +54,10 @@ async fn main() -> anyhow::Result<()> {
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "ehs-service", &["workflow:read"]))
+        .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let hazard_cache = Arc::new(InMemoryCache::<serde_json::Value>::new(
@@ -91,6 +94,9 @@ async fn main() -> anyhow::Result<()> {
             "/api/plugins/health",
             get(modules::ehs_plugin::plugin_health_check),
         )
+        // 服务间内部集成端点（仅内网可达）：挂载于 public 避免被 api_prefix nest 与鉴权链路
+        // 覆盖——不经过 auth_middleware / require_permission；路径保持 /api/internal/ 原样
+        .merge(modules::integration::integration_routes())
         .with_state(api_state.clone());
 
     // Protected routes（先 merge 业务路由，然后 tenant_middleware → build_application 再加 auth/rls/rate_limit）

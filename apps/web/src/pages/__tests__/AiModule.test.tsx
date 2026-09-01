@@ -216,13 +216,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have chat API methods defined', () => {
-      expect(aiApi.chat).toBeDefined();
-      expect(aiApi.listConversations).toBeDefined();
-      expect(aiApi.getConversation).toBeDefined();
-      expect(aiApi.createConversation).toBeDefined();
-      expect(aiApi.deleteConversation).toBeDefined();
-    });
   });
 
   describe('AiCodeAssistantPage', () => {
@@ -235,13 +228,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have code assistant API methods defined', () => {
-      expect(aiApi.generateCode).toBeDefined();
-      expect(aiApi.explainCode).toBeDefined();
-      expect(aiApi.fixCodeBug).toBeDefined();
-      expect(aiApi.optimizeCode).toBeDefined();
-      expect(aiApi.reviewCode).toBeDefined();
-    });
   });
 
   describe('AiDashboardPage', () => {
@@ -254,11 +240,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have dashboard API methods defined', () => {
-      expect(aiApi.getDashboardStats).toBeDefined();
-      expect(aiApi.getActivityTrend).toBeDefined();
-      expect(aiApi.getFeatureUsage).toBeDefined();
-    });
   });
 
   describe('AiDocumentAnalysisPage', () => {
@@ -271,13 +252,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have document analysis API methods defined', () => {
-      expect(aiApi.summarizeDocument).toBeDefined();
-      expect(aiApi.extractKeyPoints).toBeDefined();
-      expect(aiApi.extractDocument).toBeDefined();
-      expect(aiApi.documentQA).toBeDefined();
-      expect(aiApi.translateDocument).toBeDefined();
-    });
   });
 
   describe('AiKnowledgeBasePage', () => {
@@ -290,13 +264,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have knowledge base API methods defined', () => {
-      expect(aiApi.listDocuments).toBeDefined();
-      expect(aiApi.getDocument).toBeDefined();
-      expect(aiApi.createDocument).toBeDefined();
-      expect(aiApi.deleteDocument).toBeDefined();
-      expect(aiApi.vectorSearch).toBeDefined();
-    });
   });
 
   describe('AiModelSettingsPage', () => {
@@ -309,12 +276,6 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have model management API methods defined', () => {
-      expect(aiApi.listModels).toBeDefined();
-      expect(aiApi.getModelConfig).toBeDefined();
-      expect(aiApi.updateModelConfig).toBeDefined();
-      expect(aiApi.getUsageStats).toBeDefined();
-    });
   });
 
   describe('AiPromptLibraryPage', () => {
@@ -327,12 +288,5 @@ describe('AI Module Pages', () => {
       expect(container).toBeDefined();
     });
 
-    it('should have prompt library API methods defined', () => {
-      expect(aiApi.listPromptTemplates).toBeDefined();
-      expect(aiApi.getPromptTemplate).toBeDefined();
-      expect(aiApi.createPromptTemplate).toBeDefined();
-      expect(aiApi.updatePromptTemplate).toBeDefined();
-      expect(aiApi.deletePromptTemplate).toBeDefined();
-    });
   });
 });

@@ -7,7 +7,7 @@
 use sqlx::PgPool;
 use topems_shared_db::schema::run_schema_defense;
 
-pub const SERVICE_SCHEMA: &str = "public";
+pub const SERVICE_SCHEMA: &str = "ticket";
 pub const SERVICE_TAG: &str = "ticket";
 
 /// ticket 5 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。
@@ -94,6 +94,34 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("escalated_to", "UUID"),
             ("reason", "TEXT"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "ticket_automation_rules",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("name", "TEXT NOT NULL"),
+            ("description", "TEXT"),
+            ("condition_field", "TEXT NOT NULL"),
+            ("condition_value", "TEXT NOT NULL"),
+            ("action_type", "TEXT NOT NULL"),
+            ("action_value", "TEXT NOT NULL"),
+            ("priority", "INTEGER NOT NULL DEFAULT 100"),
+            ("enabled", "BOOLEAN NOT NULL DEFAULT true"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "ticket_knowledge_articles",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("title", "TEXT NOT NULL"),
+            ("content", "TEXT NOT NULL"),
+            ("category", "TEXT"),
+            ("keywords", "TEXT[] NOT NULL DEFAULT '{}'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
 ];

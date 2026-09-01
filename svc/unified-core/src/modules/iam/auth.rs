@@ -169,7 +169,18 @@ pub async fn login(
     }
 
     let user = match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, full_name, is_active, is_superuser, roles, permissions, created_at FROM iam.users WHERE username = $1 OR email = $1",
+        r#"
+        SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
+          (u.status = 'active') AS is_active, u.is_superuser,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
+                    JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
+                    JOIN core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+          (u.created_at AT TIME ZONE 'UTC') AS created_at
+        FROM core_users u
+        WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
+        "#,
     )
     .bind(username)
     .fetch_optional(&state.pool)
@@ -477,7 +488,7 @@ pub async fn register(
     }
 
     // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE username = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE username = $1")
         .bind(username)
         .fetch_one(&state.pool)
         .await
@@ -499,7 +510,7 @@ pub async fn register(
     }
 
     // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE email = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE email = $1")
         .bind(email)
         .fetch_one(&state.pool)
         .await
@@ -532,22 +543,23 @@ pub async fn register(
         }
     };
 
-    // 创建用户
+    // 创建用户：统一写 core_users（唯一权威源，auth/权限/租户全走此表）
     let user_id = Uuid::new_v4();
-    match sqlx::query(
+    let write_core = sqlx::query(
         r#"
-        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser)
-        VALUES ($1, $2, $3, $4, $5, true, false)
+        INSERT INTO core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
+        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
+        ON CONFLICT (username) DO NOTHING
         "#,
     )
     .bind(user_id)
-    .bind(username)
-    .bind(email)
+    .bind(&username)
+    .bind(&email)
     .bind(&password_hash)
     .bind(&full_name)
     .execute(&state.pool)
-    .await
-    {
+    .await;
+    match write_core {
         Ok(_) => {
             tracing::info!("用户注册成功: {}", username);
             Json(serde_json::json!({
@@ -589,9 +601,16 @@ pub async fn refresh_token(
     let refresh_token_hash = hash_token(refresh_token);
 
     let row = match sqlx::query(
-        "SELECT rt.user_id, u.username, u.is_superuser, u.email, u.is_active, u.roles, u.permissions, rt.id as refresh_token_id
+        "SELECT rt.user_id, u.username, u.is_superuser, u.email,
+           (u.status = 'active') AS is_active,
+           COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
+                     JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
+                     JOIN core_role_permissions rp ON rp.role_id = ur.role_id
+                     JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+           rt.id as refresh_token_id
          FROM iam.refresh_tokens rt
-         JOIN iam.users u ON rt.user_id = u.id
+         JOIN core_users u ON rt.user_id = u.id
          WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
     )
     .bind(&refresh_token_hash)
@@ -920,7 +939,18 @@ pub async fn forgot_password(
 
     // 查找用户
     let user = match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, email, password_hash, full_name, is_active, is_superuser, roles, permissions, created_at FROM iam.users WHERE email = $1 AND is_active = true",
+        r#"
+        SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
+          (u.status = 'active') AS is_active, u.is_superuser,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM core_user_roles ur
+                    JOIN core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM core_user_roles ur
+                    JOIN core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+          (u.created_at AT TIME ZONE 'UTC') AS created_at
+        FROM core_users u
+        WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
+        "#,
     )
     .bind(email)
     .fetch_optional(&state.pool)
@@ -1105,7 +1135,7 @@ pub async fn reset_password(
     };
 
     // 更新密码
-    match sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+    match sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
         .bind(&password_hash)
         .bind(user_id)
         .execute(&mut *tx)

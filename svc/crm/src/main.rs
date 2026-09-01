@@ -60,9 +60,12 @@ async fn main() -> Result<()> {
     tracing::info!("🔐 字段加密服务初始化成功");
 
     // 初始化 ERP / WMS 服务客户端（失败不阻塞启动，相关联动功能会优雅降级）
-    let erp_client = match TypedServiceClient::<ErpApi>::from_env_default() {
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let erp_client = match TypedServiceClient::<ErpApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "crm-service", &["erp:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("🔗 ERP 服务客户端初始化成功");
+            tracing::info!("🔗 ERP 服务客户端初始化成功（service token）");
             Some(Arc::new(client))
         }
         Err(e) => {
@@ -70,9 +73,11 @@ async fn main() -> Result<()> {
             None
         }
     };
-    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default() {
+    let wms_client = match TypedServiceClient::<WmsApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "crm-service", &["wms:admin"]))
+    {
         Ok(client) => {
-            tracing::info!("🔗 WMS 服务客户端初始化成功");
+            tracing::info!("🔗 WMS 服务客户端初始化成功（service token）");
             Some(Arc::new(client))
         }
         Err(e) => {
@@ -83,8 +88,10 @@ async fn main() -> Result<()> {
 
     let workflow_url =
         env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "crm-service", &["workflow:read"]))
+        .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let api_state = ApiState {

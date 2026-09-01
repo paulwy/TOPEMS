@@ -1,4 +1,5 @@
 use rust_decimal::Decimal;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -21,9 +22,10 @@ impl FinanceService {
             submitted_by
         );
 
-        let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
-        )
+        let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(payment_id)
         .fetch_one(&self.db_pool)
@@ -93,8 +95,8 @@ impl FinanceService {
                     );
 
                     sqlx::query(
-                        "INSERT INTO core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
-                         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                        only_own_schema_query!("finance", "INSERT INTO core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7)"),
                     )
                     .bind(tenant_id)
                     .bind(payment_id)
@@ -163,12 +165,13 @@ impl FinanceService {
         tenant_id: Uuid,
         amount: Decimal,
     ) -> Result<Option<Uuid>, TopemsError> {
-        let workflow_id: Option<Uuid> = sqlx::query_scalar(
+        let workflow_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
             "SELECT workflow_id FROM core_finance_payment_approval_config
              WHERE tenant_id = $1 AND is_active = true AND amount_threshold <= $2
              AND (max_amount IS NULL OR max_amount > $2)
-             ORDER BY priority DESC, amount_threshold DESC LIMIT 1",
-        )
+             ORDER BY priority DESC, amount_threshold DESC LIMIT 1"
+        ))
         .bind(tenant_id)
         .bind(amount)
         .fetch_optional(&self.db_pool)
@@ -190,9 +193,10 @@ impl FinanceService {
             approved_by
         );
 
-        let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
-        )
+        let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(payment_id)
         .fetch_one(&self.db_pool)
@@ -223,7 +227,7 @@ impl FinanceService {
         );
 
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2",
+            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -278,7 +282,7 @@ impl FinanceService {
 
                     let instance_status = instance.status;
                     sqlx::query(
-                        "UPDATE core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4",
+                        only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(approved_by)
                     .bind(instance_status.clone())
@@ -331,7 +335,7 @@ impl FinanceService {
             );
 
             sqlx::query(
-                "UPDATE core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3",
+                only_own_schema_query!("finance", "UPDATE core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
             )
             .bind(approved_by)
             .bind(tenant_id)
@@ -376,9 +380,10 @@ impl FinanceService {
             rejected_by
         );
 
-        let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
-        )
+        let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(payment_id)
         .fetch_one(&self.db_pool)
@@ -409,7 +414,7 @@ impl FinanceService {
         );
 
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2",
+            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -446,7 +451,7 @@ impl FinanceService {
 
                     let instance_status = instance.status;
                     sqlx::query(
-                        "UPDATE core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4",
+                        only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(rejected_by)
                     .bind(instance_status.clone())
@@ -508,9 +513,10 @@ impl FinanceService {
         req: ExecutePaymentRequest,
         executed_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
-        let payment = sqlx::query_as::<_, Payment>(
-            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
-        )
+        let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(payment_id)
         .fetch_one(&self.db_pool)
@@ -524,7 +530,7 @@ impl FinanceService {
         }
 
         sqlx::query(
-            "UPDATE core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5",
+            only_own_schema_query!("finance", "UPDATE core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5"),
         )
         .bind(req.actual_payment_date)
         .bind(&req.bank_transaction_no)
@@ -544,9 +550,10 @@ impl FinanceService {
         write_off_amount: Decimal,
         write_off_by: &str,
     ) -> Result<PaymentResponse, TopemsError> {
-        let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(
-            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2",
-        )
+        let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(only_own_schema_query!(
+            "finance",
+            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2"
+        ))
         .bind(tenant_id)
         .bind(item_id)
         .fetch_one(&self.db_pool)
@@ -561,7 +568,7 @@ impl FinanceService {
         let payment_id = item.payment_id;
 
         sqlx::query(
-            "UPDATE core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5",
+            only_own_schema_query!("finance", "UPDATE core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5"),
         )
         .bind(write_off_amount)
         .bind(write_off_by)

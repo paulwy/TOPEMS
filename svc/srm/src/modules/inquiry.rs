@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -59,7 +60,7 @@ async fn list_inquiries(
         r#"
         SELECT id, inquiry_no, title, description, category, urgency, status, published_at, deadline,
                creator, department, quotation_count, items, remarks, created_at, updated_at
-        FROM plugin_srm.inquiries
+        FROM inquiries
         WHERE ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -81,7 +82,7 @@ async fn list_inquiries(
         Ok(inquiries) => {
             let count_query = format!(
                 r#"
-                SELECT COUNT(*) FROM plugin_srm.inquiries
+                SELECT COUNT(*) FROM inquiries
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
@@ -126,7 +127,7 @@ async fn create_inquiry(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.inquiries WHERE deleted_at IS NULL AND inquiry_no = $1",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM inquiries WHERE deleted_at IS NULL AND inquiry_no = $1"),
     )
     .bind(&req.inquiry_no)
     .fetch_one(&state.db)
@@ -147,11 +148,11 @@ async fn create_inquiry(
     });
 
     let result = sqlx::query_as::<_, Inquiry>(
-        r#"
-        INSERT INTO plugin_srm.inquiries (id, inquiry_no, title, description, category, urgency, status, deadline, items, remarks, created_at, updated_at)
+        only_own_schema_query!("srm", r#"
+        INSERT INTO inquiries (id, inquiry_no, title, description, category, urgency, status, deadline, items, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.inquiry_no)
@@ -182,11 +183,11 @@ async fn get_inquiry(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Inquiry>> {
     let result = sqlx::query_as::<_, Inquiry>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, inquiry_no, title, description, category, urgency, status, published_at, deadline,
                creator, department, quotation_count, items, remarks, created_at, updated_at
-        FROM plugin_srm.inquiries WHERE id = $1
-        "#,
+        FROM inquiries WHERE id = $1
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -216,8 +217,8 @@ async fn update_inquiry(
     });
 
     let result = sqlx::query_as::<_, Inquiry>(
-        r#"
-        UPDATE plugin_srm.inquiries SET
+        only_own_schema_query!("srm", r#"
+        UPDATE inquiries SET
             title = COALESCE($2, title),
             description = COALESCE($3, description),
             category = COALESCE($4, category),
@@ -228,7 +229,7 @@ async fn update_inquiry(
             updated_at = $9
         WHERE id = $1
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.title)
@@ -255,7 +256,7 @@ async fn delete_inquiry(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("UPDATE plugin_srm.inquiries SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE inquiries SET deleted_at = NOW() WHERE id = $1"))
         .bind(id)
         .execute(&state.db)
         .await;
@@ -277,14 +278,14 @@ async fn publish_inquiry(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Inquiry>(
-        r#"
-        UPDATE plugin_srm.inquiries SET
+        only_own_schema_query!("srm", r#"
+        UPDATE inquiries SET
             status = 'published',
             published_at = $2,
             updated_at = $2
         WHERE id = $1 AND status = 'draft'
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -308,13 +309,13 @@ async fn close_inquiry(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Inquiry>(
-        r#"
-        UPDATE plugin_srm.inquiries SET
+        only_own_schema_query!("srm", r#"
+        UPDATE inquiries SET
             status = 'closed',
             updated_at = $2
         WHERE id = $1 AND status IN ('published', 'draft')
         RETURNING id, inquiry_no, title, description, category, urgency, status, published_at, deadline, creator, department, quotation_count, items, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)

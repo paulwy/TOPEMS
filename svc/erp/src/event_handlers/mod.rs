@@ -20,7 +20,8 @@
 use sqlx::{PgPool, Row};
 use topems_shared_event::event::{
     EmployeeOnboardedPayload, Event, EventResult, EventSubscriber, EventType,
-    InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction,
+    MasterDataDomain, MasterDataEvent,
     OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
     PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReconciliationApprovedPayload,
     ReconciliationCreatedPayload, ReconciliationUpdatedPayload, ReturnCompletedPayload,
@@ -66,6 +67,7 @@ impl ErpEventHandlers {
         let h18 = self.clone();
         let h19 = self.clone();
         let h20 = self.clone();
+        let h21 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -228,6 +230,14 @@ impl ErpEventHandlers {
                 Box::pin(async move {
                     if let Err(e) = h.handle_reconciliation_updated(event).await {
                         tracing::error!("[erp] handle_reconciliation_updated 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::HrmPayrollVoucherRequested], move |event| {
+                let h = h21.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_hrm_payroll_voucher_requested(event).await {
+                        tracing::error!("[erp] handle_hrm_payroll_voucher_requested 失败: {}", e);
                     }
                 })
             }))
@@ -1922,6 +1932,81 @@ impl ErpEventHandlers {
         .execute(&self.db)
         .await
         .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
+
+        Ok(())
+    }
+
+    /// HrmPayrollVoucherRequested → 生成财务凭证
+    /// （hrm 发工资核算完成事件 → erp 在本 schema 内落库，不再跨 schema 直写）
+    async fn handle_hrm_payroll_voucher_requested(&self, event: Event) -> HandlerResult {
+        let payload: HrmPayrollVoucherRequestedPayload =
+            serde_json::from_value(event.payload.clone())
+                .map_err(|e| format!("解析 HrmPayrollVoucherRequested payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[erp] HrmPayrollVoucherRequested 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
+            payload.voucher_number,
+            payload.payroll_run_id,
+            payload.entries.len(),
+            event.trace_id
+        );
+
+        let voucher_id = uuid::Uuid::new_v4();
+        let now = chrono::Utc::now();
+
+        // 创建凭证主记录（status=draft，source_system=HRM，source_id=payroll_run_id）
+        sqlx::query(
+            r#"INSERT INTO erp.financial_vouchers
+               (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status,
+                total_debit, total_credit, source_system, source_id, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)"#,
+        )
+        .bind(voucher_id)
+        .bind(&payload.voucher_number)
+        .bind(payload.voucher_date)
+        .bind(&payload.period)
+        .bind(&payload.summary)
+        .bind(payload.maker_id)
+        .bind(&payload.maker_name)
+        .bind(payload.total_gross)
+        .bind(payload.total_gross)
+        .bind(payload.payroll_run_id.to_string())
+        .bind(now)
+        .bind(now)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("创建 erp.financial_vouchers 失败: {}", e))?;
+
+        // 创建凭证分录（借贷平衡由 hrm 侧纯函数保证）
+        for entry in &payload.entries {
+            sqlx::query(
+                r#"INSERT INTO erp.voucher_items
+                   (id, voucher_id, line_number, subject_code, subject_name, summary,
+                    debit_amount, credit_amount, department_id, created_at, updated_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#,
+            )
+            .bind(uuid::Uuid::new_v4())
+            .bind(voucher_id)
+            .bind(entry.line_number)
+            .bind(&entry.subject_code)
+            .bind(&entry.subject_name)
+            .bind(&payload.summary)
+            .bind(entry.debit_amount)
+            .bind(entry.credit_amount)
+            .bind(payload.department_id)
+            .bind(now)
+            .bind(now)
+            .execute(&self.db)
+            .await
+            .map_err(|e| format!("创建 erp.voucher_items 失败: {}", e))?;
+        }
+
+        tracing::info!(
+            "[erp] HrmPayrollVoucherRequested 完成 - voucher_id={}, voucher_number={}, entries={}",
+            voucher_id,
+            payload.voucher_number,
+            payload.entries.len()
+        );
 
         Ok(())
     }

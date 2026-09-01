@@ -8,6 +8,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::purchase_order::{
@@ -74,16 +75,16 @@ async fn list_purchase_orders(
         .and_then(|s| Uuid::parse_str(&s).ok());
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.purchase_orders
+        FROM purchase_orders
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR po_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR supplier_id = $4)
         ORDER BY order_date DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -96,15 +97,16 @@ async fn list_purchase_orders(
 
     match result {
         Ok(orders) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "srm",
                 r#"
-                SELECT COUNT(*) FROM plugin_srm.purchase_orders
+                SELECT COUNT(*) FROM purchase_orders
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR po_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
-                "#,
-            )
+                "#
+            ))
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -162,7 +164,7 @@ async fn create_purchase_order(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(supplier_id)
     .bind(tenant_id)
@@ -177,7 +179,7 @@ async fn create_purchase_order(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE deleted_at IS NULL AND po_no = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE deleted_at IS NULL AND po_no = $1 AND tenant_id = $2"),
     )
     .bind(&req.po_no)
     .bind(tenant_id)
@@ -211,11 +213,11 @@ async fn create_purchase_order(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
-        INSERT INTO plugin_srm.purchase_orders (id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at)
+        only_own_schema_query!("srm", r#"
+        INSERT INTO purchase_orders (id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -257,10 +259,10 @@ async fn get_purchase_order(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.purchase_orders WHERE id = $1 AND tenant_id = $2
-        "#,
+        FROM purchase_orders WHERE id = $1 AND tenant_id = $2
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -292,7 +294,7 @@ async fn update_purchase_order(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM plugin_srm.purchase_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM purchase_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -317,7 +319,7 @@ async fn update_purchase_order(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'",
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
         )
         .bind(supplier_uuid_val)
         .bind(tenant_id)
@@ -355,12 +357,12 @@ async fn update_purchase_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
-        UPDATE plugin_srm.purchase_orders SET
+        only_own_schema_query!("srm", r#"
+        UPDATE purchase_orders SET
             po_no = $2, supplier_id = $3, expected_date = $4, actual_date = $5, total_amount = $6, currency = $7, status = $8, remarks = $9, updated_at = $10
         WHERE id = $1 AND tenant_id = $11
         RETURNING id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(po_no)
@@ -398,9 +400,10 @@ async fn delete_purchase_order(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query(
-        "UPDATE plugin_srm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE purchase_orders SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+    ))
     .bind(id)
     .bind(tenant_id)
     .execute(&state.db)

@@ -65,7 +65,8 @@ impl PmRealModule {
         }
 
         // 3. 工作流服务客户端（构造失败则 pm 模块降级跳过）
-        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default() {
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "pm-module", &["workflow:read"])) {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!("⚠️ 工作流服务客户端初始化失败，PM 模块本次不注册: {e}");

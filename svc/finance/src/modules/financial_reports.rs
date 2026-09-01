@@ -8,6 +8,7 @@ use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -44,8 +45,8 @@ fn period_string((y, m): (i32, i32)) -> String {
 
 async fn period_net_total(pool: &sqlx::PgPool, tenant_id: Uuid, period: &str) -> (f64, f64, f64) {
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
-        "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
-         FROM core_finance_ledger WHERE tenant_id = $1 AND period = $2",
+        only_own_schema_query!("finance", "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
+         FROM finance.core_finance_ledger WHERE tenant_id = $1 AND period = $2"),
     )
     .bind(tenant_id)
     .bind(period)
@@ -93,12 +94,13 @@ pub async fn get_report_item_details(
         Some(c) if !c.is_empty() => c,
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
     };
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         "SELECT account_code, account_name, period, debit, credit, balance
-         FROM core_finance_ledger
+         FROM finance.core_finance_ledger
          WHERE tenant_id = $1 AND account_code = $2 AND ($3::text IS NULL OR period = $3)
-         ORDER BY voucher_date, id",
-    )
+         ORDER BY voucher_date, id"
+    ))
     .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
@@ -163,14 +165,15 @@ pub async fn get_report_item_vouchers(
     let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "finance",
         "SELECT l.id, l.account_code, l.account_name, l.voucher_id, l.voucher_no, l.voucher_date,
                 l.period, l.description, l.debit, l.credit, l.balance
-         FROM core_finance_ledger l
+         FROM finance.core_finance_ledger l
          WHERE l.tenant_id = $1 AND l.account_code = $2 AND ($3::text IS NULL OR l.period = $3)
          ORDER BY l.voucher_date DESC, l.id DESC
-         LIMIT $4 OFFSET $5",
-    )
+         LIMIT $4 OFFSET $5"
+    ))
     .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
@@ -179,10 +182,11 @@ pub async fn get_report_item_vouchers(
     .fetch_all(&state.pool)
     .await;
 
-    let total: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_finance_ledger
-         WHERE tenant_id = $1 AND account_code = $2 AND ($3::text IS NULL OR period = $3)",
-    )
+    let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_ledger
+         WHERE tenant_id = $1 AND account_code = $2 AND ($3::text IS NULL OR period = $3)"
+    ))
     .bind(tenant_id)
     .bind(account_code)
     .bind(params.period.as_deref())
@@ -1381,13 +1385,13 @@ async fn upsert_report(
     generated_by: &str,
 ) -> Result<serde_json::Value, sqlx::Error> {
     let row = sqlx::query(
-        r#"
+        only_own_schema_query!("finance", r#"
         INSERT INTO financial_reports (report_type, org_id, tenant_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
         VALUES ($1, $2, $2, $3, $4, 'draft', 'draft', $5, $6, NOW())
         ON CONFLICT (report_type, org_id, period, currency_code)
         DO UPDATE SET data = EXCLUDED.data, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
         RETURNING id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at
-        "#,
+        "#),
     )
     .bind(report_type)
     .bind(tenant_id)
@@ -1419,9 +1423,9 @@ async fn fetch_report(
     currency_code: &str,
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let row = sqlx::query(
-        r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
-           WHERE tenant_id = $1 AND report_type = $2 AND period = $3 AND currency_code = $4"#,
+           WHERE tenant_id = $1 AND report_type = $2 AND period = $3 AND currency_code = $4"#),
     )
     .bind(tenant_id)
     .bind(report_type)
@@ -1458,12 +1462,12 @@ async fn fetch_history(
 ) -> Result<(Vec<serde_json::Value>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
     let rows = sqlx::query(
-        r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
            WHERE tenant_id = $1 AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)
            ORDER BY period DESC
-           LIMIT $6 OFFSET $7"#,
+           LIMIT $6 OFFSET $7"#),
     )
     .bind(tenant_id)
     .bind(report_type)
@@ -1475,11 +1479,12 @@ async fn fetch_history(
     .fetch_all(pool)
     .await?;
 
-    let total: i64 = sqlx::query_scalar(
+    let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
         r#"SELECT COUNT(*) FROM financial_reports
            WHERE tenant_id = $1 AND report_type = $2 AND period >= $3 AND period <= $4
-             AND ($5::text IS NULL OR currency_code = $5)"#,
-    )
+             AND ($5::text IS NULL OR currency_code = $5)"#
+    ))
     .bind(tenant_id)
     .bind(report_type)
     .bind(start_period)
@@ -1920,7 +1925,7 @@ pub async fn submit_report_for_approval(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
     };
-    match sqlx::query("UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1")
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&state.pool)
         .await
@@ -1955,7 +1960,7 @@ pub async fn approve_report(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
     };
-    match sqlx::query("UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1")
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.comment)
         .bind(&claims.username)
@@ -1992,7 +1997,7 @@ pub async fn reject_report(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
     };
-    match sqlx::query("UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1")
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.reason)
         .execute(&state.pool)
@@ -2031,7 +2036,7 @@ pub async fn lock_report(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
     };
-    match sqlx::query("UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1")
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&state.pool)
         .await
@@ -2066,7 +2071,7 @@ pub async fn unlock_report(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
     };
-    match sqlx::query("UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1")
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&state.pool)
         .await
@@ -2140,6 +2145,7 @@ pub async fn export_report(
 /// 业务概览报表：收入、支出、利润、凭证数等核心指标
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/api/finance/reports/business-overview",
     params(("period" = String, Query, description = "会计期间 YYYY-MM")),
     responses((status = 200, description = "业务概览")),
@@ -2154,16 +2160,17 @@ pub async fn get_business_overview(
         now.format("%Y-%m").to_string()
     });
 
-    let voucher_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND deleted_at IS NULL",
-    )
+    let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM core_finance_vouchers WHERE period = $1 AND deleted_at IS NULL"
+    ))
     .bind(&period)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let total_debit: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(total_debit), 0) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+        only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2171,20 +2178,23 @@ pub async fn get_business_overview(
     .unwrap_or(0.0);
 
     let subject_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "voucher_count": voucher_count,
-        "total_debit": total_debit,
-        "total_credit": total_debit,
-        "active_subjects": subject_count,
-        "net_profit": 0.0,
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "voucher_count": voucher_count,
+            "total_debit": total_debit,
+            "total_credit": total_debit,
+            "active_subjects": subject_count,
+            "net_profit": 0.0,
+        }),
+        "查询成功",
+    ))
 }
 
 /// 项目汇总报表：按项目维度汇总凭证金额
@@ -2194,20 +2204,22 @@ pub async fn get_project_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(Option<Uuid>, Option<String>, f64, f64)> = sqlx::query_as(
-        r#"SELECT vi.project_id, NULL::text as project_name,
+    let rows: Vec<(Option<Uuid>, Option<String>, f64, f64)> =
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"SELECT vi.project_id, NULL::text as project_name,
                   COALESCE(SUM(vi.debit), 0) as total_debit,
                   COALESCE(SUM(vi.credit), 0) as total_credit
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
            WHERE v.period = $1 AND v.deleted_at IS NULL AND vi.project_id IS NOT NULL
            GROUP BY vi.project_id
-           ORDER BY total_debit DESC"#,
-    )
-    .bind(&period)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+           ORDER BY total_debit DESC"#
+        ))
+        .bind(&period)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default();
 
     let projects: Vec<serde_json::Value> = rows
         .into_iter()
@@ -2221,26 +2233,30 @@ pub async fn get_project_summary(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "projects": projects,
-        "total": projects.len(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "projects": projects,
+            "total": projects.len(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 月度趋势报表：最近 12 个月的凭证金额趋势
 pub async fn get_monthly_trend(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let rows: Vec<(String, f64, i64)> = sqlx::query_as(
+    let rows: Vec<(String, f64, i64)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT period,
                   COALESCE(SUM(total_debit), 0) as total_amount,
                   COUNT(*) as voucher_count
-           FROM plugin_finance.financial_vouchers
+           FROM core_finance_vouchers
            WHERE deleted_at IS NULL AND period >= to_char(NOW() - INTERVAL '12 months', 'YYYY-MM')
            GROUP BY period
-           ORDER BY period ASC"#,
-    )
+           ORDER BY period ASC"#
+    ))
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -2256,10 +2272,13 @@ pub async fn get_monthly_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "trend": trend,
-        "months": trend.len(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "trend": trend,
+            "months": trend.len(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 部门汇总报表：按部门维度汇总凭证金额
@@ -2269,16 +2288,17 @@ pub async fn get_department_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(Option<Uuid>, f64, f64)> = sqlx::query_as(
+    let rows: Vec<(Option<Uuid>, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT vi.department_id,
                   COALESCE(SUM(vi.debit), 0) as total_debit,
                   COALESCE(SUM(vi.credit), 0) as total_credit
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
            WHERE v.period = $1 AND v.deleted_at IS NULL AND vi.department_id IS NOT NULL
            GROUP BY vi.department_id
-           ORDER BY total_debit DESC"#,
-    )
+           ORDER BY total_debit DESC"#
+    ))
     .bind(&period)
     .fetch_all(&state.pool)
     .await
@@ -2296,11 +2316,14 @@ pub async fn get_department_summary(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "departments": departments,
-        "total": departments.len(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "departments": departments,
+            "total": departments.len(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 账龄分析报表：应收/应付账款账龄分布
@@ -2311,7 +2334,8 @@ pub async fn get_aging_analysis(
     let _period = params.get("period").cloned().unwrap_or_default();
 
     // 简化版账龄分析：按凭证日期距今天数分组
-    let rows: Vec<(i32, f64)> = sqlx::query_as(
+    let rows: Vec<(i32, f64)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT
               CASE
                 WHEN (NOW()::date - v.voucher_date::date) <= 30 THEN 1
@@ -2321,11 +2345,11 @@ pub async fn get_aging_analysis(
                 ELSE 5
               END as aging_bucket,
               COALESCE(SUM(v.total_debit), 0) as amount
-           FROM plugin_finance.financial_vouchers v
+           FROM core_finance_vouchers v
            WHERE v.deleted_at IS NULL AND v.status != 'draft'
            GROUP BY aging_bucket
-           ORDER BY aging_bucket ASC"#,
-    )
+           ORDER BY aging_bucket ASC"#
+    ))
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -2342,10 +2366,13 @@ pub async fn get_aging_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "aging": aging,
-        "total_buckets": aging.len(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "aging": aging,
+            "total_buckets": aging.len(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 凭证统计报表：按状态/类型统计凭证数量和金额
@@ -2355,15 +2382,16 @@ pub async fn get_voucher_statistics(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(String, i64, f64)> = sqlx::query_as(
+    let rows: Vec<(String, i64, f64)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT status,
                   COUNT(*) as count,
                   COALESCE(SUM(total_debit), 0) as total_amount
-           FROM plugin_finance.financial_vouchers
+           FROM core_finance_vouchers
            WHERE ($1 = '' OR period = $1) AND deleted_at IS NULL
            GROUP BY status
-           ORDER BY count DESC"#,
-    )
+           ORDER BY count DESC"#
+    ))
     .bind(&period)
     .fetch_all(&state.pool)
     .await
@@ -2380,11 +2408,14 @@ pub async fn get_voucher_statistics(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "statistics": stats,
-        "total_vouchers": stats.iter().map(|s| s["count"].as_i64().unwrap_or(0)).sum::<i64>(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "statistics": stats,
+            "total_vouchers": stats.iter().map(|s| s["count"].as_i64().unwrap_or(0)).sum::<i64>(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 现金流分析报表：按现金类科目汇总现金流
@@ -2394,18 +2425,19 @@ pub async fn get_cash_flow_analysis(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(String, f64, f64)> = sqlx::query_as(
+    let rows: Vec<(String, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT vi.account_code,
                   COALESCE(SUM(vi.debit), 0) as inflow,
                   COALESCE(SUM(vi.credit), 0) as outflow
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
-           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND s.is_cash_flow = true AND s.deleted_at IS NULL
            GROUP BY vi.account_code
-           ORDER BY inflow DESC"#,
-    )
+           ORDER BY inflow DESC"#
+    ))
     .bind(&period)
     .fetch_all(&state.pool)
     .await
@@ -2423,12 +2455,15 @@ pub async fn get_cash_flow_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "cash_flows": cash_flows,
-        "total_inflow": cash_flows.iter().map(|c| c["inflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
-        "total_outflow": cash_flows.iter().map(|c| c["outflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "cash_flows": cash_flows,
+            "total_inflow": cash_flows.iter().map(|c| c["inflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+            "total_outflow": cash_flows.iter().map(|c| c["outflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 费用分析报表：按费用类科目汇总费用
@@ -2439,16 +2474,16 @@ pub async fn get_expense_analysis(
     let period = params.get("period").cloned().unwrap_or_default();
 
     let rows: Vec<(String, Option<String>, f64)> = sqlx::query_as(
-        r#"SELECT vi.account_code, vi.account_name,
+        only_own_schema_query!("finance", r#"SELECT vi.account_code, vi.account_name,
                   COALESCE(SUM(vi.debit), 0) as expense_amount
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
-           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%' OR s.category ILIKE '%成本%')
              AND s.deleted_at IS NULL
            GROUP BY vi.account_code, vi.account_name
-           ORDER BY expense_amount DESC"#,
+           ORDER BY expense_amount DESC"#),
     )
     .bind(&period)
     .fetch_all(&state.pool)
@@ -2466,11 +2501,14 @@ pub async fn get_expense_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "expenses": expenses,
-        "total_expense": expenses.iter().map(|e| e["expense_amount"].as_f64().unwrap_or(0.0)).sum::<f64>(),
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "expenses": expenses,
+            "total_expense": expenses.iter().map(|e| e["expense_amount"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+        }),
+        "查询成功",
+    ))
 }
 
 /// 利润分析报表：收入、成本、费用、利润
@@ -2481,42 +2519,44 @@ pub async fn get_profit_analysis(
     let period = params.get("period").cloned().unwrap_or_default();
 
     let total_revenue: f64 = sqlx::query_scalar(
-        r#"SELECT COALESCE(SUM(vi.credit), 0)
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
-           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+        only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%收入%' OR s.category ILIKE '%revenue%' OR s.category ILIKE '%收益%')
-             AND s.deleted_at IS NULL"#,
+             AND s.deleted_at IS NULL"#),
     )
     .bind(&period)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_cost: f64 = sqlx::query_scalar(
+    let total_cost: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
-           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%成本%' OR s.category ILIKE '%cost%')
-             AND s.deleted_at IS NULL"#,
-    )
+             AND s.deleted_at IS NULL"#
+    ))
     .bind(&period)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_expense: f64 = sqlx::query_scalar(
+    let total_expense: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
-           FROM plugin_finance.voucher_items vi
-           JOIN plugin_finance.financial_vouchers v ON v.id = vi.voucher_id
-           JOIN plugin_finance.accounting_subjects s ON s.code = vi.account_code
+           FROM core_finance_voucher_lines vi
+           JOIN core_finance_vouchers v ON v.id = vi.voucher_id
+           JOIN accounting_subjects s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%')
-             AND s.deleted_at IS NULL"#,
-    )
+             AND s.deleted_at IS NULL"#
+    ))
     .bind(&period)
     .fetch_one(&state.pool)
     .await
@@ -2525,16 +2565,19 @@ pub async fn get_profit_analysis(
     let gross_profit = total_revenue - total_cost;
     let net_profit = gross_profit - total_expense;
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "total_revenue": total_revenue,
-        "total_cost": total_cost,
-        "gross_profit": gross_profit,
-        "total_expense": total_expense,
-        "net_profit": net_profit,
-        "gross_margin": if total_revenue > 0.0 { gross_profit / total_revenue } else { 0.0 },
-        "net_margin": if total_revenue > 0.0 { net_profit / total_revenue } else { 0.0 },
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "total_revenue": total_revenue,
+            "total_cost": total_cost,
+            "gross_profit": gross_profit,
+            "total_expense": total_expense,
+            "net_profit": net_profit,
+            "gross_margin": if total_revenue > 0.0 { gross_profit / total_revenue } else { 0.0 },
+            "net_margin": if total_revenue > 0.0 { net_profit / total_revenue } else { 0.0 },
+        }),
+        "查询成功",
+    ))
 }
 
 /// 财务概览报表：核心财务指标一览
@@ -2547,16 +2590,17 @@ pub async fn get_financial_overview(
         now.format("%Y-%m").to_string()
     });
 
-    let voucher_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND deleted_at IS NULL",
-    )
+    let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM core_finance_vouchers WHERE period = $1 AND deleted_at IS NULL"
+    ))
     .bind(&period)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let posted_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2564,7 +2608,7 @@ pub async fn get_financial_overview(
     .unwrap_or(0);
 
     let total_amount: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(total_debit), 0) FROM plugin_finance.financial_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL",
+        only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2572,21 +2616,24 @@ pub async fn get_financial_overview(
     .unwrap_or(0.0);
 
     let subject_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL",
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(serde_json::json!({
-        "period": period,
-        "voucher_count": voucher_count,
-        "posted_count": posted_count,
-        "pending_count": voucher_count - posted_count,
-        "total_amount": total_amount,
-        "active_subjects": subject_count,
-        "posting_rate": if voucher_count > 0 { posted_count as f64 / voucher_count as f64 } else { 0.0 },
-    }), "查询成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "period": period,
+            "voucher_count": voucher_count,
+            "posted_count": posted_count,
+            "pending_count": voucher_count - posted_count,
+            "total_amount": total_amount,
+            "active_subjects": subject_count,
+            "posting_rate": if voucher_count > 0 { posted_count as f64 / voucher_count as f64 } else { 0.0 },
+        }),
+        "查询成功",
+    ))
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -2719,16 +2766,46 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_subscription_history),
         )
         // V321: 10 个分析报表
-        .route("/reports/business-overview", axum::routing::get(get_business_overview))
-        .route("/reports/project-summary", axum::routing::get(get_project_summary))
-        .route("/reports/monthly-trend", axum::routing::get(get_monthly_trend))
-        .route("/reports/department-summary", axum::routing::get(get_department_summary))
-        .route("/reports/aging-analysis", axum::routing::get(get_aging_analysis))
-        .route("/reports/voucher-statistics", axum::routing::get(get_voucher_statistics))
-        .route("/reports/cash-flow-analysis", axum::routing::get(get_cash_flow_analysis))
-        .route("/reports/expense-analysis", axum::routing::get(get_expense_analysis))
-        .route("/reports/profit-analysis", axum::routing::get(get_profit_analysis))
-        .route("/reports/financial-overview", axum::routing::get(get_financial_overview))
+        .route(
+            "/reports/business-overview",
+            axum::routing::get(get_business_overview),
+        )
+        .route(
+            "/reports/project-summary",
+            axum::routing::get(get_project_summary),
+        )
+        .route(
+            "/reports/monthly-trend",
+            axum::routing::get(get_monthly_trend),
+        )
+        .route(
+            "/reports/department-summary",
+            axum::routing::get(get_department_summary),
+        )
+        .route(
+            "/reports/aging-analysis",
+            axum::routing::get(get_aging_analysis),
+        )
+        .route(
+            "/reports/voucher-statistics",
+            axum::routing::get(get_voucher_statistics),
+        )
+        .route(
+            "/reports/cash-flow-analysis",
+            axum::routing::get(get_cash_flow_analysis),
+        )
+        .route(
+            "/reports/expense-analysis",
+            axum::routing::get(get_expense_analysis),
+        )
+        .route(
+            "/reports/profit-analysis",
+            axum::routing::get(get_profit_analysis),
+        )
+        .route(
+            "/reports/financial-overview",
+            axum::routing::get(get_financial_overview),
+        )
 }
 
 #[cfg(test)]

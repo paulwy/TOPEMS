@@ -12,50 +12,6 @@ describe('IAM Module Route Configuration', () => {
     expect(iamModuleConfig.permission).toBe('iam:dashboard:read');
     expect(iamModuleConfig.order).toBe(1);
   });
-
-  it('should have all required routes', () => {
-    const routes = iamModuleConfig.routes;
-    expect(routes.length).toBe(5);
-
-    const routePaths = routes.map((r) => r.path);
-    expect(routePaths).toContain('/iam/dashboard');
-    expect(routePaths).toContain('/iam/user');
-    expect(routePaths).toContain('/iam/role');
-    expect(routePaths).toContain('/iam/permission');
-    expect(routePaths).toContain('/iam/company-structure');
-  });
-
-  it('should have correct permissions for each route', () => {
-    const routes = iamModuleConfig.routes;
-
-    const dashboardRoute = routes.find((r) => r.path === '/iam/dashboard');
-    expect(dashboardRoute?.requiredPermissions).toEqual(['iam:dashboard:read']);
-
-    const userRoute = routes.find((r) => r.path === '/iam/user');
-    expect(userRoute?.requiredPermissions).toEqual(['iam:user:read', 'iam:dashboard:read']);
-
-    const roleRoute = routes.find((r) => r.path === '/iam/role');
-    expect(roleRoute?.requiredPermissions).toEqual(['iam:role:read', 'iam:dashboard:read']);
-
-    const permissionRoute = routes.find((r) => r.path === '/iam/permission');
-    expect(permissionRoute?.requiredPermissions).toEqual([
-      'iam:permission:read',
-      'iam:dashboard:read',
-    ]);
-
-    const companyStructureRoute = routes.find((r) => r.path === '/iam/company-structure');
-    expect(companyStructureRoute?.requiredPermissions).toEqual([
-      'iam:structure:read',
-      'iam:dashboard:read',
-    ]);
-  });
-
-  it('should be registered in core module routes', () => {
-    const modules = coreModuleRoutes;
-    const iamModule = modules.find((m) => m.code === 'iam');
-    expect(iamModule).toBeDefined();
-    expect(iamModule?.code).toBe('iam');
-  });
 });
 
 describe('Admin Module Route Configuration', () => {

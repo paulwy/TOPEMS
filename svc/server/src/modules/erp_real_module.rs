@@ -77,7 +77,8 @@ impl ErpRealModule {
             notification_service_url,
         ));
 
-        let hrm_client = TypedServiceClient::<HrmApi>::from_env_default()
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let hrm_client = TypedServiceClient::<HrmApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["hrm:admin"]))
             .map(Arc::new)
             .unwrap_or_else(|e| {
                 tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
@@ -90,7 +91,7 @@ impl ErpRealModule {
                 )
             });
 
-        let finance_client = TypedServiceClient::<FinanceApi>::from_env_default()
+        let finance_client = TypedServiceClient::<FinanceApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "erp-module", &["finance:read"]))
             .map(Arc::new)
             .unwrap_or_else(|e| {
                 tracing::warn!("Finance服务客户端初始化失败: {}, 将使用mock模式", e);

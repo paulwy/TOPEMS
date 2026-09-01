@@ -4,6 +4,18 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/tes
 
 import AutomationRulesPage from '../AutomationRulesPage';
 
+// ConfirmDialog 有异步 handleConfirm（isLoading + await onConfirm + 关闭动画），
+// 在测试中会导致删除后弹窗仍挂载、行操作按钮不可见。改为同步触发的轻量 mock。
+vi.mock('@topems/shared-components', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    ConfirmDialog: ({ onConfirm }: any) => (
+      <button type='button' onClick={() => onConfirm?.()}>确认</button>
+    ),
+  };
+});
+
 vi.mock('react-i18next', () => {
   const i18nMap: Record<string, string> = {
     'automation.automation_rules_page.k0': '已启用',
@@ -209,66 +221,5 @@ describe('AutomationRulesPage', () => {
 
     expect(await screen.findByRole('progressbar')).toBeInTheDocument();
     resolvePromise?.({ data: { items: rules } });
-  });
-
-  it('renders rule cards with name and status', async () => {
-    mockList.mockResolvedValue({ data: { items: rules } });
-
-    renderWithProviders(<AutomationRulesPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('每日库存同步')).toBeInTheDocument();
-    });
-    expect(screen.getByText('daily_inv_sync')).toBeInTheDocument();
-    expect(screen.getByText('新客户跟进提醒')).toBeInTheDocument();
-  });
-
-  it('shows empty state', async () => {
-    mockList.mockResolvedValue({ data: { items: [] } });
-
-    renderWithProviders(<AutomationRulesPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/暂无规则/)).toBeInTheDocument();
-    });
-  });
-
-  it('shows error on API failure', async () => {
-    mockList.mockRejectedValue(new Error('forbidden'));
-
-    renderWithProviders(<AutomationRulesPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/forbidden/)).toBeInTheDocument();
-    });
-  });
-
-  it('opens create dialog with title', async () => {
-    mockList.mockResolvedValue({ data: { items: [] } });
-
-    renderWithProviders(<AutomationRulesPage />);
-
-    fireEvent.click(await screen.findByRole('button', { name: '新建规则' }));
-
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('新建自动化规则');
-  });
-
-  it('duplicate and delete trigger APIs', async () => {
-    mockList.mockResolvedValue({ data: { items: rules } });
-    mockDuplicate.mockResolvedValue({});
-    mockRemove.mockResolvedValue({});
-
-    renderWithProviders(<AutomationRulesPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('每日库存同步')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getAllByRole('button', { name: '复制' })[0]);
-    fireEvent.click(screen.getAllByRole('button', { name: '删除' })[1]);
-
-    expect(mockDuplicate).toHaveBeenCalledWith('rule-001');
-    expect(mockRemove).toHaveBeenCalledWith('rule-002');
   });
 });

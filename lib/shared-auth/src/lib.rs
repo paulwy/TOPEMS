@@ -201,7 +201,10 @@ pub mod permission;
 pub mod permission_center;
 pub mod rate_limit;
 pub mod security;
+pub mod service;
+pub mod service_monitor;
 pub mod tenant;
+pub mod tier;
 
 // 细粒度 re-export
 pub use auth::{

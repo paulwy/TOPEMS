@@ -373,15 +373,16 @@ pub async fn submit_result(
                 let conclusion = task.conclusion.clone().unwrap_or_default();
                 let recorded_by = task.recorded_by.clone().unwrap_or_default();
                 let result_val = task.result.clone().unwrap_or(serde_json::Value::Null);
+                let test_item = task.test_items.to_string();
                 tokio::spawn(async move {
                     let payload =
                         topems_shared_event::event::LimsInspectionResultSubmittedPayload {
                             task_id: tid,
-                            task_no: tno,
+                            task_no: tno.clone(),
                             sample_id: sid,
-                            sample_no: sno,
-                            conclusion,
-                            result: result_val,
+                            sample_no: sno.clone(),
+                            conclusion: conclusion.clone(),
+                            result: result_val.clone(),
                             recorded_by,
                         };
                     if let Err(e) = publisher
@@ -397,6 +398,52 @@ pub async fn submit_result(
                             "[lims] LimsInspectionResultSubmitted 事件发布成功 - task_id={}",
                             tid
                         );
+                    }
+
+                    // 发布端补全：LimsRecordCompleted（→ integration → QMS 结果回写）
+                    // qa_lab_tasks 无 related_inspection_no 关联 → None（integration handler 需空值保护）
+                    let payload = topems_shared_event::event::LimsRecordCompletedPayload {
+                        record_id: tid,
+                        record_no: tno.clone(),
+                        task_id: tid,
+                        task_no: tno.clone(),
+                        sample_id: sid,
+                        sample_no: sno.clone(),
+                        conclusion: conclusion.clone(),
+                        test_data: result_val.clone(),
+                        related_inspection_no: None,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(
+                            topems_shared_event::event::EventType::LimsRecordCompleted,
+                            payload,
+                        )
+                        .await
+                    {
+                        tracing::warn!("[lims] LimsRecordCompleted 事件发布失败（graceful fallback）: {}", e);
+                    }
+
+                    // 发布端补全：LimsInspectionAbnormalDetected（结论非合格 → EHS 隐患联动）
+                    if !conclusion.contains("合格") {
+                        let payload =
+                            topems_shared_event::event::LimsInspectionAbnormalDetectedPayload {
+                                task_id: tid,
+                                task_no: tno.clone(),
+                                sample_id: sid,
+                                sample_no: sno.clone(),
+                                test_item: test_item.clone(),
+                                abnormal_data: result_val.clone(),
+                                conclusion: conclusion.clone(),
+                            };
+                        if let Err(e) = publisher
+                            .publish_event(
+                                topems_shared_event::event::EventType::LimsInspectionAbnormalDetected,
+                                payload,
+                            )
+                            .await
+                        {
+                            tracing::warn!("[lims] LimsInspectionAbnormalDetected 事件发布失败（graceful fallback）: {}", e);
+                        }
                     }
                 });
             }
@@ -642,6 +689,128 @@ mod tests {
         assert_eq!(
             judge_value_against_range(f64::INFINITY, "0-10"),
             JudgeResult::Invalid
+        );
+    }
+
+    // ===== parse_reference_range 补充 =====
+    #[test]
+    fn parse_empty_returns_none() {
+        assert_eq!(parse_reference_range(""), None);
+        assert_eq!(parse_reference_range("   "), None);
+    }
+
+    #[test]
+    fn parse_textual_range_none() {
+        assert_eq!(parse_reference_range("positive"), None);
+        assert_eq!(parse_reference_range("negative"), None);
+    }
+
+    #[test]
+    fn parse_leq_variants() {
+        assert_eq!(
+            parse_reference_range("<=5"),
+            Some((None, Some(5.0), true, true))
+        );
+        assert_eq!(
+            parse_reference_range("≤5"),
+            Some((None, Some(5.0), true, true))
+        );
+    }
+
+    #[test]
+    fn parse_geq_variants() {
+        assert_eq!(
+            parse_reference_range(">=5"),
+            Some((Some(5.0), None, true, true))
+        );
+        assert_eq!(
+            parse_reference_range("≥5"),
+            Some((Some(5.0), None, true, true))
+        );
+    }
+
+    #[test]
+    fn parse_strict_bounds() {
+        assert_eq!(
+            parse_reference_range("<5"),
+            Some((None, Some(5.0), true, false))
+        );
+        assert_eq!(
+            parse_reference_range(">5"),
+            Some((Some(5.0), None, false, true))
+        );
+    }
+
+    #[test]
+    fn parse_inverted_range_none() {
+        // 10-5 lo>hi → 无法解析
+        assert_eq!(parse_reference_range("10-5"), None);
+    }
+
+    #[test]
+    fn parse_invalid_number_none() {
+        assert_eq!(parse_reference_range("abc-def"), None);
+        assert_eq!(parse_reference_range(">abc"), None);
+    }
+
+    // ===== judge_value_against_range 补充 =====
+    #[test]
+    fn judge_in_range() {
+        assert_eq!(judge_value_against_range(7.0, "5-10"), JudgeResult::InRange);
+    }
+
+    #[test]
+    fn judge_boundaries_inclusive() {
+        assert_eq!(judge_value_against_range(5.0, "5-10"), JudgeResult::InRange);
+        assert_eq!(
+            judge_value_against_range(10.0, "5-10"),
+            JudgeResult::InRange
+        );
+    }
+
+    #[test]
+    fn judge_below_above() {
+        assert_eq!(
+            judge_value_against_range(4.0, "5-10"),
+            JudgeResult::BelowRange
+        );
+        assert_eq!(
+            judge_value_against_range(11.0, "5-10"),
+            JudgeResult::AboveRange
+        );
+    }
+
+    #[test]
+    fn judge_strict_boundary() {
+        // >5，value=5 不含下界 → BelowRange
+        assert_eq!(
+            judge_value_against_range(5.0, ">5"),
+            JudgeResult::BelowRange
+        );
+        // <5，value=5 不含上界 → AboveRange
+        assert_eq!(
+            judge_value_against_range(5.0, "<5"),
+            JudgeResult::AboveRange
+        );
+    }
+
+    #[test]
+    fn judge_non_finite_invalid() {
+        assert_eq!(
+            judge_value_against_range(f64::NAN, "5-10"),
+            JudgeResult::Invalid
+        );
+        assert_eq!(
+            judge_value_against_range(f64::INFINITY, "5-10"),
+            JudgeResult::Invalid
+        );
+    }
+
+    #[test]
+    fn judge_no_range() {
+        assert_eq!(
+            judge_value_against_range(5.0, "positive"),
+            JudgeResult::NoRange
         );
     }
 }

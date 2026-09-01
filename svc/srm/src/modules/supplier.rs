@@ -9,6 +9,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::repository::ListQueryParams as SharedListQueryParams;
 use uuid::Uuid;
 
@@ -60,37 +61,37 @@ pub async fn create_routes(
 
     let app = Router::new()
         .route(
-            "/api/srm/suppliers",
+            "/suppliers",
             get(list_suppliers).post(create_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}",
+            "/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}/products",
+            "/suppliers/{id}/products",
             get(get_supplier_products),
         )
         .route(
-            "/api/srm/suppliers/{id}/contracts",
+            "/suppliers/{id}/contracts",
             get(get_supplier_contracts),
         )
         .route(
-            "/api/srm/suppliers/{id}/performance",
+            "/suppliers/{id}/performance",
             get(get_supplier_performance),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/start",
+            "/suppliers/{id}/approval/start",
             post(start_supplier_approval),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/approve",
+            "/suppliers/{id}/approval/approve",
             post(approve_supplier),
         )
         .route(
-            "/api/srm/suppliers/{id}/approval/reject",
+            "/suppliers/{id}/approval/reject",
             post(reject_supplier),
         )
         .with_state(state);
@@ -123,7 +124,7 @@ fn suppliers_list_cache_key(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers",
+    path = "/suppliers",
     responses(
         (status = 200, description = "list_suppliers OK")
     ),
@@ -189,7 +190,7 @@ pub async fn list_suppliers(
     let query = format!(
         r#"
         SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM plugin_srm.suppliers
+        FROM suppliers
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -214,7 +215,7 @@ pub async fn list_suppliers(
         Ok(suppliers) => {
             let count_query = format!(
                 r#"
-                SELECT COUNT(*) FROM plugin_srm.suppliers
+                SELECT COUNT(*) FROM suppliers
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -256,7 +257,7 @@ pub async fn list_suppliers(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers",
+    path = "/suppliers",
     request_body = CreateSupplierRequest,
     responses(
         (status = 200, description = "create_supplier OK")
@@ -283,9 +284,10 @@ pub async fn create_supplier(
         ));
     }
 
-    let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND supplier_no = $2",
-    )
+    let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND supplier_no = $2"
+    ))
     .bind(tenant_id)
     .bind(&req.supplier_no)
     .fetch_one(&state.db)
@@ -300,11 +302,11 @@ pub async fn create_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query_as::<_, Supplier>(
-        r#"
-        INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
+        only_own_schema_query!("srm", r#"
+        INSERT INTO suppliers (id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -424,7 +426,7 @@ pub async fn create_supplier(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
     ),
@@ -456,10 +458,10 @@ pub async fn get_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2
-        "#,
+        FROM suppliers WHERE id = $1 AND tenant_id = $2
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -484,7 +486,7 @@ pub async fn get_supplier(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     request_body = UpdateSupplierRequest,
     params(
         ("id" = Uuid, Path, description = "id")
@@ -510,7 +512,7 @@ pub async fn update_supplier(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -547,12 +549,12 @@ pub async fn update_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query_as::<_, Supplier>(
-        r#"
-        UPDATE plugin_srm.suppliers SET
+        only_own_schema_query!("srm", r#"
+        UPDATE suppliers SET
             supplier_no = $2, name = $3, legal_name = $4, category = $5, status = $6, tax_id = $7, address = $8, contact_person = $9, phone = $10, email = $11, website = $12, credit_rating = $13, risk_level = $14, updated_at = $15
         WHERE id = $1 AND tenant_id = $16
         RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(supplier_no)
@@ -646,7 +648,7 @@ pub async fn update_supplier(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["srm:supplier:read"])),
-    path = "/api/srm/suppliers/{id}",
+    path = "/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
     ),
@@ -670,7 +672,7 @@ pub async fn delete_supplier(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -684,7 +686,7 @@ pub async fn delete_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query(
-        "UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3",
+        only_own_schema_query!("srm", "UPDATE suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3"),
     )
     .bind(id)
     .bind(Utc::now())
@@ -737,12 +739,12 @@ async fn get_supplier_products(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, SupplierProduct>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_products
+        FROM supplier_products
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -777,12 +779,12 @@ async fn get_supplier_contracts(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, SupplierContract>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_contracts
+        FROM supplier_contracts
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -817,19 +819,20 @@ async fn get_supplier_performance(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let supplier_query = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&state.db);
 
-    let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(
+    let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-        FROM plugin_srm.purchase_orders
+        FROM purchase_orders
         WHERE supplier_id = $1 AND tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_one(&state.db);
@@ -845,7 +848,8 @@ async fn get_supplier_performance(
             i64,
             Option<chrono::DateTime<Utc>>,
         ),
-    >(
+    >(only_own_schema_query!(
+        "srm",
         r#"
         SELECT 
             AVG(quality_score) as avg_quality,
@@ -855,10 +859,10 @@ async fn get_supplier_performance(
             AVG(overall_score) as avg_overall,
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
-        FROM plugin_srm.supplier_evaluations
+        FROM supplier_evaluations
         WHERE supplier_id = $1 AND tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_one(&state.db);
@@ -950,10 +954,10 @@ async fn record_audit_log(
     let log_id = Uuid::new_v4();
 
     let result = sqlx::query(
-        r#"
-        INSERT INTO plugin_srm.audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
+        only_own_schema_query!("srm", r#"
+        INSERT INTO audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        "#,
+        "#),
     )
     .bind(log_id)
     .bind(tenant_id)
@@ -1001,7 +1005,7 @@ async fn start_supplier_approval(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1043,7 +1047,7 @@ async fn start_supplier_approval(
     });
 
     let result = sqlx::query(
-        "UPDATE plugin_srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
+        only_own_schema_query!("srm", "UPDATE suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1"),
     )
     .bind(id)
     .execute(&state.db)
@@ -1131,7 +1135,7 @@ async fn approve_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1146,9 +1150,10 @@ async fn approve_supplier(
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();
 
-    let result = sqlx::query(
-        "UPDATE plugin_srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -1233,7 +1238,7 @@ async fn reject_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
-        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM suppliers WHERE id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1248,9 +1253,10 @@ async fn reject_supplier(
     let supplier_no = supplier_ref.supplier_no.clone();
     let supplier_name = supplier_ref.name.clone();
 
-    let result = sqlx::query(
-        "UPDATE plugin_srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;

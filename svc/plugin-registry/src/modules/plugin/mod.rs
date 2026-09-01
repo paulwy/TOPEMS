@@ -508,7 +508,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Insert default categories
     sqlx::query(
         r#"
-        INSERT INTO core_plugin_categories (name, code, description, icon, sort_order)
+        INSERT INTO core.core_plugin_categories (name, code, description, icon, sort_order)
         VALUES 
             ('生产制造', 'manufacturing', '生产执行、MES、设备管理', 'Factory', 1),
             ('质量管理', 'quality', 'QMS、LIMS、EHS', 'Shield', 2),

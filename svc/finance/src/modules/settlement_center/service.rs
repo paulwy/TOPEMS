@@ -1,9 +1,9 @@
 //! Settlement Center - 业务逻辑层
 //!
 //! V256 事件驱动重构：
-//! - 对账数据：从 plugin_finance.reconciliation_snapshots 本地快照读取
-//! - 结算数据：从 plugin_finance.settlement_snapshots 本地快照读取
-//! - 关联查询：读写 plugin_finance.reconciliation_settlement_links
+//! - 对账数据：从 finance.reconciliation_snapshots 本地快照读取
+//! - 结算数据：从 finance.settlement_snapshots 本地快照读取
+//! - 关联查询：读写 finance.reconciliation_settlement_links
 //! - 写入路径：写本地快照 + 发布事件（ERP/PM 通过事件订阅接收数据）
 //! - Finance 不再跨 schema 访问 erp.* 或 pm.* 表
 //! - ERP 订阅 ReconciliationCreated/Approved/Updated 事件
@@ -12,6 +12,7 @@
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::{EventPublisher, EventType};
 use uuid::Uuid;
 
@@ -28,20 +29,21 @@ pub async fn list_reconciliations(
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let items: Vec<UnifiedReconciliation> = sqlx::query_as(
+    let items: Vec<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, recon_code, recon_name, recon_type, status, period,
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM plugin_finance.reconciliation_snapshots
+           FROM reconciliation_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR recon_type = $3)
              AND ($4::text IS NULL OR period = $4)
              AND ($5::text IS NULL OR recon_name ILIKE $5)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#,
-    )
+           LIMIT $6 OFFSET $7"#
+    ))
     .bind(tenant_id_opt(tenant_id))
     .bind(&query.status)
     .bind(&query.recon_type)
@@ -61,14 +63,15 @@ pub async fn get_reconciliation_detail(
     tenant_id: Uuid,
     recon_id: Uuid,
 ) -> Result<Option<ReconciliationDetail>, sqlx::Error> {
-    let recon: Option<UnifiedReconciliation> = sqlx::query_as(
+    let recon: Option<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, recon_code, recon_name, recon_type, status, period,
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM plugin_finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM reconciliation_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_optional(pool)
@@ -78,18 +81,19 @@ pub async fn get_reconciliation_detail(
         return Ok(None);
     };
 
-    let linked: Vec<LinkedSettlementSummary> = sqlx::query_as(
+    let linked: Vec<LinkedSettlementSummary> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT l.id AS link_id, l.link_type, l.amount AS link_amount, l.status AS link_status,
                   s.id AS settlement_id, s.settlement_no AS settlement_code,
                   s.settlement_no AS settlement_name,
                   s.settlement_type, s.status AS settlement_status,
                   s.amount AS settlement_amount
-           FROM plugin_finance.reconciliation_settlement_links l
-           JOIN plugin_finance.settlement_snapshots s ON s.id = l.settlement_id
+           FROM finance.reconciliation_settlement_links l
+           JOIN settlement_snapshots s ON s.id = l.settlement_id
            WHERE l.reconciliation_id = $1
              AND l.tenant_id = $2
-             AND l.status != 'cancelled'"#,
-    )
+             AND l.status != 'cancelled'"#
+    ))
     .bind(recon_id)
     .bind(tenant_id)
     .fetch_all(pool)
@@ -112,13 +116,14 @@ pub async fn create_reconciliation(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    sqlx::query(
-        r#"INSERT INTO plugin_finance.reconciliation_snapshots
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"INSERT INTO reconciliation_snapshots
              (id, tenant_id, recon_code, recon_name, recon_type, status, period,
               entity_id, entity_type, description, created_by, synced_at, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $11, $11)
-           ON CONFLICT (id) DO NOTHING"#,
-    )
+           ON CONFLICT (id) DO NOTHING"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .bind(&req.recon_code)
@@ -133,14 +138,15 @@ pub async fn create_reconciliation(
     .execute(pool)
     .await?;
 
-    let item = sqlx::query_as(
+    let item = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, recon_code, recon_name, recon_type, status, period,
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM plugin_finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM reconciliation_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_one(pool)
@@ -188,11 +194,12 @@ pub async fn manual_reconcile(
     let affected: i64 = if req.record_ids.is_empty() {
         0
     } else {
-        let result = sqlx::query(
-            r#"UPDATE plugin_finance.reconciliation_item_snapshots
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            r#"UPDATE finance.reconciliation_item_snapshots
                SET match_status = 'matched', updated_at = NOW()
-               WHERE recon_id = $1 AND id = ANY($2)"#,
-        )
+               WHERE recon_id = $1 AND id = ANY($2)"#
+        ))
         .bind(recon_id)
         .bind(&req.record_ids)
         .execute(&mut *tx)
@@ -200,28 +207,31 @@ pub async fn manual_reconcile(
         result.rows_affected() as i64
     };
 
-    let stats: (Option<i32>, Option<i32>, Option<f64>, Option<f64>) = sqlx::query_as(
-        r#"SELECT
+    let stats: (Option<i32>, Option<i32>, Option<f64>, Option<f64>) =
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"SELECT
              COUNT(*) FILTER (WHERE match_status = 'matched')::int AS matched_count,
              COUNT(*) FILTER (WHERE match_status <> 'matched')::int AS unmatched_count,
              COALESCE(SUM(debit_amount), 0)::float8 AS total_debit,
              COALESCE(SUM(credit_amount), 0)::float8 AS total_credit
-           FROM plugin_finance.reconciliation_item_snapshots
-           WHERE recon_id = $1"#,
-    )
-    .bind(recon_id)
-    .fetch_one(&mut *tx)
-    .await?;
+           FROM finance.reconciliation_item_snapshots
+           WHERE recon_id = $1"#
+        ))
+        .bind(recon_id)
+        .fetch_one(&mut *tx)
+        .await?;
 
     let difference = stats.2.unwrap_or(0.0) - stats.3.unwrap_or(0.0);
 
-    sqlx::query(
-        r#"UPDATE plugin_finance.reconciliation_snapshots
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE reconciliation_snapshots
            SET matched_count = $1, unmatched_count = $2,
                total_debit = $3, total_credit = $4, difference = $5,
                updated_at = NOW(), synced_at = NOW()
-           WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)"#,
-    )
+           WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)"#
+    ))
     .bind(stats.0)
     .bind(stats.1)
     .bind(stats.2)
@@ -270,10 +280,11 @@ pub async fn auto_reconcile(
     let mut tx = pool.begin().await?;
 
     // 在 Finance 本地明细快照上匹配
-    let result = sqlx::query(
-        r#"UPDATE plugin_finance.reconciliation_item_snapshots ri
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.reconciliation_item_snapshots ri
            SET match_status = 'matched', updated_at = NOW()
-           FROM plugin_finance.reconciliation_snapshots r
+           FROM reconciliation_snapshots r
            WHERE ri.recon_id = r.id
              AND r.period = $1
              AND ($2::uuid IS NULL OR r.tenant_id = $2)
@@ -281,13 +292,13 @@ pub async fn auto_reconcile(
              AND ($4::uuid IS NULL OR r.entity_id = $4)
              AND ri.match_status <> 'matched'
              AND EXISTS (
-               SELECT 1 FROM plugin_finance.reconciliation_item_snapshots ri2
+               SELECT 1 FROM finance.reconciliation_item_snapshots ri2
                WHERE ri2.recon_id = ri.recon_id
                  AND ri2.match_status <> 'matched'
                  AND ri2.item_type <> ri.item_type
                  AND COALESCE(ri2.debit_amount, 0) = COALESCE(ri.credit_amount, 0)
-             )"#,
-    )
+             )"#
+    ))
     .bind(&req.period)
     .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
@@ -298,8 +309,9 @@ pub async fn auto_reconcile(
     let affected = result.rows_affected() as i64;
 
     // 重新汇总对账单统计
-    sqlx::query(
-        r#"UPDATE plugin_finance.reconciliation_snapshots r
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE reconciliation_snapshots r
            SET matched_count = s.matched_count,
                unmatched_count = s.unmatched_count,
                total_debit = s.total_debit,
@@ -313,9 +325,9 @@ pub async fn auto_reconcile(
                       SUM(debit_amount) AS total_debit,
                       SUM(credit_amount) AS total_credit,
                       SUM(debit_amount) - SUM(credit_amount) AS difference
-               FROM plugin_finance.reconciliation_item_snapshots
+               FROM finance.reconciliation_item_snapshots
                WHERE recon_id IN (
-                   SELECT id FROM plugin_finance.reconciliation_snapshots
+                   SELECT id FROM reconciliation_snapshots
                    WHERE period = $1
                      AND ($2::uuid IS NULL OR tenant_id = $2)
                      AND ($3::text IS NULL OR recon_type = $3)
@@ -323,8 +335,8 @@ pub async fn auto_reconcile(
                )
                GROUP BY recon_id
            ) s
-           WHERE r.id = s.recon_id"#,
-    )
+           WHERE r.id = s.recon_id"#
+    ))
     .bind(&req.period)
     .bind(tenant_id_opt(tenant_id))
     .bind(&req.recon_type)
@@ -347,7 +359,8 @@ pub async fn list_settlements(
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let items: Vec<UnifiedSettlement> = sqlx::query_as(
+    let items: Vec<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
                   settlement_no AS settlement_name,
                   settlement_type, status,
@@ -362,15 +375,15 @@ pub async fn list_settlements(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM plugin_finance.settlement_snapshots
+           FROM settlement_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR settlement_type = $3)
              AND ($4::uuid IS NULL OR project_id = $4)
              AND ($5::text IS NULL OR settlement_no ILIKE $5)
            ORDER BY settlement_date DESC NULLS LAST, created_at DESC
-           LIMIT $6 OFFSET $7"#,
-    )
+           LIMIT $6 OFFSET $7"#
+    ))
     .bind(tenant_id_opt(tenant_id))
     .bind(&query.status)
     .bind(&query.settlement_type)
@@ -390,7 +403,8 @@ pub async fn get_settlement_detail(
     tenant_id: Uuid,
     settlement_id: Uuid,
 ) -> Result<Option<SettlementDetail>, sqlx::Error> {
-    let settlement: Option<UnifiedSettlement> = sqlx::query_as(
+    let settlement: Option<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
                   settlement_no AS settlement_name,
                   settlement_type, status,
@@ -405,9 +419,9 @@ pub async fn get_settlement_detail(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM plugin_finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM settlement_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(settlement_id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_optional(pool)
@@ -418,14 +432,14 @@ pub async fn get_settlement_detail(
     };
 
     let linked: Vec<LinkedReconciliationSummary> = sqlx::query_as(
-        r#"SELECT l.id AS link_id, l.link_type, l.amount AS link_amount, l.status AS link_status,
+        only_own_schema_query!("finance", r#"SELECT l.id AS link_id, l.link_type, l.amount AS link_amount, l.status AS link_status,
                   r.id AS reconciliation_id, r.recon_code,
                   r.recon_name, r.recon_type, r.status AS recon_status, r.difference AS recon_difference
-           FROM plugin_finance.reconciliation_settlement_links l
-           JOIN plugin_finance.reconciliation_snapshots r ON r.id = l.reconciliation_id
+           FROM finance.reconciliation_settlement_links l
+           JOIN reconciliation_snapshots r ON r.id = l.reconciliation_id
            WHERE l.settlement_id = $1
              AND l.tenant_id = $2
-             AND l.status != 'cancelled'"#,
+             AND l.status != 'cancelled'"#),
     )
     .bind(settlement_id)
     .bind(tenant_id)
@@ -458,13 +472,14 @@ pub async fn create_settlement(
         .clone()
         .unwrap_or_else(|| format!("ST-{}", chrono::Utc::now().format("%Y%m%d%H%M%S")));
 
-    sqlx::query(
-        r#"INSERT INTO plugin_finance.settlement_snapshots
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"INSERT INTO settlement_snapshots
              (id, tenant_id, project_id, settlement_no, settlement_type, status,
               amount, settlement_date, remarks, created_by, synced_at, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, 'draft', NULL, $6, $7, $8, $9, $9, $9)
-           ON CONFLICT (id) DO NOTHING"#,
-    )
+           ON CONFLICT (id) DO NOTHING"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .bind(req.project_id)
@@ -477,7 +492,8 @@ pub async fn create_settlement(
     .execute(pool)
     .await?;
 
-    let item: UnifiedSettlement = sqlx::query_as(
+    let item: UnifiedSettlement = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
                   settlement_no AS settlement_name,
                   settlement_type, status,
@@ -492,9 +508,9 @@ pub async fn create_settlement(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM plugin_finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM settlement_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_one(pool)
@@ -535,12 +551,13 @@ pub async fn approve_reconciliation(
 ) -> Result<Option<UnifiedReconciliation>, sqlx::Error> {
     let now = chrono::Utc::now();
 
-    sqlx::query(
-        r#"UPDATE plugin_finance.reconciliation_snapshots
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE reconciliation_snapshots
            SET status = 'approved', approved_by = $1, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
-           WHERE id = $3 AND tenant_id = $4 AND status IN ('draft', 'pending')"#,
-    )
+           WHERE id = $3 AND tenant_id = $4 AND status IN ('draft', 'pending')"#
+    ))
     .bind(&approver)
     .bind(now)
     .bind(recon_id)
@@ -548,14 +565,15 @@ pub async fn approve_reconciliation(
     .execute(pool)
     .await?;
 
-    let item: Option<UnifiedReconciliation> = sqlx::query_as(
+    let item: Option<UnifiedReconciliation> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, recon_code, recon_name, recon_type, status, period,
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM plugin_finance.reconciliation_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM reconciliation_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(recon_id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_optional(pool)
@@ -615,12 +633,13 @@ pub async fn approve_settlement(
 ) -> Result<Option<UnifiedSettlement>, sqlx::Error> {
     let now = chrono::Utc::now();
 
-    sqlx::query(
-        r#"UPDATE plugin_finance.settlement_snapshots
+    sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE settlement_snapshots
            SET status = 'approved', approved_by = $1, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
-           WHERE id = $3 AND tenant_id = $4 AND status = 'pending'"#,
-    )
+           WHERE id = $3 AND tenant_id = $4 AND status = 'pending'"#
+    ))
     .bind(&approver)
     .bind(now)
     .bind(settlement_id)
@@ -628,7 +647,8 @@ pub async fn approve_settlement(
     .execute(pool)
     .await?;
 
-    let item: Option<UnifiedSettlement> = sqlx::query_as(
+    let item: Option<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
                   settlement_no AS settlement_name,
                   settlement_type, status,
@@ -643,9 +663,9 @@ pub async fn approve_settlement(
                   approved_by,
                   approved_at,
                   created_at, updated_at
-           FROM plugin_finance.settlement_snapshots
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-    )
+           FROM settlement_snapshots
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
+    ))
     .bind(settlement_id)
     .bind(tenant_id_opt(tenant_id))
     .fetch_optional(pool)
@@ -685,14 +705,15 @@ pub async fn create_link(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    let link: ReconciliationSettlementLink = sqlx::query_as(
-        r#"INSERT INTO plugin_finance.reconciliation_settlement_links
+    let link: ReconciliationSettlementLink = sqlx::query_as(only_own_schema_query!(
+        "finance",
+        r#"INSERT INTO finance.reconciliation_settlement_links
              (id, tenant_id, reconciliation_id, settlement_id, link_type,
               amount, status, remark, created_by, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, 'linked', $7, $8, $9, $9)
            RETURNING id, tenant_id, reconciliation_id, settlement_id, link_type,
-                     amount, status, remark, created_by, created_at, updated_at"#,
-    )
+                     amount, status, remark, created_by, created_at, updated_at"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .bind(req.reconciliation_id)
@@ -714,11 +735,12 @@ pub async fn cancel_link(
     tenant_id: Uuid,
     link_id: Uuid,
 ) -> Result<bool, sqlx::Error> {
-    let result = sqlx::query(
-        r#"UPDATE plugin_finance.reconciliation_settlement_links
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.reconciliation_settlement_links
            SET status = 'cancelled', updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2 AND status = 'linked'"#,
-    )
+           WHERE id = $1 AND tenant_id = $2 AND status = 'linked'"#
+    ))
     .bind(link_id)
     .bind(tenant_id)
     .execute(pool)
@@ -737,18 +759,19 @@ pub async fn list_links(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let items: Vec<ReconciliationSettlementLink> = sqlx::query_as(
+    let items: Vec<ReconciliationSettlementLink> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, tenant_id, reconciliation_id, settlement_id, link_type,
                   amount, status, remark, created_by, created_at, updated_at
-           FROM plugin_finance.reconciliation_settlement_links
+           FROM finance.reconciliation_settlement_links
            WHERE tenant_id = $1
              AND ($2::uuid IS NULL OR reconciliation_id = $2)
              AND ($3::uuid IS NULL OR settlement_id = $3)
              AND ($4::text IS NULL OR link_type = $4)
              AND ($5::text IS NULL OR status = $5)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#,
-    )
+           LIMIT $6 OFFSET $7"#
+    ))
     .bind(tenant_id)
     .bind(query.reconciliation_id)
     .bind(query.settlement_id)
@@ -776,8 +799,9 @@ pub async fn create_difference(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    let item: DifferenceAdjustment = sqlx::query_as(
-        r#"INSERT INTO plugin_finance.difference_adjustments
+    let item: DifferenceAdjustment = sqlx::query_as(only_own_schema_query!(
+        "finance",
+        r#"INSERT INTO finance.difference_adjustments
              (id, tenant_id, source_type, source_id, difference_type,
               difference_amount, reason, adjustment_amount, adjustment_type,
               status, remark, created_by, created_at, updated_at)
@@ -785,8 +809,8 @@ pub async fn create_difference(
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(id)
     .bind(tenant_id)
     .bind(&req.source_type)
@@ -812,15 +836,16 @@ pub async fn approve_difference(
     diff_id: Uuid,
     approver: Uuid,
 ) -> Result<Option<DifferenceAdjustment>, sqlx::Error> {
-    let item: Option<DifferenceAdjustment> = sqlx::query_as(
-        r#"UPDATE plugin_finance.difference_adjustments
+    let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.difference_adjustments
            SET status = 'approved', approved_by = $1, approved_at = NOW(), updated_at = NOW()
            WHERE id = $2 AND tenant_id = $3 AND status = 'pending'
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
@@ -837,15 +862,16 @@ pub async fn reject_difference(
     diff_id: Uuid,
     approver: Uuid,
 ) -> Result<Option<DifferenceAdjustment>, sqlx::Error> {
-    let item: Option<DifferenceAdjustment> = sqlx::query_as(
-        r#"UPDATE plugin_finance.difference_adjustments
+    let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.difference_adjustments
            SET status = 'rejected', approved_by = $1, approved_at = NOW(), updated_at = NOW()
            WHERE id = $2 AND tenant_id = $3 AND status = 'pending'
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
-                     created_at, updated_at"#,
-    )
+                     created_at, updated_at"#
+    ))
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
@@ -865,20 +891,21 @@ pub async fn list_differences(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let items: Vec<DifferenceAdjustment> = sqlx::query_as(
+    let items: Vec<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, tenant_id, source_type, source_id, difference_type,
                   difference_amount, reason, adjustment_amount, adjustment_type,
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
-           FROM plugin_finance.difference_adjustments
+           FROM finance.difference_adjustments
            WHERE tenant_id = $1
              AND ($2::text IS NULL OR source_type = $2)
              AND ($3::uuid IS NULL OR source_id = $3)
              AND ($4::text IS NULL OR difference_type = $4)
              AND ($5::text IS NULL OR status = $5)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#,
-    )
+           LIMIT $6 OFFSET $7"#
+    ))
     .bind(tenant_id)
     .bind(&query.source_type)
     .bind(query.source_id)
@@ -918,8 +945,10 @@ async fn get_reconciliation_statistics(
     pool: &PgPool,
     tenant_id: Uuid,
 ) -> Result<ReconciliationStatistics, sqlx::Error> {
-    let row: (i64, i64, i64, Decimal, Decimal, Decimal, i64, i64) = sqlx::query_as(
-        r#"SELECT
+    let row: (i64, i64, i64, Decimal, Decimal, Decimal, i64, i64) =
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"SELECT
              COUNT(*)::bigint AS total_count,
              COUNT(*) FILTER (WHERE status IN ('draft', 'pending'))::bigint AS pending_count,
              COUNT(*) FILTER (WHERE status = 'approved')::bigint AS approved_count,
@@ -928,12 +957,12 @@ async fn get_reconciliation_statistics(
              COALESCE(SUM(difference), 0)::numeric AS total_difference,
              COALESCE(SUM(matched_count), 0)::bigint AS matched_count,
              COALESCE(SUM(unmatched_count), 0)::bigint AS unmatched_count
-           FROM plugin_finance.reconciliation_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
-    )
-    .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
-    .await?;
+           FROM reconciliation_snapshots
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
+        ))
+        .bind(tenant_id_opt(tenant_id))
+        .fetch_one(pool)
+        .await?;
 
     Ok(ReconciliationStatistics {
         total_count: row.0,
@@ -951,8 +980,10 @@ async fn get_settlement_statistics(
     pool: &PgPool,
     tenant_id: Uuid,
 ) -> Result<SettlementStatistics, sqlx::Error> {
-    let row: (i64, i64, i64, i64, Decimal, Decimal, Decimal) = sqlx::query_as(
-        r#"SELECT
+    let row: (i64, i64, i64, i64, Decimal, Decimal, Decimal) =
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"SELECT
              COUNT(*)::bigint AS total_count,
              COUNT(*) FILTER (WHERE status = 'draft')::bigint AS draft_count,
              COUNT(*) FILTER (WHERE status = 'pending')::bigint AS pending_count,
@@ -960,12 +991,12 @@ async fn get_settlement_statistics(
              0::numeric AS total_budget,
              COALESCE(SUM(amount), 0)::numeric AS total_actual,
              0::numeric AS total_variance
-           FROM plugin_finance.settlement_snapshots
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
-    )
-    .bind(tenant_id_opt(tenant_id))
-    .fetch_one(pool)
-    .await?;
+           FROM settlement_snapshots
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
+        ))
+        .bind(tenant_id_opt(tenant_id))
+        .fetch_one(pool)
+        .await?;
 
     Ok(SettlementStatistics {
         total_count: row.0,
@@ -983,15 +1014,15 @@ async fn get_difference_statistics(
     tenant_id: Uuid,
 ) -> Result<DifferenceStatistics, sqlx::Error> {
     let row: (i64, i64, i64, i64, Decimal, Decimal) = sqlx::query_as(
-        r#"SELECT
+        only_own_schema_query!("finance", r#"SELECT
              COUNT(*)::bigint AS total_count,
              COUNT(*) FILTER (WHERE status = 'pending')::bigint AS pending_count,
              COUNT(*) FILTER (WHERE status = 'approved')::bigint AS approved_count,
              COUNT(*) FILTER (WHERE status = 'rejected')::bigint AS rejected_count,
              COALESCE(SUM(difference_amount), 0)::numeric AS total_difference_amount,
              COALESCE(SUM(adjustment_amount) FILTER (WHERE status = 'approved'), 0)::numeric AS total_adjustment_amount
-           FROM plugin_finance.difference_adjustments
-           WHERE tenant_id = $1"#,
+           FROM finance.difference_adjustments
+           WHERE tenant_id = $1"#),
     )
     .bind(tenant_id)
     .fetch_one(pool)
@@ -1011,15 +1042,16 @@ async fn get_link_statistics(
     pool: &PgPool,
     tenant_id: Uuid,
 ) -> Result<LinkStatistics, sqlx::Error> {
-    let row: (i64, i64, i64, Decimal) = sqlx::query_as(
+    let row: (i64, i64, i64, Decimal) = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT
              COUNT(*)::bigint AS total_count,
              COUNT(*) FILTER (WHERE status = 'linked')::bigint AS active_count,
              COUNT(*) FILTER (WHERE status = 'cancelled')::bigint AS cancelled_count,
              COALESCE(SUM(amount) FILTER (WHERE status = 'linked'), 0)::numeric AS total_amount
-           FROM plugin_finance.reconciliation_settlement_links
-           WHERE tenant_id = $1"#,
-    )
+           FROM finance.reconciliation_settlement_links
+           WHERE tenant_id = $1"#
+    ))
     .bind(tenant_id)
     .fetch_one(pool)
     .await?;
@@ -1039,21 +1071,24 @@ pub async fn get_dashboard_summary(
 ) -> Result<DashboardSummary, sqlx::Error> {
     let statistics = get_statistics(pool, tenant_id).await?;
 
-    let recent_reconciliations: Vec<UnifiedReconciliation> = sqlx::query_as(
-        r#"SELECT id, recon_code, recon_name, recon_type, status, period,
+    let recent_reconciliations: Vec<UnifiedReconciliation> =
+        sqlx::query_as(only_own_schema_query!(
+            "finance",
+            r#"SELECT id, recon_code, recon_name, recon_type, status, period,
                   entity_id, entity_type, total_debit, total_credit, difference,
                   matched_count, unmatched_count, description, created_by,
                   approved_by, approved_at, created_at, updated_at
-           FROM plugin_finance.reconciliation_snapshots
+           FROM reconciliation_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
-           LIMIT 5"#,
-    )
-    .bind(tenant_id_opt(tenant_id))
-    .fetch_all(pool)
-    .await?;
+           LIMIT 5"#
+        ))
+        .bind(tenant_id_opt(tenant_id))
+        .fetch_all(pool)
+        .await?;
 
-    let recent_settlements: Vec<UnifiedSettlement> = sqlx::query_as(
+    let recent_settlements: Vec<UnifiedSettlement> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, project_id, settlement_no AS settlement_code,
                   settlement_no AS settlement_name,
                   settlement_type, status,
@@ -1068,25 +1103,26 @@ pub async fn get_dashboard_summary(
                   NULL::varchar AS approved_by,
                   NULL::timestamptz AS approved_at,
                   created_at, updated_at
-           FROM plugin_finance.settlement_snapshots
+           FROM settlement_snapshots
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            ORDER BY created_at DESC
-           LIMIT 5"#,
-    )
+           LIMIT 5"#
+    ))
     .bind(tenant_id_opt(tenant_id))
     .fetch_all(pool)
     .await?;
 
-    let pending_differences: Vec<DifferenceAdjustment> = sqlx::query_as(
+    let pending_differences: Vec<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"SELECT id, tenant_id, source_type, source_id, difference_type,
                   difference_amount, reason, adjustment_amount, adjustment_type,
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
-           FROM plugin_finance.difference_adjustments
+           FROM finance.difference_adjustments
            WHERE tenant_id = $1 AND status = 'pending'
            ORDER BY created_at DESC
-           LIMIT 5"#,
-    )
+           LIMIT 5"#
+    ))
     .bind(tenant_id)
     .fetch_all(pool)
     .await?;

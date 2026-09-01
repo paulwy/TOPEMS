@@ -6,10 +6,10 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::finance::AccountingSubject;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
@@ -95,16 +95,16 @@ pub async fn list_opening_balances(
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, OpeningBalance>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT ob.id, ob.company_id, ob.subject_code, ob.subject_name, ob.period, 
                ob.debit_balance::float8 AS debit_balance, ob.credit_balance::float8 AS credit_balance, ob.created_at, ob.updated_at
-        FROM opening_balances ob
+        FROM erp.opening_balances ob
         WHERE ($1::uuid IS NULL OR ob.company_id = $1)
           AND ($2::text IS NULL OR ob.period = $2)
           AND ($3::text IS NULL OR ob.subject_code = $3)
         ORDER BY ob.period DESC, ob.subject_code ASC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(
         params
@@ -121,14 +121,15 @@ pub async fn list_opening_balances(
 
     match result {
         Ok(balances) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "erp",
                 r#"
-                SELECT COUNT(*) FROM opening_balances ob
+                SELECT COUNT(*) FROM erp.opening_balances ob
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR ob.company_id = $1)
                   AND ($2::text IS NULL OR ob.period = $2)
                   AND ($3::text IS NULL OR ob.subject_code = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(
                 params
                     .company_id
@@ -169,23 +170,26 @@ pub async fn create_opening_balance(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-        "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
-    )
-    .bind(&req.subject_code)
-    .fetch_optional(&state.db)
-    .await
+    let subject_name = match state
+        .finance_client
+        .get_accounting_subject_by_code(&req.subject_code)
+        .await
     {
-        Ok(Some(s)) => s.name,
+        Ok(v) => v
+            .get("data")
+            .and_then(|d| d.get("name"))
+            .and_then(|n| n.as_str())
+            .unwrap_or("未知科目")
+            .to_string(),
         _ => "未知科目".to_string(),
     };
 
     let result = sqlx::query_as::<_, OpeningBalance>(
-        r#"
-        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
+        only_own_schema_query!("erp", r#"
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.company_id)
@@ -256,10 +260,10 @@ pub async fn get_opening_balance(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let result = sqlx::query_as::<_, OpeningBalance>(
-        r#"
+        only_own_schema_query!("erp", r#"
         SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
-        FROM opening_balances WHERE id = $1
-        "#,
+        FROM erp.opening_balances WHERE id = $1
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -290,7 +294,7 @@ pub async fn update_opening_balance(
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let existing = sqlx::query_as::<_, OpeningBalance>(
-        "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM opening_balances WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("erp", "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM erp.opening_balances WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -309,11 +313,11 @@ pub async fn update_opening_balance(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OpeningBalance>(
-        r#"
-        UPDATE opening_balances SET debit_balance = $2, credit_balance = $3, updated_at = $4
+        only_own_schema_query!("erp", r#"
+        UPDATE erp.opening_balances SET debit_balance = $2, credit_balance = $3, updated_at = $4
         WHERE id = $1
         RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(debit_balance)
@@ -378,10 +382,13 @@ pub async fn delete_opening_balance(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("UPDATE opening_balances SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.opening_balances SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -450,22 +457,25 @@ pub async fn import_opening_balances(
     let request_data = serde_json::to_value(&req).ok();
 
     for item in req {
-        let subject_name = match sqlx::query_as::<_, AccountingSubject>(
-            "SELECT name FROM plugin_finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
-        )
-        .bind(&item.subject_code)
-        .fetch_optional(&state.db)
-        .await
+        let subject_name = match state
+            .finance_client
+            .get_accounting_subject_by_code(&item.subject_code)
+            .await
         {
-            Ok(Some(s)) => s.name,
+            Ok(v) => v
+                .get("data")
+                .and_then(|d| d.get("name"))
+                .and_then(|n| n.as_str())
+                .unwrap_or("未知科目")
+                .to_string(),
             _ => "未知科目".to_string(),
         };
 
         let result = sqlx::query(
-            r#"
-            INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
+            only_own_schema_query!("erp", r#"
+            INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            "#,
+            "#),
         )
         .bind(Uuid::new_v4())
         .bind(item.company_id)
@@ -540,9 +550,9 @@ pub async fn carry_forward_opening_balance(
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
-        INSERT INTO opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
         SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW()
-        FROM opening_balances
+        FROM erp.opening_balances
         WHERE period = $1
         ON CONFLICT (company_id, subject_code, period) DO UPDATE SET
             debit_balance = EXCLUDED.debit_balance,

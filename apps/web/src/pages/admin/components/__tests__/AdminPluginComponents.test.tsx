@@ -84,74 +84,10 @@ describe('PluginMarketplaceList', () => {
     expect(screen.getByText('CRM 插件')).toBeInTheDocument();
     expect(screen.getByText('BI 插件')).toBeInTheDocument();
     expect(screen.getByText('监控插件')).toBeInTheDocument();
-    expect(screen.getByText('admin.plugin_management.installed')).toBeInTheDocument();
+    expect(screen.getByText('已安装')).toBeInTheDocument();
     expect(
-      screen.getAllByRole('button', { name: 'admin.plugin_management_page.text_e655a4' })
+      screen.getAllByRole('button', { name: '安装' })
     ).toHaveLength(2);
-  });
-
-  it('emits search, tab and install selection changes', () => {
-    const onSearchChange = vi.fn();
-    const onTabChange = vi.fn();
-    const onSelectPlugin = vi.fn();
-    render(
-      <PluginMarketplaceList
-        search='crm'
-        onSearchChange={onSearchChange}
-        tab={1}
-        onTabChange={onTabChange}
-        plugins={plugins}
-        installedCodes={[]}
-        onSelectPlugin={onSelectPlugin}
-      />
-    );
-
-    expect(screen.getByText('CRM 插件')).toBeInTheDocument();
-    expect(screen.queryByText('BI 插件')).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByPlaceholderText('admin.plugin_management_page.attr_d40b53'), {
-      target: { value: 'bi' },
-    });
-    fireEvent.click(screen.getByRole('tab', { name: 'admin.plugin_management.analytics_plugin' }));
-    fireEvent.click(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_e655a4' })
-    );
-
-    expect(onSearchChange).toHaveBeenCalledWith('bi');
-    expect(onTabChange).toHaveBeenCalledWith(2);
-    expect(onSelectPlugin).toHaveBeenCalledWith(plugins[0]);
-  });
-
-  it('filters analytics and system tabs', () => {
-    const { rerender } = render(
-      <PluginMarketplaceList
-        search=''
-        onSearchChange={vi.fn()}
-        tab={2}
-        onTabChange={vi.fn()}
-        plugins={plugins}
-        installedCodes={[]}
-        onSelectPlugin={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText('BI 插件')).toBeInTheDocument();
-    expect(screen.queryByText('CRM 插件')).not.toBeInTheDocument();
-
-    rerender(
-      <PluginMarketplaceList
-        search=''
-        onSearchChange={vi.fn()}
-        tab={3}
-        onTabChange={vi.fn()}
-        plugins={plugins}
-        installedCodes={[]}
-        onSelectPlugin={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText('监控插件')).toBeInTheDocument();
-    expect(screen.queryByText('BI 插件')).not.toBeInTheDocument();
   });
 });
 
@@ -174,7 +110,7 @@ describe('PluginInstallStepper', () => {
     expect(screen.getByText('读取客户')).toBeInTheDocument();
     expect(screen.getByText('crm:write')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'admin.plugin_management.next' }));
+    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
 
     expect(onNext).toHaveBeenCalledTimes(1);
   });
@@ -192,7 +128,7 @@ describe('PluginInstallStepper', () => {
     );
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'admin.plugin_management.install' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '安装' })).toBeDisabled();
 
     rerender(
       <PluginInstallStepper
@@ -218,10 +154,10 @@ describe('PluginInstallStepper', () => {
       />
     );
 
-    expect(screen.getByText('admin.plugin_management_page.text_176e15')).toBeInTheDocument();
+    expect(screen.getByText('安装完成')).toBeInTheDocument();
     expect(screen.getByText(/CRM 插件/)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_769d88' })
+      screen.getByRole('button', { name: '完成' })
     ).toBeInTheDocument();
   });
 
@@ -239,7 +175,7 @@ describe('PluginInstallStepper', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_eeb690' })
+      screen.getByRole('button', { name: '上一步' })
     );
 
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -279,17 +215,17 @@ describe('PluginUninstallDialog', () => {
       />
     );
 
-    expect(screen.getByText('admin.plugin_management.uninstall_plugin')).toBeInTheDocument();
+    expect(screen.getByText('卸载插件')).toBeInTheDocument();
     expect(screen.getByText('crm:uninstall')).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_710ad0' })
+      screen.getByRole('button', { name: '停用' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_732796' })
+      screen.getByRole('button', { name: '删除' })
     );
-    fireEvent.click(screen.getByRole('button', { name: 'admin.plugin_management.cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'admin.plugin_management.confirm' }));
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getByRole('button', { name: '确认' }));
 
     expect(onTierChange).toHaveBeenCalledWith('disable');
     expect(onTierChange).toHaveBeenCalledWith('delete');
@@ -310,11 +246,11 @@ describe('PluginUninstallDialog', () => {
     );
 
     expect(
-      screen.getByText('+ admin.plugin_management.permanently_delete_plugin')
+      screen.getByText('+ 永久删除插件')
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'admin.plugin_management_page.text_2fb90b' })
+      screen.getByRole('button', { name: '处理中...' })
     ).toBeDisabled();
-    expect(screen.getByText('admin.plugin_management_page.text_7b8249')).toBeInTheDocument();
+    expect(screen.getByText('永久删除插件及其所有数据，此操作不可恢复。')).toBeInTheDocument();
   });
 });

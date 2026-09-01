@@ -28,7 +28,13 @@ topems-mes = { path = "../mes", optional = true }
 topems-ehs = { path = "../ehs", optional = true }
 topems-lims = { path = "../lims", optional = true }
 topems-tms = { path = "../tms", optional = true }
+topems-ticket = { path = "../ticket", optional = true }
+topems-rd = { path = "../rd", optional = true }
+topems-srm = { path = "../srm", optional = true }
 topems-gis = { path = "../gis", optional = true }
+topems-portal = { path = "../portal", optional = true }
+topems-master-data = { path = "../master-data", optional = true }
+topems-analytics = { path = "../analytics", optional = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -64,8 +70,12 @@ default = [
     "module-mes",
     "module-ehs",
     "module-lims",
-    # [边界治理] module-advanced / module-ai 为幽灵 feature（无对应 real_module 注册），
-    # 从 default 移除；保留 feature 定义与 ModuleGroup 映射，待 master-data/analytics / ai 真实接入后再启用
+    "module-ticket",
+    "module-rd",
+    "module-srm",
+    # [2026-08-31] module-advanced 已挂真实 master-data，加回 default；analytics 同组后续接入
+    "module-advanced",
+    # [边界治理] module-ai 仍为幽灵 feature（无 real_module），从 default 移除；待 ai 真实接入后再启用
 ]
 module-core = []
 # 真实业务服务接入：finance 模块（Phase B3）
@@ -93,11 +103,21 @@ module-ehs = ["dep:topems-ehs"]
 module-lims = ["dep:topems-lims"]
 # 真实业务服务接入：tms 模块（P3 feature flag，默认不启用，按客户需求裁剪）
 module-tms = ["dep:topems-tms"]
+# 真实业务服务接入：ticket 模块（核心业务域，默认启用）
+module-ticket = ["dep:topems-ticket"]
+# 真实业务服务接入：rd 模块（研发管理，默认启用）
+module-rd = ["dep:topems-rd"]
+# 真实业务服务接入：srm 模块（供应商关系，默认启用）
+module-srm = ["dep:topems-srm"]
 # 真实业务服务接入：gis 模块（P3 feature flag，默认不启用，按客户需求裁剪）
 module-gis = ["dep:topems-gis"]
+# 真实业务服务接入：portal 模块（占位，默认不启用——portal 含 GraphQL/WebSocket/service_aggregator，
+# 用户中心适合独立部署，与 gis 决策一致；未来如需单进程接入需重构 lib 导出 portal_routes）
+module-portal = ["dep:topems-portal"]
 # 订阅管理模块（P5 商业化支撑，默认不启用，按客户需求启用）
 module-subscription = []
-module-advanced = []
+# advanced 组真实接入：master-data + analytics（2026-09-01 挂载）
+module-advanced = ["dep:topems-master-data", "dep:topems-analytics"]
 module-ai = []
 # 私有化部署模式（进程内 trait 调用）
 private-deployment = []

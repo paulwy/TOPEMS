@@ -6,6 +6,7 @@ authors.workspace = true
 description = "TOPEMS shared service client library - typed HTTP clients for inter-service communication"
 
 [dependencies]
+topems-shared-auth = { path = "../shared-auth" }
 topems-shared-core = { path = "../shared-core" }
 topems-shared-event = { path = "../shared-event" }
 topems-shared-observability = { workspace = true }

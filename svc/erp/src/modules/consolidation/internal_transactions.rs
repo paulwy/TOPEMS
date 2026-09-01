@@ -29,7 +29,7 @@ pub async fn list_internal_transactions(
 
     let result = sqlx::query_as::<_, InternalTransaction>(
         r#"
-        SELECT * FROM plugin_erp.internal_transactions
+        SELECT * FROM erp.internal_transactions
         WHERE ($1::text IS NULL OR period >= $1)
           AND ($2::text IS NULL OR period <= $2)
         ORDER BY transaction_date DESC
@@ -47,7 +47,7 @@ pub async fn list_internal_transactions(
         Ok(transactions) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_erp.internal_transactions
+                SELECT COUNT(*) FROM erp.internal_transactions
                 WHERE ($1::text IS NULL OR period >= $1)
                   AND ($2::text IS NULL OR period <= $2)
                 "#,
@@ -83,7 +83,7 @@ pub async fn get_internal_transaction(
     Path(transaction_id): Path<Uuid>,
 ) -> Json<ApiResponse<InternalTransaction>> {
     match sqlx::query_as::<_, InternalTransaction>(
-        "SELECT * FROM plugin_erp.internal_transactions WHERE id = $1",
+        "SELECT * FROM erp.internal_transactions WHERE id = $1",
     )
     .bind(transaction_id)
     .fetch_optional(&state.db)
@@ -112,7 +112,7 @@ pub async fn execute_elimination(
 ) -> Json<ApiResponse<EliminationResult>> {
     let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
         sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM plugin_erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
+            "SELECT * FROM erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(&rule_ids)
         .bind(req.scope_id)
@@ -121,7 +121,7 @@ pub async fn execute_elimination(
         .unwrap_or_default()
     } else {
         sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM plugin_erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
+            "SELECT * FROM erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(req.scope_id)
         .fetch_all(&state.db)
@@ -136,7 +136,7 @@ pub async fn execute_elimination(
     for rule in &rules {
         let transactions: Vec<InternalTransaction> = sqlx::query_as::<_, InternalTransaction>(
             r#"
-            SELECT * FROM plugin_erp.internal_transactions
+            SELECT * FROM erp.internal_transactions
             WHERE elimination_status = 'pending'
               AND period = $1
             "#,
@@ -157,7 +157,7 @@ pub async fn execute_elimination(
         for tx in &transactions {
             sqlx::query(
                 r#"
-                UPDATE plugin_erp.internal_transactions
+                UPDATE erp.internal_transactions
                 SET elimination_status = 'eliminated', eliminated_amount = amount
                 WHERE id = $1
                 "#,

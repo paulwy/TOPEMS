@@ -82,3 +82,25 @@
 - **查询断裂风险**：`query!`/`query_as!` 在线编译依赖 search_path 解析——必须与"服务 build 时 set search_path"协同，按服务逐个迁移、逐批编译验证，不做一次性全量 `ALTER`。
 - **外键跨 schema**：若 public 表之间存在跨目标 schema 的外键（如 `core_finance_*` ↔ `finance`），PostgreSQL 允许跨 schema 外键，但会削弱物理拆分能力；建议归位时一并收敛。
 - **迁移可回退**：`ALTER TABLE SET SCHEMA` 可逆（迁回 public 即可）；执行前保留 `pg_dump -Fc` 全量备份。
+
+---
+
+## 7. 阶段 0 执行完成记录（2026-08-31）
+
+> 待确认项 A-E 已全部执行落地（提交记录见 TODO.md）。物理库维持不拆分（29MB/457 表未达阈值）。
+
+| 项 | 完成 | 提交 | 说明 |
+|---|---|---|---|
+| A qa 域两分 | ✅ | 4afa40cc6 | qa_lab_*→lims（12）；qa_ehs_*→**ehs**（~50，超原 A 项范围，EHS 域）；质量体系 qa_*→qms；78 张处理；ehs 测试加 search_path |
+| B core_finance_* 剥离 | ✅ | ed6828def | 3 张 SET SCHEMA + 10 张同名归档（旧版数据保留 _archive_*） |
+| B 子项 core_master_data_* | ✅ | 5c5eda8fe | 建 master_data schema + 5 张 SET SCHEMA（空表）；shared-db 默认表名加 master_data.* 前缀 |
+| C material_* → mes | ✅ | 419a6d620 | 2 张 SET SCHEMA + 6 张同名归档 |
+| D 跨域同步表 | ✅ | f1b298ed8 | 7 张归档（bi/integration/ehs/lims/qms 同名真相） |
+| E plugin_* 残留清理 | ✅ | 多提交 | 全库 plugin_* SQL 引用清零 |
+
+**阶段 0 结果**：public 410→400（活跃 299 + 归档 _archive_* 101，数据保留）；全量门禁 PASS；workspace 编译通过。
+
+**遗留（下一轮候选）**：
+1. `_archive_*` 101 张归档表确认无引用后清理；
+2. core_crm_*/core_erp_*/core_hrm_* 等 core_* 业务表仍留 public（报告 B 项按"平台级"保留），后续可评估归位至各自业务域；
+3. lims/qms 测试 qa_* 用例 `#[ignore]`（requires PostgreSQL），启用前需加 search_path。

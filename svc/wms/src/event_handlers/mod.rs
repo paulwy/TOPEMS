@@ -381,7 +381,7 @@ async fn store_po_snapshot(
 ) {
     let now = chrono::Utc::now();
     let result = sqlx::query(
-        r#"INSERT INTO plugin_wms.purchase_order_snapshots
+        r#"INSERT INTO wms.purchase_order_snapshots
            (id, order_number, supplier_id, supplier_name, total_amount, payable_amount,
             status, approved_by, approved_at, synced_at, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)

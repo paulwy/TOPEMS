@@ -8,6 +8,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPool, Row};
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -92,11 +93,11 @@ async fn sync_supplier_from_scm(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let scm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM srm.scm_supplier_snapshots
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#,
+        "#),
     )
     .bind(supplier_id)
     .bind(tenant_id)
@@ -133,9 +134,10 @@ async fn sync_supplier_from_scm(
         }
     };
 
-    let existing_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
-    )
+    let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2"
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -150,15 +152,16 @@ async fn sync_supplier_from_scm(
     };
 
     if existing_count > 0 {
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "srm",
             r#"
-            UPDATE plugin_srm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
+            UPDATE suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                            phone = $5, email = $6, address = $7, 
                                            tax_id = $8, status = $9, sync_from_scm = TRUE,
                                            scm_supplier_id = $10, updated_at = $11
             WHERE id = $1 AND tenant_id = $12
-            "#,
-        )
+            "#
+        ))
         .bind(id)
         .bind(&name)
         .bind(short_name)
@@ -209,13 +212,13 @@ async fn sync_supplier_from_scm(
         }
     } else {
         let result = sqlx::query(
-            r#"
-            INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
+            only_own_schema_query!("srm", r#"
+            INSERT INTO suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                phone, email, address, tax_id, status, 
                                                risk_level, sync_from_scm, scm_supplier_id,
                                                created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
-            "#,
+            "#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -286,11 +289,11 @@ async fn sync_all_suppliers_from_scm(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let scm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM srm.scm_supplier_snapshots
         WHERE tenant_id = $1 AND status != 'deleted'
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -323,24 +326,26 @@ async fn sync_all_suppliers_from_scm(
         status,
     ) in scm_suppliers
     {
-        let existing = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
-        )
+        let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "srm",
+            "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_one(&state.db)
         .await;
 
         if existing.unwrap_or(0) > 0 {
-            let result = sqlx::query(
+            let result = sqlx::query(only_own_schema_query!(
+                "srm",
                 r#"
-                UPDATE plugin_srm.suppliers SET name = $2, legal_name = $3, contact_person = $4, 
+                UPDATE suppliers SET name = $2, legal_name = $3, contact_person = $4, 
                                                phone = $5, email = $6, address = $7, 
                                                tax_id = $8, status = $9, sync_from_scm = TRUE,
                                                scm_supplier_id = $10, updated_at = $11
                 WHERE id = $1 AND tenant_id = $12
-                "#,
-            )
+                "#
+            ))
             .bind(id)
             .bind(&name)
             .bind(short_name)
@@ -363,13 +368,13 @@ async fn sync_all_suppliers_from_scm(
             }
         } else {
             let result = sqlx::query(
-                r#"
-                INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
+                only_own_schema_query!("srm", r#"
+                INSERT INTO suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                    phone, email, address, tax_id, status, 
                                                    risk_level, sync_from_scm, scm_supplier_id,
                                                    created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
-                "#,
+                "#),
             )
             .bind(id)
             .bind(tenant_id)
@@ -448,13 +453,14 @@ async fn sync_supplier_to_scm(
             Option<String>,
             String,
         ),
-    >(
+    >(only_own_schema_query!(
+        "srm",
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
-        FROM plugin_srm.suppliers
+        FROM suppliers
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#,
-    )
+        "#
+    ))
     .bind(supplier_id)
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -601,13 +607,14 @@ async fn sync_all_suppliers_to_scm(
             Option<String>,
             String,
         ),
-    >(
+    >(only_own_schema_query!(
+        "srm",
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
-        FROM plugin_srm.suppliers
+        FROM suppliers
         WHERE tenant_id = $1 AND status != 'deleted'
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
@@ -694,7 +701,8 @@ async fn get_sync_logs(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "srm",
         r#"
         SELECT id, tenant_id, sync_type, source_module, target_module, source_entity,
                source_id, source_code, target_id, target_code, operation, status,
@@ -706,8 +714,8 @@ async fn get_sync_logs(
           AND ($4::text IS NULL OR source_module = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(&req.sync_type)
     .bind(&req.status)
@@ -769,15 +777,16 @@ async fn record_sync_log(
     status: &str,
     error_message: Option<String>,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "srm",
         r#"
         INSERT INTO unified_core.inter_module_sync 
             (tenant_id, sync_type, source_module, target_module, source_entity,
              source_id, source_code, target_id, target_code, operation, status,
              error_message, executed_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(sync_type)
     .bind(source_module)

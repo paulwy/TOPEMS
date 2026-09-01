@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {
+      "id": "erp-service",
+      "name": "erp-service",
+      "category": "调用方服务",
+      "symbolSize": 34
+    },
+    {
+      "id": "wms-service",
+      "name": "wms-service",
+      "category": "被调用平台服务",
+      "symbolSize": 34
+    }
+  ],
+  "links": [
+    {
+      "source": "erp-service",
+      "target": "wms-service",
+      "value": 5,
+      "lineStyle": {
+        "width": 6
+      },
+      "sourceFlag": "runtime"
+    }
+  ],
+  "categories": [
+    {
+      "name": "调用方服务"
+    },
+    {
+      "name": "被调用平台服务"
+    },
+    {
+      "name": "模块化单体模块"
+    }
+  ]
+}

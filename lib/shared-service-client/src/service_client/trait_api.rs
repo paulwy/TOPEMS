@@ -29,6 +29,7 @@
 use super::base_client::BaseServiceClient;
 use super::error::ServiceClientResult;
 use serde::{de::DeserializeOwned, Serialize};
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -167,6 +168,41 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
         self.inner.set_auth_token(token);
         self
+    }
+
+    /// 服务间认证：用共享 JWT 密钥签发服务身份 token（最小权限 + 短时效）并设置。
+    ///
+    /// 替代转发前端用户 token（前端用户通常缺少目标服务内部权限 → 401 降级）。
+    /// 各服务经 `AuthState::from_env()` 读取同一 `JWT_SECRET`，签发方与验证方密钥天然一致。
+    ///
+    /// - `jwt_secret`: 调用方 `auth_state.jwt_secret`（或 `std::env::var("JWT_SECRET")`）。
+    /// - `service_name`: 调用方服务名（如 `"erp-service"`），用于审计日志。
+    /// - `permissions`: 目标服务所需最小权限（如 `&["hrm:admin"]`）。
+    ///
+    /// ```ignore
+    /// let client = TypedServiceClient::<HrmApi>::from_env_default()?
+    ///     .with_service_token(&jwt_secret, "erp-service", &["hrm:admin"])?;
+    /// ```
+    pub fn with_service_token(
+        mut self,
+        jwt_secret: &str,
+        service_name: &str,
+        permissions: &[&str],
+    ) -> Result<Self, TopemsError> {
+        self.set_service_token(jwt_secret, service_name, permissions)?;
+        Ok(self)
+    }
+
+    /// 同 [`TypedServiceClient::with_service_token`]，就地设置（`&mut self` 版本）。
+    pub fn set_service_token(
+        &mut self,
+        jwt_secret: &str,
+        service_name: &str,
+        permissions: &[&str],
+    ) -> Result<(), TopemsError> {
+        let token = issue_service_token(jwt_secret, service_name, permissions, None)?;
+        self.inner.set_auth_token(token);
+        Ok(())
     }
 
     /// 添加自定义 header。

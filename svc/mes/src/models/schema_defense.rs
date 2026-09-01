@@ -5,24 +5,25 @@
 
 pub const SERVICE_SCHEMA: &str = "mes";
 
-/// mes 10 张表的列定义单一事实源。不含 id 列（verify 自动拼）。
+/// mes 10 张表的列定义单一事实源。不含 id 列（verify 自动拼）。。不含 id 列（verify 自动拼）。
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "audit_logs",
         &[
-            ("organization_id", "UUID NOT NULL"),
-            ("user_id", "UUID"),
-            ("action", "VARCHAR(100) NOT NULL"),
-            ("resource", "VARCHAR(100) NOT NULL"),
-            ("resource_id", "UUID"),
-            ("old_values", "JSONB"),
-            ("new_values", "JSONB"),
-            ("ip_address", "INET"),
-            ("user_agent", "TEXT"),
-            ("details", "JSONB"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("tenant_id", "UUID"),
-            ("deleted_at", "TIMESTAMPTZ"),
+            ("action", "VARCHAR(128) NOT NULL"),
+            ("entity_type", "VARCHAR(64) NOT NULL"),
+            ("entity_id", "UUID"),
+            ("entity_ids", "JSONB"),
+            ("user_id", "UUID"),
+            ("user_name", "VARCHAR(256)"),
+            ("request_details", "JSONB"),
+            ("response_details", "JSONB"),
+            ("status", "VARCHAR(32) NOT NULL DEFAULT 'success'"),
+            ("error_message", "TEXT"),
+            ("ip_address", "VARCHAR(64)"),
+            ("user_agent", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
     (

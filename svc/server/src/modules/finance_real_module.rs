@@ -64,7 +64,8 @@ impl FinanceRealModule {
         }
 
         // 3. 工作流服务客户端
-        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        let jwt_secret = ctx.auth_state.jwt_secret.clone();
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().and_then(|c| c.with_service_token(&jwt_secret, "finance-module", &["workflow:read"]))
             .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
 
         // 4. 构建业务 AppState

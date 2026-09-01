@@ -14,6 +14,9 @@ use topems_shared_core::{
     response::{api_error, ApiResponse},
 };
 
+use crate::middleware::service_identity::ServiceIdentity;
+use crate::service::{is_service_claims, record_service_call};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
@@ -591,6 +594,8 @@ fn is_public_path(path: &str) -> bool {
         || path.starts_with("/api/integration/webhooks")
         || path.starts_with("/api/v1/core/iam/auth/")
         || path.starts_with("/api/v1/integration/webhooks")
+        // 服务间内部集成端点（仅内网可达；供 integration 等服务编排调用，须与网关/反代配合限制公网暴露）
+        || path.starts_with("/api/internal/")
 }
 
 fn is_websocket_path(path: &str) -> bool {
@@ -642,14 +647,14 @@ pub async fn auth_middleware(
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    let path = req.uri().path();
-    let method = req.method().as_str();
+    let path = req.uri().path().to_string();
+    let method = req.method().as_str().to_string();
 
-    if is_public_path(path) {
+    if is_public_path(&path) {
         return next.run(req).await;
     }
 
-    if is_websocket_path(path) {
+    if is_websocket_path(&path) {
         let is_websocket_upgrade = req
             .headers()
             .get(header::UPGRADE)
@@ -661,7 +666,7 @@ pub async fn auth_middleware(
         }
     }
 
-    if is_plugin_public_path(path, method) {
+    if is_plugin_public_path(&path, &method) {
         return next.run(req).await;
     }
 
@@ -722,6 +727,23 @@ pub async fn auth_middleware(
     } else {
         return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
     };
+
+    // 服务身份识别（service-to-service）：打审计日志并注入 ServiceIdentity，
+    // 供下游（require_permission / RLS / 处理器）区分服务调用与真实用户调用。
+    if is_service_claims(&claims) {
+        tracing::info!(
+            service = %claims.username,
+            method = %method,
+            path = %path,
+            "服务间调用（service-to-service）"
+        );
+        // 服务间调用可观测性：Prometheus 计数（service 维度），/metrics 暴露
+        record_service_call(&claims.username);
+        parts.extensions.insert(ServiceIdentity {
+            service_name: claims.username.clone(),
+            permissions: claims.permissions.clone(),
+        });
+    }
 
     parts.extensions.insert(claims);
     let req = Request::from_parts(parts, body);

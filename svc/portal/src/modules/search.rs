@@ -18,12 +18,29 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::service::record_service_degrade;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
 
 /// 统一的服务地址解析 helper：优先环境变量，否则使用权威默认端口，
 /// 并输出结构化端口排查日志（target: portal::search）。
+/// 搜索源降级判定 + 指标/告警上报。
+///
+/// 仅对"下游不可用"型错误（5xx / 网络/连接错误）上报降级告警；
+/// 401/403（权限不足）是可预期降级（service token 权限配置问题），仅 warn 不上报。
+fn record_search_degrade(service: &str, e: &TopemsError) {
+    let degraded = match e {
+        TopemsError::ServiceError { status_code, .. } => *status_code >= 500,
+        TopemsError::HttpRequest(_) => true,
+        _ => false,
+    };
+    if degraded {
+        record_service_degrade(service, &e.to_string());
+    }
+}
+
 fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &str) -> String {
     match std::env::var(env_var) {
         Ok(v) if !v.is_empty() => {
@@ -49,10 +66,6 @@ fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &st
     }
 }
 
-const DEFAULT_CRM_URL: &str = "http://localhost:8029";
-const DEFAULT_BI_URL: &str = "http://localhost:8060";
-const DEFAULT_DOC_URL: &str = "http://localhost:8000";
-const DEFAULT_ERP_URL: &str = "http://localhost:8010";
 
 #[derive(Serialize, Deserialize)]
 pub struct SearchResult {
@@ -117,20 +130,12 @@ pub async fn global_search(
     let token = extract_bearer_token(&headers);
 
     let (
-        erp_results,
-        crm_results,
-        bi_results,
         notif_results,
-        doc_results,
         hrm_results,
         workflow_results,
         mes_results,
     ) = tokio::join!(
-        search_erp(&state, &query, token.as_deref()),
-        search_crm(&state, &query, token.as_deref()),
-        search_bi(&state, &query, token.as_deref()),
         search_notifications(&state, &query, token.as_deref()),
-        search_documents(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),
         search_mes_production_orders(&state, &query, token.as_deref()),
@@ -145,11 +150,7 @@ pub async fn global_search(
         let _ = svc_name;
     };
 
-    add_results("erp", "ERP系统", erp_results);
-    add_results("crm", "客户管理", crm_results);
-    add_results("bi", "商业智能", bi_results);
     add_results("notification", "通知中心", notif_results);
-    add_results("doc", "文档中心", doc_results);
     add_results("hrm", "人力资源", hrm_results);
     add_results("workflow", "审批中心", workflow_results);
     add_results("mes", "生产制造", mes_results);
@@ -189,31 +190,19 @@ pub async fn search_suggestions(
     let token = extract_bearer_token(&headers);
 
     let (
-        erp_results,
-        crm_results,
-        bi_results,
         notif_results,
-        doc_results,
         hrm_results,
         workflow_results,
         mes_results,
     ) = tokio::join!(
-        search_erp(&state, &query, token.as_deref()),
-        search_crm(&state, &query, token.as_deref()),
-        search_bi(&state, &query, token.as_deref()),
         search_notifications(&state, &query, token.as_deref()),
-        search_documents(&state, &query, token.as_deref()),
         search_hrm_employees(&state, &query, token.as_deref()),
         search_workflow_instances(&state, &query, token.as_deref()),
         search_mes_production_orders(&state, &query, token.as_deref()),
     );
 
     let mut all_titles = Vec::new();
-    all_titles.extend(erp_results.into_iter().map(|r| r.title));
-    all_titles.extend(crm_results.into_iter().map(|r| r.title));
-    all_titles.extend(bi_results.into_iter().map(|r| r.title));
     all_titles.extend(notif_results.into_iter().map(|r| r.title));
-    all_titles.extend(doc_results.into_iter().map(|r| r.title));
     all_titles.extend(hrm_results.into_iter().map(|r| r.title));
     all_titles.extend(workflow_results.into_iter().map(|r| r.title));
     all_titles.extend(mes_results.into_iter().map(|r| r.title));
@@ -227,71 +216,6 @@ pub async fn search_suggestions(
         },
         "搜索建议获取成功",
     ))
-}
-
-async fn search_erp(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let url = format!("{}/api/erp/search", erp_base_url());
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "erp", "ERP系统", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse ERP search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("ERP search failed: {}", e);
-            vec![]
-        }
-    }
-}
-
-async fn search_crm(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("CRM_SERVICE_URL", DEFAULT_CRM_URL, "CRM");
-    let url = format!("{}/api/crm/search", base);
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "crm", "客户管理", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse CRM search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("CRM search failed: {}", e);
-            vec![]
-        }
-    }
-}
-
-async fn search_bi(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("BI_SERVICE_URL", DEFAULT_BI_URL, "BI");
-    let url = format!("{}/api/bi/search", base);
-    let mut req = state.http_client.get(&url).query(&[("q", query)]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "bi", "商业智能", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse BI search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("BI search failed: {}", e);
-            vec![]
-        }
-    }
 }
 
 async fn search_notifications(
@@ -338,33 +262,8 @@ async fn search_notifications(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("notification", &e);
             tracing::warn!("Notification search failed: {}", e);
-            vec![]
-        }
-    }
-}
-
-async fn search_documents(state: &AppState, query: &str, token: Option<&str>) -> Vec<SearchResult> {
-    let base = resolve_service_url("DOC_SERVICE_URL", DEFAULT_DOC_URL, "DOC");
-    let url = format!("{}/api/doc/search", base);
-    let mut req =
-        state
-            .http_client
-            .get(&url)
-            .query(&[("q", query), ("page", "1"), ("pagesize", "10")]);
-    if let Some(t) = token {
-        req = req.bearer_auth(t);
-    }
-    match req.send().await {
-        Ok(resp) => match resp.json::<serde_json::Value>().await {
-            Ok(json) => parse_search_results(&json, "doc", "文档中心", query),
-            Err(e) => {
-                tracing::warn!("Failed to parse doc search response: {}", e);
-                vec![]
-            }
-        },
-        Err(e) => {
-            tracing::warn!("Doc search failed: {}", e);
             vec![]
         }
     }
@@ -406,6 +305,7 @@ async fn search_hrm_employees(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("hrm", &e);
             tracing::warn!("HRM employee search failed: {}", e);
             vec![]
         }
@@ -447,6 +347,7 @@ async fn search_workflow_instances(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("workflow", &e);
             tracing::warn!("Workflow instance search failed: {}", e);
             vec![]
         }
@@ -517,6 +418,7 @@ async fn search_mes_production_orders(
                 .collect()
         }
         Err(e) => {
+            record_search_degrade("mes", &e);
             tracing::warn!("MES production order search failed: {}", e);
             vec![]
         }
@@ -600,10 +502,6 @@ fn parse_search_results(
         })
         .take(10)
         .collect()
-}
-
-fn erp_base_url() -> String {
-    resolve_service_url("ERP_SERVICE_URL", DEFAULT_ERP_URL, "ERP")
 }
 
 #[cfg(test)]

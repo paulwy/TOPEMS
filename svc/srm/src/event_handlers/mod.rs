@@ -78,7 +78,7 @@ impl SrmEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO plugin_srm_inquiries (inquiry_no, title, description, status, creator, tenant_id, created_at, updated_at)
+            "INSERT INTO srm.inquiries (inquiry_no, title, description, status, creator, tenant_id, created_at, updated_at)
              VALUES ($1, $2, $3, 'draft', $4, '00000000-0000-0000-0000-000000000000', $5, $6)
              RETURNING id",
         )
@@ -132,7 +132,7 @@ impl SrmEventHandlers {
         };
 
         let result = sqlx::query(
-            "UPDATE plugin_srm_suppliers SET credit_rating = $1, risk_level = $2, updated_at = $3 WHERE id = $4",
+            "UPDATE srm.suppliers SET credit_rating = $1, risk_level = $2, updated_at = $3 WHERE id = $4",
         )
         .bind(&grade_val)
         .bind(risk_level)
@@ -186,7 +186,7 @@ impl SrmEventHandlers {
 
         if let Some(supplier_id) = payload.supplier_id {
             let perf_count = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_srm_supplier_performance WHERE supplier_id = $1",
+                "SELECT COUNT(*) FROM srm.supplier_performance WHERE supplier_id = $1",
             )
             .bind(supplier_id)
             .fetch_one(&self.db)
@@ -194,11 +194,11 @@ impl SrmEventHandlers {
             .unwrap_or(0);
 
             let result = sqlx::query(
-                "INSERT INTO plugin_srm_supplier_performance (supplier_id, order_count, total_amount, last_order_date, tenant_id, created_at, updated_at)
+                "INSERT INTO srm.supplier_performance (supplier_id, order_count, total_amount, last_order_date, tenant_id, created_at, updated_at)
                  VALUES ($1, 1, $2, $3, '00000000-0000-0000-0000-000000000000', $4, $4)
                  ON CONFLICT (supplier_id, tenant_id) DO UPDATE SET
-                     order_count = plugin_srm_supplier_performance.order_count + 1,
-                     total_amount = plugin_srm_supplier_performance.total_amount + EXCLUDED.total_amount,
+                     order_count = srm.supplier_performance.order_count + 1,
+                     total_amount = srm.supplier_performance.total_amount + EXCLUDED.total_amount,
                      last_order_date = EXCLUDED.last_order_date,
                      updated_at = EXCLUDED.updated_at",
             )
@@ -252,7 +252,7 @@ impl SrmEventHandlers {
         let now = Utc::now();
 
         let existing_srm_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+            "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2",
         )
         .bind(payload.supplier_id)
         .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
@@ -262,7 +262,7 @@ impl SrmEventHandlers {
 
         if existing_srm_count > 0 {
             sqlx::query(
-                r#"UPDATE plugin_srm.suppliers
+                r#"UPDATE suppliers
                     SET name = $2, legal_name = $3, contact_person = $4,
                         phone = $5, email = $6, address = $7,
                         tax_id = $8, status = $9, sync_from_scm = TRUE,
@@ -283,7 +283,7 @@ impl SrmEventHandlers {
             .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
             .execute(&self.db)
             .await
-            .map_err(|e| format!("更新 plugin_srm.suppliers 失败: {}", e))?;
+            .map_err(|e| format!("更新 suppliers 失败: {}", e))?;
         } else {
             let supplier_no = format!(
                 "SUP-{}",
@@ -296,7 +296,7 @@ impl SrmEventHandlers {
             );
 
             sqlx::query(
-                r#"INSERT INTO plugin_srm.suppliers
+                r#"INSERT INTO suppliers
                     (id, tenant_id, supplier_no, name, legal_name, contact_person,
                      phone, email, address, tax_id, status,
                      risk_level, sync_from_scm, scm_supplier_id,
@@ -319,7 +319,7 @@ impl SrmEventHandlers {
             .bind(now)
             .execute(&self.db)
             .await
-            .map_err(|e| format!("创建 plugin_srm.suppliers 失败: {}", e))?;
+            .map_err(|e| format!("创建 suppliers 失败: {}", e))?;
         }
 
         sqlx::query(

@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/qms",
         legacy_prefixes: &[],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -70,8 +71,10 @@ async fn main() -> anyhow::Result<()> {
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "qms-service", &["workflow:read"]))
+        .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     let api_state = AppState {
@@ -86,6 +89,9 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        // 服务间内部集成端点（仅内网可达）：挂载于 public 避免被 api_prefix nest 与鉴权链路
+        // 覆盖——不经过 auth_middleware / require_permission；路径保持 /api/internal/ 原样
+        .merge(modules::integration::integration_routes())
         .with_state(api_state.clone());
 
     // Protected routes（QMS create_routes 返回 Router<AppState>，最后 with_state 擦除类型）

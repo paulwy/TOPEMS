@@ -25,7 +25,7 @@ pub async fn list_company_relations(
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        SELECT * FROM plugin_erp.company_relations
+        SELECT * FROM erp.company_relations
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR parent_company_id = $1 OR child_company_id = $1)
           AND ($2::text IS NULL OR relation_type = $2)
           AND status = 'active'
@@ -57,7 +57,7 @@ pub async fn get_company_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
-        "SELECT * FROM plugin_erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
+        "SELECT * FROM erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
     )
     .fetch_all(&state.db)
     .await
@@ -108,7 +108,7 @@ pub async fn create_company_relation(
 
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        INSERT INTO plugin_erp.company_relations
+        INSERT INTO erp.company_relations
         (id, parent_company_id, child_company_id, relation_type, ownership_percentage, control_percentage, effective_date, expiry_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
@@ -153,7 +153,7 @@ pub async fn update_company_relation(
 ) -> Json<ApiResponse<CompanyRelation>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        UPDATE plugin_erp.company_relations
+        UPDATE erp.company_relations
         SET ownership_percentage = COALESCE($2, ownership_percentage),
             control_percentage = COALESCE($3, control_percentage),
             expiry_date = COALESCE($4, expiry_date),
@@ -207,7 +207,7 @@ pub async fn delete_company_relation(
     Path(relation_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("UPDATE plugin_erp.company_relations SET deleted_at = NOW() WHERE id = $1")
+    match sqlx::query("UPDATE erp.company_relations SET deleted_at = NOW() WHERE id = $1")
         .bind(relation_id)
         .execute(&state.db)
         .await

@@ -40,6 +40,7 @@ pub use event_types::{
     FinanceReceiptReceivedPayload, GisDataImportedPayload, GisGeofenceTriggeredPayload,
     GisLocationTrackedPayload, HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload,
     HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
+    HrmPayrollVoucherEntryPayload, HrmPayrollVoucherRequestedPayload,
     InboundOrderRequestedPayload, InventoryUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
     LimsInspectionResultSubmittedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     LimsSampleRegisteredPayload, MaterialConsumedPayload, OpportunityWonPayload,

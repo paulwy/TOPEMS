@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
@@ -8,6 +8,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::service::is_service_claims;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{CreateInstanceRequest, WorkflowInstance};
@@ -41,11 +43,20 @@ pub struct InstanceQueryParams {
 )]
 pub async fn list_instances(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+
+    // 用户维度可见性过滤：服务身份（sub 全 0 / role=service）豁免，返回全量；
+    // 普通用户仅可见「自己发起的」或「作为任务处理人参与（core_workflow_tasks.assignee_id）」的实例。
+    let user_uuid: Option<Uuid> = if is_service_claims(&claims) {
+        None
+    } else {
+        Uuid::parse_str(&claims.sub).ok()
+    };
 
     let search = params.search.clone().unwrap_or_default();
     let status = params.status.clone();
@@ -56,20 +67,50 @@ pub async fn list_instances(
     let workflow_uuid = workflow_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let total: i64 = if !has_filters {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0)
+        sqlx::query_scalar(
+            r#"SELECT COUNT(*) FROM core_workflow_instances
+               WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
+                   SELECT 1 FROM core_workflow_tasks t
+                   WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+               ) OR EXISTS (
+                   SELECT 1 FROM approvals a
+                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     AND (a.assignee_id = $1 OR a.approved_by = $1)
+               ) OR EXISTS (
+                   SELECT 1 FROM approval_records ar
+                   JOIN approvals a ON a.id = ar.approval_id
+                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                     AND ar.actor_id = $1 AND ar.deleted_at IS NULL
+               ))"#,
+        )
+        .bind(user_uuid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0)
     } else {
         match sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM core_workflow_instances 
+            r#"SELECT COUNT(*) FROM core_workflow_instances
                WHERE (title ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
-                 AND (workflow_id = $3 OR $3 IS NULL)"#,
+                 AND (workflow_id = $3 OR $3 IS NULL)
+                 AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
+                     SELECT 1 FROM core_workflow_tasks t
+                     WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                 ) OR EXISTS (
+                     SELECT 1 FROM approvals a
+                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                       AND (a.assignee_id = $4 OR a.approved_by = $4)
+                 ) OR EXISTS (
+                     SELECT 1 FROM approval_records ar
+                     JOIN approvals a ON a.id = ar.approval_id
+                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                       AND ar.actor_id = $4 AND ar.deleted_at IS NULL
+                 ))"#,
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
+        .bind(user_uuid)
         .fetch_one(&state.pool)
         .await
         {
@@ -83,8 +124,23 @@ pub async fn list_instances(
 
     let items: Vec<WorkflowInstance> = if !has_filters {
         match sqlx::query_as::<_, WorkflowInstance>(
-            "SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            r#"SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances
+               WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
+                   SELECT 1 FROM core_workflow_tasks t
+                   WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+               ) OR EXISTS (
+                   SELECT 1 FROM approvals a
+                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     AND (a.assignee_id = $1 OR a.approved_by = $1)
+               ) OR EXISTS (
+                   SELECT 1 FROM approval_records ar
+                   JOIN approvals a ON a.id = ar.approval_id
+                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                     AND ar.actor_id = $1 AND ar.deleted_at IS NULL
+               ))
+               ORDER BY created_at DESC LIMIT $2 OFFSET $3"#
         )
+        .bind(user_uuid)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
@@ -103,16 +159,30 @@ pub async fn list_instances(
             .and_then(|s| Uuid::parse_str(&s).ok());
 
         match sqlx::query_as::<_, WorkflowInstance>(
-            r#"SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at 
-               FROM core_workflow_instances 
+            r#"SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at
+               FROM core_workflow_instances
                WHERE (title ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
                  AND (workflow_id = $3 OR $3 IS NULL)
-               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#
+                 AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
+                     SELECT 1 FROM core_workflow_tasks t
+                     WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                 ) OR EXISTS (
+                     SELECT 1 FROM approvals a
+                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                       AND (a.assignee_id = $4 OR a.approved_by = $4)
+                 ) OR EXISTS (
+                     SELECT 1 FROM approval_records ar
+                     JOIN approvals a ON a.id = ar.approval_id
+                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                       AND ar.actor_id = $4 AND ar.deleted_at IS NULL
+                 ))
+               ORDER BY created_at DESC LIMIT $5 OFFSET $6"#
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
+        .bind(user_uuid)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
@@ -487,11 +557,12 @@ pub async fn get_instance_details(
 )]
 pub async fn error_instances(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
     let mut params = params;
     params.status = Some("error".to_string());
-    list_instances(State(state), Query(params)).await
+    list_instances(State(state), Extension(claims), Query(params)).await
 }
 
 #[utoipa::path(

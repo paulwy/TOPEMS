@@ -2,7 +2,8 @@
   "default_shared": [
     "public",
     "unified_core",
-    "information_schema"
+    "information_schema",
+    "core"
   ],
   "services": {
     "ai": {
@@ -16,8 +17,8 @@
       "allow": []
     },
     "communication": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "communication",
+      "search_path": "communication, public",
       "allow": []
     },
     "crm": {
@@ -47,19 +48,11 @@
     },
     "hrm": {
       "schema": "hrm",
-      "search_path": "hrm, public, shared",
-      "allow": [
-        "mobile",
-        "erp"
-      ]
+      "search_path": "hrm, public, shared"
     },
     "integration": {
       "schema": "integration",
-      "search_path": "integration, public",
-      "allow": [
-        "qms",
-        "lims"
-      ]
+      "search_path": "integration, public"
     },
     "lims": {
       "schema": "lims",
@@ -67,8 +60,8 @@
       "allow": []
     },
     "master-data": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "master_data",
+      "search_path": "master_data, public",
       "allow": []
     },
     "mes": {
@@ -92,8 +85,8 @@
       "allow": []
     },
     "plugin-registry": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "core",
+      "search_path": "core, public",
       "allow": []
     },
     "pm": {
@@ -132,8 +125,8 @@
       "allow": []
     },
     "ticket": {
-      "schema": "public",
-      "search_path": "public",
+      "schema": "ticket",
+      "search_path": "ticket, public",
       "allow": []
     },
     "tms": {
@@ -143,10 +136,7 @@
     },
     "unified-core": {
       "schema": "public",
-      "search_path": "public",
-      "allow": [
-        "portal"
-      ]
+      "search_path": "public"
     },
     "wms": {
       "schema": "wms",

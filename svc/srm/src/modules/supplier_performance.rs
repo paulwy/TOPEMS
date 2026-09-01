@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{SupplierEvaluation, SupplierPerformance};
@@ -99,7 +100,8 @@ async fn get_performance_reports(
     let min_score = params.min_score;
     let max_score = params.max_score;
 
-    let result = sqlx::query_as::<_, SupplierPerformance>(
+    let result = sqlx::query_as::<_, SupplierPerformance>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT 
             s.id as supplier_id,
@@ -115,13 +117,13 @@ async fn get_performance_reports(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT 
                 supplier_id,
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $1
               AND status != 'cancelled'
               AND ($6::timestamptz IS NULL OR created_at >= $6)
@@ -148,7 +150,7 @@ async fn get_performance_reports(
                         (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) 
                     ELSE NULL END, 2
                 ) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1
               AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
               AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
@@ -163,8 +165,8 @@ async fn get_performance_reports(
           AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
         ORDER BY e.avg_overall_score DESC NULLS LAST
         LIMIT $5 OFFSET $10
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&category_filter)
@@ -180,13 +182,14 @@ async fn get_performance_reports(
 
     match result {
         Ok(performances) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "srm",
                 r#"
                 SELECT COUNT(*)
-                FROM plugin_srm.suppliers s
+                FROM suppliers s
                 LEFT JOIN (
                     SELECT supplier_id, AVG(overall_score) as avg_overall_score
-                    FROM plugin_srm.supplier_evaluations
+                    FROM supplier_evaluations
                     WHERE tenant_id = $1
                       AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
                       AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
@@ -199,8 +202,8 @@ async fn get_performance_reports(
                   AND ($4::text IS NULL OR s.status = $4)
                   AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
                   AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
-                "#,
-            )
+                "#
+            ))
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&category_filter)
@@ -247,17 +250,19 @@ async fn get_performance_report(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let supplier_info = sqlx::query_as::<_, (String, String, String, String)>(
-        r#"
+    let supplier_info =
+        sqlx::query_as::<_, (String, String, String, String)>(only_own_schema_query!(
+            "srm",
+            r#"
         SELECT name, category, status, contact_person
-        FROM plugin_srm.suppliers
+        FROM suppliers
         WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
-        "#,
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .fetch_optional(&state.db)
-    .await;
+        "#
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&state.db)
+        .await;
 
     let (supplier_name, category, status, contact_person) = match supplier_info {
         Ok(Some(s)) => s,
@@ -276,7 +281,8 @@ async fn get_performance_report(
         }
     };
 
-    let performance = sqlx::query_as::<_, SupplierPerformance>(
+    let performance = sqlx::query_as::<_, SupplierPerformance>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT 
             s.id as supplier_id,
@@ -292,13 +298,13 @@ async fn get_performance_report(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT 
                 supplier_id,
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $2
               AND status != 'cancelled' AND supplier_id = $1
             GROUP BY supplier_id
@@ -323,13 +329,13 @@ async fn get_performance_report(
                         (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) 
                     ELSE NULL END, 2
                 ) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $2 AND supplier_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
         WHERE s.id = $1 AND s.tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&state.db)
@@ -353,13 +359,13 @@ async fn get_performance_report(
     };
 
     let evaluation_history = sqlx::query_as::<_, SupplierEvaluation>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_evaluations
+        FROM supplier_evaluations
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY evaluation_date DESC
         LIMIT 10
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -376,35 +382,38 @@ async fn get_performance_report(
             Option<DateTime<Utc>>,
             Option<f64>,
         ),
-    >(
+    >(only_own_schema_query!(
+        "srm",
         r#"
         SELECT contract_no, title, start_date, end_date, total_amount
-        FROM plugin_srm.supplier_contracts
+        FROM supplier_contracts
         WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
         ORDER BY start_date DESC
         LIMIT 5
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
 
-    let products = sqlx::query_as::<_, (String, String, Option<f64>, Option<i32>)>(
-        r#"
+    let products =
+        sqlx::query_as::<_, (String, String, Option<f64>, Option<i32>)>(only_own_schema_query!(
+            "srm",
+            r#"
         SELECT product_no, name, unit_price, min_order_qty
-        FROM plugin_srm.supplier_products
+        FROM supplier_products
         WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
         ORDER BY unit_price ASC
         LIMIT 10
-        "#,
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap_or_default();
+        "#
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_all(&state.db)
+        .await
+        .unwrap_or_default();
 
     let result = serde_json::json!({
         "supplier_info": {
@@ -470,13 +479,13 @@ async fn compare_supplier_performance(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT 
                 supplier_id,
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $1 AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
@@ -500,7 +509,7 @@ async fn compare_supplier_performance(
                         (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) 
                     ELSE NULL END, 2
                 ) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
@@ -586,7 +595,8 @@ async fn get_performance_trend(
             Option<f64>,
             i64,
         ),
-    >(
+    >(only_own_schema_query!(
+        "srm",
         r#"
         SELECT 
             TO_CHAR(evaluation_date, 'YYYY-MM') as month,
@@ -596,14 +606,14 @@ async fn get_performance_trend(
             AVG(price_score) as avg_price_score,
             AVG(overall_score) as avg_overall_score,
             COUNT(*) as evaluation_count
-        FROM plugin_srm.supplier_evaluations
+        FROM supplier_evaluations
         WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR supplier_id = $2)
           AND evaluation_date >= NOW() - INTERVAL $3
         GROUP BY TO_CHAR(evaluation_date, 'YYYY-MM')
         ORDER BY month
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(supplier_id)
     .bind(interval)
@@ -660,7 +670,7 @@ async fn get_top_suppliers(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let top_by_score = sqlx::query_as::<_, SupplierPerformance>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
             s.name as supplier_name,
@@ -675,10 +685,10 @@ async fn get_top_suppliers(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $1 AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
@@ -689,14 +699,14 @@ async fn get_top_suppliers(
                    COUNT(*) as evaluation_count,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
         WHERE s.tenant_id = $1 AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
         ORDER BY e.avg_overall_score DESC
         LIMIT 10
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -704,7 +714,7 @@ async fn get_top_suppliers(
     .unwrap_or_default();
 
     let top_by_orders = sqlx::query_as::<_, SupplierPerformance>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
             s.name as supplier_name,
@@ -719,10 +729,10 @@ async fn get_top_suppliers(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $1 AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
@@ -733,14 +743,14 @@ async fn get_top_suppliers(
                    COUNT(*) as evaluation_count,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
         WHERE s.tenant_id = $1 AND s.status = 'active'
         ORDER BY po.total_orders DESC NULLS LAST
         LIMIT 10
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -787,7 +797,7 @@ async fn export_performance_report(
     let max_score = params.max_score;
 
     let result = sqlx::query_as::<_, SupplierPerformance>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
             s.name as supplier_name,
@@ -802,10 +812,10 @@ async fn export_performance_report(
             COALESCE(e.defect_rate, NULL) as defect_rate,
             e.last_evaluation_date,
             COALESCE(e.evaluation_count, 0) as evaluation_count
-        FROM plugin_srm.suppliers s
+        FROM suppliers s
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-            FROM plugin_srm.purchase_orders
+            FROM purchase_orders
             WHERE tenant_id = $1
               AND status != 'cancelled'
               AND ($6::timestamptz IS NULL OR created_at >= $6)
@@ -819,7 +829,7 @@ async fn export_performance_report(
                    COUNT(*) as evaluation_count,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1
               AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
               AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
@@ -833,7 +843,7 @@ async fn export_performance_report(
           AND ($8::double precision IS NULL OR e.avg_overall_score >= $8)
           AND ($9::double precision IS NULL OR e.avg_overall_score <= $9)
         ORDER BY e.avg_overall_score DESC NULLS LAST
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -888,7 +898,8 @@ async fn get_score_level_distribution(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let distribution = sqlx::query_as::<_, (String, i64)>(
+    let distribution = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT 
             CASE 
@@ -901,14 +912,14 @@ async fn get_score_level_distribution(
             COUNT(*) as count
         FROM (
             SELECT supplier_id, AVG(overall_score) as avg_overall_score
-            FROM plugin_srm.supplier_evaluations
+            FROM supplier_evaluations
             WHERE tenant_id = $1 AND overall_score IS NOT NULL
             GROUP BY supplier_id
         ) s
         GROUP BY level
         ORDER BY level
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .fetch_all(&state.db)
     .await
@@ -959,16 +970,17 @@ async fn get_performance_summary(
 
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let total_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status != 'deleted'",
-    )
+    let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM suppliers WHERE tenant_id = $1 AND status != 'deleted'"
+    ))
     .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let evaluated_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+        only_own_schema_query!("srm", "SELECT COUNT(DISTINCT supplier_id) FROM supplier_evaluations WHERE tenant_id = $1"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -976,7 +988,7 @@ async fn get_performance_summary(
     .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL",
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL"),
     )
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -984,48 +996,51 @@ async fn get_performance_summary(
     .unwrap_or(None)
     .unwrap_or(0.0);
 
-    let top_supplier = sqlx::query_as::<_, (String, f64)>(
+    let top_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT s.name, AVG(e.overall_score) as avg_score
-        FROM plugin_srm.supplier_evaluations e
-        JOIN plugin_srm.suppliers s ON e.supplier_id = s.id
+        FROM supplier_evaluations e
+        JOIN suppliers s ON e.supplier_id = s.id
         WHERE e.tenant_id = $1 AND e.overall_score IS NOT NULL
         GROUP BY s.name
         ORDER BY avg_score DESC
         LIMIT 1
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
 
-    let bottom_supplier = sqlx::query_as::<_, (String, f64)>(
+    let bottom_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT s.name, AVG(e.overall_score) as avg_score
-        FROM plugin_srm.supplier_evaluations e
-        JOIN plugin_srm.suppliers s ON e.supplier_id = s.id
+        FROM supplier_evaluations e
+        JOIN suppliers s ON e.supplier_id = s.id
         WHERE e.tenant_id = $1 AND e.overall_score IS NOT NULL
         GROUP BY s.name
         ORDER BY avg_score ASC
         LIMIT 1
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
 
-    let category_scores = sqlx::query_as::<_, (String, f64, i64)>(
+    let category_scores = sqlx::query_as::<_, (String, f64, i64)>(only_own_schema_query!(
+        "srm",
         r#"
         SELECT s.category, AVG(e.overall_score) as avg_score, COUNT(DISTINCT s.id) as supplier_count
-        FROM plugin_srm.suppliers s
-        LEFT JOIN plugin_srm.supplier_evaluations e ON s.id = e.supplier_id
+        FROM suppliers s
+        LEFT JOIN supplier_evaluations e ON s.id = e.supplier_id
         WHERE s.tenant_id = $1 AND s.status != 'deleted' AND e.overall_score IS NOT NULL
         GROUP BY s.category
         ORDER BY avg_score DESC
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .fetch_all(&state.db)
     .await

@@ -1,6 +1,6 @@
 # TopEMS 数据库物理拆分预案（P1-2）
 
-> **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** · **日期**：2026-08-31 · **归属待办**：P1-2（物理库拆分预案）
+> **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** + **拆分前置治理完成（2026-09-01，前置条件 #1 #2 #3 全部闭环）** · **日期**：2026-08-31（更新 2026-09-01） · **归属待办**：P1-2（物理库拆分预案）
 > **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）** · `TODO.md`（阶段 0 执行记录）
 
 ## 1. 现状基线（2026-08-31，阶段 0 执行后重测）
@@ -42,15 +42,15 @@
 
 ## 2. 拆分触发阈值（达到任一即启动评估）
 
-| 阈值指标 | 当前值（阶段 0 后） | 触发值（建议） | 度量方式 |
+| 阈值指标 | 当前值（2026-08-31 实测） | 触发值（建议） | 度量方式 |
 |---|---|---|---|
-| 数据库总大小 | **~31 MB** | **> 200 GB** | `pg_database_size` |
-| 最大业务 schema 表数 | **finance 58** | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
-| 活跃连接峰值（经 PgBouncer） | 未达压力 | **> 400** 持续 10 分钟 | PgBouncer stats |
-| 跨 schema 查询占比 | 低（public 聚合已消除） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
-| 备份/恢复时间 | 秒级 | **> 15 分钟** | RPO/RTO 实测 |
+| 数据库总大小 | **96 MB**（2026-08-31 实测，阶段 0 后 31MB→现 96MB） | **> 200 GB** | `pg_database_size` |
+| 最大业务 schema 表数 | **public 262** / portal 120（独立服务） | **> 600 张** 或 schema 内单表 > 20GB | `pg_class` + 行数 |
+| 活跃连接峰值（经 PgBouncer） | 开发单实例未压测 | **> 400** 持续 10 分钟 | PgBouncer stats |
+| 跨 schema 查询占比 | 低（业务服务跨 schema 直读已清零，仅 4 项设计性 allow） | **> 30%** 查询跨 3+ schema | `pg_stat_statements` |
+| 备份/恢复时间 | 秒级（整库 dump ~4MB） | **> 15 分钟** | RPO/RTO 实测 |
 
-> 结论：当前 ~31MB / 449 表 / 最大 schema 58 张，远未达到物理拆分阈值，**不建议现在执行物理拆分**；阶段 1（逻辑隔离）已完成第一轮落地（门禁增强+基线显式化，见 §3）。
+> **2026-08-31 阈值评估结论**：5 项阈值均未触发（DB 96MB vs 200GB、最大 schema 262 vs 600、跨 schema 直读清零、连接/备份无压力），**物理拆分不启动**，维持"阈值触发式"预案；待规模增长达任一阈值后再评估（见 §3 阶段 2）。阶段 1（逻辑隔离）已落地（门禁增强+基线显式化，见 §3）。
 
 ## 3. 分阶段迁移路径
 
@@ -70,20 +70,50 @@
   3. **存量显式化 + 增量阻断**：17 项既有无前缀跨 schema 引用入 `bare_ref_baseline`（输出"已知基线"不阻塞，标注处理建议）；**新增**无前缀跨 schema 直读/显式未授权引用 → 门禁 FAIL。已负向验证（master-data 新增 `FROM production_orders` → FAIL）。
   4. **修复检查工具别名误报**：`extract_schema_refs` 排除本 SQL 已声明的表别名（如 mes `FROM bom_items bi` 的 `bi.*` 不再误判为 bi schema）。
   5. **unified-core 显式跨 schema 只读** `portal.user_preferences` 入 allow（声明合法跨读）。
-- **已知基线（17 项，待逐项确认"改走 API"或"维持声明"）**：ai/analytics/users(iam)、communication→gis 3 项、finance→pm/erp 4 项、hrm→erp 2 项、monitor→hrm/wms/pm 4 项、unified-core audit_logs(同名多 schema)/users。
-- **待办（阶段 1 后续）**：17 项基线逐项治理（跨域只读改走服务 API 或集成事件）；同名多 schema 表（audit_logs 等 16 张）收敛去重。
+- **已知基线（17 项）✅ 已全部治理确认（2026-08-31）**：
+  - communication→gis 3 项：✅ 已改走 gis HTTP API（历史完成）。
+  - finance→pm/erp 4 项 / hrm→erp 2 项 / monitor→hrm/wms/pm 4 项 / ai/analytics→users：✅ 逐项代码核查**无 SQL 直读残留**（已改走 API 或本无直读）；erp→finance 直读本轮已改走 finance API（见 TODO 2026-08-31）。
+  - unified-core audit_logs(同名多 schema)/users：✅ 维持声明——audit_logs 各业务 schema 自有（审计表设计如此，门禁 ambiguous 声明不阻塞）；users 平台契约保留 public。
+- **同名多 schema 表（audit_logs 等 14 张）**：各服务自有同名表（audit_logs 18 个 schema 中 17 空 + shared 主表 345 行，代码按 search_path/显式前缀解析本服务表），门禁 `ambiguous` 声明不阻塞；**设计合理，无需物理收敛**，仅保持显式前缀规范。
+- **待办（阶段 1 后续）**：已全部完成（17 项基线治理 + 同名多 schema 声明）；剩余为阶段 2 物理拆分（触发阈值达成后再做）。
+
+### 剩余跨域白名单复核（2026-08-31）
+
+当前 `schema_boundary.json` 仅 3 项 `allow` + 1 项白名单外合法引用，逐项代码核查：
+
+| 白名单 | 引用位置 | 性质 | 复核结论 |
+|---|---|---|---|
+| ~~`hrm.allow=['mobile']`~~（已撤销） | svc/hrm/src/modules/attendance.rs | ~~历史考勤数据迁移只读~~ → **2026-08-31 已清理**：user_id 分支改走 `hrm.employees` 映射 → `hrm.attendance_records`，mobile 直读清除；`mobile.mobile_attendance` 0 行无影响 | ✅ **已治理**（allow 撤销，hrm 引用 226 无违规，292 测试通过） |
+| `integration.allow=['qms','lims']` | svc/integration/src/qms_lims_ehs.rs | 集成编排事务**直写**（INSERT/UPDATE，经 `only_own_schema_query` 宏显式声明） | ✅ **成立**：跨域编排必须直写目标 schema 保证事务原子性，走 API 会破坏原子性；宏显式声明合规。 |
+| `unified-core.allow=['portal']` | svc/unified-core/src/modules/iam/user/profile.rs | IAM 只读用户偏好（SELECT portal.user_preferences，notification_settings/shortcuts/language/timezone） | ✅ **成立**：用户偏好归 portal schema，unified-core 作为 IAM 平台核心只读消费，设计合理。 |
+| ~~`shared-ai→hrm.vectors`~~（已治理） | lib/shared-ai/src/vector_store.rs | ~~AI 向量读写 hrm.vectors~~ → **2026-08-31 已迁移**：`hrm.vectors → ai.vectors`（迁移 20260831190900，数据 0 行，DROP 旧表）；引用仅 shared-ai 5 处，ai 服务边界 schema=ai 自有合法 | ✅ **已治理**（ai.vectors 自有 schema，门禁 ai PASS 引用 42，编译通过） |
+
+**结论**：4 项设计性保留中 2 项**确认成立**（integration 直写、unified-core 只读），2 项**已治理**（hrm→mobile 清理+allow 撤销、shared-ai 向量迁移至 ai.vectors）；白名单剩余 2 项均确认成立，**无待处理项**。
 - 引入 `schema-boundary-gate`（已有 `scripts/check_schema_boundary.py`）纳入 CI，阻止新增跨 schema 直连 SQL。
 
 ### 阶段 2：物理拆分（触发阈值达成后再做）
-候选拆分域（按业务耦合度由高到低）：
-1. **财务域**（finance/erp/billing 关联紧密）——如需拆分，先拆 finance
-2. **制造域**（mes/pdm/qa）
-3. **供应链域**（scm/wms/srm）
 
-拆分方式：
+**拆分单元映射**（2026-08-31 基于当前 35 schema / 1080 表梳理，阈值达成时按此执行）：
+
+| 目标库 | 包含 schema | 表数(约) | 归属服务 |
+|---|---|---|---|
+| `topems_core`（平台核心库） | public（平台契约）+ core + iam + shared + doc + flow + notification + mail + storage + doc_service + integration + im + rs + report + master_data | ~400 | 平台级共享，所有服务必连 |
+| `topems_finance`（财务库，优先拆分） | finance + erp | ~127 | finance / erp |
+| `topems_manufacturing`（制造库） | mes + pdm + qms + ehs + lims | ~187 | mes / pdm / qms / ehs / lims |
+| `topems_supply`（供应链库） | scm + wms + srm + tms | ~78 | scm / wms / srm / tms |
+| `topems_business`（业务综合库） | crm + hrm + pm + bi + portal + mobile + gis + ai | ~300 | 其余业务服务 |
+
+**拆分前置条件（拆分前必须先治理，否则跨库无法工作）**：
+1. **integration 跨域事务直写**（allow=['qms','lims']）：拆分后 qms/lims 在制造库，integration 无法跨库事务直写 → 需改为「integration 调各域服务 API 编排」或「事件驱动 + 本地事务 + 补偿（Saga）」。**这是拆分最大前置改造**。✅ **已闭环（2026-09-01）**：9 处直写→各域 API + 订阅端接线 + 事件发布端补齐（TODO 2026-09-01）。
+2. **unified-core 读 portal.user_preferences**（allow=['portal']）：拆分后跨库 → 改为 unified-core 走 portal API 只读，或 portal 偏好表随用户中心库。✅ **已闭环（2026-09-01，commit 51b31fed3）**：portal 新增 `GET/PUT /api/portal/preferences`（service token 认证），unified-core `get_preferences`/`update_preferences` 改走 portal API；撤销 allow；tenant_middleware 补 service claims 豁免。
+3. **跨库事务边界**：任何跨域业务操作不得依赖单库事务，统一走事件（Redis Stream + DLQ 已有）+ Saga 补偿。✅ **已就绪**：跨库事务边界统一走事件 + 补偿（Saga 编排器已在 workflow-service 落地）。
+
+**拆分就绪核验（2026-09-01）**：`check_schema_boundary.py` 全服务 PASS（allow 全空，跨 schema SQL 直读清零）；`check_split_threshold.py` 5 项阈值均未触发；跨库调用全走 API/service token（服务间认证批量已闭环）。**拆分就绪，待阈值触发后启动**。
+
+**拆分方式**：
 - 每域独立 `CREATE DATABASE` + 独立连接串 + 独立 PgBouncer pool
 - 通过 `config/services.yaml` 的 `database_url` 覆盖配置，服务级灰度切换
-- 跨域数据需求走 `integration` 服务事件同步（已有 Redis Stream 基础）
+- **阈值监控**：`scripts/check_split_threshold.py`（本轮新增）自动检测 5 项阈值，任一触发即启动评估；生产建议接入 PgBouncer stats + pg_stat_statements 持续采集指标 3/4/5
 
 ## 4. 回退方案
 
@@ -95,10 +125,10 @@
 
 1. **当前不拆**：~31MB 规模物理拆分只会增加运维复杂度而无收益，采纳"阈值触发式"预案。
 2. **阶段 0（schema 归位）已完成（2026-08-31）**：public 219 → 37 张，建 lims/qms/mes/pdm/finance/master_data schema；执行中修正 11 项归属偏差（详见 `TODO.md` 阶段 0 记录与 §5.1）。
-3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。
+3. **待定项（阶段 0 后剩余）**：`public.core_*` 37 张平台级表是否迁入 `unified_core` schema（当前在 public 由 unified-core 服务拥有）；qa 域归属已随阶段 0 落定（lims/qms 分设）。**定案（2026-09-01）**：`core_*` 保持 public（拆分单元映射中 public 平台契约进 `topems_core` 库，由 unified-core 服务拥有），无需迁入 `unified_core` schema——避免无收益的 schema 搬迁，门禁 allow 已全空不受影响。
 4. 文档版本同步：overview.md / 部署文档中 PG 版本统一为 18。
 
-> 本预案为决策输入；阶段 0（schema 归位）与阶段 1 第一轮（逻辑隔离门禁）均已落地，阶段 2（物理拆分）待阈值达成后启动。
+> 本预案为决策输入；阶段 0（schema 归位）+ 阶段 1（逻辑隔离门禁）已落地，**拆分前置条件 #1 #2 #3 全部闭环（2026-09-01），拆分就绪**；阶段 2（物理拆分）待阈值达成后启动（当前 5 项阈值均未触发）。
 
 ### 5.1 归属评审结论（2026-08-31）
 

@@ -16,7 +16,7 @@ pub mod sla_service;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
+    std::env::set_var("SEARCH_PATH", "ticket, public");
 
     let config = ServiceConfig {
         name: "topems-ticket",
@@ -28,6 +28,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/ticket",
         legacy_prefixes: &["/api/v1/ticket"],
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;

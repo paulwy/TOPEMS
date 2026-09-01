@@ -13,7 +13,18 @@ mod tests {
     const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
-        PgPool::connect(TEST_DATABASE_URL).await
+        // 与 svc/qms/src/main.rs 保持一致：SEARCH_PATH='qms, public'，qa_* 归位到 qms schema 后无前缀查询依赖该路径
+        sqlx::postgres::PgPoolOptions::new()
+            .after_connect(|conn, _meta| {
+                Box::pin(async move {
+                    sqlx::query("SET search_path TO qms, public")
+                        .execute(&mut *conn)
+                        .await?;
+                    Ok(())
+                })
+            })
+            .connect(TEST_DATABASE_URL)
+            .await
     }
 
     /// 检查数据库是否可用

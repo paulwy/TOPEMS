@@ -5,7 +5,7 @@
 -- Usage (via scripts/gen-add-tenant-id.mjs code generator):
 --   $ node scripts/gen-add-tenant-id.mjs <service-name> [schemas...]
 --   Example:
---     node scripts/gen-add-tenant-id.mjs srm plugin_srm,srm
+--     node scripts/gen-add-tenant-id.mjs srm srm
 --
 -- What this template does (idempotent — safe to re-run):
 --   1. For each target SCHEMA (placeholder {{SCHEMAS}}):

@@ -9,6 +9,29 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 ---
 
+## 📊 待办任务统计（2026-09-01）
+
+> 基于 2026-09-01 核对 TODO.md 全量推进记录 + 代码现状生成。
+> 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
+
+**当前待办总数：9 项**（✅ 已完成 1 / ⏳ 待触发 1 / ⚠️ 已缓解待统一 1 / 🔲 待部署验证 1 / 🔲 待环境确认 1 / 🔲 可选后续 4）
+
+| # | 待办 | 优先级 | 状态 | 说明 |
+|---|---|---|---|---|
+| 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 5 项阈值均未触发（DB 0.1GB/200GB、portal 116 表/600 张）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
+| 2 | analytics 接入模块化单体 | P1 | 🔲 后续 | master-data 已挂载（module-advanced），analytics 同组待接入 |
+| 3 | unified-core 双轨认证统一 | P1 | ⚠️ 已缓解待统一 | 注册**双写** core_users（主表）+ iam.users（兼容副本）已解决新用户登录失败；但登录查 iam.users / 权限查 core_users 分叉，双写需保持同步——建议全量迁 core_* 或监控副本一致性 |
+| 4 | 前端批 2 页面单测降级 | P2 | ✅ 已实施 | 167 文件分类：保留 103（核心 68 + hooks 34 + NotFoundPage）/ 降级 smoke 64 计划 → **实际 59 文件收敛 it + 1 gitignore 本地**；全量 vitest 通过（167 文件 / 756 用例，110s）；分片 8→5 已落地（package.json + ci.yml），CI 每片实测 ~22s ≪ 10min 预算；smoke 化不触及 coverage include（pages 不在其中） |
+| 5 | Traefik 8080 API 网关 staging 验证 | P2 | 🔲 待部署验证 | 生产 nginx 补强已落地；Traefik 8080 方案待 staging 部署验证 |
+| 6 | consul 服务注册接入 | P3 | 🔲 可选 | 网络名直连已满足；21 服务 main 接入为可选优化 |
+| 7 | lims/qms qa_* 测试启用 | P3 | 🔲 待环境确认 | PostgreSQL 环境启用前需加 search_path（`#[ignore]` 用例） |
+| 8 | portal 嵌入模块化单体 | P3 | 🔲 可选 | 已决策保持独立部署（BFF 层职责独立）；嵌入需专项重构，列入后续 |
+| 9 | 容器环境遗留（ai exit 0 / 剩余服务启动） | P3 | 🔲 待确认 | 08-30 记录（容器部署场景），可能已过时，需确认是否仍需要 |
+
+**已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
+
+---
+
 ## ⚠️ 状态校准说明（2026-08-28）
 
 本清单中标记 `[x]` 的任务，按真实完成度分为三类：
@@ -360,7 +383,7 @@ MCP 协议适配层骨架已完成，但**业务工具真实落地状态待审�
     - 注意：pm/mobile/gis/integration/ehs 等未挂 server HTTP 路由（server 仅挂 crm/erp/finance/qms 4 服务），接口 404 属功能未暴露，非本轮问题
 
   - [x] **gis TABLE_DEFS 补齐（2026-08-29）**：补 evidence_records/track_records/track_positions 3 表到 db/schema.rs 单一事实源（TABLE_DEFS 列定义 + CREATE TABLE），gis schema 防御从 18 → 21 表完整覆盖（启动自检 20 表/224 列通过，无缺失列 WARN；ehs 原已 43 表/581 列完整）
-- [ ] **finance 遗留债务（2026-08-29 已修复列失配，仍有表缺失项）**：
+- [x] **finance 遗留债务（2026-08-29 已修复列失配，仍有表缺失项）**：
   - [x] **列失配修复完成**（补表列对齐代码模型）：
     - `core_finance_vouchers` +28 列（voucher_number/year/month/total_amount/currency_code/审批流字段/反冲字段/template_id/updated_by 等）
     - `core_finance_voucher_lines` +tenant_id
@@ -714,7 +737,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - [x] **mes 接入受阻（已解决 2026-08-30）**：**根因是编译环境 search_path，非代码缺陷**。mes 代码/schema_defense/DB(mes schema) 三者一致（equipment_code/order_number/route_code 等均为新结构）；在线编译 83 个"列不存在"错误是 query! 编译期默认 search_path 解析到 **public 旧表**（public.production_orders 为 order_no 旧结构）所致
   - 修复：在线编译/构建需设 `DATABASE_URL` 带 `?options=-csearch_path%3Dmes,public`（query! 不读 SEARCH_PATH env）
   - 验证：`DATABASE_URL=...mes,public cargo test -p topems-mes` → **506 passed / 0 failed**；离线编译通过（缓存一致）；`cargo check -p topems-server --features module-mes` 通过（mes_real_module 正常挂载）
-- [ ] **pm/aps/ehs/lims 待评估**：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
+- [x] **pm/aps/ehs/lims 待评估**：pm 为 pool 直传 + 各模块自管 AppState（需单独适配）；aps/mes 需先修 schema 失配；cs/bi/iot/oa 无独立 Cargo 包（非独立服务）
 
 ## 2026-08-29 批量接入（续）：APS 域接入完成（第 8 个真实服务）
 - [x] **aps 真实接入**（网关 8099 `/api/aps` + MCP 4 工具真实化）：
@@ -760,9 +783,9 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **缓存**：`cargo sqlx prepare`（DATABASE_URL 需带 `options=-csearch_path=mes,public`）重新生成 .sqlx（236 文件）
 - **警告**：cargo fix 清理 5 个 unused import/变量
 - **下一步（用户 P0 列表）**：
-  - [ ] mes 挂网关路由（scripts/services.conf + 8099 网关）+ 启动验证
-  - [ ] ai MCP 接入 mes 真实工具（schema_defense 风格，参考 crm/erp 的 29+3=32 个已有工具）
-  - [ ] MES 子服务/服务发现配置（lib/shared-core config/services.rs）
+  - [x] mes 挂网关路由（scripts/services.conf + 8099 网关）+ 启动验证（2026-08-29 mes_real_module 第 13 模块，`/api/mes/orders` 真实数据）
+  - [x] ai MCP 接入 mes 真实工具（schema_defense 风格，参考 crm/erp 的 29+3=32 个已有工具）（2026-08-29 mes.rs 4 工具真实化，6 测试通过）
+  - [x] MES 子服务/服务发现配置（lib/shared-core config/services.rs）（2026-08-31 收尾勾选：已被 server 统一入口 module-mes 取代，MES_SERVICE_URL env 提供独立部署 fallback，services.rs 静态配置不再需要）
 
 ## 2026-08-29 mes 网关接入 + MCP 真实化：✅ 完成
 - **mes 挂网关 8099**：svc/server 新增 `module-mes` feature + `mes_real_module.rs`（AppState 直传模式，参照 pm/crm），加入 default features + main.rs 注册（第 13 模块）
@@ -1213,7 +1236,7 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **baseline 瘦身**：`bare_ref_baseline` 17 → 4（仅 monitor 4 项，标注为 SQL 模板配置非直读）。
 - **验证**：`check_schema_boundary.py` 全 PASS（0 违规，communication/hrm/finance 均 PASS）；`cargo check --workspace` 0 error；public.audit_logs 建表成功。
 - **环境发现**：本机存在双 postgres——本地 Homebrew postgres@18 抢占 localhost:5432（数据为阶段0前旧状态），Docker 容器 topems-postgres（阶段0后权威库）通过容器网络供 docker 部署服务连接；**cargo run 本地开发会连到旧库，需注意**。8000 端口被 Docker 容器 topems-unified-core 占用（SSE 测试超时非回归）。
-- **待办**：①同名多 schema 表（audit_logs 等 16 张）收敛去重（独立项）；②~~communication→gis 改走 gis HTTP API~~ ✅（2026-08-31 已落地，见下）；③hrm→erp 凭证写入事件化（hrm 发工资核算完成事件 → erp 消费生成凭证）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
+- **待办**：①同名多 schema 表收敛去重——第一批（7 张 public/erp 空壳删除 + 归属归位）✅（2026-08-31，见下），剩余 public/iam 遗留双写 ~240 组与跨服务读改造待后续批次；②~~communication→gis 改走 gis HTTP API~~ ✅（2026-08-31 已落地，见下）；③~~hrm→erp 凭证写入事件化~~ ✅（2026-08-31 已落地，见下）；④public 37 张 core_* 平台表是否迁 unified_core schema 决策。
 
 ## 2026-08-31 P1-2 communication→gis 改走 HTTP API ✅
 - **改造** `svc/communication/src/im_location.rs`：新增 `gis_search_locations()` 辅助函数调用 gis HTTP `GET /api/gis/search?q=..&type=business|warehouse|device`，`unified_search_pois` 中 3 处 `gis.*` 直查 SQL 全部替换为 HTTP 调用（business/warehouse→gis_count、device→third_party_count），移除 only_own_schema_query! 对 gis 的白名单依赖。
@@ -1221,3 +1244,756 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **门禁**：`schema_boundary.json` communication.allow 清空 gis（不再引用 gis schema，引用 0）。
 - **验证**：`cargo check -p topems-communication -p topems-gis` 0 error 0 warning（修复 unused Row import / _pool）；`check_schema_boundary.py` 全 PASS（communication 引用=0）；gis HTTP API 实测 200（data.results 结构匹配，三表 0 行无数据）。
 - **说明**：`create_location_routes` 为既有 dead code，POI 搜索当前无 HTTP 入口（如需启用需挂载路由，超出本次范围）。
+
+## 2026-08-31 P1-2 hrm→erp 凭证写入事件化 ✅
+- **事件**：shared-event 新增 `HrmPayrollVoucherRequested` 事件类型 + `HrmPayrollVoucherRequestedPayload`/`HrmPayrollVoucherEntryPayload`（金额用 f64，与 erp 模型一致），`event/mod.rs` re-export。
+- **hrm 侧** `svc/hrm/src/modules/payroll.rs`：`generate_payroll_voucher` 删除 2 处 `INSERT INTO erp.financial_vouchers/voucher_items` 跨域 SQL，改为构建 payload（含 4 条分录，由 `build_payroll_voucher_entries` 保证借贷平衡）后 `tokio::spawn` 发布事件；接口返回 `voucher_id=None` + `voucher_number`（hrm 预生成）+ message「薪资凭证已提交，等待 ERP 生成」。
+- **erp 侧** `svc/erp/src/event_handlers/mod.rs`：新增 `handle_hrm_payroll_voucher_requested` 订阅消费，在本 schema 内写 `erp.financial_vouchers`（status=draft, source_system=HRM, source_id=payroll_run_id）+ `erp.voucher_items`。
+- **门禁**：`schema_boundary.json` hrm.allow 移除 erp（不再引用 erp schema，引用 0）。
+- **验证**：`cargo check -p topems-shared-event -p topems-hrm -p topems-erp` 0 error 0 warning；`check_schema_boundary.py` 全 PASS（hrm 引用=0）；**端到端冒烟**：起 erp+hrm → 注入 HrmPayrollVoucherRequested 到本机 Redis Stream（localhost:6379，注意非容器 Redis）→ erp 消费落库 financial_vouchers（draft/10000/HRM/source_id=payroll_run_id）+ 4 条 voucher_items，消息 ACK；测试数据已清理。
+- **说明**：(1) 本机 6379 为 brew Redis（事件总线），容器 topems-redis 为另一实例，冒烟须注入本机；(2) erp 消费端按 payload 落库未做借贷平衡二次校验（hrm 唯一发布者已保证平衡），如需可后续加防御校验；(3) hrm 接口语义由「同步生成成功」变为「已提交待 ERP 生成」。
+
+## 2026-08-31 同名多 schema 表收敛 第一批 ✅
+- **盘点**：DB 实为 325 组同名表（远超阶段0快照 16 张）。分类：public 遗留双写 ~110、iam 平台表遗留 ~132、plugin 并存 ~7（保留）、服务自治 audit_logs×19（保留）、跨服务同名异义 ~15（保留）、文档内部 3。
+- **16 张 ambiguous 决策**：analysis_results→ai、mes_qms_sync→integration 归位；budgets（pm+finance 异义）、locations（gis+wms 异义）、documents（ai+doc+pm+plugin_ai 异义）保留；contracts/projects/project_*（pm vs rd/hrm）异义保留；audit_logs 自治保留；customers/inventory/purchase_orders/supplier_evaluations/suppliers 待跨服务读改造（后续批次）。
+- **第一批执行**：删 7 张空壳（public.analysis_results/mes_qms_sync/budgets/locations/documents/document_versions + erp.budgets）；**finance.budgets 自建修复**（删除 public.budgets 后发现 finance operational.rs 无前缀 budgets 真实 SQL——财务部门预算与 pm 项目预算同名异义，已入 finance.schema_defense TABLE_DEFS + 建表）；ambiguous 16→14。
+- **验证**：7 张确认无真实 SQL 引用后删；finance 编译 0 error；门禁全 PASS。
+- **后续批次**：public 遗留双写 ~110 组（改代码引用→业务 schema）、iam 遗留 132 组（归位，联动待办④）、跨服务读改造 6 张（customers/inventory/purchase_orders/supplier_evaluations/suppliers）；详见 `docs/architecture/duplicate-table-consolidation.md`。
+
+## 2026-08-31 同名多 schema 表收敛 第三批 finance 组 ✅
+- **8 张 finance 活跃表从 public 归位**：支付链 5 张（core_finance_payments/items/workflow/approval_config/approval_nodes）+ 对账/结算/来源快照 3 张（reconciliation_snapshots/settlement_snapshots/source_amount_snapshots）—— 均在 finance.schema_defense 补定义 + 建表（FK/UNIQUE/数组类型对齐）+ 迁移数据（15 行）+ 代码 public.X→X + 删 public 表。
+- **2 张死读改读**：financial_reports 读 public.financial_vouchers/voucher_items → core_finance_vouchers/voucher_lines。
+- **容错修复**：voucher_template 查不存在的 public.payment_records/payments → core_finance_payments。
+- **保留**：public.accounting_subjects（finance 活跃 CRUD，待深判是否与 core_finance_accounts 同义）。
+- 验证：finance 编译 0 error；门禁 PASS（finance 引用 433→360）。
+- **剩余**：mobile 13 张 public 活跃表（异名新表并存待清理）、unified-core public.audit_logs、iam 132 组、accounting_subjects 深判。
+
+## 2026-08-31 同名多 schema 表收敛 第三批 mobile 组 ✅
+- **13 张 mobile 活跃表从 public 归位**：pg_dump DDL 重放 mobile schema（FK 链）+ schema_defense 补 13 张定义 + 代码 public.X→X + devices 显式 mobile.devices + 连带删 refresh_tokens/notifications 孤儿。
+- 验证：mobile 编译 0 error；门禁 PASS（mobile 引用 51）。
+- **剩余**：unified-core public.audit_logs、iam 132 组、accounting_subjects 深判。
+
+## 2026-08-31 同名多 schema 表收敛 第三批 accounting_subjects + audit_logs ✅
+- **accounting_subjects 归位 finance**：深判同名异义（简版 vs core_finance_accounts），活跃功能；归位 finance.accounting_subjects + **补 organization_id 列**（修复原 public 表缺列导致创建失败）+ 代码引用替换 + 删 public 表。门禁 PASS（finance 引用 353）。
+- **unified-core public.audit_logs 判定保留**：unified-core schema=public（own），audit_logs 合法审计表，非冗余。
+- **剩余**：iam 132 组、跨服务双引用 6 张裁决。
+
+## 2026-08-31 同名多 schema 表收敛 跨服务 6 张裁决 + srm plugin_srm 修复 ✅
+- **16 张 ambiguous 判定全部完成**：customers/inventory 跨服务异义保留；purchase_orders/supplier_evaluations/suppliers 收敛（srm 归位 + public 空壳删 + scm 副本保留）。
+- **srm 代码错引 plugin_srm 系统性修复**：18 张表 241 处 `plugin_srm.*` 前缀全去（schema_defense 建在 srm），修复 srm 采购/供应商/评估/招标模块运行时失败；删 plugin_srm 冗余招标 5 张 + public 空壳 4 张（purchase_orders/purchase_items/supplier_evaluations/suppliers）。
+- 验证：srm 编译 0 error；门禁 PASS（srm 引用 5）。
+- **剩余**：iam 132 组归位。
+
+## 2026-08-31 iam 平台表归位（第四批收官）✅
+- **删除 iam schema 133 张业务表误建副本**（qa_lims/qa_lab 31 张、core_finance+finance_v5x 62 张、core_ticket 5 张、pdm_* 19 张、equipment/material/production 等）——全部 0 行 + 无代码引用 + 其他 schema（finance/public/mes/pdm 等）有真表。
+- **保留 iam 10 张**：7 平台表（users/roles/permissions/sessions/refresh_tokens/password_reset_tokens/audit_logs）+ 3 疑似表（role_permissions/user_roles/user_access_logs）。
+- **发现待办缺陷**：unified-core **双轨**——认证 auth.rs 用 iam.users/iam.sessions/iam.refresh_tokens（旧），用户管理用 public.core_users/core_roles/core_permissions（新，schema_defense 建）。新注册用户写 core_users 但登录查 iam.users → 新用户登录失败。**待专项统一**（建议 auth.rs 迁 core_* 前缀，sessions/refresh_tokens 需建 core_ 新表或保留 iam）。
+- 验证：门禁 PASS；unified-core 编译 0 error。
+
+## 2026-08-31 认证双轨统一（auth.rs 双写 core_users）✅
+- **修复用户数据分裂**：auth 注册原先只写 iam.users（兼容副本），不写 core_users（主表）→ 新注册用户不在用户管理/租户系统。现改为**双写** core_users（主，status='active'）+ iam.users（副本），登录仍读 iam.users 副本无延迟。
+- **数据回填**：将 iam.users 中仅有的旧注册用户（schemafixer）同步进 core_users，两端数据一致（48=48）。
+- **补建 iam positions 系列 5 张表**（positions/user_positions/position_permissions/position_roles/resource_permissions）——position.rs/user_position.rs/permission_verify.rs 引用但历史未建，修复 relation does not exist；DDL 幂等入 mod.rs 兼容层 + DB 已建。
+- **保留 iam.sessions/iam.refresh_tokens**（auth 专有表，无 core_ 对应，非双轨）。
+- **记录待办**：audit_query.rs 读 iam.audit_logs（0 行无人写，登录日志实际写 core_login_logs）——审计查询指向空表，待后续对齐。
+- 验证：unified-core 编译 0 error；测试 1022 passed 0 failed；门禁 PASS。
+
+## 2026-08-31 audit_query 审计日志查询对齐（5b）✅
+- **audit_logs 生态三方断裂确认并修复**：建表 DDL、写入方（middleware/access_log/models/store）、audit_query 查询分支的列定义互不匹配，写入实际全失败（0 行）。
+- **统一到权威 Cluster-A 签名**（lims AuditLog struct 1:1，init SQL/migration V100 一致）：
+  - DB 重建 public.audit_logs 为 Cluster-A 15 列（id/tenant_id/action/entity_type/entity_id/entity_ids/user_id/user_name/request_details/response_details/status/error_message/ip_address/user_agent/created_at）——原 19 列+audit_action enum 表为无 DDL 源孤儿表（全仓库 grep 无 CREATE 源），已删。
+  - audit_query：iam.audit_logs→public.audit_logs（死表/不存在表改真实表）、iam.permission_audit_logs→public.permission_audit_logs（v448 10 列，changed_at/old_value/new_value 对齐）；login_logs 分支已验证可用（core_login_logs）。
+  - middleware/audit_log：INSERT + init 定义统一 Cluster-A（entity_type/entity_ids/request_details/response_details/status），原 13 列 request_id/method/path/... 与实际表不符。
+  - access_log：适配 Cluster-A（status/response_details），entity_id 仅合法 UUID 绑定（防非 UUID 崩溃）。
+  - models record_audit_log：适配 Cluster-A（request_details/response_details/status）。
+  - database_audit_log_store：metadata→details（public.permission_audit_logs 加 details JSONB，v448 migration 补定义）。
+- 验证：unified-core 编译 0 error 无 warning；测试 1022 passed 0 failed；门禁 PASS；事务级 SQL 全验证（4 写入+2 查询）。
+- 提交：e80e2fd3f（已推送 origin/main）。
+- **遗留**：① mobile 12 文件 public 前缀替换待用户合并提交；② 用户工作区前端改动；③ perm-matrix R5 9 处 FAIL 既有技术债。
+
+## 2026-08-31 perm-matrix R5 utoipa security 注解补齐（finance 完成）✅
+- **R5 技术债（utoipa path 宏缺 security()/permission()）9 处修复 6 处**：
+  - finance accounting_subjects 5 个宏补 BearerAuth scope（list/get=finance:read、create/update=finance:write、delete=finance:delete）。
+  - financial_reports business-overview 补 finance:report:read。
+  - 采用现有 scope 命名（不新造），格式参考 financial_reports 既有宏（security 位于 method 行后）。
+- **tms optimization 3 处**（assignments/plan、routes/optimize、freight/quote → tms:write）：注解已补入 `svc/tms/src/modules/optimization.rs`，但该文件为 **untracked 用户新文件**（从未提交），未纳入本次提交，待用户提交该文件时一并带上。
+- 验证：perm-matrix scan R5 = 0（工作区）；finance/tms 编译 0 error；测试全过；门禁 PASS。
+- 提交：baa7a0106（finance，已推送）。
+- **遗留**：optimization.rs（untracked）待用户提交后 R5 全量归零。
+
+## 2026-08-31 SRM_SCHEMA 一致性对齐（4a 去前缀遗漏）✅
+- **4a 遗漏确认**：srm 服务去 plugin_srm 前缀（归位 srm schema、删 plugin_srm 表）后，shared-db 的 `SRM_SCHEMA` 常量仍指向 `plugin_srm`（已删空 schema），`schema.rs` 测试断言与 `srm integration_tests` 3 处 SQL 仍引用 plugin_srm.suppliers（启用必失败）。
+- **修复**：SRM_SCHEMA→"srm"；断言 srm_table('suppliers')=='srm.suppliers'；integration_tests 3 处 plugin_srm→srm。
+- 验证：shared-db 143 + srm 516 测试全过（含 srm_table 断言）；门禁 PASS；业务代码 plugin_srm.* 引用清零。
+- 提交：680c8f60d（已推送）。
+- **新登记待办（plugin_* 体系过时，不擅改）**：shared-db `schema.rs` 19 个 plugin_* SCHEMA 常量（hrm/erp/pm/crm/qms/mes/wms/srm/scm/pdm/lims/rs/gis/ehs/bi/ai/im/integration）业务零使用（仅 shared-db 内部 + 自洽断言），各服务已用真实 SERVICE_SCHEMA。其中 plugin_ai（3 表）/plugin_mes（audit_logs）有"插件系统管理"注释佐证为设计选择（且 ai/mes 主 schema 存在同名表，属双 schema 待评审）；plugin_aps（5 表）在 _archive 归档服务。**建议后续统一评审这些 plugin_* schema 归属**（属 P1-2 阶段 0 E 项代码侧）。
+
+## 2026-08-31 mes 审计表统一 + plugin_* 残留收尾 ✅
+- **mes 全仓库唯一 plugin_* 审计残留收敛**：crm/hrm/rd 均用真实 schema 审计表（Some("crm"/"hrm"/"rs")），mes 独用 plugin_mes.audit_logs。
+  - audit.rs 7 处 + mod.rs 建表/索引 6 处 plugin_mes→mes；schema_defense audit_logs 加回 Cluster-A 15 列。
+  - DB：mes.audit_logs 建表（Cluster-A）+ DROP SCHEMA plugin_mes CASCADE。
+  - 验证：mes 编译 0 error；测试全过；写入事务验证 OK；门禁 PASS（mes 引用=3）。
+  - 提交：894a56596（已推送；含上一轮 caf57d68c 移除的中间态，最终态正确）。
+- **plugin_* schema 现状盘点**：
+  - plugin_srm：已删（4a）✓；plugin_mes：已删（本轮）✓
+  - plugin_ai（3 表 documents/document_chunks/qa_history）：ai 服务 vector.rs 写入目标（有注释"插件系统管理"）；但 ai schema 存在同名 4 表（documents 32 行孤儿数据 + analysis_results 3 行），**ai 服务横跨 ai/core/plugin_ai 三 schema，需专门评审归属**（登记待办）
+  - plugin_aps（5 表）：服务在 `_archive`（归档遗留）
+- **新登记待办（ai 服务 schema 评审）**：ai 服务跨 ai（schema_defense 4 表）/core（knowledge_*）/plugin_ai（vector.rs 写入）三 schema；plugin_ai.analysis_results 缺失但代码 INSERT INTO plugin_ai.analysis_results（会失败）；ai.documents 32 行孤儿。建议按 P1-2 阶段 0 一并评审 ai 服务 schema 归属。
+
+## 2026-08-31 ai 服务 plugin_ai → ai schema 收敛（工作区完成，待用户提交 svc/ai 时一并带上）⚠️
+- **背景**：ai 服务横跨 ai/core/plugin_ai 三 schema。plugin_ai 有 3 表（documents/document_chunks/qa_history，db.rs 运行时建表，0 行空壳），ai schema 有 schema_defense 建的 4 表（documents 32 行孤儿 + analysis_results 3 行 + document_chunks/qa_history）。
+- **收敛动作（已在工作区完成 + 验证）**：
+  - SQL 前缀 plugin_ai.→ai.（7 活跃文件：event_handlers/ai_plugin/analysis/db/qa/recommendation/vector，共 37 处）
+  - **修复 2 个"引用缺表"运行时 bug**：plugin_ai.analysis_results（无表，INSERT 必失败）→ ai.analysis_results；ai_training_samples（bare 引用解析到 public 不存在）→ ai.ai_training_samples + db.rs 补建表（UNIQUE(source_type,source_id) 支撑 ON CONFLICT，事务验证 OK）
+  - event_handlers INSERT 加显式 ai. 前缀；tests/integration_tests 2 处 plugin_ai→ai
+  - DB：DROP SCHEMA plugin_ai CASCADE（3 空表）；ai.ai_training_samples 已建
+  - 验证：ai 编译 0 error；测试全过（含 integration_tests）；门禁 PASS（ai 引用=42）
+- **⚠️ 未提交原因**：svc/ai 全部 8 个文件同时含用户工作区改动（only_own_schema_query 宏包装，HEAD 无宏）+ 用户 dsh 功能 60+ 文件——我的前缀替换与用户宏包装交织，**无法干净独立提交**。svc/ai 整体留在用户工作区，待用户统一提交时一并带上（代码自洽：工作区 ai.* 引用 + DB 已建 ai 表）。
+- **遗留**：ai_knowledge 模块（service.rs/mod.rs/rag.rs）未注册（死模块），含 core.* + plugin_ai 引用未编译——启用前需先改；宏参数 "plugin_ai" 冗余（编译期白名单多余项，无害）。
+
+## 2026-08-31 plugin_* schema 全库清零 + srm 残留修复 + shared-db 常量对齐 ✅
+- **plugin_aps 清理**：备份（docs/archive/plugin_aps_backup_20260831.sql，pg_dump）+ DROP SCHEMA plugin_aps CASCADE（9 行测试残留：capacities 1 + schedules 8，APS 已并入 mes 且归档，迁移脚本保留在生产环境用）。
+- **srm plugin_srm 残留清零（0606054f5）**：event_handlers 6 处 plugin_srm_ 表名→srm. 真实表（修复 2 个"引用缺表"运行时 bug：inquiries/supplier_performance 均不存在）；schema_defense TABLE_DEFS 补 2 表（14→16）；DB 建 srm.inquiries + srm.supplier_performance（UNIQUE(supplier_id,tenant_id)）；init/01+000 删 CREATE SCHEMA plugin_srm（防重跑复活）；init/04 26 处 plugin_srm.→srm.；snippets 模板清理。验证：srm 测试全过、3 类 SQL 事务验证 OK（upsert 1→2）、门禁 PASS。
+- **shared-db 20 个 SCHEMA 常量 plugin_ 前缀对齐（0892c7fc0）**：HRM/ERP/PM/CRM/QMS/MES/WMS/SCM/PDM/LIMS/RS/GIS/EHS/BI/AI/IM/INTEGRATION/MAIL/MOBILE/PORTAL → 真实 schema。业务零使用（纯死代码），仅 lib.rs pub use + 自测断言；同步断言 + 测试更名。验证：shared-db 143 passed、7 服务编译 0 error。
+- **里程碑：全库 plugin_* schema 清零**（plugin_srm/mes/ai/aps 全部删除，含空壳）。
+- **遗留**：modules 宏参数3 "plugin_srm"/"plugin_ai" 冗余白名单（无害，编译期多余项）；svc/ai 收敛待用户提交（见上条）。
+
+## 2026-08-31 plugin_* 引用收敛（wms/finance/erp）✅ + 用户工作区跳过项 ⚠️
+- **wms（4683ec162）**：event_handlers/audit_log 3 处 plugin_wms.→wms.；补建 wms.wms_approval_events + wms.purchase_order_snapshots；测试全过、INSERT 验证 OK、门禁 PASS。
+- **finance（aa9f0f5db）**：settlement_center/service.rs 3 处 plugin_finance.→finance.（表均存在）；测试全过、门禁 PASS。
+- **erp（d60dbb34e）**：consolidation 6 文件 48 处 plugin_erp.→erp.（表均存在）；测试全过、门禁 PASS。
+- **跳过项（用户工作区改动，待用户提交时收敛）**：
+  - wms modules/data_sync.rs（plugin_wms 5 处）
+  - hrm modules/attendance.rs（plugin_hrm 5 处，attendance_records/employees 表已存在）
+  - erp modules/holidays.rs + opening_balance.rs（plugin_erp 引用 + **erp.holidays 表缺失需补建**）
+  - svc/ai（工作区 3 处）
+- **注释**：server finance_module.rs 的 plugin_finance 是注释（无 SQL，不改）。
+
+## 2026-08-31 plugin_* 引用收敛（收尾：shared-ai/mobile/erp-holidays）+ 跨域待办
+- **shared-ai（可提交）**：vector_store.rs 5 处 plugin_hrm.→hrm.；补建 hrm.vectors（key PK/embedding vector/metadata JSONB/deleted_at）；INSERT ON CONFLICT 验证 OK。
+- **mobile 测试（可提交）**：integration_tests.rs 2 处 plugin_mobile.→mobile.（表存在 22 行）。
+- **erp（工作区待用户提交）**：holidays.rs 5 处 plugin_erp.holidays→erp.holidays + 补建 erp.holidays（PK tenant_id,year,date,kind，验证 OK）；opening_balance.rs 2 处 plugin_finance.accounting_subjects→finance.accounting_subjects + 宏参数白名单→finance。
+- **门禁**：erp.allow 加 finance（过渡白名单）。
+- **⚠️ 跨域待办（P1-2 阶段 0）**：erp opening_balance.rs **直读 finance.accounting_subjects**（跨域只读，宏白名单放行）。收敛 plugin_* 后门禁开始真实检查跨 schema——此引用为已知跨域，**应改走 finance API/集成事件**，届时移除 erp.allow:finance。
+- **已确认无害（不改）**：hrm attendance.rs / server finance_module.rs 的 plugin_* 在注释；ai agent.rs 的 plugin_* 为 NL 路由字符串；lib/shared-boundary 的 plugin_* 为宏文档示例/测试用例。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（B 项 core_finance_*）✅
+- **背景**：finance 代码已用 `finance.core_finance_*`（显式/无前缀+SEARCH_PATH='finance, public'），但表在 public 旧版（13 列含 deleted_at）与 finance 新版（26 列扩展，无 deleted_at）**同名并存**——public 表在 finance 显式限定查询下**运行必失败**。
+- **处理**（迁移文件 `20260831190000_core_finance_schema_migrate.sql`，幂等）：
+  - ① public 独有 3 张（account_opening_balances/voucher_entries/voucher_templates）→ SET SCHEMA finance（finance core_finance_* 15→18）
+  - ② 同名 10 张：public 旧版 rename `_archive_core_finance_*`（**数据保留**：accounts=21/vouchers=17/ledger=16/voucher_lines=25 等），finance 新版为运行真相
+- **验证**：finance 测试全过（1106+1107）；门禁 PASS（finance 引用=353）；迁移文件幂等重跑无副作用；归档数据完整。
+- **备份**：`database/backup/topems_pre_schema_migration_*.dump`（gitignore）。
+- **⚠️ 遗留**：public 旧版数据在 `_archive_core_finance_*`，如确需并入 finance 新版，按公共列 INSERT...SELECT...ON CONFLICT (id) DO NOTHING（注意新版无 deleted_at，软删语义差异）——需业务 owner 确认后再执行。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（C 项 material_*）✅
+- 迁移文件 `20260831190100_material_schema_migrate.sql`（幂等）：public 独有 2 张（material_categories/material_requirement_items）→ SET SCHEMA mes；同名 6 张旧版归档 `_archive_material_*`（数据保留），mes 为运行真相（mes 代码无前缀引用，SEARCH_PATH='mes, public' 优先）。
+- 验证：public=0/mes=8/archive=6；mes 测试全过（424+16+13）；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（D 项 跨域同步表）✅
+- 迁移文件 `20260831190200_sync_tables_schema_migrate.sql`（幂等）：public 7 张跨域同步表（analytics_sync_records/conversion_*/core_inter_module_sync/qa_*_sync_records）归档 `_archive_*`（数据保留），目标 schema（bi/integration/ehs/lims/qms）同名表为运行真相。
+- 代码引用均指向业务 schema（lims/integration 显式前缀或 search_path 优先），public 旧版无引用。
+- 验证：public 同步表残留=0；lims/integration 测试全过；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（A 项 qa_* 域两分 + ehs 扩展）✅
+- 迁移文件 `20260831190300_qa_schema_migrate.sql`（幂等，动态 DO 块）：public 78 张 qa_* 表归位——
+  - qa_lab_* → lims；qa_ehs_* → **ehs**（EHS 域，ehs schema 已有 43 张同名真相，超报告 A 项范围扩展）；其余质量体系 qa_* → qms
+  - 规则：目标 schema 同名 → public 旧版归档 `_archive_*`（数据保留）；无同名 → SET SCHEMA
+- **测试修复**：svc/ehs/tests/ehs_tests.rs create_test_pool 加 after_connect `SET search_path TO ehs, public`（qa_ehs_* 归位后无前缀测试查询依赖该路径）
+- 验证：public qa_ 残留=0；lims/qms/ehs 测试全过；门禁 PASS。
+- **⚠️ 已知待办**：lims/qms 测试中 qa_* 相关用例为 `#[ignore]`（requires PostgreSQL），启用前需同样加 search_path。
+
+## 2026-08-31 P1-2 阶段0 schema 归位（B 项子项 core_master_data_*/core_mdm_*）✅
+- 迁移文件 `20260831190400_master_data_schema_migrate.sql`（幂等）：CREATE SCHEMA IF NOT EXISTS master_data + 5 张表（core_master_data_refs/change_log/event_outbox/core_mdm_approvals/reconciliation_log）public → SET SCHEMA master_data（全部空表，无同名冲突）。
+- shared-db 同步：master_data_refs.rs `new()` 默认表名 → "master_data.core_master_data_refs"；reconciliation_log.rs 默认表名 → master_data.core_mdm_reconciliation_log + refs → master_data.core_master_data_refs（crm/scm 的 with_table 本地表不受影响）。
+- 验证：public=0/master_data=5；shared-db+unified-core+crm+scm+master-data 编译全过；门禁 PASS。
+
+## 2026-08-31 P1-2 阶段0 schema 归位 A-E 全部完成 🎉 + 归档清理待办
+- **A（qa_*）✅** 4afa40cc6：78 张归位（qa_lab_*→lims、qa_ehs_*→ehs、质量体系→qms）；ehs 测试 search_path 修复
+- **B（core_finance_*）✅** ed6828def：3 张 SET SCHEMA + 10 张同名归档；**B 子项（core_master_data_*/core_mdm_*）✅** 5c5eda8fe：建 master_data schema + 5 张 SET SCHEMA + shared-db 默认表名前缀
+- **C（material_*）✅** 419a6d620：2 张 SET SCHEMA + 6 张同名归档
+- **D（跨域同步表）✅** f1b298ed8：7 张归档（bi/integration/ehs/lims/qms 同名真相）
+- **E（plugin_*）✅** 全库清零
+- **结果**：public 410→400（活跃 299 + 归档 _archive_* 101，数据保留）；门禁 PASS；workspace 编译通过
+- **⚠️ 后续待办**：
+  1. **归档表清理**：public 101 张 `_archive_*`（旧版数据）确认无引用后可 drop 或移独立 archive schema
+  2. **core_crm_*/core_erp_*/core_hrm_* 等业务表**：报告 B 项保留 public（平台级），但明显属业务域（crm/erp/hrm），**可作下一轮归位候选**（需业务 owner 确认）
+  3. **lims/qms 测试 qa_* 用例**：`#[ignore]`（requires PostgreSQL），启用前需加 search_path
+
+## 2026-08-31 P1-2 阶段0 收尾：归档表移入 archive schema ✅
+- 迁移文件 `20260831190500_archive_schema.sql`（幂等）：建 archive schema + public 101 张 `_archive_*` 旧版表 SET SCHEMA archive（数据保留）。
+- 结果：public=299（纯活跃表）+ archive=101（归档数据）；门禁 PASS；workspace 编译通过。
+
+## 2026-08-31 P1-2 阶段0 后续：core_* 业务域表归位 ✅
+- 迁移文件 `20260831190600_core_business_schema_migrate.sql`（幂等，动态 DO 块）：public 中 core_* 业务域表按前缀归位至对应 schema（erp/crm/hrm/wms/scm/pm/pdm/doc_service/im/flow），保留 core_ 前缀命名（与 schema 内裸名表并存不合并），无同名冲突直接 SET SCHEMA；26 张处理。
+- 验证：public 299→273；erp/crm/hrm/wms/scm/pm/pdm 编译全过；门禁 PASS。
+- **保留 public（平台级/无明确 schema，待人工决策）**：core_tenant*/user*/role*/dict*/api*/menu*/permission*/billing*/ticket*/guide*/faq*/email*/file*/geofence*/location*/mobile*/usage*/plugin*/subscription*/operation*/notification*/migration*/login*/mail*/feedback* 等。
+
+## 2026-08-31 P1-2 收尾：qms 测试 search_path 修复 ✅
+- svc/qms/tests/integration_tests.rs setup_test_pool 加 after_connect `SET search_path TO qms, public`（qa_* 归位后无前缀测试查询依赖该路径；lims 测试不连 DB 无需改）。
+- 验证：qms 262+224+12 测试全过。
+
+## 2026-08-31 跨域只读治理：erp→finance 直读改走 API（17 项基线第 N 项）✅
+- finance 新增 `GET /api/finance/accounting-subjects/by-code/{code}`（精确按 code 查科目，返回 AccountingSubject）；FinanceApi 新增 `get_accounting_subject_by_code`。
+- erp opening_balance.rs 2 处 `finance.accounting_subjects` 直读 → `state.finance_client.get_accounting_subject_by_code`（HTTP，数据缺失降级"未知科目"）；删除 unused AccountingSubject import。
+- **门禁收尾**：`scripts/schema_boundary.json` 移除 `erp.allow=['finance']` 过渡白名单（跨 schema 直读清零）。
+- 验证：erp+finance 4041 passed / 0 failed；门禁 16/16 PASS。
+
+## 2026-08-31 收尾：billing/feedback 合并脚本引用清理 + TODO 遗留项勾选 ✅
+- 脚本清理：`coverage-baseline.sh` / `sqlx-prepare.sh` / `ci.yml` 移除 `topems-billing`、`topems-feedback`、`topems-lowcode` 活跃引用（对应服务均已归档/合并，属 P5 收尾遗漏）；bash -n 语法全过。
+- TODO 遗留 [ ] 勾选：finance 遗留债务（列失配+补建表均已 [x]）、pm/aps/ehs/lims 评估（后续 pm/aps 已接入 server、ehs/lims 已门控）。
+
+## 2026-08-31 archive schema 清理前检查 ✅（待用户确认 DROP）
+- **101 张 archive 表确认无代码/SQL 引用**：精确 grep（`archive.` schema / `_archive_` 表名）零命中（5 处 `archive.by_name` 为 Rust zip 变量，非 SQL）；schema-boundary 门禁 PASS（无 archive SQL 引用）。
+- 结论：archive 101 张旧版表可安全清理（DROP），但**涉及旧数据永久删除**，DROP 需用户/业务 owner 确认后执行。
+- 备份仍存：database/backup/topems_pre_schema_migration_20260831_1907.dump（3.8M）。
+
+## 2026-08-31 P1-2 阶段0 最终收尾：core_* 无引用残留归档 archive ✅
+- 迁移文件 `20260831190700_core_residual_archive.sql`（幂等，动态 DO 块）：逐表精确检查（裸名+core_ 前缀词边界）确认 **17 张无代码引用**的 core_* 业务域残留表（core_billing_*/core_ticket_activities 等 6/core_guide_*/core_location_*/core_mobile_offline_*/core_email_*/core_mail_*/core_tenant_usage 等/core_api_version_configs）→ archive。
+- **保留 public（平台契约，有引用）**：core_users/tenants/roles/permissions/dict/menu/file/notification/plugin/workflows/subscriptions/tickets/guides/faqs/geofences/documents/feedbacks/emails/usage_records 等。
+- 验证：public 273→256、archive 101→118；门禁 PASS；workspace 编译 0 error。
+
+## 2026-08-31 P1-2 阶段 1 逻辑隔离：17 项跨域基线全部治理确认 ✅
+- **17 项基线逐项核查**（docs/architecture/database-split-plan.md 更新）：
+  - communication→gis 3 项：已改走 gis HTTP API（历史完成）
+  - finance→pm/erp 4 项 / hrm→erp 2 项 / monitor→hrm/wms/pm 4 项 / ai/analytics→users：代码核查**无 SQL 直读残留**（已治理/本无直读）
+  - erp→finance 直读：本轮已改走 finance API（见上）
+  - unified-core audit_logs/users：维持声明（audit_logs 各服务自有表设计 + users 平台契约）
+- **同名多 schema 表（14 张）**：确认设计合理（audit_logs 18 schema 中 17 空 + shared 主表；各服务 search_path/显式前缀解析本服务表），门禁 ambiguous 声明不阻塞，无需物理收敛。
+- **阶段 1 后续待办全部完成**；阶段 2 物理拆分待触发阈值。
+
+## 2026-08-31 P1-2 收官：archive schema DROP（用户确认）✅
+- 迁移文件 `20260831190800_drop_archive_schema.sql`（幂等）：`DROP SCHEMA IF EXISTS archive CASCADE`——archive 118 张（101 旧版 _archive_* + 17 core_* 无引用残留）确认无代码/SQL 引用后清理。
+- **DROP 前备份**：`database/backup/topems_pre_archive_drop_20260831_2037.dump`（4.06M）。
+- **级联副作用（预期）**：顺带删除 6 个指向 archive 表的遗留外键约束（core_subscriptions_plan_id_fkey、finance.core_finance_account_opening_balances/voucher_entries 的 account_id/voucher_id fkey、bom_items_bom_id_fkey 等）——这些 FK 引用已删旧版表，必须删除；活表本身保留。
+- 验证：archive schema 存在=0、public=256、总 schema=350；门禁 PASS；workspace 编译 0 error。
+- **P1-2 全部收官**：阶段0 schema 归位 + 阶段1 逻辑隔离 + archive 清理完成。
+
+## 2026-08-31 模块化单体：ticket + rd 真实服务接入 ✅
+- **ticket_real_module.rs**（feature `module-ticket`，默认启用）：SEARCH_PATH=public；State=PgPool；`handlers::ticket_routes()` + `feedback_compat::feedback_compat_routes()`；init_ticket_tables/init_sla_tables 建表（失败 warn）；tenant_middleware + require_permission("ticket:admin") + inject_dev_claims；ModuleGroup::Core。
+- **rd_real_module.rs**（feature `module-rd`，默认启用）：SEARCH_PATH=rs,public；`modules::ApiState`（db/auth_state/config(shared-core Config::load)/metrics/start_time/event_publisher）+ `create_routes()`；schema_defense 迁移验证；ModuleGroup::Wms。
+- Cargo.toml 加 optional dep + feature + default；mod.rs + main.rs 注册（编号 17/18）。
+- 验证：`cargo check -p topems-server`（default 含 module-ticket/module-rd）0 error。
+
+## 2026-08-31 模块化单体：srm 真实服务接入 ✅
+- **srm_real_module.rs**（feature `module-srm`，默认启用）：SEARCH_PATH=srm,public,shared；各业务模块 create_routes 自管状态（Router<()>）merge 13 个路由（supplier/category/evaluation/contract/product/purchase_order/bid_price/tender/supplier_portal/performance/data_sync/scoring_dimension/statistics）；依赖构造 supplier_cache(InMemoryCache 300s) + WorkflowApi client；default_init_db("srm") 迁移验证；tenant_middleware + require_permission("srm:admin")；ModuleGroup::Erp。
+- 验证：cargo check -p topems-server 0 error；累计 15 个真实服务。
+
+## 2026-08-31 模块化单体：portal 接入评估（暂缓，保持独立部署）
+- **portal 结构**：BFF 聚合层（AppState::new(db, event_publisher) 统一构造；业务路由 200+ 行直接在 main.rs 构建；含 GraphQL 聚合层（graphql_schema::build_schema）、schema_versioning、帮助中心、插件路由；lib 无统一 create_routes 导出）。
+- **嵌入成本**：需先 lib 重构提取 protected_routes 构建（200+ 行）+ 处理 GraphQL/事件总线 spawn——高成本；且 portal 作为 BFF 与 server 统一入口职责重叠。
+- **结论**：portal **保持独立微服务部署**（BFF 层职责独立）；如需嵌入需专项重构（portal lib 提取 create_routes），列入后续。
+- **累计接入 15 个真实服务**：crm/erp/finance/qms/hrm/scm/wms/pm/mes/ehs/lims/tms/ticket/rd/srm。
+
+## 2026-08-31 模块化单体剩余服务接入：ticket/rd/srm 验证 + srm 双前缀修复 ✅
+- **ticket-real 接入完成**（新建 `svc/server/src/modules/ticket_real_module.rs`，feature `module-ticket`，骨架已就位）：复用 ticket `handlers::ticket_routes()`（Router<PgPool>）+ feedback_compat_routes；冒烟 `/api/ticket/tickets` 200。
+- **rd-real / srm-real 验证**（real_module 已存在）：`/api/rd/change-requests` 200、`/api/srm/suppliers` 200。
+- **srm 双前缀修复**：`svc/srm/src/modules/supplier.rs` 13 处 `"/api/srm/` → `"/`（supplier 路由自含前缀，与其他模块相对路径不一致，导致 nest /api/srm 后双前缀 404）；修复后 `/api/srm/suppliers` 200；srm 516 测试全过。
+- server 已注册 17 模块（16 real + platform/dashboard/finance）；srm bidding 模块未挂路由（独立服务亦未挂，非本次问题）。
+
+## 2026-08-31 模块化单体：portal 保持独立部署决策 ✅
+- **portal 评估**：AppState::new 简单（db+event_publisher），但 protected_routes 组装在 main.rs（非 lib）+ GraphQL/WebSocket/service_aggregator 复杂依赖；用户中心适合独立部署。
+- **决策**：portal **保持独立微服务**（与 gis 一致）——server Cargo 加 `module-portal` 占位（optional dep topems-portal，仅编译依赖不注册路由）；文档 modular-monolith-design.md 更新"明确不嵌入"表 + 边界规则 2。
+- 验证：`cargo check -p topems-server --features module-portal` 编译通过。
+
+## 2026-08-31 模块化单体：master-data 真实接入（advanced 组首个挂载）✅
+- 新建 `svc/server/src/modules/master_data_real_module.rs`（feature `module-advanced` 门控，仿 tms 模式）：复用 master-data `modules::create_routes()`（Router<AppState>，AppState=db/auth/metrics/start_time）；SEARCH_PATH public；nest /api/master-data + require_permission("master-data:admin")。
+- Cargo：`module-advanced` 由空幽灵改为挂载 `dep:topems-master-data`，**加回 default**（真实服务）；module-ai 仍幽灵保留待 ai 接入。
+- 注册：mod.rs cfg 声明 + main.rs #20 注册块（降级模式）。
+- 验证：`cargo build` 通过；启动冒烟 **18 模块**（master-data-real 已注册）；`/api/master-data/quality-v51/checks` 200；master_plugin 自含 /api/plugins 未 merge 主路由（独立 create_routes，不影响）。
+- 待办：analytics 同组（advanced）后续接入。
+
+## 2026-08-31 模块化单体：analytics / ai 保持独立部署评估 ✅
+- **analytics 评估**：protected_routes 在 main.rs 逐行组装（非 lib 汇总 create_routes，接入需重构 lib）+ `ReportScheduler` 定时调度后台任务；BI 服务定位 → **保持独立微服务**（同 gis/portal 边界规则）。
+- **ai 评估**：MCP/Agent/DSH 复杂服务 + `ai_service` 独立 schema → **保持独立微服务**（同 gis）。
+- 文档更新：已接入 default 15→16（+master-data）；待接入清空；不嵌入表新增 analytics/ai；module-ai 幽灵 feature 保留待评估。
+- 至此模块化单体：16 真实服务接入 server（18 模块含 platform/dashboard/finance），独立部署 7 个（gis/portal/analytics/ai/mobile/integration/monitor/plugin-registry/unified-core 等按边界规则）。
+
+## 2026-08-31 物理库拆分阶段 2 阈值评估 + 跨域白名单复核 ✅
+- **阶段 2 阈值实测**（5 项）：DB **96 MB**（vs 200GB）、最大 schema **public 262**（vs 600）、连接未压测、跨 schema 直读清零（仅 4 项设计性 allow）、备份秒级 → **5 项均未触发，物理拆分不启动**，维持"阈值触发式"预案。文档当前值刷新（31MB→96MB）。
+- **跨域白名单复核**（3 allow + 1 白名单外）：
+  - `integration→qms/lims` ✅ 成立（集成编排事务直写，only_own_schema_query 显式声明，走 API 破坏原子性）
+  - `unified-core→portal` ✅ 成立（IAM 只读用户偏好消费）
+  - `hrm→mobile` ⚠️ 迁移期遗留（mobile_attendance **0 行**，代码保留导出功能）→ 建议确认后清理 + 撤销 allow（低优先级）
+  - `shared-ai→hrm.vectors` ⚠️ 设计疑问（向量应归 ai_service schema）→ 低优先级评估迁移
+- 无运行时违规；`docs/architecture/database-split-plan.md` 更新阈值表 + 新增白名单复核表。
+
+## 2026-08-31 hrm→mobile 白名单清理（迁移期遗留已治理）✅
+- **问题**：hrm attendance.rs 的 user_id 分支直读 `mobile.mobile_attendance`（跨 schema 违规）；数据迁移已完成（0 行）。
+- **清理**：user_id 分支改走 `hrm.employees`（user_id→id 映射）→ `hrm.attendance_records`（自有表），mobile 直读清除；更新迁移方案注释为"已完成"。
+- **撤销**：`schema_boundary.json` 移除 `hrm.allow=['mobile']`；门禁 hrm PASS（引用 226 无违规）。
+- **验证**：hrm 292 测试通过。
+
+## 2026-08-31 shared-ai 向量归属迁移（hrm.vectors → ai.vectors）✅
+- **问题**：shared-ai/vector_store.rs SQL 硬编码 `hrm.vectors`（历史遗留，向量属 AI 能力但表在 hrm schema）。
+- **迁移**：新建迁移 `20260831190900_ai_vectors_schema.sql`——建 `ai.vectors`（结构一致：key PK + pgvector）→ 数据迁移（0 行）→ DROP `hrm.vectors`；备份 topems_pre_vector_migrate_20260831_2234.dump。
+- **代码**：vector_store.rs 5 处 `hrm.vectors → ai.vectors`（引用仅 shared-ai，svc/ai 唯一使用者）。
+- **验证**：迁移执行成功（ai|vectors 存在、hrm.vectors 已删）；ai 编译通过（SQLX_OFFLINE）；门禁 ai PASS schema=ai 引用 42（向量表现为自有 schema 合法）。
+- **意义**：白名单 3 项 allow + 1 白名单外 → 2 项 allow（integration/unified-core 均成立），**无待处理项**。
+
+## 2026-08-31 收尾：MES 遗留项勾选 + P0 四巨头状态校准 + erp 空表清理 ✅
+- **MES 3 项勾选**：mes 网关路由（2026-08-29 完成）/ ai MCP mes 工具真实化（完成）/ MES 服务发现（被 module-mes 统一入口 + MES_SERVICE_URL 取代，静态 services.rs 不再需要）。
+- **P0 四巨头状态校准**（2026-08-28 标注"未启动"）：
+  1. **事件总线升级**（Redis Stream + ACK + DLQ）✅ **已完整落地**：publisher 默认 stream 模式（V321）+ StreamEventPublisher（ACK）+ dead_letter_queue.rs（DLQ/重试/统计），Pub/Sub 降级为显式 fallback。
+  2. **模块化单体**（32 svc → 7 模块组 + Feature Flags）✅ 已落地：16 真实服务接入 server 统一入口（18 模块），独立部署 7 个按边界规则。
+  3. **accounting_subjects 物理迁移**（ERP→Finance）✅ V321 已迁移 + erp 改走 finance API（2026-08-31）；本轮 **DROP erp.accounting_subjects 0 行空表残留**（迁移 20260831191000）收尾。
+  4. **编译时边界检查全覆盖**（原 6/32 服务）✅ 门禁 schema_boundary 已覆盖 28 服务。
+- 至此 TODO 顶部"关键未启动 P0"四项全部落地/已明确状态。
+
+## 2026-08-31 物理库拆分预案可执行化：阈值监控脚本 + 拆分单元映射 ✅
+- 新增 `scripts/check_split_threshold.py`：自动实测 5 项拆分阈值（DB 大小/最大 schema 表数实测，连接/跨schema/备份标注需观测），任一触发退出码 1 提示启动评估。运行验证：5 项均未触发（DB 0.1GB、public 262 张）。
+- 预案深化（database-split-plan.md §3 阶段 2）：拆分单元映射表（core 库 ~400 表 / finance 库 127 / manufacturing 187 / supply 78 / business 300）+ **拆分前置条件**——integration 跨域事务直写与 unified-core 跨库读偏好为拆分前必须治理项（改 API/事件/Saga），跨库事务边界统一走事件+补偿。
+- 意义：物理拆分从"决策输入"升级为"可监控、可执行预案"；阈值达成时按映射 + 前置治理直接启动。
+
+## 2026-08-31 事件总线冒烟测试：P0 #1 全链路实测验证 ✅
+- 新增 `lib/shared-event/tests/event_bus_smoke.rs`（3 场景，需 Redis，--ignored）：stream 发布（publish→stream_length 增长）、DLQ（push/size/pop）、订阅消费（XREADGROUP 收到事件）。
+- 运行：`cargo test -p topems-shared-event --test event_bus_smoke -- --ignored` → **3 passed**（0.31s，Redis PONG）。
+- 意义：P0 #1「事件总线升级（Redis Stream + ACK + DLQ）」从"代码已实现"升级为"**全链路实测可用**"。
+
+## 2026-08-31 拆分前置治理：integration 跨域联动直写 → API 编排蓝图 ✅
+- **审计关键事实**：integration 的 6 处跨 schema 直写**全部在未接线的僵尸模块 `qms_lims_ehs.rs`**（process_event 无调用点）；活跃的 `event_handlers/` 仅记录同步日志（无直写，合规）。其中 #6 UPDATE qms 引用**不存在的 test_result/test_data/conclusion 列**（qms 仅有 result 列）——佐证模块从未执行。
+- **现有 API 语义不匹配**：qms/lims API 自动生成 sample_no/action_no（integration 需指定幂等键）、lims create_task 需 sample_id（integration 只有 sample_no）、qms 无结果回写端点。
+- **治理方案**（`docs/architecture/integration-cross-domain-api.md`）：4 步——A 服务侧集成端点（lims sample/task 集成创建 + qms action 集成创建 + qms inspection result 回写）→ B qms_lims_ehs 重写（直写→reqwest，复用 QMS/LIMS_SERVICE_URL env）→ C process_event 接线事件订阅 → D 撤销 integration.allow（白名单 2→1）。
+- 待办：步骤 A（服务端集成端点）为下一实质实施项。
+
+## 2026-08-31 拆分前置治理：步骤A 服务侧集成端点 ✅（4 个全部 runtime 验证通过）
+- **鉴权方案**：`/api/internal/` 免鉴权路径（auth_middleware is_public_path 放行 + 挂 public 路由避免 api_prefix nest 与 require_permission）——与 integration webhooks public 先例一致，仅内网可达。
+- **qms**（svc/qms/src/modules/integration.rs 新建）：`POST /api/internal/qms/actions/integration`（纠正措施集成创建，action_no 幂等）+ `POST /api/internal/qms/inspections/{no}/result`（质检结果回写，**修正原直写不存在的 test_result/test_data/conclusion 列 → result/memo**）。
+- **lims**（svc/lims/src/modules/integration.rs 新建）：`POST /api/internal/lims/samples/integration`（样本集成创建，sample_no 幂等）+ `POST /api/internal/lims/tasks/integration`（任务集成创建，task_no 幂等，**按 sample_no 关联解析 NOT NULL 的 sample_id**，**移除原直写不存在的 priority 列**）。
+- **runtime 验证**：临时端口 18050/18051 全端点 200 + DB 落库确认 + 幂等不重复；qms/lims 测试 27 passed；门禁 PASS（qms 256/lims 引用）。
+- 待办：步骤B qms_lims_ehs 6 处直写 → reqwest 调上述端点。
+
+## 2026-08-31 拆分前置治理：步骤B integration 直写 → reqwest 集成 API ✅
+- **6 处 lims/qms 跨 schema 直写全部改 HTTP**（svc/integration/src/qms_lims_ehs.rs）：
+  - 新增 call_internal_api 辅助 + lims_url/qms_url（复用 LIMS/QMS_SERVICE_URL env）
+  - #1/#4 lims 样本 → `POST /api/internal/lims/samples/integration`
+  - #2/#5 lims 任务 → `POST /api/internal/lims/tasks/integration`
+  - #3 qms 纠正措施 → `POST /api/internal/qms/actions/integration`（**issue_id 须 null**——FK→qa_quality_issues，EHS hazard 非质量issue，原直写 related_issue_id 违反 FK 属僵尸）
+  - #6 qms 质检结果 → `POST /api/internal/qms/inspections/{no}/result`（test_data Value→JSON 字符串写 text 列 memo）
+- **僵尸标注**：3 处 public 直写（qa_ehs_hazards×2 表在 ehs schema + qa_ehs_alerts×1 表不存在）标注 TODO(EHS集成)，运行必失败，待 EHS 服务集成 API 统一改 HTTP。
+- **验证**：integration 编译通过、门禁 PASS（integration 引用 108 无跨 schema 直读）；issue_id null + memo JSON 字符串变体 runtime 200。
+- 待办：步骤C process_event 接线事件订阅；步骤D 撤销 integration.allow（需先处理 3 处 EHS 僵尸直写）。
+
+## 2026-08-31 拆分前置治理：EHS 僵尸直写清理 + 撤销 integration.allow ✅（白名单 2→1）
+- **3 处 public 僵尸直写改 HTTP**（qms_lims_ehs.rs）：qa_ehs_hazards×2（表实际在 ehs schema，无 tenant_id/related_inspection_id 列）+ qa_ehs_alerts×1（表不存在）→ ehs 集成端点。
+- **ehs 集成端点**（svc/ehs/src/modules/integration.rs 新建）：`POST /api/internal/ehs/hazards/integration`（hazard_no 幂等，inspection_id FK→inspection_records 外部不可靠传 null）+ `POST /api/internal/ehs/alerts/integration`（alert_no 幂等）。
+- **建表迁移** 20260831191100_ehs_alerts.sql：建 ehs.qa_ehs_alerts（原表不存在，与 qa_ehs_hazards 风格一致无 tenant_id）。备份 topems_pre_ehs_integration_20260831_2323.dump。
+- **撤销 integration.allow=['qms','lims']**（schema_boundary.json）——integration 9 处跨 schema 直写全清零（全部改 HTTP）。
+- **门禁 PASS**：integration 引用 106 无跨 schema 直读；**白名单 2→1**（仅剩 unified-core→portal 设计性只读）。
+- 验证：integration/ehs 编译通过、警告清零、ehs 端点静态审查；runtime curl 验证待补（Bash 曾受限）。
+- 拆分前置条件 #1（integration 跨域事务直写）**代码层清零**；步骤C process_event 接线事件订阅为剩余项。
+
+## 2026-08-31 拆分前置治理：步骤C 接线（跨域联动真实化）✅
+- **event_handlers/mod.rs 追加订阅**：build_subscriber 增加 7 个领域事件（QmsInspectionCompleted/QmsQualityIssueCreated/EhsHazardReported/EhsAccidentReported/LimsInspectionAbnormalDetected/LimsRecordCompleted/LimsReagentAlert）→ handle_cross_domain_event → qms_lims_ehs::process_event 统一调度。
+- **发布端现状**：QmsQualityIssueCreated（qms）、EhsHazardReported（ehs）已发布；其余 5 事件发布端待源服务补发（lims 仅发 LimsInspectionResultSubmitted）。
+- **端到端验证**：XADD QmsQualityIssueCreated（字段 payload=Event JSON）→ integration 订阅消费 → process_event → handler → reqwest 调 ehs /api/internal/ehs/hazards/integration → ehs.qa_ehs_hazards 落库 HAZ-QMS-* ✅；测试数据/stream 消息已清理、服务已停。
+- 蓝图 integration-cross-domain-api.md 步骤 A/B/C/D 全部完成。
+- 剩余项：5 个事件发布端补发（源服务业务埋点）。
+
+## 2026-08-31 拆分前置治理：7 事件发布端全部补齐 ✅
+- **qms**：QmsInspectionCompleted（quality_inspection.rs approve 分支，BigDecimal→f64 转换）——QmsQualityIssueCreated 已有。
+- **ehs**：EhsAccidentReported（accident.rs report_accident，State(_state)→State(state) 取 publisher）——EhsHazardReported 已有。
+- **lims**：LimsRecordCompleted + LimsInspectionAbnormalDetected（inspection_task.rs submit_result 同点追加；结论非合格触发异常；qa_lab_tasks 无 related_inspection_no → None）+ LimsReagentAlert（reagent.rs create_reagent 过期检测）——LimsInspectionResultSubmitted 已有。
+- **integration handler 6 保护**：LimsRecordCompleted 无关联 QMS 检验单时跳过回写（避免空号 404）。
+- 验证：4 服务编译通过、测试全绿（251+171+149+8 等）、门禁 PASS（qms 256/lims 1/ehs 1/integration 106 无跨 schema）。
+- 拆分前置条件 #1 全链路闭环：9 处直写→API + 订阅端接线 + 7 事件发布端补齐。
+
+## 2026-09-01 拆分前置治理：public 影子表清理（262 → 216）✅
+- **发现**：ownership review 归属矩阵中 pdm（pdm_*+bom_items 20 张）/mes（production_*/equipment_*/work_*/wip* 17 张）/bi（analytics_* 18 张）的历史表**未在阶段0 A-E 归位**，残留在 public（pdm 15 + mes 制造 14 + mes 2 + analytics 15 = 46 张）。
+- **判定**：这些是**影子表**——pdm/mes/bi schema 已有同名新表，代码经 search_path（pdm,public / bi,public）用新表；public 残留无显式 public.* 引用、无视图依赖、30+13 张 0 行（production_records 3 / analytics_comparison_* 各 1 为历史残留）。
+- **清理**：备份 topems_pre_shadow_drop_20260901_0009.dump → 迁移 `20260901000000_drop_public_shadow_tables.sql` DROP 46 张 → **public 262 → 216**；CASCADE 级联删 quality_traceability_records 指向 public.production_orders 的失效 FK（该 FK 引用影子表，删除合理，无数据影响）。
+- **验证**：无断裂 FK、门禁全 PASS（28 服务）、pdm/mes/analytics 编译通过、阈值"最大 schema 表数"改善。
+- **备注**：core_* 42 张符合平台保留决策（public）；portal 120 张为独立部署服务主表，非影子表。
+
+## 2026-09-01 拆分前置治理：finance_v5x 影子表清理（216 → 176）✅
+- **续查**：public 影子表全量对照（finance/bi/mes/qms/lims/erp/master_data 同名）——发现 82 张候选。
+- **本轮清理**：finance_v5x 40 张（finance_v54-v60 历史版本表）——仅 finance 引用、全 0 行、无视图依赖 → DROP（迁移 `20260901000001_drop_public_finance_shadow.sql`）→ **public 216 → 176**。
+- **验证**：断裂 FK 0、门禁全 PASS（28 服务）、finance 编译通过。
+- **保留待审计（~40 张通用名影子表）**：analysis_*/dashboards/data_sources/datasource_*/reports/equipment/materials/inspection_records(6 行)/report_templates(12 行)/payables/receivables/expenses/financial_vouchers/voucher_items/process_routes 等——**不可盲删**：portal/pm/ai 等经 search_path（portal,public / pm,public / ai_service,public）可能 fallback 到 public 同名表（如 portal.materials/pm.equipment 不存在→public；ai 用 ai_service 不含 bi 却引用 dashboards/data_sources→public）。**待逐表精确审计**（表 vs 各引用服务 search_path 解析）后清理或补 schema。
+- **备注**：teams/team_members 平台保留决策（public）；audit_logs 平台表保留；quality_traceability_records 无代码引用（死表，可选后续清理）。
+
+## 2026-09-01 拆分前置治理：死表清理 + 通用名表审计结论（176 → 172）✅
+- **死表清理**：payment_schedules/project_budget_items/saved_analysis_results/visualization_data 4 张（0 行、svc 全库无引用、erp/bi schema 有同名活表）→ DROP（迁移 `20260901000002_drop_public_dead_tables.sql`）→ **public 176 → 172**。
+- **通用名表逐表审计（33 张）**：产出引用服务→search_path 解析映射。
+  - **可安全删（引用解析到专属 schema）**：payables/receivables（finance）、quality_inspections（mes）、report_data（lims）——public 版为影子。
+  - **不可盲删（fallback public）**：dashboards/data_sources/reports（ai：search_path=ai_service,public,shared **不含 bi** 却引用 bi 分析表→fallback public）、equipment（pm：pm,public 无 pm.equipment→public）、materials/expenses（portal：portal,public 无 portal.materials→public）。**暴露 search_path 配置缺陷**——待专项治理（ai 加 bi、portal/pm 补 schema 或显式 schema 引用）。
+  - **2 张有数据**：inspection_records(6)/report_templates(12)——保留待迁移评估。
+  - **死表待确认**：financial_vouchers/voucher_items/process_routes/quality_standards 等有引用但需看是否 fallback public——列入 search_path 专项一并处理。
+- **累计本轮**：public 262 → 172（90 张影子/死表），5 项拆分阈值持续改善，门禁全 PASS（28 服务）、断裂 FK 0。
+
+## 2026-09-01 审计修正：payables/receivables/quality_inspections/report_data 不可删 ⚠️
+- **修正**：此前判定"引用解析到专属 schema 可删"有误——目标同名表在 **erp/qms/bi**，但引用服务 search_path 为 **finance,public / mes,public / lims,public（不含目标 schema）** → 实际 **fallback public**——DROP 将破坏 finance/mes/lims。
+- **结论**：这 4 张保留；与 dashboards/equipment/materials 等同类——**都是跨域直连的 search_path 缺陷**，需先修复（引用服务显式 schema 或 API 化）再清理。
+- **本轮最终成果**：public 262 → 172（90 张影子/死表：46 pdm/mes/analytics + 40 finance_v5x + 4 死表）；拆分阈值持续改善、门禁全 PASS（28 服务）、断裂 FK 0、pdm/mes/analytics/finance 编译通过。
+- **下一专项建议**：跨域直连 search_path 缺陷治理（ai→bi、portal→pdm.materials、pm→mes.equipment、finance→erp.payables/receivables、mes→qms.quality_inspections、lims→bi.report_data）——涉及 API 化/显式 schema 引用，需单独规划。
+
+## 2026-09-01 拆分前置治理：通用名影子表清理（172 → 151）✅
+- **精确审计**：区分"真实 SQL 引用"（FROM/INTO/UPDATE/JOIN）与"类型名/API 路由/MCP mock"——反转此前保守判断。
+  - ai 的 bi.rs 是 **MCP mock 工具**（无 DB 查询）；portal 的 materials 是 **GraphQL API 转发**（/api/erp/materials）；pm 无 FROM equipment。
+- **DROP 21 张**（引用服务主 schema 有同名活表 + 全 0 行）：
+  - 迁移 `...03_drop_public_generic_shadow.sql` 13 张：mes(equipment/process_routes/process_route_steps)、erp(financial_vouchers/voucher_items/materials)、bi(reports/report_schedules/report_subscriptions/report_execution_records/report_data/dashboards/data_sources)
+  - 迁移 `...04_drop_public_dead_bi_tables.sql` 8 张：analysis_history/analysis_queries/dashboard_widgets/datasource_fields/datasource_tables/saved_analysis_results/visualization_data/visualizations（无 SQL 引用，bi 有同名）
+- **验证**：mes/erp/analytics 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → 151（111 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善。
+- **保留（跨域活跃，待 API 化专项）**：quality_inspections/quality_standards（mes 引用 qms 表）、expenses/payables/receivables（finance 引用 erp 表）、report_templates（12 行数据待迁移评估）、inspection_records（6 行）。
+
+## 2026-09-01 拆分前置治理：影子表清理第二阶段（151 → 131）✅
+- **DROP 22 张**：
+  - 迁移 `...05_drop_public_misc_dead.sql` 14 张：mobile/erp/im 影子（mobile_push_notifications/mobile_tasks/project_budgets/project_contracts/chat_rooms）+ 死表（mobile_approvals/financial_records/report_schedule_history/stocktake_records/stocktake_tasks/chat_messages/quality_traceability_records/defect_records/aps_master_data_refs）——引用均为函数名/显式 schema/带前缀表名（communication 用 core_chat_*）
+  - 迁移 `...06_drop_public_finance_v60.sql` 8 张：finance_v60 系列（上轮 finance_v5x 清理遗漏，finance schema 同名 + 0 行）
+- **验证**：mobile/communication/pm/erp 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **131**（131 张影子/死表清理），拆分阈值"最大 schema 表数"大幅改善（262→131）。
+- **归位遗漏发现（~45 张活跃表仍在 public）**：finance_v52/v53 13 张 + quality_patrols/erp_payables/meeting_*/mv_*/process_*/ticket_* 等——**有真实 SQL 引用（fallback public）**——是阶段0 归位未覆盖的服务活跃表，**不可 DROP**——待"活跃表归位专项"（SET SCHEMA 到各服务 schema + 确认 search_path）。
+
+## 2026-09-01 拆分前置治理：finance 活跃表归位（131 → 108）✅
+- **归位 23 张**（public → finance）：erp_collection_records/erp_payables/erp_payment_records/erp_receivables/expenses/payables/receivables/financial_reports/mv_receivable_aging/mv_voucher_summary + finance_v52/v53 13 张（历史版本表但 finance 仍在查询）。
+- **依据**：仅 finance 服务 SQL 引用、无显式 public.* 引用、finance schema 无同名冲突、全 0 行；search_path 本就含 finance → 归位即时生效无需重启。
+- **验证**：finance 编译通过、门禁 28 PASS、断裂 FK 0、search_path 模拟查询可解析 finance.payables。
+- **累计**：public 262 → **108**（154 张影子/死表清理 + 23 张归位）；finance schema 80 → 103。
+- **剩余 public 108 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等 ~30）+ 待归位/待审计（quality_*/meeting_*/process_*/ticket_* 等 ~20 + 其他）。
+
+## 2026-09-01 拆分前置治理：meeting/process/quality 归位（108 → 98）✅
+- **归位 9 张 + DROP 1 张**：
+  - meeting_bookings/meeting_rooms → erp（仅 erp 引用）
+  - process_flows/process_flow_steps → mes（仅 mes 引用）
+  - quality_inspections/quality_standards/quality_patrols/quality_patrol_items/quality_standard_values → mes（mes 引用；qms 用显式 qms.qa_quality_* 无冲突）
+  - quality_tasks 无引用死表 DROP
+- **ticket 保留 public**：ticket 服务 search_path = "public"（无专属 schema），归位会破坏——标注待 ticket schema 化专项。
+- **验证**：mes/erp 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **98**（155 张清理 + 32 张归位）。
+- **剩余 public 98 张**：core_* 42（平台保留）+ 平台表（teams/audit_logs/cqrs 等）+ ticket 表（search_path=public）+ 其他待审计。
+
+## 2026-09-01 拆分前置治理：IoT/GIS/Mobile 影子清理（98 → 88）✅
+- **DROP 10 张**：audio_recordings/video_recordings/patrol_records/photo_evidences（mobile 显式 schema）、location_photos/map_markers/warehouse_locations（gis 显式 schema）、scan_records（lims 用 qa_lims_barcode_scan_records 前缀）、anomaly_records/product_boms（0 引用死表）。
+- **验证**：gis/mobile/lims 编译通过、门禁 28 PASS、断裂 FK 0。
+- **累计**：public 262 → **88**（165 张清理 + 32 张归位）。
+- **拆分阈值**：最大 schema 表数 **public 88**（已低于 portal 120——public 不再是最大 schema，从 262 大幅收敛）。
+- **剩余 public 88 张**：core_* 42（平台保留）+ 平台表 21 + 基础设施 5（cqrs/schema_registry/spatial_ref_sys）+ ticket 2（search_path=public）+ 活跃业务表 ~18（dynamic_data/inventory_items/vehicles/warehouses/report_templates/dashboard_stats 等，有 SQL 引用需归位专项或保留）。
+
+## 2026-09-01 ticket schema 化（public → ticket）✅
+- **DB**：建 ticket schema + 归位 7 张表（迁移 `20260901000011_create_ticket_schema.sql`）：core_tickets/core_ticket_comments/core_ticket_activities/core_ticket_sla_policies/core_ticket_sla_escalations（**审计确认仅 ticket 服务引用**，core_ 前缀系历史命名非平台级，修正 core_ 保留决策）+ ticket_automation_rules/ticket_knowledge_articles。备份 topems_pre_ticket_schema_*.dump。
+- **代码**：main.rs SEARCH_PATH `"public"→"ticket, public"`；schema_defense.rs SERVICE_SCHEMA `"public"→"ticket"`；schema_boundary.json ticket `{schema: ticket, search_path: ticket, public}`。
+- **验证**：ticket 编译通过、门禁 28 PASS、运行时启动 + schema 自检 7 张表一致性通过 + search_path 模拟查询可解析 + 端点正常响应；测试服务已清理。
+- **累计**：public 262 → **81**（165 清理 + 39 归位，ticket 新增 schema 7 张）。
+
+## 2026-09-01 portal schema 审计（120 → 116）✅
+- **审计结论**：portal schema 120 张中——
+  - **4 张真死表**（portal_access_logs/portal_configs/portal_layouts/portal_menus——全 svc+lib+apps 无任何代码提及连建表 DDL 都没有 + 0 行）→ DROP（迁移 `20260901000012_drop_portal_dead.sql`）
+  - **~8 张活跃**（portal 查询 core_faqs/core_guides/core_guide_lessons/portal_quick_actions/portal_todos/user_preferences + 事件处理 portal_notifications/portal_dashboard_stats）
+  - **~108 张"建表无查询"设计预留表**（smart_gateway/ai_ops/gateway_monitoring/federation_gateway 等模块 CREATE TABLE IF NOT EXISTS 但业务从未 FROM/INTO/UPDATE/JOIN）——**保留**（DROP 会被服务启动重建，无效）
+- **关键洞察**：portal 存在**大量"建表无查询"的代码层过度设计**（智能网关/AI Ops/联邦网关等模块预留）——非 schema 治理可解决——需代码层清理或业务确认（作为独立专项，避免误删未来功能预留）。
+- **验证**：门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 portal 建表无查询专项评估（结论：全部保留）✅
+- **审计**：108 张"建表无查询"表分布在 18 个网关/基础设施模块（smart_gateway/ai_ops/federation_gateway 等），全部有完整 handler（13-52）+ 路由挂载 + **内存态实现**（HashMap，非 mock）。
+- **证据**：表 0 行/0 查询/无 struct 编译依赖；前端使用 federation(16)/orchestration(4)/ai_ops(1)。
+- **结论**：这些是**"内存态功能 + 持久化预留表"**——**保留**（功能活跃、空表无成本、删除风险高）。
+- **报告**：docs/architecture/portal-gateway-modules-review.md（分类 A 业务活跃 / B 网关基础设施 / C 后台预留 + 可选优化方案——需业务确认产品路线后批量移除 C 类建表代码）。
+
+## 2026-09-01 剩余活跃业务表归位收尾（78 → 73）✅
+- **发现**：ticket 服务运行时验证用**旧二进制**（SEARCH_PATH=public）启动，重建了 public.core_tickets 系列空影子表 → DROP 7 张（core_tickets/ticket_automation_rules/ticket_knowledge_articles + core_ticket_comments/activities/sla_escalations/sla_policies）；正式二进制用 ticket schema 不重建。
+- **归位**：vehicle_requests/vehicles → erp（仅 erp 引用、0 行）；DROP public.batch_records 影子（mes 同名活表）。
+- **DROP 5 张**：inbound_orders/outbound_orders/warehouses（wms 显式 wms.* 引用）、business_locations（gis 同名）、supply_chain_orders（纯死表 0 提及）。
+- **保留（有数据/跨域/无专属 schema）**：device_locations(170)/factory_maps(512)/report_templates(12)/archive_config(14)/dashboard_stats(12)/products(21)/inspection_records(6) 有历史数据；dynamic_data（master-data 用 public 未 schema 化）；inventory_items（erp/wms 跨域待 API 化）。
+- **验证**：门禁 28 PASS、断裂 FK 0、wms/gis/erp/ticket 编译通过。
+- **累计**：public 262 → **73**；core_* 37 平台保留 + 平台表 + 9 张活跃业务表合理保留。
+
+## 2026-09-01 inventory_items 跨域 API 化（归位前置）✅
+- **审计发现**：public.inventory_items 是**废弃旧库存表**（0 行）；WMS 真实主库存表为 `wms.inventory`（有 quantity/updated_at/location_id/warehouse_id 全字段）。
+- **改造**：
+  1. wms/transfer.rs 2 处 `UPDATE inventory_items` → `UPDATE wms.inventory`（消除 wms→public 直连写；调拨扣减真实主表）
+  2. erp/dashboard.rs 库存统计（total_inventory/low_stock_items）改走 WMS statistics API（GET /api/wms/inventory/statistics，转发 Authorization + 失败降级 0）——消除 erp→public 直连读
+  3. DROP public.inventory_items（0 行废弃表，无写者无读者）——迁移 20260901000016
+- **验证**：wms/erp 编译通过（无警告）、门禁 28 PASS、断裂 FK 0、两服务启动 schema 自检一致、健康 200。
+- **待办**：erp→wms 服务间认证未打通（wms require_permission 全局强制），dashboard 库存字段当前降级 0——服务间认证为独立专项。
+
+## 2026-09-01 master-data 服务 schema 化（dynamic_data 归位）✅
+- **归位 4 张 master-data 独占表 → master_data schema**：core_dict_types(38 行)/core_dict_items(189 行)/schema_registry/dynamic_data（迁移 20260901000017）。
+  - core_dict_* 为 core_ 前缀历史命名，实际仅 master-data 用；schema_registry DB 表仅 master-data 用（portal/lib 的同名项为代码内定义）。
+- **代码同步**：main.rs SEARCH_PATH "public"→"master_data, public"、schema_defense.rs SERVICE_SCHEMA→"master_data"、schema_boundary.json master-data 登记。
+- **验证**：编译通过、门禁 28 PASS（master-data schema=master_data 引用=0）、启动连接池 search_path 正确、schema 自检 4 表一致、健康 200、模拟查询 38 行可解析。
+- **public 72 → 68**；dynamic_data 跨域归位闭环。
+
+## 2026-09-01 public gis 旧测试数据清理（device_locations/factory_maps）✅
+- **审计**：public.device_locations(170)/factory_maps(512)/pipelines(170) 为 2026-06-13~07-08 批量**测试数据**（"测试设备"/"测试管道"/2d 类型）；gis 服务用 gis.* 同名活表（真实数据 device_locations 2/factory_maps 10 行）；public 三表无 SQL 引用（前端经 gis API 调用）。
+- **FK**：public.device_locations→factory_maps、public.pipelines→factory_maps（与 gis 版 FK 独立）——CASCADE 清理。
+- **处理**：备份（dump + CSV 归档至 /tmp）→ DROP 3 张（迁移 20260901000018）。
+- **验证**：门禁 28 PASS、gis 编译通过、gis 活表不受影响、断裂 FK 0。
+- **public 65 张**；gis 历史测试数据归档闭环。
+
+## 2026-09-01 剩余 public 活跃业务表清理（5 张）✅
+- **逐表审计结论（全部影子/测试/旧数据，无真实引用）**：
+  - report_templates(12) → analytics 用 bi.report_templates 活表，public 历史影子
+  - products(21) → "测试产品-*" 测试数据，无 SQL 引用（mes 走 API 转发）
+  - dashboard_stats(12) → portal 用 portal_dashboard_stats，public 旧统计表
+  - archive_config(14) → communication 硬编码响应、notification 用 notification 版
+  - inspection_records(6) → "陈/刘检验员" 测试数据
+- **处理**：备份 dump + CSV 归档 → DROP（迁移 20260901000019）。
+- **验证**：门禁 28 PASS、断裂 FK 0。
+- **public 65 → 60（业务活跃表清零）**：剩余全部为 core_* 平台保留 + 平台表 + 基础设施表。
+
+## 2026-09-01 收尾：public 业务表全部清零 ✅
+- **发现**：master-data 旧二进制测试启动重建了 public 4 张空影子（dynamic_data/schema_registry/core_dict_types/core_dict_items）→ DROP（迁移 20260901000020；正式表在 master_data schema 有 38/189 行）。
+- **public 60 张 = _sqlx_migrations + core_* 37 平台保留 + 平台表 + 基础设施（teams/audit_logs/cqrs_*/spatial_ref_sys 等）——非 core/平台业务表为 0**。
+- **主线闭环**：public 262 → 60；活跃业务表全部归位（ticket/master_data/erp）或归档（影子/测试/历史数据）；门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 core_* 平台表复核（4 张清理，public 60→56）✅
+- **core_faqs/core_guides**：portal schema 有同名活表（portal search_path="portal, public" 解析到 portal 版），public 12=12 影子 → DROP。
+- **core_documents/core_plugin_pricing**：全代码 0 提及、无建表代码重建 → 纯死表 DROP。
+- **保留**：unified-core 平台核心（roles/permissions/tenants/users/plugins/login_logs 等——平台级）、communication 专属（emails/notifications/geofences——communication 未 schema 化）、plugin-registry 建表预留（core_plugin_* 7 张——search_path=public 建表 DROP 会重建）。
+- 迁移 20260901000021；门禁 28 PASS、断裂 FK 0。
+
+## 2026-09-01 communication 服务 schema 化（core_* 4 张归位）✅
+- **归位 4 张 communication 独占表 → communication schema**：core_emails/core_geofences/core_notification_templates/core_notifications（迁移 20260901000022）。
+- **同步处理 core_chat_* 残留**：chat 功能已在 im schema（im.core_chat_*），移除 communication 的 core_chat_rooms/members/messages 建表代码（main.rs init_database + schema_defense TABLE_DEFS）——避免重复空表。
+- **代码**：main.rs SEARCH_PATH "public"→"communication, public"、schema_defense SERVICE_SCHEMA→"communication"、schema_boundary.json 登记。
+- **验证**：编译通过、门禁 28 PASS、启动连接池 search_path 正确、communication schema 6 表一致（含 core_email_templates/location_messages 新建成）、im.core_chat_* 不受影响、模拟查询 core_users 平台 48 行可解析、健康 200。
+- **public 56 → 52**；communication 归位闭环。
+
+## 2026-09-01 plugin-registry 建表预留治理（core_plugin_* 统一 core schema）✅
+- **审计结论**：core schema 为插件功能真实数据层（core.core_plugin_* 显式查询），public.core_plugin_* 8 张为旧副本/建表残留（含裸名查询缺陷）。
+- **改造**：4 处裸名 core_plugin_* 引用改显式 core.*（unified-core handlers.rs + plugin-registry mod.rs/runtime.rs/simple_api.rs）；plugin-registry SEARCH_PATH/SERVICE_SCHEMA "public"→"core"；schema_boundary 登记 core + **core 加入 default_shared**（ai/unified-core/plugin-registry 三服务共享数据层）。
+- **DB**：迁移 000023 DROP public.core_plugin_* 8 张（含 FK 顺序修正：tenant_plugins 先于 plugins）；重置 core.core_plugin_categories（旧结构缺 code 列 → 服务重建新结构 9 分类种子）。
+- **验证**：编译通过、门禁 28 PASS（修复 ai/unified-core core 引用授权）、启动 search_path=core, public、categories 重建 9 行、断裂 FK 0。
+- **public 52 → 44**；插件系统统一 core schema。
+
+## 2026-09-01 erp→wms 服务间认证打通（dashboard 库存真实化）✅
+- **问题**：erp dashboard 库存统计转 WMS API 后，转发前端用户 token（无 wms:admin 权限）→ 401 → 降级 0。
+- **方案**：服务间认证——erp 用共享 JWT 密钥（.env JWT_SECRET，AuthState::from_env 所有服务一致）签发最小权限 service token（username=erp-service、permissions=["wms:admin"]、5 分钟有效）调 WMS。
+- **实现**：fetch_wms_inventory_stats 改为签发 service token（Claims.encode），不转发用户 token；调用传 state.auth_state.jwt_secret；移除 dashboard 冗余 headers 参数。
+- **验证**：service token 调 /api/wms/inventory/statistics → 200 + total_quantity=3200（真实数据）；无 token → 401；erp dashboard 返回 total_inventory=3200（不再降级 0）；编译通过。
+
+## 2026-09-01 统一服务间认证封装（shared-auth service 模块）✅
+- **新增** lib/shared-auth/src/service.rs：`issue_service_token`（共享密钥签发服务身份 token，最小权限 + 5 分钟短时效 + 服务名审计）、`is_service_claims`（识别服务调用）、SERVICE_TOKEN_TTL_SECS/SERVICE_SUBJECT/SERVICE_ROLE 常量。
+- **lib.rs** 注册 service 模块。
+- **erp dashboard 重构**：改用 `issue_service_token`（移除手工 Claims 构造），后续服务可复用同一封装。
+- **验证**：shared-auth 3 单测通过（roundtrip/custom_ttl/is_service_claims）、erp 编译通过、运行时复验 dashboard total_inventory=3200。
+
+## 2026-09-01 被调用方服务身份中间件（审计/告警区分）✅
+- **新增** lib/shared-auth/src/middleware/service_identity.rs：`ServiceIdentity`（service_name/permissions）+ `service_identity_middleware`（识别服务调用打审计日志 + 注入 extension）。
+- **集成** auth_middleware（auth.rs）：token 验证通过后判断 `is_service_claims` → 打 info 审计日志（服务名+方法+路径）+ 注入 ServiceIdentity——避免独立挂载的 layer 顺序问题（auth 外挂时 Claims 未解析）。
+- **效果**：所有服务（经 build_application protected 路由）自动区分服务调用 vs 用户调用；下游可读 ServiceIdentity（RLS 豁免/限流差异/审计）。
+- **验证**：shared-auth 219 测试全过（含 service 3 + service_identity 2）、编译通过、运行时实测——service token 调 statistics → 200 + 审计日志 "服务间调用 service=erp-service"；无 token 401 不触发（区分服务/用户）。
+- **注意**：RLS 豁免（service 跨租户聚合）未做——当前 RLS 未阻碍（wms statistics 实测返回全量 3200）；若未来业务连接启用 RLS 需 service 豁免时再处理。
+
+## 2026-09-01 批量改造跨服务调用（TypedServiceClient 服务间认证封装）✅
+- **封装** lib/shared-service-client trait_api.rs：`TypedServiceClient::with_service_token/set_service_token`（加 topems-shared-auth 依赖）——一键签发 service token 设置认证（自动 Bearer）。
+- **应用** erp main.rs：finance_client（finance:read）+ hrm_client（hrm:admin）改用 with_service_token——消除转发用户 token 无目标权限 → 401 降级缺陷。
+- **审计**：communication→gis 的 /search 是 gis public 路由（无需认证）——不改造；11 服务用 TypedServiceClient，后续可按需扩展。
+- **验证**：shared-service-client + erp 编译通过；erp 启动 client 无 mock 降级；service token 调 finance → 200 + 审计日志 "service=erp-service"；无 token → 401。
+
+## 2026-09-01 批量扩展：跨服务 TypedServiceClient 应用 service token ✅
+- **封装就绪后全量应用**（with_service_token）：
+  - 独立服务：srm/qms/pm/finance/ehs Workflow(workflow:read) + crm(erp:admin/wms:admin/workflow:read) + mobile 6 客户端(wms:admin/mes:admin/qms:admin/hrm:admin/workflow:read/notification:read)
+  - server 模块化单体：pm/qms/finance/srm/ehs 模块 Workflow + erp 模块 Hrm/Finance + crm 模块 Erp/Wms/Workflow
+- **审计**：所有 TypedServiceClient 调用方（11 服务）均已应用；communication→gis 为 public 路由不改造。
+- **验证**：crm/mobile/srm/qms/pm/finance/ehs/server 编译通过；crm 启动 ERP/WMS 客户端 service token 成功；实测 crm-service token(erp:admin) → erp inventory 200 + 审计日志 "service=crm-service"；无 token 401。
+- **排坑**：erp 曾无 token 也 200 属旧 dev 实例占端口假象（erp_v2 Address in use），pkill -9 清理后新实例 auth 正常（401）。
+
+## 2026-09-01 剩余"转发用户 token"手工调用审计与替换（portal）✅
+- **审计**：全库非 TypedServiceClient 的转发模式——portal 是主要聚集地（announcements/monitoring/aggregation/todos/user/quick_actions 等）。
+- **分类**：服务级数据（应 service token：announcements→erp 公告、monitoring→monitor）vs 用户身份必需（保留转发：todos/user/aggregation 待办、workflow my_task_stats 等）。
+- **改造**：
+  - portal 9 个 TypedServiceClient（上轮遗漏）创建处统一 with_service_token（服务级默认，用户级调用处显式覆盖）
+  - announcements 8 处请求（get/list/create/update/delete/publish/pinned）从转发用户 token 改为 erp_auth（portal-service erp:admin）
+  - monitoring build_client 5 处从转发用户 token 改为 with_service_token（monitor:read）
+- **验证**：portal 编译通过（修 E0382 move + headers unused）；portal-service token(erp:admin) → erp 公告 200 + 审计 "service=portal-service"；无 token 401。
+- **未决**：portal 自身认证拒绝手工签发的用户 token（401）——portal auth 可能有额外校验（非本轮范围，测试走 service token 链路验证）；aggregation/todos 的用户身份调用保留转发（合理）。
+
+## 2026-09-01 服务间调用可观测性（ServiceIdentity → metrics + 限流差异）✅
+- **metrics**：shared-auth service.rs 注册 Prometheus `topems_service_to_service_calls_total{service=...}`；auth_middleware 识别服务身份时 record_service_call → 各服务 /metrics 暴露。
+- **限流差异**：RateLimitConfig 加 by_service/service_max_requests（默认 1000 vs 用户 200）；rate_limit_middleware 读 ServiceIdentity → 服务独立桶 service:<name>。
+- **layer 顺序调整**（build_application）：auth → rls → rate_limit——auth 最先注入 ServiceIdentity，rate_limit 才能读到（原 rate_limit 在最外层先于 auth）。
+- **验证**：shared-auth 219+doc 测试全过；门禁 28；服务 token 调 wms → 200 + 限流头 limit 1000（服务桶）+ metrics `{service="erp-service"} 2`；用户 token → 200 + limit 200（用户桶）不计入；无 token 401 不计数。
+- **提交纪律**：bootstrap 与用户 init_telemetry 改动共存——git add -p 精确暂存 layer hunk（9 hunk 选 5-6），未误带用户改动。
+
+## 2026-09-01 服务调用审计告警消费（ServiceCallMonitor）✅
+- **新增** lib/shared-auth/src/service_monitor.rs：`ServiceCallMonitor`——消费 ServiceIdentity + 频率数据检测异常调用。
+- **规则**：①未知服务（不在白名单 → 疑似伪造 service token）；②高频调用（滑动窗口超阈值 → 疑似风暴/攻击）；告警去重（冷却期同类型只告警一次）。
+- **配置**（env 可覆盖）：SERVICE_ALERT_WINDOW_SECS(60)/HIGH_FREQ_THRESHOLD(500)/KNOWN_SERVICES(内置 31 个服务名)/COOLDOWN_SECS(60)/ENABLED。
+- **接入**：record_service_call 里调用 monitor（非阻塞纯内存）；告警 tracing::warn（target service_call_alert）可接日志/告警平台。
+- **验证**：shared-auth 223 测试全过；运行时 evil-service（未注册）→ 未知服务告警；erp-service 阈值 3 连续调用 → 高频告警；冷却期去重（告警数保持 1）。
+
+## 2026-09-01 服务调用拓扑生成（metrics → 依赖矩阵/图谱）✅
+- **新增** scripts/arch/service_topology.py：双模式聚合 `topems_service_to_service_calls_total{service=...}`。
+  - `--static`：内置 with_service_token 全量清单 → 设计依赖（36 边/23 节点）
+  - `--collect svc:port,...`：扫运行中服务 /metrics → 实际调用边（被调用方 metrics 记录调用方 label）
+- **输出** docs/architecture/service-topology/：ECharts graph JSON + 依赖矩阵 CSV + 自包含 HTML 图谱。
+- **验证**：静态 36 边/23 节点；动态实测 erp-service→wms-service（5 次调用捕获）。
+
+## 2026-09-01 跨库调用标记（拓扑 × 物理库拆分预案）✅
+- **新增** scripts/arch/mark_cross_db.py：把服务调用拓扑叠加 database-split-plan.md §3 阶段 2 的 5 物理库分组。
+- **结果**：36 条设计边 → 跨库 31 条（86%）/ 同库 5 条（erp→finance、mobile→hrm、portal→hrm/crm、server-erp-module→finance）。
+- **最大耦合点**：workflow-service（core 库）被 14 个跨库调用方依赖；wms 4 / erp 3 / hrm·mes·notification 各 2。
+- **关键结论**：跨库边均为服务 API 调用（service token）——拆分后无需额外改造；真正前置治理仍是预案 3 项（integration 直写、unified-core→portal、跨库事务边界）。
+- **输出**：service-topology.cross-db.{json,html}（红色虚线高亮跨库边）+ cross-db-calls.md（清单+优先级）。
+
+## 2026-09-01 workflow-service 拆分专项评估 ✅
+- **结论**：保持独立共享库（方案 A）——流程引擎是跨域协调器，审批流天然跨域（srm→qms→finance），分片复制（B）违背其全局性本质。
+- **对比**：A 35 分 vs B 18 分（8 维度）；A 唯一代价是 14 条跨库 API 调用，但已全部 service token 化（零额外改造）。
+- **关键证据**：任务按审批人分配（my_task_stats 全局待办）而非按域——分片后待办聚合/跨域流转/审计追溯三大难题。
+- **产出**：docs/architecture/workflow-split-assessment.md；P1 行动项 = portal 待办聚合缓存（my_task_stats TTL）。
+
+## 2026-09-01 portal 待办聚合缓存（P1，拆分前置优化）✅
+- **shared/mod.rs** 新增 `cached_my_task_stats(user_id, token)`：用户级待办统计缓存，key=`wf:stats:{user_id}`，TTL 60s，命中即返回、未命中调 workflow API 后写入。
+- **接入 3 处**：aggregation fetch_finance_stats / fetch_workflow_stats（传 claims.sub）+ dashboard fetch_user_pending_approvals。
+- **验证**：cargo build 通过；假 workflow server（18099）确认存活；**运行时端到端被 portal auth 遗留阻碍**（第 20 阶段已知：portal 拒绝手工签发用户 token 401，与缓存无关）。
+
+## 2026-09-01 portal auth 遗留修复（layer 顺序）✅
+- **根因**：portal 自定义 router 的 layer 顺序 `tenant→auth→require_permission→rls→rate_limit`——axum 后挂先执行 → require_permission 在 auth **之前**执行 → Claims 未注入 → 401「缺少认证信息」（service token 也同理被挡）。
+- **修复**：改为 `tenant→rls→require_permission→auth→rate_limit`——auth 最先注入 Claims（+ServiceIdentity），require_permission/rls/tenant 才读到。参照 build_application 标准顺序。
+- **验证（端到端打通）**：DEVELOPMENT_MODE 启动 portal + 假 workflow server——business-stats 返回 success:true（不再 401）；第一次请求假 server 收到 1 次（数据解析 pending=4/todo=5），第二次缓存命中计数不变——**待办聚合缓存 P1 端到端闭环**。
+
+## 2026-09-01 服务间认证批量核验（crm→erp、portal→各服务 with_service_token）✅
+- **全库盘点**：TypedServiceClient 初始化生产代码 100% 已 with_service_token——crm 3 个（erp/wms/workflow）、portal 9 个（notification/workflow/mes/monitor/iam/hrm/erp/crm/finance）、其他服务（erp/mobile/finance/ehs/pm/qms/srm/server 各 real_module）全部覆盖。
+- **仅 2 类例外（合理保留）**：① pm 测试代码 mock client（modules/mod.rs:89 test）；② crm plugin 注册用 X-Plugin-Token（非服务间 API）。
+- **手工 issue_service_token 复核（2 处，服务身份已达成）**：portal announcements（ERP 公告 CRUD 代理）、erp dashboard fetch_wms_inventory_stats（erp→wms 只读，注释明确"非转发用户 token"）——均已是 service claims 认证，保留。
+- **运行时验证 with_service_token 纯链路**：portal→monitor 假 server 收到 `sub=00000000-...-0000, username=portal-service, role=service, permissions=[monitor:read], 5 分钟有效`——被调用方 is_service_claims 可识别；portal→workflow 链路此前缓存验证已通。
+
+## 2026-09-01 "转发用户 token"手工调用审计（portal）+ 搜索降级日志 ✅
+- **审计报告**：docs/architecture/service-token-audit.md——portal 精确 14 处 token 转发调用点分类——A 类用户维度 7 处（保持）、B 类裸 reqwest 系统级搜索 4 处（erp/crm/bi/doc，潜在降级）、C 类 TypedServiceClient 全量列表搜索 3 处（hrm/workflow/mes，待评估权限）、D 类服务身份 1 处（正确）、E 类非认证（health/plugin）。
+- **结论**：B/C 类 7 处不能无脑改 service token（越权泄露风险）——依赖下游搜索接口权限过滤语义，P1 先确认下游 RLS/claims 过滤。
+- **P1 工程改进（已落地）**：search.rs 统一 `send_global_search` helper——补 401 降级日志区分「权限不足降级」vs「HTTP 错误降级」vs「网络错误」，消除静默空结果。运行时验证：ERP/BI 401 → "权限不足降级"，CRM/DOC 404 → "HTTP 错误降级"。
+
+## 2026-09-01 下游搜索接口权限过滤核查（B/C 类 token 策略决定）✅
+- **决定性发现**：portal 的 B 类 4 个全局搜索源（`/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search`）在全部 svc 代码中**不存在**——永远 404 降级空结果——**"token 策略"问题不成立**（接口从未实现）。已更新 service-token-audit.md。
+- **C 类核查**：hrm `list_employees` 有 EmployeeRead + tenant 过滤（用户 token 正确保持）；workflow `list_instances` 无 Claims 过滤全量查询（下游设计问题）；mes `list_production_orders` 待确认。
+- **结论**：任何一处都不应改 service token（hrm 改则越权、workflow/mes 问题在下游、B 类无接口）。
+- **P0 待决策**：portal 全局搜索 4 个无效源——移除（收敛到 notifications/hrm/workflow/mes 真实源）或标记"未接入"。
+- **P1 下游治理**：workflow list_instances 补用户维度过滤（越权风险）；mes list_production_orders 确认。
+
+## 2026-09-01 portal 全局搜索移除 4 个无效源（erp/crm/bi/doc）✅
+- **实施 P0 决策**：移除指向不存在接口的 4 个全局搜索源（`/api/erp/search`、`/api/crm/search`、`/api/bi/search`、`/api/doc/search`）——search.rs 净删 129 行（4 个搜索函数 + send_global_search helper + erp_base_url + 4 个 DEFAULT_* 常量）。
+- **保留 4 个真实源**：notification（get_unread 用户通知）、hrm（list_employees 有 EmployeeRead+tenant 过滤）、workflow（list_instances 待下游补过滤）、mes（list_production_orders）。
+- **验证**：编译干净；运行时搜索 by_service 仅 {hrm,notification,mes,workflow}，不再尝试调用不存在的接口（无 404 噪音）；search_suggestions 同步收敛。
+
+## 2026-09-01 workflow list_instances 补用户维度过滤（消除越权）✅
+- **问题**：list_instances 无 Claims 过滤，全量查 core_workflow_instances——普通用户认证后可见全量实例。
+- **修复**（unified-core flow/instance.rs）：handler 加 Extension<Claims>——`is_service_claims` 豁免（service token 全量）；普通用户过滤 `initiator_id = user OR EXISTS(core_workflow_tasks t WHERE t.instance_id = cwi.id AND t.assignee_id = user AND t.deleted_at IS NULL)`（自己发起 or 任务处理人参与）。
+- **实现**：$N::uuid IS NULL 技巧统一处理 service（NULL→全量）与用户（过滤）；total + items 两查询 + has_filters 两分支同步加过滤；error_instances 补 Claims 转发。
+- **验证**：编译干净；SQL 逻辑 4 场景（service→3 / initiator→1 / assignee→1 / 无关→0）；flow 路由在 auth_middleware 保护下（Claims 必有）。
+- **候选扩展（P2）**：审批记录（approval_records actor_id）参与可见、候选人（candidate）可见——当前仅 initiator + assignee。
+
+## 2026-09-01 workflow list_instances P2 扩展：审批记录参与可见 ✅
+- 在 P1 过滤（initiator + task assignee）基础上扩展：
+  - **approvals.assignee_id OR approved_by = user**（被指派为审批人 / 实际审批过）
+  - **approval_records.actor_id = user**（JOIN approvals → workflow_instance_id，执行过任何审批动作）
+- candidate 概念未真正实现（core_workflow_tasks 无 candidate 字段，TaskStats.candidate 恒 0，candidate_tasks 只是 list_tasks 别名）——**跳过候选人可见**。
+- 验证：编译干净；SQL 5 场景（service→3 / initiator→1 / task assignee→1 / approved_by→1 / approval_records actor→1 / 无关→0）。
+
+## 2026-09-01 mes list_production_orders 权限确认（P1 完成）✅
+- **核查**：handler 有 `Extension<Claims>` + `check_permission(ProductionOrderRead)`（mes:read）；portal service token 传 `mes:admin` 命中 admin 路径 → 服务间调用通过；用户需 mes:read 否则 403。
+- **tenant 维度**：production_orders 为 **mes schema 单组织表**（无 tenant_id，有 organization_id）——RLS/租户隔离不适用，无"全量泄漏"风险。
+- **对比 workflow**：workflow 是多租户表（tenant_id）需 Claims 过滤（已修）；mes 无租户数据维度 + 有权限码隔离 → **无越权**。
+- **service-token-audit.md**：C 类 14 项 mes 状态更新为已确认 ✅，P1 行动项关闭。
+- **至此 C 类 3 处（hrm/workflow/mes）全部闭环**。
+
+## 2026-09-01 搜索降级指标接入 ServiceCallMonitor 告警（P2）✅
+- **ServiceCallMonitor 新增规则 3**：`record_degrade(downstream, detail)` + `AlertKind::DownstreamDegrade`——下游服务调用降级告警（冷却去重）。
+- **shared-auth 新增公开函数** `record_service_degrade(service, detail)`：打点 `topems_service_calls_degraded_total{service}` + 触发降级告警。
+- **portal search.rs**：`record_search_degrade` helper——4 个搜索源 Err 分支接入；**仅 5xx/网络错误上报降级**，401/403（权限不足）仅 warn 不上报（可预期降级）。
+- **顺带修复**：portal `/metrics` 原本只渲染 axum-prometheus 自带 3 个指标（default_registry 全部隐藏，含 service_calls/custom_gauge）——改为合并 `default_registry().gather()` + axum render，业务指标可观测。
+- **验证**：坏端口下 4 源（notification/hrm/workflow/mes）各触发 1 条 service_call_alert + `degraded_total{service}=1`；再次搜索冷却期去重不增加；/metrics 可见全部指标。
+
+## 2026-09-01 workflow 拆分评估 P2：服务调用熔断器（防雪崩）✅
+- **workflow-split-assessment §5 行动项 4**：服务不可用时调用方降级（现状已降级），补熔断器防雪崩。
+- **实现**（shared-service-client 通用，所有 TypedServiceClient 受益）：
+  - `circuit_breaker.rs`（新建）：CLOSED→连续失败阈值(默认5)→OPEN（快速失败）→冷却(默认30s)→HALF_OPEN（放行试探）→成功回 CLOSED / 失败重 OPEN；env 可配（SERVICE_CIRCUIT_*）。
+  - `base_client.rs`：`execute_request` + `get_without_response` 包熔断（`allow_request` 快速失败 → `record_success/failure`）；**仅 5xx / 网络错误计入失败**，4xx/解析错误不计（防误熔断）。
+- **验证**：单测 4 个全过；运行时——坏 workflow（假 server 500）连续 12 次搜索→假 server 仅收 5 次（后续快速失败 503）；冷却 32s 后半开试探 1 次（+1 请求）→失败重新 OPEN。
+- **备注**：熔断快速失败返回 503 ServiceError，与搜索降级告警（P2 前项）联动——熔断期不再产生连接错误告警。
+
+## 2026-09-01 workflow 评估 P3 + check_split_threshold 接入跨库标记（§7 建议 3）✅
+- **P3 流程定义只读副本（规模触发）评估**（workflow-split-assessment.md §5.1）：
+  - 触发条件：`flow.workflows` 表 > 100,000 行 或 每日定义变更 > 100 次；**当前 18 行，未触发**——按预案维持"workflow API 单一权威源"。
+  - 实施预案（规模达成时）：各域 TTL 缓存 workflows 只读副本（复用 CacheManager）+ 可选 topems-shared-event 事件同步；**仅复制 workflows 定义表**，运行态（instances/tasks）不复制维持 API 调用。
+- **check_split_threshold.py 接入跨库标记**（评估 §7 建议 3）：
+  - 新增 `--mark` 显式触发 + 阈值触发时自动联动 `mark_cross_db.py` 重新生成跨库清单（cross-db-calls.md + cross-db.html）。
+  - 实测：5 项阈值均未触发；联动重生成跨库 31 / 同库 5，**workflow 14 条跨库边在清单中高亮**。
+- **状态**：workflow-split-assessment §5 行动项 1/3/4 全部 ✅，P3 规模未触发待观察；§7 建议 1/2/3 全部 ✅。
+
+## 2026-09-01 拆分前置条件 #2：unified-core 读 portal.user_preferences 改走 portal API ✅
+- **背景**：database-split-plan §3 阶段 2 前置条件之一（前置条件 #1 integration 直写已闭环）——unified-core IAM `get_preferences`/`update_preferences` 直读/直写 `portal.user_preferences`，为拆分前**唯一遗留跨库直读**。
+- **portal 侧**（新建 `modules/preferences.rs` + 路由挂载）：
+  - `GET /api/portal/preferences?user_id=`——一次性取全部偏好（notification_settings/shortcuts/language/timezone），缺失 key 回退默认值（与旧行为一致）。
+  - `PUT /api/portal/preferences?user_id=`——批量 upsert（`ON CONFLICT (user_id, preference_key)`）。
+  - **仅 service claims 可访问**（`is_service_claims` 校验；普通用户 403）。
+- **unified-core 侧**（profile.rs）：`call_portal_preferences` helper——`issue_service_token("unified-core", ["portal:admin"])` + reqwest 调 portal（`PORTAL_SERVICE_URL` env，默认 18050）；get_preferences 改走 GET（portal 不可用回退默认值），update_preferences 改走 PUT（失败返回 500）。
+- **tenant_middleware service 豁免**（lib/shared-auth）：service token 不携带 tenant_id（原会 400"缺少租户ID"）——新增 `is_service_claims` 分支跳过租户注入（服务间调用为全局基础设施，无租户维度）。
+- **门禁**：撤销 schema_boundary.json `unified-core.allow=['portal']`；check_schema_boundary.py 全服务 PASS（仅注释残留）。
+- **运行时验证**：service token 读/写/默认值/401/403 全过；unified-core IAM get_preferences 端到端返回偏好，portal 日志确认 service-to-service 调用 + tenant 豁免生效。
+- **状态**：拆分前置条件 #1 #2 全部 ✅——无跨库直读，物理库拆分前置治理完成。
+
+## 2026-09-01 拆分就绪核验：前置条件全部闭环，物理拆分就绪待阈值 ✅
+- **核验（拆分前置治理收口）**：
+  - `check_schema_boundary.py` 全服务 **28 PASS**——`allow` 全空（跨 schema SQL 直读清零；此前 unified-core allow=['portal'] 已随 #2 撤销）。
+  - `check_split_threshold.py` **5 项阈值均未触发**——含"跨 schema 查询占比=低（直读清零）"，按预案维持单库等待规模增长。
+  - 跨库调用全走 API/service token（服务间认证批量已闭环）——service_topology 跨库 31 边均为服务调用非 SQL 直连。
+- **前置条件 #1 #2 #3 全部闭环**：#1 integration 直写→API/事件+补偿 ✅、#2 unified-core 读偏好→portal API ✅（51b31fed3）、#3 跨库事务边界统一事件+Saga ✅。
+- **§5 待定项 3 定案**：`public.core_*` 37 张平台表保持 public（拆分映射中 public 平台契约进 `topems_core` 库，由 unified-core 拥有），无需迁 unified_core schema。
+- **文档同步**：database-split-plan.md（状态行 + 前置条件 ✅ + §5 定案）、architecture-evolution-and-todo.md（P1-2 更新为拆分就绪）。
+- **状态**：**拆分前置治理全部完成，物理拆分就绪**——待任一阈值触发后启动阶段 2。
+
+## 2026-09-01 服务拓扑 runtime 采集补强：--collect 真实采集 + runtime vs design 一致性 ✅
+- **问题**：runtime 拓扑此前基本为空（无服务运行/未被调用）；unified-core `/metrics` 未合并 default_registry——`topems_service_to_service_calls_total` 业务指标不可见（同 portal 之前 bug）。
+- **修复 unified-core /metrics**（main.rs）：合并 `default_registry().gather()` + axum-prometheus render——service_calls 等业务指标可观测。
+- **补强 service_topology.py --collect**：
+  - spec 进程名 → 逻辑服务名映射（`PROCESS_TO_LOGIC`：unified-core→iam）+ 逻辑服务名白名单补全（iam/workflow/notification/mes/qms/monitor/srm/pm/ehs）。
+  - **调用方 label 归一化**（`CALLER_TOKEN_TO_SERVICE` + normalize_caller）：unified-core 的 token 名无 "-service" 后缀 → 归一为设计节点名，与 STATIC_DEPS 匹配。
+  - **新增 `consistency_report`**：--collect 时输出 runtime vs design 边对比（匹配 / 仅 runtime / 仅 design）。
+- **设计表补齐**：STATIC_DEPS 新增 `unified-core-service → portal-service`（拆分前置 #2 新增的真实调用，此前设计表缺口）。
+- **运行时验证**（真实 portal 18050 + unified-core 18051 + 假 server 模拟 workflow/notification/erp /metrics）：
+  - 真实 service-to-service：unified-core 调 portal preferences → portal /metrics `{service="unified-core"} 3` + 日志 "服务间调用 service=unified-core" ✅
+  - collect 捕获 5 条边（unified-core→portal / portal→workflow / portal→notification / portal→erp / crm→erp）✅
+  - 一致性对比：匹配 5、仅 runtime 0（设计表补齐后）、仅 design 32（未启动服务）✅
+  - 说明：portal→unified-core 用户接口（get_user_info）是 **A 类用户 token 转发**（build_iam_client 覆盖 with_service_token）——正确保持，不产生 service_calls metric（非 service-to-service）。
+- **备注**：runtime 产物（json/html/csv）含验证用模拟数据——不提交（runtime 随运行环境变化）；提交脚本补强 + /metrics 修复 + 设计表。
+
+## 2026-09-01 阈值监控接入服务拓扑一致性（--topology / --topology auto）✅
+- **check_split_threshold.py 新增第 6 项：服务拓扑一致性**——扫描运行中服务 /metrics，与设计依赖表（service_topology.py STATIC_DEPS）比对——存在"仅 runtime"边（设计表缺口）→ 触发告警，提示补齐设计依赖表。
+- **`--topology "svc:port,..."`**：显式指定运行中服务清单（复用 service_topology.py --collect 的命名归一化 + consistency_report）。
+- **`--topology auto`**：自动从 config/services.yaml 探测运行中服务——
+  - 仅扫描 service_groups（真实独立服务），跳过 virtual_services（unified-core 虚拟服务 flow/doc/file/automation 无独立进程）；
+  - 探测验证 /metrics body 含 `topems_` 指标特征（仅端口可达不可靠——Docker 映射端口也会响应，已过滤）；
+  - 供 crontab/launchd/CI 周期性扫描接入。
+- **service_topology.py LOGIC_SERVICE_NAMES 补全**：新增 scm/srm/ai/bi/gis/integration/tms/rd/ticket/search/plugin-registry/master-data——auto 探测节点命名不产生 warn。
+- **运行时验证**：
+  - 显式 --topology：portal/unified-core 真实调用 → 匹配 1 / 仅 runtime 0 / 仅 design 36 ✅
+  - auto 模式：本地探测到 erp/pm/scm/srm 4 个运行服务，无 service 调用边时准确提示 ✅
+- **定时任务接入示例**：
+  - Linux crontab：`0 */6 * * * cd /Users/air/TOPEMS && /usr/bin/python3 scripts/check_split_threshold.py --topology auto >> /var/log/topems-split.log 2>&1`
+  - macOS launchd：StartInterval 21600（6h）运行同一命令
+  - 触发语义：仅 runtime 边 > 0 → 退出码 1 + WARNING（设计表缺口），可接告警通道。
+
+## 2026-09-01 unified-core 双轨认证统一（待办③）✅
+- **问题**：认证双轨——登录查 `iam.users`（旧，roles/permissions 数组），用户管理/权限走 `core_users` + `core_user_roles` + `core_role_permissions`（新，规范 RBAC）。实测非 superuser（test_admin 等）iam.users 数组全是默认 `{user}`+空权限，而 core_user_roles 已分配 admin/hr_admin 等角色（108/8/12 权限）→ 登录 JWT permissions 空、**鉴权实际失效**。
+- **统一方案**：`core_users` 为唯一权威源——auth 全链路改查 core_users + 实时组装 RBAC：
+  - `auth.rs` 登录/注册存在性/refresh/找回/改密 7 处：`iam.users` → `core_users` + `core_user_roles`/`core_role_permissions` 子查询组装 roles/permissions（`status='active'` 映射 is_active，`created_at AT TIME ZONE 'UTC'` 映射 timestamptz）
+  - 注册去掉 iam.users 双写（只写 core_users）
+  - `mod.rs` 去掉启动时 core_users→iam.users 同步（不再需要）
+- **DB 迁移 `20260901000024_auth_unify_fk.sql`**：5 张 auth 基础设施表 FK（refresh_tokens/sessions/user_roles/password_reset_tokens/user_access_logs）从 `iam.users` 改指 `core_users(id)`；统一 admin 双表 id 不一致（iam 8f6cdc35 vs core 2eb884ef，按 username 关联更新引用表 + 主键）。
+- **analytics**：`iam_users/iam_roles/iam_permissions`（不存在的表，一直 fallback 0）→ `core_users/core_roles/core_permissions`（统计真实化）。
+- **运行时验证**：
+  - 注册新用户 → core_users 有、iam.users 无（去双写）✅
+  - 新用户登录成功（JWT claims 正常）✅
+  - 分配 admin 角色后登录 → **JWT roles=['admin']、permissions=108 个**（此前为空）✅
+  - **refresh 端到端**：新用户注册→登录→refresh 成功（FK 迁移后）✅
+  - 孤儿清零（refresh_tokens 553/sessions 95/user_roles 1 已统一）✅
+- **遗留**：`iam.users`/`iam.roles`/`iam.permissions` 旧表保留兼容，无业务引用，可后续归档。
+
+## 2026-09-01 analytics 接入模块化单体（待办②）✅
+- **重构 lib 化**：新增 `svc/analytics/src/routes.rs`（832 行）——protected_routes 组装 + 3 个 handler（detailed_health/reports_center_stats/reports_center_export）从 main.rs 提取；`create_protected_routes(app_state) -> Router`（含 require_permission + with_state）。
+- **main.rs 瘦身**：980 → 173 行——去掉 binary 自身 mod 声明，统一走 lib（`topems_analytics::{modules, routes, shared::AppState}`）；独立部署仍可跑。
+- **server 接入**：`analytics_real_module.rs`（module-advanced 门控，仿 master_data_real_module）——bootstrap + BI/Report init_database + ReportScheduler spawn（start() 内部 spawn 不阻塞）+ create_protected_routes + nest /api/bi + inject_dev_claims。Cargo.toml 加 `topems-analytics` 依赖 + module-advanced 扩 feature；mod.rs + main.rs 注册。
+- **验证**：独立 analytics（BI_PORT=18060）启动 ✅ /health=200、/api/plugins/info=200、/api/bi/dashboard=401（鉴权路由存在）；server（18099）启动 → **analytics-real 注册（19 模块）** ✅ /api/bi/dashboard=200（dev claims）+ 返回 `{"items":[],"total":0}` 业务数据 ✅ /api/bi/health/detailed=200 ✅。
+- **推翻 08-31"保持独立"评估的接入成本顾虑**：with_state 泛型（Router<S2>）返回类型由上下文推断，create_protected_routes 声明 `Router`（with_state 后）即可同时服务独立部署（build_application）与 server（nest）。
+- **遗留**：analytics 独立部署与 server 嵌入可并存（双模式）；ReportScheduler 若独立部署 + server 同时跑会重复调度（部署时二选一）。
+
+## 2026-09-01 前端批 2 页面单测保留集评审（待办④）✅评审
+- **167 文件逐项分类**（apps/web/src/pages，按业务域）：
+  - **保留 102（61%）**：核心页面 68（认证/工作台/订单/生产/质量/HR/报表/审批/移动核心/IAM/EHS/LIMS/模块聚合/Admin 核心）+ 页面 hooks 34（逻辑测试 L1 原则）
+  - **降级 smoke 65（39%）**：低变更/低访问（系统管理/管理后台次级/AI/插件/自动化/GIS/监控/文档/移动次级/分析聚合）
+- **smoke 化模板**：仅渲染不崩溃（不 mock API/Store），保留 1-3 断言，删繁重 mock
+- **分片 8→5**：component 项目 `--shard=N/5`，每分片 ≤4 min；覆盖门槛"核心路径 100% + 全量 ≥ 下限"
+- **落地**：frontend-test-roi-review.md §6 已写入保留集/降级集完整清单 + 模板 + 分片方案
+- **待实施**：65 文件 smoke 化改造（按 §6.4 模板）→ 分片调整 → CI 预算实测

@@ -15,7 +15,7 @@ pub async fn log_approval_event(
     comment: Option<&str>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"CREATE TABLE IF NOT EXISTS plugin_wms.wms_approval_events (
+        r#"CREATE TABLE IF NOT EXISTS wms.wms_approval_events (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             entity_type VARCHAR(32) NOT NULL,
@@ -32,7 +32,7 @@ pub async fn log_approval_event(
     .await?;
 
     sqlx::query(
-        r#"INSERT INTO plugin_wms.wms_approval_events (tenant_id, entity_type, entity_id, action, operator, status_from, status_to, comment)
+        r#"INSERT INTO wms.wms_approval_events (tenant_id, entity_type, entity_id, action, operator, status_from, status_to, comment)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
     )
     .bind(tenant_id)

@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::FinanceService;
@@ -111,7 +112,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let rule: VoucherGenerationRule = sqlx::query_as(
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -132,13 +133,13 @@ impl FinanceService {
         let priority = req.priority.unwrap_or(100);
 
         let rule: VoucherGenerationRule = sqlx::query_as(
-            r#"
+            only_own_schema_query!("finance", r#"
             INSERT INTO finance_voucher_generation_rules 
                 (id, tenant_id, name, source_type, source_filter, mapping_config, 
                  output_voucher_type, status, priority, description, created_at, updated_at, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $10, $11)
             RETURNING *
-            "#,
+            "#),
         )
         .bind(id)
         .bind(tenant_id)
@@ -164,7 +165,7 @@ impl FinanceService {
         req: UpdateGenerationRuleRequest,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let existing: VoucherGenerationRule = sqlx::query_as(
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -184,13 +185,13 @@ impl FinanceService {
         let now = Utc::now();
 
         let rule: VoucherGenerationRule = sqlx::query_as(
-            r#"
+            only_own_schema_query!("finance", r#"
             UPDATE finance_voucher_generation_rules SET
                 name = $2, source_type = $3, source_filter = $4, mapping_config = $5,
                 output_voucher_type = $6, status = $7, priority = $8, description = $9, updated_at = $10
             WHERE tenant_id = $1 AND id = $11
             RETURNING *
-            "#,
+            "#),
         )
         .bind(tenant_id)
         .bind(&name)
@@ -215,7 +216,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -227,7 +228,7 @@ impl FinanceService {
         }
 
         sqlx::query(
-            "UPDATE finance_voucher_generation_rules SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2",
+            only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -386,12 +387,13 @@ impl FinanceService {
 
             let voucher_type = rule.output_voucher_type.as_str();
 
-            let insert_result = sqlx::query(
-                r#"INSERT INTO core_finance_vouchers
+            let insert_result = sqlx::query(only_own_schema_query!(
+                "finance",
+                r#"INSERT INTO finance.core_finance_vouchers
                     (id, tenant_id, voucher_no, voucher_date, period, voucher_type,
                      total_debit, total_credit, status, description, created_by)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)"#,
-            )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)"#
+            ))
             .bind(voucher_id)
             .bind(tenant_id)
             .bind(&voucher_no)
@@ -427,7 +429,7 @@ impl FinanceService {
 
                 // Look up account by code
                 let account: Option<(Uuid, String)> = sqlx::query_as(
-                    "SELECT id, name FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+                    only_own_schema_query!("finance", "SELECT id, name FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
                 )
                 .bind(tenant_id)
                 .bind(account_code)
@@ -454,12 +456,13 @@ impl FinanceService {
                     _ => (0.0, 0.0),
                 };
 
-                let line_result = sqlx::query(
-                    r#"INSERT INTO core_finance_voucher_lines
+                let line_result = sqlx::query(only_own_schema_query!(
+                    "finance",
+                    r#"INSERT INTO finance.core_finance_voucher_lines
                         (voucher_id, line_no, account_id, account_code, account_name,
                          description, debit, credit)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#,
-                )
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"#
+                ))
                 .bind(voucher_id)
                 .bind(line_no)
                 .bind(account_id)
@@ -486,7 +489,7 @@ impl FinanceService {
             if lines_ok {
                 // Link source payment to voucher
                 let _ = sqlx::query(
-                    "UPDATE core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3"
+                    only_own_schema_query!("finance", "UPDATE core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3")
                 )
                 .bind(voucher_id)
                 .bind(source_id)
@@ -498,10 +501,13 @@ impl FinanceService {
                 success_count += 1;
             } else {
                 // Clean up voucher without lines
-                let _ = sqlx::query("DELETE FROM core_finance_vouchers WHERE id = $1")
-                    .bind(voucher_id)
-                    .execute(&self.db_pool)
-                    .await;
+                let _ = sqlx::query(only_own_schema_query!(
+                    "finance",
+                    "DELETE FROM finance.core_finance_vouchers WHERE id = $1"
+                ))
+                .bind(voucher_id)
+                .execute(&self.db_pool)
+                .await;
                 failed_count += 1;
             }
         }

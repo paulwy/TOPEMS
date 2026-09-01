@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
@@ -54,12 +55,12 @@ async fn list_dimensions(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, ScoringDimension>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM plugin_srm.scoring_dimensions
+        FROM scoring_dimensions
         WHERE tenant_id = $1
         ORDER BY sort_order ASC, created_at DESC
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -90,12 +91,12 @@ async fn list_active_dimensions(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, ScoringDimension>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM plugin_srm.scoring_dimensions
+        FROM scoring_dimensions
         WHERE tenant_id = $1 AND is_active = true
         ORDER BY sort_order ASC
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .fetch_all(&state.db)
@@ -127,10 +128,10 @@ async fn get_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, ScoringDimension>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2
-        "#,
+        FROM scoring_dimensions WHERE id = $1 AND tenant_id = $2
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -195,7 +196,7 @@ async fn create_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND tenant_id = $2"),
     )
     .bind(&req.code)
     .bind(tenant_id)
@@ -214,11 +215,11 @@ async fn create_dimension(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let result = sqlx::query_as::<_, ScoringDimension>(
-        r#"
-        INSERT INTO plugin_srm.scoring_dimensions (id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at)
+        only_own_schema_query!("srm", r#"
+        INSERT INTO scoring_dimensions (id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -263,7 +264,7 @@ async fn update_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, ScoringDimension>(
-        "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("srm", "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM scoring_dimensions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -296,7 +297,7 @@ async fn update_dimension(
 
         if code != &existing.code {
             let exists = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND id != $2 AND tenant_id = $3",
+                only_own_schema_query!("srm", "SELECT COUNT(*) FROM scoring_dimensions WHERE deleted_at IS NULL AND code = $1 AND id != $2 AND tenant_id = $3"),
             )
             .bind(code)
             .bind(id)
@@ -342,12 +343,12 @@ async fn update_dimension(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ScoringDimension>(
-        r#"
-        UPDATE plugin_srm.scoring_dimensions SET
+        only_own_schema_query!("srm", r#"
+        UPDATE scoring_dimensions SET
             name = $2, code = $3, weight = $4, min_score = $5, max_score = $6, description = $7, is_active = $8, sort_order = $9, updated_at = $10
         WHERE id = $1 AND tenant_id = $11
         RETURNING id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(name)
@@ -389,7 +390,7 @@ async fn delete_dimension(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result =
-        sqlx::query("UPDATE plugin_srm.scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query(only_own_schema_query!("srm", "UPDATE scoring_dimensions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
             .execute(&state.db)

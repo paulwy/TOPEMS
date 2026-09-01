@@ -1,8 +1,10 @@
+use super::circuit_breaker::{is_failure, CircuitBreaker};
 use super::error::ServiceClientResult;
 use opentelemetry::global;
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 use topems_shared_core::error::TopemsError;
 
@@ -20,6 +22,8 @@ pub struct BaseServiceClient {
     base_url: String,
     auth_token: Option<String>,
     custom_headers: HashMap<String, String>,
+    /// 服务调用熔断器（clone 间共享，防下游故障雪崩）。
+    breaker: Arc<CircuitBreaker>,
 }
 
 impl BaseServiceClient {
@@ -41,7 +45,13 @@ impl BaseServiceClient {
             base_url,
             auth_token: None,
             custom_headers: HashMap::new(),
+            breaker: Arc::new(CircuitBreaker::from_env()),
         })
+    }
+
+    /// 当前是否处于熔断打开态（供诊断/metrics）。
+    pub fn circuit_is_open(&self) -> bool {
+        self.breaker.is_open()
     }
 
     fn build_url(&self, path: &str) -> String {
@@ -93,6 +103,26 @@ impl BaseServiceClient {
         &self,
         request: RequestBuilder,
     ) -> ServiceClientResult<T> {
+        // 熔断快速失败：OPEN 期间直接返回，不发请求
+        if !self.breaker.allow_request() {
+            return Err(CircuitBreaker::circuit_open_error());
+        }
+        let result = self.execute_request_inner(request).await;
+        match &result {
+            Ok(_) => self.breaker.record_success(),
+            Err(e) => {
+                if is_failure(e) {
+                    self.breaker.record_failure();
+                }
+            }
+        }
+        result
+    }
+
+    async fn execute_request_inner<T: DeserializeOwned>(
+        &self,
+        request: RequestBuilder,
+    ) -> ServiceClientResult<T> {
         let response = self.apply_headers(request).send().await?;
 
         let status_code = response.status().as_u16();
@@ -115,6 +145,22 @@ impl BaseServiceClient {
     }
 
     pub async fn get_without_response(&self, path: &str) -> ServiceClientResult<()> {
+        if !self.breaker.allow_request() {
+            return Err(CircuitBreaker::circuit_open_error());
+        }
+        let result = self.get_without_response_inner(path).await;
+        match &result {
+            Ok(_) => self.breaker.record_success(),
+            Err(e) => {
+                if is_failure(e) {
+                    self.breaker.record_failure();
+                }
+            }
+        }
+        result
+    }
+
+    async fn get_without_response_inner(&self, path: &str) -> ServiceClientResult<()> {
         let url = self.build_url(path);
         let response = self.client.get(&url).send().await?;
 

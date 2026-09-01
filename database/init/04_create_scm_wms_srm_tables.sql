@@ -231,7 +231,7 @@ CREATE INDEX IF NOT EXISTS idx_wms_stock_takes_tenant_id ON plugin_wms.stock_tak
 -- ================================================================================
 
 -- 供应商表
-CREATE TABLE IF NOT EXISTS plugin_srm.suppliers (
+CREATE TABLE IF NOT EXISTS srm.suppliers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     supplier_no VARCHAR(100) NOT NULL,
@@ -255,17 +255,17 @@ CREATE TABLE IF NOT EXISTS plugin_srm.suppliers (
     UNIQUE(tenant_id, supplier_no)
 );
 
-COMMENT ON TABLE plugin_srm.suppliers IS 'SRM供应商表';
-COMMENT ON COLUMN plugin_srm.suppliers.sync_from_scm IS '是否从SCM同步';
+COMMENT ON TABLE srm.suppliers IS 'SRM供应商表';
+COMMENT ON COLUMN srm.suppliers.sync_from_scm IS '是否从SCM同步';
 
 -- 供应商分类表
-CREATE TABLE IF NOT EXISTS plugin_srm.supplier_categories (
+CREATE TABLE IF NOT EXISTS srm.supplier_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     category_no VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    parent_id UUID REFERENCES plugin_srm.supplier_categories(id) ON DELETE SET NULL,
+    parent_id UUID REFERENCES srm.supplier_categories(id) ON DELETE SET NULL,
     level INT DEFAULT 1,
     is_active BOOLEAN DEFAULT TRUE,
     created_by UUID,
@@ -274,13 +274,13 @@ CREATE TABLE IF NOT EXISTS plugin_srm.supplier_categories (
     UNIQUE(tenant_id, category_no)
 );
 
-COMMENT ON TABLE plugin_srm.supplier_categories IS '供应商分类表';
+COMMENT ON TABLE srm.supplier_categories IS '供应商分类表';
 
 -- 供应商评估表
-CREATE TABLE IF NOT EXISTS plugin_srm.supplier_evaluations (
+CREATE TABLE IF NOT EXISTS srm.supplier_evaluations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    supplier_id UUID REFERENCES plugin_srm.suppliers(id) ON DELETE CASCADE,
+    supplier_id UUID REFERENCES srm.suppliers(id) ON DELETE CASCADE,
     evaluation_no VARCHAR(100) NOT NULL,
     evaluation_date TIMESTAMP WITH TIME ZONE NOT NULL,
     evaluator VARCHAR(100),
@@ -297,14 +297,14 @@ CREATE TABLE IF NOT EXISTS plugin_srm.supplier_evaluations (
     UNIQUE(tenant_id, evaluation_no)
 );
 
-COMMENT ON TABLE plugin_srm.supplier_evaluations IS '供应商评估表';
+COMMENT ON TABLE srm.supplier_evaluations IS '供应商评估表';
 
 -- 供应商合同表
-CREATE TABLE IF NOT EXISTS plugin_srm.supplier_contracts (
+CREATE TABLE IF NOT EXISTS srm.supplier_contracts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     contract_no VARCHAR(100) NOT NULL,
-    supplier_id UUID REFERENCES plugin_srm.suppliers(id) ON DELETE CASCADE,
+    supplier_id UUID REFERENCES srm.suppliers(id) ON DELETE CASCADE,
     supplier_name VARCHAR(255),
     title VARCHAR(255) NOT NULL,
     contract_type VARCHAR(50),
@@ -321,14 +321,14 @@ CREATE TABLE IF NOT EXISTS plugin_srm.supplier_contracts (
     UNIQUE(tenant_id, contract_no)
 );
 
-COMMENT ON TABLE plugin_srm.supplier_contracts IS '供应商合同表';
+COMMENT ON TABLE srm.supplier_contracts IS '供应商合同表';
 
 -- 供应商产品表
-CREATE TABLE IF NOT EXISTS plugin_srm.supplier_products (
+CREATE TABLE IF NOT EXISTS srm.supplier_products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     product_no VARCHAR(100) NOT NULL,
-    supplier_id UUID REFERENCES plugin_srm.suppliers(id) ON DELETE CASCADE,
+    supplier_id UUID REFERENCES srm.suppliers(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100),
@@ -345,13 +345,13 @@ CREATE TABLE IF NOT EXISTS plugin_srm.supplier_products (
     UNIQUE(tenant_id, product_no)
 );
 
-COMMENT ON TABLE plugin_srm.supplier_products IS '供应商产品表';
+COMMENT ON TABLE srm.supplier_products IS '供应商产品表';
 
 -- 供应商绩效表
-CREATE TABLE IF NOT EXISTS plugin_srm.supplier_performance (
+CREATE TABLE IF NOT EXISTS srm.supplier_performance (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    supplier_id UUID REFERENCES plugin_srm.suppliers(id) ON DELETE CASCADE,
+    supplier_id UUID REFERENCES srm.suppliers(id) ON DELETE CASCADE,
     period VARCHAR(20) NOT NULL,
     total_orders INT DEFAULT 0,
     total_amount DECIMAL(15, 2) DEFAULT 0,
@@ -366,16 +366,16 @@ CREATE TABLE IF NOT EXISTS plugin_srm.supplier_performance (
     UNIQUE(tenant_id, supplier_id, period)
 );
 
-COMMENT ON TABLE plugin_srm.supplier_performance IS '供应商绩效表';
+COMMENT ON TABLE srm.supplier_performance IS '供应商绩效表';
 
 -- 创建索引
-CREATE INDEX IF NOT EXISTS idx_srm_suppliers_tenant_id ON plugin_srm.suppliers(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_srm_suppliers_scm_id ON plugin_srm.suppliers(scm_supplier_id);
-CREATE INDEX IF NOT EXISTS idx_srm_supplier_categories_tenant_id ON plugin_srm.supplier_categories(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_srm_supplier_evaluations_supplier_id ON plugin_srm.supplier_evaluations(supplier_id);
-CREATE INDEX IF NOT EXISTS idx_srm_supplier_contracts_supplier_id ON plugin_srm.supplier_contracts(supplier_id);
-CREATE INDEX IF NOT EXISTS idx_srm_supplier_products_supplier_id ON plugin_srm.supplier_products(supplier_id);
-CREATE INDEX IF NOT EXISTS idx_srm_supplier_performance_supplier_id ON plugin_srm.supplier_performance(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_srm_suppliers_tenant_id ON srm.suppliers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_srm_suppliers_scm_id ON srm.suppliers(scm_supplier_id);
+CREATE INDEX IF NOT EXISTS idx_srm_supplier_categories_tenant_id ON srm.supplier_categories(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_srm_supplier_evaluations_supplier_id ON srm.supplier_evaluations(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_srm_supplier_contracts_supplier_id ON srm.supplier_contracts(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_srm_supplier_products_supplier_id ON srm.supplier_products(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_srm_supplier_performance_supplier_id ON srm.supplier_performance(supplier_id);
 
 -- ================================================================================
 -- 完成提示
@@ -390,6 +390,6 @@ BEGIN
     RAISE NOTICE '  - unified_core.inter_module_sync (跨模块同步日志)';
     RAISE NOTICE '  - plugin_scm.* (供应链管理)';
     RAISE NOTICE '  - plugin_wms.* (仓储管理扩展)';
-    RAISE NOTICE '  - plugin_srm.* (供应商关系管理)';
+    RAISE NOTICE '  - srm.* (供应商关系管理)';
     RAISE NOTICE '========================================';
 END $$;

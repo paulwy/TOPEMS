@@ -1,6 +1,6 @@
 //! MES 审计日志模块
 //!
-//! 复用 CRM audit 模式，写入 plugin_mes.audit_logs。
+//! 复用 CRM audit 模式，写入 mes.audit_logs。
 //! action 命名规范：mes.{entity}.{action}（如 mes.production_order.release）
 
 use axum::{
@@ -71,7 +71,7 @@ async fn list_audit_logs(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM plugin_mes.audit_logs
+        FROM mes.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -97,7 +97,7 @@ async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_mes.audit_logs
+                SELECT COUNT(*) FROM mes.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -149,7 +149,7 @@ async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM plugin_mes.audit_logs WHERE id = $1
+        FROM mes.audit_logs WHERE id = $1
         "#,
     )
     .bind(id)
@@ -195,7 +195,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         .map(|s| s.to_string());
 
     // P1-3: 13-col INSERT delegated to SchemaAwareAuditLogService with
-    // plugin_mes prefix so tenant_id / DEFAULT columns stay in sync with
+    // mes prefix so tenant_id / DEFAULT columns stay in sync with
     // the Cluster-A 15-col standard. SELECT endpoints retained unchanged.
     let mut req = CreateAuditLogRequest::new(action, entity_type, status);
     if let Some(eid) = entity_id {
@@ -219,13 +219,13 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, Some("plugin_mes"));
+    let service = SchemaAwareAuditLogService::new(db, Some("mes"));
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
 
-/// 记录审批事件审计日志（写入 plugin_mes.audit_logs）
+/// 记录审批事件审计日志（写入 mes.audit_logs）
 ///
 /// 用于审批流程的 start/approve/reject 动作审计。
 /// action 会自动加 `approval_` 前缀，approval_id 与 comment 序列化到 request_details。
@@ -261,7 +261,7 @@ pub async fn log_approval_event(
         req = req.with_tenant_id(tid);
     }
 
-    let service = SchemaAwareAuditLogService::new(pool, Some("plugin_mes"));
+    let service = SchemaAwareAuditLogService::new(pool, Some("mes"));
     service.create_audit_log(&req).await?;
     Ok(())
 }

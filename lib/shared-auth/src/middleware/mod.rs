@@ -2,6 +2,7 @@ pub mod department;
 pub mod module;
 pub mod permission;
 pub mod rate_limit_enhanced;
+pub mod service_identity;
 pub mod tenant;
 
 pub use department::{department_middleware, require_department};
@@ -14,6 +15,7 @@ pub use rate_limit_enhanced::{
     current_timestamp, enhanced_rate_limit_middleware, generate_nonce, AntiReplayConfig,
     EnhancedRateLimitConfig, EnhancedRateLimitMiddleware, EnhancedRateLimitRule, LimitDimension,
 };
+pub use service_identity::{service_identity_middleware, ServiceIdentity};
 pub use tenant::{
     get_tenant_id, get_tenant_id_from_claims, require_tenant_status, tenant_middleware,
 };

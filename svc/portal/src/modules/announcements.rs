@@ -7,12 +7,12 @@ use axum::{
     extract::{Json, Path, State},
     http::HeaderMap,
 };
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{
     models::{Announcement, NewAnnouncement},
     shared::AppState,
-    utils::user_context::extract_bearer_token,
 };
 
 fn erp_base_url() -> String {
@@ -40,14 +40,15 @@ fn erp_base_url() -> String {
     }
 }
 
-fn add_auth_header(
-    builder: reqwest::RequestBuilder,
-    headers: &HeaderMap,
-) -> reqwest::RequestBuilder {
-    if let Some(token) = extract_bearer_token(headers) {
-        builder.bearer_auth(token)
-    } else {
-        builder
+fn erp_auth(builder: reqwest::RequestBuilder, state: &AppState) -> reqwest::RequestBuilder {
+    match issue_service_token(
+        &state.auth_state.jwt_secret,
+        "portal-service",
+        &["erp:admin"],
+        None,
+    ) {
+        Ok(t) => builder.bearer_auth(t),
+        Err(_) => builder,
     }
 }
 
@@ -104,10 +105,10 @@ fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
 )]
 pub async fn get_announcements(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements", erp_base_url());
-    let req = add_auth_header(state.http_client.get(&url), &headers);
+    let req = erp_auth(state.http_client.get(&url), &state);
     match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
@@ -138,7 +139,7 @@ pub async fn get_announcement(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Announcement>> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
-    match state.http_client.get(&url).send().await {
+    match erp_auth(state.http_client.get(&url), &state).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -183,7 +184,7 @@ pub async fn create_announcement(
         "priority": data.priority,
         "expire_at": data.expires_at,
     });
-    match state.http_client.post(&url).json(&body).send().await {
+    match erp_auth(state.http_client.post(&url), &state).json(&body).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -217,7 +218,7 @@ pub async fn update_announcement(
         "priority": data.priority,
         "expire_at": data.expires_at,
     });
-    match state.http_client.put(&url).json(&body).send().await {
+    match erp_auth(state.http_client.put(&url), &state).json(&body).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -244,7 +245,7 @@ pub async fn delete_announcement(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
-    match state.http_client.delete(&url).send().await {
+    match erp_auth(state.http_client.delete(&url), &state).send().await {
         Ok(_) => Json(ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),
             "公告删除成功",
@@ -261,7 +262,7 @@ pub async fn toggle_announcement_pin(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Announcement>> {
     let url = format!("{}/api/erp/announcements/{}/pin", erp_base_url(), id);
-    match state.http_client.post(&url).send().await {
+    match erp_auth(state.http_client.post(&url), &state).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -287,7 +288,7 @@ pub async fn get_pinned_announcements(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements?priority=pinned", erp_base_url());
-    match state.http_client.get(&url).send().await {
+    match erp_auth(state.http_client.get(&url), &state).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 let list = json

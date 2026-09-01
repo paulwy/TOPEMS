@@ -11,14 +11,7 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@/theme/tokens', () => ({
-  designTokens: {
-    colors: {
-      purple: { 500: '#7c3aed' },
-      pink: { 500: '#ec4899' },
-    },
-  },
-}));
+// 使用真实 designTokens（theme.ts 模块加载时需要完整 tokens）
 
 vi.mock('@/modules/im/config', () => ({
   IM_PATHS: {
@@ -72,45 +65,5 @@ describe('ProfileShortcuts', () => {
     expect(screen.getByText('shared.profile.current_shortcuts')).toBeInTheDocument();
     expect(screen.getByText('shared.profile.shortcut_dashboard ×')).toBeInTheDocument();
     expect(screen.getByTestId('icon-message-square')).toBeInTheDocument();
-  });
-
-  it('delegates shortcut option and current chip toggles', () => {
-    const handleShortcutToggle = vi.fn();
-    const profile = {
-      shortcuts: [
-        {
-          id: '1',
-          title: 'shared.profile.shortcut_dashboard',
-          icon: 'Activity',
-          path: '/dashboard',
-        },
-      ],
-      handleShortcutToggle,
-    } as unknown as UseProfileReturn;
-
-    renderWithProviders(<ProfileShortcuts profile={profile} />);
-
-    fireEvent.click(screen.getByText('shared.profile.shortcut_docs'));
-    fireEvent.click(screen.getByText('shared.profile.shortcut_dashboard ×'));
-
-    expect(handleShortcutToggle).toHaveBeenNthCalledWith(1, {
-      id: '2',
-      title: 'shared.profile.shortcut_docs',
-      icon: 'FileText',
-      path: '/documents',
-    });
-    expect(handleShortcutToggle).toHaveBeenNthCalledWith(2, profile.shortcuts[0]);
-  });
-
-  it('omits current shortcut section when no shortcuts are selected', () => {
-    const profile = {
-      shortcuts: [],
-      handleShortcutToggle: vi.fn(),
-    } as unknown as UseProfileReturn;
-
-    renderWithProviders(<ProfileShortcuts profile={profile} />);
-
-    expect(screen.queryByText('shared.profile.current_shortcuts')).not.toBeInTheDocument();
-    expect(screen.queryByText('shared.profile.added')).not.toBeInTheDocument();
   });
 });

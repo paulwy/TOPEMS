@@ -1274,14 +1274,14 @@ jobs:
           exit $FAILED
 
   # ──────────────────────────────────────────────────────────────────────────
-  # Frontend Tests — 9 路并行分片（unit + 8 component shards）
+  # Frontend Tests — 6 路并行分片（unit + 5 component shards）
   #
   # 旧方案在单个 job 中运行 `test:coverage`（全量测试 + 覆盖率 + 构建），
   # 导致内存峰值过高、反馈周期长（~12 min）。
   #
-  # 新方案将测试拆为 9 个并行 matrix job，每个 job 只运行一个分片：
+  # 新方案将测试拆为 6 个并行 matrix job，每个 job 只运行一个分片：
   #   - unit:    vitest run --project unit          (纯函数/工具类)
-  #   - shard-N: vitest run --project component --shard=N/8  (组件/页面)
+  #   - shard-N: vitest run --project component --shard=N/5  (组件/页面)
   #
   # 覆盖率和构建拆为独立 job，与测试并行执行。
   # ──────────────────────────────────────────────────────────────────────────
@@ -1307,12 +1307,6 @@ jobs:
             cmd: test:shard:4
           - name: shard-5
             cmd: test:shard:5
-          - name: shard-6
-            cmd: test:shard:6
-          - name: shard-7
-            cmd: test:shard:7
-          - name: shard-8
-            cmd: test:shard:8
 
     steps:
       - uses: actions/checkout@v5
@@ -1958,8 +1952,6 @@ jobs:
   #       -p topems-gis -p topems-ehs -p topems-portal -p topems-finance \
   #       -p topems-erp -p topems-hrm -p topems-crm -p topems-pm \
   #       -p topems-scm -p topems-wms -p topems-srm -p topems-pdm \
-  #       -p topems-mes -p topems-qms -p topems-ai -p topems-billing \
-  #       -p topems-rd -p topems-ticket -p topems-feedback \
   #       -p topems-plugin-registry -p topems-mobile \
   #       -p topems-unified-core -p topems-integration -p topems-master-data \
   #       -p topems-communication -p topems-analytics
@@ -2102,10 +2094,8 @@ jobs:
             -p topems-qms \
             -p topems-lims \
             -p topems-ai \
-            -p topems-billing \
             -p topems-rd \
             -p topems-ticket \
-            -p topems-feedback \
             -p topems-plugin-registry \
             -p topems-mobile \
             -p topems-unified-core \

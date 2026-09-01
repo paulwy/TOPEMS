@@ -1,7 +1,7 @@
 //! 审计日志查询与导出 handler
 //!
 //! 提供以下能力：
-//! - 通用审计日志查询（iam.audit_logs / iam.permission_audit_logs / core.login_logs）
+//! - 通用审计日志查询（public.audit_logs / public.permission_audit_logs / core.login_logs）
 //! - 通用审计日志统计
 //! - 通用审计日志导出（CSV / JSON）
 //!
@@ -155,12 +155,14 @@ pub async fn query_audit_logs(
         "permission_audit_logs" => {
             let total: i64 = sqlx::query_scalar(
                 r#"
-                SELECT COUNT(*) FROM iam.permission_audit_logs
+                SELECT COUNT(*) FROM public.permission_audit_logs
                 WHERE ($1::uuid IS NULL OR user_id = $1)
                   AND ($2::text IS NULL OR action = $2)
-                  AND ($3::timestamptz IS NULL OR created_at >= $3)
-                  AND ($4::timestamptz IS NULL OR created_at <= $4)
-                  AND ($5::text IS NULL OR COALESCE(reason, '') ILIKE '%' || $5 || '%')
+                  AND ($3::timestamptz IS NULL OR changed_at >= $3)
+                  AND ($4::timestamptz IS NULL OR changed_at <= $4)
+                  AND ($5::text IS NULL OR COALESCE(action, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(old_value, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(new_value, '') ILIKE '%' || $5 || '%')
                 "#,
             )
             .bind(
@@ -184,29 +186,30 @@ pub async fn query_audit_logs(
                     'permission_audit_logs' AS source,
                     tenant_id,
                     user_id,
-                    NULL::text AS username,
+                    changed_by AS username,
                     action,
-                    target_type AS entity_type,
-                    target_id AS entity_id,
+                    NULL::text AS entity_type,
+                    NULL::uuid AS entity_id,
                     NULL::text AS resource,
-                    NULL::text AS ip_address,
-                    NULL::text AS user_agent,
+                    ip_address,
+                    user_agent,
                     NULL::text AS status,
                     NULL::bool AS success,
                     NULL::text AS error_message,
                     jsonb_build_object(
-                        'before', before,
-                        'after', after,
-                        'reason', reason
+                        'old_value', old_value,
+                        'new_value', new_value
                     ) AS details,
-                    created_at
-                FROM iam.permission_audit_logs
+                    changed_at AS created_at
+                FROM public.permission_audit_logs
                 WHERE ($1::uuid IS NULL OR user_id = $1)
                   AND ($2::text IS NULL OR action = $2)
-                  AND ($3::timestamptz IS NULL OR created_at >= $3)
-                  AND ($4::timestamptz IS NULL OR created_at <= $4)
-                  AND ($5::text IS NULL OR COALESCE(reason, '') ILIKE '%' || $5 || '%')
-                ORDER BY created_at DESC
+                  AND ($3::timestamptz IS NULL OR changed_at >= $3)
+                  AND ($4::timestamptz IS NULL OR changed_at <= $4)
+                  AND ($5::text IS NULL OR COALESCE(action, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(old_value, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(new_value, '') ILIKE '%' || $5 || '%')
+                ORDER BY changed_at DESC
                 LIMIT $6 OFFSET $7
                 "#,
             )
@@ -309,7 +312,7 @@ pub async fn query_audit_logs(
         _ => {
             let total: i64 = sqlx::query_scalar(
                 r#"
-                SELECT COUNT(*) FROM iam.audit_logs
+                SELECT COUNT(*) FROM public.audit_logs
                 WHERE ($1::text IS NULL OR user_id::text = $1)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::text IS NULL OR entity_type = $3)
@@ -357,7 +360,7 @@ pub async fn query_audit_logs(
                         'entity_ids', entity_ids
                     ) AS details,
                     created_at
-                FROM iam.audit_logs
+                FROM public.audit_logs
                 WHERE ($1::text IS NULL OR user_id::text = $1)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::text IS NULL OR entity_type = $3)
@@ -421,7 +424,7 @@ pub async fn get_audit_log_stats(
     match source {
         "permission_audit_logs" => {
             stats.total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM iam.permission_audit_logs WHERE ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
+                "SELECT COUNT(*) FROM public.permission_audit_logs WHERE ($1::timestamptz IS NULL OR changed_at >= $1) AND ($2::timestamptz IS NULL OR changed_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
@@ -430,7 +433,7 @@ pub async fn get_audit_log_stats(
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM iam.permission_audit_logs WHERE created_at >= CURRENT_DATE",
+                "SELECT COUNT(*) FROM public.permission_audit_logs WHERE changed_at >= CURRENT_DATE",
             )
             .fetch_one(&state.pool)
             .await
@@ -438,7 +441,7 @@ pub async fn get_audit_log_stats(
 
             stats.by_action = load_top_by_column(
                 &state,
-                "iam.permission_audit_logs",
+                "public.permission_audit_logs",
                 "action",
                 start_date,
                 end_date,
@@ -475,7 +478,7 @@ pub async fn get_audit_log_stats(
         }
         _ => {
             stats.total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM iam.audit_logs WHERE ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
@@ -484,14 +487,14 @@ pub async fn get_audit_log_stats(
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM iam.audit_logs WHERE created_at >= CURRENT_DATE",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= CURRENT_DATE",
             )
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
             stats.success_total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM iam.audit_logs WHERE status = 'success'",
+                "SELECT COUNT(*) FROM public.audit_logs WHERE status = 'success'",
             )
             .fetch_one(&state.pool)
             .await
@@ -500,7 +503,7 @@ pub async fn get_audit_log_stats(
             stats.failure_total = stats.total - stats.success_total;
 
             stats.by_action =
-                load_top_by_column(&state, "iam.audit_logs", "action", start_date, end_date).await;
+                load_top_by_column(&state, "public.audit_logs", "action", start_date, end_date).await;
             stats.by_user = load_audit_top_users(&state).await;
         }
     }
@@ -562,7 +565,7 @@ async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
     let rows = sqlx::query(
         r#"
         SELECT COALESCE(user_name, user_id::text, 'unknown') AS key, COUNT(*) AS count
-        FROM iam.audit_logs
+        FROM public.audit_logs
         WHERE created_at >= NOW() - INTERVAL '30 days'
         GROUP BY user_name, user_id
         ORDER BY count DESC
@@ -609,9 +612,9 @@ async fn load_trend(
     end_date: Option<DateTime<Utc>>,
 ) -> Vec<AuditLogTrend> {
     let (table, date_col) = match source {
-        "permission_audit_logs" => ("iam.permission_audit_logs", "created_at"),
+        "permission_audit_logs" => ("public.permission_audit_logs", "changed_at"),
         "login_logs" => ("core_login_logs", "login_time"),
-        _ => ("iam.audit_logs", "created_at"),
+        _ => ("public.audit_logs", "created_at"),
     };
     let sql = format!(
         r#"
@@ -737,14 +740,14 @@ async fn fetch_export_rows(
         "permission_audit_logs" => {
             sqlx::query(
                 r#"
-                SELECT id, tenant_id, user_id, action, target_type, target_id,
-                       reason, created_at
-                FROM iam.permission_audit_logs
-                WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-                  AND ($2::timestamptz IS NULL OR created_at <= $2)
+                SELECT id, tenant_id, user_id, action, old_value, new_value,
+                       changed_by, changed_at
+                FROM public.permission_audit_logs
+                WHERE ($1::timestamptz IS NULL OR changed_at >= $1)
+                  AND ($2::timestamptz IS NULL OR changed_at <= $2)
                   AND ($3::text IS NULL OR action = $3)
                   AND ($4::uuid IS NULL OR user_id = $4)
-                ORDER BY created_at DESC
+                ORDER BY changed_at DESC
                 LIMIT $5
                 "#,
             )
@@ -793,7 +796,7 @@ async fn fetch_export_rows(
                 r#"
                 SELECT id, user_id, user_name, action, entity_type, entity_id,
                        status, error_message, ip_address, user_agent, created_at
-                FROM iam.audit_logs
+                FROM public.audit_logs
                 WHERE ($1::timestamptz IS NULL OR created_at >= $1)
                   AND ($2::timestamptz IS NULL OR created_at <= $2)
                   AND ($3::text IS NULL OR action = $3)

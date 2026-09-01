@@ -91,8 +91,10 @@ async fn main() -> Result<()> {
 
     let workflow_url =
         env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let workflow_client =
-        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+        .and_then(|c| c.with_service_token(&jwt_secret, "srm-service", &["workflow:read"]))
+        .expect("工作流服务客户端初始化失败");
     tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
 
     // 构建业务路由（各模块 create_routes 自行管理内部状态）

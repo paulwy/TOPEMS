@@ -187,8 +187,8 @@ pub async fn create_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            Reagent {
+        Ok(r) => {
+            let reagent = Reagent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
                 reagent_no: r.get("reagent_no"),
@@ -202,9 +202,49 @@ pub async fn create_reagent(
                 expired_at: r.get("expired_at"),
                 created_at: r.get("created_at"),
                 updated_at: r.get("updated_at"),
-            },
-            "试剂创建成功",
-        )),
+            };
+
+            // 发布端补全：LimsReagentAlert（试剂已过期 → EHS 告警联动）
+            if let Some(expired) = reagent.expired_at.as_deref() {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(expired) {
+                    if dt.with_timezone(&chrono::Utc) < chrono::Utc::now() {
+                        if let Some(ref publisher) = state.event_publisher {
+                            let publisher = publisher.clone();
+                            let rid = Uuid::parse_str(&reagent.id).unwrap_or_else(|_| Uuid::nil());
+                            let rno = reagent.reagent_no.clone();
+                            let rname = reagent.name.clone();
+                            let stock = reagent.quantity.map(|q| q as i32);
+                            let expiry = Some(expired.to_string());
+                            tokio::spawn(async move {
+                                let payload =
+                                    topems_shared_event::event::LimsReagentAlertPayload {
+                                        reagent_id: rid,
+                                        reagent_no: rno,
+                                        reagent_name: rname,
+                                        alert_type: Some("expired".to_string()),
+                                        severity: Some("high".to_string()),
+                                        description: Some("试剂已过期".to_string()),
+                                        current_stock: stock,
+                                        min_stock: None,
+                                        expiry_date: expiry,
+                                    };
+                                if let Err(e) = publisher
+                                    .publish_event(
+                                        topems_shared_event::event::EventType::LimsReagentAlert,
+                                        payload,
+                                    )
+                                    .await
+                                {
+                                    tracing::warn!("[lims] LimsReagentAlert 事件发布失败: {}", e);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            Json(ApiResponse::success(reagent, "试剂创建成功"))
+        },
         Err(e) => {
             tracing::error!("Failed to create reagent: {}", e);
             Json(ApiResponse::error(500, "试剂创建失败"))

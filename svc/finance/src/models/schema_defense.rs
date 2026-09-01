@@ -1,126 +1,9 @@
 pub const SERVICE_SCHEMA: &str = "finance";
-pub const INTERNAL_SCHEMA: &str = "plugin_finance";
 
 /// Finance 内部事件驱动快照表（plugin_finance schema）
-pub const INTERNAL_TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
-    (
-        "reconciliation_snapshots",
-        &[
-            ("tenant_id", "UUID NOT NULL"),
-            ("recon_code", "VARCHAR(100)"),
-            ("recon_name", "VARCHAR(200) NOT NULL"),
-            ("recon_type", "VARCHAR(50) NOT NULL"),
-            ("status", "VARCHAR(50) NOT NULL DEFAULT 'draft'"),
-            ("period", "VARCHAR(50) NOT NULL"),
-            ("entity_id", "UUID"),
-            ("entity_type", "VARCHAR(50)"),
-            ("total_debit", "DOUBLE PRECISION"),
-            ("total_credit", "DOUBLE PRECISION"),
-            ("difference", "DOUBLE PRECISION"),
-            ("matched_count", "INTEGER DEFAULT 0"),
-            ("unmatched_count", "INTEGER DEFAULT 0"),
-            ("description", "TEXT"),
-            ("created_by", "VARCHAR(200)"),
-            ("approved_by", "VARCHAR(200)"),
-            ("approved_at", "TIMESTAMPTZ"),
-            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    (
-        "reconciliation_item_snapshots",
-        &[
-            ("tenant_id", "UUID NOT NULL"),
-            ("recon_id", "UUID NOT NULL"),
-            ("item_type", "VARCHAR(50) NOT NULL"),
-            ("item_id", "UUID"),
-            ("item_code", "VARCHAR(100)"),
-            ("item_name", "VARCHAR(200)"),
-            ("debit_amount", "DOUBLE PRECISION DEFAULT 0"),
-            ("credit_amount", "DOUBLE PRECISION DEFAULT 0"),
-            ("currency", "VARCHAR(10) DEFAULT 'CNY'"),
-            ("match_status", "VARCHAR(30) NOT NULL DEFAULT 'unmatched'"),
-            ("matched_item_id", "UUID"),
-            ("description", "TEXT"),
-            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    (
-        "settlement_snapshots",
-        &[
-            ("tenant_id", "UUID NOT NULL"),
-            ("project_id", "UUID NOT NULL"),
-            ("settlement_no", "VARCHAR(100) NOT NULL"),
-            ("settlement_type", "VARCHAR(50) NOT NULL"),
-            ("status", "VARCHAR(50) NOT NULL DEFAULT 'pending'"),
-            ("amount", "DOUBLE PRECISION"),
-            ("settlement_date", "TIMESTAMPTZ"),
-            ("remarks", "TEXT"),
-            ("created_by", "VARCHAR(200)"),
-            ("approved_by", "VARCHAR(200)"),
-            ("approved_at", "TIMESTAMPTZ"),
-            ("synced_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    (
-        "reconciliation_settlement_links",
-        &[
-            ("tenant_id", "UUID NOT NULL"),
-            ("reconciliation_id", "UUID NOT NULL"),
-            ("settlement_id", "UUID NOT NULL"),
-            ("link_type", "VARCHAR(50) NOT NULL"),
-            ("amount", "DOUBLE PRECISION"),
-            ("status", "VARCHAR(50) NOT NULL DEFAULT 'linked'"),
-            ("remark", "TEXT"),
-            ("created_by", "UUID"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    (
-        "difference_adjustments",
-        &[
-            ("tenant_id", "UUID NOT NULL"),
-            ("source_type", "VARCHAR(50) NOT NULL"),
-            ("source_id", "UUID"),
-            ("difference_type", "VARCHAR(50) NOT NULL"),
-            ("difference_amount", "DOUBLE PRECISION NOT NULL"),
-            ("reason", "TEXT"),
-            ("adjustment_amount", "DOUBLE PRECISION"),
-            ("adjustment_type", "VARCHAR(50)"),
-            ("status", "VARCHAR(30) NOT NULL DEFAULT 'pending'"),
-            ("approved_by", "UUID"),
-            ("approved_at", "TIMESTAMPTZ"),
-            ("remark", "TEXT"),
-            ("created_by", "UUID"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-        ],
-    ),
-    (
-        "accounting_subjects",
-        &[
-            ("organization_id", "UUID NOT NULL DEFAULT gen_random_uuid()"),
-            ("code", "VARCHAR(50) NOT NULL"),
-            ("name", "VARCHAR(200) NOT NULL"),
-            ("category", "VARCHAR(100)"),
-            ("level", "INTEGER NOT NULL DEFAULT 1"),
-            ("parent_code", "VARCHAR(50)"),
-            ("description", "TEXT"),
-            ("is_cash_flow", "BOOLEAN NOT NULL DEFAULT false"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMPTZ"),
-            ("tenant_id", "UUID"),
-        ],
-    ),
-];
+pub const INTERNAL_TABLE_DEFS_PUBLIC: &[(&str, &[(&str, &str)])] = &[];
+
+pub const INTERNAL_TABLE_DEFS_FINANCE: &[(&str, &[(&str, &str)])] = &[];
 
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
@@ -1157,10 +1040,205 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    // 财务部门预算（与 pm.budgets 项目预算同名异义；原依赖 public.budgets 遗留，收敛后自建）
+    (
+        "budgets",
+        &[
+            ("tenant_id", "UUID"),
+            ("department_id", "UUID"),
+            ("budget_type", "VARCHAR(50)"),
+            ("fiscal_year", "VARCHAR(10)"),
+            ("total_budget", "NUMERIC(15,2) NOT NULL DEFAULT 0"),
+            ("used_amount", "NUMERIC(15,2) NOT NULL DEFAULT 0"),
+            ("remaining_amount", "NUMERIC(15,2) NOT NULL DEFAULT 0"),
+            ("usage_rate", "NUMERIC(5,2) NOT NULL DEFAULT 0"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    // 以下 4 张为 finance 活跃业务表（支付/对账/结算/来源快照），此前误建 public，归位自建
+    (
+        "core_finance_payments",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("payment_no", "VARCHAR NOT NULL"),
+            ("supplier_id", "UUID"),
+            ("supplier_name", "VARCHAR"),
+            ("payment_method", "VARCHAR NOT NULL"),
+            ("bank_account_id", "UUID"),
+            ("bank_name", "VARCHAR"),
+            ("bank_account_no", "VARCHAR"),
+            ("total_amount", "NUMERIC NOT NULL DEFAULT 0"),
+            ("currency", "VARCHAR NOT NULL DEFAULT 'CNY'"),
+            ("payment_date", "DATE"),
+            ("actual_payment_date", "DATE"),
+            ("status", "VARCHAR NOT NULL DEFAULT 'draft'"),
+            ("remark", "TEXT"),
+            ("voucher_id", "UUID"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("bank_transaction_no", "VARCHAR"),
+            ("executed_by", "VARCHAR"),
+            ("executed_at", "TIMESTAMPTZ"),
+            ("deleted_at", "TIMESTAMPTZ"),
+            ("exchange_rate", "NUMERIC"),
+            ("attachment_url", "TEXT"),
+            ("approved_by", "VARCHAR"),
+        ],
+    ),
+    (
+        "reconciliation_snapshots",
+        &[
+            ("created_at", "TIMESTAMPTZ"),
+            ("created_by", "VARCHAR"),
+            ("description", "TEXT"),
+            ("entity_id", "UUID"),
+            ("entity_type", "VARCHAR"),
+            ("period", "VARCHAR"),
+            ("recon_code", "VARCHAR"),
+            ("recon_name", "VARCHAR"),
+            ("recon_type", "VARCHAR"),
+            ("status", "VARCHAR"),
+            ("synced_at", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+            ("updated_at", "TIMESTAMPTZ"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "settlement_snapshots",
+        &[
+            ("amount", "NUMERIC"),
+            ("created_at", "TIMESTAMPTZ"),
+            ("created_by", "VARCHAR"),
+            ("project_id", "UUID"),
+            ("remarks", "VARCHAR"),
+            ("settlement_date", "DATE"),
+            ("settlement_no", "VARCHAR"),
+            ("settlement_type", "VARCHAR"),
+            ("status", "VARCHAR"),
+            ("synced_at", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+            ("updated_at", "TIMESTAMPTZ"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "source_amount_snapshots",
+        &[
+            ("payable_amount", "NUMERIC"),
+            ("source_id", "UUID"),
+            ("source_type", "VARCHAR"),
+            ("updated_at", "TIMESTAMPTZ"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    // 支付链 4 张（payment_items/workflow/approval_config/approval_nodes）此前无前缀 SQL 落 public，归位自建
+    (
+        "core_finance_payment_items",
+        &[
+            ("payment_id", "UUID NOT NULL"),
+            ("line_no", "INTEGER"),
+            ("invoice_id", "UUID"),
+            ("invoice_no", "VARCHAR"),
+            ("payable_amount", "NUMERIC NOT NULL DEFAULT 0"),
+            ("payment_amount", "NUMERIC NOT NULL DEFAULT 0"),
+            ("remark", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("payable_id", "UUID"),
+            ("write_off_amount", "NUMERIC DEFAULT 0"),
+            ("write_off_status", "VARCHAR DEFAULT 'pending'"),
+            ("write_off_date", "TIMESTAMP"),
+            ("write_off_by", "VARCHAR"),
+            ("remaining_amount", "NUMERIC DEFAULT 0"),
+            ("tenant_id", "UUID"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "core_finance_payment_workflow",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("payment_id", "UUID NOT NULL"),
+            ("workflow_id", "UUID"),
+            ("workflow_instance_id", "UUID"),
+            ("current_approver", "VARCHAR"),
+            ("current_level", "INTEGER DEFAULT 1"),
+            ("status", "VARCHAR DEFAULT 'pending'"),
+            ("approval_history", "JSONB"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "core_finance_payment_approval_config",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("name", "VARCHAR NOT NULL"),
+            ("description", "TEXT"),
+            ("amount_threshold", "NUMERIC NOT NULL DEFAULT 0"),
+            ("max_amount", "NUMERIC"),
+            ("workflow_id", "UUID"),
+            ("approval_levels", "INTEGER DEFAULT 1"),
+            ("node_config", "JSONB"),
+            ("priority", "INTEGER DEFAULT 0"),
+            ("is_active", "BOOLEAN DEFAULT true"),
+            ("created_by", "VARCHAR NOT NULL"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "core_finance_approval_nodes",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("config_id", "UUID NOT NULL"),
+            ("node_level", "INTEGER NOT NULL"),
+            ("node_name", "VARCHAR NOT NULL"),
+            ("approver_type", "VARCHAR NOT NULL DEFAULT 'role'"),
+            ("approver_role", "VARCHAR"),
+            ("approver_users", "TEXT[]"),
+            ("approval_type", "VARCHAR DEFAULT 'single'"),
+            ("timeout_hours", "INTEGER DEFAULT 48"),
+            ("notify_users", "TEXT[]"),
+            ("conditions", "JSONB"),
+            ("is_active", "BOOLEAN DEFAULT true"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    // 简版会计科目（accounting_subjects.rs 活跃 CRUD，与 core_finance_accounts 异义；原 public 表缺 organization_id 导致写入失败，归位并补列）
+    (
+        "accounting_subjects",
+        &[
+            ("organization_id", "UUID NOT NULL"),
+            ("code", "VARCHAR NOT NULL"),
+            ("name", "VARCHAR NOT NULL"),
+            ("category", "VARCHAR"),
+            ("level", "INTEGER"),
+            ("parent_code", "VARCHAR"),
+            ("description", "TEXT"),
+            ("is_cash_flow", "BOOLEAN"),
+            ("status", "VARCHAR"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("tenant_id", "UUID"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
 ];
 
 use sqlx::PgPool;
 use std::collections::BTreeSet;
+use topems_shared_boundary::only_own_schema_query;
 
 async fn add_column_if_missing(
     pool: &PgPool,
@@ -1201,13 +1279,14 @@ async fn verify_table_columns(
     table: &str,
     expected: &[&str],
 ) -> Result<(), sqlx::Error> {
-    let rows: Vec<(String,)> = sqlx::query_as(
+    let rows: Vec<(String,)> = sqlx::query_as(only_own_schema_query!(
+        "finance",
         r#"
         SELECT column_name
         FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2
-        "#,
-    )
+        "#
+    ))
     .bind(schema)
     .bind(table)
     .fetch_all(pool)
@@ -1234,7 +1313,8 @@ async fn verify_table_columns(
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
     let schemas: &[(&str, &[(&str, &[(&str, &str)])])] = &[
         (SERVICE_SCHEMA, TABLE_DEFS),
-        (INTERNAL_SCHEMA, INTERNAL_TABLE_DEFS),
+        ("public", INTERNAL_TABLE_DEFS_PUBLIC),
+        ("finance", INTERNAL_TABLE_DEFS_FINANCE),
     ];
 
     for (schema, defs) in schemas {

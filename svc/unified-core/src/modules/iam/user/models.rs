@@ -27,7 +27,7 @@ pub(crate) async fn record_audit_log(
 ) {
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, request_body, response_body, status, created_at)
+        INSERT INTO public.audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, request_details, response_details, status, created_at)
         VALUES (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, $2, $3, $4, $5, $6, $7, NOW())
         "#,
     )
@@ -37,7 +37,7 @@ pub(crate) async fn record_audit_log(
     .bind(resource_id)
     .bind(request_body)
     .bind(response_body)
-    .bind(status)
+    .bind(if status < 400 { "success" } else { "failed" })
     .execute(pool)
     .await;
 

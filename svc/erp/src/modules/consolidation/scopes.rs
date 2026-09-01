@@ -36,7 +36,7 @@ pub async fn list_scopes(
 
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        SELECT * FROM plugin_erp.consolidation_scopes
+        SELECT * FROM erp.consolidation_scopes
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -54,7 +54,7 @@ pub async fn list_scopes(
         Ok(scopes) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_erp.consolidation_scopes
+                SELECT COUNT(*) FROM erp.consolidation_scopes
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -90,7 +90,7 @@ pub async fn get_scope(
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     match sqlx::query_as::<_, ConsolidationScope>(
-        "SELECT * FROM plugin_erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT * FROM erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(scope_id)
     .fetch_optional(&state.db)
@@ -120,7 +120,7 @@ pub async fn create_scope(
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        INSERT INTO plugin_erp.consolidation_scopes (id, code, name, description, consolidation_method)
+        INSERT INTO erp.consolidation_scopes (id, code, name, description, consolidation_method)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
         "#,
@@ -168,7 +168,7 @@ pub async fn update_scope(
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        UPDATE plugin_erp.consolidation_scopes
+        UPDATE erp.consolidation_scopes
         SET name = COALESCE($2, name),
             description = COALESCE($3, description),
             consolidation_method = COALESCE($4, consolidation_method),
@@ -218,7 +218,7 @@ pub async fn delete_scope(
     Path(scope_id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("UPDATE plugin_erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1")
+    match sqlx::query("UPDATE erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1")
         .bind(scope_id)
         .execute(&state.db)
         .await

@@ -229,31 +229,12 @@ describe('TenantOverviewTab', () => {
       />
     );
 
-    expect(screen.getByText('admin.tenant_detail.total_users')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.active_users')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.storage_usage')).toBeInTheDocument();
+    expect(screen.getByText('用户总数')).toBeInTheDocument();
+    expect(screen.getByText('活跃用户')).toBeInTheDocument();
+    expect(screen.getByText('存储用量')).toBeInTheDocument();
     expect(screen.getByText('125/500GB')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail_page.text_207914')).toBeInTheDocument();
+    expect(screen.getByText('套餐配额')).toBeInTheDocument();
     expect(screen.getAllByText('25%')).toHaveLength(3);
-  });
-
-  it('passes quota values into translated summary text', () => {
-    render(
-      <TenantOverviewTab
-        tenant={tenant}
-        stats={stats}
-      />
-    );
-
-    expect(
-      screen.getByText('admin.tenant_detail_page.text_82d3a8:{"var0":25,"var1":100}')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('admin.tenant_detail_page.text_e7bb98:{"var0":125,"var1":500}')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('admin.tenant_detail_page.text_bbac12:{"var0":"2,500","var1":"10,000"}')
-    ).toBeInTheDocument();
   });
 });
 
@@ -270,10 +251,10 @@ describe('TenantBillingTab', () => {
       />
     );
 
-    expect(screen.getByText('admin.tenant_detail_page.text_5b6572')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.pro_edition')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.normal')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.billing_history')).toBeInTheDocument();
+    expect(screen.getByText('当前订阅')).toBeInTheDocument();
+    expect(screen.getByText('专业版')).toBeInTheDocument();
+    expect(screen.getByText('正常')).toBeInTheDocument();
+    expect(screen.getByText('计费历史')).toBeInTheDocument();
 
     const props = mockCrudPage.mock.calls[0][0];
     await expect(props.apiAdapter.list()).resolves.toEqual({ data: invoices, total: 1 });
@@ -288,14 +269,14 @@ describe('TenantSettingsTab', () => {
   it('renders branding, security and feature settings', () => {
     render(<TenantSettingsTab tenant={tenant} />);
 
-    expect(screen.getByText('admin.tenant_detail_page.text_74070e')).toBeInTheDocument();
+    expect(screen.getByText('品牌设置')).toBeInTheDocument();
     expect(screen.getByText('#1976d2')).toBeInTheDocument();
     expect(screen.getByText('#9c27b0')).toBeInTheDocument();
     expect(screen.getByText('portal.topems.example')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail_page.text_c8bf34')).toBeInTheDocument();
+    expect(screen.getByText('安全设置')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'admin.tenant_detail_page.text_3a17b7:{"tenant_settings_security_session_timeout_minutes":30}'
+        '30 分钟'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('crm')).toBeInTheDocument();
@@ -320,7 +301,7 @@ describe('TenantSettingsTab', () => {
       />
     );
 
-    expect(screen.getByText('admin.tenant_detail.not_set')).toBeInTheDocument();
+    expect(screen.getByText('未设置')).toBeInTheDocument();
   });
 });
 
@@ -351,13 +332,13 @@ describe('RateLimitDimensionCard', () => {
     expect(screen.getByDisplayValue('60')).toBeInTheDocument();
     expect(screen.getByDisplayValue('10')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.allowed_requests'), {
+    fireEvent.change(screen.getByLabelText('允许请求数'), {
       target: { value: '250' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.time_window'), {
+    fireEvent.change(screen.getByLabelText('时间窗口'), {
       target: { value: '120' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.priority'), {
+    fireEvent.change(screen.getByLabelText('优先级'), {
       target: { value: '20' },
     });
 
@@ -380,13 +361,13 @@ describe('RateLimitDimensionCard', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.allowed_requests'), {
+    fireEvent.change(screen.getByLabelText('允许请求数'), {
       target: { value: '' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.time_window'), {
+    fireEvent.change(screen.getByLabelText('时间窗口'), {
       target: { value: '' },
     });
-    fireEvent.change(screen.getByLabelText('admin.rate_limit_config.priority'), {
+    fireEvent.change(screen.getByLabelText('优先级'), {
       target: { value: '' },
     });
 

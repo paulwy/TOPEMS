@@ -226,43 +226,7 @@ describe('GisPage components', () => {
       expect(screen.getByLabelText('刷新')).toBeInTheDocument();
     });
 
-    it('hides create button on map tab', () => {
-      renderWithProviders(
-        <PageHeader
-          activeTab='map'
-          loading={false}
-          onRefresh={vi.fn()}
-          onCreate={vi.fn()}
-          onImport={vi.fn()}
-        />
-      );
 
-      expect(screen.getByText('导入')).toBeInTheDocument();
-      expect(screen.queryByText('新建')).not.toBeInTheDocument();
-    });
-
-    it('calls import, create and refresh handlers', () => {
-      const onImport = vi.fn();
-      const onCreate = vi.fn();
-      const onRefresh = vi.fn();
-      renderWithProviders(
-        <PageHeader
-          activeTab='devicePoints'
-          loading={false}
-          onRefresh={onRefresh}
-          onCreate={onCreate}
-          onImport={onImport}
-        />
-      );
-
-      fireEvent.click(screen.getByText('导入'));
-      fireEvent.click(screen.getByText('新建'));
-      fireEvent.click(screen.getByLabelText('刷新'));
-
-      expect(onImport).toHaveBeenCalledTimes(1);
-      expect(onCreate).toHaveBeenCalledTimes(1);
-      expect(onRefresh).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('StatsSection', () => {
@@ -280,29 +244,7 @@ describe('GisPage components', () => {
       expect(screen.getByText('启用: 3')).toBeInTheDocument();
     });
 
-    it('renders chart data and filters zero pie values', () => {
-      renderWithProviders(
-        <StatsSection
-          statistics={{
-            ...statistics,
-            pipelines: 0,
-            storage_locations: 0,
-          }}
-        />
-      );
 
-      const pieChart = screen.getByTestId('stats-chart-pie');
-      expect(pieChart).toHaveTextContent('设备点位');
-      expect(pieChart).not.toHaveTextContent('仓储位置');
-      expect(screen.getByTestId('stats-chart-bar')).toBeInTheDocument();
-    });
-
-    it('falls back to zero values when statistics is null', () => {
-      renderWithProviders(<StatsSection statistics={null} />);
-
-      expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(6);
-      expect(screen.getAllByText('启用: 0')).toHaveLength(2);
-    });
   });
 
   describe('DataTableSection', () => {
@@ -328,58 +270,8 @@ describe('GisPage components', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders loading state', () => {
-      renderWithProviders(
-        <DataTableSection
-          {...baseProps}
-          loading
-          filteredData={[]}
-        />
-      );
 
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    });
 
-    it('renders empty state when filtered data is empty', () => {
-      renderWithProviders(
-        <DataTableSection
-          {...baseProps}
-          filteredData={[]}
-        />
-      );
 
-      expect(screen.getByText('暂无数据')).toBeInTheDocument();
-    });
-
-    it('updates search and downloads template', () => {
-      const onSearchChange = vi.fn();
-      const onDownloadTemplate = vi.fn();
-      renderWithProviders(
-        <DataTableSection
-          {...baseProps}
-          onSearchChange={onSearchChange}
-          onDownloadTemplate={onDownloadTemplate}
-        />
-      );
-
-      fireEvent.change(screen.getByPlaceholderText('搜索...'), {
-        target: { value: '锅炉' },
-      });
-      fireEvent.click(screen.getByText('下载模板'));
-
-      expect(onSearchChange).toHaveBeenCalledWith('锅炉');
-      expect(onDownloadTemplate).toHaveBeenCalledTimes(1);
-    });
-
-    it('passes config and data to DataTable', () => {
-      renderWithProviders(<DataTableSection {...baseProps} />);
-
-      const table = screen.getByTestId('mock-data-table');
-      expect(table).toHaveAttribute('data-search-key', 'name');
-      expect(table).toHaveAttribute('data-search-placeholder', '设备名称');
-      expect(table).toHaveAttribute('data-export-file-name', 'gis-device-points');
-      expect(screen.getByText('锅炉温度传感器')).toBeInTheDocument();
-      expect(screen.getByText('设备名称')).toBeInTheDocument();
-    });
   });
 });

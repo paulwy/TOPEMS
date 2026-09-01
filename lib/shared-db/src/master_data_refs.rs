@@ -106,7 +106,7 @@ impl MasterDataRefService {
     pub fn new(pool: PgPool) -> Self {
         Self {
             pool,
-            table_name: "core_master_data_refs".to_string(),
+            table_name: "master_data.core_master_data_refs".to_string(),
         }
     }
 

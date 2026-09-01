@@ -99,7 +99,7 @@ async fn list_segments(
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
         SELECT id, name, description, criteria, customer_count, created_at, updated_at
-        FROM plugin_crm.customer_segments
+        FROM crm.customer_segments
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
         "#,
@@ -112,7 +112,7 @@ async fn list_segments(
     match result {
         Ok(segments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_crm.customer_segments WHERE deleted_at IS NULL",
+                "SELECT COUNT(*) FROM crm.customer_segments WHERE deleted_at IS NULL",
             )
             .fetch_one(&state.db)
             .await;
@@ -149,7 +149,7 @@ async fn get_segment(
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
         SELECT id, name, description, criteria, customer_count, created_at, updated_at
-        FROM plugin_crm.customer_segments WHERE id = $1
+        FROM crm.customer_segments WHERE id = $1
         "#,
     )
     .bind(id)
@@ -188,7 +188,7 @@ async fn create_segment(
 
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
-        INSERT INTO plugin_crm.customer_segments (id, name, description, criteria, customer_count, created_at, updated_at)
+        INSERT INTO crm.customer_segments (id, name, description, criteria, customer_count, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, name, description, criteria, customer_count, created_at, updated_at
         "#,
@@ -223,7 +223,7 @@ async fn delete_segment(
     }
 
     let result =
-        sqlx::query("UPDATE plugin_crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&state.db)
             .await;
@@ -256,7 +256,7 @@ async fn get_segment_customers(
     let offset = (page - 1) * page_size;
 
     let segment_result =
-        sqlx::query("SELECT name, criteria FROM plugin_crm.customer_segments WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query("SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
             .fetch_optional(&state.db)
             .await;
@@ -453,7 +453,7 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
         r#"
         SELECT COUNT(DISTINCT c.id)
         FROM crm.customers c
-        LEFT JOIN plugin_crm.customer_scores cs ON c.id = cs.customer_id
+        LEFT JOIN crm.customer_scores cs ON c.id = cs.customer_id
         {}
         "#,
         where_clause
@@ -565,7 +565,7 @@ async fn fetch_segment_customers(
         FROM crm.customers c
         LEFT JOIN (
             SELECT customer_id, score, score_level
-            FROM plugin_crm.customer_scores
+            FROM crm.customer_scores
             WHERE customer_id = c.id
             ORDER BY scoring_date DESC
             LIMIT 1

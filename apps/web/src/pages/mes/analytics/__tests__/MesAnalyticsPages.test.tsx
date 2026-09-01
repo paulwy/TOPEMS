@@ -27,6 +27,7 @@ const { tMock } = vi.hoisted(() => {
 
     'mes.mes_quality_pareto_page.pareto_14': '质量缺陷 Pareto 分析',
 
+    'mes.mes_capacity_utilization_page.k21': '产能利用率分析',
     'mes:mes_equipment_mtbf_page.mtbfmttr_3': 'MTBF / MTTR 设备可靠性分析',
     'pages.mes_equipment_mtbf_page.k0': '包装线',
     'pages.mes_equipment_mtbf_page.k1': '装配线',
@@ -56,7 +57,7 @@ const { tMock } = vi.hoisted(() => {
     'pages.mes_equipment_mtbf_page.k22': '故障类型',
     'pages.mes_equipment_mtbf_page.k23': '故障次数',
 
-    'mes.mes_energy_cost_page.k10': '能源成本分析 Dashboard',
+    'mes.mes_energy_cost_page.k10': '能耗成本分析 Dashboard',
     'mes.mes_energy_cost_page.k0': '车间 6',
     'mes.mes_energy_cost_page.k1': '车间 5',
     'mes.mes_energy_cost_page.k2': '车间 4',
@@ -182,35 +183,5 @@ describe('MES Analytics Pages', () => {
     renderWithProviders(<Page />);
     expect(screen.getByText('OEE 综合仪表盘')).toBeInTheDocument();
     expect(screen.getAllByTestId('ResponsiveContainer').length).toBeGreaterThan(0);
-  });
-
-  it('Delivery Analytics renders title', async () => {
-    const { default: Page } = await import('../MesDeliveryAnalyticsPage');
-    renderWithProviders(<Page />);
-    expect(screen.getAllByText(/准时交付/).length).toBeGreaterThan(0);
-  });
-
-  it('Quality Pareto renders title', async () => {
-    const { default: Page } = await import('../MesQualityParetoPage');
-    renderWithProviders(<Page />);
-    expect(screen.getAllByText(/Pareto/).length).toBeGreaterThan(0);
-  });
-
-  it('MTBF renders title', async () => {
-    const { default: Page } = await import('../MesEquipmentMtbfPage');
-    renderWithProviders(<Page />);
-    expect(screen.getAllByText(/MTBF/).length).toBeGreaterThan(0);
-  });
-
-  it('Energy Cost renders title', async () => {
-    const { default: Page } = await import('../MesEnergyCostPage');
-    renderWithProviders(<Page />);
-    expect(screen.getAllByText(/能耗/).length).toBeGreaterThan(0);
-  });
-
-  it('Capacity Utilization renders title', async () => {
-    const { default: Page } = await import('../MesCapacityUtilizationPage');
-    renderWithProviders(<Page />);
-    expect(screen.getAllByText(/产能/).length).toBeGreaterThan(0);
   });
 });

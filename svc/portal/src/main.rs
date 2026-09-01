@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/portal",
         legacy_prefixes: &["/api/v1/portal", "/api/core/portal/v1"],
+        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
     START_TIME.get_or_init(Instant::now);
@@ -143,7 +144,22 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/plugins/health", get(plugin_health_check))
         .route(
             "/metrics",
-            get(move || async move { metric_handle.render() }),
+            get(move || {
+                let handle = metric_handle.clone();
+                async move {
+                    // 合并 default_registry（shared-auth service_calls / custom_gauge 等）
+                    // 与 axum-prometheus 自带的请求指标，保证业务指标可观测。
+                    let encoder = prometheus::TextEncoder::new();
+                    let mut body = String::new();
+                    if let Ok(encoded) =
+                        encoder.encode_to_string(&prometheus::default_registry().gather())
+                    {
+                        body.push_str(&encoded);
+                    }
+                    body.push_str(&handle.render());
+                    body
+                }
+            }),
         )
         .route("/", get(home))
         .with_state(app_state.clone());
@@ -155,6 +171,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/todos/{id}", post(modules::todos::complete_todo))
         .route("/todos/{id}", delete(modules::todos::delete_todo))
         .route("/user", get(modules::user::get_user_info))
+        // 服务间内部偏好读写接口（unified-core IAM 聚合用户偏好用；service token 认证）
+        .route(
+            "/preferences",
+            get(modules::preferences::get_user_preferences)
+                .put(modules::preferences::update_user_preferences),
+        )
         .route(
             "/monitoring/services",
             get(modules::monitoring::get_monitoring_services),
@@ -329,15 +351,15 @@ async fn main() -> anyhow::Result<()> {
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
+            app_state.pool.clone(),
+            rls_middleware,
         ))
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
-            rls_middleware,
+            app_state.auth_state.clone(),
+            auth_middleware,
         ));
 
     let rate_limit_config = RateLimitConfig::new(200, 60)

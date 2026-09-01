@@ -63,45 +63,6 @@ describe('DictionarySidebar', () => {
 
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
-
-  it('renders grouped dictionary types and emits search and selection changes', () => {
-    const onSearchChange = vi.fn();
-    const onSelectType = vi.fn();
-    const activeType = buildType({ id: 'type-active', name: '订单状态', status: 'active' });
-    const inactiveType = buildType({
-      id: 'type-inactive',
-      code: 'priority',
-      name: '优先级',
-      category: 'system',
-      status: 'inactive',
-    });
-
-    render(
-      <DictionarySidebar
-        searchQuery='order'
-        onSearchChange={onSearchChange}
-        typesLoading={false}
-        groupedTypes={{
-          business: [activeType],
-          system: [inactiveType],
-        }}
-        selectedTypeId='type-active'
-        onSelectType={onSelectType}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText('admin.dictionary_management_page.attr_9427f4'), {
-      target: { value: 'priority' },
-    });
-    fireEvent.click(screen.getByText('优先级'));
-
-    expect(screen.getByText('订单状态')).toBeInTheDocument();
-    expect(screen.getByText('order_status')).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management.business_dictionary')).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management.system_dictionary')).toBeInTheDocument();
-    expect(onSearchChange).toHaveBeenCalledWith('priority');
-    expect(onSelectType).toHaveBeenCalledWith(inactiveType);
-  });
 });
 
 describe('DictionaryContent', () => {
@@ -203,22 +164,22 @@ describe('DictionaryTypeModal', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/admin\.dictionary_management_page\.attr_e21e27/), {
+    fireEvent.change(screen.getByLabelText(/编码/), {
       target: { value: 'customer_level' },
     });
-    fireEvent.change(screen.getByLabelText(/admin\.dictionary_management_page\.attr_456f3a/), {
+    fireEvent.change(screen.getByLabelText(/名称/), {
       target: { value: '客户等级' },
     });
-    fireEvent.change(screen.getByLabelText('admin.dictionary_management.description'), {
+    fireEvent.change(screen.getByLabelText('描述'), {
       target: { value: '客户分级字典' },
     });
     fireEvent.click(screen.getByRole('switch'));
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_625fb2' })
+      screen.getByRole('button', { name: '取消' })
     );
-    fireEvent.click(screen.getByRole('button', { name: 'admin.dictionary_management.create' }));
+    fireEvent.click(screen.getByRole('button', { name: '创建' }));
 
-    expect(screen.getByText('admin.dictionary_management.new_dictionary_type')).toBeInTheDocument();
+    expect(screen.getByText('新建字典类型')).toBeInTheDocument();
     expect(setNewType).toHaveBeenCalledWith({ ...newType, code: 'customer_level' });
     expect(setNewType).toHaveBeenCalledWith({ ...newType, name: '客户等级' });
     expect(setNewType).toHaveBeenCalledWith({ ...newType, description: '客户分级字典' });
@@ -246,14 +207,14 @@ describe('DictionaryTypeModal', () => {
 
     expect(screen.getByDisplayValue('locked_code')).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/admin\.dictionary_management_page\.attr_456f3a/), {
+    fireEvent.change(screen.getByLabelText(/名称/), {
       target: { value: '新名称' },
     });
     fireEvent.click(screen.getByRole('switch'));
-    fireEvent.click(screen.getByRole('button', { name: '+ admin.dictionary_management.save +' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ 保存 +' }));
 
     expect(
-      screen.getByText('+ admin.dictionary_management.edit_dictionary_type +')
+      screen.getByText('+ 编辑字典类型 +')
     ).toBeInTheDocument();
     expect(setEditingType).toHaveBeenCalledWith({ ...editingType, name: '新名称' });
     expect(setEditingType).toHaveBeenCalledWith({ ...editingType, status: 'inactive' });

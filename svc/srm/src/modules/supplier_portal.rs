@@ -6,6 +6,7 @@ use axum::{
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::purchase_order::PurchaseOrder;
@@ -71,7 +72,7 @@ async fn get_supplier_portal_stats(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -85,9 +86,10 @@ async fn get_supplier_portal_stats(
         ));
     }
 
-    let total_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE supplier_id = $1 AND tenant_id = $2",
-    )
+    let total_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2"
+    ))
     .bind(supplier_uuid)
     .bind(tenant_id)
     .fetch_one(&state.db)
@@ -95,7 +97,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let pending_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'pending'",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'pending'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -104,7 +106,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let completed_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'completed'",
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'completed'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -113,7 +115,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0);
 
     let total_amount = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT COALESCE(SUM(total_amount), 0) FROM plugin_srm.purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status != 'cancelled'",
+        only_own_schema_query!("srm", "SELECT COALESCE(SUM(total_amount), 0) FROM purchase_orders WHERE supplier_id = $1 AND tenant_id = $2 AND status != 'cancelled'"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -123,7 +125,7 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0.0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2 AND overall_score IS NOT NULL",
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2 AND overall_score IS NOT NULL"),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -133,10 +135,10 @@ async fn get_supplier_portal_stats(
     .unwrap_or(0.0);
 
     let on_time_delivery_rate = sqlx::query_scalar::<_, Option<f64>>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2)
-        FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2
-        "#,
+        FROM supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2
+        "#),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
@@ -184,12 +186,12 @@ async fn get_supplier_portal_orders(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        r#"
+        only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.purchase_orders
+        FROM purchase_orders
         WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY order_date DESC
-        "#,
+        "#),
     )
     .bind(supplier_uuid)
     .bind(tenant_id)
