@@ -1879,3 +1879,12 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - `base_client.rs`：`execute_request` + `get_without_response` 包熔断（`allow_request` 快速失败 → `record_success/failure`）；**仅 5xx / 网络错误计入失败**，4xx/解析错误不计（防误熔断）。
 - **验证**：单测 4 个全过；运行时——坏 workflow（假 server 500）连续 12 次搜索→假 server 仅收 5 次（后续快速失败 503）；冷却 32s 后半开试探 1 次（+1 请求）→失败重新 OPEN。
 - **备注**：熔断快速失败返回 503 ServiceError，与搜索降级告警（P2 前项）联动——熔断期不再产生连接错误告警。
+
+## 2026-09-01 workflow 评估 P3 + check_split_threshold 接入跨库标记（§7 建议 3）✅
+- **P3 流程定义只读副本（规模触发）评估**（workflow-split-assessment.md §5.1）：
+  - 触发条件：`flow.workflows` 表 > 100,000 行 或 每日定义变更 > 100 次；**当前 18 行，未触发**——按预案维持"workflow API 单一权威源"。
+  - 实施预案（规模达成时）：各域 TTL 缓存 workflows 只读副本（复用 CacheManager）+ 可选 topems-shared-event 事件同步；**仅复制 workflows 定义表**，运行态（instances/tasks）不复制维持 API 调用。
+- **check_split_threshold.py 接入跨库标记**（评估 §7 建议 3）：
+  - 新增 `--mark` 显式触发 + 阈值触发时自动联动 `mark_cross_db.py` 重新生成跨库清单（cross-db-calls.md + cross-db.html）。
+  - 实测：5 项阈值均未触发；联动重生成跨库 31 / 同库 5，**workflow 14 条跨库边在清单中高亮**。
+- **状态**：workflow-split-assessment §5 行动项 1/3/4 全部 ✅，P3 规模未触发待观察；§7 建议 1/2/3 全部 ✅。

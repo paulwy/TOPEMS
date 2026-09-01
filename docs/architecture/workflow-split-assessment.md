@@ -64,10 +64,30 @@
 
 | # | 行动项 | 说明 | 优先级 |
 |---|---|---|---|
-| 1 | **待办聚合缓存** | portal/mobile 侧缓存 `my_task_stats`（TTL 30-60s），避免每个页面请求跨库 | P1（高频读） |
-| 2 | **流程定义只读副本**（可选） | `workflows` 定义表规模大后可各域缓存/事件同步只读副本 | P3（规模触发） |
-| 3 | **跨库调用可观测** | 已做：metrics（service 维度）+ 独立限流桶 + ServiceCallMonitor 告警；接 Prometheus 定时抓取即可闭环 | P2 |
-| 4 | **workflow API 熔断** | 服务不可用时调用方降级（现状已降级为 0/默认值），补熔断器防雪崩 | P2 |
+| 1 | **待办聚合缓存** | portal/mobile 侧缓存 `my_task_stats`（TTL 30-60s），避免每个页面请求跨库 | P1（高频读）✅ 已落地（2026-08-31 portal `cached_my_task_stats`） |
+| 2 | **流程定义只读副本**（可选） | `workflows` 定义表规模大后可各域缓存/事件同步只读副本 | P3（规模触发）→ 评估见 §5.1 |
+| 3 | **跨库调用可观测** | 已做：metrics（service 维度）+ 独立限流桶 + ServiceCallMonitor 告警；接 Prometheus 定时抓取即可闭环 | P2 ✅ 已落地（含搜索降级告警 + 熔断器） |
+| 4 | **workflow API 熔断** | 服务不可用时调用方降级（现状已降级为 0/默认值），补熔断器防雪崩 | P2 ✅ 已落地（2026-09-01 CircuitBreaker） |
+
+### 5.1 流程定义只读副本（P3）——规模触发评估
+
+**触发条件**（建议，达到任一即启动实施）：
+
+| 指标 | 建议触发值 | 当前值（2026-09-01 实测） |
+|---|---|---|
+| `flow.workflows` 定义表行数 | **> 100,000 行** | **18 行** |
+| 流程定义变更频率 | 每日变更 > 100 次（触发副本同步失效频度） | 未达 |
+
+**结论：规模未触发**，按预案维持"workflow API 单一权威源"，等待规模增长后再实施副本。
+
+**实施预案**（规模达成时按此执行）：
+
+1. **方案**：各域（portal/mobile/srm/qms/finance 等高频读方）本地 TTL 缓存 `workflows` 只读副本（与 P1 待办缓存同款 `CacheManager` 泛型），TTL 60-300s。
+2. **同步机制**：可选两级——
+   - 轻量：TTL 过期回源 workflow API（最简单，副本数据最多滞后 TTL）；
+   - 强一致（可选）：`workflows` 表变更时经 `topems-shared-event`（Redis Stream）广播 `WorkflowDefinitionUpdated`，消费方增量刷新本地副本（复用现有事件基建）。
+3. **只读副本边界**：仅 `workflows`（流程定义，低频变更、多域只读）；**不复制** `core_workflow_instances`/`core_workflow_tasks`（运行态数据，强一致要求高，维持 API 调用）。
+4. **回退**：副本失效 → 熔断器（P2 已落地）快速失败 + 降级告警，不阻塞主链路。
 
 ## 6. 对物理拆分预案的影响
 
@@ -78,5 +98,5 @@
 ## 7. 建议行动
 
 1. **采纳方案 A**，在 `database-split-plan.md` 标注 flow schema 归属 core 库且 workflow 跨库调用已就绪。
-2. 落地 **P1 待办聚合缓存**（portal `my_task_stats` 缓存）。
-3. 将 `mark_cross_db.py` 接入 `check_split_threshold.py`——阈值触发时自动输出跨库清单（workflow 14 边将自动高亮）。
+2. ~~落地 **P1 待办聚合缓存**（portal `my_task_stats` 缓存）~~ ✅ 已落地（2026-08-31）。
+3. ~~将 `mark_cross_db.py` 接入 `check_split_threshold.py`——阈值触发时自动输出跨库清单（workflow 14 边将自动高亮）~~ ✅ 已接入（2026-09-01）：`check_split_threshold.py` 新增 `--mark` 显式触发 + 阈值触发时自动联动 `mark_cross_db.py` 重新生成跨库清单（实测跨库 31/同库 5，workflow 14 边高亮）。

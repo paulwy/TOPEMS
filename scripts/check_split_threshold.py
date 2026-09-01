@@ -5,13 +5,16 @@ TopEMS 物理库拆分阈值监控脚本（database-split-plan.md §2 预案配�
 自动检测 5 项拆分触发阈值，对照"触发值（建议）"输出是否达到启动评估条件。
 
 用法：
-  python3 scripts/check_split_threshold.py [--db DATABASE]
+  python3 scripts/check_split_threshold.py [--db DATABASE] [--mark] [--no-mark]
 
 说明：
   - 指标 1/2（DB 大小、最大 schema 表数）直接实测 PostgreSQL。
   - 指标 3/4/5（连接峰值、跨 schema 查询占比、备份/恢复时间）依赖运行时
     观测数据，脚本输出"当前观测"状态与建议采集方式，触发值作为参考。
-  - 任一指标达到触发值 → 输出 WARNING，提示启动阶段 2 物理拆分评估。
+  - 任一指标达到触发值 → 输出 WARNING，提示启动阶段 2 物理拆分评估；
+    并自动联动 mark_cross_db.py 重新生成跨库调用清单（workflow 14 边高亮）。
+  - --mark：显式触发跨库清单重新生成（不依赖阈值）。
+  - --no-mark：阈值触发时不联动跨库标记。
 
 数据库连接默认 postgres://topems:topems_secret@localhost:5432/topems，
 可用环境变量 DATABASE_URL 覆盖。
@@ -28,6 +31,35 @@ TRIGGER_MAX_SCHEMA_TABLES = 600
 TRIGGER_CONN_PEAK = 400          # 持续 10 分钟
 TRIGGER_CROSS_SCHEMA_PCT = 30.0  # 跨 3+ schema 查询占比
 TRIGGER_BACKUP_MIN = 15.0        # 备份/恢复时间
+
+# ── 跨库标记联动（评估 §7 建议 3）──────────────────────────────────
+ARCH_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arch")
+MARK_CROSS_DB = os.path.join(ARCH_DIR, "mark_cross_db.py")
+CROSS_DB_OUT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "docs", "architecture", "service-topology",
+)
+
+
+def run_cross_db_mark() -> None:
+    """调用 mark_cross_db.py 重新生成跨库清单（workflow 14 条跨库边自动高亮）。
+
+    在拆分评估启动（任一阈值触发）或显式 --mark 时执行，为拆分前置治理
+    提供最新跨库调用清单（cross-db-calls.md + service-topology.cross-db.html）。
+    """
+    print("\n[联动] 重新生成跨库调用清单（mark_cross_db.py）...")
+    out = subprocess.run(
+        [sys.executable, MARK_CROSS_DB, "--out", CROSS_DB_OUT_DIR],
+        capture_output=True, text=True, check=False,
+    )
+    if out.stdout:
+        print(out.stdout.rstrip())
+    if out.returncode != 0:
+        print(out.stderr)
+        print("⚠️ 跨库标记生成失败，请检查 mark_cross_db.py")
+    else:
+        print(f"      → 跨库清单已更新：{os.path.join(CROSS_DB_OUT_DIR, 'cross-db-calls.md')}")
+        print(f"      → 高亮图谱：{os.path.join(CROSS_DB_OUT_DIR, 'service-topology.cross-db.html')}")
 
 
 @dataclass
@@ -130,8 +162,16 @@ def main() -> int:
         print(f"    触发值 : {r.trigger}")
         print(f"    度量   : {r.source}")
     print("=" * 72)
+    if "--mark" in sys.argv:
+        # 显式触发跨库标记（不依赖阈值），便于随时刷新拆分前置治理清单
+        run_cross_db_mark()
+        if not triggered_any:
+            print("   （--mark 手动触发跨库清单重新生成；5 项阈值均未触发）")
     if triggered_any:
         print("⚠️ 存在达阈值指标，建议启动阶段 2 物理拆分评估（见 database-split-plan.md §3）。")
+        if "--no-mark" not in sys.argv:
+            # 拆分评估启动时自动联动跨库清单，作为拆分前置治理输入
+            run_cross_db_mark()
         return 1
     print("✅ 5 项阈值均未触发——按预案维持单库，等待规模增长（任一指标达阈值再评估）。")
     print("   （指标 3/4/5 为需观测项，生产环境建议接入 PgBouncer stats 与 pg_stat_statements 持续采集）")
