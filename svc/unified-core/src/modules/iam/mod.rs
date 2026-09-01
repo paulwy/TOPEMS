@@ -597,17 +597,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
-    // 同步 core_users → iam.users（幂等）
-    sqlx::query(
-        r#"
-        INSERT INTO iam.users (id, username, email, password_hash, full_name, is_active, is_superuser, created_at)
-        SELECT id, username, email, password_hash, full_name, (status = 'active'), is_superuser, created_at
-        FROM core_users
-        ON CONFLICT (username) DO NOTHING
-        "#,
-    )
-    .execute(pool)
-    .await?;
+    // core_users 为唯一权威源（auth/权限/租户全走此表）；iam.users 仅保留旧数据兼容
+    // （2026-09-01 双轨认证统一后不再同步——auth.rs 登录/刷新/找回/改密已全部改查 core_users）
 
     // ---- 默认租户 + admin 关联（tenant 中间件依赖 JWT claims.tenant_id） ----
     sqlx::query(

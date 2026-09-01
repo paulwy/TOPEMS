@@ -1964,3 +1964,19 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
   - Linux crontab：`0 */6 * * * cd /Users/air/TOPEMS && /usr/bin/python3 scripts/check_split_threshold.py --topology auto >> /var/log/topems-split.log 2>&1`
   - macOS launchd：StartInterval 21600（6h）运行同一命令
   - 触发语义：仅 runtime 边 > 0 → 退出码 1 + WARNING（设计表缺口），可接告警通道。
+
+## 2026-09-01 unified-core 双轨认证统一（待办③）✅
+- **问题**：认证双轨——登录查 `iam.users`（旧，roles/permissions 数组），用户管理/权限走 `core_users` + `core_user_roles` + `core_role_permissions`（新，规范 RBAC）。实测非 superuser（test_admin 等）iam.users 数组全是默认 `{user}`+空权限，而 core_user_roles 已分配 admin/hr_admin 等角色（108/8/12 权限）→ 登录 JWT permissions 空、**鉴权实际失效**。
+- **统一方案**：`core_users` 为唯一权威源——auth 全链路改查 core_users + 实时组装 RBAC：
+  - `auth.rs` 登录/注册存在性/refresh/找回/改密 7 处：`iam.users` → `core_users` + `core_user_roles`/`core_role_permissions` 子查询组装 roles/permissions（`status='active'` 映射 is_active，`created_at AT TIME ZONE 'UTC'` 映射 timestamptz）
+  - 注册去掉 iam.users 双写（只写 core_users）
+  - `mod.rs` 去掉启动时 core_users→iam.users 同步（不再需要）
+- **DB 迁移 `20260901000024_auth_unify_fk.sql`**：5 张 auth 基础设施表 FK（refresh_tokens/sessions/user_roles/password_reset_tokens/user_access_logs）从 `iam.users` 改指 `core_users(id)`；统一 admin 双表 id 不一致（iam 8f6cdc35 vs core 2eb884ef，按 username 关联更新引用表 + 主键）。
+- **analytics**：`iam_users/iam_roles/iam_permissions`（不存在的表，一直 fallback 0）→ `core_users/core_roles/core_permissions`（统计真实化）。
+- **运行时验证**：
+  - 注册新用户 → core_users 有、iam.users 无（去双写）✅
+  - 新用户登录成功（JWT claims 正常）✅
+  - 分配 admin 角色后登录 → **JWT roles=['admin']、permissions=108 个**（此前为空）✅
+  - **refresh 端到端**：新用户注册→登录→refresh 成功（FK 迁移后）✅
+  - 孤儿清零（refresh_tokens 553/sessions 95/user_roles 1 已统一）✅
+- **遗留**：`iam.users`/`iam.roles`/`iam.permissions` 旧表保留兼容，无业务引用，可后续归档。

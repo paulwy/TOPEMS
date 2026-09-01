@@ -853,11 +853,11 @@ async fn reports_center_stats(
         i64, i64, i64, i64, i64, i64, i64, i64,
     )>(r#"
         SELECT
-            (SELECT COUNT(*) FROM iam_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
-            (SELECT COUNT(*) FROM iam_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
+            (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
+            (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS active_users,
-            (SELECT COUNT(*) FROM iam_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
-            (SELECT COUNT(*) FROM iam_permissions WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_permissions,
+            (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
+            (SELECT COUNT(*) FROM core_permissions WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_permissions,
             (SELECT COUNT(*) FROM org_companies WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_companies,
             (SELECT COUNT(*) FROM org_departments WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_departments,
             (SELECT COUNT(*) FROM org_employees WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_employees,
