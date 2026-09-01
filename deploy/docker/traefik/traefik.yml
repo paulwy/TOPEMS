@@ -25,9 +25,13 @@ entryPoints:
         domains:
           - main: "topems.local"
 
-  # Traefik Dashboard / API 入口
-  traefik:
+  # API 网关入口（统一对外 API：移动端/第三方/BI 直连，与 Web 80/443 分离）
+  api:
     address: ":8080"
+
+  # Traefik Dashboard / API 入口（迁移至 8089，内网访问）
+  traefik:
+    address: ":8089"
 
 # ================================================
 # API 与 Dashboard
@@ -47,10 +51,6 @@ providers:
   file:
     directory: "/etc/traefik/dynamic"
     watch: true
-    # 仅加载 .yml/.yaml 后缀文件
-    filename: ""
-    # 调试日志
-    debugLogGeneratedFile: true
 
 # ================================================
 # 指标（Prometheus）
@@ -61,7 +61,6 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     addRoutersLabels: true
-    addServerTLS: true
     entryPoint: traefik
     # 桶配置（按延迟分布）
     buckets:
@@ -71,20 +70,11 @@ metrics:
       5.0: 5.0
 
 # ================================================
-# 链路追踪（Jaeger）
+# 链路追踪（traefik v3 仅支持 OpenTelemetry OTLP；Jaeger 直连需配置 OTLP collector，待接入）
 # ================================================
-tracing:
-  jaeger:
-    # 启用 Jaeger 追踪
-    samplingStrategy: const
-    samplingParam: 1.0
-    # 通过 HTTP 上报 trace
-    collector:
-      endpoint: "http://jaeger:14268/api/traces"
-    # 是否记录头信息
-    traceContextHeaderName: "uber-trace-id"
-    # 不记录请求体（避免敏感信息泄露）
-    disableAttemptReconnecting: true
+# tracing:
+#   otlp:
+#     endpoint: "jaeger:4317"
 
 # ================================================
 # 访问日志
@@ -121,15 +111,6 @@ accessLog:
         X-Auth-Token: redacted
         X-Request-Id: keep
         X-Tenant-Id: keep
-
-# ================================================
-# 实验性插件（requestid 插件用于请求 ID 注入）
-# ================================================
-experimental:
-  plugins:
-    requestid:
-      moduleName: "github.com/tommoulard/requestid"
-      version: "v0.1.0"
 
 # ================================================
 # 日志级别
