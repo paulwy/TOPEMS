@@ -41,6 +41,23 @@ fn service_calls_metric() -> &'static IntCounterVec {
     })
 }
 
+/// 下游服务调用降级计数（下游服务维度）——Prometheus 指标。
+///
+/// 调用方（如 portal 搜索聚合）在某下游源返回 5xx / 网络错误 / 降级时递增，
+/// 用于区分"服务不可用"与"正常调用"、量化聚合功能降级面。
+pub static SERVICE_CALLS_DEGRADED: OnceLock<IntCounterVec> = OnceLock::new();
+
+fn service_calls_degraded_metric() -> &'static IntCounterVec {
+    SERVICE_CALLS_DEGRADED.get_or_init(|| {
+        register_int_counter_vec!(
+            "topems_service_calls_degraded_total",
+            "Total number of degraded/failed downstream service calls by downstream service",
+            &["service"]
+        )
+        .expect("failed to register topems_service_calls_degraded_total")
+    })
+}
+
 /// 服务调用告警监控器（进程内单例，`from_env` 按环境变量配置）。
 static SERVICE_CALL_MONITOR: OnceLock<ServiceCallMonitor> = OnceLock::new();
 
@@ -50,6 +67,19 @@ pub fn record_service_call(service_name: &str) {
     SERVICE_CALL_MONITOR
         .get_or_init(ServiceCallMonitor::from_env)
         .record(service_name);
+}
+
+/// 记录一次下游服务调用降级/失败（如搜索源 5xx / 网络错误 / 不可用）。
+///
+/// 打点 `topems_service_calls_degraded_total{service=下游}` 并触发降级告警
+/// （冷却去重）。调用方聚合功能降级时使用（如 portal 搜索某源失败）。
+pub fn record_service_degrade(service_name: &str, detail: &str) {
+    service_calls_degraded_metric()
+        .with_label_values(&[service_name])
+        .inc();
+    SERVICE_CALL_MONITOR
+        .get_or_init(ServiceCallMonitor::from_env)
+        .record_degrade(service_name, detail);
 }
 
 /// 查询某调用方服务的累计服务间调用次数（供测试/内部诊断）。

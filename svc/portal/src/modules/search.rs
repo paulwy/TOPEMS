@@ -18,12 +18,29 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::service::record_service_degrade;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{shared::AppState, utils::user_context::extract_bearer_token};
 
 /// 统一的服务地址解析 helper：优先环境变量，否则使用权威默认端口，
 /// 并输出结构化端口排查日志（target: portal::search）。
+/// 搜索源降级判定 + 指标/告警上报。
+///
+/// 仅对"下游不可用"型错误（5xx / 网络/连接错误）上报降级告警；
+/// 401/403（权限不足）是可预期降级（service token 权限配置问题），仅 warn 不上报。
+fn record_search_degrade(service: &str, e: &TopemsError) {
+    let degraded = match e {
+        TopemsError::ServiceError { status_code, .. } => *status_code >= 500,
+        TopemsError::HttpRequest(_) => true,
+        _ => false,
+    };
+    if degraded {
+        record_service_degrade(service, &e.to_string());
+    }
+}
+
 fn resolve_service_url(env_var: &str, fallback: &'static str, service_label: &str) -> String {
     match std::env::var(env_var) {
         Ok(v) if !v.is_empty() => {
@@ -245,6 +262,7 @@ async fn search_notifications(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("notification", &e);
             tracing::warn!("Notification search failed: {}", e);
             vec![]
         }
@@ -287,6 +305,7 @@ async fn search_hrm_employees(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("hrm", &e);
             tracing::warn!("HRM employee search failed: {}", e);
             vec![]
         }
@@ -328,6 +347,7 @@ async fn search_workflow_instances(
             })
             .collect(),
         Err(e) => {
+            record_search_degrade("workflow", &e);
             tracing::warn!("Workflow instance search failed: {}", e);
             vec![]
         }
@@ -398,6 +418,7 @@ async fn search_mes_production_orders(
                 .collect()
         }
         Err(e) => {
+            record_search_degrade("mes", &e);
             tracing::warn!("MES production order search failed: {}", e);
             vec![]
         }

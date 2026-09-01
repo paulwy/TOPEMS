@@ -84,6 +84,8 @@ pub enum AlertKind {
     UnknownService,
     /// 高频调用
     HighFrequency,
+    /// 下游服务调用降级/失败（如搜索源不可用、5xx、网络错误）
+    DownstreamDegrade,
 }
 
 impl AlertKind {
@@ -91,6 +93,7 @@ impl AlertKind {
         match self {
             AlertKind::UnknownService => "unknown_service",
             AlertKind::HighFrequency => "high_frequency",
+            AlertKind::DownstreamDegrade => "downstream_degrade",
         }
     }
 }
@@ -142,6 +145,24 @@ impl ServiceCallMonitor {
         }
         self.check_unknown_service(service_name);
         self.check_high_frequency(service_name);
+    }
+
+    /// 规则 3：下游服务调用降级/失败告警（如搜索源 5xx / 网络错误）。
+    ///
+    /// 与 `record` 独立：`record` 面向"服务间正常调用"的频率/身份检测；
+    /// 本方法面向"调用失败/降级"事件，按 `downstream:degrade` key 冷却去重。
+    pub fn record_degrade(&self, downstream: &str, detail: &str) {
+        if !self.enabled {
+            return;
+        }
+        let key = format!("{}:{}", downstream, AlertKind::DownstreamDegrade.as_str());
+        self.alert(
+            &key,
+            format!(
+                "下游服务调用降级 downstream={} 详情: {}（服务不可用/5xx/网络错误，搜索等聚合功能将降级）",
+                downstream, detail
+            ),
+        );
     }
 
     /// 规则 1：未知服务检测。

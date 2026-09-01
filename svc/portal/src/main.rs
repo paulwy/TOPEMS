@@ -9,7 +9,7 @@ use std::time::Instant;
 use tower_cookies::CookieManagerLayer;
 
 use axum_prometheus::PrometheusMetricLayer;
-use prometheus::{default_registry, Gauge};
+use prometheus::{default_registry, Gauge, TextEncoder};
 use topems_shared::auth::auth_middleware;
 use topems_shared::{
     create_api_info_router, create_cors_layer, register_routes_with_legacy_alias, ApiResponse,
@@ -144,7 +144,22 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/plugins/health", get(plugin_health_check))
         .route(
             "/metrics",
-            get(move || async move { metric_handle.render() }),
+            get(move || {
+                let handle = metric_handle.clone();
+                async move {
+                    // 合并 default_registry（shared-auth service_calls / custom_gauge 等）
+                    // 与 axum-prometheus 自带的请求指标，保证业务指标可观测。
+                    let encoder = prometheus::TextEncoder::new();
+                    let mut body = String::new();
+                    if let Ok(encoded) =
+                        encoder.encode_to_string(&prometheus::default_registry().gather())
+                    {
+                        body.push_str(&encoded);
+                    }
+                    body.push_str(&handle.render());
+                    body
+                }
+            }),
         )
         .route("/", get(home))
         .with_state(app_state.clone());

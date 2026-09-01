@@ -1864,3 +1864,10 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **对比 workflow**：workflow 是多租户表（tenant_id）需 Claims 过滤（已修）；mes 无租户数据维度 + 有权限码隔离 → **无越权**。
 - **service-token-audit.md**：C 类 14 项 mes 状态更新为已确认 ✅，P1 行动项关闭。
 - **至此 C 类 3 处（hrm/workflow/mes）全部闭环**。
+
+## 2026-09-01 搜索降级指标接入 ServiceCallMonitor 告警（P2）✅
+- **ServiceCallMonitor 新增规则 3**：`record_degrade(downstream, detail)` + `AlertKind::DownstreamDegrade`——下游服务调用降级告警（冷却去重）。
+- **shared-auth 新增公开函数** `record_service_degrade(service, detail)`：打点 `topems_service_calls_degraded_total{service}` + 触发降级告警。
+- **portal search.rs**：`record_search_degrade` helper——4 个搜索源 Err 分支接入；**仅 5xx/网络错误上报降级**，401/403（权限不足）仅 warn 不上报（可预期降级）。
+- **顺带修复**：portal `/metrics` 原本只渲染 axum-prometheus 自带 3 个指标（default_registry 全部隐藏，含 service_calls/custom_gauge）——改为合并 `default_registry().gather()` + axum render，业务指标可观测。
+- **验证**：坏端口下 4 源（notification/hrm/workflow/mes）各触发 1 条 service_call_alert + `degraded_total{service}=1`；再次搜索冷却期去重不增加；/metrics 可见全部指标。
