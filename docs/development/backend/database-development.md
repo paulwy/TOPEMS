@@ -516,4 +516,6 @@ cargo check -p <package> --tests
 SQLX_OFFLINE=false cargo sqlx prepare --workspace --database-url "$DATABASE_URL"
 ```
 
-**后续根治项（待做）**：给 postgres 容器加宿主机 `5433:5432` 映射，`.env DATABASE_URL` 指向 `localhost:5433`（容器库 schema 完整），使在线编译 / prepare 连真实运行时库，从根上消除编译库与运行时库分裂。
+**后续根治项（已完成 2026-09-01）**：postgres 容器已加宿主机 `5433:5432` 映射（compose 端口默认改 `${POSTGRES_PORT:-5433}`，`deploy/docker/.env` 设 `POSTGRES_PORT=5433`；容器内部服务仍用 `postgres:5432`），根 `.env DATABASE_URL` 指向 `localhost:5433`（容器库 schema 完整）。工具（psql / sqlx migrate / prepare）现可连真实运行时库。
+
+**重要限制（编译仍走离线）**：编译在线模式（`SQLX_OFFLINE=false`）即使连 5433 容器库，仍会报 `relation "analytics_*" does not exist`——因为各业务表分散在不同 schema（如 analytics 表在 `bi` schema），运行时由 `SEARCH_PATH` env（`lib/shared-bootstrap` 默认 `rs, erp, public`）经连接池 after_connect 设置，而编译期 sqlx 宏无法统一 search_path。**故编译标准路径仍是 `SQLX_OFFLINE=true`（config.toml 已固化）**；容器库 5433 对齐解决的是"工具连真实运行时库"（psql 查 schema、migrate 执行 DDL、prepare 生成缓存时可按需 `?options=-csearch_path=bi,public`）。
