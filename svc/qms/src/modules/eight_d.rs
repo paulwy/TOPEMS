@@ -31,7 +31,7 @@ pub async fn list_eightd_reports(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let mut where_clause = String::from(" WHERE tenant_id::TEXT = $1");
     params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(status) = &query.status {
@@ -66,7 +66,7 @@ pub async fn list_eightd_reports(
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.clone());
+        count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
@@ -97,7 +97,7 @@ pub async fn list_eightd_reports(
 
     let mut fetch_query = sqlx::query_as::<_, EightDReport>(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.clone());
+        fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
