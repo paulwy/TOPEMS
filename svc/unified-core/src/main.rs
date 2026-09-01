@@ -654,12 +654,27 @@ async fn main() -> anyhow::Result<()> {
     let cors = create_cors_layer();
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    let app = routes::create_routes(&state, move || metric_handle.render())
-        .layer(axum::middleware::from_fn(request_context_middleware))
-        .with_telemetry()
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    // 合并 default_registry（shared-auth service_calls / custom gauge 等业务指标）
+    // 与 axum-prometheus 自带请求指标，保证服务间调用等业务指标在 /metrics 可观测。
+    let app = routes::create_routes(
+        &state,
+        move || {
+            let encoder = prometheus::TextEncoder::new();
+            let mut body = String::new();
+            if let Ok(encoded) =
+                encoder.encode_to_string(&prometheus::default_registry().gather())
+            {
+                body.push_str(&encoded);
+            }
+            body.push_str(&metric_handle.render());
+            body
+        },
+    )
+    .layer(axum::middleware::from_fn(request_context_middleware))
+    .with_telemetry()
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let app = Application {
         router: app,

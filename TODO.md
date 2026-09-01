@@ -1910,3 +1910,18 @@ curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
 - **§5 待定项 3 定案**：`public.core_*` 37 张平台表保持 public（拆分映射中 public 平台契约进 `topems_core` 库，由 unified-core 拥有），无需迁 unified_core schema。
 - **文档同步**：database-split-plan.md（状态行 + 前置条件 ✅ + §5 定案）、architecture-evolution-and-todo.md（P1-2 更新为拆分就绪）。
 - **状态**：**拆分前置治理全部完成，物理拆分就绪**——待任一阈值触发后启动阶段 2。
+
+## 2026-09-01 服务拓扑 runtime 采集补强：--collect 真实采集 + runtime vs design 一致性 ✅
+- **问题**：runtime 拓扑此前基本为空（无服务运行/未被调用）；unified-core `/metrics` 未合并 default_registry——`topems_service_to_service_calls_total` 业务指标不可见（同 portal 之前 bug）。
+- **修复 unified-core /metrics**（main.rs）：合并 `default_registry().gather()` + axum-prometheus render——service_calls 等业务指标可观测。
+- **补强 service_topology.py --collect**：
+  - spec 进程名 → 逻辑服务名映射（`PROCESS_TO_LOGIC`：unified-core→iam）+ 逻辑服务名白名单补全（iam/workflow/notification/mes/qms/monitor/srm/pm/ehs）。
+  - **调用方 label 归一化**（`CALLER_TOKEN_TO_SERVICE` + normalize_caller）：unified-core 的 token 名无 "-service" 后缀 → 归一为设计节点名，与 STATIC_DEPS 匹配。
+  - **新增 `consistency_report`**：--collect 时输出 runtime vs design 边对比（匹配 / 仅 runtime / 仅 design）。
+- **设计表补齐**：STATIC_DEPS 新增 `unified-core-service → portal-service`（拆分前置 #2 新增的真实调用，此前设计表缺口）。
+- **运行时验证**（真实 portal 18050 + unified-core 18051 + 假 server 模拟 workflow/notification/erp /metrics）：
+  - 真实 service-to-service：unified-core 调 portal preferences → portal /metrics `{service="unified-core"} 3` + 日志 "服务间调用 service=unified-core" ✅
+  - collect 捕获 5 条边（unified-core→portal / portal→workflow / portal→notification / portal→erp / crm→erp）✅
+  - 一致性对比：匹配 5、仅 runtime 0（设计表补齐后）、仅 design 32（未启动服务）✅
+  - 说明：portal→unified-core 用户接口（get_user_info）是 **A 类用户 token 转发**（build_iam_client 覆盖 with_service_token）——正确保持，不产生 service_calls metric（非 service-to-service）。
+- **备注**：runtime 产物（json/html/csv）含验证用模拟数据——不提交（runtime 随运行环境变化）；提交脚本补强 + /metrics 修复 + 设计表。

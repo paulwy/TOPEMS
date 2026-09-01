@@ -58,6 +58,8 @@ STATIC_DEPS = {
     "server-finance-module":["workflow-service"],
     "server-srm-module":    ["workflow-service"],
     "server-ehs-module":    ["workflow-service"],
+    # 平台核心服务：unified-core 调各域服务（拆分前置 #2 起 unified-core → portal 偏好 API）
+    "unified-core-service": ["portal-service"],
 }
 
 # 被调用方集合（图谱中被调用节点也计入 nodes）
@@ -74,6 +76,37 @@ PLATFORM_SERVICES = {
 MODULE_NODES = {s for s in ALL_SERVICES if "-module" in s}
 CALLER_SERVICES = set(STATIC_DEPS.keys()) - MODULE_NODES
 
+# 逻辑服务名清单（设计边节点名去掉 "-service" 后缀）：
+# collect 的 spec 名按此归一化，保证 runtime 节点名与设计边一致。
+LOGIC_SERVICE_NAMES = {
+    "wms", "erp", "finance", "hrm", "portal", "crm", "mobile",
+    "iam", "workflow", "notification", "mes", "qms", "monitor",
+    "srm", "pm", "ehs",
+}
+
+# 进程名 → 逻辑服务名映射：collect 的 spec 通常用进程名（如 unified-core），
+# 而设计边用逻辑服务名（如 iam-service）。此处把已知进程名归一化到逻辑名。
+PROCESS_TO_LOGIC = {
+    "unified-core": "iam",
+    "core": "iam",
+    "core-service": "iam",
+}
+
+# 调用方 token 名 → 设计节点名：被调用方 /metrics 的 label 是调用方 service token 名。
+# 多数已带 "-service" 后缀（portal-service 等），unified-core 的 token 名为 "unified-core"
+# （无后缀）——归一化到设计节点名以与 STATIC_DEPS 匹配。
+CALLER_TOKEN_TO_SERVICE = {
+    "unified-core": "unified-core-service",
+    "core": "unified-core-service",
+}
+
+
+def normalize_caller(label):
+    """metric label（调用方 token 名）→ 设计节点名。"""
+    if label.endswith("-service"):
+        return label
+    return CALLER_TOKEN_TO_SERVICE.get(label, label)
+
 
 def category_of(node):
     if node in MODULE_NODES:
@@ -84,12 +117,23 @@ def category_of(node):
 
 
 def collect_runtime(specs):
-    """扫描运行中服务 /metrics，返回 {被调用方: {调用方: 次数}}。"""
+    """扫描运行中服务 /metrics，返回 {被调用方: {调用方: 次数}}。
+
+    spec 形如 `svc:port`——`svc` 用进程名或逻辑服务名均可：
+    进程名经 PROCESS_TO_LOGIC 归一化（如 unified-core→iam），
+    逻辑服务名直接加 "-service" 后缀，保证节点名与设计边一致。
+    """
     metric_re = re.compile(r'topems_service_to_service_calls_total\{service="([^"]+)"\}\s+(\d+)')
     result = {}
     for spec in specs:
         name, port = spec.rsplit(":", 1)
-        base = name if name in ("wms", "erp", "finance", "hrm", "portal", "crm", "mobile") else name
+        # 进程名 → 逻辑服务名（如 unified-core → iam）
+        logic = PROCESS_TO_LOGIC.get(name, name)
+        if logic not in LOGIC_SERVICE_NAMES:
+            print(
+                f"  [warn] {name}:{port} 不在逻辑服务名清单（{sorted(LOGIC_SERVICE_NAMES)}），"
+                f"节点名按 '{logic}-service'"
+            )
         url = f"http://localhost:{port}/metrics"
         try:
             with urllib.request.urlopen(url, timeout=3) as resp:
@@ -97,14 +141,15 @@ def collect_runtime(specs):
         except Exception as e:
             print(f"  [skip] {name}:{port} 不可达（{e}）")
             continue
-        caller = base + "-service"
+        caller = logic + "-service"
         counts = {}
         for m in metric_re.finditer(body):
             caller_name, cnt = m.group(1), int(m.group(2))
+            caller_name = normalize_caller(caller_name)
             counts[caller_name] = counts.get(caller_name, 0) + cnt
         if counts:
             result[caller] = counts
-            print(f"  [ok] {name}:{port} 捕获 {len(counts)} 个调用方")
+            print(f"  [ok] {name}:{port}（→ {caller}）捕获 {len(counts)} 个调用方")
     return result
 
 
@@ -252,6 +297,24 @@ HTML_TMPL = """<!DOCTYPE html>
 """
 
 
+def consistency_report(runtime_edges, design_edges):
+    """对比 runtime（实际发生）与 design（设计声明）边，输出一致性报告。"""
+    rs = set(runtime_edges.keys())
+    ds = set(design_edges.keys())
+    matched = rs & ds
+    only_runtime = rs - ds
+    only_design = ds - rs
+    lines = []
+    lines.append(f"匹配边（design 已声明）       : {len(matched)}")
+    lines.append(f"仅 runtime（设计未声明/新增） : {len(only_runtime)}")
+    for e in sorted(only_runtime):
+        lines.append(f"    {e[0]} → {e[1]}  ({runtime_edges.get(e, '?')} 次)")
+    lines.append(f"仅 design（runtime 未捕获）   : {len(only_design)}")
+    for e in sorted(only_design):
+        lines.append(f"    {e[0]} → {e[1]}")
+    return "\n".join(lines)
+
+
 def main():
     ap = argparse.ArgumentParser(description="服务调用拓扑生成器")
     ap.add_argument("--static", action="store_true", help="使用内置静态设计依赖")
@@ -274,6 +337,12 @@ def main():
 
     mode = "runtime" if runtime else "design"
     os.makedirs(args.out, exist_ok=True)
+
+    # runtime vs design 一致性对比（仅 --collect 时输出）
+    if runtime:
+        design_edges, _ = build_edges(static=True, runtime=None)
+        print("\n== runtime vs design 一致性 ==")
+        print(consistency_report(edges, design_edges))
 
     graph = to_echarts_data(edges, source)
     option = {
