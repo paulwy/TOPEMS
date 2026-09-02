@@ -642,7 +642,9 @@ mod tests {
         assert_eq!(value.duration_ms, 100);
 
         let other_args = serde_json::json!({"query": "other"});
-        assert!(manager.get_cached_tool_call("search", &other_args).is_none());
+        assert!(manager
+            .get_cached_tool_call("search", &other_args)
+            .is_none());
     }
 
     #[test]
@@ -663,14 +665,22 @@ mod tests {
         assert_eq!(value.content, "I'm doing well, thank you!");
         assert_eq!(value.tokens_used, 50);
 
-        assert!(manager.get_cached_llm_response("gpt-4", "Hello, how are you?", 0.5).is_none());
+        assert!(manager
+            .get_cached_llm_response("gpt-4", "Hello, how are you?", 0.5)
+            .is_none());
     }
 
     #[test]
     fn test_cache_manager_all_stats() {
         let manager = CacheManager::with_defaults();
 
-        manager.cache_tool_call("tool1", &serde_json::json!({}), serde_json::json!({}), true, 100);
+        manager.cache_tool_call(
+            "tool1",
+            &serde_json::json!({}),
+            serde_json::json!({}),
+            true,
+            100,
+        );
         manager.cache_llm_response("model1", "prompt", 0.5, "response".to_string(), 10);
 
         let stats = manager.all_stats();

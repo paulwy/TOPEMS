@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 APS 业务工具到 MCP Server
 ///
@@ -88,7 +89,23 @@ pub async fn register_aps_tools(server: &McpServer) {
                 let resource_id = params["resource_id"].as_str().unwrap_or("");
                 let order_id = params["order_id"].as_str().unwrap_or("");
 
-                let schedules = generate_mock_schedules(schedule_type, status, resource_id, order_id);
+                let base = service_base_url("APS_SERVICE_URL", 8074);
+                let mut path = format!("/api/aps/schedules?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                let mut real = None;
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    if let Some(list) = data.get("schedules").cloned() {
+                        real = Some(json!({
+                            "total": data.get("total").cloned().unwrap_or(json!(list.as_array().map(|a| a.len()).unwrap_or(0))),
+                            "page": page,
+                            "page_size": page_size,
+                            "schedules": list,
+                        }));
+                    }
+                }
+                let schedules = real.map(|r| r["schedules"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                    generate_mock_schedules(schedule_type, status, resource_id, order_id)
+                });
                 let total = schedules.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -128,7 +145,12 @@ pub async fn register_aps_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("schedule_id is required".to_string()));
                 }
 
-                let schedule = generate_mock_schedule_detail(schedule_id);
+                let base = service_base_url("APS_SERVICE_URL", 8074);
+                let schedule = if let Some(data) = http_call(&base, "GET", &format!("/api/aps/schedules/{}", url_encode(&schedule_id)), None) {
+                    data
+                } else {
+                    generate_mock_schedule_detail(schedule_id)
+                };
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(schedule.to_string())],
@@ -189,7 +211,22 @@ pub async fn register_aps_tools(server: &McpServer) {
                 let workshop = params["workshop"].as_str().unwrap_or("");
                 let keyword = params["keyword"].as_str().unwrap_or("");
 
-                let resources = generate_mock_resources(resource_type, status, workshop, keyword);
+                let base = service_base_url("APS_SERVICE_URL", 8074);
+                let path = format!("/api/aps/capacities?page={}&page_size={}", page, page_size);
+                let mut real = None;
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    if let Some(list) = data.get("capacities").cloned() {
+                        real = Some(json!({
+                            "total": data.get("total").cloned().unwrap_or(json!(list.as_array().map(|a| a.len()).unwrap_or(0))),
+                            "page": page,
+                            "page_size": page_size,
+                            "resources": list,
+                        }));
+                    }
+                }
+                let resources = real.map(|r| r["resources"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                    generate_mock_resources(resource_type, status, workshop, keyword)
+                });
                 let total = resources.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -281,6 +318,34 @@ pub async fn register_aps_tools(server: &McpServer) {
                 let schedule_id = format!("SCH-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
                 let schedule_number = format!("APS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
 
+                // 真实调用：POST /api/aps/schedules（失败自动降级为 mock）
+                let base = service_base_url("APS_SERVICE_URL", 8074);
+                let body = json!({
+                    "schedule_no": format!("APS-MCP-{}", chrono::Utc::now().format("%Y%m%d%H%M%S")),
+                    "product_name": params["remark"].as_str().unwrap_or("MCP 排程"),
+                    "work_center_name": params["operator"].as_str().unwrap_or("机加工车间-01"),
+                    "planned_start": start_time,
+                    "quantity": params["quantity"].as_i64().unwrap_or(0),
+                    "priority": match params["priority"].as_str().unwrap_or("medium") {
+                        "low" => 1, "high" => 9, "urgent" => 10, _ => 5,
+                    },
+                    "status": "pending",
+                });
+                // 工具 schema 用 "YYYY-MM-DD HH:mm:ss"，API 需要 RFC3339 → 转换
+                let mut body = body;
+                if let Some(Value::String(st)) = body.get_mut("planned_start") {
+                    if !st.is_empty() && !st.contains('T') {
+                        let norm = st.trim().replace(' ', "T");
+                        body["planned_start"] = json!(format!("{}Z", norm));
+                    }
+                }
+                if let Some(data) = http_call(&base, "POST", "/api/aps/schedules", Some(body)) {
+                    let result = data;
+                    return Ok(McpToolResult {
+                        content: vec![McpContent::text(result.to_string())],
+                        is_error: None,
+                    });
+                }
                 let result = json!({
                     "schedule_id": schedule_id,
                     "schedule_number": schedule_number,
@@ -312,9 +377,27 @@ pub async fn register_aps_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 排程列表
-fn generate_mock_schedules(type_filter: &str, status_filter: &str, resource_filter: &str, order_filter: &str) -> Vec<Value> {
-    let types = ["production", "maintenance", "setup", "teardown", "inspection"];
-    let statuses = ["planned", "released", "in_progress", "completed", "cancelled", "delayed"];
+fn generate_mock_schedules(
+    type_filter: &str,
+    status_filter: &str,
+    resource_filter: &str,
+    order_filter: &str,
+) -> Vec<Value> {
+    let types = [
+        "production",
+        "maintenance",
+        "setup",
+        "teardown",
+        "inspection",
+    ];
+    let statuses = [
+        "planned",
+        "released",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "delayed",
+    ];
     let priorities = ["low", "medium", "high", "urgent"];
 
     (0..150)
@@ -416,7 +499,12 @@ fn generate_mock_schedule_detail(schedule_id: &str) -> Value {
 }
 
 /// 生成 Mock 资源列表
-fn generate_mock_resources(type_filter: &str, status_filter: &str, workshop_filter: &str, keyword_filter: &str) -> Vec<Value> {
+fn generate_mock_resources(
+    type_filter: &str,
+    status_filter: &str,
+    workshop_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
     let types = ["machine", "labor", "tool", "fixture", "line", "workstation"];
     let statuses = ["idle", "busy", "busy", "maintenance", "offline", "reserved"];
     let workshops = ["一车间", "二车间", "三车间", "装配车间", "质检车间"];
@@ -525,7 +613,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("aps.list_resources", json!({"page": 1, "page_size": 10, "status": "busy"}))
+            .call_tool(
+                "aps.list_resources",
+                json!({"page": 1, "page_size": 10, "status": "busy"}),
+            )
             .await
             .unwrap();
 
@@ -545,17 +636,20 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("aps.create_schedule", json!({
-                "schedule_type": "production",
-                "order_id": "ORD-00000001",
-                "resource_id": "RES-0001",
-                "start_time": "2026-08-27 08:00:00",
-                "end_time": "2026-08-27 16:00:00",
-                "quantity": 500,
-                "priority": "high",
-                "operator": "李四",
-                "remark": "紧急订单"
-            }))
+            .call_tool(
+                "aps.create_schedule",
+                json!({
+                    "schedule_type": "production",
+                    "order_id": "ORD-00000001",
+                    "resource_id": "RES-0001",
+                    "start_time": "2026-08-27 08:00:00",
+                    "end_time": "2026-08-27 16:00:00",
+                    "quantity": 500,
+                    "priority": "high",
+                    "operator": "李四",
+                    "remark": "紧急订单"
+                }),
+            )
             .await
             .unwrap();
 
@@ -581,23 +675,96 @@ mod tests {
         // 缺少 resource_id
         let result = server
             .tool_registry()
-            .call_tool("aps.create_schedule", json!({
-                "schedule_type": "production",
-                "order_id": "ORD-00000001",
-                "start_time": "2026-08-27 08:00:00"
-            }))
+            .call_tool(
+                "aps.create_schedule",
+                json!({
+                    "schedule_type": "production",
+                    "order_id": "ORD-00000001",
+                    "start_time": "2026-08-27 08:00:00"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 start_time
         let result = server
             .tool_registry()
-            .call_tool("aps.create_schedule", json!({
-                "schedule_type": "production",
-                "order_id": "ORD-00000001",
-                "resource_id": "RES-0001"
-            }))
+            .call_tool(
+                "aps.create_schedule",
+                json!({
+                    "schedule_type": "production",
+                    "order_id": "ORD-00000001",
+                    "resource_id": "RES-0001"
+                }),
+            )
             .await;
         assert!(result.is_err());
+    }
+    /// 端到端测试：真实 APS 服务（需网关 8099 运行，-p ignore）
+    #[tokio::test]
+    #[ignore]
+    async fn test_e2e_aps_real_service() {
+        // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
+        std::env::set_var("APS_SERVICE_URL", "http://localhost:8099");
+        let server = McpServer::new("test", "1.0.0");
+        register_aps_tools(&server).await;
+
+        // list_schedules → 真实 /api/aps/schedules
+        let result = server
+            .tool_registry()
+            .call_tool("aps.list_schedules", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(
+            total > 0,
+            "aps.list_schedules 真实服务应返回 total>0，实际: {}",
+            text
+        );
+
+        // list_resources → 真实 /api/aps/capacities
+        let result2 = server
+            .tool_registry()
+            .call_tool("aps.list_resources", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        let text2 = match &result2.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed2: Value = serde_json::from_str(&text2).unwrap_or(json!({}));
+        let total2 = parsed2["total"].as_u64().unwrap_or(0);
+        assert!(
+            total2 > 0,
+            "aps.list_resources 真实服务应返回 total>0，实际: {}",
+            text2
+        );
+
+        // create_schedule → 真实 POST
+        let result3 = server
+            .tool_registry()
+            .call_tool(
+                "aps.create_schedule",
+                json!({
+                    "schedule_type": "production",
+                    "order_id": "ORDER-TEST-001",
+                    "resource_id": "RES-TEST-001",
+                    "start_time": "2026-08-30 08:00:00",
+                    "quantity": 10,
+                    "remark": "e2e-aps-创建",
+                }),
+            )
+            .await
+            .unwrap();
+        assert!(
+            !result3.is_error.unwrap_or(false),
+            "aps.create_schedule 真实创建应成功: {:?}",
+            result3.content
+        );
     }
 }

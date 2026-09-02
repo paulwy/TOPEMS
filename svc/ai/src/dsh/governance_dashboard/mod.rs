@@ -600,6 +600,8 @@ pub struct GovernanceDashboardGenerator {
     security_events: Arc<Mutex<VecDeque<SecurityEventSummary>>>,
     /// 审计日志历史
     audit_logs: Arc<Mutex<VecDeque<AuditLogEntry>>>,
+    /// AI 调用日志数据源（3.2c：真实统计；未注入时降级模拟）
+    cost_meter: Option<Arc<crate::dsh::governance::CostMeter>>,
 }
 
 /// 审计日志条目（简化版）
@@ -625,7 +627,14 @@ impl GovernanceDashboardGenerator {
             cache: Arc::new(Mutex::new(HashMap::new())),
             security_events: Arc::new(Mutex::new(VecDeque::new())),
             audit_logs: Arc::new(Mutex::new(VecDeque::new())),
+            cost_meter: None,
         }
+    }
+
+    /// 注入 AI 调用日志数据源（3.2c：真实统计）
+    pub fn with_cost_meter(mut self, cost_meter: Arc<crate::dsh::governance::CostMeter>) -> Self {
+        self.cost_meter = Some(cost_meter);
+        self
     }
 
     /// 使用默认配置创建
@@ -654,7 +663,9 @@ impl GovernanceDashboardGenerator {
         let dashboard = self.build_dashboard(range);
 
         // 更新缓存
-        self.cache.lock().insert(cache_key, (dashboard.clone(), Instant::now()));
+        self.cache
+            .lock()
+            .insert(cache_key, (dashboard.clone(), Instant::now()));
 
         dashboard
     }
@@ -672,7 +683,12 @@ impl GovernanceDashboardGenerator {
         let security_events = self.get_security_events();
         let audit_summary = self.generate_audit_summary();
         let trends = self.generate_trends(time_range);
-        let recommendations = self.generate_recommendations(&risk_assessment, &compliance_status, &cost_analysis, &performance_metrics);
+        let recommendations = self.generate_recommendations(
+            &risk_assessment,
+            &compliance_status,
+            &cost_analysis,
+            &performance_metrics,
+        );
 
         // 计算总体治理评分
         let overall_score = self.calculate_overall_score(
@@ -704,6 +720,34 @@ impl GovernanceDashboardGenerator {
 
     /// 生成关键指标
     fn generate_key_metrics(&self) -> KeyMetrics {
+        // 3.2c：优先从真实 AI 调用日志（CostMeter）统计；未注入/锁占用时降级模拟
+        if let Some(stats) = self
+            .cost_meter
+            .as_ref()
+            .and_then(|m| m.get_global_statistics_blocking())
+        {
+            if stats.total_calls > 0 {
+                let success_rate = if stats.total_calls > 0 {
+                    (stats.successful_calls as f64 / stats.total_calls as f64) * 100.0
+                } else {
+                    0.0
+                };
+                return KeyMetrics {
+                    total_requests: stats.total_calls,
+                    successful_requests: stats.successful_calls,
+                    failed_requests: stats.failed_calls,
+                    success_rate: round2(success_rate),
+                    total_tokens: stats.total_input_tokens + stats.total_output_tokens,
+                    average_response_ms: round2(stats.average_duration_ms),
+                    p95_response_ms: stats.average_duration_ms,
+                    active_users: 0, // 真实统计不含活跃用户，由调用方补充
+                    active_agents: 0,
+                    total_tool_calls: stats.total_calls,
+                    cache_hit_rate: 0.0,
+                };
+            }
+        }
+
         // 模拟数据（实际实现中会从真实数据源收集）
         KeyMetrics {
             total_requests: 125000,
@@ -747,20 +791,14 @@ impl GovernanceDashboardGenerator {
             level: RiskLevel::Low,
             score: 20.0,
             description: "成本在预算范围内".to_string(),
-            factors: vec![
-                "预算使用率 65%".to_string(),
-                "成本趋势稳定".to_string(),
-            ],
+            factors: vec!["预算使用率 65%".to_string(), "成本趋势稳定".to_string()],
         };
 
         let performance_risk = RiskDimension {
             level: RiskLevel::Low,
             score: 18.0,
             description: "性能表现良好".to_string(),
-            factors: vec![
-                "P95 响应时间 580ms".to_string(),
-                "成功率 98.8%".to_string(),
-            ],
+            factors: vec!["P95 响应时间 580ms".to_string(), "成功率 98.8%".to_string()],
         };
 
         let data_risk = RiskDimension {
@@ -773,7 +811,12 @@ impl GovernanceDashboardGenerator {
             ],
         };
 
-        let overall_score = (security_risk.score + compliance_risk.score + cost_risk.score + performance_risk.score + data_risk.score) / 5.0;
+        let overall_score = (security_risk.score
+            + compliance_risk.score
+            + cost_risk.score
+            + performance_risk.score
+            + data_risk.score)
+            / 5.0;
         let overall_risk_level = RiskLevel::from_score(overall_score);
 
         let high_risk_items = vec![
@@ -832,18 +875,16 @@ impl GovernanceDashboardGenerator {
             },
         ];
 
-        let non_compliant_items = vec![
-            NonCompliantItem {
-                item_id: "nc_001".to_string(),
-                framework: "GDPR".to_string(),
-                control: "数据保留".to_string(),
-                description: "用户数据保留时间超过规定期限".to_string(),
-                severity: RiskLevel::High,
-                remediation: "实施自动数据清理策略，设置保留期限".to_string(),
-                due_date: Some(chrono::Utc::now().to_rfc3339()),
-                status: "待整改".to_string(),
-            },
-        ];
+        let non_compliant_items = vec![NonCompliantItem {
+            item_id: "nc_001".to_string(),
+            framework: "GDPR".to_string(),
+            control: "数据保留".to_string(),
+            description: "用户数据保留时间超过规定期限".to_string(),
+            severity: RiskLevel::High,
+            remediation: "实施自动数据清理策略，设置保留期限".to_string(),
+            due_date: Some(chrono::Utc::now().to_rfc3339()),
+            status: "待整改".to_string(),
+        }];
 
         ComplianceStatus {
             overall_compliance_rate: 87.0,
@@ -1016,7 +1057,10 @@ impl GovernanceDashboardGenerator {
                 description: "优先整改高严重程度的不合规项，确保达到合规要求".to_string(),
                 expected_benefit: "提升合规率，降低合规风险".to_string(),
                 implementation_effort: "高".to_string(),
-                related_metrics: vec!["compliance_rate".to_string(), "non_compliant_items".to_string()],
+                related_metrics: vec![
+                    "compliance_rate".to_string(),
+                    "non_compliant_items".to_string(),
+                ],
             });
         }
 
@@ -1044,7 +1088,10 @@ impl GovernanceDashboardGenerator {
                 description: "分析慢请求原因，优化数据库查询，增加缓存层".to_string(),
                 expected_benefit: "将 P95 响应时间降低到 400ms 以下".to_string(),
                 implementation_effort: "中等".to_string(),
-                related_metrics: vec!["p95_response_ms".to_string(), "average_response_ms".to_string()],
+                related_metrics: vec![
+                    "p95_response_ms".to_string(),
+                    "average_response_ms".to_string(),
+                ],
             });
         }
 
@@ -1129,6 +1176,11 @@ impl GovernanceDashboardGenerator {
     }
 }
 
+/// 四舍五入到两位小数
+fn round2(v: f64) -> f64 {
+    (v * 100.0).round() / 100.0
+}
+
 // ============================================================================
 // 测试
 // ============================================================================
@@ -1151,15 +1203,24 @@ mod tests {
     #[test]
     fn test_time_range_duration() {
         assert_eq!(TimeRange::Last1Hour.duration(), Duration::from_secs(3600));
-        assert_eq!(TimeRange::Last24Hours.duration(), Duration::from_secs(86400));
+        assert_eq!(
+            TimeRange::Last24Hours.duration(),
+            Duration::from_secs(86400)
+        );
     }
 
     #[test]
     fn test_governance_level_from_score() {
-        assert_eq!(GovernanceLevel::from_score(95.0), GovernanceLevel::Excellent);
+        assert_eq!(
+            GovernanceLevel::from_score(95.0),
+            GovernanceLevel::Excellent
+        );
         assert_eq!(GovernanceLevel::from_score(80.0), GovernanceLevel::Good);
         assert_eq!(GovernanceLevel::from_score(65.0), GovernanceLevel::Fair);
-        assert_eq!(GovernanceLevel::from_score(50.0), GovernanceLevel::NeedsImprovement);
+        assert_eq!(
+            GovernanceLevel::from_score(50.0),
+            GovernanceLevel::NeedsImprovement
+        );
         assert_eq!(GovernanceLevel::from_score(20.0), GovernanceLevel::Poor);
     }
 
@@ -1190,8 +1251,14 @@ mod tests {
     #[test]
     fn test_compliance_framework_status_as_str() {
         assert_eq!(ComplianceFrameworkStatus::Compliant.as_str(), "compliant");
-        assert_eq!(ComplianceFrameworkStatus::PartiallyCompliant.as_str(), "partially_compliant");
-        assert_eq!(ComplianceFrameworkStatus::NonCompliant.as_str(), "non_compliant");
+        assert_eq!(
+            ComplianceFrameworkStatus::PartiallyCompliant.as_str(),
+            "partially_compliant"
+        );
+        assert_eq!(
+            ComplianceFrameworkStatus::NonCompliant.as_str(),
+            "non_compliant"
+        );
     }
 
     #[test]
@@ -1205,7 +1272,16 @@ mod tests {
     #[test]
     fn test_scoring_weights_default() {
         let weights = ScoringWeights::default();
-        assert!((weights.security + weights.compliance + weights.cost + weights.performance + weights.reliability - 1.0).abs() < 0.001);
+        assert!(
+            (weights.security
+                + weights.compliance
+                + weights.cost
+                + weights.performance
+                + weights.reliability
+                - 1.0)
+                .abs()
+                < 0.001
+        );
     }
 
     #[test]
@@ -1325,7 +1401,10 @@ mod tests {
         let dashboard = generator.generate_dashboard(None);
 
         assert!(dashboard.performance_metrics.average_response_ms >= 0.0);
-        assert!(dashboard.performance_metrics.p95_response_ms >= dashboard.performance_metrics.p50_response_ms);
+        assert!(
+            dashboard.performance_metrics.p95_response_ms
+                >= dashboard.performance_metrics.p50_response_ms
+        );
         assert!(dashboard.performance_metrics.error_rate >= 0.0);
     }
 
@@ -1335,7 +1414,10 @@ mod tests {
         let dashboard = generator.generate_dashboard(None);
 
         assert!(!dashboard.trends.is_empty());
-        assert_eq!(dashboard.trends.len(), generator.config().trend_data_points as usize);
+        assert_eq!(
+            dashboard.trends.len(),
+            generator.config().trend_data_points as usize
+        );
     }
 
     #[test]
@@ -1354,5 +1436,88 @@ mod tests {
 
         let expected_level = GovernanceLevel::from_score(dashboard.overall_score);
         assert_eq!(dashboard.governance_level, expected_level);
+    }
+
+    #[tokio::test]
+    async fn test_key_metrics_from_real_cost_meter() {
+        // 3.2c：注入真实 AI 调用日志（CostMeter）后，关键指标来自真实统计
+        use crate::dsh::governance::cost_metering::{AiCallRecord, CostMeter};
+
+        let meter = Arc::new(CostMeter::new());
+        // 记录 3 次成功 + 1 次失败
+        meter
+            .record_call(AiCallRecord::new(
+                "u1",
+                "t1",
+                "mock-model",
+                100,
+                50,
+                0.001,
+                10,
+            ))
+            .await;
+        meter
+            .record_call(AiCallRecord::new(
+                "u1",
+                "t1",
+                "mock-model",
+                200,
+                100,
+                0.002,
+                20,
+            ))
+            .await;
+        meter
+            .record_call(AiCallRecord::new(
+                "u1",
+                "t1",
+                "mock-model",
+                300,
+                150,
+                0.003,
+                30,
+            ))
+            .await;
+        meter
+            .record_call(
+                AiCallRecord::new("u1", "t1", "mock-model", 0, 0, 0.0, 5).with_error("boom"),
+            )
+            .await;
+
+        let generator = GovernanceDashboardGenerator::with_defaults().with_cost_meter(meter);
+        let metrics = generator.generate_key_metrics();
+
+        assert_eq!(metrics.total_requests, 4, "真实调用次数应为 4");
+        assert_eq!(metrics.successful_requests, 3);
+        assert_eq!(metrics.failed_requests, 1);
+        assert!((metrics.success_rate - 75.0).abs() < 0.01, "成功率应为 75%");
+        assert_eq!(
+            metrics.total_tokens,
+            100 + 50 + 200 + 100 + 300 + 150,
+            "token 应为真实累计"
+        );
+        // 平均耗时 (10+20+30+5)/4 = 16.25
+        assert!((metrics.average_response_ms - 16.25).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_key_metrics_falls_back_to_simulated_when_empty() {
+        // 空 CostMeter（无调用记录）→ 降级模拟数据（保持旧行为）
+        use crate::dsh::governance::cost_metering::CostMeter;
+
+        let meter = Arc::new(CostMeter::new());
+        let generator = GovernanceDashboardGenerator::with_defaults().with_cost_meter(meter);
+        let metrics = generator.generate_key_metrics();
+        // 空数据源 → 走模拟分支
+        assert_eq!(metrics.total_requests, 125000);
+        assert_eq!(metrics.success_rate, 98.8);
+    }
+
+    #[test]
+    fn test_key_metrics_without_cost_meter_simulated() {
+        // 未注入 CostMeter → 模拟数据
+        let generator = GovernanceDashboardGenerator::with_defaults();
+        let metrics = generator.generate_key_metrics();
+        assert_eq!(metrics.total_requests, 125000);
     }
 }

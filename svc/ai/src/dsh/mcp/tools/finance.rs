@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 Finance 业务工具到 MCP Server
 ///
@@ -71,17 +72,26 @@ pub async fn register_finance_tools(server: &McpServer) {
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
                 let tx_type = params["type"].as_str().unwrap_or("");
 
-                let transactions = generate_mock_transactions(tx_type);
-                let total = transactions.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_transactions = &transactions[start.min(total)..end];
-
-                let result = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "transactions": page_transactions,
+                // 真实调用 Finance API（GET /payments，降级 mock）
+                let mut path = format!("/api/finance/payments?page={}&page_size={}", page, page_size);
+                if !tx_type.is_empty() { path.push_str(&format!("&type={}", url_encode(tx_type))); }
+                let base = service_base_url("FINANCE_SERVICE_URL", 8011);
+                let result = http_call(&base, "GET", &path, None).map(|data| {
+                    let items = data.get("items").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    json!({ "total": total, "page": page, "page_size": page_size, "transactions": items })
+                }).unwrap_or_else(|| {
+                    let transactions = generate_mock_transactions(tx_type);
+                    let total = transactions.len();
+                    let start = ((page - 1) * page_size) as usize;
+                    let end = (start + page_size as usize).min(total);
+                    let page_transactions = &transactions[start.min(total)..end];
+                    json!({
+                        "total": total,
+                        "page": page,
+                        "page_size": page_size,
+                        "transactions": page_transactions,
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -111,7 +121,10 @@ pub async fn register_finance_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("transaction_id is required".to_string()));
                 }
 
-                let transaction = generate_mock_transaction_detail(transaction_id);
+                // 真实调用 Finance API（GET /payments/{id}，降级 mock）
+                let base = service_base_url("FINANCE_SERVICE_URL", 8011);
+                let transaction = http_call(&base, "GET", &format!("/api/finance/payments/{}", transaction_id), None)
+                    .unwrap_or_else(|| generate_mock_transaction_detail(transaction_id));
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(transaction.to_string())],
@@ -121,27 +134,30 @@ pub async fn register_finance_tools(server: &McpServer) {
         )
         .await;
 
-    // 3. finance.create_invoice
+    // 3. finance.create_invoice（暂保留 mock：发票语义与现有 vouchers API 不匹配，待发票模块接入）
+    //    权限继承示例：发票创建属敏感操作，要求 "finance:write" 权限，无权限用户将被拒绝
     registry
-        .register(
+        .register_with_permission(
             "finance.create_invoice",
             "创建财务发票。需要提供客户信息、金额、税率和商品明细，返回新创建的发票ID和发票号。",
             SchemaBuilder::object()
-                .property(
-                    "customer_id",
-                    SchemaBuilder::string().description("客户ID"),
-                )
+                .property("customer_id", SchemaBuilder::string().description("客户ID"))
                 .property(
                     "customer_name",
                     SchemaBuilder::string().description("客户名称"),
                 )
                 .property(
                     "amount",
-                    SchemaBuilder::number().description("发票金额（不含税）").minimum(0.01),
+                    SchemaBuilder::number()
+                        .description("发票金额（不含税）")
+                        .minimum(0.01),
                 )
                 .property(
                     "tax_rate",
-                    SchemaBuilder::number().description("税率（百分比，如13表示13%）").minimum(0.0).maximum(100.0),
+                    SchemaBuilder::number()
+                        .description("税率（百分比，如13表示13%）")
+                        .minimum(0.0)
+                        .maximum(100.0),
                 )
                 .property(
                     "invoice_type",
@@ -149,28 +165,38 @@ pub async fn register_finance_tools(server: &McpServer) {
                         .description("发票类型")
                         .enum_values(&["vat_special", "vat_normal", "electronic"]),
                 )
-                .property(
-                    "remark",
-                    SchemaBuilder::string().description("发票备注"),
-                )
+                .property("remark", SchemaBuilder::string().description("发票备注"))
                 .required(&["customer_id", "amount", "tax_rate"])
                 .build(),
+            "finance:write",
             |params| {
                 let customer_id = params["customer_id"].as_str().unwrap_or("");
                 let amount = params["amount"].as_f64().unwrap_or(0.0);
                 let tax_rate = params["tax_rate"].as_f64().unwrap_or(0.0);
 
                 if customer_id.is_empty() {
-                    return Err(ToolExecutionError::Validation("customer_id is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "customer_id is required".to_string(),
+                    ));
                 }
                 if amount <= 0.0 {
-                    return Err(ToolExecutionError::Validation("amount must be positive".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "amount must be positive".to_string(),
+                    ));
                 }
 
                 let tax_amount = amount * tax_rate / 100.0;
                 let total_amount = amount + tax_amount;
-                let invoice_id = format!("INV-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let invoice_number = format!("INV{}{:06}", chrono::Utc::now().format("%Y%m%d"), 2001);
+                let invoice_id = format!(
+                    "INV-{}",
+                    uuid::Uuid::new_v4()
+                        .to_string()
+                        .split('-')
+                        .next()
+                        .unwrap_or("00000000")
+                );
+                let invoice_number =
+                    format!("INV{}{:06}", chrono::Utc::now().format("%Y%m%d"), 2001);
 
                 let result = json!({
                     "invoice_id": invoice_id,
@@ -193,7 +219,7 @@ pub async fn register_finance_tools(server: &McpServer) {
         )
         .await;
 
-    // 4. finance.get_report
+    // 4. finance.get_report（暂保留 mock：无对应报表 API，待报表模块接入）
     registry
         .register(
             "finance.get_report",
@@ -244,7 +270,15 @@ pub async fn register_finance_tools(server: &McpServer) {
 /// 生成 Mock 交易列表
 fn generate_mock_transactions(type_filter: &str) -> Vec<Value> {
     let types = ["income", "expense", "transfer", "refund"];
-    let categories = ["销售收入", "采购支出", "工资发放", "房租水电", "服务费", "退款", "转账"];
+    let categories = [
+        "销售收入",
+        "采购支出",
+        "工资发放",
+        "房租水电",
+        "服务费",
+        "退款",
+        "转账",
+    ];
 
     (0..100)
         .map(|i| {
@@ -366,6 +400,34 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    #[ignore = "需要 FINANCE_SERVICE_URL 指向真实 finance 服务时手动运行"]
+    async fn test_list_transactions_real_api() {
+        if std::env::var("FINANCE_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 FINANCE_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_finance_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "finance.list_transactions",
+                json!({"page": 1, "page_size": 5}),
+            )
+            .await
+            .unwrap();
+        assert_eq!(result.content.len(), 1);
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回交易，total={}", total);
+        eprintln!("finance.list_transactions 真实调用返回 total = {}", total);
+    }
+
+    #[tokio::test]
     async fn test_register_finance_tools() {
         let server = McpServer::new("test", "1.0.0");
         register_finance_tools(&server).await;
@@ -385,7 +447,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("finance.list_transactions", json!({"page": 1, "page_size": 5}))
+            .call_tool(
+                "finance.list_transactions",
+                json!({"page": 1, "page_size": 5}),
+            )
             .await
             .unwrap();
 
@@ -407,7 +472,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("finance.get_transaction", json!({"transaction_id": "TX-00000001"}))
+            .call_tool(
+                "finance.get_transaction",
+                json!({"transaction_id": "TX-00000001"}),
+            )
             .await
             .unwrap();
 
@@ -428,14 +496,20 @@ mod tests {
         // 缺少 customer_id
         let result = server
             .tool_registry()
-            .call_tool("finance.create_invoice", json!({"amount": 1000.0, "tax_rate": 13.0}))
+            .call_tool(
+                "finance.create_invoice",
+                json!({"amount": 1000.0, "tax_rate": 13.0}),
+            )
             .await;
         assert!(result.is_err());
 
         // 金额为0
         let result = server
             .tool_registry()
-            .call_tool("finance.create_invoice", json!({"customer_id": "C1", "amount": 0.0, "tax_rate": 13.0}))
+            .call_tool(
+                "finance.create_invoice",
+                json!({"customer_id": "C1", "amount": 0.0, "tax_rate": 13.0}),
+            )
             .await;
         assert!(result.is_err());
     }
@@ -447,12 +521,15 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("finance.create_invoice", json!({
-                "customer_id": "CUST-001",
-                "amount": 10000.0,
-                "tax_rate": 13.0,
-                "invoice_type": "vat_special"
-            }))
+            .call_tool(
+                "finance.create_invoice",
+                json!({
+                    "customer_id": "CUST-001",
+                    "amount": 10000.0,
+                    "tax_rate": 13.0,
+                    "invoice_type": "vat_special"
+                }),
+            )
             .await
             .unwrap();
 
@@ -475,7 +552,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("finance.get_report", json!({"report_type": "monthly", "period": "2026-08"}))
+            .call_tool(
+                "finance.get_report",
+                json!({"report_type": "monthly", "period": "2026-08"}),
+            )
             .await
             .unwrap();
 

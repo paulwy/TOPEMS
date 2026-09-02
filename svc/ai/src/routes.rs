@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 
-use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, dsh_agent_handlers, dsh_ai_enhanced_handlers, dsh_performance_handlers, health, workflow_handlers};
+use crate::handlers::{
+    ai_handlers, connector_handlers, dify_handlers, dsh_agent_handlers, dsh_ai_enhanced_handlers,
+    dsh_performance_handlers, health, workflow_handlers,
+};
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
     RecommendationApi, VectorApi,
@@ -8,7 +11,13 @@ use crate::modules::{
 use crate::shared::AppState;
 use std::sync::Arc;
 
-use crate::dsh::mcp::{create_mcp_routes, register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools, register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools, register_iot_tools, register_lims_tools, register_mes_tools, register_oa_tools, register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools, McpServer};
+use crate::dsh::mcp::{
+    create_mcp_routes, register_aps_tools, register_bi_tools, register_crm_tools,
+    register_cs_tools, register_ehs_tools, register_erp_tools, register_finance_tools,
+    register_hr_tools, register_iot_tools, register_lims_tools, register_mes_tools,
+    register_oa_tools, register_pm_tools, register_qms_tools, register_scm_tools,
+    register_wms_tools, McpServer,
+};
 
 use axum::{
     extract::DefaultBodyLimit,
@@ -73,7 +82,8 @@ pub fn create_routes(
         max_tasks: 100,
         task_timeout_secs: 300,
     };
-    let multi_agent_coordinator = crate::dsh::multi_agent::MultiAgentCoordinator::new(multi_agent_config);
+    let multi_agent_coordinator =
+        crate::dsh::multi_agent::MultiAgentCoordinator::new(multi_agent_config);
 
     // 更新 app_state，添加 DSH Agent 编排器和增强能力
     let app_state = AppState {
@@ -265,7 +275,10 @@ pub fn create_routes(
 
     // DSH Agent 编排器 API 路由
     let dsh_agent_router = Router::new()
-        .route("/dsh/agent/execute", post(dsh_agent_handlers::execute_agent))
+        .route(
+            "/dsh/agent/execute",
+            post(dsh_agent_handlers::execute_agent),
+        )
         .route("/dsh/agent/stream", post(dsh_agent_handlers::stream_agent))
         .route(
             "/dsh/agent/session/{session_id}",
@@ -317,20 +330,58 @@ pub fn create_routes(
     // DSH AI 增强能力 API 路由（知识图谱、RAG、多 Agent 协作）
     let dsh_enhanced_router = Router::new()
         // 知识图谱 API
-        .route("/dsh/kg/entities", post(dsh_ai_enhanced_handlers::add_entity).get(dsh_ai_enhanced_handlers::list_entities))
-        .route("/dsh/kg/entities/{entity_id}", get(dsh_ai_enhanced_handlers::get_entity).delete(dsh_ai_enhanced_handlers::delete_entity))
-        .route("/dsh/kg/entities/{entity_id}/neighbors", get(dsh_ai_enhanced_handlers::get_entity_neighbors))
-        .route("/dsh/kg/relations", post(dsh_ai_enhanced_handlers::add_relation).get(dsh_ai_enhanced_handlers::list_relations))
-        .route("/dsh/kg/shortest-path", post(dsh_ai_enhanced_handlers::shortest_path))
-        .route("/dsh/kg/link-entity", post(dsh_ai_enhanced_handlers::link_entity))
-        .route("/dsh/kg/communities", get(dsh_ai_enhanced_handlers::detect_communities))
-        .route("/dsh/kg/stats", get(dsh_ai_enhanced_handlers::get_graph_stats))
-        .route("/dsh/kg/extract", post(dsh_ai_enhanced_handlers::extract_entities))
+        .route(
+            "/dsh/kg/entities",
+            post(dsh_ai_enhanced_handlers::add_entity).get(dsh_ai_enhanced_handlers::list_entities),
+        )
+        .route(
+            "/dsh/kg/entities/{entity_id}",
+            get(dsh_ai_enhanced_handlers::get_entity)
+                .delete(dsh_ai_enhanced_handlers::delete_entity),
+        )
+        .route(
+            "/dsh/kg/entities/{entity_id}/neighbors",
+            get(dsh_ai_enhanced_handlers::get_entity_neighbors),
+        )
+        .route(
+            "/dsh/kg/relations",
+            post(dsh_ai_enhanced_handlers::add_relation)
+                .get(dsh_ai_enhanced_handlers::list_relations),
+        )
+        .route(
+            "/dsh/kg/shortest-path",
+            post(dsh_ai_enhanced_handlers::shortest_path),
+        )
+        .route(
+            "/dsh/kg/link-entity",
+            post(dsh_ai_enhanced_handlers::link_entity),
+        )
+        .route(
+            "/dsh/kg/communities",
+            get(dsh_ai_enhanced_handlers::detect_communities),
+        )
+        .route(
+            "/dsh/kg/stats",
+            get(dsh_ai_enhanced_handlers::get_graph_stats),
+        )
+        .route(
+            "/dsh/kg/extract",
+            post(dsh_ai_enhanced_handlers::extract_entities),
+        )
         // RAG API
-        .route("/dsh/rag/retrieve", post(dsh_ai_enhanced_handlers::rag_retrieve))
-        .route("/dsh/rag/stats", get(dsh_ai_enhanced_handlers::get_rag_stats))
+        .route(
+            "/dsh/rag/retrieve",
+            post(dsh_ai_enhanced_handlers::rag_retrieve),
+        )
+        .route(
+            "/dsh/rag/stats",
+            get(dsh_ai_enhanced_handlers::get_rag_stats),
+        )
         // 多 Agent 协作 API
-        .route("/dsh/multi-agent/execute", post(dsh_ai_enhanced_handlers::multi_agent_execute))
+        .route(
+            "/dsh/multi-agent/execute",
+            post(dsh_ai_enhanced_handlers::multi_agent_execute),
+        )
         .layer(axum::middleware::from_fn_with_state(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
@@ -373,7 +424,8 @@ pub fn create_routes(
         .with_state(copilot_state);
 
     // 治理仪表盘路由
-    let governance_state = crate::handlers::governance_dashboard_handlers::GovernanceAppState::new();
+    let governance_state =
+        crate::handlers::governance_dashboard_handlers::GovernanceAppState::new();
     let governance_dashboard_router = Router::new()
         .route(
             "/dsh/governance/dashboard",
@@ -416,6 +468,27 @@ pub fn create_routes(
             delete(crate::handlers::governance_dashboard_handlers::clear_cache),
         )
         .with_state(governance_state);
+
+    // 智能表单路由（3.2b）
+    let smart_forms_state = crate::handlers::smart_forms_handlers::SmartFormsAppState::new();
+    let smart_forms_router = Router::new()
+        .route(
+            "/dsh/smart-forms/templates",
+            get(crate::handlers::smart_forms_handlers::list_templates),
+        )
+        .route(
+            "/dsh/smart-forms/templates/{id}",
+            get(crate::handlers::smart_forms_handlers::get_template),
+        )
+        .route(
+            "/dsh/smart-forms/ai-fill",
+            post(crate::handlers::smart_forms_handlers::ai_fill),
+        )
+        .route(
+            "/dsh/smart-forms/validate",
+            post(crate::handlers::smart_forms_handlers::validate),
+        )
+        .with_state(smart_forms_state);
 
     let recommendation_router = Router::new()
         .route("/recommend", post(RecommendationApi::recommend))
@@ -568,6 +641,7 @@ pub fn create_routes(
         .merge(dsh_enhanced_router)
         .merge(business_copilot_router)
         .merge(governance_dashboard_router)
+        .merge(smart_forms_router)
         .merge(recommendation_router)
         .merge(multimodal_router)
         .merge(dify_router)

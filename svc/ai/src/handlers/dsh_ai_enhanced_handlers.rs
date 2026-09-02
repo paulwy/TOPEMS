@@ -108,7 +108,9 @@ pub async fn add_entity(
     };
 
     let entity_type = crate::dsh::knowledge_graph::EntityType::from_str(&req.entity_type);
-    let id = req.id.unwrap_or_else(|| format!("entity_{}", uuid::Uuid::new_v4()));
+    let id = req
+        .id
+        .unwrap_or_else(|| format!("entity_{}", uuid::Uuid::new_v4()));
 
     let mut entity = crate::dsh::knowledge_graph::Entity::new(&id, &req.name, entity_type);
     if let Some(desc) = req.description {
@@ -445,7 +447,9 @@ pub async fn multi_agent_execute(
     // 简化实现：返回模拟结果
     // 实际实现中应该调用 MultiAgentCoordinator 的方法
     let task_id = format!("task_{}", uuid::Uuid::new_v4());
-    let collaboration_mode = req.collaboration_mode.unwrap_or_else(|| "master_slave".to_string());
+    let collaboration_mode = req
+        .collaboration_mode
+        .unwrap_or_else(|| "master_slave".to_string());
     let num_agents = req.num_agents.unwrap_or(3);
 
     let response = MultiAgentResponse {

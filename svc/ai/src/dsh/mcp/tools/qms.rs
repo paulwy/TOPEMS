@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 QMS 业务工具到 MCP Server
 ///
@@ -77,17 +78,28 @@ pub async fn register_qms_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let result = params["result"].as_str().unwrap_or("");
 
-                let inspections = generate_mock_inspections(inspection_type, status, result);
-                let total = inspections.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_inspections = &inspections[start.min(total)..end];
-
-                let result_json = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "inspections": page_inspections,
+                // 真实调用 QMS API（GET /checks，降级 mock）
+                let mut path = format!("/api/qms/checks?page={}&page_size={}", page, page_size);
+                if !inspection_type.is_empty() { path.push_str(&format!("&inspection_type={}", url_encode(inspection_type))); }
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !result.is_empty() { path.push_str(&format!("&result={}", url_encode(result))); }
+                let base = service_base_url("QMS_SERVICE_URL", 8050);
+                let result_json = http_call(&base, "GET", &path, None).map(|data| {
+                    let items = data.get("inspections").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    json!({ "total": total, "page": page, "page_size": page_size, "inspections": items })
+                }).unwrap_or_else(|| {
+                    let inspections = generate_mock_inspections(inspection_type, status, result);
+                    let total = inspections.len();
+                    let start = ((page - 1) * page_size) as usize;
+                    let end = (start + page_size as usize).min(total);
+                    let page_inspections = &inspections[start.min(total)..end];
+                    json!({
+                        "total": total,
+                        "page": page,
+                        "page_size": page_size,
+                        "inspections": page_inspections,
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -117,7 +129,10 @@ pub async fn register_qms_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("inspection_id is required".to_string()));
                 }
 
-                let inspection = generate_mock_inspection_detail(inspection_id);
+                // 真实调用 QMS API（GET /checks/{id}，降级 mock）
+                let base = service_base_url("QMS_SERVICE_URL", 8050);
+                let inspection = http_call(&base, "GET", &format!("/api/qms/checks/{}", inspection_id), None)
+                    .unwrap_or_else(|| generate_mock_inspection_detail(inspection_id));
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(inspection.to_string())],
@@ -175,17 +190,28 @@ pub async fn register_qms_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let disposition = params["disposition"].as_str().unwrap_or("");
 
-                let nonconformances = generate_mock_nonconformances(severity, status, disposition);
-                let total = nonconformances.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_nc = &nonconformances[start.min(total)..end];
-
-                let result = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "nonconformances": page_nc,
+                // 真实调用 QMS API（GET /issues，降级 mock）
+                let mut path = format!("/api/qms/issues?page={}&page_size={}", page, page_size);
+                if !severity.is_empty() { path.push_str(&format!("&severity={}", url_encode(severity))); }
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !disposition.is_empty() { path.push_str(&format!("&disposition={}", url_encode(disposition))); }
+                let base = service_base_url("QMS_SERVICE_URL", 8050);
+                let result = http_call(&base, "GET", &path, None).map(|data| {
+                    let items = data.as_array().cloned().unwrap_or_default();
+                    let total = items.len();
+                    json!({ "total": total, "page": page, "page_size": page_size, "nonconformances": items })
+                }).unwrap_or_else(|| {
+                    let nonconformances = generate_mock_nonconformances(severity, status, disposition);
+                    let total = nonconformances.len();
+                    let start = ((page - 1) * page_size) as usize;
+                    let end = (start + page_size as usize).min(total);
+                    let page_nc = &nonconformances[start.min(total)..end];
+                    json!({
+                        "total": total,
+                        "page": page,
+                        "page_size": page_size,
+                        "nonconformances": page_nc,
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -249,12 +275,8 @@ pub async fn register_qms_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("quantity must be positive".to_string()));
                 }
 
-                let inspection_id = format!("INS-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let inspection_number = format!("QMS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
-
-                let result = json!({
-                    "inspection_id": inspection_id,
-                    "inspection_number": inspection_number,
+                // 真实调用 QMS API（POST /checks，降级 mock）
+                let payload = json!({
                     "inspection_type": inspection_type,
                     "material_id": material_id,
                     "material_code": params["material_code"].as_str().unwrap_or(""),
@@ -262,9 +284,25 @@ pub async fn register_qms_tools(server: &McpServer) {
                     "inspector": params["inspector"].as_str().unwrap_or(""),
                     "reference_order": params["reference_order"].as_str().unwrap_or(""),
                     "remark": params["remark"].as_str().unwrap_or(""),
-                    "status": "pending",
-                    "created_at": chrono::Utc::now().to_rfc3339(),
-                    "message": "检验单创建成功，已通知检验员",
+                });
+                let base = service_base_url("QMS_SERVICE_URL", 8050);
+                let result = http_call(&base, "POST", "/api/qms/checks", Some(payload)).unwrap_or_else(|| {
+                    let inspection_id = format!("INS-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
+                    let inspection_number = format!("QMS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
+                    json!({
+                        "inspection_id": inspection_id,
+                        "inspection_number": inspection_number,
+                        "inspection_type": inspection_type,
+                        "material_id": material_id,
+                        "material_code": params["material_code"].as_str().unwrap_or(""),
+                        "quantity": quantity,
+                        "inspector": params["inspector"].as_str().unwrap_or(""),
+                        "reference_order": params["reference_order"].as_str().unwrap_or(""),
+                        "remark": params["remark"].as_str().unwrap_or(""),
+                        "status": "pending",
+                        "created_at": chrono::Utc::now().to_rfc3339(),
+                        "message": "检验单创建成功（mock 降级），已通知检验员",
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -281,9 +319,19 @@ pub async fn register_qms_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 检验单列表
-fn generate_mock_inspections(type_filter: &str, status_filter: &str, result_filter: &str) -> Vec<Value> {
+fn generate_mock_inspections(
+    type_filter: &str,
+    status_filter: &str,
+    result_filter: &str,
+) -> Vec<Value> {
     let types = ["incoming", "in_process", "final", "outgoing", "audit"];
-    let statuses = ["pending", "in_progress", "completed", "completed", "cancelled"];
+    let statuses = [
+        "pending",
+        "in_progress",
+        "completed",
+        "completed",
+        "cancelled",
+    ];
     let results = ["pass", "pass", "pass", "fail", "conditional"];
     let inspectors = ["张三", "李四", "王五", "赵六", "钱七"];
 
@@ -366,11 +414,28 @@ fn generate_mock_inspection_detail(inspection_id: &str) -> Value {
 }
 
 /// 生成 Mock 不合格品列表
-fn generate_mock_nonconformances(severity_filter: &str, status_filter: &str, disposition_filter: &str) -> Vec<Value> {
+fn generate_mock_nonconformances(
+    severity_filter: &str,
+    status_filter: &str,
+    disposition_filter: &str,
+) -> Vec<Value> {
     let severities = ["minor", "minor", "major", "critical"];
     let statuses = ["open", "analyzing", "dispositioned", "closed"];
-    let dispositions = ["rework", "scrap", "use_as_is", "return_to_supplier", "concession"];
-    let types = ["外观缺陷", "尺寸超差", "性能不达标", "包装破损", "标识错误", "混料"];
+    let dispositions = [
+        "rework",
+        "scrap",
+        "use_as_is",
+        "return_to_supplier",
+        "concession",
+    ];
+    let types = [
+        "外观缺陷",
+        "尺寸超差",
+        "性能不达标",
+        "包装破损",
+        "标识错误",
+        "混料",
+    ];
 
     (0..100)
         .map(|i| {
@@ -410,6 +475,31 @@ fn generate_mock_nonconformances(severity_filter: &str, status_filter: &str, dis
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    #[ignore = "需要 QMS_SERVICE_URL 指向真实 qms 服务时手动运行"]
+    async fn test_list_inspections_real_api() {
+        if std::env::var("QMS_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 QMS_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_qms_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool("qms.list_inspections", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        assert_eq!(result.content.len(), 1);
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回检查单，total={}", total);
+        eprintln!("qms.list_inspections 真实调用返回 total = {}", total);
+    }
 
     #[tokio::test]
     async fn test_register_qms_tools() {
@@ -453,7 +543,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("qms.get_inspection", json!({"inspection_id": "INS-00000001"}))
+            .call_tool(
+                "qms.get_inspection",
+                json!({"inspection_id": "INS-00000001"}),
+            )
             .await
             .unwrap();
 
@@ -475,7 +568,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("qms.list_nonconformances", json!({"page": 1, "page_size": 10, "severity": "major"}))
+            .call_tool(
+                "qms.list_nonconformances",
+                json!({"page": 1, "page_size": 10, "severity": "major"}),
+            )
             .await
             .unwrap();
 
@@ -495,15 +591,18 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("qms.create_inspection", json!({
-                "inspection_type": "incoming",
-                "material_id": "MAT-0001",
-                "material_code": "M000001",
-                "quantity": 500,
-                "inspector": "张三",
-                "reference_order": "PO202608001",
-                "remark": "来料检验"
-            }))
+            .call_tool(
+                "qms.create_inspection",
+                json!({
+                    "inspection_type": "incoming",
+                    "material_id": "MAT-0001",
+                    "material_code": "M000001",
+                    "quantity": 500,
+                    "inspector": "张三",
+                    "reference_order": "PO202608001",
+                    "remark": "来料检验"
+                }),
+            )
             .await
             .unwrap();
 
@@ -527,21 +626,27 @@ mod tests {
         // 缺少 material_id
         let result = server
             .tool_registry()
-            .call_tool("qms.create_inspection", json!({
-                "inspection_type": "incoming",
-                "quantity": 500
-            }))
+            .call_tool(
+                "qms.create_inspection",
+                json!({
+                    "inspection_type": "incoming",
+                    "quantity": 500
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 数量为0
         let result = server
             .tool_registry()
-            .call_tool("qms.create_inspection", json!({
-                "inspection_type": "incoming",
-                "material_id": "MAT-0001",
-                "quantity": 0
-            }))
+            .call_tool(
+                "qms.create_inspection",
+                json!({
+                    "inspection_type": "incoming",
+                    "material_id": "MAT-0001",
+                    "quantity": 0
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

@@ -395,7 +395,9 @@ impl EventTriggerEngine {
             last_triggered_at: None,
         };
 
-        self.rules.lock().insert(order_created_rule.rule_id.clone(), order_created_rule);
+        self.rules
+            .lock()
+            .insert(order_created_rule.rule_id.clone(), order_created_rule);
 
         // 系统告警规则
         let alert_rule = TriggerRule {
@@ -428,7 +430,9 @@ impl EventTriggerEngine {
             last_triggered_at: None,
         };
 
-        self.rules.lock().insert(alert_rule.rule_id.clone(), alert_rule);
+        self.rules
+            .lock()
+            .insert(alert_rule.rule_id.clone(), alert_rule);
 
         info!("Default event trigger rules initialized");
     }
@@ -747,7 +751,11 @@ impl EventTriggerEngine {
         // 模拟执行动作（实际实现中会调用对应的 Agent/Workflow/LLM）
         let result = match action_type {
             AiActionType::CallAgent => {
-                let agent_id = rule.ai_action.agent_id.clone().unwrap_or_else(|| "default".to_string());
+                let agent_id = rule
+                    .ai_action
+                    .agent_id
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string());
                 serde_json::json!({
                     "agent_id": agent_id,
                     "status": "success",
@@ -756,7 +764,11 @@ impl EventTriggerEngine {
                 })
             }
             AiActionType::ExecuteWorkflow => {
-                let workflow_id = rule.ai_action.workflow_id.clone().unwrap_or_else(|| "default".to_string());
+                let workflow_id = rule
+                    .ai_action
+                    .workflow_id
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string());
                 serde_json::json!({
                     "workflow_id": workflow_id,
                     "status": "success",
@@ -765,7 +777,11 @@ impl EventTriggerEngine {
                 })
             }
             AiActionType::GenerateResponse => {
-                let prompt = rule.ai_action.prompt_template.clone().unwrap_or_else(|| "默认提示词".to_string());
+                let prompt = rule
+                    .ai_action
+                    .prompt_template
+                    .clone()
+                    .unwrap_or_else(|| "默认提示词".to_string());
                 serde_json::json!({
                     "status": "success",
                     "response": format!("AI 响应（模拟）: {}", prompt),
@@ -825,7 +841,9 @@ impl EventTriggerEngine {
     /// 注册事件订阅者
     pub fn register_subscriber(&self, subscriber: EventSubscriber) -> Result<String, String> {
         let subscriber_id = subscriber.subscriber_id.clone();
-        self.subscribers.lock().insert(subscriber_id.clone(), subscriber);
+        self.subscribers
+            .lock()
+            .insert(subscriber_id.clone(), subscriber);
         info!(subscriber_id = %subscriber_id, "Event subscriber registered");
         Ok(subscriber_id)
     }
@@ -1122,7 +1140,9 @@ mod tests {
         let engine = create_test_engine();
         let order_rules = engine.list_rules(Some("order"), false);
         assert!(!order_rules.is_empty());
-        assert!(order_rules.iter().all(|r| r.tags.contains(&"order".to_string())));
+        assert!(order_rules
+            .iter()
+            .all(|r| r.tags.contains(&"order".to_string())));
     }
 
     #[test]
@@ -1167,8 +1187,12 @@ mod tests {
     fn test_process_queue() {
         let engine = create_test_engine();
 
-        engine.publish_event(create_test_event("order.created", EventPriority::High)).unwrap();
-        engine.publish_event(create_test_event("system.alert", EventPriority::Critical)).unwrap();
+        engine
+            .publish_event(create_test_event("order.created", EventPriority::High))
+            .unwrap();
+        engine
+            .publish_event(create_test_event("system.alert", EventPriority::Critical))
+            .unwrap();
 
         let processed = engine.process_queue(10);
         assert_eq!(processed, 2);
@@ -1209,7 +1233,9 @@ mod tests {
         };
 
         engine.register_subscriber(subscriber).unwrap();
-        engine.process_event(create_test_event("order.created", EventPriority::High)).unwrap();
+        engine
+            .process_event(create_test_event("order.created", EventPriority::High))
+            .unwrap();
 
         let subscriber = engine.get_subscriber("sub1").unwrap();
         assert_eq!(subscriber.received_count, 1);
@@ -1219,8 +1245,12 @@ mod tests {
     #[test]
     fn test_list_processing_records() {
         let engine = create_test_engine();
-        engine.process_event(create_test_event("order.created", EventPriority::High)).unwrap();
-        engine.process_event(create_test_event("system.alert", EventPriority::Critical)).unwrap();
+        engine
+            .process_event(create_test_event("order.created", EventPriority::High))
+            .unwrap();
+        engine
+            .process_event(create_test_event("system.alert", EventPriority::Critical))
+            .unwrap();
 
         let records = engine.list_processing_records(None, None, None);
         assert_eq!(records.len(), 2);
@@ -1229,8 +1259,12 @@ mod tests {
     #[test]
     fn test_list_processing_records_by_type() {
         let engine = create_test_engine();
-        engine.process_event(create_test_event("order.created", EventPriority::High)).unwrap();
-        engine.process_event(create_test_event("system.alert", EventPriority::Critical)).unwrap();
+        engine
+            .process_event(create_test_event("order.created", EventPriority::High))
+            .unwrap();
+        engine
+            .process_event(create_test_event("system.alert", EventPriority::Critical))
+            .unwrap();
 
         let order_records = engine.list_processing_records(Some("order.created"), None, None);
         assert_eq!(order_records.len(), 1);
@@ -1239,8 +1273,12 @@ mod tests {
     #[test]
     fn test_get_stats() {
         let engine = create_test_engine();
-        engine.process_event(create_test_event("order.created", EventPriority::High)).unwrap();
-        engine.process_event(create_test_event("unknown.event", EventPriority::Low)).unwrap();
+        engine
+            .process_event(create_test_event("order.created", EventPriority::High))
+            .unwrap();
+        engine
+            .process_event(create_test_event("unknown.event", EventPriority::Low))
+            .unwrap();
 
         let stats = engine.get_stats();
         assert!(stats.total_events >= 2);

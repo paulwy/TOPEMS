@@ -220,14 +220,8 @@ pub async fn register_cs_tools(server: &McpServer) {
             "cs.create_ticket",
             "创建CS工单。需要提供工单标题、客户ID、类型和优先级，返回新创建的工单ID和工单编号。",
             SchemaBuilder::object()
-                .property(
-                    "title",
-                    SchemaBuilder::string().description("工单标题"),
-                )
-                .property(
-                    "customer_id",
-                    SchemaBuilder::string().description("客户ID"),
-                )
+                .property("title", SchemaBuilder::string().description("工单标题"))
+                .property("customer_id", SchemaBuilder::string().description("客户ID"))
                 .property(
                     "ticket_type",
                     SchemaBuilder::string()
@@ -245,14 +239,8 @@ pub async fn register_cs_tools(server: &McpServer) {
                     "description",
                     SchemaBuilder::string().description("工单描述"),
                 )
-                .property(
-                    "requester",
-                    SchemaBuilder::string().description("请求人"),
-                )
-                .property(
-                    "assignee",
-                    SchemaBuilder::string().description("负责人"),
-                )
+                .property("requester", SchemaBuilder::string().description("请求人"))
+                .property("assignee", SchemaBuilder::string().description("负责人"))
                 .property(
                     "channel",
                     SchemaBuilder::string()
@@ -267,16 +255,29 @@ pub async fn register_cs_tools(server: &McpServer) {
                 let ticket_type = params["ticket_type"].as_str().unwrap_or("");
 
                 if title.is_empty() {
-                    return Err(ToolExecutionError::Validation("title is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "title is required".to_string(),
+                    ));
                 }
                 if customer_id.is_empty() {
-                    return Err(ToolExecutionError::Validation("customer_id is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "customer_id is required".to_string(),
+                    ));
                 }
                 if ticket_type.is_empty() {
-                    return Err(ToolExecutionError::Validation("ticket_type is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "ticket_type is required".to_string(),
+                    ));
                 }
 
-                let ticket_id = format!("TKT-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
+                let ticket_id = format!(
+                    "TKT-{}",
+                    uuid::Uuid::new_v4()
+                        .to_string()
+                        .split('-')
+                        .next()
+                        .unwrap_or("00000000")
+                );
                 let ticket_number = format!("CS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
 
                 let result = json!({
@@ -309,8 +310,22 @@ pub async fn register_cs_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 工单列表
-fn generate_mock_tickets(status_filter: &str, priority_filter: &str, type_filter: &str, assignee_filter: &str, customer_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let statuses = ["open", "in_progress", "pending", "resolved", "closed", "reopened"];
+fn generate_mock_tickets(
+    status_filter: &str,
+    priority_filter: &str,
+    type_filter: &str,
+    assignee_filter: &str,
+    customer_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let statuses = [
+        "open",
+        "in_progress",
+        "pending",
+        "resolved",
+        "closed",
+        "reopened",
+    ];
     let priorities = ["low", "medium", "high", "urgent"];
     let types = ["question", "incident", "problem", "request", "complaint"];
     let assignees = ["张三", "李四", "王五", "赵六", "钱七"];
@@ -403,10 +418,31 @@ fn generate_mock_ticket_detail(ticket_id: &str) -> Value {
 }
 
 /// 生成 Mock 客户列表
-fn generate_mock_customers(level_filter: &str, status_filter: &str, industry_filter: &str, keyword_filter: &str) -> Vec<Value> {
+fn generate_mock_customers(
+    level_filter: &str,
+    status_filter: &str,
+    industry_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
     let levels = ["vip", "gold", "silver", "bronze", "normal"];
-    let statuses = ["active", "active", "active", "inactive", "suspended", "churned"];
-    let industries = ["制造业", "零售业", "金融业", "教育", "医疗", "物流", "IT", "房地产"];
+    let statuses = [
+        "active",
+        "active",
+        "active",
+        "inactive",
+        "suspended",
+        "churned",
+    ];
+    let industries = [
+        "制造业",
+        "零售业",
+        "金融业",
+        "教育",
+        "医疗",
+        "物流",
+        "IT",
+        "房地产",
+    ];
 
     (0..100)
         .map(|i| {
@@ -513,7 +549,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("cs.list_customers", json!({"page": 1, "page_size": 10, "status": "active"}))
+            .call_tool(
+                "cs.list_customers",
+                json!({"page": 1, "page_size": 10, "status": "active"}),
+            )
             .await
             .unwrap();
 
@@ -533,16 +572,19 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("cs.create_ticket", json!({
-                "title": "系统登录异常",
-                "customer_id": "CUS-0001",
-                "ticket_type": "incident",
-                "priority": "high",
-                "description": "多名员工无法登录系统",
-                "requester": "张经理",
-                "assignee": "李四",
-                "channel": "phone"
-            }))
+            .call_tool(
+                "cs.create_ticket",
+                json!({
+                    "title": "系统登录异常",
+                    "customer_id": "CUS-0001",
+                    "ticket_type": "incident",
+                    "priority": "high",
+                    "description": "多名员工无法登录系统",
+                    "requester": "张经理",
+                    "assignee": "李四",
+                    "channel": "phone"
+                }),
+            )
             .await
             .unwrap();
 
@@ -567,20 +609,26 @@ mod tests {
         // 缺少 customer_id
         let result = server
             .tool_registry()
-            .call_tool("cs.create_ticket", json!({
-                "title": "测试工单",
-                "ticket_type": "question"
-            }))
+            .call_tool(
+                "cs.create_ticket",
+                json!({
+                    "title": "测试工单",
+                    "ticket_type": "question"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 ticket_type
         let result = server
             .tool_registry()
-            .call_tool("cs.create_ticket", json!({
-                "title": "测试工单",
-                "customer_id": "CUS-0001"
-            }))
+            .call_tool(
+                "cs.create_ticket",
+                json!({
+                    "title": "测试工单",
+                    "customer_id": "CUS-0001"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

@@ -5,6 +5,7 @@
 //! - `generate_answer`：基于检索结果生成答案
 //! - `ask_question`：完整 RAG 流程（检索 → 生成 → 记录历史）
 
+use topems_shared_boundary::only_own_schema_query;
 use std::sync::Arc;
 
 use sqlx::PgPool;
@@ -54,7 +55,7 @@ pub async fn retrieve_relevant_chunks(
     // <=>：余弦距离（0=完全相同，2=完全相反）
     // 相似度 = 1 - 距离
     let rows: Vec<(Uuid, Uuid, String, String, f64)> = sqlx::query_as(
-        r#"SELECT
+        only_own_schema_query!("ai", r#"SELECT
             c.id AS chunk_id,
             c.document_id AS document_id,
             d.title AS document_title,
@@ -67,7 +68,7 @@ pub async fn retrieve_relevant_chunks(
              AND c.embedding IS NOT NULL
              AND d.status = 'ready'
            ORDER BY c.embedding <=> $1::vector
-           LIMIT $4"#,
+           LIMIT $4"#, "plugin_ai"),
     )
     .bind(&vector_str)
     .bind(tenant_id)
@@ -212,10 +213,10 @@ pub async fn ask_question(
 
     // 6. 记录问答历史
     let history_row: Option<(Uuid,)> = sqlx::query_as(
-        r#"INSERT INTO core.knowledge_qa_history
+        only_own_schema_query!("ai", r#"INSERT INTO core.knowledge_qa_history
             (tenant_id, kb_id, question, answer, sources, user_id, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, NOW())
-           RETURNING id"#,
+           RETURNING id"#, "plugin_ai"),
     )
     .bind(tenant_id)
     .bind(kb_id)

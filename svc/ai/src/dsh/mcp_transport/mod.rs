@@ -482,13 +482,21 @@ impl TransportManager {
             .ok_or_else(|| format!("传输会话 {} 不存在", session_id))?;
 
         if session.status != TransportStatus::Connected {
-            return Err(format!("传输会话状态为 {}，无法发送消息", session.status.as_str()));
+            return Err(format!(
+                "传输会话状态为 {}，无法发送消息",
+                session.status.as_str()
+            ));
         }
 
         // 检查消息大小
-        let message_size = serde_json::to_string(&message).map(|s| s.len()).unwrap_or(0);
+        let message_size = serde_json::to_string(&message)
+            .map(|s| s.len())
+            .unwrap_or(0);
         if message_size > session.config.max_message_size {
-            return Err(format!("消息大小 {} 超过限制 {}", message_size, session.config.max_message_size));
+            return Err(format!(
+                "消息大小 {} 超过限制 {}",
+                message_size, session.config.max_message_size
+            ));
         }
 
         // 添加到发送队列（实际实现中会通过真实传输发送）
@@ -500,7 +508,9 @@ impl TransportManager {
 
         // 如果是请求，添加到待处理请求
         if message.message_type == MessageType::Request {
-            session.pending_requests.insert(message.message_id.clone(), Instant::now());
+            session
+                .pending_requests
+                .insert(message.message_id.clone(), Instant::now());
         }
 
         debug!(session_id = %session_id, message_id = %message.message_id, "Message sent");
@@ -534,7 +544,11 @@ impl TransportManager {
     }
 
     /// 模拟接收消息（用于测试和模拟）
-    pub fn simulate_receive(&self, session_id: &str, message: TransportMessage) -> Result<(), String> {
+    pub fn simulate_receive(
+        &self,
+        session_id: &str,
+        message: TransportMessage,
+    ) -> Result<(), String> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
@@ -587,10 +601,14 @@ impl TransportManager {
         preferred_transports: Option<Vec<TransportType>>,
     ) -> TransportNegotiationResult {
         let mut negotiation_log = Vec::new();
-        let transports = preferred_transports.unwrap_or_else(|| self.config.preferred_transports.clone());
+        let transports =
+            preferred_transports.unwrap_or_else(|| self.config.preferred_transports.clone());
 
         negotiation_log.push(format!("开始传输协商，端点: {}", endpoint));
-        negotiation_log.push(format!("优先传输类型: {:?}", transports.iter().map(|t| t.as_str()).collect::<Vec<_>>()));
+        negotiation_log.push(format!(
+            "优先传输类型: {:?}",
+            transports.iter().map(|t| t.as_str()).collect::<Vec<_>>()
+        ));
 
         // 模拟协商过程（实际实现中会探测端点支持的传输类型）
         for transport in &transports {
@@ -671,7 +689,10 @@ impl TransportManager {
     pub fn get_manager_stats(&self) -> TransportManagerStats {
         let sessions = self.sessions.lock();
 
-        let active = sessions.values().filter(|s| s.status == TransportStatus::Connected).count() as u64;
+        let active = sessions
+            .values()
+            .filter(|s| s.status == TransportStatus::Connected)
+            .count() as u64;
         let total_sent: u64 = sessions.values().map(|s| s.stats.total_sent).sum();
         let total_received: u64 = sessions.values().map(|s| s.stats.total_received).sum();
         let successful: u64 = sessions.values().map(|s| s.stats.successful_requests).sum();
@@ -809,7 +830,9 @@ mod tests {
     #[test]
     fn test_connect_session() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
 
         let result = manager.connect(&session_id);
         assert!(result.is_ok());
@@ -821,7 +844,9 @@ mod tests {
     #[test]
     fn test_disconnect_session() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         let result = manager.disconnect(&session_id);
@@ -834,7 +859,9 @@ mod tests {
     #[test]
     fn test_send_message() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         let message = create_test_message(MessageType::Request);
@@ -845,7 +872,9 @@ mod tests {
     #[test]
     fn test_send_message_not_connected() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
 
         let message = create_test_message(MessageType::Request);
         let result = manager.send_message(&session_id, message);
@@ -855,7 +884,9 @@ mod tests {
     #[test]
     fn test_receive_message() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         // 模拟接收消息
@@ -870,7 +901,9 @@ mod tests {
     #[test]
     fn test_get_stats() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         let message = create_test_message(MessageType::Request);
@@ -884,8 +917,12 @@ mod tests {
     #[test]
     fn test_list_sessions() {
         let manager = create_test_manager();
-        manager.create_session(create_test_config(TransportType::Http)).unwrap();
-        manager.create_session(create_test_config(TransportType::Sse)).unwrap();
+        manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
+        manager
+            .create_session(create_test_config(TransportType::Sse))
+            .unwrap();
 
         let sessions = manager.list_sessions(None);
         assert_eq!(sessions.len(), 2);
@@ -894,7 +931,9 @@ mod tests {
     #[test]
     fn test_delete_session() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
 
         let result = manager.delete_session(&session_id);
         assert!(result.is_ok());
@@ -927,7 +966,9 @@ mod tests {
     #[test]
     fn test_auto_downgrade() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Sse)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Sse))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         let result = manager.auto_downgrade(&session_id);
@@ -939,7 +980,9 @@ mod tests {
     #[test]
     fn test_get_manager_stats() {
         let manager = create_test_manager();
-        let session_id = manager.create_session(create_test_config(TransportType::Http)).unwrap();
+        let session_id = manager
+            .create_session(create_test_config(TransportType::Http))
+            .unwrap();
         manager.connect(&session_id).unwrap();
 
         let message = create_test_message(MessageType::Request);
@@ -962,7 +1005,9 @@ mod tests {
             TransportType::Stdio,
             TransportType::InMemory,
         ] {
-            let session_id = manager.create_session(create_test_config(*transport_type)).unwrap();
+            let session_id = manager
+                .create_session(create_test_config(*transport_type))
+                .unwrap();
             manager.connect(&session_id).unwrap();
 
             let stats = manager.get_stats(&session_id).unwrap();

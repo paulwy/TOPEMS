@@ -13,7 +13,7 @@ use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, RwLock};
-use tracing::{debug, info, warn, error};
+use tracing::{debug, error, info, warn};
 
 use super::context::{AgentContext, AgentMessage, ContextManager, MessageRole};
 use super::performance::AgentPerformanceMonitor;
@@ -47,7 +47,9 @@ impl Default for AgentOrchestratorConfig {
         Self {
             max_iterations: 10,
             max_context_tokens: 8192,
-            system_prompt: "你是 TOPEMS 智能助手，帮助用户完成各种任务。你可以使用工具来获取信息和执行操作。".to_string(),
+            system_prompt:
+                "你是 TOPEMS 智能助手，帮助用户完成各种任务。你可以使用工具来获取信息和执行操作。"
+                    .to_string(),
             enable_streaming: true,
             enable_tools: true,
             tool_timeout_seconds: 30,
@@ -172,6 +174,17 @@ impl AgentOrchestrator {
         orchestrator
     }
 
+    /// 使用「路由 + 故障降级」的 Provider 组合创建 Agent 编排器（3.1b/3.1c）
+    ///
+    /// Provider 由环境变量配置（`ProviderFactory::build_resilient_provider`）：
+    /// - 简单任务 → 本地 Provider（DSH_SIMPLE_PROVIDER，默认 ollama）
+    /// - 复杂任务 → 云端 Provider（DSH_COMPLEX_PROVIDER，默认 deepseek）
+    /// - 各分支自动故障降级（DSH_FALLBACK_PROVIDER，默认 mock）
+    pub fn with_resilient_provider(tool_registry: ToolRegistry) -> Self {
+        let provider = crate::dsh::provider::ProviderFactory::build_resilient_provider();
+        Self::with_llm_provider(tool_registry, provider)
+    }
+
     /// 设置 LLM Provider
     pub fn set_llm_provider(&mut self, llm_provider: Arc<dyn LlmProvider>) {
         self.llm_provider = Some(llm_provider);
@@ -274,7 +287,10 @@ impl AgentOrchestrator {
         let mut error_retries = 0;
 
         // 获取或创建上下文
-        let mut context = self.context_manager.get_or_create_context(&session_id).await;
+        let mut context = self
+            .context_manager
+            .get_or_create_context(&session_id)
+            .await;
 
         // 添加用户消息
         context.add_message(AgentMessage::user(&request.query));
@@ -307,9 +323,7 @@ impl AgentOrchestrator {
             }
 
             // 步骤 1：思考（决定下一步行动）
-            let think_step = self
-                .think_step(&context, iteration, &available_tools)
-                .await;
+            let think_step = self.think_step(&context, iteration, &available_tools).await;
             steps.push(think_step.clone());
 
             // 如果思考步骤表明不需要工具调用，生成最终答案
@@ -325,7 +339,10 @@ impl AgentOrchestrator {
                 }
 
                 // 检查缓存
-                let tool_args = think_step.tool_arguments.clone().unwrap_or(serde_json::Value::Null);
+                let tool_args = think_step
+                    .tool_arguments
+                    .clone()
+                    .unwrap_or(serde_json::Value::Null);
                 let mut cached_value: Option<serde_json::Value> = None;
                 let mut cache_hit = false;
                 if let Some(cache) = &self.cache_manager {
@@ -636,9 +653,11 @@ impl AgentOrchestrator {
 
         // 决策逻辑：如果有 LLM Provider，使用 LLM 进行决策；否则使用简单的规则匹配
         let (tool_name, tool_arguments, description) = if let Some(llm) = &self.llm_provider {
-            self.think_with_llm(llm, context, iteration, &tool_names).await
+            self.think_with_llm(llm, context, iteration, &tool_names)
+                .await
         } else {
-            self.think_with_rules(&last_query, iteration, &tool_names).await
+            self.think_with_rules(&last_query, iteration, &tool_names)
+                .await
         };
 
         let step_type = if tool_name.is_some() {
@@ -767,7 +786,11 @@ impl AgentOrchestrator {
                     }
                     Err(e) => {
                         warn!(error = %e, "Failed to parse LLM decision JSON");
-                        (None, None, format!("LLM 返回格式解析失败，使用默认决策: {}", content))
+                        (
+                            None,
+                            None,
+                            format!("LLM 返回格式解析失败，使用默认决策: {}", content),
+                        )
                     }
                 }
             }
@@ -779,7 +802,8 @@ impl AgentOrchestrator {
                     .last()
                     .map(|m| m.content.clone())
                     .unwrap_or_default();
-                self.think_with_rules(&last_query, iteration, tool_names).await
+                self.think_with_rules(&last_query, iteration, tool_names)
+                    .await
             }
         }
     }
@@ -829,11 +853,7 @@ impl AgentOrchestrator {
 
         let args = arguments.cloned().unwrap_or(serde_json::json!({}));
 
-        info!(
-            tool = tool_name,
-            iteration = iteration,
-            "Executing tool"
-        );
+        info!(tool = tool_name, iteration = iteration, "Executing tool");
 
         match self.tool_registry.call_tool(tool_name, args).await {
             Ok(result) => {
@@ -855,7 +875,9 @@ impl AgentOrchestrator {
                     ToolExecutionError::NotFound(msg) => format!("Tool not found: {}", msg),
                     ToolExecutionError::Validation(msg) => format!("Validation error: {}", msg),
                     ToolExecutionError::Execution(msg) => format!("Execution error: {}", msg),
-                    ToolExecutionError::PermissionDenied(msg) => format!("Permission denied: {}", msg),
+                    ToolExecutionError::PermissionDenied(msg) => {
+                        format!("Permission denied: {}", msg)
+                    }
                 };
 
                 warn!(

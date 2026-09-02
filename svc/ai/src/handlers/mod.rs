@@ -7,4 +7,5 @@ pub mod dsh_ai_enhanced_handlers;
 pub mod dsh_performance_handlers;
 pub mod governance_dashboard_handlers;
 pub mod health;
+pub mod smart_forms_handlers;
 pub mod workflow_handlers;

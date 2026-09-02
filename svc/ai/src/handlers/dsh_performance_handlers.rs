@@ -10,9 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::dsh::agent::performance::{
-    ExecutionMetrics, ToolMetrics,
-};
+use crate::dsh::agent::performance::{ExecutionMetrics, ToolMetrics};
 use crate::shared::AppState;
 
 // ============================================================================
@@ -66,9 +64,7 @@ impl<T: Serialize> ApiResponse<T> {
 /// 获取性能指标
 ///
 /// GET /dsh/agent/performance/metrics
-pub async fn get_performance_metrics(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn get_performance_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("获取 DSH Agent 性能指标");
 
     // 检查性能监控器是否可用
@@ -96,19 +92,13 @@ pub async fn get_performance_metrics(
         history_size,
     };
 
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(response)),
-    )
-        .into_response()
+    (StatusCode::OK, Json(ApiResponse::success(response))).into_response()
 }
 
 /// 导出 Prometheus 格式指标
 ///
 /// GET /dsh/agent/performance/prometheus
-pub async fn export_prometheus_metrics(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn export_prometheus_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("导出 DSH Agent Prometheus 指标");
 
     // 检查性能监控器是否可用
@@ -140,9 +130,7 @@ pub async fn export_prometheus_metrics(
 /// 重置性能指标
 ///
 /// POST /dsh/agent/performance/reset
-pub async fn reset_performance_metrics(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn reset_performance_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("重置 DSH Agent 性能指标");
 
     // 检查性能监控器是否可用
@@ -160,11 +148,7 @@ pub async fn reset_performance_metrics(
     // 重置指标
     monitor.reset();
 
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(())),
-    )
-        .into_response()
+    (StatusCode::OK, Json(ApiResponse::success(()))).into_response()
 }
 
 /// 获取工具性能指标
@@ -190,11 +174,7 @@ pub async fn get_tool_performance(
 
     // 获取工具指标
     match monitor.get_tool_metric(&tool_name) {
-        Some(metrics) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(metrics)),
-        )
-            .into_response(),
+        Some(metrics) => (StatusCode::OK, Json(ApiResponse::success(metrics))).into_response(),
         None => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::<ToolMetrics>::error("工具不存在或无指标")),

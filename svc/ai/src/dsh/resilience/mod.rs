@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, warn, error};
+use tracing::{debug, error, info, warn};
 
 // ============================================================================
 // 类型定义
@@ -298,7 +298,9 @@ impl CircuitBreaker {
             CircuitBreakerState::Open => {
                 // 检查是否超时，进入半开状态
                 let state_change = *self.state_change_time.lock();
-                if now.duration_since(state_change) >= Duration::from_millis(self.config.open_duration_ms) {
+                if now.duration_since(state_change)
+                    >= Duration::from_millis(self.config.open_duration_ms)
+                {
                     *state = CircuitBreakerState::HalfOpen;
                     *self.state_change_time.lock() = now;
                     *self.half_open_count.lock() = 0;
@@ -334,18 +336,15 @@ impl CircuitBreaker {
         stats.total_requests += 1;
         stats.success_count += 1;
 
-        match *state {
-            CircuitBreakerState::HalfOpen => {
-                // 半开状态成功，检查是否可以关闭
-                let count = *self.half_open_count.lock();
-                if count >= self.config.half_open_max_requests {
-                    *state = CircuitBreakerState::Closed;
-                    *self.state_change_time.lock() = Instant::now();
-                    window.clear();
-                    info!(circuit_breaker = %self.name, "Circuit breaker transitioned to closed");
-                }
+        if *state == CircuitBreakerState::HalfOpen {
+            // 半开状态成功，检查是否可以关闭
+            let count = *self.half_open_count.lock();
+            if count >= self.config.half_open_max_requests {
+                *state = CircuitBreakerState::Closed;
+                *self.state_change_time.lock() = Instant::now();
+                window.clear();
+                info!(circuit_breaker = %self.name, "Circuit breaker transitioned to closed");
             }
-            _ => {}
         }
 
         stats.state = *state;
@@ -368,13 +367,19 @@ impl CircuitBreaker {
         // 计算失败率
         let total = window.len();
         let failures = window.iter().filter(|&&r| !r).count();
-        let failure_rate = if total > 0 { failures as f64 / total as f64 } else { 0.0 };
+        let failure_rate = if total > 0 {
+            failures as f64 / total as f64
+        } else {
+            0.0
+        };
         stats.current_failure_rate = failure_rate;
 
         match *state {
             CircuitBreakerState::Closed => {
                 // 失败率超过阈值且请求数足够，打开熔断器
-                if total >= self.config.min_request_count && failure_rate >= self.config.failure_rate_threshold {
+                if total >= self.config.min_request_count
+                    && failure_rate >= self.config.failure_rate_threshold
+                {
                     *state = CircuitBreakerState::Open;
                     *self.state_change_time.lock() = Instant::now();
                     stats.open_count += 1;
@@ -449,7 +454,10 @@ impl RetryDelayCalculator {
 
     /// 判断错误是否可重试
     pub fn is_retryable(config: &RetryConfig, error_type: &str) -> bool {
-        config.retryable_errors.iter().any(|e| error_type.contains(e))
+        config
+            .retryable_errors
+            .iter()
+            .any(|e| error_type.contains(e))
     }
 }
 
@@ -815,8 +823,14 @@ mod tests {
     fn test_is_retryable() {
         let config = RetryConfig::default();
         assert!(RetryDelayCalculator::is_retryable(&config, "timeout_error"));
-        assert!(RetryDelayCalculator::is_retryable(&config, "connection_error"));
-        assert!(!RetryDelayCalculator::is_retryable(&config, "validation_error"));
+        assert!(RetryDelayCalculator::is_retryable(
+            &config,
+            "connection_error"
+        ));
+        assert!(!RetryDelayCalculator::is_retryable(
+            &config,
+            "validation_error"
+        ));
     }
 
     #[test]
@@ -851,9 +865,7 @@ mod tests {
     async fn test_execute_with_resilience_success() {
         let manager = ResilienceManager::with_defaults();
         let result: CallResult<String> = manager
-            .execute_with_resilience("test", None, || async {
-                Ok("success".to_string())
-            })
+            .execute_with_resilience("test", None, || async { Ok("success".to_string()) })
             .await;
 
         assert!(result.success);

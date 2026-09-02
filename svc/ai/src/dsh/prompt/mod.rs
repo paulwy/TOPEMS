@@ -290,7 +290,9 @@ impl PromptEngine {
             versions.push(TemplateVersion {
                 version: new_version.clone(),
                 content: content.unwrap_or(&template.content).to_string(),
-                variables: variables.clone().unwrap_or_else(|| template.variables.clone()),
+                variables: variables
+                    .clone()
+                    .unwrap_or_else(|| template.variables.clone()),
                 changelog: changelog.to_string(),
                 created_at: chrono::Utc::now().to_rfc3339(),
                 created_by: updated_by.to_string(),
@@ -490,9 +492,15 @@ impl PromptEngine {
         };
 
         let (template_id, _version) = if group == "A" {
-            (config.template_a_id.clone(), config.template_a_version.clone())
+            (
+                config.template_a_id.clone(),
+                config.template_a_version.clone(),
+            )
         } else {
-            (config.template_b_id.clone(), config.template_b_version.clone())
+            (
+                config.template_b_id.clone(),
+                config.template_b_version.clone(),
+            )
         };
 
         let result = self.render(&template_id, variables)?;

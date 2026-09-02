@@ -6,6 +6,7 @@ use crate::services::db::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -246,28 +247,32 @@ impl AnalysisService {
         tenant_id: Uuid,
     ) -> Result<Vec<AnalysisResult>, String> {
         let query = if let Some(type_) = analysis_type {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "ai",
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
-                FROM plugin_ai.analysis_results
+                FROM ai.analysis_results
                 WHERE analysis_type = $1 AND tenant_id = $3
                 ORDER BY created_at DESC
                 LIMIT $2
                 "#,
-            )
+                "plugin_ai"
+            ))
             .bind(type_)
             .bind(limit as i64)
             .bind(tenant_id)
         } else {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "ai",
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
-                FROM plugin_ai.analysis_results
+                FROM ai.analysis_results
                 WHERE tenant_id = $2
                 ORDER BY created_at DESC
                 LIMIT $1
                 "#,
-            )
+                "plugin_ai"
+            ))
             .bind(limit as i64)
             .bind(tenant_id)
         };
@@ -377,10 +382,10 @@ impl AnalysisService {
         tenant_id: Uuid,
     ) -> Result<(), String> {
         sqlx::query(
-            r#"
-            INSERT INTO plugin_ai.analysis_results (tenant_id, analysis_type, input_text, result, confidence)
+            only_own_schema_query!("ai", r#"
+            INSERT INTO ai.analysis_results (tenant_id, analysis_type, input_text, result, confidence)
             VALUES ($1, $2, $3, $4, $5)
-            "#,
+            "#, "plugin_ai"),
         )
         .bind(tenant_id)
         .bind(analysis_type)

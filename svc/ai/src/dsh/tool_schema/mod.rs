@@ -430,7 +430,9 @@ impl ToolSchemaAdapter {
         ];
 
         for category in default_categories {
-            self.categories.lock().insert(category.name.clone(), category);
+            self.categories
+                .lock()
+                .insert(category.name.clone(), category);
         }
 
         info!("Default tool categories initialized");
@@ -451,10 +453,8 @@ impl ToolSchemaAdapter {
         if let Some(existing_tool) = &existing {
             // 兼容性检查
             if self.config.enable_compatibility_check {
-                let compatibility = self.check_schema_compatibility(
-                    &existing_tool.input_schema,
-                    &tool.input_schema,
-                );
+                let compatibility = self
+                    .check_schema_compatibility(&existing_tool.input_schema, &tool.input_schema);
 
                 if !compatibility.compatible && !self.config.allow_breaking_changes {
                     return Err(format!(
@@ -607,7 +607,9 @@ impl ToolSchemaAdapter {
 
     /// 添加工具分组
     pub fn add_category(&self, category: ToolCategory) {
-        self.categories.lock().insert(category.name.clone(), category);
+        self.categories
+            .lock()
+            .insert(category.name.clone(), category);
     }
 
     /// 获取工具分组
@@ -721,7 +723,7 @@ impl ToolSchemaAdapter {
             }
 
             // 检查删除属性
-            for (key, _) in old_props {
+            for key in old_props.keys() {
                 if !new_props.contains_key(key) {
                     let was_required = old_required.contains(key);
                     let change = SchemaChange {
@@ -794,7 +796,10 @@ impl ToolSchemaAdapter {
 
         if let Some(required) = &schema.required {
             json["required"] = serde_json::Value::Array(
-                required.iter().map(|s| serde_json::Value::String(s.clone())).collect()
+                required
+                    .iter()
+                    .map(|s| serde_json::Value::String(s.clone()))
+                    .collect(),
             );
         }
 
@@ -815,7 +820,10 @@ impl ToolSchemaAdapter {
         let categories = self.categories.lock();
         let history = self.version_history.lock();
 
-        let active_tools = tools.values().filter(|t| t.status == ToolStatus::Active).count() as u64;
+        let active_tools = tools
+            .values()
+            .filter(|t| t.status == ToolStatus::Active)
+            .count() as u64;
         let deprecated_tools = tools
             .values()
             .filter(|t| t.status == ToolStatus::Deprecated)
@@ -930,7 +938,10 @@ mod tests {
     #[test]
     fn test_compatibility_level_as_str() {
         assert_eq!(CompatibilityLevel::None.as_str(), "none");
-        assert_eq!(CompatibilityLevel::BackwardCompatible.as_str(), "backward_compatible");
+        assert_eq!(
+            CompatibilityLevel::BackwardCompatible.as_str(),
+            "backward_compatible"
+        );
         assert_eq!(CompatibilityLevel::Incompatible.as_str(), "incompatible");
     }
 
@@ -977,7 +988,9 @@ mod tests {
     #[test]
     fn test_get_tool() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let tool = adapter.get_tool("test_tool");
         assert!(tool.is_some());
@@ -987,8 +1000,12 @@ mod tests {
     #[test]
     fn test_list_tools() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("tool1", "data")).unwrap();
-        adapter.register_tool(create_test_tool("tool2", "ai")).unwrap();
+        adapter
+            .register_tool(create_test_tool("tool1", "data"))
+            .unwrap();
+        adapter
+            .register_tool(create_test_tool("tool2", "ai"))
+            .unwrap();
 
         let tools = adapter.list_tools(None, None, false);
         assert_eq!(tools.len(), 2);
@@ -997,8 +1014,12 @@ mod tests {
     #[test]
     fn test_list_tools_by_category() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("tool1", "data")).unwrap();
-        adapter.register_tool(create_test_tool("tool2", "ai")).unwrap();
+        adapter
+            .register_tool(create_test_tool("tool1", "data"))
+            .unwrap();
+        adapter
+            .register_tool(create_test_tool("tool2", "ai"))
+            .unwrap();
 
         let data_tools = adapter.list_tools(Some("data"), None, false);
         assert_eq!(data_tools.len(), 1);
@@ -1008,7 +1029,9 @@ mod tests {
     #[test]
     fn test_delete_tool() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let result = adapter.delete_tool("test_tool");
         assert!(result.is_ok());
@@ -1018,7 +1041,9 @@ mod tests {
     #[test]
     fn test_deprecate_tool() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let result = adapter.deprecate_tool("test_tool", Some("new_tool"));
         assert!(result.is_ok());
@@ -1032,7 +1057,9 @@ mod tests {
     #[test]
     fn test_version_history() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let history = adapter.get_version_history("test_tool");
         assert!(history.is_some());
@@ -1042,7 +1069,9 @@ mod tests {
     #[test]
     fn test_get_tool_version() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let tool = adapter.get_tool_version("test_tool", "1.0");
         assert!(tool.is_some());
@@ -1160,7 +1189,9 @@ mod tests {
     #[test]
     fn test_generate_mcp_tools_list() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("test_tool", "data")).unwrap();
+        adapter
+            .register_tool(create_test_tool("test_tool", "data"))
+            .unwrap();
 
         let mcp_tools = adapter.generate_mcp_tools_list(false);
         assert_eq!(mcp_tools.len(), 1);
@@ -1187,8 +1218,12 @@ mod tests {
     #[test]
     fn test_get_stats() {
         let adapter = create_test_adapter();
-        adapter.register_tool(create_test_tool("tool1", "data")).unwrap();
-        adapter.register_tool(create_test_tool("tool2", "ai")).unwrap();
+        adapter
+            .register_tool(create_test_tool("tool1", "data"))
+            .unwrap();
+        adapter
+            .register_tool(create_test_tool("tool2", "ai"))
+            .unwrap();
 
         let stats = adapter.get_stats();
         assert!(stats.total_tools >= 2);

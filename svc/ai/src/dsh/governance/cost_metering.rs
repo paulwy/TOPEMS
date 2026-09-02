@@ -70,14 +70,8 @@ pub fn default_model_pricing() -> HashMap<String, ModelPricing> {
     );
 
     // Ollama 本地模型（免费）
-    pricing.insert(
-        "llama3".to_string(),
-        ModelPricing::new("llama3", 0.0, 0.0),
-    );
-    pricing.insert(
-        "qwen2".to_string(),
-        ModelPricing::new("qwen2", 0.0, 0.0),
-    );
+    pricing.insert("llama3".to_string(), ModelPricing::new("llama3", 0.0, 0.0));
+    pricing.insert("qwen2".to_string(), ModelPricing::new("qwen2", 0.0, 0.0));
 
     // Mock 模型（测试用）
     pricing.insert(
@@ -306,6 +300,15 @@ impl BudgetCheckResult {
     }
 }
 
+/// 全局共享的成本计量器（3.2c）
+///
+/// 供 AI 调用写入端（RecordingProvider）与治理仪表盘读取端共享同一实例，
+/// 实现「真实 AI 调用日志 → 治理统计」闭环。
+pub fn global_cost_meter() -> Arc<CostMeter> {
+    static METER: std::sync::OnceLock<Arc<CostMeter>> = std::sync::OnceLock::new();
+    METER.get_or_init(|| Arc::new(CostMeter::new())).clone()
+}
+
 /// 成本计量器
 ///
 /// 提供 AI 调用的成本计量、统计和限制功能。
@@ -421,6 +424,15 @@ impl CostMeter {
         user_budgets.get(user_id).cloned()
     }
 
+    /// 获取全局统计（同步版，供治理仪表盘等同步链路使用）
+    ///
+    /// 使用 `try_read` 立即获取快照；锁被占用时返回 None（调用方降级为模拟数据），
+    /// 避免在同步上下文中阻塞。
+    pub fn get_global_statistics_blocking(&self) -> Option<CostStatistics> {
+        let guard = self.call_records.try_read().ok()?;
+        Some(self.calculate_statistics(&guard))
+    }
+
     /// 获取成本统计（全局）
     pub async fn get_global_statistics(&self) -> CostStatistics {
         let call_records = self.call_records.read().await;
@@ -430,24 +442,33 @@ impl CostMeter {
     /// 获取用户成本统计
     pub async fn get_user_statistics(&self, user_id: &str) -> CostStatistics {
         let call_records = self.call_records.read().await;
-        let user_records: Vec<AiCallRecord> =
-            call_records.iter().filter(|r| r.user_id == user_id).cloned().collect();
+        let user_records: Vec<AiCallRecord> = call_records
+            .iter()
+            .filter(|r| r.user_id == user_id)
+            .cloned()
+            .collect();
         self.calculate_statistics(&user_records)
     }
 
     /// 获取租户成本统计
     pub async fn get_tenant_statistics(&self, tenant_id: &str) -> CostStatistics {
         let call_records = self.call_records.read().await;
-        let tenant_records: Vec<AiCallRecord> =
-            call_records.iter().filter(|r| r.tenant_id == tenant_id).cloned().collect();
+        let tenant_records: Vec<AiCallRecord> = call_records
+            .iter()
+            .filter(|r| r.tenant_id == tenant_id)
+            .cloned()
+            .collect();
         self.calculate_statistics(&tenant_records)
     }
 
     /// 获取模型成本统计
     pub async fn get_model_statistics(&self, model_name: &str) -> CostStatistics {
         let call_records = self.call_records.read().await;
-        let model_records: Vec<AiCallRecord> =
-            call_records.iter().filter(|r| r.model_name == model_name).cloned().collect();
+        let model_records: Vec<AiCallRecord> = call_records
+            .iter()
+            .filter(|r| r.model_name == model_name)
+            .cloned()
+            .collect();
         self.calculate_statistics(&model_records)
     }
 

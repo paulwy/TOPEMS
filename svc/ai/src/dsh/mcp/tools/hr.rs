@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 HR 业务工具到 MCP Server
 ///
@@ -73,6 +74,26 @@ pub async fn register_hr_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let keyword = params["keyword"].as_str().unwrap_or("");
 
+                // 真实调用 HRM API（GET /api/hrm/employees，降级 mock）
+                let mut path = format!("/api/hrm/employees?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
+                let base = service_base_url("HRM_SERVICE_URL", 8020);
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let items = data.get("items").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    let result = json!({
+                        "total": total,
+                        "page": page,
+                        "page_size": page_size,
+                        "employees": items,
+                    });
+                    return Ok(McpToolResult {
+                        content: vec![McpContent::text(result.to_string())],
+                        is_error: None,
+                    });
+                }
+
                 let employees = generate_mock_employees(department, status, keyword);
                 let total = employees.len();
                 let start = ((page - 1) * page_size) as usize;
@@ -113,6 +134,17 @@ pub async fn register_hr_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("employee_id is required".to_string()));
                 }
 
+                // 真实调用 HRM API（GET /api/hrm/employees/{id}，降级 mock）
+                let base = service_base_url("HRM_SERVICE_URL", 8020);
+                let path = format!("/api/hrm/employees/{}", url_encode(employee_id));
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let result = json!({ "employee": data });
+                    return Ok(McpToolResult {
+                        content: vec![McpContent::text(result.to_string())],
+                        is_error: None,
+                    });
+                }
+
                 let employee = generate_mock_employee_detail(employee_id);
 
                 Ok(McpToolResult {
@@ -129,30 +161,15 @@ pub async fn register_hr_tools(server: &McpServer) {
             "hr.create_employee",
             "创建新员工。需要提供姓名、工号、部门、职位等基本信息，返回新创建的员工ID和工号。",
             SchemaBuilder::object()
-                .property(
-                    "name",
-                    SchemaBuilder::string().description("员工姓名"),
-                )
+                .property("name", SchemaBuilder::string().description("员工姓名"))
                 .property(
                     "employee_no",
                     SchemaBuilder::string().description("工号（可选，不填则自动生成）"),
                 )
-                .property(
-                    "department",
-                    SchemaBuilder::string().description("部门"),
-                )
-                .property(
-                    "position",
-                    SchemaBuilder::string().description("职位"),
-                )
-                .property(
-                    "email",
-                    SchemaBuilder::string().description("邮箱"),
-                )
-                .property(
-                    "phone",
-                    SchemaBuilder::string().description("手机号"),
-                )
+                .property("department", SchemaBuilder::string().description("部门"))
+                .property("position", SchemaBuilder::string().description("职位"))
+                .property("email", SchemaBuilder::string().description("邮箱"))
+                .property("phone", SchemaBuilder::string().description("手机号"))
                 .property(
                     "hire_date",
                     SchemaBuilder::string().description("入职日期（YYYY-MM-DD）"),
@@ -165,18 +182,51 @@ pub async fn register_hr_tools(server: &McpServer) {
                 let position = params["position"].as_str().unwrap_or("");
 
                 if name.is_empty() {
-                    return Err(ToolExecutionError::Validation("name is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "name is required".to_string(),
+                    ));
                 }
                 if department.is_empty() {
-                    return Err(ToolExecutionError::Validation("department is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "department is required".to_string(),
+                    ));
                 }
                 if position.is_empty() {
-                    return Err(ToolExecutionError::Validation("position is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "position is required".to_string(),
+                    ));
                 }
 
-                let employee_id = format!("EMP-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
+                // 真实调用 HRM API（POST /api/hrm/employees，降级 mock）
+                let base = service_base_url("HRM_SERVICE_URL", 8020);
+                let body = json!({
+                    "name": name,
+                    "employee_number": params["employee_no"].as_str().unwrap_or(""),
+                    "email": params["email"].as_str().unwrap_or(""),
+                    "phone": params["phone"].as_str().unwrap_or(""),
+                    "hire_date": params["hire_date"].as_str().unwrap_or(""),
+                });
+                if let Some(data) = http_call(&base, "POST", "/api/hrm/employees", Some(body)) {
+                    let result =
+                        json!({ "employee": data, "message": "员工创建成功，已发送入职通知" });
+                    return Ok(McpToolResult {
+                        content: vec![McpContent::text(result.to_string())],
+                        is_error: None,
+                    });
+                }
+
+                let employee_id = format!(
+                    "EMP-{}",
+                    uuid::Uuid::new_v4()
+                        .to_string()
+                        .split('-')
+                        .next()
+                        .unwrap_or("00000000")
+                );
                 let default_employee_no = format!("EMP{:06}", 10001);
-                let employee_no = params["employee_no"].as_str().unwrap_or(&default_employee_no);
+                let employee_no = params["employee_no"]
+                    .as_str()
+                    .unwrap_or(&default_employee_no);
 
                 let default_hire_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
                 let hire_date = params["hire_date"].as_str().unwrap_or(&default_hire_date);
@@ -269,8 +319,19 @@ pub async fn register_hr_tools(server: &McpServer) {
                     updates["salary"] = json!(salary);
                 }
 
-                if updates.as_object().map_or(true, |o| o.is_empty()) {
+                if updates.as_object().is_none_or(|o| o.is_empty()) {
                     return Err(ToolExecutionError::Validation("At least one field to update is required".to_string()));
+                }
+
+                // 真实调用 HRM API（PUT /api/hrm/employees/{id}，降级 mock）
+                let base = service_base_url("HRM_SERVICE_URL", 8020);
+                let path = format!("/api/hrm/employees/{}", url_encode(employee_id));
+                if let Some(data) = http_call(&base, "PUT", &path, Some(updates.clone())) {
+                    let result = json!({ "employee": data, "message": "员工信息更新成功" });
+                    return Ok(McpToolResult {
+                        content: vec![McpContent::text(result.to_string())],
+                        is_error: None,
+                    });
                 }
 
                 let result = json!({
@@ -295,8 +356,26 @@ pub async fn register_hr_tools(server: &McpServer) {
 
 /// 生成 Mock 员工列表
 fn generate_mock_employees(dept_filter: &str, status_filter: &str, keyword: &str) -> Vec<Value> {
-    let departments = ["研发部", "产品部", "市场部", "销售部", "人力资源部", "财务部", "运营部"];
-    let positions = ["工程师", "高级工程师", "技术经理", "产品经理", "设计师", "市场专员", "销售经理", "HR专员", "财务专员"];
+    let departments = [
+        "研发部",
+        "产品部",
+        "市场部",
+        "销售部",
+        "人力资源部",
+        "财务部",
+        "运营部",
+    ];
+    let positions = [
+        "工程师",
+        "高级工程师",
+        "技术经理",
+        "产品经理",
+        "设计师",
+        "市场专员",
+        "销售经理",
+        "HR专员",
+        "财务专员",
+    ];
     let statuses = ["active", "active", "active", "probation", "on_leave"];
 
     (0..200)
@@ -391,6 +470,31 @@ fn generate_mock_employee_detail(employee_id: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use topems_shared_mcp::protocol::McpContent;
+
+    #[tokio::test]
+    #[ignore = "需要 HRM_SERVICE_URL 指向真实 hrm 服务时手动运行"]
+    async fn test_list_employees_real_api() {
+        if std::env::var("HRM_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 HRM_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_hr_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool("hr.list_employees", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回员工，total={}", total);
+        eprintln!("hr.list_employees 真实调用返回 total = {}", total);
+    }
 
     #[tokio::test]
     async fn test_register_hr_tools() {
@@ -457,14 +561,20 @@ mod tests {
         // 缺少 name
         let result = server
             .tool_registry()
-            .call_tool("hr.create_employee", json!({"department": "研发部", "position": "工程师"}))
+            .call_tool(
+                "hr.create_employee",
+                json!({"department": "研发部", "position": "工程师"}),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 department
         let result = server
             .tool_registry()
-            .call_tool("hr.create_employee", json!({"name": "张三", "position": "工程师"}))
+            .call_tool(
+                "hr.create_employee",
+                json!({"name": "张三", "position": "工程师"}),
+            )
             .await;
         assert!(result.is_err());
     }
@@ -476,13 +586,16 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("hr.create_employee", json!({
-                "name": "王五",
-                "department": "产品部",
-                "position": "产品经理",
-                "email": "wangwu@topems.com",
-                "phone": "13900001111"
-            }))
+            .call_tool(
+                "hr.create_employee",
+                json!({
+                    "name": "王五",
+                    "department": "产品部",
+                    "position": "产品经理",
+                    "email": "wangwu@topems.com",
+                    "phone": "13900001111"
+                }),
+            )
             .await
             .unwrap();
 
@@ -505,11 +618,14 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("hr.update_employee", json!({
-                "employee_id": "EMP-00000001",
-                "position": "技术经理",
-                "salary": 35000
-            }))
+            .call_tool(
+                "hr.update_employee",
+                json!({
+                    "employee_id": "EMP-00000001",
+                    "position": "技术经理",
+                    "salary": 35000
+                }),
+            )
             .await
             .unwrap();
 

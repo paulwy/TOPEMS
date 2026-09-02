@@ -19,8 +19,7 @@ use topems_ai::dsh::mcp::{
     register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools,
     register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools,
     register_iot_tools, register_lims_tools, register_mes_tools, register_oa_tools,
-    register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools,
-    McpServer,
+    register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools, McpServer,
 };
 
 /// MCP stdio 服务器主入口
@@ -63,6 +62,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     register_scm_tools(&server).await;
     register_iot_tools(&server).await;
     register_oa_tools(&server).await;
+
+    // 3. 注册业务资源（crm/erp/finance URI）
+    server.register_resources().await;
+    let resource_count = server.resource_registry().len().await;
+    tracing::info!("Resources registered: {} resources total", resource_count);
 
     let tool_count = server.tool_registry().len().await;
     tracing::info!("All tools registered: {} tools total", tool_count);
@@ -112,7 +116,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let method = request.method.clone();
         let is_notification = request.is_notification();
-        tracing::debug!("Received request: method={}, is_notification={}", method, is_notification);
+        tracing::debug!(
+            "Received request: method={}, is_notification={}",
+            method,
+            is_notification
+        );
 
         // 4. 调用 server.handle_request 处理
         let response = server.handle_request(request).await;

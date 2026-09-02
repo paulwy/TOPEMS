@@ -8,9 +8,7 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
-use crate::dsh::business_copilot::{
-    BusinessModule, CopilotIntent,
-};
+use crate::dsh::business_copilot::{BusinessModule, CopilotIntent};
 
 // ============================================================================
 // 业务模块配置
@@ -1888,7 +1886,10 @@ impl BusinessModuleManager {
             .filter(|faq| {
                 faq.question.to_lowercase().contains(&query_lower)
                     || faq.answer.to_lowercase().contains(&query_lower)
-                    || faq.keywords.iter().any(|k| k.to_lowercase().contains(&query_lower))
+                    || faq
+                        .keywords
+                        .iter()
+                        .any(|k| k.to_lowercase().contains(&query_lower))
             })
             .cloned()
             .collect()
@@ -2079,7 +2080,10 @@ mod tests {
         // 模块数量不变（覆盖已存在的模块）
         assert_eq!(manager.module_count(), 12);
         assert!(manager.get_config(BusinessModule::HR).is_some());
-        assert_eq!(manager.get_config(BusinessModule::HR).unwrap().name, "HR 智能助手（更新）");
+        assert_eq!(
+            manager.get_config(BusinessModule::HR).unwrap().name,
+            "HR 智能助手（更新）"
+        );
     }
 
     #[test]

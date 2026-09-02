@@ -399,12 +399,20 @@ impl AgentRuntime {
                 "duration_ms": response.total_duration_ms,
             }))
         } else {
-            Err(response.error.unwrap_or_else(|| "Unknown error".to_string()))
+            Err(response
+                .error
+                .unwrap_or_else(|| "Unknown error".to_string()))
         }
     }
 
     /// 发送消息给另一个 Agent
-    pub fn send_message(&self, receiver_id: &str, message_type: MessageType, content: serde_json::Value, task_id: Option<String>) -> Result<(), String> {
+    pub fn send_message(
+        &self,
+        receiver_id: &str,
+        message_type: MessageType,
+        content: serde_json::Value,
+        task_id: Option<String>,
+    ) -> Result<(), String> {
         let senders = self.message_senders.lock();
         if let Some(sender) = senders.get(receiver_id) {
             let message = AgentMessage {
@@ -416,7 +424,9 @@ impl AgentRuntime {
                 task_id,
                 timestamp: chrono::Utc::now().to_rfc3339(),
             };
-            sender.send(message).map_err(|e| format!("Failed to send message: {}", e))?;
+            sender
+                .send(message)
+                .map_err(|e| format!("Failed to send message: {}", e))?;
             Ok(())
         } else {
             Err(format!("Receiver agent {} not found", receiver_id))
@@ -424,7 +434,11 @@ impl AgentRuntime {
     }
 
     /// 注册消息发送通道（用于 Agent 间通信）
-    pub fn register_message_sender(&self, agent_id: &str, sender: mpsc::UnboundedSender<AgentMessage>) {
+    pub fn register_message_sender(
+        &self,
+        agent_id: &str,
+        sender: mpsc::UnboundedSender<AgentMessage>,
+    ) {
         let mut senders = self.message_senders.lock();
         senders.insert(agent_id.to_string(), sender);
     }
@@ -676,7 +690,11 @@ impl MultiAgentCoordinator {
     }
 
     /// 分解任务为子任务
-    pub fn decompose_task(&self, parent_task_id: &str, subtasks: Vec<TaskDefinition>) -> Vec<String> {
+    pub fn decompose_task(
+        &self,
+        parent_task_id: &str,
+        subtasks: Vec<TaskDefinition>,
+    ) -> Vec<String> {
         let mut subtask_ids = Vec::new();
 
         for mut subtask in subtasks {
@@ -706,7 +724,8 @@ impl MultiAgentCoordinator {
     pub fn aggregate_results(&self, parent_task_id: &str) -> Result<serde_json::Value, String> {
         let tasks = self.tasks.lock();
 
-        let parent = tasks.get(parent_task_id)
+        let parent = tasks
+            .get(parent_task_id)
             .ok_or_else(|| "Parent task not found".to_string())?;
 
         let mut subtask_results = Vec::new();
@@ -820,7 +839,12 @@ impl MultiAgentCoordinator {
     pub fn cleanup_completed_tasks(&self) -> usize {
         let mut tasks = self.tasks.lock();
         let before = tasks.len();
-        tasks.retain(|_, task| !matches!(task.status, TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled));
+        tasks.retain(|_, task| {
+            !matches!(
+                task.status,
+                TaskStatus::Completed | TaskStatus::Failed | TaskStatus::Cancelled
+            )
+        });
         let removed = before - tasks.len();
         info!(removed = removed, "Completed tasks cleaned up");
         removed
@@ -841,14 +865,12 @@ mod tests {
             name: format!("Agent {}", id),
             role,
             description: format!("Test agent {}", id),
-            capabilities: vec![
-                AgentCapability {
-                    name: "general".to_string(),
-                    description: "General capability".to_string(),
-                    tags: vec!["general".to_string()],
-                    proficiency: 0.8,
-                },
-            ],
+            capabilities: vec![AgentCapability {
+                name: "general".to_string(),
+                description: "General capability".to_string(),
+                tags: vec!["general".to_string()],
+                proficiency: 0.8,
+            }],
             max_concurrent_tasks: 5,
             task_timeout_secs: 60,
         }
@@ -989,12 +1011,14 @@ mod tests {
         let parent_id = coordinator.submit_task(parent);
 
         let subtasks: Vec<TaskDefinition> = (0..3)
-            .map(|i| TaskDefinition::new(
-                &format!("Subtask {}", i),
-                &format!("Subtask {}", i),
-                "subtask_type",
-                serde_json::json!({"index": i}),
-            ))
+            .map(|i| {
+                TaskDefinition::new(
+                    &format!("Subtask {}", i),
+                    &format!("Subtask {}", i),
+                    "subtask_type",
+                    serde_json::json!({"index": i}),
+                )
+            })
             .collect();
 
         let subtask_ids = coordinator.decompose_task(&parent_id, subtasks);

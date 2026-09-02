@@ -270,9 +270,29 @@ pub async fn register_iot_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 设备列表
-fn generate_mock_devices(type_filter: &str, status_filter: &str, location_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let types = ["sensor", "actuator", "gateway", "camera", "controller", "meter"];
-    let statuses = ["online", "online", "online", "offline", "fault", "maintenance", "sleeping"];
+fn generate_mock_devices(
+    type_filter: &str,
+    status_filter: &str,
+    location_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let types = [
+        "sensor",
+        "actuator",
+        "gateway",
+        "camera",
+        "controller",
+        "meter",
+    ];
+    let statuses = [
+        "online",
+        "online",
+        "online",
+        "offline",
+        "fault",
+        "maintenance",
+        "sleeping",
+    ];
     let locations = ["一车间", "二车间", "三车间", "仓库", "办公楼", "室外"];
 
     (0..100)
@@ -370,7 +390,14 @@ fn generate_mock_device_detail(device_id: &str) -> Value {
 
 /// 生成 Mock 设备数据
 fn generate_mock_device_data(device_id: &str, type_filter: &str) -> Vec<Value> {
-    let data_types = ["temperature", "humidity", "pressure", "voltage", "current", "power"];
+    let data_types = [
+        "temperature",
+        "humidity",
+        "pressure",
+        "voltage",
+        "current",
+        "power",
+    ];
     let units = ["°C", "%", "kPa", "V", "A", "W"];
     let qualities = ["good", "good", "good", "good", "uncertain", "bad"];
 
@@ -474,7 +501,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("iot.list_device_data", json!({"page": 1, "page_size": 10, "device_id": "DEV-00000001"}))
+            .call_tool(
+                "iot.list_device_data",
+                json!({"page": 1, "page_size": 10, "device_id": "DEV-00000001"}),
+            )
             .await
             .unwrap();
 
@@ -495,13 +525,16 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("iot.send_command", json!({
-                "device_id": "DEV-00000001",
-                "command": "restart",
-                "parameters": {"delay": 5},
-                "timeout": 30,
-                "operator": "张三"
-            }))
+            .call_tool(
+                "iot.send_command",
+                json!({
+                    "device_id": "DEV-00000001",
+                    "command": "restart",
+                    "parameters": {"delay": 5},
+                    "timeout": 30,
+                    "operator": "张三"
+                }),
+            )
             .await
             .unwrap();
 
@@ -524,18 +557,24 @@ mod tests {
         // 缺少 command
         let result = server
             .tool_registry()
-            .call_tool("iot.send_command", json!({
-                "device_id": "DEV-00000001"
-            }))
+            .call_tool(
+                "iot.send_command",
+                json!({
+                    "device_id": "DEV-00000001"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 device_id
         let result = server
             .tool_registry()
-            .call_tool("iot.send_command", json!({
-                "command": "on"
-            }))
+            .call_tool(
+                "iot.send_command",
+                json!({
+                    "command": "on"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

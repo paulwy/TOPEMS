@@ -344,73 +344,164 @@ impl IntentRecognizer {
     pub fn new() -> Self {
         let mut intent_keywords = HashMap::new();
 
-        intent_keywords.insert(CopilotIntent::Query, vec![
-            "查询".to_string(), "查看".to_string(), "搜索".to_string(),
-            "查找".to_string(), "获取".to_string(), "显示".to_string(),
-            "列表".to_string(), "详情".to_string(), "多少".to_string(),
-            "query".to_string(), "search".to_string(), "find".to_string(),
-            "list".to_string(), "show".to_string(), "get".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Query,
+            vec![
+                "查询".to_string(),
+                "查看".to_string(),
+                "搜索".to_string(),
+                "查找".to_string(),
+                "获取".to_string(),
+                "显示".to_string(),
+                "列表".to_string(),
+                "详情".to_string(),
+                "多少".to_string(),
+                "query".to_string(),
+                "search".to_string(),
+                "find".to_string(),
+                "list".to_string(),
+                "show".to_string(),
+                "get".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Create, vec![
-            "创建".to_string(), "新增".to_string(), "添加".to_string(),
-            "录入".to_string(), "登记".to_string(), "新建".to_string(),
-            "create".to_string(), "add".to_string(), "new".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Create,
+            vec![
+                "创建".to_string(),
+                "新增".to_string(),
+                "添加".to_string(),
+                "录入".to_string(),
+                "登记".to_string(),
+                "新建".to_string(),
+                "create".to_string(),
+                "add".to_string(),
+                "new".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Update, vec![
-            "更新".to_string(), "修改".to_string(), "编辑".to_string(),
-            "变更".to_string(), "调整".to_string(), "设置".to_string(),
-            "update".to_string(), "edit".to_string(), "modify".to_string(),
-            "change".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Update,
+            vec![
+                "更新".to_string(),
+                "修改".to_string(),
+                "编辑".to_string(),
+                "变更".to_string(),
+                "调整".to_string(),
+                "设置".to_string(),
+                "update".to_string(),
+                "edit".to_string(),
+                "modify".to_string(),
+                "change".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Delete, vec![
-            "删除".to_string(), "移除".to_string(), "取消".to_string(),
-            "作废".to_string(), "清除".to_string(),
-            "delete".to_string(), "remove".to_string(), "cancel".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Delete,
+            vec![
+                "删除".to_string(),
+                "移除".to_string(),
+                "取消".to_string(),
+                "作废".to_string(),
+                "清除".to_string(),
+                "delete".to_string(),
+                "remove".to_string(),
+                "cancel".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Analyze, vec![
-            "分析".to_string(), "统计".to_string(), "对比".to_string(),
-            "趋势".to_string(), "占比".to_string(), "排名".to_string(),
-            "analyze".to_string(), "statistics".to_string(), "compare".to_string(),
-            "trend".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Analyze,
+            vec![
+                "分析".to_string(),
+                "统计".to_string(),
+                "对比".to_string(),
+                "趋势".to_string(),
+                "占比".to_string(),
+                "排名".to_string(),
+                "analyze".to_string(),
+                "statistics".to_string(),
+                "compare".to_string(),
+                "trend".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Report, vec![
-            "报告".to_string(), "报表".to_string(), "导出".to_string(),
-            "生成".to_string(), "汇总".to_string(),
-            "report".to_string(), "export".to_string(), "generate".to_string(),
-            "summary".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Report,
+            vec![
+                "报告".to_string(),
+                "报表".to_string(),
+                "导出".to_string(),
+                "生成".to_string(),
+                "汇总".to_string(),
+                "report".to_string(),
+                "export".to_string(),
+                "generate".to_string(),
+                "summary".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Approve, vec![
-            "审批".to_string(), "审核".to_string(), "通过".to_string(),
-            "驳回".to_string(), "同意".to_string(), "拒绝".to_string(),
-            "approve".to_string(), "review".to_string(), "reject".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Approve,
+            vec![
+                "审批".to_string(),
+                "审核".to_string(),
+                "通过".to_string(),
+                "驳回".to_string(),
+                "同意".to_string(),
+                "拒绝".to_string(),
+                "approve".to_string(),
+                "review".to_string(),
+                "reject".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Reminder, vec![
-            "提醒".to_string(), "通知".to_string(), "待办".to_string(),
-            "任务".to_string(), "日程".to_string(),
-            "reminder".to_string(), "notify".to_string(), "todo".to_string(),
-            "task".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Reminder,
+            vec![
+                "提醒".to_string(),
+                "通知".to_string(),
+                "待办".to_string(),
+                "任务".to_string(),
+                "日程".to_string(),
+                "reminder".to_string(),
+                "notify".to_string(),
+                "todo".to_string(),
+                "task".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Knowledge, vec![
-            "什么是".to_string(), "如何".to_string(), "为什么".to_string(),
-            "解释".to_string(), "说明".to_string(), "帮助".to_string(),
-            "what".to_string(), "how".to_string(), "why".to_string(),
-            "explain".to_string(), "help".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Knowledge,
+            vec![
+                "什么是".to_string(),
+                "如何".to_string(),
+                "为什么".to_string(),
+                "解释".to_string(),
+                "说明".to_string(),
+                "帮助".to_string(),
+                "what".to_string(),
+                "how".to_string(),
+                "why".to_string(),
+                "explain".to_string(),
+                "help".to_string(),
+            ],
+        );
 
-        intent_keywords.insert(CopilotIntent::Guidance, vec![
-            "操作".to_string(), "步骤".to_string(), "流程".to_string(),
-            "指导".to_string(), "教程".to_string(),
-            "operation".to_string(), "steps".to_string(), "guide".to_string(),
-            "tutorial".to_string(),
-        ]);
+        intent_keywords.insert(
+            CopilotIntent::Guidance,
+            vec![
+                "操作".to_string(),
+                "步骤".to_string(),
+                "流程".to_string(),
+                "指导".to_string(),
+                "教程".to_string(),
+                "operation".to_string(),
+                "steps".to_string(),
+                "guide".to_string(),
+                "tutorial".to_string(),
+            ],
+        );
 
         Self { intent_keywords }
     }
@@ -464,6 +555,8 @@ pub struct CopilotSessionManager {
     sessions: Arc<Mutex<HashMap<String, CopilotContext>>>,
     /// 意图识别器
     intent_recognizer: IntentRecognizer,
+    /// LLM Provider（3.2a：真实 API 联调，可选；未配置时降级规则回复）
+    llm_provider: Option<Arc<dyn crate::dsh::provider::LlmProvider>>,
 }
 
 impl CopilotSessionManager {
@@ -473,7 +566,17 @@ impl CopilotSessionManager {
             config,
             sessions: Arc::new(Mutex::new(HashMap::new())),
             intent_recognizer: IntentRecognizer::new(),
+            llm_provider: None,
         }
+    }
+
+    /// 注入 LLM Provider（启用真实 API 联调；未注入时降级规则回复）
+    pub fn with_llm_provider(
+        mut self,
+        provider: Arc<dyn crate::dsh::provider::LlmProvider>,
+    ) -> Self {
+        self.llm_provider = Some(provider);
+        self
     }
 
     /// 使用默认配置创建
@@ -509,7 +612,9 @@ impl CopilotSessionManager {
             updated_at: now,
         };
 
-        self.sessions.lock().insert(session_id.clone(), context.clone());
+        self.sessions
+            .lock()
+            .insert(session_id.clone(), context.clone());
         info!(session_id = %session_id, user_id = %user_id, "Copilot session created");
 
         context
@@ -539,9 +644,14 @@ impl CopilotSessionManager {
     }
 
     /// 添加对话消息
-    pub fn add_message(&self, session_id: &str, message: ConversationMessage) -> Result<(), String> {
+    pub fn add_message(
+        &self,
+        session_id: &str,
+        message: ConversationMessage,
+    ) -> Result<(), String> {
         let mut sessions = self.sessions.lock();
-        let context = sessions.get_mut(session_id)
+        let context = sessions
+            .get_mut(session_id)
             .ok_or_else(|| format!("会话 {} 不存在", session_id))?;
 
         context.conversation_history.push(message);
@@ -563,7 +673,8 @@ impl CopilotSessionManager {
         records: Vec<SelectedRecord>,
     ) -> Result<(), String> {
         let mut sessions = self.sessions.lock();
-        let context = sessions.get_mut(session_id)
+        let context = sessions
+            .get_mut(session_id)
             .ok_or_else(|| format!("会话 {} 不存在", session_id))?;
 
         context.selected_records = records;
@@ -579,7 +690,8 @@ impl CopilotSessionManager {
         value: serde_json::Value,
     ) -> Result<(), String> {
         let mut sessions = self.sessions.lock();
-        let context = sessions.get_mut(session_id)
+        let context = sessions
+            .get_mut(session_id)
             .ok_or_else(|| format!("会话 {} 不存在", session_id))?;
 
         context.context_data.insert(key.to_string(), value);
@@ -588,7 +700,10 @@ impl CopilotSessionManager {
     }
 
     /// 处理 Copilot 请求
-    pub fn process_request(&self, request: CopilotRequest) -> Result<CopilotResponse, String> {
+    pub async fn process_request(
+        &self,
+        request: CopilotRequest,
+    ) -> Result<CopilotResponse, String> {
         if !self.config.enabled {
             return Err("Copilot 未启用".to_string());
         }
@@ -630,8 +745,14 @@ impl CopilotSessionManager {
         };
         self.add_message(&request.session_id, user_message)?;
 
-        // 生成回复（简化版，实际应调用 LLM）
-        let reply = self.generate_reply(&request.user_input, &intent, &context);
+        // 生成回复（3.2a：优先调用真实 LLM API，失败/未配置时降级规则模板）
+        let reply = match self
+            .generate_reply_with_llm(&request.user_input, &intent, &context)
+            .await
+        {
+            Some(llm_reply) => llm_reply,
+            None => self.generate_reply(&request.user_input, &intent, &context),
+        };
 
         // 生成建议操作
         let suggested_actions = if self.config.enable_suggestions {
@@ -672,28 +793,86 @@ impl CopilotSessionManager {
     }
 
     /// 生成回复（简化版）
-    fn generate_reply(&self, input: &str, intent: &CopilotIntent, context: &CopilotContext) -> String {
+    /// 通过 LLM Provider 生成回复（3.2a 真实 API 联调）
+    ///
+    /// - 未注入 Provider → 返回 None（调用方降级规则模板）
+    /// - Provider 调用失败 → 记录并返回 None
+    /// - 成功 → 返回模型生成的回复文本
+    async fn generate_reply_with_llm(
+        &self,
+        input: &str,
+        intent: &CopilotIntent,
+        context: &CopilotContext,
+    ) -> Option<String> {
+        let provider = self.llm_provider.as_ref()?;
+
+        let system_prompt = format!(
+            "你是 TOPEMS {} 模块的业务 Copilot 助手。\n\
+             用户请求的意图：{}\n\
+             请用简洁、专业的中文回答用户。如涉及数据查询，说明将进行的操作；\
+             如涉及创建/更新/删除，列出将要执行的字段与值并请求确认。",
+            context.module.display_name(),
+            intent.as_str(),
+        );
+
+        let request =
+            crate::dsh::provider::LlmRequest::with_system(system_prompt, input.to_string());
+
+        match provider.ask(request).await {
+            Ok(resp) => Some(resp.content),
+            Err(e) => {
+                tracing::warn!(
+                    "Copilot LLM reply failed ({}), falling back to rule template",
+                    e
+                );
+                None
+            }
+        }
+    }
+
+    fn generate_reply(
+        &self,
+        input: &str,
+        intent: &CopilotIntent,
+        context: &CopilotContext,
+    ) -> String {
         match intent {
             CopilotIntent::Query => {
-                format!("好的，我来帮您查询相关信息。您询问的是：「{}」\n\n正在为您检索{}模块的数据...", input, context.module.display_name())
+                format!(
+                    "好的，我来帮您查询相关信息。您询问的是：「{}」\n\n正在为您检索{}模块的数据...",
+                    input,
+                    context.module.display_name()
+                )
             }
             CopilotIntent::Create => {
                 format!("好的，我来帮您创建新记录。请确认以下信息：\n\n您的需求是：「{}」\n\n我将在{}模块中创建相应记录。", input, context.module.display_name())
             }
             CopilotIntent::Update => {
-                format!("好的，我来帮您更新记录。您希望更新的内容是：「{}」\n\n请确认要更新哪些字段。", input)
+                format!(
+                    "好的，我来帮您更新记录。您希望更新的内容是：「{}」\n\n请确认要更新哪些字段。",
+                    input
+                )
             }
             CopilotIntent::Delete => {
-                format!("您确定要删除记录吗？删除操作不可恢复。\n\n您的请求是：「{}」", input)
+                format!(
+                    "您确定要删除记录吗？删除操作不可恢复。\n\n您的请求是：「{}」",
+                    input
+                )
             }
             CopilotIntent::Analyze => {
-                format!("好的，我来帮您分析数据。您希望分析的是：「{}」\n\n正在为您生成分析报告...", input)
+                format!(
+                    "好的，我来帮您分析数据。您希望分析的是：「{}」\n\n正在为您生成分析报告...",
+                    input
+                )
             }
             CopilotIntent::Report => {
                 format!("好的，我来帮您生成报告。您需要的报告内容是：「{}」\n\n正在为您整理数据并生成报表...", input)
             }
             CopilotIntent::Approve => {
-                format!("好的，我来帮您处理审批。您的审批请求是：「{}」\n\n请确认审批意见。", input)
+                format!(
+                    "好的，我来帮您处理审批。您的审批请求是：「{}」\n\n请确认审批意见。",
+                    input
+                )
             }
             CopilotIntent::Knowledge => {
                 format!("关于您的问题「{}」，我来为您解答：\n\n根据系统知识库，这是一个关于{}的常见问题。建议您查看相关文档或联系管理员获取更详细的信息。", input, context.module.display_name())
@@ -708,7 +887,11 @@ impl CopilotSessionManager {
     }
 
     /// 生成建议操作
-    fn generate_suggestions(&self, intent: &CopilotIntent, _context: &CopilotContext) -> Vec<SuggestedAction> {
+    fn generate_suggestions(
+        &self,
+        intent: &CopilotIntent,
+        _context: &CopilotContext,
+    ) -> Vec<SuggestedAction> {
         let mut actions = Vec::new();
 
         match intent {
@@ -781,10 +964,7 @@ impl CopilotSessionManager {
         }
 
         match intent {
-            CopilotIntent::Delete => (
-                true,
-                Some("删除操作不可恢复，您确定要继续吗？".to_string()),
-            ),
+            CopilotIntent::Delete => (true, Some("删除操作不可恢复，您确定要继续吗？".to_string())),
             CopilotIntent::Update => (
                 true,
                 Some("修改操作会覆盖原有数据，您确定要继续吗？".to_string()),
@@ -895,7 +1075,7 @@ mod tests {
     #[test]
     fn test_intent_recognizer_unknown() {
         let recognizer = IntentRecognizer::new();
-        let (intent, confidence) = recognizer.recognize("今天天气怎么样");
+        let (_intent, confidence) = recognizer.recognize("今天天气怎么样");
         assert!(confidence < 0.5);
     }
 
@@ -935,7 +1115,10 @@ mod tests {
 
         let updated = manager.update_session(context.clone());
         assert!(updated.is_some());
-        assert_eq!(updated.unwrap().current_page, Some("/dashboard".to_string()));
+        assert_eq!(
+            updated.unwrap().current_page,
+            Some("/dashboard".to_string())
+        );
     }
 
     #[test]
@@ -978,7 +1161,9 @@ mod tests {
             data: None,
         }];
 
-        assert!(manager.update_selected_records(&context.session_id, records).is_ok());
+        assert!(manager
+            .update_selected_records(&context.session_id, records)
+            .is_ok());
 
         let updated = manager.get_session(&context.session_id).unwrap();
         assert_eq!(updated.selected_records.len(), 1);
@@ -989,18 +1174,20 @@ mod tests {
         let manager = CopilotSessionManager::with_defaults();
         let context = manager.create_session("user1", "tenant1", BusinessModule::ERP);
 
-        assert!(manager.set_context_data(
-            &context.session_id,
-            "department",
-            serde_json::json!("sales")
-        ).is_ok());
+        assert!(manager
+            .set_context_data(
+                &context.session_id,
+                "department",
+                serde_json::json!("sales")
+            )
+            .is_ok());
 
         let updated = manager.get_session(&context.session_id).unwrap();
         assert_eq!(updated.context_data.get("department").unwrap(), "sales");
     }
 
-    #[test]
-    fn test_session_manager_process_request() {
+    #[tokio::test]
+    async fn test_session_manager_process_request() {
         let manager = CopilotSessionManager::with_defaults();
         let context = manager.create_session("user1", "tenant1", BusinessModule::Finance);
 
@@ -1014,15 +1201,15 @@ mod tests {
             stream: false,
         };
 
-        let response = manager.process_request(request).unwrap();
+        let response = manager.process_request(request).await.unwrap();
         assert_eq!(response.session_id, context.session_id);
         assert!(!response.reply.is_empty());
         assert_eq!(response.intent, CopilotIntent::Query);
         assert!(response.confidence > 0.0);
     }
 
-    #[test]
-    fn test_session_manager_process_delete_needs_confirmation() {
+    #[tokio::test]
+    async fn test_session_manager_process_delete_needs_confirmation() {
         let manager = CopilotSessionManager::with_defaults();
         let context = manager.create_session("user1", "tenant1", BusinessModule::ERP);
 
@@ -1036,7 +1223,7 @@ mod tests {
             stream: false,
         };
 
-        let response = manager.process_request(request).unwrap();
+        let response = manager.process_request(request).await.unwrap();
         assert!(response.needs_confirmation);
         assert!(response.confirmation_prompt.is_some());
     }

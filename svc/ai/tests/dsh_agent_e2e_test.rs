@@ -15,11 +15,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use topems_ai::dsh::agent::context::AgentMessage;
-use topems_ai::dsh::agent::{
-    AgentOrchestrator, AgentOrchestratorConfig, ContextManager,
-    MessageRole, StreamChunk, StreamingResponse,
-};
 use topems_ai::dsh::agent::orchestrator::AgentExecuteRequest;
+use topems_ai::dsh::agent::{
+    AgentOrchestrator, AgentOrchestratorConfig, ContextManager, MessageRole, StreamChunk,
+    StreamingResponse,
+};
 use topems_ai::dsh::mcp::{McpServer, ToolExecutionError, ToolRegistry};
 use topems_ai::dsh::provider::{
     LlmProvider, LlmRequest, LlmResponse, LlmStreamChunk, MockProvider, ProviderConfig,
@@ -49,10 +49,7 @@ async fn create_test_tool_registry() -> ToolRegistry {
                 "required": ["query"]
             }),
             |args| {
-                let query = args
-                    .get("query")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
+                let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
                 let result = json!({
                     "results": [
                         {"title": format!("结果1: {}", query), "content": "这是测试结果1"},
@@ -170,7 +167,6 @@ async fn test_agent_basic_execution() {
 
     assert!(!response.answer.is_empty(), "答案不应该为空");
     assert!(response.total_iterations >= 1, "迭代次数应该 >= 1");
-    assert!(response.total_duration_ms >= 0, "耗时应该 >= 0");
     assert!(!response.steps.is_empty(), "执行步骤不应该为空");
 }
 
@@ -204,7 +200,11 @@ async fn test_agent_tool_calling() {
     assert!(
         !tool_calls.is_empty(),
         "应该有工具调用，实际步骤: {:?}",
-        response.steps.iter().map(|s| &s.description).collect::<Vec<_>>()
+        response
+            .steps
+            .iter()
+            .map(|s| &s.description)
+            .collect::<Vec<_>>()
     );
 }
 
@@ -271,7 +271,10 @@ async fn test_agent_session_clear() {
     orchestrator.execute(request).await;
 
     // 验证会话存在
-    assert!(orchestrator.get_session_context(&session_id).await.is_some());
+    assert!(orchestrator
+        .get_session_context(&session_id)
+        .await
+        .is_some());
 
     // 清除会话
     let cleared = orchestrator.clear_session(&session_id).await;
@@ -279,7 +282,10 @@ async fn test_agent_session_clear() {
 
     // 验证会话已清除
     assert!(
-        orchestrator.get_session_context(&session_id).await.is_none(),
+        orchestrator
+            .get_session_context(&session_id)
+            .await
+            .is_none(),
         "会话应该已清除"
     );
 }
@@ -308,11 +314,7 @@ async fn test_agent_active_sessions() {
     }
 
     let final_count = orchestrator.active_sessions().await;
-    assert_eq!(
-        final_count,
-        initial_count + 3,
-        "活跃会话数应该增加3"
-    );
+    assert_eq!(final_count, initial_count + 3, "活跃会话数应该增加3");
 }
 
 // ============================================================================
@@ -381,11 +383,10 @@ async fn test_agent_streaming_execution() {
 
     assert!(streaming_response.is_ok(), "流式执行应该成功");
 
-    let mut streaming_response = streaming_response.unwrap();
+    let streaming_response = streaming_response.unwrap();
     assert_eq!(streaming_response.session_id, session_id);
 
     // 等待流式事件完成（最多等待5秒）
-    let mut events_received = 0;
     let timeout = tokio::time::sleep(Duration::from_secs(5));
     tokio::pin!(timeout);
 
@@ -405,7 +406,10 @@ async fn test_agent_streaming_execution() {
 
     // 验证会话存在
     assert!(
-        orchestrator.get_session_context(&session_id).await.is_some(),
+        orchestrator
+            .get_session_context(&session_id)
+            .await
+            .is_some(),
         "流式执行后会话应该存在"
     );
 }
@@ -432,7 +436,10 @@ async fn test_context_manager() {
 
     // 添加助手消息
     manager
-        .add_message(&session_id, AgentMessage::assistant("你好！有什么可以帮助你的？"))
+        .add_message(
+            &session_id,
+            AgentMessage::assistant("你好！有什么可以帮助你的？"),
+        )
         .await;
 
     // 获取上下文
@@ -526,7 +533,6 @@ async fn test_agent_execution_steps() {
         assert!(step.step_number >= 1, "步骤号应该 >= 1");
         assert!(!step.step_type.is_empty(), "步骤类型不应该为空");
         assert!(!step.description.is_empty(), "步骤描述不应该为空");
-        assert!(step.duration_ms >= 0, "步骤耗时应该 >= 0");
     }
 
     // 验证使用的工具
@@ -669,7 +675,52 @@ async fn test_agent_full_e2e_flow() {
     assert!(orchestrator.clear_session(&session_id).await);
 
     // 8. 验证会话已清除
-    assert!(orchestrator.get_session_context(&session_id).await.is_none());
+    assert!(orchestrator
+        .get_session_context(&session_id)
+        .await
+        .is_none());
 
     println!("✅ 完整端到端流程测试通过！");
+}
+
+// ============================================================================
+// 测试 3.1: 路由 + 故障降级组合 Provider（with_resilient_provider）
+// ============================================================================
+
+#[tokio::test]
+async fn test_agent_with_resilient_provider() {
+    // 将简单/复杂/备用路由全部指向 mock，确保无外部依赖
+    std::env::set_var("DSH_SIMPLE_PROVIDER", "mock");
+    std::env::set_var("DSH_COMPLEX_PROVIDER", "mock");
+    std::env::set_var("DSH_FALLBACK_PROVIDER", "mock");
+
+    let registry = create_test_tool_registry().await;
+    let config = AgentOrchestratorConfig {
+        max_iterations: 3,
+        max_context_tokens: 4096,
+        system_prompt: "你是测试助手".to_string(),
+        enable_streaming: true,
+        enable_tools: true,
+        tool_timeout_seconds: 30,
+        max_error_retries: 2,
+    };
+
+    let orchestrator = AgentOrchestrator::with_resilient_provider(registry).with_config(config);
+
+    // 简单任务（含"你好"关键词 → 简单路由）
+    let request = AgentExecuteRequest {
+        query: "你好".to_string(),
+        session_id: Some(Uuid::new_v4().to_string()),
+        max_iterations: Some(1),
+        available_tools: None,
+        stream: Some(false),
+        context_variables: None,
+    };
+    let response = orchestrator.execute(request).await;
+    assert!(!response.answer.is_empty(), "简单任务应正常返回");
+
+    // 清理环境变量
+    std::env::remove_var("DSH_SIMPLE_PROVIDER");
+    std::env::remove_var("DSH_COMPLEX_PROVIDER");
+    std::env::remove_var("DSH_FALLBACK_PROVIDER");
 }

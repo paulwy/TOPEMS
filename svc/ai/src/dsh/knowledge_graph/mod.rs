@@ -201,11 +201,7 @@ pub struct Relation {
 
 impl Relation {
     /// 创建新关系
-    pub fn new(
-        source_id: &str,
-        target_id: &str,
-        relation_type: RelationType,
-    ) -> Self {
+    pub fn new(source_id: &str, target_id: &str, relation_type: RelationType) -> Self {
         let id = format!("{}_{}_{}", source_id, relation_type.as_str(), target_id);
         Self {
             id,
@@ -613,7 +609,8 @@ impl KnowledgeGraph {
                             let mut relation_ids = Vec::new();
                             let mut current = target_id.to_string();
 
-                            while let Some((parent_entity, parent_relation)) = parent.get(&current) {
+                            while let Some((parent_entity, parent_relation)) = parent.get(&current)
+                            {
                                 entity_ids.push(parent_entity.clone());
                                 relation_ids.push(parent_relation.clone());
                                 current = parent_entity.clone();
@@ -670,7 +667,10 @@ impl KnowledgeGraph {
 
         // 精确匹配
         if let Some(ids) = name_index.get(name) {
-            return ids.iter().filter_map(|id| entities.get(id).cloned()).collect();
+            return ids
+                .iter()
+                .filter_map(|id| entities.get(id).cloned())
+                .collect();
         }
 
         // 模糊匹配（简单实现：包含匹配）
@@ -734,7 +734,9 @@ impl KnowledgeGraph {
                 if let Some(rel_ids) = adjacency.get(id) {
                     for rel_id in rel_ids {
                         if let Some(rel) = relations.get(rel_id) {
-                            if community.contains(&rel.source_id) && community.contains(&rel.target_id) {
+                            if community.contains(&rel.source_id)
+                                && community.contains(&rel.target_id)
+                            {
                                 internal_edges += 1;
                             }
                         }
@@ -770,7 +772,15 @@ impl KnowledgeGraph {
     /// 获取知识图谱统计
     pub fn get_stats(&self) -> KnowledgeGraphStats {
         // 第一部分：持有锁计算基本统计信息
-        let (total_entities, total_relations, entities_by_type, relations_by_type, avg_degree, max_degree, graph_density) = {
+        let (
+            total_entities,
+            total_relations,
+            entities_by_type,
+            relations_by_type,
+            avg_degree,
+            max_degree,
+            graph_density,
+        ) = {
             let entities = self.entities.lock();
             let relations = self.relations.lock();
             let adjacency = self.adjacency.lock();
@@ -813,7 +823,15 @@ impl KnowledgeGraph {
                 0.0
             };
 
-            (total_entities, total_relations, entities_by_type, relations_by_type, avg_degree, max_degree, graph_density)
+            (
+                total_entities,
+                total_relations,
+                entities_by_type,
+                relations_by_type,
+                avg_degree,
+                max_degree,
+                graph_density,
+            )
         }; // 锁在这里释放
 
         // 第二部分：释放锁后调用 detect_communities
@@ -921,7 +939,10 @@ impl EntityRelationExtractor {
         }
 
         // 提取人名（简化：2-4个中文字符，常见姓氏开头）
-        let surnames = ["张", "王", "李", "赵", "刘", "陈", "杨", "黄", "周", "吴", "徐", "孙", "胡", "朱", "高", "林", "何", "郭", "马", "罗"];
+        let surnames = [
+            "张", "王", "李", "赵", "刘", "陈", "杨", "黄", "周", "吴", "徐", "孙", "胡", "朱",
+            "高", "林", "何", "郭", "马", "罗",
+        ];
         for surname in &surnames {
             let pattern = format!(r"{}[\u4e00-\u9fa5]{{1,3}}", surname);
             if let Ok(re) = regex::Regex::new(&pattern) {
@@ -985,7 +1006,11 @@ impl EntityRelationExtractor {
             } else {
                 // 创建新实体
                 let id = format!("entity_{}", uuid::Uuid::new_v4());
-                let mut entity = Entity::new(&id, &extracted_entity.text, extracted_entity.entity_type.clone());
+                let mut entity = Entity::new(
+                    &id,
+                    &extracted_entity.text,
+                    extracted_entity.entity_type.clone(),
+                );
                 entity.confidence = extracted_entity.confidence;
                 graph.add_entity(entity);
                 id
@@ -999,7 +1024,11 @@ impl EntityRelationExtractor {
                 entity_id_map.get(&extracted_relation.source_text),
                 entity_id_map.get(&extracted_relation.target_text),
             ) {
-                let mut relation = Relation::new(source_id, target_id, extracted_relation.relation_type.clone());
+                let mut relation = Relation::new(
+                    source_id,
+                    target_id,
+                    extracted_relation.relation_type.clone(),
+                );
                 relation.confidence = extracted_relation.confidence;
                 graph.add_relation(relation);
             }
@@ -1049,8 +1078,14 @@ mod tests {
     #[test]
     fn test_entity_type_from_str() {
         assert_eq!(EntityType::from_str("person"), EntityType::Person);
-        assert_eq!(EntityType::from_str("organization"), EntityType::Organization);
-        assert_eq!(EntityType::from_str("custom"), EntityType::Custom("custom".to_string()));
+        assert_eq!(
+            EntityType::from_str("organization"),
+            EntityType::Organization
+        );
+        assert_eq!(
+            EntityType::from_str("custom"),
+            EntityType::Custom("custom".to_string())
+        );
     }
 
     #[test]

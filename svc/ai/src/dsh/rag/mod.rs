@@ -195,7 +195,7 @@ pub struct RetrievalResponse {
 }
 
 /// 检索统计
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RetrievalStats {
     /// 向量检索结果数
     pub vector_results: usize,
@@ -217,22 +217,6 @@ pub struct RetrievalStats {
     pub rerank_duration_ms: u64,
 }
 
-impl Default for RetrievalStats {
-    fn default() -> Self {
-        Self {
-            vector_results: 0,
-            keyword_results: 0,
-            merged_results: 0,
-            reranked_results: 0,
-            filtered_results: 0,
-            total_duration_ms: 0,
-            query_rewrite_duration_ms: 0,
-            retrieval_duration_ms: 0,
-            rerank_duration_ms: 0,
-        }
-    }
-}
-
 // ============================================================================
 // 查询重写器
 // ============================================================================
@@ -251,13 +235,13 @@ impl QueryRewriter {
     /// 创建新的查询重写器
     pub fn new(config: RagConfig) -> Self {
         let stop_words_vec: Vec<&str> = vec![
-            "的", "了", "是", "在", "我", "有", "和", "就", "不", "人",
-            "都", "一", "一个", "上", "也", "很", "到", "说", "要", "去",
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "must", "can",
+            "的", "了", "是", "在", "我", "有", "和", "就", "不", "人", "都", "一", "一个", "上",
+            "也", "很", "到", "说", "要", "去", "the", "a", "an", "is", "are", "was", "were", "be",
+            "been", "being", "have", "has", "had", "do", "does", "did", "will", "would", "could",
+            "should", "may", "might", "must", "can",
         ];
-        let mut stop_words: Vec<String> = stop_words_vec.into_iter().map(|s| s.to_string()).collect();
+        let mut stop_words: Vec<String> =
+            stop_words_vec.into_iter().map(|s| s.to_string()).collect();
         stop_words.sort();
         stop_words.dedup();
 
@@ -329,7 +313,7 @@ impl QueryRewriter {
     fn decompose_query(&self, query: &str) -> String {
         // 简单实现：按标点符号分解
         let parts: Vec<&str> = query
-            .split(|c| c == '，' || c == ',' || c == '。' || c == ';' || c == '；')
+            .split(['，', ',', '。', ';', '；'])
             .filter(|s| !s.trim().is_empty())
             .collect();
 
@@ -433,7 +417,11 @@ impl Reranker {
 
     /// 基于分数的重排序
     fn score_based_rerank(&self, mut documents: Vec<RetrievedDocument>) -> Vec<RetrievedDocument> {
-        documents.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        documents.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // 更新排名
         for (i, doc) in documents.iter_mut().enumerate() {
@@ -445,14 +433,19 @@ impl Reranker {
     }
 
     /// 基于交叉编码器的重排序（简化实现，实际需要外部模型）
-    fn cross_encoder_rerank(&self, documents: Vec<RetrievedDocument>, query: &str) -> Vec<RetrievedDocument> {
+    fn cross_encoder_rerank(
+        &self,
+        documents: Vec<RetrievedDocument>,
+        query: &str,
+    ) -> Vec<RetrievedDocument> {
         // 简化实现：使用查询与文档的词重叠率作为重排序分数
         let query_words: std::collections::HashSet<&str> = query.split_whitespace().collect();
 
         let mut scored_documents: Vec<(RetrievedDocument, f64)> = documents
             .into_iter()
             .map(|doc| {
-                let doc_words: std::collections::HashSet<&str> = doc.content.split_whitespace().collect();
+                let doc_words: std::collections::HashSet<&str> =
+                    doc.content.split_whitespace().collect();
                 let overlap = query_words.intersection(&doc_words).count() as f64;
                 let total = query_words.len().max(1) as f64;
                 let overlap_score = overlap / total;
@@ -483,14 +476,22 @@ impl Reranker {
     }
 
     /// 基于 LLM 的重排序（简化实现）
-    fn llm_based_rerank(&self, documents: Vec<RetrievedDocument>, _query: &str) -> Vec<RetrievedDocument> {
+    fn llm_based_rerank(
+        &self,
+        documents: Vec<RetrievedDocument>,
+        _query: &str,
+    ) -> Vec<RetrievedDocument> {
         // 简化实现：使用基于分数的重排序
         // 实际实现中应该调用 LLM 对文档进行相关性评分
         self.score_based_rerank(documents)
     }
 
     /// 混合重排序（分数 + 多样性）
-    fn hybrid_rerank(&self, documents: Vec<RetrievedDocument>, _query: &str) -> Vec<RetrievedDocument> {
+    fn hybrid_rerank(
+        &self,
+        documents: Vec<RetrievedDocument>,
+        _query: &str,
+    ) -> Vec<RetrievedDocument> {
         if !self.config.enable_diversity || self.config.diversity_weight == 0.0 {
             return self.score_based_rerank(documents);
         }
@@ -501,7 +502,7 @@ impl Reranker {
         // 多样性优化：MMR（Maximal Marginal Relevance）简化实现
         let diversity_weight = self.config.diversity_weight;
         let mut selected: Vec<RetrievedDocument> = Vec::new();
-        let mut remaining: Vec<RetrievedDocument> = sorted.drain(..).collect();
+        let mut remaining: Vec<RetrievedDocument> = std::mem::take(&mut sorted);
 
         while !remaining.is_empty() && selected.len() < self.config.rerank_top_k {
             let mut best_idx = 0;
@@ -519,7 +520,8 @@ impl Reranker {
                 }
 
                 // MMR 分数：(1 - λ) * 相关性 - λ * 与已选文档的最大相似度
-                let mmr_score = (1.0 - diversity_weight) * relevance - diversity_weight * (1.0 - min_similarity);
+                let mmr_score = (1.0 - diversity_weight) * relevance
+                    - diversity_weight * (1.0 - min_similarity);
 
                 if mmr_score > best_score {
                     best_score = mmr_score;
@@ -630,8 +632,12 @@ impl RagEngine {
 
         // 1. 查询重写
         let rewrite_start = std::time::Instant::now();
-        let rewritten_query = self.query_rewriter.rewrite(&request.query, &request.conversation_history);
-        let expanded_queries = self.query_rewriter.generate_expanded_queries(&rewritten_query);
+        let rewritten_query = self
+            .query_rewriter
+            .rewrite(&request.query, &request.conversation_history);
+        let expanded_queries = self
+            .query_rewriter
+            .generate_expanded_queries(&rewritten_query);
         stats.query_rewrite_duration_ms = rewrite_start.elapsed().as_millis() as u64;
 
         if rewritten_query != request.query {
@@ -641,13 +647,17 @@ impl RagEngine {
 
         // 2. 检索（这里简化实现，实际应该调用向量检索服务）
         let retrieval_start = std::time::Instant::now();
-        let documents = self.perform_retrieval(&rewritten_query, &expanded_queries, &request).await;
+        let documents = self
+            .perform_retrieval(&rewritten_query, &expanded_queries, &request)
+            .await;
         stats.retrieval_duration_ms = retrieval_start.elapsed().as_millis() as u64;
         stats.vector_results = documents.len();
         stats.merged_results = documents.len();
 
         // 3. 过滤低相似度结果
-        let threshold = request.similarity_threshold.unwrap_or(self.config.similarity_threshold);
+        let threshold = request
+            .similarity_threshold
+            .unwrap_or(self.config.similarity_threshold);
         let filtered: Vec<RetrievedDocument> = documents
             .into_iter()
             .filter(|doc| doc.score >= threshold)

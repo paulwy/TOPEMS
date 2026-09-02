@@ -186,9 +186,10 @@ pub struct NodeConfig {
 }
 
 /// 错误处理策略
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ErrorStrategy {
     /// 停止工作流
+    #[default]
     Stop,
     /// 重试
     Retry,
@@ -198,12 +199,6 @@ pub enum ErrorStrategy {
     Goto,
     /// 使用默认值
     DefaultValue,
-}
-
-impl Default for ErrorStrategy {
-    fn default() -> Self {
-        ErrorStrategy::Stop
-    }
 }
 
 /// 工作流边（连接关系）
@@ -543,7 +538,9 @@ impl WorkflowEngine {
             created_at: chrono::Utc::now().to_rfc3339(),
         };
 
-        self.templates.lock().insert(template.template_id.clone(), template);
+        self.templates
+            .lock()
+            .insert(template.template_id.clone(), template);
         info!("Default workflow templates initialized");
     }
 
@@ -568,7 +565,9 @@ impl WorkflowEngine {
         drop(version_history);
 
         // 保存当前版本
-        self.workflows.lock().insert(workflow_id.clone(), definition);
+        self.workflows
+            .lock()
+            .insert(workflow_id.clone(), definition);
 
         info!(
             workflow_id = %workflow_id,
@@ -592,7 +591,10 @@ impl WorkflowEngine {
         }
 
         // 检查起始节点是否存在
-        let has_start = definition.nodes.iter().any(|n| n.node_type == NodeType::Start);
+        let has_start = definition
+            .nodes
+            .iter()
+            .any(|n| n.node_type == NodeType::Start);
         if !has_start {
             return Err("工作流必须包含一个起始节点".to_string());
         }
@@ -894,10 +896,9 @@ impl WorkflowEngine {
                         if let Some(value) = execution.context.get(expr) {
                             execution.context.insert(var_name.clone(), value.clone());
                         } else {
-                            execution.context.insert(
-                                var_name.clone(),
-                                serde_json::Value::String(expr.clone()),
-                            );
+                            execution
+                                .context
+                                .insert(var_name.clone(), serde_json::Value::String(expr.clone()));
                         }
                     }
                 }
@@ -966,7 +967,11 @@ impl WorkflowEngine {
             info!(execution_id = %execution_id, "Workflow execution cancelled");
             Ok(())
         } else {
-            Err(format!("执行实例 {} 状态为 {}，无法取消", execution_id, execution.status.as_str()))
+            Err(format!(
+                "执行实例 {} 状态为 {}，无法取消",
+                execution_id,
+                execution.status.as_str()
+            ))
         }
     }
 
@@ -1201,7 +1206,9 @@ mod tests {
     #[test]
     fn test_get_workflow() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
 
         let workflow = engine.get_workflow("wf1");
         assert!(workflow.is_some());
@@ -1211,8 +1218,12 @@ mod tests {
     #[test]
     fn test_list_workflows() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "工作流1")).unwrap();
-        engine.register_workflow(create_test_workflow("wf2", "工作流2")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "工作流1"))
+            .unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf2", "工作流2"))
+            .unwrap();
 
         let workflows = engine.list_workflows(None);
         assert_eq!(workflows.len(), 2);
@@ -1237,7 +1248,9 @@ mod tests {
     #[test]
     fn test_delete_workflow() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
 
         assert!(engine.delete_workflow("wf1"));
         assert!(engine.get_workflow("wf1").is_none());
@@ -1246,7 +1259,9 @@ mod tests {
     #[test]
     fn test_execute_workflow() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
 
         let mut input_params = HashMap::new();
         input_params.insert("question".to_string(), serde_json::json!("测试问题"));
@@ -1257,7 +1272,6 @@ mod tests {
         let execution = execution.unwrap();
         assert_eq!(execution.status, WorkflowExecutionStatus::Completed);
         assert_eq!(execution.executed_nodes.len(), 3); // start, llm_call, end
-        assert!(execution.duration_ms >= 0);
     }
 
     #[test]
@@ -1270,7 +1284,9 @@ mod tests {
     #[test]
     fn test_get_execution() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
 
         let execution = engine
             .execute_workflow("wf1", HashMap::new(), "test_user")
@@ -1284,10 +1300,16 @@ mod tests {
     #[test]
     fn test_list_executions() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
 
-        engine.execute_workflow("wf1", HashMap::new(), "user1").unwrap();
-        engine.execute_workflow("wf1", HashMap::new(), "user2").unwrap();
+        engine
+            .execute_workflow("wf1", HashMap::new(), "user1")
+            .unwrap();
+        engine
+            .execute_workflow("wf1", HashMap::new(), "user2")
+            .unwrap();
 
         let executions = engine.list_executions(None, None);
         assert_eq!(executions.len(), 2);
@@ -1296,11 +1318,19 @@ mod tests {
     #[test]
     fn test_list_executions_by_workflow() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "工作流1")).unwrap();
-        engine.register_workflow(create_test_workflow("wf2", "工作流2")).unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "工作流1"))
+            .unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf2", "工作流2"))
+            .unwrap();
 
-        engine.execute_workflow("wf1", HashMap::new(), "user1").unwrap();
-        engine.execute_workflow("wf2", HashMap::new(), "user1").unwrap();
+        engine
+            .execute_workflow("wf1", HashMap::new(), "user1")
+            .unwrap();
+        engine
+            .execute_workflow("wf2", HashMap::new(), "user1")
+            .unwrap();
 
         let wf1_executions = engine.list_executions(Some("wf1"), None);
         assert_eq!(wf1_executions.len(), 1);
@@ -1340,8 +1370,12 @@ mod tests {
     #[test]
     fn test_get_stats() {
         let engine = create_test_engine();
-        engine.register_workflow(create_test_workflow("wf1", "测试工作流")).unwrap();
-        engine.execute_workflow("wf1", HashMap::new(), "test_user").unwrap();
+        engine
+            .register_workflow(create_test_workflow("wf1", "测试工作流"))
+            .unwrap();
+        engine
+            .execute_workflow("wf1", HashMap::new(), "test_user")
+            .unwrap();
 
         let stats = engine.get_stats();
         assert!(stats.total_workflows >= 1);

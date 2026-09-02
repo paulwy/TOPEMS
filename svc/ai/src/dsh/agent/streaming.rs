@@ -170,7 +170,10 @@ impl StreamChunk {
     }
 
     /// 创建内容完成事件
-    pub fn content_complete(session_id: impl Into<String>, full_content: impl Into<String>) -> Self {
+    pub fn content_complete(
+        session_id: impl Into<String>,
+        full_content: impl Into<String>,
+    ) -> Self {
         let mut chunk = Self::new(
             StreamEventType::ContentComplete,
             session_id,
@@ -255,7 +258,10 @@ impl StreamingResponse {
     }
 
     /// 发送思考中事件
-    pub fn send_thinking(&self, thought: impl Into<String>) -> Result<(), mpsc::error::SendError<StreamChunk>> {
+    pub fn send_thinking(
+        &self,
+        thought: impl Into<String>,
+    ) -> Result<(), mpsc::error::SendError<StreamChunk>> {
         self.send(StreamChunk::thinking(&self.session_id, thought))
     }
 
@@ -288,17 +294,26 @@ impl StreamingResponse {
     }
 
     /// 发送内容增量事件
-    pub fn send_content_delta(&self, delta: impl Into<String>) -> Result<(), mpsc::error::SendError<StreamChunk>> {
+    pub fn send_content_delta(
+        &self,
+        delta: impl Into<String>,
+    ) -> Result<(), mpsc::error::SendError<StreamChunk>> {
         self.send(StreamChunk::content_delta(&self.session_id, delta))
     }
 
     /// 发送内容完成事件
-    pub fn send_content_complete(&self, content: impl Into<String>) -> Result<(), mpsc::error::SendError<StreamChunk>> {
+    pub fn send_content_complete(
+        &self,
+        content: impl Into<String>,
+    ) -> Result<(), mpsc::error::SendError<StreamChunk>> {
         self.send(StreamChunk::content_complete(&self.session_id, content))
     }
 
     /// 发送错误事件
-    pub fn send_error(&self, error: impl Into<String>) -> Result<(), mpsc::error::SendError<StreamChunk>> {
+    pub fn send_error(
+        &self,
+        error: impl Into<String>,
+    ) -> Result<(), mpsc::error::SendError<StreamChunk>> {
         self.send(StreamChunk::error(&self.session_id, error))
     }
 
@@ -317,9 +332,11 @@ impl StreamingResponse {
         use futures::stream::StreamExt;
 
         let stream = self.receiver_stream.map(|chunk| {
-            Ok::<_, std::convert::Infallible>(axum::response::sse::Event::default()
-                .event(chunk.event.as_str())
-                .data(serde_json::to_string(&chunk.data).unwrap_or_default()))
+            Ok::<_, std::convert::Infallible>(
+                axum::response::sse::Event::default()
+                    .event(chunk.event.as_str())
+                    .data(serde_json::to_string(&chunk.data).unwrap_or_default()),
+            )
         });
 
         Sse::new(stream).keep_alive(
@@ -333,15 +350,23 @@ impl StreamingResponse {
     pub fn into_boxed_sse(
         self,
     ) -> axum::response::sse::Sse<
-        std::pin::Pin<Box<dyn futures::Stream<Item = Result<axum::response::sse::Event, std::convert::Infallible>> + Send>>,
+        std::pin::Pin<
+            Box<
+                dyn futures::Stream<
+                        Item = Result<axum::response::sse::Event, std::convert::Infallible>,
+                    > + Send,
+            >,
+        >,
     > {
         use axum::response::sse::Sse;
         use futures::stream::StreamExt;
 
         let stream = self.receiver_stream.map(|chunk| {
-            Ok::<_, std::convert::Infallible>(axum::response::sse::Event::default()
-                .event(chunk.event.as_str())
-                .data(serde_json::to_string(&chunk.data).unwrap_or_default()))
+            Ok::<_, std::convert::Infallible>(
+                axum::response::sse::Event::default()
+                    .event(chunk.event.as_str())
+                    .data(serde_json::to_string(&chunk.data).unwrap_or_default()),
+            )
         });
 
         Sse::new(Box::pin(stream))
@@ -351,15 +376,23 @@ impl StreamingResponse {
     pub fn into_pinned_sse(
         self,
     ) -> axum::response::sse::Sse<
-        std::pin::Pin<Box<dyn futures::Stream<Item = Result<axum::response::sse::Event, std::convert::Infallible>> + Send>>,
+        std::pin::Pin<
+            Box<
+                dyn futures::Stream<
+                        Item = Result<axum::response::sse::Event, std::convert::Infallible>,
+                    > + Send,
+            >,
+        >,
     > {
         use axum::response::sse::Sse;
         use futures::stream::StreamExt;
 
         let stream = self.receiver_stream.map(|chunk| {
-            Ok::<_, std::convert::Infallible>(axum::response::sse::Event::default()
-                .event(chunk.event.as_str())
-                .data(serde_json::to_string(&chunk.data).unwrap_or_default()))
+            Ok::<_, std::convert::Infallible>(
+                axum::response::sse::Event::default()
+                    .event(chunk.event.as_str())
+                    .data(serde_json::to_string(&chunk.data).unwrap_or_default()),
+            )
         });
 
         Sse::new(Box::pin(stream))
@@ -488,14 +521,17 @@ mod tests {
         let sender = response.sender();
 
         // 发送消息
-        sender.send(StreamChunk::content_delta("session1", "hello")).unwrap();
-        sender.send(StreamChunk::content_complete("session1", "hello world")).unwrap();
+        sender
+            .send(StreamChunk::content_delta("session1", "hello"))
+            .unwrap();
+        sender
+            .send(StreamChunk::content_complete("session1", "hello world"))
+            .unwrap();
 
         // 接收消息（通过 drop sender 来结束流）
         drop(sender);
 
         // 这里我们只测试发送功能，接收测试需要在实际的流中进行
-        assert!(true);
     }
 
     #[tokio::test]

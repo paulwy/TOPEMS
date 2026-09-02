@@ -1,6 +1,7 @@
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,11 +72,11 @@ impl VectorService {
     /// 创建文档记录
     pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
-            r#"
-            INSERT INTO plugin_ai.documents (tenant_id, title, file_name, file_path, file_size, mime_type, category, tags, description, status)
+            only_own_schema_query!("ai", r#"
+            INSERT INTO ai.documents (tenant_id, title, file_name, file_path, file_size, mime_type, category, tags, description, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id
-            "#,
+            "#, "plugin_ai"),
         )
         .bind(doc.tenant_id)
         .bind(&doc.title)
@@ -101,13 +102,15 @@ impl VectorService {
         error_message: Option<&str>,
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
-            UPDATE plugin_ai.documents
+            UPDATE ai.documents
             SET status = $1, error_message = $2
             WHERE id = $3 AND tenant_id = $4
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(status)
         .bind(error_message)
         .bind(id)
@@ -124,14 +127,16 @@ impl VectorService {
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Option<Document>, sqlx::Error> {
-        let doc = sqlx::query_as::<_, DocumentRow>(
+        let doc = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM plugin_ai.documents WHERE id = $1 AND tenant_id = $2
+            FROM ai.documents WHERE id = $1 AND tenant_id = $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_optional(self.db.pool())
@@ -142,16 +147,18 @@ impl VectorService {
 
     /// 获取所有文档
     pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>, sqlx::Error> {
-        let docs = sqlx::query_as::<_, DocumentRow>(
+        let docs = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM plugin_ai.documents
+            FROM ai.documents
             WHERE tenant_id = $1
             ORDER BY created_at DESC
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await?;
@@ -161,9 +168,11 @@ impl VectorService {
 
     /// 删除文档（级联删除向量）
     pub async fn delete_document(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query(
-            "UPDATE plugin_ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
-        )
+        let result = sqlx::query(only_own_schema_query!(
+            "ai",
+            "UPDATE ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "plugin_ai"
+        ))
         .bind(id)
         .bind(tenant_id)
         .execute(self.db.pool())
@@ -179,11 +188,11 @@ impl VectorService {
         tenant_id: Uuid,
     ) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
-            r#"
-            INSERT INTO plugin_ai.document_chunks (tenant_id, document_id, chunk_index, content, metadata)
+            only_own_schema_query!("ai", r#"
+            INSERT INTO ai.document_chunks (tenant_id, document_id, chunk_index, content, metadata)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
-            "#,
+            "#, "plugin_ai"),
         )
         .bind(tenant_id)
         .bind(chunk.document_id)
@@ -203,13 +212,15 @@ impl VectorService {
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
         for vector in vectors {
-            sqlx::query(
+            sqlx::query(only_own_schema_query!(
+                "ai",
                 r#"
-                UPDATE plugin_ai.document_chunks
+                UPDATE ai.document_chunks
                 SET embedding = $1
                 WHERE document_id = $2 AND chunk_index = $3 AND tenant_id = $4
                 "#,
-            )
+                "plugin_ai"
+            ))
             .bind(&vector.embedding)
             .bind(vector.document_id)
             .bind(vector.chunk_index)
@@ -237,7 +248,8 @@ impl VectorService {
                 .join(",")
         );
 
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT
                 c.document_id,
@@ -245,14 +257,15 @@ impl VectorService {
                 c.content,
                 1 - (c.embedding <=> $1::vector) AS similarity,
                 d.title AS document_title
-            FROM plugin_ai.document_chunks c
-            JOIN plugin_ai.documents d ON c.document_id = d.id
+            FROM ai.document_chunks c
+            JOIN ai.documents d ON c.document_id = d.id
             WHERE c.embedding <=> $1::vector < 0.5
               AND c.tenant_id = $3
             ORDER BY c.embedding <=> $1::vector
             LIMIT $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(&embedding_str)
         .bind(top_k as i64)
         .bind(tenant_id)
@@ -275,22 +288,30 @@ impl VectorService {
 
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
-        let doc_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_ai.documents")
-            .fetch_one(self.db.pool())
-            .await?;
+        let doc_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
+            "SELECT COUNT(*) FROM ai.documents",
+            "plugin_ai"
+        ))
+        .fetch_one(self.db.pool())
+        .await?;
 
-        let chunk_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_ai.document_chunks")
-            .fetch_one(self.db.pool())
-            .await?;
+        let chunk_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
+            "SELECT COUNT(*) FROM ai.document_chunks",
+            "plugin_ai"
+        ))
+        .fetch_one(self.db.pool())
+        .await?;
 
         let vector_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM plugin_ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL",
+            only_own_schema_query!("ai", "SELECT COUNT(*) FROM ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL", "plugin_ai"),
         )
         .fetch_one(self.db.pool())
         .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
-            "SELECT vector_dimensions FROM plugin_ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL LIMIT 1",
+            only_own_schema_query!("ai", "SELECT vector_dimensions FROM ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL LIMIT 1", "plugin_ai"),
         )
         .fetch_optional(self.db.pool())
         .await?;
@@ -305,9 +326,13 @@ impl VectorService {
 
     /// 清空所有向量数据
     pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("TRUNCATE plugin_ai.document_chunks, plugin_ai.documents CASCADE")
-            .execute(self.db.pool())
-            .await?;
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            "TRUNCATE ai.document_chunks, ai.documents CASCADE",
+            "plugin_ai"
+        ))
+        .execute(self.db.pool())
+        .await?;
         Ok(())
     }
 
@@ -318,7 +343,8 @@ impl VectorService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT
                 c.document_id,
@@ -326,15 +352,16 @@ impl VectorService {
                 c.content,
                 ts_rank_cd(to_tsvector('simple', c.content), query) AS similarity,
                 d.title AS document_title
-            FROM plugin_ai.document_chunks c
-            JOIN plugin_ai.documents d ON c.document_id = d.id,
+            FROM ai.document_chunks c
+            JOIN ai.documents d ON c.document_id = d.id,
                  to_tsquery('simple', $1) query
             WHERE to_tsvector('simple', c.content) @@ query
               AND c.tenant_id = $3
             ORDER BY similarity DESC
             LIMIT $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(query)
         .bind(top_k as i64)
         .bind(tenant_id)
@@ -437,14 +464,16 @@ impl VectorService {
         document_id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Vec<DocumentChunk>, sqlx::Error> {
-        let chunks = sqlx::query_as::<_, DocumentChunkRow>(
+        let chunks = sqlx::query_as::<_, DocumentChunkRow>(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, metadata, created_at
-            FROM plugin_ai.document_chunks
+            FROM ai.document_chunks
             WHERE document_id = $1 AND tenant_id = $2
             ORDER BY chunk_index
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(document_id)
         .bind(tenant_id)
         .fetch_all(self.db.pool())
@@ -459,13 +488,15 @@ impl VectorService {
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Option<VectorEmbedding>, sqlx::Error> {
-        let row = sqlx::query(
+        let row = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, embedding
-            FROM plugin_ai.document_chunks
+            FROM ai.document_chunks
             WHERE id = $1 AND tenant_id = $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(id)
         .bind(tenant_id)
         .fetch_optional(self.db.pool())
@@ -490,7 +521,7 @@ impl VectorService {
     /// 删除向量记录
     pub async fn delete_vector(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
         let result =
-            sqlx::query("UPDATE plugin_ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+            sqlx::query(only_own_schema_query!("ai", "UPDATE ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2", "plugin_ai"))
                 .bind(id)
                 .bind(tenant_id)
                 .execute(self.db.pool())

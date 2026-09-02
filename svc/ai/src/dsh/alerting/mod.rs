@@ -335,7 +335,12 @@ impl AlertManager {
 
     /// 获取启用的告警规则
     pub fn get_enabled_rules(&self) -> Vec<AlertRule> {
-        self.rules.lock().iter().filter(|r| r.enabled).cloned().collect()
+        self.rules
+            .lock()
+            .iter()
+            .filter(|r| r.enabled)
+            .cloned()
+            .collect()
     }
 
     /// 触发告警
@@ -477,10 +482,7 @@ impl AlertManager {
                         AlertType::SlowQuery,
                         rule.level,
                         &format!("慢查询告警：{}ms", duration_ms),
-                        &format!(
-                            "Agent 执行耗时 {}ms，超过阈值 {}ms",
-                            duration_ms, threshold
-                        ),
+                        &format!("Agent 执行耗时 {}ms，超过阈值 {}ms", duration_ms, threshold),
                         "agent_orchestrator",
                         metadata,
                     );
@@ -504,8 +506,14 @@ impl AlertManager {
             if let Some(threshold) = rule.thresholds.high_error_rate {
                 if error_rate >= threshold {
                     let mut metadata = HashMap::new();
-                    metadata.insert("error_rate".to_string(), format!("{:.2}%", error_rate * 100.0));
-                    metadata.insert("threshold".to_string(), format!("{:.2}%", threshold * 100.0));
+                    metadata.insert(
+                        "error_rate".to_string(),
+                        format!("{:.2}%", error_rate * 100.0),
+                    );
+                    metadata.insert(
+                        "threshold".to_string(),
+                        format!("{:.2}%", threshold * 100.0),
+                    );
                     metadata.insert("total_executions".to_string(), total_executions.to_string());
 
                     self.trigger_alert(
@@ -537,7 +545,10 @@ impl AlertManager {
                 if usage_ratio >= threshold {
                     let mut metadata = HashMap::new();
                     metadata.insert("quota_type".to_string(), quota_type.to_string());
-                    metadata.insert("usage_ratio".to_string(), format!("{:.2}%", usage_ratio * 100.0));
+                    metadata.insert(
+                        "usage_ratio".to_string(),
+                        format!("{:.2}%", usage_ratio * 100.0),
+                    );
                     metadata.insert("used".to_string(), used.to_string());
                     metadata.insert("limit".to_string(), limit.to_string());
 
@@ -574,7 +585,10 @@ impl AlertManager {
                     let mut metadata = HashMap::new();
                     metadata.insert("cache_name".to_string(), cache_name.to_string());
                     metadata.insert("hit_rate".to_string(), format!("{:.2}%", hit_rate * 100.0));
-                    metadata.insert("threshold".to_string(), format!("{:.2}%", threshold * 100.0));
+                    metadata.insert(
+                        "threshold".to_string(),
+                        format!("{:.2}%", threshold * 100.0),
+                    );
 
                     self.trigger_alert(
                         AlertType::LowCacheHitRate,
@@ -606,7 +620,12 @@ impl AlertManager {
 
     /// 获取未解决的告警
     pub fn get_unresolved_alerts(&self) -> Vec<AlertEvent> {
-        self.history.lock().iter().filter(|e| !e.resolved).cloned().collect()
+        self.history
+            .lock()
+            .iter()
+            .filter(|e| !e.resolved)
+            .cloned()
+            .collect()
     }
 
     /// 确认告警
@@ -754,14 +773,16 @@ mod tests {
         let manager = AlertManager::with_defaults();
 
         let metadata = HashMap::new();
-        let event = manager.trigger_alert(
-            AlertType::SlowQuery,
-            AlertLevel::Warning,
-            "Test Alert",
-            "Test",
-            "test",
-            metadata,
-        ).unwrap();
+        let event = manager
+            .trigger_alert(
+                AlertType::SlowQuery,
+                AlertLevel::Warning,
+                "Test Alert",
+                "Test",
+                "test",
+                metadata,
+            )
+            .unwrap();
 
         assert!(manager.acknowledge_alert(&event.id));
         assert_eq!(manager.get_stats().acknowledged_alerts, 1);
@@ -775,14 +796,16 @@ mod tests {
         let manager = AlertManager::with_defaults();
 
         let metadata = HashMap::new();
-        let event = manager.trigger_alert(
-            AlertType::SlowQuery,
-            AlertLevel::Warning,
-            "Test Alert",
-            "Test",
-            "test",
-            metadata,
-        ).unwrap();
+        let event = manager
+            .trigger_alert(
+                AlertType::SlowQuery,
+                AlertLevel::Warning,
+                "Test Alert",
+                "Test",
+                "test",
+                metadata,
+            )
+            .unwrap();
 
         assert_eq!(manager.get_stats().unresolved_alerts, 1);
         assert!(manager.resolve_alert(&event.id));

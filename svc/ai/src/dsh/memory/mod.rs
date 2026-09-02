@@ -240,7 +240,7 @@ impl Default for MemoryConfig {
             long_term_max_items: 10000,
             working_max_items: 50,
             short_term_default_ttl: 3600, // 1 小时
-            working_default_ttl: 600,      // 10 分钟
+            working_default_ttl: 600,     // 10 分钟
             forgetting_threshold: 0.1,
             enable_auto_forgetting: true,
         }
@@ -248,7 +248,7 @@ impl Default for MemoryConfig {
 }
 
 /// 记忆系统统计
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemoryStats {
     /// 总记忆数
     pub total_memories: u64,
@@ -268,22 +268,6 @@ pub struct MemoryStats {
     pub total_accesses: u64,
     /// 遗忘次数
     pub forgotten_count: u64,
-}
-
-impl Default for MemoryStats {
-    fn default() -> Self {
-        Self {
-            total_memories: 0,
-            short_term_count: 0,
-            long_term_count: 0,
-            working_count: 0,
-            episodic_count: 0,
-            semantic_count: 0,
-            expired_count: 0,
-            total_accesses: 0,
-            forgotten_count: 0,
-        }
-    }
 }
 
 // ============================================================================
@@ -441,7 +425,11 @@ impl MemorySystem {
     }
 
     /// 检索记忆
-    pub fn search(&self, query: &str, config: Option<MemorySearchConfig>) -> Vec<MemorySearchResult> {
+    pub fn search(
+        &self,
+        query: &str,
+        config: Option<MemorySearchConfig>,
+    ) -> Vec<MemorySearchResult> {
         let search_config = config.unwrap_or_default();
 
         let memories = self.memories.lock();
@@ -487,7 +475,11 @@ impl MemorySystem {
         drop(memories);
 
         // 按相关性分数排序
-        results.sort_by(|a, b| b.relevance_score.partial_cmp(&a.relevance_score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.relevance_score
+                .partial_cmp(&a.relevance_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // 限制返回数量并设置排名
         let top_k = search_config.top_k;
@@ -630,7 +622,11 @@ impl MemorySystem {
 
         let excess = same_type_memories.len() - max_items;
         let forget_count = excess.min(to_forget.len());
-        let ids_to_forget: Vec<String> = to_forget.iter().take(forget_count).map(|m| m.id.clone()).collect();
+        let ids_to_forget: Vec<String> = to_forget
+            .iter()
+            .take(forget_count)
+            .map(|m| m.id.clone())
+            .collect();
         drop(memories);
 
         for id in &ids_to_forget {

@@ -9,6 +9,11 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// 智能表单引擎（3.2b：AI 填充 + 校验）
+pub mod engine;
+
+pub use engine::SmartFormEngine;
+
 /// 表单定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FormDefinition {
@@ -269,7 +274,9 @@ pub struct ValidationRequest {
     pub ai_enabled: bool,
 }
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 /// 表单校验结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -386,10 +393,26 @@ pub mod builtin_templates {
                     placeholder: Some("请选择申请部门".to_string()),
                     validation: None,
                     options: vec![
-                        FieldOption { value: "tech".to_string(), label: "技术部".to_string(), disabled: false },
-                        FieldOption { value: "sales".to_string(), label: "销售部".to_string(), disabled: false },
-                        FieldOption { value: "finance".to_string(), label: "财务部".to_string(), disabled: false },
-                        FieldOption { value: "hr".to_string(), label: "人事部".to_string(), disabled: false },
+                        FieldOption {
+                            value: "tech".to_string(),
+                            label: "技术部".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "sales".to_string(),
+                            label: "销售部".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "finance".to_string(),
+                            label: "财务部".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "hr".to_string(),
+                            label: "人事部".to_string(),
+                            disabled: false,
+                        },
                     ],
                     group: Some("基本信息".to_string()),
                     order: 2,
@@ -467,11 +490,31 @@ pub mod builtin_templates {
                     placeholder: None,
                     validation: None,
                     options: vec![
-                        FieldOption { value: "travel".to_string(), label: "差旅费".to_string(), disabled: false },
-                        FieldOption { value: "meal".to_string(), label: "餐饮费".to_string(), disabled: false },
-                        FieldOption { value: "transport".to_string(), label: "交通费".to_string(), disabled: false },
-                        FieldOption { value: "office".to_string(), label: "办公用品".to_string(), disabled: false },
-                        FieldOption { value: "other".to_string(), label: "其他".to_string(), disabled: false },
+                        FieldOption {
+                            value: "travel".to_string(),
+                            label: "差旅费".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "meal".to_string(),
+                            label: "餐饮费".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "transport".to_string(),
+                            label: "交通费".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "office".to_string(),
+                            label: "办公用品".to_string(),
+                            disabled: false,
+                        },
+                        FieldOption {
+                            value: "other".to_string(),
+                            label: "其他".to_string(),
+                            disabled: false,
+                        },
                     ],
                     group: Some("基本信息".to_string()),
                     order: 1,
@@ -549,10 +592,7 @@ pub mod builtin_templates {
 
     /// 获取所有内置模板
     pub fn all_templates() -> Vec<FormDefinition> {
-        vec![
-            purchase_request(),
-            expense_reimbursement(),
-        ]
+        vec![purchase_request(), expense_reimbursement()]
     }
 }
 

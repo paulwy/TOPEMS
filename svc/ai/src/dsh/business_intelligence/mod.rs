@@ -459,8 +459,13 @@ impl SmartFormEngine {
     }
 
     /// 验证表单数据
-    pub fn validate_form(&self, form_id: &str, data: &FormData) -> Result<FormValidationResult, String> {
-        let form = self.get_form(form_id)
+    pub fn validate_form(
+        &self,
+        form_id: &str,
+        data: &FormData,
+    ) -> Result<FormValidationResult, String> {
+        let form = self
+            .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
 
         let mut field_errors: HashMap<String, Vec<FieldError>> = HashMap::new();
@@ -488,11 +493,14 @@ impl SmartFormEngine {
                 };
 
                 if is_empty {
-                    field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                        code: "REQUIRED".to_string(),
-                        message: format!("{} 为必填项", field.label),
-                        severity: ValidationSeverity::Error,
-                    });
+                    field_errors
+                        .entry(field.field_id.clone())
+                        .or_default()
+                        .push(FieldError {
+                            code: "REQUIRED".to_string(),
+                            message: format!("{} 为必填项", field.label),
+                            severity: ValidationSeverity::Error,
+                        });
                 }
             }
 
@@ -503,11 +511,17 @@ impl SmartFormEngine {
                     if let Some(min_len) = validation.min_length {
                         if let Some(s) = value.as_str() {
                             if s.len() < min_len as usize {
-                                field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                                    code: "MIN_LENGTH".to_string(),
-                                    message: format!("{} 最少需要 {} 个字符", field.label, min_len),
-                                    severity: ValidationSeverity::Error,
-                                });
+                                field_errors
+                                    .entry(field.field_id.clone())
+                                    .or_default()
+                                    .push(FieldError {
+                                        code: "MIN_LENGTH".to_string(),
+                                        message: format!(
+                                            "{} 最少需要 {} 个字符",
+                                            field.label, min_len
+                                        ),
+                                        severity: ValidationSeverity::Error,
+                                    });
                             }
                         }
                     }
@@ -515,11 +529,14 @@ impl SmartFormEngine {
                     if let Some(max_len) = validation.max_length {
                         if let Some(s) = value.as_str() {
                             if s.len() > max_len as usize {
-                                field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                                    code: "MAX_LENGTH".to_string(),
-                                    message: format!("{} 最多 {} 个字符", field.label, max_len),
-                                    severity: ValidationSeverity::Error,
-                                });
+                                field_errors
+                                    .entry(field.field_id.clone())
+                                    .or_default()
+                                    .push(FieldError {
+                                        code: "MAX_LENGTH".to_string(),
+                                        message: format!("{} 最多 {} 个字符", field.label, max_len),
+                                        severity: ValidationSeverity::Error,
+                                    });
                             }
                         }
                     }
@@ -528,11 +545,14 @@ impl SmartFormEngine {
                     if let Some(min_val) = validation.min_value {
                         if let Some(n) = value.as_f64() {
                             if n < min_val {
-                                field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                                    code: "MIN_VALUE".to_string(),
-                                    message: format!("{} 不能小于 {}", field.label, min_val),
-                                    severity: ValidationSeverity::Error,
-                                });
+                                field_errors
+                                    .entry(field.field_id.clone())
+                                    .or_default()
+                                    .push(FieldError {
+                                        code: "MIN_VALUE".to_string(),
+                                        message: format!("{} 不能小于 {}", field.label, min_val),
+                                        severity: ValidationSeverity::Error,
+                                    });
                             }
                         }
                     }
@@ -540,11 +560,14 @@ impl SmartFormEngine {
                     if let Some(max_val) = validation.max_value {
                         if let Some(n) = value.as_f64() {
                             if n > max_val {
-                                field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                                    code: "MAX_VALUE".to_string(),
-                                    message: format!("{} 不能大于 {}", field.label, max_val),
-                                    severity: ValidationSeverity::Error,
-                                });
+                                field_errors
+                                    .entry(field.field_id.clone())
+                                    .or_default()
+                                    .push(FieldError {
+                                        code: "MAX_VALUE".to_string(),
+                                        message: format!("{} 不能大于 {}", field.label, max_val),
+                                        severity: ValidationSeverity::Error,
+                                    });
                             }
                         }
                     }
@@ -553,11 +576,16 @@ impl SmartFormEngine {
                     if let Some(pattern) = &validation.pattern {
                         if let Some(s) = value.as_str() {
                             if !regex_match(s, pattern) {
-                                field_errors.entry(field.field_id.clone()).or_default().push(FieldError {
-                                    code: "PATTERN".to_string(),
-                                    message: validation.error_message.clone().unwrap_or_else(|| format!("{} 格式不正确", field.label)),
-                                    severity: ValidationSeverity::Error,
-                                });
+                                field_errors
+                                    .entry(field.field_id.clone())
+                                    .or_default()
+                                    .push(FieldError {
+                                        code: "PATTERN".to_string(),
+                                        message: validation.error_message.clone().unwrap_or_else(
+                                            || format!("{} 格式不正确", field.label),
+                                        ),
+                                        severity: ValidationSeverity::Error,
+                                    });
                             }
                         }
                     }
@@ -607,7 +635,8 @@ impl SmartFormEngine {
         form_id: &str,
         context: &HashMap<String, serde_json::Value>,
     ) -> Result<FormData, String> {
-        let form = self.get_form(form_id)
+        let form = self
+            .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
 
         let mut values = HashMap::new();
@@ -663,12 +692,9 @@ impl SmartFormEngine {
     }
 
     /// 从自然语言生成表单数据
-    pub fn generate_from_text(
-        &self,
-        form_id: &str,
-        text: &str,
-    ) -> Result<FormData, String> {
-        let form = self.get_form(form_id)
+    pub fn generate_from_text(&self, form_id: &str, text: &str) -> Result<FormData, String> {
+        let form = self
+            .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
 
         let mut values = HashMap::new();
@@ -794,11 +820,36 @@ fn create_purchase_request_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "tech".to_string(), label: "技术部".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "sales".to_string(), label: "销售部".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "finance".to_string(), label: "财务部".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "hr".to_string(), label: "人事部".to_string(), disabled: false, order: 4 },
-                    FormFieldOption { value: "admin".to_string(), label: "行政部".to_string(), disabled: false, order: 5 },
+                    FormFieldOption {
+                        value: "tech".to_string(),
+                        label: "技术部".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "sales".to_string(),
+                        label: "销售部".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "finance".to_string(),
+                        label: "财务部".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "hr".to_string(),
+                        label: "人事部".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
+                    FormFieldOption {
+                        value: "admin".to_string(),
+                        label: "行政部".to_string(),
+                        disabled: false,
+                        order: 5,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: Some(AutoFillConfig {
@@ -997,17 +1048,15 @@ fn create_purchase_request_form() -> FormDefinition {
                 order: 11,
             },
         ],
-        validation_rules: vec![
-            FormValidationRule {
-                rule_id: "amount_check".to_string(),
-                name: "金额校验".to_string(),
-                rule_type: ValidationRuleType::BusinessRule,
-                fields: vec!["quantity".to_string(), "unit_price".to_string()],
-                expression: "quantity * unit_price > 0".to_string(),
-                error_message: "采购总金额必须大于 0".to_string(),
-                severity: ValidationSeverity::Error,
-            },
-        ],
+        validation_rules: vec![FormValidationRule {
+            rule_id: "amount_check".to_string(),
+            name: "金额校验".to_string(),
+            rule_type: ValidationRuleType::BusinessRule,
+            fields: vec!["quantity".to_string(), "unit_price".to_string()],
+            expression: "quantity * unit_price > 0".to_string(),
+            error_message: "采购总金额必须大于 0".to_string(),
+            severity: ValidationSeverity::Error,
+        }],
         template: None,
         version: "1.0".to_string(),
         enabled: true,
@@ -1076,13 +1125,48 @@ fn create_expense_report_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "travel".to_string(), label: "差旅费".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "entertainment".to_string(), label: "招待费".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "office".to_string(), label: "办公费".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "transport".to_string(), label: "交通费".to_string(), disabled: false, order: 4 },
-                    FormFieldOption { value: "communication".to_string(), label: "通讯费".to_string(), disabled: false, order: 5 },
-                    FormFieldOption { value: "training".to_string(), label: "培训费".to_string(), disabled: false, order: 6 },
-                    FormFieldOption { value: "other".to_string(), label: "其他".to_string(), disabled: false, order: 7 },
+                    FormFieldOption {
+                        value: "travel".to_string(),
+                        label: "差旅费".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "entertainment".to_string(),
+                        label: "招待费".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "office".to_string(),
+                        label: "办公费".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "transport".to_string(),
+                        label: "交通费".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
+                    FormFieldOption {
+                        value: "communication".to_string(),
+                        label: "通讯费".to_string(),
+                        disabled: false,
+                        order: 5,
+                    },
+                    FormFieldOption {
+                        value: "training".to_string(),
+                        label: "培训费".to_string(),
+                        disabled: false,
+                        order: 6,
+                    },
+                    FormFieldOption {
+                        value: "other".to_string(),
+                        label: "其他".to_string(),
+                        disabled: false,
+                        order: 7,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1250,10 +1334,30 @@ fn create_customer_info_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "enterprise".to_string(), label: "企业客户".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "individual".to_string(), label: "个人客户".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "government".to_string(), label: "政府机构".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "partner".to_string(), label: "合作伙伴".to_string(), disabled: false, order: 4 },
+                    FormFieldOption {
+                        value: "enterprise".to_string(),
+                        label: "企业客户".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "individual".to_string(),
+                        label: "个人客户".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "government".to_string(),
+                        label: "政府机构".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "partner".to_string(),
+                        label: "合作伙伴".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1273,10 +1377,30 @@ fn create_customer_info_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "vip".to_string(), label: "VIP客户".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "important".to_string(), label: "重要客户".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "normal".to_string(), label: "普通客户".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "potential".to_string(), label: "潜在客户".to_string(), disabled: false, order: 4 },
+                    FormFieldOption {
+                        value: "vip".to_string(),
+                        label: "VIP客户".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "important".to_string(),
+                        label: "重要客户".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "normal".to_string(),
+                        label: "普通客户".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "potential".to_string(),
+                        label: "潜在客户".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1384,13 +1508,48 @@ fn create_customer_info_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "it".to_string(), label: "信息技术".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "finance".to_string(), label: "金融".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "manufacturing".to_string(), label: "制造业".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "retail".to_string(), label: "零售".to_string(), disabled: false, order: 4 },
-                    FormFieldOption { value: "education".to_string(), label: "教育".to_string(), disabled: false, order: 5 },
-                    FormFieldOption { value: "healthcare".to_string(), label: "医疗健康".to_string(), disabled: false, order: 6 },
-                    FormFieldOption { value: "other".to_string(), label: "其他".to_string(), disabled: false, order: 7 },
+                    FormFieldOption {
+                        value: "it".to_string(),
+                        label: "信息技术".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "finance".to_string(),
+                        label: "金融".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "manufacturing".to_string(),
+                        label: "制造业".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "retail".to_string(),
+                        label: "零售".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
+                    FormFieldOption {
+                        value: "education".to_string(),
+                        label: "教育".to_string(),
+                        disabled: false,
+                        order: 5,
+                    },
+                    FormFieldOption {
+                        value: "healthcare".to_string(),
+                        label: "医疗健康".to_string(),
+                        disabled: false,
+                        order: 6,
+                    },
+                    FormFieldOption {
+                        value: "other".to_string(),
+                        label: "其他".to_string(),
+                        disabled: false,
+                        order: 7,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1462,10 +1621,30 @@ fn create_inbound_order_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "wh_main".to_string(), label: "主仓库".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "wh_east".to_string(), label: "东区仓库".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "wh_west".to_string(), label: "西区仓库".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "wh_temp".to_string(), label: "临时仓库".to_string(), disabled: false, order: 4 },
+                    FormFieldOption {
+                        value: "wh_main".to_string(),
+                        label: "主仓库".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "wh_east".to_string(),
+                        label: "东区仓库".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "wh_west".to_string(),
+                        label: "西区仓库".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "wh_temp".to_string(),
+                        label: "临时仓库".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1485,10 +1664,30 @@ fn create_inbound_order_form() -> FormDefinition {
                 hidden: false,
                 validation: None,
                 options: Some(vec![
-                    FormFieldOption { value: "purchase".to_string(), label: "采购入库".to_string(), disabled: false, order: 1 },
-                    FormFieldOption { value: "return".to_string(), label: "退货入库".to_string(), disabled: false, order: 2 },
-                    FormFieldOption { value: "transfer".to_string(), label: "调拨入库".to_string(), disabled: false, order: 3 },
-                    FormFieldOption { value: "other".to_string(), label: "其他入库".to_string(), disabled: false, order: 4 },
+                    FormFieldOption {
+                        value: "purchase".to_string(),
+                        label: "采购入库".to_string(),
+                        disabled: false,
+                        order: 1,
+                    },
+                    FormFieldOption {
+                        value: "return".to_string(),
+                        label: "退货入库".to_string(),
+                        disabled: false,
+                        order: 2,
+                    },
+                    FormFieldOption {
+                        value: "transfer".to_string(),
+                        label: "调拨入库".to_string(),
+                        disabled: false,
+                        order: 3,
+                    },
+                    FormFieldOption {
+                        value: "other".to_string(),
+                        label: "其他入库".to_string(),
+                        disabled: false,
+                        order: 4,
+                    },
                 ]),
                 depends_on: None,
                 auto_fill: None,
@@ -1972,7 +2171,9 @@ impl DocumentIntelligenceEngine {
 
     /// 注册文档
     pub fn register_document(&self, document: DocumentInfo) {
-        self.documents.lock().insert(document.document_id.clone(), document);
+        self.documents
+            .lock()
+            .insert(document.document_id.clone(), document);
     }
 
     /// 获取文档
@@ -1986,7 +2187,8 @@ impl DocumentIntelligenceEngine {
         document_id: &str,
         content: &str,
     ) -> Result<DocumentParseResult, String> {
-        let _document = self.get_document(document_id)
+        let _document = self
+            .get_document(document_id)
             .ok_or_else(|| format!("文档 {} 不存在", document_id))?;
 
         let text = content.to_string();
@@ -2116,15 +2318,18 @@ impl DocumentIntelligenceEngine {
         document_id: &str,
         summary_type: SummaryType,
     ) -> Result<DocumentSummary, String> {
-        let document = self.get_document(document_id)
+        let document = self
+            .get_document(document_id)
             .ok_or_else(|| format!("文档 {} 不存在", document_id))?;
 
-        let content = document.content.as_deref()
+        let content = document
+            .content
+            .as_deref()
             .ok_or_else(|| "文档内容为空，请先解析文档".to_string())?;
 
         // 简化的摘要生成：提取关键句
         let sentences: Vec<&str> = content
-            .split(|c| c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?')
+            .split(['。', '！', '？', '.', '!', '?'])
             .map(|s| s.trim())
             .filter(|s| !s.is_empty() && s.len() > 10)
             .collect();
@@ -2211,7 +2416,15 @@ impl DocumentIntelligenceEngine {
             for table in &section.tables {
                 if !table.headers.is_empty() {
                     content.push_str(&format!("| {} |\n", table.headers.join(" | ")));
-                    content.push_str(&format!("| {} |\n", table.headers.iter().map(|_| "---").collect::<Vec<_>>().join(" | ")));
+                    content.push_str(&format!(
+                        "| {} |\n",
+                        table
+                            .headers
+                            .iter()
+                            .map(|_| "---")
+                            .collect::<Vec<_>>()
+                            .join(" | ")
+                    ));
                     for row in &table.rows {
                         content.push_str(&format!("| {} |\n", row.join(" | ")));
                     }
@@ -2398,7 +2611,10 @@ mod tests {
                 values.insert("item_name".to_string(), serde_json::json!("办公电脑"));
                 values.insert("quantity".to_string(), serde_json::json!(5));
                 values.insert("unit_price".to_string(), serde_json::json!(5000.0));
-                values.insert("reason".to_string(), serde_json::json!("新员工入职需要配备办公电脑"));
+                values.insert(
+                    "reason".to_string(),
+                    serde_json::json!("新员工入职需要配备办公电脑"),
+                );
                 values
             },
             status: FormStatus::Draft,
@@ -2431,10 +2647,13 @@ mod tests {
     fn test_smart_form_engine_auto_fill() {
         let engine = SmartFormEngine::with_defaults();
         let mut context = HashMap::new();
-        context.insert("user".to_string(), serde_json::json!({
-            "name": "张三",
-            "department": "tech"
-        }));
+        context.insert(
+            "user".to_string(),
+            serde_json::json!({
+                "name": "张三",
+                "department": "tech"
+            }),
+        );
 
         let data = engine.auto_fill_form("purchase_request", &context).unwrap();
         assert_eq!(data.form_id, "purchase_request");
@@ -2446,7 +2665,9 @@ mod tests {
     #[test]
     fn test_smart_form_engine_generate_from_text() {
         let engine = SmartFormEngine::with_defaults();
-        let data = engine.generate_from_text("expense_report", "差旅费报销 500元 2024-01-15").unwrap();
+        let data = engine
+            .generate_from_text("expense_report", "差旅费报销 500元 2024-01-15")
+            .unwrap();
         assert_eq!(data.form_id, "expense_report");
     }
 
@@ -2651,8 +2872,14 @@ mod tests {
 
     #[test]
     fn test_extract_date() {
-        assert_eq!(extract_date("日期是 2024-01-15"), Some("2024-01-15".to_string()));
-        assert_eq!(extract_date("日期是 2024/01/15"), Some("2024-01-15".to_string()));
+        assert_eq!(
+            extract_date("日期是 2024-01-15"),
+            Some("2024-01-15".to_string())
+        );
+        assert_eq!(
+            extract_date("日期是 2024/01/15"),
+            Some("2024-01-15".to_string())
+        );
         assert_eq!(extract_date("没有日期"), None);
     }
 

@@ -14,7 +14,7 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::dsh::business_copilot::{
-    BusinessModule, CopilotRequest, CopilotSessionManager, ConversationMessage,
+    BusinessModule, ConversationMessage, CopilotRequest, CopilotSessionManager,
 };
 
 /// 应用状态（共享的会话管理器）
@@ -26,7 +26,11 @@ pub struct CopilotAppState {
 impl CopilotAppState {
     pub fn new() -> Self {
         Self {
-            session_manager: Arc::new(RwLock::new(CopilotSessionManager::with_defaults())),
+            session_manager: Arc::new(RwLock::new(
+                CopilotSessionManager::with_defaults().with_llm_provider(
+                    crate::dsh::provider::ProviderFactory::build_resilient_provider(),
+                ),
+            )),
         }
     }
 }
@@ -236,7 +240,7 @@ pub async fn send_message(
     };
 
     let manager = state.session_manager.read().await;
-    match manager.process_request(copilot_request) {
+    match manager.process_request(copilot_request).await {
         Ok(response) => (StatusCode::OK, Json(response)).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -250,9 +254,7 @@ pub async fn send_message(
 }
 
 /// 获取活跃会话列表
-pub async fn list_active_sessions(
-    State(state): State<CopilotAppState>,
-) -> impl IntoResponse {
+pub async fn list_active_sessions(State(state): State<CopilotAppState>) -> impl IntoResponse {
     let manager = state.session_manager.read().await;
     let count = manager.active_session_count();
 
@@ -264,9 +266,7 @@ pub async fn list_active_sessions(
 }
 
 /// 意图识别
-pub async fn recognize_intent(
-    Json(req): Json<IntentRecognizeRequest>,
-) -> impl IntoResponse {
+pub async fn recognize_intent(Json(req): Json<IntentRecognizeRequest>) -> impl IntoResponse {
     let recognizer = crate::dsh::business_copilot::IntentRecognizer::new();
     let (intent, confidence) = recognizer.recognize(&req.text);
 
@@ -312,9 +312,7 @@ pub async fn list_modules() -> impl IntoResponse {
 }
 
 /// 获取模块配置
-pub async fn get_module_config(
-    Path(module): Path<String>,
-) -> impl IntoResponse {
+pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse {
     let business_module = parse_business_module(&module);
     let config = ModuleConfigResponse {
         module: business_module.as_str().to_string(),

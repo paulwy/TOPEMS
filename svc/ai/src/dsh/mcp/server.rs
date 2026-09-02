@@ -11,10 +11,11 @@ use tokio::sync::RwLock;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use topems_shared_mcp::protocol::{
     InitializeParams, InitializeResult, McpCapability, McpProtocolVersion, McpServerInfo,
-    McpToolResult, ToolsCapability,
+    McpToolResult, ResourcesCapability, ToolsCapability,
 };
 
-use super::security::McpSecurityMiddleware;
+use super::resources::{register_business_resources, ResourceRegistry};
+use super::security::{AuthenticatedUser, McpSecurityMiddleware};
 use super::tools::{ToolExecutionError, ToolRegistry};
 
 /// MCP Server 状态
@@ -69,10 +70,14 @@ pub struct McpServer {
     state: Arc<RwLock<ServerState>>,
     /// 工具注册表
     tools: ToolRegistry,
+    /// 资源注册表
+    resources: ResourceRegistry,
     /// 协议版本
     protocol_version: McpProtocolVersion,
     /// 安全中间件
     security: McpSecurityMiddleware,
+    /// 当前用户上下文（权限继承：无权限用户无法调用受限工具）
+    user: Arc<RwLock<Option<AuthenticatedUser>>>,
 }
 
 impl McpServer {
@@ -83,14 +88,60 @@ impl McpServer {
             version: version.into(),
             state: Arc::new(RwLock::new(ServerState::Uninitialized)),
             tools: ToolRegistry::new(),
+            resources: ResourceRegistry::new(),
             protocol_version: McpProtocolVersion::default(),
             security: McpSecurityMiddleware::new(),
+            user: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    /// 设置当前用户上下文（外部 Agent 对接时注入认证用户；不设置则视为匿名）
+    pub async fn set_user(&self, user: Option<AuthenticatedUser>) {
+        *self.user.write().await = user;
+    }
+
+    /// 获取当前用户上下文
+    pub async fn current_user(&self) -> Option<AuthenticatedUser> {
+        self.user.read().await.clone()
+    }
+
+    /// 检查当前用户是否有权限调用指定工具（权限继承）
+    ///
+    /// - 工具无权限要求 → 放行
+    /// - 工具要求权限但无用户上下文 → 拒绝（匿名不可调用受限工具）
+    /// - 工具要求权限且用户缺该权限 → 拒绝
+    async fn check_tool_permission(&self, tool_name: &str) -> Result<(), ToolExecutionError> {
+        let required = self.tools.required_permission(tool_name).await;
+        let Some(permission) = required else {
+            return Ok(());
+        };
+        let user = self.user.read().await.clone();
+        match user {
+            Some(u) => {
+                self.security
+                    .check_permission(&u, tool_name, Some(&permission))
+                    .await
+            }
+            None => Err(ToolExecutionError::PermissionDenied(format!(
+                "No authenticated user; tool '{}' requires permission '{}'",
+                tool_name, permission
+            ))),
         }
     }
 
     /// 获取工具注册表（用于注册工具）
     pub fn tool_registry(&self) -> &ToolRegistry {
         &self.tools
+    }
+
+    /// 获取资源注册表
+    pub fn resource_registry(&self) -> &ResourceRegistry {
+        &self.resources
+    }
+
+    /// 注册业务资源（crm/erp/finance）
+    pub async fn register_resources(&self) {
+        register_business_resources(&self.resources).await;
     }
 
     /// 获取服务器状态
@@ -138,6 +189,8 @@ impl McpServer {
             "initialize" => Some(self.handle_initialize(id, request.params).await),
             "tools/list" => Some(self.handle_tools_list(id).await),
             "tools/call" => Some(self.handle_tools_call(id, request.params).await),
+            "resources/list" => Some(self.handle_resources_list(id).await),
+            "resources/read" => Some(self.handle_resources_read(id, request.params).await),
             "ping" => Some(JsonRpcResponse::success(id, json!({}))),
             _ => Some(JsonRpcResponse::error(
                 id,
@@ -196,7 +249,10 @@ impl McpServer {
                 tools: Some(ToolsCapability {
                     list_changed: Some(true),
                 }),
-                resources: None,
+                resources: Some(ResourcesCapability {
+                    list_changed: Some(true),
+                    subscribe: Some(false),
+                }),
                 prompts: None,
                 sampling: None,
             },
@@ -246,12 +302,25 @@ impl McpServer {
         let arguments = params["arguments"].clone();
 
         // 安全检查：校验工具输入
-        if let Err(e) = self.security.validate_tool_input(&tool_name, &arguments).await {
+        if let Err(e) = self
+            .security
+            .validate_tool_input(&tool_name, &arguments)
+            .await
+        {
             let (code, message) = match e {
                 ToolExecutionError::NotFound(_) => (-32601, e.to_string()),
                 ToolExecutionError::Validation(_) => (-32602, e.to_string()),
                 ToolExecutionError::Execution(_) => (-32000, e.to_string()),
                 ToolExecutionError::PermissionDenied(_) => (-32001, e.to_string()),
+            };
+            return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
+        }
+
+        // 权限继承：无权限用户无法调用受限工具
+        if let Err(e) = self.check_tool_permission(&tool_name).await {
+            let (code, message) = match e {
+                ToolExecutionError::PermissionDenied(_) => (-32001, e.to_string()),
+                _ => (-32000, e.to_string()),
             };
             return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
         }
@@ -281,6 +350,35 @@ impl McpServer {
 
                 JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None))
             }
+        }
+    }
+
+    /// 处理 resources/list 请求
+    async fn handle_resources_list(&self, id: Value) -> JsonRpcResponse {
+        let resources = self.resources.list().await;
+        JsonRpcResponse::success(id, json!({ "resources": resources }))
+    }
+
+    /// 处理 resources/read 请求
+    async fn handle_resources_read(&self, id: Value, params: Option<Value>) -> JsonRpcResponse {
+        let uri = match params.and_then(|p| p["uri"].as_str().map(|s| s.to_string())) {
+            Some(uri) => uri,
+            None => {
+                return JsonRpcResponse::error(
+                    id,
+                    JsonRpcError::invalid_params(Some(json!({"error": "Missing resource uri"}))),
+                )
+            }
+        };
+
+        match self.resources.read_by_template(&uri).await {
+            Some((meta, content)) => {
+                JsonRpcResponse::success(id, json!({ "contents": [content], "resource": meta }))
+            }
+            None => JsonRpcResponse::error(
+                id,
+                JsonRpcError::app_error(-32002, format!("Resource not found: {}", uri), None),
+            ),
         }
     }
 
@@ -330,6 +428,208 @@ mod tests {
     use super::*;
     use topems_shared_mcp::protocol::McpContent;
     use topems_shared_mcp::schema::SchemaBuilder;
+
+    #[tokio::test]
+    async fn test_resources_list_protocol() {
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        // initialize
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+        let request = JsonRpcRequest::new("resources/list", json!(1), None);
+        let response = server.handle_request(request).await.unwrap();
+        let body = response.result.clone().unwrap();
+        assert_eq!(body["resources"].as_array().unwrap().len(), 3);
+        let uris: Vec<&str> = body["resources"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| r["uri"].as_str().unwrap())
+            .collect();
+        assert!(uris.contains(&"crm://customers/{id}"));
+        assert!(uris.contains(&"erp://sales_orders/{id}"));
+        assert!(uris.contains(&"finance://vouchers/{id}"));
+    }
+
+    #[tokio::test]
+    async fn test_resources_read_protocol_not_found() {
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        // initialize
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+        let request = JsonRpcRequest::new(
+            "resources/read",
+            json!(2),
+            Some(
+                json!({"uri": "crm://customers/nonexistent-00000000-0000-0000-0000-000000000000"}),
+            ),
+        );
+        let response = server.handle_request(request).await.unwrap();
+        assert!(!response.is_success());
+    }
+
+    #[tokio::test]
+    async fn test_resources_read_protocol_missing_uri() {
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        // initialize
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+        let request = JsonRpcRequest::new("resources/read", json!(3), Some(json!({})));
+        let response = server.handle_request(request).await.unwrap();
+        assert!(!response.is_success());
+    }
+
+    #[tokio::test]
+    #[ignore = "需要 ERP_SERVICE_URL 指向真实 erp 服务时手动运行"]
+    async fn test_resources_read_real_api() {
+        if std::env::var("ERP_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 ERP_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+
+        let id = std::env::var("ERP_SAMPLE_ORDER_ID").unwrap_or_default();
+        if id.is_empty() {
+            eprintln!("SKIP: 未设置 ERP_SAMPLE_ORDER_ID");
+            return;
+        }
+        let request = JsonRpcRequest::new(
+            "resources/read",
+            json!(2),
+            Some(json!({"uri": format!("erp://sales_orders/{}", id)})),
+        );
+        let response = server.handle_request(request).await.unwrap();
+        assert!(response.is_success(), "resources/read 应成功读取真实订单");
+        let body = response.result.clone().unwrap();
+        let contents = body["contents"].as_array().unwrap();
+        assert!(!contents.is_empty());
+        eprintln!("erp://sales_orders/{} 真实资源读取成功", id);
+    }
+
+    #[tokio::test]
+    #[ignore = "需要 CRM_SERVICE_URL 指向真实 crm 服务时手动运行"]
+    async fn test_resources_read_crm_real_api() {
+        if std::env::var("CRM_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 CRM_SERVICE_URL");
+            return;
+        }
+        let id = std::env::var("CRM_SAMPLE_CUSTOMER_ID").unwrap_or_default();
+        if id.is_empty() {
+            eprintln!("SKIP: 未设置 CRM_SAMPLE_CUSTOMER_ID");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+
+        let request = JsonRpcRequest::new(
+            "resources/read",
+            json!(2),
+            Some(json!({"uri": format!("crm://customers/{}", id)})),
+        );
+        let response = server.handle_request(request).await.unwrap();
+        assert!(response.is_success(), "resources/read 应成功读取真实客户");
+        let body = response.result.clone().unwrap();
+        let contents = body["contents"].as_array().unwrap();
+        assert!(!contents.is_empty());
+        eprintln!("crm://customers/{} 真实资源读取成功", id);
+    }
+
+    #[tokio::test]
+    #[ignore = "需要 FINANCE_SERVICE_URL 指向真实 finance 服务时手动运行"]
+    async fn test_resources_read_finance_real_api() {
+        if std::env::var("FINANCE_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 FINANCE_SERVICE_URL");
+            return;
+        }
+        let id = std::env::var("FINANCE_SAMPLE_VOUCHER_ID").unwrap_or_default();
+        if id.is_empty() {
+            eprintln!("SKIP: 未设置 FINANCE_SAMPLE_VOUCHER_ID");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        server.register_resources().await;
+        let init_request = JsonRpcRequest::new(
+            "initialize",
+            json!(1),
+            Some(json!({
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "test", "version": "1.0" }
+            })),
+        );
+        server.handle_request(init_request).await;
+        let notif = JsonRpcRequest::notification("notifications/initialized", None);
+        server.handle_request(notif).await;
+
+        let request = JsonRpcRequest::new(
+            "resources/read",
+            json!(2),
+            Some(json!({"uri": format!("finance://vouchers/{}", id)})),
+        );
+        let response = server.handle_request(request).await.unwrap();
+        assert!(response.is_success(), "resources/read 应成功读取真实凭证");
+        let body = response.result.clone().unwrap();
+        let contents = body["contents"].as_array().unwrap();
+        assert!(!contents.is_empty());
+        eprintln!("finance://vouchers/{} 真实资源读取成功", id);
+    }
 
     #[tokio::test]
     async fn test_server_initial_state() {
@@ -506,5 +806,145 @@ mod tests {
         let request = JsonRpcRequest::new("ping", json!(2), None);
         let response = server.handle_request(request).await.unwrap();
         assert!(response.is_success());
+    }
+    // ===== 权限继承验证（2.3 外部 Agent 对接）=====
+    async fn setup_finance_permission_server() -> McpServer {
+        let server = McpServer::new("test", "1.0.0");
+        crate::dsh::mcp::tools::finance::register_finance_tools(&server).await;
+        server
+    }
+
+    async fn init_server(server: &McpServer) {
+        server
+            .handle_request(JsonRpcRequest::new(
+                "initialize",
+                json!(1),
+                Some(json!({
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": { "name": "test", "version": "1.0" }
+                })),
+            ))
+            .await;
+        server
+            .handle_request(JsonRpcRequest::notification(
+                "notifications/initialized",
+                None,
+            ))
+            .await;
+    }
+
+    fn call_tool_req(name: &str, args: Value) -> JsonRpcRequest {
+        JsonRpcRequest::new(
+            "tools/call",
+            json!(2),
+            Some(json!({ "name": name, "arguments": args })),
+        )
+    }
+
+    #[tokio::test]
+    async fn test_permission_denied_without_user() {
+        // 匿名用户（未注入身份）不可调用受限工具 finance.create_invoice
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+        let resp = server
+            .handle_request(call_tool_req(
+                "finance.create_invoice",
+                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+            ))
+            .await
+            .unwrap();
+        assert!(!resp.is_success(), "匿名用户应被拒绝调用受限工具");
+        let err = resp.error.as_ref().unwrap();
+        assert_eq!(err.code, -32001, "应为权限拒绝错误码");
+    }
+
+    #[tokio::test]
+    async fn test_permission_denied_wrong_role() {
+        // 仅 crm 角色的用户无 finance:write 权限 → 拒绝
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+        server
+            .set_user(Some(AuthenticatedUser::new(
+                "user1",
+                "tenant1",
+                vec!["crm".to_string()],
+            )))
+            .await;
+        let resp = server
+            .handle_request(call_tool_req(
+                "finance.create_invoice",
+                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+            ))
+            .await
+            .unwrap();
+        assert!(!resp.is_success(), "无 finance 权限用户应被拒绝");
+        assert_eq!(resp.error.as_ref().unwrap().code, -32001);
+    }
+
+    #[tokio::test]
+    async fn test_permission_allowed_with_matching_role() {
+        // finance 角色拥有 finance:write 权限 → 放行
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+        server
+            .set_user(Some(AuthenticatedUser::new(
+                "finance_user",
+                "tenant1",
+                vec!["finance".to_string()],
+            )))
+            .await;
+        let resp = server
+            .handle_request(call_tool_req(
+                "finance.create_invoice",
+                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+            ))
+            .await
+            .unwrap();
+        assert!(resp.is_success(), "finance 角色用户应可创建发票");
+    }
+
+    #[tokio::test]
+    async fn test_permission_allowed_admin() {
+        // admin 拥有所有权限 → 放行
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+        server
+            .set_user(Some(AuthenticatedUser::new(
+                "admin1",
+                "tenant1",
+                vec!["admin".to_string()],
+            )))
+            .await;
+        let resp = server
+            .handle_request(call_tool_req(
+                "finance.create_invoice",
+                json!({"customer_id": "C1", "amount": 100.0, "tax_rate": 13.0}),
+            ))
+            .await
+            .unwrap();
+        assert!(resp.is_success(), "admin 用户应可创建发票");
+    }
+
+    #[tokio::test]
+    async fn test_unrestricted_tool_not_blocked() {
+        // 无权限用户调用无权限要求的工具（finance.list_transactions）不受影响
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+        server
+            .set_user(Some(AuthenticatedUser::new(
+                "crm_user",
+                "tenant1",
+                vec!["crm".to_string()],
+            )))
+            .await;
+        let resp = server
+            .handle_request(call_tool_req(
+                "finance.list_transactions",
+                json!({"page": 1, "page_size": 5}),
+            ))
+            .await
+            .unwrap();
+        assert!(resp.is_success(), "无权限要求工具不应被权限检查拦截");
     }
 }

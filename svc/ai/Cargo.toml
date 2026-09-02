@@ -23,6 +23,7 @@ futures.workspace = true
 async-stream = "0.3"
 topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }

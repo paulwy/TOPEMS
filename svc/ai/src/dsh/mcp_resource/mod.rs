@@ -542,7 +542,10 @@ impl ResourceManager {
             .or_insert_with(Vec::new);
 
         // 检查是否已订阅
-        if subscriber_list.iter().any(|s| s.subscriber_id == subscriber_id) {
+        if subscriber_list
+            .iter()
+            .any(|s| s.subscriber_id == subscriber_id)
+        {
             return Err(format!("订阅者 {} 已订阅该资源", subscriber_id));
         }
 
@@ -640,7 +643,11 @@ impl ResourceManager {
     }
 
     /// 获取变更事件历史
-    pub fn get_event_history(&self, resource_uri: Option<&str>, limit: Option<usize>) -> Vec<ResourceChangeEvent> {
+    pub fn get_event_history(
+        &self,
+        resource_uri: Option<&str>,
+        limit: Option<usize>,
+    ) -> Vec<ResourceChangeEvent> {
         let history = self.event_history.lock();
         let mut events: Vec<ResourceChangeEvent> = if let Some(uri) = resource_uri {
             history
@@ -689,12 +696,17 @@ impl ResourceManager {
         let permissions = &resource.permissions;
 
         // 检查角色
-        if !permissions.allowed_roles.is_empty() && !permissions.allowed_roles.contains(&role.to_string()) {
+        if !permissions.allowed_roles.is_empty()
+            && !permissions.allowed_roles.contains(&role.to_string())
+        {
             return Ok(false);
         }
 
         // 检查操作
-        if !permissions.allowed_operations.contains(&operation.to_string()) {
+        if !permissions
+            .allowed_operations
+            .contains(&operation.to_string())
+        {
             return Ok(false);
         }
 
@@ -845,7 +857,9 @@ mod tests {
     #[test]
     fn test_register_duplicate_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "资源1")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "资源1"))
+            .unwrap();
         let result = manager.register(create_test_resource("res://test/1", "资源2"));
         assert!(result.is_err());
     }
@@ -853,7 +867,9 @@ mod tests {
     #[test]
     fn test_get_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let resource = manager.get("res://test/1");
         assert!(resource.is_some());
@@ -863,7 +879,9 @@ mod tests {
     #[test]
     fn test_update_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let update = ResourceUpdate {
             name: Some("更新后的名称".to_string()),
@@ -883,7 +901,9 @@ mod tests {
     #[test]
     fn test_delete_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let result = manager.delete("res://test/1");
         assert!(result.is_ok());
@@ -893,8 +913,12 @@ mod tests {
     #[test]
     fn test_list_resources() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "资源1")).unwrap();
-        manager.register(create_test_resource("res://test/2", "资源2")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "资源1"))
+            .unwrap();
+        manager
+            .register(create_test_resource("res://test/2", "资源2"))
+            .unwrap();
 
         let resources = manager.list(None);
         assert_eq!(resources.len(), 2);
@@ -955,7 +979,9 @@ mod tests {
     #[test]
     fn test_subscribe_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let result = manager.subscribe("res://test/1", "sub1", "client");
         assert!(result.is_ok());
@@ -968,7 +994,9 @@ mod tests {
     #[test]
     fn test_duplicate_subscribe() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         manager.subscribe("res://test/1", "sub1", "client").unwrap();
         let result = manager.subscribe("res://test/1", "sub1", "client");
@@ -978,7 +1006,9 @@ mod tests {
     #[test]
     fn test_unsubscribe_resource() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         manager.subscribe("res://test/1", "sub1", "client").unwrap();
         let result = manager.unsubscribe("res://test/1", "sub1");
@@ -991,7 +1021,9 @@ mod tests {
     #[test]
     fn test_event_history() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let history = manager.get_event_history(None, None);
         assert!(!history.is_empty());
@@ -1006,17 +1038,29 @@ mod tests {
         resource.permissions.allowed_operations = vec!["read".to_string(), "write".to_string()];
         manager.register(resource).unwrap();
 
-        assert!(manager.check_permission("res://test/1", "admin", "read").unwrap());
-        assert!(manager.check_permission("res://test/1", "user", "write").unwrap());
-        assert!(!manager.check_permission("res://test/1", "guest", "read").unwrap());
-        assert!(!manager.check_permission("res://test/1", "admin", "delete").unwrap());
+        assert!(manager
+            .check_permission("res://test/1", "admin", "read")
+            .unwrap());
+        assert!(manager
+            .check_permission("res://test/1", "user", "write")
+            .unwrap());
+        assert!(!manager
+            .check_permission("res://test/1", "guest", "read")
+            .unwrap());
+        assert!(!manager
+            .check_permission("res://test/1", "admin", "delete")
+            .unwrap());
     }
 
     #[test]
     fn test_get_stats() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "资源1")).unwrap();
-        manager.register(create_test_resource("res://test/2", "资源2")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "资源1"))
+            .unwrap();
+        manager
+            .register(create_test_resource("res://test/2", "资源2"))
+            .unwrap();
 
         let stats = manager.get_stats();
         assert_eq!(stats.total_resources, 2);
@@ -1027,8 +1071,12 @@ mod tests {
     #[test]
     fn test_clear_all() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "资源1")).unwrap();
-        manager.register(create_test_resource("res://test/2", "资源2")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "资源1"))
+            .unwrap();
+        manager
+            .register(create_test_resource("res://test/2", "资源2"))
+            .unwrap();
 
         manager.clear_all();
         assert_eq!(manager.get_stats().total_resources, 0);
@@ -1037,7 +1085,9 @@ mod tests {
     #[test]
     fn test_process_notification_queue() {
         let manager = create_test_manager();
-        manager.register(create_test_resource("res://test/1", "测试资源")).unwrap();
+        manager
+            .register(create_test_resource("res://test/1", "测试资源"))
+            .unwrap();
 
         let processed = manager.process_notification_queue(10);
         assert!(processed >= 1); // 注册资源会产生一个事件

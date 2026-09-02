@@ -271,8 +271,21 @@ pub async fn register_bi_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 仪表盘列表
-fn generate_mock_dashboards(category_filter: &str, status_filter: &str, owner_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let categories = ["sales", "finance", "hr", "production", "supply_chain", "quality", "executive"];
+fn generate_mock_dashboards(
+    category_filter: &str,
+    status_filter: &str,
+    owner_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let categories = [
+        "sales",
+        "finance",
+        "hr",
+        "production",
+        "supply_chain",
+        "quality",
+        "executive",
+    ];
     let statuses = ["draft", "published", "published", "published", "archived"];
     let owners = ["张三", "李四", "王五", "赵六", "钱七"];
 
@@ -302,7 +315,10 @@ fn generate_mock_dashboards(category_filter: &str, status_filter: &str, owner_fi
                 && (status_filter.is_empty() || d["status"].as_str() == Some(status_filter))
                 && (owner_filter.is_empty() || d["owner"].as_str() == Some(owner_filter))
                 && (keyword_filter.is_empty()
-                    || d["dashboard_number"].as_str().unwrap_or("").contains(keyword_filter)
+                    || d["dashboard_number"]
+                        .as_str()
+                        .unwrap_or("")
+                        .contains(keyword_filter)
                     || d["name"].as_str().unwrap_or("").contains(keyword_filter))
         })
         .collect()
@@ -353,7 +369,12 @@ fn generate_mock_dashboard_detail(dashboard_id: &str) -> Value {
 }
 
 /// 生成 Mock 报表列表
-fn generate_mock_reports(type_filter: &str, status_filter: &str, schedule_filter: &str, owner_filter: &str) -> Vec<Value> {
+fn generate_mock_reports(
+    type_filter: &str,
+    status_filter: &str,
+    schedule_filter: &str,
+    owner_filter: &str,
+) -> Vec<Value> {
     let types = ["tabular", "chart", "pivot", "crosstab", "detail"];
     let statuses = ["active", "active", "active", "paused", "failed", "archived"];
     let schedules = ["daily", "weekly", "monthly", "quarterly", "on_demand"];
@@ -392,7 +413,12 @@ fn generate_mock_reports(type_filter: &str, status_filter: &str, schedule_filter
 }
 
 /// 生成 Mock 指标数据
-fn generate_mock_metric_data(metric_id: &str, start_date: &str, end_date: &str, granularity: &str) -> Value {
+fn generate_mock_metric_data(
+    metric_id: &str,
+    start_date: &str,
+    end_date: &str,
+    granularity: &str,
+) -> Value {
     let points = match granularity {
         "hourly" => 24,
         "daily" => 30,
@@ -421,10 +447,19 @@ fn generate_mock_metric_data(metric_id: &str, start_date: &str, end_date: &str, 
         })
         .collect();
 
-    let total: f64 = data_points.iter().map(|p| p["value"].as_f64().unwrap_or(0.0)).sum();
+    let total: f64 = data_points
+        .iter()
+        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .sum();
     let avg = total / points as f64;
-    let max = data_points.iter().map(|p| p["value"].as_f64().unwrap_or(0.0)).fold(f64::NEG_INFINITY, f64::max);
-    let min = data_points.iter().map(|p| p["value"].as_f64().unwrap_or(0.0)).fold(f64::INFINITY, f64::min);
+    let max = data_points
+        .iter()
+        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .fold(f64::NEG_INFINITY, f64::max);
+    let min = data_points
+        .iter()
+        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .fold(f64::INFINITY, f64::min);
 
     json!({
         "metric_id": metric_id,
@@ -514,7 +549,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("bi.list_reports", json!({"page": 1, "page_size": 10, "status": "active"}))
+            .call_tool(
+                "bi.list_reports",
+                json!({"page": 1, "page_size": 10, "status": "active"}),
+            )
             .await
             .unwrap();
 
@@ -534,12 +572,15 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("bi.get_metric_data", json!({
-                "metric_id": "METRIC-001",
-                "start_date": "2026-08-01",
-                "end_date": "2026-08-31",
-                "granularity": "daily"
-            }))
+            .call_tool(
+                "bi.get_metric_data",
+                json!({
+                    "metric_id": "METRIC-001",
+                    "start_date": "2026-08-01",
+                    "end_date": "2026-08-31",
+                    "granularity": "daily"
+                }),
+            )
             .await
             .unwrap();
 
@@ -549,7 +590,7 @@ mod tests {
             assert_eq!(parsed["granularity"], "daily");
             assert!(parsed["summary"].is_object());
             assert!(parsed["data_points"].is_array());
-            assert!(parsed["data_points"].as_array().unwrap().len() > 0);
+            assert!(!parsed["data_points"].as_array().unwrap().is_empty());
         } else {
             panic!("Expected text content");
         }
@@ -563,20 +604,26 @@ mod tests {
         // 缺少 end_date
         let result = server
             .tool_registry()
-            .call_tool("bi.get_metric_data", json!({
-                "metric_id": "METRIC-001",
-                "start_date": "2026-08-01"
-            }))
+            .call_tool(
+                "bi.get_metric_data",
+                json!({
+                    "metric_id": "METRIC-001",
+                    "start_date": "2026-08-01"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 metric_id
         let result = server
             .tool_registry()
-            .call_tool("bi.get_metric_data", json!({
-                "start_date": "2026-08-01",
-                "end_date": "2026-08-31"
-            }))
+            .call_tool(
+                "bi.get_metric_data",
+                json!({
+                    "start_date": "2026-08-01",
+                    "end_date": "2026-08-31"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

@@ -18,7 +18,10 @@
 
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::response::{sse::{Event, KeepAlive, Sse}, IntoResponse, Response};
+use axum::response::{
+    sse::{Event, KeepAlive, Sse},
+    IntoResponse, Response,
+};
 use axum::Json;
 use serde::Deserialize;
 use serde_json::Value;
@@ -347,7 +350,12 @@ mod tests {
 
         // SSE 端点应返回 200 OK 和 text/event-stream Content-Type
         assert_eq!(response.status(), StatusCode::OK);
-        let content_type = response.headers().get("content-type").unwrap().to_str().unwrap();
+        let content_type = response
+            .headers()
+            .get("content-type")
+            .unwrap()
+            .to_str()
+            .unwrap();
         assert!(content_type.contains("text/event-stream"));
     }
 

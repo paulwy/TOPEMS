@@ -9,6 +9,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[cfg(test)]
 use uuid::Uuid;
 
 /// 文档类型

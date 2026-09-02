@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 WMS 业务工具到 MCP Server
 ///
@@ -73,6 +74,18 @@ pub async fn register_wms_tools(server: &McpServer) {
                 let keyword = params["keyword"].as_str().unwrap_or("");
                 let status = params["status"].as_str().unwrap_or("");
 
+                // 真实调用 WMS API（GET /api/wms/inventory，降级 mock）
+                let mut path = format!("/api/wms/inventory?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
+                let base = service_base_url("WMS_SERVICE_URL", 8041);
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let items = data.get("items").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    let result = json!({ "total": total, "page": page, "page_size": page_size, "inventory": items });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
+
                 let inventory = generate_mock_inventory(warehouse_id, keyword, status);
                 let total = inventory.len();
                 let start = ((page - 1) * page_size) as usize;
@@ -119,6 +132,14 @@ pub async fn register_wms_tools(server: &McpServer) {
                 }
                 if warehouse_id.is_empty() {
                     return Err(ToolExecutionError::Validation("warehouse_id is required".to_string()));
+                }
+
+                // 真实调用 WMS API（GET /api/wms/inventory/{id}，降级 mock）
+                let base = service_base_url("WMS_SERVICE_URL", 8041);
+                let path = format!("/api/wms/inventory/{}", url_encode(material_id));
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let result = json!({ "inventory": data });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
                 }
 
                 let inventory = generate_mock_inventory_detail(material_id, warehouse_id);
@@ -171,6 +192,17 @@ pub async fn register_wms_tools(server: &McpServer) {
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
                 let status = params["status"].as_str().unwrap_or("");
                 let warehouse_type = params["warehouse_type"].as_str().unwrap_or("");
+
+                // 真实调用 WMS API（GET /api/wms/warehouses，降级 mock）
+                let mut path = format!("/api/wms/warehouses?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                let base = service_base_url("WMS_SERVICE_URL", 8041);
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let items = data.get("warehouses").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    let result = json!({ "total": total, "page": page, "page_size": page_size, "warehouses": items });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
 
                 let warehouses = generate_mock_warehouses(status, warehouse_type);
                 let total = warehouses.len();
@@ -247,6 +279,19 @@ pub async fn register_wms_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("quantity must be positive".to_string()));
                 }
 
+                // 真实调用 WMS API（POST /api/wms/transfers，降级 mock）
+                let base = service_base_url("WMS_SERVICE_URL", 8041);
+                let body = json!({
+                    "from_warehouse_id": params["from_warehouse_id"].as_str().unwrap_or(""),
+                    "to_warehouse_id": params["to_warehouse_id"].as_str().unwrap_or(""),
+                    "material_id": params["material_id"].as_str().unwrap_or(""),
+                    "quantity": params["quantity"].as_i64().unwrap_or(0),
+                });
+                if let Some(data) = http_call(&base, "POST", "/api/wms/transfers", Some(body)) {
+                    let result = json!({ "transfer": data, "message": "调拨单创建成功" });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
+
                 let transfer_id = format!("TRF-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
                 let transfer_number = format!("TRF{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
 
@@ -278,10 +323,21 @@ pub async fn register_wms_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 库存列表
-fn generate_mock_inventory(warehouse_filter: &str, keyword_filter: &str, status_filter: &str) -> Vec<Value> {
+fn generate_mock_inventory(
+    warehouse_filter: &str,
+    keyword_filter: &str,
+    status_filter: &str,
+) -> Vec<Value> {
     let warehouses = ["WH-001", "WH-002", "WH-003", "WH-004"];
     let warehouse_names = ["原材料仓", "成品仓", "半成品仓", "退货仓"];
-    let statuses = ["normal", "normal", "normal", "low_stock", "overstock", "frozen"];
+    let statuses = [
+        "normal",
+        "normal",
+        "normal",
+        "low_stock",
+        "overstock",
+        "frozen",
+    ];
     let units = ["个", "件", "箱", "kg", "m", "套"];
 
     (0..200)
@@ -368,7 +424,13 @@ fn generate_mock_inventory_detail(material_id: &str, warehouse_id: &str) -> Valu
 /// 生成 Mock 仓库列表
 fn generate_mock_warehouses(status_filter: &str, type_filter: &str) -> Vec<Value> {
     let statuses = ["active", "active", "active", "inactive", "maintenance"];
-    let types = ["raw_material", "finished_goods", "wip", "return", "hazardous"];
+    let types = [
+        "raw_material",
+        "finished_goods",
+        "wip",
+        "return",
+        "hazardous",
+    ];
     let type_names = ["原材料仓", "成品仓", "半成品仓", "退货仓", "危化品仓"];
 
     (0..20)
@@ -406,6 +468,31 @@ fn generate_mock_warehouses(status_filter: &str, type_filter: &str) -> Vec<Value
 #[cfg(test)]
 mod tests {
     use super::*;
+    use topems_shared_mcp::protocol::McpContent;
+
+    #[tokio::test]
+    #[ignore = "需要 WMS_SERVICE_URL 指向真实服务时手动运行"]
+    async fn test_wms_list_inventory_real_api() {
+        if std::env::var("WMS_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 WMS_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_wms_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool("wms.list_inventory", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回数据，total={}", total);
+        eprintln!("wms.list_inventory 真实调用返回 total = {}", total);
+    }
 
     #[tokio::test]
     async fn test_register_wms_tools() {
@@ -449,7 +536,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("wms.get_inventory", json!({"material_id": "MAT-0001", "warehouse_id": "WH-001"}))
+            .call_tool(
+                "wms.get_inventory",
+                json!({"material_id": "MAT-0001", "warehouse_id": "WH-001"}),
+            )
             .await
             .unwrap();
 
@@ -470,7 +560,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("wms.list_warehouses", json!({"page": 1, "page_size": 10, "status": "active"}))
+            .call_tool(
+                "wms.list_warehouses",
+                json!({"page": 1, "page_size": 10, "status": "active"}),
+            )
             .await
             .unwrap();
 
@@ -490,14 +583,17 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("wms.create_transfer", json!({
-                "from_warehouse_id": "WH-001",
-                "to_warehouse_id": "WH-002",
-                "material_id": "MAT-0001",
-                "quantity": 100,
-                "remark": "生产调拨",
-                "operator": "张三"
-            }))
+            .call_tool(
+                "wms.create_transfer",
+                json!({
+                    "from_warehouse_id": "WH-001",
+                    "to_warehouse_id": "WH-002",
+                    "material_id": "MAT-0001",
+                    "quantity": 100,
+                    "remark": "生产调拨",
+                    "operator": "张三"
+                }),
+            )
             .await
             .unwrap();
 
@@ -522,24 +618,30 @@ mod tests {
         // 源仓库和目标仓库相同
         let result = server
             .tool_registry()
-            .call_tool("wms.create_transfer", json!({
-                "from_warehouse_id": "WH-001",
-                "to_warehouse_id": "WH-001",
-                "material_id": "MAT-0001",
-                "quantity": 100
-            }))
+            .call_tool(
+                "wms.create_transfer",
+                json!({
+                    "from_warehouse_id": "WH-001",
+                    "to_warehouse_id": "WH-001",
+                    "material_id": "MAT-0001",
+                    "quantity": 100
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 数量为0
         let result = server
             .tool_registry()
-            .call_tool("wms.create_transfer", json!({
-                "from_warehouse_id": "WH-001",
-                "to_warehouse_id": "WH-002",
-                "material_id": "MAT-0001",
-                "quantity": 0
-            }))
+            .call_tool(
+                "wms.create_transfer",
+                json!({
+                    "from_warehouse_id": "WH-001",
+                    "to_warehouse_id": "WH-002",
+                    "material_id": "MAT-0001",
+                    "quantity": 0
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

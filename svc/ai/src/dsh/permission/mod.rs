@@ -461,10 +461,10 @@ impl PermissionMapper {
 
         // 生成缓存键
         let cache_key = format!(
-            "{}:{}:{}:{}:{}",
+            "{}:{}:{:?}:{}:{}",
             request.tenant_id,
             request.roles.join(","),
-            format!("{:?}", request.resource_category),
+            request.resource_category,
             request.resource_id,
             request.operation.as_str()
         );
@@ -472,7 +472,9 @@ impl PermissionMapper {
         // 检查缓存
         if self.config.enable_cache {
             if let Some(cache_entry) = self.cache.lock().get(&cache_key) {
-                if cache_entry.cached_at.elapsed() < Duration::from_secs(self.config.cache_ttl_seconds) {
+                if cache_entry.cached_at.elapsed()
+                    < Duration::from_secs(self.config.cache_ttl_seconds)
+                {
                     let mut stats = self.stats.lock();
                     stats.total_checks += 1;
                     stats.cache_hits += 1;
@@ -508,7 +510,8 @@ impl PermissionMapper {
             .filter(|r| {
                 r.enabled
                     && effective_roles.contains(&r.role)
-                    && self.match_resource_category(&r.resource_category, &request.resource_category)
+                    && self
+                        .match_resource_category(&r.resource_category, &request.resource_category)
                     && self.match_resource_pattern(&r.resource_pattern, &request.resource_id)
                     && r.allowed_operations.contains(&request.operation)
             })
@@ -579,7 +582,11 @@ impl PermissionMapper {
     }
 
     /// 匹配资源类别
-    fn match_resource_category(&self, rule_category: &ResourceCategory, request_category: &ResourceCategory) -> bool {
+    fn match_resource_category(
+        &self,
+        rule_category: &ResourceCategory,
+        request_category: &ResourceCategory,
+    ) -> bool {
         match rule_category {
             ResourceCategory::Custom(pattern) if pattern == "*" => true,
             _ => rule_category == request_category,
@@ -619,7 +626,8 @@ impl PermissionMapper {
         stats.total_roles = self.roles.lock().len() as u64;
 
         if stats.cache_hits + stats.cache_misses > 0 {
-            stats.cache_hit_rate = stats.cache_hits as f64 / (stats.cache_hits + stats.cache_misses) as f64;
+            stats.cache_hit_rate =
+                stats.cache_hits as f64 / (stats.cache_hits + stats.cache_misses) as f64;
         }
 
         stats

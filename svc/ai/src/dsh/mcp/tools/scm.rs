@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 SCM 业务工具到 MCP Server
 ///
@@ -80,6 +81,18 @@ pub async fn register_scm_tools(server: &McpServer) {
                 let category = params["category"].as_str().unwrap_or("");
                 let keyword = params["keyword"].as_str().unwrap_or("");
 
+                // 真实调用 SCM API（GET /api/scm/suppliers，降级 mock）
+                let mut path = format!("/api/scm/suppliers?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
+                let base = service_base_url("SCM_SERVICE_URL", 8040);
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let items = data.get("suppliers").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    let result = json!({ "total": total, "page": page, "page_size": page_size, "suppliers": items });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
+
                 let suppliers = generate_mock_suppliers(supplier_level, status, category, keyword);
                 let total = suppliers.len();
                 let start = ((page - 1) * page_size) as usize;
@@ -118,6 +131,14 @@ pub async fn register_scm_tools(server: &McpServer) {
 
                 if supplier_id.is_empty() {
                     return Err(ToolExecutionError::Validation("supplier_id is required".to_string()));
+                }
+
+                // 真实调用 SCM API（GET /api/scm/suppliers/{id}，降级 mock）
+                let base = service_base_url("SCM_SERVICE_URL", 8040);
+                let path = format!("/api/scm/suppliers/{}", url_encode(supplier_id));
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let result = json!({ "supplier": data });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
                 }
 
                 let supplier = generate_mock_supplier_detail(supplier_id);
@@ -181,6 +202,18 @@ pub async fn register_scm_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let supplier_id = params["supplier_id"].as_str().unwrap_or("");
                 let keyword = params["keyword"].as_str().unwrap_or("");
+
+                // 真实调用 SCM API（GET /api/scm/purchase-orders，降级 mock）
+                let mut path = format!("/api/scm/purchase-orders?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !keyword.is_empty() { path.push_str(&format!("&search={}", url_encode(keyword))); }
+                let base = service_base_url("SCM_SERVICE_URL", 8040);
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    let items = data.get("orders").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    let result = json!({ "total": total, "page": page, "page_size": page_size, "orders": items });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
 
                 let orders = generate_mock_purchase_orders(status, supplier_id, keyword);
                 let total = orders.len();
@@ -263,6 +296,19 @@ pub async fn register_scm_tools(server: &McpServer) {
                     total_amount += qty * price;
                 }
 
+                // 真实调用 SCM API（POST /api/scm/purchase-orders，降级 mock）
+                let base = service_base_url("SCM_SERVICE_URL", 8040);
+                let body = json!({
+                    "supplier_id": params["supplier_id"].as_str().unwrap_or(""),
+                    "items": params["items"].as_array().cloned().unwrap_or_default(),
+                    "expected_delivery_date": params["expected_delivery_date"].as_str().unwrap_or(""),
+                    "remark": params["remark"].as_str().unwrap_or(""),
+                });
+                if let Some(data) = http_call(&base, "POST", "/api/scm/purchase-orders", Some(body)) {
+                    let result = json!({ "order": data, "message": "采购订单创建成功" });
+                    return Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None });
+                }
+
                 let order_id = format!("PO-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
                 let order_number = format!("PO{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
 
@@ -295,10 +341,36 @@ pub async fn register_scm_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 供应商列表
-fn generate_mock_suppliers(level_filter: &str, status_filter: &str, category_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let levels = ["strategic", "preferred", "approved", "qualified", "pending", "blacklisted"];
-    let statuses = ["active", "active", "active", "inactive", "suspended", "terminated"];
-    let categories = ["原材料", "电子元件", "包装材料", "机械设备", "办公用品", "物流服务"];
+fn generate_mock_suppliers(
+    level_filter: &str,
+    status_filter: &str,
+    category_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let levels = [
+        "strategic",
+        "preferred",
+        "approved",
+        "qualified",
+        "pending",
+        "blacklisted",
+    ];
+    let statuses = [
+        "active",
+        "active",
+        "active",
+        "inactive",
+        "suspended",
+        "terminated",
+    ];
+    let categories = [
+        "原材料",
+        "电子元件",
+        "包装材料",
+        "机械设备",
+        "办公用品",
+        "物流服务",
+    ];
 
     (0..80)
         .map(|i| {
@@ -396,8 +468,21 @@ fn generate_mock_supplier_detail(supplier_id: &str) -> Value {
 }
 
 /// 生成 Mock 采购订单列表
-fn generate_mock_purchase_orders(status_filter: &str, supplier_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let statuses = ["draft", "pending_approval", "approved", "sent", "partial_received", "received", "closed", "cancelled"];
+fn generate_mock_purchase_orders(
+    status_filter: &str,
+    supplier_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let statuses = [
+        "draft",
+        "pending_approval",
+        "approved",
+        "sent",
+        "partial_received",
+        "received",
+        "closed",
+        "cancelled",
+    ];
 
     (0..120)
         .map(|i| {
@@ -430,6 +515,31 @@ fn generate_mock_purchase_orders(status_filter: &str, supplier_filter: &str, key
 #[cfg(test)]
 mod tests {
     use super::*;
+    use topems_shared_mcp::protocol::McpContent;
+
+    #[tokio::test]
+    #[ignore = "需要 SCM_SERVICE_URL 指向真实服务时手动运行"]
+    async fn test_scm_list_suppliers_real_api() {
+        if std::env::var("SCM_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 SCM_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_scm_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool("scm.list_suppliers", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回数据，total={}", total);
+        eprintln!("scm.list_suppliers 真实调用返回 total = {}", total);
+    }
 
     #[tokio::test]
     async fn test_register_scm_tools() {
@@ -498,7 +608,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("scm.list_purchase_orders", json!({"page": 1, "page_size": 10, "status": "approved"}))
+            .call_tool(
+                "scm.list_purchase_orders",
+                json!({"page": 1, "page_size": 10, "status": "approved"}),
+            )
             .await
             .unwrap();
 
@@ -553,19 +666,25 @@ mod tests {
         // 缺少 supplier_id
         let result = server
             .tool_registry()
-            .call_tool("scm.create_purchase_order", json!({
-                "items": [{"material_id": "MAT-0001", "quantity": 100, "unit_price": 50.0}]
-            }))
+            .call_tool(
+                "scm.create_purchase_order",
+                json!({
+                    "items": [{"material_id": "MAT-0001", "quantity": 100, "unit_price": 50.0}]
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // items 为空
         let result = server
             .tool_registry()
-            .call_tool("scm.create_purchase_order", json!({
-                "supplier_id": "SUP-0001",
-                "items": []
-            }))
+            .call_tool(
+                "scm.create_purchase_order",
+                json!({
+                    "supplier_id": "SUP-0001",
+                    "items": []
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

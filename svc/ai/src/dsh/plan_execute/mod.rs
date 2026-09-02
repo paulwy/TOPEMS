@@ -224,7 +224,10 @@ impl SubtaskStatus {
     pub fn is_terminal(&self) -> bool {
         matches!(
             self,
-            SubtaskStatus::Completed | SubtaskStatus::Failed | SubtaskStatus::Skipped | SubtaskStatus::Cancelled
+            SubtaskStatus::Completed
+                | SubtaskStatus::Failed
+                | SubtaskStatus::Skipped
+                | SubtaskStatus::Cancelled
         )
     }
 }
@@ -505,7 +508,11 @@ impl PlanExecuteOrchestrator {
     pub fn list_plans(&self, status_filter: Option<PlanStatus>) -> Vec<TaskPlan> {
         let plans = self.plans.lock();
         let mut result: Vec<TaskPlan> = if let Some(status) = status_filter {
-            plans.values().filter(|p| p.status == status).cloned().collect()
+            plans
+                .values()
+                .filter(|p| p.status == status)
+                .cloned()
+                .collect()
         } else {
             plans.values().cloned().collect()
         };
@@ -530,7 +537,11 @@ impl PlanExecuteOrchestrator {
         // 标记就绪的子任务（无依赖的）
         for subtask in &mut plan.subtasks {
             if subtask.status == SubtaskStatus::Pending {
-                let deps = plan.dependencies.get(&subtask.subtask_id).cloned().unwrap_or_default();
+                let deps = plan
+                    .dependencies
+                    .get(&subtask.subtask_id)
+                    .cloned()
+                    .unwrap_or_default();
                 if deps.is_empty() {
                     subtask.status = SubtaskStatus::Ready;
                 }
@@ -573,7 +584,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Ready && subtask.status != SubtaskStatus::WaitingRetry {
-            return Err(format!("子任务状态为 {}，无法开始执行", subtask.status.as_str()));
+            return Err(format!(
+                "子任务状态为 {}，无法开始执行",
+                subtask.status.as_str()
+            ));
         }
 
         subtask.status = SubtaskStatus::Running;
@@ -603,7 +617,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Running {
-            return Err(format!("子任务状态为 {}，无法完成", subtask.status.as_str()));
+            return Err(format!(
+                "子任务状态为 {}，无法完成",
+                subtask.status.as_str()
+            ));
         }
 
         subtask.status = SubtaskStatus::Completed;
@@ -629,9 +646,8 @@ impl PlanExecuteOrchestrator {
                 if let Some(deps) = plan.dependencies.get(&other.subtask_id) {
                     if deps.contains(&completed_id) {
                         // 检查所有依赖是否都已完成
-                        let all_deps_completed = deps.iter().all(|dep_id| {
-                            completed_ids.contains(dep_id)
-                        });
+                        let all_deps_completed =
+                            deps.iter().all(|dep_id| completed_ids.contains(dep_id));
                         if all_deps_completed {
                             other.status = SubtaskStatus::Ready;
                         }
@@ -645,7 +661,10 @@ impl PlanExecuteOrchestrator {
         // 检查计划是否全部完成
         let all_completed = plan.subtasks.iter().all(|s| s.status.is_terminal());
         if all_completed {
-            let has_failure = plan.subtasks.iter().any(|s| s.status == SubtaskStatus::Failed);
+            let has_failure = plan
+                .subtasks
+                .iter()
+                .any(|s| s.status == SubtaskStatus::Failed);
             plan.status = if has_failure {
                 PlanStatus::Failed
             } else {
@@ -676,7 +695,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Running {
-            return Err(format!("子任务状态为 {}，无法标记失败", subtask.status.as_str()));
+            return Err(format!(
+                "子任务状态为 {}，无法标记失败",
+                subtask.status.as_str()
+            ));
         }
 
         subtask.retry_count += 1;
@@ -711,7 +733,11 @@ impl PlanExecuteOrchestrator {
                 .iter()
                 .filter(|s| s.status == SubtaskStatus::Failed)
                 .count() as f64;
-            let failure_rate = if total > 0.0 { (failed / total) * 100.0 } else { 0.0 };
+            let failure_rate = if total > 0.0 {
+                (failed / total) * 100.0
+            } else {
+                0.0
+            };
 
             if failure_rate >= self.config.auto_adjust_failure_threshold {
                 plan.status = PlanStatus::Adjusting;
@@ -727,7 +753,12 @@ impl PlanExecuteOrchestrator {
     }
 
     /// 跳过子任务
-    pub fn skip_subtask(&self, plan_id: &str, subtask_id: &str, reason: &str) -> Result<(), String> {
+    pub fn skip_subtask(
+        &self,
+        plan_id: &str,
+        subtask_id: &str,
+        reason: &str,
+    ) -> Result<(), String> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -861,7 +892,11 @@ impl PlanExecuteOrchestrator {
         let mut issues = Vec::new();
         for subtask in &plan.subtasks {
             if subtask.status == SubtaskStatus::Failed {
-                issues.push(format!("子任务 '{}' 失败: {}", subtask.name, subtask.error_message.clone().unwrap_or_default()));
+                issues.push(format!(
+                    "子任务 '{}' 失败: {}",
+                    subtask.name,
+                    subtask.error_message.clone().unwrap_or_default()
+                ));
             }
         }
 
@@ -900,20 +935,42 @@ impl PlanExecuteOrchestrator {
     pub fn get_stats(&self) -> PlanExecuteStats {
         let plans = self.plans.lock();
 
-        let completed = plans.values().filter(|p| p.status == PlanStatus::Completed).count() as u64;
-        let failed = plans.values().filter(|p| p.status == PlanStatus::Failed).count() as u64;
-        let running = plans.values().filter(|p| p.status == PlanStatus::Executing).count() as u64;
+        let completed = plans
+            .values()
+            .filter(|p| p.status == PlanStatus::Completed)
+            .count() as u64;
+        let failed = plans
+            .values()
+            .filter(|p| p.status == PlanStatus::Failed)
+            .count() as u64;
+        let running = plans
+            .values()
+            .filter(|p| p.status == PlanStatus::Executing)
+            .count() as u64;
 
         let total_subtasks: u64 = plans.values().map(|p| p.subtasks.len() as u64).sum();
         let completed_subtasks: u64 = plans
             .values()
-            .map(|p| p.subtasks.iter().filter(|s| s.status == SubtaskStatus::Completed).count() as u64)
+            .map(|p| {
+                p.subtasks
+                    .iter()
+                    .filter(|s| s.status == SubtaskStatus::Completed)
+                    .count() as u64
+            })
             .sum();
         let failed_subtasks: u64 = plans
             .values()
-            .map(|p| p.subtasks.iter().filter(|s| s.status == SubtaskStatus::Failed).count() as u64)
+            .map(|p| {
+                p.subtasks
+                    .iter()
+                    .filter(|s| s.status == SubtaskStatus::Failed)
+                    .count() as u64
+            })
             .sum();
-        let total_adjustments: u64 = plans.values().map(|p| p.adjustment_history.len() as u64).sum();
+        let total_adjustments: u64 = plans
+            .values()
+            .map(|p| p.adjustment_history.len() as u64)
+            .sum();
 
         let average_completion_rate = if !plans.is_empty() {
             plans
@@ -1046,7 +1103,10 @@ mod tests {
     #[test]
     fn test_create_plan() {
         let orchestrator = create_test_orchestrator();
-        let subtasks = vec![create_test_subtask("st1", "子任务1"), create_test_subtask("st2", "子任务2")];
+        let subtasks = vec![
+            create_test_subtask("st1", "子任务1"),
+            create_test_subtask("st2", "子任务2"),
+        ];
         let deps = HashMap::new();
 
         let result = orchestrator.create_plan("测试任务", "测试目标", subtasks, deps);
@@ -1057,7 +1117,9 @@ mod tests {
     fn test_get_plan() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
 
         let plan = orchestrator.get_plan(&plan_id);
         assert!(plan.is_some());
@@ -1067,8 +1129,22 @@ mod tests {
     #[test]
     fn test_list_plans() {
         let orchestrator = create_test_orchestrator();
-        orchestrator.create_plan("任务1", "目标1", vec![create_test_subtask("st1", "子任务1")], HashMap::new()).unwrap();
-        orchestrator.create_plan("任务2", "目标2", vec![create_test_subtask("st2", "子任务2")], HashMap::new()).unwrap();
+        orchestrator
+            .create_plan(
+                "任务1",
+                "目标1",
+                vec![create_test_subtask("st1", "子任务1")],
+                HashMap::new(),
+            )
+            .unwrap();
+        orchestrator
+            .create_plan(
+                "任务2",
+                "目标2",
+                vec![create_test_subtask("st2", "子任务2")],
+                HashMap::new(),
+            )
+            .unwrap();
 
         let plans = orchestrator.list_plans(None);
         assert_eq!(plans.len(), 2);
@@ -1078,7 +1154,9 @@ mod tests {
     fn test_start_execution() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
 
         let result = orchestrator.start_execution(&plan_id);
         assert!(result.is_ok());
@@ -1090,8 +1168,13 @@ mod tests {
     #[test]
     fn test_get_ready_subtasks() {
         let orchestrator = create_test_orchestrator();
-        let subtasks = vec![create_test_subtask("st1", "子任务1"), create_test_subtask("st2", "子任务2")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let subtasks = vec![
+            create_test_subtask("st1", "子任务1"),
+            create_test_subtask("st2", "子任务2"),
+        ];
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
 
         let ready = orchestrator.get_ready_subtasks(&plan_id).unwrap();
@@ -1102,7 +1185,9 @@ mod tests {
     fn test_start_subtask() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
 
         let result = orchestrator.start_subtask(&plan_id, "st1");
@@ -1113,11 +1198,17 @@ mod tests {
     fn test_complete_subtask() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
         orchestrator.start_subtask(&plan_id, "st1").unwrap();
 
-        let result = orchestrator.complete_subtask(&plan_id, "st1", Some(serde_json::json!({"result": "success"})));
+        let result = orchestrator.complete_subtask(
+            &plan_id,
+            "st1",
+            Some(serde_json::json!({"result": "success"})),
+        );
         assert!(result.is_ok());
 
         let plan = orchestrator.get_plan(&plan_id).unwrap();
@@ -1128,7 +1219,9 @@ mod tests {
     fn test_fail_subtask_with_retry() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
         orchestrator.start_subtask(&plan_id, "st1").unwrap();
 
@@ -1145,7 +1238,9 @@ mod tests {
     fn test_skip_subtask() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
 
         let result = orchestrator.skip_subtask(&plan_id, "st1", "测试跳过原因");
@@ -1156,7 +1251,9 @@ mod tests {
     fn test_add_subtask() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
 
         let new_subtask = create_test_subtask("st2", "新子任务");
         let result = orchestrator.add_subtask(&plan_id, new_subtask);
@@ -1171,7 +1268,9 @@ mod tests {
     fn test_cancel_plan() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
 
         let result = orchestrator.cancel_plan(&plan_id);
@@ -1184,11 +1283,18 @@ mod tests {
     #[test]
     fn test_generate_report() {
         let orchestrator = create_test_orchestrator();
-        let subtasks = vec![create_test_subtask("st1", "子任务1"), create_test_subtask("st2", "子任务2")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let subtasks = vec![
+            create_test_subtask("st1", "子任务1"),
+            create_test_subtask("st2", "子任务2"),
+        ];
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
         orchestrator.start_subtask(&plan_id, "st1").unwrap();
-        orchestrator.complete_subtask(&plan_id, "st1", None).unwrap();
+        orchestrator
+            .complete_subtask(&plan_id, "st1", None)
+            .unwrap();
 
         let report = orchestrator.generate_report(&plan_id);
         assert!(report.is_ok());
@@ -1209,7 +1315,9 @@ mod tests {
         let mut deps = HashMap::new();
         deps.insert("st2".to_string(), vec!["st1".to_string()]);
 
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, deps).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, deps)
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
 
         // 只有 st1 应该就绪（st2 依赖 st1）
@@ -1219,7 +1327,9 @@ mod tests {
 
         // 完成 st1 后，st2 应该就绪
         orchestrator.start_subtask(&plan_id, "st1").unwrap();
-        orchestrator.complete_subtask(&plan_id, "st1", None).unwrap();
+        orchestrator
+            .complete_subtask(&plan_id, "st1", None)
+            .unwrap();
 
         let ready = orchestrator.get_ready_subtasks(&plan_id).unwrap();
         assert_eq!(ready.len(), 1);
@@ -1230,10 +1340,14 @@ mod tests {
     fn test_get_stats() {
         let orchestrator = create_test_orchestrator();
         let subtasks = vec![create_test_subtask("st1", "子任务1")];
-        let plan_id = orchestrator.create_plan("测试任务", "测试目标", subtasks, HashMap::new()).unwrap();
+        let plan_id = orchestrator
+            .create_plan("测试任务", "测试目标", subtasks, HashMap::new())
+            .unwrap();
         orchestrator.start_execution(&plan_id).unwrap();
         orchestrator.start_subtask(&plan_id, "st1").unwrap();
-        orchestrator.complete_subtask(&plan_id, "st1", None).unwrap();
+        orchestrator
+            .complete_subtask(&plan_id, "st1", None)
+            .unwrap();
 
         let stats = orchestrator.get_stats();
         assert!(stats.total_plans >= 1);

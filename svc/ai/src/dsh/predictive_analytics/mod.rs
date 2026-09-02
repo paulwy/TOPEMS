@@ -9,7 +9,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 /// 预测类型
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -54,8 +56,12 @@ pub struct PredictionRequest {
     pub algorithm: Option<PredictionAlgorithm>,
 }
 
-fn default_forecast_steps() -> u32 { 12 }
-fn default_confidence_level() -> f32 { 0.95 }
+fn default_forecast_steps() -> u32 {
+    12
+}
+fn default_confidence_level() -> f32 {
+    0.95
+}
 
 /// 预测周期
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -367,9 +373,15 @@ pub struct AlertConfig {
     pub ai_prediction_enabled: bool,
 }
 
-fn default_low_stock_threshold() -> f32 { 20.0 }
-fn default_overstock_threshold() -> f32 { 150.0 }
-fn default_stockout_warning_days() -> u32 { 7 }
+fn default_low_stock_threshold() -> f32 {
+    20.0
+}
+fn default_overstock_threshold() -> f32 {
+    150.0
+}
+fn default_stockout_warning_days() -> u32 {
+    7
+}
 
 /// 库存预警结果
 #[derive(Debug, Clone, Serialize, Deserialize)]

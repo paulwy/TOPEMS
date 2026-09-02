@@ -12,9 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::dsh::governance_dashboard::{
-    GovernanceDashboardGenerator, TimeRange,
-};
+use crate::dsh::governance_dashboard::{GovernanceDashboardGenerator, TimeRange};
 
 /// 应用状态（共享的仪表盘生成器）
 #[derive(Clone)]
@@ -25,7 +23,12 @@ pub struct GovernanceAppState {
 impl GovernanceAppState {
     pub fn new() -> Self {
         Self {
-            generator: Arc::new(RwLock::new(GovernanceDashboardGenerator::with_defaults())),
+            generator: Arc::new(RwLock::new(
+                // 3.2c：注入真实 AI 调用日志数据源（全局 CostMeter，与 AI 调用写入端共享），
+                // 仪表盘统计来自真实调用记录，无调用记录时降级模拟
+                GovernanceDashboardGenerator::with_defaults()
+                    .with_cost_meter(crate::dsh::governance::cost_metering::global_cost_meter()),
+            )),
         }
     }
 }
@@ -214,9 +217,7 @@ pub async fn get_recommendations(
 }
 
 /// 清除缓存
-pub async fn clear_cache(
-    State(state): State<GovernanceAppState>,
-) -> impl IntoResponse {
+pub async fn clear_cache(State(state): State<GovernanceAppState>) -> impl IntoResponse {
     let generator = state.generator.write().await;
     generator.clear_cache();
 

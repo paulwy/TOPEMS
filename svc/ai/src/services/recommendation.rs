@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -105,7 +106,8 @@ impl RecommendationService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
-        let query = sqlx::query(
+        let query = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, title, description, document_type
             FROM ai.documents
@@ -113,7 +115,8 @@ impl RecommendationService {
             ORDER BY created_at DESC
             LIMIT $1
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(top_k as i64)
         .bind(tenant_id)
         .fetch_all(self.db.pool())
@@ -368,13 +371,15 @@ impl RecommendationService {
     }
 
     pub async fn get_user_profile(&self, user_id: Uuid) -> Result<UserProfile, String> {
-        let profile = sqlx::query(
+        let profile = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT user_id, preferences, recent_interactions, created_at, updated_at
             FROM ai.user_profiles
             WHERE user_id = $1
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(user_id)
         .fetch_optional(self.db.pool())
         .await
@@ -406,14 +411,14 @@ impl RecommendationService {
         let now = chrono::Utc::now();
 
         let _ = sqlx::query(
-            r#"
+            only_own_schema_query!("ai", r#"
             INSERT INTO ai.user_profiles (user_id, preferences, recent_interactions, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id) DO UPDATE SET 
                 preferences = COALESCE($2, ai.user_profiles.preferences),
                 recent_interactions = COALESCE($3, ai.user_profiles.recent_interactions),
                 updated_at = $5
-            "#,
+            "#, "plugin_ai"),
         )
         .bind(user_id)
         .bind(updates.get("preferences").unwrap_or(&serde_json::json!({})))
@@ -433,7 +438,8 @@ impl RecommendationService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
-        let query = sqlx::query(
+        let query = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, title, description, category
             FROM ai.documents
@@ -441,7 +447,8 @@ impl RecommendationService {
             ORDER BY created_at DESC
             LIMIT $1
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(top_k as i64)
         .bind(tenant_id)
         .fetch_all(self.db.pool())

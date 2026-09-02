@@ -9,7 +9,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 /// 知识条目
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -210,8 +212,12 @@ pub struct KnowledgeSearchRequest {
     pub similarity_threshold: f32,
 }
 
-fn default_page_size() -> u32 { 20 }
-fn default_similarity_threshold() -> f32 { 0.5 }
+fn default_page_size() -> u32 {
+    20
+}
+fn default_similarity_threshold() -> f32 {
+    0.5
+}
 
 /// 知识检索结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -346,7 +352,9 @@ pub struct ExpertDiscoveryRequest {
     pub online_only: bool,
 }
 
-fn default_max_experts() -> u32 { 10 }
+fn default_max_experts() -> u32 {
+    10
+}
 
 /// 专家发现结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -458,7 +466,9 @@ pub struct BestPracticeRecommendationRequest {
     pub max_results: u32,
 }
 
-fn default_max_recommendations() -> u32 { 5 }
+fn default_max_recommendations() -> u32 {
+    5
+}
 
 /// 最佳实践推荐结果
 #[derive(Debug, Clone, Serialize, Deserialize)]

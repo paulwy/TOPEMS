@@ -6,7 +6,7 @@
 //! - mes.list_work_orders — 查询工单列表
 //! - mes.get_oee_dashboard — 获取OEE仪表盘数据
 //!
-//! 当前版本使用 mock 数据，后续版本将通过 shared-service-client 连接真实 MES API。
+//! 当前版本优先调用真实 MES 服务（网关 8099 / MES_SERVICE_URL），调用失败时回退 mock 数据。
 
 use serde_json::{json, Value};
 
@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 MES 业务工具到 MCP Server
 ///
@@ -68,7 +69,23 @@ pub async fn register_mes_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let workshop = params["workshop"].as_str().unwrap_or("");
 
-                let orders = generate_mock_production_orders(status, workshop);
+                let base = service_base_url("MES_SERVICE_URL", 8030);
+                let mut path = format!("/api/mes/orders?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                let mut real = None;
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    if let Some(list) = data.get("orders").cloned() {
+                        real = Some(json!({
+                            "total": data.get("total").cloned().unwrap_or(json!(list.as_array().map(|a| a.len()).unwrap_or(0))),
+                            "page": page,
+                            "page_size": page_size,
+                            "orders": list,
+                        }));
+                    }
+                }
+                let orders = real.map(|r| r["orders"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                    generate_mock_production_orders(status, workshop)
+                });
                 let total = orders.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -108,7 +125,12 @@ pub async fn register_mes_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("order_id is required".to_string()));
                 }
 
-                let order = generate_mock_production_order_detail(order_id);
+                let base = service_base_url("MES_SERVICE_URL", 8030);
+                let order = if let Some(data) = http_call(&base, "GET", &format!("/api/mes/orders/{}", url_encode(&order_id)), None) {
+                    data
+                } else {
+                    generate_mock_production_order_detail(order_id)
+                };
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(order.to_string())],
@@ -157,7 +179,23 @@ pub async fn register_mes_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let process = params["process"].as_str().unwrap_or("");
 
-                let work_orders = generate_mock_work_orders(status, process);
+                let base = service_base_url("MES_SERVICE_URL", 8030);
+                let mut path = format!("/api/mes/work-orders?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                let mut real = None;
+                if let Some(data) = http_call(&base, "GET", &path, None) {
+                    if let Some(list) = data.get("work_orders").cloned() {
+                        real = Some(json!({
+                            "total": data.get("total").cloned().unwrap_or(json!(list.as_array().map(|a| a.len()).unwrap_or(0))),
+                            "page": page,
+                            "page_size": page_size,
+                            "work_orders": list,
+                        }));
+                    }
+                }
+                let work_orders = real.map(|r| r["work_orders"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                    generate_mock_work_orders(status, process)
+                });
                 let total = work_orders.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -213,7 +251,16 @@ pub async fn register_mes_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("to is required".to_string()));
                 }
 
-                let dashboard = generate_mock_oee_dashboard(from, to);
+                let base = service_base_url("MES_SERVICE_URL", 8030);
+                let path = format!(
+                    "/api/mes/equipment-oee/statistics?from={}&to={}",
+                    url_encode(&from), url_encode(&to)
+                );
+                let dashboard = if let Some(data) = http_call(&base, "GET", &path, None) {
+                    data
+                } else {
+                    generate_mock_oee_dashboard(from, to)
+                };
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(dashboard.to_string())],
@@ -230,9 +277,21 @@ pub async fn register_mes_tools(server: &McpServer) {
 
 /// 生成 Mock 生产订单列表
 fn generate_mock_production_orders(status_filter: &str, workshop_filter: &str) -> Vec<Value> {
-    let statuses = ["planned", "released", "in_progress", "completed", "cancelled"];
+    let statuses = [
+        "planned",
+        "released",
+        "in_progress",
+        "completed",
+        "cancelled",
+    ];
     let workshops = ["一车间", "二车间", "三车间", "装配车间"];
-    let products = ["智能传感器A1", "数据采集模块B2", "工业网关C3", "控制器D4", "显示屏E5"];
+    let products = [
+        "智能传感器A1",
+        "数据采集模块B2",
+        "工业网关C3",
+        "控制器D4",
+        "显示屏E5",
+    ];
 
     (0..100)
         .map(|i| {
@@ -323,7 +382,9 @@ fn generate_mock_production_order_detail(order_id: &str) -> Value {
 fn generate_mock_work_orders(status_filter: &str, process_filter: &str) -> Vec<Value> {
     let statuses = ["pending", "in_progress", "paused", "completed", "scrapped"];
     let processes = ["SMT贴片", "焊接", "组装", "测试", "包装", "调试"];
-    let equipments = ["SMT-01", "SMT-02", "WELD-01", "WELD-02", "ASM-01", "TEST-01", "PKG-01"];
+    let equipments = [
+        "SMT-01", "SMT-02", "WELD-01", "WELD-02", "ASM-01", "TEST-01", "PKG-01",
+    ];
     let operators = ["张三", "李四", "王五", "赵六", "钱七"];
 
     (0..200)
@@ -452,7 +513,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("mes.list_production_orders", json!({"page": 1, "page_size": 5}))
+            .call_tool(
+                "mes.list_production_orders",
+                json!({"page": 1, "page_size": 5}),
+            )
             .await
             .unwrap();
 
@@ -474,7 +538,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("mes.get_production_order", json!({"order_id": "PO-00000001"}))
+            .call_tool(
+                "mes.get_production_order",
+                json!({"order_id": "PO-00000001"}),
+            )
             .await
             .unwrap();
 
@@ -496,7 +563,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("mes.list_work_orders", json!({"page": 1, "page_size": 10, "status": "in_progress"}))
+            .call_tool(
+                "mes.list_work_orders",
+                json!({"page": 1, "page_size": 10, "status": "in_progress"}),
+            )
             .await
             .unwrap();
 
@@ -516,7 +586,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("mes.get_oee_dashboard", json!({"from": "2026-08-20T00:00:00Z", "to": "2026-08-24T23:59:59Z"}))
+            .call_tool(
+                "mes.get_oee_dashboard",
+                json!({"from": "2026-08-20T00:00:00Z", "to": "2026-08-24T23:59:59Z"}),
+            )
             .await
             .unwrap();
 
@@ -539,14 +612,20 @@ mod tests {
         // 缺少 from
         let result = server
             .tool_registry()
-            .call_tool("mes.get_oee_dashboard", json!({"to": "2026-08-24T23:59:59Z"}))
+            .call_tool(
+                "mes.get_oee_dashboard",
+                json!({"to": "2026-08-24T23:59:59Z"}),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 to
         let result = server
             .tool_registry()
-            .call_tool("mes.get_oee_dashboard", json!({"from": "2026-08-20T00:00:00Z"}))
+            .call_tool(
+                "mes.get_oee_dashboard",
+                json!({"from": "2026-08-20T00:00:00Z"}),
+            )
             .await;
         assert!(result.is_err());
     }

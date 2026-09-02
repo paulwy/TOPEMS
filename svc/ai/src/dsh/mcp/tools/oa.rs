@@ -306,9 +306,32 @@ pub async fn register_oa_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 审批单列表
-fn generate_mock_approval_requests(type_filter: &str, status_filter: &str, applicant_filter: &str, approver_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let types = ["leave", "expense", "purchase", "travel", "contract", "overtime", "business_card", "seal"];
-    let statuses = ["draft", "pending", "pending", "approved", "rejected", "cancelled", "completed"];
+fn generate_mock_approval_requests(
+    type_filter: &str,
+    status_filter: &str,
+    applicant_filter: &str,
+    approver_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let types = [
+        "leave",
+        "expense",
+        "purchase",
+        "travel",
+        "contract",
+        "overtime",
+        "business_card",
+        "seal",
+    ];
+    let statuses = [
+        "draft",
+        "pending",
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled",
+        "completed",
+    ];
     let applicants = ["张三", "李四", "王五", "赵六", "钱七"];
     let approvers = ["部门经理A", "部门经理B", "总监A", "总监B", "总经理"];
 
@@ -399,9 +422,25 @@ fn generate_mock_approval_request_detail(request_id: &str) -> Value {
 }
 
 /// 生成 Mock 员工列表
-fn generate_mock_employees(department_filter: &str, status_filter: &str, position_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let departments = ["销售部", "技术部", "财务部", "人力资源部", "生产部", "质量部", "采购部", "行政部"];
-    let statuses = ["active", "active", "active", "active", "on_leave", "resigned"];
+fn generate_mock_employees(
+    department_filter: &str,
+    status_filter: &str,
+    position_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let departments = [
+        "销售部",
+        "技术部",
+        "财务部",
+        "人力资源部",
+        "生产部",
+        "质量部",
+        "采购部",
+        "行政部",
+    ];
+    let statuses = [
+        "active", "active", "active", "active", "on_leave", "resigned",
+    ];
     let positions = ["经理", "主管", "工程师", "专员", "助理", "总监"];
 
     (0..100)
@@ -460,7 +499,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("oa.list_approval_requests", json!({"page": 1, "page_size": 5}))
+            .call_tool(
+                "oa.list_approval_requests",
+                json!({"page": 1, "page_size": 5}),
+            )
             .await
             .unwrap();
 
@@ -482,7 +524,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("oa.get_approval_request", json!({"request_id": "REQ-00000001"}))
+            .call_tool(
+                "oa.get_approval_request",
+                json!({"request_id": "REQ-00000001"}),
+            )
             .await
             .unwrap();
 
@@ -506,7 +551,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("oa.list_employees", json!({"page": 1, "page_size": 10, "status": "active"}))
+            .call_tool(
+                "oa.list_employees",
+                json!({"page": 1, "page_size": 10, "status": "active"}),
+            )
             .await
             .unwrap();
 
@@ -526,15 +574,18 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("oa.create_approval_request", json!({
-                "approval_type": "expense",
-                "title": "办公用品采购报销",
-                "applicant": "张三",
-                "approver": "部门经理A",
-                "amount": 1500.00,
-                "reason": "采购部门办公用品",
-                "remark": "急需"
-            }))
+            .call_tool(
+                "oa.create_approval_request",
+                json!({
+                    "approval_type": "expense",
+                    "title": "办公用品采购报销",
+                    "applicant": "张三",
+                    "approver": "部门经理A",
+                    "amount": 1500.00,
+                    "reason": "采购部门办公用品",
+                    "remark": "急需"
+                }),
+            )
             .await
             .unwrap();
 
@@ -560,22 +611,28 @@ mod tests {
         // 缺少 approver
         let result = server
             .tool_registry()
-            .call_tool("oa.create_approval_request", json!({
-                "approval_type": "leave",
-                "title": "请假申请",
-                "applicant": "张三"
-            }))
+            .call_tool(
+                "oa.create_approval_request",
+                json!({
+                    "approval_type": "leave",
+                    "title": "请假申请",
+                    "applicant": "张三"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 title
         let result = server
             .tool_registry()
-            .call_tool("oa.create_approval_request", json!({
-                "approval_type": "leave",
-                "applicant": "张三",
-                "approver": "经理A"
-            }))
+            .call_tool(
+                "oa.create_approval_request",
+                json!({
+                    "approval_type": "leave",
+                    "applicant": "张三",
+                    "approver": "经理A"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

@@ -16,16 +16,15 @@
 use std::collections::HashMap;
 
 use topems_ai::dsh::knowledge_graph::{
-    CommunityResult, Entity, EntityRelationExtractor, EntityType, ExtractionResult,
-    KnowledgeGraph, KnowledgeGraphConfig, KnowledgeGraphStats, PathResult, Relation,
-    RelationType,
+    CommunityResult, Entity, EntityRelationExtractor, EntityType, ExtractionResult, KnowledgeGraph,
+    KnowledgeGraphConfig, KnowledgeGraphStats, PathResult, Relation, RelationType,
+};
+use topems_ai::dsh::multi_agent::{
+    AgentConfig, AgentRole, CollaborationGroupConfig, CollaborationMode, MultiAgentCoordinator,
 };
 use topems_ai::dsh::rag::{
     ConversationMessage, RagConfig, RagEngine, RagStats, RetrievalRequest, RetrievalResponse,
     RetrievedDocument,
-};
-use topems_ai::dsh::multi_agent::{
-    AgentConfig, AgentRole, CollaborationGroupConfig, CollaborationMode, MultiAgentCoordinator,
 };
 
 use serde_json::json;
@@ -100,7 +99,9 @@ fn test_knowledge_graph_remove_entity() {
 
     // 验证相关关系也被删除
     let relations = graph.list_relations();
-    assert!(!relations.iter().any(|r| r.source_id == "p1" || r.target_id == "p1"));
+    assert!(!relations
+        .iter()
+        .any(|r| r.source_id == "p1" || r.target_id == "p1"));
 }
 
 #[test]
@@ -241,7 +242,10 @@ fn test_entity_properties() {
     entity.add_property("department", "技术部");
 
     assert_eq!(entity.properties.get("age"), Some(&"30".to_string()));
-    assert_eq!(entity.properties.get("department"), Some(&"技术部".to_string()));
+    assert_eq!(
+        entity.properties.get("department"),
+        Some(&"技术部".to_string())
+    );
 }
 
 #[test]
@@ -276,7 +280,6 @@ fn test_entity_relation_extractor_extract_dates() {
 
     let result = extractor.extract(text);
     assert!(result.text_length > 0);
-    assert!(result.duration_ms >= 0);
 
     // 应该提取到日期
     let date_entities: Vec<_> = result
@@ -309,14 +312,13 @@ fn test_entity_relation_extractor_extract_persons() {
 
     let result = extractor.extract(text);
 
-    let person_entities: Vec<_> = result
+    let _person_entities: Vec<_> = result
         .entities
         .iter()
         .filter(|e| e.entity_type == EntityType::Person)
         .collect();
     // 人员提取是基于规则的，可能提取到也可能提取不到
     // 只要不报错即可
-    assert!(result.entities.len() >= 0);
 }
 
 #[test]
@@ -527,7 +529,9 @@ fn test_knowledge_graph_complex_query() {
     for participant in &project_participants {
         if participant.entity_type == EntityType::Person {
             let companies = graph.get_neighbors(&participant.id);
-            let has_company = companies.iter().any(|e| e.entity_type == EntityType::Organization);
+            let has_company = companies
+                .iter()
+                .any(|e| e.entity_type == EntityType::Organization);
             assert!(has_company);
         }
     }

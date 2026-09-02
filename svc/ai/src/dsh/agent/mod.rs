@@ -16,8 +16,7 @@ pub mod streaming;
 
 pub use context::{AgentContext, ContextManager, MessageRole};
 pub use orchestrator::{
-    AgentExecuteRequest, AgentOrchestrator, AgentOrchestratorConfig,
-    ExecutionStep,
+    AgentExecuteRequest, AgentOrchestrator, AgentOrchestratorConfig, ExecutionStep,
 };
-pub use performance::AgentPerformanceMonitor;
+pub use performance::{AgentPerformanceMonitor, PerformanceMonitorConfig};
 pub use streaming::{StreamChunk, StreamingResponse};

@@ -178,12 +178,7 @@ impl AgentPerformanceMonitor {
     }
 
     /// 记录工具调用
-    pub fn record_tool_call(
-        &self,
-        tool_name: &str,
-        duration_ms: u64,
-        success: bool,
-    ) {
+    pub fn record_tool_call(&self, tool_name: &str, duration_ms: u64, success: bool) {
         if !self.config.enabled {
             return;
         }
@@ -208,8 +203,7 @@ impl AgentPerformanceMonitor {
         tool_metric.total_duration_ms += duration_ms;
         tool_metric.avg_duration_ms =
             tool_metric.total_duration_ms as f64 / tool_metric.call_count as f64;
-        tool_metric.success_rate =
-            tool_metric.success_count as f64 / tool_metric.call_count as f64;
+        tool_metric.success_rate = tool_metric.success_count as f64 / tool_metric.call_count as f64;
 
         if self.config.log_detailed {
             debug!(
@@ -292,7 +286,9 @@ impl AgentPerformanceMonitor {
         cumulative.max_duration_ms = cumulative.max_duration_ms.max(duration_ms);
 
         // 高错误率警告
-        if cumulative.total_executions > 10 && cumulative.success_rate < 1.0 - self.config.high_error_rate_threshold {
+        if cumulative.total_executions > 10
+            && cumulative.success_rate < 1.0 - self.config.high_error_rate_threshold
+        {
             warn!(
                 success_rate = cumulative.success_rate,
                 threshold = 1.0 - self.config.high_error_rate_threshold,
@@ -380,7 +376,8 @@ impl AgentPerformanceMonitor {
             metrics.total_executions
         ));
 
-        output.push_str("# HELP topems_agent_executions_success Total successful agent executions\n");
+        output
+            .push_str("# HELP topems_agent_executions_success Total successful agent executions\n");
         output.push_str("# TYPE topems_agent_executions_success counter\n");
         output.push_str(&format!(
             "topems_agent_executions_success {}\n",
@@ -394,7 +391,9 @@ impl AgentPerformanceMonitor {
             metrics.failed_executions
         ));
 
-        output.push_str("# HELP topems_agent_execution_duration_ms Agent execution duration in milliseconds\n");
+        output.push_str(
+            "# HELP topems_agent_execution_duration_ms Agent execution duration in milliseconds\n",
+        );
         output.push_str("# TYPE topems_agent_execution_duration_ms summary\n");
         output.push_str(&format!(
             "topems_agent_execution_duration_ms{{quantile=\"0.5\"}} {}\n",

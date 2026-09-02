@@ -13,10 +13,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use topems_ai::dsh::agent::{
-    AgentOrchestrator, AgentPerformanceMonitor, PerformanceMonitorConfig,
-};
 use topems_ai::dsh::agent::orchestrator::AgentExecuteRequest;
+use topems_ai::dsh::agent::{AgentOrchestrator, AgentPerformanceMonitor, PerformanceMonitorConfig};
 use topems_ai::dsh::mcp::ToolRegistry;
 use topems_shared_mcp::protocol::{McpContent, McpToolResult};
 
@@ -87,8 +85,7 @@ async fn test_performance_monitor_integration_basic_execution() {
 
     // 创建 Agent 编排器并设置性能监控器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行 Agent
     let request = create_test_request("test query", "test-session-1");
@@ -103,7 +100,6 @@ async fn test_performance_monitor_integration_basic_execution() {
     assert_eq!(metrics.successful_executions, 1);
     assert_eq!(metrics.failed_executions, 0);
     assert_eq!(metrics.success_rate, 1.0);
-    assert!(metrics.total_duration_ms >= 0);
     assert!(metrics.avg_duration_ms >= 0.0);
 }
 
@@ -114,8 +110,7 @@ async fn test_performance_monitor_multiple_executions() {
 
     // 创建 Agent 编排器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行多次
     for i in 0..5 {
@@ -129,7 +124,6 @@ async fn test_performance_monitor_multiple_executions() {
     assert_eq!(metrics.successful_executions, 5);
     assert_eq!(metrics.success_rate, 1.0);
     assert!(metrics.avg_duration_ms >= 0.0);
-    assert!(metrics.min_duration_ms >= 0);
     assert!(metrics.max_duration_ms >= metrics.min_duration_ms);
 }
 
@@ -146,7 +140,10 @@ async fn test_performance_monitor_tool_calls() {
 
     // 验证工具指标
     let echo_metrics = monitor.get_tool_metric("echo");
-    assert!(echo_metrics.is_some(), "Echo tool metrics should be recorded");
+    assert!(
+        echo_metrics.is_some(),
+        "Echo tool metrics should be recorded"
+    );
 
     let echo = echo_metrics.unwrap();
     assert_eq!(echo.tool_name, "echo");
@@ -172,8 +169,7 @@ async fn test_performance_monitor_history_size() {
 
     // 创建 Agent 编排器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行 5 次（超过历史记录限制）
     for i in 0..5 {
@@ -196,8 +192,7 @@ async fn test_performance_monitor_reset() {
 
     // 创建 Agent 编排器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行几次
     for i in 0..3 {
@@ -226,8 +221,7 @@ async fn test_performance_monitor_prometheus_export() {
 
     // 创建 Agent 编排器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行几次
     for i in 0..2 {
@@ -267,8 +261,7 @@ async fn test_performance_monitor_iteration_count() {
 
     // 创建 Agent 编排器
     let registry = create_test_registry().await;
-    let orchestrator = AgentOrchestrator::new(registry)
-        .with_performance_monitor(monitor.clone());
+    let orchestrator = AgentOrchestrator::new(registry).with_performance_monitor(monitor.clone());
 
     // 执行 Agent，限制最大迭代次数
     let request = AgentExecuteRequest {

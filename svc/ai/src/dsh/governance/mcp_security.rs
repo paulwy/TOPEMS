@@ -215,16 +215,18 @@ impl McpSecurityGovernance {
         // 检查所需角色
         if !permission.required_roles.is_empty() {
             let has_role = user_roles.iter().any(|role| {
-                permission.required_roles.contains(role)
-                    || role == "admin"
-                    || role == "super_admin"
+                permission.required_roles.contains(role) || role == "admin" || role == "super_admin"
             });
             if !has_role {
                 let err = format!(
                     "User '{}' does not have required roles for tool '{}'",
                     user_id, tool_name
                 );
-                warn!(user_id = user_id, tool = tool_name, "Permission denied: missing roles");
+                warn!(
+                    user_id = user_id,
+                    tool = tool_name,
+                    "Permission denied: missing roles"
+                );
                 self.log_security_event(McpSecurityEvent::new(
                     McpSecurityEventType::PermissionDenied,
                     user_id,
@@ -365,11 +367,14 @@ impl McpSecurityGovernance {
         };
 
         // 检查用户是否尝试访问需要高权限的工具
-        let requires_admin = permission.required_roles.iter().any(|r| {
-            r == "admin" || r == "super_admin" || r.contains("admin")
-        });
+        let requires_admin = permission
+            .required_roles
+            .iter()
+            .any(|r| r == "admin" || r == "super_admin" || r.contains("admin"));
 
-        let is_admin = user_roles.iter().any(|r| r == "admin" || r == "super_admin");
+        let is_admin = user_roles
+            .iter()
+            .any(|r| r == "admin" || r == "super_admin");
 
         if requires_admin && !is_admin {
             let event = McpSecurityEvent::new(
@@ -426,13 +431,18 @@ mod tests {
     #[tokio::test]
     async fn test_check_tool_permission_success() {
         let governance = McpSecurityGovernance::new();
-        let permission = McpToolPermission::new("crm.list_customers")
-            .with_required_role("crm_user");
+        let permission =
+            McpToolPermission::new("crm.list_customers").with_required_role("crm_user");
 
         governance.register_tool_permission(permission).await;
 
         let result = governance
-            .check_tool_permission("user1", "tenant1", "crm.list_customers", &["crm_user".to_string()])
+            .check_tool_permission(
+                "user1",
+                "tenant1",
+                "crm.list_customers",
+                &["crm_user".to_string()],
+            )
             .await;
         assert!(result.is_ok());
     }
@@ -440,13 +450,18 @@ mod tests {
     #[tokio::test]
     async fn test_check_tool_permission_denied() {
         let governance = McpSecurityGovernance::new();
-        let permission = McpToolPermission::new("crm.list_customers")
-            .with_required_role("crm_user");
+        let permission =
+            McpToolPermission::new("crm.list_customers").with_required_role("crm_user");
 
         governance.register_tool_permission(permission).await;
 
         let result = governance
-            .check_tool_permission("user1", "tenant1", "crm.list_customers", &["erp_user".to_string()])
+            .check_tool_permission(
+                "user1",
+                "tenant1",
+                "crm.list_customers",
+                &["erp_user".to_string()],
+            )
             .await;
         assert!(result.is_err());
     }
@@ -454,10 +469,16 @@ mod tests {
     #[tokio::test]
     async fn test_record_and_get_daily_calls() {
         let governance = McpSecurityGovernance::new();
-        governance.record_tool_call("user1", "crm.list_customers").await;
-        governance.record_tool_call("user1", "crm.list_customers").await;
+        governance
+            .record_tool_call("user1", "crm.list_customers")
+            .await;
+        governance
+            .record_tool_call("user1", "crm.list_customers")
+            .await;
 
-        let calls = governance.get_user_daily_calls("user1", "crm.list_customers").await;
+        let calls = governance
+            .get_user_daily_calls("user1", "crm.list_customers")
+            .await;
         assert_eq!(calls, 2);
     }
 
@@ -484,13 +505,17 @@ mod tests {
     #[tokio::test]
     async fn test_detect_privilege_escalation() {
         let governance = McpSecurityGovernance::new();
-        let permission = McpToolPermission::new("admin.delete_user")
-            .with_required_role("admin");
+        let permission = McpToolPermission::new("admin.delete_user").with_required_role("admin");
 
         governance.register_tool_permission(permission).await;
 
         let event = governance
-            .detect_privilege_escalation("user1", "tenant1", "admin.delete_user", &["user".to_string()])
+            .detect_privilege_escalation(
+                "user1",
+                "tenant1",
+                "admin.delete_user",
+                &["user".to_string()],
+            )
             .await;
         assert!(event.is_some());
         assert_eq!(event.unwrap().severity, "critical");

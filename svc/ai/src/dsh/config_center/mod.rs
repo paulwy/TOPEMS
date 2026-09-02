@@ -299,32 +299,150 @@ impl ConfigCenter {
     fn init_default_configs(&self) {
         let default_configs = vec![
             // LLM 配置
-            ("llm.provider.timeout", ConfigValueType::Integer, serde_json::json!(30), "LLM 调用超时时间（秒）", "llm", false, true),
-            ("llm.provider.max_retries", ConfigValueType::Integer, serde_json::json!(3), "LLM 调用最大重试次数", "llm", false, true),
-            ("llm.provider.temperature", ConfigValueType::Float, serde_json::json!(0.7), "LLM 温度参数", "llm", false, true),
-            ("llm.provider.max_tokens", ConfigValueType::Integer, serde_json::json!(2000), "LLM 最大生成 Token 数", "llm", false, true),
-            ("llm.api_key", ConfigValueType::String, serde_json::json!(""), "LLM API 密钥", "llm", true, false),
-
+            (
+                "llm.provider.timeout",
+                ConfigValueType::Integer,
+                serde_json::json!(30),
+                "LLM 调用超时时间（秒）",
+                "llm",
+                false,
+                true,
+            ),
+            (
+                "llm.provider.max_retries",
+                ConfigValueType::Integer,
+                serde_json::json!(3),
+                "LLM 调用最大重试次数",
+                "llm",
+                false,
+                true,
+            ),
+            (
+                "llm.provider.temperature",
+                ConfigValueType::Float,
+                serde_json::json!(0.7),
+                "LLM 温度参数",
+                "llm",
+                false,
+                true,
+            ),
+            (
+                "llm.provider.max_tokens",
+                ConfigValueType::Integer,
+                serde_json::json!(2000),
+                "LLM 最大生成 Token 数",
+                "llm",
+                false,
+                true,
+            ),
+            (
+                "llm.api_key",
+                ConfigValueType::String,
+                serde_json::json!(""),
+                "LLM API 密钥",
+                "llm",
+                true,
+                false,
+            ),
             // 缓存配置
-            ("cache.enabled", ConfigValueType::Boolean, serde_json::json!(true), "是否启用缓存", "cache", false, true),
-            ("cache.ttl_seconds", ConfigValueType::Integer, serde_json::json!(300), "缓存 TTL（秒）", "cache", false, true),
-            ("cache.max_size", ConfigValueType::Integer, serde_json::json!(10000), "缓存最大条目数", "cache", false, true),
-
+            (
+                "cache.enabled",
+                ConfigValueType::Boolean,
+                serde_json::json!(true),
+                "是否启用缓存",
+                "cache",
+                false,
+                true,
+            ),
+            (
+                "cache.ttl_seconds",
+                ConfigValueType::Integer,
+                serde_json::json!(300),
+                "缓存 TTL（秒）",
+                "cache",
+                false,
+                true,
+            ),
+            (
+                "cache.max_size",
+                ConfigValueType::Integer,
+                serde_json::json!(10000),
+                "缓存最大条目数",
+                "cache",
+                false,
+                true,
+            ),
             // 限流配置
-            ("rate_limit.enabled", ConfigValueType::Boolean, serde_json::json!(true), "是否启用限流", "rate_limit", false, true),
-            ("rate_limit.requests_per_second", ConfigValueType::Integer, serde_json::json!(10), "每秒最大请求数", "rate_limit", false, true),
-            ("rate_limit.requests_per_minute", ConfigValueType::Integer, serde_json::json!(100), "每分钟最大请求数", "rate_limit", false, true),
-
+            (
+                "rate_limit.enabled",
+                ConfigValueType::Boolean,
+                serde_json::json!(true),
+                "是否启用限流",
+                "rate_limit",
+                false,
+                true,
+            ),
+            (
+                "rate_limit.requests_per_second",
+                ConfigValueType::Integer,
+                serde_json::json!(10),
+                "每秒最大请求数",
+                "rate_limit",
+                false,
+                true,
+            ),
+            (
+                "rate_limit.requests_per_minute",
+                ConfigValueType::Integer,
+                serde_json::json!(100),
+                "每分钟最大请求数",
+                "rate_limit",
+                false,
+                true,
+            ),
             // 日志配置
-            ("log.level", ConfigValueType::Enum, serde_json::json!("info"), "日志级别", "log", false, true),
-            ("log.enabled", ConfigValueType::Boolean, serde_json::json!(true), "是否启用日志", "log", false, true),
-
+            (
+                "log.level",
+                ConfigValueType::Enum,
+                serde_json::json!("info"),
+                "日志级别",
+                "log",
+                false,
+                true,
+            ),
+            (
+                "log.enabled",
+                ConfigValueType::Boolean,
+                serde_json::json!(true),
+                "是否启用日志",
+                "log",
+                false,
+                true,
+            ),
             // 安全配置
-            ("security.input_validation", ConfigValueType::Boolean, serde_json::json!(true), "是否启用输入校验", "security", false, true),
-            ("security.output_redaction", ConfigValueType::Boolean, serde_json::json!(true), "是否启用输出脱敏", "security", false, true),
+            (
+                "security.input_validation",
+                ConfigValueType::Boolean,
+                serde_json::json!(true),
+                "是否启用输入校验",
+                "security",
+                false,
+                true,
+            ),
+            (
+                "security.output_redaction",
+                ConfigValueType::Boolean,
+                serde_json::json!(true),
+                "是否启用输出脱敏",
+                "security",
+                false,
+                true,
+            ),
         ];
 
-        for (key, value_type, value, description, category, is_sensitive, is_dynamic) in default_configs {
+        for (key, value_type, value, description, category, is_sensitive, is_dynamic) in
+            default_configs
+        {
             let item = ConfigItem {
                 key: key.to_string(),
                 value,
@@ -412,12 +530,20 @@ impl ConfigCenter {
         self.record_change(ConfigChangeEvent {
             event_id: format!("evt_{}", uuid::Uuid::new_v4()),
             key: key.clone(),
-            change_type: if exists { ConfigChangeType::Updated } else { ConfigChangeType::Created },
+            change_type: if exists {
+                ConfigChangeType::Updated
+            } else {
+                ConfigChangeType::Created
+            },
             old_value: None,
             new_value: None,
             changed_at: now,
             changed_by: "system".to_string(),
-            change_note: if exists { "配置更新".to_string() } else { "配置创建".to_string() },
+            change_note: if exists {
+                "配置更新".to_string()
+            } else {
+                "配置创建".to_string()
+            },
         });
 
         info!(key = %key, "Config item registered");
@@ -436,7 +562,8 @@ impl ConfigCenter {
 
     /// 获取字符串配置值
     pub fn get_string(&self, key: &str) -> Option<String> {
-        self.get_value(key).and_then(|v| v.as_str().map(|s| s.to_string()))
+        self.get_value(key)
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
     }
 
     /// 获取整数配置值
@@ -594,7 +721,12 @@ impl ConfigCenter {
         drop(history);
 
         // 更新值
-        self.set_value(key, target_version.value.clone(), modified_by, &format!("回滚到版本 {}", version))?;
+        self.set_value(
+            key,
+            target_version.value.clone(),
+            modified_by,
+            &format!("回滚到版本 {}", version),
+        )?;
 
         // 记录回滚事件
         self.record_change(ConfigChangeEvent {
@@ -652,7 +784,8 @@ impl ConfigCenter {
         }
 
         // 检查数值范围
-        if item.value_type == ConfigValueType::Integer || item.value_type == ConfigValueType::Float {
+        if item.value_type == ConfigValueType::Integer || item.value_type == ConfigValueType::Float
+        {
             if let Some(num) = item.value.as_f64() {
                 if let Some(min) = item.min_value {
                     if num < min {
@@ -676,14 +809,25 @@ impl ConfigCenter {
     }
 
     /// 验证配置值
-    fn validate_value(&self, _key: &str, value: &serde_json::Value, item: &ConfigItem) -> ConfigValidationResult {
+    fn validate_value(
+        &self,
+        _key: &str,
+        value: &serde_json::Value,
+        item: &ConfigItem,
+    ) -> ConfigValidationResult {
         let mut temp_item = item.clone();
         temp_item.value = value.clone();
         self.validate_config_item(&temp_item)
     }
 
     /// 保存版本
-    fn save_version(&self, key: &str, value: &serde_json::Value, modified_by: &str, change_note: &str) {
+    fn save_version(
+        &self,
+        key: &str,
+        value: &serde_json::Value,
+        modified_by: &str,
+        change_note: &str,
+    ) {
         let mut history = self.version_history.lock();
         let versions = history.entry(key.to_string()).or_insert_with(VecDeque::new);
 
@@ -728,7 +872,11 @@ impl ConfigCenter {
     }
 
     /// 获取变更历史
-    pub fn get_change_history(&self, key_filter: Option<&str>, limit: Option<usize>) -> Vec<ConfigChangeEvent> {
+    pub fn get_change_history(
+        &self,
+        key_filter: Option<&str>,
+        limit: Option<usize>,
+    ) -> Vec<ConfigChangeEvent> {
         let history = self.change_history.lock();
         let mut result: Vec<ConfigChangeEvent> = if let Some(key) = key_filter {
             history.iter().filter(|e| e.key == key).cloned().collect()
@@ -866,7 +1014,12 @@ mod tests {
     #[test]
     fn test_set_value() {
         let center = create_test_center();
-        let result = center.set_value("llm.provider.timeout", serde_json::json!(60), "test_user", "测试更新");
+        let result = center.set_value(
+            "llm.provider.timeout",
+            serde_json::json!(60),
+            "test_user",
+            "测试更新",
+        );
         assert!(result.is_ok());
 
         let value = center.get_integer("llm.provider.timeout");
@@ -877,7 +1030,12 @@ mod tests {
     fn test_set_value_non_dynamic() {
         let center = create_test_center();
         // llm.api_key 是非动态配置
-        let result = center.set_value("llm.api_key", serde_json::json!("new_key"), "test_user", "测试更新");
+        let result = center.set_value(
+            "llm.api_key",
+            serde_json::json!("new_key"),
+            "test_user",
+            "测试更新",
+        );
         assert!(result.is_err());
     }
 
@@ -969,8 +1127,22 @@ mod tests {
     #[test]
     fn test_version_history() {
         let center = create_test_center();
-        center.set_value("llm.provider.timeout", serde_json::json!(60), "user1", "第一次更新").unwrap();
-        center.set_value("llm.provider.timeout", serde_json::json!(90), "user2", "第二次更新").unwrap();
+        center
+            .set_value(
+                "llm.provider.timeout",
+                serde_json::json!(60),
+                "user1",
+                "第一次更新",
+            )
+            .unwrap();
+        center
+            .set_value(
+                "llm.provider.timeout",
+                serde_json::json!(90),
+                "user2",
+                "第二次更新",
+            )
+            .unwrap();
 
         let history = center.get_version_history("llm.provider.timeout");
         assert!(history.len() >= 2);
@@ -979,7 +1151,14 @@ mod tests {
     #[test]
     fn test_change_history() {
         let center = create_test_center();
-        center.set_value("llm.provider.timeout", serde_json::json!(60), "user1", "测试变更").unwrap();
+        center
+            .set_value(
+                "llm.provider.timeout",
+                serde_json::json!(60),
+                "user1",
+                "测试变更",
+            )
+            .unwrap();
 
         let history = center.get_change_history(Some("llm.provider.timeout"), None);
         assert!(!history.is_empty());
@@ -1068,7 +1247,14 @@ mod tests {
             *count_clone.lock() += 1;
         }));
 
-        center.set_value("llm.provider.timeout", serde_json::json!(60), "user1", "测试监听").unwrap();
+        center
+            .set_value(
+                "llm.provider.timeout",
+                serde_json::json!(60),
+                "user1",
+                "测试监听",
+            )
+            .unwrap();
 
         assert_eq!(*change_count.lock(), 1);
     }

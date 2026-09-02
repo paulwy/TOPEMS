@@ -13,14 +13,14 @@ use axum::{
     Json,
 };
 use futures::stream::Stream;
-use std::pin::Pin;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
+use std::pin::Pin;
 use topems_shared_core::response::ApiResponse;
 use tracing::info;
 
-use crate::dsh::agent::ExecutionStep;
 use crate::dsh::agent::orchestrator::AgentExecuteRequest;
+use crate::dsh::agent::ExecutionStep;
 use crate::shared::AppState;
 
 /// Agent 执行请求
@@ -82,10 +82,7 @@ pub async fn execute_agent(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(
-                503,
-                "DSH Agent 编排器未初始化",
-            ));
+            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
         }
     };
 
@@ -139,8 +136,6 @@ pub async fn stream_agent(
     State(state): State<AppState>,
     Json(req): Json<DshAgentExecuteRequest>,
 ) -> Sse<Pin<Box<dyn Stream<Item = Result<Event, Infallible>> + Send>>> {
-    
-
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o.clone(),
         None => {
@@ -167,9 +162,7 @@ pub async fn stream_agent(
     info!(session_id = %session_id, "DSH Agent streaming execution started");
 
     match orchestrator.execute_streaming(execute_request).await {
-        Ok(streaming_response) => {
-            streaming_response.into_pinned_sse()
-        }
+        Ok(streaming_response) => streaming_response.into_pinned_sse(),
         Err(e) => {
             let stream = futures::stream::iter(vec![Ok(Event::default()
                 .event("error")
@@ -196,10 +189,7 @@ pub async fn get_session(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(
-                503,
-                "DSH Agent 编排器未初始化",
-            ));
+            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
         }
     };
 
@@ -233,10 +223,7 @@ pub async fn clear_session(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(
-                503,
-                "DSH Agent 编排器未初始化",
-            ));
+            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
         }
     };
 
@@ -260,10 +247,7 @@ pub async fn list_tools(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(
-                503,
-                "DSH Agent 编排器未初始化",
-            ));
+            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
         }
     };
 
@@ -294,16 +278,11 @@ pub async fn list_tools(
         (status = 200, description = "活跃会话数"),
     ),
 )]
-pub async fn active_sessions(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<usize>> {
+pub async fn active_sessions(State(state): State<AppState>) -> Json<ApiResponse<usize>> {
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(
-                503,
-                "DSH Agent 编排器未初始化",
-            ));
+            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
         }
     };
 

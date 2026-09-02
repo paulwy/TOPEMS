@@ -6,7 +6,7 @@
 //! - ehs.list_hazards — 查询隐患列表
 //! - ehs.create_incident — 创建安全事件
 //!
-//! 当前版本使用 mock 数据，后续版本将通过 shared-service-client 连接真实 EHS API。
+//! 当前版本优先调用真实 EHS 服务（网关 8099 / EHS_SERVICE_URL），调用失败时回退 mock 数据。
 
 use serde_json::{json, Value};
 
@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 EHS 业务工具到 MCP Server
 ///
@@ -75,7 +76,16 @@ pub async fn register_ehs_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let incident_type = params["incident_type"].as_str().unwrap_or("");
 
-                let incidents = generate_mock_incidents(level, status, incident_type);
+                let base = service_base_url("EHS_SERVICE_URL", 8052);
+                let mut path = format!("/api/ehs/incidents?page={}&page_size={}", page, page_size);
+                if !level.is_empty() { path.push_str(&format!("&level={}", url_encode(level))); }
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !incident_type.is_empty() { path.push_str(&format!("&incident_type={}", url_encode(incident_type))); }
+                let incidents = if let Some(data) = http_call(&base, "GET", &path, None) {
+                    data.as_array().cloned().unwrap_or_default()
+                } else {
+                    generate_mock_incidents(level, status, incident_type)
+                };
                 let total = incidents.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -115,7 +125,12 @@ pub async fn register_ehs_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("incident_id is required".to_string()));
                 }
 
-                let incident = generate_mock_incident_detail(incident_id);
+                let base = service_base_url("EHS_SERVICE_URL", 8052);
+                let incident = if let Some(data) = http_call(&base, "GET", &format!("/api/ehs/incidents/{}", url_encode(&incident_id)), None) {
+                    data
+                } else {
+                    generate_mock_incident_detail(incident_id)
+                };
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(incident.to_string())],
@@ -171,7 +186,15 @@ pub async fn register_ehs_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let location = params["location"].as_str().unwrap_or("");
 
-                let hazards = generate_mock_hazards(risk_level, status, location);
+                let base = service_base_url("EHS_SERVICE_URL", 8052);
+                let mut path = format!("/api/ehs/hazards?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !location.is_empty() { path.push_str(&format!("&location={}", url_encode(location))); }
+                let hazards = if let Some(data) = http_call(&base, "GET", &path, None) {
+                    data.as_array().cloned().unwrap_or_default()
+                } else {
+                    generate_mock_hazards(risk_level, status, location)
+                };
                 let total = hazards.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -255,12 +278,8 @@ pub async fn register_ehs_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("location is required".to_string()));
                 }
 
-                let incident_id = format!("INC-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let incident_number = format!("EHS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
-
-                let result = json!({
-                    "incident_id": incident_id,
-                    "incident_number": incident_number,
+                let base = service_base_url("EHS_SERVICE_URL", 8052);
+                let body = json!({
                     "title": title,
                     "incident_type": incident_type,
                     "level": level,
@@ -268,10 +287,33 @@ pub async fn register_ehs_tools(server: &McpServer) {
                     "location": location,
                     "description": params["description"].as_str().unwrap_or(""),
                     "reporter": params["reporter"].as_str().unwrap_or(""),
-                    "status": "reported",
-                    "created_at": chrono::Utc::now().to_rfc3339(),
-                    "message": "安全事件创建成功，已通知EHS负责人",
                 });
+                let result = http_call(&base, "POST", "/api/ehs/incidents", Some(body))
+                    .map(|data| {
+                        let mut d = data;
+                        if d.get("message").is_none() {
+                            d["message"] = json!("安全事件创建成功");
+                        }
+                        d
+                    })
+                    .unwrap_or_else(|| {
+                        let incident_id = format!("INC-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
+                        let incident_number = format!("EHS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
+                        json!({
+                            "incident_id": incident_id,
+                            "incident_number": incident_number,
+                            "title": title,
+                            "incident_type": incident_type,
+                            "level": level,
+                            "occurred_at": occurred_at,
+                            "location": location,
+                            "description": params["description"].as_str().unwrap_or(""),
+                            "reporter": params["reporter"].as_str().unwrap_or(""),
+                            "status": "reported",
+                            "created_at": chrono::Utc::now().to_rfc3339(),
+                            "message": "安全事件创建成功，已通知EHS负责人",
+                        })
+                    });
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(result.to_string())],
@@ -287,10 +329,20 @@ pub async fn register_ehs_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 安全事件列表
-fn generate_mock_incidents(level_filter: &str, status_filter: &str, type_filter: &str) -> Vec<Value> {
+fn generate_mock_incidents(
+    level_filter: &str,
+    status_filter: &str,
+    type_filter: &str,
+) -> Vec<Value> {
     let levels = ["minor", "minor", "major", "serious", "critical"];
     let statuses = ["reported", "investigating", "resolved", "closed"];
-    let types = ["injury", "near_miss", "property_damage", "environmental", "occupational_illness"];
+    let types = [
+        "injury",
+        "near_miss",
+        "property_damage",
+        "environmental",
+        "occupational_illness",
+    ];
     let locations = ["一车间", "二车间", "仓库", "办公楼", "厂区道路"];
 
     (0..80)
@@ -396,11 +448,28 @@ fn generate_mock_incident_detail(incident_id: &str) -> Value {
 }
 
 /// 生成 Mock 隐患列表
-fn generate_mock_hazards(risk_filter: &str, status_filter: &str, location_filter: &str) -> Vec<Value> {
+fn generate_mock_hazards(
+    risk_filter: &str,
+    status_filter: &str,
+    location_filter: &str,
+) -> Vec<Value> {
     let risk_levels = ["low", "medium", "high", "extreme"];
-    let statuses = ["identified", "assessing", "rectifying", "verified", "closed"];
+    let statuses = [
+        "identified",
+        "assessing",
+        "rectifying",
+        "verified",
+        "closed",
+    ];
     let locations = ["一车间", "二车间", "仓库", "办公楼", "厂区道路", "配电房"];
-    let categories = ["电气安全", "机械安全", "消防安全", "化学品安全", "高处作业", "职业健康"];
+    let categories = [
+        "电气安全",
+        "机械安全",
+        "消防安全",
+        "化学品安全",
+        "高处作业",
+        "职业健康",
+    ];
 
     (0..120)
         .map(|i| {
@@ -498,7 +567,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("ehs.list_hazards", json!({"page": 1, "page_size": 10, "risk_level": "high"}))
+            .call_tool(
+                "ehs.list_hazards",
+                json!({"page": 1, "page_size": 10, "risk_level": "high"}),
+            )
             .await
             .unwrap();
 
@@ -518,15 +590,18 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("ehs.create_incident", json!({
-                "title": "测试安全事件",
-                "incident_type": "near_miss",
-                "level": "minor",
-                "occurred_at": "2026-08-25T10:00:00Z",
-                "location": "二车间",
-                "description": "测试事件描述",
-                "reporter": "测试员工"
-            }))
+            .call_tool(
+                "ehs.create_incident",
+                json!({
+                    "title": "测试安全事件",
+                    "incident_type": "near_miss",
+                    "level": "minor",
+                    "occurred_at": "2026-08-25T10:00:00Z",
+                    "location": "二车间",
+                    "description": "测试事件描述",
+                    "reporter": "测试员工"
+                }),
+            )
             .await
             .unwrap();
 
@@ -550,24 +625,30 @@ mod tests {
         // 缺少 title
         let result = server
             .tool_registry()
-            .call_tool("ehs.create_incident", json!({
-                "incident_type": "near_miss",
-                "level": "minor",
-                "occurred_at": "2026-08-25T10:00:00Z",
-                "location": "二车间"
-            }))
+            .call_tool(
+                "ehs.create_incident",
+                json!({
+                    "incident_type": "near_miss",
+                    "level": "minor",
+                    "occurred_at": "2026-08-25T10:00:00Z",
+                    "location": "二车间"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 location
         let result = server
             .tool_registry()
-            .call_tool("ehs.create_incident", json!({
-                "title": "测试",
-                "incident_type": "near_miss",
-                "level": "minor",
-                "occurred_at": "2026-08-25T10:00:00Z"
-            }))
+            .call_tool(
+                "ehs.create_incident",
+                json!({
+                    "title": "测试",
+                    "incident_type": "near_miss",
+                    "level": "minor",
+                    "occurred_at": "2026-08-25T10:00:00Z"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

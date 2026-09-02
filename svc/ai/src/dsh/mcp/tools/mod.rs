@@ -166,6 +166,15 @@ impl ToolRegistry {
             .map(|t| t.definition.clone())
     }
 
+    /// 获取工具所需权限（无权限要求返回 None）
+    pub async fn required_permission(&self, name: &str) -> Option<String> {
+        self.tools
+            .read()
+            .await
+            .get(name)
+            .and_then(|t| t.required_permission.clone())
+    }
+
     /// 执行工具
     pub async fn call_tool(
         &self,
@@ -195,6 +204,79 @@ impl ToolRegistry {
     pub async fn unregister(&self, name: &str) -> bool {
         self.tools.write().await.remove(name).is_some()
     }
+}
+
+// =====================================================================
+// 通用同步 HTTP 工具（std TcpStream，可在同步 handler 内安全使用，无 tokio 依赖）
+// 供各业务工具文件（crm/erp/finance/...）调用真实服务 HTTP API
+// =====================================================================
+
+/// URL 查询参数编码（非 ASCII / 特殊字符 → %XX）
+pub fn url_encode(s: &str) -> String {
+    let mut out = String::new();
+    for b in s.bytes() {
+        if b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b'.' || b == b'~' {
+            out.push(b as char);
+        } else {
+            out.push_str(&format!("%{:02X}", b));
+        }
+    }
+    out
+}
+
+/// 服务基础地址：优先环境变量 <SVC>_SERVICE_URL，否则 http://localhost:<port>
+pub fn service_base_url(env_var: &str, default_port: u16) -> String {
+    std::env::var(env_var).unwrap_or_else(|_| format!("http://localhost:{}", default_port))
+}
+
+/// 纯同步 HTTP 请求（GET/POST），返回响应 JSON 的 data 字段；失败返回 None（调用方降级）
+pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> Option<Value> {
+    use std::io::{Read, Write};
+    use std::net::TcpStream;
+
+    let base = base.trim_end_matches('/');
+    let rest = base.strip_prefix("http://")?;
+    let (host, port) = match rest.split_once(':') {
+        Some((h, p)) => (h.to_string(), p.parse::<u16>().ok()?),
+        None => (rest.to_string(), 80u16),
+    };
+    let path_full = if path.starts_with('/') {
+        path.to_string()
+    } else {
+        format!("/{}", path)
+    };
+
+    let mut conn = TcpStream::connect((host.as_str(), port)).ok()?;
+    let _ = conn.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+    let _ = conn.set_write_timeout(Some(std::time::Duration::from_secs(5)));
+
+    let (request, body_bytes) = if matches!(method, "POST" | "PUT" | "DELETE") {
+        let b = body.unwrap_or(Value::Null).to_string();
+        let req = format!(
+            "{} {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            method, path_full, host, b.len()
+        );
+        (req, b)
+    } else {
+        let req = format!(
+            "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
+            path_full, host
+        );
+        (req, String::new())
+    };
+    conn.write_all(request.as_bytes()).ok()?;
+    if !body_bytes.is_empty() {
+        conn.write_all(body_bytes.as_bytes()).ok()?;
+    }
+
+    let mut response = String::new();
+    conn.read_to_string(&mut response).ok()?;
+    let (head, body) = response.split_once("\r\n\r\n")?;
+    if !head.starts_with("HTTP/1.1 2") {
+        return None;
+    }
+    let parsed: Value = serde_json::from_str(body).ok()?;
+    parsed.get("data").cloned()
 }
 
 #[cfg(test)]

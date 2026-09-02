@@ -1,6 +1,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{
     EhsHazardReportedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
     LimsInspectionAbnormalDetectedPayload, QmsQualityIssueCreatedPayload,
@@ -61,10 +62,10 @@ impl AiEventHandlers {
         let sample_id = uuid::Uuid::new_v4();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO ai_training_samples (id, model_type, sample_type, label, source_type, source_id, features_json, quality_score, is_used, created_at, updated_at, tenant_id)
+            only_own_schema_query!("ai", "INSERT INTO ai.ai_training_samples (id, model_type, sample_type, label, source_type, source_id, features_json, quality_score, is_used, created_at, updated_at, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 1.0, false, $8, $8, '00000000-0000-0000-0000-000000000000')
              ON CONFLICT (source_type, source_id) DO NOTHING
-             RETURNING id",
+             RETURNING id", "plugin_ai"),
         )
         .bind(sample_id)
         .bind(model_type)

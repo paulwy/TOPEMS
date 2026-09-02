@@ -145,7 +145,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_ai.documents (id, tenant_id, title, file_path, status, created_at, updated_at)
+            INSERT INTO ai.documents (id, tenant_id, title, file_path, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
@@ -179,7 +179,7 @@ mod tests {
         let result = sqlx::query(
             r#"
             SELECT id, title, file_name, created_at
-            FROM plugin_ai.documents
+            FROM ai.documents
             ORDER BY created_at DESC
             LIMIT 10
             "#,

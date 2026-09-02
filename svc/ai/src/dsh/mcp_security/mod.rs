@@ -35,7 +35,10 @@ impl SecurityCheckResult {
     }
 
     pub fn is_allowed(&self) -> bool {
-        matches!(self, SecurityCheckResult::Pass | SecurityCheckResult::Warning)
+        matches!(
+            self,
+            SecurityCheckResult::Pass | SecurityCheckResult::Warning
+        )
     }
 }
 
@@ -415,7 +418,8 @@ impl SecurityEngine {
             rule_id: "default_xss".to_string(),
             name: "XSS 攻击检测".to_string(),
             rule_type: ValidationRuleType::XssAttack,
-            pattern: r"(?i)(<script|javascript:|onerror=|onload=|eval\(|document\.cookie)".to_string(),
+            pattern: r"(?i)(<script|javascript:|onerror=|onload=|eval\(|document\.cookie)"
+                .to_string(),
             match_result: SecurityCheckResult::Deny,
             description: "检测 XSS 攻击模式".to_string(),
             enabled: true,
@@ -502,7 +506,11 @@ impl SecurityEngine {
         if input.len() > self.config.max_input_length {
             return (
                 SecurityCheckResult::Deny,
-                vec![format!("输入长度超过限制: {} > {}", input.len(), self.config.max_input_length)],
+                vec![format!(
+                    "输入长度超过限制: {} > {}",
+                    input.len(),
+                    self.config.max_input_length
+                )],
             );
         }
 
@@ -521,7 +529,10 @@ impl SecurityEngine {
                     SecurityCheckResult::Deny => {
                         return (
                             SecurityCheckResult::Deny,
-                            vec![format!("规则 '{}' 拒绝请求: {}", rule.name, rule.description)],
+                            vec![format!(
+                                "规则 '{}' 拒绝请求: {}",
+                                rule.name, rule.description
+                            )],
                         );
                     }
                     SecurityCheckResult::Warning => {
@@ -593,7 +604,10 @@ impl SecurityEngine {
 
         // 长度检查
         if redacted.len() > self.config.max_output_length {
-            redacted = format!("{}... (输出已截断)", &redacted[..self.config.max_output_length]);
+            redacted = format!(
+                "{}... (输出已截断)",
+                &redacted[..self.config.max_output_length]
+            );
         }
 
         (redacted, count)
@@ -618,7 +632,10 @@ impl SecurityEngine {
         if let Some(cooldown_until) = user_state.cooldown_until {
             if now < cooldown_until {
                 let remaining = cooldown_until.duration_since(now).as_secs();
-                return (false, Some(format!("速率限制冷却中，剩余 {} 秒", remaining)));
+                return (
+                    false,
+                    Some(format!("速率限制冷却中，剩余 {} 秒", remaining)),
+                );
             } else {
                 user_state.cooldown_until = None;
             }
@@ -718,7 +735,10 @@ impl SecurityEngine {
         // 速率限制检查
         let (rate_allowed, rate_message) = self.check_rate_limit(user_id, tenant_id);
         if !rate_allowed {
-            return (SecurityCheckResult::Deny, vec![rate_message.unwrap_or_else(|| "速率限制".to_string())]);
+            return (
+                SecurityCheckResult::Deny,
+                vec![rate_message.unwrap_or_else(|| "速率限制".to_string())],
+            );
         }
 
         // 输入校验
@@ -754,7 +774,7 @@ impl SecurityEngine {
             pass_count,
             warning_count,
             deny_count,
-            redaction_count: 0, // 简化实现
+            redaction_count: 0,               // 简化实现
             rate_limit_triggered: deny_count, // 简化实现
             audit_log_count: total_checks,
             high_risk_events,
@@ -792,7 +812,10 @@ mod tests {
     fn test_validation_rule_type_as_str() {
         assert_eq!(ValidationRuleType::SqlInjection.as_str(), "sql_injection");
         assert_eq!(ValidationRuleType::XssAttack.as_str(), "xss_attack");
-        assert_eq!(ValidationRuleType::CommandInjection.as_str(), "command_injection");
+        assert_eq!(
+            ValidationRuleType::CommandInjection.as_str(),
+            "command_injection"
+        );
     }
 
     #[test]
@@ -839,8 +862,12 @@ mod tests {
         let engine = create_test_engine();
         let rules = engine.get_validation_rules();
         assert!(!rules.is_empty());
-        assert!(rules.iter().any(|r| r.rule_type == ValidationRuleType::SqlInjection));
-        assert!(rules.iter().any(|r| r.rule_type == ValidationRuleType::XssAttack));
+        assert!(rules
+            .iter()
+            .any(|r| r.rule_type == ValidationRuleType::SqlInjection));
+        assert!(rules
+            .iter()
+            .any(|r| r.rule_type == ValidationRuleType::XssAttack));
     }
 
     #[test]
@@ -848,8 +875,12 @@ mod tests {
         let engine = create_test_engine();
         let rules = engine.get_redaction_rules();
         assert!(!rules.is_empty());
-        assert!(rules.iter().any(|r| r.redaction_type == RedactionType::PhoneNumber));
-        assert!(rules.iter().any(|r| r.redaction_type == RedactionType::Email));
+        assert!(rules
+            .iter()
+            .any(|r| r.redaction_type == RedactionType::PhoneNumber));
+        assert!(rules
+            .iter()
+            .any(|r| r.redaction_type == RedactionType::Email));
     }
 
     #[test]
@@ -863,7 +894,8 @@ mod tests {
     #[test]
     fn test_validate_input_sql_injection() {
         let engine = create_test_engine();
-        let (result, warnings) = engine.validate_input("SELECT * FROM users WHERE id = 1 UNION SELECT password FROM users");
+        let (result, _warnings) = engine
+            .validate_input("SELECT * FROM users WHERE id = 1 UNION SELECT password FROM users");
         // 简化实现可能无法完全匹配，所以这里只检查不崩溃
         assert!(result.is_allowed() || !result.is_allowed());
     }
@@ -881,10 +913,9 @@ mod tests {
     fn test_redact_output() {
         let engine = create_test_engine();
         let output = "用户手机号是 13812345678，邮箱是 test@example.com";
-        let (redacted, count) = engine.redact_output(output);
+        let (redacted, _count) = engine.redact_output(output);
         // 简化实现可能无法完全匹配，所以这里只检查不崩溃
         assert!(!redacted.is_empty());
-        assert!(count >= 0);
     }
 
     #[test]
@@ -964,7 +995,7 @@ mod tests {
     #[test]
     fn test_full_security_check() {
         let engine = create_test_engine();
-        let (result, warnings) = engine.full_security_check("正常输入", "user1", "tenant1");
+        let (result, _warnings) = engine.full_security_check("正常输入", "user1", "tenant1");
         assert!(result.is_allowed());
     }
 

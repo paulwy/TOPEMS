@@ -86,7 +86,11 @@ pub struct AuthenticatedUser {
 
 impl AuthenticatedUser {
     /// 创建新的认证用户
-    pub fn new(user_id: impl Into<String>, tenant_id: impl Into<String>, roles: Vec<String>) -> Self {
+    pub fn new(
+        user_id: impl Into<String>,
+        tenant_id: impl Into<String>,
+        roles: Vec<String>,
+    ) -> Self {
         Self {
             user_id: user_id.into(),
             tenant_id: tenant_id.into(),
@@ -107,9 +111,9 @@ impl AuthenticatedUser {
             return true;
         }
         // 检查角色是否匹配权限前缀
-        self.roles.iter().any(|role| {
-            permission.starts_with(role.as_str()) || role == permission
-        })
+        self.roles
+            .iter()
+            .any(|role| permission.starts_with(role.as_str()) || role == permission)
     }
 }
 
@@ -253,12 +257,16 @@ impl McpSecurityMiddleware {
         let one_minute = std::time::Duration::from_secs(60);
 
         let mut rate_limits = self.rate_limits.write().await;
-        let entry = rate_limits.entry(user_id.to_string()).or_insert_with(|| RateLimitEntry {
-            timestamps: Vec::new(),
-        });
+        let entry = rate_limits
+            .entry(user_id.to_string())
+            .or_insert_with(|| RateLimitEntry {
+                timestamps: Vec::new(),
+            });
 
         // 清理超过 1 分钟的旧时间戳
-        entry.timestamps.retain(|&t| now.duration_since(t) < one_minute);
+        entry
+            .timestamps
+            .retain(|&t| now.duration_since(t) < one_minute);
 
         // 检查是否超过速率限制
         if entry.timestamps.len() >= self.rate_limit_per_minute as usize {
@@ -334,9 +342,7 @@ impl McpSecurityMiddleware {
                 }
                 Value::Object(sanitized)
             }
-            Value::Array(arr) => {
-                Value::Array(arr.iter().map(|v| self.sanitize_value(v)).collect())
-            }
+            Value::Array(arr) => Value::Array(arr.iter().map(|v| self.sanitize_value(v)).collect()),
             _ => value.clone(),
         }
     }
@@ -361,7 +367,9 @@ impl McpSecurityMiddleware {
         RateLimitStatus {
             current_count,
             limit: self.rate_limit_per_minute,
-            remaining: self.rate_limit_per_minute.saturating_sub(current_count as u32),
+            remaining: self
+                .rate_limit_per_minute
+                .saturating_sub(current_count as u32),
         }
     }
 }
@@ -383,7 +391,11 @@ mod tests {
 
     #[test]
     fn test_authenticated_user_has_role() {
-        let user = AuthenticatedUser::new("user1", "tenant1", vec!["admin".to_string(), "user".to_string()]);
+        let user = AuthenticatedUser::new(
+            "user1",
+            "tenant1",
+            vec!["admin".to_string(), "user".to_string()],
+        );
         assert!(user.has_role("admin"));
         assert!(user.has_role("user"));
         assert!(!user.has_role("super_admin"));
@@ -405,7 +417,9 @@ mod tests {
     async fn test_validate_tool_input_size_limit() {
         let middleware = McpSecurityMiddleware::new();
         let large_input = Value::String("x".repeat(MAX_INPUT_SIZE + 1));
-        let result = middleware.validate_tool_input("test_tool", &large_input).await;
+        let result = middleware
+            .validate_tool_input("test_tool", &large_input)
+            .await;
         assert!(result.is_err());
     }
 
@@ -452,8 +466,14 @@ mod tests {
     #[test]
     fn test_check_injection_patterns() {
         let middleware = McpSecurityMiddleware::new();
-        assert!(middleware.check_injection_patterns("test", "SELECT * FROM users").is_ok());
-        assert!(middleware.check_injection_patterns("test", "DROP TABLE users").is_err());
-        assert!(middleware.check_injection_patterns("test", "DELETE FROM users WHERE id=1").is_err());
+        assert!(middleware
+            .check_injection_patterns("test", "SELECT * FROM users")
+            .is_ok());
+        assert!(middleware
+            .check_injection_patterns("test", "DROP TABLE users")
+            .is_err());
+        assert!(middleware
+            .check_injection_patterns("test", "DELETE FROM users WHERE id=1")
+            .is_err());
     }
 }

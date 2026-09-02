@@ -250,14 +250,53 @@ impl ErrorCode {
     /// 获取错误类别
     pub fn category(&self) -> ErrorCategory {
         match self {
-            ErrorCode::InternalError | ErrorCode::ServiceUnavailable | ErrorCode::GatewayTimeout | ErrorCode::UnderMaintenance => ErrorCategory::System,
-            ErrorCode::InvalidParameter | ErrorCode::MissingParameter | ErrorCode::InvalidFormat | ErrorCode::OutOfRange | ErrorCode::PayloadTooLarge | ErrorCode::UnsupportedMediaType => ErrorCategory::Validation,
-            ErrorCode::Unauthenticated | ErrorCode::AuthenticationFailed | ErrorCode::TokenExpired | ErrorCode::InvalidToken | ErrorCode::PermissionDenied | ErrorCode::Forbidden | ErrorCode::AccountLocked | ErrorCode::AccountDisabled => ErrorCategory::Auth,
-            ErrorCode::NotFound | ErrorCode::AlreadyExists | ErrorCode::Conflict | ErrorCode::ResourceLocked | ErrorCode::ResourceExpired | ErrorCode::QuotaExceeded => ErrorCategory::Resource,
-            ErrorCode::BusinessRuleViolation | ErrorCode::OperationNotAllowed | ErrorCode::InvalidState | ErrorCode::OperationTimeout | ErrorCode::OperationFailed | ErrorCode::DataInconsistency => ErrorCategory::Business,
-            ErrorCode::ExternalServiceFailed | ErrorCode::ExternalServiceTimeout | ErrorCode::ExternalServiceUnavailable | ErrorCode::ExternalServiceError | ErrorCode::LLMCallFailed | ErrorCode::DatabaseError | ErrorCode::CacheError | ErrorCode::MessageQueueError => ErrorCategory::External,
-            ErrorCode::ConfigMissing | ErrorCode::ConfigInvalid | ErrorCode::ConfigLoadFailed | ErrorCode::EnvVarMissing => ErrorCategory::Config,
-            ErrorCode::RateLimitExceeded | ErrorCode::ConcurrencyLimitExceeded | ErrorCode::BurstLimitExceeded | ErrorCode::UserQuotaExceeded | ErrorCode::TenantQuotaExceeded => ErrorCategory::RateLimit,
+            ErrorCode::InternalError
+            | ErrorCode::ServiceUnavailable
+            | ErrorCode::GatewayTimeout
+            | ErrorCode::UnderMaintenance => ErrorCategory::System,
+            ErrorCode::InvalidParameter
+            | ErrorCode::MissingParameter
+            | ErrorCode::InvalidFormat
+            | ErrorCode::OutOfRange
+            | ErrorCode::PayloadTooLarge
+            | ErrorCode::UnsupportedMediaType => ErrorCategory::Validation,
+            ErrorCode::Unauthenticated
+            | ErrorCode::AuthenticationFailed
+            | ErrorCode::TokenExpired
+            | ErrorCode::InvalidToken
+            | ErrorCode::PermissionDenied
+            | ErrorCode::Forbidden
+            | ErrorCode::AccountLocked
+            | ErrorCode::AccountDisabled => ErrorCategory::Auth,
+            ErrorCode::NotFound
+            | ErrorCode::AlreadyExists
+            | ErrorCode::Conflict
+            | ErrorCode::ResourceLocked
+            | ErrorCode::ResourceExpired
+            | ErrorCode::QuotaExceeded => ErrorCategory::Resource,
+            ErrorCode::BusinessRuleViolation
+            | ErrorCode::OperationNotAllowed
+            | ErrorCode::InvalidState
+            | ErrorCode::OperationTimeout
+            | ErrorCode::OperationFailed
+            | ErrorCode::DataInconsistency => ErrorCategory::Business,
+            ErrorCode::ExternalServiceFailed
+            | ErrorCode::ExternalServiceTimeout
+            | ErrorCode::ExternalServiceUnavailable
+            | ErrorCode::ExternalServiceError
+            | ErrorCode::LLMCallFailed
+            | ErrorCode::DatabaseError
+            | ErrorCode::CacheError
+            | ErrorCode::MessageQueueError => ErrorCategory::External,
+            ErrorCode::ConfigMissing
+            | ErrorCode::ConfigInvalid
+            | ErrorCode::ConfigLoadFailed
+            | ErrorCode::EnvVarMissing => ErrorCategory::Config,
+            ErrorCode::RateLimitExceeded
+            | ErrorCode::ConcurrencyLimitExceeded
+            | ErrorCode::BurstLimitExceeded
+            | ErrorCode::UserQuotaExceeded
+            | ErrorCode::TenantQuotaExceeded => ErrorCategory::RateLimit,
             ErrorCode::UnknownError => ErrorCategory::Unknown,
         }
     }
@@ -331,12 +370,21 @@ impl ErrorCode {
             ErrorCode::ServiceUnavailable => 503,
             ErrorCode::GatewayTimeout => 504,
 
-            ErrorCode::InvalidParameter | ErrorCode::MissingParameter | ErrorCode::InvalidFormat | ErrorCode::OutOfRange => 400,
+            ErrorCode::InvalidParameter
+            | ErrorCode::MissingParameter
+            | ErrorCode::InvalidFormat
+            | ErrorCode::OutOfRange => 400,
             ErrorCode::PayloadTooLarge => 413,
             ErrorCode::UnsupportedMediaType => 415,
 
-            ErrorCode::Unauthenticated | ErrorCode::AuthenticationFailed | ErrorCode::TokenExpired | ErrorCode::InvalidToken => 401,
-            ErrorCode::PermissionDenied | ErrorCode::Forbidden | ErrorCode::AccountLocked | ErrorCode::AccountDisabled => 403,
+            ErrorCode::Unauthenticated
+            | ErrorCode::AuthenticationFailed
+            | ErrorCode::TokenExpired
+            | ErrorCode::InvalidToken => 401,
+            ErrorCode::PermissionDenied
+            | ErrorCode::Forbidden
+            | ErrorCode::AccountLocked
+            | ErrorCode::AccountDisabled => 403,
 
             ErrorCode::NotFound => 404,
             ErrorCode::AlreadyExists | ErrorCode::Conflict => 409,
@@ -344,17 +392,31 @@ impl ErrorCode {
             ErrorCode::ResourceExpired => 410,
             ErrorCode::QuotaExceeded => 429,
 
-            ErrorCode::BusinessRuleViolation | ErrorCode::OperationNotAllowed | ErrorCode::InvalidState => 422,
+            ErrorCode::BusinessRuleViolation
+            | ErrorCode::OperationNotAllowed
+            | ErrorCode::InvalidState => 422,
             ErrorCode::OperationTimeout => 408,
             ErrorCode::OperationFailed | ErrorCode::DataInconsistency => 500,
 
-            ErrorCode::ExternalServiceFailed | ErrorCode::ExternalServiceError | ErrorCode::LLMCallFailed | ErrorCode::DatabaseError | ErrorCode::CacheError | ErrorCode::MessageQueueError => 502,
+            ErrorCode::ExternalServiceFailed
+            | ErrorCode::ExternalServiceError
+            | ErrorCode::LLMCallFailed
+            | ErrorCode::DatabaseError
+            | ErrorCode::CacheError
+            | ErrorCode::MessageQueueError => 502,
             ErrorCode::ExternalServiceTimeout => 504,
             ErrorCode::ExternalServiceUnavailable => 503,
 
-            ErrorCode::ConfigMissing | ErrorCode::ConfigInvalid | ErrorCode::ConfigLoadFailed | ErrorCode::EnvVarMissing => 500,
+            ErrorCode::ConfigMissing
+            | ErrorCode::ConfigInvalid
+            | ErrorCode::ConfigLoadFailed
+            | ErrorCode::EnvVarMissing => 500,
 
-            ErrorCode::RateLimitExceeded | ErrorCode::ConcurrencyLimitExceeded | ErrorCode::BurstLimitExceeded | ErrorCode::UserQuotaExceeded | ErrorCode::TenantQuotaExceeded => 429,
+            ErrorCode::RateLimitExceeded
+            | ErrorCode::ConcurrencyLimitExceeded
+            | ErrorCode::BurstLimitExceeded
+            | ErrorCode::UserQuotaExceeded
+            | ErrorCode::TenantQuotaExceeded => 429,
 
             ErrorCode::UnknownError => 500,
         }
@@ -712,7 +774,10 @@ pub fn err<T>(error_code: ErrorCode) -> StandardResponse<T> {
 }
 
 /// 创建带消息的错误响应
-pub fn err_with_message<T>(error_code: ErrorCode, message: impl Into<String>) -> StandardResponse<T> {
+pub fn err_with_message<T>(
+    error_code: ErrorCode,
+    message: impl Into<String>,
+) -> StandardResponse<T> {
     StandardResponse::error(StandardError::with_message(error_code, message))
 }
 
@@ -753,13 +818,25 @@ mod tests {
     #[test]
     fn test_error_code_category() {
         assert_eq!(ErrorCode::InternalError.category(), ErrorCategory::System);
-        assert_eq!(ErrorCode::InvalidParameter.category(), ErrorCategory::Validation);
+        assert_eq!(
+            ErrorCode::InvalidParameter.category(),
+            ErrorCategory::Validation
+        );
         assert_eq!(ErrorCode::Unauthenticated.category(), ErrorCategory::Auth);
         assert_eq!(ErrorCode::NotFound.category(), ErrorCategory::Resource);
-        assert_eq!(ErrorCode::BusinessRuleViolation.category(), ErrorCategory::Business);
-        assert_eq!(ErrorCode::ExternalServiceFailed.category(), ErrorCategory::External);
+        assert_eq!(
+            ErrorCode::BusinessRuleViolation.category(),
+            ErrorCategory::Business
+        );
+        assert_eq!(
+            ErrorCode::ExternalServiceFailed.category(),
+            ErrorCategory::External
+        );
         assert_eq!(ErrorCode::ConfigMissing.category(), ErrorCategory::Config);
-        assert_eq!(ErrorCode::RateLimitExceeded.category(), ErrorCategory::RateLimit);
+        assert_eq!(
+            ErrorCode::RateLimitExceeded.category(),
+            ErrorCategory::RateLimit
+        );
     }
 
     #[test]
@@ -853,7 +930,8 @@ mod tests {
 
     #[test]
     fn test_standard_response_from_error_code() {
-        let response: StandardResponse<String> = StandardResponse::from_error_code(ErrorCode::InternalError);
+        let response: StandardResponse<String> =
+            StandardResponse::from_error_code(ErrorCode::InternalError);
         assert!(!response.success);
         assert!(response.error.is_some());
         assert_eq!(response.error.unwrap().code, 10001);
@@ -965,7 +1043,8 @@ mod tests {
 
     #[test]
     fn test_err_with_message_helper() {
-        let response: StandardResponse<String> = err_with_message(ErrorCode::NotFound, "数据不存在");
+        let response: StandardResponse<String> =
+            err_with_message(ErrorCode::NotFound, "数据不存在");
         assert!(!response.success);
         assert_eq!(response.error.unwrap().message, "数据不存在");
     }

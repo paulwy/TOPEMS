@@ -6,7 +6,7 @@
 //! - lims.list_tests — 查询检测项目列表
 //! - lims.create_sample — 创建样品
 //!
-//! 当前版本使用 mock 数据，后续版本将通过 shared-service-client 连接真实 LIMS API。
+//! 当前版本优先调用真实 LIMS 服务（网关 8099 / LIMS_SERVICE_URL），调用失败时回退 mock 数据。
 
 use serde_json::{json, Value};
 
@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url, url_encode};
 
 /// 注册 LIMS 业务工具到 MCP Server
 ///
@@ -80,7 +81,16 @@ pub async fn register_lims_tools(server: &McpServer) {
                 let submitter = params["submitter"].as_str().unwrap_or("");
                 let keyword = params["keyword"].as_str().unwrap_or("");
 
-                let samples = generate_mock_samples(status, sample_type, submitter, keyword);
+                let base = service_base_url("LIMS_SERVICE_URL", 8051);
+                let mut path = format!("/api/lims/samples?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                if !sample_type.is_empty() { path.push_str(&format!("&sample_type={}", url_encode(sample_type))); }
+                if !keyword.is_empty() { path.push_str(&format!("&keyword={}", url_encode(keyword))); }
+                let samples = if let Some(data) = http_call(&base, "GET", &path, None) {
+                    data.as_array().cloned().unwrap_or_default()
+                } else {
+                    generate_mock_samples(status, sample_type, submitter, keyword)
+                };
                 let total = samples.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -120,7 +130,12 @@ pub async fn register_lims_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("sample_id is required".to_string()));
                 }
 
-                let sample = generate_mock_sample_detail(sample_id);
+                let base = service_base_url("LIMS_SERVICE_URL", 8051);
+                let sample = if let Some(data) = http_call(&base, "GET", &format!("/api/lims/samples/{}", url_encode(&sample_id)), None) {
+                    data
+                } else {
+                    generate_mock_sample_detail(sample_id)
+                };
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(sample.to_string())],
@@ -179,7 +194,14 @@ pub async fn register_lims_tools(server: &McpServer) {
                 let test_method = params["test_method"].as_str().unwrap_or("");
                 let tester = params["tester"].as_str().unwrap_or("");
 
-                let tests = generate_mock_tests(sample_id, status, test_method, tester);
+                let base = service_base_url("LIMS_SERVICE_URL", 8051);
+                let mut path = format!("/api/lims/tasks?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_encode(status))); }
+                let tests = if let Some(data) = http_call(&base, "GET", &path, None) {
+                    data.as_array().cloned().unwrap_or_default()
+                } else {
+                    generate_mock_tests(sample_id, status, test_method, tester)
+                };
                 let total = tests.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
@@ -206,39 +228,39 @@ pub async fn register_lims_tools(server: &McpServer) {
             "lims.create_sample",
             "创建LIMS样品。需要提供样品名称、类型、来源和送检人，返回新创建的样品ID和样品编号。",
             SchemaBuilder::object()
-                .property(
-                    "name",
-                    SchemaBuilder::string().description("样品名称"),
-                )
+                .property("name", SchemaBuilder::string().description("样品名称"))
                 .property(
                     "sample_type",
                     SchemaBuilder::string()
                         .description("样品类型")
-                        .enum_values(&["raw_material", "in_process", "finished_product", "environment", "water", "air"]),
+                        .enum_values(&[
+                            "raw_material",
+                            "in_process",
+                            "finished_product",
+                            "environment",
+                            "water",
+                            "air",
+                        ]),
                 )
                 .property(
                     "source",
                     SchemaBuilder::string().description("样品来源（供应商/生产线/采样点）"),
                 )
-                .property(
-                    "submitter",
-                    SchemaBuilder::string().description("送检人"),
-                )
+                .property("submitter", SchemaBuilder::string().description("送检人"))
                 .property(
                     "quantity",
                     SchemaBuilder::number().description("样品数量").minimum(0.0),
                 )
-                .property(
-                    "unit",
-                    SchemaBuilder::string().description("数量单位"),
-                )
+                .property("unit", SchemaBuilder::string().description("数量单位"))
                 .property(
                     "description",
                     SchemaBuilder::string().description("样品描述"),
                 )
                 .property(
                     "test_items",
-                    SchemaBuilder::array().description("检测项目列表").items(SchemaBuilder::string()),
+                    SchemaBuilder::array()
+                        .description("检测项目列表")
+                        .items(SchemaBuilder::string()),
                 )
                 .required(&["name", "sample_type", "source", "submitter"])
                 .build(),
@@ -249,24 +271,28 @@ pub async fn register_lims_tools(server: &McpServer) {
                 let submitter = params["submitter"].as_str().unwrap_or("");
 
                 if name.is_empty() {
-                    return Err(ToolExecutionError::Validation("name is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "name is required".to_string(),
+                    ));
                 }
                 if sample_type.is_empty() {
-                    return Err(ToolExecutionError::Validation("sample_type is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "sample_type is required".to_string(),
+                    ));
                 }
                 if source.is_empty() {
-                    return Err(ToolExecutionError::Validation("source is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "source is required".to_string(),
+                    ));
                 }
                 if submitter.is_empty() {
-                    return Err(ToolExecutionError::Validation("submitter is required".to_string()));
+                    return Err(ToolExecutionError::Validation(
+                        "submitter is required".to_string(),
+                    ));
                 }
 
-                let sample_id = format!("SMP-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let sample_number = format!("LIMS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
-
-                let result = json!({
-                    "sample_id": sample_id,
-                    "sample_number": sample_number,
+                let base = service_base_url("LIMS_SERVICE_URL", 8051);
+                let body = json!({
                     "name": name,
                     "sample_type": sample_type,
                     "source": source,
@@ -274,12 +300,43 @@ pub async fn register_lims_tools(server: &McpServer) {
                     "quantity": params["quantity"].as_f64().unwrap_or(0.0),
                     "unit": params["unit"].as_str().unwrap_or(""),
                     "description": params["description"].as_str().unwrap_or(""),
-                    "test_items": params["test_items"].as_array().unwrap_or(&vec![]),
-                    "status": "received",
-                    "received_at": chrono::Utc::now().to_rfc3339(),
-                    "created_at": chrono::Utc::now().to_rfc3339(),
-                    "message": "样品创建成功，已分配样品编号，等待检测安排",
                 });
+                let result = http_call(&base, "POST", "/api/lims/samples", Some(body))
+                    .map(|data| {
+                        let mut d = data;
+                        if d.get("message").is_none() {
+                            d["message"] = json!("样品创建成功，已分配样品编号，等待检测安排");
+                        }
+                        d
+                    })
+                    .unwrap_or_else(|| {
+                        let sample_id = format!(
+                            "SMP-{}",
+                            uuid::Uuid::new_v4()
+                                .to_string()
+                                .split('-')
+                                .next()
+                                .unwrap_or("00000000")
+                        );
+                        let sample_number =
+                            format!("LIMS{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
+                        json!({
+                            "sample_id": sample_id,
+                            "sample_number": sample_number,
+                            "name": name,
+                            "sample_type": sample_type,
+                            "source": source,
+                            "submitter": submitter,
+                            "quantity": params["quantity"].as_f64().unwrap_or(0.0),
+                            "unit": params["unit"].as_str().unwrap_or(""),
+                            "description": params["description"].as_str().unwrap_or(""),
+                            "test_items": params["test_items"].as_array().unwrap_or(&vec![]),
+                            "status": "received",
+                            "received_at": chrono::Utc::now().to_rfc3339(),
+                            "created_at": chrono::Utc::now().to_rfc3339(),
+                            "message": "样品创建成功，已分配样品编号，等待检测安排",
+                        })
+                    });
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(result.to_string())],
@@ -295,9 +352,28 @@ pub async fn register_lims_tools(server: &McpServer) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 样品列表
-fn generate_mock_samples(status_filter: &str, type_filter: &str, submitter_filter: &str, keyword_filter: &str) -> Vec<Value> {
-    let statuses = ["received", "in_testing", "completed", "completed", "rejected", "archived"];
-    let types = ["raw_material", "in_process", "finished_product", "environment", "water", "air"];
+fn generate_mock_samples(
+    status_filter: &str,
+    type_filter: &str,
+    submitter_filter: &str,
+    keyword_filter: &str,
+) -> Vec<Value> {
+    let statuses = [
+        "received",
+        "in_testing",
+        "completed",
+        "completed",
+        "rejected",
+        "archived",
+    ];
+    let types = [
+        "raw_material",
+        "in_process",
+        "finished_product",
+        "environment",
+        "water",
+        "air",
+    ];
     let submitters = ["张三", "李四", "王五", "赵六", "钱七"];
 
     (0..120)
@@ -380,11 +456,42 @@ fn generate_mock_sample_detail(sample_id: &str) -> Value {
 }
 
 /// 生成 Mock 检测项目列表
-fn generate_mock_tests(sample_filter: &str, status_filter: &str, method_filter: &str, tester_filter: &str) -> Vec<Value> {
-    let statuses = ["pending", "in_progress", "completed", "reviewed", "rejected"];
-    let methods = ["HPLC", "GC", "ICP-MS", "目视检查", "卡尔费休法", "平板计数法", "滴定法", "分光光度法"];
+fn generate_mock_tests(
+    sample_filter: &str,
+    status_filter: &str,
+    method_filter: &str,
+    tester_filter: &str,
+) -> Vec<Value> {
+    let statuses = [
+        "pending",
+        "in_progress",
+        "completed",
+        "reviewed",
+        "rejected",
+    ];
+    let methods = [
+        "HPLC",
+        "GC",
+        "ICP-MS",
+        "目视检查",
+        "卡尔费休法",
+        "平板计数法",
+        "滴定法",
+        "分光光度法",
+    ];
     let testers = ["张三", "李四", "王五", "赵六", "钱七"];
-    let test_names = ["外观检查", "纯度检测", "水分含量", "重金属检测", "微生物检测", "pH值", "密度", "粘度", "熔点", "灰分"];
+    let test_names = [
+        "外观检查",
+        "纯度检测",
+        "水分含量",
+        "重金属检测",
+        "微生物检测",
+        "pH值",
+        "密度",
+        "粘度",
+        "熔点",
+        "灰分",
+    ];
 
     (0..300)
         .map(|i| {
@@ -492,7 +599,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("lims.list_tests", json!({"page": 1, "page_size": 10, "status": "completed"}))
+            .call_tool(
+                "lims.list_tests",
+                json!({"page": 1, "page_size": 10, "status": "completed"}),
+            )
             .await
             .unwrap();
 
@@ -512,16 +622,19 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("lims.create_sample", json!({
-                "name": "原材料B批次202609",
-                "sample_type": "raw_material",
-                "source": "供应商B-批次B20260901",
-                "submitter": "张三",
-                "quantity": 300,
-                "unit": "g",
-                "description": "原材料B的2026年9月批次样品",
-                "test_items": ["外观检查", "纯度检测", "水分含量"]
-            }))
+            .call_tool(
+                "lims.create_sample",
+                json!({
+                    "name": "原材料B批次202609",
+                    "sample_type": "raw_material",
+                    "source": "供应商B-批次B20260901",
+                    "submitter": "张三",
+                    "quantity": 300,
+                    "unit": "g",
+                    "description": "原材料B的2026年9月批次样品",
+                    "test_items": ["外观检查", "纯度检测", "水分含量"]
+                }),
+            )
             .await
             .unwrap();
 
@@ -547,22 +660,28 @@ mod tests {
         // 缺少 source
         let result = server
             .tool_registry()
-            .call_tool("lims.create_sample", json!({
-                "name": "测试样品",
-                "sample_type": "raw_material",
-                "submitter": "张三"
-            }))
+            .call_tool(
+                "lims.create_sample",
+                json!({
+                    "name": "测试样品",
+                    "sample_type": "raw_material",
+                    "submitter": "张三"
+                }),
+            )
             .await;
         assert!(result.is_err());
 
         // 缺少 submitter
         let result = server
             .tool_registry()
-            .call_tool("lims.create_sample", json!({
-                "name": "测试样品",
-                "sample_type": "raw_material",
-                "source": "供应商A"
-            }))
+            .call_tool(
+                "lims.create_sample",
+                json!({
+                    "name": "测试样品",
+                    "sample_type": "raw_material",
+                    "source": "供应商A"
+                }),
+            )
             .await;
         assert!(result.is_err());
     }

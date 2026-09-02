@@ -10,21 +10,17 @@ use std::fmt;
 /// Provider 类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum ProviderType {
     /// DeepSeek API（云端大模型）
     DeepSeek,
     /// Ollama（本地小模型）
+    #[default]
     Ollama,
     /// Dify（Dify 代理层）
     Dify,
     /// Mock（测试用）
     Mock,
-}
-
-impl Default for ProviderType {
-    fn default() -> Self {
-        Self::Ollama
-    }
 }
 
 impl fmt::Display for ProviderType {
@@ -245,7 +241,7 @@ pub struct EmbeddingResponse {
 }
 
 /// LLM Provider 错误
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum LlmProviderError {
     /// 网络错误
     #[error("Network error: {0}")]

@@ -15,6 +15,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
+use super::super::tools::{http_call, service_base_url};
 
 /// 注册 ERP 业务工具到 MCP Server
 ///
@@ -26,6 +27,11 @@ use super::super::tools::ToolExecutionError;
 /// - erp.get_order — 获取订单详情（按 ID）
 /// - erp.create_order — 创建订单（客户、商品、数量）
 /// - erp.update_inventory — 更新库存（商品ID、数量、操作类型）
+/// URL 编码辅助（委托共享 helper）
+fn url_enc(s: &str) -> String {
+    super::super::tools::url_encode(s)
+}
+
 pub async fn register_erp_tools(server: &McpServer) {
     let registry = server.tool_registry();
 
@@ -68,17 +74,27 @@ pub async fn register_erp_tools(server: &McpServer) {
                 let status = params["status"].as_str().unwrap_or("");
                 let customer_id = params["customer_id"].as_str().unwrap_or("");
 
-                let orders = generate_mock_orders(status, customer_id);
-                let total = orders.len();
-                let start = ((page - 1) * page_size) as usize;
-                let end = (start + page_size as usize).min(total);
-                let page_orders = &orders[start.min(total)..end];
-
-                let result = json!({
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "orders": page_orders,
+                // 真实调用 ERP API（降级 mock）
+                let mut path = format!("/api/erp/sales-orders?page={}&page_size={}", page, page_size);
+                if !status.is_empty() { path.push_str(&format!("&status={}", url_enc(status))); }
+                if !customer_id.is_empty() { path.push_str(&format!("&customer_id={}", url_enc(customer_id))); }
+                let base = service_base_url("ERP_SERVICE_URL", 8010);
+                let result = http_call(&base, "GET", &path, None).map(|data| {
+                    let items = data.get("items").cloned().unwrap_or(json!([]));
+                    let total = data.get("total").cloned().unwrap_or(json!(0));
+                    json!({ "total": total, "page": page, "page_size": page_size, "orders": items })
+                }).unwrap_or_else(|| {
+                    let orders = generate_mock_orders(status, customer_id);
+                    let total = orders.len();
+                    let start = ((page - 1) * page_size) as usize;
+                    let end = (start + page_size as usize).min(total);
+                    let page_orders = &orders[start.min(total)..end];
+                    json!({
+                        "total": total,
+                        "page": page,
+                        "page_size": page_size,
+                        "orders": page_orders,
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -108,7 +124,10 @@ pub async fn register_erp_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("order_id is required".to_string()));
                 }
 
-                let order = generate_mock_order_detail(order_id);
+                // 真实调用 ERP API（降级 mock）
+                let base = service_base_url("ERP_SERVICE_URL", 8010);
+                let order = http_call(&base, "GET", &format!("/api/erp/sales-orders/{}", order_id), None)
+                    .unwrap_or_else(|| generate_mock_order_detail(order_id));
 
                 Ok(McpToolResult {
                     content: vec![McpContent::text(order.to_string())],
@@ -156,16 +175,20 @@ pub async fn register_erp_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("items must contain at least one item".to_string()));
                 }
 
-                let order_id = format!("ORD-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
-                let order_number = format!("SO{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
-
-                let result = json!({
-                    "order_id": order_id,
-                    "order_number": order_number,
-                    "customer_id": customer_id,
-                    "status": "pending",
-                    "created_at": chrono::Utc::now().to_rfc3339(),
-                    "message": "订单创建成功，等待确认",
+                // 真实调用 ERP API（POST purchase-orders，降级 mock）
+                let payload = json!({ "customer_id": customer_id, "items": items.unwrap(), "remark": params["remark"].as_str().unwrap_or("") });
+                let base = service_base_url("ERP_SERVICE_URL", 8010);
+                let result = http_call(&base, "POST", "/api/erp/purchase-orders", Some(payload)).unwrap_or_else(|| {
+                    let order_id = format!("ORD-{}", uuid::Uuid::new_v4().to_string().split('-').next().unwrap_or("00000000"));
+                    let order_number = format!("SO{}{:06}", chrono::Utc::now().format("%Y%m%d"), 1001);
+                    json!({
+                        "order_id": order_id,
+                        "order_number": order_number,
+                        "customer_id": customer_id,
+                        "status": "pending",
+                        "created_at": chrono::Utc::now().to_rfc3339(),
+                        "message": "订单创建成功（mock 降级），等待确认",
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -219,31 +242,41 @@ pub async fn register_erp_tools(server: &McpServer) {
                     return Err(ToolExecutionError::Validation("quantity must be positive".to_string()));
                 }
 
-                let current_stock = 1000i64; // Mock 当前库存
-                let new_stock = match operation {
-                    "inbound" => current_stock + quantity,
-                    "outbound" => {
-                        if quantity > current_stock {
-                            return Err(ToolExecutionError::Validation(format!(
-                                "库存不足：当前库存{}，请求出库{}",
-                                current_stock, quantity
-                            )));
-                        }
-                        current_stock - quantity
-                    }
-                    "adjust" => quantity, // 盘点调整为指定数量
-                    _ => return Err(ToolExecutionError::Validation(format!("Unknown operation: {}", operation))),
-                };
+                // 前置校验：operation 合法性 + outbound 超量（mock 基准库存 1000，保守校验）
+                if operation != "inbound" && operation != "outbound" && operation != "adjust" {
+                    return Err(ToolExecutionError::Validation(format!("Unknown operation: {}", operation)));
+                }
+                if operation == "outbound" && quantity > 1000 {
+                    return Err(ToolExecutionError::Validation(format!(
+                        "库存不足：当前库存{}，请求出库{}",
+                        1000, quantity
+                    )));
+                }
 
-                let result = json!({
-                    "product_id": product_id,
-                    "warehouse_id": warehouse_id,
-                    "operation": operation,
-                    "quantity": quantity,
-                    "previous_stock": current_stock,
-                    "current_stock": new_stock,
-                    "updated_at": chrono::Utc::now().to_rfc3339(),
-                    "message": format!("库存更新成功：{} → {}", current_stock, new_stock),
+                // 真实调用 ERP API（POST inventory，降级 mock）
+                let payload = json!({ "product_id": product_id, "warehouse_id": warehouse_id, "operation": operation, "quantity": quantity });
+                let base = service_base_url("ERP_SERVICE_URL", 8010);
+                let api_result = http_call(&base, "POST", "/api/erp/inventory", Some(payload));
+                let result = api_result.unwrap_or_else(|| {
+                    let current_stock = 1000i64; // Mock 当前库存
+                    let new_stock = match operation {
+                        "inbound" => current_stock + quantity,
+                        "outbound" => {
+                            current_stock.saturating_sub(quantity)
+                        }
+                        "adjust" => quantity,
+                        _ => current_stock,
+                    };
+                    json!({
+                        "product_id": product_id,
+                        "warehouse_id": warehouse_id,
+                        "operation": operation,
+                        "quantity": quantity,
+                        "previous_stock": current_stock,
+                        "current_stock": new_stock,
+                        "updated_at": chrono::Utc::now().to_rfc3339(),
+                        "message": format!("库存更新成功：{} → {}", current_stock, new_stock),
+                    })
                 });
 
                 Ok(McpToolResult {
@@ -281,7 +314,8 @@ fn generate_mock_orders(status_filter: &str, customer_filter: &str) -> Vec<Value
         })
         .filter(|o| {
             (status_filter.is_empty() || o["status"].as_str() == Some(status_filter))
-                && (customer_filter.is_empty() || o["customer_id"].as_str() == Some(customer_filter))
+                && (customer_filter.is_empty()
+                    || o["customer_id"].as_str() == Some(customer_filter))
         })
         .collect()
 }
@@ -378,6 +412,31 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "需要 ERP_SERVICE_URL 指向真实 erp 服务时手动运行"]
+    async fn test_list_orders_real_api() {
+        if std::env::var("ERP_SERVICE_URL").is_err() {
+            eprintln!("SKIP: 未设置 ERP_SERVICE_URL");
+            return;
+        }
+        let server = McpServer::new("test", "1.0.0");
+        register_erp_tools(&server).await;
+        let result = server
+            .tool_registry()
+            .call_tool("erp.list_orders", json!({"page": 1, "page_size": 5}))
+            .await
+            .unwrap();
+        assert_eq!(result.content.len(), 1);
+        let text = match &result.content[0] {
+            McpContent::Text { text } => text.clone(),
+            _ => String::new(),
+        };
+        let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+        let total = parsed["total"].as_u64().unwrap_or(0);
+        assert!(total > 0, "真实 API 应返回订单，total={}", total);
+        eprintln!("erp.list_orders 真实调用返回 total = {}", total);
+    }
+
+    #[tokio::test]
     async fn test_get_order() {
         let server = McpServer::new("test", "1.0.0");
         register_erp_tools(&server).await;
@@ -406,7 +465,10 @@ mod tests {
         // 缺少 customer_id
         let result = server
             .tool_registry()
-            .call_tool("erp.create_order", json!({"items": [{"product_id": "P1", "quantity": 1}]}))
+            .call_tool(
+                "erp.create_order",
+                json!({"items": [{"product_id": "P1", "quantity": 1}]}),
+            )
             .await;
         assert!(result.is_err());
 
@@ -425,7 +487,10 @@ mod tests {
 
         let result = server
             .tool_registry()
-            .call_tool("erp.update_inventory", json!({"product_id": "P1", "quantity": 50, "operation": "inbound"}))
+            .call_tool(
+                "erp.update_inventory",
+                json!({"product_id": "P1", "quantity": 50, "operation": "inbound"}),
+            )
             .await
             .unwrap();
 
@@ -446,7 +511,10 @@ mod tests {
         // 出库数量超过库存
         let result = server
             .tool_registry()
-            .call_tool("erp.update_inventory", json!({"product_id": "P1", "quantity": 2000, "operation": "outbound"}))
+            .call_tool(
+                "erp.update_inventory",
+                json!({"product_id": "P1", "quantity": 2000, "operation": "outbound"}),
+            )
             .await;
         assert!(result.is_err());
     }

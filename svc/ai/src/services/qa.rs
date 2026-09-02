@@ -7,6 +7,7 @@ use sqlx::{Executor, Row};
 use topems_shared_ai::ai_client::{
     create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -261,7 +262,8 @@ impl QAService {
         limit: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, String> {
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
@@ -269,7 +271,8 @@ impl QAService {
             ORDER BY created_at DESC
             OFFSET $1 LIMIT $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(offset as i64)
         .bind(limit as i64)
         .bind(tenant_id)
@@ -301,11 +304,13 @@ impl QAService {
 
     /// 获取问答历史总数
     pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, String> {
-        let count: i64 = sqlx::query_scalar(
+        let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
             r#"
             SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND tenant_id = $1
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(tenant_id)
         .fetch_one(self.db.pool())
         .await
@@ -322,7 +327,8 @@ impl QAService {
         limit: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, String> {
-        let rows = sqlx::query(
+        let rows = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
@@ -331,7 +337,8 @@ impl QAService {
             ORDER BY created_at DESC
             OFFSET $2 LIMIT $3
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(format!("%{}%", query))
         .bind(offset as i64)
         .bind(limit as i64)
@@ -368,13 +375,15 @@ impl QAService {
         query: &str,
         tenant_id: Uuid,
     ) -> Result<i64, String> {
-        let count: i64 = sqlx::query_scalar(
+        let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
             r#"
             SELECT COUNT(*) FROM ai.qa_history 
             WHERE deleted_at IS NULL AND tenant_id = $2
               AND (question ILIKE $1 OR answer ILIKE $1)
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(format!("%{}%", query))
         .bind(tenant_id)
         .fetch_one(self.db.pool())
@@ -386,13 +395,15 @@ impl QAService {
 
     /// 删除问答历史（软删除）
     pub async fn delete_qa_history(&self, qa_id: Uuid, tenant_id: Uuid) -> Result<bool, String> {
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             UPDATE ai.qa_history
             SET deleted_at = CURRENT_TIMESTAMP
             WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(qa_id)
         .bind(tenant_id)
         .execute(self.db.pool())
@@ -408,13 +419,15 @@ impl QAService {
         qa_ids: &[Uuid],
         tenant_id: Uuid,
     ) -> Result<i64, String> {
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             UPDATE ai.qa_history
             SET deleted_at = CURRENT_TIMESTAMP
             WHERE id = ANY($1) AND deleted_at IS NULL AND tenant_id = $2
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(qa_ids)
         .bind(tenant_id)
         .execute(self.db.pool())
@@ -432,13 +445,15 @@ impl QAService {
         rating: Option<i32>,
         tenant_id: Uuid,
     ) -> Result<(), String> {
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "ai",
             r#"
             UPDATE ai.qa_history
             SET feedback = $1, rating = $2
             WHERE id = $3 AND tenant_id = $4
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(feedback)
         .bind(rating)
         .bind(qa_id)
@@ -757,13 +772,15 @@ impl QAService {
         sources: Option<&[SearchResult]>,
         tenant_id: Uuid,
     ) -> Result<Uuid, String> {
-        let id: Uuid = sqlx::query_scalar(
+        let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
+            "ai",
             r#"
             INSERT INTO ai.qa_history (tenant_id, question, answer, context, sources)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
             "#,
-        )
+            "plugin_ai"
+        ))
         .bind(tenant_id)
         .bind(question)
         .bind(answer)
@@ -858,7 +875,8 @@ impl QAService {
             .db
             .pool()
             .fetch_all(
-                sqlx::query(
+                sqlx::query(only_own_schema_query!(
+                    "ai",
                     r#"
                     SELECT
                         c.document_id,
@@ -867,12 +885,13 @@ impl QAService {
                         1 - (c.embedding <=> $1::vector) AS similarity,
                         d.title AS document_title
                     FROM ai.document_chunks c
-                    JOIN plugin_ai.documents d ON c.document_id = d.id
+                    JOIN ai.documents d ON c.document_id = d.id
                     WHERE c.embedding IS NOT NULL AND d.tenant_id = $3
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,
-                )
+                    "plugin_ai"
+                ))
                 .bind(format!(
                     "[{}]",
                     query_embedding
@@ -916,7 +935,8 @@ impl QAService {
             .db
             .pool()
             .fetch_all(
-                sqlx::query(
+                sqlx::query(only_own_schema_query!(
+                    "ai",
                     r#"
                     SELECT
                         c.document_id,
@@ -925,13 +945,14 @@ impl QAService {
                         ts_rank_cd(to_tsvector('simple', c.content), query) AS keyword_score,
                         d.title AS document_title
                     FROM ai.document_chunks c
-                    JOIN plugin_ai.documents d ON c.document_id = d.id,
+                    JOIN ai.documents d ON c.document_id = d.id,
                          to_tsquery('simple', $1) query
                     WHERE to_tsvector('simple', c.content) @@ query
                     ORDER BY keyword_score DESC
                     LIMIT $2
                     "#,
-                )
+                    "plugin_ai"
+                ))
                 .bind(query)
                 .bind((top_k * 2) as i64),
             )
