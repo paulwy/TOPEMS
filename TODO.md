@@ -15,9 +15,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-01 架构主线（拆分就绪核验、服务拓扑 runtime 采集、阈值监控接入、每日巡检定时任务）已闭环，不再列入待办。
 > 09-01 编译库一致性治理已闭环：`.cargo/config.toml` 固化 `SQLX_OFFLINE=true`（编译默认离线缓存，绕开 Homebrew 库缺表）；容器库已对齐（postgres 映射 `5433:5432`，`.env DATABASE_URL` 指向 `localhost:5433` 容器库）——根治项完成，详见 `docs/development/backend/database-development.md` §7.8。
 > 09-02 全量 Docker 运行环境启动完成（32 容器 / 31 healthy），新增 #13 已闭环。
-> 09-02 提交后遗留处理（svc/aps+billing 归档删除、analytics 权限模块、旧 stash 清理）进行中，新增 #14。
+> 09-02 提交后遗留处理已闭环（svc/aps+billing 归档删除、analytics 权限模块 + finance R5、旧 stash 清理 + 删除意图落地），#14 已闭环。
 
-**当前待办总数：14 项**（✅ 已完成 10 / ⏳ 进行中 2 / 🔲 可选后续 2）
+**当前待办总数：14 项**（✅ 已完成 11 / ⏳ 进行中 1 / 🔲 可选后续 2）
 
 ---
 
@@ -52,7 +52,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 12 | qms 建表 DDL 未入库 + init_database 未在启动调用 | P2 | ✅ 已闭环（09-01） | 根因澄清：init_database 已被 main.rs:68 调用，但缺 CREATE SCHEMA（only_own_schema_query! 仅编译期校验展开，不建 schema；01_rebuild 只 DROP 不 CREATE qms）→ 容器重建后建表失败被 warn 吞、业务 500；**修复**：init_database 开头补 `CREATE SCHEMA IF NOT EXISTS qms` + 26 表 DDL 入库 `database/init/07_create_qms_tables.sql`；**验证**：DROP SCHEMA qms CASCADE 模拟全新库 → 重启容器自动建 26 表 → 8 端点全 success |
 | 10 | QMS 查询层 id cast 专项修复 | P2 | ✅ 已闭环（09-01） | 82 处 `SELECT id` → `id::TEXT`（11 模块）修复 id UUID→String 解码失败；顺带并入 schema 隔离改造（only_own_schema_query! + qms. 前缀）；qms 查询均为非宏 `sqlx::query/query_as`，无需更新 .sqlx 缓存；**运行时验证完成**（容器重建 + 26 张表 DDL 提取建表 + eightd uuid=jsonb 修复）：/issues /checks /audit-plans /eightd 全 200 success；#7 测试凭据对齐新库 admin123，7/7 全过 |
 | 13 | 全量 Docker 运行环境启动 | P1 | ✅ 已闭环（09-02） | 32 容器 / 31 healthy 全量运行（24 业务服务 + 基础设施 + 监控 + 网关 nginx）；修复构建卡死（docker.io 不可达 → 镜像源切 docker.1panel.live）、compose 挂载路径、healthcheck、nginx/traefik 网关循环依赖、运维组件（alertmanager/pgbouncer/grafana）；端到端验证登录 200 + qms/portal 200；提交 `f8fe706dc` + `c87c3355f`。已知遗留：traefik healthcheck 显示 unhealthy（服务可用，302→443 SSL 校验失败） |
-| 14 | 提交后遗留处理 | P1 | ⏳ 进行中（09-02） | ① svc/aps + svc/billing 归档删除（已归档至 `svc/_archive/`，原目录待删，已确认无外部依赖）；② analytics 权限模块缺失（perm-matrix 门禁 R1：lib.rs 无 `pub mod permission;`）；③ 旧 stash 清理（stash@{0..7} 备份确认，恢复过程临时备份 /tmp/stash0_full.diff） |
+| 14 | 提交后遗留处理 | P1 | ✅ 已闭环（09-02） | ① svc/aps（21）+ svc/billing（10）归档删除（已归档 `svc/_archive/`，server/shared-service-client/services.rs 仅注释引用无编译依赖；顺带修复 shared-auth 缺 service/service_monitor mod 声明、shared-service-client 缺 circuit_breaker mod 声明，cargo check 通过）；② analytics 权限模块缺失（新增根级 `permission.rs` 声明 analytics:view/admin + 统一入口，修复 perm-matrix R1；finance 6 处 utoipa 宏补 security 属性修复 R5——perm-matrix 全 0 FAIL）；③ 旧 stash 清理（12 个 stash 全量 diff 备份至 /tmp/topems_stash_backup/ 后 drop；落地 autostash 删除意图 50 文件：billing_api.rs 客户端 + 49 个过期 .sqlx 缓存）。提交 `8818b958c`、`d9076e4a7`、`82c70b556` |
 
 **已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
 
