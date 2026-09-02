@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 阶段验收报告（2026-08-30）</title>
+<style>
+  :root { --primary:#1a73e8; --ok:#188038; --warn:#b06000; --bg:#f7f9fc; --card:#fff; --line:#e2e8f0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:#1c2733; line-height:1.7; }
+  .wrap { max-width:1080px; margin:0 auto; padding:32px 20px 64px; }
+  header { background:linear-gradient(135deg,#1a73e8,#4a90e2); color:#fff; border-radius:14px; padding:32px 36px; margin-bottom:28px; }
+  header h1 { font-size:26px; margin-bottom:6px; }
+  header .sub { opacity:.92; font-size:14px; }
+  header .badges { margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; }
+  .badge { background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:3px 12px; border-radius:20px; font-size:12px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:24px 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 16px; text-align:center; }
+  .card .num { font-size:30px; font-weight:700; color:var(--primary); }
+  .card .lbl { font-size:13px; color:#5b6b7b; margin-top:4px; }
+  .card.ok .num { color:var(--ok); }
+  h2 { font-size:20px; margin:36px 0 16px; padding-left:12px; border-left:4px solid var(--primary); }
+  .phase { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 22px; margin-bottom:14px; }
+  .phase h3 { font-size:16px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .tag { font-size:11px; padding:2px 10px; border-radius:12px; background:#e8f0fe; color:var(--primary); font-weight:600; }
+  .phase ul { padding-left:20px; }
+  .phase li { font-size:14px; margin:5px 0; color:#33404d; }
+  .phase .done { color:var(--ok); font-weight:600; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:10px; overflow:hidden; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--line); }
+  th { background:#f1f5fb; font-weight:600; }
+  .ok-badge { color:var(--ok); font-weight:600; }
+  .note { background:#fff8e6; border:1px solid #f0d48a; border-radius:10px; padding:12px 16px; font-size:13px; color:#6b4e00; margin-top:18px; }
+  footer { margin-top:40px; color:#8a97a5; font-size:12px; text-align:center; }
+  code { background:#eef2f7; padding:1px 6px; border-radius:4px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>TOPEMS 模块化单体 · 阶段验收报告</h1>
+    <div class="sub">P0–P5 主线收口 · 验收日期 2026-08-30 · 石家庄</div>
+    <div class="badges">
+      <span class="badge">✅ 全量测试 23,613 passed</span>
+      <span class="badge">✅ CI 6 项门禁转绿</span>
+      <span class="badge">✅ 5 组合裁剪矩阵</span>
+      <span class="badge">✅ HTTP 冒烟通过</span>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="num">48</div><div class="lbl">Workspace 成员</div></div>
+    <div class="card"><div class="num">29</div><div class="lbl">业务服务 svc</div></div>
+    <div class="card"><div class="num">19</div><div class="lbl">共享库 lib</div></div>
+    <div class="card ok"><div class="num">23,613</div><div class="lbl">测试通过 / 0 失败</div></div>
+    <div class="card ok"><div class="num">14+</div><div class="lbl">server 单进程模块</div></div>
+    <div class="card ok"><div class="num">6</div><div class="lbl">CI 门禁全绿</div></div>
+  </div>
+
+  <h2>一、阶段成果（P0–P5）</h2>
+
+  <div class="phase">
+    <h3>P0 · 基础治理 <span class="tag">已完成 19 项</span></h3>
+    <ul>
+      <li class="done">✅ 移除 lowcode 空壳服务（归档代码 + 配置清理）</li>
+      <li class="done">✅ 事件总线升级（模块化单体前置依赖）</li>
+      <li class="done">✅ 编译时边界检查全覆盖（schema-boundary 门禁）</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>P1 · 多服务批量接入 <span class="tag">已完成 29 项</span></h3>
+    <ul>
+      <li class="done">✅ 真实服务批量接入统一入口：qms → crm → hrm → scm/wms → pm → mes → ehs → lims（real_module 模式，feature 门控）</li>
+      <li class="done">✅ finance / erp 真实接入 + 进程内 trait 调用（AccountBalanceProvider）</li>
+      <li class="done">✅ 各服务 MCP 工具真实化（list_projects / list_tasks 等降级优先）</li>
+      <li class="done">✅ crm org_id 孤儿列修复（写库端到端）</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>P2 · 功能补全 <span class="tag">已完成 9 项</span></h3>
+    <ul>
+      <li class="done">✅ tms 核心功能补全：订单分配 / 路径优化 / 运费结算（+15 引擎测试）</li>
+      <li class="done">✅ 其他模块业务功能补齐（事件订阅、表结构、路由）</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>P3 · 模块化单体架构 <span class="tag">已完成 4 项</span></h3>
+    <ul>
+      <li class="done">✅ feature 矩阵完整（15 模块：core/erp/finance/qms/crm/hrm/scm/wms/pm/mes/ehs/lims/tms/advanced/ai）</li>
+      <li class="done">✅ 裁剪矩阵 5 组合编译验证（default / +tms / 最小集 / +subscription / 全量）</li>
+      <li class="done">✅ gis 决策保持独立微服务（模块化单体 + gis 特例）</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>P4 · 架构优化 <span class="tag">已完成 80 项</span></h3>
+    <ul>
+      <li class="done">✅ CI 门禁强化：clippy / fmt / sqlx 离线缓存 / schema-boundary 全部转绿</li>
+      <li class="done">✅ 全量回归：cargo test --workspace → 23,613 passed / 0 failed</li>
+      <li class="done">✅ 集成测试环境健壮化（SSE guard + 8 个 doctest 修复）</li>
+      <li class="done">✅ 遗留服务合并：feedback→ticket、aps→mes、billing→finance</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h3>P5 · 商业化支撑 <span class="tag">已完成（4/4 核心项）</span></h3>
+    <ul>
+      <li class="done">✅ tier 分层引擎（free/basic/advanced + 权限自动关联 + 订阅状态降级）</li>
+      <li class="done">✅ 订阅管理模块（subscription_module：subscriptions 表 + 3 API + effective_tier）</li>
+      <li class="done">✅ 模块化单体按 tier 裁剪（modules_to_disable_for_tier）</li>
+      <li class="done">✅ billing 合并到 finance（商业模式决策：私有化主线；归档前后端）</li>
+    </ul>
+  </div>
+
+  <h2>二、验证矩阵</h2>
+  <table>
+    <tr><th>验证项</th><th>方式</th><th>结果</th></tr>
+    <tr><td>全量测试</td><td>cargo test --workspace</td><td class="ok-badge">23,613 passed / 0 failed</td></tr>
+    <tr><td>编译</td><td>cargo check --workspace</td><td class="ok-badge">0 error</td></tr>
+    <tr><td>Lint</td><td>cargo clippy --workspace --all-targets -D warnings</td><td class="ok-badge">EXIT 0</td></tr>
+    <tr><td>格式</td><td>cargo fmt --all --check</td><td class="ok-badge">0 diff</td></tr>
+    <tr><td>裁剪矩阵</td><td>5 feature 组合编译</td><td class="ok-badge">全部通过</td></tr>
+    <tr><td>HTTP 冒烟</td><td>server 单进程 14+ 模块 + 订阅 API</td><td class="ok-badge">端到端通过（含降级）</td></tr>
+  </table>
+
+  <h2>三、关键架构决策</h2>
+  <table>
+    <tr><th>决策项</th><th>结论</th><th>依据</th></tr>
+    <tr><td>billing 保留/合并</td><td class="ok-badge">合并到 finance</td><td>私有化 ERP 主线；订阅由 P5 承载；SaaS 计费无交付对象</td></tr>
+    <tr><td>gis 部署形态</td><td class="ok-badge">独立微服务</td><td>含 WebSocket/插件体系，嵌入重构成本高价值低</td></tr>
+    <tr><td>模块间调用</td><td class="ok-badge">进程内 trait（私有化）/ HTTP（SaaS）</td><td>dashboard→finance 已实证 in_proc_trait</td></tr>
+    <tr><td>商业化</td><td class="ok-badge">订阅制 tier（free/basic/advanced）</td><td>P5 subscription_module + 自动降级</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>遗留项</strong>：前端 SaaS 计费 UI 已归档（billing-api）；其余均为可选增强（如 gis 重构评估、订阅 API 鉴权接入真实权限链）。无阻塞性未完成项。
+  </div>
+
+  <footer>TOPEMS 模块化单体 · 2026-08-30 阶段验收 · 数据来源：cargo test/clippy/fmt 实测 + TODO 阶段归档</footer>
+</div>
+</body>
+</html>

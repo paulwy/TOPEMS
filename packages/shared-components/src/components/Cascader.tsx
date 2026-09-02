@@ -12,6 +12,7 @@ import {
   Chip,
 } from '@mui/material';
 import { ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
+import i18next from 'i18next';
 
 export interface CascaderOption {
   value: string;
@@ -48,8 +49,11 @@ const Cascader: React.FC<CascaderProps> = ({
   className,
   locale,
 }) => {
-  const finalPlaceholder = placeholder ?? locale?.placeholder ?? 'Select';
-  const backText = locale?.backText ?? 'Back';
+  const finalPlaceholder =
+    placeholder ??
+    locale?.placeholder ??
+    i18next.t('components.cascader.placeholder', { defaultValue: 'Select' });
+  const backText = locale?.backText ?? i18next.t('components.cascader.back_text', { defaultValue: 'Back' });
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedPath, setSelectedPath] = useState<CascaderOption[]>([]);
   const [currentLevel, setCurrentLevel] = useState<CascaderOption[]>(options);

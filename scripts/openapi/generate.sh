@@ -85,7 +85,6 @@ SERVICES=(
   "gis|8071|/api-docs/openapi.json|infrastructure"
   "integration|8072|/api-docs/openapi.json|infrastructure"
   # 扩展服务 (8080-8089)
-  "billing|8085|/api-docs/openapi.json|billing"
   "ticket|8086|/api-docs/openapi.json|billing"
   "feedback|8087|/api-docs/openapi.json|billing"
   "communication|8084|/api-docs/openapi.json|communication"
@@ -97,7 +96,7 @@ SERVICES=(
 # 这些服务存在于 svc/ 目录但未实现 OpenAPI 端点
 MISSING_SERVICES=(
   "search|8082|search"
-  "lowcode|8088|lowcode"
+  # [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
 )
 
 # 默认超时配置
@@ -111,7 +110,8 @@ EXTRACT=false
 
 # --extract 模式下通过 cargo test extract_openapi_spec 提取 spec 的服务列表。
 # 这些服务已在源码中实现了 extract_openapi_spec 测试（将 spec 写到 /tmp/topems-<svc>-openapi.json）。
-EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms" "feedback" "ehs" "crm" "integration" "portal" "analytics" "ai" "erp" "gis" "lims" "lowcode" "mobile" "pm" "pdm" "scm" "srm" "rd" "billing" "communication" "monitor" "search" "ticket" "plugin-registry")
+EXTRACT_SERVICES=("finance" "hrm" "mes" "master-data" "qms" "unified-core" "wms" "feedback" "ehs" "crm" "integration" "portal" "analytics" "ai" "erp" "gis" "lims" "mobile" "pm" "pdm" "scm" "srm" "rd" "billing" "communication" "monitor" "search" "ticket" "plugin-registry")
+# [V2026.08 已移除] lowcode（原在 EXTRACT_SERVICES 中）
 
 print_help() {
   cat << 'EOF'

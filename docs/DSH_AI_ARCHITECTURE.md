@@ -124,10 +124,16 @@ pub struct AgentOrchestrator {
 - 流式响应支持
 
 **支持的 Provider**:
-- DeepSeek API
+- DeepSeek API（云端大模型）
 - Ollama（本地部署）
+- Dify（Dify 应用，3.1a）
 - Mock（测试用）
 - 自定义 Provider（实现 `LlmProvider` trait）
+
+**组合能力（3.1b/3.1c）**:
+- `ProviderRouter`：简单任务→Ollama，复杂任务→DeepSeek（`DSH_SIMPLE_PROVIDER` / `DSH_COMPLEX_PROVIDER` / `DSH_ROUTING`）
+- `FailoverProvider`：主 Provider 失败自动切换备用（`DSH_FALLBACK_PROVIDER`）
+- `AgentOrchestrator::with_resilient_provider()`：路由+降级组合注入 Agent 路径
 
 **核心接口**:
 ```rust
@@ -318,9 +324,10 @@ SSE 流式响应
 
 **理由**:
 - 避免厂商锁定
-- 支持本地部署（Ollama）和云端 API（DeepSeek）
+- 支持本地部署（Ollama）和云端 API（DeepSeek）与 Dify 应用
 - 易于测试（Mock Provider）
 - 符合开闭原则
+- 支持任务复杂度路由（简单→本地快，复杂→云端强）与故障自动降级（3.1）
 
 ### 5.3 多层缓存策略
 
@@ -372,6 +379,15 @@ SSE 流式响应
 - **资源指标**: CPU、内存、磁盘、网络
 - **缓存指标**: 命中率、驱逐次数、过期次数
 - **告警指标**: 告警次数、告警级别分布
+
+#### 治理仪表盘数据来源（3.2c）
+
+- **真实 AI 调用日志闭环**：所有经 `ProviderFactory::build_resilient_provider` 创建的 Provider 组合
+  外层包 `RecordingProvider`（`dsh/provider/recorded.rs`），每次 `ask` 向全局 `CostMeter`
+  （`dsh/governance/cost_metering.rs` 的 `global_cost_meter()`）写入调用记录（成功/失败、token、耗时）。
+- **仪表盘读取**：`GovernanceAppState::new` 注入同一全局 `CostMeter`，`generate_key_metrics`
+  在有真实统计（total_calls>0）时输出真实值；无调用记录/锁占用时降级模拟数据。
+- 该闭环使 Copilot、智能表单 AI 填充等所有真实 AI 调用自动进入治理统计，替换原有内存模拟数据源。
 
 ### 7.2 日志设计
 

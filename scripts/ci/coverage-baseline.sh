@@ -275,7 +275,7 @@ FAST_CORE_SVCS=(
   topems-unified-core topems-ai topems-erp topems-wms topems-crm
   topems-ehs topems-srm topems-pdm topems-monitor topems-mobile topems-communication
   topems-master-data topems-ticket topems-search
-  topems-plugin-registry topems-pm
+  topems-feedback topems-plugin-registry topems-pm
 # [V2026.08 已移除] topems-lowcode
 )
 

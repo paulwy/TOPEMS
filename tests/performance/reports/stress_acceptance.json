@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-08-30T05:58:49.680331",
+  "url": "http://localhost:8099",
+  "concurrent": 50,
+  "duration": 180.17555713653564,
+  "total_requests": 217073,
+  "total_success": 217073,
+  "success_rate": 100.0,
+  "throughput_rps": 1204.7860622709425,
+  "stable_after": true,
+  "endpoints": {
+    "/api/server/health": {
+      "requests": 27135,
+      "success_rate": 100.0,
+      "p50_ms": 42.68,
+      "p95_ms": 47.96,
+      "p99_ms": 55.32,
+      "rps": 150.6
+    },
+    "/api/crm/customers": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.64,
+      "p95_ms": 48.97,
+      "p99_ms": 57.95,
+      "rps": 150.6
+    },
+    "/api/erp/sales-orders": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.36,
+      "p95_ms": 48.76,
+      "p99_ms": 57.11,
+      "rps": 150.6
+    },
+    "/api/finance/vouchers": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 42.87,
+      "p95_ms": 48.22,
+      "p99_ms": 55.94,
+      "rps": 150.6
+    },
+    "/api/qms/checks": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.56,
+      "p95_ms": 48.81,
+      "p99_ms": 57.19,
+      "rps": 150.6
+    },
+    "/api/scm/suppliers": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.3,
+      "p95_ms": 48.68,
+      "p99_ms": 56.69,
+      "rps": 150.6
+    },
+    "/api/wms/inventory": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.66,
+      "p95_ms": 49.05,
+      "p99_ms": 57.94,
+      "rps": 150.6
+    },
+    "/api/hrm/employees": {
+      "requests": 27134,
+      "success_rate": 100.0,
+      "p50_ms": 43.56,
+      "p95_ms": 48.99,
+      "p99_ms": 58.39,
+      "rps": 150.6
+    }
+  },
+  "acceptance": {
+    "/api/server/health": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/crm/customers": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/erp/sales-orders": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/finance/vouchers": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/qms/checks": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/scm/suppliers": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/wms/inventory": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "/api/hrm/employees": {
+      "p95_lt_2s": true,
+      "success_rate_ge_99": true,
+      "pass": true
+    },
+    "overall": true,
+    "service_stable": true
+  }
+}

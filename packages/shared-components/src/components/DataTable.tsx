@@ -178,6 +178,10 @@ export interface DataTableProps<TData, TValue> {
   showCreate?: boolean;
   /** 新建按钮标签 */
   createLabel?: string;
+  /** 刷新按钮标签 */
+  refreshLabel?: string;
+  /** 加载中标签 */
+  loadingLabel?: string;
   /** 新建按钮点击回调 */
   onCreate?: () => void;
   /** 导出文件名 */
@@ -938,8 +942,10 @@ export function DataTable<TData, TValue>({
   onRowClick,
   onSelectionChange,
   showRefresh = false,
+  refreshLabel,
   onRefresh,
   loading = false,
+  loadingLabel,
   responsive = true,
   emptyMessage,
   getRowKey = (row: TData): string =>
@@ -989,6 +995,8 @@ export function DataTable<TData, TValue>({
       searchPlaceholder: searchPlaceholder ?? labelsProp?.searchPlaceholder ?? defaultLabels.searchPlaceholder,
       createLabel: createLabel ?? labelsProp?.createLabel ?? defaultLabels.createLabel,
       emptyMessage: emptyMessage ?? labelsProp?.emptyMessage ?? defaultLabels.emptyMessage,
+      loadingLabel: loadingLabel ?? labelsProp?.loadingLabel ?? defaultLabels.loadingLabel,
+      refreshLabel: refreshLabel ?? labelsProp?.refreshLabel ?? defaultLabels.refreshLabel,
     }),
     [labelsProp, searchPlaceholder, createLabel, emptyMessage]
   );

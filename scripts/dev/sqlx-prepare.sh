@@ -155,7 +155,7 @@ fi
 if [ "$MODE" == "check" ]; then
   log "执行 sqlx 缓存 --check（通过 SQLX_OFFLINE cargo check 一组核心包）..."
   # 有 query! 宏使用且正常可编译的包清单（来自 grep 统计）
-  DEFAULT_CHECK_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-search topems-analytics topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
+  DEFAULT_CHECK_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-feedback topems-search topems-analytics topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
   # 若用户指定了 -p，则只 check 指定的
   if [ "${#CUSTOM_PKGS[@]}" -gt 0 ]; then
     CHECK_PKGS=("${CUSTOM_PKGS[@]}")
