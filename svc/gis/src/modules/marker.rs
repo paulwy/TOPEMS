@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -27,7 +28,7 @@ pub struct CreateMapMarker {
 }
 
 pub async fn list_map_markers(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, MapMarker>("id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM map_markers ORDER BY created_at DESC")
+    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers ORDER BY created_at DESC"))
         .fetch_all(&pool)
         .await
     {
@@ -53,11 +54,11 @@ pub async fn create_map_marker(
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
     match sqlx::query_as::<_, MapMarker>(
-        r#"
-        INSERT INTO map_markers (marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.map_markers (marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.marker_type)
     .bind(&payload.name)
@@ -83,7 +84,7 @@ pub async fn get_map_marker(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MapMarker>> {
-    match sqlx::query_as::<_, MapMarker>("id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM map_markers WHERE id = $1")
+    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -106,12 +107,12 @@ pub async fn update_map_marker(
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
     match sqlx::query_as::<_, MapMarker>(
-        r#"
-        UPDATE map_markers 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.map_markers 
         SET marker_type = $1, name = $2, marker_style = $3, position = $4, icon_svg = $5, color = $6, size = $7, popup_content = $8, click_action = $9, action_data = $10, visible = $11, z_index = $12, updated_at = NOW()
         WHERE id = $13
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.marker_type)
     .bind(&payload.name)
@@ -143,10 +144,13 @@ pub async fn delete_map_marker(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::MapMarkerWrite).await {
         return e;
     }
-    match sqlx::query("DELETE FROM map_markers WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "DELETE FROM gis.map_markers WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

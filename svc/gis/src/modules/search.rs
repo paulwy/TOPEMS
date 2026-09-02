@@ -95,7 +95,6 @@ pub async fn search_locations(
                     "code": location.business_code,
                     "position": location.position,
                     "business_type": location.business_type,
-                    "address": location.address,
                     "status": location.status
                 }));
             }

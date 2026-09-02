@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
@@ -94,7 +95,8 @@ pub async fn list_wave_picks(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                status, priority, assigned_to, assigned_user_name, batch_id,
@@ -106,8 +108,8 @@ pub async fn list_wave_picks(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -117,14 +119,15 @@ pub async fn list_wave_picks(
 
     match result {
         Ok(wave_picks) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.wave_picks
                 WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -173,7 +176,7 @@ pub async fn create_wave_pick(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, WavePick>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.wave_picks (id, org_id, wave_pick_number, wave_pick_type, 
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
@@ -183,7 +186,7 @@ pub async fn create_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.wave_pick_number)
@@ -251,7 +254,8 @@ pub async fn get_wave_pick(
         Err(e) => return e,
     }
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                status, priority, assigned_to, assigned_user_name, batch_id,
@@ -259,8 +263,8 @@ pub async fn get_wave_pick(
                total_quantity, picked_quantity, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -305,7 +309,8 @@ pub async fn update_wave_pick(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.wave_picks SET
             priority = COALESCE($2, priority),
@@ -316,8 +321,8 @@ pub async fn update_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(priority)
     .bind(remarks)
@@ -386,9 +391,10 @@ pub async fn delete_wave_pick(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
-        "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -471,7 +477,8 @@ pub async fn list_wave_pick_items(
         Err(e) => return e,
     }
 
-    let result = sqlx::query_as::<_, WavePickItem>(
+    let result = sqlx::query_as::<_, WavePickItem>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, wave_pick_id, outbound_order_id, outbound_order_number,
                material_code, material_name, location_id, location_code,
@@ -480,8 +487,8 @@ pub async fn list_wave_pick_items(
         FROM wms.wave_pick_items
         WHERE wave_pick_id = $1 AND deleted_at IS NULL
         ORDER BY created_at DESC
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_all(&state.db)
     .await;
@@ -525,7 +532,8 @@ pub async fn assign_wave_pick(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.wave_picks SET
             assigned_to = $2,
@@ -535,8 +543,8 @@ pub async fn assign_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.assigned_to)
     .bind(now)
@@ -605,7 +613,8 @@ pub async fn start_wave_pick(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.wave_picks SET
             status = 'picking',
@@ -616,8 +625,8 @@ pub async fn start_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(now)
@@ -686,7 +695,8 @@ pub async fn complete_wave_pick(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.wave_picks SET
             status = 'completed',
@@ -697,8 +707,8 @@ pub async fn complete_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(now)
@@ -767,7 +777,8 @@ pub async fn cancel_wave_pick(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, WavePick>(
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.wave_picks SET
             status = 'cancelled',
@@ -777,8 +788,8 @@ pub async fn cancel_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity, picked_quantity, remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_one(&state.db)

@@ -8,6 +8,7 @@ use axum::{
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::{AuthState, Claims};
@@ -71,6 +72,7 @@ async fn main() -> Result<()> {
         enable_request_context: false,
         api_prefix: "/api/gis",
         legacy_prefixes: &["/api/v1/gis", "/api/core/gis/v1"],
+        init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;
 
@@ -555,7 +557,7 @@ async fn list_device_locations_by_map(
     Path(map_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, DeviceLocation>(
-        "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM device_locations WHERE map_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)
@@ -587,11 +589,11 @@ async fn create_device_location(
         return e;
     }
     match sqlx::query_as::<_, DeviceLocation>(
-        r#"
-        INSERT INTO device_locations (map_id, device_name, device_code, device_type, position, status, description)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.device_locations (map_id, device_name, device_code, device_type, position, status, description)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(payload.map_id)
     .bind(&payload.device_name)
@@ -627,12 +629,12 @@ async fn update_device_location(
         return e;
     }
     match sqlx::query_as::<_, DeviceLocation>(
-        r#"
-        UPDATE device_locations 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.device_locations 
         SET map_id = $1, device_name = $2, device_code = $3, device_type = $4, position = $5, status = $6, description = $7, updated_at = NOW()
         WHERE id = $8
         RETURNING *
-        "#,
+        "#),
     )
     .bind(payload.map_id)
     .bind(&payload.device_name)
@@ -670,10 +672,13 @@ async fn delete_device_location(
     {
         return e;
     }
-    match sqlx::query("DELETE FROM device_locations WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "DELETE FROM gis.device_locations WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

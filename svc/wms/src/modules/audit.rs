@@ -6,6 +6,7 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -50,7 +51,8 @@ pub async fn list_audit_logs(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, AuditLog>(
+    let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
@@ -64,8 +66,8 @@ pub async fn list_audit_logs(
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
-        "#,
-    )
+        "#
+    ))
     .bind(&params.action)
     .bind(&params.entity_type)
     .bind(&params.user_id)
@@ -79,7 +81,8 @@ pub async fn list_audit_logs(
 
     match result {
         Ok(logs) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
@@ -88,8 +91,8 @@ pub async fn list_audit_logs(
                   AND ($4::text IS NULL OR status = $4)
                   AND ($5::text IS NULL OR created_at >= $5::timestamptz)
                   AND ($6::text IS NULL OR created_at <= $6::timestamptz)
-                "#,
-            )
+                "#
+            ))
             .bind(&params.action)
             .bind(&params.entity_type)
             .bind(&params.user_id)
@@ -129,14 +132,15 @@ pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {
-    let result = sqlx::query_as::<_, AuditLog>(
+    let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         FROM audit_logs WHERE id = $1
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;

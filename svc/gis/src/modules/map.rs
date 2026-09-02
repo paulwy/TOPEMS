@@ -10,6 +10,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -92,11 +93,11 @@ pub async fn create_map(
     }
 
     match sqlx::query_as::<_, Map>(
-        r#"
-        INSERT INTO maps (name, code, description, map_type, projection, bounds, center, zoom_level, created_by)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.maps (name, code, description, map_type, projection, bounds, center, zoom_level, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.name)
     .bind(&payload.code)
@@ -127,7 +128,7 @@ pub async fn create_map(
     )
 )]
 pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps ORDER BY created_at DESC"))
         .fetch_all(&pool)
         .await
     {
@@ -158,7 +159,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
     )
 )]
 pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Map>> {
-    match sqlx::query_as::<_, Map>("id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM maps WHERE deleted_at IS NULL AND id = $1")
+    match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -196,13 +197,13 @@ pub async fn update_map(
     }
 
     match sqlx::query_as::<_, Map>(
-        r#"
-        UPDATE maps 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.maps 
         SET name = $1, description = $2, map_type = $3, projection = $4, 
             bounds = $5, center = $6, zoom_level = $7, status = COALESCE($8, status), updated_at = NOW()
         WHERE id = $9
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.name)
     .bind(&payload.description)
@@ -246,10 +247,13 @@ pub async fn delete_map(
         return e;
     }
 
-    match sqlx::query("UPDATE maps SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.maps SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -268,7 +272,7 @@ pub async fn list_map_layers(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, MapLayer>(
-        "id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM gis.map_layers WHERE map_id = $1 ORDER BY z_index DESC, created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)
@@ -296,14 +300,15 @@ pub async fn add_map_layer(
         return e;
     }
 
-    match sqlx::query_as::<_, MapLayer>(
+    match sqlx::query_as::<_, MapLayer>(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO map_layers (map_id, name, layer_type, source_type, source_url, source_data, 
+        INSERT INTO gis.map_layers (map_id, name, layer_type, source_type, source_url, source_data, 
             style_config, opacity, visible, z_index, min_zoom, max_zoom, properties)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(map_id)
     .bind(&payload.name)
     .bind(&payload.layer_type)
@@ -335,10 +340,13 @@ pub async fn delete_map_layer(
         return e;
     }
 
-    match sqlx::query("DELETE FROM map_layers WHERE id = $1")
-        .bind(layer_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "DELETE FROM gis.map_layers WHERE id = $1"
+    ))
+    .bind(layer_id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

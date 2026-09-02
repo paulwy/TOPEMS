@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -33,14 +34,14 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
         .bind(offset)
     } else {
         sqlx::query_as::<_, WarehouseLocation>(
-            "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
@@ -50,11 +51,14 @@ pub async fn list_warehouse_locations(
         Ok(locations) => {
             let total_query = if !search.is_empty() {
                 sqlx::query(
-                    "SELECT COUNT(*) FROM warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1",
+                    only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1"),
                 )
                 .bind(format!("%{}%", search))
             } else {
-                sqlx::query("SELECT COUNT(*) FROM warehouse_locations WHERE deleted_at IS NULL")
+                sqlx::query(only_own_schema_query!(
+                    "gis",
+                    "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL"
+                ))
             };
             let total: i64 = total_query
                 .fetch_one(&pool)
@@ -84,13 +88,14 @@ pub async fn create_warehouse_location(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
-    match sqlx::query_as::<_, WarehouseLocation>(
+    match sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO warehouse_locations (warehouse_name, zone, position, status, description)
+        INSERT INTO gis.warehouse_locations (warehouse_name, zone, position, status, description)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.warehouse_name)
     .bind(&payload.zone)
     .bind(&payload.position)
@@ -109,7 +114,7 @@ pub async fn get_warehouse_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
     match sqlx::query_as::<_, WarehouseLocation>(
-        "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -132,12 +137,12 @@ pub async fn update_warehouse_location(
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     match sqlx::query_as::<_, WarehouseLocation>(
-        r#"
-        UPDATE warehouse_locations 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.warehouse_locations 
         SET warehouse_name = $1, zone = $2, position = $3, status = $4, description = $5, updated_at = NOW()
         WHERE id = $6
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.warehouse_name)
     .bind(&payload.zone)
@@ -162,10 +167,13 @@ pub async fn delete_warehouse_location(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::WarehouseLocationWrite).await {
         return e;
     }
-    match sqlx::query("UPDATE warehouse_locations SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.warehouse_locations SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -183,7 +191,7 @@ pub async fn list_warehouse_locations_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, WarehouseLocation>(
-        "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

@@ -9,6 +9,7 @@ use num_traits::cast::ToPrimitive;
 use serde::Deserialize;
 use sqlx::Row;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
@@ -42,10 +43,11 @@ fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 async fn generate_inventory_movement_no(state: &ApiState, tenant_id: Uuid) -> String {
     let today = Utc::now().format("%Y%m%d").to_string();
     let prefix = format!("MV-{}", today);
-    let seq: i64 = sqlx::query_scalar(
+    let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "wms",
         r#"SELECT COUNT(*) FROM wms.inventory_movements
-           WHERE tenant_id = $1 AND movement_no LIKE $2"#,
-    )
+           WHERE tenant_id = $1 AND movement_no LIKE $2"#
+    ))
     .bind(tenant_id)
     .bind(format!("{}%", prefix))
     .fetch_one(&state.db)
@@ -173,7 +175,8 @@ pub async fn list_inventory(
     let status_filter = params.status.clone();
     let warehouse_id = params.warehouse_id;
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
                available_quantity, reserved_quantity, location_id, warehouse_id, 
@@ -187,8 +190,8 @@ pub async fn list_inventory(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(warehouse_id)
@@ -199,15 +202,16 @@ pub async fn list_inventory(
 
     match result {
         Ok(items) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory
                 WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR quality_status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(warehouse_id)
@@ -257,7 +261,7 @@ pub async fn create_inventory(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, InventoryItem>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.inventory (id, org_id, warehouse_id, location_id, 
                                    material_code, material_name, specification, 
                                    quantity, unit, available_quantity, 
@@ -266,7 +270,7 @@ pub async fn create_inventory(
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity, 
                   location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.warehouse_id)
@@ -348,7 +352,8 @@ pub async fn get_inventory(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
                available_quantity, reserved_quantity, location_id, warehouse_id, 
@@ -357,8 +362,8 @@ pub async fn get_inventory(
                purchase_price, total_value, last_movement_date, last_movement_type,
                created_at, updated_at
         FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -410,11 +415,11 @@ pub async fn update_inventory(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing_result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, material_code, material_name, specification, unit, quantity, 
                available_quantity, location_id, warehouse_id, min_quantity, max_quantity, quality_status
         FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -484,7 +489,8 @@ pub async fn update_inventory(
     });
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.inventory SET
             material_code = $2, material_name = $3, specification = $4, unit = $5, 
@@ -494,8 +500,8 @@ pub async fn update_inventory(
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity, 
                   location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
                   created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&sku)
     .bind(&name)
@@ -531,7 +537,8 @@ pub async fn update_inventory(
                 };
                 let abs_qty = quantity_diff.abs();
 
-                if let Err(e) = sqlx::query(
+                if let Err(e) = sqlx::query(only_own_schema_query!(
+                    "wms",
                     r#"
                     INSERT INTO wms.inventory_movements (
                         id, movement_no, tenant_id, movement_type, reference_id, reference_type,
@@ -544,8 +551,8 @@ pub async fn update_inventory(
                         NULL, $10, NULL, $11,
                         'completed', $12, $13, $14, $15, $15
                     )
-                    "#,
-                )
+                    "#
+                ))
                 .bind(movement_id)
                 .bind(&movement_no)
                 .bind(tenant_id)
@@ -630,9 +637,10 @@ pub async fn delete_inventory(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
-        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -700,7 +708,8 @@ pub async fn list_low_stock_inventory(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
                available_quantity, min_quantity, reorder_point, warehouse_id, location_id,
@@ -710,8 +719,8 @@ pub async fn list_low_stock_inventory(
            OR (reorder_point IS NOT NULL AND available_quantity <= reorder_point)
           AND deleted_at IS NULL
         ORDER BY quantity ASC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -755,7 +764,8 @@ pub async fn list_inventory_by_warehouse(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
                available_quantity, reserved_quantity, location_id, min_quantity, max_quantity, 
@@ -763,8 +773,8 @@ pub async fn list_inventory_by_warehouse(
         FROM wms.inventory
         WHERE warehouse_id = $1 AND deleted_at IS NULL
         ORDER BY material_code ASC
-        "#,
-    )
+        "#
+    ))
     .bind(warehouse_id)
     .fetch_all(&state.db)
     .await;
@@ -820,7 +830,8 @@ pub async fn get_inventory_statistics(
 
     let warehouse_id = params.warehouse_id;
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT 
             COUNT(*) as total_items,
@@ -833,8 +844,8 @@ pub async fn get_inventory_statistics(
         FROM wms.inventory
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(warehouse_id)
     .fetch_one(&state.db)
     .await;
@@ -908,7 +919,8 @@ pub async fn get_abc_analysis(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT 
             material_code,
@@ -918,8 +930,8 @@ pub async fn get_abc_analysis(
         WHERE deleted_at IS NULL
         GROUP BY material_code, material_name
         ORDER BY value DESC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -1010,7 +1022,8 @@ pub async fn get_turnover(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT 
             DATE_TRUNC('month', created_at) as period,
@@ -1021,8 +1034,8 @@ pub async fn get_turnover(
           AND created_at >= NOW() - INTERVAL '6 months'
         GROUP BY DATE_TRUNC('month', created_at)
         ORDER BY period ASC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 
@@ -1082,7 +1095,8 @@ pub async fn get_value_by_warehouse(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT 
             i.warehouse_id,
@@ -1094,8 +1108,8 @@ pub async fn get_value_by_warehouse(
         WHERE i.deleted_at IS NULL
         GROUP BY i.warehouse_id, w.name
         ORDER BY total_value DESC
-        "#,
-    )
+        "#
+    ))
     .fetch_all(&state.db)
     .await;
 

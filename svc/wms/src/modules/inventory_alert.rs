@@ -8,6 +8,7 @@ use chrono::Utc;
 use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
@@ -398,9 +399,10 @@ pub async fn acknowledge_alert(
     }
 
     // 检查库存是否存在
-    let exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "wms",
+        "SELECT COUNT(*) FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -846,7 +848,8 @@ pub async fn list_alert_rules(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, rule_name, alert_type, warehouse_id, material_code, 
                threshold_value, severity, enabled, remarks, created_at, updated_at
@@ -855,8 +858,8 @@ pub async fn list_alert_rules(
           AND ($2::text IS NULL OR alert_type = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
     .bind(params.alert_type.as_deref())
     .bind(page_size)
@@ -866,13 +869,14 @@ pub async fn list_alert_rules(
 
     match result {
         Ok(rules) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_alert_rules
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR rule_name ILIKE $1)
                   AND ($2::text IS NULL OR alert_type = $2)
-                "#,
-            )
+                "#
+            ))
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.alert_type.as_deref())
             .fetch_one(&state.db)
@@ -938,15 +942,16 @@ pub async fn create_alert_rule(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id, 
                                                material_code, threshold_value, severity, 
                                                enabled, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.rule_name)
     .bind(&req.alert_type)
@@ -1036,7 +1041,7 @@ pub async fn get_alert_rule(
     }
 
     let result =
-        sqlx::query("SELECT id, tenant_id, warehouse_id, item_id, item_code, alert_type, threshold_min, threshold_max, unit, is_active, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, item_id, item_code, alert_type, threshold_min, threshold_max, unit, is_active, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
             .bind(id)
             .fetch_optional(&state.db)
             .await;
@@ -1092,7 +1097,8 @@ pub async fn update_alert_rule(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.inventory_alert_rules SET
             rule_name = COALESCE($2, rule_name),
@@ -1104,8 +1110,8 @@ pub async fn update_alert_rule(
             updated_at = $8
         WHERE id = $1
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.rule_name)
     .bind(&req.alert_type)
@@ -1198,11 +1204,13 @@ pub async fn delete_alert_rule(
         Err(e) => return e,
     }
 
-    let result =
-        sqlx::query("UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -1270,7 +1278,7 @@ pub async fn list_alert_records(
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records
         WHERE ($1::text IS NULL OR alert_type = $1)
           AND ($2::text IS NULL OR severity = $2)
@@ -1278,7 +1286,7 @@ pub async fn list_alert_records(
           AND ($4::uuid IS NULL OR warehouse_id = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(params.alert_type.as_deref())
     .bind(params.severity.as_deref())
@@ -1291,15 +1299,16 @@ pub async fn list_alert_records(
 
     match result {
         Ok(records) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_alert_records
                 WHERE ($1::text IS NULL OR alert_type = $1)
                   AND ($2::text IS NULL OR severity = $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR warehouse_id = $4)
-                "#,
-            )
+                "#
+            ))
             .bind(params.alert_type.as_deref())
             .bind(params.severity.as_deref())
             .bind(params.status.as_deref())
@@ -1370,7 +1379,7 @@ pub async fn get_alert_record(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1")
+    let result = sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1"))
         .bind(id)
         .fetch_optional(&state.db)
         .await;
@@ -1437,7 +1446,8 @@ pub async fn confirm_alert_record(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.inventory_alert_records SET
             status = 'confirmed',
@@ -1445,8 +1455,8 @@ pub async fn confirm_alert_record(
             updated_at = $3
         WHERE id = $1
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(req.notes.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)

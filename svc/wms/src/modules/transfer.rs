@@ -748,7 +748,7 @@ pub async fn execute_transfer(
     for item in &items {
         let result = sqlx::query(
             only_own_schema_query!("wms", r#"
-            UPDATE wms.inventory
+            UPDATE inventory_items
             SET quantity = quantity - $1, updated_at = $2
             WHERE id = $3 AND quantity >= $1
             "#),
@@ -778,7 +778,7 @@ pub async fn execute_transfer(
 
         let update_result = sqlx::query(
             only_own_schema_query!("wms", r#"
-            UPDATE wms.inventory
+            UPDATE inventory_items
             SET location_id = COALESCE($1, location_id), warehouse_id = COALESCE($2, warehouse_id), updated_at = $3
             WHERE id = $4
             "#),

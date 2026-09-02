@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use num_traits::cast::ToPrimitive;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
@@ -54,7 +55,7 @@ pub async fn list_batches(
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Batch>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
@@ -64,7 +65,7 @@ pub async fn list_batches(
           AND ($6::text IS NULL OR status = $6)
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
-        "#,
+        "#),
     )
     .bind(&params.warehouse_id)
     .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
@@ -79,7 +80,8 @@ pub async fn list_batches(
 
     match result {
         Ok(batches) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.batches
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
@@ -88,8 +90,8 @@ pub async fn list_batches(
                   AND ($4::text IS NULL OR supplier_id = $4)
                   AND ($5::text IS NULL OR quality_status = $5)
                   AND ($6::text IS NULL OR status = $6)
-                "#,
-            )
+                "#
+            ))
             .bind(&params.warehouse_id)
             .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
@@ -142,7 +144,7 @@ pub async fn create_batch(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Batch>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.batches (
             id, batch_no, sku, material_name, specification, unit, quantity,
             available_quantity, warehouse_id, location_id, supplier_id,
@@ -150,7 +152,7 @@ pub async fn create_batch(
             manufacture_date, shelf_life_days, unit_price, remark, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.batch_no)
@@ -214,7 +216,7 @@ pub async fn get_batch(
     };
 
     let result = sqlx::query_as::<_, Batch>(
-        "SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(batch_id)
     .fetch_optional(&state.db)
@@ -261,7 +263,8 @@ pub async fn update_batch(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, Batch>(
+    let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.batches SET
             batch_no = COALESCE($1, batch_no),
@@ -284,8 +287,8 @@ pub async fn update_batch(
             updated_at = $18
         WHERE id = $19
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.batch_no)
     .bind(&req.sku)
     .bind(&req.material_name)
@@ -345,10 +348,13 @@ pub async fn delete_batch(
         Err(_) => return Json(api_error(400, "无效的批次ID")),
     };
 
-    let result = sqlx::query("UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1")
-        .bind(batch_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(batch_id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -445,12 +451,12 @@ pub async fn get_expiring_soon(
     let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
 
     let result = sqlx::query_as::<_, Batch>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
         ORDER BY remaining_days ASC
-        "#,
+        "#),
     )
     .bind(days)
     .bind(warehouse_id)
@@ -489,12 +495,12 @@ pub async fn get_expired(
     let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
 
     let result = sqlx::query_as::<_, Batch>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, item_id, item_code, item_name, quantity, unit, warehouse_id, location_id, production_date, expiry_date, status, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1 OR $1 IS NULL)
         ORDER BY remaining_days ASC
-        "#,
+        "#),
     )
     .bind(warehouse_id)
     .fetch_all(&state.db)
@@ -537,7 +543,8 @@ pub async fn adjust_quantity(
 
     let quantity = data.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0);
 
-    let result = sqlx::query_as::<_, Batch>(
+    let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.batches SET
             quantity = quantity + $1,
@@ -545,8 +552,8 @@ pub async fn adjust_quantity(
             updated_at = NOW()
         WHERE id = $2
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(quantity)
     .bind(batch_id)
     .fetch_one(&state.db)
@@ -593,15 +600,16 @@ pub async fn transfer_location(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let result = sqlx::query_as::<_, Batch>(
+    let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.batches SET
             location_id = $1,
             updated_at = NOW()
         WHERE id = $2
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(to_location_id)
     .bind(batch_id)
     .fetch_one(&state.db)

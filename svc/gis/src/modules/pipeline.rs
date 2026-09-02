@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -32,7 +33,7 @@ pub async fn list_pipelines(
     let offset = (page - 1) * page_size;
 
     match sqlx::query_as::<_, Pipeline>(
-        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
@@ -40,7 +41,7 @@ pub async fn list_pipelines(
     .await
     {
         Ok(pipelines) => {
-            let total: i64 = sqlx::query("SELECT COUNT(*) FROM pipelines WHERE deleted_at IS NULL")
+            let total: i64 = sqlx::query(only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.pipelines WHERE deleted_at IS NULL"))
                 .fetch_one(&pool)
                 .await
                 .map(|row| row.get::<i64, _>(0))
@@ -68,13 +69,14 @@ pub async fn create_pipeline(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
-    match sqlx::query_as::<_, Pipeline>(
+    match sqlx::query_as::<_, Pipeline>(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO pipelines (name, code, pipeline_type, path, status, description)
+        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.name)
     .bind(&payload.code)
     .bind(&payload.pipeline_type)
@@ -94,7 +96,7 @@ pub async fn get_pipeline(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Pipeline>> {
     match sqlx::query_as::<_, Pipeline>(
-        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -117,12 +119,12 @@ pub async fn update_pipeline(
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     match sqlx::query_as::<_, Pipeline>(
-        r#"
-        UPDATE pipelines 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.pipelines 
         SET name = $1, code = $2, pipeline_type = $3, path = $4, status = $5, description = $6, updated_at = NOW()
         WHERE id = $7
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.name)
     .bind(&payload.code)
@@ -148,10 +150,13 @@ pub async fn delete_pipeline(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
         return e;
     }
-    match sqlx::query("UPDATE pipelines SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.pipelines SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -169,7 +174,7 @@ pub async fn list_pipelines_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Pipeline>(
-        "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -62,7 +63,7 @@ pub async fn list_discrepancies(
     let adjustment_status = params.adjustment_status;
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -73,7 +74,7 @@ pub async fn list_discrepancies(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&stock_take_id)
     .bind(&adjustment_status)
@@ -85,12 +86,12 @@ pub async fn list_discrepancies(
     match result {
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("wms", r#"
                 SELECT COUNT(*) FROM wms.discrepancy_records
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)
                   AND deleted_at IS NULL
-                "#,
+                "#),
             )
             .bind(&stock_take_id)
             .bind(&adjustment_status)
@@ -149,14 +150,14 @@ pub async fn get_discrepancy(
     }
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -218,7 +219,7 @@ pub async fn create_discrepancy(
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.discrepancy_records (
             id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
             system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
@@ -229,7 +230,7 @@ pub async fn create_discrepancy(
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(stock_take_item.stock_take_id)
@@ -311,7 +312,7 @@ pub async fn approve_discrepancy(
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.discrepancy_records SET
             adjustment_status = $2, approved_by = $3, approval_date = $4, notes = COALESCE($5, notes), updated_at = $6
         WHERE id = $1 AND adjustment_status = 'pending'
@@ -319,7 +320,7 @@ pub async fn approve_discrepancy(
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(approval_status)
@@ -402,14 +403,14 @@ pub async fn adjust_inventory(
 
     // 获取已审批的差异处理记录
     let record = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND adjustment_status = 'approved' AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -446,7 +447,7 @@ pub async fn adjust_inventory(
 
     // 更新差异处理记录状态
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.discrepancy_records SET
             adjustment_status = 'completed', adjustment_date = $2, updated_at = $2
         WHERE id = $1
@@ -454,7 +455,7 @@ pub async fn adjust_inventory(
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)

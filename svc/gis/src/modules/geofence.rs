@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -114,10 +115,13 @@ pub async fn get_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Geofence>> {
-    match sqlx::query_as::<_, Geofence>("SELECT * FROM gis.geofences WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+        "gis",
+        "SELECT * FROM gis.geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "获取地理围栏成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
@@ -140,7 +144,8 @@ pub async fn create_geofence(
         .unwrap_or_else(|| vec!["notification".to_string()]));
     let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
 
-    match sqlx::query_as::<_, Geofence>(
+    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+        "gis",
         r#"
         INSERT INTO gis.geofences (
             name, description, chat_id, creator_id, shape_type,
@@ -149,8 +154,8 @@ pub async fn create_geofence(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.name)
     .bind(&payload.description)
     .bind(payload.chat_id)
@@ -182,10 +187,13 @@ pub async fn update_geofence(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeofenceRequest>,
 ) -> Json<ApiResponse<Geofence>> {
-    let current = match sqlx::query_as::<_, Geofence>("SELECT * FROM gis.geofences WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
+    let current = match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+        "gis",
+        "SELECT * FROM gis.geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_one(&pool)
+    .await
     {
         Ok(g) => g,
         Err(sqlx::Error::RowNotFound) => {
@@ -221,7 +229,8 @@ pub async fn update_geofence(
     let start_at = payload.start_at.or(current.start_at);
     let end_at = payload.end_at.or(current.end_at);
 
-    match sqlx::query_as::<_, Geofence>(
+    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+        "gis",
         r#"
         UPDATE gis.geofences
         SET name = $1, description = $2, coordinates = $3, radius = $4,
@@ -230,8 +239,8 @@ pub async fn update_geofence(
             start_at = $11, end_at = $12, updated_at = NOW()
         WHERE id = $13
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&name)
     .bind(&description)
     .bind(&coordinates)
@@ -260,10 +269,13 @@ pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    match sqlx::query("DELETE FROM gis.geofences WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "DELETE FROM gis.geofences WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

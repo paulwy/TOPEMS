@@ -6,6 +6,7 @@ use axum::{
 use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,10 +112,10 @@ async fn insert_device_location(
     let status = record.status.as_deref().unwrap_or("active");
 
     sqlx::query(
-        r#"
-        INSERT INTO device_locations (device_name, device_code, device_type, position, status, description)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.device_locations (device_name, device_code, device_type, position, status, description)
         VALUES ($1, $2, $3, $4, $5, $6)
-        "#,
+        "#),
     )
     .bind(&record.device_name)
     .bind(&record.device_code)
@@ -144,12 +145,13 @@ async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), S
         serde_json::from_str(&record.path).map_err(|e| format!("路径解析失败: {}", e))?;
     let status = record.status.as_deref().unwrap_or("active");
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO pipelines (name, code, pipeline_type, path, status, description)
+        INSERT INTO gis.pipelines (name, code, pipeline_type, path, status, description)
         VALUES ($1, $2, $3, $4, $5, $6)
-        "#,
-    )
+        "#
+    ))
     .bind(&record.name)
     .bind(&record.code)
     .bind(&record.pipeline_type)
@@ -177,12 +179,13 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
         serde_json::from_str(&record.position).map_err(|e| format!("位置解析失败: {}", e))?;
     let status = record.status.as_deref().unwrap_or("active");
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO warehouse_locations (warehouse_name, zone, position, status, description)
+        INSERT INTO gis.warehouse_locations (warehouse_name, zone, position, status, description)
         VALUES ($1, $2, $3, $4, $5)
-        "#,
-    )
+        "#
+    ))
     .bind(&record.warehouse_name)
     .bind(&record.zone)
     .bind(&position)
@@ -198,7 +201,7 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
 pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let mut features: Vec<serde_json::Value> = Vec::new();
 
-    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>("id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM device_locations")
+    if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations"))
         .fetch_all(&pool)
         .await
     {
@@ -217,7 +220,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
         }
     }
 
-    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>("id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM pipelines")
+    if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines"))
         .fetch_all(&pool)
         .await
     {
@@ -237,7 +240,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
     }
 
     if let Ok(warehouses) =
-        sqlx::query_as::<_, WarehouseLocation>("id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM warehouse_locations")
+        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations"))
             .fetch_all(&pool)
             .await
     {
@@ -256,7 +259,7 @@ pub async fn export_geojson(State(pool): State<PgPool>) -> Json<ApiResponse<serd
         }
     }
 
-    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>("id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM business_locations")
+    if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations"))
         .fetch_all(&pool)
         .await
     {

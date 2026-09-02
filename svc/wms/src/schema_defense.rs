@@ -12,7 +12,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "warehouses",
         &[
-            ("organization_id", "UUID NOT NULL"),
+            ("organization_id", "UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000002'"),
             ("warehouse_code", "VARCHAR(100) NOT NULL"),
             ("warehouse_name", "VARCHAR(255) NOT NULL"),
             ("warehouse_type", "VARCHAR(50)"),
@@ -56,7 +56,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "locations",
         &[
-            ("organization_id", "UUID NOT NULL"),
+            ("organization_id", "UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000002'"),
             ("warehouse_id", "UUID NOT NULL"),
             ("location_code", "VARCHAR(100) NOT NULL"),
             ("location_name", "VARCHAR(255) NOT NULL"),
@@ -95,7 +95,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "inventory",
         &[
-            ("organization_id", "UUID NOT NULL"),
+            ("organization_id", "UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000002'"),
             ("warehouse_id", "UUID NOT NULL"),
             ("location_id", "UUID"),
             ("material_code", "VARCHAR(100) NOT NULL"),

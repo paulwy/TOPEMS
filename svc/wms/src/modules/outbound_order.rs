@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -114,7 +115,8 @@ pub async fn list_outbound_orders(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -125,8 +127,8 @@ pub async fn list_outbound_orders(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -136,14 +138,15 @@ pub async fn list_outbound_orders(
 
     match result {
         Ok(orders) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.outbound_orders
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -194,7 +197,8 @@ pub async fn create_outbound_order(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO wms.outbound_orders (id, org_id, order_number, order_type, warehouse_id, 
                                         customer_id, order_date, expected_ship_date, total_value, 
@@ -204,8 +208,8 @@ pub async fn create_outbound_order(
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.order_number)
     .bind(req.warehouse_id)
@@ -281,14 +285,15 @@ pub async fn get_outbound_order(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                total_value as total_amount, status, notes as remarks, created_at, updated_at
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -329,14 +334,15 @@ pub async fn update_outbound_order(
     }
     let request_data = serde_json::to_value(&req).ok();
 
-    let existing = sqlx::query_as::<_, OutboundOrder>(
+    let existing = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                total_value as total_amount, status, notes as remarks, created_at, updated_at 
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -356,7 +362,8 @@ pub async fn update_outbound_order(
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.outbound_orders SET
             warehouse_id = $2, customer_id = $3, expected_ship_date = $4, actual_ship_date = $5, 
@@ -365,8 +372,8 @@ pub async fn update_outbound_order(
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(warehouse_id)
     .bind(customer_id)
@@ -442,9 +449,10 @@ pub async fn delete_outbound_order(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
-        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -512,7 +520,7 @@ pub async fn list_outbound_order_items(
         Err(e) => return e,
     }
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, line_number, material_code, material_name, specification, batch_number,
                requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit, 
                source_location_id, source_location_code, destination_location_id, destination_location_code,
@@ -521,7 +529,7 @@ pub async fn list_outbound_order_items(
         FROM wms.outbound_order_items
         WHERE order_id = $1 AND deleted_at IS NULL
         ORDER BY line_number ASC
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_all(&state.db)
@@ -593,7 +601,7 @@ pub async fn create_outbound_order_item(
     let total_value = req.unit_price.map(|p| p * req.requested_quantity);
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.outbound_order_items (id, org_id, order_id, line_number, 
                                               material_code, material_name, material_type, 
                                               specification, batch_number, lot_number, serial_number,
@@ -606,7 +614,7 @@ pub async fn create_outbound_order_item(
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
                   unit_price, total_value, picking_status, packing_status, notes as remarks,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(item_id)
     .bind(id)
@@ -701,7 +709,7 @@ pub async fn update_outbound_order_item(
     let now = Utc::now();
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.outbound_order_items SET
             shipped_quantity = $1, notes = $2, updated_at = $3
         WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL
@@ -710,7 +718,7 @@ pub async fn update_outbound_order_item(
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
                   unit_price, total_value, picking_status, packing_status, notes as remarks,
                   created_at, updated_at
-        "#,
+        "#),
     )
     .bind(req.shipped_quantity)
     .bind(&req.remarks)
@@ -787,7 +795,7 @@ pub async fn delete_outbound_order_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.outbound_order_items SET deleted_at = NOW() WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL"#)
+    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.outbound_order_items SET deleted_at = NOW() WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL"#))
         .bind(id)
         .bind(item_id)
         .execute(&state.db)
@@ -864,7 +872,8 @@ pub async fn confirm_outbound_order(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'confirmed', updated_at = $2
@@ -872,8 +881,8 @@ pub async fn confirm_outbound_order(
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_one(&state.db)
@@ -940,14 +949,14 @@ pub async fn pick_outbound_order(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.outbound_orders SET
             status = 'picking', picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
         WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(now)
@@ -1014,7 +1023,8 @@ pub async fn pack_outbound_order(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'packing', picking_status = 'completed', picking_end_time = $2, 
@@ -1023,8 +1033,8 @@ pub async fn pack_outbound_order(
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_one(&state.db)
@@ -1109,13 +1119,14 @@ pub async fn ship_outbound_order(
     };
 
     for item in &items {
-        let _ = sqlx::query(
+        let _ = sqlx::query(only_own_schema_query!(
+            "wms",
             r#"
             UPDATE wms.outbound_order_items SET
                 shipped_quantity = $1, notes = $2, updated_at = $3
             WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL
-            "#,
-        )
+            "#
+        ))
         .bind(item.shipped_quantity)
         .bind(&item.remarks)
         .bind(now)
@@ -1125,7 +1136,7 @@ pub async fn ship_outbound_order(
         .await;
 
         let _ = sqlx::query(
-            r#"
+            only_own_schema_query!("wms", r#"
             UPDATE wms.inventory SET
                 quantity = quantity - $1,
                 available_quantity = available_quantity - $1,
@@ -1133,7 +1144,7 @@ pub async fn ship_outbound_order(
             WHERE org_id = '00000000-0000-0000-0000-000000000001'
               AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
             AND quantity >= $1
-            "#,
+            "#),
         )
         .bind(item.shipped_quantity)
         .bind(now)
@@ -1142,10 +1153,11 @@ pub async fn ship_outbound_order(
         .await;
 
         // V19.8: 出库发货时同步写入 inventory_movements
-        let seq: i64 = sqlx::query_scalar(
+        let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "wms",
             r#"SELECT COUNT(*) FROM wms.inventory_movements
-               WHERE movement_no LIKE $1"#,
-        )
+               WHERE movement_no LIKE $1"#
+        ))
         .bind(format!("MV-{}%", now.format("%Y%m%d")))
         .fetch_one(&mut *tx)
         .await
@@ -1155,7 +1167,8 @@ pub async fn ship_outbound_order(
         let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
             .unwrap_or(uuid::Uuid::nil());
 
-        let _ = sqlx::query(
+        let _ = sqlx::query(only_own_schema_query!(
+            "wms",
             r#"
             INSERT INTO wms.inventory_movements (
                 id, movement_no, tenant_id, movement_type, reference_id, reference_type,
@@ -1171,8 +1184,8 @@ pub async fn ship_outbound_order(
             FROM wms.outbound_order_items oo
             JOIN wms.outbound_orders o ON oo.order_id = o.id
             WHERE oo.id = $8
-            "#,
-        )
+            "#
+        ))
         .bind(movement_id)
         .bind(&movement_no)
         .bind(org_id)
@@ -1185,14 +1198,15 @@ pub async fn ship_outbound_order(
         .await;
     }
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'shipping', packing_status = 'completed', packing_end_time = $1,
             shipping_status = 'in_progress', actual_ship_date = $1, updated_at = $1
         WHERE id = $2 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(id)
     .execute(&mut *tx)
@@ -1202,14 +1216,15 @@ pub async fn ship_outbound_order(
         return Json(api_error(500, "出库操作失败"));
     }
 
-    let order_result = sqlx::query_as::<_, OutboundOrder>(
+    let order_result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                total_value as total_amount, status, notes as remarks, created_at, updated_at
         FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_one(&state.db)
     .await;
@@ -1329,7 +1344,8 @@ pub async fn complete_outbound_order(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'completed', shipping_status = 'completed', delivery_date = $2, updated_at = $2
@@ -1337,8 +1353,8 @@ pub async fn complete_outbound_order(
         RETURNING id, order_number, warehouse_id, customer_id, order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
                   total_value as total_amount, status, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
     .fetch_one(&state.db)
@@ -1423,7 +1439,7 @@ pub async fn start_outbound_approval(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1492,7 +1508,7 @@ pub async fn approve_outbound(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1509,7 +1525,7 @@ pub async fn approve_outbound(
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let result = sqlx::query(
-                "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
             )
             .bind(id)
             .bind(tenant_id)
@@ -1579,7 +1595,7 @@ pub async fn reject_outbound(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1595,7 +1611,7 @@ pub async fn reject_outbound(
                 return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
             }
             let result = sqlx::query(
-                "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
             )
             .bind(id)
             .bind(tenant_id)

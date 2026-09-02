@@ -1,5 +1,6 @@
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
@@ -157,7 +158,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<()>> {
-    match sqlx::query("SELECT 1").fetch_one(&state.db).await {
+    match sqlx::query(only_own_schema_query!("wms", "SELECT 1"))
+        .fetch_one(&state.db)
+        .await
+    {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
         Err(e) => Json(ApiResponse::error(503, &format!("Database error: {}", e))),
     }
@@ -235,14 +239,12 @@ mod tests {
             version: "1.0.0".to_string(),
             description: "WMS 仓储管理系统".to_string(),
             runtime_url: "http://localhost:8041".to_string(),
-            permissions: vec![
-                PermissionDef {
-                    code: "wms:warehouse:read".to_string(),
-                    name: "查看仓库".to_string(),
-                    resource_type: "warehouse".to_string(),
-                    action: "read".to_string(),
-                },
-            ],
+            permissions: vec![PermissionDef {
+                code: "wms:warehouse:read".to_string(),
+                name: "查看仓库".to_string(),
+                resource_type: "warehouse".to_string(),
+                action: "read".to_string(),
+            }],
             dependencies: vec!["core".to_string()],
             navigation_config: Some(serde_json::json!({"menu": "wms"})),
             category: Some("warehouse".to_string()),
@@ -273,8 +275,8 @@ mod tests {
         };
         let json = serde_json::to_value(&info).unwrap();
         assert_eq!(json["code"], "wms");
-        assert_eq!(json["permissions"].as_array().unwrap().is_empty(), true);
-        assert_eq!(json["dependencies"].as_array().unwrap().is_empty(), true);
+        assert!(json["permissions"].as_array().unwrap().is_empty());
+        assert!(json["dependencies"].as_array().unwrap().is_empty());
         assert!(json["navigation_config"].is_null());
         assert!(json["category"].is_null());
     }

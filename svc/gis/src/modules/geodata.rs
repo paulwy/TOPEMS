@@ -9,6 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -101,13 +102,14 @@ pub async fn upload_geodata(
             .map(|arr| arr.len() as i32)
     });
 
-    match sqlx::query_as::<_, GeoData>(
+    match sqlx::query_as::<_, GeoData>(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO plugin_gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by)
+        INSERT INTO gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&name)
     .bind(&data_type)
     .bind(&format)
@@ -149,12 +151,13 @@ async fn insert_feature(
         .unwrap_or("Unknown")
         .to_string();
 
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
-        INSERT INTO plugin_gis.geofeatures (geodata_id, feature_type, geometry, properties)
+        INSERT INTO gis.geofeatures (geodata_id, feature_type, geometry, properties)
         VALUES ($1, $2, $3, $4)
-        "#,
-    )
+        "#
+    ))
     .bind(geodata_id)
     .bind(&feature_type)
     .bind(geometry)
@@ -167,7 +170,7 @@ async fn insert_feature(
 
 /// 获取地理数据列表
 pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, GeoData>("id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata ORDER BY created_at DESC")
+    match sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata ORDER BY created_at DESC"))
         .fetch_all(&pool)
         .await
     {
@@ -188,7 +191,7 @@ pub async fn get_geodata(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeoData>> {
     match sqlx::query_as::<_, GeoData>(
-        "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -212,12 +215,12 @@ pub async fn update_geodata(
     }
 
     match sqlx::query_as::<_, GeoData>(
-        r#"
-        UPDATE plugin_gis.geodata 
+        only_own_schema_query!("gis", r#"
+        UPDATE gis.geodata 
         SET name = $1, data_type = $2, metadata = $3, status = COALESCE($4, status), updated_at = NOW()
         WHERE id = $5
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.name)
     .bind(&payload.data_type)
@@ -243,10 +246,13 @@ pub async fn delete_geodata(
         return e;
     }
 
-    match sqlx::query("UPDATE plugin_gis.geodata SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.geodata SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -272,7 +278,7 @@ pub async fn convert_geodata(
 
     // Get source data
     match sqlx::query_as::<_, GeoData>(
-        "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM plugin_gis.geodata WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -355,7 +361,7 @@ pub async fn list_geofeatures(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, GeoFeature>(
-        "id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM plugin_gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"),
     )
     .bind(id)
     .fetch_all(&pool)

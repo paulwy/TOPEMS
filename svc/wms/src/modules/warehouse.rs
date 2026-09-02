@@ -1,5 +1,6 @@
 use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
@@ -74,7 +75,7 @@ pub async fn list_warehouses(
     }
 
     let result = sqlx::query_as::<_, Warehouse>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses
         WHERE tenant_id = $1
@@ -83,7 +84,7 @@ pub async fn list_warehouses(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(tenant_id)
     .bind(&search_pattern)
@@ -95,15 +96,16 @@ pub async fn list_warehouses(
 
     match result {
         Ok(warehouses) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.warehouses
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
@@ -154,11 +156,11 @@ pub async fn create_warehouse(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Warehouse>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.warehouses (id, tenant_id, org_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
         VALUES ($1, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9)
         RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -250,10 +252,10 @@ pub async fn get_warehouse(
     }
 
     let result = sqlx::query_as::<_, Warehouse>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -302,10 +304,10 @@ pub async fn update_warehouse(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Warehouse>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -327,12 +329,12 @@ pub async fn update_warehouse(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Warehouse>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.warehouses SET
             warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8
         WHERE id = $1 AND tenant_id = $9 AND deleted_at IS NULL
         RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&name)
@@ -418,7 +420,7 @@ pub async fn delete_warehouse(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#,
+        only_own_schema_query!("wms", r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -504,7 +506,13 @@ mod tests {
     #[test]
     fn test_warehouse_list_cache_key() {
         let tenant_id = Uuid::nil();
-        let key = warehouse_list_cache_key(tenant_id, 1, 20, &Some("test".to_string()), &Some("active".to_string()));
+        let key = warehouse_list_cache_key(
+            tenant_id,
+            1,
+            20,
+            &Some("test".to_string()),
+            &Some("active".to_string()),
+        );
         assert!(key.starts_with("warehouses:"));
         assert!(key.contains("page:1"));
         assert!(key.contains("size:20"));

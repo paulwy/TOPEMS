@@ -12,6 +12,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -73,11 +74,11 @@ pub async fn register_device(
     }
 
     match sqlx::query_as::<_, Device>(
-        r#"
+        only_own_schema_query!("gis", r#"
         INSERT INTO gis.devices (device_code, device_name, device_type, description, properties, registered_by)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.device_code)
     .bind(&payload.device_name)
@@ -105,7 +106,7 @@ pub async fn register_device(
     )
 )]
 pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Device>("id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices ORDER BY created_at DESC"))
         .fetch_all(&pool)
         .await
     {
@@ -140,7 +141,7 @@ pub async fn get_device(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Device>> {
     match sqlx::query_as::<_, Device>(
-        "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -163,15 +164,16 @@ pub async fn update_device(
         return e;
     }
 
-    match sqlx::query_as::<_, Device>(
+    match sqlx::query_as::<_, Device>(only_own_schema_query!(
+        "gis",
         r#"
-        UPDATE devices 
+        UPDATE gis.devices 
         SET device_name = $1, device_type = $2, description = $3, 
             properties = $4, status = COALESCE($5, status), updated_at = NOW()
         WHERE id = $6
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.device_name)
     .bind(&payload.device_type)
     .bind(&payload.description)
@@ -197,10 +199,13 @@ pub async fn delete_device(
         return e;
     }
 
-    match sqlx::query("UPDATE gis.devices SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.devices SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -225,19 +230,19 @@ pub async fn update_device_location(
         return e;
     }
 
-    match sqlx::query_as::<_, Device>("id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1")
+    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
     {
         Ok(device) => {
             match sqlx::query_as::<_, DeviceLocationRecord>(
-                r#"
+                only_own_schema_query!("gis", r#"
                 INSERT INTO gis.device_location_records 
                 (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
-                "#,
+                "#),
             )
             .bind(id)
             .bind(device.tenant_id)
@@ -428,7 +433,7 @@ pub async fn report_device_location(
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
     match sqlx::query_as::<_, Device>(
-        "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1",
+        only_own_schema_query!("gis", "id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
     )
     .bind(&device_code)
     .fetch_one(&pool)
@@ -436,12 +441,12 @@ pub async fn report_device_location(
     {
         Ok(device) => {
             match sqlx::query_as::<_, DeviceLocationRecord>(
-                r#"
+                only_own_schema_query!("gis", r#"
                 INSERT INTO gis.device_location_records 
                 (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
-                "#,
+                "#),
             )
             .bind(device.id)
             .bind(device.tenant_id)

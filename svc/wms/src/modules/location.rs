@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{CreateLocationRequest, Location, UpdateLocationRequest};
@@ -90,7 +91,7 @@ pub async fn list_locations(
     let warehouse_id = params.warehouse_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let result = sqlx::query_as::<_, Location>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
         FROM wms.locations
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -98,7 +99,7 @@ pub async fn list_locations(
           AND ($3::uuid IS NULL OR warehouse_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
+        "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
@@ -110,14 +111,15 @@ pub async fn list_locations(
 
     match result {
         Ok(locations) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.locations
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(warehouse_id)
@@ -170,11 +172,11 @@ pub async fn create_location(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Location>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.locations (id, warehouse_id, code, name, type, capacity, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8)
         RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(req.warehouse_id)
@@ -251,10 +253,10 @@ pub async fn get_location(
     };
 
     let result = sqlx::query_as::<_, Location>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
         FROM wms.locations WHERE id = $1
-        "#,
+        "#),
     )
     .bind(location_id)
     .fetch_optional(&state.db)
@@ -303,9 +305,9 @@ pub async fn update_location(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Location>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1
-        "#,
+        "#),
     )
     .bind(location_id)
     .fetch_optional(&state.db)
@@ -326,13 +328,13 @@ pub async fn update_location(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Location>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.locations SET
             warehouse_id = $2, code = $3, name = $4, type = $5, capacity = $6, 
             status = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(location_id)
     .bind(warehouse_id)
@@ -410,10 +412,13 @@ pub async fn delete_location(
         Err(_) => return Json(api_error(400, "无效的库位ID")),
     };
 
-    let result = sqlx::query("UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1")
-        .bind(location_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(location_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -548,11 +553,11 @@ pub async fn batch_create_locations(
     for item in req {
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Location>(
-            r#"
+            only_own_schema_query!("wms", r#"
             INSERT INTO wms.locations (id, warehouse_id, code, name, type, capacity, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8)
             RETURNING id, tenant_id, warehouse_id, code, name, type, capacity, status, created_at, updated_at
-            "#,
+            "#),
         )
         .bind(id)
         .bind(item.warehouse_id)
@@ -609,7 +614,8 @@ pub async fn batch_update_locations(
 
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.locations SET
             warehouse_id = COALESCE($1, warehouse_id),
@@ -620,8 +626,8 @@ pub async fn batch_update_locations(
             status = COALESCE($6, status),
             updated_at = $7
         WHERE id = ANY($8)
-        "#,
-    )
+        "#
+    ))
     .bind(req.updates.warehouse_id)
     .bind(&req.updates.code)
     .bind(&req.updates.name)
@@ -681,10 +687,13 @@ pub async fn batch_delete_locations(
         return Json(api_error(400, "无效的库位ID列表"));
     }
 
-    let result = sqlx::query("UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1)")
-        .bind(&ids)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1)"
+    ))
+    .bind(&ids)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) => Json(ApiResponse::success(

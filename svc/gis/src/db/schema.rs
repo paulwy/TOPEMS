@@ -1,5 +1,6 @@
 use sqlx::PgPool;
 use std::collections::BTreeSet;
+use topems_shared_boundary::only_own_schema_query;
 
 // =====================================================================
 // 📋 开发规范：GIS 数据表新增/修改列流程
@@ -26,12 +27,12 @@ use std::collections::BTreeSet;
 
 /// gis 服务使用的默认 schema（search_path 中 "gis" 在 public 之前，
 /// 因此无 schema 前缀的 CREATE TABLE 也落此 schema）。
-const GIS_SCHEMA: &str = "gis";
+pub const GIS_SCHEMA: &str = "gis";
 
 /// 表列定义的**单一事实源**（每张表只写一次，迁移与自检共享）。
 /// 格式：`(表名, &[(列名, 列DDL片段), ...])`，列DDL 与上方 CREATE TABLE 对应列保持完全一致。
 /// 注：不含 PRIMARY KEY 列 id（由 CREATE TABLE 统一管理）。
-const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
+pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "factory_maps",
         &[
@@ -336,6 +337,53 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
         ],
     ),
+    (
+        "evidence_records",
+        &[
+            ("tenant_id", "UUID"),
+            ("title", "VARCHAR(255)"),
+            ("evidence_type", "VARCHAR(50)"),
+            ("position", "POINT"),
+            ("file_url", "TEXT"),
+            ("thumbnail_url", "TEXT"),
+            ("duration", "NUMERIC(10,2)"),
+            ("file_size", "BIGINT"),
+            ("file_hash", "VARCHAR(128)"),
+            ("recorded_by", "UUID"),
+            ("recorded_at", "TIMESTAMP WITH TIME ZONE"),
+            ("tags", "JSONB"),
+            ("description", "TEXT"),
+            ("metadata", "JSONB"),
+            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "track_records",
+        &[
+            ("tenant_id", "UUID"),
+            ("device_id", "UUID"),
+            ("device_name", "VARCHAR(255)"),
+            ("start_time", "TIMESTAMP WITH TIME ZONE"),
+            ("end_time", "TIMESTAMP WITH TIME ZONE"),
+            ("total_distance", "NUMERIC(12,2)"),
+            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "track_positions",
+        &[
+            ("track_id", "UUID"),
+            ("position", "POINT"),
+            ("altitude", "NUMERIC(10,2)"),
+            ("speed", "NUMERIC(10,2)"),
+            ("heading", "NUMERIC(10,2)"),
+            ("accuracy", "NUMERIC(10,2)"),
+            ("battery_level", "NUMERIC(5,2)"),
+            ("timestamp", "TIMESTAMP WITH TIME ZONE"),
+            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
+        ],
+    ),
 ];
 
 /// 对指定表执行 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`。
@@ -385,13 +433,14 @@ async fn verify_table_columns(
     table: &str,
     expected: &[&str],
 ) -> Result<(), sqlx::Error> {
-    let rows: Vec<(String,)> = sqlx::query_as(
+    let rows: Vec<(String,)> = sqlx::query_as(only_own_schema_query!(
+        "gis",
         r#"
         SELECT column_name
         FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2
-        "#,
-    )
+        "#
+    ))
     .bind(schema)
     .bind(table)
     .fetch_all(pool)
@@ -418,12 +467,16 @@ async fn verify_table_columns(
 
 pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create gis schema if not exists
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS gis")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE SCHEMA IF NOT EXISTS gis"
+    ))
+    .execute(pool)
+    .await?;
 
     // Factory maps table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS factory_maps (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -436,13 +489,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Device locations table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS device_locations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -457,13 +511,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Pipelines table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS pipelines (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -478,13 +533,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Warehouse locations table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS warehouse_locations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -499,13 +555,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Location photos table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS location_photos (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -517,13 +574,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             taken_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Business locations table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS business_locations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -546,13 +604,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Map markers table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS map_markers (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -571,13 +630,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Maps table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.maps (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -595,13 +655,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Map layers table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.map_layers (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -621,13 +682,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS GeoData table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.geodata (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -645,13 +707,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS GeoFeatures table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.geofeatures (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -665,13 +728,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Spatial Analysis table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.spatial_analysis (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -686,13 +750,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_by UUID,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Locations table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.locations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -707,13 +772,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Devices table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.devices (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -728,13 +794,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 deleted_at TIMESTAMP
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Device Location Records table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.device_location_records (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -749,13 +816,14 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // GIS Audit Log table
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.audit_log (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -768,75 +836,88 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             ip_address VARCHAR(50),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Create indexes for better query performance
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON device_locations(map_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON device_locations(map_id)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON pipelines(map_id)")
-        .execute(pool)
-        .await?;
-
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON warehouse_locations(map_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON pipelines(map_id)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON location_photos(map_id)")
-        .execute(pool)
-        .await?;
-
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_business_locations_type ON business_locations(business_type)")
-        .execute(pool)
-        .await?;
-
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_map_markers_type ON map_markers(marker_type)")
-        .execute(pool)
-        .await?;
-
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_gis_geofeatures_geodata_id ON gis.geofeatures(geodata_id)",
-    )
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON warehouse_locations(map_id)"
+    ))
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_device_location_records_device_id ON gis.device_location_records(device_id)")
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON location_photos(map_id)"
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_business_locations_type ON business_locations(business_type)"))
         .execute(pool)
         .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_device_location_records_recorded_at ON gis.device_location_records(recorded_at)")
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_map_markers_type ON map_markers(marker_type)"
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_gis_geofeatures_geodata_id ON gis.geofeatures(geodata_id)"
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_gis_device_location_records_device_id ON gis.device_location_records(device_id)"))
+        .execute(pool)
+        .await?;
+
+    sqlx::query(only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_gis_device_location_records_recorded_at ON gis.device_location_records(recorded_at)"))
         .execute(pool)
         .await?;
 
     // jsonb GIN indexes for efficient JSON querying (instead of GIST which requires PostGIS geometry)
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_device_locations_position ON device_locations USING GIN (position)"
+        only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_device_locations_position ON device_locations USING GIN (position)")
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_business_locations_position ON business_locations USING GIN (position)"
+        only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_business_locations_position ON business_locations USING GIN (position)")
     )
     .execute(pool)
     .await?;
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_gis_locations_position ON gis.locations USING GIN (position)"
+        only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_gis_locations_position ON gis.locations USING GIN (position)")
     )
     .execute(pool)
     .await?;
 
     // Geofences table (for IM geofence sync)
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "gis",
         r#"
         CREATE TABLE IF NOT EXISTS gis.geofences (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -858,24 +939,95 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
-        "#,
-    )
+        "#
+    ))
     .execute(pool)
     .await?;
 
     // Create indexes for geofences
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_chat_id ON gis.geofences(chat_id)")
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_gis_geofences_chat_id ON gis.geofences(chat_id)"
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        "CREATE INDEX IF NOT EXISTS idx_gis_geofences_status ON gis.geofences(status)"
+    ))
+    .execute(pool)
+    .await?;
+
+    sqlx::query(only_own_schema_query!("gis", "CREATE INDEX IF NOT EXISTS idx_gis_geofences_coordinates ON gis.geofences USING GIN (coordinates)"))
         .execute(pool)
         .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_status ON gis.geofences(status)")
-        .execute(pool)
-        .await?;
+    // ---- evidence_records / track_records / track_positions（来自 sync 模块建表） ----
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        r#"
+        CREATE TABLE IF NOT EXISTS gis.evidence_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
+            title VARCHAR(255),
+            evidence_type VARCHAR(50),
+            position POINT,
+            file_url TEXT,
+            thumbnail_url TEXT,
+            duration NUMERIC(10,2),
+            file_size BIGINT,
+            file_hash VARCHAR(128),
+            recorded_by UUID,
+            recorded_at TIMESTAMP WITH TIME ZONE,
+            tags JSONB,
+            description TEXT,
+            metadata JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gis_geofences_coordinates ON gis.geofences USING GIN (coordinates)")
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        r#"
+        CREATE TABLE IF NOT EXISTS gis.track_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
+            device_id UUID,
+            device_name VARCHAR(255),
+            start_time TIMESTAMP WITH TIME ZONE,
+            end_time TIMESTAMP WITH TIME ZONE,
+            total_distance NUMERIC(12,2),
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
 
+    sqlx::query(only_own_schema_query!(
+        "gis",
+        r#"
+        CREATE TABLE IF NOT EXISTS gis.track_positions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            track_id UUID,
+            position POINT,
+            altitude NUMERIC(10,2),
+            speed NUMERIC(10,2),
+            heading NUMERIC(10,2),
+            accuracy NUMERIC(10,2),
+            battery_level NUMERIC(5,2),
+            timestamp TIMESTAMP WITH TIME ZONE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
     // ----------------------------------------------------------------
     // 增量迁移补丁：对所有表逐列执行 ALTER TABLE ADD COLUMN IF NOT EXISTS
     // 目的：防止 CREATE TABLE IF NOT EXISTS 对"已存在的旧表"不做任何修改，

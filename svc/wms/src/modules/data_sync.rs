@@ -6,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::OutboundOrder;
@@ -115,14 +116,16 @@ pub async fn create_shipping_from_outbound_internal(
     customer_id: Option<Uuid>,
     _remarks: Option<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let outbound_order = sqlx::query_as::<_, OutboundOrder>(
+    let outbound_order = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
                actual_delivery, total_amount, status, remarks, created_at, updated_at
         FROM plugin_wms.outbound_orders
         WHERE id = $1 AND status = 'confirmed'
         "#,
-    )
+        "plugin_wms"
+    ))
     .bind(outbound_order_id)
     .fetch_optional(&state.db)
     .await;
@@ -195,14 +198,16 @@ pub async fn create_shipping_from_outbound_internal(
         }
     }
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE plugin_wms.outbound_orders 
         SET status = 'shipped', sales_order_id = $2, 
             sales_order_number = $3, is_synced_to_crm = TRUE, updated_at = $4
         WHERE id = $1
         "#,
-    )
+        "plugin_wms"
+    ))
     .bind(outbound_order_id)
     .bind(shipping_id)
     .bind(&shipping_order_number)
@@ -271,13 +276,15 @@ pub async fn create_inbound_from_scm(
         }
     };
 
-    let purchase_order = sqlx::query(
+    let purchase_order = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, order_number, supplier_id, total_amount, status
         FROM plugin_wms.purchase_order_snapshots
         WHERE id = $1 AND status = 'approved'
         "#,
-    )
+        "plugin_wms"
+    ))
     .bind(purchase_order_id)
     .fetch_optional(&state.db)
     .await;
@@ -307,13 +314,15 @@ pub async fn create_inbound_from_scm(
     let now = Utc::now();
     let inbound_order_number = format!("WMS-INB-{}", po_number);
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO plugin_wms.inbound_orders (id, order_number, supplier_id, 
                                               order_type, status, created_at, updated_at)
         VALUES ($1, $2, $3, 'purchase', 'pending', $4, $5)
         "#,
-    )
+        "plugin_wms"
+    ))
     .bind(inbound_id)
     .bind(&inbound_order_number)
     .bind(po_supplier_id)
@@ -377,7 +386,8 @@ pub async fn get_sync_logs(
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(
+    let rows = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, tenant_id, sync_type, source_module, target_module, source_entity,
                source_id, source_code, target_id, target_code, operation, status,
@@ -388,8 +398,8 @@ pub async fn get_sync_logs(
           AND ($3::text IS NULL OR source_module = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(&req.sync_type)
     .bind(&req.status)
     .bind(&req.source_module)
@@ -450,15 +460,16 @@ pub async fn record_sync_log(
     error_message: Option<String>,
     retry_count: i32,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query(
+    sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO unified_core.inter_module_sync 
             (tenant_id, sync_type, source_module, target_module, source_entity,
              source_id, source_code, target_id, target_code, operation, status,
              error_message, retry_count, max_retries, executed_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        "#,
-    )
+        "#
+    ))
     .bind(Uuid::from_u128(1))
     .bind(sync_type)
     .bind(source_module)

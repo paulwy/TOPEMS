@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -25,7 +26,7 @@ pub async fn list_location_photos(
     State(pool): State<PgPool>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, LocationPhoto>(
-        "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM location_photos ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos ORDER BY created_at DESC"),
     )
     .fetch_all(&pool)
     .await
@@ -45,7 +46,7 @@ pub async fn get_location_photo(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LocationPhoto>> {
-    match sqlx::query_as::<_, LocationPhoto>("id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM location_photos WHERE id = $1")
+    match sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -66,11 +67,11 @@ pub async fn create_location_photo(
     }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
     match sqlx::query_as::<_, LocationPhoto>(
-        r#"
-        INSERT INTO location_photos (location_id, photo_url, photo_type, caption, taken_at, tags)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.location_photos (location_id, photo_url, photo_type, caption, taken_at, tags)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(payload.location_id)
     .bind(&payload.photo_url)
@@ -94,10 +95,13 @@ pub async fn delete_location_photo(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::LocationPhotoWrite).await {
         return e;
     }
-    match sqlx::query("DELETE FROM location_photos WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "DELETE FROM gis.location_photos WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -115,7 +119,7 @@ pub async fn list_location_photos_by_map(
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, LocationPhoto>(
-        "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM location_photos WHERE map_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .fetch_all(&pool)

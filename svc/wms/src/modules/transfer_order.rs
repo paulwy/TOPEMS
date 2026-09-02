@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -63,15 +64,15 @@ pub async fn list_transfers(
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, TransferOrder>(
-        r#"
-        SELECT id, tenant_id, transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders
+        only_own_schema_query!("wms", r#"
+        SELECT id, tenant_id, order_number AS transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
           AND ($2::uuid IS NULL OR from_warehouse_id = $2)
           AND ($3::uuid IS NULL OR to_warehouse_id = $3)
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
-        "#,
+        "#),
     )
     .bind(&params.transfer_type)
     .bind(params.from_warehouse_id)
@@ -84,15 +85,16 @@ pub async fn list_transfers(
 
     match result {
         Ok(transfers) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.transfer_orders
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
                   AND ($2::uuid IS NULL OR from_warehouse_id = $2)
                   AND ($3::uuid IS NULL OR to_warehouse_id = $3)
                   AND ($4::text IS NULL OR status = $4)
-                "#,
-            )
+                "#
+            ))
             .bind(&params.transfer_type)
             .bind(params.from_warehouse_id)
             .bind(params.to_warehouse_id)
@@ -138,7 +140,8 @@ pub async fn create_transfer(
     let order_number = format!("TF{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO wms.transfer_orders (
             id, order_number, transfer_type, from_warehouse_id, from_location_id,
@@ -146,8 +149,8 @@ pub async fn create_transfer(
             priority, remarks, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&order_number)
     .bind(req.transfer_type.as_deref().unwrap_or("inter_warehouse"))
@@ -173,14 +176,14 @@ pub async fn create_transfer(
                 let total_amount = item.unit_price.map(|p| p * item.planned_quantity as f64);
 
                 let _ = sqlx::query(
-                    r#"
+                    only_own_schema_query!("wms", r#"
                     INSERT INTO wms.transfer_order_items (
                         id, transfer_id, line_number, sku, material_name, specification,
                         batch_number, unit, planned_quantity, shipped_quantity, received_quantity,
                         unit_price, total_amount, from_location_id, to_location_id, remarks,
                         status, created_at, updated_at
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-                    "#,
+                    "#),
                 )
                 .bind(item_id)
                 .bind(id)
@@ -207,9 +210,10 @@ pub async fn create_transfer(
                 line_number += 1;
             }
 
-            let total_qty = sqlx::query_scalar::<_, i64>(
-                "SELECT SUM(planned_quantity) FROM wms.transfer_order_items WHERE transfer_id = $1",
-            )
+            let total_qty = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
+                "SELECT SUM(planned_quantity) FROM wms.transfer_order_items WHERE transfer_id = $1"
+            ))
             .bind(id)
             .fetch_one(&state.db)
             .await
@@ -249,7 +253,7 @@ pub async fn get_transfer(
     };
 
     let result = sqlx::query_as::<_, TransferOrder>(
-        "SELECT id, tenant_id, transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, order_number AS transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(transfer_id)
     .fetch_optional(&state.db)
@@ -288,7 +292,7 @@ pub async fn list_transfer_items(
     };
 
     let result = sqlx::query_as::<_, TransferOrderItem>(
-        "SELECT id, tenant_id, transfer_id, item_id, item_code, item_name, quantity, unit, line_number, created_at FROM wms.transfer_order_items WHERE transfer_id = $1 ORDER BY line_number",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, transfer_id, item_id, item_code, item_name, quantity, unit, line_number, created_at FROM wms.transfer_order_items WHERE transfer_id = $1 ORDER BY line_number"),
     )
     .bind(transfer_id)
     .fetch_all(&state.db)
@@ -334,7 +338,8 @@ pub async fn update_transfer(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.transfer_orders SET
             transfer_type = COALESCE($1, transfer_type),
@@ -350,8 +355,8 @@ pub async fn update_transfer(
             updated_at = $11
         WHERE id = $12
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(req.get("transfer_type").and_then(|v| v.as_str()))
     .bind(
         req.get("from_warehouse_id")
@@ -415,20 +420,26 @@ pub async fn delete_transfer(
         Err(_) => return Json(api_error(400, "无效的调拨单ID")),
     };
 
-    let result = sqlx::query("DELETE FROM wms.transfer_order_items WHERE transfer_id = $1")
-        .bind(transfer_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "DELETE FROM wms.transfer_order_items WHERE transfer_id = $1"
+    ))
+    .bind(transfer_id)
+    .execute(&state.db)
+    .await;
 
     if let Err(e) = result {
         tracing::error!("删除调拨单明细失败: {}", e);
         return Json(api_error(500, "删除调拨单失败"));
     }
 
-    let result = sqlx::query("UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1")
-        .bind(transfer_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(transfer_id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -466,7 +477,8 @@ pub async fn confirm_transfer(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'confirmed',
@@ -474,8 +486,8 @@ pub async fn confirm_transfer(
             updated_at = $2
         WHERE id = $3 AND status = 'pending'
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
@@ -516,7 +528,8 @@ pub async fn ship_transfer(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'shipped',
@@ -524,8 +537,8 @@ pub async fn ship_transfer(
             updated_at = $2
         WHERE id = $3 AND status = 'confirmed'
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
@@ -577,13 +590,13 @@ pub async fn receive_transfer(
 
             if let Ok(item_id) = Uuid::parse_str(item_id_str) {
                 let _ = sqlx::query(
-                    r#"
+                    only_own_schema_query!("wms", r#"
                     UPDATE wms.transfer_order_items SET
                         received_quantity = received_quantity + $1,
                         status = CASE WHEN received_quantity + $1 >= planned_quantity THEN 'completed' ELSE 'partial' END,
                         updated_at = $2
                     WHERE id = $3 AND transfer_id = $4
-                    "#,
+                    "#),
                 )
                 .bind(received_qty)
                 .bind(now)
@@ -595,7 +608,8 @@ pub async fn receive_transfer(
         }
     }
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'received',
@@ -603,8 +617,8 @@ pub async fn receive_transfer(
             updated_at = $2
         WHERE id = $3 AND status = 'shipped'
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
@@ -645,7 +659,8 @@ pub async fn complete_transfer(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, TransferOrder>(
+    let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.transfer_orders SET
             status = 'completed',
@@ -653,8 +668,8 @@ pub async fn complete_transfer(
             updated_at = $1
         WHERE id = $2 AND status = 'received'
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(now)
     .bind(transfer_id)
     .fetch_one(&state.db)
@@ -763,12 +778,14 @@ pub async fn start_transfer_approval(
         })
         .unwrap_or_else(Uuid::new_v4);
 
-    let current =
-        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
-            .bind(transfer_id)
-            .bind(tenant_id)
-            .fetch_one(&state.db)
-            .await;
+    let current = sqlx::query(only_own_schema_query!(
+        "wms",
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(transfer_id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
 
     match current {
         Ok(row) => {
@@ -835,12 +852,14 @@ pub async fn approve_transfer(
         })
         .unwrap_or_else(Uuid::new_v4);
 
-    let current =
-        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
-            .bind(transfer_id)
-            .bind(tenant_id)
-            .fetch_one(&state.db)
-            .await;
+    let current = sqlx::query(only_own_schema_query!(
+        "wms",
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(transfer_id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
 
     match current {
         Ok(row) => {
@@ -852,7 +871,7 @@ pub async fn approve_transfer(
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let result = sqlx::query(
-                "UPDATE wms.transfer_orders SET status = 'shipped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+                only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'shipped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
             )
             .bind(transfer_id)
             .bind(tenant_id)
@@ -925,12 +944,14 @@ pub async fn reject_transfer(
         })
         .unwrap_or_else(Uuid::new_v4);
 
-    let current =
-        sqlx::query("SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2")
-            .bind(transfer_id)
-            .bind(tenant_id)
-            .fetch_one(&state.db)
-            .await;
+    let current = sqlx::query(only_own_schema_query!(
+        "wms",
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(transfer_id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
 
     match current {
         Ok(row) => {
@@ -941,7 +962,7 @@ pub async fn reject_transfer(
                 return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
             }
             let result = sqlx::query(
-                "UPDATE wms.transfer_orders SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+                only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
             )
             .bind(transfer_id)
             .bind(tenant_id)

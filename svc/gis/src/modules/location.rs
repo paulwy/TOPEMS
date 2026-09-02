@@ -7,6 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -78,11 +79,11 @@ pub async fn create_location(
     }
 
     match sqlx::query_as::<_, Location>(
-        r#"
-        INSERT INTO plugin_gis.locations (name, code, location_type, position, address, description, properties)
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.locations (name, code, location_type, position, address, description, properties)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(&payload.name)
     .bind(&payload.code)
@@ -112,7 +113,7 @@ pub async fn create_location(
 )]
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     match sqlx::query_as::<_, Location>(
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations ORDER BY created_at DESC",
+        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations ORDER BY created_at DESC"),
     )
     .fetch_all(&pool)
     .await
@@ -148,7 +149,7 @@ pub async fn get_location(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
     match sqlx::query_as::<_, Location>(
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -171,15 +172,16 @@ pub async fn update_location(
         return e;
     }
 
-    match sqlx::query_as::<_, Location>(
+    match sqlx::query_as::<_, Location>(only_own_schema_query!(
+        "gis",
         r#"
-        UPDATE plugin_gis.locations 
+        UPDATE gis.locations 
         SET name = $1, location_type = $2, position = $3, address = $4, 
             description = $5, properties = $6, status = COALESCE($7, status), updated_at = NOW()
         WHERE id = $8
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&payload.name)
     .bind(&payload.location_type)
     .bind(&payload.position)
@@ -207,10 +209,13 @@ pub async fn delete_location(
         return e;
     }
 
-    match sqlx::query("UPDATE plugin_gis.locations SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
+    match sqlx::query(only_own_schema_query!(
+        "gis",
+        "UPDATE gis.locations SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -231,9 +236,9 @@ pub async fn search_locations(
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
     };
 
     match if payload.location_type.is_some() {
@@ -267,7 +272,7 @@ pub async fn nearby_locations(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
     match sqlx::query_as::<_, Location>(
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM plugin_gis.locations WHERE deleted_at IS NULL AND status = 'active'",
+        only_own_schema_query!("gis", "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND status = 'active'"),
     )
     .fetch_all(&pool)
     .await

@@ -7,6 +7,7 @@ use axum::{
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -133,7 +134,8 @@ pub async fn list_stock_takes(
     let status_filter = params.status.clone();
     let warehouse_id = params.warehouse_id;
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
@@ -147,8 +149,8 @@ pub async fn list_stock_takes(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#,
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(warehouse_id)
@@ -159,15 +161,16 @@ pub async fn list_stock_takes(
 
     match result {
         Ok(stock_takes) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
+            let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.stock_takes
                 WHERE ($1::text IS NULL OR stock_take_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                   AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(warehouse_id)
@@ -222,14 +225,14 @@ pub async fn create_stock_take(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, StockTake>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_takes (id, org_id, stock_take_number, stock_take_type, 
                                      warehouse_id, location_id, status, planned_date, 
                                      remarks, created_at, updated_at)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8)
         RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                   planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.stock_take_number)
@@ -299,7 +302,8 @@ pub async fn get_stock_take(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
@@ -307,8 +311,8 @@ pub async fn get_stock_take(
                discrepancy_quantity, discrepancy_value, accuracy_rate,
                approval_status, adjustment_status, remarks, created_at, updated_at
         FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -352,13 +356,14 @@ pub async fn update_stock_take(
     }
     let request_data = serde_json::to_value(&req).ok();
 
-    let existing = sqlx::query_as::<_, StockTake>(
+    let existing = sqlx::query_as::<_, StockTake>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at 
         FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -377,13 +382,13 @@ pub async fn update_stock_take(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, StockTake>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.stock_takes SET
             warehouse_id = $2, location_id = $3, status = $4, actual_date = $5, remarks = $6, updated_at = $7
         WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                   planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(warehouse_id)
@@ -454,9 +459,10 @@ pub async fn delete_stock_take(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
-        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+    ))
     .bind(id)
     .execute(&state.db)
     .await;
@@ -542,27 +548,30 @@ pub async fn start_stock_take(
         Err(e) => return e,
     };
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.stock_takes SET
             status = 'in_progress', actual_date = $1, updated_at = $1
         WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(now.date_naive())
     .bind(id)
     .execute(&mut *tx)
     .await;
 
-    let warehouse_id_result =
-        sqlx::query_scalar::<_, Uuid>(r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#)
-            .bind(id)
-            .fetch_one(&mut *tx)
-            .await;
+    let warehouse_id_result = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "wms",
+        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#
+    ))
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await;
 
     if let Ok(warehouse_id) = warehouse_id_result {
         let _ = sqlx::query(
-            r#"
+            only_own_schema_query!("wms", r#"
             INSERT INTO wms.stock_take_items (id, org_id, stock_take_id, line_number,
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
@@ -573,7 +582,7 @@ pub async fn start_stock_take(
                    i.quality_status, NOW(), NOW()
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.deleted_at IS NULL
-            "#,
+            "#),
         )
         .bind(id)
         .bind(warehouse_id)
@@ -585,14 +594,15 @@ pub async fn start_stock_take(
         return Json(api_error(500, "开始盘点失败"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
                total_items, counted_items, discrepancy_items, remarks, created_at, updated_at
         FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_one(&state.db)
     .await;
@@ -654,7 +664,8 @@ pub async fn list_stock_take_items(
         Err(e) => return e,
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, stock_take_id, line_number, material_code, material_name, specification,
                batch_number, location_id, location_code, location_name,
@@ -666,8 +677,8 @@ pub async fn list_stock_take_items(
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND deleted_at IS NULL
         ORDER BY line_number ASC
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_all(&state.db)
     .await;
@@ -755,7 +766,7 @@ pub async fn create_stock_take_item(
     };
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_take_items (id, org_id, stock_take_id, material_code, 
                                           material_name, specification, batch_number, location_id,
                                           system_quantity, counted_quantity, discrepancy_quantity,
@@ -765,7 +776,7 @@ pub async fn create_stock_take_item(
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(item_id)
     .bind(id)
@@ -865,9 +876,10 @@ pub async fn count_stock_take(
     };
 
     for item in &items {
-        let system_qty_result = sqlx::query_scalar::<_, f64>(
-            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#,
-        )
+        let system_qty_result = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
+            "wms",
+            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#
+        ))
         .bind(item.item_id)
         .fetch_one(&mut *tx)
         .await;
@@ -882,7 +894,8 @@ pub async fn count_stock_take(
                 "none"
             };
 
-            let _ = sqlx::query(
+            let _ = sqlx::query(only_own_schema_query!(
+                "wms",
                 r#"
                 UPDATE wms.stock_take_items SET
                     counted_quantity = $1,
@@ -893,8 +906,8 @@ pub async fn count_stock_take(
                     counting_time = $6,
                     updated_at = $6
                 WHERE id = $7 AND deleted_at IS NULL
-                "#,
-            )
+                "#
+            ))
             .bind(item.counted_quantity)
             .bind(discrepancy)
             .bind(discrepancy_type)
@@ -933,7 +946,8 @@ pub async fn get_stock_take_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, stock_take_id, line_number, material_code, material_name, specification,
                batch_number, location_id, location_code, location_name,
@@ -943,8 +957,8 @@ pub async fn get_stock_take_item(
                discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
                adjustment_status, notes as remarks, created_at, updated_at
         FROM wms.stock_take_items WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(item_id)
     .fetch_optional(&state.db)
@@ -984,13 +998,14 @@ pub async fn update_stock_take_item(
     }
     let request_data = serde_json::to_value(&req).ok();
 
-    let existing = sqlx::query(
+    let existing = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, stock_take_id, system_quantity, counted_quantity, discrepancy_quantity, 
                discrepancy_type, status, notes FROM wms.stock_take_items 
         WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(item_id)
     .fetch_optional(&state.db)
@@ -1038,7 +1053,8 @@ pub async fn update_stock_take_item(
     });
     let now = Utc::now();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.stock_take_items SET
             counted_quantity = $1, discrepancy_quantity = $2, discrepancy_type = $3, 
@@ -1047,8 +1063,8 @@ pub async fn update_stock_take_item(
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(actual_quantity)
     .bind(variance)
     .bind(discrepancy_type)
@@ -1118,7 +1134,7 @@ pub async fn delete_stock_take_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#)
+    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#))
         .bind(id)
         .bind(item_id)
         .execute(&state.db)
@@ -1206,7 +1222,7 @@ pub async fn complete_stock_take(
     };
 
     let stats_result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT 
             COUNT(*) as total_items,
             COUNT(CASE WHEN counted_quantity IS NOT NULL THEN 1 END) as counted_items,
@@ -1216,7 +1232,7 @@ pub async fn complete_stock_take(
             SUM(CASE WHEN discrepancy_type IS NOT NULL THEN discrepancy_quantity ELSE 0 END) as discrepancy_quantity
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_one(&mut *tx)
@@ -1241,7 +1257,8 @@ pub async fn complete_stock_take(
         0.0
     };
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.stock_takes SET
             status = 'completed',
@@ -1254,8 +1271,8 @@ pub async fn complete_stock_take(
             accuracy_rate = $7,
             updated_at = $8
         WHERE id = $9 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(total_items)
     .bind(counted_items)
     .bind(discrepancy_items)
@@ -1272,7 +1289,8 @@ pub async fn complete_stock_take(
         return Json(api_error(500, "完成盘点失败"));
     }
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
@@ -1280,8 +1298,8 @@ pub async fn complete_stock_take(
                discrepancy_quantity, discrepancy_value, accuracy_rate,
                approval_status, adjustment_status, remarks, created_at, updated_at
         FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_one(&state.db)
     .await;
@@ -1361,14 +1379,15 @@ pub async fn adjust_stock_take(
         Err(e) => return e,
     };
 
-    let discrepancies = sqlx::query(
+    let discrepancies = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         SELECT material_code, batch_number, discrepancy_quantity
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND discrepancy_type != 'none' AND discrepancy_type IS NOT NULL
           AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .fetch_all(&mut *tx)
     .await;
@@ -1380,7 +1399,8 @@ pub async fn adjust_stock_take(
             let discrepancy_qty: f64 = item.try_get("discrepancy_quantity").unwrap_or(0.0);
 
             if discrepancy_qty != 0.0 {
-                let _ = sqlx::query(
+                let _ = sqlx::query(only_own_schema_query!(
+                    "wms",
                     r#"
                     UPDATE wms.inventory SET
                         quantity = quantity + $1,
@@ -1390,8 +1410,8 @@ pub async fn adjust_stock_take(
                       AND material_code = $3
                       AND ($4::text IS NULL OR batch_number = $4)
                       AND deleted_at IS NULL
-                    "#,
-                )
+                    "#
+                ))
                 .bind(discrepancy_qty)
                 .bind(now)
                 .bind(&material_code)
@@ -1402,7 +1422,8 @@ pub async fn adjust_stock_take(
         }
     }
 
-    let _ = sqlx::query(
+    let _ = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.stock_takes SET
             adjustment_status = 'completed',
@@ -1410,8 +1431,8 @@ pub async fn adjust_stock_take(
             adjustment_date = $1,
             updated_at = $1
         WHERE id = $2 AND deleted_at IS NULL
-        "#,
-    )
+        "#
+    ))
     .bind(now.date_naive())
     .bind(id)
     .execute(&mut *tx)
@@ -1467,7 +1488,7 @@ pub async fn start_stock_take_approval(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1537,7 +1558,7 @@ pub async fn approve_stock_take(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1554,7 +1575,7 @@ pub async fn approve_stock_take(
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let result = sqlx::query(
-                "UPDATE wms.stock_takes SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+                only_own_schema_query!("wms", "UPDATE wms.stock_takes SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
             )
             .bind(id)
             .bind(tenant_id)
@@ -1625,7 +1646,7 @@ pub async fn reject_stock_take(
         .unwrap_or_else(Uuid::new_v4);
 
     let current = sqlx::query(
-        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
     )
     .bind(id)
     .bind(tenant_id)

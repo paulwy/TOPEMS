@@ -1,3 +1,4 @@
+use topems_shared_boundary::only_own_schema_query;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -64,7 +65,7 @@ pub async fn list_cycle_count_configs(
     let is_active = params.is_active;
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
@@ -73,7 +74,7 @@ pub async fn list_cycle_count_configs(
           AND deleted_at IS NULL
         ORDER BY priority_level, next_count_date
         LIMIT $3 OFFSET $4
-        "#,
+        "#),
     )
     .bind(&warehouse_id)
     .bind(&is_active)
@@ -85,12 +86,12 @@ pub async fn list_cycle_count_configs(
     match result {
         Ok(configs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
+                only_own_schema_query!("wms", r#"
                 SELECT COUNT(*) FROM wms.cycle_count_configs
                 WHERE ($1::uuid IS NULL OR warehouse_id = $1)
                   AND ($2::boolean IS NULL OR is_active = $2)
                   AND deleted_at IS NULL
-                "#,
+                "#),
             )
             .bind(&warehouse_id)
             .bind(&is_active)
@@ -141,11 +142,11 @@ pub async fn create_cycle_count_config(
     };
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9)
         RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level, last_count_date, next_count_date, is_active, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.warehouse_id)
@@ -212,12 +213,12 @@ pub async fn get_cycle_count_config(
     }
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -258,14 +259,14 @@ pub async fn update_cycle_count_config(
     };
 
     let result = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         UPDATE wms.cycle_count_configs SET
             warehouse_id = $2, location_id = $3, material_category = $4, count_frequency = $5,
             priority_level = $6, next_count_date = $7, updated_at = $8
         WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                   last_count_date, next_count_date, is_active, created_at, updated_at
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.warehouse_id)
@@ -397,12 +398,12 @@ pub async fn generate_cycle_count(
 
     // 获取配置
     let config = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND is_active = true AND deleted_at IS NULL
-        "#,
+        "#),
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -511,13 +512,13 @@ pub async fn generate_all_cycle_counts(
 
     // 查询所有到期的配置
     let configs = sqlx::query_as::<_, CycleCountConfig>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE is_active = true AND next_count_date <= $1 AND deleted_at IS NULL
         ORDER BY priority_level DESC, next_count_date
-        "#,
+        "#),
     )
     .bind(now)
     .fetch_all(&state.db)

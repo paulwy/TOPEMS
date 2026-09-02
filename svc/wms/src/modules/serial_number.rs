@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
@@ -70,7 +71,7 @@ pub async fn list_serial_numbers(
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
@@ -81,7 +82,7 @@ pub async fn list_serial_numbers(
           AND ($7::text IS NULL OR status = $7)
         ORDER BY created_at DESC
         LIMIT $8 OFFSET $9
-        "#,
+        "#),
     )
     .bind(params.warehouse_id)
     .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
@@ -97,7 +98,8 @@ pub async fn list_serial_numbers(
 
     match result {
         Ok(serials) => {
-            let total = sqlx::query_scalar::<_, i64>(
+            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.serial_numbers
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
@@ -107,8 +109,8 @@ pub async fn list_serial_numbers(
                   AND ($5::text IS NULL OR batch_no ILIKE $5)
                   AND ($6::text IS NULL OR quality_status = $6)
                   AND ($7::text IS NULL OR status = $7)
-                "#,
-            )
+                "#
+            ))
             .bind(params.warehouse_id)
             .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.serial_no.as_ref().map(|s| format!("%{}%", s)))
@@ -162,7 +164,7 @@ pub async fn create_serial_number(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        r#"
+        only_own_schema_query!("wms", r#"
         INSERT INTO wms.serial_numbers (
             id, serial_no, sku, material_name, specification, unit,
             warehouse_id, location_id, supplier_id, batch_no,
@@ -171,7 +173,7 @@ pub async fn create_serial_number(
             unit_price, remark, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.serial_no)
@@ -234,7 +236,7 @@ pub async fn bulk_create_serial_numbers(
     for item in req {
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, SerialNumber>(
-            r#"
+            only_own_schema_query!("wms", r#"
             INSERT INTO wms.serial_numbers (
                 id, serial_no, sku, material_name, specification, unit,
                 warehouse_id, location_id, supplier_id, batch_no,
@@ -243,7 +245,7 @@ pub async fn bulk_create_serial_numbers(
                 unit_price, remark, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             RETURNING *
-            "#,
+            "#),
         )
         .bind(id)
         .bind(&item.serial_no)
@@ -300,7 +302,7 @@ pub async fn get_serial_number(
     };
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(serial_id)
     .fetch_optional(&state.db)
@@ -337,7 +339,7 @@ pub async fn get_by_serial_no(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1"),
     )
     .bind(serial_no)
     .fetch_optional(&state.db)
@@ -374,7 +376,7 @@ pub async fn get_by_batch(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, item_id, item_code, item_name, warehouse_id, location_id, batch_no, status, production_date, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC"),
     )
     .bind(batch_no)
     .fetch_all(&state.db)
@@ -420,7 +422,8 @@ pub async fn update_serial_number(
 
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, SerialNumber>(
+    let result = sqlx::query_as::<_, SerialNumber>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.serial_numbers SET
             sku = COALESCE($1, sku),
@@ -444,8 +447,8 @@ pub async fn update_serial_number(
             updated_at = $19
         WHERE id = $20
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.sku)
     .bind(&req.material_name)
     .bind(&req.specification)
@@ -506,10 +509,13 @@ pub async fn delete_serial_number(
         Err(_) => return Json(api_error(400, "无效的序列号ID")),
     };
 
-    let result = sqlx::query("UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1")
-        .bind(serial_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(serial_id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -546,7 +552,7 @@ pub async fn get_serial_number_statistics(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query(
-        r#"
+        only_own_schema_query!("wms", r#"
         SELECT
             COUNT(*) as total_serials,
             SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) as in_stock_count,
@@ -555,7 +561,7 @@ pub async fn get_serial_number_statistics(
             SUM(CASE WHEN warranty_end_date IS NOT NULL AND warranty_end_date <= NOW() + INTERVAL '30 days' THEN 1 ELSE 0 END) as warranty_expiring_soon_count
         FROM wms.serial_numbers
         WHERE warehouse_id = $1 OR $1 IS NULL
-        "#,
+        "#),
     )
     .bind(warehouse_id)
     .fetch_one(&state.db)
@@ -612,15 +618,16 @@ pub async fn transfer_location(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = sqlx::query_as::<_, SerialNumber>(
+    let result = sqlx::query_as::<_, SerialNumber>(only_own_schema_query!(
+        "wms",
         r#"
         UPDATE wms.serial_numbers SET
             location_id = $1,
             updated_at = NOW()
         WHERE id = $2
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(to_location_id)
     .bind(serial_id)
     .fetch_one(&state.db)

@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{
@@ -20,12 +21,13 @@ async fn generate_movement_no(state: &ApiState, tenant_id: Uuid) -> String {
     let today = Utc::now().format("%Y%m%d").to_string();
     let prefix = format!("MV-{}", today);
 
-    let seq: i64 = sqlx::query_scalar(
+    let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "wms",
         r#"
         SELECT COUNT(*) FROM wms.inventory_movements
         WHERE tenant_id = $1 AND movement_no LIKE $2
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(format!("{}%", prefix))
     .fetch_one(&state.db)
@@ -87,7 +89,8 @@ async fn list_inventory_movements(
     let reference_filter = params.ref_id.or(params.reference_id.clone());
     let reference_type_filter = params.ref_type.or(params.reference_type.clone());
 
-    let result = sqlx::query_as::<_, InventoryMovement>(
+    let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, movement_no, tenant_id, movement_type, reference_id, reference_type,
                material_id, material_code, material_name, quantity,
@@ -102,8 +105,8 @@ async fn list_inventory_movements(
           AND ($6::uuid IS NULL OR material_id = $6)
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
-        "#,
-    )
+        "#
+    ))
     .bind(tenant_id)
     .bind(&params.movement_type)
     .bind(&params.status)
@@ -117,7 +120,8 @@ async fn list_inventory_movements(
 
     match result {
         Ok(records) => {
-            let total: i64 = sqlx::query_scalar(
+            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+                "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_movements
                 WHERE tenant_id = $1
@@ -126,8 +130,8 @@ async fn list_inventory_movements(
                   AND ($4::text IS NULL OR reference_id = $4)
                   AND ($5::text IS NULL OR reference_type = $5)
                   AND ($6::uuid IS NULL OR material_id = $6)
-                "#,
-            )
+                "#
+            ))
             .bind(tenant_id)
             .bind(&params.movement_type)
             .bind(&params.status)
@@ -188,7 +192,8 @@ async fn create_inventory_movement(
     let movement_no = generate_movement_no(&state, tenant_id).await;
     let operator_id = Uuid::parse_str(&claims.sub).ok();
 
-    let result = sqlx::query_as::<_, InventoryMovement>(
+    let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
+        "wms",
         r#"
         INSERT INTO wms.inventory_movements (
             id, movement_no, tenant_id, movement_type, reference_id, reference_type,
@@ -205,8 +210,8 @@ async fn create_inventory_movement(
                   material_id, material_code, material_name, quantity,
                   from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
                   status, performed_by, performed_at, notes, created_at, updated_at
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(&movement_no)
     .bind(tenant_id)
@@ -265,7 +270,8 @@ async fn get_inventory_movement(
         None => return Json(api_error(401, "缺少租户ID")),
     };
 
-    let result = sqlx::query_as::<_, InventoryMovement>(
+    let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
+        "wms",
         r#"
         SELECT id, movement_no, tenant_id, movement_type, reference_id, reference_type,
                material_id, material_code, material_name, quantity,
@@ -273,8 +279,8 @@ async fn get_inventory_movement(
                status, performed_by, performed_at, notes, created_at, updated_at
         FROM wms.inventory_movements
         WHERE id = $1 AND tenant_id = $2
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&state.db)
