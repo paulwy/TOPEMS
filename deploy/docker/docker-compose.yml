@@ -8,6 +8,8 @@ x-common-env: &common-env
   DATABASE_URL: postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
   CORE_URL: http://unified-core:8000
   CONSUL_URL: http://consul:8500
+  CONSUL_HOST: http://consul:8500
+  CONSUL_ENABLED: "true"
   IAM_SERVICE_URL: http://unified-core:8000
   JWT_SECRET: ${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
   JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
