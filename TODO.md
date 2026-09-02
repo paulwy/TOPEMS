@@ -17,6 +17,24 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 
 **当前待办总数：12 项**（✅ 已完成 9 / ⏳ 待触发 1 / 🔲 可选后续 2 —— 实质待办全部清零）
 
+---
+
+## 🚀 运行环境状态（2026-09-02）
+
+> 全量 Docker 环境启动完成：**32 容器 / 31 healthy**（唯一 unhealthy：traefik healthcheck 显示问题，服务本身可用——80 响应 302 正常，仅 healthcheck 探测跟随 302 到 443 时 SSL 证书校验失败）。
+> 端到端验证：unified-core 登录 200（admin/admin123，code 0 + token）、qms 8050 200、portal 8063 200、traefik 80 302 正常。
+
+**本次启动修复（已推送 `f8fe706dc` + `c87c3355f`）**：
+- **构建卡死根治**：docker.io 不可达致 BuildKit 拉基础镜像元数据无限重试（2h 仅 4 镜像）→ `Dockerfile.service` 基础镜像源切至 `docker.1panel.live/library/*`（已预拉）→ 19 业务镜像全部构建成功（21 个含 qms/unified-core）
+- **compose 挂载路径**：prometheus/nginx 挂载指向误建空目录 → 改 `prometheus/prometheus.yml`、`nginx/nginx.conf`
+- **网关循环依赖解除**：nginx(/api→traefik:80) ↔ traefik(静态→nginx) 死锁 → traefik 移除对 nginx 健康依赖、nginx 增对 traefik 启动依赖（`service_started`）
+- **healthcheck 修复**：prometheus/alertmanager curl→wget、nginx 探测根路径（403 接受）、jaeger 探测 16686（原 14268 404）
+- **运维组件**：alertmanager 移除 `--config.expand-env`（版本不支持）+ feishu.tmpl 18 处 `default` 函数改 if/else；pgbouncer 移除无效 `default_client_connection_limit`；grafana datasource `isDefault` 去重；nginx 注释已移除服务（search/communication/ticket/master-data）upstream
+
+**已知遗留（不阻塞运行）**：traefik healthcheck 显示 unhealthy（BusyBox wget 不支持 --no-check-certificate，302→443 SSL 校验失败；服务可用）；nginx.conf 中 communication/ticket/master-data upstream 已注释待服务回归 compose 时恢复。
+
+---
+
 | # | 待办 | 优先级 | 状态 | 说明 |
 |---|---|---|---|---|
 | 1 | 物理库拆分阶段 2 | P1 | ⏳ 待阈值触发 | 5 项阈值均未触发（DB 0.1GB/200GB、portal 116 表/600 张）；已配每日 09:30 巡检定时任务（`--topology auto` 含一致性告警） |
