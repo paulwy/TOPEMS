@@ -771,6 +771,8 @@ pub struct ServiceContext {
     pub event_publisher: Option<Arc<EventPublisher>>,
     /// 启动时间
     pub start_time: Instant,
+    /// Consul 服务注册守卫（CONSUL_ENABLED=true 时注册，guard drop 时自动注销）
+    pub consul_guard: Option<topems_shared_event::consul::ConsulRegistrationGuard>,
 }
 
 /// 组装完毕、可运行的应用
@@ -828,13 +830,30 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
         None
     };
 
+    let consul_guard = register_with_consul(config.name, resolve_port(config)).await;
+
     Ok(ServiceContext {
         db,
         auth_state,
         metrics,
         event_publisher,
         start_time,
+        consul_guard,
     })
+}
+
+/// 启动时向 Consul 注册当前服务（CONSUL_ENABLED=true 且 Consul 可达时生效）。
+///
+/// 复用 `topems_shared_event::consul::try_register_service`，guard 在 ServiceContext
+/// 存活期间保持注册与心跳，进程退出时自动注销。Consul 不可达或未启用时 graceful
+/// fallback（仅 warn 日志，不阻塞启动）。
+///
+/// 健康检查路径统一使用服务标准 `/health` 端点。
+pub async fn register_with_consul(
+    service_name: &'static str,
+    service_port: u16,
+) -> Option<topems_shared_event::consul::ConsulRegistrationGuard> {
+    topems_shared_event::consul::try_register_service(service_name, service_port, "/health").await
 }
 
 /// 默认的 init_db 实现：可选 master_data refs 表 + 服务特定 schema defense
@@ -2117,6 +2136,7 @@ mod tests {
             auth_state: auth_state.clone(),
             metrics: metrics.clone(),
             event_publisher: None,
+            consul_guard: None,
             start_time,
         };
         let svc_cfg = ServiceConfig {
@@ -2142,6 +2162,7 @@ mod tests {
             auth_state: auth_state.clone(),
             metrics: metrics.clone(),
             event_publisher: None,
+            consul_guard: None,
             start_time,
         };
         assert!(ctx.event_publisher.is_none());

@@ -533,8 +533,13 @@ pub async fn try_register_service(
     }
 
     let service_id = format!("{}-{}", service_name, Uuid::new_v4());
+    // 注册地址：优先 CONSUL_REGISTER_ADDRESS 环境变量（显式指定时），默认回退
+    // service_name（Docker 网络下即容器名/网络别名，如 topems-erp，consul 可直接
+    // 解析做 HTTP 健康检查）；本机直连场景可设 CONSUL_REGISTER_ADDRESS=127.0.0.1。
+    let register_address =
+        env::var("CONSUL_REGISTER_ADDRESS").unwrap_or_else(|_| service_name.to_string());
     let registration = ServiceRegistration::new(service_id.clone(), service_name, service_port)
-        .with_address("127.0.0.1")
+        .with_address(register_address)
         .with_health_check(health_check_path)
         .with_tag("topems")
         .with_meta("version", env!("CARGO_PKG_VERSION"));
