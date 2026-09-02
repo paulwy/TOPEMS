@@ -138,6 +138,15 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+vi.mock('@/components/templates', () => ({
+  MobilePageTemplate: ({ title, children }: { title?: React.ReactNode; children?: React.ReactNode }) => (
+    <div data-testid='mobile-page-template'>
+      {title}
+      {children}
+    </div>
+  ),
+}));
+
 describe('MobileTaskListPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileTaskListPage />);

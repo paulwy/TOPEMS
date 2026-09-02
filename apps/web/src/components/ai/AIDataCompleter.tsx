@@ -8,7 +8,7 @@ import { useAIHelper } from '../../hooks/useAIHelper';
 import type { CompleteRequest, CompletionItem, CompleteResponse } from '@/types/ai';
 import i18n from '@/i18n';
 
-interface AIDataCompleterProps {
+export interface AIDataCompleterProps {
   isOpen: boolean;
   onClose: () => void;
   completeRequest: CompleteRequest;

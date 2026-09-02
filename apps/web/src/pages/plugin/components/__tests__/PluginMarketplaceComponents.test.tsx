@@ -60,7 +60,7 @@ vi.mock('@/api/plugin', async () => {
   const actual = await vi.importActual<typeof import('@/api/plugin')>('@/api/plugin');
   return {
     ...actual,
-    SUITES: [
+    SUITES: () => [
       { code: 'suite-erp', name: 'ERP 套件' },
       { code: 'suite-wms', name: 'WMS 套件' },
     ],

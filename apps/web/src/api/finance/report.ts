@@ -174,4 +174,41 @@ export const reportApi = {
   },
 };
 
+/**
+ * 旧版命名兼容：ERP 页面使用 financeReportApi.balanceSheet() 等短方法名。
+ * 参数宽松（仅 period 等常用字段），适配旧页面调用。
+ * 返回类型按 ERP 页面使用的 @/api/erp/types 模型（total_assets 等字段）对齐。
+ */
+type ReportParams = { period?: string; [key: string]: unknown };
+
+type ERPBalanceSheet = import('../erp/types').BalanceSheet;
+type ERPIncomeStatement = import('../erp/types').IncomeStatement;
+type ERPCashFlowStatement = import('../erp/types').CashFlowStatement;
+
+export const financeReportApi = {
+  balanceSheet: (params: ReportParams) =>
+    reportApi.getBalanceSheet(params as unknown as ReportQueryParams) as unknown as Promise<
+      ApiResponse<ERPBalanceSheet>
+    >,
+  incomeStatement: (params: ReportParams) =>
+    reportApi.getIncomeStatement(params as unknown as ReportQueryParams) as unknown as Promise<
+      ApiResponse<ERPIncomeStatement>
+    >,
+  cashFlowStatement: (params: ReportParams) =>
+    reportApi.getCashFlowStatement(params as unknown as ReportQueryParams) as unknown as Promise<
+      ApiResponse<ERPCashFlowStatement>
+    >,
+  agingAnalysis: reportApi.getAgingAnalysis,
+  accountBalanceReport: reportApi.getAccountBalanceReport,
+  accountLedger: reportApi.getAccountLedger,
+  departmentSummary: reportApi.getDepartmentSummary,
+  voucherStatistics: reportApi.getVoucherStatistics,
+  cashFlowAnalysis: reportApi.getCashFlowAnalysis,
+  expenseAnalysis: reportApi.getExpenseAnalysis,
+  profitAnalysis: reportApi.getProfitAnalysis,
+  financialOverview: reportApi.getFinancialOverview,
+  businessOverview: reportApi.getBusinessOverview,
+  monthlyTrend: reportApi.getMonthlyTrend,
+};
+
 export default reportApi;

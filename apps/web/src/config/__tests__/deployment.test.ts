@@ -50,7 +50,6 @@ describe('deployment config — other feature flags sanity', () => {
     const { getFeatureFlag } = await import('../deployment');
     const keys = [
       'quotaEnabled',
-      'billingEnabled',
       'tenantManagement',
       'ssoEnabled',
       'twoFactorRequired',

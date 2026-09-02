@@ -17,12 +17,10 @@ describe('config/ports - BACKEND_PORTS 常量', () => {
     expect(BACKEND_PORTS.pm).toBe(8023);
   });
 
-  it('扩展服务端口 (search/communication/billing/ticket/lowcode/master-data)', () => {
+  it('扩展服务端口 (search/communication/ticket/master-data)', () => {
     expect(BACKEND_PORTS.search).toBe(8082);
     expect(BACKEND_PORTS.communication).toBe(8084);
-    expect(BACKEND_PORTS.billing).toBe(8085);
     expect(BACKEND_PORTS.ticket).toBe(8086);
-    expect(BACKEND_PORTS.lowcode).toBe(8088);
     expect(BACKEND_PORTS['master-data']).toBe(8090);
   });
 });

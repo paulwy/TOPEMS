@@ -197,3 +197,8 @@ export const authLogger = createLogger('Auth', {
   level: IS_PROD ? 'error' : 'info',
   prefix: 'AUTH',
 });
+
+export const errorLogger = createLogger('Error', {
+  level: IS_PROD ? 'error' : 'debug',
+  prefix: 'ERROR',
+});

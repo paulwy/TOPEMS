@@ -8,23 +8,42 @@ export interface Budget {
   period?: string;
   start_date?: string;
   end_date?: string;
-  status?: 'draft' | 'active' | 'closed';
+  status?: string;
   total_amount?: number;
   used_amount?: number;
   remaining_amount?: number;
+  usage_rate?: number;
   department_id?: string;
   project_id?: string;
   created_at?: string;
   updated_at?: string;
+  // 预算详情字段（FinanceBudgetDetailPage 使用）
+  total_budget?: number;
+  fiscal_year?: string;
+  budget_type?: string;
+  items?: BudgetItem[];
+}
+
+export interface BudgetItem {
+  id: string;
+  subject: string;
+  category: string;
+  budgetAmount: number;
+  usedAmount: number;
+  remainingAmount: number;
+  usageRate: number;
 }
 
 export const budgetApi = {
   list: (params?: {
+    page?: number;
+    pagesize?: number;
     status?: string;
     period?: string;
     department_id?: string;
     keyword?: string;
-  }): Promise<ApiResponse<Budget[]>> => {
+    [key: string]: unknown;
+  }): Promise<ApiResponse<{ items: Budget[]; total: number; [key: string]: unknown }>> => {
     return apiClient.finance.get('/budgets', { params });
   },
 

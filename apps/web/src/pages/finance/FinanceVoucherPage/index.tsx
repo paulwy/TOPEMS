@@ -25,7 +25,8 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { PageContainer, StatCardGroup, ActionButton, StatusBadge } from '@/components/common';
 import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
-import type { FinancialVoucher, VoucherItem, VoucherItemRequest } from '@/api/finance';
+import type { FinancialVoucher, VoucherItemRequest } from '@/api/finance';
+import type { VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/modules/finance/config';
@@ -95,7 +96,7 @@ const FinanceVoucherPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(null);
-  const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
+  const [voucherItems, setVoucherItems] = useState<VoucherEntry[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -502,7 +503,7 @@ const FinanceVoucherPage: React.FC = () => {
       },
       {
         title: i18n.t('finance.finance_voucher_page_index.pending_review'),
-        value: allVouchers.filter((v) => v.status === 'pending').length,
+        value: allVouchers.filter((v) => v.status === 'submitted').length,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },

@@ -24,7 +24,7 @@ interface DatabaseStructureTreeProps {
   selectedTable: TableDetail | null;
   onTableSelect: (table: TableDetail) => void;
 }
-const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
+export const DatabaseStructureTree: React.FC<DatabaseStructureTreeProps> = ({
   loading,
   searchQuery,
   onSearchChange,

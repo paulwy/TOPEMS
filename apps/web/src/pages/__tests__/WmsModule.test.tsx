@@ -30,11 +30,20 @@ vi.mock('@/components/common', () => {
     React.createElement('div', null, children || 'MockConfirmDialog');
   const MockQuickSearch = ({ children }: { children?: React.ReactNode }) =>
     React.createElement('div', null, children || 'MockQuickSearch');
+  const MockFormDialog = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockFormDialog');
+  const MockFormDrawer = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockFormDrawer');
+  const MockFormBuilder = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children || 'MockFormBuilder');
   return {
     PageContainer: MockPageContainer,
     Grid: MockGrid,
     ConfirmDialog: MockConfirmDialog,
     QuickSearch: MockQuickSearch,
+    FormDialog: MockFormDialog,
+    FormDrawer: MockFormDrawer,
+    FormBuilder: MockFormBuilder,
   };
 });
 

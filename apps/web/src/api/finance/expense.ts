@@ -14,7 +14,7 @@ export interface Expense {
   department_id?: string;
   project_id?: string;
   employee_id?: string;
-  status?: 'draft' | 'submitted' | 'approved' | 'rejected' | 'paid' | 'cancelled';
+  status?: string;
   payment_method?: string;
   voucher_id?: string;
   created_at?: string;
@@ -23,6 +23,8 @@ export interface Expense {
 
 export const expenseApi = {
   list: (params?: {
+    page?: number;
+    pagesize?: number;
     status?: string;
     category?: string;
     department_id?: string;
@@ -30,7 +32,8 @@ export const expenseApi = {
     start_date?: string;
     end_date?: string;
     keyword?: string;
-  }): Promise<ApiResponse<Expense[]>> => {
+    [key: string]: unknown;
+  }): Promise<ApiResponse<{ items: Expense[]; total: number; [key: string]: unknown }>> => {
     return apiClient.finance.get('/expenses', { params });
   },
 

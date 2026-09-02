@@ -91,10 +91,10 @@ export interface AccountingSubject {
   id: string;
   code: string;
   name: string;
-  category?: string;
+  category?: string | null;
   level: number;
-  parent_code?: string;
-  description?: string;
+  parent_code?: string | null;
+  description?: string | null;
   is_cash_flow: boolean;
   status: string;
   created_at: string;

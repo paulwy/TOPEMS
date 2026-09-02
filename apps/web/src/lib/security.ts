@@ -18,13 +18,29 @@ export const escapeHtml = (text: string): string => {
   return div.innerHTML;
 };
 
-const generateCsrfToken = (): string => {
+export const validateUrl = (url: string): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
+
+export const validateEmail = (email: string): boolean => {
+  if (!email) return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+export const generateCsrfToken = (): string => {
   const array = new Uint32Array(8);
   crypto.getRandomValues(array);
   return Array.from(array, (dec) => dec.toString(16).padStart(8, '0')).join('');
 };
 
-const setCsrfToken = (token: string): void => {
+export const setCsrfToken = (token: string): void => {
   const expireTime = Date.now() + 24 * 60 * 60 * 1000;
   localStorage.setItem(CSRF_TOKEN_KEY, token);
   localStorage.setItem(CSRF_TOKEN_EXPIRE_KEY, expireTime.toString());

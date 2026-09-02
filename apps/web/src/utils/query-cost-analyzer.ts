@@ -411,11 +411,57 @@ export function analyzeQueryCost(
   }
 }
 
-function getCostLevel(score: number): CostLevel {
+export function getCostLevel(score: number): CostLevel {
   if (score <= COST_THRESHOLDS.low) return 'low';
   if (score <= COST_THRESHOLDS.medium) return 'medium';
   if (score <= COST_THRESHOLDS.high) return 'high';
   return 'critical';
+}
+
+export function estimateResponseSize(query: string, variables?: Record<string, unknown>): number {
+  const analysis = analyzeQueryCost(query, variables);
+  return analysis.estimatedSizeKB;
+}
+
+export function suggestOptimization(query: string): string[] {
+  const analysis = analyzeQueryCost(query);
+  return analysis.suggestions;
+}
+
+export function validateQuery(
+  query: string,
+  maxScore: number,
+  variables?: Record<string, unknown>
+): { valid: boolean; score: number; reason: string } {
+  const analysis = analyzeQueryCost(query, variables);
+  const valid = analysis.score <= maxScore;
+  return {
+    valid,
+    score: analysis.score,
+    reason: valid
+      ? '查询成本符合预期'
+      : `查询成本 ${analysis.score} 超过上限 ${maxScore})`,
+  };
+}
+
+export function getCostLevelColor(level: CostLevel): string {
+  const colors: Record<CostLevel, string> = {
+    low: '#16a34a',
+    medium: '#f59e0b',
+    high: '#f97316',
+    critical: '#ef4444',
+  };
+  return colors[level];
+}
+
+export function getCostLevelLabel(level: CostLevel): string {
+  const labels: Record<CostLevel, string> = {
+    low: '低',
+    medium: '中',
+    high: '高',
+    critical: '严重',
+  };
+  return labels[level];
 }
 
 export { parseQueryName };

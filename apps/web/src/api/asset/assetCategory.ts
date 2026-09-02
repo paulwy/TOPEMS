@@ -1,5 +1,5 @@
-import apiClient from '../../client';
-import type { ApiResponse } from '../../client';
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
 import type { PaginationParams, PaginatedResult } from '@/api/erp/types';
 
 /**

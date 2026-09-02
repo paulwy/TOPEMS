@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
-import { AmountDisplay } from '../AmountDisplay';
+import AmountDisplay from '../AmountDisplay';
 
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn((selector?: any) =>

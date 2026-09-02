@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { FormFieldGroup } from '../FormFieldGroup';
+import FormFieldGroup from '../FormFieldGroup';
 
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn((selector?: any) =>

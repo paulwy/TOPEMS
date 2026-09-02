@@ -2,7 +2,8 @@ import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { Dialog } from '@/components/common';
-import type { FinancialVoucher, VoucherItem } from '@/api/finance';
+import type { FinancialVoucher } from '@/api/finance';
+import type { VoucherEntry } from '@/types/finance';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -11,7 +12,7 @@ interface VoucherDetailModalProps {
   open: boolean;
   onClose: () => void;
   currentVoucher: FinancialVoucher | null;
-  voucherItems: VoucherItem[];
+  voucherItems: VoucherEntry[];
   getStatusBadge: (status: string) => React.ReactNode;
   formatCurrency: (amount: number) => string;
 }

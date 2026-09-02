@@ -197,7 +197,7 @@ export const wmsApi = {
 //   /wms/stock-takes/${id}/approval/{start,approve,reject}
 //   /wms/transfer-orders/${id}/approval/{start,approve,reject}
 // ============================================================================
-const wmsApprovalApi = {
+export const wmsApprovalApi = {
   inbound: {
     start: (id: string, body: ApprovalStartRequest) =>
       apiClient.post(`/wms/inbound-orders/${id}/approval/start`, body),

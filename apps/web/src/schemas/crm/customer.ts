@@ -7,7 +7,7 @@ const customerRating = z.enum(['A', 'B', 'C', 'D']);
 export const customerType = z.enum(['enterprise', 'individual']);
 export const approvalStatus = z.enum(['none', 'pending', 'approved', 'rejected']);
 
-const customerZodSchema = z
+export const customerZodSchema = z
   .object({
     id: z.string().uuid(),
     tenantId: z.string().uuid(),

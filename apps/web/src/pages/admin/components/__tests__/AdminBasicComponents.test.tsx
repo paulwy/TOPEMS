@@ -60,12 +60,12 @@ describe('Admin dictionary components', () => {
     const onCreateClick = vi.fn();
     render(<DictionaryHeader onCreateClick={onCreateClick} />);
 
-    expect(screen.getByText('admin.dictionary_management_page.text_e1e56b')).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management_page.text_4e16c7')).toBeInTheDocument();
+    expect(screen.getByText('字典管理')).toBeInTheDocument();
+    expect(screen.getByText('管理系统中的字典类型与字典项，供各业务模块引用')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'back' })).toHaveAttribute('href', '/dashboard');
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_2c293b' })
+      screen.getByRole('button', { name: '新建字典' })
     );
 
     expect(onCreateClick).toHaveBeenCalledTimes(1);
@@ -83,15 +83,15 @@ describe('Admin dictionary components', () => {
     );
 
     expect(
-      screen.getByText('admin.dictionary_management.export_dictionary_items')
+      screen.getByText('导出字典项')
     ).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management_page.text_bbe5e7')).toBeInTheDocument();
+    expect(screen.getByText('将字典项导出为 JSON 文件，便于备份与迁移。')).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_625fb2' })
+      screen.getByRole('button', { name: '取消' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_3ca522' })
+      screen.getByRole('button', { name: '导出' })
     );
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -112,7 +112,7 @@ describe('Admin dictionary components', () => {
     );
 
     const importButton = screen.getByRole('button', {
-      name: 'admin.dictionary_management_page.text_3e36a9',
+      name: '导入',
     });
     expect(importButton).toBeDisabled();
 
@@ -134,7 +134,7 @@ describe('Admin dictionary components', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_3e36a9' })
+      screen.getByRole('button', { name: '导入' })
     );
 
     expect(onImport).toHaveBeenCalledTimes(1);
@@ -171,9 +171,9 @@ describe('Tenant member components', () => {
     );
 
     expect(screen.getByTestId('crud-page')).toBeInTheDocument();
-    expect(screen.getByText('admin.tenant_detail.member_management')).toBeInTheDocument();
+    expect(screen.getByText('成员管理')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'admin.tenant_detail_page.text_e39cf1' }));
+    fireEvent.click(screen.getByRole('button', { name: '添加成员' }));
 
     const props = mockCrudPage.mock.calls[0][0];
     await expect(props.apiAdapter.list()).resolves.toEqual({ data: users, total: 1 });
@@ -219,13 +219,13 @@ describe('Tenant member components', () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText('admin.tenant_detail.email_address'), {
+    fireEvent.change(screen.getByLabelText('邮箱地址'), {
       target: { value: 'new@example.com' },
     });
     fireEvent.mouseDown(screen.getByRole('combobox'));
-    fireEvent.click(screen.getByRole('option', { name: 'admin.tenant_detail.administrator' }));
-    fireEvent.click(screen.getByRole('button', { name: 'admin.tenant_detail.cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'admin.tenant_detail_page.text_8965f3' }));
+    fireEvent.click(screen.getByRole('option', { name: '管理员' }));
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getByRole('button', { name: '发送邀请' }));
 
     expect(onFormChange).toHaveBeenCalledWith({ email: 'new@example.com', role: 'member' });
     expect(onFormChange).toHaveBeenCalledWith({ email: 'old@example.com', role: 'admin' });

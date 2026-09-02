@@ -169,7 +169,7 @@ describe('OperationAuditLogFilter', () => {
     expect(screen.getByDisplayValue('trace-1')).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.operation_audit_log_page.text_a95500' })
+      screen.getByRole('button', { name: '清除筛选' })
     );
 
     expect(defaultProps.clearFilters).toHaveBeenCalledTimes(1);
@@ -178,19 +178,19 @@ describe('OperationAuditLogFilter', () => {
   it('emits text and date filter changes while resetting page', () => {
     render(<OperationAuditLogFilter {...defaultProps} />);
 
-    fireEvent.change(screen.getByPlaceholderText('admin.operation_audit_log.filter_by_username'), {
+    fireEvent.change(screen.getByPlaceholderText('用户名'), {
       target: { value: 'operator' },
     });
-    fireEvent.change(screen.getByPlaceholderText('admin.operation_audit_log.resource_type'), {
+    fireEvent.change(screen.getByPlaceholderText('资源类型'), {
       target: { value: 'order' },
     });
-    fireEvent.change(screen.getByPlaceholderText('admin.operation_audit_log_page.attr_22c443'), {
+    fireEvent.change(screen.getByPlaceholderText('按 Trace ID 搜索'), {
       target: { value: 'trace-2' },
     });
-    fireEvent.change(screen.getByLabelText('admin.operation_audit_log.start_time'), {
+    fireEvent.change(screen.getByLabelText('开始时间'), {
       target: { value: '2024-02-01T10:00' },
     });
-    fireEvent.change(screen.getByLabelText('admin.operation_audit_log.end_time'), {
+    fireEvent.change(screen.getByLabelText('结束时间'), {
       target: { value: '2024-02-02T10:00' },
     });
 
@@ -212,7 +212,7 @@ describe('OperationAuditLogFilter', () => {
     fireEvent.mouseDown(selects[1]);
     fireEvent.click(screen.getByRole('option', { name: '删除' }));
     fireEvent.mouseDown(selects[2]);
-    fireEvent.click(screen.getByRole('option', { name: 'admin.operation_audit_log.failed' }));
+    fireEvent.click(screen.getByRole('option', { name: '失败' }));
 
     expect(defaultProps.setModuleFilter).toHaveBeenCalledWith('erp');
     expect(defaultProps.setOperationFilter).toHaveBeenCalledWith('delete');
@@ -236,7 +236,7 @@ describe('OperationAuditLogFilter', () => {
     );
 
     expect(
-      screen.queryByRole('button', { name: 'admin.operation_audit_log_page.text_a95500' })
+      screen.queryByRole('button', { name: '清除筛选' })
     ).not.toBeInTheDocument();
   });
 });
@@ -254,9 +254,9 @@ describe('MonitoringAlertRuleForm', () => {
       />
     );
 
-    expect(screen.getByText('admin.monitoring_alert.add_alert_rule')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'admin.monitoring_alert.cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'admin.monitoring_alert.create' }));
+    expect(screen.getByText('新增告警规则')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getByRole('button', { name: '创建' }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledWith({ data: {} });
@@ -275,9 +275,9 @@ describe('MonitoringAlertRuleForm', () => {
 
     expect(screen.getByDisplayValue('CPU 告警')).toBeInTheDocument();
     expect(screen.getByDisplayValue('cpu > 90')).toBeInTheDocument();
-    expect(screen.getByText('+ admin.monitoring_alert.edit_alert_rule +')).toBeInTheDocument();
+    expect(screen.getByText('+ 编辑告警规则 +')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '+ admin.monitoring_alert.save +' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ 保存 +' }));
 
     expect(onSave).toHaveBeenCalledWith({ id: 'rule-1', data: {} });
   });
@@ -309,8 +309,8 @@ describe('MonitoringAlertTable', () => {
     expect(screen.getByText('header-slot')).toBeInTheDocument();
     expect(screen.getByText('filter-slot')).toBeInTheDocument();
     expect(screen.getByText('CPU 过高')).toBeInTheDocument();
-    expect(screen.getByText('admin.monitoring_alert.critical')).toBeInTheDocument();
-    expect(screen.getByText('admin.monitoring_alert.pending')).toBeInTheDocument();
+    expect(screen.getByText('严重')).toBeInTheDocument();
+    expect(screen.getByText('待处理')).toBeInTheDocument();
     expect(screen.getAllByText('custom')).toHaveLength(2);
 
     const props = mockListPageTemplate.mock.calls[0][0];
@@ -348,13 +348,13 @@ describe('MonitoringAlertTable', () => {
     );
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.monitoring_alert_page.text_e83a25' })
+      screen.getByRole('button', { name: '确认' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.monitoring_alert_page.text_4b8621' })
+      screen.getByRole('button', { name: '解决' })
     );
     fireEvent.click(
-      screen.getAllByRole('button', { name: 'admin.monitoring_alert_page.text_e643c7' })[0]
+      screen.getAllByRole('button', { name: '升级' })[0]
     );
     fireEvent.click(screen.getByRole('button', { name: 'refresh' }));
     fireEvent.click(screen.getByRole('button', { name: 'go-page-3' }));

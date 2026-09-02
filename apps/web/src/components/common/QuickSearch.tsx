@@ -127,7 +127,7 @@ const SuggestionItem = styled(ListItem, {
  * 快速搜索组件
  * 支持键盘快捷键触发、搜索历史和搜索建议功能
  */
-const QuickSearch: React.FC<QuickSearchProps> = ({
+export const QuickSearch: React.FC<QuickSearchProps> = ({
   onSearch,
   suggestions = [],
   showSuggestions = true,
@@ -570,9 +570,9 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                   borderTop: '1px solid',
                   borderColor: 'divider',
                   cursor: 'pointer',
-                  bgcolor: alpha('var(--color-fallback-dark-bg)', 0.04),
+                  bgcolor: 'action.hover',
                   '&:hover': {
-                    bgcolor: alpha('var(--color-fallback-dark-bg)', 0.08),
+                    bgcolor: 'action.selected',
                   },
                 }}
                 onClick={handleSearch}
@@ -588,5 +588,4 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   );
 };
 
-export { QuickSearch };
 export default QuickSearch;

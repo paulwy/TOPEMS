@@ -4,6 +4,7 @@ import {
   RobotOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
   SyncOutlined,
@@ -144,6 +145,7 @@ const MultiAgentMonitor: React.FC<MultiAgentMonitorProps> = ({
       const interval = setInterval(onRefresh, 5000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [autoRefresh, onRefresh]);
 
   // 计算统计数据

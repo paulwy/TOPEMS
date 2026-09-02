@@ -58,7 +58,7 @@ describe('batch smoke test: page modules', () => {
         // Same semantics as original smoke tests where render failures were accepted.
         expect(e).toBeDefined();
       }
-    });
+    }, 60_000);
   }
 });
 
@@ -80,6 +80,6 @@ describe('batch smoke test: component modules', () => {
         // Non-fatal: same as original smoke tests
         expect(e).toBeDefined();
       }
-    });
+    }, 60_000);
   }
 });

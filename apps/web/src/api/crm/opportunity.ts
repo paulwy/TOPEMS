@@ -30,7 +30,7 @@ export const opportunityApi = {
 
   create: async (
     data: AdaptedRequestBody<'create_opportunity'> | CreateOpportunityRequest
-  ): Promise<TypedApiResponse<Opportunity, 'create_opportunity'>> => {
+  ): Promise<TypedApiResponse<Opportunity>> => {
     return apiClient.crm.post(
       '/opportunities',
       toOpenApiRequestBody(data as Record<string, unknown>)

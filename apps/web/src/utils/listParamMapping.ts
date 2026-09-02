@@ -10,9 +10,9 @@
  * - offset : 用 offset/limit 代替 page/pagesize
  */
 
-type BackendParamStyle = 'standard' | 'nested' | 'offset';
+export type BackendParamStyle = 'standard' | 'nested' | 'offset';
 
-interface ListStateParams {
+export interface ListStateParams {
   search: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
@@ -21,7 +21,7 @@ interface ListStateParams {
   filters: Record<string, unknown>;
 }
 
-interface ParamMappingOptions {
+export interface ParamMappingOptions {
   /** 后端参数风格，默认 'standard' */
   style?: BackendParamStyle;
   /** 搜索参数名，默认 'keyword' */
@@ -133,7 +133,7 @@ export function mapListParamsToBackend(
   return params;
 }
 
-function parsePaginationFromResponse(
+export function parsePaginationFromResponse(
   response: Record<string, unknown>,
   _style: BackendParamStyle = 'standard'
 ): { items: unknown[]; total: number; page: number; pageSize: number } {
@@ -149,7 +149,7 @@ function parsePaginationFromResponse(
 /**
  * 预设配置：TOPEMS 标准后端
  */
-const topemsStandardParams: ParamMappingOptions = {
+export const topemsStandardParams: ParamMappingOptions = {
   style: 'standard',
   searchParamName: 'keyword',
   sortByParamName: 'sortBy',
@@ -162,7 +162,7 @@ const topemsStandardParams: ParamMappingOptions = {
 /**
  * 预设配置：嵌套筛选风格（如一些 Java 后端）
  */
-const nestedFilterParams: ParamMappingOptions = {
+export const nestedFilterParams: ParamMappingOptions = {
   style: 'nested',
   filtersKey: 'filters',
   sortKey: 'sort',
@@ -174,7 +174,7 @@ const nestedFilterParams: ParamMappingOptions = {
 /**
  * 预设配置：offset 风格（如一些 NoSQL 数据库）
  */
-const offsetStyleParams: ParamMappingOptions = {
+export const offsetStyleParams: ParamMappingOptions = {
   style: 'offset',
   offsetParamName: 'offset',
   pageSizeParamName: 'limit',
@@ -209,4 +209,174 @@ export interface FilterCondition {
   field: string;
   op: FilterOperator;
   value: unknown;
+}
+
+export type FilterGroup = {
+  logic?: 'and' | 'or';
+  conditions: (FilterCondition | FilterGroup)[];
+};
+
+/**
+ * 将结构化筛选条件转换为 standard 风格的平铺参数
+ *
+ * 转换规则（默认）：
+ * - eq: 直接 `field: value`
+ * - 其他操作符：`field_op: value`（如 `age_gt: 18`）
+ * - in/nin: 值用逗号分隔
+ * - between: 值用逗号分隔两个数
+ */
+export function buildStandardFilterParams(
+  filters: Record<string, unknown> | FilterCondition[] | FilterGroup,
+  options: {
+    fieldMapping?: Record<string, string>;
+    /** 操作符后缀分隔符，默认 '_' */
+    opSeparator?: string;
+    /** 多值分隔符，默认 ',' */
+    valueSeparator?: string;
+  } = {}
+): Record<string, unknown> {
+  const { fieldMapping = {}, opSeparator = '_', valueSeparator = ',' } = options;
+
+  const mapField = (field: string): string => fieldMapping[field] ?? field;
+
+  const result: Record<string, unknown> = {};
+
+  // 简单对象形式：{ status: 'active', age: 18 }
+  if (!Array.isArray(filters) && !('conditions' in filters)) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      result[mapField(key)] = value;
+    });
+    return result;
+  }
+
+  const conditions = (Array.isArray(filters) ? filters : (filters as FilterGroup).conditions) as (
+    FilterCondition | FilterGroup
+  )[];
+
+  conditions.forEach((cond) => {
+    if ('conditions' in cond) {
+      // 嵌套组：暂时扁平化（仅 and 逻辑）
+      const nested = buildStandardFilterParams(cond, options);
+      Object.assign(result, nested);
+      return;
+    }
+
+    const field = mapField(cond.field);
+    const { op, value } = cond;
+
+    switch (op) {
+      case 'eq':
+        result[field] = value;
+        break;
+      case 'null':
+        result[field] = null;
+        break;
+      case 'notnull':
+        result[`${field}${opSeparator}notnull`] = true;
+        break;
+      case 'in':
+      case 'nin':
+        result[`${field}${opSeparator}${op}`] = Array.isArray(value)
+          ? value.join(valueSeparator)
+          : value;
+        break;
+      case 'between':
+        result[`${field}${opSeparator}${op}`] = Array.isArray(value)
+          ? value.join(valueSeparator)
+          : value;
+        break;
+      default:
+        result[`${field}${opSeparator}${op}`] = value;
+    }
+  });
+
+  return result;
+}
+
+/**
+ * 将结构化筛选条件转换为 nested 风格的对象数组
+ *
+ * [
+ *   { field: 'age', op: 'gt', value: 18 },
+ *   { field: 'status', op: 'eq', value: 'active' }
+ * ]
+ */
+export function buildNestedFilterArray(
+  filters: Record<string, unknown> | FilterCondition[],
+  options: {
+    fieldMapping?: Record<string, string>;
+  } = {}
+): FilterCondition[] {
+  const { fieldMapping = {} } = options;
+  const mapField = (field: string): string => fieldMapping[field] ?? field;
+
+  if (!Array.isArray(filters)) {
+    return Object.entries(filters)
+      .filter(([, v]) => v !== undefined && v !== null && v !== '')
+      .map(([field, value]) => ({
+        field: mapField(field),
+        op: 'eq' as FilterOperator,
+        value,
+      }));
+  }
+
+  return filters.map((cond) => ({
+    ...cond,
+    field: mapField(cond.field),
+  }));
+}
+
+/**
+ * URL 查询参数 <-> 结构化筛选条件 的序列化/反序列化
+ *
+ * URL 格式：?f_status=active&f_age_gt=18&f_tags_in=a,b,c
+ */
+
+export const FILTER_URL_PREFIX = 'f_';
+
+export function serializeFiltersToUrl(
+  filters: Record<string, unknown>,
+  prefix: string = FILTER_URL_PREFIX
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    const paramKey = `${prefix}${key}`;
+    if (typeof value === 'object') {
+      result[paramKey] = JSON.stringify(value);
+    } else {
+      result[paramKey] = String(value);
+    }
+  });
+  return result;
+}
+
+export function parseFiltersFromUrl(
+  searchParams: URLSearchParams,
+  prefix: string = FILTER_URL_PREFIX,
+  defaultFilters: Record<string, unknown> = {}
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...defaultFilters };
+  searchParams.forEach((value, key) => {
+    if (!key.startsWith(prefix)) return;
+    const field = key.slice(prefix.length);
+    const defaultValue = defaultFilters[field];
+    if (typeof defaultValue === 'number') {
+      const n = Number(value);
+      result[field] = Number.isFinite(n) ? n : defaultValue;
+    } else if (typeof defaultValue === 'boolean') {
+      result[field] = value === 'true';
+    } else if (Array.isArray(defaultValue)) {
+      try {
+        const parsed = JSON.parse(value);
+        result[field] = Array.isArray(parsed) ? parsed : defaultValue;
+      } catch {
+        result[field] = value.split(',').filter(Boolean);
+      }
+    } else {
+      result[field] = value;
+    }
+  });
+  return result;
 }

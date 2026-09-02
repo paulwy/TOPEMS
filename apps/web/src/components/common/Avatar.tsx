@@ -1,6 +1,6 @@
 import { designTokens } from '@topems/tokens';
 import React from 'react';
-import { Avatar as MuiAvatar, Box, Typography, Badge } from '@mui/material';
+import { Avatar as MuiAvatar, Box, Typography, Badge, Tooltip } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -146,6 +146,64 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   }
 
   return withStatus;
+};
+
+
+export interface AvatarGroupProps {
+  avatars: Array<Omit<CustomAvatarProps, 'size'>>;
+  max?: number;
+  size?: AvatarSize;
+  spacing?: number;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+}
+
+export const AvatarGroup: React.FC<AvatarGroupProps> = ({
+  avatars,
+  max = 5,
+  size = 'md',
+  spacing = -8,
+  sx,
+}) => {
+  const displayAvatars = avatars.slice(0, max);
+  const remainingCount = avatars.length - max;
+
+  const gap = -spacing;
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', ...sx }}>
+      {displayAvatars.map((avatarProps, index) => (
+        <Box
+          key={index}
+          sx={{
+            marginLeft: index > 0 ? gap : 0,
+            position: 'relative',
+            zIndex: displayAvatars.length - index,
+          }}
+        >
+          <Tooltip title={avatarProps.name || ''}>
+            <Avatar
+              size={size}
+              {...avatarProps}
+            />
+          </Tooltip>
+        </Box>
+      ))}
+      {remainingCount > 0 && (
+        <Box
+          sx={{
+            marginLeft: gap,
+            position: 'relative',
+            zIndex: 0,
+          }}
+        >
+          <Avatar
+            size={size}
+            label={`+${remainingCount}`}
+          />
+        </Box>
+      )}
+    </Box>
+  );
 };
 
 export default Avatar;

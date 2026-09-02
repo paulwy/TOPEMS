@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
+import PriorityBadge from '../PriorityBadge';
 
 const i18nMap: Record<string, string> = {
   'common.status_urgent': '紧急',

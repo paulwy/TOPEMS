@@ -4,7 +4,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { getBudgetSchema } from '@/schemas/finance/budget';
 import { budgetApi } from '@/api/finance/budget';
-import type { Budget } from '@/api/finance';
+import type { Budget } from '@/api/finance/budget';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';

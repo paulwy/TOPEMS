@@ -30,7 +30,7 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         'tenant',
       ].forEach((svc) => expect(GROUP1_CORE_SERVICES.has(svc)).toBe(true));
     });
-    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/oa/asset/master-data/search/communication/billing/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
+    it('Group2 包含 erp/hrm/pm/mes/pdm/scm/wms/srm/qms/lims/ehs/rd/bi/analytics/portal/mobile/gis/integration/finance/ai/oa/asset/master-data/search/communication/ticket/feedback/mail/im/notification/comm（独立 K8s deployment）', () => {
       [
         'erp',
         'finance',
@@ -61,7 +61,6 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
         // V66 扩展外迁服务（8082/8084-8088）
         'search',
         'communication',
-        'billing',
         'ticket',
         'feedback',
         // communication 子模块（仍归 Group2）
@@ -200,7 +199,6 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       expect(SERVICE_CODES.automation).toBe('automation');
       expect(SERVICE_CODES.ticket).toBe('ticket');
       expect(SERVICE_CODES.plugin).toBe('plugin');
-      expect(SERVICE_CODES.billing).toBe('billing');
       expect(SERVICE_CODES.tenant).toBe('tenant');
       expect(SERVICE_CODES.asset).toBe('asset');
     });

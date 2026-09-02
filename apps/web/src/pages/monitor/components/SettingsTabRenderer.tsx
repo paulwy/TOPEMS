@@ -12,7 +12,7 @@ interface SettingsTabRendererProps {
   subtitle?: string;
 }
 
-const SettingsTabRenderer: React.FC<SettingsTabRendererProps> = ({
+export const SettingsTabRenderer: React.FC<SettingsTabRendererProps> = ({
   tabs,
   handleSave,
   title,

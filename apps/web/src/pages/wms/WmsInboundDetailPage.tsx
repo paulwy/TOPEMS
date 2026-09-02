@@ -248,8 +248,7 @@ export default function WmsInboundDetailPage() {
                 data={items}
                 searchKey='material_name'
                 showSearch={false}
-                showFilters={false}
-                showExport={false}
+                                showExport={false}
                 enablePagination={false}
                 striped
               />

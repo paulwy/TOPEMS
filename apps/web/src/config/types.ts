@@ -59,7 +59,6 @@ interface ServicesConfig {
   // 搜索独立服务
   search: string;
   // 独立基础设施服务
-  billing: string;
   ticket: string;
   feedback: string;
   // [V2026.08 已移除] lowcode 空壳占位服务

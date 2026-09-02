@@ -3,7 +3,7 @@ import i18n from '@/i18n';
 
 const logger = createLogger('ErrorHandler');
 
-enum ErrorCode {
+export enum ErrorCode {
   UNKNOWN = 'UNKNOWN_ERROR',
   NETWORK = 'NETWORK_ERROR',
   UNAUTHORIZED = 'UNAUTHORIZED',
@@ -21,7 +21,7 @@ export interface AppError {
   originalError?: unknown;
 }
 
-class AppExceptionError extends Error {
+export class AppExceptionError extends Error {
   code: ErrorCode;
   details?: unknown;
   originalError?: unknown;

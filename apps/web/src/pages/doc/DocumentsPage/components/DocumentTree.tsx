@@ -11,7 +11,7 @@ interface DocumentTreeProps {
   onDeleteFolder: (id: string, name: string) => void;
 }
 
-const DocumentTree: React.FC<DocumentTreeProps> = ({
+export const DocumentTree: React.FC<DocumentTreeProps> = ({
   folders,
   selectedFolderId,
   onSelectFolder,

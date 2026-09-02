@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { getCsrfToken, initCsrfToken } from './security';
+import { getCsrfToken, initCsrfToken, verifyCsrfToken } from './security';
 
 const CSRF_HEADER = 'X-CSRF-Token';
 const CSRF_COOKIE_NAME = 'csrf_token';
@@ -28,4 +28,13 @@ export const csrfResponseInterceptor = (response: AxiosResponse): AxiosResponse 
 
 export const initCsrfProtection = (): void => {
   initCsrfToken();
+};
+
+export const validateCsrfToken = (token: string | undefined): boolean => {
+  if (!token) return false;
+  return verifyCsrfToken(token);
+};
+
+export const getCsrfHeaderName = (): string => {
+  return CSRF_HEADER;
 };

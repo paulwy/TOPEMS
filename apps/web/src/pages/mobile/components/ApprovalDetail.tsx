@@ -25,7 +25,7 @@ interface ApprovalDetailProps {
   onApprove: () => void;
   onReject: () => void;
 }
-const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
+export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
   approval,
   approvalComment,
   onCommentChange,

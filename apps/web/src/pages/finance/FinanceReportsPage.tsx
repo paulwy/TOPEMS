@@ -126,9 +126,9 @@ const FinanceReportsPage: React.FC = () => {
         dataKey: 'value',
         nameKey: 'name',
         data: monthlyTrends.flatMap((m) => [
-          { name: m.month, value: m.revenue, type: 'revenue' },
-          { name: m.month, value: m.expenses, type: 'expenses' },
-          { name: m.month, value: m.profit, type: 'profit' },
+          { name: m.month, value: Number(m.revenue ?? 0), type: 'revenue' },
+          { name: m.month, value: Number(m.expenses ?? 0), type: 'expenses' },
+          { name: m.month, value: Number(m.profit ?? 0), type: 'profit' },
         ]),
         height: 280,
       },

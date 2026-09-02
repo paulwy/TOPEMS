@@ -263,8 +263,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type }) => {
       data={data}
       enablePagination={false}
       showSearch={false}
-      showFilters={false}
-      showExport={false}
+            showExport={false}
       showSelection={false}
       showCreate={false}
       emptyMessage={t('gis.index.empty_no_data')}

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { DescriptionList } from '../DescriptionList';
+import DescriptionList from '../DescriptionList';
 
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn((selector?: any) =>

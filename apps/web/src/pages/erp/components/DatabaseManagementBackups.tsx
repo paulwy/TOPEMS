@@ -27,7 +27,7 @@ interface DatabaseManagementBackupsProps {
   onRestore: (backupId: string) => void;
   onDelete: (backupId: string) => void;
 }
-const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps> = ({
+export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps> = ({
   backups,
   loading,
   onBackup,

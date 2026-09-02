@@ -15,7 +15,6 @@ import { iamNavConfig } from '@/modules/iam/config';
 import { imNavConfig } from '@/modules/im/config';
 import { integrationNavConfig } from '@/modules/integration/config';
 import { limsNavConfig } from '@/modules/lims/config';
-import { lowcodeNavConfig } from '@/modules/lowcode/config';
 import { mesNavConfig } from '@/modules/mes/config';
 import { mobileNavConfig } from '@/modules/mobile/config';
 import { monitorNavConfig } from '@/modules/monitor/config';
@@ -42,7 +41,6 @@ const coreModuleNavConfigs: ModuleNavConfig[] = [
   workflowNavConfig,
   notificationNavConfig,
   assetNavConfig,
-  lowcodeNavConfig,
   oaNavConfig,
   docNavConfig,
   monitorNavConfig,
@@ -91,7 +89,6 @@ export {
   imNavConfig,
   integrationNavConfig,
   limsNavConfig,
-  lowcodeNavConfig,
   mesNavConfig,
   mobileNavConfig,
   monitorNavConfig,
@@ -109,4 +106,5 @@ export {
   tmsNavConfig,
   wmsNavConfig,
   workflowNavConfig,
+  coreModuleNavConfigs,
 };

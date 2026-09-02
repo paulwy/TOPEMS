@@ -152,6 +152,7 @@ vi.mock('@/api/qms', () => ({
   qmsApi: {
     getStatistics: vi.fn(),
   },
+  useQmsMock: vi.fn(() => ({ data: undefined, mockEnabled: false })),
 }));
 
 vi.mock('@/api/ehs', () => ({

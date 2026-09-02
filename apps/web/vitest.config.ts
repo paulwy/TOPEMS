@@ -247,6 +247,14 @@ export default defineConfig({
           // vi.mock calls have full control over their own module mocks.
           isolate: true,
           setupFiles: [setupEnv, setupCore],
+          // MUI 内部 Transition.mjs 以目录导入形式引用 react-transition-group 子路径，
+          // Vitest 默认 external 化 node_modules 会让 Node 原生 ESM 解析失败（ERR_UNSUPPORTED_DIR_IMPORT）。
+          // 将 @mui 与 react-transition-group 交由 Vite 转换，配合 resolve.alias 修正子路径。
+          server: {
+            deps: {
+              inline: [/@mui\//, /react-transition-group/],
+            },
+          },
         },
       },
       {
@@ -264,6 +272,13 @@ export default defineConfig({
           ],
           isolate: true,
           setupFiles: [setupEnv, setupCore, setupMocks],
+          // MUI 内部 Transition.mjs 以目录导入形式引用 react-transition-group 子路径，
+          // 必须交由 Vite 转换（inline），配合 fix-react-transition-group-subpaths 插件修正。
+          server: {
+            deps: {
+              inline: [/@mui\//, /react-transition-group/],
+            },
+          },
         },
       },
       {
@@ -279,6 +294,13 @@ export default defineConfig({
           ],
           isolate: true,
           setupFiles: [setupEnv, setupCore, setupMocks],
+          // MUI 内部 Transition.mjs 以目录导入形式引用 react-transition-group 子路径，
+          // 必须交由 Vite 转换（inline），配合 fix-react-transition-group-subpaths 插件修正。
+          server: {
+            deps: {
+              inline: [/@mui\//, /react-transition-group/],
+            },
+          },
         },
         coverage: {
           provider: 'v8',

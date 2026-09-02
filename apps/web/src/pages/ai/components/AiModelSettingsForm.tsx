@@ -32,7 +32,7 @@ interface AiModelSettingsFormProps {
   onSaveConfig: () => void;
 }
 
-const AiModelSettingsForm: React.FC<AiModelSettingsFormProps> = ({
+export const AiModelSettingsForm: React.FC<AiModelSettingsFormProps> = ({
   selectedModel,
   temperature,
   maxTokens,

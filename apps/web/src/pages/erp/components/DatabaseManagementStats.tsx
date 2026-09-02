@@ -10,7 +10,7 @@ interface Stats {
 interface DatabaseManagementStatsProps {
   stats: Stats;
 }
-const DatabaseManagementStats: React.FC<DatabaseManagementStatsProps> = ({ stats }) => {
+export const DatabaseManagementStats: React.FC<DatabaseManagementStatsProps> = ({ stats }) => {
   return (
     <Box
       sx={{

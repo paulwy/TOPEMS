@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 
 import type { ColumnDef, ColumnWidthResult } from '../TableSection';
+import { TableSection } from '../TableSection';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 interface TestRow {

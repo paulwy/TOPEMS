@@ -63,14 +63,20 @@ vi.mock('@/i18n', () => {
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-vi.mock('@/utils/logger', () => ({
-  logger: {
+vi.mock('@/utils/logger', () => {
+  const mockLogger = {
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
-  },
-}));
+  };
+  return {
+    default: () => mockLogger,
+    createLogger: () => mockLogger,
+    logger: mockLogger,
+    apiLogger: mockLogger,
+  };
+});
 
 import { logger } from '@/utils/logger';
 

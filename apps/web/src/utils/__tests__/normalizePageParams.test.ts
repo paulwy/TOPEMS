@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizePageParams } from '../normalizePageParams';
+import { normalizePageParams, normalizeObjectKeysDeep } from '../normalizePageParams';
 
 describe('utils/normalizePageParams', () => {
   describe('normalizePageParams', () => {

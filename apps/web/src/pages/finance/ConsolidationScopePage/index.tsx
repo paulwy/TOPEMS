@@ -18,7 +18,10 @@ import {
   Chip,
 } from '@mui/material';
 import { Plus, Users, Edit2, Network, Settings, Trash2 } from 'lucide-react';
-import { FolderOpen, PlayCircle, People, Business } from '@mui/icons-material';
+import FolderOpen from '@mui/icons-material/FolderOpen';
+import PlayCircle from '@mui/icons-material/PlayCircle';
+import People from '@mui/icons-material/People';
+import Business from '@mui/icons-material/Business';
 import { PageContainer } from '@/components/common';
 import { StatCardGroup } from '@/components';
 import { useConsolidationScope } from './hooks/useConsolidationScope';

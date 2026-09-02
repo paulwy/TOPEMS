@@ -14,7 +14,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -25,6 +24,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import BuildIcon from '@mui/icons-material/Build';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -33,12 +33,15 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { DshAgentChatPanel } from '@/components/ai/DshAgentChatPanel';
 import { useDshAgent } from '@/hooks/features/ai/useDshAgent';
+import { useTranslation } from 'react-i18next';
 
 // ============================================================================
 // 页面组件
 // ============================================================================
 
 const DshAgentPage: React.FC = () => {
+  const { t } = useTranslation();
+
   // 使用 DSH Agent Hook
   const { tools, loadTools, sessionId, isLoading, error } = useDshAgent();
 
@@ -51,23 +54,23 @@ const DshAgentPage: React.FC = () => {
   const features = [
     {
       icon: <SmartToyIcon color="primary" />,
-      title: '智能 Agent 编排',
-      description: '基于 ReAct 模式的 Agent 编排，支持多轮对话和工具调用',
+      title: t('ai.dsh_agent.feat.orchestration'),
+      description: t('ai.dsh_agent.feat.orchestration_desc'),
     },
     {
       icon: <BuildIcon color="secondary" />,
-      title: 'MCP 工具集成',
-      description: '集成 16 个业务系统的 MCP 工具，覆盖 CRM、ERP、MES 等',
+      title: t('ai.dsh_agent.feat.mcp'),
+      description: t('ai.dsh_agent.feat.mcp_desc'),
     },
     {
       icon: <SpeedIcon color="success" />,
-      title: '流式响应',
-      description: '支持 SSE 流式响应，实时展示思考过程和工具调用',
+      title: t('ai.dsh_agent.feat.streaming'),
+      description: t('ai.dsh_agent.feat.streaming_desc'),
     },
     {
       icon: <MemoryIcon color="warning" />,
-      title: '上下文管理',
-      description: '智能上下文窗口管理，支持多轮对话和上下文变量',
+      title: t('ai.dsh_agent.feat.context'),
+      description: t('ai.dsh_agent.feat.context_desc'),
     },
   ];
 
@@ -95,7 +98,7 @@ const DshAgentPage: React.FC = () => {
         {/* 左侧：聊天面板 */}
         <Grid item xs={12} md={8}>
           <DshAgentChatPanel
-            title="DSH Agent 对话"
+            title={t('ai.dsh_agent.panel.title')}
             maxHeight={700}
             sessionId={sessionId}
           />
@@ -151,7 +154,7 @@ const DshAgentPage: React.FC = () => {
                     ))}
                     {tools.length > 20 && (
                       <Chip
-                        label={`+${tools.length - 20} 更多`}
+                        label={t('ai.dsh_agent.more', { count: tools.length - 20 })}
                         size="small"
                         color="primary"
                       />
@@ -173,8 +176,8 @@ const DshAgentPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       会话 ID:
                     </Typography>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {sessionId ? `${sessionId.substring(0, 8)}...` : '未创建'}
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                      {sessionId ? `${sessionId.substring(0, 8)}...` : t('ai.dsh_agent.not_created')}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -182,7 +185,7 @@ const DshAgentPage: React.FC = () => {
                       状态:
                     </Typography>
                     <Chip
-                      label={isLoading ? '处理中' : '空闲'}
+                      label={isLoading ? t('ai.dsh_agent.processing') : t('ai.dsh_agent.idle')}
                       size="small"
                       color={isLoading ? 'warning' : 'success'}
                       variant="outlined"
@@ -197,21 +200,21 @@ const DshAgentPage: React.FC = () => {
               <Typography variant="subtitle2" gutterBottom>
                 💡 使用提示
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 尝试输入以下问题：
               </Typography>
               <List dense disablePadding>
                 <ListItem disableGutters>
-                  <ListItemText primary="• 搜索客户信息" />
+                  <ListItemText primary={t('ai.dsh_agent.hint.search_customer')} />
                 </ListItem>
                 <ListItem disableGutters>
-                  <ListItemText primary="• 查询销售订单" />
+                  <ListItemText primary={t('ai.dsh_agent.hint.query_order')} />
                 </ListItem>
                 <ListItem disableGutters>
-                  <ListItemText primary="• 查看生产进度" />
+                  <ListItemText primary={t('ai.dsh_agent.hint.production')} />
                 </ListItem>
                 <ListItem disableGutters>
-                  <ListItemText primary="• 分析财务数据" />
+                  <ListItemText primary={t('ai.dsh_agent.hint.finance')} />
                 </ListItem>
               </List>
             </Paper>

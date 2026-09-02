@@ -698,7 +698,103 @@ const __TEST_TRANSLATIONS__: Record<string, string> = {
   'shared.location_message.gis_5': '围栏创建并同步到 GIS',
   'shared.location_message.gis_6': 'GIS 搜索失败:',
   'shared.location_message.gis_13': '围栏已同步到 GIS',
+  // @topems/shared-components i18n keys (raw i18next singleton)
+  'shared.status_badge.active': '启用',
+  'shared.status_badge.inactive': '停用',
+  'shared.status_badge.pending': '待处理',
+  'shared.status_badge.approved': '已批准',
+  'shared.status_badge.rejected': '已拒绝',
+  'shared.status_badge.draft': '草稿',
+  'shared.status_badge.published': '已发布',
+  'shared.status_badge.archived': '已归档',
+  'shared.status_badge.deleted': '已删除',
+  'shared.status_badge.completed': '已完成',
+  'shared.status_badge.cancelled': '已取消',
+  'shared.status_badge.processing': '处理中',
+  'shared.status_badge.failed': '失败',
+  'shared.status_badge.success': '成功',
+  'shared.status_badge.warning': '警告',
+  'shared.status_badge.error': '错误',
+  'shared.status_badge.info': '信息',
+  'shared.status_badge.employee_active': '在职',
+  'shared.status_badge.employee_inactive': '离职',
+  'shared.status_badge.customer_active': '活跃',
+  'shared.status_badge.project_active': '进行中',
+  'shared.status_badge.workflow_approved': '已通过',
+  'shared.status_badge.finance_posted': '已记账',
+  'components.pagination.total': '显示 {{start}}-{{end}} / 共 {{total}} 条',
+  'components.pagination.first_page': '第一页',
+  'components.pagination.last_page': '最后一页',
+  'components.pagination.prev_page': '上一页',
+  'components.pagination.next_page': '下一页',
+  'components.pagination.per_page': '每页',
+  'components.cascader.placeholder': '请选择',
+  'components.cascader.back_text': '返回',
+  'shared.date_range_picker.placeholder': '选择日期范围',
+  'shared.date_range_picker.today': '今天',
+  'shared.date_range_picker.yesterday': '昨天',
+  'shared.date_range_picker.this_week': '本周',
+  'shared.date_range_picker.this_month': '本月',
+  'shared.date_range_picker.this_quarter': '本季度',
+  'shared.date_range_picker.this_year': '今年',
+  'shared.date_range_picker.quick_select': '快捷选择',
+  'shared.date_range_picker.cancel': '取消',
+  'shared.date_range_picker.confirm': '确定',
+  'components.filter_bar.title': '筛选条件',
+  'components.filter_bar.collapse': '收起筛选',
+  'components.filter_bar.expand': '展开筛选',
+  'components.filter_bar.reset': '重置筛选',
+  'components.filter_bar.search': '搜索',
+  'components.filter_bar.all': '全部',
+  'components.filter_bar.start_date': '开始日期',
+  'components.filter_bar.end_date': '结束日期',
+  'components.filter_bar.separator': '至',
+  'components.filter_bar.applied_filters': '已选条件',
 };
+
+// ─── Supplement translations from real zh locale files ─────────────────────
+// 很多组件直接调用 `i18n.t('module.page.key')`，其译文保存在 src/i18n/locales/zh/*.json。
+// 这里把真实 zh locale 合并进 __TEST_TRANSLATIONS__（仅填充缺失键，不覆盖手工维护值），
+// 使 `i18n.t()` 返回真实中文而不是原始 key。扁平 key 与嵌套对象都会被展开。
+const __flattenLocale = (
+  obj: Record<string, unknown>,
+  prefix = ''
+): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+      Object.assign(out, __flattenLocale(v as Record<string, unknown>, key));
+    } else if (typeof v === 'string') {
+      out[key] = v;
+    }
+  }
+  return out;
+};
+(() => {
+  const localeFiles = [
+    'admin', 'ai', 'api', 'aps', 'asset', 'automation', 'bi', 'common',
+    'components', 'config', 'context', 'crm', 'debug', 'design_system',
+    'design-system', 'desktop', 'dev_platform', 'dev-platform', 'devtools',
+    'doc', 'ehs', 'erp', 'finance', 'fullstack_automation', 'gis', 'help',
+    'hooks', 'hrm', 'iam', 'im', 'integration', 'intelligent_ops',
+    'intelligent-ops', 'layouts', 'lib', 'lims', 'mes',
+    'microfrontend', 'mobile', 'monitor', 'notification', 'oa', 'pages',
+    'pdm', 'performance', 'plugin', 'pm', 'qms', 'rd', 'report', 'routes',
+    'schema', 'schemas', 'scm', 'services', 'shared', 'srm', 'store',
+    'system', 'templates', 'theme', 'ticket', 'tms', 'utils', 'wms', 'workflow',
+  ];
+  for (const name of localeFiles) {
+    try {
+      const raw = require(`../i18n/locales/zh/${name}.json`) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(__flattenLocale(raw))) {
+        if (!(k in __TEST_TRANSLATIONS__)) __TEST_TRANSLATIONS__[k] = v;
+      }
+    } catch {
+      // ignore missing locale files
+    }
+  }
+})();
 
 const __mockTranslate = (key: string, ns?: string): string => {
   if (ns) {
@@ -736,6 +832,33 @@ vi.mock('@/i18n', () => ({
   ensureNamespacesLoaded: vi.fn().mockResolvedValue(undefined),
   loadTranslationsForLang: vi.fn().mockResolvedValue(undefined),
 }));
+
+// ─── Mock raw i18next (used by @topems/shared-components) ──────────────────
+vi.mock('i18next', () => {
+  const interpolate = (base: string, options?: Record<string, unknown>): string => {
+    if (!options) return base;
+    let out = base;
+    for (const [k, v] of Object.entries(options)) {
+      out = out.split(`{{${k}}}`).join(String(v));
+      out = out.split(`{${k}}`).join(String(v));
+      out = out.split(`\${${k}}`).join(String(v));
+    }
+    return out;
+  };
+  const t = (key: string, options?: Record<string, unknown>) =>
+    interpolate(__TEST_TRANSLATIONS__[key] ?? key, options);
+  const mockI18n = {
+    t,
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+    exists: (key: string) => !!__TEST_TRANSLATIONS__[key],
+    on: vi.fn(),
+    off: vi.fn(),
+    use: vi.fn(() => mockI18n),
+    init: vi.fn(),
+  };
+  return { default: mockI18n, ...mockI18n };
+});
 
 // ─── Mock recharts ─────────────────────────────────────────────────────────
 const makeChart = (name: string) => {
@@ -798,15 +921,288 @@ vi.mock('@/components/templates/CrudPage', () => {
   };
 });
 
-vi.mock('@/components/templates', () => ({
-  DashboardTemplate: ({ children }: any) => React.createElement('div', null, children),
-  ListPageTemplate: ({ children }: any) => React.createElement('div', null, children),
-}));
+const __templateStub = ({ children }: any) => React.createElement('div', null, children);
+const __dashboardTemplate = ({ children, statCards, stats, title }: any) => {
+  const cards = statCards ?? stats ?? [];
+  const nodes: React.ReactNode[] = [];
+  if (title != null) nodes.push(React.createElement('div', { key: '__t' }, title));
+  cards.forEach((c: any, i: number) => {
+    nodes.push(
+      React.createElement(
+        'div',
+        { key: i, 'data-testid': `stat-card-${c?.id ?? i}` },
+        React.createElement('span', null, c?.title),
+        React.createElement('span', null, `${c?.value ?? ''}${c?.suffix ?? ''}`)
+      )
+    );
+  });
+  if (children) nodes.push(children);
+  return React.createElement('div', null, ...nodes);
+};
+const __listPageTemplate = ({
+  children,
+  title,
+  subtitle,
+  columns,
+  data: dataProp,
+  loading: propLoading,
+  emptyMessage,
+  actions,
+  rowActions,
+  renderRowActions,
+  crud,
+  toolbar,
+}: any) => {
+  const api = crud?.api;
+  const hasCrud = !!api;
+  const [state, setState] = React.useState<any>({
+    loading: propLoading ?? hasCrud,
+    data: dataProp ?? [],
+    error: null,
+    formOpen: false,
+    formValues: {},
+  });
+  // 非 crud 模式：父组件异步更新 data / loading 时保持同步
+  React.useEffect(() => {
+    if (hasCrud) return;
+    setState((s: any) => ({ ...s, data: dataProp ?? [] }));
+  }, [dataProp]);
+  React.useEffect(() => {
+    if (hasCrud) return;
+    setState((s: any) => ({ ...s, loading: propLoading ?? false }));
+  }, [propLoading]);
+  React.useEffect(() => {
+    if (!api) return;
+    let active = true;
+    setState((s: any) => ({ ...s, loading: true, error: null }));
+    Promise.resolve(api.list({ page: 1, pageSize: 1000 }))
+      .then((resp: any) => {
+        if (!active) return;
+        const items = resp?.data?.items ?? resp?.data?.data ?? resp?.data ?? resp;
+        setState((s: any) => ({ ...s, loading: false, data: Array.isArray(items) ? items : [] }));
+      })
+      .catch((err: any) => {
+        if (!active) return;
+        setState((s: any) => ({ ...s, loading: false, data: [], error: err?.message ?? String(err) }));
+      });
+    return () => {
+      active = false;
+    };
+  }, [api]);
 
+  const nodes: React.ReactNode[] = [];
+  if (title != null) nodes.push(React.createElement('div', { key: '__t' }, title));
+  if (subtitle != null) nodes.push(React.createElement('div', { key: '__s' }, subtitle));
+  const toolbarActions = hasCrud && crud?.createButtonText
+    ? [
+        {
+          label: crud.createButtonText,
+          onClick: () => setState((s: any) => ({ ...s, formOpen: true, formValues: {} })),
+        },
+      ]
+    : actions ?? [];
+  if (toolbarActions && toolbarActions.length > 0) {
+    toolbarActions.forEach((a: any, ai: number) => {
+      nodes.push(
+        React.createElement('button', { key: `__a${ai}`, onClick: a?.onClick }, a?.label)
+      );
+    });
+  }
+  if (state.loading) {
+    nodes.push(React.createElement('div', { key: '__prog', role: 'progressbar' }, 'Loading...'));
+  } else {
+    // 表头（列标签）：真实 ListPageTemplate 在空态/数据态都渲染表头
+    (columns ?? []).forEach((col: any, ci: number) => {
+      nodes.push(
+        React.createElement('div', { key: `__h${ci}`, 'data-testid': `header-${col?.id ?? ci}` }, col?.label)
+      );
+    });
+    if (state.error != null) {
+      nodes.push(React.createElement('div', { key: '__err' }, state.error));
+    } else if (!state.data || state.data.length === 0) {
+      if (emptyMessage != null) nodes.push(React.createElement('div', { key: '__empty' }, emptyMessage));
+    } else {
+    (state.data as any[]).forEach((row, ri) => {
+      (columns ?? []).forEach((col: any, ci: number) => {
+        const cell = col?.render ? col.render(row) : row?.[col?.id ?? col?.field ?? ''];
+        nodes.push(
+          React.createElement('div', { key: `__r${ri}c${ci}`, 'data-testid': `cell-${col?.id ?? ci}` }, cell)
+        );
+      });
+      const acts: any[] = [...((rowActions ?? crud?.rowActions) ?? [])];
+      if (hasCrud) {
+        acts.push({
+          key: '__del',
+          label: '删除',
+          onClick: (r: any) => {
+            const delFn = api?.delete ?? api?.remove;
+            if (delFn) void delFn(r?.id ?? r?.key);
+          },
+        });
+      }
+      if (renderRowActions) {
+        nodes.push(
+          React.createElement('div', { key: `__ra${ri}`, 'data-testid': `row-actions-${ri}` }, renderRowActions(row))
+        );
+      } else if (acts.length > 0) {
+        acts.forEach((ra: any, rj: number) => {
+          nodes.push(
+            React.createElement('button', { key: `__rr${ri}-${rj}`, onClick: () => ra?.onClick?.(row) }, ra?.label)
+          );
+        });
+      }
+    });
+    }
+  }
+  if (hasCrud && state.formOpen) {
+    const fields = crud?.formFields ?? [];
+    const requiredFields = fields.filter((f: any) => f?.required);
+    const allFilled = requiredFields.every(
+      (f: any) => ((state.formValues[f?.key] ?? '') as string).trim() !== ''
+    );
+    const submitLabel = crud?.createSubmitText ?? '创建';
+    nodes.push(
+      React.createElement(
+        'div',
+        { key: '__dlg', role: 'dialog' },
+        React.createElement('h2', null, crud?.createButtonText ?? '新建'),
+        ...fields.map((f: any, fi: number) =>
+          React.createElement('input', {
+            key: `__f${fi}`,
+            'aria-label': f?.label ?? String(f?.key),
+            value: state.formValues[f?.key] ?? '',
+            onChange: (e: any) =>
+              setState((s: any) => ({ ...s, formValues: { ...s.formValues, [f?.key]: e.target.value } })),
+          })
+        ),
+        React.createElement(
+          'button',
+          {
+            key: '__create',
+            disabled: !allFilled,
+            onClick: () => {
+              void api.create(state.formValues);
+              setState((s: any) => ({ ...s, formOpen: false }));
+            },
+          },
+          submitLabel
+        ),
+        React.createElement(
+          'button',
+          { key: '__cancel', onClick: () => setState((s: any) => ({ ...s, formOpen: false })) },
+          '取消'
+        )
+      )
+    );
+  }
+  return React.createElement('div', null, ...nodes, children);
+};
+// 显式具名导出（vitest mock 校验走普通属性访问，Proxy 不可靠）。
+const __statsPageTemplate = ({ children, loading, statCards, title, tables, customToolbar }: any) => {
+  if (loading) {
+    return React.createElement('div', { role: 'progressbar' }, 'Loading...');
+  }
+  const nodes: React.ReactNode[] = [];
+  if (title != null) nodes.push(React.createElement('div', { key: '__t' }, title));
+  if (customToolbar) nodes.push(React.createElement('div', { key: '__toolbar' }, customToolbar));
+  (statCards ?? []).forEach((c: any, i: number) => {
+    nodes.push(
+      React.createElement(
+        'div',
+        { key: `__sc${i}`, 'data-testid': `stat-card-${c?.id ?? i}` },
+        React.createElement('span', null, c?.title),
+        React.createElement('span', null, `${c?.value ?? ''}${c?.suffix ?? ''}`)
+      )
+    );
+  });
+  (tables ?? []).forEach((tb: any, ti: number) => {
+    if (tb?.title != null) nodes.push(React.createElement('div', { key: `__tt${ti}` }, tb.title));
+    (tb?.data ?? []).forEach((row: any, ri: number) => {
+      (tb?.columns ?? []).forEach((col: any, ci: number) => {
+        const cell = col?.render ? col.render(row[col?.field ?? col?.id]) : row[col?.field ?? col?.id ?? ''];
+        nodes.push(
+          React.createElement('div', { key: `__tr${ti}-${ri}-${ci}`, 'data-testid': `tcell-${col?.id ?? ci}` }, cell)
+        );
+      });
+    });
+  });
+  return React.createElement('div', null, ...nodes, children);
+};
+vi.mock('@/components/templates', () => ({
+  DashboardTemplate: __dashboardTemplate,
+  ListPageTemplate: __listPageTemplate,
+  DetailPageTemplate: __templateStub,
+  MasterDetailPageTemplate: __templateStub,
+  FormPageTemplate: __templateStub,
+  TreePageTemplate: __templateStub,
+  CardListTemplate: __templateStub,
+  GisMapTemplate: __templateStub,
+  ChatPageTemplate: __templateStub,
+  AiToolPageTemplate: __templateStub,
+  StatsPageTemplate: __statsPageTemplate,
+  SettingsPageTemplate: __templateStub,
+  WizardPageTemplate: __templateStub,
+  AuthPageTemplate: __templateStub,
+  MobilePageTemplate: __templateStub,
+  DesignerTemplate: __templateStub,
+  CardAction: __templateStub,
+  ChartCard: __templateStub,
+  GeoFence: __templateStub,
+  MapMarker: __templateStub,
+  MasterColumn: __templateStub,
+  PageAction: __templateStub,
+  QuickAction: __templateStub,
+  RowAction: __templateStub,
+  SettingSection: __templateStub,
+  StatCard: __templateStub,
+  StatsStatCard: __templateStub,
+  TreeNode: __templateStub,
+  TrackPoint: __templateStub,
+  WizardStep: __templateStub,
+  default: __templateStub,
+}));
+// 子路径模板导入（部分页面直接从子路径 import，不走 barrel）
+vi.mock('@/components/templates/StatsPageTemplate', () => ({ StatsPageTemplate: __statsPageTemplate, default: __statsPageTemplate }));
+vi.mock('@/components/templates/ListPageTemplate', () => ({ ListPageTemplate: __listPageTemplate, default: __listPageTemplate }));
+vi.mock('@/components/templates/DashboardTemplate', () => ({ DashboardTemplate: __dashboardTemplate, StatCard: __templateStub, default: __dashboardTemplate }));
+vi.mock('@/components/templates/DetailPageTemplate', () => ({ DetailPageTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/FormPageTemplate', () => ({ FormPageTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/SettingsPageTemplate', () => ({ SettingsPageTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/DesignerTemplate', () => ({ DesignerTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/GisMapTemplate', () => ({ GisMapTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/KanbanPageTemplate', () => ({ KanbanPageTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/ReportViewerTemplate', () => ({ ReportViewerTemplate: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/CrudPage', () => ({ CrudPage: __templateStub, default: __templateStub }));
+vi.mock('@/components/templates/TreeBuilder', () => ({ TreeBuilder: __templateStub, default: __templateStub }));
+
+const __commonFallback = ({ children, title }: any) =>
+  React.createElement('div', null, children, title);
+// 显式具名导出（vitest mock 校验走普通属性访问，Proxy 不可靠）。
 vi.mock('@/components/common', () => ({
   PageContainer: ({ children }: any) => React.createElement('div', null, children),
   LoadingSpinner: () => React.createElement('div', { 'data-testid': 'loading' }, 'Loading...'),
   FormBuilder: () => React.createElement('div', null, 'Form'),
+  FormDialog: ({ children, title, open }: any) =>
+    open === false
+      ? null
+      : React.createElement('div', { role: 'dialog' }, children, title),
+  FormDrawer: ({ children }: any) => React.createElement('div', null, children),
+  ActionButton: __commonFallback,
+  BackButton: __commonFallback,
+  ConfirmDialog: ({ children }: any) => React.createElement('div', null, children),
+  CurrencyField: __commonFallback,
+  DataExport: __commonFallback,
+  DataTable: __commonFallback,
+  Dialog: __commonFallback,
+  EmptyState: __commonFallback,
+  FormField: __commonFallback,
+  FormSelect: __commonFallback,
+  Grid: __commonFallback,
+  ImageUpload: __commonFallback,
+  StatCardGroup: __commonFallback,
+  StatusBadge: __commonFallback,
+  StatusChip: __commonFallback,
+  default: __commonFallback,
 }));
 
 vi.mock('@/components/bi/DashboardEditor', () => ({

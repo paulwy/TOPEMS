@@ -29,7 +29,7 @@ interface DatabaseStructureTableProps {
   onAddColumn: () => void;
   onDropColumn: (columnName: string) => void;
 }
-const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
+export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
   selectedTable,
   detailLoading,
   onAddColumn,

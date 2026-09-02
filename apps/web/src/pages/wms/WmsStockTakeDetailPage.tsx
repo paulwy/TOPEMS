@@ -227,8 +227,7 @@ export default function WmsStockTakeDetailPage() {
                 data={items}
                 enablePagination={false}
                 showSearch={false}
-                showFilters={false}
-                showExport={false}
+                                showExport={false}
                 showCreate={false}
                 showSelection={false}
               />

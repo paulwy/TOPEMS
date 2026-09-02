@@ -11,7 +11,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   Tabs,
   Tab,
   Card,
@@ -29,6 +28,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PersonIcon from '@mui/icons-material/Person';
@@ -46,6 +46,7 @@ import {
   GovernanceDashboard,
 } from '@/components/ai/business';
 import { useBusinessCopilot } from '@/hooks/features/ai/useBusinessCopilot';
+import { useTranslation } from 'react-i18next';
 import type { BusinessModuleType } from '@/api/ai/business-copilot';
 import type { FormDefinition, DocumentInfo, DocumentSummary } from '@/api/ai/business-intelligence';
 
@@ -59,10 +60,10 @@ type TabType = 'chat' | 'form' | 'document' | 'governance';
 // 示例表单定义
 // ============================================================================
 
-const sampleForm: FormDefinition = {
+const createSampleForm = (t: (k: string) => string): FormDefinition => ({
   form_id: 'purchase_request',
-  name: '采购申请单',
-  description: '用于申请采购物资或服务',
+  name: t('ai.business_copilot.form.name'),
+  description: t('ai.business_copilot.form.description'),
   category: 'erp',
   version: '1.0',
   enabled: true,
@@ -70,160 +71,165 @@ const sampleForm: FormDefinition = {
     {
       field_id: 'title',
       name: 'title',
-      label: '申请标题',
+      label: t('ai.business_copilot.fld_title.label'),
       field_type: 'text',
-      placeholder: '请输入采购申请标题',
+      placeholder: t('ai.business_copilot.fld_title.placeholder'),
       required: true,
-      group: '基本信息',
+      group: t('ai.business_copilot.group.basic'),
       order: 1,
     },
     {
       field_id: 'applicant',
       name: 'applicant',
-      label: '申请人',
+      label: t('ai.business_copilot.fld_applicant.label'),
       field_type: 'text',
       required: true,
-      group: '基本信息',
+      group: t('ai.business_copilot.group.basic'),
       order: 2,
     },
     {
       field_id: 'department',
       name: 'department',
-      label: '申请部门',
+      label: t('ai.business_copilot.fld_dept.label'),
       field_type: 'select',
       required: true,
       options: [
-        { value: 'it', label: '信息技术部' },
-        { value: 'finance', label: '财务部' },
-        { value: 'hr', label: '人力资源部' },
-        { value: 'operations', label: '运营部' },
+        { value: 'it', label: t('ai.business_copilot.dept_it') },
+        { value: 'finance', label: t('ai.business_copilot.dept_finance') },
+        { value: 'hr', label: t('ai.business_copilot.dept_hr') },
+        { value: 'operations', label: t('ai.business_copilot.dept_ops') },
       ],
-      group: '基本信息',
+      group: t('ai.business_copilot.group.basic'),
       order: 3,
     },
     {
       field_id: 'request_date',
       name: 'request_date',
-      label: '申请日期',
+      label: t('ai.business_copilot.fld_date.label'),
       field_type: 'date',
       required: true,
-      group: '基本信息',
+      group: t('ai.business_copilot.group.basic'),
       order: 4,
     },
     {
       field_id: 'item_name',
       name: 'item_name',
-      label: '采购物品名称',
+      label: t('ai.business_copilot.fld_item.label'),
       field_type: 'text',
       required: true,
-      group: '采购明细',
+      group: t('ai.business_copilot.group.details'),
       order: 5,
     },
     {
       field_id: 'quantity',
       name: 'quantity',
-      label: '数量',
+      label: t('ai.business_copilot.fld_qty.label'),
       field_type: 'integer',
       required: true,
-      validation: { min_value: 1, error_message: '数量必须大于0' },
-      group: '采购明细',
+      validation: { min_value: 1, error_message: t('ai.business_copilot.fld_qty.error') },
+      group: t('ai.business_copilot.group.details'),
       order: 6,
     },
     {
       field_id: 'estimated_amount',
       name: 'estimated_amount',
-      label: '预估金额（元）',
+      label: t('ai.business_copilot.fld_amount.label'),
       field_type: 'decimal',
       required: true,
-      validation: { min_value: 0, error_message: '金额不能为负数' },
-      group: '采购明细',
+      validation: { min_value: 0, error_message: t('ai.business_copilot.fld_amount.error') },
+      group: t('ai.business_copilot.group.details'),
       order: 7,
     },
     {
       field_id: 'urgency',
       name: 'urgency',
-      label: '紧急程度',
+      label: t('ai.business_copilot.fld_urgency.label'),
       field_type: 'radio',
       required: true,
       options: [
-        { value: 'low', label: '普通' },
-        { value: 'medium', label: '紧急' },
-        { value: 'high', label: '特急' },
+        { value: 'low', label: t('ai.business_copilot.urgency_low') },
+        { value: 'medium', label: t('ai.business_copilot.urgency_medium') },
+        { value: 'high', label: t('ai.business_copilot.urgency_high') },
       ],
       default_value: 'low',
-      group: '采购明细',
+      group: t('ai.business_copilot.group.details'),
       order: 8,
     },
     {
       field_id: 'reason',
       name: 'reason',
-      label: '采购理由',
+      label: t('ai.business_copilot.fld_reason.label'),
       field_type: 'textarea',
-      placeholder: '请详细说明采购理由和用途',
+      placeholder: t('ai.business_copilot.fld_reason.placeholder'),
       required: true,
-      validation: { min_length: 10, error_message: '采购理由至少10个字' },
-      group: '其他',
+      validation: { min_length: 10, error_message: t('ai.business_copilot.fld_reason.error') },
+      group: t('ai.business_copilot.group.other'),
       order: 9,
     },
     {
       field_id: 'remarks',
       name: 'remarks',
-      label: '备注',
+      label: t('ai.business_copilot.fld_remarks.label'),
       field_type: 'textarea',
-      group: '其他',
+      group: t('ai.business_copilot.group.other'),
       order: 10,
     },
   ],
-};
+});
 
 // ============================================================================
 // 示例文档
 // ============================================================================
 
-const sampleDocument: DocumentInfo = {
+const createSampleDocument = (t: (k: string) => string): DocumentInfo => ({
   document_id: 'doc_001',
-  name: '2024年度财务报告.pdf',
+  name: t('ai.business_copilot.doc.name'),
   document_type: 'pdf',
   file_size: 2457600,
-  content: '这是一份示例财务报告的内容...\n\n第一章 概述\n本报告总结了2024年度公司的财务状况...\n\n第二章 财务分析\n营业收入同比增长15%，达到12.5亿元...\n净利润达到2.3亿元，同比增长12%...\n\n第三章 未来展望\n预计2025年营业收入将继续保持增长...',
+  content: t('ai.business_copilot.doc.content'),
   metadata: {
-    author: '财务部',
+    author: t('ai.business_copilot.doc.author'),
     created_at: '2024-12-31',
     page_count: 45,
     word_count: 12500,
     language: 'zh-CN',
-    title: '2024年度财务报告',
+    title: t('ai.business_copilot.doc.title'),
   },
   uploaded_at: '2024-12-31T10:00:00Z',
   processing_status: 'completed',
-};
+});
 
-const sampleSummary: DocumentSummary = {
+const createSampleSummary = (t: (k: string) => string): DocumentSummary => ({
   document_id: 'doc_001',
   summary_type: 'standard',
-  content: '本报告总结了2024年度公司的财务状况。营业收入同比增长15%，达到12.5亿元；净利润达到2.3亿元，同比增长12%。公司整体财务状况良好，预计2025年将继续保持增长态势。',
+  content: t('ai.business_copilot.summary.content'),
   length: 120,
   key_sentences: [
-    '营业收入同比增长15%，达到12.5亿元',
-    '净利润达到2.3亿元，同比增长12%',
-    '公司整体财务状况良好',
-    '预计2025年营业收入将继续保持增长',
+    t('ai.business_copilot.summary.s1'),
+    t('ai.business_copilot.summary.s2'),
+    t('ai.business_copilot.summary.s3'),
+    t('ai.business_copilot.summary.s4'),
   ],
   keywords: [
-    { keyword: '营业收入', weight: 0.95, frequency: 15 },
-    { keyword: '净利润', weight: 0.88, frequency: 12 },
-    { keyword: '财务状况', weight: 0.75, frequency: 8 },
-    { keyword: '增长', weight: 0.70, frequency: 20 },
-    { keyword: '2024年度', weight: 0.65, frequency: 10 },
+    { keyword: t('ai.business_copilot.keyword.revenue'), weight: 0.95, frequency: 15 },
+    { keyword: t('ai.business_copilot.keyword.profit'), weight: 0.88, frequency: 12 },
+    { keyword: t('ai.business_copilot.keyword.finance'), weight: 0.75, frequency: 8 },
+    { keyword: t('ai.business_copilot.keyword.growth'), weight: 0.70, frequency: 20 },
+    { keyword: t('ai.business_copilot.keyword.fy2024'), weight: 0.65, frequency: 10 },
   ],
   generated_at: '2024-12-31T10:05:00Z',
-};
+});
 
 // ============================================================================
 // 页面组件
 // ============================================================================
 
 const BusinessCopilotPage: React.FC = () => {
+  const { t } = useTranslation();
+  const sampleForm = createSampleForm(t);
+  const sampleDocument = createSampleDocument(t);
+  const sampleSummary = createSampleSummary(t);
+
   // 状态
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [inputValue, setInputValue] = useState('');
@@ -329,7 +335,7 @@ const BusinessCopilotPage: React.FC = () => {
             <ListItemText
               primary={
                 <Typography variant="subtitle2" color="text.secondary">
-                  {msg.role === 'user' ? '我' : 'Copilot'}
+                  {msg.role === 'user' ? t('ai.business_copilot.me') : 'Copilot'}
                 </Typography>
               }
               secondary={
@@ -361,10 +367,10 @@ const BusinessCopilotPage: React.FC = () => {
 
   // 标签页配置
   const tabs = [
-    { value: 'chat' as TabType, label: '智能对话', icon: <SmartToyIcon /> },
-    { value: 'form' as TabType, label: '智能表单', icon: <BuildIcon /> },
-    { value: 'document' as TabType, label: '文档智能', icon: <DescriptionIcon /> },
-    { value: 'governance' as TabType, label: '治理仪表盘', icon: <DashboardIcon /> },
+    { value: 'chat' as TabType, label: t('ai.business_copilot.tab.chat'), icon: <SmartToyIcon /> },
+    { value: 'form' as TabType, label: t('ai.business_copilot.tab.form'), icon: <BuildIcon /> },
+    { value: 'document' as TabType, label: t('ai.business_copilot.tab.document'), icon: <DescriptionIcon /> },
+    { value: 'governance' as TabType, label: t('ai.business_copilot.tab.governance'), icon: <DashboardIcon /> },
   ];
 
   return (
@@ -461,12 +467,12 @@ const BusinessCopilotPage: React.FC = () => {
                 {/* 输入区域 */}
                 <Divider />
                 <Box sx={{ p: 2 }}>
-                  <Stack direction="row" spacing={1} alignItems="flex-end">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-end' }}>
                     <TextField
                       fullWidth
                       multiline
                       maxRows={4}
-                      placeholder="输入您的问题，按 Enter 发送..."
+                      placeholder={t('ai.business_copilot.input.placeholder')}
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
@@ -479,7 +485,7 @@ const BusinessCopilotPage: React.FC = () => {
                       disabled={!inputValue.trim() || isSending}
                       startIcon={isSending ? <CircularProgress size={20} /> : <SendIcon />}
                     >
-                      {isSending ? '发送中' : '发送'}
+                      {isSending ? t('ai.business_copilot.sending') : t('ai.business_copilot.send')}
                     </Button>
                   </Stack>
                 </Box>

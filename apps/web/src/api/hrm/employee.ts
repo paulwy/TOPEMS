@@ -51,7 +51,7 @@ export const employeeApi: CrudOperations<Employee> = {
 
   /**
    * A4 绑定样板：get_employee operation（openapi: GET /hrm/employees/{id}）
-   * schema: TypedApiResponse<Employee, 'get_employee'>
+   * schema: TypedApiResponse<Employee>
    */
   get: (id: string): Promise<ApiResponse<Employee>> => {
     return apiClient.hrm.get(`/employees/${id}`);
@@ -68,7 +68,7 @@ export const employeeApi: CrudOperations<Employee> = {
 
   /**
    * A4 绑定样板：update_employee operation（openapi: PUT /hrm/employees/{id}）
-   * schema: TypedApiResponse<Employee, 'update_employee'>
+   * schema: TypedApiResponse<Employee>
    */
   update: (id: string, data: Partial<Employee>): Promise<ApiResponse<Employee>> => {
     return apiClient.hrm.put(`/employees/${id}`, data);
@@ -76,7 +76,7 @@ export const employeeApi: CrudOperations<Employee> = {
 
   /**
    * A4 绑定样板：delete_employee operation（openapi: DELETE /hrm/employees/{id}）
-   * schema: TypedApiResponse<string, 'delete_employee'>
+   * schema: TypedApiResponse<string>
    */
   delete: (id: string): Promise<ApiResponse<string>> => {
     return apiClient.hrm.delete(`/employees/${id}`);

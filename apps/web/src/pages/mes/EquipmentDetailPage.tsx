@@ -22,7 +22,7 @@ const EquipmentDetailPage: React.FC = () => {
   const { success, error } = useNotification();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const {
-    data: equipment,
+    data: equipmentData,
     isPending: loading,
     error: queryError,
   } = useQuery<Asset | null>({
@@ -41,6 +41,7 @@ const EquipmentDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
+  const equipment: Asset | null = equipmentData ?? null;
   const errorMessage = queryError
     ? i18n.t('mes.equipment_detail_page.notifications.load_error.message')
     : undefined;

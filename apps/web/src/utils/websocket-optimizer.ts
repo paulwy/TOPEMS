@@ -32,6 +32,35 @@ export function calculateBackoffDelay(
 }
 
 /**
+ * 完整抖动（Full Jitter）退避
+ * 随机返回 [0, capped] 之间的值
+ */
+export function fullJitterBackoff(
+  attempt: number,
+  minDelay: number = 1000,
+  maxDelay: number = 30000
+): number {
+  const exponential = minDelay * Math.pow(2, attempt);
+  const capped = Math.min(exponential, maxDelay);
+  return Math.floor(Math.random() * capped);
+}
+
+/**
+ * 均衡抖动（Equal Jitter）退避
+ * 固定一半 + 随机一半
+ */
+export function equalJitterBackoff(
+  attempt: number,
+  minDelay: number = 1000,
+  maxDelay: number = 30000
+): number {
+  const exponential = minDelay * Math.pow(2, attempt);
+  const capped = Math.min(exponential, maxDelay);
+  const half = capped / 2;
+  return Math.floor(half + Math.random() * half);
+}
+
+/**
  * 心跳检测器
  * 监控连接是否健康，检测僵尸连接
  */

@@ -15,6 +15,7 @@ export interface FixedAsset {
   depreciation_method: string;
   useful_life_months: number;
   depreciation_period?: string;
+  monthly_depreciation?: number;
   department_id?: string;
   department_name?: string;
   location?: string;
@@ -98,11 +99,11 @@ export const fixedAssetApi = {
     return apiClient.erp.get<FixedAsset>(`/fixed-assets/${id}`);
   },
 
-  async create(data: CreateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
+  async create(data: Partial<FixedAsset> | CreateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
     return apiClient.erp.post<FixedAsset>('/fixed-assets', data);
   },
 
-  async update(id: string, data: UpdateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
+  async update(id: string, data: Partial<FixedAsset> | UpdateFixedAssetRequest): Promise<ApiResponse<FixedAsset>> {
     return apiClient.erp.put<FixedAsset>(`/fixed-assets/${id}`, data);
   },
 
@@ -113,7 +114,12 @@ export const fixedAssetApi = {
     return this.remove(id);
   },
 
-  async depreciate(data: DepreciateAssetsRequest): Promise<ApiResponse<{ count: number }>> {
-    return apiClient.erp.post<{ count: number }>('/fixed-assets/depreciate', data);
+  async depreciate(
+    data: DepreciateAssetsRequest
+  ): Promise<ApiResponse<{ count: number; depreciated_count?: number }>> {
+    return apiClient.erp.post<{ count: number; depreciated_count?: number }>(
+      '/fixed-assets/depreciate',
+      data
+    );
   },
 };

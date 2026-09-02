@@ -11,8 +11,6 @@ type DeploymentMode = 'saas' | 'on-premise';
 interface FeatureFlags {
   /** 配额限制开关 */
   quotaEnabled: boolean;
-  /** 计费功能开关 */
-  billingEnabled: boolean;
   /** 租户管理UI开关 */
   tenantManagement: boolean;
   /** SSO 单点登录开关 */
@@ -58,7 +56,6 @@ export const deploymentConfig: DeploymentConfig = {
   defaultTenantId: getEnv('VITE_DEFAULT_TENANT_ID') || '00000000-0000-0000-0000-000000000001',
   features: {
     quotaEnabled: getEnv('VITE_QUOTA_ENABLED') === 'true',
-    billingEnabled: getEnv('VITE_BILLING_ENABLED') === 'true',
     tenantManagement: getEnv('VITE_TENANT_MANAGEMENT') === 'true',
     ssoEnabled: getEnv('VITE_SSO_ENABLED') === 'true',
     twoFactorRequired: getEnv('VITE_TWO_FACTOR_REQUIRED') === 'true',
@@ -70,5 +67,11 @@ export const deploymentConfig: DeploymentConfig = {
 deploymentConfig.features.quotaEnabled && deploymentConfig.multiTenantEnabled;
 
 deploymentConfig.features.tenantManagement && deploymentConfig.multiTenantEnabled;
+
+/**
+ * 获取功能开关状态
+ */
+export const getFeatureFlag = (flag: keyof FeatureFlags): boolean =>
+  deploymentConfig.features[flag];
 
 export default deploymentConfig;

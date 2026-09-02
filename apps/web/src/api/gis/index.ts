@@ -8,6 +8,9 @@ export * from './types';
 
 export { deviceApi } from './device';
 export { businessApi } from './business';
+export { mapApi } from './map';
+export { pipelineApi } from './pipeline';
+export { storageApi } from './storage';
 
 export const gisApi = {
   devices: deviceApi,

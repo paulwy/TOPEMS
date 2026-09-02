@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import type { Document } from '@/api/ai';
 import { aiApi } from '@/api/ai';
+import { documentApi } from '@/api/ai/documents';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
@@ -67,7 +68,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const response = await aiApi.listDocuments();
+      const response = await documentApi.listDocuments();
       if (response.success && response.data) {
         setDocuments(response.data.items);
       }

@@ -38,7 +38,7 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-interface ModuleTheme {
+export interface ModuleTheme {
   code: string;
   name: string;
   icon: React.ComponentType<any>;
@@ -46,196 +46,206 @@ interface ModuleTheme {
   color: string;
 }
 
-function getModuleThemes(): Record<string, ModuleTheme> {
+export function getModuleThemes(): Record<string, ModuleTheme> {
   return {
     iam: {
       code: 'iam',
-      name: i18n.t('shared.module_themes.k0'),
+      name: '系统管理',
       icon: Shield,
       gradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
       color: ct.secondary[400],
     },
     crm: {
       code: 'crm',
-      name: i18n.t('shared.module_themes.k1'),
+      name: '客户管理',
       icon: Users,
       gradient: `linear-gradient(135deg, ${ct.info.main} 0%, ${ct.info.dark} 100%)`,
       color: ct.info.main,
     },
     erp: {
       code: 'erp',
-      name: i18n.t('shared.module_themes.k2'),
+      name: '企业资源',
       icon: Building2,
       gradient: `linear-gradient(135deg, ${ct.warning[500]} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning[500],
     },
     wms: {
       code: 'wms',
-      name: i18n.t('shared.module_themes.k3'),
+      name: '仓储管理',
       icon: Package,
       gradient: `linear-gradient(135deg, ${ct.info.main} 0%, ${ct.info.dark} 100%)`,
       color: ct.info.main,
     },
     mes: {
       code: 'mes',
-      name: i18n.t('shared.module_themes.k4'),
+      name: '制造执行',
       icon: Factory,
       gradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error.dark} 100%)`,
       color: ct.error.main,
     },
     qms: {
       code: 'qms',
-      name: i18n.t('shared.module_themes.k5'),
+      name: '质量管理',
       icon: ClipboardCheck,
       gradient: `linear-gradient(135deg, ${ct.info[400]} 0%, ${ct.info.dark} 100%)`,
       color: ct.info[400],
     },
     hrm: {
       code: 'hrm',
-      name: i18n.t('shared.module_themes.k6'),
+      name: '人力管理',
       icon: Users,
       gradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       color: ct.success.main,
     },
     finance: {
       code: 'finance',
-      name: i18n.t('shared.module_themes.k7'),
+      name: '财务管理',
       icon: Wallet,
       gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
       color: ct.success.main,
     },
     scm: {
       code: 'scm',
-      name: i18n.t('shared.module_themes.k8'),
+      name: '供应链',
       icon: Truck,
       gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning.main,
     },
     srm: {
       code: 'srm',
-      name: i18n.t('shared.module_themes.k9'),
+      name: '供应商',
       icon: Handshake,
       gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
       color: ct.success[400],
     },
     pm: {
       code: 'pm',
-      name: i18n.t('shared.module_themes.k10'),
+      name: '项目管理',
       icon: FolderKanban,
       gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning.main,
     },
     ehs: {
       code: 'ehs',
-      name: i18n.t('shared.module_themes.k11'),
+      name: '安全环保',
       icon: Activity,
       gradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       color: ct.success.main,
     },
     lims: {
       code: 'lims',
-      name: i18n.t('shared.module_themes.k12'),
+      name: '实验室',
       icon: FlaskConical,
       gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
       color: ct.success[400],
     },
     bi: {
       code: 'bi',
-      name: i18n.t('shared.module_themes.k13'),
+      name: '商业智能',
       icon: BarChart3,
       gradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       color: ct.secondary.main,
     },
     workflow: {
       code: 'workflow',
-      name: i18n.t('shared.module_themes.k14'),
+      name: '流程管理',
       icon: Workflow,
       gradient: `linear-gradient(135deg, ${ct.info.main} 0%, ${ct.info.dark} 100%)`,
       color: ct.info.main,
     },
     docs: {
       code: 'docs',
-      name: i18n.t('shared.module_themes.k15'),
+      name: '文档中心',
       icon: BookOpen,
       gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning.main,
     },
     monitor: {
       code: 'monitor',
-      name: i18n.t('shared.module_themes.k16'),
+      name: '系统监控',
       icon: Activity,
       gradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error.dark} 100%)`,
       color: ct.error.main,
     },
     notification: {
       code: 'notification',
-      name: i18n.t('shared.module_themes.k17'),
+      name: '消息通知',
       icon: Bell,
       gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning.main,
     },
     integration: {
       code: 'integration',
-      name: i18n.t('shared.module_themes.k18'),
+      name: '集成管理',
       icon: Plug,
       gradient: `linear-gradient(135deg, ${ct.grey[500]} 0%, ${ct.grey[600]} 100%)`,
       color: ct.grey[500],
     },
     gis: {
       code: 'gis',
-      name: i18n.t('shared.module_themes.k19'),
+      name: '地理信息',
       icon: Map,
       gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
       color: ct.success.main,
     },
     pdm: {
       code: 'pdm',
-      name: i18n.t('shared.module_themes.k20'),
+      name: '产品数据',
       icon: Database,
       gradient: `linear-gradient(135deg, ${ct.info[400]} 0%, ${ct.info.dark} 100%)`,
       color: ct.info[400],
     },
     rs: {
       code: 'rs',
-      name: i18n.t('shared.module_themes.k21'),
+      name: '需求系统',
       icon: Code2,
       gradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
       color: ct.secondary[400],
     },
     report: {
       code: 'report',
-      name: i18n.t('shared.module_themes.k22'),
+      name: '报表中心',
       icon: FileBarChart,
       gradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       color: ct.primary.main,
     },
     plugin: {
       code: 'plugin',
-      name: i18n.t('shared.module_themes.k23'),
+      name: '插件市场',
       icon: Puzzle,
       gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       color: ct.warning.main,
     },
     ai: {
       code: 'ai',
-      name: i18n.t('shared.module_themes.ai_0'),
+      name: '智能助手',
       icon: Zap,
       gradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       color: ct.primary.main,
     },
     admin: {
       code: 'admin',
-      name: i18n.t('shared.module_themes.k24'),
+      name: '系统设置',
       icon: Settings,
       gradient: `linear-gradient(135deg, ${ct.grey[500]} 0%, ${ct.grey[600]} 100%)`,
       color: ct.grey[500],
     },
     im: {
       code: 'im',
-      name: i18n.t('shared.module_themes.k25'),
+      name: '即时通讯',
       icon: MessageSquare,
       gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
       color: ct.success.main,
     },
   };
+}
+
+export function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
+  return getModuleThemes()[moduleCode.toLowerCase()];
+}
+
+export function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {
+  const pathParts = pathname.split('/').filter(Boolean);
+  if (pathParts.length === 0) return undefined;
+  return getModuleTheme(pathParts[0]);
 }

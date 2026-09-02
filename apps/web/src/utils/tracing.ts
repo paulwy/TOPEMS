@@ -6,7 +6,7 @@
 
 import config from '../config/runtime';
 
-interface SpanContext {
+export interface SpanContext {
   traceId: string;
   spanId: string;
   traceFlags: number;
@@ -52,7 +52,7 @@ export function getCurrentSpanId(): string | null {
   return currentSpanId;
 }
 
-function createSpan(name: string, parentSpanId?: string): Span {
+export function createSpan(name: string, parentSpanId?: string): Span {
   const spanId = generateId().substring(0, 16);
   currentSpanId = spanId;
   return {
@@ -75,7 +75,7 @@ export function endSpan(span: Span, attributes?: Record<string, string | number 
   sendSpanToCollector(span);
 }
 
-function getTraceHeaders(): Record<string, string> {
+export function getTraceHeaders(): Record<string, string> {
   if (!currentTraceId || !currentSpanId) {
     return {};
   }
@@ -169,4 +169,53 @@ export function instrumentFetch(originalFetch: typeof fetch): typeof fetch {
       throw error;
     }
   };
+}
+
+export function resetTrace(): void {
+  currentTraceId = null;
+  currentSpanId = null;
+}
+
+interface AxiosInterceptorConfig {
+  headers?: Record<string, string>;
+}
+
+interface AxiosResponse {
+  config?: AxiosInterceptorConfig;
+}
+
+interface AxiosInterceptorManager<T> {
+  use(
+    onFulfilled?: (value: T) => T | Promise<T>,
+    onRejected?: (error: unknown) => Promise<never>
+  ): number;
+}
+
+interface AxiosInstance {
+  interceptors: {
+    request: AxiosInterceptorManager<AxiosInterceptorConfig>;
+    response: AxiosInterceptorManager<AxiosResponse>;
+  };
+}
+
+export function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
+  axiosInstance.interceptors.request.use((config: AxiosInterceptorConfig) => {
+    const traceHeaders = getTraceHeaders();
+    config.headers = {
+      ...config.headers,
+      ...traceHeaders,
+    };
+    return config;
+  });
+
+  axiosInstance.interceptors.response.use(
+    (response: AxiosResponse) => {
+      return response;
+    },
+    (error: unknown) => {
+      return Promise.reject(error);
+    }
+  );
+
+  return axiosInstance;
 }

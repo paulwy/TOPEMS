@@ -27,7 +27,7 @@ export const companyApi: CrudOperations<Company> = {
   /**
    * A4 绑定样板：get_company operation（openapi: GET /hrm/companies/{id}）
    * 返回类型保持 ApiResponse<Company>（满足 CrudOperations 接口约束）。
-   * 对应的 operation schema: TypedApiResponse<Company, 'get_company'>。
+   * 对应的 operation schema: TypedApiResponse<Company>。
    */
   get: (id: string): Promise<ApiResponse<Company>> => {
     return apiClient.hrm.get(`/companies/${id}`);

@@ -37,11 +37,6 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
         module: 'iam',
         apiBasePath: '/api/core/iam',
       },
-      billing: {
-        service: 'billing',
-        module: 'billing',
-        apiBasePath: '/api/billing',
-      },
       plugin: {
         service: 'plugin-registry',
         module: 'plugin',
@@ -196,11 +191,6 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     apiBasePath: '/api/erp',
   },
 
-  lowcode: {
-    service: 'lowcode',
-    module: 'lowcode',
-    apiBasePath: '/api/lowcode',
-  },
 
   // 自动化编排（V64 新增）：初期落地 unified-core，业务量足够再拆独立服务
   // 自动化 = workflow（流程运行时）+ integration（数据桥接）+ lowcode（UI/表单）的编排层

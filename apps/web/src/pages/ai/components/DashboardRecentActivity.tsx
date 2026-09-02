@@ -6,7 +6,7 @@ import { RecentItem } from './RecentItem';
 import { AI_PATHS } from '@/modules/ai/config';
 import type { RecentItemData } from '../hooks/useAiDashboard';
 
-const DashboardRecentActivity: React.FC<{ items: RecentItemData[] }> = ({ items }) => {
+export const DashboardRecentActivity: React.FC<{ items: RecentItemData[] }> = ({ items }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 

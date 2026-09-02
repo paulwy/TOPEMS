@@ -844,6 +844,9 @@ function topemsRechartsSplitPlugin(): Plugin {
         { test: /[\\/]node_modules[\\/](i18next|react-i18next)[\\/]/, name: 'i18n-vendor' },
         { test: /[\\/]node_modules[\\/](react-hook-form|@hookform)[\\/]/, name: 'form-vendor' },
         { test: /[\\/]node_modules[\\/]dayjs[\\/]/, name: 'dayjs-vendor' },
+        // 3.3c: lucide-react 子路径导出会被 Rolldown 拆成每图标一个 chunk，
+        // 首页入口曾静态引用 103 个单图标 chunk（首屏 163 请求）。合并为单一 vendor chunk。
+        { test: /[\\/]node_modules[\\/]lucide-react[\\/]/, name: 'lucide-vendor' },
       ];
 
       const rechartsGroups = [

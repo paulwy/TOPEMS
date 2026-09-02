@@ -64,7 +64,6 @@ export type ServiceName =
   | 'file'
   | 'scm'
   | 'migration'
-  | 'billing'
   | 'ticket'
   | 'feedback';
 

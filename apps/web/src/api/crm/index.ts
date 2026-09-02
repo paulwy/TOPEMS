@@ -90,6 +90,9 @@ export { rfmApi } from './rfm';
 export { billingApi } from './billing';
 export { returnsApi } from './returns';
 export { crmAuditApi } from './crmAudit';
+export { opportunityApi } from './opportunity';
+export { customerScoringApi } from './scoring';
+export { customerSegmentationApi, customerRecommendationApi } from './segmentation';
 
 export const crmApi = {
   dashboard: crmDashboardApi,

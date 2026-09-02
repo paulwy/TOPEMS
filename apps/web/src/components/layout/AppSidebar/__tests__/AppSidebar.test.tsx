@@ -48,6 +48,8 @@ vi.mock('@/i18n', () => ({
     language: 'zh-CN',
     changeLanguage: vi.fn(),
     exists: (key: string) => !!i18nMap[key],
+    on: vi.fn(),
+    off: vi.fn(),
   },
 }));
 

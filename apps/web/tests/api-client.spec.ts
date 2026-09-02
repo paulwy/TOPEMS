@@ -73,6 +73,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@/utils/logger', () => ({
+  default: mocks.createLogger,
   createLogger: mocks.createLogger,
   apiLogger: mocks.apiLogger,
 }));

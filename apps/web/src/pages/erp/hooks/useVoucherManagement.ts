@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import type { SyntheticEvent } from 'react';
-import { voucherApi, accountingSubjectApi } from '@/api/erp';
+import { voucherApi } from '@/api/erp';
+import { accountingSubjectApi } from '@/api/finance';
+import type { AccountingSubject } from '@/api/finance';
 import type {
-  FinancialVoucher,
-  VoucherItem,
   VoucherItemRequest,
-  AccountingSubject,
 } from '@/api/erp/types';
+import type { Voucher, VoucherEntry } from '@/types/finance';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -38,7 +38,7 @@ export const useVoucherManagement = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(null);
+  const [currentVoucher, setCurrentVoucher] = useState<Voucher | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newVoucher, setNewVoucher] = useState<NewVoucherState>({
@@ -100,7 +100,7 @@ export const useVoucherManagement = () => {
     enabled: !!currentVoucher?.id,
     staleTime: 5 * 60 * 1000,
   });
-  const voucherItems: VoucherItem[] =
+  const voucherItems: VoucherEntry[] =
     voucherItemsQuery.data?.success && voucherItemsQuery.data.data
       ? voucherItemsQuery.data.data
       : [];
@@ -206,7 +206,7 @@ export const useVoucherManagement = () => {
     return {
       total: totalCount,
       draft: vouchers.filter((v) => v.status === 'draft').length,
-      pending: vouchers.filter((v) => v.status === 'pending').length,
+      pending: vouchers.filter((v) => v.status === 'submitted').length,
       approved: vouchers.filter((v) => v.status === 'approved').length,
       posted: vouchers.filter((v) => v.status === 'posted').length,
     };
@@ -257,7 +257,7 @@ export const useVoucherManagement = () => {
       apiLogger.error('Create voucher failed:', err);
     }
   };
-  const handleAudit = async (voucher: FinancialVoucher) => {
+  const handleAudit = async (voucher: Voucher) => {
     try {
       const result = await updateMutation.mutateAsync({
         id: voucher.id,
@@ -280,7 +280,7 @@ export const useVoucherManagement = () => {
       apiLogger.error('Audit voucher failed:', err);
     }
   };
-  const handlePost = async (voucher: FinancialVoucher) => {
+  const handlePost = async (voucher: Voucher) => {
     try {
       const result = await updateMutation.mutateAsync({
         id: voucher.id,
@@ -369,7 +369,7 @@ export const useVoucherManagement = () => {
   const totalDebit = newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0);
   const totalCredit = newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0);
   const isBalanced = totalDebit === totalCredit && totalDebit > 0;
-  const handleViewDetail = (voucher: FinancialVoucher) => {
+  const handleViewDetail = (voucher: Voucher) => {
     setCurrentVoucher(voucher);
     voucherItemsQuery.refetch();
     setShowDetailModal(true);

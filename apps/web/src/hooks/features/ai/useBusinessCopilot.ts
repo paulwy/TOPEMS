@@ -147,13 +147,13 @@ export function useBusinessCopilot(
       }
 
       const request: SendMessageRequest = {
-        user_id: 'anonymous',
-        message: user_input,
         module: state.currentModule,
+        session_id: sessionId,
+        user_input,
         ...options,
       };
 
-      const response = await sendMessage(sessionId, request);
+      const response = await sendMessage(request);
       if (response.data) {
         // 添加用户消息
         const userMessage: ConversationMessage = {

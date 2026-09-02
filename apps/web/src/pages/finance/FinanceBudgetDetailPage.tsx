@@ -120,13 +120,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
       }
 
       const totalUsed = items.reduce((sum, item) => sum + item.usedAmount, 0);
-      const totalRemaining = budgetData.total_budget - totalUsed;
+      const totalRemaining = (budgetData.total_budget ?? 0) - totalUsed;
       const usageRate =
-        budgetData.total_budget > 0 ? (totalUsed / budgetData.total_budget) * 100 : 0;
+        (budgetData.total_budget ?? 0) > 0 ? (totalUsed / (budgetData.total_budget ?? 0)) * 100 : 0;
 
       return {
-        id: budgetData.id,
-        code: `BUD-${budgetData.fiscal_year}-${budgetData.id.slice(-3).toUpperCase()}`,
+        id: budgetData.id ?? '',
+        code: `BUD-${budgetData.fiscal_year}-${(budgetData.id ?? '').slice(-3).toUpperCase()}`,
         name: t('finance.finance_budget_detail_page.e1', {
           v1: budgetData.fiscal_year,
           v2: getBudgetTypeName(budgetData.budget_type || ''),
@@ -134,21 +134,21 @@ const FinanceBudgetDetailPage: React.FC = () => {
         type: budgetData.budget_type || '',
         fiscalYear: budgetData.fiscal_year || '',
         department: '-',
-        totalBudget: budgetData.total_budget,
+        totalBudget: budgetData.total_budget ?? 0,
         usedAmount: totalUsed,
         remainingAmount: totalRemaining,
         usageRate: Math.round(usageRate * 100) / 100,
         status: budgetData.status as BudgetDetail['status'],
         items,
-        createdAt: budgetData.created_at,
-        updatedAt: budgetData.updated_at,
+        createdAt: budgetData.created_at ?? '',
+        updatedAt: budgetData.updated_at ?? '',
       };
     },
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
-  const budget = budgetQuery.data ?? null;
+  const budget: BudgetDetail | null = budgetQuery.data ?? null;
   const loading = budgetQuery.isLoading;
   const errorMessage = budgetQuery.error
     ? t('finance.finance_budget_detail_page.detail_1')

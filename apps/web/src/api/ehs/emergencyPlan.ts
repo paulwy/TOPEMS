@@ -1,3 +1,6 @@
+import { apiClient } from '../client';
+import type { ApiResponse, PaginatedResponse } from '../client';
+
 interface EmergencyPlanItem {
   id: string;
   plan_no: string;
@@ -128,3 +131,76 @@ export interface CreateVersionRequest {
   change_description?: string;
   content?: string;
 }
+
+export const emergencyPlanApi = {
+  async listPlans(
+    params?: PlanListQuery
+  ): Promise<ApiResponse<PaginatedResponse<EmergencyPlanItem>>> {
+    const qs = new URLSearchParams();
+    if (params?.page !== undefined) qs.set('page', String(params.page));
+    if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
+    if (params?.status) qs.set('status', params.status);
+    if (params?.category) qs.set('category', params.category);
+    const s = qs.toString();
+    return apiClient.ehs.get<PaginatedResponse<EmergencyPlanItem>>(
+      `/emergency-plans${s ? `?${s}` : ''}`
+    );
+  },
+
+  async getPlan(id: string): Promise<ApiResponse<PlanDetail>> {
+    return apiClient.ehs.get<PlanDetail>(`/emergency-plans/${id}`);
+  },
+
+  async createPlan(data: CreatePlanRequest): Promise<ApiResponse<EmergencyPlanItem>> {
+    return apiClient.ehs.post<EmergencyPlanItem>('/emergency-plans', data);
+  },
+
+  async updatePlan(id: string, data: UpdatePlanRequest): Promise<ApiResponse<EmergencyPlanItem>> {
+    return apiClient.ehs.put<EmergencyPlanItem>(`/emergency-plans/${id}`, data);
+  },
+
+  async deletePlan(id: string): Promise<ApiResponse<null>> {
+    return apiClient.ehs.delete<null>(`/emergency-plans/${id}`);
+  },
+
+  async listPlanCategories(): Promise<ApiResponse<PlanCategory[]>> {
+    return apiClient.ehs.get<PlanCategory[]>('/emergency-plans/categories');
+  },
+
+  async listPlanSupplies(planId: string): Promise<ApiResponse<PlanSupply[]>> {
+    return apiClient.ehs.get<PlanSupply[]>(`/emergency-plans/${planId}/supplies`);
+  },
+
+  async addPlanSupply(planId: string, data: CreateSupplyRequest): Promise<ApiResponse<PlanSupply>> {
+    return apiClient.ehs.post<PlanSupply>(`/emergency-plans/${planId}/supplies`, data);
+  },
+
+  async deletePlanSupply(planId: string, supplyId: string): Promise<ApiResponse<null>> {
+    return apiClient.ehs.delete<null>(`/emergency-plans/${planId}/supplies/${supplyId}`);
+  },
+
+  async listPlanVersions(planId: string): Promise<ApiResponse<PlanVersion[]>> {
+    return apiClient.ehs.get<PlanVersion[]>(`/emergency-plans/${planId}/versions`);
+  },
+
+  async createPlanVersion(
+    planId: string,
+    data: CreateVersionRequest
+  ): Promise<ApiResponse<PlanVersion>> {
+    return apiClient.ehs.post<PlanVersion>(`/emergency-plans/${planId}/versions`, data);
+  },
+
+  async submitPlanApproval(
+    planId: string,
+    data?: SubmitApprovalRequest
+  ): Promise<ApiResponse<EmergencyPlanItem>> {
+    return apiClient.ehs.post<EmergencyPlanItem>(
+      `/emergency-plans/${planId}/submit-approval`,
+      data ?? {}
+    );
+  },
+
+  async approvePlan(planId: string, data: ApprovePlanRequest): Promise<ApiResponse<PlanApproval>> {
+    return apiClient.ehs.post<PlanApproval>(`/emergency-plans/${planId}/approve`, data);
+  },
+};

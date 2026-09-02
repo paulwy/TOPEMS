@@ -110,7 +110,6 @@ const config: RuntimeConfig = {
     'plugin-registry': getEnv('VITE_PLUGIN_REGISTRY_SERVICE_URL', '/api/plugin'),
 
     // === 独立基础设施服务 ===
-    billing: getEnv('VITE_BILLING_SERVICE_URL', '/api/billing'),
     ticket: getEnv('VITE_TICKET_SERVICE_URL', '/api/ticket'),
     feedback: getEnv('VITE_FEEDBACK_SERVICE_URL', '/api/feedback'),
 

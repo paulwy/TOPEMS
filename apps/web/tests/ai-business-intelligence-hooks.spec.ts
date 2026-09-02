@@ -324,6 +324,9 @@ describe('useBusinessCopilot Hook', () => {
 
       await act(async () => {
         await result.current.createNewSession('erp');
+      });
+
+      await act(async () => {
         await result.current.send('测试消息');
       });
 

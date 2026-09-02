@@ -5,13 +5,13 @@ import {
   CardContent,
   Chip,
   Divider,
-  Grid,
   LinearProgress,
   Paper,
   Stack,
   Typography,
   useTheme,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import {
   AlertTriangle,
   CheckCircle,
@@ -187,7 +187,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
 
       {/* 关键指标 */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="总请求数"
             value={formatNumber(data.key_metrics.total_requests)}
@@ -195,7 +195,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             color="#1976d2"
           />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="成功率"
             value={`${data.key_metrics.success_rate.toFixed(1)}%`}
@@ -204,7 +204,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             progress={data.key_metrics.success_rate}
           />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="平均响应"
             value={`${data.key_metrics.average_response_ms.toFixed(0)}ms`}
@@ -213,7 +213,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             color="#f57c00"
           />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="Token 使用"
             value={formatNumber(data.key_metrics.total_tokens)}
@@ -221,7 +221,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             color="#7b1fa2"
           />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="活跃用户"
             value={formatNumber(data.key_metrics.active_users)}
@@ -229,7 +229,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             color="#0097a7"
           />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid xs={6} sm={4} md={2}>
           <MetricCard
             title="缓存命中"
             value={`${data.key_metrics.cache_hit_rate.toFixed(1)}%`}
@@ -243,7 +243,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
       {!compact && (
         <Grid container spacing={2}>
           {/* 风险评估 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card elevation={1} sx={{ height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -265,7 +265,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="caption" color="text.secondary">风险评分</Typography>
-                    <Typography variant="caption" fontWeight={600}>{data.risk_assessment.risk_score.toFixed(1)}/100</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{data.risk_assessment.risk_score.toFixed(1)}/100</Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
@@ -302,7 +302,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
           </Grid>
 
           {/* 合规与成本 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Stack spacing={2} sx={{ height: '100%' }}>
               {/* 合规状态 */}
               <Card elevation={1}>
@@ -318,7 +318,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                         <Typography variant="caption" color="text.secondary">总体合规率</Typography>
-                        <Typography variant="caption" fontWeight={600}>{data.compliance_status.overall_compliance_rate.toFixed(1)}%</Typography>
+                        <Typography variant="caption" sx={{ fontWeight: 600 }}>{data.compliance_status.overall_compliance_rate.toFixed(1)}%</Typography>
                       </Box>
                       <LinearProgress
                         variant="determinate"
@@ -329,7 +329,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                   </Box>
 
                   <Grid container spacing={1}>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Paper variant="outlined" sx={{ p: 1, textAlign: 'center', borderRadius: 1 }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
                           {data.compliance_status.total_checks}
@@ -337,7 +337,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                         <Typography variant="caption" color="text.secondary">总检查</Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Paper variant="outlined" sx={{ p: 1, textAlign: 'center', borderRadius: 1, borderColor: '#2e7d3250' }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: '#2e7d32' }}>
                           {data.compliance_status.passed_checks}
@@ -345,7 +345,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                         <Typography variant="caption" color="text.secondary">通过</Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Paper variant="outlined" sx={{ p: 1, textAlign: 'center', borderRadius: 1, borderColor: '#c6282850' }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: '#c62828' }}>
                           {data.compliance_status.failed_checks}
@@ -377,13 +377,13 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                   </Box>
 
                   <Grid container spacing={1} sx={{ mb: 2 }}>
-                    <Grid item xs={6}>
+                    <Grid xs={6}>
                       <Typography variant="caption" color="text.secondary">LLM 成本</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {data.cost_analysis.llm_cost.toLocaleString()} {data.cost_analysis.currency}
                       </Typography>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid xs={6}>
                       <Typography variant="caption" color="text.secondary">工具成本</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {data.cost_analysis.tool_cost.toLocaleString()} {data.cost_analysis.currency}
@@ -398,7 +398,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                       <Typography variant="caption" color="text.secondary">
                         预算使用 ({data.cost_analysis.budget_usage.used_amount.toLocaleString()} / {data.cost_analysis.budget_usage.total_budget.toLocaleString()})
                       </Typography>
-                      <Typography variant="caption" fontWeight={600} color={data.cost_analysis.budget_usage.is_over_budget ? 'error' : 'primary'}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }} color={data.cost_analysis.budget_usage.is_over_budget ? 'error' : 'primary'}>
                         {data.cost_analysis.budget_usage.usage_percent.toFixed(1)}%
                       </Typography>
                     </Box>

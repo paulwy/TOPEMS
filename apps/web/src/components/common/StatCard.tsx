@@ -356,7 +356,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
 /**
  * 统计卡片基类组件
  */
-const StatCardBase: React.FC<StatCardBaseProps> = ({
+export const StatCardBase: React.FC<StatCardBaseProps> = ({
   title,
   value,
   subtitle,

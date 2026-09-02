@@ -7,25 +7,32 @@ import {
   supplierApi,
   customerApi,
 } from '../core';
-import { voucherApi } from '../finance/voucher';
-import { bankAccountApi, bankTransactionApi } from '../finance/bank';
-import { financeReportApi } from '../finance/report';
+import { voucherApi } from '../../finance/voucher';
+import { bankAccountApi } from '../bankAccount';
+import { bankTransactionApi } from '../bankTransaction';
+import { financeReportApi } from '../../finance/report';
 import { officeSupplyApi } from '../admin/officeSupplies';
 import { meetingRoomApi, meetingBookingApi } from '../admin/meeting';
 import { vehicleApi, vehicleRequestApi } from '../admin/vehicle';
 import { announcementApi } from '../admin/announcement';
 import apiClient from '../../client';
 
-vi.mock('../../client', () => ({
-  default: {
-    erp: {
-      get: vi.fn(),
-      post: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-    },
-  },
-}));
+vi.mock('../../client', () => {
+  const erpClient = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
+  const financeClient = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
+  const client = { erp: erpClient, finance: financeClient };
+  return { default: client, apiClient: client, downloadBlob: vi.fn() };
+});
 
 describe('ERP supplierApi', () => {
   const mockApiClient = apiClient.erp as {
@@ -358,7 +365,7 @@ describe('ERP salesOrderApi', () => {
 });
 
 describe('ERP voucherApi', () => {
-  const mockApiClient = apiClient.erp as {
+  const mockApiClient = apiClient.finance as {
     get: vi.Mock;
     post: vi.Mock;
     put: vi.Mock;
@@ -372,7 +379,7 @@ describe('ERP voucherApi', () => {
   it('should call GET /vouchers for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await voucherApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/vouchers?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/vouchers', expect.anything());
   });
 
   it('should call GET /vouchers/:id for get', async () => {
@@ -492,7 +499,7 @@ describe('ERP bankTransactionApi', () => {
 });
 
 describe('ERP financeReportApi', () => {
-  const mockApiClient = apiClient.erp as {
+  const mockApiClient = apiClient.finance as {
     get: vi.Mock;
     post: vi.Mock;
     put: vi.Mock;
@@ -506,25 +513,25 @@ describe('ERP financeReportApi', () => {
   it('should call GET /reports/balance-sheet for balanceSheet', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: {} });
     await financeReportApi.balanceSheet({ period: '2024-01' });
-    expect(mockApiClient.get).toHaveBeenCalled();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/reports/balance-sheet', expect.anything());
   });
 
   it('should call GET /reports/income-statement for incomeStatement', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: {} });
     await financeReportApi.incomeStatement({ period: '2024-01' });
-    expect(mockApiClient.get).toHaveBeenCalled();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/reports/income-statement', expect.anything());
   });
 
   it('should call GET /reports/cash-flow for cashFlowStatement', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: {} });
     await financeReportApi.cashFlowStatement({ period: '2024-01' });
-    expect(mockApiClient.get).toHaveBeenCalled();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/reports/cash-flow', expect.anything());
   });
 
   it('should call GET /reports/business-overview for businessOverview', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: {} });
     await financeReportApi.businessOverview({ period: '2024-01' });
-    expect(mockApiClient.get).toHaveBeenCalled();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/reports/business-overview', expect.anything());
   });
 
   it('should call GET /reports/monthly-trend for monthlyTrend', async () => {

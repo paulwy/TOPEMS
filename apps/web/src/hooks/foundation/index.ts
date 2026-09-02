@@ -6,7 +6,7 @@
  */
 
 // Debounce - 来自 shared-hooks
-export { useDebounce } from '@topems/shared-hooks';
+export { useDebounce, useDebouncedCallback } from '@topems/shared-hooks';
 
 // Throttle
 

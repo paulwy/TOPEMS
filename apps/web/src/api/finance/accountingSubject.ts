@@ -21,9 +21,11 @@ export interface AccountingSubject {
 export interface AccountingSubjectQuery {
   page?: number;
   page_size?: number;
+  pagesize?: number;
   search?: string;
   category?: string;
   status?: string;
+  [key: string]: unknown;
 }
 
 export interface PaginatedAccountingSubjects {
@@ -67,14 +69,14 @@ export const accountingSubjectApi = {
   },
 
   create: (
-    data: CreateAccountingSubjectRequest
+    data: Partial<AccountingSubject> | CreateAccountingSubjectRequest
   ): Promise<ApiResponse<AccountingSubject>> => {
     return apiClient.finance.post('/accounting-subjects', data);
   },
 
   update: (
     id: string,
-    data: UpdateAccountingSubjectRequest
+    data: Partial<AccountingSubject> | UpdateAccountingSubjectRequest
   ): Promise<ApiResponse<AccountingSubject>> => {
     return apiClient.finance.put(`/accounting-subjects/${id}`, data);
   },

@@ -17,7 +17,7 @@ interface MobileQualityDefectListProps {
   getStatusLabel: (status: string) => string;
   getStatusColor: (status: string) => ChipColor;
 }
-const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
+export const MobileQualityDefectList: React.FC<MobileQualityDefectListProps> = ({
   defectRecords,
   getSeverityLabel,
   getSeverityColor,

@@ -27,7 +27,7 @@ export const departmentApi: CrudOperations<Department> = {
   /**
    * A4 绑定样板：get_department operation（openapi: GET /hrm/departments/{id}）
    * 返回类型保持 ApiResponse<Department>（满足 CrudOperations 接口约束）。
-   * 对应的 operation schema: TypedApiResponse<Department, 'get_department'>。
+   * 对应的 operation schema: TypedApiResponse<Department>。
    */
   get: (id: string): Promise<ApiResponse<Department>> => {
     return apiClient.hrm.get(`/departments/${id}`);

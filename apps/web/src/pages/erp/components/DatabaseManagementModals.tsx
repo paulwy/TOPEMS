@@ -48,7 +48,7 @@ interface DatabaseManagementModalsProps {
   onCloseDeleteDialog: () => void;
   onConfirmDelete: () => void;
 }
-const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> = ({
+export const DatabaseManagementModals: React.FC<DatabaseManagementModalsProps> = ({
   showStructureModal,
   onCloseStructureModal,
   currentTable,

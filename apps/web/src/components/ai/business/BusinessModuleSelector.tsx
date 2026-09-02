@@ -2,11 +2,11 @@ import React from 'react';
 import {
   Box,
   Chip,
-  Grid,
   Paper,
   Typography,
   useTheme,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import {
   Building2,
   Wallet,
@@ -117,7 +117,7 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
       </Typography>
       <Grid container spacing={1.5}>
         {BUSINESS_MODULES.map((mod) => (
-          <Grid item xs={6} sm={4} md={3} key={mod.id}>
+          <Grid xs={6} sm={4} md={3} key={mod.id}>
             <Paper
               elevation={selectedModule === mod.id ? 3 : 1}
               onClick={() => onSelect?.(mod.id)}

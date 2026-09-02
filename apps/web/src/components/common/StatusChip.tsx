@@ -22,7 +22,7 @@ export interface StatusChipProps {
   sx?: ChipProps['sx'];
 }
 
-const DEFAULT_STATUS_MAPPING: Record<string, Omit<StatusMapping, 'label'> & { labelKey: string }> =
+export const DEFAULT_STATUS_MAPPING: Record<string, Omit<StatusMapping, 'label'> & { labelKey: string }> =
   {
     draft: { color: 'secondary', labelKey: 'status_draft', variant: 'outlined' },
     pending: { color: 'warning', labelKey: 'status_pending' },

@@ -163,3 +163,81 @@ export const formatFileSize = (bytes: number | string): string => {
   const i = Math.floor(Math.log(number) / Math.log(k));
   return `${sharedFormatNumber(number / Math.pow(k, i), 2)} ${sizes[i]}`;
 };
+
+export const formatStatus = (status: string | number): string => {
+  const statusMap: Record<string, string> = {
+    0: i18n.t('shared.format.k1'),
+    1: i18n.t('shared.format.k2'),
+    active: i18n.t('shared.format.k3'),
+    inactive: i18n.t('shared.format.k4'),
+    pending: i18n.t('shared.format.k5'),
+    approved: i18n.t('shared.format.k6'),
+    rejected: i18n.t('shared.format.k7'),
+    completed: i18n.t('shared.format.k8'),
+    processing: i18n.t('shared.format.k9'),
+    cancelled: i18n.t('shared.format.k10'),
+    draft: i18n.t('shared.format.k11'),
+    published: i18n.t('shared.format.k12'),
+    deleted: i18n.t('shared.format.k13'),
+    success: i18n.t('shared.format.k14'),
+    failed: i18n.t('shared.format.k15'),
+    warning: i18n.t('shared.format.k16'),
+    error: i18n.t('shared.format.k17'),
+  };
+  return statusMap[String(status).toLowerCase()] || String(status);
+};
+
+export const formatPhone = (phone: string): string => {
+  if (!phone) return '';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+};
+
+export const formatEmail = (email: string): string => {
+  if (!email) return '';
+  const [prefix, domain] = email.split('@');
+  if (!prefix || !domain) return email;
+  return `${prefix.slice(0, 2)}***@${domain}`;
+};
+
+export const formatIdCard = (idCard: string): string => {
+  if (!idCard) return '';
+  return idCard.replace(/(\d{4})\d+(\d{4})/, '$1**********$2');
+};
+
+export const formatDateRange = (startDate: string, endDate: string): string => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return `${startDate} - ${endDate}`;
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const sameDay = sameMonth && start.getDate() === end.getDate();
+
+  if (sameDay) {
+    return formatDate(startDate, 'YYYY-MM-DD');
+  } else if (sameMonth) {
+    return `${formatDate(startDate, 'MM-DD')} - ${formatDate(endDate, 'MM-DD')}`;
+  } else if (sameYear) {
+    return `${formatDate(startDate, 'MM-DD')} - ${formatDate(endDate, 'MM-DD')}`;
+  } else {
+    return `${formatDate(startDate, 'YYYY-MM-DD')} - ${formatDate(endDate, 'YYYY-MM-DD')}`;
+  }
+};
+
+export const formatMonth = (dateString: string): string => {
+  return formatDate(dateString, i18n.t('shared.format.yyyymm_12'));
+};
+
+export const formatWeek = (dateString: string): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() + diff);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  return `${formatDate(weekStart.toISOString(), 'MM-DD')} ~ ${formatDate(weekEnd.toISOString(), 'MM-DD')}`;
+};

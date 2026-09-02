@@ -7,3 +7,15 @@ export type { RetrievedDocument, RetrievalRequest, RetrievalResponse, RetrievalC
 
 export { default as MultiAgentMonitor } from './multi-agent/MultiAgentMonitor';
 export type { AgentInfo, AgentTask, AgentMessage, CollaborationSession, AgentStatus, CollaborationMode } from './multi-agent/MultiAgentMonitor';
+
+export { AIHelperButton } from './AIHelperButton';
+export type { AIHelperButtonProps } from './AIHelperButton';
+
+export { AICodeGenerator } from './AICodeGenerator';
+export type { AICodeGeneratorProps } from './AICodeGenerator';
+
+export { AIDataCompleter } from './AIDataCompleter';
+export type { AIDataCompleterProps } from './AIDataCompleter';
+
+export { AIFormValidator } from './AIFormValidator';
+export type { AIFormValidatorProps } from './AIFormValidator';

@@ -32,14 +32,14 @@ export const ruleTypedApi = {
    * list_rules operation（openapi: GET /api/monitor/rules）
    * 返回 AlertRuleRecord[]（非分页，与 business-metrics/slos 不同）
    */
-  list: async (): Promise<TypedApiResponse<AlertRuleRecord[], 'list_rules'>> => {
+  list: async (): Promise<TypedApiResponse<AlertRuleRecord[]>> => {
     return apiClient.monitor.get('/rules');
   },
 
   /**
    * get_rule operation（openapi: GET /api/monitor/rules/{id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<AlertRuleRecord, 'get_rule'>> => {
+  get: async (id: string): Promise<TypedApiResponse<AlertRuleRecord>> => {
     return apiClient.monitor.get(`/rules/${id}`);
   },
 
@@ -49,7 +49,7 @@ export const ruleTypedApi = {
    */
   create: async (
     data: AdaptedRequestBody<'create_rule'> | AlertRuleCreateRequest
-  ): Promise<TypedApiResponse<AlertRuleRecord, 'create_rule'>> => {
+  ): Promise<TypedApiResponse<AlertRuleRecord>> => {
     return apiClient.monitor.post('/rules', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
@@ -59,7 +59,7 @@ export const ruleTypedApi = {
   update: async (
     id: string,
     data: AdaptedRequestBody<'update_rule'> | AlertRuleCreateRequest
-  ): Promise<TypedApiResponse<AlertRuleRecord, 'update_rule'>> => {
+  ): Promise<TypedApiResponse<AlertRuleRecord>> => {
     return apiClient.monitor.put(
       `/rules/${id}`,
       toOpenApiRequestBody(data as Record<string, unknown>)
@@ -69,7 +69,7 @@ export const ruleTypedApi = {
   /**
    * delete_rule operation（openapi: DELETE /api/monitor/rules/{id}）
    */
-  delete: async (id: string): Promise<TypedApiResponse<{ id: string }, 'delete_rule'>> => {
+  delete: async (id: string): Promise<TypedApiResponse<{ id: string }>> => {
     return apiClient.monitor.delete(`/rules/${id}`);
   },
 };

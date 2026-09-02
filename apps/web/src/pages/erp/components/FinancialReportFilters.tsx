@@ -20,7 +20,7 @@ const TAB_ICONS: Record<string, React.ReactElement> = {
   'cash-flow': <Activity size={16} />,
   'equity-change': <Building2 size={16} />,
 };
-const FinancialReportFilters: React.FC<FinancialReportFiltersProps> = ({
+export const FinancialReportFilters: React.FC<FinancialReportFiltersProps> = ({
   activeTab,
   onTabChange,
   periodType,

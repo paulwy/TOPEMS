@@ -7,7 +7,6 @@ import {
   CardContent,
   Chip,
   Divider,
-  Grid,
   LinearProgress,
   Paper,
   Stack,
@@ -17,6 +16,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import {
   FileText,
   FileType,
@@ -302,7 +302,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
             <Box>
               {document.metadata ? (
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">标题</Typography>
@@ -312,7 +312,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">作者</Typography>
@@ -322,7 +322,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">语言</Typography>
@@ -332,7 +332,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">页数</Typography>
@@ -342,7 +342,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">字数</Typography>
@@ -352,7 +352,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                       </CardContent>
                     </Card>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid xs={12} sm={6} md={4}>
                     <Card variant="outlined">
                       <CardContent sx={{ p: 2 }}>
                         <Typography variant="caption" color="text.secondary">文件大小</Typography>
@@ -378,7 +378,11 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                 placeholder="在文档中搜索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{ startAdornment: <Search size={18} style={{ marginRight: 8, color: 'text.secondary' }} /> }}
+                slotProps={{
+                  input: {
+                    startAdornment: <Search size={18} style={{ marginRight: 8, color: 'text.secondary' }} />,
+                  },
+                }}
                 sx={{ mb: 2 }}
               />
               {document.content && searchQuery ? (

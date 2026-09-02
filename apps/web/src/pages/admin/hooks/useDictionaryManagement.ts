@@ -22,7 +22,7 @@ const DEFAULT_NEW_TYPE: Partial<DictType> = {
   description: '',
   status: 'active',
 };
-function useDictionaryManagement() {
+export function useDictionaryManagement() {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<DictType | null>(null);

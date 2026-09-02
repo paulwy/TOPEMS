@@ -107,6 +107,11 @@ import {
   type DataTableConfig,
 } from '@/components/templates/DashboardTemplate';
 
+// 本文件测试真实模板（SettingsPageTemplate / DashboardTemplate），
+// 撤消 setup-mocks.ts 对这两个子路径模板的 stub mock。
+vi.unmock('@/components/templates/SettingsPageTemplate');
+vi.unmock('@/components/templates/DashboardTemplate');
+
 vi.mock('lucide-react', async (importOriginal) => {
   const actual: Record<
     string,

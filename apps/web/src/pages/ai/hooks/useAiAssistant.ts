@@ -57,7 +57,7 @@ interface UseAiAssistantResult {
   handleKnowledgeSubmit: () => Promise<void>;
 }
 
-const useAiAssistant = (): UseAiAssistantResult => {
+export const useAiAssistant = (): UseAiAssistantResult => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
 

@@ -197,7 +197,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                           </IconButton>
                         </Tooltip>
                       )}
-                      {voucher.status === 'draft' || voucher.status === 'pending' ? (
+                      {voucher.status === 'draft' || voucher.status === 'submitted' ? (
                         <Tooltip title={i18n.t('erp.voucher_mgmt.label.audit')}>
                           <IconButton
                             size='small'
@@ -221,7 +221,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                           </IconButton>
                         </Tooltip>
                       )}
-                      {(voucher.status === 'draft' || voucher.status === 'pending') && (
+                      {(voucher.status === 'draft' || voucher.status === 'submitted') && (
                         <Tooltip title={i18n.t('erp.voucher_mgmt.label.delete')}>
                           <IconButton
                             size='small'

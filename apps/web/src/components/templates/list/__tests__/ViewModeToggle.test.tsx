@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 
 import { renderWithProviders } from '@/__tests__/test-utils';
+import { ViewModeToggle } from '../ViewModeToggle';
 
 describe('ViewModeToggle', () => {
   beforeEach(() => {

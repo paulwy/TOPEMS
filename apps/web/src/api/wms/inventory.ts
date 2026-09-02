@@ -42,7 +42,7 @@ export const inventoryApi = {
   /**
    * V72.5 第二批 绑定样板：wms_get_inventory operation（openapi: GET /api/wms/inventory/{id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<InventoryItem, 'wms_get_inventory'>> => {
+  get: async (id: string): Promise<TypedApiResponse<InventoryItem>> => {
     return apiClient.wms.get(`/inventory/${id}`);
   },
 
@@ -51,7 +51,7 @@ export const inventoryApi = {
    */
   create: async (
     data: AdaptedRequestBody<'wms_create_inventory'> | CreateInventoryItemRequest
-  ): Promise<TypedApiResponse<InventoryItem, 'wms_create_inventory'>> => {
+  ): Promise<TypedApiResponse<InventoryItem>> => {
     return apiClient.wms.post('/inventory', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 

@@ -181,11 +181,10 @@ export function classifyMFError(params: {
 }
 
 export function getUserMessage(event: MFErrorEvent): string {
-  const base = USER_MESSAGES[event.type];
-  if (event.moduleName !== 'unknown') {
-    return `[${event.moduleName}] ${base}`;
-  }
-  return base;
+  const base = USER_MESSAGES[event.type] ?? i18n.t('microfrontend.mf-error-classifier.k9');
+  const prefix = event.moduleName !== 'unknown' ? `[${event.moduleName}] ` : '';
+  const detail = event.errorMessage ? `：${event.errorMessage}` : '';
+  return `${prefix}${base}${detail}`;
 }
 
 export function shouldShowToast(event: MFErrorEvent): boolean {

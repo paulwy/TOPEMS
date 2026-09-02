@@ -137,6 +137,7 @@ const apps = [
     status: 'published',
     version: 3,
     updated_at: '2026-08-10 14:22',
+    created_at: '2026-08-10 14:22',
   },
   {
     id: 'a2',
@@ -145,6 +146,7 @@ const apps = [
     status: 'draft',
     version: 1,
     updated_at: '2026-08-11 09:05',
+    created_at: '2026-08-11 09:05',
   },
   {
     id: 'a3',
@@ -153,12 +155,15 @@ const apps = [
     status: 'published',
     version: 5,
     updated_at: '2026-08-12 16:40',
+    created_at: '2026-08-12 16:40',
   },
 ];
 
 describe('AppListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // 复制操作走 window.confirm，jsdom 默认返回 false
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('renders loading spinner while fetching', async () => {

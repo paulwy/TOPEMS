@@ -64,10 +64,6 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
   gis: () => import('@/modules/gis/config').then((m) => ({ gisModuleConfig: m.gisModuleConfig })),
   asset: () =>
     import('@/modules/asset/config').then((m) => ({ assetModuleConfig: m.assetModuleConfig })),
-  lowcode: () =>
-    import('@/modules/lowcode/config').then((m) => ({
-      lowcodeModuleConfig: m.lowcodeModuleConfig,
-    })),
   oa: () => import('@/modules/oa/config').then((m) => ({ oaModuleConfig: m.oaModuleConfig })),
   ticket: () =>
     import('@/modules/ticket/config').then((m) => ({

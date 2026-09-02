@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 
 import type { ExportFormat, ExportScope } from '../ExportMenu';
+import { ExportMenu } from '../ExportMenu';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('react-i18next', () => ({

@@ -16,7 +16,7 @@ interface ApprovalFilterProps {
   tabs: string[];
   pendingCount: number;
 }
-const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
+export const ApprovalFilter: React.FC<ApprovalFilterProps> = ({
   searchQuery,
   onSearchChange,
   activeTab,

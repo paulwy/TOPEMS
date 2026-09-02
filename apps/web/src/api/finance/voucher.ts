@@ -22,7 +22,7 @@ export const voucherApi = {
    * V72.5 第二批 绑定样板：list_vouchers operation（openapi: GET /finance/vouchers）
    */
   list: async (
-    params?: AdaptedQuery<'list_vouchers'> | VoucherQueryParams
+    params?: Record<string, unknown> | VoucherQueryParams
   ): Promise<TypedPaginatedResponse<Voucher>> => {
     return apiClient.finance.get('/vouchers', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -32,7 +32,7 @@ export const voucherApi = {
   /**
    * V72.5 第二批 绑定样板：get_voucher operation（openapi: GET /finance/vouchers/{voucher_id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<Voucher, 'get_voucher'>> => {
+  get: async (id: string): Promise<TypedApiResponse<Voucher>> => {
     return apiClient.finance.get(`/vouchers/${id}`);
   },
 
@@ -48,11 +48,11 @@ export const voucherApi = {
    * V72.5 第二批 绑定样板：create_voucher operation（openapi: POST /finance/vouchers）
    */
   create: async (
-    data: AdaptedRequestBody<'create_voucher'> | CreateVoucherRequest
-  ): Promise<TypedApiResponse<VoucherOperationResult, 'create_voucher'>> => {
+    data: Record<string, unknown>
+  ): Promise<TypedApiResponse<VoucherOperationResult>> => {
     return apiClient.finance.post(
       '/vouchers',
-      toOpenApiRequestBody(data as Record<string, unknown>)
+      toOpenApiRequestBody(data)
     );
   },
 
@@ -66,7 +66,7 @@ export const voucherApi = {
 
   update: (
     id: string,
-    data: Partial<CreateVoucherRequest>
+    data: Record<string, unknown>
   ): Promise<ApiResponse<VoucherOperationResult>> => {
     return apiClient.finance.put(`/vouchers/${id}`, data);
   },

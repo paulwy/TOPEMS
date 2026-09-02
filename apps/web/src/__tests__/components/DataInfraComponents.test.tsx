@@ -47,6 +47,13 @@ import {
   type SettingTab,
 } from '@/components/templates/SettingsPageTemplate';
 
+// 本文件测试真实模板（Dashboard/Stats/GisMap/Settings），
+// 撤消 setup-mocks.ts 对这四个子路径模板的 stub mock。
+vi.unmock('@/components/templates/DashboardTemplate');
+vi.unmock('@/components/templates/StatsPageTemplate');
+vi.unmock('@/components/templates/GisMapTemplate');
+vi.unmock('@/components/templates/SettingsPageTemplate');
+
 // ========== 全局 mock（同 V82-2c 模板，保持一致） ==========
 const i18nMap = vi.hoisted(() => {
   const base: Record<string, string> = {

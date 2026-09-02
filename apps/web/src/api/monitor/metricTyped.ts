@@ -45,7 +45,7 @@ export const metricTypedApi = {
   /**
    * get_business_metric operation（openapi: GET /api/monitor/business-metrics/{id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<BusinessMetric, 'get_business_metric'>> => {
+  get: async (id: string): Promise<TypedApiResponse<BusinessMetric>> => {
     return apiClient.monitor.get(`/business-metrics/${id}`);
   },
 
@@ -55,7 +55,7 @@ export const metricTypedApi = {
    */
   create: async (
     data: AdaptedRequestBody<'create_business_metric'> | BusinessMetricRequest
-  ): Promise<TypedApiResponse<BusinessMetric, 'create_business_metric'>> => {
+  ): Promise<TypedApiResponse<BusinessMetric>> => {
     return apiClient.monitor.post(
       '/business-metrics',
       toOpenApiRequestBody(data as Record<string, unknown>)
@@ -68,7 +68,7 @@ export const metricTypedApi = {
   update: async (
     id: string,
     data: AdaptedRequestBody<'update_business_metric'> | BusinessMetricRequest
-  ): Promise<TypedApiResponse<BusinessMetric, 'update_business_metric'>> => {
+  ): Promise<TypedApiResponse<BusinessMetric>> => {
     return apiClient.monitor.put(
       `/business-metrics/${id}`,
       toOpenApiRequestBody(data as Record<string, unknown>)
@@ -80,7 +80,7 @@ export const metricTypedApi = {
    */
   delete: async (
     id: string
-  ): Promise<TypedApiResponse<{ id: string }, 'delete_business_metric'>> => {
+  ): Promise<TypedApiResponse<{ id: string }>> => {
     return apiClient.monitor.delete(`/business-metrics/${id}`);
   },
 };

@@ -28,7 +28,7 @@ interface AiModelUsageStatsProps {
   totalUsage: TotalUsage;
 }
 
-const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage }) => {
+export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage }) => {
   const { t } = useTranslation();
 
   return (

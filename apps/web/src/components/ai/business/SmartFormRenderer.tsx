@@ -7,7 +7,6 @@ import {
   FormControl,
   FormControlLabel,
   FormHelperText,
-  Grid,
   InputLabel,
   MenuItem,
   Paper,
@@ -17,7 +16,11 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { CheckCircle, Error, Save, Send } from '@mui/icons-material';
+import { Grid } from '@/components/common';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import Error from '@mui/icons-material/Error';
+import Save from '@mui/icons-material/Save';
+import Send from '@mui/icons-material/Send';
 
 export interface FormFieldDefinition {
   field_id: string;
@@ -204,8 +207,10 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             placeholder={field.placeholder}
             type="number"
             required={field.required}
-            inputProps={{
-              step: field.field_type === 'integer' ? 1 : 'any',
+            slotProps={{
+              htmlInput: {
+                step: field.field_type === 'integer' ? 1 : 'any',
+              },
             }}
           />
         );
@@ -217,7 +222,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             label={field.label}
             type="date"
             required={field.required}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
         );
 
@@ -228,7 +233,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             label={field.label}
             type="datetime-local"
             required={field.required}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
         );
 
@@ -328,7 +333,7 @@ export const SmartFormRenderer: React.FC<SmartFormRendererProps> = ({
             {...commonProps}
             label={field.label}
             value={value}
-            InputProps={{ readOnly: true }}
+            slotProps={{ input: { readOnly: true } }}
             required={false}
           />
         );

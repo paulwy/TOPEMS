@@ -17,6 +17,12 @@ import { Edit } from 'lucide-react';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 import type { MockInstance } from 'vitest';
 
+// 本文件是模板组件本身的测试：需要真实的 ListPageTemplate / DetailPageTemplate / FormPageTemplate，
+// 撤消 setup-mocks.ts 中对该三个子路径的模板 stub mock。
+vi.unmock('@/components/templates/ListPageTemplate');
+vi.unmock('@/components/templates/DetailPageTemplate');
+vi.unmock('@/components/templates/FormPageTemplate');
+
 // ========== 被测组件 ==========
 // ListPageTemplate：泛型，质量任务 / 样品 / 隐患清单的通用列表基盘
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
@@ -713,7 +719,9 @@ describe('ListPageTemplate · QMS/LIMS/EHS 列表共享', () => {
       />
     );
     // Skeleton 带 MuiSkeleton-root class，至少 3 列 × 2 行 = 6 个 skeleton
-    const skeletons = container.querySelectorAll('span.MuiSkeleton-root');
+    // Skeleton 被 mock 为纯 span（无 MuiSkeleton-root class，class 由真实 MUI 内部添加），
+    // 故改用 mock 提供的 data-testid="mui-skeleton" 计数。
+    const skeletons = container.querySelectorAll('[data-testid="mui-skeleton"]');
     expect(skeletons.length).toBeGreaterThanOrEqual(6);
     unmount();
 

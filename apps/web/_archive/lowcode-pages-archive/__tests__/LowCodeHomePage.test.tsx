@@ -136,7 +136,7 @@ describe('LowCodeHomePage', () => {
       expect(screen.getByText('12')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('低代码平台概览')).toBeInTheDocument();
+    expect(screen.getByText('低代码概览')).toBeInTheDocument();
     expect(screen.getByText('应用总数')).toBeInTheDocument();
     expect(screen.getByText('已发布应用')).toBeInTheDocument();
     expect(screen.getByText('数据模型')).toBeInTheDocument();

@@ -8,7 +8,7 @@ import { useCrudMutations } from '@/hooks';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-function useTemplateManagement() {
+export function useTemplateManagement() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);

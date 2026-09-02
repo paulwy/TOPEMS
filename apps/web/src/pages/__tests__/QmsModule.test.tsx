@@ -10,6 +10,7 @@ import { qmsApi } from '@/api/qms';
 import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/qms', () => ({
+  useQmsMock: () => ({ data: {}, mockEnabled: false, refresh: () => {} }),
   qmsApi: {
     dashboard: {
       getStatistics: vi.fn().mockResolvedValue({ data: {} }),

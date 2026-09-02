@@ -248,11 +248,19 @@ describe('WorkflowConfigPage', () => {
       expect(screen.getByText('客户自动分配')).toBeInTheDocument();
     });
 
-    const toggleBtns = screen.getAllByRole('button', { name: /(启用|禁用)/ });
-    fireEvent.click(toggleBtns[0]);
+    // 点击 enabled 行的“禁用”按钮（w1）
+    fireEvent.click(screen.getByRole('button', { name: '禁用' }));
     expect(mockDisable).toHaveBeenCalledWith('w1');
 
-    fireEvent.click(toggleBtns[1]);
-    expect(mockEnable).toHaveBeenCalledWith('w2');
+    // mutation 成功后 invalidate 重查，按钮重新渲染；
+    // 等“启用”按钮可点击（非 disabled）后再点，避免 isMutating 期间点击丢失
+    await waitFor(() => {
+      const btn = screen.getAllByRole('button', { name: '启用' })[0];
+      if (!btn || (btn as HTMLButtonElement).disabled) {
+        throw new Error('启用 button not ready');
+      }
+      fireEvent.click(btn);
+      expect(mockEnable).toHaveBeenCalledWith('w2');
+    });
   });
 });

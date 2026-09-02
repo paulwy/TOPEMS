@@ -138,11 +138,20 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+vi.mock('@/components/templates', () => ({
+  MobilePageTemplate: ({ title, children }: { title?: React.ReactNode; children?: React.ReactNode }) => (
+    <div data-testid='mobile-page-template'>
+      {title}
+      {children}
+    </div>
+  ),
+}));
+
 describe('MobileApprovalPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileApprovalPage />);
     await waitFor(() => {
-      expect(screen.getByText('审批')).toBeInTheDocument();
+      expect(screen.getByText('审批中心')).toBeInTheDocument();
     });
   });
 });

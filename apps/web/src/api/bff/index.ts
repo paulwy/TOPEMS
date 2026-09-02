@@ -460,3 +460,154 @@ export const masterDataApi = {
   getByCode: (domain: string, code: string) =>
     apiClient.erp.get<ApiResponse<MasterDataRef>>(`/master-data-refs/by-code/${domain}/${code}`),
 };
+
+// ==================== 通用联邦实体 CRUD（GraphQL） ====================
+
+/** 实体列表查询参数 */
+export interface ListEntitiesParams {
+  page: number;
+  pageSize: number;
+  [key: string]: unknown;
+}
+
+/** 通用实体列表查询（联邦 GraphQL） */
+export async function listEntitiesGql<T = unknown>(
+  service: string,
+  entityType: string,
+  params: ListEntitiesParams
+): Promise<{ items: T[]; total: number }> {
+  const { page, pageSize, ...filters } = params;
+  const filterStr = Object.entries(filters)
+    .map(([k, v]) => `${k}: $${k}`)
+    .join(', ');
+  return bffGraphQL<{ listEntities: { items: T[]; total: number } }>(
+    `
+    query ListEntities($service: String!, $entityType: String!, $page: Int!, $pageSize: Int!${filterStr ? `, ${filterStr}` : ''}) {
+      listEntities(service: $service, entityType: $entityType, page: $page, pageSize: $pageSize${Object.keys(filters).length ? `, ${Object.keys(filters).map((k) => `${k}: $${k}`).join(', ')}` : ''}) {
+        items
+        total
+      }
+    }
+  `,
+    { service, entityType, page, pageSize, ...filters }
+  ).then((r) => r.listEntities);
+}
+
+/** 联邦单实体查询 */
+export async function getFederatedEntityGql<T = unknown>(
+  service: string,
+  entityType: string,
+  id: string
+): Promise<{ data: T }> {
+  return bffGraphQL<{ entity: { data: T } }>(
+    `
+    query GetFederatedEntity($service: String!, $entityType: String!, $id: ID!) {
+      entity(service: $service, entityType: $entityType, id: $id) {
+        data
+      }
+    }
+  `,
+    { service, entityType, id }
+  ).then((r) => r.entity);
+}
+
+/** 创建实体（GraphQL Mutation） */
+export async function createEntityGql<T = unknown>(
+  service: string,
+  entityType: string,
+  item: Record<string, unknown>
+): Promise<{ createEntity: T }> {
+  return bffGraphQL<{ createEntity: T }>(
+    `
+    mutation CreateEntity($service: String!, $entityType: String!, $item: JSON!) {
+      createEntity(service: $service, entityType: $entityType, item: $item)
+    }
+  `,
+    { service, entityType, item }
+  );
+}
+
+/** 更新实体（GraphQL Mutation） */
+export async function updateEntityGql<T = unknown>(
+  service: string,
+  entityType: string,
+  id: string,
+  item: Record<string, unknown>
+): Promise<{ updateEntity: T }> {
+  return bffGraphQL<{ updateEntity: T }>(
+    `
+    mutation UpdateEntity($service: String!, $entityType: String!, $id: ID!, $item: JSON!) {
+      updateEntity(service: $service, entityType: $entityType, id: $id, item: $item)
+    }
+  `,
+    { service, entityType, id, item }
+  );
+}
+
+/** 删除实体（GraphQL Mutation） */
+export async function deleteEntityGql(
+  service: string,
+  entityType: string,
+  id: string
+): Promise<void> {
+  await bffGraphQL<{ deleteEntity: boolean }>(
+    `
+    mutation DeleteEntity($service: String!, $entityType: String!, $id: ID!) {
+      deleteEntity(service: $service, entityType: $entityType, id: $id)
+    }
+  `,
+    { service, entityType, id }
+  );
+}
+
+/** 获取联邦仪表盘聚合数据 */
+export async function getFederatedDashboard() {
+  return bffGraphQL<{
+    dashboard: {
+      stats: {
+        erp: ServiceStats;
+        crm: ServiceStats;
+        hrm: ServiceStats;
+        finance: ServiceStats;
+        mes: ServiceStats;
+        workflow: ServiceStats;
+      };
+      todos: UnifiedTodo[];
+      services: Array<{ service: string; healthy: boolean; url: string }>;
+    };
+    moduleStats: Array<{ service: string; total: number; available: boolean }>;
+    federatedServices: Array<{
+      service: string;
+      url: string;
+      available: boolean;
+      entities: string[];
+    }>;
+  }>(`
+    query FederatedDashboard {
+      dashboard {
+        stats {
+          erp { service total active available }
+          crm { service total active available }
+          hrm { service total active available }
+          finance { service total active available }
+          mes { service total active available }
+          workflow { service total active available }
+        }
+        todos { id title source priority status createdAt }
+        services { service healthy url }
+      }
+      moduleStats { service total available }
+      federatedServices { service url available entities }
+    }
+  `);
+}
+
+/** 注册 BFF GraphQL 性能监控回调，返回取消注册函数 */
+export function onBffPerformance(
+  cb: PerformanceCallback
+): () => void {
+  performanceCallbacks.add(cb);
+  return () => {
+    performanceCallbacks.delete(cb);
+  };
+}

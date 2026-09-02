@@ -2,10 +2,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { ApiResponse } from '@topems/shared-types';
 import { handleResponse, handleRequestError, safeRequest, paginatedRequest } from '../client';
 
-vi.mock('@/utils/logger', () => ({
-  default: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
-  __esModule: true,
-}));
+vi.mock('@/utils/logger', () => {
+  const mockLogger = () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() });
+  return {
+    default: mockLogger,
+    createLogger: mockLogger,
+    apiLogger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+    __esModule: true,
+  };
+});
 
 vi.mock('@/utils/errors', () => ({
   handleApiError: vi.fn((e: unknown) => ({

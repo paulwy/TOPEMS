@@ -34,7 +34,7 @@ vi.mock('lucide-react', () => ({
 vi.mock('@/api/plugin', () => ({
   Plugin: class {},
   fetchAllPluginInfo: vi.fn(),
-  PLUGIN_REGISTRY: {
+  PLUGIN_REGISTRY: () => ({
     workflow: { port: 3001, url: 'http://localhost:3001' },
     erp: { port: 3002, url: 'http://localhost:3002' },
     hrm: { port: 3003, url: 'http://localhost:3003' },
@@ -53,7 +53,7 @@ vi.mock('@/api/plugin', () => ({
     monitor: { port: 3016, url: 'http://localhost:3016' },
     portal: { port: 3017, url: 'http://localhost:3017' },
     integration: { port: 3018, url: 'http://localhost:3018' },
-  },
+  }),
 }));
 
 vi.mock('@/lib/reactQuery', () => ({

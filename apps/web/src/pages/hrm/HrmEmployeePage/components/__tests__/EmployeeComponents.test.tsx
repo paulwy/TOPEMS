@@ -194,7 +194,7 @@ describe('EmployeeFormDialog', () => {
     render(<EmployeeFormDialog {...defaultProps} />);
 
     expect(
-      screen.getByText('hrm.hrm_employee_page_components__employee_form_dialog.add')
+      screen.getByText('新增员工')
     ).toBeInTheDocument();
     expect(screen.getByDisplayValue('张三')).toBeInTheDocument();
     expect(screen.getByDisplayValue('E001')).toBeInTheDocument();
@@ -211,23 +211,23 @@ describe('EmployeeFormDialog', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'hrm.hrm_employee_page_components__employee_form_dialog.text_0dd441',
+        name: '生成工号',
       })
     );
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'hrm.hrm_employee_page_components__employee_form_dialog.text_e93748',
+        name: '智能补全',
       })
     );
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'hrm.hrm_employee_page_components__employee_form_dialog.text_6bc019',
+        name: 'AI校验',
       })
     );
     fireEvent.click(screen.getByRole('button', { name: '取消' }));
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'hrm.hrm_employee_page_components__employee_form_dialog.create',
+        name: '创建',
       })
     );
 
@@ -247,11 +247,11 @@ describe('EmployeeFormDialog', () => {
     );
 
     expect(
-      screen.getByText('hrm.hrm_employee_page_components__employee_form_dialog.edit')
+      screen.getByText('编辑员工')
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', {
-        name: 'hrm.hrm_employee_page_components__employee_form_dialog.save',
+        name: '保存',
       })
     ).toBeInTheDocument();
   });

@@ -53,7 +53,7 @@ interface AuditLog {
   created_at: string;
 }
 
-const useDashboardData = () => {
+export const useDashboardData = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, hasPermission } = useAuth();

@@ -5,8 +5,8 @@
  * 请勿手动修改
  */
 
-import { apiClient } from '../client';
-import type { ApiResponse } from '../client';
+import { apiClient } from '../../client';
+import type { ApiResponse } from '../../client';
 import type * as Types from './types';
 
 // ============================================================================

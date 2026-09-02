@@ -1,6 +1,6 @@
-import apiClient from '../../client';
-import type { ApiResponse } from '../../client';
-import { cleanEmptyUuids } from '../utils';
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import { cleanEmptyUuids } from '../erp/utils';
 import type {
   Asset,
   FixedAsset,

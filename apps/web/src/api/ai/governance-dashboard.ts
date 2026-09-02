@@ -230,7 +230,7 @@ export interface GovernanceDashboardData {
 // API 函数
 // ============================================================================
 
-const BASE_PATH = '/api/ai/dsh/governance';
+const BASE_PATH = '/api/ai/governance';
 
 /**
  * 获取治理仪表盘数据

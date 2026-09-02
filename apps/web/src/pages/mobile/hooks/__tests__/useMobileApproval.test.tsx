@@ -133,9 +133,9 @@ describe('useMobileApproval', () => {
 
     it('getPriorityLabel should return correct labels', () => {
       const t = (x: string) => x;
-      expect(getPriorityLabel('high', t)).toBe('mobile.approval.priority.urgent');
-      expect(getPriorityLabel('medium', t)).toBe('mobile.approval.priority.normal');
-      expect(getPriorityLabel('low', t)).toBe('mobile.approval.priority.low');
+      expect(getPriorityLabel('high', t)).toBe('紧急');
+      expect(getPriorityLabel('medium', t)).toBe('普通');
+      expect(getPriorityLabel('low', t)).toBe('低');
     });
   });
 

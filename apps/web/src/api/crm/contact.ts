@@ -27,7 +27,7 @@ export const contactApi = {
 
   create: async (
     data: AdaptedRequestBody<'create_contact'> | CreateContactRequest
-  ): Promise<TypedApiResponse<Contact, 'create_contact'>> => {
+  ): Promise<TypedApiResponse<Contact>> => {
     return apiClient.crm.post('/contacts', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 

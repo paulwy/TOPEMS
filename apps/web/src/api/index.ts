@@ -46,7 +46,6 @@ export { templateApi } from './template';
 export { integrationApi } from './integration';
 export { automationApi } from './automation';
 export { externalErpApi } from './external-erp';
-export { lowcodeApi } from './lowcode';
 export { consolidationContractApi as consolidationContract } from './consolidation-contract';
 export * as consolidationApi from './consolidation';
 
@@ -66,7 +65,7 @@ export * as reportApi from './report';
 export * as migrationApi from './migration';
 export * as financeApi from './finance';
 export { helpApi } from './help';
-export { feedbackApi } from './feedback';
+// [V2026.08 已合并] feedbackApi 已归档 apps/web/_archive/feedback-api（feedback 服务合并至 ticket，兼容端点在 /api/feedback）
 
 // V33.0/V34.0 Portal BFF 聚合 API
 export {

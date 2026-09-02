@@ -60,7 +60,7 @@ const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
   </div>
 );
-const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
+export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
   alerts,
   loading,
   total,

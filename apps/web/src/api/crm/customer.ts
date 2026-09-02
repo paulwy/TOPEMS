@@ -38,14 +38,14 @@ export const customerApi = {
    */
   create: async (
     data: AdaptedRequestBody<'create_customer'> | CreateCustomerRequest
-  ): Promise<TypedApiResponse<Customer, 'create_customer'>> => {
+  ): Promise<TypedApiResponse<Customer>> => {
     return apiClient.crm.post('/customers', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
    * A4 绑定样板：get_customer operation（openapi: GET /crm/customers/{id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<Customer, 'get_customer'>> => {
+  get: async (id: string): Promise<TypedApiResponse<Customer>> => {
     return apiClient.crm.get(`/customers/${id}`);
   },
 

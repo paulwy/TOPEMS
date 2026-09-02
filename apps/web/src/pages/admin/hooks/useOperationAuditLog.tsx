@@ -19,7 +19,7 @@ const formatDateTimeForApi = (dateTimeString: string): string => {
     return dateTimeString;
   }
 };
-const useOperationAuditLog = () => {
+export const useOperationAuditLog = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const MODULE_OPTIONS: Array<{ value: string; label: string }> = useMemo(
     () => [

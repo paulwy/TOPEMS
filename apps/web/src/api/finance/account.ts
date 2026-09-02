@@ -49,7 +49,7 @@ export const accountApi = {
   /**
    * V72.5 第二批 绑定样板：get_account operation（openapi: GET /finance/accounts/{account_id}）
    */
-  get: async (id: string): Promise<TypedApiResponse<Account, 'get_account'>> => {
+  get: async (id: string): Promise<TypedApiResponse<Account>> => {
     return apiClient.finance.get(`/accounts/${id}`);
   },
 
@@ -59,7 +59,7 @@ export const accountApi = {
    */
   create: async (
     data: AdaptedRequestBody<'create_account'> | Partial<Account>
-  ): Promise<TypedApiResponse<Account, 'create_account'>> => {
+  ): Promise<TypedApiResponse<Account>> => {
     return apiClient.finance.post(
       '/accounts',
       toOpenApiRequestBody(data as Record<string, unknown>)

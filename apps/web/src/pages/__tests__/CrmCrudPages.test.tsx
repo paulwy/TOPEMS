@@ -6,15 +6,11 @@ import InteractionManagementPage from '../crm/InteractionManagementPage';
 import ReturnListPage from '../crm/ReturnListPage';
 import { crmApi, interactionApi, returnsApi } from '@/api/crm';
 
+// setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api，
+// 但本文件专门验证真实适配器的参数归一化/响应解包/错误翻译，需恢复真实实现。
+vi.unmock('@/schema/crudPageAdapter');
+
 const mockCrudPage = vi.hoisted(() => vi.fn());
-const mockCreateCrudPageAdapter = vi.hoisted(() =>
-  vi.fn((handlers) => ({
-    list: handlers.list,
-    create: handlers.create,
-    update: handlers.update,
-    delete: handlers.delete,
-  }))
-);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -27,10 +23,6 @@ vi.mock('@/components/templates/CrudPage', () => ({
     mockCrudPage(props);
     return <div data-testid='crud-page'>crud-page</div>;
   },
-}));
-
-vi.mock('@/schema/crudPageAdapter', () => ({
-  createCrudPageAdapter: mockCreateCrudPageAdapter,
 }));
 
 vi.mock('@/schemas/crm/contact', () => ({
@@ -146,14 +138,10 @@ describe('CrmCrudPages', () => {
     render(<ContactManagementPage />);
     const props = mockCrudPage.mock.calls[0][0];
 
-    await expect(props.apiAdapter.list({})).rejects.toThrow('crm.contactList.error_load_list');
-    await expect(props.apiAdapter.create({})).rejects.toThrow('crm.contactList.error_create');
-    await expect(props.apiAdapter.update('contact-1', {})).rejects.toThrow(
-      'crm.contactList.error_update'
-    );
-    await expect(props.apiAdapter.delete('contact-1')).rejects.toThrow(
-      'crm.contactList.error_delete'
-    );
+    await expect(props.apiAdapter.list({})).rejects.toThrow('加载列表失败');
+    await expect(props.apiAdapter.create({})).rejects.toThrow('创建失败');
+    await expect(props.apiAdapter.update('contact-1', {})).rejects.toThrow('更新失败');
+    await expect(props.apiAdapter.delete('contact-1')).rejects.toThrow('删除失败');
   });
 
   it('renders interaction management with adapter-backed API methods', () => {

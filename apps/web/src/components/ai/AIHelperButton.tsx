@@ -4,7 +4,7 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import type { ButtonProps } from '@mui/material/Button';
 import i18n from '@/i18n';
 
-interface AIHelperButtonProps {
+export interface AIHelperButtonProps {
   type: 'generate' | 'optimize' | 'validate' | 'complete';
   onClick: () => void;
   disabled?: boolean;

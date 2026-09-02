@@ -47,7 +47,6 @@ const GROUP2_SERVICES = [
   'search',
   // V68.1 拆分服务
   'plugin-registry',
-  'billing',
   'ticket',
   'feedback',
   // [V2026.08 已移除] lowcode 空壳占位服务

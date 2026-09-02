@@ -108,9 +108,9 @@ export interface CopilotRequest {
 
 /** 发送消息请求 */
 export interface SendMessageRequest {
-  user_id: string;
-  message: string;
-  module?: BusinessModuleType;
+  module: BusinessModuleType;
+  session_id: string;
+  user_input: string;
 }
 
 /** Copilot 响应 */
@@ -189,7 +189,7 @@ export interface QuickActionItem {
 // API 函数
 // ============================================================================
 
-const BASE_PATH = '/api/ai/dsh/copilot';
+const BASE_PATH = '/api/ai/copilot';
 
 /**
  * 创建 Copilot 会话
@@ -224,10 +224,9 @@ export async function deleteSession(session_id: string): Promise<ApiResponse<voi
  * 发送消息并获取响应
  */
 export async function sendMessage(
-  session_id: string,
   request: SendMessageRequest
 ): Promise<ApiResponse<CopilotResponse>> {
-  return apiClient.post(`${BASE_PATH}/sessions/${session_id}/messages`, request);
+  return apiClient.post(`${BASE_PATH}/chat`, request);
 }
 
 /**
@@ -237,7 +236,7 @@ export async function recognizeIntent(
   text: string,
   module?: BusinessModuleType
 ): Promise<ApiResponse<IntentRecognitionResult>> {
-  return apiClient.post(`${BASE_PATH}/intent/recognize`, { text, module });
+  return apiClient.post(`${BASE_PATH}/intent`, { text, module });
 }
 
 /**

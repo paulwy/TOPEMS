@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
-import { StatusTimeline, type TimelineItem } from '../StatusTimeline';
+import StatusTimeline from '../StatusTimeline';
+import type { TimelineItem } from '../StatusTimeline';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('react-i18next', () => {

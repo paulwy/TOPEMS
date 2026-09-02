@@ -27,6 +27,17 @@ export { incomingInspectionApi } from './incomingInspection';
 export { syncRecordApi } from './syncRecord';
 export { auditLogApi } from './auditLog';
 export { deliveryAppointmentApi } from './deliveryAppointment';
+export { purchaseItemApi } from './purchaseItem';
+export { supplierEvaluationApi } from './supplierEvaluation';
+export { mrpPlanApi } from './mrpPlan';
+export { mrpSuggestionApi } from './mrpSuggestion';
+export { inspectionRecordApi } from './inspectionRecord';
+export { inventoryTurnoverApi } from './inventoryTurnover';
+export { supplyChainDashboardApi } from './supplyChainDashboard';
+export { priceComparisonApi } from './priceComparison';
+export { purchaseRequisitionApi } from './purchaseRequisition';
+export { purchaseContractApi } from './purchaseContract';
+export { supplierAdmissionApi } from './supplierAdmission';
 
 export const scmApi = {
   suppliers: supplierApi,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { batchOperation } from '../batchOperation';
+import { batchOperation, createBatchAbortController } from '../batchOperation';
 
 interface Employee {
   id: number;

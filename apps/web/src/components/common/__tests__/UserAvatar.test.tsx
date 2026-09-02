@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
+import UserAvatar from '../UserAvatar';
 
 describe('UserAvatar', () => {
   beforeEach(() => {

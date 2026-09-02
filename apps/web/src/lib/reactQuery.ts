@@ -1063,6 +1063,9 @@ export const QUERY_KEYS = {
     WORKFLOW_STATISTICS_BASE: ['ad-hoc', 'workflow_statistics_base'],
     WORKFLOW_VERSIONS_BASE: ['ad-hoc', 'workflow_versions_base'],
     WORKFLOW_VERSION_WORKFLOW_BASE: ['ad-hoc', 'workflow_version_workflow_base'],
+    PROJECT_FINANCE_BASE: ['ad-hoc', 'project_finance_base'],
+    PROJECT_BUDGET_ITEMS_BASE: ['ad-hoc', 'project_budget_items_base'],
+    PROJECT_COST_PERFORMANCE_BASE: ['ad-hoc', 'project_cost_performance_base'],
   },
 };
 

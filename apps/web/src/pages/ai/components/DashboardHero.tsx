@@ -9,7 +9,7 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-const DashboardHero: React.FC = () => {
+export const DashboardHero: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 

@@ -5,6 +5,7 @@ import React from 'react';
 import { Tabs } from '@mui/material';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import type { ExtendedTabConfig } from '../ExtendedTab';
+import ExtendedTab from '../ExtendedTab';
 
 // Mock PluginContext to control isPluginInstalled behavior
 const isPluginInstalledMock = vi.fn((code: string) => code === 'installed-module');

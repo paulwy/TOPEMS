@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
+import ShortcutsHelpPanel from '../ShortcutsHelpPanel';
 
 vi.mock('react-i18next', () => {
   const sources = [

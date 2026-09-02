@@ -53,10 +53,10 @@ describe('TreeView', () => {
     // Child should not be visible initially
     expect(screen.queryByText('Child 1.1')).not.toBeInTheDocument();
 
-    // Click the expand toggle button for Node 1 (first IconButton)
-    const node1Row = screen.getByText('Node 1').closest('div');
-    expect(node1Row).not.toBeNull();
-    const toggleButton = node1Row!.parentElement!.querySelector('button');
+    // Click the expand toggle button for Node 1 (the row's first IconButton)
+    const nodeLabel = screen.getByText('Node 1');
+    const row = nodeLabel.parentElement!.parentElement!;
+    const toggleButton = row.querySelector('button');
     expect(toggleButton).not.toBeNull();
     fireEvent.click(toggleButton!);
 
@@ -104,8 +104,9 @@ describe('TreeView', () => {
       />
     );
 
-    const node1Row = screen.getByText('Node 1').closest('div');
-    const toggleButton = node1Row!.parentElement!.querySelector('button');
+    const nodeLabel = screen.getByText('Node 1');
+    const row = nodeLabel.parentElement!.parentElement!;
+    const toggleButton = row.querySelector('button');
     fireEvent.click(toggleButton!);
 
     expect(handleExpand).toHaveBeenCalledWith('node-1');

@@ -31,6 +31,7 @@ export { expenseApi } from './expense';
 export { budgetApi } from './budget';
 export { riskApi } from './risk';
 export { taxApi } from './tax';
+export { accountingSubjectApi } from './accountingSubject';
 
 // ============================================================================
 // ERP → Finance 类型迁移（B1 阶段）

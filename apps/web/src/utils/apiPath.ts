@@ -9,17 +9,17 @@
  *  └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-const API_VERSION = '';
+export const API_VERSION = '';
 
 /**
  * Group1 核心虚拟服务（K8s ingress `/api/core/*` 转发到 unified-core:8000）
  * 这些服务的路径必须以 `/api/core/{svc}/` 开头。
  *
  * V66.1 架构一致性修复：mail/im/notification/comm 已外迁到 communication 独立服务（8084），
- * billing/ticket 已外迁为独立进程（8085/8086），不再属于 Group1。
+ * ticket 已外迁为独立进程（8086），不再属于 Group1。
  * 独立服务的路径前缀为 `/api/{svc}/`。
  */
-const GROUP1_CORE_SERVICES = new Set<string>([
+export const GROUP1_CORE_SERVICES = new Set<string>([
   'iam',
   'flow', // 工作流引擎（unified-core 虚拟服务，路径 /api/core/flow）
   'file',
@@ -35,7 +35,7 @@ const GROUP1_CORE_SERVICES = new Set<string>([
 ]);
 
 /** Group2 独立进程服务列表（作为快速引用，实际所有非 Group1 服务都算 Group2） */
-const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
+export const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'erp',
   'finance',
   'ai',
@@ -64,8 +64,8 @@ const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   // 扩展服务（V66 外迁为独立进程）
   'communication', // 通讯（mail/im/notification/comm 整合），端口 8084
   'search', // 全文搜索，端口 8082
-  'billing', // 计费，端口 8085
   'ticket', // 工单，端口 8086
+  'feedback', // 反馈，端口 8087（已合并至 ticket 的 customer_feedback 类型，/api/feedback 兼容路由）
   // [V2026.08 已合并] feedback 已合并至 ticket（customer_feedback 类型），/api/feedback 兼容路由指向 ticket
   // [V2026.08 已移除] lowcode 空壳占位服务（原端口 8088）
   // 子路径模块（归 Group2）
@@ -77,7 +77,7 @@ const GROUP2_INDEPENDENT_SERVICES = new Set<string>([
   'asset', // 资产（归 erp 服务，但路径独立）
 ]);
 
-const SERVICE_CODES = {
+export const SERVICE_CODES = {
   iam: 'iam',
   portal: 'portal',
   workflow: 'flow', // workflow 是别名，实际服务为 'flow'（unified-core 虚拟服务，路径 /api/core/flow）
@@ -115,7 +115,6 @@ const SERVICE_CODES = {
   monitor: 'monitor',
   oa: 'oa',
   search: 'search', // Group2: 全文搜索（端口 8082）
-  billing: 'billing', // Group2: 计费（端口 8085）
   ticket: 'ticket', // Group2: 工单（端口 8086）
   feedback: 'feedback', // Group2: 反馈（端口 8087）
   // [V2026.08 已移除] lowcode 空壳占位服务
@@ -140,7 +139,7 @@ interface ApiPathOptions {
  *   Group1（iam/workflow/file/...） →  /api/core/{svc}/{path}
  *   Group2（erp/hrm/pm/...）       →  /api/{svc}/{path}
  */
-function buildApiPath(options: ApiPathOptions): string {
+export function buildApiPath(options: ApiPathOptions): string {
   const { service, path } = options;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const prefix = GROUP1_CORE_SERVICES.has(service) ? '/api/core' : '/api';
@@ -150,11 +149,11 @@ function buildApiPath(options: ApiPathOptions): string {
 /**
  * 无版本路径（V9.0 统一默认风格，等价于 buildApiPath 不带 version）
  */
-function buildUnifiedApiPath(service: string, path: string): string {
+export function buildUnifiedApiPath(service: string, path: string): string {
   return buildApiPath({ service, path });
 }
 
-function createServiceApi(service: ServiceCode | string) {
+export function createServiceApi(service: ServiceCode | string) {
   return {
     path: (resourcePath: string) => buildApiPath({ service, path: resourcePath }),
     list: (resource: string) => buildApiPath({ service, path: `/${resource}` }),
@@ -205,7 +204,6 @@ export const SERVICES = {
   'master-data': createServiceApi('master-data'),
   communication: createServiceApi('communication'),
   search: createServiceApi('search'),
-  billing: createServiceApi('billing'),
   ticket: createServiceApi('ticket'),
   feedback: createServiceApi('feedback'),
   // [V2026.08 已移除] lowcode 空壳占位服务

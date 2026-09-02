@@ -18,7 +18,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -39,6 +38,7 @@ import {
   ListItemText,
   Avatar,
 } from '@mui/material';
+import { Grid } from '@/components/common';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -54,6 +54,7 @@ import InfoIcon from '@mui/icons-material/Info';
 
 import { GovernanceDashboard } from '@/components/ai/business';
 import { useGovernanceDashboard } from '@/hooks/features/ai/useGovernanceDashboard';
+import { useTranslation } from 'react-i18next';
 import type { TimeRange } from '@/api/ai/governance-dashboard';
 
 // ============================================================================
@@ -61,6 +62,8 @@ import type { TimeRange } from '@/api/ai/governance-dashboard';
 // ============================================================================
 
 const GovernanceDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
+
   // 状态
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('24h');
 
@@ -89,10 +92,10 @@ const GovernanceDashboardPage: React.FC = () => {
 
   // 时间范围选项
   const timeRangeOptions: { value: TimeRange; label: string }[] = [
-    { value: '1h', label: '最近 1 小时' },
-    { value: '24h', label: '最近 24 小时' },
-    { value: '7d', label: '最近 7 天' },
-    { value: '30d', label: '最近 30 天' },
+    { value: '1h', label: t('ai.governance_dashboard.range_1h') },
+    { value: '24h', label: t('ai.governance_dashboard.range_24h') },
+    { value: '7d', label: t('ai.governance_dashboard.range_7d') },
+    { value: '30d', label: t('ai.governance_dashboard.range_30d') },
   ];
 
   // 渲染加载状态
@@ -109,12 +112,16 @@ const GovernanceDashboardPage: React.FC = () => {
     );
   }
 
+  if (!dashboard) {
+    return null;
+  }
+
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和控制栏 */}
       <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+          <Grid xs={12} md={6}>
             <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DashboardIcon color="primary" sx={{ fontSize: 40 }} />
               AI 治理仪表盘
@@ -123,14 +130,14 @@ const GovernanceDashboardPage: React.FC = () => {
               全面监控 AI 系统的安全、合规、成本和性能
             </Typography>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
+          <Grid xs={12} md={6}>
+            <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
               {/* 时间范围选择 */}
               <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>时间范围</InputLabel>
+                <InputLabel>{t('ai.governance_dashboard.time_range')}</InputLabel>
                 <Select
                   value={selectedTimeRange}
-                  label="时间范围"
+                  label={t('ai.governance_dashboard.time_range')}
                   onChange={(e) => handleTimeRangeChange(e.target.value as TimeRange)}
                 >
                   {timeRangeOptions.map((option) => (
@@ -147,7 +154,7 @@ const GovernanceDashboardPage: React.FC = () => {
                 size="small"
                 onClick={() => setAutoRefresh(!autoRefresh)}
               >
-                {autoRefresh ? '自动刷新中' : '开启自动刷新'}
+                {autoRefresh ? t('ai.governance_dashboard.auto_refreshing') : t('ai.governance_dashboard.enable_auto_refresh')}
               </Button>
 
               {/* 刷新按钮 */}
@@ -158,7 +165,7 @@ const GovernanceDashboardPage: React.FC = () => {
                 onClick={refresh}
                 disabled={isLoading}
               >
-                {isLoading ? '刷新中' : '刷新'}
+                {isLoading ? t('ai.governance_dashboard.refreshing') : t('ai.governance_dashboard.refresh')}
               </Button>
 
               {/* 清除缓存按钮 */}
@@ -206,7 +213,7 @@ const GovernanceDashboardPage: React.FC = () => {
       {dashboard && (
         <Grid container spacing={3}>
           {/* 风险评估详情 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -254,7 +261,7 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 合规状态详情 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -272,7 +279,7 @@ const GovernanceDashboardPage: React.FC = () => {
                     </Typography>
                   </Box>
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <CheckCircleIcon color="success" sx={{ fontSize: 32 }} />
                         <Typography variant="h6">
@@ -283,7 +290,7 @@ const GovernanceDashboardPage: React.FC = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <ErrorIcon color="error" sx={{ fontSize: 32 }} />
                         <Typography variant="h6">
@@ -294,7 +301,7 @@ const GovernanceDashboardPage: React.FC = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid xs={4}>
                       <Box sx={{ textAlign: 'center' }}>
                         <InfoIcon color="info" sx={{ fontSize: 32 }} />
                         <Typography variant="h6">
@@ -312,7 +319,7 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 成本分析详情 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -329,7 +336,7 @@ const GovernanceDashboardPage: React.FC = () => {
                       ¥{dashboard.cost_analysis.total_cost.toFixed(2)}
                     </Typography>
                     <Chip
-                      label={`趋势: ${dashboard.cost_analysis.cost_trend_percent > 0 ? '+' : ''}${dashboard.cost_analysis.cost_trend_percent.toFixed(1)}%`}
+                      label={t('ai.governance_dashboard.trend', { value: `${dashboard.cost_analysis.cost_trend_percent > 0 ? '+' : ''}${dashboard.cost_analysis.cost_trend_percent.toFixed(1)}%` })}
                       color={dashboard.cost_analysis.cost_trend_percent > 0 ? 'error' : 'success'}
                       size="small"
                       sx={{ mt: 1 }}
@@ -358,7 +365,7 @@ const GovernanceDashboardPage: React.FC = () => {
           </Grid>
 
           {/* 性能指标详情 */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -367,7 +374,7 @@ const GovernanceDashboardPage: React.FC = () => {
                 </Typography>
                 <Divider sx={{ my: 2 }} />
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid xs={6}>
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         平均响应时间
@@ -377,7 +384,7 @@ const GovernanceDashboardPage: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid xs={6}>
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         P95 响应时间
@@ -387,7 +394,7 @@ const GovernanceDashboardPage: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid xs={6}>
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         吞吐量
@@ -397,7 +404,7 @@ const GovernanceDashboardPage: React.FC = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid xs={6}>
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         错误率

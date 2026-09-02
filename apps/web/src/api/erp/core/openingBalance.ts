@@ -17,12 +17,17 @@ export interface OpeningBalance {
 export interface CreateOpeningBalanceRequest {
   company_id: string;
   subject_code: string;
+  subject_name: string;
   period: string;
   debit_balance: number;
   credit_balance: number;
 }
 
 interface UpdateOpeningBalanceRequest {
+  company_id?: string;
+  subject_code?: string;
+  subject_name?: string;
+  period?: string;
   debit_balance?: number;
   credit_balance?: number;
 }

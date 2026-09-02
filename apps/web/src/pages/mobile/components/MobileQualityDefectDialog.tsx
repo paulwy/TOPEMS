@@ -30,7 +30,7 @@ interface MobileQualityDefectDialogProps {
   onSubmit: () => void;
   submitting: boolean;
 }
-const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps> = ({
+export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps> = ({
   open,
   onClose,
   selectedTask,

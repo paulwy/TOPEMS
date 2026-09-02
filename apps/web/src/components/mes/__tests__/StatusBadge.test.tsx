@@ -25,6 +25,8 @@ vi.mock('@/i18n', () => {
     'components.mes.fsm_action_buttons.down': 'down',
     'components.mes.fsm_action_buttons.scrapped': 'scrapped',
     'components.mes.fsm_action_buttons.approval_suffix': ' (审批)',
+    // 组件实际使用 k0 作为审批流转后缀标注
+    'components.mes.fsm_action_buttons.k0': ' (审批)',
   };
   return {
     default: {

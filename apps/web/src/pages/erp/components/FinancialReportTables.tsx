@@ -353,7 +353,7 @@ const CashFlowTable: React.FC<{
     </TableContainer>
   );
 };
-const FinancialReportTables: React.FC<FinancialReportTablesProps> = ({
+export const FinancialReportTables: React.FC<FinancialReportTablesProps> = ({
   activeTab,
   balanceSheet,
   incomeStatement,

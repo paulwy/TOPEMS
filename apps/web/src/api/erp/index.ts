@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import { assetApi } from '../asset/asset';
 import {
   purchaseOrderApi,
   salesOrderApi,
@@ -12,7 +13,6 @@ import {
   salesOrderExtendedApi,
   addressbookApi,
   announcementApi,
-  assetApi,
   auditApi,
   fixedAssetApi,
   officeSupplyApi,
@@ -32,14 +32,16 @@ export * from './types';
 export * from './utils';
 export * from './core';
 
-export { voucherApi } from './finance/voucher';
-export { receivableApi, payableApi } from './finance/receivablePayable';
-export { assetApi, fixedAssetApi } from './finance/asset';
-export { assetCategoryApi } from './finance/assetCategory';
-export { budgetApi, expenseApi } from './finance/budget';
-export { accountingSubjectApi, openingBalanceApi } from './finance/accounting';
-export { financeReportApi } from './finance/report';
-export { bankAccountApi, bankTransactionApi } from './finance/bank';
+// 资产 API：使用统一 Asset schema（@/api/erp/types），覆盖 core/asset.ts 的旧实现
+export { assetApi } from '../asset/asset';
+
+export { voucherApi } from '../finance/voucher';
+export { receivableApi, payableApi } from './receivablePayable';
+export { budgetApi } from '../finance/budget';
+export { reportApi, financeReportApi } from '../finance/report';
+export { expenseApi } from '../finance/expense';
+export { accountingSubjectApi } from '../finance/accountingSubject';
+export { bankAccountApi } from './bankAccount';
 
 export { officeSupplyApi } from './admin/officeSupplies';
 export { meetingRoomApi, meetingBookingApi } from './admin/meeting';
