@@ -16,9 +16,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 > 09-01 编译库一致性治理已闭环：`.cargo/config.toml` 固化 `SQLX_OFFLINE=true`（编译默认离线缓存，绕开 Homebrew 库缺表）；容器库已对齐（postgres 映射 `5433:5432`，`.env DATABASE_URL` 指向 `localhost:5433` 容器库）——根治项完成，详见 `docs/development/backend/database-development.md` §7.8。
 > 09-02 全量 Docker 运行环境启动完成（32 容器 / 31 healthy），新增 #13 已闭环。
 > 09-02 提交后遗留处理已闭环（svc/aps+billing 归档删除、analytics 权限模块 + finance R5、旧 stash 清理 + 删除意图落地），#14 已闭环。
-> 09-03 运行环境升级已闭环（#15）：重建 21 服务镜像 + 5433 治理迁移（2a 归位 69 张 + 2b DROP 59 张 + 2c auth FK）+ public 影子清理（163→36 对齐 5432）；网关登录豁免 + 端到端验证已闭环（#16）。
+> 09-03 运行环境升级已闭环（#15）：重建 21 服务镜像 + 5433 治理迁移（2a 归位 69 张 + 2b DROP 59 张 + 2c auth FK）+ public 影子清理（163→36 对齐 5432）；网关登录豁免 + 端到端验证已闭环（#16）；运行环境遗留治理已闭环（#17）：bi/ai SEARCH_PATH 根治 + portal 缺 schema 修复 + 裸引用门禁治理 + sidecar 清理（health 401 转认证专项）。
 
-**当前待办总数：16 项**（✅ 已完成 14 / ⏳ 进行中 0 / 🔲 可选后续 2）
+**当前待办总数：15 项**（✅ 已完成 15 / ⏳ 进行中 0 / 🔲 可选后续 1）
 
 ---
 
@@ -33,11 +33,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 - **网关登录豁免（#16）**：dynamic.yml 增 `router-core-auth`（`/api/core/iam/auth` 前缀 priority 200 免 jwt-auth，login/refresh/verify 防 forwardAuth 递归）→ 网关登录 401 修复。提交 `(dynamic.yml)`
 - **端到端验证**：网关登录 200 + token 访问 `/api/core/iam/users`、`/api/erp/inventory`、`/api/erp/inventory/low-stock`、`/api/hrm/employees` 全 200
 
-**已知遗留（不阻塞业务，见表格 #8/#17）**：
-- **bi 服务 init_database 建表 DDL 硬编码 public**——重启会重建 analytics_*/report_* 到 public（0 行残留），需源码 schema 化 + 重建镜像（本轮已 DROP 2 次，需根治）
-- **communication/hrm check_schema_boundary FAIL**（源码 SQL 裸引用）
-- **consul 5 个 sidecar-proxy critical**（已注销的 Connect 残留，不影响业务）
-- **erp/hrm `/health` 经网关 401**（health 端点认证策略差异，业务接口 200 正常）
+**已知遗留（不阻塞业务）**：
+- **erp/hrm `/health` 经网关 401**（#17 ④ 已定位：`is_public_path` 豁免 vs `require_permission` 不一致，转"统一认证"专项；health 走容器内 /health 正常，业务接口 200）
+- **communication→gis / hrm→erp 跨服务直读**（#17 ② 已加 baseline 承认，标注走 API 专项——communication im_location 应改走 gis API、hrm payroll 应改走 erp API）
 
 ---
 
@@ -59,7 +57,7 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层建设，包括 MCP 协议适
 | 14 | 提交后遗留处理 | P1 | ✅ 已闭环（09-02） | ① svc/aps（21）+ svc/billing（10）归档删除（已归档 `svc/_archive/`，server/shared-service-client/services.rs 仅注释引用无编译依赖；顺带修复 shared-auth 缺 service/service_monitor mod 声明、shared-service-client 缺 circuit_breaker mod 声明，cargo check 通过）；② analytics 权限模块缺失（新增根级 `permission.rs` 声明 analytics:view/admin + 统一入口，修复 perm-matrix R1；finance 6 处 utoipa 宏补 security 属性修复 R5——perm-matrix 全 0 FAIL）；③ 旧 stash 清理（12 个 stash 全量 diff 备份至 /tmp/topems_stash_backup/ 后 drop；落地 autostash 删除意图 50 文件：billing_api.rs 客户端 + 49 个过期 .sqlx 缓存）。提交 `8818b958c`、`d9076e4a7`、`82c70b556` |
 | 15 | 运行环境升级（镜像重建 + 5433 治理迁移 + public 影子清理） | P1 | ✅ 已闭环（09-03） | ① **构建根治**：Dockerfile.service 中科大 sparse 源 + build-local.sh 串行防 OOM，21 服务镜像全部重建；② **5433 迁移**：2a 归位 qa_ehs_*/qa_* 69 张（补 CREATE SCHEMA ehs/qms）、2b DROP 59 张影子、2c auth FK（refresh_tokens/sessions→core_users）；③ **public 163→36 对齐 5432**：归位 finance 58/lims 31/pdm 19/report 1/bi 13/gis 1 + DROP 冲突 4 张，全 0 行无数据损失；④ 21 服务新镜像全 healthy，finance/lims/pdm schema 防御成功（66 张校验）。提交 `25768bdfe`/`536f441a8`/`e02f73747`/`37fc3d108`/`c7cc7d3cd`/`66d1eeaf4` |
 | 16 | 网关登录豁免 + 端到端验证 | P1 | ✅ 已闭环（09-03） | 根因：traefik `default-chain`（含 jwt-auth forwardAuth）对 `/api/core` 全部路由强制认证，登录接口未豁免 → 网关 401。修复：dynamic.yml 增 `router-core-auth`（`/api/core/iam/auth` 前缀 priority 200，中间件链去掉 jwt-auth；verify 豁免防 forwardAuth 递归调用自身）→ traefik 重启后网关登录 200。端到端验证：网关登录 + token 访问 `/api/core/iam/users`（200 用户列表）、`/api/erp/inventory`（200 库存列表）、`/api/erp/inventory/low-stock`（200）、`/api/hrm/employees`（200）——admin 带权限业务流经网关全通 |
-| 17 | 运行环境遗留治理 | P2 | 🔲 待处理 | ① **bi 服务 init_database 建表 DDL 硬编码 public**——重启会在 public 重建 analytics_*/report_* 0 行残留（本轮已 DROP 2 次，需源码 schema 化 + 重建镜像根治）；② **communication/hrm check_schema_boundary FAIL**（源码 SQL 裸引用，需补 schema 前缀）；③ **consul 5 个 sidecar-proxy critical**（已注销 Connect 残留，清注册）；④ **erp/hrm `/health` 经网关 401**（health 端点认证策略差异，业务接口 200 正常，可豁免或对齐） |
+| 17 | 运行环境遗留治理 | P2 | ✅ 已闭环（09-03） | ① **bi 建表硬编码 public 根治**——`svc/analytics/src/main.rs` SEARCH_PATH `"analytics,public"`→`"bi,public"`（analytics schema 不存在致建表回退 public）；顺带修 `svc/ai` `"ai_service,public,shared"`→`"ai,public,shared"`（ai_service schema 不存在）；重建 bi/ai 镜像 → **bi schema 30 表 + ai schema 5 表，public 仍 36 无残留**。顺带修 **portal 缺 schema**——`CREATE SCHEMA portal` + 重启 → **112 表归位 portal**（原 schema 防御失败被吞未建表）；② **communication/hrm 裸引用**——根因：communication im_location 直读 gis 3 表（SQL 指定 public 错误）、hrm payroll 直写 erp 财务表（only_own_schema_query! 限定 hrm 但表在 erp）、hrm attendance 宏白名单读 mobile；**加 bare_ref_baseline 5 条 + hrm allow mobile**（均标注走 API 专项）→ **check_schema_boundary 全 PASS**；③ **consul 5 sidecar-proxy critical**——deregister 5 个（erp/hrm/scm/unified-core/wms）→ **0 critical**；④ **erp/hrm `/health` 经网关 401**——根因定位：`is_public_path`（auth_middleware 豁免 health）与 `require_permission`（不豁免）不一致，修 shared-auth 需重建全服务 → **转"统一认证"专项**（health 走容器内 /health 正常，业务接口 200，不阻塞）。提交 `3e26e1c2a`/`85a134ff0`/`300d9be07`/`bc345e11c`/`f89a31dee` 等 |
 
 **已随 09-01 推进闭环的重点**（不再列入待办）：拆分就绪核验（前置条件 #1 #2 #3 ✅）、服务拓扑 runtime 采集补强、阈值监控接入拓扑一致性（--topology auto）、workflow 拆分评估 P1/P2/P3、服务间认证体系批量、转发 token 审计 + 4 无效搜索源移除、portal 待办聚合缓存 + auth 修复。
 
