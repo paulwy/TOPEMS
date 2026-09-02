@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -42,7 +43,7 @@ async fn list_members(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC",
+        only_own_schema_query!("pm", "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -81,17 +82,18 @@ async fn create_member(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectMember>(
+    let result = sqlx::query_as::<_, ProjectMember>(only_own_schema_query!(
+        "pm",
         r#"
-        INSERT INTO plugin_pm.project_members (
+        INSERT INTO pm.project_members (
             id, project_id, user_id, role, responsibilities,
             start_date, end_date, created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         ON CONFLICT (project_id, user_id) DO NOTHING
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(project_id)
     .bind(&req.user_id)
@@ -135,7 +137,7 @@ async fn get_member(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2",
+        only_own_schema_query!("pm", "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -176,9 +178,10 @@ async fn update_member(
 ) -> Json<ApiResponse<ProjectMember>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectMember>(
+    let result = sqlx::query_as::<_, ProjectMember>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.project_members
+        UPDATE pm.project_members
         SET role = COALESCE($1, role),
             responsibilities = COALESCE($2, responsibilities),
             start_date = COALESCE($3, start_date),
@@ -186,8 +189,8 @@ async fn update_member(
             updated_at = $5
         WHERE project_id = $6 AND id = $7
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.role)
     .bind(&req.responsibilities)
     .bind(req.start_date)
@@ -228,11 +231,14 @@ async fn delete_member(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2")
-        .bind(project_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

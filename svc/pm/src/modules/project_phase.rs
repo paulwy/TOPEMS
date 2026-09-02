@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -56,7 +57,7 @@ async fn list_phases(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
+        only_own_schema_query!("pm", "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -94,9 +95,10 @@ async fn create_phase(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pm.project_phases WHERE project_id = $1",
-    )
+    let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "pm",
+        "SELECT COUNT(*) FROM pm.project_phases WHERE project_id = $1"
+    ))
     .bind(project_id)
     .fetch_one(&pool)
     .await;
@@ -106,17 +108,18 @@ async fn create_phase(
         Err(_) => 1,
     };
 
-    let result = sqlx::query_as::<_, ProjectPhase>(
+    let result = sqlx::query_as::<_, ProjectPhase>(only_own_schema_query!(
+        "pm",
         r#"
-        INSERT INTO plugin_pm.project_phases (
+        INSERT INTO pm.project_phases (
             id, project_id, name, description, sequence_number,
             start_date, end_date, progress, status, predecessor_ids,
             created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(project_id)
     .bind(&req.name)
@@ -162,7 +165,7 @@ async fn get_phase(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectPhase>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2",
+        only_own_schema_query!("pm", "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -203,9 +206,10 @@ async fn update_phase(
 ) -> Json<ApiResponse<ProjectPhase>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectPhase>(
+    let result = sqlx::query_as::<_, ProjectPhase>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.project_phases
+        UPDATE pm.project_phases
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             sequence_number = COALESCE($3, sequence_number),
@@ -217,8 +221,8 @@ async fn update_phase(
             updated_at = $9
         WHERE project_id = $10 AND id = $11
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.name)
     .bind(&req.description)
     .bind(req.sequence_number)
@@ -263,11 +267,14 @@ async fn delete_phase(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2")
-        .bind(project_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

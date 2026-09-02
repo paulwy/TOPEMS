@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::approval::{
     create_approval_and_log, execute_transition_and_log, reject_and_log,
@@ -67,7 +68,7 @@ async fn get_approval(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let result = sqlx::query_as::<_, ProjectApproval>(
-        "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1",
+        only_own_schema_query!("pm", "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
     )
     .bind(project_id)
     .fetch_optional(&state.pool)
@@ -154,16 +155,17 @@ async fn submit_approval(
         "workflow_instance_id": workflow_instance_id,
     });
 
-    let result = sqlx::query_as::<_, ProjectApproval>(
+    let result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
+        "pm",
         r#"
-        INSERT INTO plugin_pm.project_approvals (
+        INSERT INTO pm.project_approvals (
             id, project_id, status, current_step, total_steps,
             approvals, comments, created_by, created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(project_id)
     .bind("pending")
@@ -229,7 +231,7 @@ async fn handle_approval_action(
     }
 
     let result = sqlx::query_as::<_, ProjectApproval>(
-        "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+        only_own_schema_query!("pm", "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
     )
     .bind(project_id)
     .fetch_optional(&state.pool)
@@ -314,14 +316,15 @@ async fn handle_approval_action(
             }
         }
 
-        let update_result = sqlx::query_as::<_, ProjectApproval>(
+        let update_result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
+            "pm",
             r#"
-            UPDATE plugin_pm.project_approvals
+            UPDATE pm.project_approvals
             SET status = $1, approvals = $2, comments = $3, updated_at = $4
             WHERE id = $5
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(if action == "reject" {
             "rejected"
         } else {
@@ -410,14 +413,15 @@ async fn handle_approval_action(
             approval.current_step + 1
         };
 
-        let update_result = sqlx::query_as::<_, ProjectApproval>(
+        let update_result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
+            "pm",
             r#"
-            UPDATE plugin_pm.project_approvals
+            UPDATE pm.project_approvals
             SET status = $1, current_step = $2, approvals = $3, comments = $4, updated_at = $5
             WHERE id = $6
             RETURNING *
-            "#,
-        )
+            "#
+        ))
         .bind(new_status)
         .bind(new_step)
         .bind(&approvals)
@@ -461,11 +465,14 @@ async fn update_project_status(
     project_id: Uuid,
     status: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE plugin_pm.projects SET status = $1, updated_at = $2 WHERE id = $3")
-        .bind(status)
-        .bind(Utc::now())
-        .bind(project_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3"
+    ))
+    .bind(status)
+    .bind(Utc::now())
+    .bind(project_id)
+    .execute(pool)
+    .await?;
     Ok(())
 }

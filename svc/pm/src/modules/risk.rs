@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -61,7 +62,7 @@ async fn get_project_risks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectRisk>>> {
     let risks = sqlx::query_as::<_, ProjectRisk>(
-        "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC",
+        only_own_schema_query!("pm", "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -83,7 +84,7 @@ async fn get_risk(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectRisk>> {
-    let risk = sqlx::query_as::<_, ProjectRisk>("id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1")
+    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -119,8 +120,8 @@ async fn create_risk(
     );
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
-        "INSERT INTO plugin_pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -193,8 +194,9 @@ async fn update_risk(
 ) -> Json<ApiResponse<ProjectRisk>> {
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
-    let risk = sqlx::query_as::<_, ProjectRisk>(
-        "UPDATE plugin_pm.project_risks SET
+    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.project_risks SET
             risk_name = COALESCE($1, risk_name),
             risk_description = COALESCE($2, risk_description),
             risk_category = COALESCE($3, risk_category),
@@ -210,8 +212,8 @@ async fn update_risk(
             owner = COALESCE($13, owner),
             response_due_date = COALESCE($14, response_due_date),
             updated_at = $15
-        WHERE id = $16 RETURNING *",
-    )
+        WHERE id = $16 RETURNING *"
+    ))
     .bind(req.risk_name)
     .bind(req.risk_description)
     .bind(req.risk_category)
@@ -295,7 +297,7 @@ async fn get_risk_events(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<RiskEvent>>> {
     let events = sqlx::query_as::<_, RiskEvent>(
-        "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM plugin_pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
+        only_own_schema_query!("pm", "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC"),
     )
     .bind(id)
     .fetch_all(&pool)
@@ -322,8 +324,8 @@ async fn create_risk_event(
     let now = Utc::now();
 
     let event = sqlx::query_as::<_, RiskEvent>(
-        "INSERT INTO plugin_pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $5) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $5) RETURNING *")
     )
     .bind(event_id)
     .bind(id)

@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -59,7 +60,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC",
+        only_own_schema_query!("pm", "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -97,17 +98,18 @@ async fn add_resource(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectResource>(
+    let result = sqlx::query_as::<_, ProjectResource>(only_own_schema_query!(
+        "pm",
         r#"
-        INSERT INTO plugin_pm.project_resources (
+        INSERT INTO pm.project_resources (
             id, project_id, resource_type, resource_id, resource_service,
             role, start_date, end_date, allocation_percent, actual_hours,
             actual_cost, status, created_by, created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(project_id)
     .bind(&req.resource_type)
@@ -156,7 +158,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM plugin_pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2",
+        only_own_schema_query!("pm", "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -197,9 +199,10 @@ async fn update_resource(
 ) -> Json<ApiResponse<ProjectResource>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectResource>(
+    let result = sqlx::query_as::<_, ProjectResource>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.project_resources
+        UPDATE pm.project_resources
         SET role = COALESCE($1, role),
             start_date = COALESCE($2, start_date),
             end_date = COALESCE($3, end_date),
@@ -210,8 +213,8 @@ async fn update_resource(
             updated_at = $8
         WHERE project_id = $9 AND id = $10
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.role)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -255,12 +258,14 @@ async fn remove_resource(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result =
-        sqlx::query("UPDATE plugin_pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2")
-            .bind(project_id)
-            .bind(id)
-            .execute(&pool)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

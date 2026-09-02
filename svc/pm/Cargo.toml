@@ -24,6 +24,7 @@ dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 topems-shared-bootstrap = { workspace = true }
+topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-service-client = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true

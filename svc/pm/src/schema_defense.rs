@@ -318,6 +318,26 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("tenant_id", "UUID NOT NULL"),
         ],
     ),
+    (
+        "pm_tasks",
+        &[
+            ("tenant_id", "UUID NOT NULL"),
+            ("project_id", "UUID NOT NULL"),
+            ("task_number", "VARCHAR(50)"),
+            ("title", "VARCHAR(200) NOT NULL"),
+            ("description", "TEXT"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'todo'"),
+            ("priority", "VARCHAR(20) NOT NULL DEFAULT 'medium'"),
+            ("assignee", "VARCHAR(100)"),
+            ("start_date", "TIMESTAMPTZ"),
+            ("end_date", "TIMESTAMPTZ"),
+            ("progress", "INTEGER NOT NULL DEFAULT 0"),
+            ("created_by", "VARCHAR(100)"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
 ];
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {

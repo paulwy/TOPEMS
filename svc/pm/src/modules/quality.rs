@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -56,7 +57,7 @@ async fn get_project_quality_checks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
     let checks = sqlx::query_as::<_, QualityCheck>(
-        "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM plugin_pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("pm", "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -79,7 +80,7 @@ async fn get_quality_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let check =
-        sqlx::query_as::<_, QualityCheck>("id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM plugin_pm.quality_checks WHERE id = $1")
+        sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -109,8 +110,8 @@ async fn create_quality_check(
     let now = Utc::now();
 
     let check = sqlx::query_as::<_, QualityCheck>(
-        "INSERT INTO plugin_pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -144,8 +145,9 @@ async fn update_quality_check(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
-    let check = sqlx::query_as::<_, QualityCheck>(
-        "UPDATE plugin_pm.quality_checks SET
+    let check = sqlx::query_as::<_, QualityCheck>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.quality_checks SET
             check_name = COALESCE($1, check_name),
             check_type = COALESCE($2, check_type),
             check_criteria = COALESCE($3, check_criteria),
@@ -158,8 +160,8 @@ async fn update_quality_check(
             corrective_actions = COALESCE($10, corrective_actions),
             follow_up_date = COALESCE($11, follow_up_date),
             updated_at = $12
-        WHERE id = $13 RETURNING *",
-    )
+        WHERE id = $13 RETURNING *"
+    ))
     .bind(req.check_name)
     .bind(req.check_type)
     .bind(req.check_criteria)
@@ -197,7 +199,7 @@ async fn get_project_defects(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Defect>>> {
     let defects = sqlx::query_as::<_, Defect>(
-        "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM plugin_pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC",
+        only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -217,7 +219,7 @@ async fn get_project_defects(
 
 async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
     let defect = sqlx::query_as::<_, Defect>(
-        "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM plugin_pm.defects WHERE deleted_at IS NULL AND id = $1",
+        only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -248,8 +250,8 @@ async fn create_defect(
     let now = Utc::now();
 
     let defect = sqlx::query_as::<_, Defect>(
-        "INSERT INTO plugin_pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -285,7 +287,7 @@ async fn update_defect(
     Json(req): Json<UpdateDefectRequest>,
 ) -> Json<ApiResponse<Defect>> {
     let defect = sqlx::query_as::<_, Defect>(
-        "UPDATE plugin_pm.defects SET
+        only_own_schema_query!("pm", "UPDATE pm.defects SET
             defect_name = COALESCE($1, defect_name),
             defect_description = COALESCE($2, defect_description),
             severity = COALESCE($3, severity),
@@ -296,7 +298,7 @@ async fn update_defect(
             resolution = COALESCE($8, resolution),
             resolved_at = CASE WHEN COALESCE($5, status) = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END,
             updated_at = $9
-        WHERE id = $10 RETURNING *"
+        WHERE id = $10 RETURNING *")
     )
     .bind(req.defect_name)
     .bind(req.defect_description)
@@ -328,10 +330,13 @@ async fn update_defect(
 }
 
 async fn delete_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE plugin_pm.defects SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.defects SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除缺陷成功")),

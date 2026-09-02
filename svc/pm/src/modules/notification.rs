@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -34,7 +35,7 @@ async fn get_project_notifications(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let notifications = sqlx::query_as::<_, Notification>(
-        "id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at FROM plugin_pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
+        only_own_schema_query!("pm", "id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -60,8 +61,8 @@ async fn create_notification(
     let now = Utc::now();
 
     let notification = sqlx::query_as::<_, Notification>(
-        "INSERT INTO plugin_pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11) RETURNING *")
     )
     .bind(id)
     .bind(req.project_id)
@@ -94,7 +95,7 @@ async fn get_project_settings(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<NotificationSetting>>> {
     let settings = sqlx::query_as::<_, NotificationSetting>(
-        "SELECT id, project_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at FROM plugin_pm.notification_settings WHERE project_id = $1",
+        only_own_schema_query!("pm", "SELECT id, project_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at FROM pm.notification_settings WHERE project_id = $1"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -121,8 +122,8 @@ async fn create_setting(
     let now = Utc::now();
 
     let setting = sqlx::query_as::<_, NotificationSetting>(
-        "INSERT INTO plugin_pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
-        VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
+        VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -152,14 +153,15 @@ async fn update_setting(
     Path(id): Path<Uuid>,
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> Json<ApiResponse<NotificationSetting>> {
-    let setting = sqlx::query_as::<_, NotificationSetting>(
-        "UPDATE plugin_pm.notification_settings SET
+    let setting = sqlx::query_as::<_, NotificationSetting>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.notification_settings SET
             enabled = COALESCE($1, enabled),
             notify_before_days = COALESCE($2, notify_before_days),
             preferred_channel = COALESCE($3, preferred_channel),
             updated_at = $4
-        WHERE id = $5 RETURNING *",
-    )
+        WHERE id = $5 RETURNING *"
+    ))
     .bind(req.enabled)
     .bind(req.notify_before_days)
     .bind(req.preferred_channel)

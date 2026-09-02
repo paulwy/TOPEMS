@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared::ApiResponse;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{EventPublisher, EventType, PmProjectCreatedPayload};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -159,9 +160,12 @@ async fn list_projects(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
-    let result = sqlx::query_as::<_, Project>("SELECT * FROM pm.projects ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await;
+    let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
+        "pm",
+        "SELECT * FROM pm.projects ORDER BY created_at DESC"
+    ))
+    .fetch_all(&state.pool)
+    .await;
 
     let projects = match result {
         Ok(p) => p,
@@ -224,17 +228,17 @@ async fn create_project(
     );
 
     let result = sqlx::query_as::<_, Project>(
-        r#"
-        INSERT INTO plugin_pm.projects (
+        only_own_schema_query!("pm", r#"
+        INSERT INTO pm.projects (
             id, name, code, description, project_type, status, leader,
             start_date, end_date, budget, progress, project_config, benefit_target,
-            risk_level, priority, tags, parent_id, workspace_id, created_by,
+            risk_level, priority, tags, parent_id, workspace_id, tenant_id, created_by,
             created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, to_jsonb($16::text[]), $17, $18, $19, $20, $21, $22)
         ON CONFLICT (code) DO NOTHING
         RETURNING *
-        "#,
+        "#),
     )
     .bind(id)
     .bind(&req.name)
@@ -254,6 +258,7 @@ async fn create_project(
     .bind(&req.tags)
     .bind(req.parent_id)
     .bind(req.workspace_id)
+    .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
     .bind(Some("system"))
     .bind(now)
     .bind(now)
@@ -365,9 +370,10 @@ async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Project>> {
-    let result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
-    )
+    let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
+        "pm",
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -409,9 +415,10 @@ async fn update_project(
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
 
-    let result = sqlx::query_as::<_, Project>(
+    let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.projects
+        UPDATE pm.projects
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             status = COALESCE($3, status),
@@ -423,14 +430,14 @@ async fn update_project(
             benefit_target = COALESCE($9, benefit_target),
             risk_level = COALESCE($10, risk_level),
             priority = COALESCE($11, priority),
-            tags = COALESCE($12, tags),
+            tags = COALESCE(to_jsonb($12::text[]), tags),
             parent_id = COALESCE($13, parent_id),
             workspace_id = COALESCE($14, workspace_id),
             updated_at = $15
         WHERE id = $16
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.name)
     .bind(&req.description)
     .bind(&req.status)
@@ -525,10 +532,13 @@ async fn delete_project(
     headers: HeaderMap,
 ) -> Json<ApiResponse<bool>> {
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let result = sqlx::query("UPDATE pm.projects SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.projects SET deleted_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {
@@ -595,9 +605,10 @@ async fn get_project_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
-    let project_result = sqlx::query_as::<_, Project>(
-        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1",
-    )
+    let project_result = sqlx::query_as::<_, Project>(only_own_schema_query!(
+        "pm",
+        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1"
+    ))
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
@@ -611,12 +622,14 @@ async fn get_project_dashboard(
         }
     };
 
-    let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1",
-    )
-    .bind(id)
-    .fetch_all(&state.pool)
-    .await;
+    let phases_result =
+        sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(only_own_schema_query!(
+            "pm",
+            "SELECT * FROM pm.project_phases WHERE project_id = $1"
+        ))
+        .bind(id)
+        .fetch_all(&state.pool)
+        .await;
 
     let phases = phases_result.unwrap_or_default();
     let completed_phases = phases.iter().filter(|p| p.status == "completed").count();
@@ -642,12 +655,14 @@ async fn get_project_dashboard(
         "utilization_rate": 0.0
     });
 
-    let members_result = sqlx::query_as::<_, crate::models::project_member::ProjectMember>(
-        "SELECT * FROM pm.project_members WHERE project_id = $1",
-    )
-    .bind(id)
-    .fetch_all(&state.pool)
-    .await;
+    let members_result =
+        sqlx::query_as::<_, crate::models::project_member::ProjectMember>(only_own_schema_query!(
+            "pm",
+            "SELECT * FROM pm.project_members WHERE project_id = $1"
+        ))
+        .bind(id)
+        .fetch_all(&state.pool)
+        .await;
 
     let members: Vec<serde_json::Value> = members_result
         .unwrap_or_default()
@@ -716,12 +731,14 @@ async fn get_project_gantt(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
-    let phases_result = sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(
-        "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC",
-    )
-    .bind(id)
-    .fetch_all(&state.pool)
-    .await;
+    let phases_result =
+        sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(only_own_schema_query!(
+            "pm",
+            "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"
+        ))
+        .bind(id)
+        .fetch_all(&state.pool)
+        .await;
 
     let phases: Vec<GanttPhase> = match phases_result {
         Ok(phase_rows) => phase_rows
@@ -745,7 +762,10 @@ async fn get_project_gantt(
 
     let milestones_result =
         sqlx::query_as::<_, crate::models::project_milestone::ProjectMilestone>(
-            "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+            only_own_schema_query!(
+                "pm",
+                "SELECT * FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"
+            ),
         )
         .bind(id)
         .fetch_all(&state.pool)

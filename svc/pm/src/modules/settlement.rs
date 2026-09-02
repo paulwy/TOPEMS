@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
     EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
@@ -60,7 +61,7 @@ async fn get_project_settlements(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Settlement>>> {
     let settlements = sqlx::query_as::<_, Settlement>(
-        "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC",
+        only_own_schema_query!("pm", "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC"),
     )
     .bind(project_id)
     .fetch_all(&state.pool)
@@ -83,7 +84,7 @@ async fn get_settlement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let settlement =
-        sqlx::query_as::<_, Settlement>("id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM plugin_pm.settlements WHERE id = $1")
+        sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -113,8 +114,8 @@ async fn create_settlement(
     let now = Utc::now();
 
     let settlement = sqlx::query_as::<_, Settlement>(
-        "INSERT INTO plugin_pm.settlements (id, project_id, settlement_code, settlement_name, settlement_type, status, settlement_period_start, settlement_period_end, description, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_code, settlement_name, settlement_type, status, settlement_period_start, settlement_period_end, description, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -170,15 +171,16 @@ async fn update_settlement(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementRequest>,
 ) -> Json<ApiResponse<Settlement>> {
-    let settlement = sqlx::query_as::<_, Settlement>(
-        "UPDATE plugin_pm.settlements SET
+    let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.settlements SET
             settlement_name = COALESCE($1, settlement_name),
             status = COALESCE($2, status),
             actual_amount = COALESCE($3, actual_amount),
             description = COALESCE($4, description),
             updated_at = $5
-        WHERE id = $6 RETURNING *",
-    )
+        WHERE id = $6 RETURNING *"
+    ))
     .bind(req.settlement_name)
     .bind(req.status)
     .bind(req.actual_amount)
@@ -209,13 +211,14 @@ async fn approve_settlement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let now = Utc::now();
-    let settlement = sqlx::query_as::<_, Settlement>(
-        "UPDATE plugin_pm.settlements SET
+    let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.settlements SET
             status = 'approved',
             approved_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 RETURNING *",
-    )
+        WHERE id = $1 RETURNING *"
+    ))
     .bind(id)
     .fetch_one(&state.pool)
     .await;
@@ -257,7 +260,7 @@ async fn get_settlement_items(
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementItem>>> {
     let items = sqlx::query_as::<_, SettlementItem>(
-        "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_reason, description, created_at FROM plugin_pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name",
+        only_own_schema_query!("pm", "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_reason, description, created_at FROM pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name"),
     )
     .bind(settlement_id)
     .fetch_all(&state.pool)
@@ -290,8 +293,8 @@ async fn create_settlement_item(
     };
 
     let item = sqlx::query_as::<_, SettlementItem>(
-        "INSERT INTO plugin_pm.settlement_items (id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.settlement_items (id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
     )
     .bind(id)
     .bind(settlement_id)
@@ -328,7 +331,7 @@ async fn update_settlement_item(
     Json(req): Json<UpdateSettlementItemRequest>,
 ) -> Json<ApiResponse<SettlementItem>> {
     let item = sqlx::query_as::<_, SettlementItem>(
-        "UPDATE plugin_pm.settlement_items SET
+        only_own_schema_query!("pm", "UPDATE pm.settlement_items SET
             item_name = COALESCE($1, item_name),
             category = COALESCE($2, category),
             actual_amount = COALESCE($3, actual_amount),
@@ -336,7 +339,7 @@ async fn update_settlement_item(
             variance_percent = CASE WHEN $3 IS NOT NULL AND budget_amount != 0 THEN (($3 - budget_amount) / budget_amount) * 100 ELSE variance_percent END,
             description = COALESCE($4, description),
             updated_at = $5
-        WHERE id = $6 RETURNING *",
+        WHERE id = $6 RETURNING *"),
     )
     .bind(req.item_name)
     .bind(req.category)
@@ -367,10 +370,13 @@ async fn delete_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM plugin_pm.settlement_items WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "DELETE FROM pm.settlement_items WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除决算项成功")),
@@ -393,7 +399,7 @@ async fn get_settlement_adjustments(
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementAdjustment>>> {
     let adjustments = sqlx::query_as::<_, SettlementAdjustment>(
-        "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM plugin_pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at",
+        only_own_schema_query!("pm", "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at"),
     )
     .bind(settlement_id)
     .fetch_all(&state.pool)
@@ -420,8 +426,8 @@ async fn create_settlement_adjustment(
     let now = Utc::now();
 
     let adjustment = sqlx::query_as::<_, SettlementAdjustment>(
-        "INSERT INTO plugin_pm.settlement_adjustments (id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.settlement_adjustments (id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *")
     )
     .bind(id)
     .bind(settlement_id)

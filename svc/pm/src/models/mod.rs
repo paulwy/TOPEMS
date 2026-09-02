@@ -18,3 +18,4 @@ pub mod report;
 pub mod risk;
 pub mod service_integration;
 pub mod settlement;
+pub mod task;

@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 
 use topems_shared_core::response::ApiResponse;
@@ -757,9 +758,10 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     )
     .await;
 
-    let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(
-        "SELECT project_type, COUNT(*) as count FROM pm_projects GROUP BY project_type",
-    )
+    let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "pm",
+        "SELECT project_type, COUNT(*) as count FROM pm_projects GROUP BY project_type"
+    ))
     .fetch_all(db)
     .await
     .unwrap_or_default()
@@ -771,7 +773,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     .collect();
 
     let by_leader: Vec<LeaderCount> = sqlx::query_as::<_, (String, i64)>(
-        "SELECT leader as leader, COUNT(*) as count FROM pm_projects WHERE leader IS NOT NULL GROUP BY leader ORDER BY count DESC",
+        only_own_schema_query!("pm", "SELECT leader as leader, COUNT(*) as count FROM pm_projects WHERE leader IS NOT NULL GROUP BY leader ORDER BY count DESC"),
     )
     .fetch_all(db)
     .await
@@ -780,9 +782,10 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     .map(|(leader, count)| LeaderCount { leader, count })
     .collect();
 
-    let average_progress: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(progress), 0) FROM pm_projects WHERE status = 'active'",
-    )
+    let average_progress: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(AVG(progress), 0) FROM pm_projects WHERE status = 'active'"
+    ))
     .fetch_one(db)
     .await
     .unwrap_or(0.0);
@@ -824,9 +827,10 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
     )
     .await;
 
-    let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(
-        "SELECT contract_type, COUNT(*) as count FROM pm_contracts GROUP BY contract_type",
-    )
+    let by_type: Vec<TypeCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "pm",
+        "SELECT contract_type, COUNT(*) as count FROM pm_contracts GROUP BY contract_type"
+    ))
     .fetch_all(db)
     .await
     .unwrap_or_default()
@@ -837,10 +841,13 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
     })
     .collect();
 
-    let total_amount: f64 = sqlx::query_scalar("SELECT COALESCE(SUM(amount), 0) FROM pm_contracts")
-        .fetch_one(db)
-        .await
-        .unwrap_or(0.0);
+    let total_amount: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(SUM(amount), 0) FROM pm_contracts"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
 
     let avg_amount = if total_contracts > 0 {
         total_amount / total_contracts as f64
@@ -858,23 +865,29 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
 }
 
 async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
-    let total_budget: f64 =
-        sqlx::query_scalar("SELECT COALESCE(SUM(total_amount), 0) FROM pm_budgets")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0.0);
+    let total_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(SUM(total_amount), 0) FROM pm_budgets"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
 
-    let allocated_budget: f64 =
-        sqlx::query_scalar("SELECT COALESCE(SUM(allocated_amount), 0) FROM pm_budgets")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0.0);
+    let allocated_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(SUM(allocated_amount), 0) FROM pm_budgets"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
 
-    let spent_budget: f64 =
-        sqlx::query_scalar("SELECT COALESCE(SUM(spent_amount), 0) FROM pm_budgets")
-            .fetch_one(db)
-            .await
-            .unwrap_or(0.0);
+    let spent_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(SUM(spent_amount), 0) FROM pm_budgets"
+    ))
+    .fetch_one(db)
+    .await
+    .unwrap_or(0.0);
 
     let remaining_budget = total_budget - spent_budget;
     let budget_usage_rate = if total_budget > 0.0 {
@@ -884,7 +897,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
     };
 
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, f64, f64)>(
-        "SELECT COALESCE(category, 'uncategorized'), SUM(budget_amount), SUM(spent_amount) FROM pm_budget_items GROUP BY category",
+        only_own_schema_query!("pm", "SELECT COALESCE(category, 'uncategorized'), SUM(budget_amount), SUM(spent_amount) FROM pm_budget_items GROUP BY category"),
     )
     .fetch_all(db)
     .await
@@ -913,9 +926,10 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     let closed_risks =
         query_count(db, "SELECT COUNT(*) FROM pm_risks WHERE status = 'closed'").await;
 
-    let by_level: Vec<LevelCount> = sqlx::query_as::<_, (String, i64)>(
-        "SELECT COALESCE(level, 'unknown'), COUNT(*) FROM pm_risks GROUP BY level",
-    )
+    let by_level: Vec<LevelCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+        "pm",
+        "SELECT COALESCE(level, 'unknown'), COUNT(*) FROM pm_risks GROUP BY level"
+    ))
     .fetch_all(db)
     .await
     .unwrap_or_default()
@@ -924,7 +938,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     .collect();
 
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, i64, i64)>(
-        "SELECT COALESCE(risk_category, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm_risks GROUP BY risk_category",
+        only_own_schema_query!("pm", "SELECT COALESCE(risk_category, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm_risks GROUP BY risk_category"),
     )
     .fetch_all(db)
     .await
@@ -955,15 +969,17 @@ async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
     )
     .await;
 
-    let by_priority: Vec<PriorityCount> = sqlx::query_as::<_, (String, i64)>(
-        "SELECT COALESCE(priority, 'normal'), COUNT(*) FROM pm_tasks GROUP BY priority",
-    )
-    .fetch_all(db)
-    .await
-    .unwrap_or_default()
-    .into_iter()
-    .map(|(priority, count)| PriorityCount { priority, count })
-    .collect();
+    let by_priority: Vec<PriorityCount> =
+        sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
+            "pm",
+            "SELECT COALESCE(priority, 'normal'), COUNT(*) FROM pm_tasks GROUP BY priority"
+        ))
+        .fetch_all(db)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(priority, count)| PriorityCount { priority, count })
+        .collect();
 
     let completed = query_count(
         db,

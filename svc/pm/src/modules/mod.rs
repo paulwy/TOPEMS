@@ -20,6 +20,7 @@ pub mod risk;
 pub mod service_integration;
 pub mod settlement;
 pub mod statistics;
+pub mod task;
 
 use axum::{extract::Extension, Router};
 use std::sync::Arc;
@@ -64,6 +65,7 @@ pub fn create_routes(
         .merge(document::create_routes(pool.clone()))
         .merge(report::create_routes(pool.clone()))
         .merge(notification::create_routes(pool.clone()))
+        .merge(task::create_routes(pool.clone()))
         .merge(statistics::create_routes(pool))
         .layer(Extension(audit_service))
 }

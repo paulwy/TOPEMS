@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -42,7 +43,7 @@ async fn get_project_reports(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectReport>>> {
     let reports = sqlx::query_as::<_, ProjectReport>(
-        "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM plugin_pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC",
+        only_own_schema_query!("pm", "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -65,7 +66,7 @@ async fn get_report(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let report =
-        sqlx::query_as::<_, ProjectReport>("id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM plugin_pm.project_reports WHERE id = $1")
+        sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -95,8 +96,8 @@ async fn create_report(
     let now = Utc::now();
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        "INSERT INTO plugin_pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -130,7 +131,7 @@ async fn generate_report(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let project_data = sqlx::query("SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM plugin_pm.projects WHERE id = $1")
+    let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1"))
         .bind(project_id)
         .fetch_one(&pool)
         .await;
@@ -149,7 +150,7 @@ async fn generate_report(
         Err(_) => serde_json::json!({}),
     };
 
-    let phases_data = sqlx::query("SELECT name, phase_number, progress, status FROM plugin_pm.project_phases WHERE project_id = $1 ORDER BY phase_number")
+    let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, phase_number, progress, status FROM pm.project_phases WHERE project_id = $1 ORDER BY phase_number"))
         .bind(project_id)
         .fetch_all(&pool)
         .await;
@@ -170,7 +171,7 @@ async fn generate_report(
     };
 
     let milestones_data = sqlx::query(
-        "SELECT name, target_date, status FROM plugin_pm.project_milestones WHERE project_id = $1 ORDER BY target_date",
+        only_own_schema_query!("pm", "SELECT name, target_date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY target_date"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -190,9 +191,10 @@ async fn generate_report(
         Err(_) => Vec::new(),
     };
 
-    let budget_data = sqlx::query(
-        "SELECT total_budget, used_amount, remaining_amount FROM plugin_pm.budgets WHERE project_id = $1",
-    )
+    let budget_data = sqlx::query(only_own_schema_query!(
+        "pm",
+        "SELECT total_budget, used_amount, remaining_amount FROM pm.budgets WHERE project_id = $1"
+    ))
     .bind(project_id)
     .fetch_all(&pool)
     .await;
@@ -221,8 +223,8 @@ async fn generate_report(
     let summary = generate_summary(&report_data);
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        "INSERT INTO plugin_pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -272,7 +274,7 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let templates = sqlx::query_as::<_, ReportTemplate>(
-        "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM plugin_pm.report_templates WHERE is_active = true ORDER BY template_name",
+        only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE is_active = true ORDER BY template_name"),
     )
     .fetch_all(&pool)
     .await;
@@ -294,7 +296,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let template = sqlx::query_as::<_, ReportTemplate>(
-        "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM plugin_pm.report_templates WHERE id = $1",
+        only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)
@@ -324,8 +326,8 @@ async fn create_template(
     let now = Utc::now();
 
     let template = sqlx::query_as::<_, ReportTemplate>(
-        "INSERT INTO plugin_pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8) RETURNING *"
+        only_own_schema_query!("pm", "INSERT INTO pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8) RETURNING *")
     )
     .bind(id)
     .bind(&req.template_code)
@@ -355,13 +357,14 @@ async fn update_template(
     Path(id): Path<Uuid>,
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
-    let template = sqlx::query_as::<_, ReportTemplate>(
-        "UPDATE plugin_pm.report_templates SET
+    let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.report_templates SET
             template_name = COALESCE($1, template_name),
             content = COALESCE($2, content),
             updated_at = $3
-        WHERE id = $4 RETURNING *",
-    )
+        WHERE id = $4 RETURNING *"
+    ))
     .bind(req.template_name)
     .bind(req.content)
     .bind(Utc::now())
@@ -389,11 +392,13 @@ async fn delete_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result =
-        sqlx::query("UPDATE plugin_pm.report_templates SET is_active = false WHERE id = $1")
-            .bind(id)
-            .execute(&pool)
-            .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.report_templates SET is_active = false WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除报告模板成功")),

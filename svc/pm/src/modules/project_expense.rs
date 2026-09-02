@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -54,7 +55,7 @@ async fn list_expenses(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectExpense>>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC",
+        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -93,8 +94,8 @@ async fn add_expense(
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProjectExpense>(
-        r#"
-        INSERT INTO plugin_pm.project_expenses (
+        only_own_schema_query!("pm", r#"
+        INSERT INTO pm.project_expenses (
             id, project_id, phase_id, expense_type, category,
             subcategory, description, amount, currency, incurred_date,
             reported_date, paid_date, budget_item_id, resource_id,
@@ -103,7 +104,7 @@ async fn add_expense(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING *
-        "#,
+        "#),
     )
     .bind(id)
     .bind(project_id)
@@ -159,7 +160,7 @@ async fn get_expense(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectExpense>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2",
+        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -200,9 +201,10 @@ async fn update_expense(
 ) -> Json<ApiResponse<ProjectExpense>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectExpense>(
+    let result = sqlx::query_as::<_, ProjectExpense>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.project_expenses
+        UPDATE pm.project_expenses
         SET expense_type = COALESCE($1, expense_type),
             category = COALESCE($2, category),
             subcategory = COALESCE($3, subcategory),
@@ -214,8 +216,8 @@ async fn update_expense(
             updated_at = $9
         WHERE project_id = $10 AND id = $11
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.expense_type)
     .bind(&req.category)
     .bind(&req.subcategory)
@@ -260,11 +262,14 @@ async fn remove_expense(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2")
-        .bind(project_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

@@ -1,4 +1,4 @@
-﻿//! TOPEMS-PM 统一项目管理系统
+//! TOPEMS-PM 统一项目管理系统
 //!
 //! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
 
@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
         enable_request_context: true,
         api_prefix: "/api/pm",
         legacy_prefixes: &["/api/v1/pm"],
-        ..Default::default()
+        init_telemetry: true,
     };
 
     let ctx = bootstrap_service(&config).await?;
@@ -80,10 +80,8 @@ async fn main() -> Result<()> {
     }
 
     // ── 工作流服务客户端 ──────────────────────────────────────────────
-    let jwt_secret = ctx.auth_state.jwt_secret.clone();
-    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
-        .and_then(|c| c.with_service_token(&jwt_secret, "pm-service", &["workflow:read"]))
-        .expect("工作流服务客户端初始化失败");
+    let workflow_client =
+        TypedServiceClient::<WorkflowApi>::from_env_default().expect("工作流服务客户端初始化失败");
     tracing::info!(
         "🔗 工作流服务客户端初始化成功: {}",
         std::env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".into())

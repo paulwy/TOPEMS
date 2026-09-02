@@ -1,6 +1,7 @@
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
     HrmEmployeeUpdatedPayload, RdProjectCreatedPayload, SettlementApprovedPayload,
@@ -102,9 +103,10 @@ impl PmEventHandlers {
             _ => return Ok(()),
         }
 
-        let member_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM pm.project_members WHERE user_id = $1",
-        )
+        let member_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "pm",
+            "SELECT COUNT(*) FROM pm.project_members WHERE user_id = $1"
+        ))
         .bind(employee_id.to_string())
         .fetch_one(&self.db)
         .await
@@ -181,13 +183,14 @@ impl PmEventHandlers {
         let now = Utc::now();
         let status = if approved { "approved" } else { "rejected" };
 
-        let result = sqlx::query(
+        let result = sqlx::query(only_own_schema_query!(
+            "pm",
             r#"
-            UPDATE plugin_pm.project_approvals
+            UPDATE pm.project_approvals
             SET status = $1, comments = $2, updated_at = $3
             WHERE project_id = $4 AND status = 'pending'
-            "#,
-        )
+            "#
+        ))
         .bind(status)
         .bind(reason.unwrap_or_default())
         .bind(now)
@@ -198,9 +201,10 @@ impl PmEventHandlers {
         match result {
             Ok(r) => {
                 if r.rows_affected() > 0 {
-                    let _ = sqlx::query(
-                        "UPDATE plugin_pm.projects SET status = $1, updated_at = $2 WHERE id = $3",
-                    )
+                    let _ = sqlx::query(only_own_schema_query!(
+                        "pm",
+                        "UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3"
+                    ))
                     .bind(if approved { "active" } else { "rejected" })
                     .bind(now)
                     .bind(project_id)
@@ -251,10 +255,10 @@ impl PmEventHandlers {
             .unwrap_or_else(|| format!("RD-{}", payload.project_id));
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO plugin_pm.projects (id, name, code, description, project_type, status, leader, start_date, progress, created_at, updated_at)
+            only_own_schema_query!("pm", "INSERT INTO pm.projects (id, name, code, description, project_type, status, leader, start_date, progress, created_at, updated_at)
              VALUES ($1, $2, $3, $4, 'rd_project', 'active', $5, $6, 0, $7, $7)
              ON CONFLICT (id) DO NOTHING
-             RETURNING id",
+             RETURNING id"),
         )
         .bind(payload.project_id)
         .bind(&payload.project_name)
@@ -302,14 +306,15 @@ impl PmEventHandlers {
         let now = Utc::now();
         let date = payload.settlement_date.unwrap_or(now);
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "pm",
             r#"INSERT INTO pm.settlements
                (id, project_id, settlement_no, settlement_type,
                 settlement_date, amount, currency, status, remarks,
                 created_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, COALESCE($6, 0), 'CNY', $7, $8, $9, $10, $11, $11)
-             ON CONFLICT (id) DO NOTHING"#,
-        )
+             ON CONFLICT (id) DO NOTHING"#
+        ))
         .bind(payload.id)
         .bind(payload.project_id)
         .bind(&payload.settlement_no)
@@ -339,12 +344,13 @@ impl PmEventHandlers {
             event.trace_id
         );
 
-        sqlx::query(
+        sqlx::query(only_own_schema_query!(
+            "pm",
             r#"UPDATE pm.settlements
                SET status = 'approved',
                    updated_at = NOW()
-               WHERE id = $1 AND status IN ('pending', 'draft')"#,
-        )
+               WHERE id = $1 AND status IN ('pending', 'draft')"#
+        ))
         .bind(payload.id)
         .execute(&self.db)
         .await

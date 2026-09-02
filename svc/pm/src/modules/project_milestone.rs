@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -68,7 +69,7 @@ async fn list_milestones(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC",
+        only_own_schema_query!("pm", "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -106,16 +107,17 @@ async fn create_milestone(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectMilestone>(
+    let result = sqlx::query_as::<_, ProjectMilestone>(only_own_schema_query!(
+        "pm",
         r#"
-        INSERT INTO plugin_pm.project_milestones (
+        INSERT INTO pm.project_milestones (
             id, project_id, name, description, date, status,
             phase_id, acceptance_criteria, created_at, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(id)
     .bind(project_id)
     .bind(&req.name)
@@ -159,7 +161,7 @@ async fn get_milestone(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let result = sqlx::query_as::<_, ProjectMilestone>(
-        "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 AND id = $2",
+        only_own_schema_query!("pm", "id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -200,9 +202,10 @@ async fn update_milestone(
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, ProjectMilestone>(
+    let result = sqlx::query_as::<_, ProjectMilestone>(only_own_schema_query!(
+        "pm",
         r#"
-        UPDATE plugin_pm.project_milestones
+        UPDATE pm.project_milestones
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             date = COALESCE($3, date),
@@ -212,8 +215,8 @@ async fn update_milestone(
             updated_at = $7
         WHERE project_id = $8 AND id = $9
         RETURNING *
-        "#,
-    )
+        "#
+    ))
     .bind(&req.name)
     .bind(&req.description)
     .bind(req.date)
@@ -256,11 +259,14 @@ async fn delete_milestone(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2")
-        .bind(project_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -71,7 +72,7 @@ async fn get_benefits(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectBenefit>>> {
     let result = sqlx::query_as::<_, ProjectBenefit>(
-        "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC"
+        only_own_schema_query!("pm", "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC")
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -105,7 +106,7 @@ async fn get_analysis(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
-        "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1",
+        only_own_schema_query!("pm", "id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, actual_value, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -242,8 +243,8 @@ async fn calculate_benefits(
     };
 
     let result = sqlx::query_as::<_, ProjectBenefit>(
-        r#"
-        INSERT INTO plugin_pm.project_benefits (
+        only_own_schema_query!("pm", r#"
+        INSERT INTO pm.project_benefits (
             id, project_id, period_type, period_date,
             planned_cost, actual_cost, planned_progress, actual_progress,
             planned_value, earned_value, actual_cost_eva,
@@ -269,7 +270,7 @@ async fn calculate_benefits(
             notes = EXCLUDED.notes,
             updated_at = EXCLUDED.updated_at
         RETURNING *
-        "#,
+        "#),
     )
     .bind(id)
     .bind(project_id)
