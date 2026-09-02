@@ -5,6 +5,7 @@ pub mod trait_api;
 
 // ============ 基础设施（保留）============
 pub mod base_client;
+pub mod circuit_breaker;
 pub mod error;
 pub mod generic;
 
